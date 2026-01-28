@@ -6,3 +6,4 @@ export { default as Meditations } from "./Meditations";
 export { default as Welcome } from "./Welcome";
 export { default as Videos } from "./Videos";
 export { default as Events } from "./Events";
+export { default as EditProfile } from "./EditProfile";

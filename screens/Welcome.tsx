@@ -11,7 +11,6 @@ const Welcome = () => {
       source={require("../assets/images/background.png")}
       style={styles.bg}
     >
-      <View style={styles.welcomeOverlay} />
       <View style={styles.welcomeContainer}>
         <View style={styles.welcomeTop}>
           <Text style={styles.welcomeTitle}>Vibes</Text>

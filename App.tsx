@@ -11,6 +11,7 @@ import {
   Welcome,
   Videos,
   Events,
+  EditProfile,
 } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
@@ -94,6 +95,11 @@ const App = () => (
       <Stack.Screen
         name="Events"
         component={Events}
+        options={{ headerShown: false, animationEnabled: true }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfile}
         options={{ headerShown: false, animationEnabled: true }}
       />
     </Stack.Navigator>

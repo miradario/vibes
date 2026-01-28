@@ -1,90 +1,80 @@
 import React from "react";
-import {
-  ScrollView,
-  View,
-  Text,
-  ImageBackground,
-  TouchableOpacity,
-} from "react-native";
+import { ScrollView, View, Text, ImageBackground, TouchableOpacity, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Icon, ProfileItem } from "../components";
+import { Icon } from "../components";
 import DEMO from "../assets/data/demo";
-import styles, { WHITE } from "../assets/styles";
+import styles, { DARK_GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
 
 const Profile = () => {
   const navigation = useNavigation();
-  const {
-    age,
-    image,
-    info1,
-    info2,
-    info3,
-    info4,
-    meditations,
-    videos,
-    events,
-    shareToCommunity,
-    pricing,
-    location,
-    match,
-    name,
-  } = DEMO[7];
+  const { age, image, name } = DEMO[7];
 
   return (
     <ImageBackground
       source={require("../assets/images/bg.png")}
       style={styles.bg}
     >
-      <ScrollView style={styles.containerProfile}>
-        <ImageBackground source={image} style={styles.photo}>
-          <View style={styles.top}>
-            <TouchableOpacity>
-              <Icon
-                name="chevron-back"
-                size={20}
-                color={WHITE}
-                style={styles.topIconLeft}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity>
-              <Icon
-                name="ellipsis-vertical"
-                size={20}
-                color={WHITE}
-                style={styles.topIconRight}
-              />
-            </TouchableOpacity>
+      <ScrollView style={styles.containerProfile} showsVerticalScrollIndicator={false}>
+        <View style={styles.auraHeader}>
+          <View style={styles.auraAvatarWrap}>
+            <Image source={image} style={styles.auraAvatar} />
           </View>
-        </ImageBackground>
+          <View style={styles.auraProgress}>
+            <Text style={styles.auraProgressText}>20% complete</Text>
+          </View>
+          <View style={styles.auraNameRow}>
+            <Text style={styles.auraName}>
+              {name}
+              {age ? `, ${age}` : ""}
+            </Text>
+            <View style={styles.auraVerified}>
+              <Icon name="checkmark" size={12} color={WHITE} />
+            </View>
+          </View>
+        </View>
 
-        <ProfileItem
-          matches={match}
-          name={name}
-          age={age}
-          location={location}
-          info1={info1}
-          info2={info2}
-          info3={info3}
-          info4={info4}
-          meditations={meditations}
-          videos={videos}
-          events={events}
-          shareToCommunity={shareToCommunity}
-          pricing={pricing}
-        />
-
-        <View style={styles.actionsProfile}>
-          <TouchableOpacity style={styles.circledButton}>
-            <Icon name="ellipsis-horizontal" size={20} color={WHITE} />
+        <View style={styles.auraActions}>
+          <TouchableOpacity style={styles.auraActionItem}>
+            <View style={styles.auraActionCircle}>
+              <Icon name="settings" size={20} color={DARK_GRAY} />
+            </View>
+            <Text style={styles.auraActionLabel}>Settings</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.roundedButton}
-            onPress={() => navigation.navigate("Meditations" as never)}
+            style={styles.auraActionItem}
+            onPress={() => navigation.navigate("EditProfile" as never)}
           >
-            <Icon name="chatbubble" size={20} color={WHITE} />
-            <Text style={styles.textButton}>Meditate</Text>
+            <View style={styles.auraActionCircle}>
+              <Icon name="pencil" size={20} color={DARK_GRAY} />
+            </View>
+            <Text style={styles.auraActionLabel}>Edit profile</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.auraActionItem}
+            onPress={() => navigation.navigate("EditProfile" as never)}
+          >
+            <View style={[styles.auraActionCircle, { borderColor: PRIMARY_COLOR }]}>
+              <Icon name="camera" size={20} color={PRIMARY_COLOR} />
+            </View>
+            <Text style={styles.auraActionLabel}>Add media</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.auraCard}>
+          <Text style={styles.auraCardTitle}>Vibe Plus</Text>
+          <Text style={styles.auraCardSubtitle}>
+            Level up every action you take on Vibe.
+          </Text>
+          <View style={styles.auraDots}>
+            <View style={[styles.auraDot, styles.auraDotActive]} />
+            <View style={styles.auraDot} />
+            <View style={styles.auraDot} />
+            <View style={styles.auraDot} />
+          </View>
+          <TouchableOpacity style={styles.auraCta}>
+            <Text style={styles.auraCtaText}>GET VIBE PLUS</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

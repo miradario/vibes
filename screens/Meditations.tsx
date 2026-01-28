@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 
@@ -17,12 +18,15 @@ const MEDITATIONS = [
   { id: "5", title: "Gratitude Flow", duration: "9 min", level: "All levels" },
 ];
 
-const Meditations = () => (
-  <ImageBackground
-    source={require("../assets/images/bg.png")}
-    style={styles.bg}
-  >
-    <View style={styles.containerMeditations}>
+const Meditations = () => {
+  const navigation = useNavigation();
+
+  return (
+    <ImageBackground
+      source={require("../assets/images/bg.png")}
+      style={styles.bg}
+    >
+      <View style={styles.containerMeditations}>
       <View style={styles.top}>
         <Text style={styles.title}>Meditations</Text>
         <TouchableOpacity>
@@ -48,8 +52,27 @@ const Meditations = () => (
           </TouchableOpacity>
         )}
       />
-    </View>
-  </ImageBackground>
-);
+
+      <View style={styles.meditationBottomBar}>
+        <TouchableOpacity
+          style={styles.meditationBarButton}
+          onPress={() => navigation.navigate("Tab" as never)}
+        >
+          <Icon name="home" size={16} color={DARK_GRAY} />
+          <Text style={styles.meditationBarText}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.meditationBarPrimary}>
+          <Icon name="play" size={16} color="#FFFFFF" />
+          <Text style={styles.meditationBarPrimaryText}>Play</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.meditationBarButton}>
+          <Icon name="moon" size={16} color={DARK_GRAY} />
+          <Text style={styles.meditationBarText}>Timer</Text>
+        </TouchableOpacity>
+      </View>
+      </View>
+    </ImageBackground>
+  );
+};
 
 export default Meditations;
