@@ -2,3 +2,7 @@ export { default as Home } from "./Home";
 export { default as Matches } from "./Matches";
 export { default as Messages } from "./Messages";
 export { default as Profile } from "./Profile";
+export { default as Meditations } from "./Meditations";
+export { default as Welcome } from "./Welcome";
+export { default as Videos } from "./Videos";
+export { default as Events } from "./Events";

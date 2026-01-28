@@ -13,11 +13,16 @@ const ProfileItem = ({
   location,
   matches,
   name,
+  meditations,
+  videos,
+  events,
+  shareToCommunity,
+  pricing,
 }: ProfileItemT) => (
   <View style={styles.containerProfileItem}>
     <View style={styles.matchesProfileItem}>
       <Text style={styles.matchesTextProfileItem}>
-        <Icon name="heart" size={13} color={WHITE} /> {matches}% Match!
+        <Icon name="star" size={13} color={WHITE} /> {matches}% Sync
       </Text>
     </View>
 
@@ -29,31 +34,108 @@ const ProfileItem = ({
 
     <View style={styles.info}>
       <Text style={styles.iconProfile}>
-        <Icon name="person" size={12} color={DARK_GRAY} />
+        <Icon name="planet" size={12} color={DARK_GRAY} />
       </Text>
       <Text style={styles.infoContent}>{info1}</Text>
     </View>
 
     <View style={styles.info}>
       <Text style={styles.iconProfile}>
-        <Icon name="pizza" size={12} color={DARK_GRAY} />
+        <Icon name="leaf" size={12} color={DARK_GRAY} />
       </Text>
       <Text style={styles.infoContent}>{info2}</Text>
     </View>
 
     <View style={styles.info}>
       <Text style={styles.iconProfile}>
-        <Icon name="airplane" size={12} color={DARK_GRAY} />
+        <Icon name="moon" size={12} color={DARK_GRAY} />
       </Text>
       <Text style={styles.infoContent}>{info3}</Text>
     </View>
 
     <View style={styles.info}>
       <Text style={styles.iconProfile}>
-        <Icon name="calendar" size={12} color={DARK_GRAY} />
+        <Icon name="star" size={12} color={DARK_GRAY} />
       </Text>
       <Text style={styles.infoContent}>{info4}</Text>
     </View>
+
+    {meditations && (
+      <View style={styles.profileSection}>
+        <Text style={styles.profileSectionTitle}>Meditations</Text>
+        {meditations.map((item, index) => (
+          <View key={`meditation-${index}`} style={styles.profileRow}>
+            <View>
+              <Text style={styles.profileRowTitle}>{item.title}</Text>
+              <Text style={styles.profileRowMeta}>{item.duration}</Text>
+            </View>
+            <View style={styles.profileBadge}>
+              <Text style={styles.profileBadgeText}>{item.access}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    )}
+
+    {videos && (
+      <View style={styles.profileSection}>
+        <Text style={styles.profileSectionTitle}>Videos</Text>
+        {videos.map((item, index) => (
+          <View key={`video-${index}`} style={styles.profileRow}>
+            <View>
+              <Text style={styles.profileRowTitle}>{item.title}</Text>
+              <Text style={styles.profileRowMeta}>{item.duration}</Text>
+            </View>
+            <View style={styles.profileBadge}>
+              <Text style={styles.profileBadgeText}>{item.access}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    )}
+
+    {events && (
+      <View style={styles.profileSection}>
+        <Text style={styles.profileSectionTitle}>Events</Text>
+        {events.map((item, index) => (
+          <View key={`event-${index}`} style={styles.profileRow}>
+            <View>
+              <Text style={styles.profileRowTitle}>{item.title}</Text>
+              <Text style={styles.profileRowMeta}>
+                {item.date} · {item.location}
+              </Text>
+            </View>
+            <View style={styles.profileBadge}>
+              <Text style={styles.profileBadgeText}>{item.access}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    )}
+
+    {(shareToCommunity !== undefined || pricing) && (
+      <View style={styles.profileSection}>
+        <Text style={styles.profileSectionTitle}>Sharing</Text>
+        {shareToCommunity !== undefined && (
+          <View style={styles.profileRow}>
+            <Text style={styles.profileRowTitle}>Community sharing</Text>
+            <View style={styles.profileBadge}>
+              <Text style={styles.profileBadgeText}>
+                {shareToCommunity ? "On" : "Off"}
+              </Text>
+            </View>
+          </View>
+        )}
+        {pricing && (
+          <View style={styles.profileRow}>
+            <Text style={styles.profileRowTitle}>Pricing</Text>
+            <View style={styles.profileBadge}>
+              <Text style={styles.profileBadgeText}>{pricing}</Text>
+            </View>
+          </View>
+        )}
+      </View>
+    )}
   </View>
 );
 

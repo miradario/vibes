@@ -6,11 +6,13 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Icon, ProfileItem } from "../components";
 import DEMO from "../assets/data/demo";
 import styles, { WHITE } from "../assets/styles";
 
 const Profile = () => {
+  const navigation = useNavigation();
   const {
     age,
     image,
@@ -18,6 +20,11 @@ const Profile = () => {
     info2,
     info3,
     info4,
+    meditations,
+    videos,
+    events,
+    shareToCommunity,
+    pricing,
     location,
     match,
     name,
@@ -60,6 +67,11 @@ const Profile = () => {
           info2={info2}
           info3={info3}
           info4={info4}
+          meditations={meditations}
+          videos={videos}
+          events={events}
+          shareToCommunity={shareToCommunity}
+          pricing={pricing}
         />
 
         <View style={styles.actionsProfile}>
@@ -67,9 +79,12 @@ const Profile = () => {
             <Icon name="ellipsis-horizontal" size={20} color={WHITE} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.roundedButton}>
+          <TouchableOpacity
+            style={styles.roundedButton}
+            onPress={() => navigation.navigate("Meditations" as never)}
+          >
             <Icon name="chatbubble" size={20} color={WHITE} />
-            <Text style={styles.textButton}>Start chatting</Text>
+            <Text style={styles.textButton}>Meditate</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

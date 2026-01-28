@@ -3,9 +3,16 @@ export type CardItemT = {
   hasActions?: boolean;
   hasVariant?: boolean;
   image: any;
+  onImagePress?: () => void;
   isOnline?: boolean;
   matches?: string;
   name: string;
+  vibe?: string;
+  intention?: string;
+  prompt?: string;
+  tags?: string[];
+  images?: any[];
+  onContactPress?: () => void;
 };
 
 export type IconT = {
@@ -30,12 +37,16 @@ export type ProfileItemT = {
   location?: string;
   matches: string;
   name: string;
+  meditations?: { title: string; duration: string; access: "Free" | "Paid" }[];
+  videos?: { title: string; duration: string; access: "Free" | "Paid" }[];
+  events?: { title: string; date: string; location: string; access: "Free" | "Paid" }[];
+  shareToCommunity?: boolean;
+  pricing?: "Free" | "Paid";
 };
 
 export type TabBarIconT = {
   focused: boolean;
   iconName: any;
-  text: string;
 };
 
 export type DataT = {
@@ -46,10 +57,20 @@ export type DataT = {
   description: string;
   message: string;
   image: any;
+  images?: any[];
   age?: string;
   info1?: string;
   info2?: string;
   info3?: string;
   info4?: string;
   location?: string;
+  vibe?: string;
+  intention?: string;
+  prompt?: string;
+  tags?: string[];
+  meditations?: { title: string; duration: string; access: "Free" | "Paid" }[];
+  videos?: { title: string; duration: string; access: "Free" | "Paid" }[];
+  events?: { title: string; date: string; location: string; access: "Free" | "Paid" }[];
+  shareToCommunity?: boolean;
+  pricing?: "Free" | "Paid";
 };
