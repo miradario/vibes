@@ -73,7 +73,10 @@ const Profile = () => {
             <View style={styles.auraDot} />
             <View style={styles.auraDot} />
           </View>
-          <TouchableOpacity style={styles.auraCta}>
+          <TouchableOpacity
+            style={styles.auraCta}
+            onPress={() => navigation.navigate("Premium" as never)}
+          >
             <Text style={styles.auraCtaText}>GET VIBE PLUS</Text>
           </TouchableOpacity>
         </View>
