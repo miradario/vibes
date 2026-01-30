@@ -31,7 +31,7 @@ const Login = () => {
 
   return (
     <ImageBackground source={require("../assets/images/background.png")} style={styles.bg}>
-      <View style={styles.welcomeOverlay} />
+      <View />
       <KeyboardAvoidingView style={styles.loginContainer} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={styles.loginCard}>
           <Text style={styles.loginTitle}>Bienvenido de nuevo</Text>
