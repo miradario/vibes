@@ -1,0 +1,79 @@
+openapi: 3.0.3
+info:
+  title: Vibes API
+  version: 1.0.0
+servers:
+  - url: /functions/v1
+paths:
+  /candidates:
+    get:
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: cursor
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Candidate"
+  /swipes:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SwipeRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwipeResponse"
+components:
+  schemas:
+    Candidate:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        age:
+          type: integer
+        photos:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+    SwipeRequest:
+      type: object
+      required:
+        - candidateId
+        - direction
+      properties:
+        candidateId:
+          type: string
+        direction:
+          type: string
+          enum: [like, nope, super]
+    SwipeResponse:
+      type: object
+      properties:
+        match:
+          type: boolean
+        swipeId:
+          type: string
