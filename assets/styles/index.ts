@@ -930,6 +930,235 @@ export default StyleSheet.create({
     color: WHITE,
     fontSize: 13,
   },
+  auraSettingsSection: {
+    marginTop: 18,
+    marginHorizontal: 16,
+    backgroundColor: WHITE,
+    borderRadius: 20,
+    paddingVertical: 8,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowColor: BLACK,
+    shadowOffset: { height: 4, width: 0 },
+  },
+  auraSettingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFE1CC",
+  },
+  auraSettingRowLast: {
+    borderBottomWidth: 0,
+  },
+  auraSettingLabel: {
+    color: DARK_GRAY,
+    fontSize: 14,
+  },
+
+  // SETTINGS
+  settingsContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 60,
+  },
+  settingsSection: {
+    marginBottom: 18,
+  },
+  settingsSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  settingsSectionTitle: {
+    color: PRIMARY_COLOR,
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  settingsTag: {
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  settingsTagText: {
+    color: WHITE,
+    fontSize: 10,
+  },
+  settingsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  settingsTitle: {
+    color: DARK_GRAY,
+    fontSize: 18,
+  },
+  settingsCard: {
+    backgroundColor: WHITE,
+    borderRadius: 20,
+    paddingVertical: 8,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowColor: BLACK,
+    shadowOffset: { height: 4, width: 0 },
+  },
+  settingsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFE1CC",
+  },
+  settingsRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  settingsRowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  settingsRowLast: {
+    borderBottomWidth: 0,
+  },
+  settingsLabel: {
+    color: DARK_GRAY,
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  settingsAdd: {
+    color: GRAY,
+    fontSize: 12,
+    marginRight: 6,
+  },
+  preferenceCard: {
+    backgroundColor: WHITE,
+    borderRadius: 18,
+    padding: 16,
+    marginTop: 16,
+  },
+  preferenceText: {
+    color: DARK_GRAY,
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  preferenceEmphasis: {
+    color: PRIMARY_COLOR,
+    fontWeight: "600",
+  },
+
+  // ONBOARDING
+  onboardContainer: {
+    flex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 50,
+    paddingBottom: 24,
+  },
+  onboardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  onboardProgressTrack: {
+    flex: 1,
+    height: 4,
+    backgroundColor: "#FFE1CC",
+    borderRadius: 2,
+    marginHorizontal: 12,
+    overflow: "hidden",
+  },
+  onboardProgressFill: {
+    height: 4,
+    backgroundColor: PRIMARY_COLOR,
+  },
+  onboardSkip: {
+    color: PRIMARY_COLOR,
+    fontSize: 12,
+  },
+  onboardTitle: {
+    color: DARK_GRAY,
+    fontSize: 24,
+    marginBottom: 10,
+  },
+  onboardSubtitle: {
+    color: GRAY,
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  onboardOptions: {
+    marginTop: 8,
+  },
+  onboardOption: {
+    borderWidth: 1,
+    borderColor: "#FFE1CC",
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: WHITE,
+  },
+  onboardOptionActive: {
+    borderColor: PRIMARY_COLOR,
+    backgroundColor: "#FFE1CC",
+  },
+  onboardOptionText: {
+    color: DARK_GRAY,
+    fontSize: 14,
+    textAlign: "center",
+  },
+  onboardOptionTextActive: {
+    color: PRIMARY_COLOR,
+  },
+  onboardList: {
+    marginTop: 8,
+  },
+  onboardListItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFE1CC",
+  },
+  onboardListText: {
+    color: DARK_GRAY,
+    fontSize: 14,
+  },
+  onboardCheck: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: "#FFE1CC",
+  },
+  onboardCheckActive: {
+    backgroundColor: PRIMARY_COLOR,
+    borderColor: PRIMARY_COLOR,
+  },
+  onboardFooter: {
+    marginTop: "auto",
+  },
+  onboardNext: {
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 22,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  onboardNextDisabled: {
+    backgroundColor: "#EAD8F7",
+  },
+  onboardNextText: {
+    color: WHITE,
+    fontSize: 14,
+  },
   meditationList: {
     paddingBottom: 110,
   },

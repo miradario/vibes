@@ -1,5 +1,12 @@
 import React from "react";
-import { ScrollView, View, Text, ImageBackground, TouchableOpacity, Image } from "react-native";
+import {
+  ScrollView,
+  View,
+  Text,
+  ImageBackground,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import DEMO from "../assets/data/demo";
@@ -32,7 +39,10 @@ const Profile = () => {
         </View>
 
         <View style={styles.auraActions}>
-          <TouchableOpacity style={styles.auraActionItem}>
+          <TouchableOpacity
+            style={styles.auraActionItem}
+            onPress={() => navigation.navigate("Settings" as never)}
+          >
             <View style={styles.auraActionCircle}>
               <Icon name="settings" size={20} color={DARK_GRAY} />
             </View>
@@ -67,6 +77,7 @@ const Profile = () => {
             <Text style={styles.auraCtaText}>GET VIBE PLUS</Text>
           </TouchableOpacity>
         </View>
+
       </ScrollView>
     </ImageBackground>
   );

@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Home, Matches, Messages, Profile, Meditations, Welcome, Videos, Events, EditProfile, Premium, Chat, Login } from "./screens";
+import { Home, Matches, Messages, Profile, Meditations, Welcome, Videos, Events, EditProfile, Premium, Chat, Settings, PreferenceDetail, OnboardingGender, OnboardingOrientation, OnboardingInterested, Login } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
 
@@ -69,6 +69,14 @@ const App = () => (
         <Stack.Screen name="Login" component={Login} options={{ headerShown: false, animationEnabled: true }} />
         <Stack.Screen name="Videos" component={Videos} options={{ headerShown: false, animationEnabled: true }} />
         <Stack.Screen name="Events" component={Events} options={{ headerShown: false, animationEnabled: true }} />
+        <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false, animationEnabled: true }} />
+        <Stack.Screen name="Premium" component={Premium} options={{ headerShown: false, animationEnabled: true }} />
+        <Stack.Screen name="Chat" component={Chat} options={{ headerShown: false, animationEnabled: true }} />
+        <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false, animationEnabled: true }} />
+        <Stack.Screen name="PreferenceDetail" component={PreferenceDetail} options={{ headerShown: false, animationEnabled: true }} />
+        <Stack.Screen name="OnboardingGender" component={OnboardingGender} options={{ headerShown: false, animationEnabled: true }} />
+        <Stack.Screen name="OnboardingOrientation" component={OnboardingOrientation} options={{ headerShown: false, animationEnabled: true }} />
+        <Stack.Screen name="OnboardingInterested" component={OnboardingInterested} options={{ headerShown: false, animationEnabled: true }} />
       </Stack.Navigator>
     </NavigationContainer>
   </QueryClientProvider>

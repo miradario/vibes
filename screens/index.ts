@@ -10,3 +10,8 @@ export { default as EditProfile } from "./EditProfile";
 export { default as Premium } from "./Premium";
 export { default as Chat } from "./Chat";
 export { default as Login } from "./Login";
+export { default as Settings } from "./Settings";
+export { default as PreferenceDetail } from "./PreferenceDetail";
+export { default as OnboardingGender } from "./OnboardingGender";
+export { default as OnboardingOrientation } from "./OnboardingOrientation";
+export { default as OnboardingInterested } from "./OnboardingInterested";
