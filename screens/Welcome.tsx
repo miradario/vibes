@@ -37,6 +37,12 @@ const Welcome = () => {
             >
               <Text style={styles.welcomeSecondaryText}>Meditate first</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.welcomeSecondary}
+              onPress={() => navigation.navigate("Login" as never)}
+            >
+              <Text style={styles.welcomeSecondaryText}>Log in</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
