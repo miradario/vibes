@@ -9,3 +9,4 @@ export { default as Events } from "./Events";
 export { default as EditProfile } from "./EditProfile";
 export { default as Premium } from "./Premium";
 export { default as Chat } from "./Chat";
+export { default as Login } from "./Login";

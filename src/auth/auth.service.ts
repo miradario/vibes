@@ -1,0 +1,21 @@
+import type { LoginInput } from "./auth.types";
+import * as authClient from "./supabaseAuth.client";
+
+export const login = async ({ email, password }: LoginInput) => {
+  const { data, error } = await authClient.signInWithPassword(email, password);
+  if (error) {
+    throw error;
+  }
+  return data.session ?? null;
+};
+
+export const logout = async () => {
+  const { error } = await authClient.signOut();
+  if (error) {
+    throw error;
+  }
+};
+
+export const getSession = async () => authClient.getSession();
+
+export const onAuthStateChange = authClient.onAuthStateChange;
