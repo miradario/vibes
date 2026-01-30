@@ -35,7 +35,6 @@ const App = () => (
                   tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="compass" />,
                 }}
               />
-
               <Tab.Screen
                 name="Soulmates"
                 component={Matches}
@@ -44,7 +43,6 @@ const App = () => (
                   tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="heart" />,
                 }}
               />
-
               <Tab.Screen
                 name="Flow"
                 component={Messages}
@@ -53,7 +51,6 @@ const App = () => (
                   tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="chatbubble-ellipses" />,
                 }}
               />
-
               <Tab.Screen
                 name="Aura"
                 component={Profile}
