@@ -14,6 +14,11 @@ import {
   EditProfile,
   Premium,
   Chat,
+  Settings,
+  PreferenceDetail,
+  OnboardingGender,
+  OnboardingOrientation,
+  OnboardingInterested,
 } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
@@ -112,6 +117,31 @@ const App = () => (
       <Stack.Screen
         name="Chat"
         component={Chat}
+        options={{ headerShown: false, animationEnabled: true }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={Settings}
+        options={{ headerShown: false, animationEnabled: true }}
+      />
+      <Stack.Screen
+        name="PreferenceDetail"
+        component={PreferenceDetail}
+        options={{ headerShown: false, animationEnabled: true }}
+      />
+      <Stack.Screen
+        name="OnboardingGender"
+        component={OnboardingGender}
+        options={{ headerShown: false, animationEnabled: true }}
+      />
+      <Stack.Screen
+        name="OnboardingOrientation"
+        component={OnboardingOrientation}
+        options={{ headerShown: false, animationEnabled: true }}
+      />
+      <Stack.Screen
+        name="OnboardingInterested"
+        component={OnboardingInterested}
         options={{ headerShown: false, animationEnabled: true }}
       />
     </Stack.Navigator>

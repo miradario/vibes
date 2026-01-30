@@ -26,7 +26,7 @@ const Welcome = () => {
           <View style={styles.welcomeButtons}>
             <TouchableOpacity
               style={styles.welcomePrimary}
-              onPress={() => navigation.navigate("Tab" as never)}
+              onPress={() => navigation.navigate("OnboardingGender" as never)}
             >
               <Text style={styles.welcomePrimaryText}>Begin</Text>
             </TouchableOpacity>
