@@ -638,6 +638,8 @@ export default StyleSheet.create({
   // CONTAINER - HOME
   containerHome: {
     marginHorizontal: 10,
+    flex: 1,
+    paddingBottom: 90,
   },
 
   // CONTAINER - MATCHES

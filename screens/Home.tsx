@@ -270,6 +270,7 @@ const Home = () => {
         </View>
 
         <CardStack
+          style={{ flex: 1 }}
           loop
           verticalSwipe={false}
           renderNoMoreCards={() => null}
