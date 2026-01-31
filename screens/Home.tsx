@@ -13,6 +13,7 @@ import styles, { DARK_GRAY } from "../assets/styles";
 import DEMO from "../assets/data/demo";
 import Icon from "../components/Icon";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
+import { handleApiError } from "../src/utils/handleApiError";
 
 const Home = () => {
   const [swiper, setSwiper] = useState<CardStack | null>(null);
@@ -250,7 +251,10 @@ const Home = () => {
                   targetUserId: String(item.id),
                   direction: "like",
                 },
-                { onSuccess: logSwipeResult, onError: (error) => console.log("swipeMutation error:", error) },
+                {
+                  onSuccess: logSwipeResult,
+                  onError: (error) => handleApiError(error, { toastTitle: "Swipe Error" }),
+                },
               );
             }
             triggerSwipeFeedback("like");
@@ -261,9 +265,12 @@ const Home = () => {
               swipeMutation.mutate(
                 {
                   targetUserId: String(item.id),
-                  direction: "nope",
+                  direction: "pass",
                 },
-                { onSuccess: logSwipeResult, onError: (error) => console.log("swipeMutation error:", error) },
+                {
+                  onSuccess: logSwipeResult,
+                  onError: (error) => handleApiError(error),
+                },
               );
             }
             triggerSwipeFeedback("nope");

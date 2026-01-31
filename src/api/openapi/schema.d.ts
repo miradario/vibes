@@ -11,7 +11,7 @@ export interface components {
     };
     SwipeRequest: {
       targetUserId: string;
-      direction: "like" | "nope" | "super";
+      direction: "like" | "pass" | "super";
     };
     SwipeResponse: {
       match?: boolean;

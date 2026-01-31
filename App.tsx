@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import Toast from "react-native-toast-message";
 import {
   Home,
   Matches,
@@ -161,6 +162,7 @@ const App = () => (
         />
       </Stack.Navigator>
     </NavigationContainer>
+    <Toast />
   </QueryClientProvider>
 );
 
