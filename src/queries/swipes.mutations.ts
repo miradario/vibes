@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { swipe } from "../services/swipes.service";
+import { createSwipe } from "../api/modules/swipes/swipes.api";
 import { candidatesKeys } from "./candidates.queries";
 import type { GetCandidatesResponse } from "../api/modules/candidates/candidates.types";
 import type { SwipeRequest, SwipeResponse } from "../api/modules/swipes/swipes.types";
@@ -12,7 +12,7 @@ export const useSwipeMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation<SwipeResponse, unknown, SwipeRequest, SwipeContext>({
-    mutationFn: swipe,
+    mutationFn: createSwipe,
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: candidatesKeys.all });
 
@@ -24,7 +24,7 @@ export const useSwipeMutation = () => {
         if (!data) return;
         queryClient.setQueryData<GetCandidatesResponse>(
           key,
-          data.filter((candidate) => candidate.id !== payload.candidateId)
+          data.filter((candidate) => candidate.id !== payload.targetUserId),
         );
       });
 

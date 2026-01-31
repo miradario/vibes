@@ -12,6 +12,7 @@ import { Filters, CardItem } from "../components";
 import styles, { DARK_GRAY } from "../assets/styles";
 import DEMO from "../assets/data/demo";
 import Icon from "../components/Icon";
+import { useSwipeMutation } from "../src/queries/swipes.mutations";
 
 const Home = () => {
   const [swiper, setSwiper] = useState<CardStack | null>(null);
@@ -28,6 +29,10 @@ const Home = () => {
   const [contactProfile, setContactProfile] = useState<any>(null);
   const likePhrases = ["Have faith", "She/He could be your soulmate", "Life is amazing", "People are amazing"];
   const nopePhrases = ["Maybe next life", "Good luck to them", "She/He is amazing anyways", "People are amazing"];
+  const swipeMutation = useSwipeMutation();
+  const logSwipeResult = (data: unknown) => {
+    console.log("swipeMutation result:", data);
+  };
 
   const triggerSwipeFeedback = (type: "like" | "nope") => {
     setSwipeType(type);
@@ -237,8 +242,32 @@ const Home = () => {
             setIsSwiping(false);
             swipeProgress.setValue(0);
           }}
-          onSwipedRight={() => triggerSwipeFeedback("like")}
-          onSwipedLeft={() => triggerSwipeFeedback("nope")}>
+          onSwipedRight={(index: number) => {
+            const item = DEMO[index];
+            if (item) {
+              swipeMutation.mutate(
+                {
+                  targetUserId: String(item.id),
+                  direction: "like",
+                },
+                { onSuccess: logSwipeResult, onError: (error) => console.log("swipeMutation error:", error) },
+              );
+            }
+            triggerSwipeFeedback("like");
+          }}
+          onSwipedLeft={(index: number) => {
+            const item = DEMO[index];
+            if (item) {
+              swipeMutation.mutate(
+                {
+                  targetUserId: String(item.id),
+                  direction: "nope",
+                },
+                { onSuccess: logSwipeResult, onError: (error) => console.log("swipeMutation error:", error) },
+              );
+            }
+            triggerSwipeFeedback("nope");
+          }}>
           {DEMO.map((item) => (
             <CardAny key={item.id}>
               <CardItem

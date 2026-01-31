@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  ScrollView,
-  View,
-  Text,
-  ImageBackground,
-  TouchableOpacity,
-  Image,
-} from "react-native";
+import { ScrollView, View, Text, ImageBackground, TouchableOpacity, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import DEMO from "../assets/data/demo";
@@ -16,7 +9,8 @@ import { useCandidatesQuery } from "../src/queries/candidates.queries";
 const Profile = () => {
   const navigation = useNavigation();
   const { age, image, name } = DEMO[7];
-  const { data: candidates } = useCandidatesQuery();
+  const { data: candidates, isError, error, isLoading } = useCandidatesQuery(); //Example usage of the query
+  console.log("Candidates data:", isError ? `Error getting candidates: ${error}` : candidates);
   return (
     <ImageBackground source={require("../assets/images/bg.png")} style={styles.bg}>
       <ScrollView style={styles.containerProfile} showsVerticalScrollIndicator={false}>
@@ -39,10 +33,7 @@ const Profile = () => {
         </View>
 
         <View style={styles.auraActions}>
-          <TouchableOpacity
-            style={styles.auraActionItem}
-            onPress={() => navigation.navigate("Settings" as never)}
-          >
+          <TouchableOpacity style={styles.auraActionItem} onPress={() => navigation.navigate("Settings" as never)}>
             <View style={styles.auraActionCircle}>
               <Icon name="settings" size={20} color={DARK_GRAY} />
             </View>
@@ -77,7 +68,6 @@ const Profile = () => {
             <Text style={styles.auraCtaText}>GET VIBE PLUS</Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </ImageBackground>
   );

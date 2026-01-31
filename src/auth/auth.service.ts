@@ -1,5 +1,8 @@
 import type { LoginInput } from "./auth.types";
 import * as authClient from "./supabaseAuth.client";
+import { bootstrapAuthSession } from "./session.bootstrap";
+
+void bootstrapAuthSession();
 
 export const login = async ({ email, password }: LoginInput) => {
   const { data, error } = await authClient.signInWithPassword(email, password);

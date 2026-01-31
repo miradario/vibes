@@ -10,7 +10,7 @@ export interface components {
       bio?: string;
     };
     SwipeRequest: {
-      candidateId: string;
+      targetUserId: string;
       direction: "like" | "nope" | "super";
     };
     SwipeResponse: {

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchCandidates } from "../services/candidates.service";
+import { getCandidates } from "../api/modules/candidates/candidates.api";
 import type { GetCandidatesParams, GetCandidatesResponse } from "../api/modules/candidates/candidates.types";
 
 export const candidatesKeys = {
@@ -11,7 +11,11 @@ export const candidatesKeys = {
 export const useCandidatesQuery = (params?: GetCandidatesParams) => {
   return useQuery<GetCandidatesResponse>({
     queryKey: candidatesKeys.list(params),
-    queryFn: () => fetchCandidates(params ?? {}),
+    queryFn: () => {
+      const resolvedParams = params ?? {};
+      const limit = resolvedParams.limit ?? 20;
+      return getCandidates({ ...resolvedParams, limit });
+    },
     staleTime: 30_000,
   });
 };
