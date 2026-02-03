@@ -26,6 +26,7 @@ const Home = () => {
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
   const swipeAnim = useRef(new Animated.Value(0)).current;
   const swipeProgress = useRef(new Animated.Value(0)).current;
+  const swipeX = useRef(new Animated.Value(0)).current;
   const [showContact, setShowContact] = useState<boolean>(false);
   const [contactProfile, setContactProfile] = useState<any>(null);
   const likePhrases = ["Have faith", "She/He could be your soulmate", "Life is amazing", "People are amazing"];
@@ -180,22 +181,79 @@ const Home = () => {
         </View>
       </Modal>
 
+      {/* Tinder-like badges during swipe: LIKE (left), NOPE (right) */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.swipeBadgeLike,
+          {
+            opacity: swipeX.interpolate({
+              inputRange: [0, 80],
+              outputRange: [0, 1],
+            }),
+            transform: [
+              {
+                scale: swipeX.interpolate({
+                  inputRange: [0, 80],
+                  outputRange: [0.4, 1],
+                }),
+              },
+              {
+                rotate: swipeX.interpolate({
+                  inputRange: [0, 120],
+                  outputRange: ["-25deg", "0deg"],
+                }),
+              },
+            ],
+          },
+        ]}>
+        <Text style={styles.swipeBadgeTextLike}>LIKE</Text>
+      </Animated.View>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.swipeBadgeNope,
+          {
+            opacity: swipeX.interpolate({
+              inputRange: [-80, 0],
+              outputRange: [1, 0],
+            }),
+            transform: [
+              {
+                scale: swipeX.interpolate({
+                  inputRange: [-80, 0],
+                  outputRange: [1, 0.4],
+                }),
+              },
+              {
+                rotate: swipeX.interpolate({
+                  inputRange: [-120, 0],
+                  outputRange: ["0deg", "25deg"],
+                }),
+              },
+            ],
+          },
+        ]}>
+        <Text style={styles.swipeBadgeTextNope}>NOPE</Text>
+      </Animated.View>
+
+      {/* Post-swipe feedback: centered icon + phrase */}
       {swipeType && (
         <Animated.View
           pointerEvents="none"
           style={[
             styles.swipeOverlay,
             {
-              opacity: isSwiping ? swipeProgress : swipeAnim,
+              opacity: isSwiping ? 0 : swipeAnim,
               transform: [
                 {
-                  scale: (isSwiping ? swipeProgress : swipeAnim).interpolate({
+                  scale: swipeAnim.interpolate({
                     inputRange: [0, 1],
                     outputRange: [0.7, 1],
                   }),
                 },
                 {
-                  translateY: (isSwiping ? swipeProgress : swipeAnim).interpolate({
+                  translateY: swipeAnim.interpolate({
                     inputRange: [0, 1],
                     outputRange: [10, 0],
                   }),
@@ -206,8 +264,8 @@ const Home = () => {
           <View style={styles.swipeIconWrap}>
             <Icon name={swipeType === "like" ? "heart" : "heart-dislike"} size={34} color={swipeType === "like" ? "#2F8F83" : "#B76E5A"} />
           </View>
-          {!isSwiping && swipeType === "nope" && nopePhrase ? <Text style={styles.swipeText}>{nopePhrase}</Text> : null}
-          {!isSwiping && swipeType === "like" && likePhrase ? <Text style={styles.swipeText}>{likePhrase}</Text> : null}
+          {swipeType === "nope" && nopePhrase ? <Text style={styles.swipeText}>{nopePhrase}</Text> : null}
+          {swipeType === "like" && likePhrase ? <Text style={styles.swipeText}>{likePhrase}</Text> : null}
         </Animated.View>
       )}
 
@@ -228,11 +286,13 @@ const Home = () => {
           onSwipeStart={() => {
             setIsSwiping(true);
             swipeProgress.setValue(0);
+            swipeX.setValue(0);
           }}
           onSwipe={(x: number) => {
             const distance = Math.min(Math.abs(x), 120);
             const progress = distance / 120;
             swipeProgress.setValue(progress);
+            swipeX.setValue(x);
             if (distance < 5) {
               setSwipeType(null);
               return;
@@ -242,6 +302,7 @@ const Home = () => {
           onSwipeEnd={() => {
             setIsSwiping(false);
             swipeProgress.setValue(0);
+            swipeX.setValue(0);
           }}
           onSwipedRight={(index: number) => {
             const item = DEMO[index];

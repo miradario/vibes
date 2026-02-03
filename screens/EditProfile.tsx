@@ -7,11 +7,13 @@ import {
   Image,
   ScrollView,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import DEMO from "../assets/data/demo";
 
 const EditProfile = () => {
+  const navigation = useNavigation();
   const profile = DEMO[7];
   const media = [
     profile.image,
@@ -29,7 +31,12 @@ const EditProfile = () => {
     >
       <ScrollView style={styles.editContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.top}>
-          <Text style={styles.title}>Edit Profile</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
+          </TouchableOpacity>
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text style={styles.title}>Edit Profile</Text>
+          </View>
           <TouchableOpacity>
             <Icon name="checkmark" color={DARK_GRAY} size={22} />
           </TouchableOpacity>
