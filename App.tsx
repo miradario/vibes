@@ -9,6 +9,7 @@ import {
   Home,
   Matches,
   Messages,
+  Match,
   Profile,
   Meditations,
   Welcome,
@@ -133,6 +134,11 @@ const App = () => (
         <Stack.Screen
           name="Chat"
           component={Chat}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="Match"
+          component={Match}
           options={{ headerShown: false, animationEnabled: true }}
         />
         <Stack.Screen

@@ -317,6 +317,9 @@ const Home = () => {
                   onError: (error) => handleApiError(error, { toastTitle: "Swipe Error" }),
                 },
               );
+              if (Math.random() < 0.35) {
+                navigation.navigate("Match" as never, { profile: item } as never);
+              }
             }
             triggerSwipeFeedback("like");
           }}
@@ -340,6 +343,7 @@ const Home = () => {
             <CardAny key={item.id}>
               <CardItem
                 hasActions
+                variant="discover"
                 image={item.image}
                 name={item.name}
                 description={item.description}

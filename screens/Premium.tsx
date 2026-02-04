@@ -15,7 +15,7 @@ const Premium = () => (
       </View>
 
       <Text style={styles.premiumTitle}>
-        See who resonates with you and match instantly with Vibe Gold.
+        See who resonates with you and connect instantly with Vibe Gold.
       </Text>
 
       <Text style={styles.premiumSectionLabel}>Select a plan</Text>

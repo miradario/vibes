@@ -1,6 +1,6 @@
 import { StyleSheet, Dimensions } from "react-native";
 
-export const PRIMARY_COLOR = "#5B2D8B";
+export const PRIMARY_COLOR = "#F26D6A";
 export const SECONDARY_COLOR = "#FF9F68";
 export const WHITE = "#FFF6EE";
 export const GRAY = "#7A6E86";
@@ -31,6 +31,16 @@ export default StyleSheet.create({
     shadowColor: BLACK,
     shadowOffset: { height: 0, width: 0 },
   },
+  containerCardItemDiscover: {
+    backgroundColor: "#F7F1E9",
+    borderRadius: 28,
+    alignItems: "stretch",
+    padding: 16,
+    marginHorizontal: 8,
+    marginTop: 12,
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+  },
   matchesCardItem: {
     backgroundColor: SECONDARY_COLOR,
     paddingVertical: 7,
@@ -40,10 +50,17 @@ export default StyleSheet.create({
   matchesTextCardItem: {
     color: WHITE,
   },
+  matchesTextCardItemDiscover: {
+    color: DARK_GRAY,
+  },
   descriptionCardItem: {
     color: GRAY,
     textAlign: "center",
     paddingHorizontal: 10,
+  },
+  descriptionCardItemDiscover: {
+    textAlign: "left",
+    paddingHorizontal: 2,
   },
   status: {
     paddingBottom: 10,
@@ -73,13 +90,39 @@ export default StyleSheet.create({
     alignItems: "center",
     paddingVertical: 30,
   },
+  actionsCardItemDiscover: {
+    paddingVertical: 18,
+    justifyContent: "space-between",
+  },
   cardImageWrap: {
     position: "relative",
+  },
+  discoverImageWrap: {
+    width: "100%",
+    borderRadius: 22,
+    backgroundColor: "#E9E0D3",
+    overflow: "hidden",
+    marginBottom: 12,
+  },
+  discoverImage: {
+    width: "100%",
+    height: 280,
+    margin: 0,
   },
   matchesCardOverlay: {
     position: "absolute",
     bottom: 12,
     alignSelf: "center",
+  },
+  discoverMatchesOverlay: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+  },
+  discoverMatchesPill: {
+    backgroundColor: "rgba(255,255,255,0.85)",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
   },
   cardThumbRow: {
     flexDirection: "row",
@@ -105,6 +148,19 @@ export default StyleSheet.create({
     borderRadius: 16,
     flexDirection: "row",
     alignItems: "center",
+  },
+  contactButtonDiscover: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    marginBottom: 8,
+    backgroundColor: "#C96A4B",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowColor: BLACK,
+    shadowOffset: { height: 2, width: 0 },
   },
   contactButtonText: {
     color: WHITE,
@@ -429,6 +485,10 @@ export default StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 12,
   },
+  promptTextDiscover: {
+    textAlign: "left",
+    paddingHorizontal: 2,
+  },
   button: {
     width: 60,
     height: 60,
@@ -526,20 +586,24 @@ export default StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     flexDirection: "row",
-    paddingHorizontal: 10,
-    width: DIMENSION_WIDTH - 100,
+    width: "100%",
   },
   avatar: {
     borderRadius: 30,
     width: 60,
     height: 60,
     marginRight: 20,
-    marginVertical: 15,
+    marginVertical: 6,
   },
   message: {
     color: GRAY,
     fontSize: 12,
     paddingTop: 5,
+  },
+  messageName: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    fontWeight: "600",
   },
 
   // COMPONENT - PROFILE ITEM
@@ -689,7 +753,208 @@ export default StyleSheet.create({
   containerMessages: {
     justifyContent: "space-between",
     flex: 1,
+    paddingHorizontal: 0,
+  },
+  matchScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  matchCard: {
+    width: "100%",
+    backgroundColor: WHITE,
+    borderRadius: 26,
+    paddingVertical: 26,
+    paddingHorizontal: 22,
+    alignItems: "center",
+    shadowOpacity: 0.2,
+    shadowRadius: 22,
+    shadowColor: BLACK,
+    shadowOffset: { height: 10, width: 0 },
+  },
+  matchHeartsLayer: {
+    width: "100%",
+    height: 70,
+    position: "relative",
+    marginBottom: 6,
+  },
+  matchHeart: {
+    position: "absolute",
+    backgroundColor: "rgba(255,255,255,0.9)",
+    padding: 8,
+    borderRadius: 20,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowColor: BLACK,
+    shadowOffset: { height: 4, width: 0 },
+  },
+  matchHeartLeft: {
+    left: 10,
+    top: 12,
+  },
+  matchHeartCenter: {
+    alignSelf: "center",
+    top: 0,
+  },
+  matchHeartRight: {
+    right: 10,
+    top: 16,
+  },
+  matchTitle: {
+    fontSize: 28,
+    color: "#F26D6A",
+    fontWeight: "800",
+  },
+  matchSubtitle: {
+    marginTop: 6,
+    color: DARK_GRAY,
+    fontSize: 14,
+    textAlign: "center",
+  },
+  matchAvatarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 18,
+    marginBottom: 18,
+  },
+  matchAvatarRing: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF1E6",
+    borderWidth: 2,
+    borderColor: "#F9D7C7",
+  },
+  matchAvatarRingRight: {
+    marginLeft: -18,
+    backgroundColor: "#FDE6DC",
+  },
+  matchAvatar: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+  },
+  matchActions: {
+    width: "100%",
+    marginTop: 8,
+  },
+  matchPrimaryButton: {
+    backgroundColor: "#F26D6A",
+    paddingVertical: 12,
+    borderRadius: 22,
+    alignItems: "center",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowColor: BLACK,
+    shadowOffset: { height: 6, width: 0 },
+  },
+  matchPrimaryButtonText: {
+    color: WHITE,
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+  },
+  matchSecondaryButton: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#F0D5CC",
+    paddingVertical: 11,
+    borderRadius: 22,
+    alignItems: "center",
+  },
+  matchSecondaryButtonText: {
+    color: DARK_GRAY,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  flowTop: {
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    paddingBottom: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EFE6DA",
+  },
+  flowTopIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  flowTopCenter: {
+    flex: 1,
+    alignItems: "center",
+  },
+  flowSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    marginTop: 16,
+  },
+  flowSectionTitle: {
+    color: "#F26D6A",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  flowSectionCount: {
+    backgroundColor: "#F26D6A",
+    borderRadius: 12,
     paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginLeft: 10,
+  },
+  flowSectionCountText: {
+    color: WHITE,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  matchesRow: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  matchItem: {
+    alignItems: "center",
+    marginRight: 14,
+  },
+  matchAvatarWrap: {
+    position: "relative",
+  },
+  matchAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    borderColor: WHITE,
+  },
+  matchDot: {
+    position: "absolute",
+    right: -2,
+    bottom: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#F26D6A",
+    borderWidth: 2,
+    borderColor: WHITE,
+  },
+  matchName: {
+    marginTop: 8,
+    color: DARK_GRAY,
+    fontSize: 13,
+  },
+  messageRow: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EFE6DA",
   },
   chatHeader: {
     paddingTop: 50,
@@ -807,6 +1072,106 @@ export default StyleSheet.create({
 
   // CONTAINER - PROFILE
   containerProfile: { marginHorizontal: 0 },
+  profileCalmContent: {
+    paddingHorizontal: 24,
+    paddingTop: 56,
+    paddingBottom: 48,
+  },
+  profileHeader: {
+    marginBottom: 18,
+  },
+  profileName: {
+    fontSize: 30,
+    color: DARK_GRAY,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+  },
+  profileEssence: {
+    marginTop: 10,
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#6F635E",
+  },
+  profileEssenceMuted: {
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#9B8F84",
+  },
+  profileValueRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 6,
+    marginBottom: 18,
+  },
+  profileValuePill: {
+    backgroundColor: "#FBE7DC",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  profileValueText: {
+    color: DARK_GRAY,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  profilePracticeSection: {
+    marginBottom: 26,
+  },
+  profileSectionLabel: {
+    color: "#A08E82",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  profileInfoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  profileInfoPill: {
+    backgroundColor: "#F4EEE7",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  profileInfoText: {
+    color: "#6F635E",
+    fontSize: 12,
+  },
+  profilePrimaryCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 22,
+    paddingVertical: 12,
+    marginBottom: 22,
+  },
+  profilePrimaryCtaText: {
+    color: WHITE,
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+    marginLeft: 8,
+  },
+  profileSecondaryActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+  },
+  profileActionButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#F4EEE7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   containerMeditations: {
     flex: 1,
     paddingHorizontal: 10,

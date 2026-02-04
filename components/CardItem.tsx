@@ -26,13 +26,15 @@ const CardItem = ({
   tags,
   images,
   onContactPress,
+  variant,
 }: CardItemT) => {
   // Custom styling
   const fullWidth = Dimensions.get("window").width;
+  const isDiscover = variant === "discover";
 
   const imageStyle = [
     {
-      borderRadius: 8,
+      borderRadius: isDiscover ? 22 : 8,
       width: hasVariant ? fullWidth / 2 - 30 : fullWidth - 80,
       height: hasVariant ? 170 : 350,
       margin: hasVariant ? 0 : 20,
@@ -41,30 +43,30 @@ const CardItem = ({
 
   const nameStyle = [
     {
-      paddingTop: hasVariant ? 10 : 15,
-      paddingBottom: hasVariant ? 5 : 7,
+      paddingTop: hasVariant ? 10 : isDiscover ? 12 : 15,
+      paddingBottom: hasVariant ? 5 : isDiscover ? 6 : 7,
       color: DARK_GRAY,
       fontSize: hasVariant ? 15 : 30,
     },
   ];
 
   return (
-    <View style={styles.containerCardItem}>
+    <View style={[styles.containerCardItem, isDiscover && styles.containerCardItemDiscover]}>
       {/* IMAGE */}
-      <View style={styles.cardImageWrap}>
+      <View style={[styles.cardImageWrap, isDiscover && styles.discoverImageWrap]}>
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={onImagePress}
           disabled={!onImagePress}
         >
-          <Image source={image} style={imageStyle} />
+          <Image source={image} style={[imageStyle, isDiscover && styles.discoverImage]} />
         </TouchableOpacity>
         {/* MATCHES */}
         {matches && (
-          <View style={styles.matchesCardOverlay}>
-            <View style={styles.matchesCardItem}>
-              <Text style={styles.matchesTextCardItem}>
-                <Icon name="star" color={WHITE} size={13} /> {matches}% Sync
+          <View style={isDiscover ? styles.discoverMatchesOverlay : styles.matchesCardOverlay}>
+            <View style={[styles.matchesCardItem, isDiscover && styles.discoverMatchesPill]}>
+              <Text style={[styles.matchesTextCardItem, isDiscover && styles.matchesTextCardItemDiscover]}>
+                <Icon name="star" color={isDiscover ? DARK_GRAY : WHITE} size={13} /> {matches}% Sync
               </Text>
             </View>
           </View>
@@ -95,10 +97,12 @@ const CardItem = ({
 
         {/* DESCRIPTION */}
         {description && (
-          <Text style={styles.descriptionCardItem}>{description}</Text>
+          <Text style={[styles.descriptionCardItem, isDiscover && styles.descriptionCardItemDiscover]}>
+            {description}
+          </Text>
         )}
 
-        {prompt && <Text style={styles.promptText}>{prompt}</Text>}
+        {prompt && <Text style={[styles.promptText, isDiscover && styles.promptTextDiscover]}>{prompt}</Text>}
 
         {(vibe || intention) && (
           <View style={styles.vibeRow}>
@@ -127,12 +131,12 @@ const CardItem = ({
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.contactButton}
+        style={[styles.contactButton, isDiscover && styles.contactButtonDiscover]}
         onPress={onContactPress}
         disabled={!onContactPress}
       >
-        <Icon name="chatbubble-ellipses" size={14} color={WHITE} />
-        <Text style={styles.contactButtonText}>Contact</Text>
+        <Icon name="library" size={14} color={WHITE} />
+        <Text style={styles.contactButtonText}>Assets shared</Text>
       </TouchableOpacity>
 
       {/* STATUS */}
@@ -147,7 +151,7 @@ const CardItem = ({
 
       {/* ACTIONS */}
       {hasActions && (
-        <View style={styles.actionsCardItem}>
+        <View style={[styles.actionsCardItem, isDiscover && styles.actionsCardItemDiscover]}>
           <TouchableOpacity style={styles.miniButton}>
             <Icon name="star" color={STAR_ACTIONS} size={14} />
           </TouchableOpacity>

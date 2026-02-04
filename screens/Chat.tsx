@@ -31,7 +31,7 @@ const Chat = () => {
 
       <View style={styles.chatBody}>
         <Text style={styles.chatMatchedText}>
-          You matched with {profile?.name || "them"} on 11/07/2023.
+          You connected with {profile?.name || "them"} on 11/07/2023.
         </Text>
 
         <View style={styles.chatBubbleLeft}>

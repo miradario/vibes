@@ -1,71 +1,86 @@
 import React from "react";
-import { ScrollView, View, Text, ImageBackground, TouchableOpacity, Image } from "react-native";
+import { ScrollView, View, Text, ImageBackground, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import DEMO from "../assets/data/demo";
-import styles, { DARK_GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
-import { useCandidatesQuery } from "../src/queries/candidates.queries";
+import styles from "../assets/styles";
+
+const ValuePill = ({ label }: { label: string }) => (
+  <View style={styles.profileValuePill}>
+    <Text style={styles.profileValueText}>{label}</Text>
+  </View>
+);
+
+const InfoPill = ({ label }: { label: string }) => (
+  <View style={styles.profileInfoPill}>
+    <Text style={styles.profileInfoText}>{label}</Text>
+  </View>
+);
 
 const Profile = () => {
   const navigation = useNavigation();
-  const { age, image, name } = DEMO[7];
-  const { data: candidates, isError, error, isLoading } = useCandidatesQuery(); //Example usage of the query
-  console.log("Candidates data:", isError ? `Error getting candidates: ${error}` : candidates);
+  const profile = DEMO[7];
+  const values = [profile.vibe, profile.intention].filter(Boolean).slice(0, 3) as string[];
+  const practiceTags = (profile.tags || []).filter(Boolean);
   return (
     <ImageBackground source={require("../assets/images/bg.png")} style={styles.bg}>
-      <ScrollView style={styles.containerProfile} showsVerticalScrollIndicator={false}>
-        <View style={styles.auraHeader}>
-          <View style={styles.auraAvatarWrap}>
-            <Image source={image} style={styles.auraAvatar} />
-          </View>
-          <View style={styles.auraProgress}>
-            <Text style={styles.auraProgressText}>20% complete</Text>
-          </View>
-          <View style={styles.auraNameRow}>
-            <Text style={styles.auraName}>
-              {name}
-              {age ? `, ${age}` : ""}
-            </Text>
-            <View style={styles.auraVerified}>
-              <Icon name="checkmark" size={12} color={WHITE} />
-            </View>
-          </View>
+      <ScrollView
+        style={styles.containerProfile}
+        contentContainerStyle={styles.profileCalmContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.profileHeader}>
+          <Text style={styles.profileName}>
+            {profile.name}
+            {profile.age ? `, ${profile.age}` : ""}
+          </Text>
+          {profile.description ? (
+            <Text style={styles.profileEssence}>{profile.description}</Text>
+          ) : null}
+          {profile.prompt ? (
+            <Text style={styles.profileEssenceMuted}>{profile.prompt}</Text>
+          ) : null}
         </View>
 
-        <View style={styles.auraActions}>
-          <TouchableOpacity style={styles.auraActionItem} onPress={() => navigation.navigate("Settings" as never)}>
-            <View style={styles.auraActionCircle}>
-              <Icon name="settings" size={20} color={DARK_GRAY} />
-            </View>
-            <Text style={styles.auraActionLabel}>Settings</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.auraActionItem} onPress={() => navigation.navigate("EditProfile" as never)}>
-            <View style={styles.auraActionCircle}>
-              <Icon name="pencil" size={20} color={DARK_GRAY} />
-            </View>
-            <Text style={styles.auraActionLabel}>Edit profile</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.auraActionItem} onPress={() => navigation.navigate("EditProfile" as never)}>
-            <View style={[styles.auraActionCircle, { borderColor: PRIMARY_COLOR }]}>
-              <Icon name="camera" size={20} color={PRIMARY_COLOR} />
-            </View>
-            <Text style={styles.auraActionLabel}>Add media</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.auraCard}>
-          <Text style={styles.auraCardTitle}>Vibe Plus</Text>
-          <Text style={styles.auraCardSubtitle}>Level up every action you take on Vibe.</Text>
-          <View style={styles.auraDots}>
-            <View style={[styles.auraDot, styles.auraDotActive]} />
-            <View style={styles.auraDot} />
-            <View style={styles.auraDot} />
-            <View style={styles.auraDot} />
+        {values.length > 0 ? (
+          <View style={styles.profileValueRow}>
+            {values.map((value, index) => (
+              <ValuePill key={`value-${index}`} label={value} />
+            ))}
           </View>
-          <TouchableOpacity style={styles.auraCta} onPress={() => navigation.navigate("Premium" as never)}>
-            <Text style={styles.auraCtaText}>GET VIBE PLUS</Text>
+        ) : null}
+
+        {practiceTags.length > 0 ? (
+          <View style={styles.profilePracticeSection}>
+            <Text style={styles.profileSectionLabel}>Practice & Lifestyle</Text>
+            <View style={styles.profileInfoRow}>
+              {practiceTags.map((tag, index) => (
+                <InfoPill key={`practice-${index}`} label={tag} />
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        <TouchableOpacity
+          style={styles.profilePrimaryCta}
+          onPress={() => navigation.navigate("Chat" as never, { profile } as never)}
+        >
+          <Icon name="library" size={16} color="#FFFFFF" />
+          <Text style={styles.profilePrimaryCtaText}>Assets shared</Text>
+        </TouchableOpacity>
+
+        <View style={styles.profileSecondaryActions}>
+          <TouchableOpacity style={styles.profileActionButton}>
+            <Icon name="star" size={18} color="#8A7D75" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.profileActionButton}>
+            <Icon name="heart" size={20} color="#8A7D75" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.profileActionButton}>
+            <Icon name="close" size={20} color="#8A7D75" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.profileActionButton}>
+            <Icon name="moon" size={18} color="#8A7D75" />
           </TouchableOpacity>
         </View>
       </ScrollView>

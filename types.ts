@@ -2,6 +2,7 @@ export type CardItemT = {
   description?: string;
   hasActions?: boolean;
   hasVariant?: boolean;
+  variant?: "discover";
   image: any;
   onImagePress?: () => void;
   isOnline?: boolean;
