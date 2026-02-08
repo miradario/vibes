@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { useState } from "react";
 import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -12,7 +14,7 @@ const OnboardingInterested = () => {
 
   return (
     <ImageBackground
-      source={require("../assets/images/bg.png")}
+      source={require("../assets/images/backgroundSimple.png")}
       style={styles.bg}
     >
       <View style={styles.onboardContainer}>
@@ -26,7 +28,9 @@ const OnboardingInterested = () => {
           <View style={{ width: 40 }} />
         </View>
 
-        <Text style={styles.onboardTitle}>Who are you interested in seeing?</Text>
+        <Text style={styles.onboardTitle}>
+          Who are you interested in seeing?
+        </Text>
 
         <View style={styles.onboardOptions}>
           {options.map((option) => (

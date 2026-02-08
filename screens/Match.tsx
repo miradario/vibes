@@ -1,5 +1,15 @@
+/** @format */
+
 import React, { useEffect, useMemo, useRef } from "react";
-import { View, Text, ImageBackground, Animated, TouchableOpacity, Image } from "react-native";
+import {
+  View,
+  Text,
+  Animated,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+} from "react-native";
+import { Video, ResizeMode } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles from "../assets/styles";
 import DEMO from "../assets/data/demo";
@@ -14,89 +24,257 @@ const Match = () => {
   );
   const profile = route?.params?.profile ?? randomProfile;
 
-  const scaleAnim = useRef(new Animated.Value(0.85)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const floatAnim = useRef(new Animated.Value(0)).current;
+  const leftAvatarX = useRef(new Animated.Value(-120)).current;
+  const rightAvatarX = useRef(new Animated.Value(120)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 260,
+      Animated.spring(leftAvatarX, {
+        toValue: 0,
+        speed: 12,
+        bounciness: 6,
         useNativeDriver: true,
       }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        speed: 14,
-        bounciness: 8,
+      Animated.spring(rightAvatarX, {
+        toValue: 0,
+        speed: 12,
+        bounciness: 6,
         useNativeDriver: true,
       }),
     ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, {
-          toValue: 1,
-          duration: 1600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 1600,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, [fadeAnim, scaleAnim, floatAnim]);
-
-  const floatUp = floatAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -12],
-  });
+  }, [leftAvatarX, rightAvatarX]);
 
   return (
-    <ImageBackground source={require("../assets/images/match.png")} style={styles.bg}>
+    <View style={[styles.matchScreen, matchVideoStyles.container]}>
+      <Video
+        source={require("../assets/videos/match.mp4")}
+        style={matchVideoStyles.video}
+        resizeMode={ResizeMode.COVER}
+        isLooping
+        shouldPlay
+        isMuted={false}
+        volume={1.0}
+      />
+      <View style={matchVideoStyles.overlay} />
       <View style={styles.matchScreen}>
-        <Animated.View style={[styles.matchCard, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-          <View style={styles.matchHeartsLayer}>
-            <Animated.View style={[styles.matchHeart, styles.matchHeartLeft, { transform: [{ translateY: floatUp }] }]}>
-              <Icon name="sparkles" size={22} color="#F26D6A" />
-            </Animated.View>
-            <Animated.View style={[styles.matchHeart, styles.matchHeartCenter, { transform: [{ translateY: floatUp }] }]}>
-              <Icon name="infinite" size={30} color="#FF8A7A" />
-            </Animated.View>
-            <Animated.View style={[styles.matchHeart, styles.matchHeartRight, { transform: [{ translateY: floatUp }] }]}>
-              <Icon name="sparkles" size={20} color="#F26D6A" />
-            </Animated.View>
-          </View>
+        <View style={matchVideoStyles.matchCard}>
+          <Text style={matchVideoStyles.matchTitle}>
+            Our energies resonated
+          </Text>
+          <Text style={matchVideoStyles.matchSubtitle}>
+            You and {profile?.name?.split(" ")[0] || "your soulmate"} are now
+            connected
+          </Text>
 
-          <Text style={styles.matchTitle}>It’s a Connection</Text>
-          <Text style={styles.matchSubtitle}>You and {profile?.name || "this soul"} resonated.</Text>
+          <View style={matchVideoStyles.avatarBackground}>
+            <View style={matchVideoStyles.matchAvatarRow}>
+              {/* Left Avatar with Halo and Sparkles */}
+              <Animated.View
+                style={[
+                  matchVideoStyles.matchAvatarContainer,
+                  {
+                    transform: [{ translateX: leftAvatarX }],
+                  },
+                ]}
+              >
+                <View style={matchVideoStyles.matchHaloWrap}>
+                  <Image
+                    source={require("../assets/images/sparklings.png")}
+                    style={matchVideoStyles.matchSparkles}
+                    resizeMode="contain"
+                  />
+                  <Image
+                    source={require("../assets/images/halo.png")}
+                    style={matchVideoStyles.matchHalo}
+                    resizeMode="contain"
+                  />
+                  <Image
+                    source={require("../assets/images/01.jpg")}
+                    style={matchVideoStyles.matchAvatar}
+                  />
+                </View>
+              </Animated.View>
 
-          <View style={styles.matchAvatarRow}>
-            <View style={styles.matchAvatarRing}>
-              <Image source={require("../assets/images/01.jpg")} style={styles.matchAvatar} />
+              {/* Right Avatar with Halo and Sparkles */}
+              <Animated.View
+                style={[
+                  matchVideoStyles.matchAvatarContainer,
+                  {
+                    transform: [{ translateX: rightAvatarX }],
+                  },
+                ]}
+              >
+                <View style={matchVideoStyles.matchHaloWrap}>
+                  <Image
+                    source={require("../assets/images/sparklings.png")}
+                    style={matchVideoStyles.matchSparkles}
+                    resizeMode="contain"
+                  />
+                  <Image
+                    source={require("../assets/images/halo.png")}
+                    style={matchVideoStyles.matchHalo}
+                    resizeMode="contain"
+                  />
+                  <Image
+                    source={profile?.image}
+                    style={matchVideoStyles.matchAvatar}
+                  />
+                </View>
+              </Animated.View>
             </View>
-            <View style={[styles.matchAvatarRing, styles.matchAvatarRingRight]}>
-              <Image source={profile?.image} style={styles.matchAvatar} />
-            </View>
           </View>
 
-          <View style={styles.matchActions}>
-            <TouchableOpacity
-              style={styles.matchPrimaryButton}
-              onPress={() => navigation.navigate("Chat" as never, { profile } as never)}
-            >
-              <Text style={styles.matchPrimaryButtonText}>Send a Message</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.matchSecondaryButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.matchSecondaryButtonText}>Keep Swiping</Text>
-            </TouchableOpacity>
+          <View style={matchVideoStyles.buttonsBackground}>
+            <View style={matchVideoStyles.matchActions}>
+              <TouchableOpacity
+                style={matchVideoStyles.matchPrimaryButton}
+                onPress={() =>
+                  navigation.navigate("Chat" as never, { profile } as never)
+                }
+              >
+                <Text style={matchVideoStyles.matchPrimaryButtonText}>
+                  Chat with {profile?.name?.split(" ")[0] || "your soulmate"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={matchVideoStyles.matchSecondaryButton}
+                onPress={() => navigation.navigate("Home" as never)}
+              >
+                <Text style={matchVideoStyles.matchSecondaryButtonText}>
+                  Later
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </Animated.View>
+        </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 
 export default Match;
+
+const matchVideoStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  video: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 248, 240, 0.25)",
+  },
+  matchCard: {
+    width: "100%",
+    backgroundColor: "transparent",
+    borderRadius: 0,
+    paddingVertical: 24,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    shadowOpacity: 0,
+  },
+  matchTitle: {
+    fontSize: 28,
+    color: "#5F6F52",
+    fontWeight: "600",
+    fontFamily: "serif",
+    textAlign: "center",
+    marginBottom: 18,
+  },
+  matchSubtitle: {
+    marginTop: 6,
+    color: "#7A886C",
+    fontSize: 18,
+    textAlign: "center",
+    fontFamily: "serif",
+    marginBottom: 32,
+  },
+  avatarBackground: {
+    borderRadius: 24,
+    paddingVertical: 32,
+    paddingHorizontal: 4,
+    marginBottom: 24,
+  },
+  matchAvatarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    height: 300,
+  },
+  matchAvatarContainer: {
+    marginHorizontal: -20,
+  },
+  matchHaloWrap: {
+    height: 200,
+    width: 200,
+    padding: 20,
+    alignItems: "stretch",
+    justifyContent: "center",
+    position: "relative",
+  },
+  matchSparkles: {
+    position: "absolute",
+    width: 500,
+    height: 400,
+    top: -50,
+    left: -150,
+    opacity: 0.9,
+    zIndex: 5,
+  },
+  matchHalo: {
+    position: "absolute",
+    width: 200,
+    height: 200,
+    top: -10,
+    opacity: 0.8,
+    zIndex: 1,
+  },
+  matchAvatar: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 3,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    zIndex: 2,
+  },
+  buttonsBackground: {
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    borderRadius: 24,
+    paddingVertical: 34,
+    paddingHorizontal: 24,
+  },
+  matchActions: {
+    width: 330,
+    alignItems: "center",
+  },
+  matchPrimaryButton: {
+    backgroundColor: "#8F9F86",
+    paddingVertical: 16,
+    borderRadius: 28,
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 14,
+  },
+  matchPrimaryButtonText: {
+    color: "#FFF6EE",
+    fontSize: 20,
+    fontWeight: "600",
+    fontFamily: "serif",
+    letterSpacing: 0.4,
+  },
+  matchSecondaryButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    paddingVertical: 14,
+    borderRadius: 26,
+    alignItems: "center",
+    width: "100%",
+  },
+  matchSecondaryButtonText: {
+    color: "#5F6F52",
+    fontSize: 20,
+    fontWeight: "500",
+    fontFamily: "serif",
+  },
+});

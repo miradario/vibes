@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { useState } from "react";
 import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -12,7 +14,7 @@ const OnboardingGender = () => {
 
   return (
     <ImageBackground
-      source={require("../assets/images/bg.png")}
+      source={require("../assets/images/backgroundSimple.png")}
       style={styles.bg}
     >
       <View style={styles.onboardContainer}>
@@ -59,7 +61,9 @@ const OnboardingGender = () => {
               !selected && styles.onboardNextDisabled,
             ]}
             disabled={!selected}
-            onPress={() => navigation.navigate("OnboardingOrientation" as never)}
+            onPress={() =>
+              navigation.navigate("OnboardingOrientation" as never)
+            }
           >
             <Text style={styles.onboardNextText}>Next</Text>
           </TouchableOpacity>

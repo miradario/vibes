@@ -4,10 +4,13 @@ export type CardItemT = {
   hasVariant?: boolean;
   variant?: "discover";
   image: any;
+  imageBlurRadius?: number;
+  hideDetails?: boolean;
   onImagePress?: () => void;
   isOnline?: boolean;
   matches?: string;
   name: string;
+  location?: string;
   vibe?: string;
   intention?: string;
   prompt?: string;

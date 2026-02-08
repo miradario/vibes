@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -6,27 +6,227 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Alert,
+  Modal,
+  StyleSheet,
+  Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import styles, { DARK_GRAY, WHITE } from "../assets/styles";
+import styles, { BLACK, DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import DEMO from "../assets/data/demo";
+import * as ImagePicker from "expo-image-picker";
+import { supabase } from "../src/lib/supabase";
+import { useAuthSession } from "../src/auth/auth.queries";
+import { useProfileQuery } from "../src/queries/profile.queries";
 
 const EditProfile = () => {
   const navigation = useNavigation();
+  const { data: session } = useAuthSession();
+  const { data: profileData, refetch } = useProfileQuery(session?.user?.id);
   const profile = DEMO[7];
-  const media = [
-    profile.image,
-    ...(profile.images || []).slice(0, 1),
-    null,
-    null,
-    null,
-    null,
-  ];
+
+  const maxPhotos = 6;
+  const profilePhotos = Array.isArray(profileData?.photos)
+    ? profileData?.photos
+    : [];
+  const buildSlots = (photos: (string | null)[]) =>
+    Array.from({ length: maxPhotos }, (_, index) => photos[index] ?? null);
+  const [mediaSlots, setMediaSlots] = useState<(string | null)[]>(
+    buildSlots(profilePhotos)
+  );
+
+  useEffect(() => {
+    const nextSlots = buildSlots(profilePhotos);
+    const isSame =
+      mediaSlots.length === nextSlots.length &&
+      mediaSlots.every((item, index) => item === nextSlots[index]);
+    if (!isSame) {
+      setMediaSlots(nextSlots);
+    }
+  }, [profilePhotos, mediaSlots]);
+
+  const [busyIndex, setBusyIndex] = useState<number | null>(null);
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+
+  const promptOpenSettings = () => {
+    Alert.alert(
+      "Permiso requerido",
+      "Debes habilitar los permisos en Ajustes.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Abrir ajustes", onPress: () => Linking.openSettings() },
+      ]
+    );
+  };
+
+  const ensureCameraPermission = async () => {
+    const current = await ImagePicker.getCameraPermissionsAsync();
+    if (current.status === "granted") return true;
+
+    const requested = await ImagePicker.requestCameraPermissionsAsync();
+    if (requested.status === "granted") return true;
+    if (!requested.canAskAgain) {
+      promptOpenSettings();
+    } else {
+      Alert.alert("Permiso requerido", "Permite el acceso a tu cámara.");
+    }
+    return false;
+  };
+
+  const ensureLibraryPermission = async () => {
+    const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+    if (current.status === "granted") return true;
+
+    const requested = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (requested.status === "granted") return true;
+    if (!requested.canAskAgain) {
+      promptOpenSettings();
+    } else {
+      Alert.alert("Permiso requerido", "Permite el acceso a tus fotos.");
+    }
+    return false;
+  };
+
+  const uploadPhoto = async (uri: string, slotIndex: number) => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    const optimistic = Array.from({ length: maxPhotos }, (_, index) =>
+      mediaSlots[index] ?? null
+    );
+    optimistic[slotIndex] = uri;
+    setMediaSlots(optimistic);
+
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const ext = uri.split(".").pop() || "jpg";
+    const filePath = `${userId}/${Date.now()}-${slotIndex}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("profile-photos")
+      .upload(filePath, blob, {
+        contentType: blob.type || "image/jpeg",
+        upsert: true,
+      });
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from("profile-photos")
+      .getPublicUrl(filePath);
+
+    const nextPhotos = Array.from({ length: maxPhotos }, (_, index) =>
+      optimistic[index] ?? null
+    );
+    nextPhotos[slotIndex] = data.publicUrl || uri;
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: userId,
+          photos: nextPhotos,
+          photo_url: nextPhotos.find((item) => Boolean(item)) ?? null,
+        },
+        { onConflict: "id" }
+      );
+    if (updateError) throw updateError;
+
+    setMediaSlots(nextPhotos);
+    await refetch();
+  };
+
+  const pickFromLibrary = async (slotIndex: number) => {
+    const hasPermission = await ensureLibraryPermission();
+    if (!hasPermission) {
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaType.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setBusyIndex(slotIndex);
+      try {
+        await uploadPhoto(result.assets[0].uri, slotIndex);
+      } catch (error) {
+        Alert.alert("Error", "No se pudo subir la foto.");
+      } finally {
+        setBusyIndex(null);
+      }
+    }
+  };
+
+  const takePhoto = async (slotIndex: number) => {
+    const hasPermission = await ensureCameraPermission();
+    if (!hasPermission) {
+      return;
+    }
+
+    let result;
+    try {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaType.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+    } catch (error) {
+      Alert.alert("Error", "No se pudo abrir la cámara.");
+      return;
+    }
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setBusyIndex(slotIndex);
+      try {
+        await uploadPhoto(result.assets[0].uri, slotIndex);
+      } catch (error) {
+        Alert.alert("Error", "No se pudo subir la foto.");
+      } finally {
+        setBusyIndex(null);
+      }
+    }
+  };
+
+  const handleAddMedia = (slotIndex: number) => {
+    setSelectedSlot(slotIndex);
+    setPhotoModalVisible(true);
+  };
+
+  const handleRemove = async (slotIndex: number) => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    const nextPhotos = Array.from({ length: maxPhotos }, (_, index) =>
+      mediaSlots[index] ?? null
+    );
+    nextPhotos[slotIndex] = null;
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: userId,
+          photos: nextPhotos,
+          photo_url: nextPhotos.find((item) => Boolean(item)) ?? null,
+        },
+        { onConflict: "id" }
+      );
+    if (updateError) {
+      Alert.alert("Error", "No se pudo eliminar la foto.");
+      return;
+    }
+
+    setMediaSlots(nextPhotos);
+    await refetch();
+  };
 
   return (
     <ImageBackground
-      source={require("../assets/images/bg.png")}
+      source={require("../assets/images/backgroundSimple.png")}
       style={styles.bg}
     >
       <ScrollView style={styles.editContainer} showsVerticalScrollIndicator={false}>
@@ -45,14 +245,28 @@ const EditProfile = () => {
         <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>Photos</Text>
           <View style={styles.mediaGrid}>
-            {media.map((item, index) => (
-              <TouchableOpacity key={`media-${index}`} style={styles.mediaSlot}>
+            {mediaSlots.map((item, index) => (
+              <TouchableOpacity
+                key={`media-${index}`}
+                style={styles.mediaSlot}
+                onPress={() => {
+                  if (!item) {
+                    handleAddMedia(index);
+                  }
+                }}
+              >
                 {item ? (
                   <>
-                    <Image source={item} style={styles.mediaImage} />
-                    <View style={styles.mediaRemove}>
+                    <Image
+                      source={typeof item === "string" ? { uri: item } : item}
+                      style={styles.mediaImage}
+                    />
+                    <TouchableOpacity
+                      style={styles.mediaRemove}
+                      onPress={() => handleRemove(index)}
+                    >
                       <Icon name="close" size={14} color={WHITE} />
-                    </View>
+                    </TouchableOpacity>
                   </>
                 ) : (
                   <View style={styles.mediaPlaceholder}>
@@ -64,7 +278,18 @@ const EditProfile = () => {
               </TouchableOpacity>
             ))}
           </View>
-          <TouchableOpacity style={styles.editPrimaryButton}>
+          <TouchableOpacity
+            style={styles.editPrimaryButton}
+            onPress={() => {
+              const firstEmpty = mediaSlots.findIndex((item) => !item);
+              if (firstEmpty === -1) {
+                Alert.alert("Límite alcanzado", "Máximo 6 fotos.");
+                return;
+              }
+              handleAddMedia(firstEmpty);
+            }}
+            disabled={busyIndex !== null}
+          >
             <Text style={styles.editPrimaryText}>Add media</Text>
           </TouchableOpacity>
         </View>
@@ -111,8 +336,119 @@ const EditProfile = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={photoModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPhotoModalVisible(false)}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.card}>
+            <Text style={modalStyles.title}>Agregar foto</Text>
+            <Text style={modalStyles.subtitle}>Elige una opción</Text>
+
+            <View style={modalStyles.actions}>
+              <TouchableOpacity
+                style={modalStyles.primaryButton}
+                onPress={async () => {
+                  if (selectedSlot === null) return;
+                  setPhotoModalVisible(false);
+                  await new Promise((resolve) => setTimeout(resolve, 250));
+                  await takePhoto(selectedSlot);
+                }}
+              >
+                <Text style={modalStyles.primaryText}>Cámara</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={modalStyles.secondaryButton}
+                onPress={async () => {
+                  if (selectedSlot === null) return;
+                  setPhotoModalVisible(false);
+                  await new Promise((resolve) => setTimeout(resolve, 250));
+                  await pickFromLibrary(selectedSlot);
+                }}
+              >
+                <Text style={modalStyles.secondaryText}>Galería</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={modalStyles.cancelButton}
+              onPress={() => setPhotoModalVisible(false)}
+            >
+              <Text style={modalStyles.cancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 };
 
 export default EditProfile;
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(17, 12, 24, 0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: WHITE,
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    shadowColor: BLACK,
+    shadowOpacity: 0.2,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
+  },
+  title: {
+    fontSize: 18,
+    color: DARK_GRAY,
+    fontWeight: "700",
+  },
+  subtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    color: GRAY,
+  },
+  actions: {
+    marginTop: 18,
+    gap: 10,
+  },
+  primaryButton: {
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  primaryText: {
+    color: WHITE,
+    fontWeight: "700",
+  },
+  secondaryButton: {
+    backgroundColor: "#F4E7DD",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  secondaryText: {
+    color: DARK_GRAY,
+    fontWeight: "600",
+  },
+  cancelButton: {
+    marginTop: 14,
+    alignItems: "center",
+  },
+  cancelText: {
+    color: GRAY,
+    fontWeight: "600",
+  },
+});

@@ -9,6 +9,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import MeditationPlayer from "../components/MeditationPlayer";
 
 const MEDITATIONS = [
   { id: "1", title: "Morning Stillness", duration: "7 min", level: "Beginner" },
@@ -20,10 +21,20 @@ const MEDITATIONS = [
 
 const Meditations = () => {
   const navigation = useNavigation();
+  const defaultMeditation =
+    MEDITATIONS[0] ?? {
+      id: "0",
+      title: "Gentle Reset",
+      duration: "5 min",
+      level: "All levels",
+    };
+  const [activeMeditation, setActiveMeditation] = React.useState(defaultMeditation);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [progress, setProgress] = React.useState(0.25);
 
   return (
     <ImageBackground
-      source={require("../assets/images/bg.png")}
+      source={require("../assets/images/backgroundSimple.png")}
       style={styles.bg}
     >
       <View style={styles.containerMeditations}>
@@ -39,7 +50,14 @@ const Meditations = () => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.meditationList}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.meditationCard}>
+          <TouchableOpacity
+            style={styles.meditationCard}
+            onPress={() => {
+              setActiveMeditation(item);
+              setIsPlaying(true);
+              setProgress(0.1);
+            }}
+          >
             <View>
               <Text style={styles.meditationTitle}>{item.title}</Text>
               <Text style={styles.meditationMeta}>
@@ -53,22 +71,18 @@ const Meditations = () => {
         )}
       />
 
-      <View style={styles.meditationBottomBar}>
-        <TouchableOpacity
-          style={styles.meditationBarButton}
-          onPress={() => navigation.navigate("Tab" as never)}
-        >
-          <Icon name="home" size={16} color={DARK_GRAY} />
-          <Text style={styles.meditationBarText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.meditationBarPrimary}>
-          <Icon name="play" size={16} color="#FFFFFF" />
-          <Text style={styles.meditationBarPrimaryText}>Play</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.meditationBarButton}>
-          <Icon name="moon" size={16} color={DARK_GRAY} />
-          <Text style={styles.meditationBarText}>Timer</Text>
-        </TouchableOpacity>
+      <View style={styles.meditationPlayerDock}>
+        <MeditationPlayer
+          title={activeMeditation.title}
+          duration={activeMeditation.duration}
+          level={activeMeditation.level}
+          progress={progress}
+          isPlaying={isPlaying}
+          onPlayPause={() => setIsPlaying((current) => !current)}
+          onSkipPrev={() => setProgress((current) => Math.max(0, current - 0.1))}
+          onSkipNext={() => setProgress((current) => Math.min(1, current + 0.1))}
+          onOpen={() => navigation.navigate("Tab" as never)}
+        />
       </View>
       </View>
     </ImageBackground>

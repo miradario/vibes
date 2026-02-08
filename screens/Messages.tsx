@@ -15,10 +15,14 @@ import styles, { DARK_GRAY } from "../assets/styles";
 const Messages = () => {
   const navigation = useNavigation();
   const matches = DEMO.slice(0, 6);
+  const matchesWithLikes = [
+    { id: "likes-you", name: "Likes you", image: matches[0]?.image },
+    ...matches,
+  ];
 
   return (
     <ImageBackground
-      source={require("../assets/images/bg.png")}
+      source={require("../assets/images/backgroundSimple.png")}
       style={styles.bg}
     >
       <View style={styles.containerMessages}>
@@ -39,28 +43,52 @@ const Messages = () => {
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.flowSectionHeader}>
-                <Text style={styles.flowSectionTitle}>New Connections</Text>
+              <TouchableOpacity
+                style={styles.flowSectionHeader}
+                onPress={() => navigation.navigate("Soulmates" as never)}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Icon name="heart" color="#FF6F66" size={16} />
+                  <Text style={[styles.flowSectionTitle, { marginLeft: 8 }]}>
+                    New Connections
+                  </Text>
+                </View>
                 <View style={styles.flowSectionCount}>
                   <Text style={styles.flowSectionCountText}>{matches.length}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               <FlatList
                 horizontal
-                data={matches}
+                data={matchesWithLikes}
                 keyExtractor={(item, index) => `match-${index}`}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.matchesRow}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.matchItem}>
-                    <View style={styles.matchAvatarWrap}>
-                      <Image source={item.image} style={styles.matchAvatar} />
-                      <View style={styles.matchDot} />
-                    </View>
-                    <Text style={styles.matchName}>{item.name}</Text>
-                  </TouchableOpacity>
-                )}
+                renderItem={({ item }) => {
+                  const isLikesYou = item.id === "likes-you";
+                  return (
+                    <TouchableOpacity
+                      style={styles.matchItem}
+                      onPress={() => {
+                        if (isLikesYou) {
+                          navigation.navigate("Soulmates" as never);
+                        } else {
+                          navigation.navigate("Chat" as never, { profile: item } as never);
+                        }
+                      }}
+                    >
+                      <View style={styles.matchAvatarWrap}>
+                        <Image
+                          source={item.image}
+                          style={styles.matchAvatar}
+                          blurRadius={isLikesYou ? 12 : 0}
+                        />
+                        <View style={styles.matchDot} />
+                      </View>
+                      <Text style={styles.matchName}>{item.name}</Text>
+                    </TouchableOpacity>
+                  );
+                }}
               />
 
               <View style={styles.flowSectionHeader}>

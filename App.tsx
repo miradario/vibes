@@ -1,3 +1,5 @@
+/** @format */
+
 import "react-native-url-polyfill/auto";
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

@@ -5,7 +5,7 @@ import Icon from "../components/Icon";
 
 const Premium = () => (
   <ImageBackground
-    source={require("../assets/images/bg.png")}
+    source={require("../assets/images/backgroundSimple.png")}
     style={styles.bg}
   >
     <View style={styles.premiumContainer}>
