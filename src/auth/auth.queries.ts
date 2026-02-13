@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as authService from "./auth.service";
-import type { AuthSession, LoginInput } from "./auth.types";
+import type { AuthSession, LoginInput, SignupInput } from "./auth.types";
 
 export const authKeys = {
   session: ["auth", "session"] as const,
@@ -44,6 +44,18 @@ export const useLoginMutation = () => {
 
   return useMutation<AuthSession, unknown, LoginInput>({
     mutationFn: authService.login,
+    onSuccess: (session) => {
+      queryClient.setQueryData(authKeys.session, session ?? null);
+      queryClient.invalidateQueries();
+    },
+  });
+};
+
+export const useSignupMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<AuthSession, unknown, SignupInput>({
+    mutationFn: authService.signup,
     onSuccess: (session) => {
       queryClient.setQueryData(authKeys.session, session ?? null);
       queryClient.invalidateQueries();

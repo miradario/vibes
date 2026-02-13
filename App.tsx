@@ -26,6 +26,8 @@ import {
   OnboardingOrientation,
   OnboardingInterested,
   Login,
+  EventDetail,
+  EventChat,
 } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
@@ -91,6 +93,16 @@ const App = () => (
                 }}
               />
               <Tab.Screen
+                name="Events"
+                component={Events}
+                options={{
+                  tabBarLabel: "Events",
+                  tabBarIcon: ({ focused }) => (
+                    <TabBarIcon focused={focused} iconName="calendar" />
+                  ),
+                }}
+              />
+              <Tab.Screen
                 name="Aura"
                 component={Profile}
                 options={{
@@ -121,6 +133,16 @@ const App = () => (
         <Stack.Screen
           name="Events"
           component={Events}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="EventDetail"
+          component={EventDetail}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="EventChat"
+          component={EventChat}
           options={{ headerShown: false, animationEnabled: true }}
         />
         <Stack.Screen

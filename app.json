@@ -26,6 +26,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-font"]
+    "plugins": ["expo-font", ["expo-image-picker", {"photosPermission": "Allow Vibe to access your photos.", "cameraPermission": "Allow Vibe to access your camera."}]]
   }
 }

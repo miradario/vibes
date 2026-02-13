@@ -41,36 +41,8 @@ const Settings = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <Text style={styles.settingsTitle}>Settings</Text>
+          <Text style={styles.settingsTitle}>Preferences</Text>
           <View style={{ width: 22 }} />
-        </View>
-
-        <View style={styles.settingsSection}>
-          <Text style={styles.settingsSectionTitle}>Configuración</Text>
-          <View style={styles.settingsCard}>
-            {items.map((item, index) => (
-              <TouchableOpacity
-                key={item.label}
-                style={[
-                  styles.settingsRow,
-                  index === items.length - 1 && styles.settingsRowLast,
-                ]}
-                onPress={() => {
-                  if (item.isLogout) {
-                    logout();
-                  }
-                }}
-                disabled={item.isLogout && isLoggingOut}
-              >
-                <Text style={styles.settingsLabel}>
-                  {item.isLogout && isLoggingOut
-                    ? "Cerrando sesión..."
-                    : item.label}
-                </Text>
-                <Icon name="chevron-forward" size={16} color={DARK_GRAY} />
-              </TouchableOpacity>
-            ))}
-          </View>
         </View>
 
         <View style={styles.settingsSection}>

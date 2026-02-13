@@ -12,6 +12,14 @@ export const login = async ({ email, password }: LoginInput) => {
   return data.session ?? null;
 };
 
+export const signup = async ({ email, password }: LoginInput) => {
+  const { data, error } = await authClient.signUp(email, password);
+  if (error) {
+    throw error;
+  }
+  return data.session ?? null;
+};
+
 export const logout = async () => {
   const { error } = await authClient.signOut();
   if (error) {

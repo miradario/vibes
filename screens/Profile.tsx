@@ -12,17 +12,30 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import DEMO from "../assets/data/demo";
-import styles, { DARK_GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
-import { useCandidatesQuery } from "../src/queries/candidates.queries";
+import styles, { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";
+import { useLogoutMutation } from "../src/auth/auth.queries";
 
 const Profile = () => {
   const navigation = useNavigation();
-  const { age, image, name } = DEMO[7];
-  const { data: candidates, isError, error, isLoading } = useCandidatesQuery(); //Example usage of the query
-  console.log(
-    "Candidates data:",
-    isError ? `Error getting candidates: ${error}` : candidates,
-  );
+  const { image, name, location } = DEMO[0];
+  const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation();
+
+  const menuItems = [
+    { icon: "options", label: "Preferencias", screen: "Settings" },
+    { icon: "mail", label: "Contacto", screen: null },
+    { icon: "lock-closed", label: "Privacidad", screen: null },
+    { icon: "document-text", label: "Términos y condiciones", screen: null },
+    { icon: "help-circle", label: "Preguntas frecuentes", screen: null },
+  ];
+
+  const handleLogout = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        navigation.navigate("Welcome" as never);
+      },
+    });
+  };
+
   return (
     <ImageBackground
       source={require("../assets/images/backgroundSimple.png")}
@@ -32,59 +45,64 @@ const Profile = () => {
         style={styles.containerProfile}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.auraHeader}>
-          <View style={styles.auraAvatarWrap}>
+        <Text style={styles.auraScreenTitle}>Ajustes</Text>
+
+        <View style={styles.auraProfileCard}>
+          <View style={styles.auraProfileAvatarWrap}>
             <Image
               source={require("../assets/images/halo.png")}
-              style={styles.auraAvatarHalo}
+              style={styles.auraProfileHalo}
             />
-            <Image source={image} style={styles.auraAvatar} />
+            <Image source={image} style={styles.auraProfileAvatar} />
           </View>
-          <View style={styles.auraProgress}>
-            <Text style={styles.auraProgressText}>20% complete</Text>
-          </View>
-          <View style={styles.auraNameRow}>
-            <Text style={styles.auraName}>
-              {name}
-              {age ? `, ${age}` : ""}
+          <View style={styles.auraProfileInfo}>
+            <Text style={styles.auraProfileName}>
+              {name?.split(" ")[0]} {name?.split(" ")[1]?.charAt(0)}.
             </Text>
-            <View style={styles.auraVerified}>
-              <Icon name="checkmark" size={12} color={WHITE} />
-            </View>
+            <Text style={styles.auraProfileLocation}>
+              {location || "Buenos Aires"}
+            </Text>
           </View>
+          <TouchableOpacity
+            style={styles.auraEditButton}
+            onPress={() => navigation.navigate("EditProfile" as never)}
+          >
+            <Text style={styles.auraEditButtonText}>Editar</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.auraActions}>
-          <TouchableOpacity
-            style={styles.auraActionItem}
-            onPress={() => navigation.navigate("Settings" as never)}
-          >
-            <View style={styles.auraActionCircle}>
-              <Icon name="settings" size={20} color={DARK_GRAY} />
-            </View>
-            <Text style={styles.auraActionLabel}>Settings</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.auraActionItem}
-            onPress={() => navigation.navigate("EditProfile" as never)}
-          >
-            <View style={styles.auraActionCircle}>
-              <Icon name="pencil" size={20} color={DARK_GRAY} />
-            </View>
-            <Text style={styles.auraActionLabel}>Edit profile</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.auraActionItem}
-            onPress={() => navigation.navigate("EditProfile" as never)}
-          >
-            <View
-              style={[styles.auraActionCircle, { borderColor: PRIMARY_COLOR }]}
+        <View style={styles.auraMenuList}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={item.label}
+              style={[
+                styles.auraMenuItem,
+                index === menuItems.length - 1 && styles.auraMenuItemLast,
+              ]}
+              onPress={() =>
+                item.screen && navigation.navigate(item.screen as never)
+              }
             >
-              <Icon name="camera" size={20} color={PRIMARY_COLOR} />
+              <View style={styles.auraMenuIconWrap}>
+                <Icon name={item.icon} size={22} color={TEXT_SECONDARY} />
+              </View>
+              <Text style={styles.auraMenuLabel}>{item.label}</Text>
+              <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity
+            style={[styles.auraMenuItem, styles.auraMenuItemLast]}
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+          >
+            <View style={styles.auraMenuIconWrap}>
+              <Icon name="power" size={22} color={TEXT_SECONDARY} />
             </View>
-            <Text style={styles.auraActionLabel}>Add media</Text>
+            <Text style={styles.auraMenuLabel}>
+              {isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+            </Text>
+            <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
           </TouchableOpacity>
         </View>
 
@@ -105,6 +123,11 @@ const Profile = () => {
           >
             <Text style={styles.auraCtaText}>GET VIBE PLUS</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.auraFooter}>
+          <Text style={styles.auraFooterTitle}>Sobre Vibes</Text>
+          <Text style={styles.auraFooterVersion}>version 1.1.4</Text>
         </View>
       </ScrollView>
     </ImageBackground>

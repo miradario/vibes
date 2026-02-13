@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,31 @@ import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
+
+const IMAGE_MEDIA_TYPE =
+  (ImagePicker as any).MediaType?.Images
+    ? [(ImagePicker as any).MediaType.Images]
+    : ["images"];
+const PROFILE_PICTURES_BUCKET = "profile pictures";
+const EXTENSION_TO_CONTENT_TYPE: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  heic: "image/heic",
+  heif: "image/heif",
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (!error) return "Unknown error";
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return JSON.stringify(error);
+};
 
 const EditProfile = () => {
   const navigation = useNavigation();
@@ -91,7 +116,10 @@ const EditProfile = () => {
 
   const uploadPhoto = async (uri: string, slotIndex: number) => {
     const userId = session?.user?.id;
-    if (!userId) return;
+    if (!userId) {
+      console.error("uploadPhoto: missing session userId");
+      throw new Error("Missing user session");
+    }
 
     const optimistic = Array.from({ length: maxPhotos }, (_, index) =>
       mediaSlots[index] ?? null
@@ -99,22 +127,38 @@ const EditProfile = () => {
     optimistic[slotIndex] = uri;
     setMediaSlots(optimistic);
 
+    console.log("uploadPhoto:start", { userId, slotIndex, uri });
     const response = await fetch(uri);
-    const blob = await response.blob();
-    const ext = uri.split(".").pop() || "jpg";
+    const arrayBuffer = await response.arrayBuffer();
+    const uriWithoutQuery = uri.split("?")[0];
+    const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
+    const ext = rawExt.toLowerCase();
+    const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";
+    console.log("uploadPhoto:fetched_bytes", {
+      contentType,
+      byteLength: arrayBuffer.byteLength,
+    });
     const filePath = `${userId}/${Date.now()}-${slotIndex}.${ext}`;
+    console.log("uploadPhoto:uploading", {
+      bucket: PROFILE_PICTURES_BUCKET,
+      filePath,
+    });
 
     const { error: uploadError } = await supabase.storage
-      .from("profile-photos")
-      .upload(filePath, blob, {
-        contentType: blob.type || "image/jpeg",
+      .from(PROFILE_PICTURES_BUCKET)
+      .upload(filePath, arrayBuffer, {
+        contentType,
         upsert: true,
       });
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error("uploadPhoto:storage_upload_error", uploadError);
+      throw uploadError;
+    }
 
     const { data } = supabase.storage
-      .from("profile-photos")
+      .from(PROFILE_PICTURES_BUCKET)
       .getPublicUrl(filePath);
+    console.log("uploadPhoto:public_url", data?.publicUrl);
 
     const nextPhotos = Array.from({ length: maxPhotos }, (_, index) =>
       optimistic[index] ?? null
@@ -131,10 +175,14 @@ const EditProfile = () => {
         },
         { onConflict: "id" }
       );
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error("uploadPhoto:profiles_upsert_error", updateError);
+      throw updateError;
+    }
 
     setMediaSlots(nextPhotos);
     await refetch();
+    console.log("uploadPhoto:success", { slotIndex });
   };
 
   const pickFromLibrary = async (slotIndex: number) => {
@@ -143,18 +191,26 @@ const EditProfile = () => {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
+    let result;
+    try {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: IMAGE_MEDIA_TYPE,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+    } catch (error) {
+      Alert.alert("Error", "No se pudo abrir la galería.");
+      return;
+    }
 
     if (!result.canceled && result.assets?.[0]?.uri) {
       setBusyIndex(slotIndex);
       try {
         await uploadPhoto(result.assets[0].uri, slotIndex);
       } catch (error) {
-        Alert.alert("Error", "No se pudo subir la foto.");
+        const message = getErrorMessage(error);
+        console.error("Error uploading photo from gallery", { message, error });
+        Alert.alert("Error", `No se pudo subir la foto: ${message}`);
       } finally {
         setBusyIndex(null);
       }
@@ -170,7 +226,7 @@ const EditProfile = () => {
     let result;
     try {
       result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaType.Images,
+        mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
         quality: 0.8,
       });
@@ -184,7 +240,9 @@ const EditProfile = () => {
       try {
         await uploadPhoto(result.assets[0].uri, slotIndex);
       } catch (error) {
-        Alert.alert("Error", "No se pudo subir la foto.");
+        const message = getErrorMessage(error);
+        console.error("Error uploading photo from camera", { message, error });
+        Alert.alert("Error", `No se pudo subir la foto: ${message}`);
       } finally {
         setBusyIndex(null);
       }

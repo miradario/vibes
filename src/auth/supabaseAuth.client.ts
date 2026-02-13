@@ -11,6 +11,14 @@ export const signInWithPassword = async (email: string, password: string) => {
   return auth.signIn({ email, password });
 };
 
+export const signUp = async (email: string, password: string) => {
+  const auth = supabase.auth as any;
+  if (typeof auth.signUp === "function") {
+    return auth.signUp({ email, password });
+  }
+  return auth.signIn({ email, password });
+};
+
 export const signOut = async () => supabase.auth.signOut();
 
 export const getSession = async (): Promise<Session | null> => {

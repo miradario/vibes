@@ -14,6 +14,11 @@ import * as ImagePicker from "expo-image-picker";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 
+const IMAGE_MEDIA_TYPE =
+  (ImagePicker as any).MediaType?.Images
+    ? [(ImagePicker as any).MediaType.Images]
+    : ["images"];
+
 const OnboardingPhoto = () => {
   const navigation = useNavigation();
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -30,12 +35,18 @@ const OnboardingPhoto = () => {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    let result;
+    try {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: IMAGE_MEDIA_TYPE,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+    } catch (error) {
+      Alert.alert("Error", "Could not open the gallery.");
+      return;
+    }
 
     if (!result.canceled) {
       setPhotoUri(result.assets[0].uri);
@@ -52,11 +63,18 @@ const OnboardingPhoto = () => {
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    let result;
+    try {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: IMAGE_MEDIA_TYPE,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+    } catch (error) {
+      Alert.alert("Error", "Could not open the camera.");
+      return;
+    }
 
     if (!result.canceled) {
       setPhotoUri(result.assets[0].uri);

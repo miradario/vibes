@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 import {
   View,
@@ -35,7 +37,12 @@ const Matches = () => {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.soulmateItem}
-              onPress={() => navigation.navigate("Match" as never, { profile: item } as never)}
+              onPress={() =>
+                navigation.navigate(
+                  "Match" as never,
+                  { profile: item } as never,
+                )
+              }
             >
               <View style={styles.soulmateHaloWrap}>
                 <Image
@@ -51,7 +58,9 @@ const Matches = () => {
                 <Image source={item.image} style={styles.soulmateAvatar} />
               </View>
               <Text style={styles.soulmateName}>{item.name}</Text>
-              <Text style={styles.soulmateCity}>{item.location || "Buenos Aires"}</Text>
+              <Text style={styles.soulmateCity}>
+                {item.location || "Buenos Aires"}
+              </Text>
             </TouchableOpacity>
           )}
         />

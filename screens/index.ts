@@ -18,3 +18,5 @@ export { default as OnboardingGender } from "./OnboardingGender";
 export { default as OnboardingOrientation } from "./OnboardingOrientation";
 export { default as OnboardingInterested } from "./OnboardingInterested";
 export { default as OnboardingName } from "./OnboardingName";
+export { default as EventDetail } from "./EventDetail";
+export { default as EventChat } from "./EventChat";
