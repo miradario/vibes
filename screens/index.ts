@@ -20,3 +20,7 @@ export { default as OnboardingInterested } from "./OnboardingInterested";
 export { default as OnboardingName } from "./OnboardingName";
 export { default as EventDetail } from "./EventDetail";
 export { default as EventChat } from "./EventChat";
+export { default as CreateEvent } from "./CreateEvent";
+export { default as Contact } from "./Contact";
+export { default as Faq } from "./Faq";
+export { default as TermsConditions } from "./TermsConditions";

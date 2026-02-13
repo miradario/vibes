@@ -28,6 +28,10 @@ import {
   Login,
   EventDetail,
   EventChat,
+  CreateEvent,
+  Contact,
+  Faq,
+  TermsConditions,
 } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
@@ -146,6 +150,11 @@ const App = () => (
           options={{ headerShown: false, animationEnabled: true }}
         />
         <Stack.Screen
+          name="CreateEvent"
+          component={CreateEvent}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
           name="EditProfile"
           component={EditProfile}
           options={{ headerShown: false, animationEnabled: true }}
@@ -173,6 +182,21 @@ const App = () => (
         <Stack.Screen
           name="PreferenceDetail"
           component={PreferenceDetail}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="Contact"
+          component={Contact}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="Faq"
+          component={Faq}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="TermsConditions"
+          component={TermsConditions}
           options={{ headerShown: false, animationEnabled: true }}
         />
         <Stack.Screen

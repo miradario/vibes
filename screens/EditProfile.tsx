@@ -14,7 +14,6 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import styles, { BLACK, DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
-import DEMO from "../assets/data/demo";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -45,16 +44,59 @@ const getErrorMessage = (error: unknown) => {
   return JSON.stringify(error);
 };
 
+const PROFILE_SINGLE_PHOTO_KEYS = [
+  "photo_url",
+  "avatar_url",
+  "image_url",
+  "picture_url",
+  "photo",
+  "avatar",
+  "image",
+  "profile_photo",
+  "profile_picture",
+] as const;
+
+const buildProfilePhotosFromRow = (profileRow: Record<string, any> | null) => {
+  if (!profileRow) return [];
+  if (Array.isArray(profileRow.photos)) return profileRow.photos;
+
+  for (const key of PROFILE_SINGLE_PHOTO_KEYS) {
+    const value = profileRow[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return [value];
+    }
+  }
+
+  return [];
+};
+
+const buildProfilePhotoUpdatePayload = (
+  profileRow: Record<string, any> | null,
+  nextPhotos: (string | null)[]
+) => {
+  if (profileRow && Array.isArray(profileRow.photos)) {
+    return { photos: nextPhotos };
+  }
+
+  if (profileRow) {
+    for (const key of PROFILE_SINGLE_PHOTO_KEYS) {
+      if (key in profileRow) {
+        return { [key]: nextPhotos.find((item) => Boolean(item)) ?? null };
+      }
+    }
+  }
+
+  return null;
+};
+
 const EditProfile = () => {
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
   const { data: profileData, refetch } = useProfileQuery(session?.user?.id);
-  const profile = DEMO[7];
 
   const maxPhotos = 6;
-  const profilePhotos = Array.isArray(profileData?.photos)
-    ? profileData?.photos
-    : [];
+  const supportsMultiPhotos = Array.isArray((profileData as any)?.photos);
+  const profilePhotos = buildProfilePhotosFromRow(profileData ?? null);
   const buildSlots = (photos: (string | null)[]) =>
     Array.from({ length: maxPhotos }, (_, index) => photos[index] ?? null);
   const [mediaSlots, setMediaSlots] = useState<(string | null)[]>(
@@ -62,14 +104,15 @@ const EditProfile = () => {
   );
 
   useEffect(() => {
+    if (!supportsMultiPhotos) return;
     const nextSlots = buildSlots(profilePhotos);
-    const isSame =
-      mediaSlots.length === nextSlots.length &&
-      mediaSlots.every((item, index) => item === nextSlots[index]);
-    if (!isSame) {
-      setMediaSlots(nextSlots);
-    }
-  }, [profilePhotos, mediaSlots]);
+    setMediaSlots((prev) => {
+      const isSame =
+        prev.length === nextSlots.length &&
+        prev.every((item, index) => item === nextSlots[index]);
+      return isSame ? prev : nextSlots;
+    });
+  }, [profilePhotos, supportsMultiPhotos]);
 
   const [busyIndex, setBusyIndex] = useState<number | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
@@ -165,13 +208,25 @@ const EditProfile = () => {
     );
     nextPhotos[slotIndex] = data.publicUrl || uri;
 
+    const profilePayload = buildProfilePhotoUpdatePayload(
+      (profileData as Record<string, any>) ?? null,
+      nextPhotos
+    );
+    if (!profilePayload) {
+      console.warn(
+        "uploadPhoto: no known photo column found in profiles; skipping profiles update",
+        { availableProfileKeys: Object.keys((profileData as Record<string, any>) ?? {}) }
+      );
+      setMediaSlots(nextPhotos);
+      return;
+    }
+
     const { error: updateError } = await supabase
       .from("profiles")
       .upsert(
         {
           id: userId,
-          photos: nextPhotos,
-          photo_url: nextPhotos.find((item) => Boolean(item)) ?? null,
+          ...profilePayload,
         },
         { onConflict: "id" }
       );
@@ -181,7 +236,9 @@ const EditProfile = () => {
     }
 
     setMediaSlots(nextPhotos);
-    await refetch();
+    if (supportsMultiPhotos) {
+      await refetch();
+    }
     console.log("uploadPhoto:success", { slotIndex });
   };
 
@@ -263,13 +320,25 @@ const EditProfile = () => {
     );
     nextPhotos[slotIndex] = null;
 
+    const profilePayload = buildProfilePhotoUpdatePayload(
+      (profileData as Record<string, any>) ?? null,
+      nextPhotos
+    );
+    if (!profilePayload) {
+      console.warn(
+        "handleRemove: no known photo column found in profiles; skipping profiles update",
+        { availableProfileKeys: Object.keys((profileData as Record<string, any>) ?? {}) }
+      );
+      setMediaSlots(nextPhotos);
+      return;
+    }
+
     const { error: updateError } = await supabase
       .from("profiles")
       .upsert(
         {
           id: userId,
-          photos: nextPhotos,
-          photo_url: nextPhotos.find((item) => Boolean(item)) ?? null,
+          ...profilePayload,
         },
         { onConflict: "id" }
       );
@@ -279,7 +348,9 @@ const EditProfile = () => {
     }
 
     setMediaSlots(nextPhotos);
-    await refetch();
+    if (supportsMultiPhotos) {
+      await refetch();
+    }
   };
 
   return (
@@ -307,11 +378,7 @@ const EditProfile = () => {
               <TouchableOpacity
                 key={`media-${index}`}
                 style={styles.mediaSlot}
-                onPress={() => {
-                  if (!item) {
-                    handleAddMedia(index);
-                  }
-                }}
+                onPress={() => handleAddMedia(index)}
               >
                 {item ? (
                   <>
@@ -321,7 +388,10 @@ const EditProfile = () => {
                     />
                     <TouchableOpacity
                       style={styles.mediaRemove}
-                      onPress={() => handleRemove(index)}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        handleRemove(index);
+                      }}
                     >
                       <Icon name="close" size={14} color={WHITE} />
                     </TouchableOpacity>
@@ -349,48 +419,6 @@ const EditProfile = () => {
             disabled={busyIndex !== null}
           >
             <Text style={styles.editPrimaryText}>Add media</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.editSection}>
-          <Text style={styles.editSectionTitle}>Meditations</Text>
-          {(profile.meditations || []).map((item, index) => (
-            <View key={`edit-med-${index}`} style={styles.editRow}>
-              <View>
-                <Text style={styles.editRowTitle}>{item.title}</Text>
-                <Text style={styles.editRowMeta}>
-                  {item.duration} · {item.access}
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.editRowAction}>
-                <Icon name="pencil" size={14} color={DARK_GRAY} />
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity style={styles.editOutlineButton}>
-            <Icon name="add" size={16} color={DARK_GRAY} />
-            <Text style={styles.editOutlineText}>Add meditation</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.editSection}>
-          <Text style={styles.editSectionTitle}>Videos</Text>
-          {(profile.videos || []).map((item, index) => (
-            <View key={`edit-vid-${index}`} style={styles.editRow}>
-              <View>
-                <Text style={styles.editRowTitle}>{item.title}</Text>
-                <Text style={styles.editRowMeta}>
-                  {item.duration} · {item.access}
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.editRowAction}>
-                <Icon name="pencil" size={14} color={DARK_GRAY} />
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity style={styles.editOutlineButton}>
-            <Icon name="add" size={16} color={DARK_GRAY} />
-            <Text style={styles.editOutlineText}>Add video</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

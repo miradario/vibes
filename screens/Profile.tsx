@@ -12,7 +12,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import DEMO from "../assets/data/demo";
-import styles, { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";
+import styles, { TEXT_SECONDARY } from "../assets/styles";
 import { useLogoutMutation } from "../src/auth/auth.queries";
 
 const Profile = () => {
@@ -22,10 +22,13 @@ const Profile = () => {
 
   const menuItems = [
     { icon: "options", label: "Preferencias", screen: "Settings" },
-    { icon: "mail", label: "Contacto", screen: null },
-    { icon: "lock-closed", label: "Privacidad", screen: null },
-    { icon: "document-text", label: "Términos y condiciones", screen: null },
-    { icon: "help-circle", label: "Preguntas frecuentes", screen: null },
+    { icon: "mail", label: "Contacto", screen: "Contact" },
+    {
+      icon: "document-text",
+      label: "Términos y condiciones",
+      screen: "TermsConditions",
+    },
+    { icon: "help-circle", label: "Preguntas frecuentes", screen: "Faq" },
   ];
 
   const handleLogout = () => {

@@ -24,7 +24,12 @@ const EventDetail = () => {
 
   return (
     <View style={styles.eventDetailContainer}>
-      <Image source={event.image} style={styles.eventDetailHeroImage} />
+      <Image
+        source={
+          typeof event.image === "string" ? { uri: event.image } : event.image
+        }
+        style={styles.eventDetailHeroImage}
+      />
 
       <View style={styles.eventDetailHeader}>
         <TouchableOpacity
@@ -59,15 +64,13 @@ const EventDetail = () => {
         <View style={styles.eventDetailInfoSection}>
           <View style={styles.eventDetailInfoRow}>
             <Icon name="calendar" size={20} color={TEXT_SECONDARY} />
-            <Text style={styles.eventDetailInfoText}>
-              28 abril · 18:00 - 19:30
-            </Text>
+            <Text style={styles.eventDetailInfoText}>{event.date}</Text>
           </View>
 
           <View style={styles.eventDetailInfoRow}>
             <Icon name="location" size={20} color={TEXT_SECONDARY} />
             <Text style={styles.eventDetailInfoText}>
-              Parque Palermo, Buenos Aires
+              {event.location || "Parque Palermo, Buenos Aires"}
             </Text>
           </View>
 

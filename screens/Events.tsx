@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
   Image,
   TextInput,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import styles, { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import styles, { TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 
 const EVENTS = [
@@ -43,6 +43,19 @@ const EVENTS = [
 
 const Events = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const [events, setEvents] = useState(EVENTS);
+
+  useEffect(() => {
+    const newEvent = (route.params as any)?.newEvent;
+
+    if (newEvent?.id) {
+      setEvents((prev) =>
+        prev.some((item) => item.id === newEvent.id) ? prev : [newEvent, ...prev]
+      );
+      navigation.setParams?.({ newEvent: undefined } as never);
+    }
+  }, [navigation, route.params]);
 
   return (
     <ImageBackground
@@ -50,7 +63,22 @@ const Events = () => {
       style={styles.bg}
     >
       <View style={styles.eventsContainer}>
-        <Text style={styles.eventsTitle}>Eventos</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.eventsTitle}>Eventos</Text>
+          <TouchableOpacity
+            style={styles.eventCardButton}
+            onPress={() => navigation.navigate("CreateEvent" as never)}
+          >
+            <Text style={styles.eventCardButtonText}>Crear</Text>
+            <Icon name="add" size={16} color={TEXT_SECONDARY} />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.eventsSearchBar}>
           <Icon name="search" size={20} color={TEXT_SECONDARY} />
@@ -63,7 +91,7 @@ const Events = () => {
         </View>
 
         <FlatList
-          data={EVENTS}
+          data={events}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.eventsListContent}
           showsVerticalScrollIndicator={false}
@@ -77,7 +105,12 @@ const Events = () => {
                 )
               }
             >
-              <Image source={item.image} style={styles.eventCardImage} />
+              <Image
+                source={
+                  typeof item.image === "string" ? { uri: item.image } : item.image
+                }
+                style={styles.eventCardImage}
+              />
               <View style={styles.eventCardContent}>
                 <View style={styles.eventCardHeader}>
                   <Text style={styles.eventCardTitle}>{item.title}</Text>
