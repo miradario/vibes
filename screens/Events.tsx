@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 import {
   View,
@@ -43,55 +45,64 @@ const Events = () => {
   const navigation = useNavigation();
 
   return (
-  <ImageBackground
-    source={require("../assets/images/backgroundSimple.png")}
-    style={styles.bg}
-  >
-    <View style={styles.eventsContainer}>
-      <Text style={styles.eventsTitle}>Eventos</Text>
+    <ImageBackground
+      source={require("../assets/images/backgroundSimple.png")}
+      style={styles.bg}
+    >
+      <View style={styles.eventsContainer}>
+        <Text style={styles.eventsTitle}>Eventos</Text>
 
-      <View style={styles.eventsSearchBar}>
-        <Icon name="search" size={20} color={TEXT_SECONDARY} />
-        <TextInput
-          style={styles.eventsSearchInput}
-          placeholder="Buscar eventos..."
-          placeholderTextColor={TEXT_SECONDARY}
+        <View style={styles.eventsSearchBar}>
+          <Icon name="search" size={20} color={TEXT_SECONDARY} />
+          <TextInput
+            style={styles.eventsSearchInput}
+            placeholder="Buscar eventos..."
+            placeholderTextColor={TEXT_SECONDARY}
+          />
+          <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+        </View>
+
+        <FlatList
+          data={EVENTS}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.eventsListContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.eventCard}
+              onPress={() =>
+                navigation.navigate(
+                  "EventDetail" as never,
+                  { event: item } as never,
+                )
+              }
+            >
+              <Image source={item.image} style={styles.eventCardImage} />
+              <View style={styles.eventCardContent}>
+                <View style={styles.eventCardHeader}>
+                  <Text style={styles.eventCardTitle}>{item.title}</Text>
+                  <Text style={styles.eventCardAttendees}>
+                    {item.attendees}
+                  </Text>
+                </View>
+                <Text style={styles.eventCardSubtitle}>{item.subtitle}</Text>
+                <View style={styles.eventCardFooter}>
+                  <Text style={styles.eventCardDate}>{item.date}</Text>
+                  <TouchableOpacity style={styles.eventCardButton}>
+                    <Text style={styles.eventCardButtonText}>Ver evento</Text>
+                    <Icon
+                      name="chevron-forward"
+                      size={14}
+                      color={TEXT_SECONDARY}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
         />
-        <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
       </View>
-
-      <FlatList
-        data={EVENTS}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.eventsListContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.eventCard}
-            onPress={() =>
-              navigation.navigate("EventDetail" as never, { event: item } as never)
-            }
-          >
-            <Image source={item.image} style={styles.eventCardImage} />
-            <View style={styles.eventCardContent}>
-              <View style={styles.eventCardHeader}>
-                <Text style={styles.eventCardTitle}>{item.title}</Text>
-                <Text style={styles.eventCardAttendees}>{item.attendees}</Text>
-              </View>
-              <Text style={styles.eventCardSubtitle}>{item.subtitle}</Text>
-              <View style={styles.eventCardFooter}>
-                <Text style={styles.eventCardDate}>{item.date}</Text>
-                <TouchableOpacity style={styles.eventCardButton}>
-                  <Text style={styles.eventCardButtonText}>Ver evento</Text>
-                  <Icon name="chevron-forward" size={14} color={TEXT_SECONDARY} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-    </View>
-  </ImageBackground>
+    </ImageBackground>
   );
 };
 

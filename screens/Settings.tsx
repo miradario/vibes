@@ -1,5 +1,13 @@
+/** @format */
+
 import React from "react";
-import { View, Text, ImageBackground, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  ImageBackground,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
@@ -24,7 +32,11 @@ const Settings = () => {
     { icon: "people", label: "Plan familiar", key: "family_plan" },
     { icon: "medkit", label: "Vacuna", key: "vaccine" },
     { icon: "grid", label: "Personalidad", key: "personality" },
-    { icon: "chatbubble", label: "Estilo de comunicación", key: "communication_style" },
+    {
+      icon: "chatbubble",
+      label: "Estilo de comunicación",
+      key: "communication_style",
+    },
     { icon: "heart", label: "Estilo de amor", key: "love_style" },
     { icon: "leaf", label: "Mascotas", key: "pets" },
     { icon: "leaf", label: "Vegetariano", key: "vegetarian" },
@@ -36,7 +48,10 @@ const Settings = () => {
       source={require("../assets/images/backgroundSimple.png")}
       style={styles.bg}
     >
-      <ScrollView style={styles.settingsContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.settingsContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.settingsHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
@@ -61,10 +76,13 @@ const Settings = () => {
                   index === personalItems.length - 1 && styles.settingsRowLast,
                 ]}
                 onPress={() =>
-                  navigation.navigate("PreferenceDetail" as never, {
-                    label: item.label,
-                    key: item.key,
-                  } as never)
+                  navigation.navigate(
+                    "PreferenceDetail" as never,
+                    {
+                      label: item.label,
+                      key: item.key,
+                    } as never,
+                  )
                 }
               >
                 <View style={styles.settingsRowLeft}>

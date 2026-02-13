@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { useState } from "react";
 import {
   View,
@@ -39,7 +41,10 @@ const EventChat = () => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ImageBackground
-        source={event?.image || require("../assets/images/events/evento_meditation.png")}
+        source={
+          event?.image ||
+          require("../assets/images/events/evento_meditation.png")
+        }
         style={styles.eventChatBackground}
       >
         <View style={styles.eventChatHeader}>
@@ -81,8 +86,7 @@ const EventChat = () => {
           </View>
           <Text style={styles.eventChatDescription}>
             Este es el espacio del evento.{"\n"}
-            Usalo para coordinar, compartir{"\n"}
-            y llegar con presencia.
+            Usalo para coordinar, compartir{"\n"}y llegar con presencia.
           </Text>
           <View style={styles.eventChatTags}>
             <View style={styles.eventChatTag}>
@@ -109,7 +113,7 @@ const EventChat = () => {
             <View key={msg.id} style={styles.eventChatMessageBubble}>
               <Text style={styles.eventChatMessageSender}>
                 {msg.sender}
-                <Text style={styles.eventChatMessageTime}>     {msg.time}</Text>
+                <Text style={styles.eventChatMessageTime}> {msg.time}</Text>
               </Text>
               <Text style={styles.eventChatMessageText}>{msg.text}</Text>
             </View>

@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 import {
   View,
@@ -49,12 +51,19 @@ const Messages = () => {
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Icon name="heart" color="#2F8F83" size={16} />
-                  <Text style={[styles.flowSectionTitle, { marginLeft: 8, color: "#2F8F83" }]}>
+                  <Text
+                    style={[
+                      styles.flowSectionTitle,
+                      { marginLeft: 8, color: "#2F8F83" },
+                    ]}
+                  >
                     New Connections
                   </Text>
                 </View>
                 <View style={styles.flowSectionCount}>
-                  <Text style={styles.flowSectionCountText}>{matches.length}</Text>
+                  <Text style={styles.flowSectionCountText}>
+                    {matches.length}
+                  </Text>
                 </View>
               </TouchableOpacity>
 
@@ -73,7 +82,10 @@ const Messages = () => {
                         if (isLikesYou) {
                           navigation.navigate("Soulmates" as never);
                         } else {
-                          navigation.navigate("Chat" as never, { profile: item } as never);
+                          navigation.navigate(
+                            "Chat" as never,
+                            { profile: item } as never,
+                          );
                         }
                       }}
                     >
@@ -102,7 +114,9 @@ const Messages = () => {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.messageRow}
-              onPress={() => navigation.navigate("Chat" as never, { profile: item } as never)}
+              onPress={() =>
+                navigation.navigate("Chat" as never, { profile: item } as never)
+              }
             >
               <Message
                 image={item.image}

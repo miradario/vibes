@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 import {
   View,
@@ -23,7 +25,7 @@ const EventDetail = () => {
   return (
     <View style={styles.eventDetailContainer}>
       <Image source={event.image} style={styles.eventDetailHeroImage} />
-      
+
       <View style={styles.eventDetailHeader}>
         <TouchableOpacity
           style={styles.eventDetailBackButton}
