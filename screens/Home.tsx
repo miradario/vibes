@@ -10,8 +10,10 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import CardStack, { Card } from "react-native-card-stack-swiper";
 
 // Workaround: library typings do not declare `children` on CardStackProps.
@@ -19,7 +21,7 @@ const CardStackAny = CardStack as unknown as React.ComponentType<any>;
 // Workaround: library typings do not declare `children` on Card props.
 const CardAny = Card as unknown as React.ComponentType<any>;
 
-import { Filters, CardItem } from "../components";
+import { CardItem } from "../components";
 import styles, { DARK_GRAY } from "../assets/styles";
 import DEMO from "../assets/data/demo";
 import Icon from "../components/Icon";
@@ -98,10 +100,14 @@ const Home = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/background.png")}
-      style={styles.bg}
-    >
+    <View style={localStyles.screen}>
+      <ImageBackground
+        source={require("../assets/images/newBackground.png")}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+      <View style={localStyles.readabilityVeil} />
+      <SafeAreaView style={localStyles.safeArea} edges={["top", "left", "right"]}>
       <Modal
         visible={showGallery}
         transparent
@@ -328,16 +334,6 @@ const Home = () => {
       )}
 
       <View style={styles.containerHome}>
-        <View style={styles.top}>
-          <Filters />
-          <TouchableOpacity
-            style={styles.meditatePill}
-            onPress={() => navigation.navigate("Meditations" as never)}
-          >
-            <Icon name="moon" size={13} color={DARK_GRAY} />
-            <Text style={styles.meditateText}>Meditate</Text>
-          </TouchableOpacity>
-        </View>
         <CardStackAny
           style={{ flex: 1 }}
           loop
@@ -427,8 +423,23 @@ const Home = () => {
           ))}
         </CardStackAny>
       </View>
-    </ImageBackground>
+      </SafeAreaView>
+    </View>
   );
 };
+
+const localStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#FCE7D2",
+  },
+  safeArea: {
+    flex: 1,
+  },
+  readabilityVeil: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 246, 236, 0.12)",
+  },
+});
 
 export default Home;

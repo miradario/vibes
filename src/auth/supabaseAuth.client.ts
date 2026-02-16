@@ -1,5 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { recoverInvalidRefreshToken } from "./session.recovery";
 
 type AuthChangeEvent = string;
 
@@ -26,6 +27,7 @@ export const getSession = async (): Promise<Session | null> => {
   if (typeof auth.getSession === "function") {
     const { data, error } = await auth.getSession();
     if (error) {
+      await recoverInvalidRefreshToken(error);
       return null;
     }
     return data.session ?? null;

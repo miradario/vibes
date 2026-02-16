@@ -1,4 +1,5 @@
 import { supabase } from "../../lib/supabase";
+import { recoverInvalidRefreshToken } from "../../auth/session.recovery";
 
 export type AccessToken = string | null;
 
@@ -8,7 +9,10 @@ export const getAccessToken = async (): Promise<AccessToken> => {
   // Supabase JS v2
   if (typeof auth.getSession === "function") {
     const { data, error } = await auth.getSession();
-    if (error) return null;
+    if (error) {
+      await recoverInvalidRefreshToken(error);
+      return null;
+    }
     return data?.session?.access_token ?? null;
   }
 

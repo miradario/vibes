@@ -24,3 +24,4 @@ export { default as CreateEvent } from "./CreateEvent";
 export { default as Contact } from "./Contact";
 export { default as Faq } from "./Faq";
 export { default as TermsConditions } from "./TermsConditions";
+export { default as Session } from "./Session";

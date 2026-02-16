@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,15 +8,12 @@ import {
   Image,
   ImageBackground,
   StyleSheet,
-  Animated,
 } from "react-native";
-import { Video, ResizeMode } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 
 const Welcome = () => {
   const navigation = useNavigation();
-  const [videoError, setVideoError] = useState(false);
 
   return (
     <View style={styles.bg}>
@@ -24,17 +21,6 @@ const Welcome = () => {
         source={require("../assets/images/background.png")}
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
-      />
-
-      <Video
-        source={require("../assets/videos/welcome.mp4")}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode={ResizeMode.COVER}
-        isLooping={false}
-        shouldPlay
-        isMuted={false}
-        volume={1.0}
-        onError={() => setVideoError(true)}
       />
 
       <View style={styles.welcomeContainer}>
@@ -59,6 +45,17 @@ const Welcome = () => {
               onPress={() => navigation.navigate("Signup" as never)}
             >
               <Text style={styles.welcomeSecondaryText}>Sign up</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.welcomeSecondary}
+              onPress={() =>
+                navigation.navigate(
+                  "Session" as never,
+                  { title: "AI Session" } as never
+                )
+              }
+            >
+              <Text style={styles.welcomeSecondaryText}>Try Guru Vibe</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -32,6 +32,7 @@ import {
   Contact,
   Faq,
   TermsConditions,
+  Session,
 } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
@@ -197,6 +198,11 @@ const App = () => (
         <Stack.Screen
           name="TermsConditions"
           component={TermsConditions}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="Session"
+          component={Session}
           options={{ headerShown: false, animationEnabled: true }}
         />
         <Stack.Screen

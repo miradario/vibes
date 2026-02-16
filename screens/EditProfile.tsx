@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { BLACK, DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -87,6 +88,43 @@ const buildProfilePhotoUpdatePayload = (
   }
 
   return null;
+};
+
+const isArrayBuffer = (value: unknown): value is ArrayBuffer =>
+  typeof ArrayBuffer !== "undefined" && value instanceof ArrayBuffer;
+
+const base64ToArrayBuffer = (base64: string) => {
+  if (typeof atob !== "function") {
+    throw new Error("Base64 decoder is not available in this runtime");
+  }
+
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes.buffer;
+};
+
+const readUriAsArrayBuffer = async (uri: string) => {
+  try {
+    const response = await fetch(uri);
+    const fetched = await response.arrayBuffer();
+    if (isArrayBuffer(fetched) && fetched.byteLength > 0) {
+      return fetched.slice(0);
+    }
+  } catch (error) {
+    console.warn("readUriAsArrayBuffer: fetch fallback", { uri, error });
+  }
+
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const fromBase64 = base64ToArrayBuffer(base64);
+  if (!isArrayBuffer(fromBase64) || fromBase64.byteLength === 0) {
+    throw new Error("Failed to convert file URI to ArrayBuffer");
+  }
+  return fromBase64.slice(0);
 };
 
 const EditProfile = () => {
@@ -171,15 +209,16 @@ const EditProfile = () => {
     setMediaSlots(optimistic);
 
     console.log("uploadPhoto:start", { userId, slotIndex, uri });
-    const response = await fetch(uri);
-    const arrayBuffer = await response.arrayBuffer();
     const uriWithoutQuery = uri.split("?")[0];
     const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
     const ext = rawExt.toLowerCase();
     const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";
+    const arrayBuffer = await readUriAsArrayBuffer(uri);
+    const uploadBody = new Uint8Array(arrayBuffer).buffer;
     console.log("uploadPhoto:fetched_bytes", {
       contentType,
       byteLength: arrayBuffer.byteLength,
+      isArrayBuffer: isArrayBuffer(uploadBody),
     });
     const filePath = `${userId}/${Date.now()}-${slotIndex}.${ext}`;
     console.log("uploadPhoto:uploading", {
@@ -189,7 +228,7 @@ const EditProfile = () => {
 
     const { error: uploadError } = await supabase.storage
       .from(PROFILE_PICTURES_BUCKET)
-      .upload(filePath, arrayBuffer, {
+      .upload(filePath, uploadBody, {
         contentType,
         upsert: true,
       });
