@@ -173,7 +173,6 @@ export default StyleSheet.create({
     left: -140,
     zIndex: 2,
     opacity: 0.5,
-
   },
   discoverImage: {
     width: 290,
@@ -399,10 +398,8 @@ export default StyleSheet.create({
 
     opacity: 1,
     position: "absolute",
-    width: DIMENSION_WIDTH ,
+    width: DIMENSION_WIDTH,
     height: 180,
-
-    
   },
 
   welcomePrimary: {
@@ -438,7 +435,6 @@ export default StyleSheet.create({
     shadowOffset: { height: 4, width: 0 },
     elevation: 2,
     marginBottom: 40,
-    
   },
   welcomeSecondaryText: {
     color: TEXT_PRIMARY,
@@ -1292,13 +1288,6 @@ export default StyleSheet.create({
   },
   matchAvatarWrap: {
     position: "relative",
-  },
-  matchAvatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 2,
-    borderColor: WHITE,
   },
   matchDot: {
     position: "absolute",

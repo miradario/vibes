@@ -8,9 +8,7 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import Constants from "expo-constants";
 import Gradient from "./Gradient";
 
-let ElevenLabsProvider: React.ComponentType<{ children?: React.ReactNode }> = ({
-  children,
-}) => <>{children}</>;
+let ElevenLabsProvider: React.ComponentType<{ children?: React.ReactNode }> = ({ children }) => <>{children}</>;
 
 let elevenLabsLoadError: unknown = null;
 let isElevenLabsAvailable = false;
@@ -65,15 +63,12 @@ const SessionScreenContent = ({ title }: SessionScreenProps) => {
       setConversationId(conversationId);
     },
     onDisconnect: () => console.log("Disconnected from conversation"),
-    onMessage: (message) => console.log("Received message:", message),
-    onError: (error) => console.error("Conversation error:", error),
-    onModeChange: (mode) => console.log("Conversation mode changed:", mode),
-    onStatusChange: (prop) =>
-      console.log("Conversation status changed:", prop.status),
-    onCanSendFeedbackChange: (prop) =>
-      console.log("Can send feedback changed:", prop.canSendFeedback),
-    onUnhandledClientToolCall: (params) =>
-      console.log("Unhandled client tool call:", params),
+    onMessage: (message: string) => console.log("Received message:", message),
+    onError: (error: unknown) => console.error("Conversation error:", error),
+    onModeChange: (mode: string) => console.log("Conversation mode changed:", mode),
+    onStatusChange: (prop: { status: string }) => console.log("Conversation status changed:", prop.status),
+    onCanSendFeedbackChange: (prop: { canSendFeedback: boolean }) => console.log("Can send feedback changed:", prop.canSendFeedback),
+    onUnhandledClientToolCall: (params: unknown) => console.log("Unhandled client tool call:", params),
   });
 
   const startConversation = async () => {
@@ -83,10 +78,7 @@ const SessionScreenContent = ({ title }: SessionScreenProps) => {
         isExpoGo,
         loadError: elevenLabsLoadError,
       });
-      Alert.alert(
-        "ElevenLabs no disponible",
-        "Ejecuta la app en un dev build (npx expo run:android / run:ios), no en Expo Go.",
-      );
+      Alert.alert("ElevenLabs no disponible", "Ejecuta la app en un dev build (npx expo run:android / run:ios), no en Expo Go.");
       return;
     }
 
@@ -141,27 +133,12 @@ const SessionScreenContent = ({ title }: SessionScreenProps) => {
 
       <View style={localStyles.content}>
         <Text style={localStyles.brandTitle}>guruVibe</Text>
-        <Text style={localStyles.subtitle}>
-          A space to tune into what's present.
-        </Text>
-        <TouchableOpacity
-          onPress={canStart ? startConversation : endConversation}
-          disabled={isBusy || (!canStart && !canEnd)}
-          style={[
-            localStyles.cta,
-            (isBusy || (!canStart && !canEnd)) && localStyles.ctaDisabled,
-          ]}
-        >
-          <Text style={localStyles.ctaText}>
-            {canStart ? "I'm ready" : "End session"}
-          </Text>
+        <Text style={localStyles.subtitle}>A space to tune into what's present.</Text>
+        <TouchableOpacity onPress={canStart ? startConversation : endConversation} disabled={isBusy || (!canStart && !canEnd)} style={[localStyles.cta, (isBusy || (!canStart && !canEnd)) && localStyles.ctaDisabled]}>
+          <Text style={localStyles.ctaText}>{canStart ? "I'm ready" : "End session"}</Text>
         </TouchableOpacity>
-        <Text style={localStyles.statusText}>
-          {isBusy ? "connecting..." : conversation.status}
-        </Text>
-        {Boolean(conversationId) && (
-          <Text style={localStyles.metaText}>{conversationId}</Text>
-        )}
+        <Text style={localStyles.statusText}>{isBusy ? "connecting..." : conversation.status}</Text>
+        {Boolean(conversationId) && <Text style={localStyles.metaText}>{conversationId}</Text>}
       </View>
     </SafeAreaView>
   );

@@ -52,17 +52,14 @@ const CardItem = ({
     },
   ];
 
-  const nameStyle = [
-    {
-      paddingTop: hasVariant ? 10 : isDiscover ? 8 : 15,
-      paddingBottom: hasVariant ? 5 : isDiscover ? 4 : 7,
-      color: DARK_GRAY,
-      fontSize: hasVariant ? 15 : isDiscover ? 22 : 30,
-      textAlign: isDiscover ? "center" : "left",
-      fontFamily: isDiscover ? "serif" : undefined,
-    },
-  ];
-
+  const nameStyle = {
+    paddingTop: hasVariant ? 10 : isDiscover ? 8 : 15,
+    paddingBottom: hasVariant ? 5 : isDiscover ? 4 : 7,
+    color: DARK_GRAY,
+    fontSize: hasVariant ? 15 : isDiscover ? 22 : 30,
+    textAlign: isDiscover ? ("center" as const) : ("left" as const),
+    fontFamily: isDiscover ? "serif" : undefined,
+  };
   return (
     <View
       style={[
@@ -97,9 +94,9 @@ const CardItem = ({
                   width: dot.size,
                   height: dot.size,
                   borderRadius: dot.size / 2,
-                  top: dot.top,
-                  left: dot.left,
-                  right: dot.right,
+                  top: parseInt(dot.top || "0"),
+                  left: parseInt(dot.left || "0"),
+                  right: parseInt(dot.right || "0"),
                 },
               ]}
             />

@@ -20,17 +20,7 @@ const clampProgress = (value?: number) => {
   return Math.min(1, Math.max(0, value));
 };
 
-const VideoPlayer = ({
-  title,
-  duration,
-  access,
-  progress = 0,
-  isPlaying = false,
-  onPlayPause,
-  onSkipNext,
-  onSkipPrev,
-  onOpen,
-}: VideoPlayerProps) => {
+const VideoPlayer = ({ title, duration, access, progress = 0, isPlaying = false, onPlayPause, onSkipNext, onSkipPrev, onOpen }: VideoPlayerProps) => {
   const progressWidth = `${clampProgress(progress) * 100}%`;
 
   return (
@@ -45,11 +35,7 @@ const VideoPlayer = ({
             </Text>
           )}
         </View>
-        <TouchableOpacity
-          style={styles.meditationPlayerOpen}
-          onPress={onOpen}
-          disabled={!onOpen}
-        >
+        <TouchableOpacity style={styles.meditationPlayerOpen} onPress={onOpen} disabled={!onOpen}>
           <Icon name="play" size={16} color={WHITE} />
           <Text style={styles.meditationPlayerOpenText}>Watch</Text>
         </TouchableOpacity>
@@ -57,30 +43,18 @@ const VideoPlayer = ({
 
       <View style={styles.meditationPlayerProgress}>
         <View style={styles.meditationPlayerTrack}>
-          <View style={[styles.meditationPlayerFill, { width: progressWidth }]} />
+          <View style={[styles.meditationPlayerFill, { width: parseFloat(progressWidth) }]} />
         </View>
       </View>
 
       <View style={styles.meditationPlayerControls}>
-        <TouchableOpacity
-          style={styles.meditationPlayerControl}
-          onPress={onSkipPrev}
-          disabled={!onSkipPrev}
-        >
+        <TouchableOpacity style={styles.meditationPlayerControl} onPress={onSkipPrev} disabled={!onSkipPrev}>
           <Icon name="play-skip-back" size={18} color={DARK_GRAY} />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.meditationPlayerMain}
-          onPress={onPlayPause}
-          disabled={!onPlayPause}
-        >
+        <TouchableOpacity style={styles.meditationPlayerMain} onPress={onPlayPause} disabled={!onPlayPause}>
           <Icon name={isPlaying ? "pause" : "play"} size={20} color={WHITE} />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.meditationPlayerControl}
-          onPress={onSkipNext}
-          disabled={!onSkipNext}
-        >
+        <TouchableOpacity style={styles.meditationPlayerControl} onPress={onSkipNext} disabled={!onSkipNext}>
           <Icon name="play-skip-forward" size={18} color={DARK_GRAY} />
         </TouchableOpacity>
       </View>

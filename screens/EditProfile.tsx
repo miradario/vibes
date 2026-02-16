@@ -12,18 +12,23 @@ import {
   Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import styles, { BLACK, DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
+import styles, {
+  BLACK,
+  DARK_GRAY,
+  GRAY,
+  PRIMARY_COLOR,
+  WHITE,
+} from "../assets/styles";
 import Icon from "../components/Icon";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 
-const IMAGE_MEDIA_TYPE =
-  (ImagePicker as any).MediaType?.Images
-    ? [(ImagePicker as any).MediaType.Images]
-    : ["images"];
+const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
+  ? [(ImagePicker as any).MediaType.Images]
+  : ["images"];
 const PROFILE_PICTURES_BUCKET = "profile pictures";
 const EXTENSION_TO_CONTENT_TYPE: Record<string, string> = {
   jpg: "image/jpeg",
@@ -202,8 +207,9 @@ const EditProfile = () => {
       throw new Error("Missing user session");
     }
 
-    const optimistic = Array.from({ length: maxPhotos }, (_, index) =>
-      mediaSlots[index] ?? null
+    const optimistic = Array.from(
+      { length: maxPhotos },
+      (_, index) => mediaSlots[index] ?? null
     );
     optimistic[slotIndex] = uri;
     setMediaSlots(optimistic);
@@ -242,8 +248,9 @@ const EditProfile = () => {
       .getPublicUrl(filePath);
     console.log("uploadPhoto:public_url", data?.publicUrl);
 
-    const nextPhotos = Array.from({ length: maxPhotos }, (_, index) =>
-      optimistic[index] ?? null
+    const nextPhotos = Array.from(
+      { length: maxPhotos },
+      (_, index) => optimistic[index] ?? null
     );
     nextPhotos[slotIndex] = data.publicUrl || uri;
 
@@ -254,21 +261,23 @@ const EditProfile = () => {
     if (!profilePayload) {
       console.warn(
         "uploadPhoto: no known photo column found in profiles; skipping profiles update",
-        { availableProfileKeys: Object.keys((profileData as Record<string, any>) ?? {}) }
+        {
+          availableProfileKeys: Object.keys(
+            (profileData as Record<string, any>) ?? {}
+          ),
+        }
       );
       setMediaSlots(nextPhotos);
       return;
     }
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: userId,
-          ...profilePayload,
-        },
-        { onConflict: "id" }
-      );
+    const { error: updateError } = await supabase.from("profiles").upsert(
+      {
+        id: userId,
+        ...profilePayload,
+      },
+      { onConflict: "id" }
+    );
     if (updateError) {
       console.error("uploadPhoto:profiles_upsert_error", updateError);
       throw updateError;
@@ -354,8 +363,9 @@ const EditProfile = () => {
     const userId = session?.user?.id;
     if (!userId) return;
 
-    const nextPhotos = Array.from({ length: maxPhotos }, (_, index) =>
-      mediaSlots[index] ?? null
+    const nextPhotos = Array.from(
+      { length: maxPhotos },
+      (_, index) => mediaSlots[index] ?? null
     );
     nextPhotos[slotIndex] = null;
 
@@ -366,21 +376,23 @@ const EditProfile = () => {
     if (!profilePayload) {
       console.warn(
         "handleRemove: no known photo column found in profiles; skipping profiles update",
-        { availableProfileKeys: Object.keys((profileData as Record<string, any>) ?? {}) }
+        {
+          availableProfileKeys: Object.keys(
+            (profileData as Record<string, any>) ?? {}
+          ),
+        }
       );
       setMediaSlots(nextPhotos);
       return;
     }
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: userId,
-          ...profilePayload,
-        },
-        { onConflict: "id" }
-      );
+    const { error: updateError } = await supabase.from("profiles").upsert(
+      {
+        id: userId,
+        ...profilePayload,
+      },
+      { onConflict: "id" }
+    );
     if (updateError) {
       Alert.alert("Error", "No se pudo eliminar la foto.");
       return;
@@ -397,7 +409,10 @@ const EditProfile = () => {
       source={require("../assets/images/backgroundSimple.png")}
       style={styles.bg}
     >
-      <ScrollView style={styles.editContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.editContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.top}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
