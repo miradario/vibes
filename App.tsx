@@ -76,9 +76,9 @@ const App = () => (
               />
               <Tab.Screen
                 name="Soulmates"
-                component={Matches}
+                component={Session}
                 options={{
-                  tabBarLabel: "Soulmates",
+                  tabBarLabel: "guruVibes",
                   tabBarIcon: ({ focused }) => (
                     <TabBarIcon focused={focused} iconName="heart" />
                   ),
