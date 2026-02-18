@@ -25,7 +25,13 @@ import {
   OnboardingGender,
   OnboardingOrientation,
   OnboardingInterested,
+  OnboardingName,
+  OnboardingAge,
+  OnboardingCountry,
+  OnboardingPhoto,
+  OnboardingSpiritualPath,
   Login,
+  Signup,
   EventDetail,
   EventChat,
   CreateEvent,
@@ -128,6 +134,36 @@ const App = () => (
         <Stack.Screen
           name="Login"
           component={Login}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="Signup"
+          component={Signup}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="OnboardingName"
+          component={OnboardingName}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="OnboardingAge"
+          component={OnboardingAge}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="OnboardingCountry"
+          component={OnboardingCountry}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="OnboardingPhoto"
+          component={OnboardingPhoto}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="OnboardingSpiritualPath"
+          component={OnboardingSpiritualPath}
           options={{ headerShown: false, animationEnabled: true }}
         />
         <Stack.Screen

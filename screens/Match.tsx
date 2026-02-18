@@ -138,7 +138,12 @@ const Match = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={matchVideoStyles.matchSecondaryButton}
-                onPress={() => navigation.navigate("Home" as never)}
+                onPress={() =>
+                  navigation.navigate(
+                    "Tab" as never,
+                    { screen: "Discover" } as never
+                  )
+                }
               >
                 <Text style={matchVideoStyles.matchSecondaryButtonText}>
                   Later

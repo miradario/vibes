@@ -13,7 +13,7 @@ import IMAGE_10 from "../images/10.jpg";
 const data: DataT[] = [
   {
     id: 1,
-    name: "Ayla Rivers",
+    name: "Sol Preusse",
     isOnline: true,
     match: "92",
     description:

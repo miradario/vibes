@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,18 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
+import { useAuthSession } from "../src/auth/auth.queries";
 
 const Welcome = () => {
   const navigation = useNavigation();
+  const { data: session, isLoading } = useAuthSession();
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (session?.user?.id) {
+      navigation.navigate("Tab" as never);
+    }
+  }, [isLoading, navigation, session?.user?.id]);
 
   return (
     <View style={styles.bg}>

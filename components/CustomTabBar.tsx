@@ -1,10 +1,16 @@
+/** @format */
+
 import React from "react";
 import { View, TouchableOpacity, Text } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import Icon from "./Icon";
-import styles, { PRIMARY_COLOR, DARK_GRAY, WHITE } from "../assets/styles";
+import styles, { PRIMARY_COLOR, WHITE } from "../assets/styles";
 
-const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+const CustomTabBar = ({
+  state,
+  descriptors,
+  navigation,
+}: BottomTabBarProps) => {
   return (
     <View style={styles.tabBarWrapper}>
       <View style={styles.tabBarContainer}>
@@ -42,22 +48,23 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
                   {icon ? (
                     icon({ focused: true })
                   ) : (
-                    <Icon name="heart" size={18} color={WHITE} />
+                    <Icon name="heart" size={22} color={WHITE} />
                   )}
                 </View>
               ) : (
                 icon && icon({ focused: false })
               )}
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[
-                  styles.tabButtonText,
-                  { color: isFocused ? PRIMARY_COLOR : DARK_GRAY },
-                ]}
-              >
-                {String(label)}
-              </Text>
+              {isFocused ? (
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[styles.tabButtonText, { color: PRIMARY_COLOR }]}
+                >
+                  {String(label)}
+                </Text>
+              ) : (
+                <View style={{ height: 18 }} />
+              )}
             </TouchableOpacity>
           );
         })}

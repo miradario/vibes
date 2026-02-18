@@ -1,7 +1,14 @@
 /** @format */
 
 import React from "react";
-import { Text, View, Image, Dimensions, TouchableOpacity } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  ImageBackground,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import Icon from "./Icon";
 import { CardItemT } from "../types";
 import styles, {
@@ -68,11 +75,19 @@ const CardItem = ({
       ]}
     >
       {isDiscover && (
+        <ImageBackground
+          source={require("../assets/images/cardback.png")}
+          style={styles.discoverCardBackground}
+          imageStyle={styles.discoverCardBackgroundImage}
+          resizeMode="cover"
+        />
+      )}
+      {isDiscover && (
         <View pointerEvents="none" style={styles.discoverSparkleLayer}>
           <Image
             source={require("../assets/images/sparklings.png")}
             style={styles.discoverSparkleImage}
-            resizeMode="contain"
+            resizeMode="cover"
           />
           {[
             { top: "8%", left: "12%", size: 4 },
@@ -94,9 +109,9 @@ const CardItem = ({
                   width: dot.size,
                   height: dot.size,
                   borderRadius: dot.size / 2,
-                  top: parseInt(dot.top || "0"),
-                  left: parseInt(dot.left || "0"),
-                  right: parseInt(dot.right || "0"),
+                  top: dot.top as any,
+                  left: dot.left as any,
+                  right: dot.right as any,
                 },
               ]}
             />
@@ -114,11 +129,6 @@ const CardItem = ({
         >
           {isDiscover ? (
             <View style={styles.discoverAvatarWrap}>
-              <Image
-                source={require("../assets/images/halo.png")}
-                style={styles.discoverAvatarHalo}
-                resizeMode="contain"
-              />
               <Image
                 source={image}
                 style={[imageStyle, styles.discoverImage]}
@@ -200,7 +210,9 @@ const CardItem = ({
           style={isDiscover ? styles.discoverContent : undefined}
         >
           {/* NAME */}
-          <Text style={nameStyle}>{name}</Text>
+          <Text style={isDiscover ? styles.discoverName : nameStyle}>
+            {name}
+          </Text>
 
           {isDiscover && location ? (
             <Text style={styles.discoverLocation}>{location}</Text>
@@ -211,7 +223,7 @@ const CardItem = ({
             <Text
               style={[
                 styles.descriptionCardItem,
-                isDiscover && styles.descriptionCardItemDiscover,
+                isDiscover && styles.discoverDescription,
               ]}
             >
               {description}
@@ -243,11 +255,20 @@ const CardItem = ({
             </View>
           )}
 
-          {prompt && isDiscover && (
-            <View style={styles.discoverPromptPill}>
-              <Text style={styles.discoverPromptText}>{prompt}</Text>
-            </View>
-          )}
+          {prompt && isDiscover ? (
+            <>
+              <View style={styles.discoverRitualRow}>
+                <View style={styles.discoverRitualLine} />
+                <Text style={styles.discoverRitualTitle}>
+                  💛 Ritual favorito
+                </Text>
+                <View style={styles.discoverRitualLine} />
+              </View>
+              <View style={styles.discoverPromptPill}>
+                <Text style={styles.discoverPromptText}>{prompt}</Text>
+              </View>
+            </>
+          ) : null}
 
           {prompt && !isDiscover && (
             <Text style={styles.promptText}>{prompt}</Text>
