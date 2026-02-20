@@ -9,20 +9,21 @@ import {
   ImageBackground,
   StyleSheet,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import { useAuthSession } from "../src/auth/auth.queries";
 
 const Welcome = () => {
   const navigation = useNavigation();
   const { data: session, isLoading } = useAuthSession();
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (isLoading) return;
-    if (session?.user?.id) {
+    if (isFocused && session?.user?.id) {
       navigation.navigate("Tab" as never);
     }
-  }, [isLoading, navigation, session?.user?.id]);
+  }, [isFocused, isLoading, navigation, session?.user?.id]);
 
   return (
     <View style={styles.bg}>

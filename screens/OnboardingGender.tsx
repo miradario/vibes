@@ -5,12 +5,20 @@ import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 
 const OnboardingGender = () => {
   const navigation = useNavigation();
-  const [selected, setSelected] = useState<string | null>(null);
+  const { draft, updateDraft } = useOnboardingDraft();
+  const [selected, setSelected] = useState<number | null>(
+    draft.genderId ?? null
+  );
 
-  const options = ["Woman", "Man", "More"];
+  const options = [
+    { id: 1, label: "Woman" },
+    { id: 2, label: "Man" },
+    { id: 3, label: "More" },
+  ];
 
   return (
     <ImageBackground
@@ -35,20 +43,20 @@ const OnboardingGender = () => {
         <View style={styles.onboardOptions}>
           {options.map((option) => (
             <TouchableOpacity
-              key={option}
+              key={option.id}
               style={[
                 styles.onboardOption,
-                selected === option && styles.onboardOptionActive,
+                selected === option.id && styles.onboardOptionActive,
               ]}
-              onPress={() => setSelected(option)}
+              onPress={() => setSelected(option.id)}
             >
               <Text
                 style={[
                   styles.onboardOptionText,
-                  selected === option && styles.onboardOptionTextActive,
+                  selected === option.id && styles.onboardOptionTextActive,
                 ]}
               >
-                {option}
+                {option.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -61,9 +69,11 @@ const OnboardingGender = () => {
               !selected && styles.onboardNextDisabled,
             ]}
             disabled={!selected}
-            onPress={() =>
-              navigation.navigate("OnboardingOrientation" as never)
-            }
+            onPress={() => {
+              if (!selected) return;
+              updateDraft({ genderId: selected });
+              navigation.navigate("OnboardingOrientation" as never);
+            }}
           >
             <Text style={styles.onboardNextText}>Next</Text>
           </TouchableOpacity>

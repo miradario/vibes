@@ -5,6 +5,7 @@ import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 
 const OPTIONS = [
   "Straight",
@@ -20,7 +21,8 @@ const OPTIONS = [
 
 const OnboardingOrientation = () => {
   const navigation = useNavigation();
-  const [selected, setSelected] = useState<string[]>([]);
+  const { draft, updateDraft } = useOnboardingDraft();
+  const [selected, setSelected] = useState<string[]>(draft.orientation ?? []);
 
   const toggle = (value: string) => {
     if (selected.includes(value)) {
@@ -77,7 +79,10 @@ const OnboardingOrientation = () => {
               selected.length === 0 && styles.onboardNextDisabled,
             ]}
             disabled={selected.length === 0}
-            onPress={() => navigation.navigate("OnboardingInterested" as never)}
+            onPress={() => {
+              updateDraft({ orientation: selected });
+              navigation.navigate("OnboardingInterested" as never);
+            }}
           >
             <Text style={styles.onboardNextText}>Next</Text>
           </TouchableOpacity>

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { mapUserPreferencesRow } from "../api/mappers/userPreferences.mapper";
 import { supabase } from "../lib/supabase";
 
 export type UserPreferences = Record<string, any>;
@@ -19,7 +20,7 @@ export const useUserPreferencesQuery = (userId?: string) => {
         .eq("user_id", userId as string)
         .maybeSingle();
       if (error) throw error;
-      return data ?? null;
+      return mapUserPreferencesRow(data ?? null);
     },
     enabled: Boolean(userId),
     staleTime: 60_000,

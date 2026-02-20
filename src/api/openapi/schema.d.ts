@@ -4,10 +4,19 @@ export interface components {
   schemas: {
     Candidate: {
       id: string;
-      name?: string;
-      age?: number;
-      photos?: string[];
-      bio?: string;
+      display_name?: string;
+      orientation?: string[];
+      photos?: components["schemas"]["Photos"][];
+      email: string;
+      phone?: string;
+      birthDate?: Date;
+      genderId?: number;
+      intentId?: number;
+      path: string[];
+      isTeacher: boolean;
+      isActive: boolean;
+      createdAt: Date;
+      updatedAt: Date;
     };
     SwipeRequest: {
       targetUserId: string;
@@ -17,6 +26,12 @@ export interface components {
       match?: boolean;
       swipeId?: string;
     };
+    Photos: {
+      id: string;
+      url: string;
+      order: number;
+      isPrimary: boolean;
+    }[];
   };
 }
 

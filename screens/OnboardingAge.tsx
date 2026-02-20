@@ -1,26 +1,66 @@
 /** @format */
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
   ImageBackground,
   TouchableOpacity,
-  TextInput,
+  Platform,
 } from "react-native";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 
 const OnboardingAge = () => {
   const navigation = useNavigation();
-  const [age, setAge] = useState("");
+  const { draft, updateDraft } = useOnboardingDraft();
+  const [showPicker, setShowPicker] = useState(Platform.OS === "ios");
+  const [birthDate, setBirthDate] = useState<Date | null>(() => {
+    if (!draft.birthDate) return null;
+    const parsed = new Date(draft.birthDate);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  });
 
   const progress = 33; // 2/6 steps
 
-  const isValidAge = () => {
-    const ageNum = parseInt(age);
-    return ageNum >= 18 && ageNum <= 100;
+  const maxDate = useMemo(() => {
+    const today = new Date();
+    return new Date(
+      today.getFullYear() - 18,
+      today.getMonth(),
+      today.getDate()
+    );
+  }, []);
+
+  const formatDate = (date: Date) => date.toISOString().split("T")[0];
+
+  const getAge = (date: Date) => {
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const monthDiff = today.getMonth() - date.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < date.getDate())
+    ) {
+      age -= 1;
+    }
+    return age;
+  };
+
+  const isValidAge = birthDate ? getAge(birthDate) >= 18 : false;
+
+  const handleChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === "android") {
+      setShowPicker(false);
+    }
+    if (date) {
+      setBirthDate(date);
+    }
   };
 
   return (
@@ -43,31 +83,45 @@ const OnboardingAge = () => {
           </View>
         </View>
 
-        <Text style={styles.onboardTitle}>How old are you?</Text>
+        <Text style={styles.onboardTitle}>What’s your birth date?</Text>
         <Text style={styles.onboardSubtitle}>
           You must be at least 18 years old
         </Text>
 
         <View style={styles.loginField}>
-          <TextInput
+          <TouchableOpacity
             style={styles.loginInput}
-            placeholder="Enter your age"
-            placeholderTextColor="#9B91A6"
-            keyboardType="number-pad"
-            value={age}
-            onChangeText={setAge}
-            maxLength={3}
-          />
+            onPress={() => setShowPicker(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: birthDate ? DARK_GRAY : "#9B91A6" }}>
+              {birthDate ? formatDate(birthDate) : "Select your birth date"}
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        {showPicker ? (
+          <DateTimePicker
+            value={birthDate ?? maxDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={handleChange}
+            maximumDate={maxDate}
+          />
+        ) : null}
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity
             style={[
               styles.onboardNext,
-              !isValidAge() && styles.onboardNextDisabled,
+              !isValidAge && styles.onboardNextDisabled,
             ]}
-            disabled={!isValidAge()}
-            onPress={() => navigation.navigate("OnboardingGender" as never)}
+            disabled={!isValidAge}
+            onPress={() => {
+              if (!birthDate) return;
+              updateDraft({ birthDate: formatDate(birthDate) });
+              navigation.navigate("OnboardingGender" as never);
+            }}
           >
             <Text style={styles.onboardNextText}>Next</Text>
           </TouchableOpacity>

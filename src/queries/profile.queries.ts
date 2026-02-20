@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { mapProfileWithPhotos } from "../api/mappers/profile.mapper";
 import { supabase } from "../lib/supabase";
 
 export type ProfileRow = Record<string, any>;
@@ -10,17 +11,28 @@ export const profileKeys = {
 };
 
 const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle();
+  const [profileResponse, photosResponse] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    supabase
+      .from("profile_photos")
+      .select("*")
+      .eq("profile_id", userId)
+      .order("order", { ascending: true }),
+  ]);
 
-  if (error) {
-    throw error;
+  if (profileResponse.error) {
+    throw profileResponse.error;
   }
 
-  return data ?? null;
+  if (photosResponse.error) {
+    throw photosResponse.error;
+  }
+
+  if (!profileResponse.data) {
+    return null;
+  }
+
+  return mapProfileWithPhotos(profileResponse.data, photosResponse.data ?? []);
 };
 
 export const useProfileQuery = (userId?: string) => {

@@ -36,8 +36,9 @@ const Settings = () => {
   const [vegetarian, setVegetarian] = useState<"Sí" | "No">("No");
   const [aboutMe, setAboutMe] = useState("");
   const [smoking, setSmoking] = useState<"Sí" | "No">("No");
-  const [otherOptions, setOtherOptions] =
-    useState<string[]>(OTHER_DEFAULT_OPTIONS);
+  const [otherOptions, setOtherOptions] = useState<string[]>(
+    OTHER_DEFAULT_OPTIONS
+  );
   const [selectedOtherTags, setSelectedOtherTags] = useState<string[]>(
     OTHER_DEFAULT_OPTIONS
   );
@@ -46,7 +47,7 @@ const Settings = () => {
   useEffect(() => {
     if (!prefs) return;
     setSpiritualPath(
-      Array.isArray(prefs.spiritual_path) ? prefs.spiritual_path : []
+      Array.isArray(prefs.spiritualPath) ? prefs.spiritualPath : []
     );
     if (prefs.vegetarian === "Sí" || prefs.vegetarian === "No") {
       setVegetarian(prefs.vegetarian);
@@ -54,13 +55,13 @@ const Settings = () => {
     if (prefs.smoking === "Sí" || prefs.smoking === "No") {
       setSmoking(prefs.smoking);
     }
-    if (typeof prefs.about_me === "string") {
-      setAboutMe(prefs.about_me);
+    if (typeof prefs.aboutMe === "string") {
+      setAboutMe(prefs.aboutMe);
     }
-    if (Array.isArray(prefs.other_tags) && prefs.other_tags.length) {
-      setSelectedOtherTags(prefs.other_tags);
+    if (Array.isArray(prefs.otherTags) && prefs.otherTags.length) {
+      setSelectedOtherTags(prefs.otherTags);
       setOtherOptions((prev) =>
-        Array.from(new Set([...prev, ...prefs.other_tags]))
+        Array.from(new Set([...prev, ...prefs.otherTags]))
       );
     }
   }, [prefs]);
@@ -141,17 +142,15 @@ const Settings = () => {
     }
   };
 
-  const renderChip = (
-    label: string,
-    active: boolean,
-    onPress: () => void
-  ) => (
+  const renderChip = (label: string, active: boolean, onPress: () => void) => (
     <TouchableOpacity
       key={label}
       style={[localStyles.chip, active && localStyles.chipActive]}
       onPress={onPress}
     >
-      <Text style={[localStyles.chipText, active && localStyles.chipTextActive]}>
+      <Text
+        style={[localStyles.chipText, active && localStyles.chipTextActive]}
+      >
         {label}
       </Text>
       {active ? <Icon name="checkmark" size={16} color={WHITE} /> : null}
@@ -244,7 +243,9 @@ const Settings = () => {
           </View>
           <View style={localStyles.chipWrap}>
             {otherOptions.map((item) =>
-              renderChip(item, selectedOthers.has(item), () => toggleOther(item))
+              renderChip(item, selectedOthers.has(item), () =>
+                toggleOther(item)
+              )
             )}
           </View>
           <View style={localStyles.addRow}>
@@ -257,7 +258,10 @@ const Settings = () => {
               onSubmitEditing={addCustomTag}
               returnKeyType="done"
             />
-            <TouchableOpacity style={localStyles.addButton} onPress={addCustomTag}>
+            <TouchableOpacity
+              style={localStyles.addButton}
+              onPress={addCustomTag}
+            >
               <Text style={localStyles.addButtonText}>+ Agregar</Text>
             </TouchableOpacity>
           </View>

@@ -1,16 +1,37 @@
 /** @format */
 
 import React, { useState } from "react";
-import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ImageBackground,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import { useAuthSession } from "../src/auth/auth.queries";
+import {
+  useCompleteOnboardingMutation,
+  useOnboardingDraft,
+} from "../src/queries/onboarding.queries";
 
 const OnboardingInterested = () => {
   const navigation = useNavigation();
-  const [selected, setSelected] = useState<string | null>(null);
+  const { data: session } = useAuthSession();
+  const { draft, updateDraft, resetDraft } = useOnboardingDraft();
+  const completeMutation = useCompleteOnboardingMutation();
+  const [selected, setSelected] = useState<number | null>(
+    draft.intentId ?? null
+  );
 
-  const options = ["Women", "Men", "Everyone"];
+  const options = [
+    { id: 1, label: "Women" },
+    { id: 2, label: "Man" },
+    { id: 3, label: "Everyone" },
+  ];
 
   return (
     <ImageBackground
@@ -35,20 +56,20 @@ const OnboardingInterested = () => {
         <View style={styles.onboardOptions}>
           {options.map((option) => (
             <TouchableOpacity
-              key={option}
+              key={option.id}
               style={[
                 styles.onboardOption,
-                selected === option && styles.onboardOptionActive,
+                selected === option.id && styles.onboardOptionActive,
               ]}
-              onPress={() => setSelected(option)}
+              onPress={() => setSelected(option.id)}
             >
               <Text
                 style={[
                   styles.onboardOptionText,
-                  selected === option && styles.onboardOptionTextActive,
+                  selected === option.id && styles.onboardOptionTextActive,
                 ]}
               >
-                {option}
+                {option.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -58,12 +79,45 @@ const OnboardingInterested = () => {
           <TouchableOpacity
             style={[
               styles.onboardNext,
-              !selected && styles.onboardNextDisabled,
+              (!selected || completeMutation.isPending) &&
+                styles.onboardNextDisabled,
             ]}
-            disabled={!selected}
-            onPress={() => navigation.navigate("Tab" as never)}
+            disabled={!selected || completeMutation.isPending}
+            onPress={async () => {
+              const userId = session?.user?.id;
+              if (!selected || !userId) {
+                Alert.alert("Error", "No se pudo completar el registro.");
+                return;
+              }
+
+              console.log("onboarding:submit", { userId, selected, draft });
+              updateDraft({ intentId: selected });
+
+              try {
+                await completeMutation.mutateAsync({
+                  userId,
+                  draft: {
+                    ...draft,
+                    intentId: selected,
+                  },
+                });
+                resetDraft();
+                navigation.navigate("Tab" as never);
+              } catch (error) {
+                console.log("onboarding:submit_error", error);
+                const message =
+                  error instanceof Error
+                    ? error.message
+                    : "No se pudo completar el onboarding.";
+                Alert.alert("Error", message);
+              }
+            }}
           >
-            <Text style={styles.onboardNextText}>Next</Text>
+            {completeMutation.isPending ? (
+              <ActivityIndicator color={DARK_GRAY} />
+            ) : (
+              <Text style={styles.onboardNextText}>Next</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

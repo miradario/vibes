@@ -11,10 +11,12 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 
 const OnboardingName = () => {
   const navigation = useNavigation();
-  const [name, setName] = useState("");
+  const { draft, updateDraft } = useOnboardingDraft();
+  const [name, setName] = useState(draft.displayName ?? "");
 
   const progress = 16; // 1/6 steps
 
@@ -62,7 +64,10 @@ const OnboardingName = () => {
               !name.trim() && styles.onboardNextDisabled,
             ]}
             disabled={!name.trim()}
-            onPress={() => navigation.navigate("OnboardingAge" as never)}
+            onPress={() => {
+              updateDraft({ displayName: name.trim() });
+              navigation.navigate("OnboardingAge" as never);
+            }}
           >
             <Text style={styles.onboardNextText}>Next</Text>
           </TouchableOpacity>
