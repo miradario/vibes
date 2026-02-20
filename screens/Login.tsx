@@ -5,16 +5,14 @@ import { useLoginMutation } from "../src/auth/auth.queries";
 import {
   View,
   Text,
-  ImageBackground,
   Image,
   TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import styles, { TEXT_PRIMARY } from "../assets/styles";
+import styles from "../assets/styles";
+import VibesActionButton from "../components/VibesActionButton";
 
 const Login = () => {
   const navigation = useNavigation();
@@ -44,10 +42,7 @@ const Login = () => {
   const isDisabled = !email || !password || loading;
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <Image
         source={require("../assets/images/logo.png")}
         style={styles.welcomeLogo}
@@ -88,27 +83,21 @@ const Login = () => {
 
           {error ? <Text style={styles.loginError}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={[styles.welcomePrimary, isDisabled && { opacity: 0.6 }]}
+          <VibesActionButton
+            label={loading ? "Signing in..." : "Sign in"}
+            variant="start"
             onPress={handleLogin}
             disabled={isDisabled}
-          >
-            {loading ? (
-              <ActivityIndicator color={TEXT_PRIMARY} />
-            ) : (
-              <Text style={styles.welcomePrimaryText}>Sign in</Text>
-            )}
-          </TouchableOpacity>
+          />
 
-          <TouchableOpacity
-            style={styles.welcomeSecondary}
+          <VibesActionButton
+            label="Back"
+            variant="skip"
             onPress={() => navigation.navigate("Welcome" as never)}
-          >
-            <Text style={styles.welcomeSecondaryText}>Back</Text>
-          </TouchableOpacity>
+          />
         </View>
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </View>
   );
 };
 

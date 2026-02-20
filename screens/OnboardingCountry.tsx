@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -51,10 +50,7 @@ const OnboardingCountry = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.onboardContainer}>
         <View style={styles.onboardHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -115,7 +111,7 @@ const OnboardingCountry = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

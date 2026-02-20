@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Icon } from "../components";
 import styles, { DARK_GRAY } from "../assets/styles";
@@ -10,10 +10,7 @@ const Chat = () => {
   const profile = route?.params?.profile;
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.chatHeader}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="chevron-back" size={22} color={DARK_GRAY} />
@@ -65,7 +62,7 @@ const Chat = () => {
           <Icon name="musical-notes" size={16} color={DARK_GRAY} />
         </TouchableOpacity>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

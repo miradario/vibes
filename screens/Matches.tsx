@@ -5,7 +5,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ImageBackground,
   FlatList,
   Image,
 } from "react-native";
@@ -17,10 +16,7 @@ import styles, { DARK_GRAY } from "../assets/styles";
 const Matches = () => {
   const navigation = useNavigation();
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.soulmateScreen}>
         <View style={styles.soulmateHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -69,7 +65,7 @@ const Matches = () => {
           <Text style={styles.soulmateFooterText}>See previous resonances</Text>
         </TouchableOpacity>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

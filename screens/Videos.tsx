@@ -2,7 +2,6 @@ import React from "react";
 import {
   View,
   Text,
-  ImageBackground,
   FlatList,
   TouchableOpacity,
 } from "react-native";
@@ -26,10 +25,7 @@ const Videos = () => {
   const [progress, setProgress] = React.useState(0.15);
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.containerMeditations}>
         <View style={styles.top}>
           <Text style={styles.title}>Videos</Text>
@@ -78,7 +74,7 @@ const Videos = () => {
           />
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

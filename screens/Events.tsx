@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   FlatList,
   TouchableOpacity,
   Image,
@@ -58,10 +57,7 @@ const Events = () => {
   }, [navigation, route.params]);
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.eventsContainer}>
         <View
           style={{
@@ -135,7 +131,7 @@ const Events = () => {
           )}
         />
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

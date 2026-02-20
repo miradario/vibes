@@ -1,21 +1,21 @@
 import { StyleSheet, Dimensions } from "react-native";
 
-export const PRIMARY_COLOR = "#E06A17";
-export const SECONDARY_COLOR = "#F29B58";
-export const WHITE = "#FFF4E8";
-export const GRAY = "#7A5538";
-export const DARK_GRAY = "#5A3218";
-export const BLACK = "#2A160B";
-export const BG_MAIN = "#FFF1E3";
-export const BG_GRADIENT = "#FFD2A9";
-export const TEXT_PRIMARY = "#5A3218";
-export const TEXT_SECONDARY = "#8A5A34";
-export const SURFACE_BUTTON = "#FFE9D3";
-export const CTA_PRIMARY = "#E06A17";
-export const GLOW_HIGHLIGHT = "#FFD7B1";
-export const BUTTON_CREAM = "#FFEEDC";
-export const BUTTON_BORDER = "#F3C79F";
-export const WARM_SHADOW = "rgba(224, 106, 23, 0.26)";
+export const PRIMARY_COLOR = "#D2A86C";
+export const SECONDARY_COLOR = "#E4B76E";
+export const WHITE = "#FFFFFF";
+export const GRAY = "#6E6E6E";
+export const DARK_GRAY = "#3A3A3A";
+export const BLACK = "#1E1E1E";
+export const BG_MAIN = "#F6F6F4";
+export const BG_GRADIENT = "#F3EFE8";
+export const TEXT_PRIMARY = "#1E1E1E";
+export const TEXT_SECONDARY = "#6E6E6E";
+export const SURFACE_BUTTON = "#FFFFFF";
+export const CTA_PRIMARY = "#D8B27A";
+export const GLOW_HIGHLIGHT = "rgba(0, 0, 0, 0.06)";
+export const BUTTON_CREAM = "#FFFFFF";
+export const BUTTON_BORDER = "rgba(0, 0, 0, 0.08)";
+export const WARM_SHADOW = "rgba(0, 0, 0, 0.10)";
 export const SERIF_FONT = "serif";
 
 export const ONLINE_STATUS = "#66BCA3";

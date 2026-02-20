@@ -2,7 +2,6 @@ import React from "react";
 import {
   View,
   Text,
-  ImageBackground,
   FlatList,
   TouchableOpacity,
 } from "react-native";
@@ -33,10 +32,7 @@ const Meditations = () => {
   const [progress, setProgress] = React.useState(0.25);
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.containerMeditations}>
       <View style={styles.top}>
         <Text style={styles.title}>Meditations</Text>
@@ -85,7 +81,7 @@ const Meditations = () => {
         />
       </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

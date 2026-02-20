@@ -1,7 +1,7 @@
 /** @format */
 
 import React, { useState } from "react";
-import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
@@ -21,10 +21,7 @@ const OnboardingGender = () => {
   ];
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.onboardContainer}>
         <View style={styles.onboardHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -79,7 +76,7 @@ const OnboardingGender = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

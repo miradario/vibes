@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   TextInput,
 } from "react-native";
@@ -21,10 +20,7 @@ const OnboardingName = () => {
   const progress = 16; // 1/6 steps
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.onboardContainer}>
         <View style={styles.onboardHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -73,7 +69,7 @@ const OnboardingName = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

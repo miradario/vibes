@@ -5,7 +5,6 @@ import { useSignupMutation } from "../src/auth/auth.queries";
 import {
   View,
   Text,
-  ImageBackground,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -45,7 +44,7 @@ const Signup = () => {
 
     try {
       await signupMutation.mutateAsync({ email, password });
-      navigation.navigate("OnboardingName" as never);
+      navigation.navigate("VibesMinimalOnboarding" as never);
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "No se pudo crear la cuenta.";
@@ -54,10 +53,7 @@ const Signup = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View>
         <Image
           source={require("../assets/images/logo.png")}
@@ -144,7 +140,7 @@ const Signup = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </View>
   );
 };
 

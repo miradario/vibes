@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   ScrollView,
   Alert,
@@ -171,10 +170,7 @@ const PreferenceDetail = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.settingsContainer}>
         <View style={styles.settingsHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -239,7 +235,7 @@ const PreferenceDetail = () => {
           </View>
         </ScrollView>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   Platform,
 } from "react-native";
@@ -64,10 +63,7 @@ const OnboardingAge = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.onboardContainer}>
         <View style={styles.onboardHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -127,7 +123,7 @@ const OnboardingAge = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

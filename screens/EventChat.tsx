@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   Image,
   TextInput,
@@ -40,13 +39,7 @@ const EventChat = () => {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ImageBackground
-        source={
-          event?.image ||
-          require("../assets/images/events/evento_meditation.png")
-        }
-        style={styles.eventChatBackground}
-      >
+      <View style={styles.eventChatBackground}>
         <View style={styles.eventChatHeader}>
           <TouchableOpacity
             style={styles.eventChatBackButton}
@@ -135,7 +128,7 @@ const EventChat = () => {
             <Icon name="send" size={20} color={WHITE} />
           </TouchableOpacity>
         </View>
-      </ImageBackground>
+      </View>
     </KeyboardAvoidingView>
   );
 };

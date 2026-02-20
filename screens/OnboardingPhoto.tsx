@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   Image,
   Alert,
@@ -82,10 +81,7 @@ const OnboardingPhoto = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.onboardContainer}>
         <View style={styles.onboardHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -181,7 +177,7 @@ const OnboardingPhoto = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

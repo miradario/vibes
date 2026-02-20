@@ -1,13 +1,10 @@
 import React from "react";
-import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import styles, { DARK_GRAY, PRIMARY_COLOR } from "../assets/styles";
 import Icon from "../components/Icon";
 
 const Premium = () => (
-  <ImageBackground
-    source={require("../assets/images/backgroundSimple.png")}
-    style={styles.bg}
-  >
+  <View style={styles.bg}>
     <View style={styles.premiumContainer}>
       <View style={styles.premiumHeader}>
         <Icon name="flame" size={20} color={PRIMARY_COLOR} />
@@ -49,7 +46,7 @@ const Premium = () => (
         <Text style={styles.premiumCtaText}>Continue</Text>
       </TouchableOpacity>
     </View>
-  </ImageBackground>
+  </View>
 );
 
 export default Premium;
