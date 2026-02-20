@@ -5,7 +5,6 @@ import {
   ScrollView,
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   Image,
 } from "react-native";
@@ -40,10 +39,7 @@ const Profile = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <ScrollView
         style={styles.containerProfile}
         showsVerticalScrollIndicator={false}
@@ -133,7 +129,7 @@ const Profile = () => {
           <Text style={styles.auraFooterVersion}>version 1.1.4</Text>
         </View>
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 };
 

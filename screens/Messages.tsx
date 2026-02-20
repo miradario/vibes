@@ -4,7 +4,6 @@ import React from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   Image,
   FlatList,
@@ -23,10 +22,7 @@ const Messages = () => {
   ];
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.containerMessages}>
         <FlatList
           data={DEMO}
@@ -127,7 +123,7 @@ const Messages = () => {
           )}
         />
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

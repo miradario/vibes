@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   TextInput,
   ScrollView,
@@ -187,10 +186,7 @@ const CreateEvent = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <ScrollView
         style={styles.editContainer}
         contentContainerStyle={localStyles.content}
@@ -334,7 +330,7 @@ const CreateEvent = () => {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </View>
   );
 };
 

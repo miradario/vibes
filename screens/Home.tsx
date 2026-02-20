@@ -3,7 +3,6 @@
 import React, { useRef, useState } from "react";
 import {
   View,
-  ImageBackground,
   Animated,
   Text,
   Modal,
@@ -101,12 +100,6 @@ const Home = () => {
 
   return (
     <View style={localStyles.screen}>
-      <ImageBackground
-        source={require("../assets/images/newBackground.png")}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
-      <View style={localStyles.readabilityVeil} />
       <SafeAreaView style={localStyles.safeArea} edges={["top", "left", "right"]}>
       <Modal
         visible={showGallery}

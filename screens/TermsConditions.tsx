@@ -4,7 +4,6 @@ import React from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   StyleSheet,
   Image,
@@ -18,10 +17,7 @@ const TermsConditions = () => {
   const navigation = useNavigation();
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.settingsContainer}>
         <View style={styles.settingsHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -67,7 +63,7 @@ const TermsConditions = () => {
           </Text>
         </ScrollView>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

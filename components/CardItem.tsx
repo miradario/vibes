@@ -5,7 +5,6 @@ import {
   Text,
   View,
   Image,
-  ImageBackground,
   Dimensions,
   TouchableOpacity,
 } from "react-native";
@@ -75,12 +74,7 @@ const CardItem = ({
       ]}
     >
       {isDiscover && (
-        <ImageBackground
-          source={require("../assets/images/cardback.png")}
-          style={styles.discoverCardBackground}
-          imageStyle={styles.discoverCardBackgroundImage}
-          resizeMode="cover"
-        />
+        <View style={styles.discoverCardBackground} />
       )}
       {isDiscover && (
         <View pointerEvents="none" style={styles.discoverSparkleLayer}>

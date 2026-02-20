@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -159,10 +158,7 @@ const Settings = () => {
   );
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <ScrollView
         style={styles.settingsContainer}
         showsVerticalScrollIndicator={false}
@@ -267,7 +263,7 @@ const Settings = () => {
           <Text style={localStyles.saveButtonText}>Guardar</Text>
         </TouchableOpacity>
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 };
 

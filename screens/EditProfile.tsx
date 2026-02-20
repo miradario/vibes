@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   Image,
   ScrollView,
@@ -405,10 +404,7 @@ const EditProfile = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <ScrollView
         style={styles.editContainer}
         showsVerticalScrollIndicator={false}
@@ -522,7 +518,7 @@ const EditProfile = () => {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </View>
   );
 };
 

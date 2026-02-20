@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -88,10 +87,7 @@ const OnboardingSpiritualPath = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.onboardContainer}>
         <View style={styles.onboardHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -233,7 +229,7 @@ const OnboardingSpiritualPath = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

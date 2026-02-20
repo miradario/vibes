@@ -4,7 +4,6 @@ import React from "react";
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   StyleSheet,
   Linking,
@@ -42,10 +41,7 @@ const Contact = () => {
   const navigation = useNavigation();
 
   return (
-    <ImageBackground
-      source={require("../assets/images/backgroundSimple.png")}
-      style={styles.bg}
-    >
+    <View style={styles.bg}>
       <View style={styles.settingsContainer}>
         <View style={styles.settingsHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -83,7 +79,7 @@ const Contact = () => {
 
         <Text style={localStyles.note}>Tu mensaje es 100% confidencial.</Text>
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 

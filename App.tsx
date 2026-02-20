@@ -42,6 +42,7 @@ import {
 } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
+import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboarding";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -58,7 +59,24 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Welcome">
+      <Stack.Navigator
+        initialRouteName="VibesMinimalOnboarding"
+        screenOptions={{
+          gestureDirection: "horizontal",
+          cardStyleInterpolator: ({ current, layouts }) => ({
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          }),
+        }}
+      >
         <Stack.Screen
           name="Welcome"
           component={Welcome}
@@ -139,6 +157,11 @@ const App = () => (
         <Stack.Screen
           name="Signup"
           component={Signup}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="VibesMinimalOnboarding"
+          component={VibesMinimalOnboarding}
           options={{ headerShown: false, animationEnabled: true }}
         />
         <Stack.Screen
