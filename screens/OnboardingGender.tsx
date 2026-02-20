@@ -6,6 +6,7 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import { GENDERS } from "../src/constants/lookups";
 
 const OnboardingGender = () => {
   const navigation = useNavigation();
@@ -13,12 +14,6 @@ const OnboardingGender = () => {
   const [selected, setSelected] = useState<number | null>(
     draft.genderId ?? null
   );
-
-  const options = [
-    { id: 1, label: "Woman" },
-    { id: 2, label: "Man" },
-    { id: 3, label: "More" },
-  ];
 
   return (
     <View style={styles.bg}>
@@ -38,7 +33,7 @@ const OnboardingGender = () => {
         <Text style={styles.onboardTitle}>What’s your gender?</Text>
 
         <View style={styles.onboardOptions}>
-          {options.map((option) => (
+          {GENDERS.map((option) => (
             <TouchableOpacity
               key={option.id}
               style={[
