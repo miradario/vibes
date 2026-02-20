@@ -112,7 +112,7 @@ const Home = () => {
             style={styles.galleryClose}
             onPress={() => setShowGallery(false)}
           >
-            <Icon name="close" size={18} color="#FFFFFF" />
+            <Icon name="close" size={18} color="#F6F6F4" />
           </TouchableOpacity>
           <FlatList
             data={galleryImages}
@@ -140,7 +140,7 @@ const Home = () => {
             <View style={styles.contactHeader}>
               <Text style={styles.contactTitle}>Library & Events</Text>
               <TouchableOpacity onPress={() => setShowContact(false)}>
-                <Icon name="close" size={18} color="#000000" />
+                <Icon name="close" size={18} color="#2B2B2B" />
               </TouchableOpacity>
             </View>
 
@@ -314,7 +314,7 @@ const Home = () => {
             <Icon
               name={swipeType === "like" ? "heart" : "heart-dislike"}
               size={34}
-              color={swipeType === "like" ? "#2F8F83" : "#B76E5A"}
+              color={swipeType === "like" ? "#AEBFD1" : "#D88C7A"}
             />
           </View>
           {swipeType === "nope" && nopePhrase ? (
@@ -424,14 +424,14 @@ const Home = () => {
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FCE7D2",
+    backgroundColor: "#F6F6F4",
   },
   safeArea: {
     flex: 1,
   },
   readabilityVeil: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 246, 236, 0.12)",
+    backgroundColor: "rgba(246, 246, 244, 0.12)",
   },
 });
 

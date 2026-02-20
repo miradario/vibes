@@ -2,11 +2,19 @@
 
 import "react-native-url-polyfill/auto";
 import React from "react";
+import { ActivityIndicator, Text, TextInput, View } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Toast from "react-native-toast-message";
+import { useFonts } from "expo-font";
+import {
+  CormorantGaramond_400Regular,
+  CormorantGaramond_500Medium,
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_700Bold,
+} from "@expo-google-fonts/cormorant-garamond";
 import {
   Home,
   Matches,
@@ -46,6 +54,7 @@ import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboard
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+let hasAppliedGlobalFont = false;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,9 +65,39 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <NavigationContainer>
+const App = () => {
+  const [fontsLoaded] = useFonts({
+    CormorantGaramond_400Regular,
+    CormorantGaramond_500Medium,
+    CormorantGaramond_600SemiBold,
+    CormorantGaramond_700Bold,
+  });
+
+  if (!hasAppliedGlobalFont) {
+    (Text as any).defaultProps = (Text as any).defaultProps || {};
+    (Text as any).defaultProps.style = [
+      { fontFamily: "CormorantGaramond_500Medium" },
+      (Text as any).defaultProps.style,
+    ];
+    (TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
+    (TextInput as any).defaultProps.style = [
+      { fontFamily: "CormorantGaramond_500Medium" },
+      (TextInput as any).defaultProps.style,
+    ];
+    hasAppliedGlobalFont = true;
+  }
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <NavigationContainer>
       <Stack.Navigator
         initialRouteName="VibesMinimalOnboarding"
         screenOptions={{
@@ -280,9 +319,10 @@ const App = () => (
           options={{ headerShown: false, animationEnabled: true }}
         />
       </Stack.Navigator>
-    </NavigationContainer>
-    <Toast />
-  </QueryClientProvider>
-);
+      </NavigationContainer>
+      <Toast />
+    </QueryClientProvider>
+  );
+};
 
 export default App;

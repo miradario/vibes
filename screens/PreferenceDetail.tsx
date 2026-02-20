@@ -196,8 +196,8 @@ const PreferenceDetail = () => {
                     onPress={() => toggleOption(option)}
                     style={{
                       borderWidth: 1,
-                      borderColor: active ? PRIMARY_COLOR : "#E8D8C7",
-                      backgroundColor: active ? "#FFEDE2" : WHITE,
+                      borderColor: active ? PRIMARY_COLOR : "#AEBFD1",
+                      backgroundColor: active ? "#F6F6F4" : WHITE,
                       paddingVertical: 10,
                       paddingHorizontal: 12,
                       borderRadius: 12,

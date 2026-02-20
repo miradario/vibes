@@ -86,13 +86,13 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     marginBottom: 18,
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
   },
   card: {
     backgroundColor: WHITE,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E8D8C7",
+    borderColor: "#AEBFD1",
     overflow: "hidden",
   },
   row: {
@@ -100,7 +100,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#EDE1D4",
+    borderBottomColor: "#AEBFD1",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -113,7 +113,7 @@ const localStyles = StyleSheet.create({
     flex: 1,
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
   },
 });
 

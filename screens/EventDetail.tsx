@@ -35,10 +35,10 @@ const EventDetail = () => {
           style={styles.eventDetailBackButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="chevron-back" size={24} color="#FFFFFF" />
+          <Icon name="chevron-back" size={24} color="#F6F6F4" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.eventDetailMenuButton}>
-          <Icon name="ellipsis-horizontal" size={24} color="#FFFFFF" />
+          <Icon name="ellipsis-horizontal" size={24} color="#F6F6F4" />
         </TouchableOpacity>
       </View>
 

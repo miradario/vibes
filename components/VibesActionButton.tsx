@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 import {
   StyleProp,
@@ -62,25 +64,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
-    shadowColor: "#C89E61",
+    shadowColor: "#E4B76E",
     shadowOpacity: 0.22,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
     elevation: 3,
   },
   startText: {
-    color: "#FFFFFF",
+    color: "#F6F6F4",
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "CormorantGaramond_600SemiBold",
   },
   skipWrap: {
     width: "100%",
+    marginTop: vibesTheme.spacing.sm,
     alignItems: "center",
   },
   skipDivider: {
     width: "100%",
     height: 1,
-    backgroundColor: "rgba(0,0,0,0.12)",
+    backgroundColor: "rgba(43, 43, 43, 0.12)",
     marginBottom: 14,
   },
   skipButton: {
@@ -90,7 +93,7 @@ const styles = StyleSheet.create({
   skipText: {
     color: vibesTheme.colors.secondaryText,
     fontSize: 18,
-    fontWeight: "500",
+    fontFamily: "CormorantGaramond_500Medium",
   },
   disabled: {
     opacity: 0.55,

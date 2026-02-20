@@ -125,9 +125,9 @@ const SessionScreenContent = ({ title }: SessionScreenProps) => {
         isSpeaking={isSpeaking}
         sizeMultiplier={0.5}
         colors={{
-          halo: "#F6DEC8",
-          core: "#F3CFB3",
-          ember: "#FAEBDD",
+          halo: "#AEBFD1",
+          core: "#E4B76E",
+          ember: "#F6F6F4",
         }}
       />
 
@@ -147,7 +147,7 @@ const SessionScreenContent = ({ title }: SessionScreenProps) => {
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F7F2EE",
+    backgroundColor: "#F6F6F4",
   },
   orbOuter: {
     position: "absolute",
@@ -156,7 +156,7 @@ const localStyles = StyleSheet.create({
     width: 520,
     height: 520,
     borderRadius: 260,
-    backgroundColor: "rgba(245, 207, 176, 0.38)",
+    backgroundColor: "rgba(228, 183, 110, 0.38)",
   },
   orbMiddle: {
     position: "absolute",
@@ -165,9 +165,9 @@ const localStyles = StyleSheet.create({
     width: 370,
     height: 370,
     borderRadius: 185,
-    backgroundColor: "rgba(242, 187, 143, 0.33)",
+    backgroundColor: "rgba(216, 140, 122, 0.33)",
     borderWidth: 1,
-    borderColor: "rgba(255, 241, 225, 0.9)",
+    borderColor: "rgba(246, 246, 244, 0.9)",
   },
   orbInner: {
     position: "absolute",
@@ -176,7 +176,7 @@ const localStyles = StyleSheet.create({
     width: 285,
     height: 285,
     borderRadius: 142.5,
-    backgroundColor: "rgba(248, 233, 221, 0.55)",
+    backgroundColor: "rgba(246, 246, 244, 0.55)",
   },
   content: {
     flex: 1,
@@ -188,17 +188,17 @@ const localStyles = StyleSheet.create({
   brandTitle: {
     fontSize: 64,
     lineHeight: 68,
-    color: "#5A3218",
-    fontFamily: "serif",
+    color: "#2B2B2B",
+    fontFamily: "CormorantGaramond_500Medium",
     fontWeight: "700",
   },
   subtitle: {
     marginTop: 16,
     fontSize: 20,
     lineHeight: 30,
-    color: "#6E4930",
+    color: "#2B2B2B",
     textAlign: "center",
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
   },
   cta: {
     marginTop: 120,
@@ -207,10 +207,10 @@ const localStyles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 36,
     alignItems: "center",
-    backgroundColor: "#F3CAA2",
+    backgroundColor: "#E4B76E",
     borderWidth: 1,
-    borderColor: "rgba(255, 236, 214, 0.9)",
-    shadowColor: "rgba(219, 167, 120, 0.8)",
+    borderColor: "rgba(228, 183, 110, 0.9)",
+    shadowColor: "rgba(228, 183, 110, 0.8)",
     shadowOpacity: 0.35,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
@@ -220,20 +220,20 @@ const localStyles = StyleSheet.create({
     opacity: 0.7,
   },
   ctaText: {
-    color: "#5A3218",
+    color: "#2B2B2B",
     fontSize: 22,
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
     fontWeight: "600",
   },
   statusText: {
     marginTop: 16,
-    color: "#9A7B63",
+    color: "#6E6E6E",
     fontSize: 13,
     textTransform: "lowercase",
   },
   metaText: {
     marginTop: 4,
-    color: "#B0947D",
+    color: "#6E6E6E",
     fontSize: 11,
   },
 });

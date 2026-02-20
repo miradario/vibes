@@ -34,7 +34,7 @@ const Messages = () => {
                   <Icon name="infinite" color={DARK_GRAY} size={20} />
                 </TouchableOpacity>
                 <View style={styles.flowTopCenter}>
-                  <Icon name="chatbubble-ellipses" color="#2F8F83" size={26} />
+                  <Icon name="chatbubble-ellipses" color="#AEBFD1" size={26} />
                 </View>
                 <TouchableOpacity style={styles.flowTopIcon}>
                   <Icon name="ellipsis-vertical" color={DARK_GRAY} size={20} />
@@ -46,11 +46,11 @@ const Messages = () => {
                 onPress={() => navigation.navigate("Soulmates" as never)}
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Icon name="heart" color="#2F8F83" size={16} />
+                  <Icon name="heart" color="#AEBFD1" size={16} />
                   <Text
                     style={[
                       styles.flowSectionTitle,
-                      { marginLeft: 8, color: "#2F8F83" },
+                      { marginLeft: 8, color: "#AEBFD1" },
                     ]}
                   >
                     New Connections

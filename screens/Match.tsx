@@ -168,7 +168,7 @@ const matchVideoStyles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 248, 240, 0.25)",
+    backgroundColor: "rgba(246, 246, 244, 0.25)",
   },
   matchCard: {
     width: "100%",
@@ -181,18 +181,18 @@ const matchVideoStyles = StyleSheet.create({
   },
   matchTitle: {
     fontSize: 28,
-    color: "#5F6F52",
+    color: "#6E6E6E",
     fontWeight: "600",
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
     textAlign: "center",
     marginBottom: 18,
   },
   matchSubtitle: {
     marginTop: 6,
-    color: "#7A886C",
+    color: "#6E6E6E",
     fontSize: 18,
     textAlign: "center",
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
     marginBottom: 32,
   },
   avatarBackground: {
@@ -241,11 +241,11 @@ const matchVideoStyles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
     borderWidth: 3,
-    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderColor: "rgba(246, 246, 244, 0.95)",
     zIndex: 2,
   },
   buttonsBackground: {
-    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    backgroundColor: "rgba(246, 246, 244, 0.6)",
     borderRadius: 24,
     paddingVertical: 34,
     paddingHorizontal: 24,
@@ -255,7 +255,7 @@ const matchVideoStyles = StyleSheet.create({
     alignItems: "center",
   },
   matchPrimaryButton: {
-    backgroundColor: "#8F9F86",
+    backgroundColor: "#AEBFD1",
     paddingVertical: 16,
     borderRadius: 28,
     alignItems: "center",
@@ -263,23 +263,23 @@ const matchVideoStyles = StyleSheet.create({
     marginBottom: 14,
   },
   matchPrimaryButtonText: {
-    color: "#FFF6EE",
+    color: "#F6F6F4",
     fontSize: 20,
     fontWeight: "600",
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
     letterSpacing: 0.4,
   },
   matchSecondaryButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    backgroundColor: "rgba(246, 246, 244, 0.95)",
     paddingVertical: 14,
     borderRadius: 26,
     alignItems: "center",
     width: "100%",
   },
   matchSecondaryButtonText: {
-    color: "#5F6F52",
+    color: "#6E6E6E",
     fontSize: 20,
     fontWeight: "500",
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
   },
 });

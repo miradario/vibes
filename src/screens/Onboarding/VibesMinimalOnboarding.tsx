@@ -14,9 +14,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { useFonts } from "expo-font";
-import { Inter_400Regular } from "@expo-google-fonts/inter";
-import { PlayfairDisplay_600SemiBold } from "@expo-google-fonts/playfair-display";
 import { useNavigation } from "@react-navigation/native";
 import { vibesTheme } from "../../theme/vibesTheme";
 import Icon from "../../../components/Icon";
@@ -37,11 +34,6 @@ const VibesMinimalOnboarding = () => {
   const draw2 = useSharedValue(0);
   const draw3 = useSharedValue(0);
   const penProgress = useSharedValue(0);
-
-  const [fontsLoaded] = useFonts({
-    PlayfairDisplay_600SemiBold,
-    Inter_400Regular,
-  });
 
   useEffect(() => {
     illustrationOpacity.value = withTiming(1, {
@@ -275,15 +267,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 34,
-    fontWeight: "600",
     letterSpacing: 0.3,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
-    fontFamily: "PlayfairDisplay_600SemiBold",
-  },
-  titleFallback: {
-    fontFamily: undefined,
-    fontWeight: "600",
+    fontFamily: "CormorantGaramond_600SemiBold",
   },
   body: {
     marginTop: vibesTheme.spacing.lg,
@@ -291,11 +278,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
     color: vibesTheme.colors.secondaryText,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "CormorantGaramond_500Medium",
     maxWidth: 320,
-  },
-  bodyFallback: {
-    fontFamily: undefined,
   },
   ctaButton: {
     marginTop: "auto",

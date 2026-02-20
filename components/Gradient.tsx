@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     width: width * 1.7,
     height: width * 1.7,
     borderRadius: width,
-    backgroundColor: "#FFA85C",
+    backgroundColor: "#E4B76E",
   },
   core: {
     position: "absolute",
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     width: width * 1.2,
     height: width * 1.2,
     borderRadius: width,
-    backgroundColor: "#FF7A1A",
+    backgroundColor: "#D88C7A",
   },
   ember: {
     position: "absolute",
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     width: width * 0.76,
     height: width * 0.76,
     borderRadius: width,
-    backgroundColor: "#FFD3A8",
+    backgroundColor: "#F6F6F4",
   },
 });
 

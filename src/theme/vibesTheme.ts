@@ -1,15 +1,15 @@
 export const vibesTheme = {
   colors: {
     background: "#F6F6F4",
-    surface: "#FFFFFF",
-    primaryText: "#1E1E1E",
+    surface: "#F6F6F4",
+    primaryText: "#2B2B2B",
     secondaryText: "#6E6E6E",
-    muted: "#A0A0A0",
+    muted: "#6E6E6E",
     accentBlue: "#AEBFD1",
     accentMustard: "#E4B76E",
     accentCoral: "#D88C7A",
     lineArt: "#2B2B2B",
-    borderSoft: "rgba(0,0,0,0.06)",
+    borderSoft: "rgba(43, 43, 43, 0.06)",
   },
   radii: {
     sm: 8,

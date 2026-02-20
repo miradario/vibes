@@ -81,14 +81,14 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     marginBottom: 18,
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
   },
   card: {
     flex: 1,
     backgroundColor: WHITE,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E8D8C7",
+    borderColor: "#AEBFD1",
   },
   cardContent: {
     padding: 16,
@@ -97,7 +97,7 @@ const localStyles = StyleSheet.create({
   titleText: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontFamily: "serif",
+    fontFamily: "CormorantGaramond_500Medium",
     marginTop: 8,
     marginBottom: 6,
   },

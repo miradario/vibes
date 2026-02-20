@@ -527,7 +527,7 @@ export default EditProfile;
 const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(17, 12, 24, 0.45)",
+    backgroundColor: "rgba(43, 43, 43, 0.45)",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
@@ -570,7 +570,7 @@ const modalStyles = StyleSheet.create({
     fontWeight: "700",
   },
   secondaryButton: {
-    backgroundColor: "#F4E7DD",
+    backgroundColor: "#F6F6F4",
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",

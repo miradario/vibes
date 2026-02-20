@@ -1,13 +1,7 @@
 /** @format */
 
 import React from "react";
-import {
-  Text,
-  View,
-  Image,
-  Dimensions,
-  TouchableOpacity,
-} from "react-native";
+import { Text, View, Image, Dimensions, TouchableOpacity } from "react-native";
 import Icon from "./Icon";
 import { CardItemT } from "../types";
 import styles, {
@@ -64,7 +58,7 @@ const CardItem = ({
     color: DARK_GRAY,
     fontSize: hasVariant ? 15 : isDiscover ? 22 : 30,
     textAlign: isDiscover ? ("center" as const) : ("left" as const),
-    fontFamily: isDiscover ? "serif" : undefined,
+    fontFamily: "CormorantGaramond_500Medium",
   };
   return (
     <View
@@ -73,9 +67,7 @@ const CardItem = ({
         isDiscover && styles.containerCardItemDiscover,
       ]}
     >
-      {isDiscover && (
-        <View style={styles.discoverCardBackground} />
-      )}
+      {isDiscover && <View style={styles.discoverCardBackground} />}
       {isDiscover && (
         <View pointerEvents="none" style={styles.discoverSparkleLayer}>
           <Image
@@ -126,16 +118,10 @@ const CardItem = ({
               <Image
                 source={image}
                 style={[imageStyle, styles.discoverImage]}
-                blurRadius={imageBlurRadius}
               />
             </View>
           ) : hasVariant ? (
             <View style={styles.soulmateAvatarWrap}>
-              <Image
-                source={require("../assets/images/logo.png")}
-                style={styles.soulmateAvatarHalo}
-                resizeMode="contain"
-              />
               <Image
                 source={image}
                 style={[imageStyle, styles.soulmateAvatarImage]}

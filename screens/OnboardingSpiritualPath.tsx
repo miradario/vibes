@@ -132,7 +132,7 @@ const OnboardingSpiritualPath = () => {
                   <TextInput
                     style={[styles.loginInput, { marginTop: 0 }]}
                     placeholder={`Tell us about your ${path} practice...`}
-                    placeholderTextColor="#9B91A6"
+                    placeholderTextColor="#6E6E6E"
                     multiline
                     numberOfLines={3}
                     value={pathDescriptions[path] || ""}
@@ -144,7 +144,7 @@ const OnboardingSpiritualPath = () => {
                   <TextInput
                     style={[styles.loginInput, { marginTop: 5 }]}
                     placeholder="e.g., 5 years"
-                    placeholderTextColor="#9B91A6"
+                    placeholderTextColor="#6E6E6E"
                     value={pathYears[path] || ""}
                     onChangeText={(text) => updateYears(path, text)}
                   />
@@ -154,7 +154,7 @@ const OnboardingSpiritualPath = () => {
                       styles.onboardListItem,
                       {
                         backgroundColor: teacherPaths.includes(path)
-                          ? "#F3F0F7"
+                          ? "#F6F6F4"
                           : "transparent",
                         marginTop: 10,
                         paddingHorizontal: 0,
@@ -169,7 +169,7 @@ const OnboardingSpiritualPath = () => {
                         name="school"
                         size={18}
                         color={
-                          teacherPaths.includes(path) ? "#6B4CE6" : DARK_GRAY
+                          teacherPaths.includes(path) ? "#D88C7A" : DARK_GRAY
                         }
                         style={{ marginRight: 8 }}
                       />
@@ -179,8 +179,8 @@ const OnboardingSpiritualPath = () => {
                           {
                             fontSize: 14,
                             color: teacherPaths.includes(path)
-                              ? "#6B4CE6"
-                              : "#1A1A1A",
+                              ? "#D88C7A"
+                              : "#2B2B2B",
                           },
                         ]}
                       >
@@ -204,7 +204,7 @@ const OnboardingSpiritualPath = () => {
                       <TextInput
                         style={[styles.loginInput, { marginTop: 5 }]}
                         placeholder="e.g., 3 years"
-                        placeholderTextColor="#9B91A6"
+                        placeholderTextColor="#6E6E6E"
                         value={teachingYears[path] || ""}
                         onChangeText={(text) => updateTeachingYears(path, text)}
                       />

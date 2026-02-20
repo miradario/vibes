@@ -75,7 +75,7 @@ const OnboardingCountry = () => {
           <TextInput
             style={styles.loginInput}
             placeholder="Enter your country"
-            placeholderTextColor="#9B91A6"
+            placeholderTextColor="#6E6E6E"
             autoCapitalize="words"
             value={country}
             onChangeText={setCountry}
@@ -90,7 +90,7 @@ const OnboardingCountry = () => {
           <Icon
             name="location"
             size={18}
-            color="#6B4CE6"
+            color="#D88C7A"
             style={{ marginRight: 8 }}
           />
           <Text style={styles.welcomeSecondaryText}>

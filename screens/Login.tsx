@@ -9,6 +9,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
@@ -61,7 +62,7 @@ const Login = () => {
             <TextInput
               style={styles.loginInput}
               placeholder="your@email.com"
-              placeholderTextColor="#9B91A6"
+              placeholderTextColor="#6E6E6E"
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
@@ -73,8 +74,8 @@ const Login = () => {
             <Text style={styles.loginLabel}>Password</Text>
             <TextInput
               style={styles.loginInput}
-              placeholder="••••••••"
-              placeholderTextColor="#9B91A6"
+              placeholder=""
+              placeholderTextColor="#6E6E6E"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
@@ -83,18 +84,20 @@ const Login = () => {
 
           {error ? <Text style={styles.loginError}>{error}</Text> : null}
 
-          <VibesActionButton
-            label={loading ? "Signing in..." : "Sign in"}
-            variant="start"
-            onPress={handleLogin}
-            disabled={isDisabled}
-          />
+          <View style={localStyles.actions}>
+            <VibesActionButton
+              label={loading ? "Signing in..." : "Sign in"}
+              variant="start"
+              onPress={handleLogin}
+              disabled={isDisabled}
+            />
 
-          <VibesActionButton
-            label="Back"
-            variant="skip"
-            onPress={() => navigation.navigate("Welcome" as never)}
-          />
+            <VibesActionButton
+              label="Back"
+              variant="skip"
+              onPress={() => navigation.navigate("Welcome" as never)}
+            />
+          </View>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -102,3 +105,9 @@ const Login = () => {
 };
 
 export default Login;
+
+const localStyles = StyleSheet.create({
+  actions: {
+    marginTop: 28,
+  },
+});

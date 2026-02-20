@@ -90,7 +90,7 @@ const OnboardingAge = () => {
             onPress={() => setShowPicker(true)}
             activeOpacity={0.7}
           >
-            <Text style={{ color: birthDate ? DARK_GRAY : "#9B91A6" }}>
+            <Text style={{ color: birthDate ? DARK_GRAY : "#6E6E6E" }}>
               {birthDate ? formatDate(birthDate) : "Select your birth date"}
             </Text>
           </TouchableOpacity>

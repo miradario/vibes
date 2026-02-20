@@ -45,7 +45,7 @@ const OnboardingName = () => {
           <TextInput
             style={styles.loginInput}
             placeholder="Enter your name"
-            placeholderTextColor="#9B91A6"
+            placeholderTextColor="#6E6E6E"
             autoCapitalize="words"
             value={name}
             onChangeText={setName}

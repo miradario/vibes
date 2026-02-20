@@ -73,7 +73,7 @@ const Signup = () => {
             <TextInput
               style={styles.loginInput}
               placeholder="tu@email.com"
-              placeholderTextColor="#9B91A6"
+              placeholderTextColor="#6E6E6E"
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
@@ -86,7 +86,7 @@ const Signup = () => {
             <TextInput
               style={styles.loginInput}
               placeholder="••••••••"
-              placeholderTextColor="#9B91A6"
+              placeholderTextColor="#6E6E6E"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
@@ -98,7 +98,7 @@ const Signup = () => {
             <TextInput
               style={styles.loginInput}
               placeholder="••••••••"
-              placeholderTextColor="#9B91A6"
+              placeholderTextColor="#6E6E6E"
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}

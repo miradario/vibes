@@ -114,7 +114,7 @@ const OnboardingPhoto = () => {
                   height: 200,
                   borderRadius: 100,
                   borderWidth: 3,
-                  borderColor: "#6B4CE6",
+                  borderColor: "#D88C7A",
                 }}
               />
             </TouchableOpacity>
@@ -125,17 +125,17 @@ const OnboardingPhoto = () => {
                 width: 200,
                 height: 200,
                 borderRadius: 100,
-                backgroundColor: "#F3F0F7",
+                backgroundColor: "#F6F6F4",
                 borderWidth: 2,
-                borderColor: "#6B4CE6",
+                borderColor: "#D88C7A",
                 borderStyle: "dashed",
                 justifyContent: "center",
                 alignItems: "center",
               }}
             >
-              <Icon name="camera" size={60} color="#6B4CE6" />
+              <Icon name="camera" size={60} color="#D88C7A" />
               <Text
-                style={{ marginTop: 10, color: "#6B4CE6", fontWeight: "600" }}
+                style={{ marginTop: 10, color: "#D88C7A", fontWeight: "600" }}
               >
                 Add Photo
               </Text>
@@ -148,7 +148,7 @@ const OnboardingPhoto = () => {
             <Icon
               name="images"
               size={18}
-              color="#6B4CE6"
+              color="#D88C7A"
               style={{ marginRight: 8 }}
             />
             <Text style={styles.welcomeSecondaryText}>Choose from gallery</Text>
@@ -157,7 +157,7 @@ const OnboardingPhoto = () => {
             <Icon
               name="camera"
               size={18}
-              color="#6B4CE6"
+              color="#D88C7A"
               style={{ marginRight: 8 }}
             />
             <Text style={styles.welcomeSecondaryText}>Take a photo</Text>
