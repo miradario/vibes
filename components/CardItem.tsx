@@ -7,7 +7,6 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
-  ScrollView,
 } from "react-native";
 import Icon from "./Icon";
 import DiscoverCirclesOverlay from "./DiscoverCirclesOverlay";
@@ -83,12 +82,7 @@ const CardItem = ({
       <View style={[styles.containerCardItem, styles.containerCardItemDiscover]}>
         <View style={styles.discoverCardBackground} />
         <DiscoverCirclesOverlay />
-        <ScrollView
-          style={styles.discoverScroll}
-          contentContainerStyle={styles.discoverScrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
+        <View style={styles.discoverScroll}>
           <View style={styles.discoverHeaderWrap}>
             <Text style={styles.discoverTitle}>{name}</Text>
             {discoverSubtitle ? (
@@ -135,7 +129,17 @@ const CardItem = ({
               ))}
             </View>
           ) : null}
-        </ScrollView>
+
+          {onContactPress ? (
+            <TouchableOpacity
+              style={styles.discoverConnectButton}
+              onPress={onContactPress}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.discoverConnectButtonText}>Conectar</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
     );
   }
