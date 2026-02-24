@@ -1,9 +1,9 @@
 /** @format */
 
 import React, { useEffect } from "react";
-import { Pressable, StyleSheet, Text, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Circle, Ellipse, G, Path } from "react-native-svg";
+import Svg, { Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 import Animated, {
   Easing,
   interpolate,
@@ -13,31 +13,161 @@ import Animated, {
   withDelay,
   withSequence,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 import { useNavigation } from "@react-navigation/native";
 import { vibesTheme } from "../../theme/vibesTheme";
 import Icon from "../../../components/Icon";
+import { firstSvgPaths } from "./firstSvgPaths";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedG = Animated.createAnimatedComponent(G);
+
+type DrawStrokePathProps = {
+  d: string;
+  dash: number;
+  startAt: number;
+  span: number;
+  progress: SharedValue<number>;
+};
+
+const DrawStrokePath = ({
+  d,
+  dash,
+  startAt,
+  span,
+  progress,
+}: DrawStrokePathProps) => {
+  const animatedProps = useAnimatedProps(() => {
+    "worklet";
+    const local = Math.min(Math.max((progress.value - startAt) / span, 0), 1);
+    return {
+      strokeDashoffset: dash * (1 - local),
+      opacity: local > 0 ? 0.95 : 0,
+    };
+  });
+
+  return (
+    <AnimatedPath
+      d={d}
+      fill="none"
+      stroke={vibesTheme.colors.lineArt}
+      strokeWidth={2.1}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeDasharray={dash}
+      animatedProps={animatedProps}
+    />
+  );
+};
+
+type ButterflyProps = {
+  phase: number;
+  amplitudeX: number;
+  amplitudeY: number;
+  scale: number;
+  progress: SharedValue<number>;
+  x: number;
+  y: number;
+  size: number;
+};
+
+const butterflyParts = [firstSvgPaths[47], firstSvgPaths[48], firstSvgPaths[53]];
+
+const FlyingButterfly = ({
+  phase,
+  amplitudeX,
+  amplitudeY,
+  scale,
+  progress,
+  x,
+  y,
+  size,
+}: ButterflyProps) => {
+  const butterflyStyle = useAnimatedStyle(() => {
+    "worklet";
+    const t = Math.min(Math.max(progress.value, 0), 1);
+    const lateral = Math.sin((t + phase) * Math.PI * 2.4);
+    const lift = Math.cos((t + phase) * Math.PI * 2.1);
+    const tx = t * amplitudeX * 1.7 + lateral * amplitudeX * 0.34;
+    const ty = -t * amplitudeY * 2.7 + lift * amplitudeY * 0.3;
+    const rot = lateral * 10;
+    const flutter = 1 + Math.sin((t + phase) * Math.PI * 5.2) * 0.04;
+    const opacity = interpolate(
+      t,
+      [0, 0.08, 0.58, 0.84, 1],
+      [0, 0.96, 0.92, 0.48, 0],
+    );
+
+    return {
+      opacity,
+      transform: [
+        { translateX: tx },
+        { translateY: ty },
+        { rotate: `${rot}deg` },
+        { scale: scale * flutter },
+      ],
+    };
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.butterflyLayer,
+        { left: x, top: y, width: size, height: size },
+        butterflyStyle,
+      ]}
+    >
+      <Svg width="100%" height="100%" viewBox="880 145 150 120">
+        {butterflyParts.map((part, index) => (
+          <Path key={`butterfly-${index}`} d={part.d} fill={part.fill} />
+        ))}
+      </Svg>
+    </Animated.View>
+  );
+};
+
+const butterflyPathIndexes = new Set([47, 48, 53]);
+const hiddenStaticPathIndexes = new Set([2, 49, 50, 51, 52]);
+
+const basePaths = firstSvgPaths.filter(
+  (_, index) =>
+    index !== 0 &&
+    !butterflyPathIndexes.has(index) &&
+    !hiddenStaticPathIndexes.has(index),
+);
+
+const drawPaths = [
+  { d: firstSvgPaths[45].d, dash: 12000, startAt: 0.0, span: 0.22 },
+  { d: firstSvgPaths[3].d, dash: 26000, startAt: 0.22, span: 0.26 },
+  { d: firstSvgPaths[8].d, dash: 13000, startAt: 0.48, span: 0.18 },
+  { d: firstSvgPaths[7].d, dash: 28000, startAt: 0.66, span: 0.22 },
+  { d: firstSvgPaths[44].d, dash: 10000, startAt: 0.88, span: 0.12 },
+] as const;
 
 const VibesMinimalOnboarding = () => {
   const navigation = useNavigation();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
+  const illustrationHeight = Math.max(300, height * 0.5);
+  const illustrationWidth = Math.max(280, width - vibesTheme.spacing.lg * 2);
+
   const illustrationOpacity = useSharedValue(0);
   const titleY = useSharedValue(8);
   const titleOpacity = useSharedValue(0);
   const ctaOpacity = useSharedValue(0);
   const ctaScale = useSharedValue(1);
-  const draw1 = useSharedValue(0);
-  const draw2 = useSharedValue(0);
-  const draw3 = useSharedValue(0);
+  const drawProgress = useSharedValue(0);
+  const fillOpacity = useSharedValue(0);
   const penProgress = useSharedValue(0);
+  const butterflyFlightA = useSharedValue(0);
+  const butterflyFlightB = useSharedValue(0);
+  const butterflyFlightC = useSharedValue(0);
 
   useEffect(() => {
     illustrationOpacity.value = withTiming(1, {
-      duration: 400,
+      duration: 420,
       easing: Easing.out(Easing.cubic),
     });
     titleOpacity.value = withDelay(
@@ -53,35 +183,38 @@ const VibesMinimalOnboarding = () => {
       withTiming(1, { duration: 360, easing: Easing.out(Easing.cubic) }),
     );
 
-    const durationMs = 2600;
-    const d1 = Math.round(durationMs * 0.55);
-    const d2 = Math.round(durationMs * 0.25);
-    const d3 = Math.max(1, durationMs - d1 - d2);
-
-    draw1.value = withDelay(
-      200,
-      withTiming(1, { duration: d1, easing: Easing.out(Easing.cubic) }),
-    );
-    draw2.value = withDelay(
-      200 + d1,
-      withTiming(1, { duration: d2, easing: Easing.out(Easing.cubic) }),
-    );
-    draw3.value = withDelay(
-      200 + d1 + d2,
-      withTiming(1, { duration: d3, easing: Easing.out(Easing.cubic) }),
+    drawProgress.value = withDelay(
+      180,
+      withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.cubic) }),
     );
     penProgress.value = withDelay(
-      200,
-      withTiming(1, {
-        duration: durationMs,
-        easing: Easing.inOut(Easing.quad),
-      }),
+      180,
+      withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.cubic) }),
+    );
+    fillOpacity.value = withDelay(
+      2500,
+      withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) }),
+    );
+
+    butterflyFlightA.value = withDelay(
+      2450,
+      withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.cubic) }),
+    );
+    butterflyFlightB.value = withDelay(
+      2680,
+      withTiming(1, { duration: 3400, easing: Easing.inOut(Easing.cubic) }),
+    );
+    butterflyFlightC.value = withDelay(
+      2860,
+      withTiming(1, { duration: 3600, easing: Easing.inOut(Easing.cubic) }),
     );
   }, [
+    butterflyFlightA,
+    butterflyFlightB,
+    butterflyFlightC,
     ctaOpacity,
-    draw1,
-    draw2,
-    draw3,
+    drawProgress,
+    fillOpacity,
     illustrationOpacity,
     penProgress,
     titleOpacity,
@@ -102,34 +235,43 @@ const VibesMinimalOnboarding = () => {
     transform: [{ scale: ctaScale.value }],
   }));
 
-  const line1Props = useAnimatedProps(() => ({
-    strokeDashoffset: 1500 * (1 - draw1.value),
-  }));
-  const line2Props = useAnimatedProps(() => ({
-    strokeDashoffset: 900 * (1 - draw2.value),
-  }));
-  const line3Props = useAnimatedProps(() => ({
-    strokeDashoffset: 700 * (1 - draw3.value),
+  const fillGroupProps = useAnimatedProps(() => ({
+    opacity: fillOpacity.value,
   }));
 
-  const penDotProps = useAnimatedProps(() => {
-    const x = interpolate(
-      penProgress.value,
-      [0, 0.55, 0.8, 1],
-      [169, 141, 74, 196],
-    );
-    const y = interpolate(
-      penProgress.value,
-      [0, 0.55, 0.8, 1],
-      [61, 210, 302, 277],
-    );
-    const opacity = interpolate(
-      penProgress.value,
-      [0, 0.97, 1],
-      [0.65, 0.6, 0],
-    );
-    return { cx: x, cy: y, opacity };
-  });
+  const penStyle = useAnimatedStyle(() => ({
+    opacity: drawProgress.value < 1 ? 0.9 : 0,
+    transform: [
+      {
+        translateX: interpolate(
+          penProgress.value,
+          [0, 0.22, 0.48, 0.66, 0.88, 1],
+          [
+            illustrationWidth * 0.54,
+            illustrationWidth * 0.43,
+            illustrationWidth * 0.39,
+            illustrationWidth * 0.58,
+            illustrationWidth * 0.45,
+            illustrationWidth * 0.62,
+          ],
+        ),
+      },
+      {
+        translateY: interpolate(
+          penProgress.value,
+          [0, 0.22, 0.48, 0.66, 0.88, 1],
+          [
+            illustrationHeight * 0.16,
+            illustrationHeight * 0.34,
+            illustrationHeight * 0.46,
+            illustrationHeight * 0.54,
+            illustrationHeight * 0.72,
+            illustrationHeight * 0.9,
+          ],
+        ),
+      },
+    ],
+  }));
 
   const onContinue = () => {
     ctaScale.value = withSequence(
@@ -143,86 +285,85 @@ const VibesMinimalOnboarding = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View pointerEvents="none" style={styles.topGlowOverlay}>
+        <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <Defs>
+            <LinearGradient id="ScreenTopRightGlow" x1="100" y1="0" x2="35" y2="70">
+              <Stop offset="0" stopColor={vibesTheme.colors.accentMustard} stopOpacity={0.11} />
+              <Stop offset="1" stopColor={vibesTheme.colors.accentMustard} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100" height="100" fill="url(#ScreenTopRightGlow)" />
+        </Svg>
+      </View>
       <Animated.View
         style={[
           styles.illustrationArea,
-          { height: Math.max(280, height * 0.45) },
+          { height: illustrationHeight },
           illustrationStyle,
         ]}
       >
-        <Svg width="100%" height="100%" viewBox="0 0 360 320">
-          <Ellipse
-            cx="170"
-            cy="150"
-            rx="82"
-            ry="96"
-            fill={vibesTheme.colors.accentBlue}
-            opacity={0.5}
-          />
-          <Circle
-            cx="230"
-            cy="216"
-            r="56"
-            fill={vibesTheme.colors.accentMustard}
-            opacity={0.72}
-          />
-          <Circle
-            cx="266"
-            cy="62"
-            r="44"
-            fill={vibesTheme.colors.accentCoral}
-            opacity={0.12}
-          />
+        <Svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 1588 2048"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <Defs>
+            <LinearGradient id="Gradient1" x1="639.033" y1="1028.56" x2="1034.76" y2="1131.54">
+              <Stop offset="0" stopColor="rgb(216,227,240)" stopOpacity={1} />
+              <Stop offset="1" stopColor="rgb(251,252,253)" stopOpacity={1} />
+            </LinearGradient>
+          </Defs>
 
-          <G
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity={0.88}
-          >
-            <AnimatedPath
-              d="M298 38c-5 40-28 62-53 70-24 8-51 3-66-11-17-17-7-29-1-36 M169 61c-11 11-23 25-35 42-16 23-27 51-24 74 2 14 10 24 22 30 M141 116c10-13 24-20 39-18 15 2 26 12 30 24 M150 131c7-8 18-12 28-10 9 1 16 7 19 15"
-              stroke={vibesTheme.colors.lineArt}
-              strokeWidth={1.5}
-              strokeDasharray={1500}
-              animatedProps={line1Props}
-            />
-            <AnimatedPath
-              d="M141 158c16 9 39 10 54 1 M108 210c16-8 32-10 49-8 20 2 37 11 58 11 19 0 37-6 52-17"
-              stroke={vibesTheme.colors.lineArt}
-              strokeWidth={1.5}
-              strokeDasharray={900}
-              animatedProps={line2Props}
-            />
-            <AnimatedPath
-              d="M74 302c13-44 35-72 66-88"
-              stroke={vibesTheme.colors.lineArt}
-              strokeWidth={1.5}
-              strokeDasharray={700}
-              animatedProps={line3Props}
-            />
-            <AnimatedPath
-              d="M196 277c30 18 68 22 120 20"
-              stroke={vibesTheme.colors.accentCoral}
-              strokeWidth={1.35}
-              strokeDasharray={700}
-              animatedProps={line3Props}
-            />
-            <AnimatedCircle
-              r={2.6}
-              fill={vibesTheme.colors.accentCoral}
-              animatedProps={penDotProps}
-            />
-          </G>
+          <AnimatedG animatedProps={fillGroupProps}>
+            {basePaths.map((path, index) => (
+              <Path key={`base-${index}`} d={path.d} fill={path.fill} />
+            ))}
+          </AnimatedG>
 
-          <G fill={vibesTheme.colors.accentCoral} opacity={0.58}>
-            <Circle cx="96" cy="92" r="2" />
-            <Circle cx="267" cy="95" r="2" />
-            <Circle cx="287" cy="140" r="1.8" />
-            <Circle cx="108" cy="176" r="1.7" />
-            <Circle cx="248" cy="176" r="1.7" />
-          </G>
+          {drawPaths.map((path, index) => (
+            <DrawStrokePath
+              key={`draw-${index}`}
+              d={path.d}
+              dash={path.dash}
+              startAt={path.startAt}
+              span={path.span}
+              progress={drawProgress}
+            />
+          ))}
         </Svg>
+        <Animated.View pointerEvents="none" style={[styles.penTip, penStyle]} />
+        <FlyingButterfly
+          phase={0}
+          amplitudeX={26}
+          amplitudeY={18}
+          scale={1}
+          progress={butterflyFlightA}
+          x={illustrationWidth * 0.56}
+          y={illustrationHeight * 0.09}
+          size={62}
+        />
+        <FlyingButterfly
+          phase={0.2}
+          amplitudeX={21}
+          amplitudeY={16}
+          scale={0.86}
+          progress={butterflyFlightB}
+          x={illustrationWidth * 0.44}
+          y={illustrationHeight * 0.16}
+          size={54}
+        />
+        <FlyingButterfly
+          phase={0.4}
+          amplitudeX={19}
+          amplitudeY={14}
+          scale={0.78}
+          progress={butterflyFlightC}
+          x={illustrationWidth * 0.66}
+          y={illustrationHeight * 0.14}
+          size={48}
+        />
       </Animated.View>
 
       <Animated.View style={[styles.textBlock, titleStyle]}>
@@ -253,15 +394,35 @@ const styles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
     alignItems: "center",
   },
+  topGlowOverlay: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: "56%",
+    height: "25%",
+    zIndex: 0,
+  },
   illustrationArea: {
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: vibesTheme.spacing.xl,
+    paddingHorizontal: vibesTheme.spacing.lg,
     paddingTop: vibesTheme.spacing.md,
   },
+  butterflyLayer: {
+    position: "absolute",
+    zIndex: 4,
+  },
+  penTip: {
+    position: "absolute",
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: vibesTheme.colors.accentCoral,
+    zIndex: 5,
+  },
   textBlock: {
-    marginTop: vibesTheme.spacing.lg,
+    marginTop: vibesTheme.spacing.md,
     alignItems: "center",
     paddingHorizontal: vibesTheme.spacing.xl,
   },

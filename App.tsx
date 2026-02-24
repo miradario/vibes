@@ -119,7 +119,37 @@ const App = () => {
         <Stack.Screen
           name="Welcome"
           component={Welcome}
-          options={{ headerShown: false, animationEnabled: true }}
+          options={{
+            headerShown: false,
+            animationEnabled: true,
+            gestureDirection: "vertical",
+            transitionSpec: {
+              open: {
+                animation: "timing",
+                config: { duration: 460 },
+              },
+              close: {
+                animation: "timing",
+                config: { duration: 360 },
+              },
+            },
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                opacity: current.progress.interpolate({
+                  inputRange: [0, 0.25, 1],
+                  outputRange: [0, 0.55, 1],
+                }),
+                transform: [
+                  {
+                    translateY: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.height, 0],
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
         />
         <Stack.Screen
           name="Tab"

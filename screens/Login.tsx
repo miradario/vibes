@@ -5,7 +5,6 @@ import { useLoginMutation } from "../src/auth/auth.queries";
 import {
   View,
   Text,
-  Image,
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +13,9 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
+import AnimatedIllustration from "../src/components/illustrations/AnimatedIllustration";
+import { loginIllustrationConfig } from "../src/components/illustrations/presets/loginIllustrationConfig";
+import VibesHeader from "../src/components/VibesHeader";
 
 const Login = () => {
   const navigation = useNavigation();
@@ -44,16 +46,19 @@ const Login = () => {
 
   return (
     <View style={styles.bg}>
-      <Image
-        source={require("../assets/images/logo.png")}
-        style={styles.welcomeLogo}
-      />
+      <View style={styles.welcomeLogo}>
+        <AnimatedIllustration
+          {...loginIllustrationConfig}
+          style={localStyles.loginIllustration}
+        />
+      </View>
       <View />
       <KeyboardAvoidingView
         style={styles.loginContainer}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.loginCard}>
+          <VibesHeader title="Login" subtitle="" style={localStyles.header} />
           <Text style={styles.loginTitle}>Welcome back</Text>
           <Text style={styles.loginSubtitle}>Sign in to continue</Text>
 
@@ -109,5 +114,12 @@ export default Login;
 const localStyles = StyleSheet.create({
   actions: {
     marginTop: 28,
+  },
+  header: {
+    marginBottom: 14,
+  },
+  loginIllustration: {
+    width: "100%",
+    height: "100%",
   },
 });

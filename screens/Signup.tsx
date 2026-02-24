@@ -6,14 +6,16 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-  Image,
+  StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import styles, { WHITE } from "../assets/styles";
+import styles from "../assets/styles";
+import AnimatedIllustration from "../src/components/illustrations/AnimatedIllustration";
+import { signupIllustrationConfig } from "../src/components/illustrations/presets/signupIllustrationConfig";
+import VibesHeader from "../src/components/VibesHeader";
+import VibesActionButton from "../components/VibesActionButton";
 
 const Signup = () => {
   const navigation = useNavigation();
@@ -55,16 +57,19 @@ const Signup = () => {
   return (
     <View style={styles.bg}>
       <View>
-        <Image
-          source={require("../assets/images/logo.png")}
-          style={styles.welcomeLogo}
-        />
+        <View style={styles.welcomeLogo}>
+          <AnimatedIllustration
+            {...signupIllustrationConfig}
+            style={localStyles.signupIllustration}
+          />
+        </View>
       </View>
       <KeyboardAvoidingView
         style={styles.loginContainer}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.loginCard}>
+          <VibesHeader title="Signup" subtitle="" style={localStyles.header} />
           <Text style={styles.loginTitle}>Crear cuenta</Text>
           <Text style={styles.loginSubtitle}>Comienza tu viaje consciente</Text>
 
@@ -107,37 +112,20 @@ const Signup = () => {
 
           {error ? <Text style={styles.loginError}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={[
-              styles.loginButton,
-              (!email || !password || !confirmPassword || loading) &&
-                styles.loginButtonDisabled,
-            ]}
-            onPress={handleSignup}
-            disabled={!email || !password || !confirmPassword || loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={WHITE} />
-            ) : (
-              <Text style={styles.loginButtonText}>Crear cuenta</Text>
-            )}
-          </TouchableOpacity>
+          <View style={localStyles.actions}>
+            <VibesActionButton
+              label={loading ? "Signing up..." : "Sign up"}
+              variant="start"
+              onPress={handleSignup}
+              disabled={!email || !password || !confirmPassword || loading}
+            />
 
-          <TouchableOpacity
-            style={styles.loginSecondary}
-            onPress={() => navigation.navigate("Login" as never)}
-          >
-            <Text style={styles.loginSecondaryText}>
-              ¿Ya tienes cuenta? Inicia sesión
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.loginSecondary}
-            onPress={() => navigation.navigate("Welcome" as never)}
-          >
-            <Text style={styles.loginSecondaryText}>Volver</Text>
-          </TouchableOpacity>
+            <VibesActionButton
+              label="Back"
+              variant="skip"
+              onPress={() => navigation.navigate("Welcome" as never)}
+            />
+          </View>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -145,3 +133,16 @@ const Signup = () => {
 };
 
 export default Signup;
+
+const localStyles = StyleSheet.create({
+  actions: {
+    marginTop: 28,
+  },
+  header: {
+    marginBottom: 14,
+  },
+  signupIllustration: {
+    width: "100%",
+    height: "100%",
+  },
+});
