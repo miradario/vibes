@@ -25,6 +25,10 @@ import { handleApiError } from "../src/utils/handleApiError";
 
 const Home = () => {
   const navigation = useNavigation();
+  const centerProfile = DEMO[0] ?? null;
+  const orbitUsers = centerProfile
+    ? DEMO.filter((item) => item.id !== centerProfile.id)
+    : DEMO;
   const [showGallery, setShowGallery] = useState<boolean>(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
@@ -140,7 +144,12 @@ const Home = () => {
           </View>
 
           <View style={localStyles.discoverOrbitWrap}>
-            <DiscoverOrbitCanvas users={DEMO} onUserPress={openProfileSheet} />
+            <DiscoverOrbitCanvas
+              users={orbitUsers}
+              centerUser={centerProfile}
+              onCenterPress={() => navigation.navigate("Aura" as never)}
+              onUserPress={openProfileSheet}
+            />
           </View>
 
           <View style={localStyles.discoverFiltersRow}>
