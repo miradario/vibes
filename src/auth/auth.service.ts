@@ -1,6 +1,7 @@
 import type { LoginInput } from "./auth.types";
 import * as authClient from "./supabaseAuth.client";
 import { bootstrapAuthSession } from "./session.bootstrap";
+import { recoverInvalidRefreshToken } from "./session.recovery";
 
 void bootstrapAuthSession();
 
@@ -23,6 +24,10 @@ export const signup = async ({ email, password }: LoginInput) => {
 export const logout = async () => {
   const { error } = await authClient.signOut();
   if (error) {
+    const recovered = await recoverInvalidRefreshToken(error);
+    if (recovered) {
+      return;
+    }
     throw error;
   }
 };

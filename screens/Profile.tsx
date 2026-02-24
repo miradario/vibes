@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import DEMO from "../assets/data/demo";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
@@ -33,7 +33,18 @@ const Profile = () => {
   const handleLogout = () => {
     logout(undefined, {
       onSuccess: () => {
-        navigation.navigate("Welcome" as never);
+        const resetToWelcome = CommonActions.reset({
+          index: 0,
+          routes: [{ name: "Welcome" as never }],
+        });
+        const parentNavigation = navigation.getParent();
+
+        if (parentNavigation) {
+          parentNavigation.dispatch(resetToWelcome);
+          return;
+        }
+
+        navigation.dispatch(resetToWelcome);
       },
     });
   };

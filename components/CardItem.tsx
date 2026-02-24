@@ -1,8 +1,16 @@
 /** @format */
 
 import React from "react";
-import { Text, View, Image, Dimensions, TouchableOpacity } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  Dimensions,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import Icon from "./Icon";
+import DiscoverCirclesOverlay from "./DiscoverCirclesOverlay";
 import { CardItemT } from "../types";
 import styles, {
   DISLIKE_ACTIONS,
@@ -12,7 +20,9 @@ import styles, {
   DARK_GRAY,
   WHITE,
   TEXT_PRIMARY,
+  BG_MAIN,
 } from "../assets/styles";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 const CardItem = ({
   description,
@@ -60,67 +70,85 @@ const CardItem = ({
     textAlign: isDiscover ? ("center" as const) : ("left" as const),
     fontFamily: "CormorantGaramond_500Medium",
   };
+
+  const discoverSubtitle =
+    [vibe, intention].filter(Boolean).join(" \u00b7 ") ||
+    location ||
+    (description ? description.slice(0, 64) : "");
+
+  if (isDiscover) {
+    const discoverGallery = (images && images.length > 0 ? images : [image]).slice(0, 6);
+
+    return (
+      <View style={[styles.containerCardItem, styles.containerCardItemDiscover]}>
+        <View style={styles.discoverCardBackground} />
+        <DiscoverCirclesOverlay />
+        <ScrollView
+          style={styles.discoverScroll}
+          contentContainerStyle={styles.discoverScrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.discoverHeaderWrap}>
+            <Text style={styles.discoverTitle}>{name}</Text>
+            {discoverSubtitle ? (
+              <Text style={styles.discoverSubtitle}>{discoverSubtitle}</Text>
+            ) : null}
+          </View>
+
+          <View style={styles.discoverDivider} />
+
+          <View style={styles.discoverPhotoCard}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={onImagePress}
+              disabled={!onImagePress}
+              style={styles.discoverPhotoTouch}
+            >
+              <Image source={image} style={styles.discoverPhoto} />
+              <View pointerEvents="none" style={styles.discoverPhotoFade}>
+                <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <Defs>
+                    <LinearGradient id="DiscoverPhotoFade" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0" stopColor={BG_MAIN} stopOpacity={0} />
+                      <Stop offset="1" stopColor={BG_MAIN} stopOpacity={0.95} />
+                    </LinearGradient>
+                  </Defs>
+                  <Rect x="0" y="0" width="100" height="100" fill="url(#DiscoverPhotoFade)" />
+                </Svg>
+              </View>
+            </TouchableOpacity>
+
+          </View>
+
+          {discoverGallery.length > 1 ? (
+            <View style={styles.discoverGalleryRow}>
+              {discoverGallery.slice(1).map((thumb, index) => (
+                <TouchableOpacity
+                  key={`discover-gallery-${index}`}
+                  style={styles.discoverGalleryThumbWrap}
+                  onPress={onImagePress}
+                  activeOpacity={0.85}
+                >
+                  <Image source={thumb} style={styles.discoverGalleryThumb} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
-    <View
-      style={[
-        styles.containerCardItem,
-        isDiscover && styles.containerCardItemDiscover,
-      ]}
-    >
-      {isDiscover && <View style={styles.discoverCardBackground} />}
-      {isDiscover && (
-        <View pointerEvents="none" style={styles.discoverSparkleLayer}>
-          <Image
-            source={require("../assets/images/sparklings.png")}
-            style={styles.discoverSparkleImage}
-            resizeMode="cover"
-          />
-          {[
-            { top: "8%", left: "12%", size: 4 },
-            { top: "14%", right: "18%", size: 3 },
-            { top: "22%", left: "40%", size: 2 },
-            { top: "32%", right: "12%", size: 4 },
-            { top: "46%", left: "18%", size: 3 },
-            { top: "54%", right: "28%", size: 2 },
-            { top: "62%", left: "55%", size: 3 },
-            { top: "70%", right: "16%", size: 4 },
-            { top: "78%", left: "24%", size: 2 },
-            { top: "86%", right: "34%", size: 3 },
-          ].map((dot, index) => (
-            <View
-              key={`sparkle-${index}`}
-              style={[
-                styles.discoverSparkleDot,
-                {
-                  width: dot.size,
-                  height: dot.size,
-                  borderRadius: dot.size / 2,
-                  top: dot.top as any,
-                  left: dot.left as any,
-                  right: dot.right as any,
-                },
-              ]}
-            />
-          ))}
-        </View>
-      )}
-      {/* IMAGE */}
-      <View
-        style={[styles.cardImageWrap, isDiscover && styles.discoverImageWrap]}
-      >
+    <View style={styles.containerCardItem}>
+      <View style={styles.cardImageWrap}>
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={onImagePress}
           disabled={!onImagePress}
         >
-          {isDiscover ? (
-            <View style={styles.discoverAvatarWrap}>
-              <Image
-                source={image}
-                style={[imageStyle, styles.discoverImage]}
-              />
-            </View>
-          ) : hasVariant ? (
+          {hasVariant ? (
             <View style={styles.soulmateAvatarWrap}>
               <Image
                 source={image}
@@ -128,47 +156,21 @@ const CardItem = ({
               />
             </View>
           ) : (
-            <Image
-              source={image}
-              style={[imageStyle, isDiscover && styles.discoverImage]}
-              blurRadius={imageBlurRadius}
-            />
+            <Image source={image} style={imageStyle} blurRadius={imageBlurRadius} />
           )}
         </TouchableOpacity>
-        {/* MATCHES */}
-        {matches && !isDiscover && (
-          <View
-            style={
-              isDiscover
-                ? styles.discoverMatchesOverlay
-                : styles.matchesCardOverlay
-            }
-          >
-            <View
-              style={[
-                styles.matchesCardItem,
-                isDiscover && styles.discoverMatchesPill,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.matchesTextCardItem,
-                  isDiscover && styles.matchesTextCardItemDiscover,
-                ]}
-              >
-                <Icon
-                  name="star"
-                  color={isDiscover ? DARK_GRAY : WHITE}
-                  size={13}
-                />{" "}
-                {matches}% Sync
+        {matches && (
+          <View style={styles.matchesCardOverlay}>
+            <View style={styles.matchesCardItem}>
+              <Text style={styles.matchesTextCardItem}>
+                <Icon name="star" color={WHITE} size={13} /> {matches}% Sync
               </Text>
             </View>
           </View>
         )}
       </View>
 
-      {!hasVariant && !isDiscover && images && images.length > 1 && (
+      {!hasVariant && images && images.length > 1 && (
         <View style={styles.cardThumbRow}>
           {images.slice(0, 4).map((thumb, index) => (
             <TouchableOpacity
@@ -187,30 +189,14 @@ const CardItem = ({
           activeOpacity={0.9}
           onPress={onContactPress}
           disabled={!onContactPress}
-          style={isDiscover ? styles.discoverContent : undefined}
         >
-          {/* NAME */}
-          <Text style={isDiscover ? styles.discoverName : nameStyle}>
-            {name}
-          </Text>
+          <Text style={nameStyle}>{name}</Text>
 
-          {isDiscover && location ? (
-            <Text style={styles.discoverLocation}>{location}</Text>
-          ) : null}
-
-          {/* DESCRIPTION */}
           {description && (
-            <Text
-              style={[
-                styles.descriptionCardItem,
-                isDiscover && styles.discoverDescription,
-              ]}
-            >
-              {description}
-            </Text>
+            <Text style={styles.descriptionCardItem}>{description}</Text>
           )}
 
-          {(vibe || intention) && !isDiscover && (
+          {(vibe || intention) && (
             <View style={styles.vibeRow}>
               {vibe && (
                 <View style={styles.vibePill}>
@@ -225,7 +211,7 @@ const CardItem = ({
             </View>
           )}
 
-          {tags && tags.length > 0 && !isDiscover && (
+          {tags && tags.length > 0 && (
             <View style={styles.vibeRow}>
               {tags.map((tag, index) => (
                 <View key={`${tag}-${index}`} style={styles.vibePill}>
@@ -235,47 +221,13 @@ const CardItem = ({
             </View>
           )}
 
-          {prompt && isDiscover ? (
-            <>
-              <View style={styles.discoverRitualRow}>
-                <View style={styles.discoverRitualLine} />
-                <Text style={styles.discoverRitualTitle}>
-                  💛 Ritual favorito
-                </Text>
-                <View style={styles.discoverRitualLine} />
-              </View>
-              <View style={styles.discoverPromptPill}>
-                <Text style={styles.discoverPromptText}>{prompt}</Text>
-              </View>
-            </>
-          ) : null}
-
-          {prompt && !isDiscover && (
-            <Text style={styles.promptText}>{prompt}</Text>
-          )}
-
-          {isDiscover && images && images.length > 1 && (
-            <View style={styles.cardThumbRow}>
-              {images.slice(0, 4).map((thumb, index) => (
-                <TouchableOpacity
-                  key={`thumb-discover-${index}`}
-                  style={styles.cardThumbWrap}
-                  onPress={onImagePress}
-                >
-                  <Image source={thumb} style={styles.cardThumb} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          {prompt && <Text style={styles.promptText}>{prompt}</Text>}
         </TouchableOpacity>
       )}
 
-      {!hideDetails && !isDiscover && (
+      {!hideDetails && (
         <TouchableOpacity
-          style={[
-            styles.contactButton,
-            isDiscover && styles.contactButtonDiscover,
-          ]}
+          style={styles.contactButton}
           onPress={onContactPress}
           disabled={!onContactPress}
         >
@@ -286,7 +238,6 @@ const CardItem = ({
         </TouchableOpacity>
       )}
 
-      {/* STATUS */}
       {!hideDetails && !description && (
         <View style={styles.status}>
           <View style={isOnline ? styles.online : styles.offline} />
@@ -296,14 +247,8 @@ const CardItem = ({
         </View>
       )}
 
-      {/* ACTIONS */}
-      {hasActions && !isDiscover && (
-        <View
-          style={[
-            styles.actionsCardItem,
-            isDiscover && styles.actionsCardItemDiscover,
-          ]}
-        >
+      {hasActions && (
+        <View style={styles.actionsCardItem}>
           <TouchableOpacity style={styles.miniButton}>
             <Icon name="star" color={STAR_ACTIONS} size={14} />
           </TouchableOpacity>
