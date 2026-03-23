@@ -31,10 +31,16 @@ const VibesHeader = ({
   const isCenter = align === "center";
 
   return (
-    <View style={[styles.container, isCenter ? styles.center : styles.left, style]}>
-      <Text style={[styles.title, !isCenter && styles.leftText, titleStyle]}>{title}</Text>
+    <View
+      style={[styles.container, isCenter ? styles.center : styles.left, style]}
+    >
+      <Text style={[styles.title, !isCenter && styles.leftText, titleStyle]}>
+        {title}
+      </Text>
       {subtitle ? (
-        <Text style={[styles.subtitle, !isCenter && styles.leftText, subtitleStyle]}>
+        <Text
+          style={[styles.subtitle, !isCenter && styles.leftText, subtitleStyle]}
+        >
           {subtitle}
         </Text>
       ) : null}
@@ -56,8 +62,8 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   title: {
-    marginTop: 18,
-    fontSize: 42,
+    marginTop: 22,
+    fontSize: 54,
     color: vibesTheme.colors.primaryText,
     fontFamily: "CormorantGaramond_500Medium",
     letterSpacing: 0.3,
@@ -66,7 +72,7 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: 8,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
+    fontSize: 20,
     fontFamily: "CormorantGaramond_500Medium",
     textAlign: "center",
   },

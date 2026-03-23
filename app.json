@@ -35,6 +35,7 @@
     },
     "plugins": [
       "expo-font",
+      "@lottiefiles/dotlottie-react-native/plugin",
       [
         "expo-image-picker",
         {

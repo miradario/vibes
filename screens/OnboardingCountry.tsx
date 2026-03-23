@@ -105,7 +105,7 @@ const OnboardingCountry = () => {
               !country.trim() && styles.onboardNextDisabled,
             ]}
             disabled={!country.trim()}
-            onPress={() => navigation.navigate("OnboardingGender" as never)}
+            onPress={() => navigation.navigate("OnboardingPhoto" as never)}
           >
             <Text style={styles.onboardNextText}>Next</Text>
           </TouchableOpacity>

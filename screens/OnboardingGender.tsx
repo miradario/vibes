@@ -1,16 +1,22 @@
 /** @format */
 
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
-import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import { useAuthSession } from "../src/auth/auth.queries";
+import {
+  useCompleteOnboardingMutation,
+  useOnboardingDraft,
+} from "../src/queries/onboarding.queries";
 import { GENDERS } from "../src/constants/lookups";
 
 const OnboardingGender = () => {
   const navigation = useNavigation();
-  const { draft, updateDraft } = useOnboardingDraft();
+  const { data: session } = useAuthSession();
+  const { draft, updateDraft, resetDraft } = useOnboardingDraft();
+  const completeMutation = useCompleteOnboardingMutation();
   const [selected, setSelected] = useState<number | null>(
     draft.genderId ?? null
   );
@@ -23,7 +29,7 @@ const OnboardingGender = () => {
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
           <View style={styles.onboardProgressTrack}>
-            <View style={[styles.onboardProgressFill, { width: "33%" }]} />
+            <View style={[styles.onboardProgressFill, { width: "100%" }]} />
           </View>
           <TouchableOpacity onPress={() => navigation.navigate("Tab" as never)}>
             <Text style={styles.onboardSkip}>Skip</Text>
@@ -58,16 +64,42 @@ const OnboardingGender = () => {
           <TouchableOpacity
             style={[
               styles.onboardNext,
-              !selected && styles.onboardNextDisabled,
+              (!selected || completeMutation.isPending) &&
+                styles.onboardNextDisabled,
             ]}
-            disabled={!selected}
-            onPress={() => {
-              if (!selected) return;
+            disabled={!selected || completeMutation.isPending}
+            onPress={async () => {
+              const userId = session?.user?.id;
+              if (!selected || !userId) {
+                Alert.alert("Error", "No se pudo completar el onboarding.");
+                return;
+              }
               updateDraft({ genderId: selected });
-              navigation.navigate("OnboardingOrientation" as never);
+
+              try {
+                await completeMutation.mutateAsync({
+                  userId,
+                  draft: {
+                    ...draft,
+                    genderId: selected,
+                  },
+                });
+                resetDraft();
+                navigation.navigate("Tab" as never);
+              } catch (error) {
+                const message =
+                  error instanceof Error
+                    ? error.message
+                    : "No se pudo completar el onboarding.";
+                Alert.alert("Error", message);
+              }
             }}
           >
-            <Text style={styles.onboardNextText}>Next</Text>
+            {completeMutation.isPending ? (
+              <ActivityIndicator color={DARK_GRAY} />
+            ) : (
+              <Text style={styles.onboardNextText}>Next</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

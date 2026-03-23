@@ -223,7 +223,7 @@ const OnboardingSpiritualPath = () => {
               selectedPaths.length === 0 && styles.onboardNextDisabled,
             ]}
             disabled={selectedPaths.length === 0}
-            onPress={() => navigation.navigate("OnboardingInterested" as never)}
+            onPress={() => navigation.navigate("Tab" as never)}
           >
             <Text style={styles.onboardNextText}>Next</Text>
           </TouchableOpacity>

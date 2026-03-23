@@ -10,7 +10,7 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import AnimatedIllustration from "../src/components/illustrations/AnimatedIllustration";
 import { signupIllustrationConfig } from "../src/components/illustrations/presets/signupIllustrationConfig";
@@ -25,6 +25,7 @@ const Signup = () => {
   const [error, setError] = useState<string | null>(null);
   const signupMutation = useSignupMutation();
   const loading = signupMutation.isPending;
+  const passwordsMatch = password === confirmPassword;
 
   const handleSignup = async () => {
     if (!email || !password || !confirmPassword) {
@@ -46,7 +47,12 @@ const Signup = () => {
 
     try {
       await signupMutation.mutateAsync({ email, password });
-      navigation.navigate("VibesMinimalOnboarding" as never);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "OnboardingName" as never }],
+        }),
+      );
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "No se pudo crear la cuenta.";
@@ -78,7 +84,7 @@ const Signup = () => {
             <TextInput
               style={styles.loginInput}
               placeholder="tu@email.com"
-              placeholderTextColor="#6E6E6E"
+              placeholderTextColor="rgba(110,110,110,0.45)"
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
@@ -90,7 +96,7 @@ const Signup = () => {
             <Text style={styles.loginLabel}>Contraseña</Text>
             <TextInput
               style={styles.loginInput}
-              placeholder="••••••••"
+              placeholder=""
               placeholderTextColor="#6E6E6E"
               secureTextEntry
               value={password}
@@ -102,7 +108,7 @@ const Signup = () => {
             <Text style={styles.loginLabel}>Confirmar contraseña</Text>
             <TextInput
               style={styles.loginInput}
-              placeholder="••••••••"
+              placeholder=""
               placeholderTextColor="#6E6E6E"
               secureTextEntry
               value={confirmPassword}
@@ -117,7 +123,9 @@ const Signup = () => {
               label={loading ? "Signing up..." : "Sign up"}
               variant="start"
               onPress={handleSignup}
-              disabled={!email || !password || !confirmPassword || loading}
+              disabled={
+                !email || !password || !confirmPassword || !passwordsMatch || loading
+              }
             />
 
             <VibesActionButton

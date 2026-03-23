@@ -116,7 +116,7 @@ const OnboardingAge = () => {
             onPress={() => {
               if (!birthDate) return;
               updateDraft({ birthDate: formatDate(birthDate) });
-              navigation.navigate("OnboardingGender" as never);
+              navigation.navigate("OnboardingPhoto" as never);
             }}
           >
             <Text style={styles.onboardNextText}>Next</Text>

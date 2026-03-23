@@ -1,12 +1,24 @@
 /** @format */
 
 import React, { useEffect } from "react";
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
+import Svg, {
+  Defs,
+  G,
+  LinearGradient,
+  Path,
+  Rect,
+  Stop,
+} from "react-native-svg";
 import Animated, {
   Easing,
-  interpolate,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
@@ -62,81 +74,17 @@ const DrawStrokePath = ({
   );
 };
 
-type ButterflyProps = {
-  phase: number;
-  amplitudeX: number;
-  amplitudeY: number;
-  scale: number;
-  progress: SharedValue<number>;
-  x: number;
-  y: number;
-  size: number;
-};
-
-const butterflyParts = [firstSvgPaths[47], firstSvgPaths[48], firstSvgPaths[53]];
-
-const FlyingButterfly = ({
-  phase,
-  amplitudeX,
-  amplitudeY,
-  scale,
-  progress,
-  x,
-  y,
-  size,
-}: ButterflyProps) => {
-  const butterflyStyle = useAnimatedStyle(() => {
-    "worklet";
-    const t = Math.min(Math.max(progress.value, 0), 1);
-    const lateral = Math.sin((t + phase) * Math.PI * 2.4);
-    const lift = Math.cos((t + phase) * Math.PI * 2.1);
-    const tx = t * amplitudeX * 1.7 + lateral * amplitudeX * 0.34;
-    const ty = -t * amplitudeY * 2.7 + lift * amplitudeY * 0.3;
-    const rot = lateral * 10;
-    const flutter = 1 + Math.sin((t + phase) * Math.PI * 5.2) * 0.04;
-    const opacity = interpolate(
-      t,
-      [0, 0.08, 0.58, 0.84, 1],
-      [0, 0.96, 0.92, 0.48, 0],
-    );
-
-    return {
-      opacity,
-      transform: [
-        { translateX: tx },
-        { translateY: ty },
-        { rotate: `${rot}deg` },
-        { scale: scale * flutter },
-      ],
-    };
-  });
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        styles.butterflyLayer,
-        { left: x, top: y, width: size, height: size },
-        butterflyStyle,
-      ]}
-    >
-      <Svg width="100%" height="100%" viewBox="880 145 150 120">
-        {butterflyParts.map((part, index) => (
-          <Path key={`butterfly-${index}`} d={part.d} fill={part.fill} />
-        ))}
-      </Svg>
-    </Animated.View>
-  );
-};
-
-const butterflyPathIndexes = new Set([47, 48, 53]);
-const hiddenStaticPathIndexes = new Set([2, 49, 50, 51, 52]);
+const removedRedFills = new Set(["rgb(213,173,164)", "rgb(215,190,184)"]);
+const hiddenStaticPathIndexes = new Set([1, 2, 8, 49, 50, 51, 52]);
 
 const basePaths = firstSvgPaths.filter(
   (_, index) =>
     index !== 0 &&
-    !butterflyPathIndexes.has(index) &&
-    !hiddenStaticPathIndexes.has(index),
+    index !== 47 &&
+    index !== 48 &&
+    index !== 53 &&
+    !hiddenStaticPathIndexes.has(index) &&
+    !removedRedFills.has(firstSvgPaths[index].fill),
 );
 
 const drawPaths = [
@@ -149,9 +97,8 @@ const drawPaths = [
 
 const VibesMinimalOnboarding = () => {
   const navigation = useNavigation();
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const illustrationHeight = Math.max(300, height * 0.5);
-  const illustrationWidth = Math.max(280, width - vibesTheme.spacing.lg * 2);
 
   const illustrationOpacity = useSharedValue(0);
   const titleY = useSharedValue(8);
@@ -160,10 +107,6 @@ const VibesMinimalOnboarding = () => {
   const ctaScale = useSharedValue(1);
   const drawProgress = useSharedValue(0);
   const fillOpacity = useSharedValue(0);
-  const penProgress = useSharedValue(0);
-  const butterflyFlightA = useSharedValue(0);
-  const butterflyFlightB = useSharedValue(0);
-  const butterflyFlightC = useSharedValue(0);
 
   useEffect(() => {
     illustrationOpacity.value = withTiming(1, {
@@ -187,36 +130,16 @@ const VibesMinimalOnboarding = () => {
       180,
       withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.cubic) }),
     );
-    penProgress.value = withDelay(
-      180,
-      withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.cubic) }),
-    );
     fillOpacity.value = withDelay(
       2500,
       withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) }),
     );
 
-    butterflyFlightA.value = withDelay(
-      2450,
-      withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.cubic) }),
-    );
-    butterflyFlightB.value = withDelay(
-      2680,
-      withTiming(1, { duration: 3400, easing: Easing.inOut(Easing.cubic) }),
-    );
-    butterflyFlightC.value = withDelay(
-      2860,
-      withTiming(1, { duration: 3600, easing: Easing.inOut(Easing.cubic) }),
-    );
   }, [
-    butterflyFlightA,
-    butterflyFlightB,
-    butterflyFlightC,
     ctaOpacity,
     drawProgress,
     fillOpacity,
     illustrationOpacity,
-    penProgress,
     titleOpacity,
     titleY,
   ]);
@@ -239,40 +162,6 @@ const VibesMinimalOnboarding = () => {
     opacity: fillOpacity.value,
   }));
 
-  const penStyle = useAnimatedStyle(() => ({
-    opacity: drawProgress.value < 1 ? 0.9 : 0,
-    transform: [
-      {
-        translateX: interpolate(
-          penProgress.value,
-          [0, 0.22, 0.48, 0.66, 0.88, 1],
-          [
-            illustrationWidth * 0.54,
-            illustrationWidth * 0.43,
-            illustrationWidth * 0.39,
-            illustrationWidth * 0.58,
-            illustrationWidth * 0.45,
-            illustrationWidth * 0.62,
-          ],
-        ),
-      },
-      {
-        translateY: interpolate(
-          penProgress.value,
-          [0, 0.22, 0.48, 0.66, 0.88, 1],
-          [
-            illustrationHeight * 0.16,
-            illustrationHeight * 0.34,
-            illustrationHeight * 0.46,
-            illustrationHeight * 0.54,
-            illustrationHeight * 0.72,
-            illustrationHeight * 0.9,
-          ],
-        ),
-      },
-    ],
-  }));
-
   const onContinue = () => {
     ctaScale.value = withSequence(
       withTiming(0.96, { duration: 90 }),
@@ -286,14 +175,39 @@ const VibesMinimalOnboarding = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View pointerEvents="none" style={styles.topGlowOverlay}>
-        <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <Svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
           <Defs>
-            <LinearGradient id="ScreenTopRightGlow" x1="100" y1="0" x2="35" y2="70">
-              <Stop offset="0" stopColor={vibesTheme.colors.accentMustard} stopOpacity={0.11} />
-              <Stop offset="1" stopColor={vibesTheme.colors.accentMustard} stopOpacity={0} />
+            <LinearGradient
+              id="ScreenTopRightGlow"
+              x1="100"
+              y1="0"
+              x2="35"
+              y2="70"
+            >
+              <Stop
+                offset="0"
+                stopColor={vibesTheme.colors.accentMustard}
+                stopOpacity={0.11}
+              />
+              <Stop
+                offset="1"
+                stopColor={vibesTheme.colors.accentMustard}
+                stopOpacity={0}
+              />
             </LinearGradient>
           </Defs>
-          <Rect x="0" y="0" width="100" height="100" fill="url(#ScreenTopRightGlow)" />
+          <Rect
+            x="0"
+            y="0"
+            width="100"
+            height="100"
+            fill="url(#ScreenTopRightGlow)"
+          />
         </Svg>
       </View>
       <Animated.View
@@ -310,7 +224,13 @@ const VibesMinimalOnboarding = () => {
           preserveAspectRatio="xMidYMid meet"
         >
           <Defs>
-            <LinearGradient id="Gradient1" x1="639.033" y1="1028.56" x2="1034.76" y2="1131.54">
+            <LinearGradient
+              id="Gradient1"
+              x1="639.033"
+              y1="1028.56"
+              x2="1034.76"
+              y2="1131.54"
+            >
               <Stop offset="0" stopColor="rgb(216,227,240)" stopOpacity={1} />
               <Stop offset="1" stopColor="rgb(251,252,253)" stopOpacity={1} />
             </LinearGradient>
@@ -333,37 +253,6 @@ const VibesMinimalOnboarding = () => {
             />
           ))}
         </Svg>
-        <Animated.View pointerEvents="none" style={[styles.penTip, penStyle]} />
-        <FlyingButterfly
-          phase={0}
-          amplitudeX={26}
-          amplitudeY={18}
-          scale={1}
-          progress={butterflyFlightA}
-          x={illustrationWidth * 0.56}
-          y={illustrationHeight * 0.09}
-          size={62}
-        />
-        <FlyingButterfly
-          phase={0.2}
-          amplitudeX={21}
-          amplitudeY={16}
-          scale={0.86}
-          progress={butterflyFlightB}
-          x={illustrationWidth * 0.44}
-          y={illustrationHeight * 0.16}
-          size={54}
-        />
-        <FlyingButterfly
-          phase={0.4}
-          amplitudeX={19}
-          amplitudeY={14}
-          scale={0.78}
-          progress={butterflyFlightC}
-          x={illustrationWidth * 0.66}
-          y={illustrationHeight * 0.14}
-          size={48}
-        />
       </Animated.View>
 
       <Animated.View style={[styles.textBlock, titleStyle]}>
@@ -409,25 +298,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: vibesTheme.spacing.lg,
     paddingTop: vibesTheme.spacing.md,
   },
-  butterflyLayer: {
-    position: "absolute",
-    zIndex: 4,
-  },
-  penTip: {
-    position: "absolute",
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: vibesTheme.colors.accentCoral,
-    zIndex: 5,
-  },
   textBlock: {
     marginTop: vibesTheme.spacing.md,
     alignItems: "center",
     paddingHorizontal: vibesTheme.spacing.xl,
   },
   title: {
-    fontSize: 34,
+    fontSize: 42,
     letterSpacing: 0.3,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
@@ -435,12 +312,12 @@ const styles = StyleSheet.create({
   },
   body: {
     marginTop: vibesTheme.spacing.lg,
-    fontSize: 15,
+    fontSize: 24,
     lineHeight: 22,
     textAlign: "center",
     color: vibesTheme.colors.secondaryText,
     fontFamily: "CormorantGaramond_500Medium",
-    maxWidth: 320,
+    maxWidth: 380,
   },
   ctaButton: {
     marginTop: "auto",

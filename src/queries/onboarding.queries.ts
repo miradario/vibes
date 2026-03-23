@@ -3,20 +3,28 @@ import { supabase } from "../lib/supabase";
 import { profileKeys } from "./profile.queries";
 import { userPreferencesKeys } from "./userPreferences.queries";
 
+const DEFAULT_INTENT_ID = 3; // "Everyone"
+
 export type OnboardingDraft = {
   displayName?: string;
   birthDate?: string;
+  country?: string;
   genderId?: number;
   orientation?: string[];
   intentId?: number;
+  photoUris?: string[];
+  primaryPhotoUri?: string;
 };
 
 const defaultDraft: OnboardingDraft = {
   displayName: "",
   birthDate: "",
+  country: "",
   genderId: undefined,
   orientation: [],
   intentId: undefined,
+  photoUris: [],
+  primaryPhotoUri: "",
 };
 
 export const onboardingKeys = {
@@ -79,12 +87,12 @@ export const useCompleteOnboardingMutation = () => {
       const payload: Record<string, unknown> = {
         id: userId,
         display_name: draft.displayName?.trim() ?? "",
+        intent_id: draft.intentId ?? DEFAULT_INTENT_ID,
       };
 
       if (draft.birthDate) payload.birth_date = draft.birthDate;
       if (draft.genderId) payload.gender_id = draft.genderId;
       if (draft.orientation?.length) payload.orientation = draft.orientation;
-      if (draft.intentId) payload.intent_id = draft.intentId;
 
       console.log("completeOnboarding:payload", payload);
       const { error } = await supabase
@@ -110,6 +118,56 @@ export const useCompleteOnboardingMutation = () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
       queryClient.invalidateQueries({ queryKey: userPreferencesKeys.all });
       queryClient.invalidateQueries({ queryKey: onboardingKeys.pending });
+    },
+  });
+};
+
+type ResetOnboardingInput = {
+  userId: string;
+};
+
+const resetOnboardingWithFallback = async (userId: string) => {
+  const workingPayload: Record<string, any> = {
+    id: userId,
+    display_name: "",
+    birth_date: null,
+    gender_id: null,
+    orientation: null,
+    intent_id: DEFAULT_INTENT_ID,
+  };
+
+  while (true) {
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(workingPayload, { onConflict: "id" });
+
+    if (!error) return;
+
+    if (error.code === "PGRST204") {
+      const match = error.message.match(/'([^']+)' column/);
+      const missingColumn = match?.[1];
+      if (missingColumn && missingColumn in workingPayload && missingColumn !== "id") {
+        delete workingPayload[missingColumn];
+        if (Object.keys(workingPayload).length <= 1) throw error;
+        continue;
+      }
+    }
+
+    throw error;
+  }
+};
+
+export const useResetOnboardingMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, unknown, ResetOnboardingInput>({
+    mutationFn: async ({ userId }) => {
+      await resetOnboardingWithFallback(userId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.pending });
+      queryClient.invalidateQueries({ queryKey: userPreferencesKeys.all });
     },
   });
 };
