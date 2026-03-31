@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { mapProfileWithPhotos } from "../api/mappers/profile.mapper";
+import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { supabase } from "../lib/supabase";
 
 export type ProfileRow = Record<string, any>;
@@ -32,7 +33,14 @@ const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
     return null;
   }
 
-  return mapProfileWithPhotos(profileResponse.data, photosResponse.data ?? []);
+  const signedPhotoRows = await Promise.all(
+    (photosResponse.data ?? []).map(async (photoRow) => ({
+      ...photoRow,
+      url: await createSignedProfilePhotoUrl((photoRow as Record<string, any>).url),
+    })),
+  );
+
+  return mapProfileWithPhotos(profileResponse.data, signedPhotoRows);
 };
 
 export const useProfileQuery = (userId?: string) => {

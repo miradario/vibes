@@ -25,6 +25,7 @@ export { default as OnboardingSpiritualPath } from "./OnboardingSpiritualPath";
 export { default as EventDetail } from "./EventDetail";
 export { default as EventChat } from "./EventChat";
 export { default as CreateEvent } from "./CreateEvent";
+export { default as CreateChallenge } from "./CreateChallenge";
 export { default as Contact } from "./Contact";
 export { default as Faq } from "./Faq";
 export { default as TermsConditions } from "./TermsConditions";

@@ -16,6 +16,31 @@ const EventDetail = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const event = (route.params as any)?.event;
+  const isChallenge = event?.type === "challenge";
+  const eventDescription =
+    typeof event?.description === "string" && event.description.trim()
+      ? event.description.trim()
+      : typeof event?.subtitle === "string" && event.subtitle.trim()
+        ? event.subtitle.trim()
+        : null;
+  const eventLocation =
+    typeof event?.location === "string" && event.location.trim()
+      ? event.location.trim()
+      : null;
+  const eventHostName =
+    typeof event?.hostName === "string" && event.hostName.trim()
+      ? event.hostName.trim()
+      : null;
+  const eventHostImage =
+    typeof event?.hostImage === "string" && event.hostImage.trim()
+      ? { uri: event.hostImage.trim() }
+      : null;
+  const eventTags = Array.isArray(event?.tags)
+    ? event.tags.filter(
+        (tag: unknown): tag is string =>
+          typeof tag === "string" && tag.trim().length > 0,
+      )
+    : [];
 
   if (!event) {
     return null;
@@ -47,18 +72,21 @@ const EventDetail = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.eventDetailTitle}>{event.title}</Text>
-        <Text style={styles.eventDetailDescription}>
-          Nos encontraremos al atardecer para meditar en silencio y conectar con
-          la energía del sol.
-        </Text>
+        {eventDescription ? (
+          <Text style={styles.eventDetailDescription}>{eventDescription}</Text>
+        ) : null}
 
-        <View style={styles.eventDetailHostSection}>
-          <Image
-            source={require("../assets/images/01.jpg")}
-            style={styles.eventDetailHostAvatar}
-          />
-          <Text style={styles.eventDetailHostName}>Vale Martínez</Text>
-        </View>
+        {eventHostName ? (
+          <View style={styles.eventDetailHostSection}>
+            {eventHostImage ? (
+              <Image
+                source={eventHostImage}
+                style={styles.eventDetailHostAvatar}
+              />
+            ) : null}
+            <Text style={styles.eventDetailHostName}>{eventHostName}</Text>
+          </View>
+        ) : null}
 
         <View style={styles.eventDetailInfoSection}>
           <View style={styles.eventDetailInfoRow}>
@@ -66,19 +94,21 @@ const EventDetail = () => {
             <Text style={styles.eventDetailInfoText}>{event.date}</Text>
           </View>
 
-          <View style={styles.eventDetailInfoRow}>
-            <Icon name="location" size={20} color={TEXT_SECONDARY} />
-            <Text style={styles.eventDetailInfoText}>
-              {event.location || "Parque Palermo, Buenos Aires"}
-            </Text>
-          </View>
+          {eventLocation ? (
+            <View style={styles.eventDetailInfoRow}>
+              <Icon name="location" size={20} color={TEXT_SECONDARY} />
+              <Text style={styles.eventDetailInfoText}>{eventLocation}</Text>
+            </View>
+          ) : null}
 
-          <View style={styles.eventDetailInfoRow}>
-            <Icon name="leaf" size={20} color={TEXT_SECONDARY} />
-            <Text style={styles.eventDetailInfoText}>
-              calma · apertura · silencio
-            </Text>
-          </View>
+          {eventTags.length > 0 ? (
+            <View style={styles.eventDetailInfoRow}>
+              <Icon name="leaf" size={20} color={TEXT_SECONDARY} />
+              <Text style={styles.eventDetailInfoText}>
+                {eventTags.join(" · ")}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <TouchableOpacity
@@ -88,12 +118,14 @@ const EventDetail = () => {
           }
         >
           <Text style={styles.eventDetailJoinButtonText}>
-            Sumarme al evento
+            {isChallenge ? "Sumarme al challenge" : "Sumarme al evento"}
           </Text>
         </TouchableOpacity>
 
         <Text style={styles.eventDetailJoinNote}>
-          Al sumarte, entrás al grupo del evento.
+          {isChallenge
+            ? "Al sumarte, entrás al grupo del challenge."
+            : "Al sumarte, entrás al grupo del evento."}
         </Text>
       </ScrollView>
     </View>

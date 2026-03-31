@@ -43,6 +43,7 @@ import {
   EventDetail,
   EventChat,
   CreateEvent,
+  CreateChallenge,
   Contact,
   Faq,
   TermsConditions,
@@ -169,11 +170,12 @@ const App = () => {
               />
               <Tab.Screen
                 name="Soulmates"
-                component={Session}
+                component={Events}
+                initialParams={{ section: "challenge" }}
                 options={{
-                  tabBarLabel: "guruVibes",
+                  tabBarLabel: "Challenges",
                   tabBarIcon: ({ focused }) => (
-                    <TabBarIcon focused={focused} iconName="heart" />
+                    <TabBarIcon focused={focused} iconName="leaf" />
                   ),
                 }}
               />
@@ -193,6 +195,7 @@ const App = () => {
               <Tab.Screen
                 name="Events"
                 component={Events}
+                initialParams={{ section: "event" }}
                 options={{
                   tabBarLabel: "Events",
                   tabBarIcon: ({ focused }) => (
@@ -281,6 +284,11 @@ const App = () => {
         <Stack.Screen
           name="CreateEvent"
           component={CreateEvent}
+          options={{ headerShown: false, animationEnabled: true }}
+        />
+        <Stack.Screen
+          name="CreateChallenge"
+          component={CreateChallenge}
           options={{ headerShown: false, animationEnabled: true }}
         />
         <Stack.Screen

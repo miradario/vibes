@@ -14,25 +14,14 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, { TEXT_SECONDARY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
-import DEMO from "../assets/data/demo";
 
 const EventChat = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const event = (route.params as any)?.event;
   const [message, setMessage] = useState("");
-
-  const participants = DEMO.slice(0, 3);
-
-  const messages = [
-    {
-      id: "1",
-      sender: "Vale Martínez",
-      text: "Hola! Bienvenidos 😊\nLos espero a las 18 en los lagos.\nCada uno puede traer algo para sentarse. ¡Qué lindo vernos pronto!",
-      time: "10:25",
-      avatar: require("../assets/images/01.jpg"),
-    },
-  ];
+  const participants: Array<{ id: string; image: any }> = [];
+  const messages: Array<{ id: string; sender: string; text: string; time: string }> = [];
 
   return (
     <KeyboardAvoidingView
@@ -68,7 +57,7 @@ const EventChat = () => {
           <View style={styles.eventChatParticipants}>
             {participants.map((participant, index) => (
               <Image
-                key={index}
+                key={participant.id || index}
                 source={participant.image}
                 style={[
                   styles.eventChatParticipantAvatar,
@@ -102,6 +91,15 @@ const EventChat = () => {
           contentContainerStyle={styles.eventChatMessagesContent}
           showsVerticalScrollIndicator={false}
         >
+          {messages.length === 0 ? (
+            <View style={localStyles.emptyMessages}>
+              <Text style={localStyles.emptyMessagesTitle}>No event messages yet</Text>
+              <Text style={localStyles.emptyMessagesText}>
+                Demo chat content was removed. Load real event participants and
+                messages here when that backend is ready.
+              </Text>
+            </View>
+          ) : null}
           {messages.map((msg) => (
             <View key={msg.id} style={styles.eventChatMessageBubble}>
               <Text style={styles.eventChatMessageSender}>
@@ -134,3 +132,25 @@ const EventChat = () => {
 };
 
 export default EventChat;
+
+const localStyles = {
+  emptyMessages: {
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    alignItems: "center" as const,
+  },
+  emptyMessagesTitle: {
+    color: "#2B2B2B",
+    fontSize: 22,
+    fontFamily: "CormorantGaramond_600SemiBold",
+    textAlign: "center" as const,
+  },
+  emptyMessagesText: {
+    marginTop: 10,
+    color: "#6E6E6E",
+    fontSize: 16,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_500Medium",
+    textAlign: "center" as const,
+  },
+};

@@ -12,17 +12,20 @@ import {
 import { Video, ResizeMode } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles from "../assets/styles";
-import DEMO from "../assets/data/demo";
-import Icon from "../components/Icon";
+import { useAuthSession } from "../src/auth/auth.queries";
+import { useProfileQuery } from "../src/queries/profile.queries";
+import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 
 const Match = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const randomProfile = useMemo(
-    () => DEMO[Math.floor(Math.random() * DEMO.length)],
-    [],
+  const { data: session } = useAuthSession();
+  const { data: ownProfileData } = useProfileQuery(session?.user?.id);
+  const ownProfile = useMemo(
+    () => mapOwnProfileToConnectionProfile(ownProfileData, session?.user?.email?.split("@")[0]),
+    [ownProfileData, session?.user?.email],
   );
-  const profile = route?.params?.profile ?? randomProfile;
+  const profile = route?.params?.profile ?? null;
 
   const leftAvatarX = useRef(new Animated.Value(-120)).current;
   const rightAvatarX = useRef(new Animated.Value(120)).current;
@@ -89,7 +92,7 @@ const Match = () => {
                     resizeMode="contain"
                   />
                   <Image
-                    source={require("../assets/images/01.jpg")}
+                    source={ownProfile.image}
                     style={matchVideoStyles.matchAvatar}
                   />
                 </View>
@@ -116,7 +119,7 @@ const Match = () => {
                     resizeMode="contain"
                   />
                   <Image
-                    source={profile?.image}
+                    source={profile?.image ?? require("../assets/images/logo.png")}
                     style={matchVideoStyles.matchAvatar}
                   />
                 </View>
@@ -128,12 +131,17 @@ const Match = () => {
             <View style={matchVideoStyles.matchActions}>
               <TouchableOpacity
                 style={matchVideoStyles.matchPrimaryButton}
+                disabled={!profile}
                 onPress={() =>
-                  navigation.navigate("Chat" as never, { profile } as never)
+                  profile
+                    ? navigation.navigate("Chat" as never, { profile } as never)
+                    : navigation.goBack()
                 }
               >
                 <Text style={matchVideoStyles.matchPrimaryButtonText}>
-                  Chat with {profile?.name?.split(" ")[0] || "your soulmate"}
+                  {profile
+                    ? `Chat with ${profile?.name?.split(" ")[0] || "your soulmate"}`
+                    : "Back to discover"}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity

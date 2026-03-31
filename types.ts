@@ -54,7 +54,7 @@ export type TabBarIconT = {
 };
 
 export type DataT = {
-  id: number;
+  id: string | number;
   name: string;
   isOnline: boolean;
   match: string;

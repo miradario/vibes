@@ -23,6 +23,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
+import { createSignedProfilePhotoUrl } from "../src/lib/profilePhotoStorage";
 import { useProfileQuery } from "../src/queries/profile.queries";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
@@ -63,7 +64,45 @@ const PROFILE_SINGLE_PHOTO_KEYS = [
 
 const buildProfilePhotosFromRow = (profileRow: Record<string, any> | null) => {
   if (!profileRow) return [];
-  if (Array.isArray(profileRow.photos)) return profileRow.photos;
+  if (Array.isArray(profileRow.photos)) {
+    return profileRow.photos
+      .map((photo: any, index: number) => {
+        if (typeof photo === "string" && photo.trim().length > 0) {
+          return {
+            url: photo.trim(),
+            order: index,
+          };
+        }
+
+        if (
+          photo &&
+          typeof photo === "object" &&
+          typeof photo.url === "string" &&
+          photo.url.trim().length > 0
+        ) {
+          return {
+            url: photo.url.trim(),
+            order:
+              typeof photo.order === "number" ? photo.order : index,
+          };
+        }
+
+        return null;
+      })
+      .filter(
+        (
+          photo
+        ): photo is {
+          url: string;
+          order: number;
+        } => Boolean(photo)
+      )
+      .sort((left, right) => left.order - right.order)
+      .reduce<string[]>((acc, photo) => {
+        acc[photo.order] = photo.url;
+        return acc;
+      }, []);
+  }
 
   for (const key of PROFILE_SINGLE_PHOTO_KEYS) {
     const value = profileRow[key];
@@ -75,23 +114,32 @@ const buildProfilePhotosFromRow = (profileRow: Record<string, any> | null) => {
   return [];
 };
 
-const buildProfilePhotoUpdatePayload = (
-  profileRow: Record<string, any> | null,
-  nextPhotos: (string | null)[]
-) => {
-  if (profileRow && Array.isArray(profileRow.photos)) {
-    return { photos: nextPhotos };
-  }
+const buildExistingPhotoRows = (profileRow: Record<string, any> | null) => {
+  if (!profileRow || !Array.isArray(profileRow.photos)) return [];
 
-  if (profileRow) {
-    for (const key of PROFILE_SINGLE_PHOTO_KEYS) {
-      if (key in profileRow) {
-        return { [key]: nextPhotos.find((item) => Boolean(item)) ?? null };
-      }
-    }
-  }
+  return profileRow.photos
+    .map((photo: any, index: number) => {
+      if (!photo || typeof photo !== "object") return null;
 
-  return null;
+      return {
+        id: typeof photo.id === "string" ? photo.id : null,
+        url: typeof photo.url === "string" ? photo.url : null,
+        order:
+          typeof photo.order === "number" ? photo.order : index,
+        isPrimary:
+          typeof photo.isPrimary === "boolean" ? photo.isPrimary : index === 0,
+      };
+    })
+    .filter(
+      (
+        photo
+      ): photo is {
+        id: string | null;
+        url: string | null;
+        order: number;
+        isPrimary: boolean;
+      } => Boolean(photo)
+    );
 };
 
 const isArrayBuffer = (value: unknown): value is ArrayBuffer =>
@@ -131,6 +179,36 @@ const readUriAsArrayBuffer = async (uri: string) => {
   return fromBase64.slice(0);
 };
 
+const DEFAULT_INTENT_ID = 3;
+const DEFAULT_GENDER_ID = 3;
+
+const ensureProfileExists = async (
+  userId: string,
+  displayName?: string | null,
+  genderId?: number | null,
+  intentId?: number | null
+) => {
+  const resolvedDisplayName =
+    typeof displayName === "string" && displayName.trim().length > 0
+      ? displayName.trim()
+      : "Vibes";
+
+  const { error } = await supabase.from("profiles").upsert(
+    {
+      id: userId,
+      display_name: resolvedDisplayName,
+      gender_id: genderId ?? DEFAULT_GENDER_ID,
+      intent_id: intentId ?? DEFAULT_INTENT_ID,
+    },
+    { onConflict: "id" }
+  );
+
+  if (error) {
+    console.error("ensureProfileExists:error", error);
+    throw error;
+  }
+};
+
 const EditProfile = () => {
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
@@ -139,7 +217,7 @@ const EditProfile = () => {
   const maxPhotos = 6;
   const supportsMultiPhotos = Array.isArray((profileData as any)?.photos);
   const profilePhotos = buildProfilePhotosFromRow(profileData ?? null);
-  const buildSlots = (photos: (string | null)[]) =>
+  const buildSlots = (photos: (string | undefined | null)[]) =>
     Array.from({ length: maxPhotos }, (_, index) => photos[index] ?? null);
   const [mediaSlots, setMediaSlots] = useState<(string | null)[]>(
     buildSlots(profilePhotos)
@@ -213,6 +291,13 @@ const EditProfile = () => {
     optimistic[slotIndex] = uri;
     setMediaSlots(optimistic);
 
+    await ensureProfileExists(
+      userId,
+      profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
+      profileData?.genderId ?? null,
+      profileData?.intentId ?? null
+    );
+
     console.log("uploadPhoto:start", { userId, slotIndex, uri });
     const uriWithoutQuery = uri.split("?")[0];
     const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
@@ -242,50 +327,49 @@ const EditProfile = () => {
       throw uploadError;
     }
 
-    const { data } = supabase.storage
-      .from(PROFILE_PICTURES_BUCKET)
-      .getPublicUrl(filePath);
-    console.log("uploadPhoto:public_url", data?.publicUrl);
+    const signedUrl = await createSignedProfilePhotoUrl(filePath);
+    console.log("uploadPhoto:signed_url", signedUrl);
 
     const nextPhotos = Array.from(
       { length: maxPhotos },
       (_, index) => optimistic[index] ?? null
     );
-    nextPhotos[slotIndex] = data.publicUrl || uri;
+    nextPhotos[slotIndex] = signedUrl || uri;
 
-    const profilePayload = buildProfilePhotoUpdatePayload(
-      (profileData as Record<string, any>) ?? null,
-      nextPhotos
+    const existingRows = buildExistingPhotoRows(
+      (profileData as Record<string, any>) ?? null
     );
-    if (!profilePayload) {
-      console.warn(
-        "uploadPhoto: no known photo column found in profiles; skipping profiles update",
-        {
-          availableProfileKeys: Object.keys(
-            (profileData as Record<string, any>) ?? {}
-          ),
-        }
-      );
-      setMediaSlots(nextPhotos);
-      return;
+    const existingForSlot = existingRows.find((photo) => photo.order === slotIndex);
+
+    if (existingForSlot?.id) {
+      const { error: deleteExistingError } = await supabase
+        .from("profile_photos")
+        .delete()
+        .eq("id", existingForSlot.id);
+
+      if (deleteExistingError) {
+        console.error(
+          "uploadPhoto:profile_photos_delete_existing_error",
+          deleteExistingError
+        );
+        throw deleteExistingError;
+      }
     }
 
-    const { error: updateError } = await supabase.from("profiles").upsert(
-      {
-        id: userId,
-        ...profilePayload,
-      },
-      { onConflict: "id" }
-    );
-    if (updateError) {
-      console.error("uploadPhoto:profiles_upsert_error", updateError);
-      throw updateError;
+    const { error: insertError } = await supabase.from("profile_photos").insert({
+      profile_id: userId,
+      url: filePath,
+      order: slotIndex,
+      is_primary: slotIndex === 0,
+    });
+
+    if (insertError) {
+      console.error("uploadPhoto:profile_photos_insert_error", insertError);
+      throw insertError;
     }
 
     setMediaSlots(nextPhotos);
-    if (supportsMultiPhotos) {
-      await refetch();
-    }
+    await refetch();
     console.log("uploadPhoto:success", { slotIndex });
   };
 
@@ -362,45 +446,43 @@ const EditProfile = () => {
     const userId = session?.user?.id;
     if (!userId) return;
 
+    await ensureProfileExists(
+      userId,
+      profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
+      profileData?.genderId ?? null,
+      profileData?.intentId ?? null
+    );
+
     const nextPhotos = Array.from(
       { length: maxPhotos },
       (_, index) => mediaSlots[index] ?? null
     );
     nextPhotos[slotIndex] = null;
 
-    const profilePayload = buildProfilePhotoUpdatePayload(
-      (profileData as Record<string, any>) ?? null,
-      nextPhotos
+    const existingRows = buildExistingPhotoRows(
+      (profileData as Record<string, any>) ?? null
     );
-    if (!profilePayload) {
-      console.warn(
-        "handleRemove: no known photo column found in profiles; skipping profiles update",
-        {
-          availableProfileKeys: Object.keys(
-            (profileData as Record<string, any>) ?? {}
-          ),
-        }
-      );
+    const existingForSlot = existingRows.find((photo) => photo.order === slotIndex);
+
+    if (!existingForSlot?.id) {
       setMediaSlots(nextPhotos);
+      await refetch();
       return;
     }
 
-    const { error: updateError } = await supabase.from("profiles").upsert(
-      {
-        id: userId,
-        ...profilePayload,
-      },
-      { onConflict: "id" }
-    );
-    if (updateError) {
+    const { error: deleteError } = await supabase
+      .from("profile_photos")
+      .delete()
+      .eq("id", existingForSlot.id)
+      .eq("profile_id", userId);
+
+    if (deleteError) {
       Alert.alert("Error", "No se pudo eliminar la foto.");
       return;
     }
 
     setMediaSlots(nextPhotos);
-    if (supportsMultiPhotos) {
-      await refetch();
-    }
+    await refetch();
   };
 
   return (

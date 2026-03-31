@@ -1,7 +1,7 @@
 /** @format */
 
 import React, { useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import VibesActionButton from "../components/VibesActionButton";
@@ -44,17 +44,6 @@ const Welcome = () => {
               variant="skip"
               onPress={() => navigation.navigate("Signup" as never)}
             />
-            <TouchableOpacity
-              style={localStyles.guruLink}
-              onPress={() =>
-                navigation.navigate(
-                  "Session" as never,
-                  { title: "AI Session" } as never,
-                )
-              }
-            >
-              <Text style={localStyles.guruLinkText}>Try Guru Vibe</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -98,15 +87,5 @@ const localStyles = StyleSheet.create({
   buttons: {
     width: "100%",
     gap: 12,
-  },
-  guruLink: {
-    alignItems: "center",
-    marginTop: 10,
-    paddingVertical: 8,
-  },
-  guruLinkText: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 16,
-    fontFamily: "CormorantGaramond_500Medium",
   },
 });

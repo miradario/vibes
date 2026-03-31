@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
-import DEMO from "../assets/data/demo";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import {
   useAuthSession,
@@ -22,40 +21,27 @@ import {
   useResetOnboardingMutation,
 } from "../src/queries/onboarding.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
+import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 
 const Profile = () => {
   const navigation = useNavigation();
-  const fallbackProfile = DEMO[0];
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
   const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation();
   const { resetDraft } = useOnboardingDraft();
   const { mutate: resetOnboarding, isPending: isResettingOnboarding } =
     useResetOnboardingMutation();
+  const ownProfile = mapOwnProfileToConnectionProfile(
+    profile,
+    session?.user?.email?.split("@")[0],
+  );
 
   const displayName =
-    (typeof profile?.displayName === "string" && profile.displayName.trim()) ||
-    (typeof profile?.name === "string" && profile.name.trim()) ||
-    session?.user?.email?.split("@")[0] ||
-    fallbackProfile.name ||
-    "Vibes";
+    ownProfile.name;
 
   const location =
-    (typeof profile?.location === "string" && profile.location.trim()) ||
-    (typeof profile?.country === "string" && profile.country.trim()) ||
-    fallbackProfile.location ||
+    ownProfile.location ||
     "Buenos Aires";
-
-  const profileImageUrl =
-    (Array.isArray(profile?.photos) &&
-      profile.photos.find((photo: any) => Boolean(photo?.url))?.url) ||
-    (typeof profile?.avatarUrl === "string" && profile.avatarUrl.trim()) ||
-    (typeof profile?.photoUrl === "string" && profile.photoUrl.trim()) ||
-    (typeof profile?.imageUrl === "string" && profile.imageUrl.trim()) ||
-    (typeof profile?.avatar === "string" && profile.avatar.trim()) ||
-    (typeof profile?.photo === "string" && profile.photo.trim()) ||
-    (typeof profile?.image === "string" && profile.image.trim()) ||
-    null;
 
   const [firstName, ...restNames] = displayName.split(" ").filter(Boolean);
   const shortName = restNames.length
@@ -161,11 +147,7 @@ const Profile = () => {
               style={styles.auraProfileHalo}
             />
             <Image
-              source={
-                profileImageUrl
-                  ? { uri: profileImageUrl }
-                  : fallbackProfile.image
-              }
+              source={ownProfile.image}
               style={styles.auraProfileAvatar}
             />
           </View>

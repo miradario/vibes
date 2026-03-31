@@ -12,9 +12,13 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import styles, {
   DARK_GRAY,
   TEXT_SECONDARY,
@@ -23,27 +27,89 @@ import styles, {
   BLACK,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import { useAuthSession } from "../src/auth/auth.queries";
+import { useProfileQuery } from "../src/queries/profile.queries";
+import { useCreateEventMutation } from "../src/queries/events.queries";
 
 const IMAGE_MEDIA_TYPE =
   (ImagePicker as any).MediaType?.Images
     ? [(ImagePicker as any).MediaType.Images]
     : ["images"];
 
+const formatEventDate = (value: Date) =>
+  value.toLocaleDateString("es-AR", {
+    day: "numeric",
+    month: "long",
+  });
+
+const formatEventTime = (value: Date) =>
+  value.toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+const formatEventDateTime = (value: Date) =>
+  `${formatEventDate(value)} · ${formatEventTime(value)}`;
+
+const normalizeCapacityInput = (value: string) => value.replace(/\D+/g, "");
+
 const CreateEvent = () => {
   const navigation = useNavigation();
+  const { data: session } = useAuthSession();
+  const { data: profile } = useProfileQuery(session?.user?.id);
+  const createEventMutation = useCreateEventMutation();
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
-  const [date, setDate] = useState("");
-  const [attendees, setAttendees] = useState("");
+  const [eventDateTime, setEventDateTime] = useState<Date | null>(null);
+  const [capacity, setCapacity] = useState("");
   const [location, setLocation] = useState("");
   const [isValidatingLocation, setIsValidatingLocation] = useState(false);
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const [pickerMode, setPickerMode] = useState<"date" | "time" | null>(null);
   const [validatedLocation, setValidatedLocation] = useState<{
     address: string;
     lat: number;
     lng: number;
   } | null>(null);
+
+  const openDatePicker = () => {
+    setPickerMode("date");
+  };
+
+  const openTimePicker = () => {
+    setPickerMode("time");
+  };
+
+  const handleDateTimeChange = (
+    event: DateTimePickerEvent,
+    selectedValue?: Date,
+  ) => {
+    if (Platform.OS === "android") {
+      setPickerMode(null);
+    }
+
+    if (event.type === "dismissed" || !selectedValue) {
+      return;
+    }
+
+    const baseDate = eventDateTime ? new Date(eventDateTime) : new Date();
+
+    if (pickerMode === "date") {
+      baseDate.setFullYear(
+        selectedValue.getFullYear(),
+        selectedValue.getMonth(),
+        selectedValue.getDate(),
+      );
+    }
+
+    if (pickerMode === "time") {
+      baseDate.setHours(selectedValue.getHours(), selectedValue.getMinutes(), 0, 0);
+    }
+
+    setEventDateTime(baseDate);
+  };
 
   const pickFromGallery = async () => {
     const current = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -121,6 +187,10 @@ const CreateEvent = () => {
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(trimmedLocation)}&key=${apiKey}`,
       );
       const data = await response.json();
+      console.log("googleMaps:geocode:request", {
+        address: trimmedLocation,
+      });
+      console.log("googleMaps:geocode:response", data);
 
       if (data?.status !== "OK" || !data?.results?.length) {
         Alert.alert(
@@ -148,8 +218,8 @@ const CreateEvent = () => {
     }
   };
 
-  const handleCreate = () => {
-    if (!title.trim() || !date.trim() || !location.trim()) {
+  const handleCreate = async () => {
+    if (!title.trim() || !eventDateTime || !location.trim()) {
       Alert.alert(
         "Faltan datos",
         "Completá al menos título, fecha y ubicación.",
@@ -157,32 +227,50 @@ const CreateEvent = () => {
       return;
     }
 
-    if (!validatedLocation) {
-      Alert.alert(
-        "Validá la ubicación",
-        "Antes de crear el evento, validá la ubicación con Google Maps.",
-      );
+    if (!session?.user?.id) {
+      Alert.alert("Sesión requerida", "Necesitás iniciar sesión para crear un evento.");
       return;
     }
 
-    const newEvent = {
-      id: `custom-${Date.now()}`,
-      title: title.trim(),
-      subtitle: subtitle.trim() || "Evento creado por la comunidad",
-      date: date.trim(),
-      attendees: attendees.trim() || "0/20",
-      location: validatedLocation.address,
-      image:
-        eventImageUri || require("../assets/images/events/event_meditation2.png"),
-    };
+    const parsedCapacity = capacity.trim() ? Number.parseInt(capacity, 10) : 0;
+    const resolvedLocation = validatedLocation?.address || location.trim();
+    const hostName =
+      (typeof profile?.displayName === "string" && profile.displayName.trim()) ||
+      session.user.email?.split("@")[0] ||
+      null;
+    const hostImage =
+      Array.isArray(profile?.photos) &&
+      typeof profile.photos[0]?.url === "string" &&
+      profile.photos[0].url.trim()
+        ? profile.photos[0].url.trim()
+        : null;
 
-    navigation.navigate(
-      "Tab" as never,
-      {
-        screen: "Events",
-        params: { newEvent },
-      } as never
-    );
+    try {
+      await createEventMutation.mutateAsync({
+        createdBy: session.user.id,
+        title: title.trim(),
+        subtitle: subtitle.trim() || "Evento creado por la comunidad",
+        description: subtitle.trim() || null,
+        startsAt: eventDateTime.toISOString(),
+        location: resolvedLocation,
+        capacity: parsedCapacity,
+        imageUri: eventImageUri,
+        hostName,
+        hostImage,
+      });
+
+      navigation.navigate(
+        "Tab" as never,
+        {
+          screen: "Events",
+          params: { section: "event" },
+        } as never,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "No se pudo crear el evento.";
+      Alert.alert("Error", message);
+    }
   };
 
   return (
@@ -241,13 +329,62 @@ const CreateEvent = () => {
           />
 
           <Text style={localStyles.label}>Fecha y hora</Text>
-          <TextInput
-            style={localStyles.input}
-            placeholder="Ej: 21 marzo · 19:00"
-            placeholderTextColor={TEXT_SECONDARY}
-            value={date}
-            onChangeText={setDate}
-          />
+          <View style={localStyles.dateTimeRow}>
+            <TouchableOpacity
+              style={localStyles.dateTimeButton}
+              onPress={openDatePicker}
+            >
+              <Icon name="calendar" size={16} color={TEXT_SECONDARY} />
+              <Text
+                style={[
+                  localStyles.dateTimeButtonText,
+                  !eventDateTime && localStyles.dateTimePlaceholder,
+                ]}
+              >
+                {eventDateTime ? formatEventDate(eventDateTime) : "Seleccionar fecha"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={localStyles.dateTimeButton}
+              onPress={openTimePicker}
+            >
+              <Icon name="time" size={16} color={TEXT_SECONDARY} />
+              <Text
+                style={[
+                  localStyles.dateTimeButtonText,
+                  !eventDateTime && localStyles.dateTimePlaceholder,
+                ]}
+              >
+                {eventDateTime ? formatEventTime(eventDateTime) : "Seleccionar hora"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {eventDateTime ? (
+            <Text style={localStyles.selectedDateTimeText}>
+              {formatEventDateTime(eventDateTime)}
+            </Text>
+          ) : null}
+          {pickerMode ? (
+            <View style={localStyles.pickerWrap}>
+              <DateTimePicker
+                value={eventDateTime ?? new Date()}
+                mode={pickerMode}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                minimumDate={pickerMode === "date" ? new Date() : undefined}
+                onChange={handleDateTimeChange}
+                is24Hour
+              />
+              {Platform.OS === "ios" ? (
+                <TouchableOpacity
+                  style={localStyles.pickerDoneButton}
+                  onPress={() => setPickerMode(null)}
+                >
+                  <Text style={localStyles.pickerDoneText}>Listo</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : null}
 
           <Text style={localStyles.label}>Ubicación</Text>
           <TextInput
@@ -280,15 +417,22 @@ const CreateEvent = () => {
           <Text style={localStyles.label}>Cupos</Text>
           <TextInput
             style={localStyles.input}
-            placeholder="Ej: 0/20"
+            placeholder="Ej: 20"
             placeholderTextColor={TEXT_SECONDARY}
-            value={attendees}
-            onChangeText={setAttendees}
+            value={capacity}
+            onChangeText={(value) => setCapacity(normalizeCapacityInput(value))}
+            keyboardType="number-pad"
           />
         </View>
 
-        <TouchableOpacity style={localStyles.createButton} onPress={handleCreate}>
-          <Text style={localStyles.createButtonText}>Crear evento</Text>
+        <TouchableOpacity
+          style={localStyles.createButton}
+          onPress={handleCreate}
+          disabled={createEventMutation.isPending}
+        >
+          <Text style={localStyles.createButtonText}>
+            {createEventMutation.isPending ? "Creando..." : "Crear evento"}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -362,6 +506,48 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: DARK_GRAY,
+  },
+  dateTimeRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  dateTimeButton: {
+    flex: 1,
+    backgroundColor: "#F6F6F4",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  dateTimeButtonText: {
+    color: DARK_GRAY,
+    fontSize: 14,
+  },
+  dateTimePlaceholder: {
+    color: TEXT_SECONDARY,
+  },
+  selectedDateTimeText: {
+    marginTop: 8,
+    color: PRIMARY_COLOR,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  pickerWrap: {
+    marginTop: 10,
+    backgroundColor: "#F6F6F4",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  pickerDoneButton: {
+    alignSelf: "flex-end",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  pickerDoneText: {
+    color: PRIMARY_COLOR,
+    fontWeight: "700",
   },
   createButton: {
     marginTop: 20,

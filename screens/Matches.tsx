@@ -5,12 +5,9 @@ import {
   View,
   Text,
   TouchableOpacity,
-  FlatList,
-  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
-import DEMO from "../assets/data/demo";
 import styles, { DARK_GRAY } from "../assets/styles";
 
 const Matches = () => {
@@ -26,40 +23,13 @@ const Matches = () => {
           <View style={{ width: 22 }} />
         </View>
 
-        <FlatList
-          data={DEMO}
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={styles.soulmateList}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.soulmateItem}
-              onPress={() =>
-                navigation.navigate(
-                  "Match" as never,
-                  { profile: item } as never,
-                )
-              }
-            >
-              <View style={styles.soulmateHaloWrap}>
-                <Image
-                  source={require("../assets/images/sparklings.png")}
-                  style={styles.soulmateSparkles}
-                  resizeMode="contain"
-                />
-                <Image
-                  source={require("../assets/images/halo.png")}
-                  style={styles.soulmateHalo}
-                  resizeMode="contain"
-                />
-                <Image source={item.image} style={styles.soulmateAvatar} />
-              </View>
-              <Text style={styles.soulmateName}>{item.name}</Text>
-              <Text style={styles.soulmateCity}>
-                {item.location || "Buenos Aires"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
+        <View style={localStyles.emptyState}>
+          <Text style={localStyles.emptyTitle}>No real resonances yet</Text>
+          <Text style={localStyles.emptyText}>
+            This screen no longer uses demo connections. Show matches here once the
+            backend exposes real connected users.
+          </Text>
+        </View>
 
         <TouchableOpacity style={styles.soulmateFooterButton}>
           <Text style={styles.soulmateFooterText}>See previous resonances</Text>
@@ -70,3 +40,26 @@ const Matches = () => {
 };
 
 export default Matches;
+
+const localStyles = {
+  emptyState: {
+    flex: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    paddingHorizontal: 28,
+  },
+  emptyTitle: {
+    color: "#2B2B2B",
+    fontSize: 24,
+    fontFamily: "CormorantGaramond_600SemiBold",
+    textAlign: "center" as const,
+  },
+  emptyText: {
+    marginTop: 10,
+    color: "#6E6E6E",
+    fontSize: 16,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_500Medium",
+    textAlign: "center" as const,
+  },
+};
