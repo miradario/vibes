@@ -17,7 +17,12 @@ import {
   FlatList,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import styles, { TEXT_SECONDARY, WHITE, PRIMARY_COLOR, DARK_GRAY } from "../assets/styles";
+import styles, {
+  TEXT_SECONDARY,
+  WHITE,
+  PRIMARY_COLOR,
+  DARK_GRAY,
+} from "../assets/styles";
 import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -45,7 +50,8 @@ const EventChat = () => {
   const isAdmin = Boolean(userId && createdBy && userId === createdBy);
 
   const { data: participants = [] } = useEventParticipantsQuery(eventId);
-  const { data: messages = [], isLoading: messagesLoading } = useEventMessagesQuery(eventId);
+  const { data: messages = [], isLoading: messagesLoading } =
+    useEventMessagesQuery(eventId);
   const sendMutation = useSendEventMessageMutation();
   const deleteMutation = useDeleteEventMessageMutation();
   const kickMutation = useKickParticipantMutation();
@@ -55,7 +61,9 @@ const EventChat = () => {
   const scrollRef = useRef<ScrollView>(null);
 
   // Build a lookup for sender info from participants
-  const participantMap = useRef<Record<string, { name: string | null; avatar: string | null }>>({});
+  const participantMap = useRef<
+    Record<string, { name: string | null; avatar: string | null }>
+  >({});
   useEffect(() => {
     const map: typeof participantMap.current = {};
     for (const p of participants) {
@@ -74,7 +82,11 @@ const EventChat = () => {
   const handleSend = async () => {
     const body = message.trim();
     if (!body || !eventId || !userId) {
-      console.log("[EventChat] Send blocked:", { body: !!body, eventId, userId });
+      console.log("[EventChat] Send blocked:", {
+        body: !!body,
+        eventId,
+        userId,
+      });
       return;
     }
     setMessage("");
@@ -87,7 +99,10 @@ const EventChat = () => {
       });
     } catch (err: any) {
       console.error("[EventChat] Send error:", err);
-      Alert.alert("Error al enviar", err?.message ?? "No se pudo enviar el mensaje.");
+      Alert.alert(
+        "Error al enviar",
+        err?.message ?? "No se pudo enviar el mensaje.",
+      );
       setMessage(body);
     }
   };
@@ -173,7 +188,8 @@ const EventChat = () => {
                 {event?.title || "Evento"}
               </Text>
               <Text style={styles.eventChatHeaderSubtitle}>
-                {participants.length} participante{participants.length !== 1 ? "s" : ""}
+                {participants.length} participante
+                {participants.length !== 1 ? "s" : ""}
               </Text>
             </View>
           </View>
@@ -191,9 +207,7 @@ const EventChat = () => {
               <Image
                 key={participant.id}
                 source={
-                  participant.avatarUrl
-                    ? { uri: participant.avatarUrl }
-                    : LOGO
+                  participant.avatarUrl ? { uri: participant.avatarUrl } : LOGO
                 }
                 style={[
                   styles.eventChatParticipantAvatar,
@@ -202,8 +216,16 @@ const EventChat = () => {
               />
             ))}
             {participants.length > 8 && (
-              <View style={[styles.eventChatParticipantAvatar, localStyles.moreAvatar, { marginLeft: -15 }]}>
-                <Text style={localStyles.moreAvatarText}>+{participants.length - 8}</Text>
+              <View
+                style={[
+                  styles.eventChatParticipantAvatar,
+                  localStyles.moreAvatar,
+                  { marginLeft: -15 },
+                ]}
+              >
+                <Text style={localStyles.moreAvatarText}>
+                  +{participants.length - 8}
+                </Text>
               </View>
             )}
           </View>
@@ -234,10 +256,15 @@ const EventChat = () => {
           showsVerticalScrollIndicator={false}
         >
           {messagesLoading ? (
-            <ActivityIndicator color={PRIMARY_COLOR} style={{ marginVertical: 32 }} />
+            <ActivityIndicator
+              color={PRIMARY_COLOR}
+              style={{ marginVertical: 32 }}
+            />
           ) : messages.length === 0 ? (
             <View style={localStyles.emptyMessages}>
-              <Text style={localStyles.emptyMessagesTitle}>Aún no hay mensajes</Text>
+              <Text style={localStyles.emptyMessagesTitle}>
+                Aún no hay mensajes
+              </Text>
               <Text style={localStyles.emptyMessagesText}>
                 Sé el primero en romper el hielo 🧊
               </Text>
@@ -266,7 +293,9 @@ const EventChat = () => {
                   <View
                     style={[
                       localStyles.messageBubble,
-                      isMe ? localStyles.messageBubbleMe : localStyles.messageBubbleOther,
+                      isMe
+                        ? localStyles.messageBubbleMe
+                        : localStyles.messageBubbleOther,
                     ]}
                   >
                     {!isMe && (
@@ -274,7 +303,12 @@ const EventChat = () => {
                         {sender.name || "Participante"}
                       </Text>
                     )}
-                    <Text style={[localStyles.messageText, isMe && { color: WHITE }]}>
+                    <Text
+                      style={[
+                        localStyles.messageText,
+                        isMe && { color: WHITE },
+                      ]}
+                    >
                       {msg.body}
                     </Text>
                     <Text
@@ -362,7 +396,9 @@ const EventChat = () => {
                     </View>
                     {canKick && (
                       <TouchableOpacity
-                        onPress={() => handleKick(item.userId, item.displayName)}
+                        onPress={() =>
+                          handleKick(item.userId, item.displayName)
+                        }
                         style={localStyles.kickButton}
                       >
                         <Text style={localStyles.kickButtonText}>Expulsar</Text>

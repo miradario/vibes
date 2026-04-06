@@ -23,7 +23,12 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import styles, { TEXT_SECONDARY, PRIMARY_COLOR, WHITE, DARK_GRAY } from "../assets/styles";
+import styles, {
+  TEXT_SECONDARY,
+  PRIMARY_COLOR,
+  WHITE,
+  DARK_GRAY,
+} from "../assets/styles";
 import Icon from "../components/Icon";
 import ChallengeTreeProgress from "../components/ChallengeTreeProgress";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -106,10 +111,8 @@ const EventDetail = () => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
 
-  const { data: participant, isLoading: participantLoading } = useChallengeParticipantQuery(
-    isChallenge ? event?.id : undefined,
-    userId,
-  );
+  const { data: participant, isLoading: participantLoading } =
+    useChallengeParticipantQuery(isChallenge ? event?.id : undefined, userId);
   const { data: challengeCheckins = [] } = useChallengeCheckinsQuery(
     isChallenge ? event?.id : undefined,
     userId,
@@ -120,17 +123,16 @@ const EventDetail = () => {
   const deleteMutation = useDeleteChallengeMutation();
 
   const { data: isEventParticipant, isLoading: eventParticipantLoading } =
-    useIsEventParticipantQuery(
-      !isChallenge ? event?.id : undefined,
-      userId,
-    );
+    useIsEventParticipantQuery(!isChallenge ? event?.id : undefined, userId);
   const joinEventMutation = useJoinEventMutation();
 
   const { data: challengeParticipants = [] } = useChallengeParticipantsQuery(
     isChallenge ? event?.id : undefined,
   );
 
-  const isAdmin = Boolean(userId && event?.createdBy && userId === event.createdBy);
+  const isAdmin = Boolean(
+    userId && event?.createdBy && userId === event.createdBy,
+  );
 
   const [checkInModalVisible, setCheckInModalVisible] = useState(false);
   const [checkInNote, setCheckInNote] = useState("");
@@ -142,11 +144,14 @@ const EventDetail = () => {
   const streak = participant?.streak ?? 0;
   const totalCheckins = participant?.totalCheckins ?? 0;
   const milestone = nextMilestone(streak);
-  const durationDays = typeof event?.durationDays === "number" && event.durationDays > 0
-    ? event.durationDays
-    : 21;
+  const durationDays =
+    typeof event?.durationDays === "number" && event.durationDays > 0
+      ? event.durationDays
+      : 21;
   const treeProgress = Math.min(streak / durationDays, 1);
-  const challengeStartDate = formatStartDate(event?.startsAt ?? event?.createdAt);
+  const challengeStartDate = formatStartDate(
+    event?.startsAt ?? event?.createdAt,
+  );
   const selectedChallengePreset = getChallengeMediaPreset(
     event?.imagePresetId ?? parseChallengeMediaPreset(event?.imageUrl),
   );
@@ -163,10 +168,10 @@ const EventDetail = () => {
   const eventVideoSource = selectedEventPreset?.video
     ? selectedEventPreset.video
     : isVideoMedia(event?.imageUrl)
-      ? { uri: event.imageUrl }
-      : isVideoMedia(event?.image)
-        ? { uri: event.image }
-        : null;
+    ? { uri: event.imageUrl }
+    : isVideoMedia(event?.image)
+    ? { uri: event.image }
+    : null;
 
   // Animated tree background
   const treeBgOpacity = useSharedValue(0);
@@ -190,7 +195,10 @@ const EventDetail = () => {
     opacity: treeBgOpacity.value,
   }));
 
-  const progressDays = Array.from({ length: durationDays }, (_, index) => index + 1);
+  const progressDays = Array.from(
+    { length: durationDays },
+    (_, index) => index + 1,
+  );
 
   const renderBottomActions = () => {
     if (isChallenge) {
@@ -205,13 +213,17 @@ const EventDetail = () => {
                 navigation.navigate("EventChat" as never, { event } as never)
               }
             >
-              <Text style={styles.eventDetailJoinButtonText}>Entrar al chat del challenge</Text>
+              <Text style={styles.eventDetailJoinButtonText}>
+                Entrar al chat del challenge
+              </Text>
             </TouchableOpacity>
 
             {checkedInToday ? (
               <View style={localStyles.checkedInBadge}>
                 <Icon name="checkmark-circle" size={18} color="#4CAF50" />
-                <Text style={localStyles.checkedInText}>Check-in de hoy completo</Text>
+                <Text style={localStyles.checkedInText}>
+                  Check-in de hoy completo
+                </Text>
               </View>
             ) : (
               <TouchableOpacity
@@ -224,7 +236,9 @@ const EventDetail = () => {
                 ) : (
                   <>
                     <Icon name="flame" size={18} color={WHITE} />
-                    <Text style={localStyles.checkInButtonText}>Hacer check-in de hoy</Text>
+                    <Text style={localStyles.checkInButtonText}>
+                      Hacer check-in de hoy
+                    </Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -243,10 +257,14 @@ const EventDetail = () => {
             {joinMutation.isPending ? (
               <ActivityIndicator color={WHITE} size="small" />
             ) : (
-              <Text style={styles.eventDetailJoinButtonText}>Sumarme al challenge</Text>
+              <Text style={styles.eventDetailJoinButtonText}>
+                Sumarme al challenge
+              </Text>
             )}
           </TouchableOpacity>
-          <Text style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}>
+          <Text
+            style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}
+          >
             Al sumarte, empezás a trackear tu racha diaria.
           </Text>
         </View>
@@ -264,7 +282,9 @@ const EventDetail = () => {
               navigation.navigate("EventChat" as never, { event } as never)
             }
           >
-            <Text style={styles.eventDetailJoinButtonText}>Ir al chat del evento</Text>
+            <Text style={styles.eventDetailJoinButtonText}>
+              Ir al chat del evento
+            </Text>
           </TouchableOpacity>
         </View>
       );
@@ -298,7 +318,9 @@ const EventDetail = () => {
           {joinEventMutation.isPending ? (
             <ActivityIndicator color={WHITE} size="small" />
           ) : (
-            <Text style={styles.eventDetailJoinButtonText}>Sumarme al evento</Text>
+            <Text style={styles.eventDetailJoinButtonText}>
+              Sumarme al evento
+            </Text>
           )}
         </TouchableOpacity>
         <Text style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}>
@@ -312,8 +334,8 @@ const EventDetail = () => {
     typeof event?.description === "string" && event.description.trim()
       ? event.description.trim()
       : typeof event?.subtitle === "string" && event.subtitle.trim()
-        ? event.subtitle.trim()
-        : null;
+      ? event.subtitle.trim()
+      : null;
   const eventLocation =
     typeof event?.location === "string" && event.location.trim()
       ? event.location.trim()
@@ -363,10 +385,16 @@ const EventDetail = () => {
           onPress: async () => {
             setMenuVisible(false);
             try {
-              await leaveMutation.mutateAsync({ challengeId: event.id, userId });
+              await leaveMutation.mutateAsync({
+                challengeId: event.id,
+                userId,
+              });
               navigation.goBack();
             } catch (error: any) {
-              Alert.alert("Error", error?.message ?? "No se pudo salir del challenge.");
+              Alert.alert(
+                "Error",
+                error?.message ?? "No se pudo salir del challenge.",
+              );
             }
           },
         },
@@ -389,7 +417,10 @@ const EventDetail = () => {
               await deleteMutation.mutateAsync({ challengeId: event.id });
               navigation.goBack();
             } catch (error: any) {
-              Alert.alert("Error", error?.message ?? "No se pudo eliminar el challenge.");
+              Alert.alert(
+                "Error",
+                error?.message ?? "No se pudo eliminar el challenge.",
+              );
             }
           },
         },
@@ -450,7 +481,7 @@ const EventDetail = () => {
         >
           <Icon name="chevron-back" size={24} color="#F6F6F4" />
         </TouchableOpacity>
-        {(isJoined || isAdmin) ? (
+        {isJoined || isAdmin ? (
           <TouchableOpacity
             style={styles.eventDetailMenuButton}
             onPress={() => setMenuVisible(true)}
@@ -478,7 +509,10 @@ const EventDetail = () => {
         {!isChallenge && eventHostName ? (
           <View style={styles.eventDetailHostSection}>
             {eventHostImage ? (
-              <Image source={eventHostImage} style={styles.eventDetailHostAvatar} />
+              <Image
+                source={eventHostImage}
+                style={styles.eventDetailHostAvatar}
+              />
             ) : null}
             <Text style={styles.eventDetailHostName}>{eventHostName}</Text>
           </View>
@@ -527,7 +561,10 @@ const EventDetail = () => {
             </View>
 
             {participantLoading ? (
-              <ActivityIndicator color={PRIMARY_COLOR} style={{ marginVertical: 24 }} />
+              <ActivityIndicator
+                color={PRIMARY_COLOR}
+                style={{ marginVertical: 24 }}
+              />
             ) : isJoined ? (
               <View style={localStyles.trackingCard}>
                 <View style={localStyles.daysWrap}>
@@ -540,10 +577,14 @@ const EventDetail = () => {
                         )
                       : null;
                     const dayKey = dayDate ? formatDayKey(dayDate) : null;
-                    const isDone = dayKey ? checkinSet.has(dayKey) : day <= streak;
+                    const isDone = dayKey
+                      ? checkinSet.has(dayKey)
+                      : day <= streak;
                     const isPast = dayKey ? dayKey < todayKey : false;
                     const isMissed = Boolean(dayKey && isPast && !isDone);
-                    const isCurrent = Boolean(dayKey && dayKey === todayKey && !isDone);
+                    const isCurrent = Boolean(
+                      dayKey && dayKey === todayKey && !isDone,
+                    );
 
                     return (
                       <View
@@ -570,19 +611,22 @@ const EventDetail = () => {
                   })}
                 </View>
 
-                <ChallengeTreeProgress
-                  progress={treeProgress}
-                  size={200}
-                />
+                <ChallengeTreeProgress progress={treeProgress} size={200} />
 
                 <View style={localStyles.streakRow}>
-                  <Text style={localStyles.streakEmoji}>{getStreakEmoji(streak)}</Text>
+                  <Text style={localStyles.streakEmoji}>
+                    {getStreakEmoji(streak)}
+                  </Text>
                   <View style={localStyles.streakTextWrap}>
                     <Text style={localStyles.streakCount}>{streak} días</Text>
-                    <Text style={localStyles.streakLabel}>{getStreakMessage(streak)}</Text>
+                    <Text style={localStyles.streakLabel}>
+                      {getStreakMessage(streak)}
+                    </Text>
                   </View>
                   <View style={localStyles.totalBadge}>
-                    <Text style={localStyles.totalBadgeNumber}>{totalCheckins}</Text>
+                    <Text style={localStyles.totalBadgeNumber}>
+                      {totalCheckins}
+                    </Text>
                     <Text style={localStyles.totalBadgeLabel}>total</Text>
                   </View>
                 </View>
@@ -593,7 +637,12 @@ const EventDetail = () => {
                       <View
                         style={[
                           localStyles.milestoneBarFill,
-                          { width: `${Math.min((streak / milestone) * 100, 100)}%` },
+                          {
+                            width: `${Math.min(
+                              (streak / milestone) * 100,
+                              100,
+                            )}%`,
+                          },
                         ]}
                       />
                     </View>
@@ -612,7 +661,10 @@ const EventDetail = () => {
             )}
           </>
         ) : eventParticipantLoading ? (
-          <ActivityIndicator color={PRIMARY_COLOR} style={{ marginVertical: 24 }} />
+          <ActivityIndicator
+            color={PRIMARY_COLOR}
+            style={{ marginVertical: 24 }}
+          />
         ) : isEventParticipant ? (
           <View style={localStyles.joinSpacer} />
         ) : (
@@ -656,7 +708,9 @@ const EventDetail = () => {
               {checkInMutation.isPending ? (
                 <ActivityIndicator color={WHITE} size="small" />
               ) : (
-                <Text style={localStyles.modalConfirmText}>Confirmar check-in 🔥</Text>
+                <Text style={localStyles.modalConfirmText}>
+                  Confirmar check-in 🔥
+                </Text>
               )}
             </TouchableOpacity>
             <TouchableOpacity
@@ -677,7 +731,11 @@ const EventDetail = () => {
         onRequestClose={() => setMenuVisible(false)}
       >
         <View style={localStyles.menuBackdrop}>
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setMenuVisible(false)} />
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => setMenuVisible(false)}
+          />
         </View>
         <View style={localStyles.menuSheet}>
           <View style={localStyles.menuHandle} />
@@ -685,17 +743,25 @@ const EventDetail = () => {
 
           <TouchableOpacity
             style={localStyles.menuItem}
-            onPress={() => { setMenuVisible(false); setParticipantsVisible(true); }}
+            onPress={() => {
+              setMenuVisible(false);
+              setParticipantsVisible(true);
+            }}
           >
             <Icon name="people" size={20} color={DARK_GRAY} />
-            <Text style={localStyles.menuItemText}>Participantes ({challengeParticipants.length})</Text>
+            <Text style={localStyles.menuItemText}>
+              Participantes ({challengeParticipants.length})
+            </Text>
             <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
           </TouchableOpacity>
 
           {isJoined ? (
             <TouchableOpacity
               style={localStyles.menuItem}
-              onPress={() => { setMenuVisible(false); navigation.navigate("EventChat" as never, { event } as never); }}
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("EventChat" as never, { event } as never);
+              }}
             >
               <Icon name="chatbubbles" size={20} color={DARK_GRAY} />
               <Text style={localStyles.menuItemText}>Chat del challenge</Text>
@@ -709,7 +775,9 @@ const EventDetail = () => {
               onPress={handleLeave}
             >
               <Icon name="exit" size={20} color="#D32F2F" />
-              <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>Salir del challenge</Text>
+              <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>
+                Salir del challenge
+              </Text>
             </TouchableOpacity>
           ) : null}
 
@@ -722,19 +790,26 @@ const EventDetail = () => {
                 onPress={handleLeave}
               >
                 <Icon name="exit" size={20} color="#D32F2F" />
-                <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>Abandonar challenge</Text>
+                <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>
+                  Abandonar challenge
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[localStyles.menuItem, localStyles.menuItemDanger]}
                 onPress={handleDelete}
               >
                 <Icon name="trash" size={20} color="#D32F2F" />
-                <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>Eliminar challenge</Text>
+                <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>
+                  Eliminar challenge
+                </Text>
               </TouchableOpacity>
             </>
           ) : null}
 
-          <TouchableOpacity style={localStyles.menuCancel} onPress={() => setMenuVisible(false)}>
+          <TouchableOpacity
+            style={localStyles.menuCancel}
+            onPress={() => setMenuVisible(false)}
+          >
             <Text style={localStyles.menuCancelText}>Cancelar</Text>
           </TouchableOpacity>
         </View>
@@ -748,11 +823,17 @@ const EventDetail = () => {
         onRequestClose={() => setParticipantsVisible(false)}
       >
         <View style={localStyles.menuBackdrop}>
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setParticipantsVisible(false)} />
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => setParticipantsVisible(false)}
+          />
         </View>
         <View style={[localStyles.menuSheet, { paddingBottom: 32 }]}>
           <View style={localStyles.menuHandle} />
-          <Text style={localStyles.menuTitle}>Participantes ({challengeParticipants.length})</Text>
+          <Text style={localStyles.menuTitle}>
+            Participantes ({challengeParticipants.length})
+          </Text>
           <FlatList
             data={challengeParticipants}
             keyExtractor={(item) => item.id}
@@ -770,10 +851,15 @@ const EventDetail = () => {
               </View>
             )}
             ListEmptyComponent={
-              <Text style={localStyles.emptyParticipants}>Nadie se sumó todavía</Text>
+              <Text style={localStyles.emptyParticipants}>
+                Nadie se sumó todavía
+              </Text>
             }
           />
-          <TouchableOpacity style={localStyles.menuCancel} onPress={() => setParticipantsVisible(false)}>
+          <TouchableOpacity
+            style={localStyles.menuCancel}
+            onPress={() => setParticipantsVisible(false)}
+          >
             <Text style={localStyles.menuCancelText}>Cerrar</Text>
           </TouchableOpacity>
         </View>

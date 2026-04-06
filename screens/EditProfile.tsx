@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { useEffect, useRef, useState } from "react";
 import {
   View,
@@ -90,8 +92,7 @@ const buildProfilePhotosFromRow = (profileRow: Record<string, any> | null) => {
         ) {
           return {
             url: photo.url.trim(),
-            order:
-              typeof photo.order === "number" ? photo.order : index,
+            order: typeof photo.order === "number" ? photo.order : index,
           };
         }
 
@@ -99,11 +100,11 @@ const buildProfilePhotosFromRow = (profileRow: Record<string, any> | null) => {
       })
       .filter(
         (
-          photo
+          photo,
         ): photo is {
           url: string;
           order: number;
-        } => Boolean(photo)
+        } => Boolean(photo),
       )
       .sort((left, right) => left.order - right.order)
       .reduce<string[]>((acc, photo) => {
@@ -132,21 +133,20 @@ const buildExistingPhotoRows = (profileRow: Record<string, any> | null) => {
       return {
         id: typeof photo.id === "string" ? photo.id : null,
         url: typeof photo.url === "string" ? photo.url : null,
-        order:
-          typeof photo.order === "number" ? photo.order : index,
+        order: typeof photo.order === "number" ? photo.order : index,
         isPrimary:
           typeof photo.isPrimary === "boolean" ? photo.isPrimary : index === 0,
       };
     })
     .filter(
       (
-        photo
+        photo,
       ): photo is {
         id: string | null;
         url: string | null;
         order: number;
         isPrimary: boolean;
-      } => Boolean(photo)
+      } => Boolean(photo),
     );
 };
 
@@ -194,7 +194,7 @@ const ensureProfileExists = async (
   userId: string,
   displayName?: string | null,
   genderId?: number | null,
-  intentId?: number | null
+  intentId?: number | null,
 ) => {
   const resolvedDisplayName =
     typeof displayName === "string" && displayName.trim().length > 0
@@ -208,7 +208,7 @@ const ensureProfileExists = async (
       gender_id: genderId ?? DEFAULT_GENDER_ID,
       intent_id: intentId ?? DEFAULT_INTENT_ID,
     },
-    { onConflict: "id" }
+    { onConflict: "id" },
   );
 
   if (error) {
@@ -253,7 +253,16 @@ const DraggablePhotoSlot = ({
     const tCol = Math.max(0, Math.min(2, col + dCols));
     const tRow = Math.max(0, Math.min(1, row + dRows));
     const target = tRow * 3 + tCol;
-    console.log("calcTarget", { fromIdx, dx, dy, gw, slotW, dCols, dRows, target });
+    console.log("calcTarget", {
+      fromIdx,
+      dx,
+      dy,
+      gw,
+      slotW,
+      dCols,
+      dRows,
+      target,
+    });
     return Math.max(0, Math.min(5, target));
   };
 
@@ -358,7 +367,7 @@ const EditProfile = () => {
   const buildSlots = (photos: (string | undefined | null)[]) =>
     Array.from({ length: maxPhotos }, (_, index) => photos[index] ?? null);
   const [mediaSlots, setMediaSlots] = useState<(string | null)[]>(
-    buildSlots(profilePhotos)
+    buildSlots(profilePhotos),
   );
 
   useEffect(() => {
@@ -378,7 +387,7 @@ const EditProfile = () => {
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const gridWidthRef = useRef(0);
   const [displayName, setDisplayName] = useState(
-    (profileData as any)?.displayName ?? ""
+    (profileData as any)?.displayName ?? "",
   );
   const [savingName, setSavingName] = useState(false);
 
@@ -423,7 +432,7 @@ const EditProfile = () => {
 
     try {
       const existingRows = buildExistingPhotoRows(
-        (profileData as Record<string, any>) ?? null
+        (profileData as Record<string, any>) ?? null,
       );
       console.log("handleReorder:existingRows", existingRows);
       const fromRow = existingRows.find((p) => p.order === fromIndex);
@@ -435,7 +444,7 @@ const EditProfile = () => {
           supabase
             .from("profile_photos")
             .update({ order: toIndex, is_primary: toIndex === 0 })
-            .eq("id", fromRow.id)
+            .eq("id", fromRow.id),
         );
       }
       if (toRow?.id) {
@@ -443,7 +452,7 @@ const EditProfile = () => {
           supabase
             .from("profile_photos")
             .update({ order: fromIndex, is_primary: fromIndex === 0 })
-            .eq("id", toRow.id)
+            .eq("id", toRow.id),
         );
       }
 
@@ -462,7 +471,7 @@ const EditProfile = () => {
       [
         { text: "Cancelar", style: "cancel" },
         { text: "Abrir ajustes", onPress: () => Linking.openSettings() },
-      ]
+      ],
     );
   };
 
@@ -503,7 +512,7 @@ const EditProfile = () => {
 
     const optimistic = Array.from(
       { length: maxPhotos },
-      (_, index) => mediaSlots[index] ?? null
+      (_, index) => mediaSlots[index] ?? null,
     );
     optimistic[slotIndex] = uri;
     setMediaSlots(optimistic);
@@ -512,7 +521,7 @@ const EditProfile = () => {
       userId,
       profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
       profileData?.genderId ?? null,
-      profileData?.intentId ?? null
+      profileData?.intentId ?? null,
     );
 
     console.log("uploadPhoto:start", { userId, slotIndex, uri });
@@ -549,14 +558,16 @@ const EditProfile = () => {
 
     const nextPhotos = Array.from(
       { length: maxPhotos },
-      (_, index) => optimistic[index] ?? null
+      (_, index) => optimistic[index] ?? null,
     );
     nextPhotos[slotIndex] = signedUrl || uri;
 
     const existingRows = buildExistingPhotoRows(
-      (profileData as Record<string, any>) ?? null
+      (profileData as Record<string, any>) ?? null,
     );
-    const existingForSlot = existingRows.find((photo) => photo.order === slotIndex);
+    const existingForSlot = existingRows.find(
+      (photo) => photo.order === slotIndex,
+    );
 
     if (existingForSlot?.id) {
       const { error: deleteExistingError } = await supabase
@@ -567,18 +578,20 @@ const EditProfile = () => {
       if (deleteExistingError) {
         console.error(
           "uploadPhoto:profile_photos_delete_existing_error",
-          deleteExistingError
+          deleteExistingError,
         );
         throw deleteExistingError;
       }
     }
 
-    const { error: insertError } = await supabase.from("profile_photos").insert({
-      profile_id: userId,
-      url: filePath,
-      order: slotIndex,
-      is_primary: slotIndex === 0,
-    });
+    const { error: insertError } = await supabase
+      .from("profile_photos")
+      .insert({
+        profile_id: userId,
+        url: filePath,
+        order: slotIndex,
+        is_primary: slotIndex === 0,
+      });
 
     if (insertError) {
       console.error("uploadPhoto:profile_photos_insert_error", insertError);
@@ -667,19 +680,21 @@ const EditProfile = () => {
       userId,
       profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
       profileData?.genderId ?? null,
-      profileData?.intentId ?? null
+      profileData?.intentId ?? null,
     );
 
     const nextPhotos = Array.from(
       { length: maxPhotos },
-      (_, index) => mediaSlots[index] ?? null
+      (_, index) => mediaSlots[index] ?? null,
     );
     nextPhotos[slotIndex] = null;
 
     const existingRows = buildExistingPhotoRows(
-      (profileData as Record<string, any>) ?? null
+      (profileData as Record<string, any>) ?? null,
     );
-    const existingForSlot = existingRows.find((photo) => photo.order === slotIndex);
+    const existingForSlot = existingRows.find(
+      (photo) => photo.order === slotIndex,
+    );
 
     if (!existingForSlot?.id) {
       setMediaSlots(nextPhotos);

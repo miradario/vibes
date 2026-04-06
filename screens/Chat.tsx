@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { useRef, useEffect, useState } from "react";
 import {
   View,
@@ -90,9 +92,7 @@ const Chat = () => {
         style={isOwn ? styles.chatBubbleRight : styles.chatBubbleLeft}
       >
         <Text
-          style={
-            isOwn ? styles.chatBubbleTextRight : styles.chatBubbleTextLeft
-          }
+          style={isOwn ? styles.chatBubbleTextRight : styles.chatBubbleTextLeft}
         >
           {item.text}
         </Text>
@@ -180,12 +180,7 @@ const Chat = () => {
           returnKeyType="default"
         />
         <TouchableOpacity onPress={handleSend} disabled={!text.trim()}>
-          <Text
-            style={[
-              styles.chatSend,
-              !text.trim() && { opacity: 0.4 },
-            ]}
-          >
+          <Text style={[styles.chatSend, !text.trim() && { opacity: 0.4 }]}>
             SEND
           </Text>
         </TouchableOpacity>

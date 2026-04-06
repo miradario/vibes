@@ -34,19 +34,21 @@ const Home = () => {
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
-  const { data: candidates = [], isLoading, isError, error } = useCandidatesQuery();
-  const profiles = useMemo<DataT[]>(
-    () => {
-      return candidates.map((candidate) => {
-        const profile = mapCandidateToConnectionProfile(candidate);
-        return {
-          ...profile,
-          match: profile.match ?? "0",
-        };
-      }) as DataT[];
-    },
-    [candidates],
-  );
+  const {
+    data: candidates = [],
+    isLoading,
+    isError,
+    error,
+  } = useCandidatesQuery();
+  const profiles = useMemo<DataT[]>(() => {
+    return candidates.map((candidate) => {
+      const profile = mapCandidateToConnectionProfile(candidate);
+      return {
+        ...profile,
+        match: profile.match ?? "0",
+      };
+    }) as DataT[];
+  }, [candidates]);
   const centerProfile = useMemo<DataT>(
     () =>
       ({
@@ -55,7 +57,7 @@ const Home = () => {
           session?.user?.email?.split("@")[0],
         ),
         match: "0",
-      }) as DataT,
+      } as DataT),
     [ownProfileData, session?.user?.email],
   );
   const errorMessage =
@@ -108,7 +110,10 @@ const Home = () => {
 
   return (
     <View style={localStyles.screen}>
-      <SafeAreaView style={localStyles.safeArea} edges={["top", "left", "right"]}>
+      <SafeAreaView
+        style={localStyles.safeArea}
+        edges={["top", "left", "right"]}
+      >
         <Modal
           visible={showGallery}
           transparent
@@ -165,7 +170,9 @@ const Home = () => {
                   images={selectedProfile.images}
                   matches={selectedProfile.match}
                   onImagePress={() =>
-                    openGallery(selectedProfile.images || [selectedProfile.image])
+                    openGallery(
+                      selectedProfile.images || [selectedProfile.image],
+                    )
                   }
                   onContactPress={() => connectProfile(selectedProfile)}
                 />
@@ -183,11 +190,15 @@ const Home = () => {
             {isLoading ? (
               <View style={localStyles.emptyState}>
                 <ActivityIndicator color="#2B2B2B" />
-                <Text style={localStyles.emptyStateText}>Loading real profiles...</Text>
+                <Text style={localStyles.emptyStateText}>
+                  Loading real profiles...
+                </Text>
               </View>
             ) : isError ? (
               <View style={localStyles.emptyState}>
-                <Text style={localStyles.emptyStateTitle}>Could not load profiles</Text>
+                <Text style={localStyles.emptyStateTitle}>
+                  Could not load profiles
+                </Text>
                 <Text style={localStyles.emptyStateText}>{errorMessage}</Text>
               </View>
             ) : (
@@ -200,9 +211,12 @@ const Home = () => {
                 />
                 {profiles.length === 0 ? (
                   <View style={localStyles.discoverOrbitHint}>
-                    <Text style={localStyles.emptyStateTitle}>No real profiles yet</Text>
+                    <Text style={localStyles.emptyStateTitle}>
+                      No real profiles yet
+                    </Text>
                     <Text style={localStyles.emptyStateText}>
-                      Your profile stays in the center. Other users will appear around it.
+                      Your profile stays in the center. Other users will appear
+                      around it.
                     </Text>
                   </View>
                 ) : null}
@@ -212,7 +226,10 @@ const Home = () => {
 
           <View style={localStyles.discoverFiltersRow}>
             <Filters />
-            <TouchableOpacity style={localStyles.discoverFilterChip} activeOpacity={0.9}>
+            <TouchableOpacity
+              style={localStyles.discoverFilterChip}
+              activeOpacity={0.9}
+            >
               <Text style={localStyles.discoverFilterChipText}>Distance</Text>
             </TouchableOpacity>
           </View>

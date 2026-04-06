@@ -19,14 +19,17 @@ import { useFindMatchQuery } from "../src/queries/matches.queries";
 import ConexionReveal from "../components/ConexionReveal";
 import { useWindowDimensions } from "react-native";
 
-
 const Match = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const ownProfile = useMemo(
-    () => mapOwnProfileToConnectionProfile(ownProfileData, session?.user?.email?.split("@")[0]),
+    () =>
+      mapOwnProfileToConnectionProfile(
+        ownProfileData,
+        session?.user?.email?.split("@")[0],
+      ),
     [ownProfileData, session?.user?.email],
   );
   const profile = route?.params?.profile ?? null;
@@ -100,10 +103,17 @@ const Match = () => {
     <View style={[styles.matchScreen, matchVideoStyles.container]}>
       {/* Full-screen hand-drawn conexion animation */}
       <Animated.View
-        style={[matchVideoStyles.fullBg, { opacity: bgOpacity, transform: [{ scale: bgScale }] }]}
+        style={[
+          matchVideoStyles.fullBg,
+          { opacity: bgOpacity, transform: [{ scale: bgScale }] },
+        ]}
         pointerEvents="none"
       >
-        <ConexionReveal width={dimensions.width} height={dimensions.height} durationMs={3200} />
+        <ConexionReveal
+          width={dimensions.width}
+          height={dimensions.height}
+          durationMs={3200}
+        />
       </Animated.View>
 
       {/* Radial glow pulse */}
@@ -166,7 +176,9 @@ const Match = () => {
                     resizeMode="contain"
                   />
                   <Image
-                    source={profile?.image ?? require("../assets/images/logo.png")}
+                    source={
+                      profile?.image ?? require("../assets/images/logo.png")
+                    }
                     style={matchVideoStyles.matchAvatar}
                   />
                   <Image
@@ -189,16 +201,20 @@ const Match = () => {
                   if (profile && matchData) {
                     const primaryPhoto =
                       Array.isArray(profile.images) && profile.images[0]
-                        ? typeof profile.images[0] === "object" && "uri" in profile.images[0]
+                        ? typeof profile.images[0] === "object" &&
+                          "uri" in profile.images[0]
                           ? (profile.images[0] as { uri: string }).uri
                           : null
                         : null;
-                    navigation.navigate("Chat" as never, {
-                      matchId: matchData.id,
-                      otherUserId: String(profile.id),
-                      otherUserName: profile.name,
-                      otherUserPhoto: primaryPhoto,
-                    } as never);
+                    navigation.navigate(
+                      "Chat" as never,
+                      {
+                        matchId: matchData.id,
+                        otherUserId: String(profile.id),
+                        otherUserName: profile.name,
+                        otherUserPhoto: primaryPhoto,
+                      } as never,
+                    );
                   } else {
                     navigation.goBack();
                   }
@@ -206,7 +222,9 @@ const Match = () => {
               >
                 <Text style={matchVideoStyles.matchPrimaryButtonText}>
                   {profile
-                    ? `Chat with ${profile?.name?.split(" ")[0] || "your soulmate"}`
+                    ? `Chat with ${
+                        profile?.name?.split(" ")[0] || "your soulmate"
+                      }`
                     : "Back to discover"}
                 </Text>
               </TouchableOpacity>
@@ -215,7 +233,7 @@ const Match = () => {
                 onPress={() =>
                   navigation.navigate(
                     "Tab" as never,
-                    { screen: "Discover" } as never
+                    { screen: "Discover" } as never,
                   )
                 }
               >

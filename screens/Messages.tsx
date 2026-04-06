@@ -46,7 +46,14 @@ const Messages = () => {
   const { data: eventGroups = [], isLoading: groupsLoading } =
     useMyEventGroupsQuery(userId);
 
-  console.log("[Messages] matches:", matches?.length, "loading:", isLoading, "error:", error);
+  console.log(
+    "[Messages] matches:",
+    matches?.length,
+    "loading:",
+    isLoading,
+    "error:",
+    error,
+  );
 
   const withMessages = (matches ?? []).filter((m) => m.lastMessage);
   const newConnections = (matches ?? []).filter((m) => !m.lastMessage);
@@ -56,12 +63,15 @@ const Messages = () => {
       style={localStyles.matchRow}
       activeOpacity={0.7}
       onPress={() =>
-        navigation.navigate("Chat" as never, {
-          matchId: item.id,
-          otherUserId: item.otherUserId,
-          otherUserName: item.otherUserName,
-          otherUserPhoto: item.otherUserPhoto,
-        } as never)
+        navigation.navigate(
+          "Chat" as never,
+          {
+            matchId: item.id,
+            otherUserId: item.otherUserId,
+            otherUserName: item.otherUserName,
+            otherUserPhoto: item.otherUserPhoto,
+          } as never,
+        )
       }
     >
       <Image
@@ -102,7 +112,10 @@ const Messages = () => {
         style={localStyles.matchRow}
         activeOpacity={0.7}
         onPress={() =>
-          navigation.navigate("EventChat" as never, { event: item.event } as never)
+          navigation.navigate(
+            "EventChat" as never,
+            { event: item.event } as never,
+          )
         }
       >
         <Image source={imgSource} style={localStyles.groupAvatar} />
@@ -122,9 +135,7 @@ const Messages = () => {
           </Text>
         </View>
         {item.lastMessageAt && (
-          <Text style={localStyles.time}>
-            {formatTime(item.lastMessageAt)}
-          </Text>
+          <Text style={localStyles.time}>{formatTime(item.lastMessageAt)}</Text>
         )}
       </TouchableOpacity>
     );
@@ -132,7 +143,9 @@ const Messages = () => {
 
   return (
     <View style={styles.bg}>
-      <View style={[styles.containerMessages, { justifyContent: "flex-start" }]}>
+      <View
+        style={[styles.containerMessages, { justifyContent: "flex-start" }]}
+      >
         <View style={styles.flowTop}>
           <TouchableOpacity style={styles.flowTopIcon}>
             <Icon name="infinite" color={DARK_GRAY} size={20} />

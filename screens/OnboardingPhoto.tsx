@@ -17,10 +17,9 @@ import styles, { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 
-const IMAGE_MEDIA_TYPE =
-  (ImagePicker as any).MediaType?.Images
-    ? [(ImagePicker as any).MediaType.Images]
-    : ["images"];
+const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
+  ? [(ImagePicker as any).MediaType.Images]
+  : ["images"];
 
 const MAX_PHOTOS = 6;
 
@@ -206,12 +205,17 @@ const OnboardingPhoto = () => {
         <Text style={styles.onboardTitle}>Add your photo</Text>
         <Text style={styles.onboardSubtitle}>Show your authentic self</Text>
         {draft.country ? (
-          <Text style={localStyles.locationText}>Location: {draft.country}</Text>
+          <Text style={localStyles.locationText}>
+            Location: {draft.country}
+          </Text>
         ) : null}
 
         <View style={localStyles.previewSection}>
           {primaryUri ? (
-            <Image source={{ uri: primaryUri }} style={localStyles.primaryPhoto} />
+            <Image
+              source={{ uri: primaryUri }}
+              style={localStyles.primaryPhoto}
+            />
           ) : (
             <View style={localStyles.emptyPrimaryPhoto}>
               <Icon name="person" size={56} color={TEXT_SECONDARY} />
@@ -236,7 +240,10 @@ const OnboardingPhoto = () => {
         ) : null}
 
         <View style={styles.onboardOptions}>
-          <TouchableOpacity style={styles.welcomeSecondary} onPress={uploadPhoto}>
+          <TouchableOpacity
+            style={styles.welcomeSecondary}
+            onPress={uploadPhoto}
+          >
             <Icon
               name="images"
               size={18}

@@ -47,10 +47,7 @@ const ConexionReveal = ({ width, height, durationMs = 3200 }: Props) => {
   return (
     <View style={{ width, height }}>
       <Animated.View
-        style={[
-          styles.clipContainer,
-          { width, height: clipHeight, opacity },
-        ]}
+        style={[styles.clipContainer, { width, height: clipHeight, opacity }]}
       >
         <Image
           source={require("../assets/images/conexion.png")}

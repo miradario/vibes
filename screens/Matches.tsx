@@ -28,12 +28,15 @@ const Matches = () => {
       style={localStyles.matchRow}
       activeOpacity={0.7}
       onPress={() =>
-        navigation.navigate("Chat" as never, {
-          matchId: item.id,
-          otherUserId: item.otherUserId,
-          otherUserName: item.otherUserName,
-          otherUserPhoto: item.otherUserPhoto,
-        } as never)
+        navigation.navigate(
+          "Chat" as never,
+          {
+            matchId: item.id,
+            otherUserId: item.otherUserId,
+            otherUserName: item.otherUserName,
+            otherUserPhoto: item.otherUserPhoto,
+          } as never,
+        )
       }
     >
       <Image
