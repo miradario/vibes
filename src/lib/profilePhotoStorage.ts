@@ -30,6 +30,7 @@ export const getProfilePicturePath = (value?: string | null) => {
 
 export const createSignedProfilePhotoUrl = async (value?: string | null) => {
   const path = getProfilePicturePath(value);
+  // If no path could be extracted, it's an external URL (Cloudinary, etc.) — return as-is
   if (!path) return value ?? null;
 
   const { data, error } = await supabase.storage
@@ -38,7 +39,7 @@ export const createSignedProfilePhotoUrl = async (value?: string | null) => {
 
   if (error) {
     console.warn("createSignedProfilePhotoUrl:error", { path, error });
-    return value ?? null;
+    return null;
   }
 
   return data.signedUrl;

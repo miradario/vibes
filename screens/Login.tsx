@@ -10,11 +10,10 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
+import { ResizeMode, Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
-import AnimatedIllustration from "../src/components/illustrations/AnimatedIllustration";
-import { loginIllustrationConfig } from "../src/components/illustrations/presets/loginIllustrationConfig";
 import VibesHeader from "../src/components/VibesHeader";
 
 const Login = () => {
@@ -47,9 +46,12 @@ const Login = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.welcomeLogo}>
-        <AnimatedIllustration
-          {...loginIllustrationConfig}
+        <Video
+          source={require("../assets/videos/login.mp4")}
           style={localStyles.loginIllustration}
+          resizeMode={ResizeMode.CONTAIN}
+          shouldPlay
+          isMuted
         />
       </View>
       <View />

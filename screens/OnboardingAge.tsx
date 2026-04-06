@@ -6,10 +6,12 @@ import {
   Text,
   TouchableOpacity,
   Platform,
+  StyleSheet,
 } from "react-native";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import { ResizeMode, Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
@@ -106,6 +108,16 @@ const OnboardingAge = () => {
           />
         ) : null}
 
+        <View style={localStyles.videoWrap}>
+          <Video
+            source={require("../assets/videos/name.mp4")}
+            style={localStyles.video}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay
+            isMuted
+          />
+        </View>
+
         <View style={styles.onboardFooter}>
           <TouchableOpacity
             style={[
@@ -128,3 +140,16 @@ const OnboardingAge = () => {
 };
 
 export default OnboardingAge;
+
+const localStyles = StyleSheet.create({
+  videoWrap: {
+    flex: 1,
+    minHeight: 320,
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  video: {
+    width: "100%",
+    height: "100%",
+  },
+});

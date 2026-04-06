@@ -7,6 +7,7 @@ import type {
 } from "../api/modules/candidates/candidates.types";
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
+import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 
 type ProfileRow = Record<string, any>;
 type PhotoRow = Record<string, any>;
@@ -23,6 +24,16 @@ const fetchCandidates = async (
 ): Promise<GetCandidatesResponse> => {
   const limit = params?.limit ?? 20;
 
+  // Fetch IDs the current user has already swiped on
+  let swipedIds: string[] = [];
+  if (currentUserId) {
+    const { data: swipeRows } = await supabase
+      .from("swipes")
+      .select("target_id")
+      .eq("swiper_id", currentUserId);
+    swipedIds = (swipeRows ?? []).map((r: any) => String(r.target_id));
+  }
+
   let query = supabase
     .from("profiles")
     .select("*")
@@ -32,6 +43,11 @@ const fetchCandidates = async (
 
   if (currentUserId) {
     query = query.neq("id", currentUserId);
+  }
+
+  // Exclude already-swiped profiles
+  if (swipedIds.length > 0) {
+    query = query.not("id", "in", `(${swipedIds.join(",")})`);
   }
 
   const { data: profileRows, error: profilesError } = await query;
@@ -69,24 +85,56 @@ const fetchCandidates = async (
     }, new Map<string, PhotoRow[]>());
   }
 
-  return profiles.map((profile) => {
+  return Promise.all(profiles.map(async (profile) => {
     const id = String(profile.id);
-    const photos = photosByProfileId.get(id) ?? [];
+    const tablePhotos = photosByProfileId.get(id) ?? [];
+
+    // Sign URLs from profile_photos table
+    const signedTablePhotos = (await Promise.all(
+      tablePhotos.map(async (photo, index) => {
+        const rawUrl = typeof photo.url === "string" ? photo.url : "";
+        const signedUrl = rawUrl ? await createSignedProfilePhotoUrl(rawUrl) : null;
+        if (!signedUrl) return null;
+        return {
+          id: String(photo.id ?? `${id}-photo-${index}`),
+          url: signedUrl,
+          order:
+            typeof photo.order === "number" ? photo.order : Number(photo.order ?? index),
+          isPrimary: Boolean(photo.isPrimary),
+        };
+      }),
+    )).filter(Boolean) as { id: string; url: string; order: number; isPrimary: boolean }[];
+
+    // Fallback: use photos array from profiles table if no profile_photos rows
+    let mergedPhotos = signedTablePhotos;
+    if (mergedPhotos.length === 0 && Array.isArray(profile.photos)) {
+      const fromProfile = profile.photos
+        .map((item: any, idx: number) => {
+          const url =
+            typeof item === "string" ? item.trim() :
+            (item && typeof item === "object" && typeof item.url === "string") ? item.url.trim() : "";
+          if (!url) return null;
+          return { id: `${id}-p-${idx}`, url, order: idx, isPrimary: idx === 0 };
+        })
+        .filter(Boolean) as { id: string; url: string; order: number; isPrimary: boolean }[];
+
+      mergedPhotos = (await Promise.all(
+        fromProfile.map(async (p) => {
+          const signed = await createSignedProfilePhotoUrl(p.url);
+          if (!signed) return null;
+          return { ...p, url: signed };
+        }),
+      )).filter(Boolean) as { id: string; url: string; order: number; isPrimary: boolean }[];
+    }
 
     return {
       ...profile,
       displayName:
         typeof profile.displayName === "string" ? profile.displayName : undefined,
       isActive: Boolean(profile.isActive),
-      photos: photos.map((photo, index) => ({
-        id: String(photo.id ?? `${id}-photo-${index}`),
-        url: typeof photo.url === "string" ? photo.url : "",
-        order:
-          typeof photo.order === "number" ? photo.order : Number(photo.order ?? index),
-        isPrimary: Boolean(photo.isPrimary),
-      })),
+      photos: mergedPhotos,
     } as Candidate;
-  });
+  }));
 };
 
 export const useCandidatesQuery = (params?: GetCandidatesParams) => {

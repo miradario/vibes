@@ -84,15 +84,17 @@ const Home = () => {
         direction: "like",
       },
       {
+        onSuccess: (response) => {
+          if (response?.match) {
+            navigation.navigate("Match" as never, { profile } as never);
+          }
+        },
         onError: (error) =>
           handleApiError(error, { toastTitle: "Connect Error" }),
       },
     );
 
     closeProfileSheet();
-    if (Math.random() < 0.35) {
-      navigation.navigate("Match" as never, { profile } as never);
-    }
   };
 
   const openProfileSheet = (profile: DataT) => {

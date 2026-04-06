@@ -130,7 +130,15 @@ const Events = () => {
                 <Text style={styles.eventCardSubtitle}>{item.subtitle}</Text>
                 <View style={styles.eventCardFooter}>
                   <Text style={styles.eventCardDate}>{item.date}</Text>
-                  <TouchableOpacity style={styles.eventCardButton}>
+                  <TouchableOpacity
+                    style={styles.eventCardButton}
+                    onPress={() =>
+                      navigation.navigate(
+                        "EventDetail" as never,
+                        { event: item } as never,
+                      )
+                    }
+                  >
                     <Text style={styles.eventCardButtonText}>
                       {item.type === "challenge" ? "Ver challenge" : "Ver evento"}
                     </Text>

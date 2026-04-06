@@ -20,7 +20,7 @@ import styles, {
 } from "../assets/styles";
 import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
-import { supabase } from "../src/lib/supabase";
+import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 
 const SPIRITUAL_OPTIONS = ["Meditación", "Yoga", "Astrología", "Reiki"];
@@ -98,26 +98,6 @@ const Settings = () => {
     setCustomTag("");
   };
 
-  const upsertPreferencesWithFallback = async (
-    payload: Record<string, any>
-  ) => {
-    const working = { ...payload };
-    while (true) {
-      const { error } = await supabase
-        .from("user_preferences")
-        .upsert(working, { onConflict: "user_id" });
-      if (!error) return;
-
-      if (error.code !== "PGRST204") throw error;
-      const match = error.message.match(/'([^']+)' column/);
-      const missingColumn = match?.[1];
-      if (!missingColumn || missingColumn === "user_id") throw error;
-      if (!(missingColumn in working)) throw error;
-      delete working[missingColumn];
-      if (Object.keys(working).length <= 1) throw error;
-    }
-  };
-
   const handleSave = async () => {
     const userId = session?.user?.id;
     if (!userId) {
@@ -126,8 +106,7 @@ const Settings = () => {
     }
 
     try {
-      await upsertPreferencesWithFallback({
-        user_id: userId,
+      await upsertUserPreferences(userId, {
         spiritual_path: spiritualPath,
         vegetarian,
         about_me: aboutMe,

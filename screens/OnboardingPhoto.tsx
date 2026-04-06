@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Image,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -101,6 +102,7 @@ const OnboardingPhoto = () => {
     [draft.photoUris, draft.primaryPhotoUri],
   );
   const [photoUris, setPhotoUris] = useState<string[]>(initialPhotos);
+  const [showPickerModal, setShowPickerModal] = useState(false);
 
   const progress = 83;
 
@@ -149,27 +151,21 @@ const OnboardingPhoto = () => {
     });
   };
 
-  const uploadPhoto = async () => {
+  const uploadPhoto = () => {
     if (photoUris.length >= MAX_PHOTOS) return;
-    Alert.alert("Upload photo", "Choose source", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Camera",
-        onPress: async () => {
-          const uri = await pickFromCamera();
-          if (!uri) return;
-          persistPhotos([...photoUris, uri]);
-        },
-      },
-      {
-        text: "Gallery",
-        onPress: async () => {
-          const uri = await pickFromGallery();
-          if (!uri) return;
-          persistPhotos([...photoUris, uri]);
-        },
-      },
-    ]);
+    setShowPickerModal(true);
+  };
+
+  const handlePickCamera = async () => {
+    setShowPickerModal(false);
+    const uri = await pickFromCamera();
+    if (uri) persistPhotos([...photoUris, uri]);
+  };
+
+  const handlePickGallery = async () => {
+    setShowPickerModal(false);
+    const uri = await pickFromGallery();
+    if (uri) persistPhotos([...photoUris, uri]);
   };
 
   const setAsPrimary = (index: number) => {
@@ -266,7 +262,7 @@ const OnboardingPhoto = () => {
           ) : null}
         </View>
 
-        <View style={styles.onboardFooter}>
+        <View style={localStyles.footer}>
           <TouchableOpacity style={styles.onboardNext} onPress={onContinue}>
             <Text style={styles.onboardNextText}>Continue</Text>
           </TouchableOpacity>
@@ -275,6 +271,56 @@ const OnboardingPhoto = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Photo source picker modal */}
+      <Modal
+        visible={showPickerModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPickerModal(false)}
+      >
+        <TouchableOpacity
+          style={localStyles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowPickerModal(false)}
+        >
+          <View style={localStyles.modalCard}>
+            <Text style={localStyles.modalTitle}>Choose source</Text>
+            <Text style={localStyles.modalSubtitle}>
+              How would you like to add your photo?
+            </Text>
+
+            <View style={localStyles.modalButtons}>
+              <TouchableOpacity
+                style={localStyles.modalOption}
+                onPress={handlePickCamera}
+              >
+                <View style={localStyles.modalIconWrap}>
+                  <Icon name="camera" size={26} color="#D88C7A" />
+                </View>
+                <Text style={localStyles.modalOptionText}>Camera</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={localStyles.modalOption}
+                onPress={handlePickGallery}
+              >
+                <View style={localStyles.modalIconWrap}>
+                  <Icon name="images" size={26} color="#D88C7A" />
+                </View>
+                <Text style={localStyles.modalOptionText}>Gallery</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={localStyles.modalCancel}
+              onPress={() => setShowPickerModal(false)}
+            >
+              <Text style={localStyles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -348,11 +394,83 @@ const localStyles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
+  footer: {
+    marginTop: "auto",
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
   skipButton: {
     marginTop: 12,
     alignSelf: "center",
     paddingVertical: 4,
     paddingHorizontal: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: "#FDF8F5",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 28,
+    paddingBottom: 36,
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontFamily: "CormorantGaramond_600SemiBold",
+    fontSize: 22,
+    color: "#3B3B3B",
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontFamily: "CormorantGaramond_500Medium",
+    fontSize: 15,
+    color: "#9B9B9B",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 24,
+    marginBottom: 24,
+  },
+  modalOption: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 28,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  modalIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#FDF0EC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  modalOptionText: {
+    fontFamily: "CormorantGaramond_600SemiBold",
+    fontSize: 16,
+    color: "#3B3B3B",
+  },
+  modalCancel: {
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+  },
+  modalCancelText: {
+    fontFamily: "CormorantGaramond_500Medium",
+    fontSize: 16,
+    color: "#9B9B9B",
   },
 });
 

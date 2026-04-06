@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   StyleSheet,
   Linking,
+  TextInput,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, {
@@ -25,6 +26,13 @@ import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../src/lib/profilePhotoStorage";
 import { useProfileQuery } from "../src/queries/profile.queries";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+} from "react-native-reanimated";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -209,6 +217,136 @@ const ensureProfileExists = async (
   }
 };
 
+const DraggablePhotoSlot = ({
+  index,
+  item,
+  onPress,
+  onRemove,
+  getGridWidth,
+  onDragStart,
+  onDragEnd,
+  onReorder,
+}: {
+  index: number;
+  item: string | null;
+  onPress: (i: number) => void;
+  onRemove: (i: number) => void;
+  getGridWidth: () => number;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onReorder: (from: number, to: number) => void;
+}) => {
+  const tx = useSharedValue(0);
+  const ty = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const zIdx = useSharedValue(1);
+
+  const calcTarget = (fromIdx: number, dx: number, dy: number) => {
+    const gw = getGridWidth();
+    if (gw <= 0) return fromIdx;
+    const slotW = gw / 3;
+    const cellH = slotW * (4 / 3) + 12;
+    const col = fromIdx % 3;
+    const row = Math.floor(fromIdx / 3);
+    const dCols = Math.round(dx / slotW);
+    const dRows = Math.round(dy / cellH);
+    const tCol = Math.max(0, Math.min(2, col + dCols));
+    const tRow = Math.max(0, Math.min(1, row + dRows));
+    const target = tRow * 3 + tCol;
+    console.log("calcTarget", { fromIdx, dx, dy, gw, slotW, dCols, dRows, target });
+    return Math.max(0, Math.min(5, target));
+  };
+
+  const handleDrop = (dx: number, dy: number) => {
+    const target = calcTarget(index, dx, dy);
+    console.log("handleDrop", { index, target, dx, dy });
+    if (target !== index) onReorder(index, target);
+    onDragEnd();
+  };
+
+  const pan = Gesture.Pan()
+    .activateAfterLongPress(150)
+    .enabled(!!item)
+    .onStart(() => {
+      "worklet";
+      scale.value = withSpring(1.1);
+      zIdx.value = 100;
+      runOnJS(onDragStart)();
+    })
+    .onUpdate((e) => {
+      "worklet";
+      tx.value = e.translationX;
+      ty.value = e.translationY;
+    })
+    .onEnd(() => {
+      "worklet";
+      const dx = tx.value;
+      const dy = ty.value;
+      tx.value = withSpring(0);
+      ty.value = withSpring(0);
+      scale.value = withSpring(1);
+      zIdx.value = 1;
+      runOnJS(handleDrop)(dx, dy);
+    })
+    .onFinalize(() => {
+      "worklet";
+      tx.value = withSpring(0);
+      ty.value = withSpring(0);
+      scale.value = withSpring(1);
+      zIdx.value = 1;
+    });
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: tx.value },
+      { translateY: ty.value },
+      { scale: scale.value },
+    ],
+    zIndex: zIdx.value,
+  }));
+
+  return (
+    <GestureDetector gesture={pan}>
+      <Animated.View style={[styles.mediaSlot, animStyle]}>
+        <TouchableOpacity
+          style={{ flex: 1 }}
+          onPress={() => onPress(index)}
+          activeOpacity={0.8}
+        >
+          {item ? (
+            <>
+              <Image
+                source={typeof item === "string" ? { uri: item } : item}
+                style={styles.mediaImage}
+              />
+              {index === 0 && (
+                <View style={localStyles.primaryBadge}>
+                  <Text style={localStyles.primaryBadgeText}>Principal</Text>
+                </View>
+              )}
+              <TouchableOpacity
+                style={styles.mediaRemove}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onRemove(index);
+                }}
+              >
+                <Icon name="close" size={14} color={WHITE} />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={styles.mediaPlaceholder}>
+              <View style={styles.mediaAdd}>
+                <Icon name="add" size={16} color={WHITE} />
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
+    </GestureDetector>
+  );
+};
+
 const EditProfile = () => {
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
@@ -237,6 +375,85 @@ const EditProfile = () => {
   const [busyIndex, setBusyIndex] = useState<number | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const gridWidthRef = useRef(0);
+  const [displayName, setDisplayName] = useState(
+    (profileData as any)?.displayName ?? ""
+  );
+  const [savingName, setSavingName] = useState(false);
+
+  useEffect(() => {
+    const name = (profileData as any)?.displayName;
+    if (typeof name === "string") setDisplayName(name);
+  }, [(profileData as any)?.displayName]);
+
+  const saveDisplayName = async () => {
+    const userId = session?.user?.id;
+    if (!userId || !displayName.trim()) return;
+    setSavingName(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: displayName.trim() })
+        .eq("id", userId);
+      if (error) {
+        Alert.alert("Error", "No se pudo guardar el nombre.");
+        console.error("saveDisplayName:error", error);
+      } else {
+        await refetch();
+      }
+    } catch (err) {
+      console.error("saveDisplayName:error", err);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleReorder = async (fromIndex: number, toIndex: number) => {
+    console.log("handleReorder called", { fromIndex, toIndex });
+    if (fromIndex === toIndex) return;
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    const newSlots = [...mediaSlots];
+    const temp = newSlots[fromIndex];
+    newSlots[fromIndex] = newSlots[toIndex];
+    newSlots[toIndex] = temp;
+    setMediaSlots(newSlots);
+
+    try {
+      const existingRows = buildExistingPhotoRows(
+        (profileData as Record<string, any>) ?? null
+      );
+      console.log("handleReorder:existingRows", existingRows);
+      const fromRow = existingRows.find((p) => p.order === fromIndex);
+      const toRow = existingRows.find((p) => p.order === toIndex);
+      const updates: Promise<any>[] = [];
+
+      if (fromRow?.id) {
+        updates.push(
+          supabase
+            .from("profile_photos")
+            .update({ order: toIndex, is_primary: toIndex === 0 })
+            .eq("id", fromRow.id)
+        );
+      }
+      if (toRow?.id) {
+        updates.push(
+          supabase
+            .from("profile_photos")
+            .update({ order: fromIndex, is_primary: fromIndex === 0 })
+            .eq("id", toRow.id)
+        );
+      }
+
+      await Promise.all(updates);
+      await refetch();
+    } catch (error) {
+      console.error("handleReorder:error", error);
+      await refetch();
+    }
+  };
 
   const promptOpenSettings = () => {
     Alert.alert(
@@ -490,6 +707,7 @@ const EditProfile = () => {
       <ScrollView
         style={styles.editContainer}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={scrollEnabled}
       >
         <View style={styles.top}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -498,44 +716,36 @@ const EditProfile = () => {
           <View style={{ flex: 1, alignItems: "center" }}>
             <Text style={styles.title}>Edit Profile</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              await saveDisplayName();
+              navigation.goBack();
+            }}
+          >
             <Icon name="checkmark" color={DARK_GRAY} size={22} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>Photos</Text>
-          <View style={styles.mediaGrid}>
+          <View
+            style={styles.mediaGrid}
+            onLayout={(e) => {
+              gridWidthRef.current = e.nativeEvent.layout.width;
+            }}
+          >
             {mediaSlots.map((item, index) => (
-              <TouchableOpacity
+              <DraggablePhotoSlot
                 key={`media-${index}`}
-                style={styles.mediaSlot}
-                onPress={() => handleAddMedia(index)}
-              >
-                {item ? (
-                  <>
-                    <Image
-                      source={typeof item === "string" ? { uri: item } : item}
-                      style={styles.mediaImage}
-                    />
-                    <TouchableOpacity
-                      style={styles.mediaRemove}
-                      onPress={(event) => {
-                        event.stopPropagation();
-                        handleRemove(index);
-                      }}
-                    >
-                      <Icon name="close" size={14} color={WHITE} />
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <View style={styles.mediaPlaceholder}>
-                    <View style={styles.mediaAdd}>
-                      <Icon name="add" size={16} color={WHITE} />
-                    </View>
-                  </View>
-                )}
-              </TouchableOpacity>
+                index={index}
+                item={item}
+                onPress={handleAddMedia}
+                onRemove={handleRemove}
+                getGridWidth={() => gridWidthRef.current}
+                onDragStart={() => setScrollEnabled(false)}
+                onDragEnd={() => setScrollEnabled(true)}
+                onReorder={handleReorder}
+              />
             ))}
           </View>
           <TouchableOpacity
@@ -552,6 +762,22 @@ const EditProfile = () => {
           >
             <Text style={styles.editPrimaryText}>Add media</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.editSection}>
+          <Text style={styles.editSectionTitle}>Nombre</Text>
+          <TextInput
+            style={localStyles.nameInput}
+            value={displayName}
+            onChangeText={setDisplayName}
+            onBlur={saveDisplayName}
+            onSubmitEditing={saveDisplayName}
+            placeholder="Tu nombre"
+            placeholderTextColor={GRAY}
+            returnKeyType="done"
+            editable={!savingName}
+            maxLength={50}
+          />
         </View>
       </ScrollView>
 
@@ -668,5 +894,32 @@ const modalStyles = StyleSheet.create({
   cancelText: {
     color: GRAY,
     fontWeight: "600",
+  },
+});
+
+const localStyles = StyleSheet.create({
+  primaryBadge: {
+    position: "absolute",
+    left: 6,
+    top: 6,
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  primaryBadgeText: {
+    color: WHITE,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  nameInput: {
+    backgroundColor: "rgba(246, 246, 244, 0.6)",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: DARK_GRAY,
+    borderWidth: 1,
+    borderColor: "rgba(216, 140, 122, 0.25)",
   },
 });

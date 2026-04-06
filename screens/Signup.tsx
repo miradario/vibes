@@ -10,10 +10,9 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
+import { ResizeMode, Video } from "expo-av";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
-import AnimatedIllustration from "../src/components/illustrations/AnimatedIllustration";
-import { signupIllustrationConfig } from "../src/components/illustrations/presets/signupIllustrationConfig";
 import VibesHeader from "../src/components/VibesHeader";
 import VibesActionButton from "../components/VibesActionButton";
 
@@ -21,20 +20,13 @@ const Signup = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const signupMutation = useSignupMutation();
   const loading = signupMutation.isPending;
-  const passwordsMatch = password === confirmPassword;
 
   const handleSignup = async () => {
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password) {
       setError("Por favor completa todos los campos.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
       return;
     }
 
@@ -64,9 +56,12 @@ const Signup = () => {
     <View style={styles.bg}>
       <View>
         <View style={styles.welcomeLogo}>
-          <AnimatedIllustration
-            {...signupIllustrationConfig}
+          <Video
+            source={require("../assets/videos/signup.mp4")}
             style={localStyles.signupIllustration}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay
+            isMuted
           />
         </View>
       </View>
@@ -104,18 +99,6 @@ const Signup = () => {
             />
           </View>
 
-          <View style={styles.loginField}>
-            <Text style={styles.loginLabel}>Confirmar contraseña</Text>
-            <TextInput
-              style={styles.loginInput}
-              placeholder=""
-              placeholderTextColor="#6E6E6E"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-          </View>
-
           {error ? <Text style={styles.loginError}>{error}</Text> : null}
 
           <View style={localStyles.actions}>
@@ -123,9 +106,7 @@ const Signup = () => {
               label={loading ? "Signing up..." : "Sign up"}
               variant="start"
               onPress={handleSignup}
-              disabled={
-                !email || !password || !confirmPassword || !passwordsMatch || loading
-              }
+              disabled={!email || !password || loading}
             />
 
             <VibesActionButton

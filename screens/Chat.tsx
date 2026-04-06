@@ -1,69 +1,240 @@
-import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import React, { useRef, useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Icon } from "../components";
 import styles, { DARK_GRAY } from "../assets/styles";
+import { useAuthSession } from "../src/auth/auth.queries";
+import {
+  useDirectMessagesQuery,
+  useSendDirectMessageMutation,
+  useDeleteDirectMessageMutation,
+  type DirectMessage,
+} from "../src/queries/matches.queries";
+
+const LOGO = require("../assets/images/logo.png");
 
 const Chat = () => {
   const navigation = useNavigation();
   const route = useRoute() as any;
-  const profile = route?.params?.profile;
+  const { matchId, otherUserId, otherUserName, otherUserPhoto } =
+    route?.params ?? {};
+
+  const { data: session } = useAuthSession();
+  const myId = session?.user?.id;
+
+  const { data: messages, isLoading } = useDirectMessagesQuery(matchId);
+  const sendMutation = useSendDirectMessageMutation();
+  const deleteMutation = useDeleteDirectMessageMutation();
+
+  const [text, setText] = useState("");
+  const flatListRef = useRef<FlatList>(null);
+
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages?.length]);
+
+  const handleSend = () => {
+    const body = text.trim();
+    if (!body || !matchId) return;
+    setText("");
+    sendMutation.mutate(
+      { matchId, body },
+      {
+        onError: (err) => {
+          Alert.alert("Error", err.message || "Could not send message");
+        },
+      },
+    );
+  };
+
+  const handleLongPress = (msg: DirectMessage) => {
+    if (msg.senderId !== myId) return;
+    Alert.alert("Delete message?", msg.text.slice(0, 60), [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () =>
+          deleteMutation.mutate({ messageId: msg.id, matchId: msg.matchId }),
+      },
+    ]);
+  };
+
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const renderMessage = ({ item }: { item: DirectMessage }) => {
+    const isOwn = item.senderId === myId;
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onLongPress={() => handleLongPress(item)}
+        style={isOwn ? styles.chatBubbleRight : styles.chatBubbleLeft}
+      >
+        <Text
+          style={
+            isOwn ? styles.chatBubbleTextRight : styles.chatBubbleTextLeft
+          }
+        >
+          {item.text}
+        </Text>
+        <Text
+          style={[
+            localStyles.msgTime,
+            isOwn ? localStyles.msgTimeRight : localStyles.msgTimeLeft,
+          ]}
+        >
+          {formatTime(item.createdAt)}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const matchDate = messages?.[0]?.createdAt;
 
   return (
-    <View style={styles.bg}>
+    <KeyboardAvoidingView
+      style={styles.bg}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={0}
+    >
+      {/* Header */}
       <View style={styles.chatHeader}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="chevron-back" size={22} color={DARK_GRAY} />
         </TouchableOpacity>
         <View style={styles.chatHeaderCenter}>
-          <View style={styles.chatAvatarWrap}>
-            <Icon name="person" size={16} color={DARK_GRAY} />
-          </View>
-          <Text style={styles.chatName}>{profile?.name || "Chat"}</Text>
+          <Image
+            source={otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
+            style={styles.chatAvatarWrap}
+          />
+          <Text style={styles.chatName}>{otherUserName || "Chat"}</Text>
         </View>
         <TouchableOpacity>
           <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.chatBody}>
-        <Text style={styles.chatMatchedText}>
-          You connected with {profile?.name || "them"} on 11/07/2023.
-        </Text>
-
-        <View style={styles.chatBubbleLeft}>
-          <Text style={styles.chatBubbleTextLeft}>
-            Hey, what's up with dog pics?
-          </Text>
+      {/* Messages */}
+      {isLoading ? (
+        <View style={localStyles.loadingWrap}>
+          <ActivityIndicator color="#E4B76E" size="large" />
         </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={messages ?? []}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          contentContainerStyle={localStyles.messageList}
+          ListHeaderComponent={
+            <Text style={styles.chatMatchedText}>
+              You connected with {otherUserName || "them"}
+              {matchDate
+                ? ` on ${new Date(matchDate).toLocaleDateString()}`
+                : ""}
+              .
+            </Text>
+          }
+          ListEmptyComponent={
+            <View style={localStyles.emptyWrap}>
+              <Text style={localStyles.emptyText}>
+                Say hi to {otherUserName || "your connection"}!
+              </Text>
+            </View>
+          }
+          onContentSizeChange={() =>
+            flatListRef.current?.scrollToEnd({ animated: false })
+          }
+        />
+      )}
 
-        <View style={styles.chatBubbleRight}>
-          <Text style={styles.chatBubbleTextRight}>cuz em a dog 🐶</Text>
-          <Text style={styles.chatSent}>Sent</Text>
-        </View>
-      </View>
-
+      {/* Input */}
       <View style={styles.chatInputBar}>
-        <Text style={styles.chatInputPlaceholder}>Type a message ...</Text>
-        <Text style={styles.chatSend}>SEND</Text>
+        <TextInput
+          style={localStyles.input}
+          placeholder="Type a message ..."
+          placeholderTextColor="#999"
+          value={text}
+          onChangeText={setText}
+          multiline
+          maxLength={2000}
+          returnKeyType="default"
+        />
+        <TouchableOpacity onPress={handleSend} disabled={!text.trim()}>
+          <Text
+            style={[
+              styles.chatSend,
+              !text.trim() && { opacity: 0.4 },
+            ]}
+          >
+            SEND
+          </Text>
+        </TouchableOpacity>
       </View>
-
-      <View style={styles.chatTools}>
-        <TouchableOpacity style={styles.chatToolButton}>
-          <Icon name="person" size={16} color={DARK_GRAY} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.chatToolPill}>
-          <Text style={styles.chatToolText}>GIF</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.chatToolButton}>
-          <Icon name="star" size={16} color={DARK_GRAY} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.chatToolButton}>
-          <Icon name="musical-notes" size={16} color={DARK_GRAY} />
-        </TouchableOpacity>
-      </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 export default Chat;
+
+const localStyles = {
+  messageList: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
+    flexGrow: 1,
+  },
+  msgTime: {
+    fontSize: 10,
+    marginTop: 4,
+  },
+  msgTimeRight: {
+    color: "rgba(0,0,0,0.35)",
+    textAlign: "right" as const,
+  },
+  msgTimeLeft: {
+    color: "rgba(0,0,0,0.35)",
+  },
+  input: {
+    flex: 1,
+    color: "#2B2B2B",
+    fontSize: 14,
+    maxHeight: 80,
+    marginRight: 8,
+  },
+  loadingWrap: {
+    flex: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  emptyWrap: {
+    flex: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    paddingTop: 60,
+  },
+  emptyText: {
+    color: "#AEBFD1",
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+};

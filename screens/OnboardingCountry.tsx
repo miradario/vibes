@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
+import { ResizeMode, Video } from "expo-av";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 
@@ -98,6 +100,16 @@ const OnboardingCountry = () => {
           </Text>
         </TouchableOpacity>
 
+        <View style={localStyles.videoWrap}>
+          <Video
+            source={require("../assets/videos/name.mp4")}
+            style={localStyles.video}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay
+            isMuted
+          />
+        </View>
+
         <View style={styles.onboardFooter}>
           <TouchableOpacity
             style={[
@@ -116,3 +128,16 @@ const OnboardingCountry = () => {
 };
 
 export default OnboardingCountry;
+
+const localStyles = StyleSheet.create({
+  videoWrap: {
+    flex: 1,
+    minHeight: 320,
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  video: {
+    width: "100%",
+    height: "100%",
+  },
+});

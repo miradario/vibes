@@ -714,7 +714,7 @@ export default StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     color: DARK_GRAY,
-    fontSize: 14,
+    fontSize: 18,
     fontFamily: SERIF_FONT,
   },
   loginError: {
@@ -2424,11 +2424,12 @@ export default StyleSheet.create({
   },
   onboardFooter: {
     marginTop: "auto",
+    marginBottom: 16,
   },
   onboardNext: {
     backgroundColor: CTA_PRIMARY,
     borderRadius: 24,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: "center",
     shadowOpacity: 0.16,
     shadowRadius: 10,
@@ -2437,7 +2438,7 @@ export default StyleSheet.create({
     elevation: 2,
   },
   onboardNextDisabled: {
-    backgroundColor: GLOW_HIGHLIGHT,
+    backgroundColor: "rgba(228, 183, 110, 0.72)",
   },
   onboardNextText: {
     color: WHITE,
@@ -3019,7 +3020,7 @@ export default StyleSheet.create({
   },
   eventDetailHeroImage: {
     width: "100%",
-    height: 320,
+    height: 220,
   },
   eventDetailHeader: {
     position: "absolute",
@@ -3035,7 +3036,7 @@ export default StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(43, 43, 43, 0.3)",
+    backgroundColor: "rgba(43, 43, 43, 0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -3043,7 +3044,7 @@ export default StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(43, 43, 43, 0.3)",
+    backgroundColor: "rgba(43, 43, 43, 0.16)",
     alignItems: "center",
     justifyContent: "center",
   },

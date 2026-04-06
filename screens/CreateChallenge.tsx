@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import {
   Alert,
   Image,
-  Modal,
+  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,7 +14,9 @@ import {
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import * as ImagePicker from "expo-image-picker";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import styles, {
   BLACK,
   DARK_GRAY,
@@ -25,13 +28,18 @@ import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useCreateChallengeMutation } from "../src/queries/events.queries";
-
-const IMAGE_MEDIA_TYPE =
-  (ImagePicker as any).MediaType?.Images
-    ? [(ImagePicker as any).MediaType.Images]
-    : ["images"];
+import {
+  challengeMediaPresets,
+  type ChallengeMediaPresetId,
+} from "../src/constants/challengeMediaPresets";
 
 const normalizeDaysInput = (value: string) => value.replace(/\D+/g, "");
+const formatChallengeDate = (value: Date) =>
+  value.toLocaleDateString("es-AR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
 const CreateChallenge = () => {
   const navigation = useNavigation();
@@ -41,61 +49,38 @@ const CreateChallenge = () => {
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [days, setDays] = useState("");
-  const [challengeImageUri, setChallengeImageUri] = useState<string | null>(null);
-  const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] =
+    useState<ChallengeMediaPresetId>("challenge");
+  const [challengeStartDate, setChallengeStartDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const pickFromGallery = async () => {
-    const current = await ImagePicker.getMediaLibraryPermissionsAsync();
-    const permission =
-      current.status === "granted"
-        ? current
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permission.status !== "granted") {
-      Alert.alert("Permiso requerido", "Permite acceso a la galería.");
-      return;
-    }
-
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: IMAGE_MEDIA_TYPE,
-        allowsEditing: true,
-        quality: 0.85,
-      });
-      if (!result.canceled && result.assets?.[0]?.uri) {
-        setChallengeImageUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error("Error opening gallery for challenge image", error);
-      Alert.alert("Error", "No se pudo abrir la galería.");
-    }
+  const openDatePicker = () => {
+    setShowDatePicker(true);
   };
 
-  const takePhoto = async () => {
-    const current = await ImagePicker.getCameraPermissionsAsync();
-    const permission =
-      current.status === "granted"
-        ? current
-        : await ImagePicker.requestCameraPermissionsAsync();
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    selectedValue?: Date,
+  ) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
 
-    if (permission.status !== "granted") {
-      Alert.alert("Permiso requerido", "Permite acceso a la cámara.");
+    if (event.type === "dismissed" || !selectedValue) {
       return;
     }
 
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: IMAGE_MEDIA_TYPE,
-        allowsEditing: true,
-        quality: 0.85,
-      });
-      if (!result.canceled && result.assets?.[0]?.uri) {
-        setChallengeImageUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error("Error opening camera for challenge image", error);
-      Alert.alert("Error", "No se pudo abrir la cámara.");
-    }
+    const nextDate = challengeStartDate
+      ? new Date(challengeStartDate)
+      : new Date();
+
+    nextDate.setFullYear(
+      selectedValue.getFullYear(),
+      selectedValue.getMonth(),
+      selectedValue.getDate(),
+    );
+    nextDate.setHours(12, 0, 0, 0);
+    setChallengeStartDate(nextDate);
   };
 
   const handleCreate = async () => {
@@ -114,13 +99,6 @@ const CreateChallenge = () => {
       (typeof profile?.displayName === "string" && profile.displayName.trim()) ||
       session.user.email?.split("@")[0] ||
       null;
-    const hostImage =
-      Array.isArray(profile?.photos) &&
-      typeof profile.photos[0]?.url === "string" &&
-      profile.photos[0].url.trim()
-        ? profile.photos[0].url.trim()
-        : null;
-
     try {
       await createChallengeMutation.mutateAsync({
         createdBy: session.user.id,
@@ -128,9 +106,10 @@ const CreateChallenge = () => {
         subtitle: subtitle.trim() || "Challenge creado por la comunidad",
         description: subtitle.trim() || null,
         durationDays: parsedDays,
-        imageUri: challengeImageUri,
+        startsAt: challengeStartDate?.toISOString() ?? null,
+        imagePresetId: selectedPresetId,
         hostName,
-        hostImage,
+        hostImage: null,
       });
 
       navigation.navigate(
@@ -141,9 +120,23 @@ const CreateChallenge = () => {
         } as never,
       );
     } catch (error) {
+      console.log("createChallenge:error", error);
+      const fallback = "No se pudo crear el challenge.";
       const message =
-        error instanceof Error ? error.message : "No se pudo crear el challenge.";
-      Alert.alert("Error", message);
+        error instanceof Error
+          ? error.message || fallback
+          : typeof error === "object" && error !== null && "message" in error
+            ? String((error as { message?: unknown }).message || fallback)
+            : fallback;
+      const details =
+        typeof error === "object" && error !== null && "details" in error
+          ? String((error as { details?: unknown }).details || "")
+          : "";
+      const hint =
+        typeof error === "object" && error !== null && "hint" in error
+          ? String((error as { hint?: unknown }).hint || "")
+          : "";
+      Alert.alert("Error", [message, details, hint].filter(Boolean).join("\n"));
     }
   };
 
@@ -174,24 +167,58 @@ const CreateChallenge = () => {
             onChangeText={setTitle}
           />
 
-          <Text style={localStyles.label}>Imagen del challenge</Text>
-          <TouchableOpacity
-            style={localStyles.imagePickerButton}
-            onPress={() => setPhotoModalVisible(true)}
-          >
-            <Icon name="image" size={16} color={WHITE} />
-            <Text style={localStyles.imagePickerButtonText}>
-              {challengeImageUri ? "Cambiar imagen" : "Subir imagen"}
-            </Text>
-          </TouchableOpacity>
+          <Text style={localStyles.label}>Imagen y video del challenge</Text>
+          <View style={localStyles.presetGrid}>
+            {challengeMediaPresets.map((preset) => {
+              const isSelected = selectedPresetId === preset.id;
+
+              return (
+                <Pressable
+                  key={preset.id}
+                  style={[
+                    localStyles.presetCard,
+                    isSelected && localStyles.presetCardSelected,
+                  ]}
+                  onPress={() => setSelectedPresetId(preset.id)}
+                >
+                  <View style={localStyles.presetImageWrap}>
+                    <Image source={preset.image} style={localStyles.presetImage} />
+                  </View>
+                  <Text style={localStyles.presetLabel}>{preset.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
           <Image
             source={
-              challengeImageUri
-                ? { uri: challengeImageUri }
-                : require("../assets/images/logo.png")
+              challengeMediaPresets.find(
+                (preset) => preset.id === selectedPresetId,
+              )?.image || require("../assets/images/logo.png")
             }
             style={localStyles.imagePreview}
           />
+
+          <Text style={localStyles.label}>Fecha de comienzo</Text>
+          <TouchableOpacity
+            style={localStyles.dateButton}
+            onPress={openDatePicker}
+          >
+            <Icon name="calendar" size={18} color={DARK_GRAY} />
+            <Text style={localStyles.dateButtonText}>
+              {challengeStartDate
+                ? formatChallengeDate(challengeStartDate)
+                : "Seleccionar fecha"}
+            </Text>
+          </TouchableOpacity>
+          {showDatePicker ? (
+            <DateTimePicker
+              value={challengeStartDate ?? new Date()}
+              mode="date"
+              display={Platform.OS === "ios" ? "inline" : "default"}
+              onChange={handleDateChange}
+              minimumDate={new Date()}
+            />
+          ) : null}
 
           <Text style={localStyles.label}>Descripción corta</Text>
           <TextInput
@@ -223,45 +250,6 @@ const CreateChallenge = () => {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-
-      <Modal
-        visible={photoModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPhotoModalVisible(false)}
-      >
-        <View style={localStyles.modalOverlay}>
-          <View style={localStyles.modalCard}>
-            <Text style={localStyles.modalTitle}>Imagen del challenge</Text>
-            <TouchableOpacity
-              style={localStyles.modalPrimaryButton}
-              onPress={async () => {
-                setPhotoModalVisible(false);
-                await new Promise((resolve) => setTimeout(resolve, 200));
-                await takePhoto();
-              }}
-            >
-              <Text style={localStyles.modalPrimaryText}>Usar cámara</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={localStyles.modalSecondaryButton}
-              onPress={async () => {
-                setPhotoModalVisible(false);
-                await new Promise((resolve) => setTimeout(resolve, 200));
-                await pickFromGallery();
-              }}
-            >
-              <Text style={localStyles.modalSecondaryText}>Elegir de galería</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={localStyles.modalCancelButton}
-              onPress={() => setPhotoModalVisible(false)}
-            >
-              <Text style={localStyles.modalCancelText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -295,31 +283,67 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
     color: DARK_GRAY,
   },
-  imagePickerButton: {
+  presetGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
     marginTop: 6,
-    backgroundColor: "#F6F6F4",
-    borderRadius: 24,
+    marginBottom: 8,
+  },
+  presetCard: {
+    width: "48%",
+    backgroundColor: WHITE,
+    borderRadius: 14,
     borderWidth: 1,
+    borderColor: "rgba(43,43,43,0.08)",
+    padding: 12,
+    alignItems: "center",
+  },
+  presetCardSelected: {
     borderColor: "#E4B76E",
-    paddingVertical: 10,
+    backgroundColor: "rgba(228,183,110,0.12)",
+  },
+  presetImage: {
+    width: 56,
+    height: 56,
+    resizeMode: "contain",
+  },
+  presetImageWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 12,
+    backgroundColor: WHITE,
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
-    gap: 8,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 3 },
+    marginBottom: 8,
   },
-  imagePickerButtonText: {
+  presetLabel: {
     color: DARK_GRAY,
-    fontWeight: "700",
+    fontWeight: "600",
+    fontSize: 14,
   },
   imagePreview: {
     marginTop: 10,
     width: "100%",
     height: 170,
     borderRadius: 12,
+  },
+  dateButton: {
+    marginTop: 6,
+    backgroundColor: WHITE,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(43,43,43,0.08)",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dateButtonText: {
+    color: DARK_GRAY,
+    fontSize: 15,
+    fontWeight: "600",
   },
   createButton: {
     marginTop: 20,
@@ -336,71 +360,6 @@ const localStyles = StyleSheet.create({
     color: WHITE,
     fontWeight: "700",
     fontSize: 15,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.45)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-  },
-  modalCard: {
-    width: "100%",
-    maxWidth: 360,
-    backgroundColor: WHITE,
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    shadowColor: BLACK,
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
-  },
-  modalTitle: {
-    fontSize: 18,
-    color: DARK_GRAY,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  modalPrimaryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 12,
-    alignItems: "center",
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 5 },
-  },
-  modalPrimaryText: {
-    color: WHITE,
-    fontWeight: "700",
-  },
-  modalSecondaryButton: {
-    backgroundColor: "#F6F6F4",
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "#E4B76E",
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 10,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  modalSecondaryText: {
-    color: DARK_GRAY,
-    fontWeight: "600",
-  },
-  modalCancelButton: {
-    marginTop: 14,
-    alignItems: "center",
-  },
-  modalCancelText: {
-    color: TEXT_SECONDARY,
-    fontWeight: "600",
   },
 });
 

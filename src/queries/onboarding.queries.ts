@@ -1,7 +1,81 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../lib/supabase";
 import { profileKeys } from "./profile.queries";
 import { userPreferencesKeys } from "./userPreferences.queries";
+
+const PROFILE_PICTURES_BUCKET = "profile pictures";
+
+const EXTENSION_TO_CONTENT_TYPE: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
+const isArrayBuffer = (value: unknown): value is ArrayBuffer =>
+  value instanceof ArrayBuffer ||
+  Object.prototype.toString.call(value) === "[object ArrayBuffer]";
+
+const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+};
+
+const readUriAsArrayBuffer = async (uri: string): Promise<ArrayBuffer> => {
+  try {
+    const response = await fetch(uri);
+    const fetched = await response.arrayBuffer();
+    if (isArrayBuffer(fetched) && fetched.byteLength > 0) return fetched.slice(0);
+  } catch (_) {
+    // fall through to base64 fallback
+  }
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const buf = base64ToArrayBuffer(base64);
+  if (!isArrayBuffer(buf) || buf.byteLength === 0) {
+    throw new Error("Failed to convert file URI to ArrayBuffer");
+  }
+  return buf.slice(0);
+};
+
+const uploadOnboardingPhotos = async (userId: string, uris: string[]) => {
+  for (let i = 0; i < uris.length; i++) {
+    const uri = uris[i];
+    const rawExt = uri.split("?")[0].split(".").pop() || "jpg";
+    const ext = rawExt.toLowerCase();
+    const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";
+    const arrayBuffer = await readUriAsArrayBuffer(uri);
+    const uploadBody = new Uint8Array(arrayBuffer).buffer;
+    const filePath = `${userId}/${Date.now()}-${i}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(PROFILE_PICTURES_BUCKET)
+      .upload(filePath, uploadBody, { contentType, upsert: true });
+
+    if (uploadError) {
+      console.error("onboarding:photo_upload_error", uploadError);
+      throw uploadError;
+    }
+
+    const { error: insertError } = await supabase
+      .from("profile_photos")
+      .insert({
+        profile_id: userId,
+        url: filePath,
+        order: i,
+        is_primary: i === 0,
+      });
+
+    if (insertError) {
+      console.error("onboarding:photo_insert_error", insertError);
+      throw insertError;
+    }
+  }
+};
 
 const DEFAULT_INTENT_ID = 3; // "Everyone"
 
@@ -112,6 +186,11 @@ export const useCompleteOnboardingMutation = () => {
           console.log("completeOnboarding:error_hint", (error as any).hint);
         }
         throw error;
+      }
+
+      // Upload photos to Supabase Storage + profile_photos table
+      if (draft.photoUris?.length) {
+        await uploadOnboardingPhotos(userId, draft.photoUris);
       }
     },
     onSuccess: () => {

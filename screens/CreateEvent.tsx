@@ -30,6 +30,10 @@ import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useCreateEventMutation } from "../src/queries/events.queries";
+import {
+  challengeMediaPresets,
+  type ChallengeMediaPresetId,
+} from "../src/constants/challengeMediaPresets";
 
 const IMAGE_MEDIA_TYPE =
   (ImagePicker as any).MediaType?.Images
@@ -66,6 +70,8 @@ const CreateEvent = () => {
   const [location, setLocation] = useState("");
   const [isValidatingLocation, setIsValidatingLocation] = useState(false);
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] =
+    useState<ChallengeMediaPresetId | null>("challenge");
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time" | null>(null);
   const [validatedLocation, setValidatedLocation] = useState<{
@@ -131,6 +137,7 @@ const CreateEvent = () => {
       });
       if (!result.canceled && result.assets?.[0]?.uri) {
         setEventImageUri(result.assets[0].uri);
+        setSelectedPresetId(null);
       }
     } catch (error) {
       console.error("Error opening gallery for event image", error);
@@ -158,6 +165,7 @@ const CreateEvent = () => {
       });
       if (!result.canceled && result.assets?.[0]?.uri) {
         setEventImageUri(result.assets[0].uri);
+        setSelectedPresetId(null);
       }
     } catch (error) {
       console.error("Error opening camera for event image", error);
@@ -255,6 +263,7 @@ const CreateEvent = () => {
         location: resolvedLocation,
         capacity: parsedCapacity,
         imageUri: eventImageUri,
+        imagePresetId: eventImageUri ? null : selectedPresetId,
         hostName,
         hostImage,
       });
@@ -300,7 +309,32 @@ const CreateEvent = () => {
             onChangeText={setTitle}
           />
 
-          <Text style={localStyles.label}>Imagen del evento</Text>
+          <Text style={localStyles.label}>Imagen y video del evento</Text>
+          <View style={localStyles.presetGrid}>
+            {challengeMediaPresets.map((preset) => {
+              const isSelected =
+                !eventImageUri && selectedPresetId === preset.id;
+
+              return (
+                <TouchableOpacity
+                  key={preset.id}
+                  style={[
+                    localStyles.presetCard,
+                    isSelected && localStyles.presetCardSelected,
+                  ]}
+                  onPress={() => {
+                    setEventImageUri(null);
+                    setSelectedPresetId(preset.id);
+                  }}
+                >
+                  <View style={localStyles.presetImageWrap}>
+                    <Image source={preset.image} style={localStyles.presetImage} />
+                  </View>
+                  <Text style={localStyles.presetLabel}>{preset.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
           <TouchableOpacity
             style={localStyles.imagePickerButton}
             onPress={() => setPhotoModalVisible(true)}
@@ -314,7 +348,9 @@ const CreateEvent = () => {
             source={
               eventImageUri
                 ? { uri: eventImageUri }
-                : require("../assets/images/events/event_meditation2.png")
+                : challengeMediaPresets.find(
+                    (preset) => preset.id === selectedPresetId,
+                  )?.image || require("../assets/images/events/event_meditation2.png")
             }
             style={localStyles.imagePreview}
           />
@@ -607,6 +643,45 @@ const localStyles = StyleSheet.create({
   imagePickerButtonText: {
     color: DARK_GRAY,
     fontWeight: "700",
+  },
+  presetGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  presetCard: {
+    width: "48%",
+    backgroundColor: WHITE,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(43,43,43,0.08)",
+    padding: 12,
+    alignItems: "center",
+  },
+  presetCardSelected: {
+    borderColor: "#E4B76E",
+    backgroundColor: "rgba(228,183,110,0.12)",
+  },
+  presetImageWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 12,
+    backgroundColor: WHITE,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  presetImage: {
+    width: 56,
+    height: 56,
+    resizeMode: "contain",
+  },
+  presetLabel: {
+    color: DARK_GRAY,
+    fontWeight: "600",
+    fontSize: 14,
   },
   imagePreview: {
     marginTop: 10,

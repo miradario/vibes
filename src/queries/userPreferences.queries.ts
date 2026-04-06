@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { mapUserPreferencesRow } from "../api/mappers/userPreferences.mapper";
-import { supabase } from "../lib/supabase";
+import { getUserPreferences } from "../lib/userPreferencesStore";
 
 export type UserPreferences = Record<string, any>;
 
@@ -13,15 +12,7 @@ export const userPreferencesKeys = {
 export const useUserPreferencesQuery = (userId?: string) => {
   return useQuery<UserPreferences | null>({
     queryKey: userPreferencesKeys.byUser(userId),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_preferences")
-        .select("*")
-        .eq("user_id", userId as string)
-        .maybeSingle();
-      if (error) throw error;
-      return mapUserPreferencesRow(data ?? null);
-    },
+    queryFn: async () => getUserPreferences(userId as string),
     enabled: Boolean(userId),
     staleTime: 60_000,
   });

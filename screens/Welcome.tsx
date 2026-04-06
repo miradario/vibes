@@ -2,12 +2,11 @@
 
 import React, { useEffect } from "react";
 import { View, StyleSheet } from "react-native";
+import { ResizeMode, Video } from "expo-av";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import VibesActionButton from "../components/VibesActionButton";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import AnimatedIllustration from "../src/components/illustrations/AnimatedIllustration";
-import { welcomeIllustrationConfig } from "../src/components/illustrations/presets/welcomeIllustrationConfig";
 import VibesHeader from "../src/components/VibesHeader";
 
 const Welcome = () => {
@@ -27,7 +26,13 @@ const Welcome = () => {
       <View style={localStyles.content}>
         <View style={localStyles.top}>
           <View style={localStyles.illustrationWrap}>
-            <AnimatedIllustration {...welcomeIllustrationConfig} />
+            <Video
+              source={require("../assets/videos/bienvenidx.mp4")}
+              style={localStyles.video}
+              resizeMode={ResizeMode.CONTAIN}
+              shouldPlay
+              isMuted
+            />
           </View>
           <VibesHeader subtitle="A calm space to begin" />
         </View>
@@ -69,17 +74,15 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     marginTop: 30,
   },
-  logo: {
-    width: 200,
-    height: 110,
-    resizeMode: "contain",
-    opacity: 0.9,
-  },
   illustrationWrap: {
     width: 348,
     height: 368,
     marginTop: -18,
     marginBottom: 2,
+  },
+  video: {
+    width: "100%",
+    height: "100%",
   },
   card: {
     marginBottom: 20,

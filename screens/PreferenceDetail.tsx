@@ -10,8 +10,11 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
-import { supabase } from "../src/lib/supabase";
+import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+
+const toCamelKey = (key: string) =>
+  key.replace(/_([a-z])/g, (_match: string, letter: string) => letter.toUpperCase());
 
 const PreferenceDetail = () => {
   const navigation = useNavigation();
@@ -119,7 +122,7 @@ const PreferenceDetail = () => {
 
   useEffect(() => {
     if (!prefKey) return;
-    const current = prefs?.[prefKey];
+    const current = prefs?.[prefKey] ?? prefs?.[toCamelKey(prefKey)];
     if (config.multiple) {
       const next = Array.isArray(current) ? current : [];
       setSelected(next);
@@ -149,19 +152,13 @@ const PreferenceDetail = () => {
     }
 
     const value = config.multiple ? selected : selected[0] ?? null;
-    const { error } = await supabase
-      .from("user_preferences")
-      .upsert(
-        {
-          user_id: userId,
-          [prefKey]: value,
-        },
-        { onConflict: "user_id" }
-      );
-
-    if (error) {
+    try {
+      await upsertUserPreferences(userId, {
+        [prefKey]: value,
+      });
+    } catch (error: any) {
       console.log("user_preferences upsert error:", error);
-      Alert.alert("Error", error.message || "No se pudo guardar.");
+      Alert.alert("Error", error?.message || "No se pudo guardar.");
       return;
     }
 

@@ -5,13 +5,52 @@ import {
   View,
   Text,
   TouchableOpacity,
+  FlatList,
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import styles, { DARK_GRAY } from "../assets/styles";
+import {
+  useMatchesQuery,
+  type MatchWithProfile,
+} from "../src/queries/matches.queries";
+
+const LOGO = require("../assets/images/logo.png");
 
 const Matches = () => {
   const navigation = useNavigation();
+  const { data: matches, isLoading } = useMatchesQuery();
+
+  const renderItem = ({ item }: { item: MatchWithProfile }) => (
+    <TouchableOpacity
+      style={localStyles.matchRow}
+      activeOpacity={0.7}
+      onPress={() =>
+        navigation.navigate("Chat" as never, {
+          matchId: item.id,
+          otherUserId: item.otherUserId,
+          otherUserName: item.otherUserName,
+          otherUserPhoto: item.otherUserPhoto,
+        } as never)
+      }
+    >
+      <Image
+        source={item.otherUserPhoto ? { uri: item.otherUserPhoto } : LOGO}
+        style={localStyles.avatar}
+      />
+      <View style={localStyles.info}>
+        <Text style={localStyles.name} numberOfLines={1}>
+          {item.otherUserName}
+        </Text>
+        <Text style={localStyles.subtitle} numberOfLines={1}>
+          {item.lastMessage ?? "New connection"}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.bg}>
       <View style={styles.soulmateScreen}>
@@ -23,13 +62,25 @@ const Matches = () => {
           <View style={{ width: 22 }} />
         </View>
 
-        <View style={localStyles.emptyState}>
-          <Text style={localStyles.emptyTitle}>No real resonances yet</Text>
-          <Text style={localStyles.emptyText}>
-            This screen no longer uses demo connections. Show matches here once the
-            backend exposes real connected users.
-          </Text>
-        </View>
+        {isLoading ? (
+          <View style={localStyles.emptyState}>
+            <ActivityIndicator color="#E4B76E" size="large" />
+          </View>
+        ) : (matches ?? []).length === 0 ? (
+          <View style={localStyles.emptyState}>
+            <Text style={localStyles.emptyTitle}>No resonances yet</Text>
+            <Text style={localStyles.emptyText}>
+              When you connect with someone, they'll appear here.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={matches}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        )}
 
         <TouchableOpacity style={styles.soulmateFooterButton}>
           <Text style={styles.soulmateFooterText}>See previous resonances</Text>
@@ -42,6 +93,35 @@ const Matches = () => {
 export default Matches;
 
 const localStyles = {
+  matchRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(174, 191, 209, 0.3)",
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#E4B76E",
+  },
+  info: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  name: {
+    color: "#2B2B2B",
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  subtitle: {
+    color: "#6E6E6E",
+    fontSize: 14,
+    fontFamily: "CormorantGaramond_500Medium",
+    marginTop: 2,
+  },
   emptyState: {
     flex: 1,
     alignItems: "center" as const,

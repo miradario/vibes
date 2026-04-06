@@ -3,6 +3,7 @@
 import "react-native-url-polyfill/auto";
 import React from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -97,6 +98,7 @@ const App = () => {
   }
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <QueryClientProvider client={queryClient}>
       <NavigationContainer>
       <Stack.Navigator
@@ -360,6 +362,7 @@ const App = () => {
       </NavigationContainer>
       <Toast />
     </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 };
 
