@@ -7,7 +7,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  Alert,
 } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
@@ -16,10 +15,6 @@ import {
   useAuthSession,
   useLogoutMutation,
 } from "../src/auth/auth.queries";
-import {
-  useOnboardingDraft,
-  useResetOnboardingMutation,
-} from "../src/queries/onboarding.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 
@@ -28,9 +23,6 @@ const Profile = () => {
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
   const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation();
-  const { resetDraft } = useOnboardingDraft();
-  const { mutate: resetOnboarding, isPending: isResettingOnboarding } =
-    useResetOnboardingMutation();
   const ownProfile = mapOwnProfileToConnectionProfile(
     profile,
     session?.user?.email?.split("@")[0],
@@ -56,7 +48,6 @@ const Profile = () => {
       label: "Términos y condiciones",
       screen: "TermsConditions",
     },
-    { icon: "help-circle", label: "Preguntas frecuentes", screen: "Faq" },
   ];
 
   const handleLogout = () => {
@@ -76,60 +67,6 @@ const Profile = () => {
         navigation.dispatch(resetToWelcome);
       },
     });
-  };
-
-  const handleResetOnboardingForCurrentUser = () => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      Alert.alert("Error", "No active session found.");
-      return;
-    }
-
-    Alert.alert(
-      "Reset onboarding (dev)",
-      "Esto reinicia tu onboarding para test. No borra tu cuenta.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Resetear",
-          style: "destructive",
-          onPress: () => {
-            resetOnboarding(
-              { userId },
-              {
-                onSuccess: () => {
-                  resetDraft();
-                  const resetToOnboarding = CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: "OnboardingName" as never }],
-                  });
-                  const parentNavigation = navigation.getParent();
-
-                  if (parentNavigation) {
-                    parentNavigation.dispatch(resetToOnboarding);
-                    return;
-                  }
-
-                  navigation.dispatch(resetToOnboarding);
-                },
-                onError: (error) => {
-                  const message =
-                    error instanceof Error
-                      ? error.message
-                      : typeof error === "object" &&
-                        error !== null &&
-                        "message" in error &&
-                        typeof (error as { message?: unknown }).message === "string"
-                      ? ((error as { message?: string }).message as string)
-                      : "Could not reset onboarding.";
-                  Alert.alert("Error", message);
-                },
-              },
-            );
-          },
-        },
-      ],
-    );
   };
 
   return (
@@ -196,24 +133,6 @@ const Profile = () => {
             </Text>
             <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
           </TouchableOpacity>
-
-          {__DEV__ ? (
-            <TouchableOpacity
-              style={[styles.auraMenuItem, styles.auraMenuItemLast]}
-              onPress={handleResetOnboardingForCurrentUser}
-              disabled={isResettingOnboarding}
-            >
-              <View style={styles.auraMenuIconWrap}>
-                <Icon name="refresh" size={22} color={TEXT_SECONDARY} />
-              </View>
-              <Text style={styles.auraMenuLabel}>
-                {isResettingOnboarding
-                  ? "Reseteando..."
-                  : "Reset onboarding (dev)"}
-              </Text>
-              <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
-            </TouchableOpacity>
-          ) : null}
         </View>
 
         <View style={styles.auraCard}>

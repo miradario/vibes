@@ -445,10 +445,25 @@ export const useJoinChallengeMutation = () => {
         user_id: userId,
       });
       if (error) throw error;
+
+      const { error: eventParticipantError } = await supabase
+        .from("event_participants")
+        .upsert(
+          {
+            event_id: challengeId,
+            event_type: "challenge",
+            user_id: userId,
+          },
+          { onConflict: "event_id,user_id" },
+        );
+      if (eventParticipantError) throw eventParticipantError;
     },
     onSuccess: (_data, { challengeId, userId }) => {
       queryClient.invalidateQueries({
         queryKey: challengeParticipantKeys.participant(challengeId, userId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: eventParticipantKeys.byEvent(challengeId),
       });
       queryClient.invalidateQueries({ queryKey: challengesKeys.all });
       queryClient.invalidateQueries({ queryKey: myEventGroupsKeys.all(userId) });
@@ -492,6 +507,13 @@ export const useLeaveChallengeMutation = () => {
         .eq("challenge_id", challengeId)
         .eq("user_id", userId);
       if (error) throw error;
+
+      const { error: eventParticipantError } = await supabase
+        .from("event_participants")
+        .delete()
+        .eq("event_id", challengeId)
+        .eq("user_id", userId);
+      if (eventParticipantError) throw eventParticipantError;
     },
     onSuccess: (_data, { challengeId, userId }) => {
       queryClient.invalidateQueries({
@@ -499,6 +521,9 @@ export const useLeaveChallengeMutation = () => {
       });
       queryClient.invalidateQueries({
         queryKey: challengeCheckinsKeys.list(challengeId, userId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: eventParticipantKeys.byEvent(challengeId),
       });
       queryClient.invalidateQueries({ queryKey: challengesKeys.all });
       queryClient.invalidateQueries({ queryKey: myEventGroupsKeys.all(userId) });
@@ -920,6 +945,20 @@ export const useSendEventMessageMutation = () => {
     { eventId: string; eventType: EventType; senderId: string; body: string }
   >({
     mutationFn: async ({ eventId, eventType, senderId, body }) => {
+      if (eventType === "challenge") {
+        const { error: eventParticipantError } = await supabase
+          .from("event_participants")
+          .upsert(
+            {
+              event_id: eventId,
+              event_type: "challenge",
+              user_id: senderId,
+            },
+            { onConflict: "event_id,user_id" },
+          );
+        if (eventParticipantError) throw eventParticipantError;
+      }
+
       const { error } = await supabase.from("event_messages").insert({
         event_id: eventId,
         event_type: eventType,

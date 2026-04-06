@@ -54,19 +54,18 @@ const Signup = () => {
 
   return (
     <View style={styles.bg}>
-      <View>
-        <View style={styles.welcomeLogo}>
-          <Video
-            source={require("../assets/videos/signup.mp4")}
-            style={localStyles.signupIllustration}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay
-            isMuted
-          />
-        </View>
+      <View style={localStyles.heroWrap}>
+        <Video
+          source={require("../assets/videos/signup.mp4")}
+          style={localStyles.signupIllustration}
+          resizeMode={ResizeMode.CONTAIN}
+          shouldPlay
+          isMuted
+          isLooping
+        />
       </View>
       <KeyboardAvoidingView
-        style={styles.loginContainer}
+        style={[styles.loginContainer, localStyles.loginContainer]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.loginCard}>
@@ -129,6 +128,17 @@ const localStyles = StyleSheet.create({
   },
   header: {
     marginBottom: 14,
+  },
+  heroWrap: {
+    width: "100%",
+    height: 250,
+    marginTop: 28,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loginContainer: {
+    marginTop: 12,
   },
   signupIllustration: {
     width: "100%",
