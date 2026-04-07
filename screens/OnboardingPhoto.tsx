@@ -402,9 +402,9 @@ const localStyles = StyleSheet.create({
     marginRight: 8,
   },
   footer: {
-    marginTop: "auto",
-    paddingTop: 16,
-    paddingBottom: 12,
+    marginTop: 28,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
   skipButton: {
     marginTop: 12,
