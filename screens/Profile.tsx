@@ -80,10 +80,6 @@ const Profile = () => {
         <View style={styles.auraProfileCard}>
           <View style={styles.auraProfileAvatarWrap}>
             <Image
-              source={require("../assets/images/halo.png")}
-              style={styles.auraProfileHalo}
-            />
-            <Image
               source={ownProfile.image}
               style={styles.auraProfileAvatar}
             />

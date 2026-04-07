@@ -85,11 +85,14 @@ const Chat = () => {
 
   const renderMessage = ({ item }: { item: DirectMessage }) => {
     const isOwn = item.senderId === myId;
-    return (
+    const bubble = (
       <TouchableOpacity
         activeOpacity={0.8}
         onLongPress={() => handleLongPress(item)}
-        style={isOwn ? styles.chatBubbleRight : styles.chatBubbleLeft}
+        style={[
+          isOwn ? styles.chatBubbleRight : styles.chatBubbleLeft,
+          localStyles.messageBubble,
+        ]}
       >
         <Text
           style={isOwn ? styles.chatBubbleTextRight : styles.chatBubbleTextLeft}
@@ -105,6 +108,20 @@ const Chat = () => {
           {formatTime(item.createdAt)}
         </Text>
       </TouchableOpacity>
+    );
+
+    if (isOwn) {
+      return <View style={localStyles.ownMessageRow}>{bubble}</View>;
+    }
+
+    return (
+      <View style={localStyles.incomingMessageRow}>
+        <Image
+          source={otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
+          style={localStyles.messageAvatar}
+        />
+        {bubble}
+      </View>
     );
   };
 
@@ -194,9 +211,28 @@ export default Chat;
 const localStyles = {
   messageList: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 10,
+    paddingTop: 8,
+    paddingBottom: 20,
     flexGrow: 1,
+  },
+  incomingMessageRow: {
+    flexDirection: "row" as const,
+    alignItems: "flex-end" as const,
+    marginBottom: 12,
+  },
+  ownMessageRow: {
+    alignItems: "flex-end" as const,
+    marginBottom: 12,
+  },
+  messageBubble: {
+    marginBottom: 0,
+  },
+  messageAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 10,
+    marginBottom: 4,
   },
   msgTime: {
     fontSize: 10,
@@ -224,8 +260,8 @@ const localStyles = {
   emptyWrap: {
     flex: 1,
     alignItems: "center" as const,
-    justifyContent: "center" as const,
-    paddingTop: 60,
+    justifyContent: "flex-start" as const,
+    paddingTop: 180,
   },
   emptyText: {
     color: "#AEBFD1",

@@ -93,7 +93,21 @@ const Messages = () => {
   );
 
   const renderNewConnection = ({ item }: { item: MatchWithProfile }) => (
-    <View style={localStyles.newConnBubble}>
+    <TouchableOpacity
+      style={localStyles.newConnBubble}
+      activeOpacity={0.7}
+      onPress={() =>
+        navigation.navigate(
+          "Chat" as never,
+          {
+            matchId: item.id,
+            otherUserId: item.otherUserId,
+            otherUserName: item.otherUserName,
+            otherUserPhoto: item.otherUserPhoto,
+          } as never,
+        )
+      }
+    >
       <Image
         source={item.otherUserPhoto ? { uri: item.otherUserPhoto } : LOGO}
         style={localStyles.newConnAvatar}
@@ -101,7 +115,7 @@ const Messages = () => {
       <Text style={localStyles.newConnName} numberOfLines={1}>
         {item.otherUserName}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderGroupRow = ({ item }: { item: EventGroupSummary }) => {

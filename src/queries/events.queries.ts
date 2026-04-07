@@ -14,7 +14,7 @@ import {
 } from "../constants/challengeMediaPresets";
 
 const EVENT_ASSETS_BUCKET = "event-assets";
-const EVENT_FALLBACK_IMAGE = require("../../assets/images/events/event_meditation2.png");
+const EVENT_FALLBACK_IMAGE = require("../../assets/images/challenges/challengetree.png");
 const CHALLENGE_FALLBACK_IMAGE = require("../../assets/images/logo.png");
 
 export type EventType = "event" | "challenge";
@@ -946,17 +946,26 @@ export const useSendEventMessageMutation = () => {
   >({
     mutationFn: async ({ eventId, eventType, senderId, body }) => {
       if (eventType === "challenge") {
-        const { error: eventParticipantError } = await supabase
+        const { data: existingParticipant, error: existingParticipantError } =
+          await supabase
+            .from("event_participants")
+            .select("id")
+            .eq("event_id", eventId)
+            .eq("user_id", senderId)
+            .maybeSingle();
+
+        if (existingParticipantError) throw existingParticipantError;
+
+        if (!existingParticipant) {
+          const { error: eventParticipantError } = await supabase
           .from("event_participants")
-          .upsert(
-            {
+            .insert({
               event_id: eventId,
               event_type: "challenge",
               user_id: senderId,
-            },
-            { onConflict: "event_id,user_id" },
-          );
-        if (eventParticipantError) throw eventParticipantError;
+            });
+          if (eventParticipantError) throw eventParticipantError;
+        }
       }
 
       const { error } = await supabase.from("event_messages").insert({

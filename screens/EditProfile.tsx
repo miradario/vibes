@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Linking,
   TextInput,
+  type LayoutChangeEvent,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, {
@@ -189,6 +190,12 @@ const readUriAsArrayBuffer = async (uri: string) => {
 
 const DEFAULT_INTENT_ID = 3;
 const DEFAULT_GENDER_ID = 3;
+type PhotoSlotLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 const ensureProfileExists = async (
   userId: string,
@@ -222,7 +229,8 @@ const DraggablePhotoSlot = ({
   item,
   onPress,
   onRemove,
-  getGridWidth,
+  getSlotLayout,
+  onSlotLayout,
   onDragStart,
   onDragEnd,
   onReorder,
@@ -231,7 +239,8 @@ const DraggablePhotoSlot = ({
   item: string | null;
   onPress: (i: number) => void;
   onRemove: (i: number) => void;
-  getGridWidth: () => number;
+  getSlotLayout: (i: number) => PhotoSlotLayout | null;
+  onSlotLayout: (i: number, event: LayoutChangeEvent) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onReorder: (from: number, to: number) => void;
@@ -242,33 +251,39 @@ const DraggablePhotoSlot = ({
   const zIdx = useSharedValue(1);
 
   const calcTarget = (fromIdx: number, dx: number, dy: number) => {
-    const gw = getGridWidth();
-    if (gw <= 0) return fromIdx;
-    const slotW = gw / 3;
-    const cellH = slotW * (4 / 3) + 12;
-    const col = fromIdx % 3;
-    const row = Math.floor(fromIdx / 3);
-    const dCols = Math.round(dx / slotW);
-    const dRows = Math.round(dy / cellH);
-    const tCol = Math.max(0, Math.min(2, col + dCols));
-    const tRow = Math.max(0, Math.min(1, row + dRows));
-    const target = tRow * 3 + tCol;
-    console.log("calcTarget", {
-      fromIdx,
-      dx,
-      dy,
-      gw,
-      slotW,
-      dCols,
-      dRows,
-      target,
-    });
-    return Math.max(0, Math.min(5, target));
+    const currentLayout = getSlotLayout(fromIdx);
+    if (!currentLayout) return fromIdx;
+
+    const draggedCenterX = currentLayout.x + currentLayout.width / 2 + dx;
+    const draggedCenterY = currentLayout.y + currentLayout.height / 2 + dy;
+
+    let bestIndex = fromIdx;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    for (let candidateIndex = 0; candidateIndex < 6; candidateIndex += 1) {
+      const candidateLayout = getSlotLayout(candidateIndex);
+      if (!candidateLayout) continue;
+
+      const candidateCenterX =
+        candidateLayout.x + candidateLayout.width / 2;
+      const candidateCenterY =
+        candidateLayout.y + candidateLayout.height / 2;
+      const distance = Math.hypot(
+        draggedCenterX - candidateCenterX,
+        draggedCenterY - candidateCenterY,
+      );
+
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = candidateIndex;
+      }
+    }
+
+    return bestIndex;
   };
 
   const handleDrop = (dx: number, dy: number) => {
     const target = calcTarget(index, dx, dy);
-    console.log("handleDrop", { index, target, dx, dy });
     if (target !== index) onReorder(index, target);
     onDragEnd();
   };
@@ -316,7 +331,10 @@ const DraggablePhotoSlot = ({
 
   return (
     <GestureDetector gesture={pan}>
-      <Animated.View style={[styles.mediaSlot, animStyle]}>
+      <Animated.View
+        style={[styles.mediaSlot, animStyle]}
+        onLayout={(event) => onSlotLayout(index, event)}
+      >
         <TouchableOpacity
           style={{ flex: 1 }}
           onPress={() => onPress(index)}
@@ -362,8 +380,14 @@ const EditProfile = () => {
   const { data: profileData, refetch } = useProfileQuery(session?.user?.id);
 
   const maxPhotos = 6;
-  const supportsMultiPhotos = Array.isArray((profileData as any)?.photos);
-  const profilePhotos = buildProfilePhotosFromRow(profileData ?? null);
+  const supportsMultiPhotos = useMemo(
+    () => Array.isArray((profileData as any)?.photos),
+    [profileData],
+  );
+  const profilePhotos = useMemo(
+    () => buildProfilePhotosFromRow(profileData ?? null),
+    [profileData],
+  );
   const buildSlots = (photos: (string | undefined | null)[]) =>
     Array.from({ length: maxPhotos }, (_, index) => photos[index] ?? null);
   const [mediaSlots, setMediaSlots] = useState<(string | null)[]>(
@@ -385,7 +409,7 @@ const EditProfile = () => {
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const gridWidthRef = useRef(0);
+  const slotLayoutsRef = useRef<Record<number, PhotoSlotLayout>>({});
   const [displayName, setDisplayName] = useState(
     (profileData as any)?.displayName ?? "",
   );
@@ -419,47 +443,73 @@ const EditProfile = () => {
   };
 
   const handleReorder = async (fromIndex: number, toIndex: number) => {
-    console.log("handleReorder called", { fromIndex, toIndex });
     if (fromIndex === toIndex) return;
     const userId = session?.user?.id;
     if (!userId) return;
 
-    const newSlots = [...mediaSlots];
-    const temp = newSlots[fromIndex];
-    newSlots[fromIndex] = newSlots[toIndex];
-    newSlots[toIndex] = temp;
-    setMediaSlots(newSlots);
+    const previousSlots = [...mediaSlots];
+    const nextSlots = [...previousSlots];
+    const temp = nextSlots[fromIndex];
+    nextSlots[fromIndex] = nextSlots[toIndex];
+    nextSlots[toIndex] = temp;
+    setMediaSlots(nextSlots);
 
     try {
       const existingRows = buildExistingPhotoRows(
         (profileData as Record<string, any>) ?? null,
       );
-      console.log("handleReorder:existingRows", existingRows);
-      const fromRow = existingRows.find((p) => p.order === fromIndex);
-      const toRow = existingRows.find((p) => p.order === toIndex);
-      const updates: Promise<any>[] = [];
+      const rowsByCurrentOrder = new Map(
+        existingRows
+          .filter((row) => row.id && typeof row.order === "number")
+          .map((row) => [row.order, row] as const),
+      );
 
-      if (fromRow?.id) {
-        updates.push(
-          supabase
-            .from("profile_photos")
-            .update({ order: toIndex, is_primary: toIndex === 0 })
-            .eq("id", fromRow.id),
+      const finalRows = nextSlots
+        .map((url, order) => {
+          if (!url) return null;
+          const sourceOrder = previousSlots.findIndex((slot) => slot === url);
+          if (sourceOrder === -1) return null;
+          const row = rowsByCurrentOrder.get(sourceOrder);
+          if (!row?.id) return null;
+          return {
+            id: row.id,
+            order,
+            isPrimary: order === 0,
+          };
+        })
+        .filter(
+          (
+            row,
+          ): row is {
+            id: string;
+            order: number;
+            isPrimary: boolean;
+          } => Boolean(row),
         );
-      }
-      if (toRow?.id) {
-        updates.push(
-          supabase
-            .from("profile_photos")
-            .update({ order: fromIndex, is_primary: fromIndex === 0 })
-            .eq("id", toRow.id),
-        );
+
+      for (let index = 0; index < finalRows.length; index += 1) {
+        const row = finalRows[index];
+        const { error } = await supabase
+          .from("profile_photos")
+          .update({ order: -(index + 1), is_primary: false })
+          .eq("id", row.id);
+
+        if (error) throw error;
       }
 
-      await Promise.all(updates);
+      for (const row of finalRows) {
+        const { error } = await supabase
+          .from("profile_photos")
+          .update({ order: row.order, is_primary: row.isPrimary })
+          .eq("id", row.id);
+
+        if (error) throw error;
+      }
+
       await refetch();
     } catch (error) {
       console.error("handleReorder:error", error);
+      setMediaSlots(previousSlots);
       await refetch();
     }
   };
@@ -743,12 +793,7 @@ const EditProfile = () => {
 
         <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>Photos</Text>
-          <View
-            style={styles.mediaGrid}
-            onLayout={(e) => {
-              gridWidthRef.current = e.nativeEvent.layout.width;
-            }}
-          >
+          <View style={styles.mediaGrid}>
             {mediaSlots.map((item, index) => (
               <DraggablePhotoSlot
                 key={`media-${index}`}
@@ -756,7 +801,13 @@ const EditProfile = () => {
                 item={item}
                 onPress={handleAddMedia}
                 onRemove={handleRemove}
-                getGridWidth={() => gridWidthRef.current}
+                getSlotLayout={(slotIndex) =>
+                  slotLayoutsRef.current[slotIndex] ?? null
+                }
+                onSlotLayout={(slotIndex, event) => {
+                  const { x, y, width, height } = event.nativeEvent.layout;
+                  slotLayoutsRef.current[slotIndex] = { x, y, width, height };
+                }}
                 onDragStart={() => setScrollEnabled(false)}
                 onDragEnd={() => setScrollEnabled(true)}
                 onReorder={handleReorder}

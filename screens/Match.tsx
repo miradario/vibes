@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Easing,
 } from "react-native";
+import { ResizeMode, Video } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles from "../assets/styles";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -125,6 +126,16 @@ const Match = () => {
 
       <View style={styles.matchScreen}>
         <View style={matchVideoStyles.matchCard}>
+          <View style={matchVideoStyles.heroWrap}>
+            <Video
+              source={require("../assets/videos/connection.mp4")}
+              style={matchVideoStyles.heroVideo}
+              resizeMode={ResizeMode.CONTAIN}
+              shouldPlay
+              isMuted
+            />
+          </View>
+
           <Text style={matchVideoStyles.matchTitle}>
             Two energies aligned—something meaningful begins here. ✨
           </Text>
@@ -139,11 +150,6 @@ const Match = () => {
                 ]}
               >
                 <View style={matchVideoStyles.matchHaloWrap}>
-                  <Image
-                    source={require("../assets/images/halo.png")}
-                    style={matchVideoStyles.matchHalo}
-                    resizeMode="contain"
-                  />
                   <Image
                     source={ownProfile.image}
                     style={matchVideoStyles.matchAvatar}
@@ -170,11 +176,6 @@ const Match = () => {
                 ]}
               >
                 <View style={matchVideoStyles.matchHaloWrap}>
-                  <Image
-                    source={require("../assets/images/halo.png")}
-                    style={matchVideoStyles.matchHalo}
-                    resizeMode="contain"
-                  />
                   <Image
                     source={
                       profile?.image ?? require("../assets/images/logo.png")
@@ -276,10 +277,22 @@ const matchVideoStyles = StyleSheet.create({
     width: "100%",
     backgroundColor: "transparent",
     borderRadius: 0,
-    paddingVertical: 24,
+    paddingTop: 12,
+    paddingBottom: 24,
     paddingHorizontal: 24,
     alignItems: "center",
     shadowOpacity: 0,
+  },
+  heroWrap: {
+    width: "100%",
+    height: 220,
+    marginBottom: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroVideo: {
+    width: "100%",
+    height: "100%",
   },
   matchTitle: {
     fontSize: 28,

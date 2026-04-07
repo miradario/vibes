@@ -464,7 +464,6 @@ const EventDetail = () => {
             resizeMode={ResizeMode.COVER}
             shouldPlay
             isMuted
-            isLooping
           />
         ) : (
           <Image
@@ -556,7 +555,6 @@ const EventDetail = () => {
                 resizeMode={ResizeMode.CONTAIN}
                 shouldPlay
                 isMuted
-                isLooping
               />
             </View>
 

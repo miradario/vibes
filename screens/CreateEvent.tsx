@@ -350,7 +350,7 @@ const CreateEvent = () => {
                 ? { uri: eventImageUri }
                 : challengeMediaPresets.find(
                     (preset) => preset.id === selectedPresetId,
-                  )?.image || require("../assets/images/events/event_meditation2.png")
+                  )?.image || require("../assets/images/challenges/challengetree.png")
             }
             style={localStyles.imagePreview}
           />

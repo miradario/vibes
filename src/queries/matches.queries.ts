@@ -268,12 +268,16 @@ async function fetchDirectMessages(matchId: string): Promise<DirectMessage[]> {
 export const useDirectMessagesQuery = (matchId?: string) => {
   const queryClient = useQueryClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const queryKey = dmKeys.byMatch(matchId);
 
   const query = useQuery<DirectMessage[]>({
-    queryKey: dmKeys.byMatch(matchId),
+    queryKey,
     queryFn: () => fetchDirectMessages(matchId!),
     enabled: Boolean(matchId),
     staleTime: 10_000,
+    refetchInterval: matchId ? 2000 : false,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
@@ -284,32 +288,33 @@ export const useDirectMessagesQuery = (matchId?: string) => {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "messages",
           filter: `match_id=eq.${matchId}`,
         },
         (payload) => {
-          if (!payload.new) return;
-          const mapped = mapSupabaseSelect([payload.new]);
-          const raw = (Array.isArray(mapped) ? mapped[0] : mapped) as Record<string, any>;
-          const msg: DirectMessage = {
-            id: String(raw.id),
-            matchId: String(raw.matchId),
-            senderId: String(raw.senderId),
-            text: String(raw.text),
-            createdAt: String(raw.createdAt),
-          };
+          if (payload.eventType === "INSERT" && payload.new) {
+            const mapped = mapSupabaseSelect([payload.new]);
+            const raw = (Array.isArray(mapped)
+              ? mapped[0]
+              : mapped) as Record<string, any>;
+            const msg: DirectMessage = {
+              id: String(raw.id),
+              matchId: String(raw.matchId),
+              senderId: String(raw.senderId),
+              text: String(raw.text),
+              createdAt: String(raw.createdAt),
+            };
 
-          queryClient.setQueryData<DirectMessage[]>(
-            dmKeys.byMatch(matchId),
-            (prev) => {
+            queryClient.setQueryData<DirectMessage[]>(queryKey, (prev) => {
               if (!prev) return [msg];
               if (prev.some((m) => m.id === msg.id)) return prev;
               return [...prev, msg];
-            },
-          );
-          // Also refresh matches list to update last message preview
+            });
+          }
+
+          queryClient.invalidateQueries({ queryKey });
           queryClient.invalidateQueries({ queryKey: matchKeys.all });
         },
       )
