@@ -16,15 +16,20 @@ import {
   useLogoutMutation,
 } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 
 const Profile = () => {
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
+  const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
   const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation();
   const ownProfile = mapOwnProfileToConnectionProfile(
-    profile,
+    {
+      ...(profile ?? {}),
+      ...(userPreferences ?? {}),
+    },
     session?.user?.email?.split("@")[0],
   );
 
@@ -131,24 +136,23 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.auraCard}>
-          <Text style={styles.auraCardTitle}>Vibe Plus</Text>
-          <Text style={styles.auraCardSubtitle}>
-            Level up every action you take on Vibe.
-          </Text>
-          <View style={styles.auraDots}>
-            <View style={[styles.auraDot, styles.auraDotActive]} />
-            <View style={styles.auraDot} />
-            <View style={styles.auraDot} />
-            <View style={styles.auraDot} />
+        {ownProfile.preferences && ownProfile.preferences.length > 0 ? (
+          <View style={localStyles.preferencesCard}>
+            <Text style={localStyles.preferencesTitle}>Tus preferencias</Text>
+            <View style={localStyles.preferencesWrap}>
+              {ownProfile.preferences.map((preference, index) => (
+                <View
+                  key={`${preference}-${index}`}
+                  style={localStyles.preferenceChip}
+                >
+                  <Text style={localStyles.preferenceChipText}>
+                    {preference}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
-          <TouchableOpacity
-            style={styles.auraCta}
-            onPress={() => navigation.navigate("Premium" as never)}
-          >
-            <Text style={styles.auraCtaText}>GET VIBE PLUS</Text>
-          </TouchableOpacity>
-        </View>
+        ) : null}
 
         <View style={styles.auraFooter}>
           <Text style={styles.auraFooterTitle}>Sobre Vibes</Text>
@@ -157,6 +161,44 @@ const Profile = () => {
       </ScrollView>
     </View>
   );
+};
+
+const localStyles = {
+  preferencesCard: {
+    marginTop: 18,
+    marginHorizontal: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 22,
+    backgroundColor: "#FBF7F4",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+  },
+  preferencesTitle: {
+    color: "#2B2B2B",
+    fontSize: 24,
+    fontFamily: "CormorantGaramond_600SemiBold",
+    marginBottom: 12,
+  },
+  preferencesWrap: {
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
+  },
+  preferenceChip: {
+    backgroundColor: "#F6F6F4",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  preferenceChipText: {
+    color: "#2B2B2B",
+    fontSize: 14,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
 };
 
 export default Profile;

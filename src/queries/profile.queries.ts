@@ -49,5 +49,9 @@ export const useProfileQuery = (userId?: string) => {
     queryFn: () => fetchProfile(userId as string),
     enabled: Boolean(userId),
     staleTime: 60_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
   });
 };

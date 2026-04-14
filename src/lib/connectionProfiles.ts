@@ -14,6 +14,7 @@ type ProfileLike = Record<string, any>;
 export type ConnectionProfile = {
   id: string;
   name: string;
+  age?: string;
   image: ImageSourcePropType;
   images: ImageSourcePropType[];
   location?: string;
@@ -23,6 +24,10 @@ export type ConnectionProfile = {
   intention?: string;
   prompt?: string;
   tags?: string[];
+  preferences?: string[];
+  vegetarian?: string;
+  smoking?: string;
+  pets?: string;
   match?: string;
   isOnline: boolean;
 };
@@ -32,6 +37,48 @@ const isNonEmptyString = (value: unknown): value is string =>
 
 const toImageSource = (url?: string | null): ImageSourcePropType =>
   isNonEmptyString(url) ? { uri: url.trim() } : FALLBACK_PROFILE_IMAGE;
+
+const toAge = (value: unknown): string | undefined => {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return String(Math.floor(value));
+  }
+
+  if (isNonEmptyString(value)) {
+    const trimmedValue = value.trim();
+    const numericValue = Number(trimmedValue);
+    if (Number.isFinite(numericValue) && numericValue > 0) {
+      return String(Math.floor(numericValue));
+    }
+
+    const birthDate = new Date(trimmedValue);
+    if (!Number.isNaN(birthDate.getTime())) {
+      const now = new Date();
+      let age = now.getFullYear() - birthDate.getFullYear();
+      const monthDiff = now.getMonth() - birthDate.getMonth();
+      const hadBirthday =
+        monthDiff > 0 ||
+        (monthDiff === 0 && now.getDate() >= birthDate.getDate());
+
+      if (!hadBirthday) age -= 1;
+
+      return age > 0 ? String(age) : undefined;
+    }
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const now = new Date();
+    let age = now.getFullYear() - value.getFullYear();
+    const monthDiff = now.getMonth() - value.getMonth();
+    const hadBirthday =
+      monthDiff > 0 || (monthDiff === 0 && now.getDate() >= value.getDate());
+
+    if (!hadBirthday) age -= 1;
+
+    return age > 0 ? String(age) : undefined;
+  }
+
+  return undefined;
+};
 
 const getPhotoUrls = (photos: unknown): string[] => {
   if (!Array.isArray(photos)) return [];
@@ -86,11 +133,79 @@ const buildTags = (profile: ProfileLike): string[] => {
   return tags.slice(0, 6);
 };
 
+const getTaggedValue = (tags: string[], prefixes: string[]) => {
+  const lowerPrefixes = prefixes.map((prefix) => prefix.toLowerCase());
+  const match = tags.find((tag) =>
+    lowerPrefixes.some((prefix) => tag.toLowerCase().startsWith(prefix)),
+  );
+
+  if (!match) return undefined;
+
+  const parts = match.split(":");
+  if (parts.length > 1 && isNonEmptyString(parts.slice(1).join(":"))) {
+    return parts.slice(1).join(":").trim();
+  }
+
+  return match.trim();
+};
+
+const buildPreferences = (profile: ProfileLike): string[] => {
+  const preferences: string[] = [];
+  const tags = buildTags(profile);
+  const pushPreference = (label: string, value: unknown) => {
+    if (Array.isArray(value)) {
+      const cleaned = value.filter(isNonEmptyString).map((item) => item.trim());
+      if (cleaned.length > 0) {
+        preferences.push(`${label}: ${cleaned.join(", ")}`);
+      }
+      return;
+    }
+
+    if (isNonEmptyString(value)) {
+      preferences.push(`${label}: ${value.trim()}`);
+    }
+  };
+
+  if (tags.length > 0) {
+    preferences.push(...tags);
+  }
+
+  if (isNonEmptyString(profile.intention)) {
+    preferences.push(`Busca: ${profile.intention.trim()}`);
+  }
+
+  if (typeof profile.isTeacher === "boolean") {
+    preferences.push(profile.isTeacher ? "Es guía/teacher" : "No es guía");
+  }
+
+  pushPreference("Camino espiritual", profile.spiritualPath ?? profile.spiritual_path);
+  pushPreference("Vegetarianismo", profile.vegetarian);
+  pushPreference("Fuma", profile.smoking);
+  pushPreference("Sobre mí", profile.aboutMe ?? profile.about_me);
+  pushPreference("Otros", profile.otherTags ?? profile.other_tags);
+  pushPreference("Open to", profile.openTo ?? profile.open_to);
+  pushPreference("Idiomas", profile.languages);
+  pushPreference("Zodiaco", profile.zodiac);
+  pushPreference("Educación", profile.education);
+  pushPreference("Plan familiar", profile.familyPlan ?? profile.family_plan);
+  pushPreference("Vacuna", profile.vaccine);
+  pushPreference("Personalidad", profile.personality);
+  pushPreference(
+    "Comunicación",
+    profile.communicationStyle ?? profile.communication_style,
+  );
+  pushPreference("Estilo de amor", profile.loveStyle ?? profile.love_style);
+  pushPreference("Mascotas", profile.pets);
+
+  return Array.from(new Set(preferences)).slice(0, 16);
+};
+
 export const mapCandidateToConnectionProfile = (
   candidate: Candidate | ProfileLike,
 ): ConnectionProfile => {
   const photos = getPhotoUrls((candidate as ProfileLike).photos);
   const photoSources = photos.map((url) => ({ uri: url }));
+  const tags = buildTags(candidate as ProfileLike);
   const displayName =
     (isNonEmptyString((candidate as ProfileLike).displayName) &&
       (candidate as ProfileLike).displayName.trim()) ||
@@ -103,10 +218,27 @@ export const mapCandidateToConnectionProfile = (
     (isNonEmptyString((candidate as ProfileLike).country) &&
       (candidate as ProfileLike).country.trim()) ||
     undefined;
+  const age =
+    toAge((candidate as ProfileLike).age) ??
+    toAge((candidate as ProfileLike).birthDate) ??
+    toAge((candidate as ProfileLike).birth_date);
+  const vegetarian =
+    (isNonEmptyString((candidate as ProfileLike).vegetarian) &&
+      (candidate as ProfileLike).vegetarian.trim()) ||
+    getTaggedValue(tags, ["vegetarian", "vegetariano"]);
+  const smoking =
+    (isNonEmptyString((candidate as ProfileLike).smoking) &&
+      (candidate as ProfileLike).smoking.trim()) ||
+    getTaggedValue(tags, ["smoke", "fuma", "fumar"]);
+  const pets =
+    (isNonEmptyString((candidate as ProfileLike).pets) &&
+      (candidate as ProfileLike).pets.trim()) ||
+    getTaggedValue(tags, ["pets", "mascotas"]);
 
   return {
     id: String((candidate as ProfileLike).id ?? displayName),
     name: displayName,
+    age,
     image: photoSources[0] ?? FALLBACK_PROFILE_IMAGE,
     images: photoSources.length > 0 ? photoSources : [FALLBACK_PROFILE_IMAGE],
     location,
@@ -132,7 +264,11 @@ export const mapCandidateToConnectionProfile = (
       (isNonEmptyString((candidate as ProfileLike).prompt) &&
         (candidate as ProfileLike).prompt.trim()) ||
       undefined,
-    tags: buildTags(candidate as ProfileLike),
+    tags,
+    preferences: buildPreferences(candidate as ProfileLike),
+    vegetarian,
+    smoking,
+    pets,
     match:
       typeof (candidate as ProfileLike).match === "number"
         ? String((candidate as ProfileLike).match)

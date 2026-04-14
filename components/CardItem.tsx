@@ -1,11 +1,12 @@
 /** @format */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
   Image,
   Dimensions,
+  ScrollView,
   TouchableOpacity,
 } from "react-native";
 import Icon from "./Icon";
@@ -23,6 +24,8 @@ import styles, {
 } from "../assets/styles";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
+const SHOW_DISCOVER_DEBUG = true;
+
 const CardItem = ({
   description,
   hasActions,
@@ -34,11 +37,16 @@ const CardItem = ({
   isOnline,
   matches,
   name,
+  age,
   location,
   vibe,
   intention,
   prompt,
   tags,
+  preferences,
+  vegetarian,
+  smoking,
+  pets,
   images,
   onContactPress,
   variant,
@@ -74,17 +82,48 @@ const CardItem = ({
     [vibe, intention].filter(Boolean).join(" \u00b7 ") ||
     location ||
     (description ? description.slice(0, 64) : "");
+  const discoverAgeLabel = age ? `${age} años` : null;
+  const discoverPreferences = (preferences && preferences.length > 0 ? preferences : tags) || [];
+  const discoverHabits = [
+    vegetarian ? `Vegetariano: ${vegetarian}` : null,
+    smoking ? `Fuma: ${smoking}` : null,
+    pets ? `Mascotas: ${pets}` : null,
+  ].filter(Boolean) as string[];
+  const discoverDebugPayload = {
+    name,
+    age,
+    vegetarian: vegetarian ?? null,
+    smoking: smoking ?? null,
+    pets: pets ?? null,
+    tags: tags ?? [],
+    preferences: preferences ?? [],
+  };
+  const discoverGallery = (images && images.length > 0 ? images : [image]).slice(0, 6);
+  const [activeDiscoverImage, setActiveDiscoverImage] = useState(discoverGallery[0] ?? image);
+  const activeDiscoverIndex = Math.max(
+    0,
+    discoverGallery.findIndex((galleryImage) => galleryImage === activeDiscoverImage),
+  );
+
+  useEffect(() => {
+    setActiveDiscoverImage(discoverGallery[0] ?? image);
+  }, [image, images]);
 
   if (isDiscover) {
-    const discoverGallery = (images && images.length > 0 ? images : [image]).slice(0, 6);
-
     return (
       <View style={[styles.containerCardItem, styles.containerCardItemDiscover]}>
         <View style={styles.discoverCardBackground} />
         <DiscoverCirclesOverlay />
-        <View style={styles.discoverScroll}>
+        <ScrollView
+          style={styles.discoverScroll}
+          contentContainerStyle={styles.discoverScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.discoverHeaderWrap}>
             <Text style={styles.discoverTitle}>{name}</Text>
+            {discoverAgeLabel ? (
+              <Text style={styles.discoverAge}>{discoverAgeLabel}</Text>
+            ) : null}
             {discoverSubtitle ? (
               <Text style={styles.discoverSubtitle}>{discoverSubtitle}</Text>
             ) : null}
@@ -95,11 +134,11 @@ const CardItem = ({
           <View style={styles.discoverPhotoCard}>
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={onImagePress}
+              onPress={() => onImagePress?.(activeDiscoverImage, activeDiscoverIndex)}
               disabled={!onImagePress}
               style={styles.discoverPhotoTouch}
             >
-              <Image source={image} style={styles.discoverPhoto} />
+              <Image source={activeDiscoverImage} style={styles.discoverPhoto} />
               <View pointerEvents="none" style={styles.discoverPhotoFade}>
                 <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <Defs>
@@ -115,13 +154,16 @@ const CardItem = ({
 
           </View>
 
-          {discoverGallery.length > 1 ? (
+          {discoverGallery.length > 0 ? (
             <View style={styles.discoverGalleryRow}>
-              {discoverGallery.slice(1).map((thumb, index) => (
+              {discoverGallery.map((thumb, index) => (
                 <TouchableOpacity
                   key={`discover-gallery-${index}`}
-                  style={styles.discoverGalleryThumbWrap}
-                  onPress={onImagePress}
+                  style={[
+                    styles.discoverGalleryThumbWrap,
+                    activeDiscoverImage === thumb && styles.discoverGalleryThumbWrapActive,
+                  ]}
+                  onPress={() => setActiveDiscoverImage(thumb)}
                   activeOpacity={0.85}
                 >
                   <Image source={thumb} style={styles.discoverGalleryThumb} />
@@ -130,7 +172,79 @@ const CardItem = ({
             </View>
           ) : null}
 
-          {onContactPress ? (
+          {description ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>Sobre {name}</Text>
+              <Text style={styles.discoverDescription}>{description}</Text>
+            </View>
+          ) : null}
+
+          {(vibe || intention) ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>Datos</Text>
+              <View style={styles.discoverTagRowLeft}>
+                {vibe ? (
+                  <View style={styles.discoverTagPill}>
+                    <Text style={styles.discoverTagText}>Vibe: {vibe}</Text>
+                  </View>
+                ) : null}
+                {intention ? (
+                  <View style={styles.discoverTagPill}>
+                    <Text style={styles.discoverTagText}>Intención: {intention}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
+
+          {prompt ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>Ritual</Text>
+              <View style={styles.discoverPromptPillFull}>
+                <Text style={styles.discoverPromptTextLeft}>{prompt}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {discoverHabits.length > 0 ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>Hábitos</Text>
+              <View style={styles.discoverTagRowLeft}>
+                {discoverHabits.map((habit, index) => (
+                  <View key={`${habit}-${index}`} style={styles.discoverTagPill}>
+                    <Text style={styles.discoverTagText}>{habit}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {discoverPreferences.length > 0 ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>Preferencias</Text>
+              <View style={styles.discoverTagRowLeft}>
+                {discoverPreferences.map((preference, index) => (
+                  <View key={`${preference}-${index}`} style={styles.discoverTagPill}>
+                    <Text style={styles.discoverTagText}>{preference}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {SHOW_DISCOVER_DEBUG ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>Debug</Text>
+              <View style={styles.discoverDebugBox}>
+                <Text style={styles.discoverDebugText}>
+                  {JSON.stringify(discoverDebugPayload, null, 2)}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+        </ScrollView>
+        {onContactPress ? (
+          <View style={styles.discoverFixedFooter}>
             <TouchableOpacity
               style={styles.discoverConnectButton}
               onPress={onContactPress}
@@ -138,8 +252,8 @@ const CardItem = ({
             >
               <Text style={styles.discoverConnectButtonText}>Conectar</Text>
             </TouchableOpacity>
-          ) : null}
-        </View>
+          </View>
+        ) : null}
       </View>
     );
   }

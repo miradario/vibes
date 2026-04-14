@@ -11,6 +11,7 @@ import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 
 type ProfileRow = Record<string, any>;
 type PhotoRow = Record<string, any>;
+type UserPreferenceRow = Record<string, any>;
 
 export const candidatesKeys = {
   all: ["candidates"] as const,
@@ -62,13 +63,22 @@ const fetchCandidates = async (
     .filter((id) => id.length > 0);
 
   let photosByProfileId = new Map<string, PhotoRow[]>();
+  let preferencesByUserId = new Map<string, UserPreferenceRow>();
 
   if (profileIds.length > 0) {
-    const { data: photoRows, error: photosError } = await supabase
-      .from("profile_photos")
-      .select("*")
-      .in("profile_id", profileIds)
-      .order("order", { ascending: true });
+    const [photosResponse, preferencesResponse] = await Promise.all([
+      supabase
+        .from("profile_photos")
+        .select("*")
+        .in("profile_id", profileIds)
+        .order("order", { ascending: true }),
+      supabase
+        .from("user_preferences")
+        .select("*")
+        .in("user_id", profileIds),
+    ]);
+
+    const { data: photoRows, error: photosError } = photosResponse;
 
     if (photosError) {
       throw photosError;
@@ -83,6 +93,29 @@ const fetchCandidates = async (
       acc.set(profileId, existing);
       return acc;
     }, new Map<string, PhotoRow[]>());
+
+    const { data: preferenceRows, error: preferencesError } = preferencesResponse;
+    if (preferencesError) {
+      const message =
+        typeof preferencesError.message === "string"
+          ? preferencesError.message.toLowerCase()
+          : "";
+      if (!message.includes("could not find the table 'public.user_preferences'")) {
+        throw preferencesError;
+      }
+    } else {
+      const mappedPreferences =
+        (mapSupabaseSelect(preferenceRows ?? []) as UserPreferenceRow[]) ?? [];
+      preferencesByUserId = mappedPreferences.reduce<Map<string, UserPreferenceRow>>(
+        (acc, preferenceRow) => {
+          const userId = String(preferenceRow.userId ?? preferenceRow.user_id ?? "");
+          if (!userId) return acc;
+          acc.set(userId, preferenceRow);
+          return acc;
+        },
+        new Map<string, UserPreferenceRow>(),
+      );
+    }
   }
 
   return Promise.all(profiles.map(async (profile) => {
@@ -129,6 +162,7 @@ const fetchCandidates = async (
 
     return {
       ...profile,
+      ...preferencesByUserId.get(id),
       displayName:
         typeof profile.displayName === "string" ? profile.displayName : undefined,
       isActive: Boolean(profile.isActive),
@@ -145,5 +179,9 @@ export const useCandidatesQuery = (params?: GetCandidatesParams) => {
     queryKey: candidatesKeys.list(currentUserId, params),
     queryFn: () => fetchCandidates(currentUserId, params),
     staleTime: 30_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
   });
 };

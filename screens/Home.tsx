@@ -17,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CardItem } from "../components";
 import DiscoverOrbitCanvas from "../components/DiscoverOrbitCanvas";
 import Filters from "../components/Filters";
-import styles from "../assets/styles";
+import styles, { DIMENSION_WIDTH } from "../assets/styles";
 import Icon from "../components/Icon";
 import type { DataT } from "../types";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -67,13 +67,17 @@ const Home = () => {
   const orbitUsers = profiles.filter((item) => item.id !== centerProfile.id);
   const [showGallery, setShowGallery] = useState<boolean>(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  const [galleryInitialIndex, setGalleryInitialIndex] = useState<number>(0);
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
   const swipeMutation = useSwipeMutation();
 
-  const openGallery = (images: any[] | undefined) => {
+  const openGallery = (images: any[] | undefined, initialIndex = 0) => {
     if (!images || images.length === 0) return;
     setGalleryImages(images);
+    setGalleryInitialIndex(
+      initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0,
+    );
     setShowGallery(true);
   };
 
@@ -128,9 +132,16 @@ const Home = () => {
               <Icon name="close" size={18} color="#F6F6F4" />
             </TouchableOpacity>
             <FlatList
+              key={`gallery-${galleryInitialIndex}-${galleryImages.length}`}
               data={galleryImages}
               keyExtractor={(_, index) => `gallery-${index}`}
+              getItemLayout={(_, index) => ({
+                length: DIMENSION_WIDTH,
+                offset: DIMENSION_WIDTH * index,
+                index,
+              })}
               horizontal
+              initialScrollIndex={galleryInitialIndex}
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               renderItem={({ item }) => (
@@ -154,6 +165,13 @@ const Home = () => {
               style={styles.discoverSheetBackdrop}
               onPress={closeProfileSheet}
             />
+            <TouchableOpacity
+              style={styles.discoverSheetCloseButton}
+              onPress={closeProfileSheet}
+              activeOpacity={0.9}
+            >
+              <Icon name="close" size={20} color="#2B2B2B" />
+            </TouchableOpacity>
             <View style={styles.discoverSheetContainer}>
               <View style={styles.discoverSheetHandle} />
               {selectedProfile ? (
@@ -161,17 +179,23 @@ const Home = () => {
                   variant="discover"
                   image={selectedProfile.image}
                   name={selectedProfile.name}
+                  age={selectedProfile.age}
                   location={selectedProfile.location}
                   description={selectedProfile.description}
                   vibe={selectedProfile.vibe}
                   intention={selectedProfile.intention}
                   prompt={selectedProfile.prompt}
                   tags={selectedProfile.tags}
+                  preferences={selectedProfile.preferences}
+                  vegetarian={selectedProfile.vegetarian}
+                  smoking={selectedProfile.smoking}
+                  pets={selectedProfile.pets}
                   images={selectedProfile.images}
                   matches={selectedProfile.match}
-                  onImagePress={() =>
+                  onImagePress={(_image, index) =>
                     openGallery(
                       selectedProfile.images || [selectedProfile.image],
+                      index ?? 0,
                     )
                   }
                   onContactPress={() => connectProfile(selectedProfile)}
