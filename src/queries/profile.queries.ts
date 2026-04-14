@@ -11,28 +11,36 @@ export const profileKeys = {
 };
 
 const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
-  const [profileResponse, photosResponse] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-    supabase
-      .from("profile_photos")
-      .select("*")
-      .eq("profile_id", userId)
-      .order("order", { ascending: true }),
-  ]);
+  try {
+    const [profileResponse, photosResponse] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      supabase
+        .from("profile_photos")
+        .select("*")
+        .eq("profile_id", userId)
+        .order("order", { ascending: true }),
+    ]);
 
-  if (profileResponse.error) {
-    throw profileResponse.error;
+    if (profileResponse.error) {
+      throw profileResponse.error;
+    }
+
+    if (photosResponse.error) {
+      throw photosResponse.error;
+    }
+
+    if (!profileResponse.data) {
+      return null;
+    }
+
+    return mapProfileWithPhotos(profileResponse.data, photosResponse.data ?? []);
+  } catch (error) {
+    if (error instanceof Error && /network request failed/i.test(error.message)) {
+      return null;
+    }
+
+    throw error;
   }
-
-  if (photosResponse.error) {
-    throw photosResponse.error;
-  }
-
-  if (!profileResponse.data) {
-    return null;
-  }
-
-  return mapProfileWithPhotos(profileResponse.data, photosResponse.data ?? []);
 };
 
 export const useProfileQuery = (userId?: string) => {

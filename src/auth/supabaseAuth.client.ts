@@ -25,15 +25,25 @@ export const signOut = async () => supabase.auth.signOut();
 export const getSession = async (): Promise<Session | null> => {
   const auth = supabase.auth as any;
   if (typeof auth.getSession === "function") {
-    const { data, error } = await auth.getSession();
-    if (error) {
+    try {
+      const { data, error } = await auth.getSession();
+      if (error) {
+        await recoverInvalidRefreshToken(error);
+        return null;
+      }
+
+      return data.session ?? null;
+    } catch (error) {
       await recoverInvalidRefreshToken(error);
       return null;
     }
-    return data.session ?? null;
   }
 
-  return auth.session() ?? null;
+  try {
+    return auth.session() ?? null;
+  } catch {
+    return null;
+  }
 };
 
 export const onAuthStateChange = (

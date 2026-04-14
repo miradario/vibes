@@ -5,20 +5,42 @@ import { recoverInvalidRefreshToken } from "./session.recovery";
 
 void bootstrapAuthSession();
 
-export const login = async ({ email, password }: LoginInput) => {
-  const { data, error } = await authClient.signInWithPassword(email, password);
-  if (error) {
-    throw error;
+const normalizeAuthError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    if (/network request failed/i.test(error.message)) {
+      return new Error(
+        "Cannot reach the authentication server. Check the configured Supabase URL and your network connection."
+      );
+    }
+
+    return error;
   }
-  return data.session ?? null;
+
+  return new Error("Could not complete authentication.");
+};
+
+export const login = async ({ email, password }: LoginInput) => {
+  try {
+    const { data, error } = await authClient.signInWithPassword(email, password);
+    if (error) {
+      throw error;
+    }
+    return data.session ?? null;
+  } catch (error) {
+    throw normalizeAuthError(error);
+  }
 };
 
 export const signup = async ({ email, password }: LoginInput) => {
-  const { data, error } = await authClient.signUp(email, password);
-  if (error) {
-    throw error;
+  try {
+    const { data, error } = await authClient.signUp(email, password);
+    if (error) {
+      throw error;
+    }
+    return data.session ?? null;
+  } catch (error) {
+    throw normalizeAuthError(error);
   }
-  return data.session ?? null;
 };
 
 export const logout = async () => {

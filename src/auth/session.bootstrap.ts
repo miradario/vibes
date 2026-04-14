@@ -8,26 +8,36 @@ const isSessionExpired = (expiresAt?: number | null): boolean => {
 };
 
 export const bootstrapAuthSession = async (): Promise<void> => {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    await recoverInvalidRefreshToken(error);
-    return;
-  }
-
-  const session = data.session;
-  if (session && isSessionExpired(session.expires_at)) {
-    const { error: refreshError } = await supabase.auth.refreshSession();
-    if (refreshError) {
-      await recoverInvalidRefreshToken(refreshError);
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      await recoverInvalidRefreshToken(error);
+      return;
     }
+
+    const session = data.session;
+    if (session && isSessionExpired(session.expires_at)) {
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        await recoverInvalidRefreshToken(refreshError);
+      }
+    }
+  } catch (error) {
+    console.warn("Auth bootstrap skipped due to network/configuration error.", error);
   }
 };
 
 export const verifyPersistedSession = async (): Promise<boolean> => {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      await recoverInvalidRefreshToken(error);
+      return false;
+    }
+
+    return Boolean(data.session);
+  } catch (error) {
     await recoverInvalidRefreshToken(error);
     return false;
   }
-  return Boolean(data.session);
 };

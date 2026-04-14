@@ -14,13 +14,21 @@ export const useUserPreferencesQuery = (userId?: string) => {
   return useQuery<UserPreferences | null>({
     queryKey: userPreferencesKeys.byUser(userId),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_preferences")
-        .select("*")
-        .eq("user_id", userId as string)
-        .maybeSingle();
-      if (error) throw error;
-      return mapUserPreferencesRow(data ?? null);
+      try {
+        const { data, error } = await supabase
+          .from("user_preferences")
+          .select("*")
+          .eq("user_id", userId as string)
+          .maybeSingle();
+        if (error) throw error;
+        return mapUserPreferencesRow(data ?? null);
+      } catch (error) {
+        if (error instanceof Error && /network request failed/i.test(error.message)) {
+          return null;
+        }
+
+        throw error;
+      }
     },
     enabled: Boolean(userId),
     staleTime: 60_000,

@@ -36,6 +36,12 @@ export const normalizeAxiosError = (error: unknown): ApiError => {
   }
 
   if (error instanceof Error) {
+    if (/network request failed/i.test(error.message)) {
+      return new Error(
+        "Cannot reach the server. Check backend configuration and network connectivity."
+      ) as ApiError;
+    }
+
     return error as ApiError;
   }
 

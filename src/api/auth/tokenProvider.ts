@@ -8,18 +8,28 @@ export const getAccessToken = async (): Promise<AccessToken> => {
 
   // Supabase JS v2
   if (typeof auth.getSession === "function") {
-    const { data, error } = await auth.getSession();
-    if (error) {
+    try {
+      const { data, error } = await auth.getSession();
+      if (error) {
+        await recoverInvalidRefreshToken(error);
+        return null;
+      }
+
+      return data?.session?.access_token ?? null;
+    } catch (error) {
       await recoverInvalidRefreshToken(error);
       return null;
     }
-    return data?.session?.access_token ?? null;
   }
 
   // Fallback for older clients/typings
   if (typeof auth.session === "function") {
-    const session = auth.session();
-    return session?.access_token ?? null;
+    try {
+      const session = auth.session();
+      return session?.access_token ?? null;
+    } catch {
+      return null;
+    }
   }
 
   return null;
