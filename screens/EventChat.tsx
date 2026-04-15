@@ -35,7 +35,7 @@ import {
   type EventMessage,
 } from "../src/queries/events.queries";
 
-const LOGO = require("../assets/images/logo.png");
+
 
 const EventChat = () => {
   const navigation = useNavigation();
@@ -182,15 +182,19 @@ const EventChat = () => {
             <Icon name="chevron-back" size={24} color={TEXT_SECONDARY} />
           </TouchableOpacity>
           <View style={styles.eventChatHeaderInfo}>
-            <Image source={LOGO} style={styles.eventChatHeaderLogo} />
             <View>
-              <Text style={styles.eventChatHeaderTitle}>
+              <Text style={[styles.eventChatHeaderTitle, { fontSize: 22, fontWeight: 'bold', color: '#222', letterSpacing: 0.2 }]}>
                 {event?.title || "Evento"}
               </Text>
-              <Text style={styles.eventChatHeaderSubtitle}>
-                {participants.length} participante
-                {participants.length !== 1 ? "s" : ""}
-              </Text>
+              {event?.date && (
+                <Text style={{ color: '#E4B76E', fontWeight: '600', fontSize: 15, marginTop: 2 }}>
+                  {(() => {
+                    const eventDate = new Date(event.date);
+                    const dateStr = eventDate.toLocaleDateString();
+                    return `📅 ${dateStr}`;
+                  })()}
+                </Text>
+              )}
             </View>
           </View>
           <TouchableOpacity
@@ -201,50 +205,19 @@ const EventChat = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.eventChatParticipantsSection}>
-          <View style={styles.eventChatParticipants}>
-            {participants.slice(0, 8).map((participant, index) => (
-              <Image
-                key={participant.id}
-                source={
-                  participant.avatarUrl ? { uri: participant.avatarUrl } : LOGO
-                }
-                style={[
-                  styles.eventChatParticipantAvatar,
-                  index > 0 && { marginLeft: -15 },
-                ]}
-              />
-            ))}
-            {participants.length > 8 && (
-              <View
-                style={[
-                  styles.eventChatParticipantAvatar,
-                  localStyles.moreAvatar,
-                  { marginLeft: -15 },
-                ]}
-              >
-                <Text style={localStyles.moreAvatarText}>
-                  +{participants.length - 8}
-                </Text>
-              </View>
-            )}
-          </View>
-          <Text style={styles.eventChatDescription}>
-            Este es el espacio del evento.{"\n"}
-            Usalo para coordinar, compartir{"\n"}y llegar con presencia.
-          </Text>
-          <View style={styles.eventChatTags}>
-            <View style={styles.eventChatTag}>
-              <Text style={styles.eventChatTagIcon}>🌿</Text>
-              <Text style={styles.eventChatTagText}>Escucha</Text>
+        <View style={[styles.eventChatParticipantsSection, { alignItems: 'center', marginTop: 10, marginBottom: 10 }]}> 
+          <View style={{ flexDirection: 'row', gap: 18, marginBottom: 6 }}>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 28 }}>📍</Text>
+              <Text style={{ color: '#444', fontSize: 13, marginTop: 2 }}>{event?.location || 'Sin ubicación'}</Text>
             </View>
-            <View style={styles.eventChatTag}>
-              <Text style={styles.eventChatTagIcon}>🙏</Text>
-              <Text style={styles.eventChatTagText}>Respeto</Text>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 28 }}>⏰</Text>
+              <Text style={{ color: '#444', fontSize: 13, marginTop: 2 }}>{event?.date ? (new Date(event.date)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sin hora'}</Text>
             </View>
-            <View style={styles.eventChatTag}>
-              <Text style={styles.eventChatTagIcon}>🧘</Text>
-              <Text style={styles.eventChatTagText}>Presencia</Text>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 28 }}>📝</Text>
+              <Text style={{ color: '#444', fontSize: 13, marginTop: 2, maxWidth: 90 }} numberOfLines={2}>{event?.description || 'Sin descripción'}</Text>
             </View>
           </View>
         </View>

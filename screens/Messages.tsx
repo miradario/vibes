@@ -22,7 +22,7 @@ import {
 } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
 
-const LOGO = require("../assets/images/logo.png");
+
 
 const formatTime = (iso: string | null) => {
   if (!iso) return "";

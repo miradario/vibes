@@ -15,7 +15,7 @@ import {
 
 const EVENT_ASSETS_BUCKET = "event-assets";
 const EVENT_FALLBACK_IMAGE = require("../../assets/images/challenges/challengetree.png");
-const CHALLENGE_FALLBACK_IMAGE = require("../../assets/images/logo.png");
+
 
 export type EventType = "event" | "challenge";
 

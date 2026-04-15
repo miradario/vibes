@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from "react-native";
+import VibesHeader from "../src/components/VibesHeader";
 import { ResizeMode, Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
@@ -43,20 +44,7 @@ const OnboardingOrientation = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <View style={styles.onboardHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <View style={styles.onboardProgressTrack}>
-            <View style={[styles.onboardProgressFill, { width: "100%" }]} />
-          </View>
-          <TouchableOpacity onPress={() => navigation.navigate("Tab" as never)}>
-            <Text style={styles.onboardSkip}>Skip</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.onboardTitle}>Your sexual orientation?</Text>
-        <Text style={styles.onboardSubtitle}>Select up to 3</Text>
+        <VibesHeader title="Your sexual orientation?" subtitle="Select up to 3" />
 
         <View style={styles.onboardList}>
           {OPTIONS.map((option) => (

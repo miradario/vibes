@@ -6,7 +6,7 @@ import {
   type SpiritualPathDetails,
 } from "./spiritualPaths";
 
-const FALLBACK_PROFILE_IMAGE = require("../../assets/images/logo.png");
+
 
 type PhotoLike = {
   url?: string | null;

@@ -17,7 +17,7 @@ import {
   type MatchWithProfile,
 } from "../src/queries/matches.queries";
 
-const LOGO = require("../assets/images/logo.png");
+
 
 const Matches = () => {
   const navigation = useNavigation();

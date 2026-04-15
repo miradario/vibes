@@ -48,7 +48,7 @@ import {
   parseChallengeMediaPreset,
 } from "../src/constants/challengeMediaPresets";
 
-const LOGO = require("../assets/images/logo.png");
+
 const CHALLENGE_TREE_BG = require("../assets/images/challengeTree.png");
 const EVENT_TREE_BG = require("../assets/images/eventTree.png");
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");

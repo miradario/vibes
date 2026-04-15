@@ -193,7 +193,7 @@ const CreateChallenge = () => {
             source={
               challengeMediaPresets.find(
                 (preset) => preset.id === selectedPresetId,
-              )?.image || require("../assets/images/logo.png")
+              )?.image
             }
             style={localStyles.imagePreview}
           />

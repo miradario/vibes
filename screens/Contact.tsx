@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
-import Icon from "../components/Icon";
+import VibesHeader from "../src/components/VibesHeader";
 
 const CONTACT_ITEMS = [
   {
@@ -43,18 +43,9 @@ const Contact = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.settingsContainer}>
-        <View style={styles.settingsHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <Text style={styles.settingsTitle}>Contacto</Text>
-          <View style={{ width: 22 }} />
-        </View>
+        <VibesHeader title="Contacto" subtitle="Escribinos con confianza y presencia." />
 
-        <Image source={require("../assets/images/logo.png")} style={localStyles.hero} />
-        <Text style={localStyles.subtitle}>
-          Escribinos con confianza y presencia.
-        </Text>
+
 
         <View style={localStyles.card}>
           {CONTACT_ITEMS.map((item, index) => (

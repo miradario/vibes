@@ -18,7 +18,7 @@ import styles, {
   TEXT_SECONDARY,
   WHITE,
 } from "../assets/styles";
-import Icon from "../components/Icon";
+import VibesHeader from "../src/components/VibesHeader";
 import SpiritualPathDetailsModal from "../components/SpiritualPathDetailsModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -200,17 +200,7 @@ const Settings = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        <View style={styles.settingsHeader}>
-          <TouchableOpacity onPress={() => { handleSave().finally(() => navigation.goBack()); }}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <Text style={styles.settingsTitle}>Preferencias</Text>
-          <View style={{ width: 22 }} />
-        </View>
-
-        <Text style={localStyles.subtitle}>
-          Comentá sobre vos y compartí tus elecciones conscientes.
-        </Text>
+        <VibesHeader title="Preferencias" subtitle="Comentá sobre vos y compartí tus elecciones conscientes." />
 
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>

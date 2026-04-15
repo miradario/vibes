@@ -27,7 +27,7 @@ import {
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 
-const LOGO = require("../assets/images/logo.png");
+
 
 const Chat = () => {
   const navigation = useNavigation();
@@ -151,7 +151,18 @@ const Chat = () => {
             source={otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
             style={styles.chatAvatarWrap}
           />
-          <Text style={styles.chatName}>{otherUserName || "Chat"}</Text>
+          <Text style={styles.chatName}>
+            {(() => {
+              const name = profile?.display_name || profile?.name || otherUserName || "Chat";
+              let age = "";
+              if (profile?.birth_date) {
+                const birthYear = new Date(profile.birth_date).getFullYear();
+                const thisYear = new Date().getFullYear();
+                age = thisYear - birthYear;
+              }
+              return age ? `${name}, ${age}` : name;
+            })()}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity>
           <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />

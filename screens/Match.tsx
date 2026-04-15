@@ -13,6 +13,7 @@ import {
 import { ResizeMode, Video } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles from "../assets/styles";
+import VibesHeader from "../src/components/VibesHeader";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
@@ -102,6 +103,7 @@ const Match = () => {
 
   return (
     <View style={[styles.matchScreen, matchVideoStyles.container]}>
+      <VibesHeader title="¡Es un match!" subtitle="Two energies aligned—something meaningful begins here. ✨" />
       {/* Full-screen hand-drawn conexion animation */}
       <Animated.View
         style={[
@@ -135,10 +137,6 @@ const Match = () => {
               isMuted
             />
           </View>
-
-          <Text style={matchVideoStyles.matchTitle}>
-            Two energies aligned—something meaningful begins here. ✨
-          </Text>
 
           <View style={matchVideoStyles.avatarBackground}>
             <View style={matchVideoStyles.matchAvatarRow}>
@@ -178,7 +176,7 @@ const Match = () => {
                 <View style={matchVideoStyles.matchHaloWrap}>
                   <Image
                     source={
-                      profile?.image ?? require("../assets/images/logo.png")
+                      profile?.image
                     }
                     style={matchVideoStyles.matchAvatar}
                   />

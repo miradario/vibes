@@ -27,7 +27,7 @@ const TermsConditions = () => {
           <View style={{ width: 22 }} />
         </View>
 
-        <Image source={require("../assets/images/logo.png")} style={localStyles.hero} />
+
         <Text style={localStyles.subtitle}>
           Lee con tranquilidad y conciencia nuestros términos.
         </Text>
