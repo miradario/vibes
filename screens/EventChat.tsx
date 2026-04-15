@@ -24,7 +24,13 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import CardItem from "../components/CardItem";
 import { useAuthSession } from "../src/auth/auth.queries";
+import { useProfileQuery } from "../src/queries/profile.queries";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
+import { useSwipeMutation } from "../src/queries/swipes.mutations";
+import { handleApiError } from "../src/utils/handleApiError";
 import {
   useEventParticipantsQuery,
   useEventMessagesQuery,
@@ -35,7 +41,13 @@ import {
   type EventMessage,
 } from "../src/queries/events.queries";
 
+const LOGO = require("../assets/images/logo.png");
 
+const parseEventDate = (value?: string | null) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
 const EventChat = () => {
   const navigation = useNavigation();
@@ -44,10 +56,12 @@ const EventChat = () => {
   const eventId = event?.id as string | undefined;
   const eventType = (event?.type ?? "event") as EventType;
   const createdBy = event?.createdBy as string | undefined;
+  const eventStartsAt = parseEventDate(event?.startsAt);
 
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const isAdmin = Boolean(userId && createdBy && userId === createdBy);
+  const swipeMutation = useSwipeMutation();
 
   const { data: participants = [] } = useEventParticipantsQuery(eventId);
   const { data: messages = [], isLoading: messagesLoading } =
@@ -58,7 +72,54 @@ const EventChat = () => {
 
   const [message, setMessage] = useState("");
   const [membersModalVisible, setMembersModalVisible] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<{
+    userId: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const { data: selectedParticipantProfile } = useProfileQuery(
+    selectedParticipant?.userId,
+  );
+  const { data: selectedParticipantPreferences } = useUserPreferencesQuery(
+    selectedParticipant?.userId,
+  );
+  const selectedParticipantCard = selectedParticipant
+    ? mapCandidateToConnectionProfile({
+        id: selectedParticipant.userId,
+        displayName:
+          selectedParticipantProfile?.displayName ??
+          selectedParticipant.displayName ??
+          "Participante",
+        ...(selectedParticipantProfile ?? {}),
+        ...(selectedParticipantPreferences ?? {}),
+        photos:
+          selectedParticipantProfile?.photos ??
+          (selectedParticipant.avatarUrl ? [selectedParticipant.avatarUrl] : []),
+      })
+    : null;
+  const handleConnectParticipant = () => {
+    if (!selectedParticipant || !selectedParticipantCard) return;
+    swipeMutation.mutate(
+      {
+        targetUserId: String(selectedParticipant.userId),
+        direction: "like",
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.match) {
+            navigation.navigate(
+              "Match" as never,
+              { profile: selectedParticipantCard } as never,
+            );
+          }
+          setSelectedParticipant(null);
+        },
+        onError: (error) =>
+          handleApiError(error, { toastTitle: "Connect Error" }),
+      },
+    );
+  };
 
   // Build a lookup for sender info from participants
   const participantMap = useRef<
@@ -188,11 +249,11 @@ const EventChat = () => {
               </Text>
               {event?.date && (
                 <Text style={{ color: '#E4B76E', fontWeight: '600', fontSize: 15, marginTop: 2 }}>
-                  {(() => {
-                    const eventDate = new Date(event.date);
-                    const dateStr = eventDate.toLocaleDateString();
-                    return `📅 ${dateStr}`;
-                  })()}
+                  {`📅 ${
+                    eventStartsAt
+                      ? eventStartsAt.toLocaleDateString()
+                      : event?.date ?? "Sin fecha"
+                  }`}
                 </Text>
               )}
             </View>
@@ -213,7 +274,14 @@ const EventChat = () => {
             </View>
             <View style={{ alignItems: 'center' }}>
               <Text style={{ fontSize: 28 }}>⏰</Text>
-              <Text style={{ color: '#444', fontSize: 13, marginTop: 2 }}>{event?.date ? (new Date(event.date)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sin hora'}</Text>
+              <Text style={{ color: '#444', fontSize: 13, marginTop: 2 }}>
+                {eventStartsAt
+                  ? eventStartsAt.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : 'Sin hora'}
+              </Text>
             </View>
             <View style={{ alignItems: 'center' }}>
               <Text style={{ fontSize: 28 }}>📝</Text>
@@ -356,7 +424,17 @@ const EventChat = () => {
                 const isCreator = item.userId === createdBy;
                 const canKick = isAdmin && item.userId !== userId;
                 return (
-                  <View style={localStyles.memberRow}>
+                  <TouchableOpacity
+                    style={localStyles.memberRow}
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      setSelectedParticipant({
+                        userId: item.userId,
+                        displayName: item.displayName,
+                        avatarUrl: item.avatarUrl,
+                      })
+                    }
+                  >
                     <Image
                       source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
                       style={localStyles.memberAvatar}
@@ -372,15 +450,61 @@ const EventChat = () => {
                         onPress={() =>
                           handleKick(item.userId, item.displayName)
                         }
+                        onPressOut={() => undefined}
                         style={localStyles.kickButton}
                       >
                         <Text style={localStyles.kickButtonText}>Expulsar</Text>
                       </TouchableOpacity>
                     )}
-                  </View>
+                  </TouchableOpacity>
                 );
               }}
             />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={Boolean(selectedParticipant && selectedParticipantCard)}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedParticipant(null)}
+      >
+        <View style={styles.discoverSheetRoot}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.discoverSheetBackdrop}
+            onPress={() => setSelectedParticipant(null)}
+          />
+          <TouchableOpacity
+            style={styles.discoverSheetCloseButton}
+            onPress={() => setSelectedParticipant(null)}
+            activeOpacity={0.9}
+          >
+            <Icon name="close" size={20} color="#2B2B2B" />
+          </TouchableOpacity>
+          <View style={styles.discoverSheetContainer}>
+            <View style={styles.discoverSheetHandle} />
+            {selectedParticipantCard ? (
+              <CardItem
+                variant="discover"
+                image={selectedParticipantCard.image}
+                name={selectedParticipantCard.name}
+                age={selectedParticipantCard.age}
+                location={selectedParticipantCard.location}
+                description={selectedParticipantCard.description}
+                vibe={selectedParticipantCard.vibe}
+                intention={selectedParticipantCard.intention}
+                prompt={selectedParticipantCard.prompt}
+                tags={selectedParticipantCard.tags}
+                preferences={selectedParticipantCard.preferences}
+                vegetarian={selectedParticipantCard.vegetarian}
+                smoking={selectedParticipantCard.smoking}
+                pets={selectedParticipantCard.pets}
+                images={selectedParticipantCard.images}
+                onContactPress={handleConnectParticipant}
+              />
+            ) : null}
           </View>
         </View>
       </Modal>

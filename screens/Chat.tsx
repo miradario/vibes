@@ -27,7 +27,7 @@ import {
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 
-
+const LOGO = require("../assets/images/logo.png");
 
 const Chat = () => {
   const navigation = useNavigation();

@@ -5,6 +5,7 @@ import {
   normalizeSpiritualPathDetails,
   type SpiritualPathDetails,
 } from "./spiritualPaths";
+import FALLBACK_PROFILE_IMAGE from "../../assets/icon.png";
 
 
 
@@ -181,8 +182,8 @@ const buildPreferences = (profile: ProfileLike): string[] => {
     preferences.push(`Busca: ${profile.intention.trim()}`);
   }
 
-  if (typeof profile.isTeacher === "boolean") {
-    preferences.push(profile.isTeacher ? "Es guía/teacher" : "No es guía");
+  if (profile.isTeacher === true) {
+    preferences.push("Es guía/teacher");
   }
 
   pushPreference("Camino espiritual", profile.spiritualPath ?? profile.spiritual_path);

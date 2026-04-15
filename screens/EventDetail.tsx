@@ -30,25 +30,31 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import CardItem from "../components/CardItem";
 import ChallengeTreeProgress from "../components/ChallengeTreeProgress";
 import { useAuthSession } from "../src/auth/auth.queries";
+import { useProfileQuery } from "../src/queries/profile.queries";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
+import { useSwipeMutation } from "../src/queries/swipes.mutations";
+import { handleApiError } from "../src/utils/handleApiError";
 import {
   useChallengeParticipantQuery,
   useChallengeCheckinsQuery,
-  useChallengeParticipantsQuery,
   useJoinChallengeMutation,
   useCheckInChallengeMutation,
   useLeaveChallengeMutation,
   useDeleteChallengeMutation,
   useIsEventParticipantQuery,
   useJoinEventMutation,
+  useEventParticipantsQuery,
 } from "../src/queries/events.queries";
 import {
   getChallengeMediaPreset,
   parseChallengeMediaPreset,
 } from "../src/constants/challengeMediaPresets";
 
-
+const LOGO = require("../assets/images/logo.png");
 const CHALLENGE_TREE_BG = require("../assets/images/challengeTree.png");
 const EVENT_TREE_BG = require("../assets/images/eventTree.png");
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -110,6 +116,7 @@ const EventDetail = () => {
 
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const swipeMutation = useSwipeMutation();
 
   const { data: participant, isLoading: participantLoading } =
     useChallengeParticipantQuery(isChallenge ? event?.id : undefined, userId);
@@ -126,7 +133,7 @@ const EventDetail = () => {
     useIsEventParticipantQuery(!isChallenge ? event?.id : undefined, userId);
   const joinEventMutation = useJoinEventMutation();
 
-  const { data: challengeParticipants = [] } = useChallengeParticipantsQuery(
+  const { data: challengeParticipants = [] } = useEventParticipantsQuery(
     isChallenge ? event?.id : undefined,
   );
 
@@ -138,6 +145,17 @@ const EventDetail = () => {
   const [checkInNote, setCheckInNote] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<{
+    userId: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null>(null);
+  const { data: selectedParticipantProfile } = useProfileQuery(
+    selectedParticipant?.userId,
+  );
+  const { data: selectedParticipantPreferences } = useUserPreferencesQuery(
+    selectedParticipant?.userId,
+  );
 
   const isJoined = Boolean(participant);
   const checkedInToday = participant?.checkedInToday ?? false;
@@ -163,8 +181,6 @@ const EventDetail = () => {
     startDate && !Number.isNaN(startDate.getTime()) ? startDate : null;
   const todayKey = formatDayKey(new Date());
   const checkinSet = new Set(challengeCheckins);
-  const eventMediaSource =
-    typeof event?.image === "string" ? { uri: event.image } : event?.image;
   const eventVideoSource = selectedEventPreset?.video
     ? selectedEventPreset.video
     : isVideoMedia(event?.imageUrl)
@@ -172,6 +188,42 @@ const EventDetail = () => {
     : isVideoMedia(event?.image)
     ? { uri: event.image }
     : null;
+  const selectedParticipantCard = selectedParticipant
+    ? mapCandidateToConnectionProfile({
+        id: selectedParticipant.userId,
+        displayName:
+          selectedParticipantProfile?.displayName ??
+          selectedParticipant.displayName ??
+          "Participante",
+        ...(selectedParticipantProfile ?? {}),
+        ...(selectedParticipantPreferences ?? {}),
+        photos:
+          selectedParticipantProfile?.photos ??
+          (selectedParticipant.avatarUrl ? [selectedParticipant.avatarUrl] : []),
+      })
+    : null;
+  const handleConnectParticipant = () => {
+    if (!selectedParticipant || !selectedParticipantCard) return;
+    swipeMutation.mutate(
+      {
+        targetUserId: String(selectedParticipant.userId),
+        direction: "like",
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.match) {
+            navigation.navigate(
+              "Match" as never,
+              { profile: selectedParticipantCard } as never,
+            );
+          }
+          setSelectedParticipant(null);
+        },
+        onError: (error) =>
+          handleApiError(error, { toastTitle: "Connect Error" }),
+      },
+    );
+  };
 
   // Animated tree background
   const treeBgOpacity = useSharedValue(0);
@@ -282,9 +334,8 @@ const EventDetail = () => {
               navigation.navigate("EventChat" as never, { event } as never)
             }
           >
-            <Text style={styles.eventDetailJoinButtonText}>
-              Ir al chat del evento
-            </Text>
+            <Text style={styles.eventDetailJoinButtonText}>Ir al chat del evento</Text>
+            <Icon name="arrow-forward" size={24} color={WHITE} />
           </TouchableOpacity>
         </View>
       );
@@ -318,9 +369,10 @@ const EventDetail = () => {
           {joinEventMutation.isPending ? (
             <ActivityIndicator color={WHITE} size="small" />
           ) : (
-            <Text style={styles.eventDetailJoinButtonText}>
-              Sumarme al evento
-            </Text>
+            <>
+              <Text style={styles.eventDetailJoinButtonText}>Enter the Space</Text>
+              <Icon name="arrow-forward" size={24} color={WHITE} />
+            </>
           )}
         </TouchableOpacity>
         <Text style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}>
@@ -354,6 +406,11 @@ const EventDetail = () => {
           typeof tag === "string" && tag.trim().length > 0,
       )
     : [];
+  const eventSubtitle =
+    typeof event?.subtitle === "string" && event.subtitle.trim()
+      ? event.subtitle.trim()
+      : "Entrá a un espacio sereno para compartir presencia y conexión.";
+  const eventLeadText = eventDescription || eventSubtitle;
 
   if (!event) return null;
 
@@ -455,22 +512,27 @@ const EventDetail = () => {
         resizeMode="contain"
         pointerEvents="none"
       />
-
       {!isChallenge ? (
-        eventVideoSource ? (
-          <Video
-            source={eventVideoSource}
-            style={styles.eventDetailHeroImage}
-            resizeMode={ResizeMode.COVER}
-            shouldPlay
-            isMuted
-          />
-        ) : (
-          <Image
-            source={eventMediaSource}
-            style={styles.eventDetailHeroImage}
-          />
-        )
+        <>
+          <View style={styles.eventDetailAmbientGlow} pointerEvents="none" />
+          <View style={styles.eventDetailAmbientSparkleCluster} pointerEvents="none">
+            <View style={styles.eventDetailSparkleDotLarge} />
+            <View style={styles.eventDetailSparkleDotMedium} />
+            <View style={styles.eventDetailSparkleDotSmall} />
+            <Icon
+              name="sparkles"
+              size={16}
+              color="rgba(228, 183, 110, 0.72)"
+              style={styles.eventDetailSparkleIcon}
+            />
+            <Icon
+              name="sparkles-outline"
+              size={12}
+              color="rgba(228, 183, 110, 0.52)"
+              style={styles.eventDetailSparkleIconSmall}
+            />
+          </View>
+        </>
       ) : null}
 
       <View style={styles.eventDetailHeader}>
@@ -478,14 +540,22 @@ const EventDetail = () => {
           style={styles.eventDetailBackButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="chevron-back" size={24} color="#F6F6F4" />
+          <Icon
+            name="chevron-back"
+            size={24}
+            color={isChallenge ? "#F6F6F4" : DARK_GRAY}
+          />
         </TouchableOpacity>
         {isJoined || isAdmin ? (
           <TouchableOpacity
             style={styles.eventDetailMenuButton}
             onPress={() => setMenuVisible(true)}
           >
-            <Icon name="ellipsis-horizontal" size={24} color="#F6F6F4" />
+            <Icon
+              name="ellipsis-horizontal"
+              size={24}
+              color={isChallenge ? "#F6F6F4" : DARK_GRAY}
+            />
           </TouchableOpacity>
         ) : (
           <View style={styles.eventDetailMenuButton} />
@@ -500,47 +570,98 @@ const EventDetail = () => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.eventDetailTitle}>{event.title}</Text>
-        {eventDescription ? (
-          <Text style={styles.eventDetailDescription}>{eventDescription}</Text>
-        ) : null}
-
-        {!isChallenge && eventHostName ? (
-          <View style={styles.eventDetailHostSection}>
-            {eventHostImage ? (
-              <Image
-                source={eventHostImage}
-                style={styles.eventDetailHostAvatar}
-              />
-            ) : null}
-            <Text style={styles.eventDetailHostName}>{eventHostName}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.eventDetailInfoSection}>
-          <View style={styles.eventDetailInfoRow}>
-            <Icon name="calendar" size={20} color={PRIMARY_COLOR} />
-            <Text style={styles.eventDetailInfoText}>
-              {isChallenge ? challengeStartDate : event.date}
-            </Text>
-          </View>
-
-          {!isChallenge && eventLocation ? (
-            <View style={styles.eventDetailInfoRow}>
-              <Icon name="location" size={20} color={TEXT_SECONDARY} />
-              <Text style={styles.eventDetailInfoText}>{eventLocation}</Text>
+        {!isChallenge ? (
+          <>
+            <View style={styles.eventDetailTitleBlock}>
+              <Text style={styles.eventDetailTitle}>{event.title}</Text>
+              <Text style={styles.eventDetailSubtitle}>{eventLeadText}</Text>
             </View>
-          ) : null}
 
-          {!isChallenge && eventTags.length > 0 ? (
-            <View style={styles.eventDetailInfoRow}>
-              <Icon name="leaf" size={20} color={TEXT_SECONDARY} />
-              <Text style={styles.eventDetailInfoText}>
-                {eventTags.join(" · ")}
+            <View style={styles.eventDetailInfoCard}>
+              <View style={styles.eventDetailOrganizerRow}>
+                <View style={styles.eventDetailOrganizerAvatarWrap}>
+                  {eventHostImage ? (
+                    <Image
+                      source={eventHostImage}
+                      style={styles.eventDetailHostAvatar}
+                    />
+                  ) : (
+                    <View style={styles.eventDetailHostAvatarFallback}>
+                      <Icon name="person" size={24} color={WHITE} />
+                    </View>
+                  )}
+                </View>
+                <View style={styles.eventDetailOrganizerLabelWrap}>
+                  <Text style={styles.eventDetailHostName}>
+                    {eventHostName || "Comunidad Vibes"}
+                  </Text>
+                  <Text style={styles.eventDetailOrganizerLabel}>Organizador</Text>
+                </View>
+              </View>
+
+              <View style={styles.eventDetailInfoSection}>
+                <TouchableOpacity activeOpacity={0.85} style={styles.eventDetailInfoRow}>
+                  <View style={styles.eventDetailInfoIconWrap}>
+                    <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
+                  </View>
+                  <View style={styles.eventDetailInfoCopy}>
+                    <Text style={styles.eventDetailInfoText}>{event.date}</Text>
+                    <Text style={styles.eventDetailInfoLabel}>
+                      Agregar a mi calendario
+                    </Text>
+                  </View>
+                  <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                </TouchableOpacity>
+
+                {eventLocation ? (
+                  <TouchableOpacity activeOpacity={0.85} style={styles.eventDetailInfoRow}>
+                    <View style={styles.eventDetailInfoIconWrap}>
+                      <Icon name="location" size={18} color={PRIMARY_COLOR} />
+                    </View>
+                    <View style={styles.eventDetailInfoCopy}>
+                      <Text style={styles.eventDetailInfoText}>{eventLocation}</Text>
+                      <Text style={styles.eventDetailInfoLabel}>Ver en el mapa</Text>
+                    </View>
+                    <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
+
+            <View style={styles.eventDetailClosingNoteWrap}>
+              <Text style={styles.eventDetailClosingNote}>
+                ✧ Las mejores conexiones comienzan en espacios reales.
               </Text>
             </View>
-          ) : null}
-        </View>
+
+            {eventVideoSource ? (
+              <View style={localStyles.eventInlineVideoWrap}>
+                <View style={localStyles.eventInlineVideoFrame}>
+                  <Video
+                    source={eventVideoSource}
+                    style={localStyles.eventInlineVideo}
+                    resizeMode={ResizeMode.CONTAIN}
+                    isMuted
+                  />
+                </View>
+              </View>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <Text style={styles.eventDetailTitle}>{event.title}</Text>
+            {eventDescription ? (
+              <Text style={styles.eventDetailDescription}>{eventDescription}</Text>
+            ) : null}
+
+            <View style={styles.eventDetailInfoSection}>
+              <View style={styles.eventDetailInfoRow}>
+                <Icon name="calendar" size={20} color={PRIMARY_COLOR} />
+                <Text style={styles.eventDetailInfoText}>{challengeStartDate}</Text>
+              </View>
+            </View>
+          </>
+        )}
 
         {/* ── Tracking section (solo challenges) ── */}
         {isChallenge ? (
@@ -553,7 +674,6 @@ const EventDetail = () => {
                 }
                 style={localStyles.challengeVideo}
                 resizeMode={ResizeMode.CONTAIN}
-                shouldPlay
                 isMuted
               />
             </View>
@@ -837,7 +957,17 @@ const EventDetail = () => {
             keyExtractor={(item) => item.id}
             style={{ maxHeight: 380 }}
             renderItem={({ item }) => (
-              <View style={localStyles.participantRow}>
+              <TouchableOpacity
+                style={localStyles.participantRow}
+                activeOpacity={0.85}
+                onPress={() =>
+                  setSelectedParticipant({
+                    userId: item.userId,
+                    displayName: item.displayName,
+                    avatarUrl: item.avatarUrl,
+                  })
+                }
+              >
                 <Image
                   source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
                   style={localStyles.participantAvatar}
@@ -846,7 +976,7 @@ const EventDetail = () => {
                   {item.displayName || "Participante"}
                   {item.userId === event.createdBy ? " 👑" : ""}
                 </Text>
-              </View>
+              </TouchableOpacity>
             )}
             ListEmptyComponent={
               <Text style={localStyles.emptyParticipants}>
@@ -860,6 +990,51 @@ const EventDetail = () => {
           >
             <Text style={localStyles.menuCancelText}>Cerrar</Text>
           </TouchableOpacity>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={Boolean(selectedParticipant && selectedParticipantCard)}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedParticipant(null)}
+      >
+        <View style={styles.discoverSheetRoot}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.discoverSheetBackdrop}
+            onPress={() => setSelectedParticipant(null)}
+          />
+          <TouchableOpacity
+            style={styles.discoverSheetCloseButton}
+            onPress={() => setSelectedParticipant(null)}
+            activeOpacity={0.9}
+          >
+            <Icon name="close" size={20} color="#2B2B2B" />
+          </TouchableOpacity>
+          <View style={styles.discoverSheetContainer}>
+            <View style={styles.discoverSheetHandle} />
+            {selectedParticipantCard ? (
+              <CardItem
+                variant="discover"
+                image={selectedParticipantCard.image}
+                name={selectedParticipantCard.name}
+                age={selectedParticipantCard.age}
+                location={selectedParticipantCard.location}
+                description={selectedParticipantCard.description}
+                vibe={selectedParticipantCard.vibe}
+                intention={selectedParticipantCard.intention}
+                prompt={selectedParticipantCard.prompt}
+                tags={selectedParticipantCard.tags}
+                preferences={selectedParticipantCard.preferences}
+                vegetarian={selectedParticipantCard.vegetarian}
+                smoking={selectedParticipantCard.smoking}
+                pets={selectedParticipantCard.pets}
+                images={selectedParticipantCard.images}
+                onContactPress={handleConnectParticipant}
+              />
+            ) : null}
+          </View>
         </View>
       </Modal>
     </View>
@@ -905,6 +1080,32 @@ const localStyles = StyleSheet.create({
   challengeVideo: {
     width: "100%",
     height: "100%",
+  },
+  eventInlineVideoWrap: {
+    marginTop: 6,
+    marginBottom: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+  },
+  eventInlineVideo: {
+    width: "100%",
+    height: "100%",
+    opacity: 0.96,
+  },
+  eventInlineVideoFrame: {
+    width: "88%",
+    height: 170,
+    borderRadius: 26,
+    overflow: "hidden",
+    backgroundColor: "rgba(255, 255, 255, 0.78)",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.18)",
+    shadowColor: "#B38A4A",
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 5,
   },
   daysWrap: {
     flexDirection: "row",

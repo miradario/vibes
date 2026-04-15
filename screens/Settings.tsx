@@ -18,6 +18,7 @@ import styles, {
   TEXT_SECONDARY,
   WHITE,
 } from "../assets/styles";
+import Icon from "../components/Icon";
 import VibesHeader from "../src/components/VibesHeader";
 import SpiritualPathDetailsModal from "../components/SpiritualPathDetailsModal";
 import { useAuthSession } from "../src/auth/auth.queries";

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
+import Icon from "../components/Icon";
 import VibesHeader from "../src/components/VibesHeader";
 
 const CONTACT_ITEMS = [

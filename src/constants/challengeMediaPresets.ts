@@ -4,6 +4,7 @@ import type { ImageSourcePropType } from "react-native";
 export type ChallengeMediaPresetId =
   | "welcome"
   | "challenge"
+  | "events"
   | "signup"
   | "login";
 
@@ -32,6 +33,12 @@ export const challengeMediaPresets: ChallengeMediaPreset[] = [
     label: "Challenge",
     image: require("../../assets/images/challenges/challengetree.png"),
     video: require("../../assets/videos/challenge.mp4"),
+  },
+  {
+    id: "events",
+    label: "Evento",
+    image: require("../../assets/images/challenges/events.png"),
+    video: require("../../assets/videos/events.mp4"),
   },
   {
     id: "signup",
@@ -96,7 +103,7 @@ export const extractChallengePresetFromDescription = (
 ): ChallengeMediaPresetId | null => {
   if (!description) return null;
 
-  const match = description.match(/\[\[preset:(welcome|challenge|signup|login)\]\]/);
+  const match = description.match(/\[\[preset:(welcome|challenge|events|signup|login)\]\]/);
   return match?.[1] ? (match[1] as ChallengeMediaPresetId) : null;
 };
 
@@ -106,7 +113,7 @@ export const stripChallengePresetFromDescription = (
   if (!description) return null;
 
   const cleaned = description
-    .replace(/\n?\[\[preset:(welcome|challenge|signup|login)\]\]/g, "")
+    .replace(/\n?\[\[preset:(welcome|challenge|events|signup|login)\]\]/g, "")
     .replace(/\n?\[\[starts_at:[^\]]+\]\]/g, "")
     .trim();
 

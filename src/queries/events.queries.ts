@@ -463,6 +463,9 @@ export const useJoinChallengeMutation = () => {
         queryKey: challengeParticipantKeys.participant(challengeId, userId),
       });
       queryClient.invalidateQueries({
+        queryKey: ["challenge_participants_list", challengeId],
+      });
+      queryClient.invalidateQueries({
         queryKey: eventParticipantKeys.byEvent(challengeId),
       });
       queryClient.invalidateQueries({ queryKey: challengesKeys.all });
@@ -488,6 +491,9 @@ export const useCheckInChallengeMutation = () => {
     onSuccess: (_data, { challengeId, userId }) => {
       queryClient.invalidateQueries({
         queryKey: challengeParticipantKeys.participant(challengeId, userId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["challenge_participants_list", challengeId],
       });
       queryClient.invalidateQueries({
         queryKey: challengeCheckinsKeys.list(challengeId, userId),
@@ -1014,18 +1020,32 @@ export const useKickParticipantMutation = () => {
     unknown,
     { participantUserId: string; eventId: string; eventType: EventType }
   >({
-    mutationFn: async ({ participantUserId, eventId }) => {
+    mutationFn: async ({ participantUserId, eventId, eventType }) => {
       const { error } = await supabase
         .from("event_participants")
         .delete()
         .eq("event_id", eventId)
         .eq("user_id", participantUserId);
       if (error) throw error;
+
+      if (eventType === "challenge") {
+        const { error: challengeParticipantError } = await supabase
+          .from("challenge_participants")
+          .delete()
+          .eq("challenge_id", eventId)
+          .eq("user_id", participantUserId);
+        if (challengeParticipantError) throw challengeParticipantError;
+      }
     },
     onSuccess: (_data, { eventId, eventType }) => {
       queryClient.invalidateQueries({
         queryKey: eventParticipantKeys.byEvent(eventId),
       });
+      if (eventType === "challenge") {
+        queryClient.invalidateQueries({
+          queryKey: ["challenge_participants_list", eventId],
+        });
+      }
       queryClient.invalidateQueries({
         queryKey: eventType === "event" ? eventsKeys.all : challengesKeys.all,
       });
