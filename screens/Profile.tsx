@@ -138,7 +138,6 @@ const Profile = () => {
 
         {ownProfile.preferences && ownProfile.preferences.length > 0 ? (
           <View style={localStyles.preferencesCard}>
-            <Text style={localStyles.preferencesTitle}>Tus preferencias</Text>
             <View style={localStyles.preferencesWrap}>
               {ownProfile.preferences.map((preference, index) => (
                 <View
@@ -173,12 +172,6 @@ const localStyles = {
     backgroundColor: "#FBF7F4",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
-  },
-  preferencesTitle: {
-    color: "#2B2B2B",
-    fontSize: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
-    marginBottom: 12,
   },
   preferencesWrap: {
     flexDirection: "row" as const,

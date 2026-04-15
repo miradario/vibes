@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../lib/supabase";
+import type { SpiritualPathDetails } from "../lib/spiritualPaths";
+import { upsertUserPreferences } from "../lib/userPreferencesStore";
 import { profileKeys } from "./profile.queries";
 import { userPreferencesKeys } from "./userPreferences.queries";
 
@@ -86,6 +88,8 @@ export type OnboardingDraft = {
   genderId?: number;
   orientation?: string[];
   intentId?: number;
+  spiritualPath?: string[];
+  spiritualPathDetails?: SpiritualPathDetails;
   photoUris?: string[];
   primaryPhotoUri?: string;
 };
@@ -97,6 +101,8 @@ const defaultDraft: OnboardingDraft = {
   genderId: undefined,
   orientation: [],
   intentId: undefined,
+  spiritualPath: [],
+  spiritualPathDetails: {},
   photoUris: [],
   primaryPhotoUri: "",
 };
@@ -187,6 +193,11 @@ export const useCompleteOnboardingMutation = () => {
         }
         throw error;
       }
+
+      await upsertUserPreferences(userId, {
+        spiritual_path: draft.spiritualPath ?? [],
+        spiritual_path_details: draft.spiritualPathDetails ?? {},
+      });
 
       // Upload photos to Supabase Storage + profile_photos table
       if (draft.photoUris?.length) {

@@ -19,11 +19,20 @@ import styles, {
   WHITE,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import SpiritualPathDetailsModal from "../components/SpiritualPathDetailsModal";
 import { useAuthSession } from "../src/auth/auth.queries";
+import {
+  getSelectedSpiritualPaths,
+  hasSpiritualPathDetail,
+  normalizeSpiritualPathDetail,
+  normalizeSpiritualPathDetails,
+  SPIRITUAL_PATH_OPTIONS,
+  type SpiritualPathDetail,
+  type SpiritualPathDetails,
+} from "../src/lib/spiritualPaths";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 
-const SPIRITUAL_OPTIONS = ["Meditación", "Yoga", "Astrología", "Reiki"];
 const OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
 
 const Settings = () => {
@@ -32,22 +41,37 @@ const Settings = () => {
   const { data: prefs, refetch } = useUserPreferencesQuery(session?.user?.id);
 
   const [spiritualPath, setSpiritualPath] = useState<string[]>([]);
+  const [spiritualPathDetails, setSpiritualPathDetails] =
+    useState<SpiritualPathDetails>({});
+  const [activeSpiritualPath, setActiveSpiritualPath] = useState<string | null>(
+    null,
+  );
   const [vegetarian, setVegetarian] = useState<"Sí" | "No">("No");
   const [aboutMe, setAboutMe] = useState("");
   const [smoking, setSmoking] = useState<"Sí" | "No">("No");
   const [otherOptions, setOtherOptions] = useState<string[]>(
-    OTHER_DEFAULT_OPTIONS
+    OTHER_DEFAULT_OPTIONS,
   );
   const [selectedOtherTags, setSelectedOtherTags] = useState<string[]>(
-    OTHER_DEFAULT_OPTIONS
+    OTHER_DEFAULT_OPTIONS,
   );
   const [customTag, setCustomTag] = useState("");
 
   useEffect(() => {
     if (!prefs) return;
+
     setSpiritualPath(
-      Array.isArray(prefs.spiritualPath) ? prefs.spiritualPath : []
+      getSelectedSpiritualPaths(
+        prefs.spiritualPath ?? prefs.spiritual_path,
+        prefs.spiritualPathDetails ?? prefs.spiritual_path_details,
+      ),
     );
+    setSpiritualPathDetails(
+      normalizeSpiritualPathDetails(
+        prefs.spiritualPathDetails ?? prefs.spiritual_path_details,
+      ),
+    );
+
     if (prefs.vegetarian === "Sí" || prefs.vegetarian === "No") {
       setVegetarian(prefs.vegetarian);
     }
@@ -60,25 +84,44 @@ const Settings = () => {
     if (Array.isArray(prefs.otherTags) && prefs.otherTags.length) {
       setSelectedOtherTags(prefs.otherTags);
       setOtherOptions((prev) =>
-        Array.from(new Set([...prev, ...prefs.otherTags]))
+        Array.from(new Set([...prev, ...prefs.otherTags])),
       );
     }
   }, [prefs]);
 
   const selectedOthers = useMemo(
     () => new Set(selectedOtherTags),
-    [selectedOtherTags]
+    [selectedOtherTags],
   );
 
-  const toggleSpiritualPath = (item: string) => {
-    setSpiritualPath((prev) =>
-      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]
-    );
+  const openSpiritualPathEditor = (item: string) => {
+    setSpiritualPath((prev) => (prev.includes(item) ? prev : [...prev, item]));
+    setActiveSpiritualPath(item);
+  };
+
+  const updateSpiritualPathDetail = (
+    item: string,
+    nextDetail: SpiritualPathDetail,
+  ) => {
+    setSpiritualPathDetails((prev) => ({
+      ...prev,
+      [item]: normalizeSpiritualPathDetail(nextDetail),
+    }));
+  };
+
+  const removeSpiritualPath = (item: string) => {
+    setSpiritualPath((prev) => prev.filter((value) => value !== item));
+    setSpiritualPathDetails((prev) => {
+      const next = { ...prev };
+      delete next[item];
+      return next;
+    });
+    setActiveSpiritualPath(null);
   };
 
   const toggleOther = (item: string) => {
     setSelectedOtherTags((prev) =>
-      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]
+      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item],
     );
   };
 
@@ -108,6 +151,7 @@ const Settings = () => {
     try {
       await upsertUserPreferences(userId, {
         spiritual_path: spiritualPath,
+        spiritual_path_details: spiritualPathDetails,
         vegetarian,
         about_me: aboutMe,
         smoking,
@@ -135,14 +179,29 @@ const Settings = () => {
     </TouchableOpacity>
   );
 
+  // Interceptar back para guardar antes de salir
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      // Si ya estamos guardando, dejar pasar
+      if (e.data.action.type === 'GO_BACK' || e.data.action.type === 'POP') {
+        e.preventDefault();
+        handleSave().finally(() => {
+          navigation.dispatch(e.data.action);
+        });
+      }
+    });
+    return unsubscribe;
+  }, [navigation, spiritualPath, spiritualPathDetails, vegetarian, aboutMe, smoking, selectedOtherTags]);
+
   return (
     <View style={styles.bg}>
       <ScrollView
         style={styles.settingsContainer}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View style={styles.settingsHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => { handleSave().finally(() => navigation.goBack()); }}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
           <Text style={styles.settingsTitle}>Preferencias</Text>
@@ -159,13 +218,35 @@ const Settings = () => {
             <Text style={localStyles.sectionTitle}>Camino espiritual</Text>
             <View style={localStyles.line} />
           </View>
+          <Text style={localStyles.helperText}>
+            Tocá un camino para seleccionarlo y sumar datos opcionales.
+          </Text>
           <View style={localStyles.chipWrap}>
-            {SPIRITUAL_OPTIONS.map((item) =>
+            {SPIRITUAL_PATH_OPTIONS.map((item) =>
               renderChip(item, spiritualPath.includes(item), () =>
-                toggleSpiritualPath(item)
-              )
+                openSpiritualPathEditor(item),
+              ),
             )}
           </View>
+          {spiritualPath.length > 0 ? (
+            <View style={localStyles.detailList}>
+              {spiritualPath.map((item) => (
+                <TouchableOpacity
+                  key={`${item}-detail`}
+                  style={localStyles.detailItem}
+                  onPress={() => setActiveSpiritualPath(item)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={localStyles.detailItemTitle}>{item}</Text>
+                  <Text style={localStyles.detailItemSubtitle}>
+                    {hasSpiritualPathDetail(spiritualPathDetails[item])
+                      ? "Editar datos opcionales"
+                      : "Agregar datos opcionales"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
         </View>
 
         <View style={localStyles.section}>
@@ -218,9 +299,7 @@ const Settings = () => {
           </View>
           <View style={localStyles.chipWrap}>
             {otherOptions.map((item) =>
-              renderChip(item, selectedOthers.has(item), () =>
-                toggleOther(item)
-              )
+              renderChip(item, selectedOthers.has(item), () => toggleOther(item)),
             )}
           </View>
           <View style={localStyles.addRow}>
@@ -242,10 +321,32 @@ const Settings = () => {
           </View>
         </View>
 
+      </ScrollView>
+
+      {/* Botón fijo abajo */}
+      <View style={localStyles.saveButtonFixedWrap}>
         <TouchableOpacity style={localStyles.saveButton} onPress={handleSave}>
           <Text style={localStyles.saveButtonText}>Guardar</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
+
+      <SpiritualPathDetailsModal
+        visible={Boolean(activeSpiritualPath)}
+        pathLabel={activeSpiritualPath}
+        detail={
+          activeSpiritualPath ? spiritualPathDetails[activeSpiritualPath] ?? {} : {}
+        }
+        onChange={(nextDetail) => {
+          if (!activeSpiritualPath) return;
+          updateSpiritualPathDetail(activeSpiritualPath, nextDetail);
+        }}
+        onClose={() => setActiveSpiritualPath(null)}
+        onRemove={
+          activeSpiritualPath
+            ? () => removeSpiritualPath(activeSpiritualPath)
+            : undefined
+        }
+      />
     </View>
   );
 };
@@ -278,6 +379,11 @@ const localStyles = StyleSheet.create({
     height: 1,
     backgroundColor: "#F6F6F4",
     marginLeft: 10,
+  },
+  helperText: {
+    color: GRAY,
+    fontSize: 14,
+    marginBottom: 10,
   },
   chipWrap: {
     flexDirection: "row",
@@ -312,6 +418,28 @@ const localStyles = StyleSheet.create({
   chipTextActive: {
     color: WHITE,
     fontWeight: "700",
+  },
+  detailList: {
+    marginTop: 12,
+    gap: 10,
+  },
+  detailItem: {
+    borderWidth: 1,
+    borderColor: "rgba(168, 131, 102, 0.18)",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "#FBF8F4",
+  },
+  detailItemTitle: {
+    color: DARK_GRAY,
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  detailItemSubtitle: {
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+    marginTop: 4,
   },
   aboutInput: {
     backgroundColor: WHITE,
@@ -355,19 +483,30 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontWeight: "600",
   },
+  saveButtonFixedWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F6F6F4',
+    zIndex: 10,
+  },
   saveButton: {
-    marginTop: 28,
-    marginBottom: 22,
-    alignSelf: "center",
-    width: "72%",
     backgroundColor: PRIMARY_COLOR,
     borderRadius: 24,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: "center",
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { height: 6, width: 0 },
+    justifyContent: "center",
+    shadowColor: "#E4B76E",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
   },
   saveButtonText: {
     color: WHITE,

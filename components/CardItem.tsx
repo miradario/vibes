@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Icon from "./Icon";
 import DiscoverCirclesOverlay from "./DiscoverCirclesOverlay";
+import SpiritualPathDetailsModal from "./SpiritualPathDetailsModal";
 import { CardItemT } from "../types";
 import styles, {
   DISLIKE_ACTIONS,
@@ -23,8 +24,12 @@ import styles, {
   BG_MAIN,
 } from "../assets/styles";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import {
+  getSelectedSpiritualPaths,
+  normalizeSpiritualPathDetails,
+} from "../src/lib/spiritualPaths";
 
-const SHOW_DISCOVER_DEBUG = true;
+const SHOW_DISCOVER_DEBUG = false;
 
 const CardItem = ({
   description,
@@ -44,6 +49,8 @@ const CardItem = ({
   prompt,
   tags,
   preferences,
+  spiritualPath,
+  spiritualPathDetails,
   vegetarian,
   smoking,
   pets,
@@ -83,7 +90,32 @@ const CardItem = ({
     location ||
     (description ? description.slice(0, 64) : "");
   const discoverAgeLabel = age ? `${age} años` : null;
-  const discoverPreferences = (preferences && preferences.length > 0 ? preferences : tags) || [];
+  const discoverPathDetails = normalizeSpiritualPathDetails(spiritualPathDetails);
+  const discoverSpiritualPaths = getSelectedSpiritualPaths(
+    spiritualPath,
+    spiritualPathDetails,
+  );
+  // Construir lista de preferencias extendida
+  const extraPrefs: string[] = [];
+  if (preferences && Array.isArray(preferences)) {
+    extraPrefs.push(...preferences.filter((p) => !p.startsWith("Camino espiritual:")));
+  }
+  // Agregar campos individuales si existen
+  const addIf = (label: string, value: any) => {
+    if (value && typeof value === 'string' && value.trim()) extraPrefs.push(`${label}: ${value}`);
+  };
+  addIf('Sobre mí', (spiritualPathDetails && spiritualPathDetails.about_me) || description);
+  addIf('Abierto a', spiritualPathDetails?.open_to);
+  addIf('Idiomas', spiritualPathDetails?.languages);
+  addIf('Signo', spiritualPathDetails?.zodiac);
+  addIf('Educación', spiritualPathDetails?.education);
+  addIf('Plan familiar', spiritualPathDetails?.family_plan);
+  addIf('Vacuna', spiritualPathDetails?.vaccine);
+  addIf('Personalidad', spiritualPathDetails?.personality);
+  addIf('Comunicación', spiritualPathDetails?.communication_style);
+  addIf('Estilo de amor', spiritualPathDetails?.love_style);
+  addIf('Mascotas', spiritualPathDetails?.pets);
+  const discoverPreferences = extraPrefs;
   const discoverHabits = [
     vegetarian ? `Vegetariano: ${vegetarian}` : null,
     smoking ? `Fuma: ${smoking}` : null,
@@ -97,9 +129,12 @@ const CardItem = ({
     pets: pets ?? null,
     tags: tags ?? [],
     preferences: preferences ?? [],
+    spiritualPath: spiritualPath ?? [],
+    spiritualPathDetails: discoverPathDetails,
   };
   const discoverGallery = (images && images.length > 0 ? images : [image]).slice(0, 6);
   const [activeDiscoverImage, setActiveDiscoverImage] = useState(discoverGallery[0] ?? image);
+  const [activeDiscoverPath, setActiveDiscoverPath] = useState<string | null>(null);
   const activeDiscoverIndex = Math.max(
     0,
     discoverGallery.findIndex((galleryImage) => galleryImage === activeDiscoverImage),
@@ -108,6 +143,12 @@ const CardItem = ({
   useEffect(() => {
     setActiveDiscoverImage(discoverGallery[0] ?? image);
   }, [image, images]);
+
+  useEffect(() => {
+    if (activeDiscoverPath && !discoverSpiritualPaths.includes(activeDiscoverPath)) {
+      setActiveDiscoverPath(null);
+    }
+  }, [activeDiscoverPath, discoverSpiritualPaths]);
 
   if (isDiscover) {
     return (
@@ -219,6 +260,24 @@ const CardItem = ({
             </View>
           ) : null}
 
+          {discoverSpiritualPaths.length > 0 ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>Camino espiritual</Text>
+              <View style={styles.discoverTagRowLeft}>
+                {discoverSpiritualPaths.map((path, index) => (
+                  <TouchableOpacity
+                    key={`${path}-${index}`}
+                    style={styles.discoverTagPill}
+                    onPress={() => setActiveDiscoverPath(path)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.discoverTagText}>{path}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
           {discoverPreferences.length > 0 ? (
             <View style={styles.discoverInfoSection}>
               <Text style={styles.discoverSectionTitle}>Preferencias</Text>
@@ -232,17 +291,15 @@ const CardItem = ({
             </View>
           ) : null}
 
-          {SHOW_DISCOVER_DEBUG ? (
-            <View style={styles.discoverInfoSection}>
-              <Text style={styles.discoverSectionTitle}>Debug</Text>
-              <View style={styles.discoverDebugBox}>
-                <Text style={styles.discoverDebugText}>
-                  {JSON.stringify(discoverDebugPayload, null, 2)}
-                </Text>
-              </View>
-            </View>
-          ) : null}
+          {/* Debug removido */}
         </ScrollView>
+        <SpiritualPathDetailsModal
+          visible={Boolean(activeDiscoverPath)}
+          pathLabel={activeDiscoverPath}
+          detail={activeDiscoverPath ? discoverPathDetails[activeDiscoverPath] ?? {} : {}}
+          onClose={() => setActiveDiscoverPath(null)}
+          readOnly
+        />
         {onContactPress ? (
           <View style={styles.discoverFixedFooter}>
             <TouchableOpacity

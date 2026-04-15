@@ -1,5 +1,10 @@
 import type { ImageSourcePropType } from "react-native";
 import type { Candidate } from "../api/modules/candidates/candidates.types";
+import {
+  getSelectedSpiritualPaths,
+  normalizeSpiritualPathDetails,
+  type SpiritualPathDetails,
+} from "./spiritualPaths";
 
 const FALLBACK_PROFILE_IMAGE = require("../../assets/images/logo.png");
 
@@ -25,6 +30,8 @@ export type ConnectionProfile = {
   prompt?: string;
   tags?: string[];
   preferences?: string[];
+  spiritualPath?: string[];
+  spiritualPathDetails?: SpiritualPathDetails;
   vegetarian?: string;
   smoking?: string;
   pets?: string;
@@ -234,6 +241,16 @@ export const mapCandidateToConnectionProfile = (
     (isNonEmptyString((candidate as ProfileLike).pets) &&
       (candidate as ProfileLike).pets.trim()) ||
     getTaggedValue(tags, ["pets", "mascotas"]);
+  const spiritualPath = getSelectedSpiritualPaths(
+    (candidate as ProfileLike).spiritualPath ??
+      (candidate as ProfileLike).spiritual_path,
+    (candidate as ProfileLike).spiritualPathDetails ??
+      (candidate as ProfileLike).spiritual_path_details,
+  );
+  const spiritualPathDetails = normalizeSpiritualPathDetails(
+    (candidate as ProfileLike).spiritualPathDetails ??
+      (candidate as ProfileLike).spiritual_path_details,
+  );
 
   return {
     id: String((candidate as ProfileLike).id ?? displayName),
@@ -265,7 +282,13 @@ export const mapCandidateToConnectionProfile = (
         (candidate as ProfileLike).prompt.trim()) ||
       undefined,
     tags,
-    preferences: buildPreferences(candidate as ProfileLike),
+    preferences: buildPreferences({
+      ...(candidate as ProfileLike),
+      spiritualPath,
+      spiritualPathDetails,
+    }),
+    spiritualPath,
+    spiritualPathDetails,
     vegetarian,
     smoking,
     pets,

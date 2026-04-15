@@ -187,6 +187,8 @@ const Home = () => {
                   prompt={selectedProfile.prompt}
                   tags={selectedProfile.tags}
                   preferences={selectedProfile.preferences}
+                  spiritualPath={selectedProfile.spiritualPath}
+                  spiritualPathDetails={selectedProfile.spiritualPathDetails}
                   vegetarian={selectedProfile.vegetarian}
                   smoking={selectedProfile.smoking}
                   pets={selectedProfile.pets}

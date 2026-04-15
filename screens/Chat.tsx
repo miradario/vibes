@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Icon } from "../components";
+import CardItem from "../components/CardItem";
 import styles, { DARK_GRAY } from "../assets/styles";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -23,6 +24,8 @@ import {
   useDeleteDirectMessageMutation,
   type DirectMessage,
 } from "../src/queries/matches.queries";
+import { useProfileQuery } from "../src/queries/profile.queries";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 
 const LOGO = require("../assets/images/logo.png");
 
@@ -31,6 +34,11 @@ const Chat = () => {
   const route = useRoute() as any;
   const { matchId, otherUserId, otherUserName, otherUserPhoto } =
     route?.params ?? {};
+
+  // Estado para mostrar CardItem modal
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const { data: profile } = useProfileQuery(otherUserId);
+  const { data: preferences } = useUserPreferencesQuery(otherUserId);
 
   const { data: session } = useAuthSession();
   const myId = session?.user?.id;
@@ -138,17 +146,64 @@ const Chat = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="chevron-back" size={22} color={DARK_GRAY} />
         </TouchableOpacity>
-        <View style={styles.chatHeaderCenter}>
+        <TouchableOpacity style={styles.chatHeaderCenter} onPress={() => setShowProfileModal(true)}>
           <Image
             source={otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
             style={styles.chatAvatarWrap}
           />
           <Text style={styles.chatName}>{otherUserName || "Chat"}</Text>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity>
           <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
         </TouchableOpacity>
       </View>
+      {/* Modal CardItem del usuario, igual a Discover */}
+      {showProfileModal && profile && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            zIndex: 100,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            activeOpacity={1}
+            onPress={() => setShowProfileModal(false)}
+          />
+          <View style={{ width: '94%', maxHeight: '92%', borderRadius: 32, overflow: 'hidden', backgroundColor: 'transparent' }}>
+            <CardItem
+              variant="discover"
+              name={profile.display_name || profile.name || ''}
+              age={profile.birth_date ? String(new Date().getFullYear() - new Date(profile.birth_date).getFullYear()) : ''}
+              image={profile.photo_url || (profile.photos && profile.photos[0]?.url) || otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
+              images={profile.photos?.map((p: any) => ({ uri: p.url }))}
+              location={profile.location}
+              description={profile.about_me}
+              vibe={profile.vibe}
+              intention={profile.intent}
+              prompt={profile.prompt}
+              tags={profile.tags}
+              preferences={preferences?.otherTags}
+              spiritualPath={preferences?.spiritualPath}
+              spiritualPathDetails={preferences?.spiritualPathDetails}
+              vegetarian={preferences?.vegetarian}
+              smoking={preferences?.smoking}
+              pets={preferences?.pets}
+              hideDetails={false}
+            />
+            <TouchableOpacity style={{ padding: 18, alignItems: 'center', backgroundColor: 'transparent' }} onPress={() => setShowProfileModal(false)}>
+              <Text style={{ color: '#E4B76E', fontWeight: 'bold', fontSize: 18 }}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Messages */}
       {isLoading ? (

@@ -1,3 +1,5 @@
+import type { SpiritualPathDetails } from "./src/lib/spiritualPaths";
+
 export type CardItemT = {
   description?: string;
   hasActions?: boolean;
@@ -17,6 +19,8 @@ export type CardItemT = {
   prompt?: string;
   tags?: string[];
   preferences?: string[];
+  spiritualPath?: string[];
+  spiritualPathDetails?: SpiritualPathDetails;
   vegetarian?: string;
   smoking?: string;
   pets?: string;
@@ -78,6 +82,8 @@ export type DataT = {
   prompt?: string;
   tags?: string[];
   preferences?: string[];
+  spiritualPath?: string[];
+  spiritualPathDetails?: SpiritualPathDetails;
   vegetarian?: string;
   smoking?: string;
   pets?: string;

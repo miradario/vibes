@@ -176,11 +176,11 @@ const OnboardingPhoto = () => {
   };
 
   const onContinue = () => {
-    navigation.navigate("OnboardingGender" as never);
+    navigation.navigate("OnboardingSpiritualPath" as never);
   };
 
   const onSkip = () => {
-    navigation.navigate("OnboardingGender" as never);
+    navigation.navigate("OnboardingSpiritualPath" as never);
   };
 
   const primaryUri = photoUris[0] ?? null;
