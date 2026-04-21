@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import styles, {
   DARK_GRAY,
   GRAY,
@@ -33,6 +34,7 @@ import {
 } from "../src/lib/spiritualPaths";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { showToast } from "../src/utils/toast";
 
 const OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
 
@@ -159,7 +161,13 @@ const Settings = () => {
         other_tags: selectedOtherTags,
       });
       await refetch();
-      Alert.alert("Listo", "Preferencias guardadas.");
+      navigation.goBack();
+      setTimeout(() => {
+        showToast("Preferencias guardadas", {
+          type: "success",
+          text1: "Preferencias guardadas",
+        });
+      }, 180);
     } catch (error: any) {
       Alert.alert("Error", error?.message || "No se pudo guardar.");
     }
@@ -180,29 +188,33 @@ const Settings = () => {
     </TouchableOpacity>
   );
 
-  // Interceptar back para guardar antes de salir
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
-      // Si ya estamos guardando, dejar pasar
-      if (e.data.action.type === 'GO_BACK' || e.data.action.type === 'POP') {
-        e.preventDefault();
-        handleSave().finally(() => {
-          navigation.dispatch(e.data.action);
-        });
-      }
-    });
-    return unsubscribe;
-  }, [navigation, spiritualPath, spiritualPathDetails, vegetarian, aboutMe, smoking, selectedOtherTags]);
-
   return (
-    <View style={styles.bg}>
-      <ScrollView
-        style={styles.settingsContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
-      >
-        <VibesHeader title="Preferencias" subtitle="Comentá sobre vos y compartí tus elecciones conscientes." />
+    <SafeAreaView style={styles.bg} edges={["top", "left", "right"]}>
+      <View style={localStyles.fixedHeader}>
+        <View style={localStyles.headerRow}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={localStyles.backButton}
+            activeOpacity={0.85}
+          >
+            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
+          </TouchableOpacity>
+          <View style={localStyles.headerCopy}>
+            <VibesHeader
+              title="Preferencias"
+              subtitle="Comentá sobre vos y compartí tus elecciones conscientes."
+              style={localStyles.headerTextWrap}
+            />
+          </View>
+          <View style={localStyles.headerSpacer} />
+        </View>
+      </View>
 
+      <ScrollView
+        style={localStyles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={localStyles.scrollContent}
+      >
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>
             <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
@@ -338,18 +350,51 @@ const Settings = () => {
             : undefined
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const localStyles = StyleSheet.create({
-  subtitle: {
-    textAlign: "center",
-    color: GRAY,
-    fontSize: 15,
-    marginTop: 8,
-    marginBottom: 10,
-    paddingHorizontal: 14,
+  fixedHeader: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 24,
+    paddingTop: 6,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(43, 43, 43, 0.06)",
+    zIndex: 10,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F6F6F4",
+    marginTop: 6,
+  },
+  headerCopy: {
+    flex: 1,
+  },
+  headerTextWrap: {
+    alignItems: "flex-start",
+  },
+  headerSpacer: {
+    width: 40,
+    height: 40,
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  scrollContent: {
+    paddingTop: 12,
+    paddingBottom: 118,
   },
   section: {
     marginTop: 18,
@@ -475,16 +520,16 @@ const localStyles = StyleSheet.create({
     fontWeight: "600",
   },
   saveButtonFixedWrap: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingHorizontal: 24,
     paddingBottom: 24,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F6F6F4',
+    borderTopColor: "#F6F6F4",
     zIndex: 10,
   },
   saveButton: {

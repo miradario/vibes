@@ -208,6 +208,32 @@ const buildPreferences = (profile: ProfileLike): string[] => {
   return Array.from(new Set(preferences)).slice(0, 16);
 };
 
+const formatLocation = (profile: ProfileLike) => {
+  const baseLocation =
+    (isNonEmptyString(profile.locationLabel) && profile.locationLabel.trim()) ||
+    (isNonEmptyString(profile.location) && profile.location.trim()) ||
+    ([profile.city, profile.country]
+      .filter((item: unknown): item is string => isNonEmptyString(item))
+      .map((item) => item.trim())
+      .join(", ")) ||
+    undefined;
+
+  const distanceKm =
+    typeof profile.distanceKm === "number" && Number.isFinite(profile.distanceKm)
+      ? Math.max(1, Math.round(profile.distanceKm))
+      : null;
+
+  if (baseLocation && distanceKm) {
+    return `${baseLocation} · ${distanceKm} km`;
+  }
+
+  if (distanceKm) {
+    return `${distanceKm} km`;
+  }
+
+  return baseLocation;
+};
+
 export const mapCandidateToConnectionProfile = (
   candidate: Candidate | ProfileLike,
 ): ConnectionProfile => {
@@ -220,12 +246,7 @@ export const mapCandidateToConnectionProfile = (
     (isNonEmptyString((candidate as ProfileLike).name) &&
       (candidate as ProfileLike).name.trim()) ||
     "Vibes";
-  const location =
-    (isNonEmptyString((candidate as ProfileLike).location) &&
-      (candidate as ProfileLike).location.trim()) ||
-    (isNonEmptyString((candidate as ProfileLike).country) &&
-      (candidate as ProfileLike).country.trim()) ||
-    undefined;
+  const location = formatLocation(candidate as ProfileLike);
   const age =
     toAge((candidate as ProfileLike).age) ??
     toAge((candidate as ProfileLike).birthDate) ??

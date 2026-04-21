@@ -57,6 +57,18 @@ type CreateEventInput = {
   hostImage?: string | null;
 };
 
+type UpdateEventInput = {
+  eventId: string;
+  title: string;
+  subtitle: string;
+  description?: string | null;
+  startsAt: string;
+  location: string;
+  capacity: number;
+  imageUri?: string | null;
+  imagePresetId?: ChallengeMediaPresetId | null;
+};
+
 type CreateChallengeInput = {
   createdBy: string;
   title: string;
@@ -344,6 +356,46 @@ export const useCreateEventMutation = () => {
           host_name: input.hostName ?? null,
           host_image_url: input.hostImage ?? null,
         })
+        .select("*")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return mapEventRow(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+    },
+  });
+};
+
+export const useUpdateEventMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<EventFeedItem, unknown, UpdateEventInput>({
+    mutationFn: async (input) => {
+      const imageUrl = input.imagePresetId
+        ? null
+        : await maybeUploadEventImage(input.imageUri, `events/${input.eventId}`);
+      const encodedDescription = encodeChallengeDescriptionWithPreset(
+        input.description ?? null,
+        input.imagePresetId,
+      );
+
+      const { data, error } = await supabase
+        .from("events")
+        .update({
+          title: input.title,
+          subtitle: input.subtitle,
+          description: encodedDescription,
+          starts_at: input.startsAt,
+          location: input.location,
+          capacity: input.capacity,
+          image_url: imageUrl,
+        })
+        .eq("id", input.eventId)
         .select("*")
         .single();
 

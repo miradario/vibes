@@ -14,7 +14,7 @@ import {
   Modal,
   Platform,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker, {
   type DateTimePickerEvent,
@@ -29,7 +29,10 @@ import styles, {
 import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
-import { useCreateEventMutation } from "../src/queries/events.queries";
+import {
+  useCreateEventMutation,
+  useUpdateEventMutation,
+} from "../src/queries/events.queries";
 import {
   challengeMediaPresets,
   type ChallengeMediaPresetId,
@@ -60,18 +63,44 @@ const normalizeCapacityInput = (value: string) => value.replace(/\D+/g, "");
 
 const CreateEvent = () => {
   const navigation = useNavigation();
+  const route = useRoute() as any;
+  const editingEvent = route?.params?.event ?? null;
+  const isEditing = Boolean(editingEvent?.id);
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
   const createEventMutation = useCreateEventMutation();
-  const [title, setTitle] = useState("");
-  const [subtitle, setSubtitle] = useState("");
-  const [eventDateTime, setEventDateTime] = useState<Date | null>(null);
-  const [capacity, setCapacity] = useState("");
-  const [location, setLocation] = useState("");
+  const updateEventMutation = useUpdateEventMutation();
+  const [title, setTitle] = useState(
+    typeof editingEvent?.title === "string" ? editingEvent.title : "",
+  );
+  const [subtitle, setSubtitle] = useState(
+    typeof editingEvent?.description === "string" && editingEvent.description.trim()
+      ? editingEvent.description
+      : typeof editingEvent?.subtitle === "string"
+        ? editingEvent.subtitle
+        : "",
+  );
+  const [eventDateTime, setEventDateTime] = useState<Date | null>(() => {
+    if (typeof editingEvent?.startsAt === "string" && editingEvent.startsAt.trim()) {
+      const parsed = new Date(editingEvent.startsAt);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    return null;
+  });
+  const [capacity, setCapacity] = useState(
+    typeof editingEvent?.capacity === "number" && editingEvent.capacity > 0
+      ? String(editingEvent.capacity)
+      : "",
+  );
+  const [location, setLocation] = useState(
+    typeof editingEvent?.location === "string" ? editingEvent.location : "",
+  );
   const [isValidatingLocation, setIsValidatingLocation] = useState(false);
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
   const [selectedPresetId, setSelectedPresetId] =
-    useState<ChallengeMediaPresetId | null>("challenge");
+    useState<ChallengeMediaPresetId | null>(
+      editingEvent?.imagePresetId ?? "challenge",
+    );
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time" | null>(null);
   const [validatedLocation, setValidatedLocation] = useState<{
@@ -254,27 +283,49 @@ const CreateEvent = () => {
         : null;
 
     try {
-      await createEventMutation.mutateAsync({
-        createdBy: session.user.id,
-        title: title.trim(),
-        subtitle: subtitle.trim() || "Evento creado por la comunidad",
-        description: subtitle.trim() || null,
-        startsAt: eventDateTime.toISOString(),
-        location: resolvedLocation,
-        capacity: parsedCapacity,
-        imageUri: eventImageUri,
-        imagePresetId: eventImageUri ? null : selectedPresetId,
-        hostName,
-        hostImage,
-      });
+      let savedEvent;
+      if (isEditing) {
+        savedEvent = await updateEventMutation.mutateAsync({
+          eventId: editingEvent.id,
+          title: title.trim(),
+          subtitle: subtitle.trim() || "Evento creado por la comunidad",
+          description: subtitle.trim() || null,
+          startsAt: eventDateTime.toISOString(),
+          location: resolvedLocation,
+          capacity: parsedCapacity,
+          imageUri: eventImageUri || editingEvent.imageUrl || null,
+          imagePresetId: eventImageUri ? null : selectedPresetId,
+        });
+      } else {
+        savedEvent = await createEventMutation.mutateAsync({
+          createdBy: session.user.id,
+          title: title.trim(),
+          subtitle: subtitle.trim() || "Evento creado por la comunidad",
+          description: subtitle.trim() || null,
+          startsAt: eventDateTime.toISOString(),
+          location: resolvedLocation,
+          capacity: parsedCapacity,
+          imageUri: eventImageUri,
+          imagePresetId: eventImageUri ? null : selectedPresetId,
+          hostName,
+          hostImage,
+        });
+      }
 
-      navigation.navigate(
-        "Tab" as never,
-        {
-          screen: "Events",
-          params: { section: "event" },
-        } as never,
-      );
+      if (isEditing) {
+        navigation.navigate(
+          "EventDetail" as never,
+          { event: savedEvent } as never,
+        );
+      } else {
+        navigation.navigate(
+          "Tab" as never,
+          {
+            screen: "Events",
+            params: { section: "event" },
+          } as never,
+        );
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "No se pudo crear el evento.";
@@ -294,7 +345,9 @@ const CreateEvent = () => {
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={styles.title}>Crear evento</Text>
+            <Text style={styles.title}>
+              {isEditing ? "Editar evento" : "Crear evento"}
+            </Text>
           </View>
           <View style={{ width: 22 }} />
         </View>
@@ -348,6 +401,8 @@ const CreateEvent = () => {
             source={
               eventImageUri
                 ? { uri: eventImageUri }
+                : editingEvent?.imageUrl
+                  ? { uri: editingEvent.imageUrl }
                 : challengeMediaPresets.find(
                     (preset) => preset.id === selectedPresetId,
                   )?.image || require("../assets/images/challenges/challengetree.png")
@@ -464,10 +519,16 @@ const CreateEvent = () => {
         <TouchableOpacity
           style={localStyles.createButton}
           onPress={handleCreate}
-          disabled={createEventMutation.isPending}
+          disabled={createEventMutation.isPending || updateEventMutation.isPending}
         >
           <Text style={localStyles.createButtonText}>
-            {createEventMutation.isPending ? "Creando..." : "Crear evento"}
+            {createEventMutation.isPending || updateEventMutation.isPending
+              ? isEditing
+                ? "Guardando..."
+                : "Creando..."
+              : isEditing
+                ? "Guardar cambios"
+                : "Crear evento"}
           </Text>
         </TouchableOpacity>
       </ScrollView>

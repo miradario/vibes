@@ -14,6 +14,7 @@ export type CardItemT = {
   name: string;
   age?: string;
   location?: string;
+  distanceLabel?: string;
   vibe?: string;
   intention?: string;
   prompt?: string;
@@ -77,6 +78,7 @@ export type DataT = {
   info3?: string;
   info4?: string;
   location?: string;
+  distanceLabel?: string;
   vibe?: string;
   intention?: string;
   prompt?: string;

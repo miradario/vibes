@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import {
   Image,
   LayoutChangeEvent,
+  Text,
   TouchableOpacity,
   View,
   useWindowDimensions,
@@ -202,6 +203,7 @@ const DiscoverOrbitCanvas = ({
 
         {users.map((user, index) => {
           const config = userConfigs[index];
+          const userPresenceLabel = user.location ?? user.distanceLabel;
           return (
             <MovingNode
               key={`drift-user-${user.id}`}
@@ -212,19 +214,33 @@ const DiscoverOrbitCanvas = ({
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => onUserPress(user)}
-                style={[
-                  styles.discoverOrbitUserTapTarget,
-                  {
-                    width: config.size,
-                    height: config.size,
-                    borderRadius: config.size / 2,
-                  },
-                ]}
+                style={localStyles.userBubbleTouch}
                 accessibilityLabel={`Abrir perfil de ${user.name}`}
               >
-                <View style={styles.discoverOrbitUserRing}>
-                  <Image source={user.image} style={styles.discoverOrbitUserImage} />
+                <View
+                  style={[
+                    styles.discoverOrbitUserTapTarget,
+                    {
+                      width: config.size,
+                      height: config.size,
+                      borderRadius: config.size / 2,
+                    },
+                  ]}
+                >
+                  <View style={styles.discoverOrbitUserRing}>
+                    <Image source={user.image} style={styles.discoverOrbitUserImage} />
+                  </View>
                 </View>
+                {userPresenceLabel ? (
+                  <View style={localStyles.distancePill}>
+                    <Text
+                      style={localStyles.distancePillText}
+                      numberOfLines={2}
+                    >
+                      {userPresenceLabel}
+                    </Text>
+                  </View>
+                ) : null}
               </TouchableOpacity>
             </MovingNode>
           );
@@ -235,3 +251,24 @@ const DiscoverOrbitCanvas = ({
 };
 
 export default DiscoverOrbitCanvas;
+
+const localStyles = {
+  userBubbleTouch: {
+    alignItems: "center" as const,
+  },
+  distancePill: {
+    marginTop: 6,
+    maxWidth: 116,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "rgba(43, 43, 43, 0.78)",
+  },
+  distancePillText: {
+    color: "#F6F6F4",
+    fontSize: 11,
+    fontFamily: "CormorantGaramond_700Bold",
+    letterSpacing: 0.2,
+    textAlign: "center" as const,
+  },
+};

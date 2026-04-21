@@ -485,6 +485,14 @@ const EventDetail = () => {
     );
   };
 
+  const handleEditEvent = () => {
+    setMenuVisible(false);
+    navigation.navigate(
+      "CreateEvent" as never,
+      { event } as never,
+    );
+  };
+
   const handleCheckIn = async () => {
     if (!userId) return;
     try {
@@ -885,6 +893,21 @@ const EventDetail = () => {
               <Text style={localStyles.menuItemText}>Chat del challenge</Text>
               <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
             </TouchableOpacity>
+          ) : null}
+
+          {!isChallenge && isAdmin ? (
+            <>
+              <View style={localStyles.menuDivider} />
+              <Text style={localStyles.menuSectionLabel}>Admin</Text>
+              <TouchableOpacity
+                style={localStyles.menuItem}
+                onPress={handleEditEvent}
+              >
+                <Icon name="create-outline" size={20} color={DARK_GRAY} />
+                <Text style={localStyles.menuItemText}>Editar evento</Text>
+                <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
+              </TouchableOpacity>
+            </>
           ) : null}
 
           {isJoined && !isAdmin ? (

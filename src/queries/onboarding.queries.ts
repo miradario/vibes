@@ -85,6 +85,10 @@ export type OnboardingDraft = {
   displayName?: string;
   birthDate?: string;
   country?: string;
+  city?: string;
+  locationLabel?: string;
+  latitude?: number;
+  longitude?: number;
   genderId?: number;
   orientation?: string[];
   intentId?: number;
@@ -98,6 +102,10 @@ const defaultDraft: OnboardingDraft = {
   displayName: "",
   birthDate: "",
   country: "",
+  city: "",
+  locationLabel: "",
+  latitude: undefined,
+  longitude: undefined,
   genderId: undefined,
   orientation: [],
   intentId: undefined,
@@ -171,6 +179,11 @@ export const useCompleteOnboardingMutation = () => {
       };
 
       if (draft.birthDate) payload.birth_date = draft.birthDate;
+      if (draft.country?.trim()) payload.country = draft.country.trim();
+      if (draft.city?.trim()) payload.city = draft.city.trim();
+      if (draft.locationLabel?.trim()) payload.location_label = draft.locationLabel.trim();
+      if (typeof draft.latitude === "number") payload.latitude = draft.latitude;
+      if (typeof draft.longitude === "number") payload.longitude = draft.longitude;
       if (draft.genderId) payload.gender_id = draft.genderId;
       if (draft.orientation?.length) payload.orientation = draft.orientation;
 
@@ -221,6 +234,11 @@ const resetOnboardingWithFallback = async (userId: string) => {
     id: userId,
     display_name: "",
     birth_date: null,
+    country: null,
+    city: null,
+    location_label: null,
+    latitude: null,
+    longitude: null,
     gender_id: null,
     orientation: null,
     intent_id: DEFAULT_INTENT_ID,

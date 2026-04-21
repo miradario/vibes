@@ -126,9 +126,21 @@ const OnboardingPhoto = () => {
         });
         if (!active) return;
 
-        if (address?.country && address.country !== draft.country) {
-          updateDraft({ country: address.country });
-        }
+        const city =
+          address?.city ??
+          address?.subregion ??
+          address?.region ??
+          "";
+        const country = address?.country ?? "";
+        const locationLabel = [city, country].filter(Boolean).join(", ");
+
+        updateDraft({
+          country,
+          city,
+          locationLabel,
+          latitude: current.coords.latitude,
+          longitude: current.coords.longitude,
+        });
       } catch (_error) {
         // Keep flow non-blocking if location is not available.
       }
@@ -139,7 +151,7 @@ const OnboardingPhoto = () => {
     return () => {
       active = false;
     };
-  }, [draft.country, updateDraft]);
+  }, [updateDraft]);
 
   const persistPhotos = (nextPhotos: string[]) => {
     const trimmed = nextPhotos.slice(0, MAX_PHOTOS);
@@ -204,9 +216,9 @@ const OnboardingPhoto = () => {
 
         <Text style={styles.onboardTitle}>Add your photo</Text>
         <Text style={styles.onboardSubtitle}>Show your authentic self</Text>
-        {draft.country ? (
+        {draft.locationLabel || draft.country ? (
           <Text style={localStyles.locationText}>
-            Location: {draft.country}
+            Ubicación: {draft.locationLabel || draft.country}
           </Text>
         ) : null}
 

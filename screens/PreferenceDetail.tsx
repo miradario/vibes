@@ -12,6 +12,7 @@ import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { showToast } from "../src/utils/toast";
 
 const toCamelKey = (key: string) =>
   key.replace(/_([a-z])/g, (_match: string, letter: string) => letter.toUpperCase());
@@ -164,6 +165,12 @@ const PreferenceDetail = () => {
 
     await refetch();
     navigation.goBack();
+    setTimeout(() => {
+      showToast("Preferencia guardada", {
+        type: "success",
+        text1: "Preferencia guardada",
+      });
+    }, 180);
   };
 
   return (

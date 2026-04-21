@@ -12,6 +12,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Icon } from "../components";
@@ -24,6 +25,7 @@ import {
   useDeleteDirectMessageMutation,
   type DirectMessage,
 } from "../src/queries/matches.queries";
+import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 
@@ -39,6 +41,12 @@ const Chat = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const { data: profile } = useProfileQuery(otherUserId);
   const { data: preferences } = useUserPreferencesQuery(otherUserId);
+  const profileCard = profile
+    ? mapCandidateToConnectionProfile({
+        ...profile,
+        ...(preferences ?? {}),
+      })
+    : null;
 
   const { data: session } = useAuthSession();
   const myId = session?.user?.id;
@@ -158,7 +166,7 @@ const Chat = () => {
               if (profile?.birth_date) {
                 const birthYear = new Date(profile.birth_date).getFullYear();
                 const thisYear = new Date().getFullYear();
-                age = thisYear - birthYear;
+                age = String(thisYear - birthYear);
               }
               return age ? `${name}, ${age}` : name;
             })()}
@@ -168,53 +176,51 @@ const Chat = () => {
           <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
         </TouchableOpacity>
       </View>
-      {/* Modal CardItem del usuario, igual a Discover */}
-      {showProfileModal && profile && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            zIndex: 100,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
+      <Modal
+        visible={showProfileModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowProfileModal(false)}
+      >
+        <View style={styles.discoverSheetRoot}>
           <TouchableOpacity
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             activeOpacity={1}
+            style={styles.discoverSheetBackdrop}
             onPress={() => setShowProfileModal(false)}
           />
-          <View style={{ width: '94%', maxHeight: '92%', borderRadius: 32, overflow: 'hidden', backgroundColor: 'transparent' }}>
-            <CardItem
-              variant="discover"
-              name={profile.display_name || profile.name || ''}
-              age={profile.birth_date ? String(new Date().getFullYear() - new Date(profile.birth_date).getFullYear()) : ''}
-              image={profile.photo_url || (profile.photos && profile.photos[0]?.url) || otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
-              images={profile.photos?.map((p: any) => ({ uri: p.url }))}
-              location={profile.location}
-              description={profile.about_me}
-              vibe={profile.vibe}
-              intention={profile.intent}
-              prompt={profile.prompt}
-              tags={profile.tags}
-              preferences={preferences?.otherTags}
-              spiritualPath={preferences?.spiritualPath}
-              spiritualPathDetails={preferences?.spiritualPathDetails}
-              vegetarian={preferences?.vegetarian}
-              smoking={preferences?.smoking}
-              pets={preferences?.pets}
-              hideDetails={false}
-            />
-            <TouchableOpacity style={{ padding: 18, alignItems: 'center', backgroundColor: 'transparent' }} onPress={() => setShowProfileModal(false)}>
-              <Text style={{ color: '#E4B76E', fontWeight: 'bold', fontSize: 18 }}>Cerrar</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.discoverSheetCloseButton}
+            onPress={() => setShowProfileModal(false)}
+            activeOpacity={0.9}
+          >
+            <Icon name="close" size={20} color="#2B2B2B" />
+          </TouchableOpacity>
+          <View style={styles.discoverSheetContainer}>
+            <View style={styles.discoverSheetHandle} />
+            {profileCard ? (
+              <CardItem
+                variant="discover"
+                image={profileCard.image}
+                name={profileCard.name}
+                age={profileCard.age}
+                location={profileCard.location}
+                description={profileCard.description}
+                vibe={profileCard.vibe}
+                intention={profileCard.intention}
+                prompt={profileCard.prompt}
+                tags={profileCard.tags}
+                preferences={profileCard.preferences}
+                spiritualPath={profileCard.spiritualPath}
+                spiritualPathDetails={profileCard.spiritualPathDetails}
+                vegetarian={profileCard.vegetarian}
+                smoking={profileCard.smoking}
+                pets={profileCard.pets}
+                images={profileCard.images}
+              />
+            ) : null}
           </View>
         </View>
-      )}
+      </Modal>
 
       {/* Messages */}
       {isLoading ? (
