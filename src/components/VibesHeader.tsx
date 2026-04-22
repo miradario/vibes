@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   View,
+  type TextProps,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -17,6 +18,8 @@ export type VibesHeaderProps = {
   style?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
   subtitleStyle?: StyleProp<TextStyle>;
+  titleNumberOfLines?: TextProps["numberOfLines"];
+  titleAdjustsFontSizeToFit?: TextProps["adjustsFontSizeToFit"];
   align?: "center" | "left";
 };
 
@@ -26,6 +29,8 @@ const VibesHeader = ({
   style,
   titleStyle,
   subtitleStyle,
+  titleNumberOfLines,
+  titleAdjustsFontSizeToFit = false,
   align = "center",
 }: VibesHeaderProps) => {
   const isCenter = align === "center";
@@ -34,7 +39,11 @@ const VibesHeader = ({
     <View
       style={[styles.container, isCenter ? styles.center : styles.left, style]}
     >
-      <Text style={[styles.title, !isCenter && styles.leftText, titleStyle]}>
+      <Text
+        style={[styles.title, !isCenter && styles.leftText, titleStyle]}
+        numberOfLines={titleNumberOfLines}
+        adjustsFontSizeToFit={titleAdjustsFontSizeToFit}
+      >
         {title}
       </Text>
       {subtitle ? (

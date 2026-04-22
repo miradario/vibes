@@ -204,6 +204,10 @@ const Settings = () => {
               title="Preferencias"
               subtitle="Comentá sobre vos y compartí tus elecciones conscientes."
               style={localStyles.headerTextWrap}
+              titleStyle={localStyles.headerTitle}
+              subtitleStyle={localStyles.headerSubtitle}
+              titleNumberOfLines={1}
+              titleAdjustsFontSizeToFit
             />
           </View>
           <View style={localStyles.headerSpacer} />
@@ -367,7 +371,7 @@ const localStyles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: 10,
   },
   backButton: {
     width: 40,
@@ -384,8 +388,16 @@ const localStyles = StyleSheet.create({
   headerTextWrap: {
     alignItems: "flex-start",
   },
+  headerTitle: {
+    fontSize: 40,
+    lineHeight: 44,
+  },
+  headerSubtitle: {
+    fontSize: 18,
+    lineHeight: 22,
+  },
   headerSpacer: {
-    width: 40,
+    width: 20,
     height: 40,
   },
   scrollView: {

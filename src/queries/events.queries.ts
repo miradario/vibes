@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
+import { uploadImageToSupabase } from "../lib/supabaseStorage";
 import {
   encodeChallengeDescriptionWithPreset,
   extractChallengePresetFromDescription,
@@ -14,10 +15,13 @@ import {
 } from "../constants/challengeMediaPresets";
 
 const EVENT_ASSETS_BUCKET = "event-assets";
+const CHALLENGE_FALLBACK_IMAGE = require("../../assets/images/challenges/challengetree.png");
 const EVENT_FALLBACK_IMAGE = require("../../assets/images/challenges/challengetree.png");
 
 
 export type EventType = "event" | "challenge";
+export type EventPricingType = "free" | "paid";
+export type EventModality = "in_person" | "online";
 
 export type EventFeedItem = {
   id: string;
@@ -31,6 +35,11 @@ export type EventFeedItem = {
   capacity?: number | null;
   durationDays?: number | null;
   location?: string | null;
+  eventLink?: string | null;
+  pricingType?: EventPricingType;
+  paymentLink?: string | null;
+  modality?: EventModality;
+  onlineLink?: string | null;
   image: string | number;
   imageUrl?: string | null;
   imagePresetId?: ChallengeMediaPresetId | null;
@@ -49,7 +58,12 @@ type CreateEventInput = {
   subtitle: string;
   description?: string | null;
   startsAt: string;
-  location: string;
+  location?: string | null;
+  eventLink?: string | null;
+  pricingType: EventPricingType;
+  paymentLink?: string | null;
+  modality: EventModality;
+  onlineLink?: string | null;
   capacity: number;
   imageUri?: string | null;
   imagePresetId?: ChallengeMediaPresetId | null;
@@ -63,7 +77,12 @@ type UpdateEventInput = {
   subtitle: string;
   description?: string | null;
   startsAt: string;
-  location: string;
+  location?: string | null;
+  eventLink?: string | null;
+  pricingType: EventPricingType;
+  paymentLink?: string | null;
+  modality: EventModality;
+  onlineLink?: string | null;
   capacity: number;
   imageUri?: string | null;
   imagePresetId?: ChallengeMediaPresetId | null;
@@ -139,6 +158,10 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
     parseChallengeMediaPreset(imageUrl) ??
       extractChallengePresetFromDescription(rawDescription),
   );
+  const pricingType: EventPricingType =
+    row.pricing_type === "paid" ? "paid" : "free";
+  const modality: EventModality =
+    row.modality === "online" ? "online" : "in_person";
 
   return {
     id: String(row.id),
@@ -169,6 +192,20 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
     durationDays: type === "challenge" ? durationDays : null,
     location:
       typeof row.location === "string" && row.location.trim() ? row.location : null,
+    eventLink:
+      typeof row.event_link === "string" && row.event_link.trim()
+        ? row.event_link.trim()
+        : null,
+    pricingType,
+    paymentLink:
+      typeof row.payment_link === "string" && row.payment_link.trim()
+        ? row.payment_link.trim()
+        : null,
+    modality,
+    onlineLink:
+      typeof row.online_link === "string" && row.online_link.trim()
+        ? row.online_link.trim()
+        : null,
     image:
       preset?.image ||
       imageUrl ||
@@ -349,7 +386,12 @@ export const useCreateEventMutation = () => {
           subtitle: input.subtitle,
           description: encodedDescription,
           starts_at: input.startsAt,
-          location: input.location,
+          location: input.location ?? null,
+          event_link: input.eventLink ?? null,
+          pricing_type: input.pricingType,
+          payment_link: input.paymentLink ?? null,
+          modality: input.modality,
+          online_link: input.onlineLink ?? null,
           capacity: input.capacity,
           participant_count: 0,
           image_url: imageUrl,
@@ -391,7 +433,12 @@ export const useUpdateEventMutation = () => {
           subtitle: input.subtitle,
           description: encodedDescription,
           starts_at: input.startsAt,
-          location: input.location,
+          location: input.location ?? null,
+          event_link: input.eventLink ?? null,
+          pricing_type: input.pricingType,
+          payment_link: input.paymentLink ?? null,
+          modality: input.modality,
+          online_link: input.onlineLink ?? null,
           capacity: input.capacity,
           image_url: imageUrl,
         })

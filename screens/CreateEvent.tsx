@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import {
+  KeyboardAvoidingView,
   View,
   Text,
   TouchableOpacity,
@@ -13,9 +14,11 @@ import {
   Image,
   Modal,
   Platform,
+  Linking,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
+import { ResizeMode, Video } from "expo-av";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -31,6 +34,8 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import {
   useCreateEventMutation,
+  type EventModality,
+  type EventPricingType,
   useUpdateEventMutation,
 } from "../src/queries/events.queries";
 import {
@@ -60,6 +65,94 @@ const formatEventDateTime = (value: Date) =>
   `${formatEventDate(value)} · ${formatEventTime(value)}`;
 
 const normalizeCapacityInput = (value: string) => value.replace(/\D+/g, "");
+
+const getStaticMapPreviewUrl = (
+  lat: number,
+  lng: number,
+  apiKey: string,
+) =>
+  `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=800x360&scale=2&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=${apiKey}`;
+
+const normalizeExternalUrl = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
+const isValidExternalUrl = (value: string) => {
+  const normalized = normalizeExternalUrl(value);
+  if (!normalized) return false;
+
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const getMissingEventFields = (params: {
+  title: string;
+  subtitle: string;
+  eventDateTime: Date | null;
+  location: string;
+  pricingType: EventPricingType;
+  paymentLink: string;
+  modality: EventModality;
+  onlineLink: string;
+  capacity: string;
+  hasSelectedImage: boolean;
+}) => {
+  const missing: string[] = [];
+
+  if (!params.title.trim()) missing.push("título");
+  if (!params.subtitle.trim()) missing.push("descripción corta");
+  if (!params.eventDateTime) missing.push("fecha y hora");
+  if (params.modality === "in_person" && !params.location.trim()) {
+    missing.push("ubicación");
+  }
+  if (params.modality === "online" && !params.onlineLink.trim()) {
+    missing.push("link online");
+  }
+  if (params.pricingType === "paid" && !params.paymentLink.trim()) {
+    missing.push("link de pago");
+  }
+  if (!params.capacity.trim()) missing.push("cupos");
+  if (!params.hasSelectedImage) missing.push("imagen");
+
+  return missing;
+};
+
+const getInvalidEventLinks = (params: {
+  eventLink: string;
+  pricingType: EventPricingType;
+  paymentLink: string;
+  modality: EventModality;
+  onlineLink: string;
+}) => {
+  const invalid: string[] = [];
+
+  if (params.eventLink.trim() && !isValidExternalUrl(params.eventLink)) {
+    invalid.push("link del evento");
+  }
+  if (
+    params.pricingType === "paid" &&
+    params.paymentLink.trim() &&
+    !isValidExternalUrl(params.paymentLink)
+  ) {
+    invalid.push("link de pago");
+  }
+  if (
+    params.modality === "online" &&
+    params.onlineLink.trim() &&
+    !isValidExternalUrl(params.onlineLink)
+  ) {
+    invalid.push("link online");
+  }
+
+  return invalid;
+};
 
 const CreateEvent = () => {
   const navigation = useNavigation();
@@ -92,6 +185,21 @@ const CreateEvent = () => {
       ? String(editingEvent.capacity)
       : "",
   );
+  const [eventLink, setEventLink] = useState(
+    typeof editingEvent?.eventLink === "string" ? editingEvent.eventLink : "",
+  );
+  const [pricingType, setPricingType] = useState<EventPricingType>(
+    editingEvent?.pricingType === "paid" ? "paid" : "free",
+  );
+  const [paymentLink, setPaymentLink] = useState(
+    typeof editingEvent?.paymentLink === "string" ? editingEvent.paymentLink : "",
+  );
+  const [modality, setModality] = useState<EventModality>(
+    editingEvent?.modality === "online" ? "online" : "in_person",
+  );
+  const [onlineLink, setOnlineLink] = useState(
+    typeof editingEvent?.onlineLink === "string" ? editingEvent.onlineLink : "",
+  );
   const [location, setLocation] = useState(
     typeof editingEvent?.location === "string" ? editingEvent.location : "",
   );
@@ -99,15 +207,45 @@ const CreateEvent = () => {
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
   const [selectedPresetId, setSelectedPresetId] =
     useState<ChallengeMediaPresetId | null>(
-      editingEvent?.imagePresetId ?? "challenge",
+      editingEvent
+        ? editingEvent?.imagePresetId ?? null
+        : "challenge",
     );
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time" | null>(null);
   const [validatedLocation, setValidatedLocation] = useState<{
     address: string;
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
   } | null>(null);
+  const [mapPreviewFailed, setMapPreviewFailed] = useState(false);
+  const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const activePreset =
+    challengeMediaPresets.find((preset) => preset.id === selectedPresetId) ??
+    null;
+  const hasSelectedImage = Boolean(
+    eventImageUri || editingEvent?.imageUrl || activePreset?.image,
+  );
+  const missingFields = getMissingEventFields({
+    title,
+    subtitle,
+    eventDateTime,
+    location,
+    pricingType,
+    paymentLink,
+    modality,
+    onlineLink,
+    capacity,
+    hasSelectedImage,
+  });
+  const invalidLinks = getInvalidEventLinks({
+    eventLink,
+    pricingType,
+    paymentLink,
+    modality,
+    onlineLink,
+  });
+  const isFormComplete = missingFields.length === 0;
 
   const openDatePicker = () => {
     setPickerMode("date");
@@ -209,11 +347,20 @@ const CreateEvent = () => {
       return;
     }
 
+    const useManualLocationFallback = (message: string) => {
+      setValidatedLocation({
+        address: trimmedLocation,
+        lat: null,
+        lng: null,
+      });
+      setMapPreviewFailed(false);
+      Alert.alert("Ubicación guardada", message);
+    };
+
     const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      Alert.alert(
-        "Falta API Key",
-        "Definí EXPO_PUBLIC_GOOGLE_MAPS_API_KEY para validar con Google Maps.",
+      useManualLocationFallback(
+        "Google Maps no está configurado. Vamos a usar la ubicación escrita manualmente.",
       );
       return;
     }
@@ -228,6 +375,16 @@ const CreateEvent = () => {
         address: trimmedLocation,
       });
       console.log("googleMaps:geocode:response", data);
+
+      if (
+        data?.status === "REQUEST_DENIED" ||
+        typeof data?.error_message === "string"
+      ) {
+        useManualLocationFallback(
+          "La API de Google Maps no está habilitada para este proyecto. Vamos a usar la ubicación escrita manualmente.",
+        );
+        return;
+      }
 
       if (data?.status !== "OK" || !data?.results?.length) {
         Alert.alert(
@@ -244,6 +401,7 @@ const CreateEvent = () => {
         lat: firstResult.geometry.location.lat,
         lng: firstResult.geometry.location.lng,
       });
+      setMapPreviewFailed(false);
       setLocation(firstResult.formatted_address);
       Alert.alert("Ubicación validada", firstResult.formatted_address);
     } catch (error) {
@@ -256,10 +414,18 @@ const CreateEvent = () => {
   };
 
   const handleCreate = async () => {
-    if (!title.trim() || !eventDateTime || !location.trim()) {
+    if (!isFormComplete) {
       Alert.alert(
         "Faltan datos",
-        "Completá al menos título, fecha y ubicación.",
+        `Completá: ${missingFields.join(", ")}.`,
+      );
+      return;
+    }
+
+    if (invalidLinks.length > 0) {
+      Alert.alert(
+        "Links inválidos",
+        `Revisá: ${invalidLinks.join(", ")}.`,
       );
       return;
     }
@@ -269,8 +435,24 @@ const CreateEvent = () => {
       return;
     }
 
+    const resolvedStartsAt = eventDateTime?.toISOString();
+    if (!resolvedStartsAt) {
+      Alert.alert("Falta fecha", "Elegí una fecha y hora para el evento.");
+      return;
+    }
+
     const parsedCapacity = capacity.trim() ? Number.parseInt(capacity, 10) : 0;
-    const resolvedLocation = validatedLocation?.address || location.trim();
+    const resolvedLocation =
+      modality === "in_person"
+        ? validatedLocation?.address || location.trim()
+        : null;
+    const resolvedEventLink = eventLink.trim()
+      ? normalizeExternalUrl(eventLink)
+      : null;
+    const resolvedPaymentLink =
+      pricingType === "paid" ? normalizeExternalUrl(paymentLink) : null;
+    const resolvedOnlineLink =
+      modality === "online" ? normalizeExternalUrl(onlineLink) : null;
     const hostName =
       (typeof profile?.displayName === "string" && profile.displayName.trim()) ||
       session.user.email?.split("@")[0] ||
@@ -290,8 +472,13 @@ const CreateEvent = () => {
           title: title.trim(),
           subtitle: subtitle.trim() || "Evento creado por la comunidad",
           description: subtitle.trim() || null,
-          startsAt: eventDateTime.toISOString(),
+          startsAt: resolvedStartsAt,
           location: resolvedLocation,
+          eventLink: resolvedEventLink,
+          pricingType,
+          paymentLink: resolvedPaymentLink,
+          modality,
+          onlineLink: resolvedOnlineLink,
           capacity: parsedCapacity,
           imageUri: eventImageUri || editingEvent.imageUrl || null,
           imagePresetId: eventImageUri ? null : selectedPresetId,
@@ -302,8 +489,13 @@ const CreateEvent = () => {
           title: title.trim(),
           subtitle: subtitle.trim() || "Evento creado por la comunidad",
           description: subtitle.trim() || null,
-          startsAt: eventDateTime.toISOString(),
+          startsAt: resolvedStartsAt,
           location: resolvedLocation,
+          eventLink: resolvedEventLink,
+          pricingType,
+          paymentLink: resolvedPaymentLink,
+          modality,
+          onlineLink: resolvedOnlineLink,
           capacity: parsedCapacity,
           imageUri: eventImageUri,
           imagePresetId: eventImageUri ? null : selectedPresetId,
@@ -333,12 +525,31 @@ const CreateEvent = () => {
     }
   };
 
+  const handleOpenValidatedLocation = async () => {
+    const target = validatedLocation?.address || location.trim();
+    if (!target) return;
+
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(target)}`;
+
+    try {
+      await Linking.openURL(mapsUrl);
+    } catch {
+      Alert.alert("Mapa", "No se pudo abrir el mapa.");
+    }
+  };
+
   return (
-    <View style={styles.bg}>
+    <KeyboardAvoidingView
+      style={styles.bg}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
+    >
+      <View style={styles.bg}>
       <ScrollView
         style={styles.editContainer}
         contentContainerStyle={localStyles.content}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
       >
         <View style={styles.top}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -356,7 +567,7 @@ const CreateEvent = () => {
           <Text style={localStyles.label}>Título</Text>
           <TextInput
             style={localStyles.input}
-            placeholder="Ej: Meditación de luna llena"
+            placeholder="Meditación de luna llena"
             placeholderTextColor={TEXT_SECONDARY}
             value={title}
             onChangeText={setTitle}
@@ -383,40 +594,42 @@ const CreateEvent = () => {
                   <View style={localStyles.presetImageWrap}>
                     <Image source={preset.image} style={localStyles.presetImage} />
                   </View>
-                  <Text style={localStyles.presetLabel}>{preset.label}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
-          <TouchableOpacity
-            style={localStyles.imagePickerButton}
-            onPress={() => setPhotoModalVisible(true)}
-          >
-            <Icon name="image" size={16} color={WHITE} />
-            <Text style={localStyles.imagePickerButtonText}>
-              {eventImageUri ? "Cambiar imagen" : "Subir imagen"}
-            </Text>
-          </TouchableOpacity>
-          <Image
-            source={
-              eventImageUri
-                ? { uri: eventImageUri }
-                : editingEvent?.imageUrl
-                  ? { uri: editingEvent.imageUrl }
-                : challengeMediaPresets.find(
-                    (preset) => preset.id === selectedPresetId,
-                  )?.image || require("../assets/images/challenges/challengetree.png")
-            }
-            style={localStyles.imagePreview}
-          />
+          {activePreset ? (
+            <View style={localStyles.videoPreviewCard}>
+              <Video
+                source={activePreset.video}
+                style={localStyles.videoPreview}
+                resizeMode={ResizeMode.CONTAIN}
+                isMuted
+                isLooping
+                shouldPlay
+              />
+            </View>
+          ) : null}
 
           <Text style={localStyles.label}>Descripción corta</Text>
           <TextInput
             style={localStyles.input}
-            placeholder="Ej: Respiración, calma, conexión"
+            placeholder="Respiración, calma, conexión"
             placeholderTextColor={TEXT_SECONDARY}
             value={subtitle}
             onChangeText={setSubtitle}
+          />
+
+          <Text style={localStyles.label}>Link del evento</Text>
+          <TextInput
+            style={localStyles.input}
+            placeholder="https://mipagina.com/evento"
+            placeholderTextColor={TEXT_SECONDARY}
+            value={eventLink}
+            onChangeText={setEventLink}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
           />
 
           <Text style={localStyles.label}>Fecha y hora</Text>
@@ -431,8 +644,9 @@ const CreateEvent = () => {
                   localStyles.dateTimeButtonText,
                   !eventDateTime && localStyles.dateTimePlaceholder,
                 ]}
+                numberOfLines={1}
               >
-                {eventDateTime ? formatEventDate(eventDateTime) : "Seleccionar fecha"}
+                {eventDateTime ? formatEventDate(eventDateTime) : "Fecha"}
               </Text>
             </TouchableOpacity>
 
@@ -446,8 +660,9 @@ const CreateEvent = () => {
                   localStyles.dateTimeButtonText,
                   !eventDateTime && localStyles.dateTimePlaceholder,
                 ]}
+                numberOfLines={1}
               >
-                {eventDateTime ? formatEventTime(eventDateTime) : "Seleccionar hora"}
+                {eventDateTime ? formatEventTime(eventDateTime) : "Hora"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -477,38 +692,202 @@ const CreateEvent = () => {
             </View>
           ) : null}
 
-          <Text style={localStyles.label}>Ubicación</Text>
-          <TextInput
-            style={localStyles.input}
-            placeholder="Ej: Palermo, Buenos Aires"
-            placeholderTextColor={TEXT_SECONDARY}
-            value={location}
-            onChangeText={(value) => {
-              setLocation(value);
-              setValidatedLocation(null);
-            }}
-          />
-          <TouchableOpacity
-            style={localStyles.validateButton}
-            onPress={handleValidateLocation}
-            disabled={isValidatingLocation}
-          >
-            {isValidatingLocation ? (
-              <ActivityIndicator color={WHITE} />
-            ) : (
-              <Text style={localStyles.validateButtonText}>Validar ubicación</Text>
-            )}
-          </TouchableOpacity>
-          {validatedLocation ? (
-            <Text style={localStyles.validatedText}>
-              Ubicación válida: {validatedLocation.address}
-            </Text>
+          <Text style={localStyles.label}>Tipo de evento</Text>
+          <View style={localStyles.choiceRow}>
+            <TouchableOpacity
+              style={[
+                localStyles.choiceChip,
+                modality === "in_person" && localStyles.choiceChipActive,
+              ]}
+              onPress={() => setModality("in_person")}
+            >
+              <Text
+                style={[
+                  localStyles.choiceChipText,
+                  modality === "in_person" && localStyles.choiceChipTextActive,
+                ]}
+              >
+                Presencial
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                localStyles.choiceChip,
+                modality === "online" && localStyles.choiceChipActive,
+              ]}
+              onPress={() => {
+                setModality("online");
+                setValidatedLocation(null);
+                setMapPreviewFailed(false);
+              }}
+            >
+              <Text
+                style={[
+                  localStyles.choiceChipText,
+                  modality === "online" && localStyles.choiceChipTextActive,
+                ]}
+              >
+                Online
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {modality === "in_person" ? (
+            <>
+              <Text style={localStyles.label}>Ubicación</Text>
+              <TextInput
+                style={localStyles.input}
+                placeholder="Palermo, Buenos Aires"
+                placeholderTextColor={TEXT_SECONDARY}
+                value={location}
+                onChangeText={(value) => {
+                  setLocation(value);
+                  setValidatedLocation(null);
+                  setMapPreviewFailed(false);
+                }}
+              />
+              <TouchableOpacity
+                style={localStyles.validateButton}
+                onPress={handleValidateLocation}
+                disabled={isValidatingLocation}
+              >
+                {isValidatingLocation ? (
+                  <ActivityIndicator color={WHITE} />
+                ) : (
+                  <Text style={localStyles.validateButtonText}>
+                    Validar ubicación
+                  </Text>
+                )}
+              </TouchableOpacity>
+              {validatedLocation ? (
+                <View style={localStyles.validatedLocationBlock}>
+                  <Text style={localStyles.validatedText}>
+                    Ubicación válida: {validatedLocation.address}
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={localStyles.mapPreviewCard}
+                    onPress={handleOpenValidatedLocation}
+                  >
+                    {typeof validatedLocation.lat === "number" &&
+                    typeof validatedLocation.lng === "number" &&
+                    googleMapsApiKey &&
+                    !mapPreviewFailed ? (
+                      <Image
+                        source={{
+                          uri: getStaticMapPreviewUrl(
+                            validatedLocation.lat,
+                            validatedLocation.lng,
+                            googleMapsApiKey,
+                          ),
+                        }}
+                        style={localStyles.mapPreviewImage}
+                        onError={() => setMapPreviewFailed(true)}
+                      />
+                    ) : (
+                      <View style={localStyles.mapPreviewFallback}>
+                        <View style={localStyles.mapPreviewFallbackPin}>
+                          <Icon name="location" size={26} color={PRIMARY_COLOR} />
+                        </View>
+                        <Text style={localStyles.mapPreviewFallbackTitle}>
+                          Ubicación lista para abrir
+                        </Text>
+                        <Text style={localStyles.mapPreviewFallbackText}>
+                          {validatedLocation.address}
+                        </Text>
+                        {typeof validatedLocation.lat === "number" &&
+                        typeof validatedLocation.lng === "number" ? (
+                          <Text style={localStyles.mapPreviewFallbackMeta}>
+                            {validatedLocation.lat.toFixed(4)},{" "}
+                            {validatedLocation.lng.toFixed(4)}
+                          </Text>
+                        ) : null}
+                      </View>
+                    )}
+                    <View style={localStyles.mapPreviewOverlay}>
+                      <View style={localStyles.mapPreviewBadge}>
+                        <Icon name="navigate" size={14} color={WHITE} />
+                        <Text style={localStyles.mapPreviewBadgeText}>
+                          Ver mapa
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Text style={localStyles.label}>Link online</Text>
+              <TextInput
+                style={localStyles.input}
+                placeholder="https://meet.google.com/..."
+                placeholderTextColor={TEXT_SECONDARY}
+                value={onlineLink}
+                onChangeText={setOnlineLink}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+            </>
+          )}
+
+          <Text style={localStyles.label}>Acceso</Text>
+          <View style={localStyles.choiceRow}>
+            <TouchableOpacity
+              style={[
+                localStyles.choiceChip,
+                pricingType === "free" && localStyles.choiceChipActive,
+              ]}
+              onPress={() => setPricingType("free")}
+            >
+              <Text
+                style={[
+                  localStyles.choiceChipText,
+                  pricingType === "free" && localStyles.choiceChipTextActive,
+                ]}
+              >
+                Gratis
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                localStyles.choiceChip,
+                pricingType === "paid" && localStyles.choiceChipActive,
+              ]}
+              onPress={() => setPricingType("paid")}
+            >
+              <Text
+                style={[
+                  localStyles.choiceChipText,
+                  pricingType === "paid" && localStyles.choiceChipTextActive,
+                ]}
+              >
+                Pago
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {pricingType === "paid" ? (
+            <>
+              <Text style={localStyles.label}>Link de pago</Text>
+              <TextInput
+                style={localStyles.input}
+                placeholder="https://mipagina.com/pago"
+                placeholderTextColor={TEXT_SECONDARY}
+                value={paymentLink}
+                onChangeText={setPaymentLink}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+            </>
           ) : null}
 
           <Text style={localStyles.label}>Cupos</Text>
           <TextInput
             style={localStyles.input}
-            placeholder="Ej: 20"
+            placeholder="20"
             placeholderTextColor={TEXT_SECONDARY}
             value={capacity}
             onChangeText={(value) => setCapacity(normalizeCapacityInput(value))}
@@ -517,7 +896,10 @@ const CreateEvent = () => {
         </View>
 
         <TouchableOpacity
-          style={localStyles.createButton}
+          style={[
+            localStyles.createButton,
+            !isFormComplete && localStyles.createButtonDisabled,
+          ]}
           onPress={handleCreate}
           disabled={createEventMutation.isPending || updateEventMutation.isPending}
         >
@@ -571,7 +953,8 @@ const CreateEvent = () => {
           </View>
         </View>
       </Modal>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -607,6 +990,33 @@ const localStyles = StyleSheet.create({
   dateTimeRow: {
     flexDirection: "row",
     gap: 10,
+  },
+  choiceRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 2,
+  },
+  choiceChip: {
+    flex: 1,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(43,43,43,0.1)",
+    backgroundColor: "#F6F6F4",
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  choiceChipActive: {
+    backgroundColor: PRIMARY_COLOR,
+    borderColor: PRIMARY_COLOR,
+  },
+  choiceChipText: {
+    color: DARK_GRAY,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  choiceChipTextActive: {
+    color: WHITE,
   },
   dateTimeButton: {
     flex: 1,
@@ -657,6 +1067,9 @@ const localStyles = StyleSheet.create({
     shadowColor: PRIMARY_COLOR,
     shadowOffset: { width: 0, height: 6 },
   },
+  createButtonDisabled: {
+    opacity: 0.72,
+  },
   createButtonText: {
     color: WHITE,
     fontWeight: "700",
@@ -685,24 +1098,73 @@ const localStyles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
-  imagePickerButton: {
-    marginTop: 6,
-    backgroundColor: "#F6F6F4",
-    borderRadius: 24,
+  validatedLocationBlock: {
+    marginTop: 8,
+    gap: 10,
+  },
+  mapPreviewCard: {
+    height: 168,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#EFE7D9",
     borderWidth: 1,
-    borderColor: "#E4B76E",
-    paddingVertical: 10,
+    borderColor: "rgba(228, 183, 110, 0.32)",
+  },
+  mapPreviewImage: {
+    width: "100%",
+    height: "100%",
+  },
+  mapPreviewFallback: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
-    gap: 8,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 3 },
+    gap: 10,
+    paddingHorizontal: 22,
+    backgroundColor: "#FBF5EA",
   },
-  imagePickerButtonText: {
+  mapPreviewFallbackPin: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(228, 183, 110, 0.14)",
+  },
+  mapPreviewFallbackTitle: {
     color: DARK_GRAY,
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  mapPreviewFallbackText: {
+    color: DARK_GRAY,
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  mapPreviewFallbackMeta: {
+    color: TEXT_SECONDARY,
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  mapPreviewOverlay: {
+    position: "absolute",
+    right: 12,
+    bottom: 12,
+  },
+  mapPreviewBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(43, 43, 43, 0.72)",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  mapPreviewBadgeText: {
+    color: WHITE,
+    fontSize: 12,
     fontWeight: "700",
   },
   presetGrid: {
@@ -713,7 +1175,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   presetCard: {
-    width: "48%",
+    width: "31%",
     backgroundColor: WHITE,
     borderRadius: 14,
     borderWidth: 1,
@@ -726,8 +1188,8 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(228,183,110,0.12)",
   },
   presetImageWrap: {
-    width: 88,
-    height: 88,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     backgroundColor: WHITE,
     alignItems: "center",
@@ -735,20 +1197,23 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   presetImage: {
-    width: 56,
-    height: 56,
-    resizeMode: "contain",
-  },
-  presetLabel: {
-    color: DARK_GRAY,
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  imagePreview: {
-    marginTop: 10,
     width: "100%",
-    height: 170,
-    borderRadius: 12,
+    height: "100%",
+    resizeMode: "cover",
+  },
+  videoPreviewCard: {
+    marginTop: 12,
+    width: "100%",
+    height: 160,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#F6F6F4",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.24)",
+  },
+  videoPreview: {
+    width: "100%",
+    height: "100%",
   },
   modalOverlay: {
     flex: 1,

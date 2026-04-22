@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -13,15 +13,10 @@ import {
   Modal,
   TextInput,
   FlatList,
-  Dimensions,
+  Linking,
+  Platform,
 } from "react-native";
 import { ResizeMode, Video } from "expo-av";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from "react-native-reanimated";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, {
   TEXT_SECONDARY,
@@ -47,7 +42,7 @@ import {
   useDeleteChallengeMutation,
   useIsEventParticipantQuery,
   useJoinEventMutation,
-  useEventParticipantsQuery,
+  useChallengeParticipantsQuery,
 } from "../src/queries/events.queries";
 import {
   getChallengeMediaPreset,
@@ -55,10 +50,6 @@ import {
 } from "../src/constants/challengeMediaPresets";
 
 const LOGO = require("../assets/images/logo.png");
-const CHALLENGE_TREE_BG = require("../assets/images/challengeTree.png");
-const EVENT_TREE_BG = require("../assets/images/eventTree.png");
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
 
 const getStreakEmoji = (streak: number) => {
@@ -68,7 +59,10 @@ const getStreakEmoji = (streak: number) => {
   return "✨";
 };
 
-const getStreakMessage = (streak: number) => {
+const getStreakMessage = (streak: number, totalCheckins: number) => {
+  if (streak === 0 && totalCheckins > 0) {
+    return "Ya tenés avances. Hacé el check-in de hoy para retomar la racha.";
+  }
   if (streak === 0) return "¡Hacé tu primer check-in!";
   if (streak === 1) return "¡Arrancaste! Mantené la racha";
   if (streak < 3) return `${streak} días seguidos, ¡vas bien!`;
@@ -80,6 +74,64 @@ const getStreakMessage = (streak: number) => {
 
 const nextMilestone = (streak: number) => {
   return STREAK_MILESTONES.find((m) => m > streak) ?? null;
+};
+
+const getMilestoneMessage = (streak: number, milestone: number | null) => {
+  if (!milestone) return "Ya alcanzaste todas las metas. 🏆";
+
+  const remainingDays = Math.max(milestone - streak, 0);
+  const dayLabel = remainingDays === 1 ? "día" : "días";
+
+  if (streak === 0) {
+    return `Primera meta: ${milestone} días seguidos.`;
+  }
+
+  return `Te faltan ${remainingDays} ${dayLabel} para llegar a ${milestone} días seguidos.`;
+};
+
+const getStreakHeadline = (streak: number, totalCheckins: number) => {
+  if (streak === 0 && totalCheckins > 0) return "Racha en pausa";
+  if (streak === 0) return "Hoy empieza";
+  if (streak === 1) return "1 día";
+  return `${streak} días`;
+};
+
+const getTotalCheckinsLabel = (totalCheckins: number) => {
+  if (totalCheckins === 1) return "check-in";
+  return "check-ins";
+};
+
+const getParticipantCountFallback = (attendees: unknown) => {
+  if (typeof attendees !== "string") return 0;
+  const match = attendees.match(/\d+/);
+  return match ? Number(match[0]) || 0 : 0;
+};
+
+const getCheckInModalMessage = (streak: number, totalCheckins: number) => {
+  if (streak === 0 && totalCheckins > 0) {
+    return "Tu racha está en pausa. Si hacés el check-in de hoy, volvés a 1 día.";
+  }
+  return `Racha actual: ${streak} días · si hacés el check-in de hoy, pasás a ${streak + 1}.`;
+};
+
+const getCurrentStreakFromCheckins = (
+  checkins: string[],
+  referenceDate: Date,
+) => {
+  if (!checkins.length) return 0;
+
+  const checkinSet = new Set(checkins);
+  const cursor = new Date(referenceDate);
+  let streak = 0;
+
+  while (true) {
+    const key = formatDayKey(cursor);
+    if (!checkinSet.has(key)) break;
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
 };
 
 const formatStartDate = (iso?: string | null) => {
@@ -99,6 +151,9 @@ const formatDayKey = (date: Date) => {
   const day = `${date.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+
+const getStaticMapPreviewUrl = (location: string, apiKey: string) =>
+  `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(location)}&zoom=15&size=900x320&scale=2&maptype=roadmap&markers=color:red%7C${encodeURIComponent(location)}&key=${apiKey}`;
 
 const isVideoMedia = (value: unknown) => {
   if (typeof value !== "string") return false;
@@ -133,7 +188,7 @@ const EventDetail = () => {
     useIsEventParticipantQuery(!isChallenge ? event?.id : undefined, userId);
   const joinEventMutation = useJoinEventMutation();
 
-  const { data: challengeParticipants = [] } = useEventParticipantsQuery(
+  const { data: challengeParticipants = [] } = useChallengeParticipantsQuery(
     isChallenge ? event?.id : undefined,
   );
 
@@ -145,6 +200,10 @@ const EventDetail = () => {
   const [checkInNote, setCheckInNote] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
+  const [eventMapPreviewFailed, setEventMapPreviewFailed] = useState(false);
+  const [selectedProgressDay, setSelectedProgressDay] = useState<string | null>(
+    null,
+  );
   const [selectedParticipant, setSelectedParticipant] = useState<{
     userId: string;
     displayName: string | null;
@@ -158,15 +217,10 @@ const EventDetail = () => {
   );
 
   const isJoined = Boolean(participant);
-  const checkedInToday = participant?.checkedInToday ?? false;
-  const streak = participant?.streak ?? 0;
-  const totalCheckins = participant?.totalCheckins ?? 0;
-  const milestone = nextMilestone(streak);
   const durationDays =
     typeof event?.durationDays === "number" && event.durationDays > 0
       ? event.durationDays
       : 21;
-  const treeProgress = Math.min(streak / durationDays, 1);
   const challengeStartDate = formatStartDate(
     event?.startsAt ?? event?.createdAt,
   );
@@ -176,11 +230,35 @@ const EventDetail = () => {
   const selectedEventPreset = getChallengeMediaPreset(
     event?.imagePresetId ?? parseChallengeMediaPreset(event?.imageUrl),
   );
-  const startDate = event?.createdAt ? new Date(event.createdAt) : null;
+  const challengeVideoSource =
+    selectedChallengePreset?.video ||
+    require("../assets/videos/challenge.mp4");
+  const todayDate = new Date();
+  const todayKey = formatDayKey(todayDate);
+  const startDate = event?.startsAt ?? event?.createdAt;
+  const parsedStartDate = startDate ? new Date(startDate) : null;
   const validStartDate =
-    startDate && !Number.isNaN(startDate.getTime()) ? startDate : null;
-  const todayKey = formatDayKey(new Date());
+    parsedStartDate && !Number.isNaN(parsedStartDate.getTime())
+      ? parsedStartDate
+      : null;
   const checkinSet = new Set(challengeCheckins);
+  const participantCount = Math.max(
+    challengeParticipants.length,
+    getParticipantCountFallback(event?.attendees),
+  );
+  const totalCheckins = Math.max(
+    participant?.totalCheckins ?? 0,
+    challengeCheckins.length,
+  );
+  const checkedInToday =
+    Boolean(participant?.checkedInToday) || checkinSet.has(todayKey);
+  const streak =
+    challengeCheckins.length > 0
+      ? getCurrentStreakFromCheckins(challengeCheckins, todayDate)
+      : participant?.streak ?? 0;
+  const milestone = nextMilestone(streak);
+  const treeProgress = Math.min(streak / durationDays, 1);
+  const showTreeProgress = streak > 0;
   const eventVideoSource = selectedEventPreset?.video
     ? selectedEventPreset.video
     : isVideoMedia(event?.imageUrl)
@@ -224,28 +302,6 @@ const EventDetail = () => {
       },
     );
   };
-
-  // Animated tree background
-  const treeBgOpacity = useSharedValue(0);
-  useEffect(() => {
-    if (isChallenge) {
-      const target = isJoined ? 0.08 + treeProgress * 0.17 : 0.06;
-      treeBgOpacity.value = withTiming(target, {
-        duration: 1800,
-        easing: Easing.out(Easing.cubic),
-      });
-    } else {
-      // Events: gentle fade-in
-      treeBgOpacity.value = withTiming(0.12, {
-        duration: 1800,
-        easing: Easing.out(Easing.cubic),
-      });
-    }
-  }, [isChallenge, isJoined, treeProgress]);
-
-  const treeBgStyle = useAnimatedStyle(() => ({
-    opacity: treeBgOpacity.value,
-  }));
 
   const progressDays = Array.from(
     { length: durationDays },
@@ -370,7 +426,9 @@ const EventDetail = () => {
             <ActivityIndicator color={WHITE} size="small" />
           ) : (
             <>
-              <Text style={styles.eventDetailJoinButtonText}>Enter the Space</Text>
+              <Text style={styles.eventDetailJoinButtonText}>
+                Unirse al evento
+              </Text>
               <Icon name="arrow-forward" size={24} color={WHITE} />
             </>
           )}
@@ -392,6 +450,24 @@ const EventDetail = () => {
     typeof event?.location === "string" && event.location.trim()
       ? event.location.trim()
       : null;
+  const eventLink =
+    typeof event?.eventLink === "string" && event.eventLink.trim()
+      ? event.eventLink.trim()
+      : null;
+  const pricingType = event?.pricingType === "paid" ? "paid" : "free";
+  const paymentLink =
+    typeof event?.paymentLink === "string" && event.paymentLink.trim()
+      ? event.paymentLink.trim()
+      : null;
+  const modality = event?.modality === "online" ? "online" : "in_person";
+  const onlineLink =
+    typeof event?.onlineLink === "string" && event.onlineLink.trim()
+      ? event.onlineLink.trim()
+      : null;
+  const challengeLocation =
+    typeof event?.location === "string" && event.location.trim()
+      ? event.location.trim()
+      : "Ubicación a confirmar";
   const eventHostName =
     typeof event?.hostName === "string" && event.hostName.trim()
       ? event.hostName.trim()
@@ -411,8 +487,126 @@ const EventDetail = () => {
       ? event.subtitle.trim()
       : "Entrá a un espacio sereno para compartir presencia y conexión.";
   const eventLeadText = eventDescription || eventSubtitle;
+  const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!event) return null;
+
+  const getExternalUrl = (value: string) =>
+    /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+  const getExternalUrlLabel = (value: string, fallback: string) => {
+    try {
+      const parsed = new URL(getExternalUrl(value));
+      return parsed.hostname.replace(/^www\./i, "") || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const handleOpenExternalLink = async (
+    url: string | null,
+    errorTitle: string,
+    errorMessage: string,
+  ) => {
+    if (!url) {
+      Alert.alert(errorTitle, errorMessage);
+      return;
+    }
+
+    const target = getExternalUrl(url);
+
+    try {
+      const supported = await Linking.canOpenURL(target);
+      if (!supported) {
+        Alert.alert(errorTitle, errorMessage);
+        return;
+      }
+      await Linking.openURL(target);
+    } catch {
+      Alert.alert(errorTitle, errorMessage);
+    }
+  };
+
+  const handleOpenCalendar = async () => {
+    const baseDate = validStartDate ?? todayDate;
+    const start = new Date(baseDate);
+    const end = new Date(baseDate);
+    const isAllDayChallenge = isChallenge;
+
+    if (isAllDayChallenge) {
+      end.setDate(end.getDate() + Math.max(durationDays, 1));
+    } else {
+      end.setHours(end.getHours() + 1);
+    }
+
+    const formatCalendarDate = (value: Date, allDay: boolean) => {
+      if (allDay) {
+        const year = value.getFullYear();
+        const month = `${value.getMonth() + 1}`.padStart(2, "0");
+        const day = `${value.getDate()}`.padStart(2, "0");
+        return `${year}${month}${day}`;
+      }
+
+      return value.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    };
+
+    const title = event?.title ?? (isChallenge ? "Challenge" : "Evento");
+    const details = eventDescription ?? eventSubtitle ?? "";
+    const location = isChallenge ? challengeLocation : eventLocation ?? "";
+    const calendarUrl =
+      `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+      `&text=${encodeURIComponent(title)}` +
+      `&dates=${formatCalendarDate(start, isAllDayChallenge)}/${formatCalendarDate(end, isAllDayChallenge)}` +
+      `&details=${encodeURIComponent(details)}` +
+      `&location=${encodeURIComponent(location)}`;
+
+    try {
+      const supported = await Linking.canOpenURL(calendarUrl);
+      if (!supported) {
+        Alert.alert("Calendario", "No se pudo abrir el calendario.");
+        return;
+      }
+      await Linking.openURL(calendarUrl);
+    } catch {
+      Alert.alert("Calendario", "No se pudo abrir el calendario.");
+    }
+  };
+
+  const handleOpenMap = async () => {
+    const location = isChallenge ? challengeLocation : eventLocation;
+
+    if (!location || location === "Ubicación a confirmar") {
+      Alert.alert("Mapa", "Este challenge todavía no tiene una ubicación definida.");
+      return;
+    }
+
+    const encodedLocation = encodeURIComponent(location);
+    const candidateUrls =
+      Platform.OS === "ios"
+        ? [
+            `comgooglemaps://?q=${encodedLocation}`,
+            `maps://?q=${encodedLocation}`,
+            `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+          ]
+        : [
+            `geo:0,0?q=${encodedLocation}`,
+            `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+          ];
+
+    try {
+      for (const url of candidateUrls) {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+          return;
+        }
+      }
+
+      Alert.alert("Mapa", "No se pudo abrir el mapa.");
+    } catch {
+      Alert.alert("Mapa", "No se pudo abrir el mapa.");
+    }
+  };
 
   const handleJoin = async () => {
     if (!userId) {
@@ -513,13 +707,24 @@ const EventDetail = () => {
 
   return (
     <View style={styles.eventDetailContainer}>
-      {/* Animated tree background */}
-      <Animated.Image
-        source={isChallenge ? CHALLENGE_TREE_BG : EVENT_TREE_BG}
-        style={[localStyles.challengeTreeBg, treeBgStyle]}
-        resizeMode="contain"
-        pointerEvents="none"
-      />
+      {isChallenge ? (
+        <>
+          <View style={localStyles.challengeBackgroundVideoWrap} pointerEvents="none">
+            <Video
+              source={challengeVideoSource}
+              style={localStyles.challengeBackgroundVideo}
+              resizeMode={ResizeMode.COVER}
+              isMuted
+              isLooping
+              shouldPlay
+            />
+          </View>
+          <View
+            style={localStyles.challengeBackgroundScrim}
+            pointerEvents="none"
+          />
+        </>
+      ) : null}
       {!isChallenge ? (
         <>
           <View style={styles.eventDetailAmbientGlow} pointerEvents="none" />
@@ -548,25 +753,17 @@ const EventDetail = () => {
           style={styles.eventDetailBackButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon
-            name="chevron-back"
-            size={24}
-            color={isChallenge ? "#F6F6F4" : DARK_GRAY}
-          />
+          <Icon name="chevron-back" size={24} color={DARK_GRAY} />
         </TouchableOpacity>
         {isJoined || isAdmin ? (
           <TouchableOpacity
             style={styles.eventDetailMenuButton}
             onPress={() => setMenuVisible(true)}
           >
-            <Icon
-              name="ellipsis-horizontal"
-              size={24}
-              color={isChallenge ? "#F6F6F4" : DARK_GRAY}
-            />
+            <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
           </TouchableOpacity>
         ) : (
-          <View style={styles.eventDetailMenuButton} />
+          <View style={localStyles.headerSpacer} />
         )}
       </View>
 
@@ -580,10 +777,30 @@ const EventDetail = () => {
       >
         {!isChallenge ? (
           <>
-            <View style={styles.eventDetailTitleBlock}>
-              <Text style={styles.eventDetailTitle}>{event.title}</Text>
-              <Text style={styles.eventDetailSubtitle}>{eventLeadText}</Text>
-            </View>
+            {eventVideoSource ? (
+              <View style={localStyles.eventHeroMedia}>
+                <Video
+                  source={eventVideoSource}
+                  style={localStyles.eventHeroVideo}
+                  resizeMode={ResizeMode.COVER}
+                  isMuted
+                  shouldPlay
+                  isLooping
+                />
+                <View style={localStyles.eventHeroScrim} />
+                <View style={localStyles.eventHeroContent}>
+                  <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
+                  <Text style={localStyles.eventHeroSubtitle}>
+                    {eventLeadText}
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.eventDetailTitleBlock}>
+                <Text style={styles.eventDetailTitle}>{event.title}</Text>
+                <Text style={styles.eventDetailSubtitle}>{eventLeadText}</Text>
+              </View>
+            )}
 
             <View style={styles.eventDetailInfoCard}>
               <View style={styles.eventDetailOrganizerRow}>
@@ -608,7 +825,11 @@ const EventDetail = () => {
               </View>
 
               <View style={styles.eventDetailInfoSection}>
-                <TouchableOpacity activeOpacity={0.85} style={styles.eventDetailInfoRow}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.eventDetailInfoRow}
+                  onPress={handleOpenCalendar}
+                >
                   <View style={styles.eventDetailInfoIconWrap}>
                     <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
                   </View>
@@ -621,14 +842,153 @@ const EventDetail = () => {
                   <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
                 </TouchableOpacity>
 
-                {eventLocation ? (
-                  <TouchableOpacity activeOpacity={0.85} style={styles.eventDetailInfoRow}>
+                {modality === "in_person" && eventLocation ? (
+                  <>
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      style={styles.eventDetailInfoRow}
+                      onPress={handleOpenMap}
+                    >
+                      <View style={styles.eventDetailInfoIconWrap}>
+                        <Icon name="location" size={18} color={PRIMARY_COLOR} />
+                      </View>
+                      <View style={styles.eventDetailInfoCopy}>
+                        <Text style={styles.eventDetailInfoText}>{eventLocation}</Text>
+                        <Text style={styles.eventDetailInfoLabel}>Ver en el mapa</Text>
+                      </View>
+                      <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      style={localStyles.eventMiniMapCard}
+                      onPress={handleOpenMap}
+                    >
+                      {googleMapsApiKey && !eventMapPreviewFailed ? (
+                        <Image
+                          source={{
+                            uri: getStaticMapPreviewUrl(
+                              eventLocation,
+                              googleMapsApiKey,
+                            ),
+                          }}
+                          style={localStyles.eventMiniMapImage}
+                          onError={() => setEventMapPreviewFailed(true)}
+                        />
+                      ) : (
+                        <View style={localStyles.eventMiniMapFallback}>
+                          <View style={localStyles.eventMiniMapPin}>
+                            <Icon name="location" size={22} color={PRIMARY_COLOR} />
+                          </View>
+                          <View style={localStyles.eventMiniMapCopy}>
+                            <Text style={localStyles.eventMiniMapTitle}>
+                              Ver ubicación
+                            </Text>
+                            <Text
+                              style={localStyles.eventMiniMapText}
+                              numberOfLines={2}
+                            >
+                              {eventLocation}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+                      <View style={localStyles.eventMiniMapBadge}>
+                        <Icon name="navigate" size={12} color={WHITE} />
+                        <Text style={localStyles.eventMiniMapBadgeText}>
+                          Abrir mapa
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </>
+                ) : null}
+
+                {eventLink ? (
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={styles.eventDetailInfoRow}
+                    onPress={() =>
+                      handleOpenExternalLink(
+                        eventLink,
+                        "Evento",
+                        "No se pudo abrir el link del evento.",
+                      )
+                    }
+                  >
                     <View style={styles.eventDetailInfoIconWrap}>
-                      <Icon name="location" size={18} color={PRIMARY_COLOR} />
+                      <Icon
+                        name="open-outline"
+                        size={18}
+                        color={PRIMARY_COLOR}
+                      />
                     </View>
                     <View style={styles.eventDetailInfoCopy}>
-                      <Text style={styles.eventDetailInfoText}>{eventLocation}</Text>
-                      <Text style={styles.eventDetailInfoLabel}>Ver en el mapa</Text>
+                      <Text style={styles.eventDetailInfoText}>
+                        {getExternalUrlLabel(eventLink, "Link del evento")}
+                      </Text>
+                      <Text style={styles.eventDetailInfoLabel}>
+                        Abrir link del evento
+                      </Text>
+                    </View>
+                    <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                  </TouchableOpacity>
+                ) : null}
+
+                {modality === "online" && onlineLink ? (
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={styles.eventDetailInfoRow}
+                    onPress={() =>
+                      handleOpenExternalLink(
+                        onlineLink,
+                        "Evento online",
+                        "No se pudo abrir el link online.",
+                      )
+                    }
+                  >
+                    <View style={styles.eventDetailInfoIconWrap}>
+                      <Icon
+                        name="videocam-outline"
+                        size={18}
+                        color={PRIMARY_COLOR}
+                      />
+                    </View>
+                    <View style={styles.eventDetailInfoCopy}>
+                      <Text style={styles.eventDetailInfoText}>
+                        {getExternalUrlLabel(onlineLink, "Evento online")}
+                      </Text>
+                      <Text style={styles.eventDetailInfoLabel}>
+                        Entrar al evento online
+                      </Text>
+                    </View>
+                    <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                  </TouchableOpacity>
+                ) : null}
+
+                {pricingType === "paid" && paymentLink ? (
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={styles.eventDetailInfoRow}
+                    onPress={() =>
+                      handleOpenExternalLink(
+                        paymentLink,
+                        "Pago",
+                        "No se pudo abrir el link de pago.",
+                      )
+                    }
+                  >
+                    <View style={styles.eventDetailInfoIconWrap}>
+                      <Icon
+                        name="card-outline"
+                        size={18}
+                        color={PRIMARY_COLOR}
+                      />
+                    </View>
+                    <View style={styles.eventDetailInfoCopy}>
+                      <Text style={styles.eventDetailInfoText}>
+                        {getExternalUrlLabel(paymentLink, "Evento pago")}
+                      </Text>
+                      <Text style={styles.eventDetailInfoLabel}>Pagar evento</Text>
                     </View>
                     <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
                   </TouchableOpacity>
@@ -641,19 +1001,6 @@ const EventDetail = () => {
                 ✧ Las mejores conexiones comienzan en espacios reales.
               </Text>
             </View>
-
-            {eventVideoSource ? (
-              <View style={localStyles.eventInlineVideoWrap}>
-                <View style={localStyles.eventInlineVideoFrame}>
-                  <Video
-                    source={eventVideoSource}
-                    style={localStyles.eventInlineVideo}
-                    resizeMode={ResizeMode.CONTAIN}
-                    isMuted
-                  />
-                </View>
-              </View>
-            ) : null}
           </>
         ) : (
           <>
@@ -663,10 +1010,54 @@ const EventDetail = () => {
             ) : null}
 
             <View style={styles.eventDetailInfoSection}>
-              <View style={styles.eventDetailInfoRow}>
-                <Icon name="calendar" size={20} color={PRIMARY_COLOR} />
-                <Text style={styles.eventDetailInfoText}>{challengeStartDate}</Text>
-              </View>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.eventDetailInfoRow}
+                onPress={handleOpenCalendar}
+              >
+                <View style={styles.eventDetailInfoIconWrap}>
+                  <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
+                </View>
+                <View style={styles.eventDetailInfoCopy}>
+                  <Text style={styles.eventDetailInfoText}>{challengeStartDate}</Text>
+                  <Text style={styles.eventDetailInfoLabel}>
+                    Agregar a mi calendario
+                  </Text>
+                </View>
+                <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.eventDetailInfoRow}
+                onPress={handleOpenMap}
+              >
+                <View style={styles.eventDetailInfoIconWrap}>
+                  <Icon name="location" size={18} color={PRIMARY_COLOR} />
+                </View>
+                <View style={styles.eventDetailInfoCopy}>
+                  <Text style={styles.eventDetailInfoText}>{challengeLocation}</Text>
+                  <Text style={styles.eventDetailInfoLabel}>Ver en el mapa</Text>
+                </View>
+                <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.eventDetailInfoRow}
+                onPress={() => setParticipantsVisible(true)}
+              >
+                <View style={styles.eventDetailInfoIconWrap}>
+                  <Icon name="people" size={18} color={PRIMARY_COLOR} />
+                </View>
+                <View style={styles.eventDetailInfoCopy}>
+                  <Text style={styles.eventDetailInfoText}>
+                    {participantCount} participantes
+                  </Text>
+                  <Text style={styles.eventDetailInfoLabel}>Ver participantes</Text>
+                </View>
+                <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+              </TouchableOpacity>
             </View>
           </>
         )}
@@ -674,18 +1065,6 @@ const EventDetail = () => {
         {/* ── Tracking section (solo challenges) ── */}
         {isChallenge ? (
           <>
-            <View style={localStyles.challengeMediaCard}>
-              <Video
-                source={
-                  selectedChallengePreset?.video ||
-                  require("../assets/videos/challenge.mp4")
-                }
-                style={localStyles.challengeVideo}
-                resizeMode={ResizeMode.CONTAIN}
-                isMuted
-              />
-            </View>
-
             {participantLoading ? (
               <ActivityIndicator
                 color={PRIMARY_COLOR}
@@ -693,67 +1072,76 @@ const EventDetail = () => {
               />
             ) : isJoined ? (
               <View style={localStyles.trackingCard}>
-                <View style={localStyles.daysWrap}>
-                  {progressDays.map((day) => {
-                    const dayDate = validStartDate
-                      ? new Date(
-                          validStartDate.getFullYear(),
-                          validStartDate.getMonth(),
-                          validStartDate.getDate() + day - 1,
-                        )
-                      : null;
-                    const dayKey = dayDate ? formatDayKey(dayDate) : null;
-                    const isDone = dayKey
-                      ? checkinSet.has(dayKey)
-                      : day <= streak;
-                    const isPast = dayKey ? dayKey < todayKey : false;
-                    const isMissed = Boolean(dayKey && isPast && !isDone);
-                    const isCurrent = Boolean(
-                      dayKey && dayKey === todayKey && !isDone,
-                    );
+                <View style={localStyles.daysPanel}>
+                  <View style={localStyles.daysWrap}>
+                    {progressDays.map((day) => {
+                      const dayDate = validStartDate
+                        ? new Date(
+                            validStartDate.getFullYear(),
+                            validStartDate.getMonth(),
+                            validStartDate.getDate() + day - 1,
+                          )
+                        : null;
+                      const dayKey = dayDate ? formatDayKey(dayDate) : null;
+                      const isDone = dayKey
+                        ? checkinSet.has(dayKey)
+                        : day <= streak;
+                      const isPast = dayKey ? dayKey < todayKey : false;
+                      const isMissed = Boolean(dayKey && isPast && !isDone);
+                      const isCurrent = Boolean(
+                        dayKey && dayKey === todayKey && !isDone,
+                      );
+                      const selectionKey = dayKey ?? `day-${day}`;
+                      const isSelected = selectedProgressDay === selectionKey;
 
-                    return (
-                      <View
-                        key={`day-${day}`}
-                        style={[
-                          localStyles.dayPill,
-                          isDone && localStyles.dayPillDone,
-                          isMissed && localStyles.dayPillMissed,
-                          isCurrent && localStyles.dayPillCurrent,
-                        ]}
-                      >
-                        <Text
+                      return (
+                        <TouchableOpacity
+                          key={`day-${day}`}
+                          activeOpacity={0.85}
+                          onPress={() => setSelectedProgressDay(selectionKey)}
                           style={[
-                            localStyles.dayPillText,
-                            isDone && localStyles.dayPillTextDone,
-                            isMissed && localStyles.dayPillTextMissed,
-                            isCurrent && localStyles.dayPillTextCurrent,
+                            localStyles.dayPill,
+                            isDone && localStyles.dayPillDone,
+                            isMissed && localStyles.dayPillMissed,
+                            isCurrent && localStyles.dayPillCurrent,
+                            isSelected && localStyles.dayPillSelected,
                           ]}
                         >
-                          {day}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                          <Text
+                            style={[
+                              localStyles.dayPillText,
+                              isDone && localStyles.dayPillTextDone,
+                              isMissed && localStyles.dayPillTextMissed,
+                              isCurrent && localStyles.dayPillTextCurrent,
+                            ]}
+                          >
+                            {day}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 </View>
-
-                <ChallengeTreeProgress progress={treeProgress} size={200} />
 
                 <View style={localStyles.streakRow}>
                   <Text style={localStyles.streakEmoji}>
                     {getStreakEmoji(streak)}
                   </Text>
                   <View style={localStyles.streakTextWrap}>
-                    <Text style={localStyles.streakCount}>{streak} días</Text>
+                    <Text style={localStyles.streakCount}>
+                      {getStreakHeadline(streak, totalCheckins)}
+                    </Text>
                     <Text style={localStyles.streakLabel}>
-                      {getStreakMessage(streak)}
+                      {getStreakMessage(streak, totalCheckins)}
                     </Text>
                   </View>
                   <View style={localStyles.totalBadge}>
                     <Text style={localStyles.totalBadgeNumber}>
                       {totalCheckins}
                     </Text>
-                    <Text style={localStyles.totalBadgeLabel}>total</Text>
+                    <Text style={localStyles.totalBadgeLabel}>
+                      {getTotalCheckinsLabel(totalCheckins)}
+                    </Text>
                   </View>
                 </View>
 
@@ -773,14 +1161,18 @@ const EventDetail = () => {
                       />
                     </View>
                     <Text style={localStyles.milestoneLabel}>
-                      {milestone - streak} días para los {milestone} días 🏆
+                      {getMilestoneMessage(streak, milestone)}
                     </Text>
                   </View>
                 ) : (
                   <Text style={localStyles.milestoneLabel}>
-                    ¡Alcanzaste todos los milestones! 🏆
+                    {getMilestoneMessage(streak, milestone)}
                   </Text>
                 )}
+
+                {showTreeProgress ? (
+                  <ChallengeTreeProgress progress={treeProgress} size={200} />
+                ) : null}
               </View>
             ) : (
               <View style={localStyles.joinSpacer} />
@@ -815,7 +1207,7 @@ const EventDetail = () => {
               {getStreakEmoji(streak + 1)} Check-in del día
             </Text>
             <Text style={localStyles.modalSubtitle}>
-              Racha actual: {streak} días · mañana serán {streak + 1}
+              {getCheckInModalMessage(streak, totalCheckins)}
             </Text>
             <TextInput
               style={localStyles.noteInput}
@@ -876,7 +1268,7 @@ const EventDetail = () => {
           >
             <Icon name="people" size={20} color={DARK_GRAY} />
             <Text style={localStyles.menuItemText}>
-              Participantes ({challengeParticipants.length})
+              Participantes ({participantCount})
             </Text>
             <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
           </TouchableOpacity>
@@ -963,25 +1355,23 @@ const EventDetail = () => {
         animationType="slide"
         onRequestClose={() => setParticipantsVisible(false)}
       >
-        <View style={localStyles.menuBackdrop}>
-          <TouchableOpacity
-            style={{ flex: 1 }}
-            activeOpacity={1}
-            onPress={() => setParticipantsVisible(false)}
-          />
-        </View>
-        <View style={[localStyles.menuSheet, { paddingBottom: 32 }]}>
-          <View style={localStyles.menuHandle} />
-          <Text style={localStyles.menuTitle}>
-            Participantes ({challengeParticipants.length})
-          </Text>
+        <View style={localStyles.participantsModalOverlay}>
+          <View style={localStyles.participantsModalCard}>
+            <View style={localStyles.participantsModalHeader}>
+              <Text style={localStyles.participantsModalTitle}>
+                Participantes ({participantCount})
+              </Text>
+              <TouchableOpacity onPress={() => setParticipantsVisible(false)}>
+                <Icon name="close" size={24} color={DARK_GRAY} />
+              </TouchableOpacity>
+            </View>
           <FlatList
             data={challengeParticipants}
             keyExtractor={(item) => item.id}
             style={{ maxHeight: 380 }}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={localStyles.participantRow}
+                style={localStyles.memberRow}
                 activeOpacity={0.85}
                 onPress={() =>
                   setSelectedParticipant({
@@ -993,12 +1383,14 @@ const EventDetail = () => {
               >
                 <Image
                   source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
-                  style={localStyles.participantAvatar}
+                  style={localStyles.memberAvatar}
                 />
-                <Text style={localStyles.participantName}>
-                  {item.displayName || "Participante"}
-                  {item.userId === event.createdBy ? " 👑" : ""}
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={localStyles.memberName}>
+                    {item.displayName || "Participante"}
+                    {item.userId === event.createdBy ? " 👑" : ""}
+                  </Text>
+                </View>
               </TouchableOpacity>
             )}
             ListEmptyComponent={
@@ -1007,12 +1399,7 @@ const EventDetail = () => {
               </Text>
             }
           />
-          <TouchableOpacity
-            style={localStyles.menuCancel}
-            onPress={() => setParticipantsVisible(false)}
-          >
-            <Text style={localStyles.menuCancelText}>Cerrar</Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
@@ -1065,17 +1452,31 @@ const EventDetail = () => {
 };
 
 const localStyles = StyleSheet.create({
-  challengeTreeBg: {
+  challengeBackgroundVideoWrap: {
     position: "absolute",
-    bottom: 40,
-    alignSelf: "center",
-    width: SCREEN_HEIGHT * 0.55,
-    height: SCREEN_HEIGHT * 0.55,
-    zIndex: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  challengeBackgroundVideo: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    opacity: 0.22,
+  },
+  challengeBackgroundScrim: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "rgba(247, 244, 238, 0.88)",
   },
   trackingCard: {
-    marginTop: 20,
-    backgroundColor: WHITE,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
     borderRadius: 20,
     padding: 18,
     shadowColor: "#E4B76E",
@@ -1086,60 +1487,126 @@ const localStyles = StyleSheet.create({
     alignItems: "stretch",
     gap: 14,
   },
-  challengeMediaCard: {
-    marginTop: 20,
-    height: 220,
-    overflow: "hidden",
-    backgroundColor: WHITE,
-    borderRadius: 20,
+  daysPanel: {
+    backgroundColor: "#FBF5EA",
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.18)",
-    shadowColor: "#E4B76E",
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    borderColor: "#F0E1C7",
   },
-  challengeVideo: {
+  eventHeroMedia: {
+    minHeight: 232,
+    borderRadius: 28,
+    overflow: "hidden",
+    marginBottom: 18,
+    justifyContent: "flex-end",
+    backgroundColor: "#C9B89A",
+  },
+  eventHeroVideo: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  eventHeroScrim: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "rgba(37, 26, 11, 0.36)",
+  },
+  eventHeroContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+  },
+  eventHeroTitle: {
+    color: WHITE,
+    fontSize: 36,
+    lineHeight: 38,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  eventHeroSubtitle: {
+    marginTop: 6,
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  eventMiniMapCard: {
+    height: 116,
+    borderRadius: 18,
+    overflow: "hidden",
+    backgroundColor: "#FBF5EA",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.24)",
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  eventMiniMapImage: {
     width: "100%",
     height: "100%",
   },
-  eventInlineVideoWrap: {
-    marginTop: 6,
-    marginBottom: 24,
+  eventMiniMapFallback: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#FBF5EA",
+  },
+  eventMiniMapPin: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
+    backgroundColor: "rgba(228, 183, 110, 0.16)",
   },
-  eventInlineVideo: {
-    width: "100%",
-    height: "100%",
-    opacity: 0.96,
+  eventMiniMapCopy: {
+    flex: 1,
   },
-  eventInlineVideoFrame: {
-    width: "88%",
-    height: 170,
-    borderRadius: 26,
-    overflow: "hidden",
-    backgroundColor: "rgba(255, 255, 255, 0.78)",
-    borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.18)",
-    shadowColor: "#B38A4A",
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 5,
+  eventMiniMapTitle: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  eventMiniMapText: {
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+    fontFamily: "CormorantGaramond_500Medium",
+    marginTop: 2,
+  },
+  eventMiniMapBadge: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(43, 43, 43, 0.72)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  eventMiniMapBadgeText: {
+    color: WHITE,
+    fontSize: 11,
+    fontWeight: "700",
   },
   daysWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 12,
+    alignSelf: "flex-start",
   },
   dayPill: {
-    minWidth: 32,
-    height: 32,
-    paddingHorizontal: 8,
-    borderRadius: 16,
+    minWidth: 40,
+    height: 40,
+    paddingHorizontal: 10,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F4EFE7",
@@ -1158,8 +1625,16 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#FFF8ED",
     borderColor: PRIMARY_COLOR,
   },
+  dayPillSelected: {
+    transform: [{ scale: 1.06 }],
+    shadowColor: PRIMARY_COLOR,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
   dayPillText: {
-    fontSize: 13,
+    fontSize: 15,
     color: TEXT_SECONDARY,
     fontFamily: "CormorantGaramond_700Bold",
   },
@@ -1199,6 +1674,10 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
+  headerSpacer: {
+    width: 40,
+    height: 40,
+  },
   fixedFooterNote: {
     marginBottom: 8,
   },
@@ -1214,7 +1693,7 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   streakCount: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: "CormorantGaramond_700Bold",
     color: DARK_GRAY,
   },
@@ -1228,7 +1707,8 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FDF6EC",
     borderRadius: 12,
-    paddingHorizontal: 10,
+    minWidth: 76,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
     borderColor: "#E4B76E",
@@ -1445,20 +1925,43 @@ const localStyles = StyleSheet.create({
     color: TEXT_SECONDARY,
   },
   // ── Participantes ──
-  participantRow: {
+  participantsModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(43, 43, 43, 0.5)",
+    justifyContent: "flex-end",
+  },
+  participantsModalCard: {
+    backgroundColor: WHITE,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  participantsModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  participantsModalTitle: {
+    fontSize: 20,
+    fontFamily: "CormorantGaramond_700Bold",
+    color: DARK_GRAY,
+  },
+  memberRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#F0EDE8",
   },
-  participantAvatar: {
+  memberAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
   },
-  participantName: {
+  memberName: {
     fontSize: 16,
     fontFamily: "CormorantGaramond_600SemiBold",
     color: DARK_GRAY,
