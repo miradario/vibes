@@ -706,25 +706,12 @@ const EventDetail = () => {
   };
 
   return (
-    <View style={styles.eventDetailContainer}>
-      {isChallenge ? (
-        <>
-          <View style={localStyles.challengeBackgroundVideoWrap} pointerEvents="none">
-            <Video
-              source={challengeVideoSource}
-              style={localStyles.challengeBackgroundVideo}
-              resizeMode={ResizeMode.COVER}
-              isMuted
-              isLooping
-              shouldPlay
-            />
-          </View>
-          <View
-            style={localStyles.challengeBackgroundScrim}
-            pointerEvents="none"
-          />
-        </>
-      ) : null}
+    <View
+      style={[
+        styles.eventDetailContainer,
+        isChallenge && localStyles.challengeWhiteBackground,
+      ]}
+    >
       {!isChallenge ? (
         <>
           <View style={styles.eventDetailAmbientGlow} pointerEvents="none" />
@@ -803,8 +790,18 @@ const EventDetail = () => {
             )}
 
             <View style={styles.eventDetailInfoCard}>
-              <View style={styles.eventDetailOrganizerRow}>
-                <View style={styles.eventDetailOrganizerAvatarWrap}>
+              <View
+                style={[
+                  styles.eventDetailOrganizerRow,
+                  localStyles.eventOrganizerStack,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.eventDetailOrganizerAvatarWrap,
+                    localStyles.eventOrganizerAvatarStack,
+                  ]}
+                >
                   {eventHostImage ? (
                     <Image
                       source={eventHostImage}
@@ -816,11 +813,16 @@ const EventDetail = () => {
                     </View>
                   )}
                 </View>
-                <View style={styles.eventDetailOrganizerLabelWrap}>
+                <View
+                  style={[
+                    styles.eventDetailOrganizerLabelWrap,
+                    localStyles.eventOrganizerLabelStack,
+                  ]}
+                >
+                  <Text style={styles.eventDetailOrganizerLabel}>Organizador</Text>
                   <Text style={styles.eventDetailHostName}>
                     {eventHostName || "Comunidad Vibes"}
                   </Text>
-                  <Text style={styles.eventDetailOrganizerLabel}>Organizador</Text>
                 </View>
               </View>
 
@@ -1452,28 +1454,8 @@ const EventDetail = () => {
 };
 
 const localStyles = StyleSheet.create({
-  challengeBackgroundVideoWrap: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
-  challengeBackgroundVideo: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    opacity: 0.22,
-  },
-  challengeBackgroundScrim: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: "rgba(247, 244, 238, 0.88)",
+  challengeWhiteBackground: {
+    backgroundColor: WHITE,
   },
   trackingCard: {
     backgroundColor: "rgba(255, 255, 255, 0.94)",
@@ -1673,6 +1655,17 @@ const localStyles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+  },
+  eventOrganizerStack: {
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  eventOrganizerAvatarStack: {
+    marginRight: 0,
+    marginBottom: 10,
+  },
+  eventOrganizerLabelStack: {
+    alignItems: "center",
   },
   headerSpacer: {
     width: 40,

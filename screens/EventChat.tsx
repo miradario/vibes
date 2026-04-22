@@ -15,6 +15,7 @@ import {
   Alert,
   Modal,
   FlatList,
+  Linking,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, {
@@ -49,6 +50,23 @@ const parseEventDate = (value?: string | null) => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const formatEventChatDate = (value: Date | null) => {
+  if (!value) return "Sin fecha";
+  return value.toLocaleDateString("es-AR", {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+  });
+};
+
+const formatEventChatTime = (value: Date | null) => {
+  if (!value) return "Sin hora";
+  return value.toLocaleTimeString("es-AR", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
 const EventChat = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -57,6 +75,10 @@ const EventChat = () => {
   const eventType = (event?.type ?? "event") as EventType;
   const createdBy = event?.createdBy as string | undefined;
   const eventStartsAt = parseEventDate(event?.startsAt);
+  const eventLocation =
+    typeof event?.location === "string" && event.location.trim()
+      ? event.location.trim()
+      : null;
 
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
@@ -229,6 +251,40 @@ const EventChat = () => {
     [eventId, eventType, kickMutation],
   );
 
+  const handleOpenMap = useCallback(async () => {
+    if (!eventLocation) {
+      Alert.alert("Mapa", "Este evento no tiene ubicación cargada.");
+      return;
+    }
+
+    const encodedLocation = encodeURIComponent(eventLocation);
+    const candidateUrls =
+      Platform.OS === "ios"
+        ? [
+            `comgooglemaps://?q=${encodedLocation}`,
+            `maps://?q=${encodedLocation}`,
+            `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+          ]
+        : [
+            `geo:0,0?q=${encodedLocation}`,
+            `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+          ];
+
+    try {
+      for (const url of candidateUrls) {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+          return;
+        }
+      }
+
+      Alert.alert("Mapa", "No se pudo abrir el mapa.");
+    } catch {
+      Alert.alert("Mapa", "No se pudo abrir el mapa.");
+    }
+  }, [eventLocation]);
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -244,18 +300,9 @@ const EventChat = () => {
           </TouchableOpacity>
           <View style={styles.eventChatHeaderInfo}>
             <View>
-              <Text style={[styles.eventChatHeaderTitle, { fontSize: 22, fontWeight: 'bold', color: '#222', letterSpacing: 0.2 }]}>
+              <Text style={[styles.eventChatHeaderTitle, localStyles.headerTitle]}>
                 {event?.title || "Evento"}
               </Text>
-              {event?.date && (
-                <Text style={{ color: '#E4B76E', fontWeight: '600', fontSize: 15, marginTop: 2 }}>
-                  {`📅 ${
-                    eventStartsAt
-                      ? eventStartsAt.toLocaleDateString()
-                      : event?.date ?? "Sin fecha"
-                  }`}
-                </Text>
-              )}
             </View>
           </View>
           <TouchableOpacity
@@ -266,34 +313,57 @@ const EventChat = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.eventChatParticipantsSection, { alignItems: 'center', marginTop: 10, marginBottom: 10 }]}> 
-          <View style={{ flexDirection: 'row', gap: 18, marginBottom: 6 }}>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 28 }}>📍</Text>
-              <Text style={{ color: '#444', fontSize: 13, marginTop: 2 }}>{event?.location || 'Sin ubicación'}</Text>
+        <View style={localStyles.eventMetaSection}>
+          <View style={localStyles.eventMetaCard}>
+            <View style={localStyles.eventMetaMain}>
+              <View style={localStyles.eventMetaDateBlock}>
+                <View style={localStyles.eventMetaLine}>
+                  <Icon name="calendar" size={15} color={PRIMARY_COLOR} />
+                  <Text style={localStyles.eventMetaDateText}>
+                    {formatEventChatDate(eventStartsAt)}
+                  </Text>
+                </View>
+                <View style={localStyles.eventMetaLine}>
+                  <Icon name="time" size={15} color={PRIMARY_COLOR} />
+                  <Text style={localStyles.eventMetaTimeText}>
+                    {formatEventChatTime(eventStartsAt)}
+                  </Text>
+                </View>
+              </View>
+
+              {eventLocation ? (
+                <TouchableOpacity
+                  style={localStyles.eventMapButton}
+                  onPress={handleOpenMap}
+                  activeOpacity={0.85}
+                >
+                  <Icon name="location" size={15} color={WHITE} />
+                  <Text style={localStyles.eventMapButtonText}>Ver mapa</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 28 }}>⏰</Text>
-              <Text style={{ color: '#444', fontSize: 13, marginTop: 2 }}>
-                {eventStartsAt
-                  ? eventStartsAt.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : 'Sin hora'}
+
+            {eventLocation ? (
+              <Text style={localStyles.eventLocationText} numberOfLines={2}>
+                {eventLocation}
               </Text>
-            </View>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 28 }}>📝</Text>
-              <Text style={{ color: '#444', fontSize: 13, marginTop: 2, maxWidth: 90 }} numberOfLines={2}>{event?.description || 'Sin descripción'}</Text>
-            </View>
+            ) : null}
+
+            {event?.description ? (
+              <Text style={localStyles.eventDescriptionText} numberOfLines={2}>
+                {event.description}
+              </Text>
+            ) : null}
           </View>
         </View>
 
         <ScrollView
           ref={scrollRef}
           style={styles.eventChatMessagesContainer}
-          contentContainerStyle={styles.eventChatMessagesContent}
+          contentContainerStyle={[
+            styles.eventChatMessagesContent,
+            localStyles.messagesContentCompact,
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {messagesLoading ? (
@@ -515,9 +585,83 @@ const EventChat = () => {
 export default EventChat;
 
 const localStyles = StyleSheet.create({
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#222",
+    letterSpacing: 0.2,
+  },
+  eventMetaSection: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 6,
+  },
+  eventMetaCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.88)",
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.06)",
+  },
+  eventMetaMain: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  eventMetaDateBlock: {
+    flex: 1,
+    gap: 6,
+  },
+  eventMetaLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  eventMetaDateText: {
+    color: PRIMARY_COLOR,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  eventMetaTimeText: {
+    color: "#444",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  eventMapButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  eventMapButtonText: {
+    color: WHITE,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  eventLocationText: {
+    marginTop: 10,
+    color: "#444",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  eventDescriptionText: {
+    marginTop: 8,
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  messagesContentCompact: {
+    paddingTop: 8,
+  },
   emptyMessages: {
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingVertical: 20,
     alignItems: "center",
   },
   emptyMessagesTitle: {

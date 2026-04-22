@@ -95,6 +95,7 @@ type CreateChallengeInput = {
   description?: string | null;
   durationDays: number;
   startsAt?: string | null;
+  location?: string | null;
   imagePresetId?: ChallengeMediaPresetId | null;
   hostName?: string | null;
   hostImage?: string | null;
@@ -274,7 +275,10 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
     attendees: participantCount > 0 ? `${participantCount} participantes` : "Challenge",
     capacity: null,
     durationDays,
-    location: null,
+    location:
+      typeof row.location === "string" && row.location.trim()
+        ? row.location.trim()
+        : null,
     image: preset?.image || imageUrl || CHALLENGE_FALLBACK_IMAGE,
     imageUrl,
     imagePresetId: preset?.id ?? null,
@@ -698,6 +702,7 @@ export const useCreateChallengeMutation = () => {
         title: input.title,
         subtitle: input.subtitle,
         duration_days: input.durationDays,
+        location: input.location ?? null,
       };
 
       const encodedDescription = encodeChallengeDescriptionWithPreset(

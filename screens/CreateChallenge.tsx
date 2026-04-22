@@ -30,6 +30,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { useCreateChallengeMutation } from "../src/queries/events.queries";
 import {
   challengeMediaPresets,
+  getChallengeMediaPreset,
   type ChallengeMediaPresetId,
 } from "../src/constants/challengeMediaPresets";
 
@@ -48,11 +49,13 @@ const CreateChallenge = () => {
   const createChallengeMutation = useCreateChallengeMutation();
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
+  const [location, setLocation] = useState("");
   const [days, setDays] = useState("");
   const [selectedPresetId, setSelectedPresetId] =
     useState<ChallengeMediaPresetId>("challenge");
   const [challengeStartDate, setChallengeStartDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const activePreset = getChallengeMediaPreset(selectedPresetId);
 
   const openDatePicker = () => {
     setShowDatePicker(true);
@@ -107,6 +110,7 @@ const CreateChallenge = () => {
         description: subtitle.trim() || null,
         durationDays: parsedDays,
         startsAt: challengeStartDate?.toISOString() ?? null,
+        location: location.trim() || null,
         imagePresetId: selectedPresetId,
         hostName,
         hostImage: null,
@@ -190,11 +194,7 @@ const CreateChallenge = () => {
             })}
           </View>
           <Image
-            source={
-              challengeMediaPresets.find(
-                (preset) => preset.id === selectedPresetId,
-              )?.image
-            }
+            source={activePreset?.image}
             style={localStyles.imagePreview}
           />
 
@@ -227,6 +227,15 @@ const CreateChallenge = () => {
             placeholderTextColor={TEXT_SECONDARY}
             value={subtitle}
             onChangeText={setSubtitle}
+          />
+
+          <Text style={localStyles.label}>Ubicación</Text>
+          <TextInput
+            style={localStyles.input}
+            placeholder="Ej: Palermo, Buenos Aires"
+            placeholderTextColor={TEXT_SECONDARY}
+            value={location}
+            onChangeText={setLocation}
           />
 
           <Text style={localStyles.label}>Duración en días</Text>
