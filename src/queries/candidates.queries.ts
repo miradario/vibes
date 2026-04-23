@@ -19,20 +19,73 @@ export const candidatesKeys = {
     [...candidatesKeys.all, userId ?? "anonymous", params ?? {}] as const,
 };
 
+const toCoordinate = (value: unknown) =>
+  typeof value === "number"
+    ? value
+    : typeof value === "string" && value.trim()
+      ? Number(value)
+      : null;
+
+const toRadians = (value: number) => (value * Math.PI) / 180;
+
+const calculateDistanceKm = (
+  originLat: number,
+  originLng: number,
+  targetLat: number,
+  targetLng: number,
+) => {
+  const earthRadiusKm = 6371;
+  const deltaLat = toRadians(targetLat - originLat);
+  const deltaLng = toRadians(targetLng - originLng);
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(toRadians(originLat)) *
+      Math.cos(toRadians(targetLat)) *
+      Math.sin(deltaLng / 2) ** 2;
+
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 const fetchCandidates = async (
   currentUserId?: string,
   params?: GetCandidatesParams,
 ): Promise<GetCandidatesResponse> => {
   const limit = params?.limit ?? 20;
+  let currentUserCoordinates:
+    | { latitude: number; longitude: number }
+    | null = null;
 
   // Fetch IDs the current user has already swiped on
   let swipedIds: string[] = [];
   if (currentUserId) {
-    const { data: swipeRows } = await supabase
-      .from("swipes")
-      .select("target_id")
-      .eq("swiper_id", currentUserId);
+    const [{ data: swipeRows }, { data: currentUserProfile }] = await Promise.all([
+      supabase
+        .from("swipes")
+        .select("target_id")
+        .eq("swiper_id", currentUserId),
+      supabase
+        .from("profiles")
+        .select("latitude, longitude")
+        .eq("id", currentUserId)
+        .maybeSingle(),
+    ]);
+
     swipedIds = (swipeRows ?? []).map((r: any) => String(r.target_id));
+
+    const currentLatitude = toCoordinate((currentUserProfile as any)?.latitude);
+    const currentLongitude = toCoordinate((currentUserProfile as any)?.longitude);
+
+    if (
+      currentLatitude !== null &&
+      Number.isFinite(currentLatitude) &&
+      currentLongitude !== null &&
+      Number.isFinite(currentLongitude)
+    ) {
+      currentUserCoordinates = {
+        latitude: currentLatitude,
+        longitude: currentLongitude,
+      };
+    }
   }
 
   let query = supabase
@@ -163,11 +216,22 @@ const fetchCandidates = async (
     return {
       ...profile,
       ...preferencesByUserId.get(id),
+      distanceKm:
+        currentUserCoordinates &&
+        Number.isFinite(toCoordinate(profile.latitude) ?? NaN) &&
+        Number.isFinite(toCoordinate(profile.longitude) ?? NaN)
+          ? calculateDistanceKm(
+              currentUserCoordinates.latitude,
+              currentUserCoordinates.longitude,
+              Number(toCoordinate(profile.latitude)),
+              Number(toCoordinate(profile.longitude)),
+            )
+          : undefined,
       displayName:
         typeof profile.displayName === "string" ? profile.displayName : undefined,
       isActive: Boolean(profile.isActive),
       photos: mergedPhotos,
-    } as Candidate;
+    } as unknown as Candidate;
   }));
 };
 

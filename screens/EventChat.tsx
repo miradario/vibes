@@ -86,7 +86,11 @@ const EventChat = () => {
   const swipeMutation = useSwipeMutation();
 
   const { data: participants = [] } = useEventParticipantsQuery(eventId);
-  const { data: messages = [], isLoading: messagesLoading } =
+  const {
+    data: messages = [],
+    isLoading: messagesLoading,
+    error: messagesError,
+  } =
     useEventMessagesQuery(eventId);
   const sendMutation = useSendEventMessageMutation();
   const deleteMutation = useDeleteEventMessageMutation();
@@ -94,6 +98,7 @@ const EventChat = () => {
 
   const [message, setMessage] = useState("");
   const [membersModalVisible, setMembersModalVisible] = useState(false);
+  const [messagesLoadingTimedOut, setMessagesLoadingTimedOut] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState<{
     userId: string;
     displayName: string | null;
@@ -161,6 +166,19 @@ const EventChat = () => {
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [messages.length]);
+
+  useEffect(() => {
+    if (!messagesLoading) {
+      setMessagesLoadingTimedOut(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setMessagesLoadingTimedOut(true);
+    }, 4000);
+
+    return () => clearTimeout(timeoutId);
+  }, [messagesLoading]);
 
   const handleSend = async () => {
     const body = message.trim();
@@ -366,18 +384,40 @@ const EventChat = () => {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {messagesLoading ? (
+          {!eventId ? (
+            <View style={localStyles.emptyMessages}>
+              <Text style={localStyles.emptyMessagesTitle}>
+                No se pudo abrir este chat
+              </Text>
+              <Text style={localStyles.emptyMessagesText}>
+                Falta la referencia del evento.
+              </Text>
+            </View>
+          ) : messagesLoading && !messagesLoadingTimedOut ? (
             <ActivityIndicator
               color={PRIMARY_COLOR}
               style={{ marginVertical: 32 }}
             />
+          ) : messagesError ? (
+            <View style={localStyles.emptyMessages}>
+              <Text style={localStyles.emptyMessagesTitle}>
+                No se pudieron cargar los mensajes
+              </Text>
+              <Text style={localStyles.emptyMessagesText}>
+                Probá salir y volver a entrar al chat.
+              </Text>
+            </View>
           ) : messages.length === 0 ? (
             <View style={localStyles.emptyMessages}>
               <Text style={localStyles.emptyMessagesTitle}>
-                Aún no hay mensajes
+                {messagesLoadingTimedOut
+                  ? "Todavía no pudimos cargar el historial"
+                  : "Aún no hay mensajes"}
               </Text>
               <Text style={localStyles.emptyMessagesText}>
-                Sé el primero en romper el hielo 🧊
+                {messagesLoadingTimedOut
+                  ? "Podés escribir igual y el chat se va a actualizar cuando responda."
+                  : "Sé el primero en romper el hielo 🧊"}
               </Text>
             </View>
           ) : (

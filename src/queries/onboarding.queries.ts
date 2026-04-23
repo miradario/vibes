@@ -86,6 +86,7 @@ export type OnboardingDraft = {
   birthDate?: string;
   country?: string;
   city?: string;
+  neighborhood?: string;
   locationLabel?: string;
   latitude?: number;
   longitude?: number;
@@ -103,6 +104,7 @@ const defaultDraft: OnboardingDraft = {
   birthDate: "",
   country: "",
   city: "",
+  neighborhood: "",
   locationLabel: "",
   latitude: undefined,
   longitude: undefined,
@@ -167,6 +169,33 @@ type CompleteOnboardingInput = {
   draft: OnboardingDraft;
 };
 
+const upsertProfileWithFallback = async (payload: Record<string, unknown>) => {
+  const workingPayload: Record<string, unknown> = { ...payload };
+
+  while (true) {
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(workingPayload, { onConflict: "id" });
+
+    if (!error) return;
+
+    if (error.code === "PGRST204") {
+      const match = error.message.match(/'([^']+)' column/);
+      const missingColumn = match?.[1];
+      if (
+        missingColumn &&
+        missingColumn in workingPayload &&
+        missingColumn !== "id"
+      ) {
+        delete workingPayload[missingColumn];
+        continue;
+      }
+    }
+
+    throw error;
+  }
+};
+
 export const useCompleteOnboardingMutation = () => {
   const queryClient = useQueryClient();
 
@@ -181,6 +210,9 @@ export const useCompleteOnboardingMutation = () => {
       if (draft.birthDate) payload.birth_date = draft.birthDate;
       if (draft.country?.trim()) payload.country = draft.country.trim();
       if (draft.city?.trim()) payload.city = draft.city.trim();
+      if (draft.neighborhood?.trim()) {
+        payload.neighborhood = draft.neighborhood.trim();
+      }
       if (draft.locationLabel?.trim()) payload.location_label = draft.locationLabel.trim();
       if (typeof draft.latitude === "number") payload.latitude = draft.latitude;
       if (typeof draft.longitude === "number") payload.longitude = draft.longitude;
@@ -188,21 +220,27 @@ export const useCompleteOnboardingMutation = () => {
       if (draft.orientation?.length) payload.orientation = draft.orientation;
 
       console.log("completeOnboarding:payload", payload);
-      const { error } = await supabase
-        .from("profiles")
-        .upsert(payload, { onConflict: "id" });
-
-      if (error) {
+      try {
+        await upsertProfileWithFallback(payload);
+      } catch (error) {
         console.log("completeOnboarding:error", error);
-        console.log("completeOnboarding:error_message", error.message);
-        if ("details" in error) {
+        if (error && typeof error === "object" && "message" in error) {
           console.log(
-            "completeOnboarding:error_details",
-            (error as any).details
+            "completeOnboarding:error_message",
+            (error as { message?: unknown }).message,
           );
         }
-        if ("hint" in error) {
-          console.log("completeOnboarding:error_hint", (error as any).hint);
+        if (error && typeof error === "object" && "details" in error) {
+          console.log(
+            "completeOnboarding:error_details",
+            (error as { details?: unknown }).details,
+          );
+        }
+        if (error && typeof error === "object" && "hint" in error) {
+          console.log(
+            "completeOnboarding:error_hint",
+            (error as { hint?: unknown }).hint,
+          );
         }
         throw error;
       }
@@ -236,6 +274,7 @@ const resetOnboardingWithFallback = async (userId: string) => {
     birth_date: null,
     country: null,
     city: null,
+    neighborhood: null,
     location_label: null,
     latitude: null,
     longitude: null,

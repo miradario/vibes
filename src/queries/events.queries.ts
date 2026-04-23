@@ -95,7 +95,6 @@ type CreateChallengeInput = {
   description?: string | null;
   durationDays: number;
   startsAt?: string | null;
-  location?: string | null;
   imagePresetId?: ChallengeMediaPresetId | null;
   hostName?: string | null;
   hostImage?: string | null;
@@ -275,10 +274,7 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
     attendees: participantCount > 0 ? `${participantCount} participantes` : "Challenge",
     capacity: null,
     durationDays,
-    location:
-      typeof row.location === "string" && row.location.trim()
-        ? row.location.trim()
-        : null,
+    location: null,
     image: preset?.image || imageUrl || CHALLENGE_FALLBACK_IMAGE,
     imageUrl,
     imagePresetId: preset?.id ?? null,
@@ -702,7 +698,6 @@ export const useCreateChallengeMutation = () => {
         title: input.title,
         subtitle: input.subtitle,
         duration_days: input.durationDays,
-        location: input.location ?? null,
       };
 
       const encodedDescription = encodeChallengeDescriptionWithPreset(
@@ -1020,17 +1015,13 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
         rows.map(async (row: any) => {
           const sid = String(row.sender_id);
           const profile = profileMap[sid];
-          let senderAvatar: string | null = null;
-          const photoPath = firstPhotoMap[sid];
-          if (photoPath) {
-            senderAvatar = await createSignedProfilePhotoUrl(photoPath);
-          }
           return {
             id: String(row.id),
             eventId: String(row.event_id),
             senderId: String(row.sender_id),
             senderName: profile?.display_name ?? null,
-            senderAvatar,
+            // Avoid blocking the whole chat on storage signing.
+            senderAvatar: null,
             body: String(row.body),
             createdAt: String(row.created_at),
           };

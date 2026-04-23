@@ -126,17 +126,30 @@ const OnboardingPhoto = () => {
         });
         if (!active) return;
 
+        const extendedAddress = address as
+          | (Location.LocationGeocodedAddress & { subdistrict?: string | null })
+          | null
+          | undefined;
+
         const city =
           address?.city ??
           address?.subregion ??
           address?.region ??
           "";
+        const neighborhood =
+          extendedAddress?.district ??
+          extendedAddress?.subdistrict ??
+          extendedAddress?.street ??
+          "";
         const country = address?.country ?? "";
-        const locationLabel = [city, country].filter(Boolean).join(", ");
+        const locationLabel = [neighborhood, city, country]
+          .filter(Boolean)
+          .join(", ");
 
         updateDraft({
           country,
           city,
+          neighborhood,
           locationLabel,
           latitude: current.coords.latitude,
           longitude: current.coords.longitude,

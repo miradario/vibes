@@ -212,7 +212,7 @@ const formatLocation = (profile: ProfileLike) => {
   const baseLocation =
     (isNonEmptyString(profile.locationLabel) && profile.locationLabel.trim()) ||
     (isNonEmptyString(profile.location) && profile.location.trim()) ||
-    ([profile.city, profile.country]
+    ([profile.neighborhood, profile.city, profile.country]
       .filter((item: unknown): item is string => isNonEmptyString(item))
       .map((item) => item.trim())
       .join(", ")) ||

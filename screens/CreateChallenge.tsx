@@ -49,7 +49,6 @@ const CreateChallenge = () => {
   const createChallengeMutation = useCreateChallengeMutation();
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
-  const [location, setLocation] = useState("");
   const [days, setDays] = useState("");
   const [selectedPresetId, setSelectedPresetId] =
     useState<ChallengeMediaPresetId>("challenge");
@@ -110,7 +109,6 @@ const CreateChallenge = () => {
         description: subtitle.trim() || null,
         durationDays: parsedDays,
         startsAt: challengeStartDate?.toISOString() ?? null,
-        location: location.trim() || null,
         imagePresetId: selectedPresetId,
         hostName,
         hostImage: null,
@@ -227,15 +225,6 @@ const CreateChallenge = () => {
             placeholderTextColor={TEXT_SECONDARY}
             value={subtitle}
             onChangeText={setSubtitle}
-          />
-
-          <Text style={localStyles.label}>Ubicación</Text>
-          <TextInput
-            style={localStyles.input}
-            placeholder="Ej: Palermo, Buenos Aires"
-            placeholderTextColor={TEXT_SECONDARY}
-            value={location}
-            onChangeText={setLocation}
           />
 
           <Text style={localStyles.label}>Duración en días</Text>

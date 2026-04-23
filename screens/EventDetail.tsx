@@ -464,10 +464,6 @@ const EventDetail = () => {
     typeof event?.onlineLink === "string" && event.onlineLink.trim()
       ? event.onlineLink.trim()
       : null;
-  const challengeLocation =
-    typeof event?.location === "string" && event.location.trim()
-      ? event.location.trim()
-      : "Ubicación a confirmar";
   const eventHostName =
     typeof event?.hostName === "string" && event.hostName.trim()
       ? event.hostName.trim()
@@ -552,7 +548,7 @@ const EventDetail = () => {
 
     const title = event?.title ?? (isChallenge ? "Challenge" : "Evento");
     const details = eventDescription ?? eventSubtitle ?? "";
-    const location = isChallenge ? challengeLocation : eventLocation ?? "";
+    const location = isChallenge ? "" : eventLocation ?? "";
     const calendarUrl =
       `https://calendar.google.com/calendar/render?action=TEMPLATE` +
       `&text=${encodeURIComponent(title)}` +
@@ -573,10 +569,10 @@ const EventDetail = () => {
   };
 
   const handleOpenMap = async () => {
-    const location = isChallenge ? challengeLocation : eventLocation;
+    const location = eventLocation;
 
-    if (!location || location === "Ubicación a confirmar") {
-      Alert.alert("Mapa", "Este challenge todavía no tiene una ubicación definida.");
+    if (!location) {
+      Alert.alert("Mapa", "Este evento no tiene una ubicación definida.");
       return;
     }
 
@@ -1025,21 +1021,6 @@ const EventDetail = () => {
                   <Text style={styles.eventDetailInfoLabel}>
                     Agregar a mi calendario
                   </Text>
-                </View>
-                <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.85}
-                style={styles.eventDetailInfoRow}
-                onPress={handleOpenMap}
-              >
-                <View style={styles.eventDetailInfoIconWrap}>
-                  <Icon name="location" size={18} color={PRIMARY_COLOR} />
-                </View>
-                <View style={styles.eventDetailInfoCopy}>
-                  <Text style={styles.eventDetailInfoText}>{challengeLocation}</Text>
-                  <Text style={styles.eventDetailInfoLabel}>Ver en el mapa</Text>
                 </View>
                 <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
               </TouchableOpacity>
