@@ -39,11 +39,6 @@ const upsertPushToken = async (userId: string, token: Notifications.DevicePushTo
 };
 
 const registerPushToken = async (userId: string) => {
-  if (!Device.isDevice) {
-    console.log("[push] skipping push registration on simulator/emulator");
-    return;
-  }
-
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -63,6 +58,11 @@ const registerPushToken = async (userId: string) => {
 
   if (status !== "granted") {
     console.log("[push] notifications permission not granted");
+    return;
+  }
+
+  if (!Device.isDevice) {
+    console.log("[push] permissions granted, skipping token registration on simulator/emulator");
     return;
   }
 
