@@ -5,7 +5,10 @@ import React from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  CommonActions,
+} from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Toast from "react-native-toast-message";
@@ -53,10 +56,14 @@ import {
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
 import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboarding";
+import { PushNotificationsBootstrap } from "./src/notifications/pushNotifications";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const navigationRef = React.createRef<any>();
 let hasAppliedGlobalFont = false;
+let isNavigationReady = false;
+let pendingNavigateToMessages = false;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,10 +105,35 @@ const App = () => {
     );
   }
 
+  const navigateToMessages = () => {
+    if (!isNavigationReady || !navigationRef.current) {
+      pendingNavigateToMessages = true;
+      return;
+    }
+
+    navigationRef.current.dispatch(
+      CommonActions.navigate({
+        name: "Tab",
+        params: {
+          screen: "Flow",
+        },
+      }),
+    );
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <NavigationContainer>
+        <NavigationContainer
+          ref={navigationRef}
+          onReady={() => {
+            isNavigationReady = true;
+            if (!pendingNavigateToMessages) return;
+            pendingNavigateToMessages = false;
+            navigateToMessages();
+          }}
+        >
+          <PushNotificationsBootstrap navigateToMessages={navigateToMessages} />
           <Stack.Navigator
             initialRouteName="VibesMinimalOnboarding"
             screenOptions={{

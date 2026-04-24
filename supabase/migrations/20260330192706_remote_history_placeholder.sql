@@ -1,0 +1,2 @@
+-- Historical remote migration placeholder.
+-- This file exists to align local migration history with the remote project.

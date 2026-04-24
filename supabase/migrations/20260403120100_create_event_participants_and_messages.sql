@@ -20,17 +20,20 @@ create index if not exists event_participants_user_idx
 alter table public.event_participants enable row level security;
 
 -- Any authenticated user can see participants of any event
+drop policy if exists "event_participants_select" on public.event_participants;
 create policy "event_participants_select"
 on public.event_participants for select
 to authenticated using (true);
 
 -- Authenticated users can join events (insert their own row)
+drop policy if exists "event_participants_insert" on public.event_participants;
 create policy "event_participants_insert"
 on public.event_participants for insert
 to authenticated
 with check (auth.uid() = user_id);
 
 -- Users can leave events (delete their own row)
+drop policy if exists "event_participants_delete" on public.event_participants;
 create policy "event_participants_delete"
 on public.event_participants for delete
 to authenticated
@@ -98,6 +101,7 @@ create index if not exists event_messages_event_created_idx
 alter table public.event_messages enable row level security;
 
 -- Only participants can read messages
+drop policy if exists "event_messages_select" on public.event_messages;
 create policy "event_messages_select"
 on public.event_messages for select
 to authenticated
@@ -110,6 +114,7 @@ using (
 );
 
 -- Only participants can send messages
+drop policy if exists "event_messages_insert" on public.event_messages;
 create policy "event_messages_insert"
 on public.event_messages for insert
 to authenticated
@@ -123,12 +128,14 @@ with check (
 );
 
 -- Sender can delete their own messages (for everyone)
+drop policy if exists "event_messages_delete_own" on public.event_messages;
 create policy "event_messages_delete_own"
 on public.event_messages for delete
 to authenticated
 using (auth.uid() = sender_id);
 
 -- Event/challenge creator (admin) can delete any message
+drop policy if exists "event_messages_delete_admin" on public.event_messages;
 create policy "event_messages_delete_admin"
 on public.event_messages for delete
 to authenticated
@@ -146,6 +153,7 @@ using (
 );
 
 -- Event/challenge creator (admin) can kick participants
+drop policy if exists "event_participants_delete_admin" on public.event_participants;
 create policy "event_participants_delete_admin"
 on public.event_participants for delete
 to authenticated
@@ -163,4 +171,9 @@ using (
 );
 
 -- Enable realtime for event_messages
-alter publication supabase_realtime add table public.event_messages;
+do $$
+begin
+  alter publication supabase_realtime add table public.event_messages;
+exception
+  when duplicate_object then null;
+end $$;
