@@ -18,8 +18,10 @@ import styles from "../assets/styles";
 import VibesHeader from "../src/components/VibesHeader";
 import VibesActionButton from "../components/VibesActionButton";
 import Icon from "../components/Icon";
+import { useI18n } from "../src/i18n";
 
 const Signup = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,12 +32,12 @@ const Signup = () => {
 
   const handleSignup = async () => {
     if (!email || !password) {
-      setError("Por favor completa todos los campos.");
+      setError(t("signup.missingFields"));
       return;
     }
 
     if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+      setError(t("signup.passwordLength"));
       return;
     }
 
@@ -51,8 +53,8 @@ const Signup = () => {
       );
     } catch (e) {
       const msg =
-        e instanceof Error ? e.message : "No se pudo crear la cuenta.";
-      setError(msg || "No se pudo crear la cuenta.");
+        e instanceof Error ? e.message : t("signup.failed");
+      setError(msg || t("signup.failed"));
     }
   };
 
@@ -78,15 +80,15 @@ const Signup = () => {
           contentContainerStyle={localStyles.formScrollContent}
         >
           <View style={styles.loginCard}>
-            <VibesHeader title="Signup" subtitle="" style={localStyles.header} />
-            <Text style={styles.loginTitle}>Crear cuenta</Text>
-            <Text style={styles.loginSubtitle}>Comienza tu viaje consciente</Text>
+            <VibesHeader title={t("signup.header")} subtitle="" style={localStyles.header} />
+            <Text style={styles.loginTitle}>{t("signup.title")}</Text>
+            <Text style={styles.loginSubtitle}>{t("signup.subtitle")}</Text>
 
             <View style={styles.loginField}>
-              <Text style={styles.loginLabel}>Email</Text>
+              <Text style={styles.loginLabel}>{t("common.email")}</Text>
               <TextInput
                 style={styles.loginInput}
-                placeholder="tu@email.com"
+                placeholder={t("signup.emailPlaceholder")}
                 placeholderTextColor="rgba(110,110,110,0.45)"
                 autoCapitalize="none"
                 keyboardType="email-address"
@@ -96,7 +98,7 @@ const Signup = () => {
             </View>
 
             <View style={styles.loginField}>
-              <Text style={styles.loginLabel}>Contraseña</Text>
+              <Text style={styles.loginLabel}>{t("common.password")}</Text>
               <View style={localStyles.passwordField}>
                 <TextInput
                   style={[styles.loginInput, localStyles.passwordInput]}
@@ -124,14 +126,14 @@ const Signup = () => {
 
             <View style={localStyles.actions}>
               <VibesActionButton
-                label={loading ? "Signing up..." : "Sign up"}
+                label={loading ? t("signup.submitting") : t("signup.submit")}
                 variant="start"
                 onPress={handleSignup}
                 disabled={!email || !password || loading}
               />
 
               <VibesActionButton
-                label="Back"
+                label={t("common.back")}
                 variant="skip"
                 onPress={() => navigation.navigate("Welcome" as never)}
               />

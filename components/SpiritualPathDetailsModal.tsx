@@ -16,6 +16,13 @@ import {
   getSpiritualPathDetailEntries,
   SPIRITUAL_PATH_DETAIL_FIELDS,
 } from "../src/lib/spiritualPaths";
+import { useI18n } from "../src/i18n";
+import {
+  translateSpiritualFieldLabel,
+  translateSpiritualOption,
+  translateSpiritualPathLabel,
+  translateSpiritualPlaceholder,
+} from "../src/i18n/translations";
 
 type SpiritualPathDetailsModalProps = {
   visible: boolean;
@@ -36,6 +43,7 @@ const SpiritualPathDetailsModal = ({
   onRemove,
   readOnly = false,
 }: SpiritualPathDetailsModalProps) => {
+  const { locale, t } = useI18n();
   const filledEntries = getSpiritualPathDetailEntries(detail);
 
   const getNextFieldValue = (key: keyof SpiritualPathDetail, text: string) => {
@@ -63,11 +71,15 @@ const SpiritualPathDetailsModal = ({
           style={localStyles.keyboardWrap}
         >
           <View style={localStyles.card}>
-            <Text style={localStyles.title}>{pathLabel ?? "Camino espiritual"}</Text>
+            <Text style={localStyles.title}>
+              {pathLabel
+                ? translateSpiritualPathLabel(locale, pathLabel)
+                : t("spiritual.defaultTitle")}
+            </Text>
             <Text style={localStyles.subtitle}>
               {readOnly
-                ? "Datos compartidos para este camino."
-                : "Completá sólo lo que quieras sumar. Todo es opcional."}
+                ? t("spiritual.sharedData")
+                : t("spiritual.optionalData")}
             </Text>
 
             <ScrollView
@@ -80,21 +92,25 @@ const SpiritualPathDetailsModal = ({
                 filledEntries.length > 0 ? (
                   filledEntries.map((entry) => (
                     <View key={entry.key} style={localStyles.readOnlyItem}>
-                      <Text style={localStyles.readOnlyLabel}>{entry.label}</Text>
+                      <Text style={localStyles.readOnlyLabel}>
+                        {translateSpiritualFieldLabel(locale, entry.label)}
+                      </Text>
                       <Text style={localStyles.readOnlyValue}>{entry.value}</Text>
                     </View>
                   ))
                 ) : (
                   <View style={localStyles.emptyState}>
                     <Text style={localStyles.emptyStateText}>
-                      No agregó datos adicionales para este camino.
+                      {t("spiritual.noExtraData")}
                     </Text>
                   </View>
                 )
               ) : (
                 SPIRITUAL_PATH_DETAIL_FIELDS.map((field) => (
                   <View key={field.key} style={localStyles.fieldWrap}>
-                    <Text style={localStyles.fieldLabel}>{field.label}</Text>
+                    <Text style={localStyles.fieldLabel}>
+                      {translateSpiritualFieldLabel(locale, field.label)}
+                    </Text>
                     {field.options ? (
                       <View style={localStyles.optionRow}>
                         {field.options.map((option) => {
@@ -120,7 +136,7 @@ const SpiritualPathDetailsModal = ({
                                   active && localStyles.optionChipTextActive,
                                 ]}
                               >
-                                {option}
+                                {translateSpiritualOption(locale, option)}
                               </Text>
                             </TouchableOpacity>
                           );
@@ -133,7 +149,7 @@ const SpiritualPathDetailsModal = ({
                           localStyles.input,
                           field.multiline && localStyles.notesInput,
                         ]}
-                        placeholder={field.placeholder}
+                        placeholder={translateSpiritualPlaceholder(locale, field.placeholder)}
                         placeholderTextColor={GRAY}
                         keyboardType={field.keyboardType ?? "default"}
                         multiline={Boolean(field.multiline)}
@@ -160,7 +176,7 @@ const SpiritualPathDetailsModal = ({
                   onPress={onRemove}
                   activeOpacity={0.85}
                 >
-                  <Text style={localStyles.removeButtonText}>Quitar camino</Text>
+                  <Text style={localStyles.removeButtonText}>{t("spiritual.removePath")}</Text>
                 </TouchableOpacity>
               ) : null}
 
@@ -170,7 +186,7 @@ const SpiritualPathDetailsModal = ({
                 activeOpacity={0.9}
               >
                 <Text style={localStyles.primaryButtonText}>
-                  {readOnly ? "Cerrar" : "Listo"}
+                  {readOnly ? t("common.close") : t("common.done")}
                 </Text>
               </TouchableOpacity>
             </View>

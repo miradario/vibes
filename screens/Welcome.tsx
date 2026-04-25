@@ -8,8 +8,10 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import VibesActionButton from "../components/VibesActionButton";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesHeader from "../src/components/VibesHeader";
+import { useI18n } from "../src/i18n";
 
 const Welcome = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const { data: session, isLoading } = useAuthSession();
   const isFocused = useIsFocused();
@@ -34,18 +36,18 @@ const Welcome = () => {
               isMuted
             />
           </View>
-          <VibesHeader subtitle="A calm space to begin" />
+          <VibesHeader subtitle={t("welcome.subtitle")} />
         </View>
 
         <View style={localStyles.card}>
           <View style={localStyles.buttons}>
             <VibesActionButton
-              label="Log in"
+              label={t("welcome.login")}
               variant="start"
               onPress={() => navigation.navigate("Login" as never)}
             />
             <VibesActionButton
-              label="Sign up"
+              label={t("welcome.signup")}
               variant="skip"
               onPress={() => navigation.navigate("Signup" as never)}
             />

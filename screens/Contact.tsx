@@ -13,38 +13,39 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import VibesHeader from "../src/components/VibesHeader";
-
-const CONTACT_ITEMS = [
-  {
-    icon: "mail-open-outline",
-    title: "Email",
-    subtitle: "hola@esvibes.com",
-    action: () => Linking.openURL("mailto:hola@esvibes.com"),
-  },
-  {
-    icon: "logo-instagram",
-    title: "Instagram",
-    subtitle: "@esvibes",
-    action: () => Linking.openURL("https://instagram.com/esvibes"),
-  },
-  {
-    icon: "bulb-outline",
-    title: "Sugerencias",
-    subtitle: "Ayudanos a mejorar",
-    action: () =>
-      Linking.openURL(
-        "mailto:hola@esvibes.com?subject=Sugerencias%20Vibes&body=Hola%20equipo%20Vibes,"
-      ),
-  },
-];
+import { useI18n } from "../src/i18n";
 
 const Contact = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
+  const CONTACT_ITEMS = [
+    {
+      icon: "mail-open-outline",
+      title: "Email",
+      subtitle: "hola@esvibes.com",
+      action: () => Linking.openURL("mailto:hola@esvibes.com"),
+    },
+    {
+      icon: "logo-instagram",
+      title: "Instagram",
+      subtitle: "@esvibes",
+      action: () => Linking.openURL("https://instagram.com/esvibes"),
+    },
+    {
+      icon: "bulb-outline",
+      title: t("contact.suggestions"),
+      subtitle: t("contact.suggestionsSubtitle"),
+      action: () =>
+        Linking.openURL(
+          "mailto:hola@esvibes.com?subject=Sugerencias%20Vibes&body=Hola%20equipo%20Vibes,"
+        ),
+    },
+  ];
 
   return (
     <View style={styles.bg}>
       <View style={styles.settingsContainer}>
-        <VibesHeader title="Contacto" subtitle="Escribinos con confianza y presencia." />
+        <VibesHeader title={t("contact.title")} subtitle={t("contact.subtitle")} />
 
 
 
@@ -69,7 +70,7 @@ const Contact = () => {
           ))}
         </View>
 
-        <Text style={localStyles.note}>Tu mensaje es 100% confidencial.</Text>
+        <Text style={localStyles.note}>{t("contact.confidential")}</Text>
       </View>
     </View>
   );

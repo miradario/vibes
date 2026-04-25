@@ -18,8 +18,16 @@ import {
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
+import { useI18n } from "../src/i18n";
+
+const stripPreferenceLabel = (value: string) => {
+  const index = value.indexOf(":");
+  if (index === -1) return value;
+  return value.slice(index + 1).trim() || value;
+};
 
 const Profile = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
@@ -46,11 +54,11 @@ const Profile = () => {
     : firstName;
 
   const menuItems = [
-    { icon: "options", label: "Preferencias", screen: "Settings" },
-    { icon: "mail", label: "Contacto", screen: "Contact" },
+    { icon: "options", label: t("profile.preferences"), screen: "Settings" },
+    { icon: "mail", label: t("profile.contact"), screen: "Contact" },
     {
       icon: "document-text",
-      label: "Términos y condiciones",
+      label: t("profile.terms"),
       screen: "TermsConditions",
     },
   ];
@@ -80,7 +88,7 @@ const Profile = () => {
         style={styles.containerProfile}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.auraScreenTitle}>Ajustes</Text>
+        <Text style={styles.auraScreenTitle}>{t("profile.title")}</Text>
 
         <View style={styles.auraProfileCard}>
           <View style={styles.auraProfileAvatarWrap}>
@@ -97,7 +105,7 @@ const Profile = () => {
             style={styles.auraEditButton}
             onPress={() => navigation.navigate("EditProfile" as never)}
           >
-            <Text style={styles.auraEditButtonText}>Editar</Text>
+            <Text style={styles.auraEditButtonText}>{t("common.edit")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -130,7 +138,7 @@ const Profile = () => {
               <Icon name="power" size={22} color={TEXT_SECONDARY} />
             </View>
             <Text style={styles.auraMenuLabel}>
-              {isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+              {isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
             </Text>
             <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
           </TouchableOpacity>
@@ -145,7 +153,7 @@ const Profile = () => {
                   style={localStyles.preferenceChip}
                 >
                   <Text style={localStyles.preferenceChipText}>
-                    {preference}
+                    {stripPreferenceLabel(preference)}
                   </Text>
                 </View>
               ))}
@@ -154,7 +162,7 @@ const Profile = () => {
         ) : null}
 
         <View style={styles.auraFooter}>
-          <Text style={styles.auraFooterTitle}>Sobre Vibes</Text>
+          <Text style={styles.auraFooterTitle}>{t("profile.aboutVibes")}</Text>
           <Text style={styles.auraFooterVersion}>version 1.1.4</Text>
         </View>
       </ScrollView>

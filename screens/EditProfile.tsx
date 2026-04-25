@@ -36,6 +36,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from "react-native-reanimated";
+import { useI18n } from "../src/i18n";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -245,6 +246,7 @@ const DraggablePhotoSlot = ({
   onDragEnd: () => void;
   onReorder: (from: number, to: number) => void;
 }) => {
+  const { t } = useI18n();
   const tx = useSharedValue(0);
   const ty = useSharedValue(0);
   const scale = useSharedValue(1);
@@ -348,7 +350,7 @@ const DraggablePhotoSlot = ({
               />
               {index === 0 && (
                 <View style={localStyles.primaryBadge}>
-                  <Text style={localStyles.primaryBadgeText}>Principal</Text>
+                  <Text style={localStyles.primaryBadgeText}>{t("editProfile.primary")}</Text>
                 </View>
               )}
               <TouchableOpacity
@@ -375,6 +377,7 @@ const DraggablePhotoSlot = ({
 };
 
 const EditProfile = () => {
+  const { locale, setLocale, t } = useI18n();
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
   const { data: profileData, refetch } = useProfileQuery(session?.user?.id);
@@ -430,7 +433,7 @@ const EditProfile = () => {
         .update({ display_name: displayName.trim() })
         .eq("id", userId);
       if (error) {
-        Alert.alert("Error", "No se pudo guardar el nombre.");
+        Alert.alert(t("common.error"), t("editProfile.saveNameError"));
         console.error("saveDisplayName:error", error);
       } else {
         await refetch();
@@ -516,11 +519,11 @@ const EditProfile = () => {
 
   const promptOpenSettings = () => {
     Alert.alert(
-      "Permiso requerido",
-      "Debes habilitar los permisos en Ajustes.",
+      t("editProfile.permissionsTitle"),
+      t("editProfile.openSettingsBody"),
       [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Abrir ajustes", onPress: () => Linking.openSettings() },
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("editProfile.openSettingsAction"), onPress: () => Linking.openSettings() },
       ],
     );
   };
@@ -534,7 +537,7 @@ const EditProfile = () => {
     if (!requested.canAskAgain) {
       promptOpenSettings();
     } else {
-      Alert.alert("Permiso requerido", "Permite el acceso a tu cámara.");
+      Alert.alert(t("editProfile.permissionsTitle"), t("editProfile.cameraPermissionBody"));
     }
     return false;
   };
@@ -548,7 +551,7 @@ const EditProfile = () => {
     if (!requested.canAskAgain) {
       promptOpenSettings();
     } else {
-      Alert.alert("Permiso requerido", "Permite el acceso a tus fotos.");
+      Alert.alert(t("editProfile.permissionsTitle"), t("editProfile.galleryPermissionBody"));
     }
     return false;
   };
@@ -667,7 +670,7 @@ const EditProfile = () => {
         quality: 0.8,
       });
     } catch (error) {
-      Alert.alert("Error", "No se pudo abrir la galería.");
+      Alert.alert(t("common.error"), t("editProfile.galleryError"));
       return;
     }
 
@@ -678,7 +681,7 @@ const EditProfile = () => {
       } catch (error) {
         const message = getErrorMessage(error);
         console.error("Error uploading photo from gallery", { message, error });
-        Alert.alert("Error", `No se pudo subir la foto: ${message}`);
+        Alert.alert(t("common.error"), t("editProfile.uploadError", { message }));
       } finally {
         setBusyIndex(null);
       }
@@ -699,7 +702,7 @@ const EditProfile = () => {
         quality: 0.8,
       });
     } catch (error) {
-      Alert.alert("Error", "No se pudo abrir la cámara.");
+      Alert.alert(t("common.error"), t("editProfile.cameraError"));
       return;
     }
 
@@ -710,7 +713,7 @@ const EditProfile = () => {
       } catch (error) {
         const message = getErrorMessage(error);
         console.error("Error uploading photo from camera", { message, error });
-        Alert.alert("Error", `No se pudo subir la foto: ${message}`);
+        Alert.alert(t("common.error"), t("editProfile.uploadError", { message }));
       } finally {
         setBusyIndex(null);
       }
@@ -759,7 +762,7 @@ const EditProfile = () => {
       .eq("profile_id", userId);
 
     if (deleteError) {
-      Alert.alert("Error", "No se pudo eliminar la foto.");
+      Alert.alert(t("common.error"), t("editProfile.deleteError"));
       return;
     }
 
@@ -779,7 +782,7 @@ const EditProfile = () => {
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={styles.title}>Edit Profile</Text>
+            <Text style={styles.title}>{t("editProfile.title")}</Text>
           </View>
           <TouchableOpacity
             onPress={async () => {
@@ -792,7 +795,7 @@ const EditProfile = () => {
         </View>
 
         <View style={styles.editSection}>
-          <Text style={styles.editSectionTitle}>Photos</Text>
+          <Text style={styles.editSectionTitle}>{t("editProfile.photos")}</Text>
           <View style={styles.mediaGrid}>
             {mediaSlots.map((item, index) => (
               <DraggablePhotoSlot
@@ -819,31 +822,80 @@ const EditProfile = () => {
             onPress={() => {
               const firstEmpty = mediaSlots.findIndex((item) => !item);
               if (firstEmpty === -1) {
-                Alert.alert("Límite alcanzado", "Máximo 6 fotos.");
+                Alert.alert(t("editProfile.maxPhotosTitle"), t("editProfile.maxPhotosBody"));
                 return;
               }
               handleAddMedia(firstEmpty);
             }}
             disabled={busyIndex !== null}
           >
-            <Text style={styles.editPrimaryText}>Add media</Text>
+            <Text style={styles.editPrimaryText}>{t("editProfile.addMedia")}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.editSection}>
-          <Text style={styles.editSectionTitle}>Nombre</Text>
+          <Text style={styles.editSectionTitle}>{t("editProfile.name")}</Text>
           <TextInput
             style={localStyles.nameInput}
             value={displayName}
             onChangeText={setDisplayName}
             onBlur={saveDisplayName}
             onSubmitEditing={saveDisplayName}
-            placeholder="Tu nombre"
+            placeholder={t("editProfile.namePlaceholder")}
             placeholderTextColor={GRAY}
             returnKeyType="done"
             editable={!savingName}
             maxLength={50}
           />
+        </View>
+
+        <View style={styles.editSection}>
+          <Text style={styles.editSectionTitle}>{t("settings.language")}</Text>
+          <View style={localStyles.languageRow}>
+            <TouchableOpacity
+              style={[
+                localStyles.languageChip,
+                locale === "es" && localStyles.languageChipActive,
+              ]}
+              onPress={() => void setLocale("es")}
+              activeOpacity={0.85}
+            >
+              <Text
+                style={[
+                  localStyles.languageChipText,
+                  locale === "es" && localStyles.languageChipTextActive,
+                ]}
+              >
+                {t("settings.spanish")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                localStyles.languageChip,
+                locale === "en" && localStyles.languageChipActive,
+              ]}
+              onPress={() => void setLocale("en")}
+              activeOpacity={0.85}
+            >
+              <Text
+                style={[
+                  localStyles.languageChipText,
+                  locale === "en" && localStyles.languageChipTextActive,
+                ]}
+              >
+                {t("settings.english")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.editSection}>
+          <Text style={styles.editSectionTitle}>{t("editProfile.email")}</Text>
+          <View style={localStyles.readOnlyField}>
+            <Text style={localStyles.readOnlyValue}>
+              {session?.user?.email ?? "-"}
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -855,8 +907,8 @@ const EditProfile = () => {
       >
         <View style={modalStyles.overlay}>
           <View style={modalStyles.card}>
-            <Text style={modalStyles.title}>Agregar foto</Text>
-            <Text style={modalStyles.subtitle}>Elige una opción</Text>
+            <Text style={modalStyles.title}>{t("editProfile.addPhoto")}</Text>
+            <Text style={modalStyles.subtitle}>{t("editProfile.chooseOption")}</Text>
 
             <View style={modalStyles.actions}>
               <TouchableOpacity
@@ -868,7 +920,7 @@ const EditProfile = () => {
                   await takePhoto(selectedSlot);
                 }}
               >
-                <Text style={modalStyles.primaryText}>Cámara</Text>
+                <Text style={modalStyles.primaryText}>{t("editProfile.camera")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={modalStyles.secondaryButton}
@@ -879,7 +931,7 @@ const EditProfile = () => {
                   await pickFromLibrary(selectedSlot);
                 }}
               >
-                <Text style={modalStyles.secondaryText}>Galería</Text>
+                <Text style={modalStyles.secondaryText}>{t("editProfile.gallery")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -887,7 +939,7 @@ const EditProfile = () => {
               style={modalStyles.cancelButton}
               onPress={() => setPhotoModalVisible(false)}
             >
-              <Text style={modalStyles.cancelText}>Cancelar</Text>
+              <Text style={modalStyles.cancelText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -987,5 +1039,44 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     borderWidth: 1,
     borderColor: "rgba(216, 140, 122, 0.25)",
+  },
+  readOnlyField: {
+    backgroundColor: "#F6F6F4",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "rgba(174, 191, 209, 0.8)",
+  },
+  readOnlyValue: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  languageRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  languageChip: {
+    minHeight: 44,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(216, 140, 122, 0.35)",
+    backgroundColor: "#F6F6F4",
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  languageChipActive: {
+    backgroundColor: PRIMARY_COLOR,
+    borderColor: PRIMARY_COLOR,
+  },
+  languageChipText: {
+    color: DARK_GRAY,
+    fontSize: 15,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  languageChipTextActive: {
+    color: WHITE,
   },
 });

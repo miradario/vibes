@@ -13,8 +13,10 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import { useI18n } from "../src/i18n";
 
 const OnboardingName = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
   const [name, setName] = useState(draft.displayName ?? "");
@@ -38,15 +40,13 @@ const OnboardingName = () => {
           </View>
         </View>
 
-        <Text style={styles.onboardTitle}>What's your name?</Text>
-        <Text style={styles.onboardSubtitle}>
-          This is how it will appear on your profile
-        </Text>
+        <Text style={styles.onboardTitle}>{t("onboarding.nameTitle")}</Text>
+        <Text style={styles.onboardSubtitle}>{t("onboarding.nameSubtitle")}</Text>
 
         <View style={styles.loginField}>
           <TextInput
             style={styles.loginInput}
-            placeholder="Enter your name"
+            placeholder={t("onboarding.namePlaceholder")}
             placeholderTextColor="#6E6E6E"
             autoCapitalize="words"
             value={name}
@@ -77,7 +77,7 @@ const OnboardingName = () => {
               navigation.navigate("OnboardingAge" as never);
             }}
           >
-            <Text style={styles.onboardNextText}>Next</Text>
+            <Text style={styles.onboardNextText}>{t("common.next")}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -12,8 +12,10 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
+import { useI18n } from "../src/i18n";
 
 const TermsConditions = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
 
   return (
@@ -23,13 +25,13 @@ const TermsConditions = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <Text style={styles.settingsTitle}>Términos y condiciones</Text>
+          <Text style={styles.settingsTitle}>{t("terms.title")}</Text>
           <View style={{ width: 22 }} />
         </View>
 
 
         <Text style={localStyles.subtitle}>
-          Lee con tranquilidad y conciencia nuestros términos.
+          {t("terms.subtitle")}
         </Text>
 
         <ScrollView
@@ -37,30 +39,20 @@ const TermsConditions = () => {
           contentContainerStyle={localStyles.cardContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={localStyles.titleText}>Bienvenido a Vibes</Text>
-          <Text style={localStyles.bodyText}>
-            Te invitamos a leer con conciencia estos Términos y Condiciones.
-          </Text>
+          <Text style={localStyles.titleText}>{t("terms.welcomeTitle")}</Text>
+          <Text style={localStyles.bodyText}>{t("terms.welcomeBody")}</Text>
 
-          <Text style={localStyles.titleText}>Aceptación</Text>
-          <Text style={localStyles.bodyText}>
-            Al usar Vibes, confirmás que aceptás estos términos.
-          </Text>
+          <Text style={localStyles.titleText}>{t("terms.acceptanceTitle")}</Text>
+          <Text style={localStyles.bodyText}>{t("terms.acceptanceBody")}</Text>
 
-          <Text style={localStyles.titleText}>Edad y uso</Text>
-          <Text style={localStyles.bodyText}>
-            Para usar Vibes, debés ser mayor de 18 años y utilizar la plataforma de forma respetuosa.
-          </Text>
+          <Text style={localStyles.titleText}>{t("terms.ageTitle")}</Text>
+          <Text style={localStyles.bodyText}>{t("terms.ageBody")}</Text>
 
-          <Text style={localStyles.titleText}>Privacidad</Text>
-          <Text style={localStyles.bodyText}>
-            Tus datos se procesan conforme a nuestra política de privacidad y se usan para mejorar tu experiencia.
-          </Text>
+          <Text style={localStyles.titleText}>{t("terms.privacyTitle")}</Text>
+          <Text style={localStyles.bodyText}>{t("terms.privacyBody")}</Text>
 
-          <Text style={localStyles.titleText}>Contenido</Text>
-          <Text style={localStyles.bodyText}>
-            No está permitido publicar contenido ofensivo, ilegal o que afecte la seguridad de otras personas.
-          </Text>
+          <Text style={localStyles.titleText}>{t("terms.contentTitle")}</Text>
+          <Text style={localStyles.bodyText}>{t("terms.contentBody")}</Text>
         </ScrollView>
       </View>
     </View>

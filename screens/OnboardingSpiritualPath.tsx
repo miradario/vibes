@@ -23,8 +23,11 @@ import {
   type SpiritualPathDetails,
 } from "../src/lib/spiritualPaths";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import { useI18n } from "../src/i18n";
+import { translateSpiritualPathLabel } from "../src/i18n/translations";
 
 const OnboardingSpiritualPath = () => {
+  const { locale, t } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
   const [selectedPaths, setSelectedPaths] = useState<string[]>(
@@ -84,10 +87,8 @@ const OnboardingSpiritualPath = () => {
           </View>
         </View>
 
-        <Text style={styles.onboardTitle}>Your spiritual path</Text>
-        <Text style={styles.onboardSubtitle}>
-          Select what resonates. Every path can include optional details.
-        </Text>
+        <Text style={styles.onboardTitle}>{t("onboarding.spiritualTitle")}</Text>
+        <Text style={styles.onboardSubtitle}>{t("onboarding.spiritualSubtitle")}</Text>
 
         <ScrollView
           style={styles.onboardList}
@@ -100,12 +101,14 @@ const OnboardingSpiritualPath = () => {
               onPress={() => openPathEditor(path)}
             >
               <View>
-                <Text style={styles.onboardListText}>{path}</Text>
+                <Text style={styles.onboardListText}>
+                  {translateSpiritualPathLabel(locale, path)}
+                </Text>
                 {selectedPaths.includes(path) ? (
                   <Text style={localStyles.selectedPathHint}>
                     {hasSpiritualPathDetail(pathDetails[path])
-                      ? "Editar datos opcionales"
-                      : "Agregar datos opcionales"}
+                      ? t("onboarding.spiritualEditOptional")
+                      : t("onboarding.spiritualAddOptional")}
                   </Text>
                 ) : null}
               </View>
@@ -131,10 +134,10 @@ const OnboardingSpiritualPath = () => {
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity style={styles.onboardNext} onPress={continueOnboarding}>
-            <Text style={styles.onboardNextText}>Continue</Text>
+            <Text style={styles.onboardNextText}>{t("common.continue")}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={localStyles.skipButton} onPress={continueOnboarding}>
-            <Text style={styles.onboardSkip}>Skip</Text>
+            <Text style={styles.onboardSkip}>{t("common.skip")}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -12,32 +12,17 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
-
-const FAQ_ITEMS = [
-  {
-    question: "¿Cómo funciona Vibes?",
-    answer:
-      "Completás tu perfil, descubrís personas afines y conectás por match para conversar y compartir experiencias.",
-  },
-  {
-    question: "¿Qué es Vibing?",
-    answer:
-      "Vibing es la afinidad energética entre personas con intereses y valores similares.",
-  },
-  {
-    question: "¿Qué significa un \"match\"?",
-    answer:
-      "Un match sucede cuando dos personas se eligen mutuamente y se habilita el chat.",
-  },
-  {
-    question: "¿Puedo usar Vibes gratis?",
-    answer:
-      "Sí, podés usar funciones base de forma gratuita. Algunas funciones avanzadas requieren plan premium.",
-  },
-];
+import { useI18n } from "../src/i18n";
 
 const Faq = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
+  const FAQ_ITEMS = [
+    { question: t("faq.q1"), answer: t("faq.a1") },
+    { question: t("faq.q2"), answer: t("faq.a2") },
+    { question: t("faq.q3"), answer: t("faq.a3") },
+    { question: t("faq.q4"), answer: t("faq.a4") },
+  ];
 
   return (
     <View style={styles.bg}>
@@ -46,13 +31,13 @@ const Faq = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <Text style={styles.settingsTitle}>Preguntas frecuentes</Text>
+          <Text style={styles.settingsTitle}>{t("faq.title")}</Text>
           <View style={{ width: 22 }} />
         </View>
 
 
         <Text style={localStyles.subtitle}>
-          Encuentra respuestas a las dudas más comunes.
+          {t("faq.subtitle")}
         </Text>
 
         <View style={localStyles.card}>

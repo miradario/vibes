@@ -14,8 +14,10 @@ import * as Location from "expo-location";
 import { ResizeMode, Video } from "expo-av";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import { useI18n } from "../src/i18n";
 
 const OnboardingCountry = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,8 +30,8 @@ const OnboardingCountry = () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
-          "Permission denied",
-          "Please allow location access to use this feature",
+          t("onboarding.locationPermissionDeniedTitle"),
+          t("onboarding.locationPermissionDeniedMessage"),
         );
         setLoading(false);
         return;
@@ -45,7 +47,7 @@ const OnboardingCountry = () => {
         setCountry(address.country);
       }
     } catch (error) {
-      Alert.alert("Error", "Could not get your location");
+      Alert.alert(t("common.error"), t("onboarding.locationError"));
     } finally {
       setLoading(false);
     }
@@ -68,15 +70,13 @@ const OnboardingCountry = () => {
           </View>
         </View>
 
-        <Text style={styles.onboardTitle}>Where are you from?</Text>
-        <Text style={styles.onboardSubtitle}>
-          We'll use your location to connect you with nearby souls
-        </Text>
+        <Text style={styles.onboardTitle}>{t("onboarding.countryTitle")}</Text>
+        <Text style={styles.onboardSubtitle}>{t("onboarding.countrySubtitle")}</Text>
 
         <View style={styles.loginField}>
           <TextInput
             style={styles.loginInput}
-            placeholder="Enter your country"
+            placeholder={t("onboarding.countryPlaceholder")}
             placeholderTextColor="#6E6E6E"
             autoCapitalize="words"
             value={country}
@@ -96,7 +96,7 @@ const OnboardingCountry = () => {
             style={{ marginRight: 8 }}
           />
           <Text style={styles.welcomeSecondaryText}>
-            {loading ? "Getting location..." : "Use my location"}
+            {loading ? t("onboarding.gettingLocation") : t("onboarding.useMyLocation")}
           </Text>
         </TouchableOpacity>
 
@@ -119,7 +119,7 @@ const OnboardingCountry = () => {
             disabled={!country.trim()}
             onPress={() => navigation.navigate("OnboardingPhoto" as never)}
           >
-            <Text style={styles.onboardNextText}>Next</Text>
+            <Text style={styles.onboardNextText}>{t("common.next")}</Text>
           </TouchableOpacity>
         </View>
       </View>

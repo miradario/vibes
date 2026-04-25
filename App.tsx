@@ -53,6 +53,7 @@ import {
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
 import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboarding";
+import { I18nProvider, useI18n } from "./src/i18n";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -68,7 +69,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => {
+const AppNavigator = () => {
+  const { t } = useI18n();
   const [fontsLoaded] = useFonts({
     CormorantGaramond_400Regular,
     CormorantGaramond_500Medium,
@@ -165,7 +167,7 @@ const App = () => {
                     name="Discover"
                     component={Home}
                     options={{
-                      tabBarLabel: "Discover",
+                      tabBarLabel: t("tabs.discover"),
                       tabBarIcon: ({ focused }) => (
                         <TabBarIcon focused={focused} iconName="compass" />
                       ),
@@ -176,7 +178,7 @@ const App = () => {
                     component={Events}
                     initialParams={{ section: "challenge" }}
                     options={{
-                      tabBarLabel: "Challenges",
+                      tabBarLabel: t("tabs.challenges"),
                       tabBarIcon: ({ focused }) => (
                         <TabBarIcon focused={focused} iconName="leaf" />
                       ),
@@ -186,7 +188,7 @@ const App = () => {
                     name="Flow"
                     component={Messages}
                     options={{
-                      tabBarLabel: "Flow",
+                      tabBarLabel: t("tabs.flow"),
                       tabBarIcon: ({ focused }) => (
                         <TabBarIcon
                           focused={focused}
@@ -200,7 +202,7 @@ const App = () => {
                     component={Events}
                     initialParams={{ section: "event" }}
                     options={{
-                      tabBarLabel: "Events",
+                      tabBarLabel: t("tabs.events"),
                       tabBarIcon: ({ focused }) => (
                         <TabBarIcon focused={focused} iconName="calendar" />
                       ),
@@ -210,7 +212,7 @@ const App = () => {
                     name="Aura"
                     component={Profile}
                     options={{
-                      tabBarLabel: "Aura",
+                      tabBarLabel: t("tabs.aura"),
                       tabBarIcon: ({ focused }) => (
                         <TabBarIcon
                           focused={focused}
@@ -369,5 +371,11 @@ const App = () => {
     </GestureHandlerRootView>
   );
 };
+
+const App = () => (
+  <I18nProvider>
+    <AppNavigator />
+  </I18nProvider>
+);
 
 export default App;

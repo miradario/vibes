@@ -16,8 +16,10 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import { useI18n } from "../src/i18n";
 
 const OnboardingAge = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
   const [showPicker, setShowPicker] = useState(Platform.OS === "ios");
@@ -81,10 +83,8 @@ const OnboardingAge = () => {
           </View>
         </View>
 
-        <Text style={styles.onboardTitle}>What’s your birth date?</Text>
-        <Text style={styles.onboardSubtitle}>
-          You must be at least 18 years old
-        </Text>
+        <Text style={styles.onboardTitle}>{t("onboarding.ageTitle")}</Text>
+        <Text style={styles.onboardSubtitle}>{t("onboarding.ageSubtitle")}</Text>
 
         <View style={styles.loginField}>
           <TouchableOpacity
@@ -93,7 +93,7 @@ const OnboardingAge = () => {
             activeOpacity={0.7}
           >
             <Text style={{ color: birthDate ? DARK_GRAY : "#6E6E6E" }}>
-              {birthDate ? formatDate(birthDate) : "Select your birth date"}
+              {birthDate ? formatDate(birthDate) : t("onboarding.agePlaceholder")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -131,7 +131,7 @@ const OnboardingAge = () => {
               navigation.navigate("OnboardingPhoto" as never);
             }}
           >
-            <Text style={styles.onboardNextText}>Next</Text>
+            <Text style={styles.onboardNextText}>{t("common.next")}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -11,9 +11,11 @@ import {
   useCompleteOnboardingMutation,
   useOnboardingDraft,
 } from "../src/queries/onboarding.queries";
-import { GENDERS } from "../src/constants/lookups";
+import { GENDERS, getGenderLabel } from "../src/constants/lookups";
+import { useI18n } from "../src/i18n";
 
 const OnboardingGender = () => {
+  const { locale, t } = useI18n();
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
@@ -33,11 +35,11 @@ const OnboardingGender = () => {
             <View style={[styles.onboardProgressFill, { width: "100%" }]} />
           </View>
           <TouchableOpacity onPress={() => navigation.navigate("Tab" as never)}>
-            <Text style={styles.onboardSkip}>Skip</Text>
+            <Text style={styles.onboardSkip}>{t("common.skip")}</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.onboardTitle}>What’s your gender?</Text>
+        <Text style={styles.onboardTitle}>{t("onboarding.genderTitle")}</Text>
 
         <View style={styles.onboardOptions}>
           {GENDERS.map((option) => (
@@ -55,7 +57,7 @@ const OnboardingGender = () => {
                   selected === option.id && styles.onboardOptionTextActive,
                 ]}
               >
-                {option.label}
+                {getGenderLabel(option.id, locale)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -82,7 +84,7 @@ const OnboardingGender = () => {
             onPress={async () => {
               const userId = session?.user?.id;
               if (!selected || !userId) {
-                Alert.alert("Error", "No se pudo completar el onboarding.");
+                Alert.alert(t("common.error"), t("onboarding.onboardingError"));
                 return;
               }
               updateDraft({ genderId: selected });
@@ -101,15 +103,15 @@ const OnboardingGender = () => {
                 const message =
                   error instanceof Error
                     ? error.message
-                    : "No se pudo completar el onboarding.";
-                Alert.alert("Error", message);
+                    : t("onboarding.onboardingError");
+                Alert.alert(t("common.error"), message);
               }
             }}
           >
             {completeMutation.isPending ? (
               <ActivityIndicator color={DARK_GRAY} />
             ) : (
-              <Text style={styles.onboardNextText}>Next</Text>
+              <Text style={styles.onboardNextText}>{t("common.next")}</Text>
             )}
           </TouchableOpacity>
         </View>

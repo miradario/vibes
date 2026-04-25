@@ -12,6 +12,7 @@ import {
   useCompleteOnboardingMutation,
   useOnboardingDraft,
 } from "../src/queries/onboarding.queries";
+import { useI18n } from "../src/i18n";
 
 const OPTIONS = [
   "Straight",
@@ -26,6 +27,7 @@ const OPTIONS = [
 ];
 
 const OnboardingOrientation = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
@@ -44,7 +46,10 @@ const OnboardingOrientation = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <VibesHeader title="Your sexual orientation?" subtitle="Select up to 3" />
+        <VibesHeader
+          title={t("onboarding.orientationTitle")}
+          subtitle={t("onboarding.orientationSubtitle")}
+        />
 
         <View style={styles.onboardList}>
           {OPTIONS.map((option) => (
@@ -85,7 +90,7 @@ const OnboardingOrientation = () => {
             onPress={async () => {
               const userId = session?.user?.id;
               if (!userId) {
-                Alert.alert("Error", "No se pudo completar el onboarding.");
+                Alert.alert(t("common.error"), t("onboarding.onboardingError"));
                 return;
               }
 
@@ -104,15 +109,15 @@ const OnboardingOrientation = () => {
                 const message =
                   error instanceof Error
                     ? error.message
-                    : "No se pudo completar el onboarding.";
-                Alert.alert("Error", message);
+                    : t("onboarding.onboardingError");
+                Alert.alert(t("common.error"), message);
               }
             }}
           >
             {completeMutation.isPending ? (
               <ActivityIndicator color={DARK_GRAY} />
             ) : (
-              <Text style={styles.onboardNextText}>Next</Text>
+              <Text style={styles.onboardNextText}>{t("common.next")}</Text>
             )}
           </TouchableOpacity>
         </View>

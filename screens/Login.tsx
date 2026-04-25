@@ -18,8 +18,10 @@ import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
 import VibesHeader from "../src/components/VibesHeader";
 import Icon from "../components/Icon";
+import { useI18n } from "../src/i18n";
 
 const Login = () => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +32,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setError("Please complete your email and password.");
+      setError(t("login.missingFields"));
       return;
     }
 
@@ -40,8 +42,8 @@ const Login = () => {
       await loginMutation.mutateAsync({ email, password });
       navigation.navigate("Tab" as never);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Could not log in.";
-      setError(msg || "Could not log in.");
+      const msg = e instanceof Error ? e.message : t("login.failed");
+      setError(msg || t("login.failed"));
     }
   };
 
@@ -69,15 +71,15 @@ const Login = () => {
           contentContainerStyle={localStyles.formScrollContent}
         >
           <View style={styles.loginCard}>
-            <VibesHeader title="Login" subtitle="" style={localStyles.header} />
-            <Text style={styles.loginTitle}>Welcome back</Text>
-            <Text style={styles.loginSubtitle}>Sign in to continue</Text>
+            <VibesHeader title={t("login.header")} subtitle="" style={localStyles.header} />
+            <Text style={styles.loginTitle}>{t("login.title")}</Text>
+            <Text style={styles.loginSubtitle}>{t("login.subtitle")}</Text>
 
             <View style={styles.loginField}>
-              <Text style={styles.loginLabel}>Email</Text>
+              <Text style={styles.loginLabel}>{t("common.email")}</Text>
               <TextInput
                 style={styles.loginInput}
-                placeholder="your@email.com"
+                placeholder={t("login.emailPlaceholder")}
                 placeholderTextColor="#6E6E6E"
                 autoCapitalize="none"
                 keyboardType="email-address"
@@ -87,7 +89,7 @@ const Login = () => {
             </View>
 
             <View style={styles.loginField}>
-              <Text style={styles.loginLabel}>Password</Text>
+              <Text style={styles.loginLabel}>{t("common.password")}</Text>
               <View style={localStyles.passwordField}>
                 <TextInput
                   style={[styles.loginInput, localStyles.passwordInput]}
@@ -115,14 +117,14 @@ const Login = () => {
 
             <View style={localStyles.actions}>
               <VibesActionButton
-                label={loading ? "Signing in..." : "Sign in"}
+                label={loading ? t("login.submitting") : t("login.submit")}
                 variant="start"
                 onPress={handleLogin}
                 disabled={isDisabled}
               />
 
               <VibesActionButton
-                label="Back"
+                label={t("common.back")}
                 variant="skip"
                 onPress={() => navigation.navigate("Welcome" as never)}
               />

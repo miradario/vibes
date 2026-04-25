@@ -1,17 +1,40 @@
 export const GENDERS = [
-  { id: 1, label: "Woman" },
-  { id: 2, label: "Man" },
-  { id: 3, label: "More" },
+  { id: 1, labelKey: "lookups.woman" },
+  { id: 2, labelKey: "lookups.man" },
+  { id: 3, labelKey: "lookups.more" },
 ] as const;
 
 export const INTENTS = [
-  { id: 1, label: "Women" },
-  { id: 2, label: "Man" },
-  { id: 3, label: "Everyone" },
+  { id: 1, labelKey: "lookups.women" },
+  { id: 2, labelKey: "lookups.men" },
+  { id: 3, labelKey: "lookups.everyone" },
 ] as const;
 
-export const getGenderLabel = (id?: number | null) =>
-  GENDERS.find((item) => item.id === id)?.label ?? null;
+const translations = {
+  es: {
+    "lookups.woman": "Mujer",
+    "lookups.man": "Hombre",
+    "lookups.more": "Más",
+    "lookups.women": "Mujeres",
+    "lookups.men": "Hombres",
+    "lookups.everyone": "Todos",
+  },
+  en: {
+    "lookups.woman": "Woman",
+    "lookups.man": "Man",
+    "lookups.more": "More",
+    "lookups.women": "Women",
+    "lookups.men": "Men",
+    "lookups.everyone": "Everyone",
+  },
+} as const;
 
-export const getIntentLabel = (id?: number | null) =>
-  INTENTS.find((item) => item.id === id)?.label ?? null;
+export const getGenderLabel = (id?: number | null, locale: "es" | "en" = "en") => {
+  const key = GENDERS.find((item) => item.id === id)?.labelKey;
+  return key ? translations[locale][key] : null;
+};
+
+export const getIntentLabel = (id?: number | null, locale: "es" | "en" = "en") => {
+  const key = INTENTS.find((item) => item.id === id)?.labelKey;
+  return key ? translations[locale][key] : null;
+};

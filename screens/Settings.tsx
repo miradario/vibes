@@ -1,6 +1,7 @@
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
+import * as Location from "expo-location";
 import {
   View,
   Text,
@@ -35,10 +36,13 @@ import {
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { showToast } from "../src/utils/toast";
+import { useI18n } from "../src/i18n";
+import { translateSpiritualPathLabel } from "../src/i18n/translations";
 
 const OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
 
 const Settings = () => {
+  const { locale, setLocale, t } = useI18n();
   const navigation = useNavigation();
   const { data: session } = useAuthSession();
   const { data: prefs, refetch } = useUserPreferencesQuery(session?.user?.id);
@@ -50,6 +54,9 @@ const Settings = () => {
     null,
   );
   const [vegetarian, setVegetarian] = useState<"Sí" | "No">("No");
+  const [location, setLocation] = useState("");
+  const [currentLocation, setCurrentLocation] = useState("");
+  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [aboutMe, setAboutMe] = useState("");
   const [smoking, setSmoking] = useState<"Sí" | "No">("No");
   const [otherOptions, setOtherOptions] = useState<string[]>(
@@ -81,6 +88,9 @@ const Settings = () => {
     if (prefs.smoking === "Sí" || prefs.smoking === "No") {
       setSmoking(prefs.smoking);
     }
+    if (typeof (prefs.location ?? prefs.locationLabel) === "string") {
+      setLocation((prefs.location ?? prefs.locationLabel) as string);
+    }
     if (typeof prefs.aboutMe === "string") {
       setAboutMe(prefs.aboutMe);
     }
@@ -91,6 +101,48 @@ const Settings = () => {
       );
     }
   }, [prefs]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCurrentLocation = async () => {
+      setIsResolvingLocation(true);
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (!active || permission.status !== "granted") return;
+
+        const current = await Location.getCurrentPositionAsync({});
+        if (!active) return;
+
+        const [address] = await Location.reverseGeocodeAsync({
+          latitude: current.coords.latitude,
+          longitude: current.coords.longitude,
+        });
+        if (!active) return;
+
+        const city =
+          address?.city ?? address?.subregion ?? address?.region ?? "";
+        const country = address?.country ?? "";
+        const locationLabel = [city, country].filter(Boolean).join(", ");
+
+        if (locationLabel) {
+          setCurrentLocation(locationLabel);
+        }
+      } catch (_error) {
+        // Keep preferences editable even if location is unavailable.
+      } finally {
+        if (active) {
+          setIsResolvingLocation(false);
+        }
+      }
+    };
+
+    loadCurrentLocation();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const selectedOthers = useMemo(
     () => new Set(selectedOtherTags),
@@ -131,11 +183,11 @@ const Settings = () => {
   const addCustomTag = () => {
     const next = customTag.trim();
     if (!next) {
-      Alert.alert("Falta texto", "Escribí un interés antes de agregar.");
+      Alert.alert(t("settings.missingInterestTitle"), t("settings.missingInterestMessage"));
       return;
     }
     if (otherOptions.includes(next)) {
-      Alert.alert("Ya existe", "Ese interés ya está en la lista.");
+      Alert.alert(t("settings.duplicateInterestTitle"), t("settings.duplicateInterestMessage"));
       setCustomTag("");
       return;
     }
@@ -147,7 +199,7 @@ const Settings = () => {
   const handleSave = async () => {
     const userId = session?.user?.id;
     if (!userId) {
-      Alert.alert("Error", "No se encontró sesión activa.");
+      Alert.alert(t("common.error"), t("settings.missingSession"));
       return;
     }
 
@@ -156,6 +208,7 @@ const Settings = () => {
         spiritual_path: spiritualPath,
         spiritual_path_details: spiritualPathDetails,
         vegetarian,
+        location: location.trim(),
         about_me: aboutMe,
         smoking,
         other_tags: selectedOtherTags,
@@ -163,13 +216,13 @@ const Settings = () => {
       await refetch();
       navigation.goBack();
       setTimeout(() => {
-        showToast("Preferencias guardadas", {
+        showToast(t("settings.saved"), {
           type: "success",
-          text1: "Preferencias guardadas",
+          text1: t("settings.saved"),
         });
       }, 180);
     } catch (error: any) {
-      Alert.alert("Error", error?.message || "No se pudo guardar.");
+      Alert.alert(t("common.error"), error?.message || t("settings.saveError"));
     }
   };
 
@@ -201,8 +254,8 @@ const Settings = () => {
           </TouchableOpacity>
           <View style={localStyles.headerCopy}>
             <VibesHeader
-              title="Preferencias"
-              subtitle="Comentá sobre vos y compartí tus elecciones conscientes."
+              title={t("settings.title")}
+              subtitle={t("settings.subtitle")}
               style={localStyles.headerTextWrap}
               titleStyle={localStyles.headerTitle}
               subtitleStyle={localStyles.headerSubtitle}
@@ -222,15 +275,13 @@ const Settings = () => {
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>
             <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>Camino espiritual</Text>
+            <Text style={localStyles.sectionTitle}>{t("settings.spiritualPath")}</Text>
             <View style={localStyles.line} />
           </View>
-          <Text style={localStyles.helperText}>
-            Tocá un camino para seleccionarlo y sumar datos opcionales.
-          </Text>
+          <Text style={localStyles.helperText}>{t("settings.spiritualPathHint")}</Text>
           <View style={localStyles.chipWrap}>
             {SPIRITUAL_PATH_OPTIONS.map((item) =>
-              renderChip(item, spiritualPath.includes(item), () =>
+              renderChip(translateSpiritualPathLabel(locale, item), spiritualPath.includes(item), () =>
                 openSpiritualPathEditor(item),
               ),
             )}
@@ -244,11 +295,13 @@ const Settings = () => {
                   onPress={() => setActiveSpiritualPath(item)}
                   activeOpacity={0.85}
                 >
-                  <Text style={localStyles.detailItemTitle}>{item}</Text>
+                  <Text style={localStyles.detailItemTitle}>
+                    {translateSpiritualPathLabel(locale, item)}
+                  </Text>
                   <Text style={localStyles.detailItemSubtitle}>
                     {hasSpiritualPathDetail(spiritualPathDetails[item])
-                      ? "Editar datos opcionales"
-                      : "Agregar datos opcionales"}
+                      ? t("onboarding.spiritualEditOptional")
+                      : t("onboarding.spiritualAddOptional")}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -259,19 +312,56 @@ const Settings = () => {
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>
             <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>Vegetarianismo</Text>
+            <Text style={localStyles.sectionTitle}>{t("settings.vegetarian")}</Text>
             <View style={localStyles.line} />
           </View>
           <View style={localStyles.chipWrap}>
-            {renderChip("Sí", vegetarian === "Sí", () => setVegetarian("Sí"))}
-            {renderChip("No", vegetarian === "No", () => setVegetarian("No"))}
+            {renderChip(t("common.yes"), vegetarian === "Sí", () => setVegetarian("Sí"))}
+            {renderChip(t("common.no"), vegetarian === "No", () => setVegetarian("No"))}
           </View>
         </View>
 
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>
+            <Icon name="location-outline" size={18} color={TEXT_SECONDARY} />
+            <Text style={localStyles.sectionTitle}>{t("settings.location")}</Text>
+            <View style={localStyles.line} />
+          </View>
+          {currentLocation ? (
+            <View style={localStyles.currentLocationCard}>
+              <Text style={localStyles.currentLocationLabel}>
+                {t("settings.currentLocation")}
+              </Text>
+              <Text style={localStyles.currentLocationValue}>
+                {currentLocation}
+              </Text>
+              <TouchableOpacity
+                style={localStyles.currentLocationButton}
+                onPress={() => setLocation(currentLocation)}
+              >
+                <Text style={localStyles.currentLocationButtonText}>
+                  {t("settings.useCurrentLocation")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : isResolvingLocation ? (
+            <Text style={localStyles.helperText}>{t("settings.resolvingLocation")}</Text>
+          ) : null}
+          <TextInput
+            style={localStyles.textInput}
+            value={location}
+            onChangeText={setLocation}
+            placeholder={t("settings.locationPlaceholder")}
+            placeholderTextColor={GRAY}
+            autoCapitalize="words"
+            returnKeyType="done"
+          />
+        </View>
+
+        <View style={localStyles.section}>
+          <View style={localStyles.sectionHeader}>
             <Icon name="flower-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>Sobre mí</Text>
+            <Text style={localStyles.sectionTitle}>{t("settings.aboutMe")}</Text>
             <View style={localStyles.line} />
           </View>
           <TextInput
@@ -280,7 +370,7 @@ const Settings = () => {
             numberOfLines={5}
             value={aboutMe}
             onChangeText={setAboutMe}
-            placeholder="Escribir algo sobre vos..."
+            placeholder={t("settings.aboutMePlaceholder")}
             placeholderTextColor={GRAY}
             textAlignVertical="top"
           />
@@ -289,19 +379,19 @@ const Settings = () => {
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>
             <Icon name="bonfire-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>Fumar</Text>
+            <Text style={localStyles.sectionTitle}>{t("settings.smoking")}</Text>
             <View style={localStyles.line} />
           </View>
           <View style={localStyles.chipWrap}>
-            {renderChip("Sí", smoking === "Sí", () => setSmoking("Sí"))}
-            {renderChip("No", smoking === "No", () => setSmoking("No"))}
+            {renderChip(t("common.yes"), smoking === "Sí", () => setSmoking("Sí"))}
+            {renderChip(t("common.no"), smoking === "No", () => setSmoking("No"))}
           </View>
         </View>
 
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>
             <Icon name="moon-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>Otros</Text>
+            <Text style={localStyles.sectionTitle}>{t("settings.other")}</Text>
             <View style={localStyles.line} />
           </View>
           <View style={localStyles.chipWrap}>
@@ -314,7 +404,7 @@ const Settings = () => {
               style={localStyles.addInput}
               value={customTag}
               onChangeText={setCustomTag}
-              placeholder="Nuevo interés"
+              placeholder={t("settings.newInterestPlaceholder")}
               placeholderTextColor={GRAY}
               onSubmitEditing={addCustomTag}
               returnKeyType="done"
@@ -323,7 +413,7 @@ const Settings = () => {
               style={localStyles.addButton}
               onPress={addCustomTag}
             >
-              <Text style={localStyles.addButtonText}>+ Agregar</Text>
+              <Text style={localStyles.addButtonText}>{t("settings.addInterest")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -333,7 +423,7 @@ const Settings = () => {
       {/* Botón fijo abajo */}
       <View style={localStyles.saveButtonFixedWrap}>
         <TouchableOpacity style={localStyles.saveButton} onPress={handleSave}>
-          <Text style={localStyles.saveButtonText}>Guardar</Text>
+          <Text style={localStyles.saveButtonText}>{t("common.save")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -498,6 +588,53 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
     color: DARK_GRAY,
     minHeight: 120,
+  },
+  textInput: {
+    backgroundColor: WHITE,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#AEBFD1",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: DARK_GRAY,
+    minHeight: 52,
+  },
+  currentLocationCard: {
+    backgroundColor: "#FBF8F4",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(168, 131, 102, 0.18)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  currentLocationLabel: {
+    color: TEXT_SECONDARY,
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  currentLocationValue: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 4,
+  },
+  currentLocationButton: {
+    alignSelf: "flex-start",
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "#F6F6F4",
+    borderWidth: 1,
+    borderColor: "#E4B76E",
+  },
+  currentLocationButtonText: {
+    color: PRIMARY_COLOR,
+    fontSize: 14,
+    fontWeight: "700",
   },
   addRow: {
     marginTop: 10,
