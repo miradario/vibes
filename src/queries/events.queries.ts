@@ -393,7 +393,7 @@ export const useCreateEventMutation = () => {
           modality: input.modality,
           online_link: input.onlineLink ?? null,
           capacity: input.capacity,
-          participant_count: 0,
+          participant_count: 1,
           image_url: imageUrl,
           host_name: input.hostName ?? null,
           host_image_url: input.hostImage ?? null,
@@ -403,6 +403,21 @@ export const useCreateEventMutation = () => {
 
       if (error) {
         throw error;
+      }
+
+      const { error: participantError } = await supabase
+        .from("event_participants")
+        .upsert(
+          {
+            event_id: String(data.id),
+            event_type: "event",
+            user_id: input.createdBy,
+          },
+          { onConflict: "event_id,user_id" },
+        );
+
+      if (participantError) {
+        throw participantError;
       }
 
       return mapEventRow(data);
@@ -658,30 +673,59 @@ export const useChallengeParticipantsQuery = (challengeId: string | undefined) =
     queryKey: ["challenge_participants_list", challengeId ?? ""],
     queryFn: async () => {
       if (!challengeId) return [];
-      const { data, error } = await supabase
+
+      const { data: rows, error } = await supabase
         .from("challenge_participants")
-        .select("id, user_id, joined_at, profiles:user_id ( display_name, photos )")
+        .select("id, user_id, joined_at")
         .eq("challenge_id", challengeId)
         .order("joined_at", { ascending: true });
+
       if (error) throw error;
-      if (!data) return [];
-      const participants = await Promise.all(
-        data.map(async (row: any) => {
-          const profile = row.profiles;
-          let avatarUrl: string | null = null;
-          if (profile?.photos?.[0]) {
-            avatarUrl = await createSignedProfilePhotoUrl(profile.photos[0]);
-          }
+      if (!rows || rows.length === 0) return [];
+
+      const userIds = rows.map((row: any) => String(row.user_id));
+      const [{ data: profiles }, { data: photoRows }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, display_name")
+          .in("id", userIds),
+        supabase
+          .from("profile_photos")
+          .select("profile_id, url")
+          .in("profile_id", userIds)
+          .order("order", { ascending: true }),
+      ]);
+
+      const profileMap: Record<string, any> = {};
+      for (const profile of profiles ?? []) {
+        profileMap[String((profile as any).id)] = profile;
+      }
+
+      const firstPhotoMap: Record<string, string> = {};
+      for (const photo of photoRows ?? []) {
+        const profileId = String((photo as any).profile_id);
+        if (!firstPhotoMap[profileId]) {
+          firstPhotoMap[profileId] = String((photo as any).url);
+        }
+      }
+
+      return Promise.all(
+        rows.map(async (row: any) => {
+          const userId = String(row.user_id);
+          const profile = profileMap[userId];
+          const photoPath = firstPhotoMap[userId];
+
           return {
             id: String(row.id),
-            userId: String(row.user_id),
+            userId,
             joinedAt: String(row.joined_at),
             displayName: profile?.display_name ?? null,
-            avatarUrl,
+            avatarUrl: photoPath
+              ? await createSignedProfilePhotoUrl(photoPath)
+              : null,
           };
         }),
       );
-      return participants;
     },
     enabled: Boolean(challengeId),
     staleTime: 60_000,
@@ -784,11 +828,14 @@ export const useJoinEventMutation = () => {
     { eventId: string; eventType: EventType; userId: string }
   >({
     mutationFn: async ({ eventId, eventType, userId }) => {
-      const { error } = await supabase.from("event_participants").insert({
-        event_id: eventId,
-        event_type: eventType,
-        user_id: userId,
-      });
+      const { error } = await supabase.from("event_participants").upsert(
+        {
+          event_id: eventId,
+          event_type: eventType,
+          user_id: userId,
+        },
+        { onConflict: "event_id,user_id" },
+      );
       if (error) throw error;
     },
     onSuccess: (_data, { eventId, eventType, userId }) => {

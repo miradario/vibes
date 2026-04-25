@@ -57,6 +57,8 @@ const CardItem = ({
   pets,
   images,
   onContactPress,
+  secondaryActionLabel,
+  onSecondaryActionPress,
   variant,
 }: CardItemT) => {
   // Custom styling
@@ -301,15 +303,28 @@ const CardItem = ({
           onClose={() => setActiveDiscoverPath(null)}
           readOnly
         />
-        {onContactPress ? (
+        {onContactPress || onSecondaryActionPress ? (
           <View style={styles.discoverFixedFooter}>
-            <TouchableOpacity
-              style={styles.discoverConnectButton}
-              onPress={onContactPress}
-              activeOpacity={0.9}
-            >
-              <Text style={styles.discoverConnectButtonText}>Conectar</Text>
-            </TouchableOpacity>
+            {onContactPress ? (
+              <TouchableOpacity
+                style={styles.discoverConnectButton}
+                onPress={onContactPress}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.discoverConnectButtonText}>Conectar</Text>
+              </TouchableOpacity>
+            ) : null}
+            {onSecondaryActionPress && secondaryActionLabel ? (
+              <TouchableOpacity
+                style={styles.discoverSecondaryAction}
+                onPress={onSecondaryActionPress}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.discoverSecondaryActionText}>
+                  {secondaryActionLabel}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : null}
       </View>

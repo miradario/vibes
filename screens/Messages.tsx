@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,19 +8,28 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
+import CardItem from "../components/CardItem";
 import {
   useMatchesQuery,
+  useIncomingLikesQuery,
   type MatchWithProfile,
+  type IncomingLike,
 } from "../src/queries/matches.queries";
 import {
   useMyEventGroupsQuery,
   type EventGroupSummary,
 } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
+import { useProfileQuery } from "../src/queries/profile.queries";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
+import { useSwipeMutation } from "../src/queries/swipes.mutations";
+import { handleApiError } from "../src/utils/handleApiError";
 
 const LOGO = require("../assets/images/logo.png");
 
@@ -43,8 +52,18 @@ const Messages = () => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const { data: matches, isLoading, error } = useMatchesQuery();
+  const { data: incomingLikes = [] } = useIncomingLikesQuery();
+  const swipeMutation = useSwipeMutation();
   const { data: eventGroups = [], isLoading: groupsLoading } =
     useMyEventGroupsQuery(userId);
+  const [selectedIncomingLike, setSelectedIncomingLike] =
+    useState<IncomingLike | null>(null);
+  const { data: selectedIncomingProfile } = useProfileQuery(
+    selectedIncomingLike?.likerUserId,
+  );
+  const { data: selectedIncomingPreferences } = useUserPreferencesQuery(
+    selectedIncomingLike?.likerUserId,
+  );
 
   console.log(
     "[Messages] matches:",
@@ -57,6 +76,21 @@ const Messages = () => {
 
   const withMessages = (matches ?? []).filter((m) => m.lastMessage);
   const newConnections = (matches ?? []).filter((m) => !m.lastMessage);
+  const selectedIncomingLikeCard = selectedIncomingLike
+    ? mapCandidateToConnectionProfile({
+        id: selectedIncomingLike.likerUserId,
+        displayName:
+          selectedIncomingProfile?.displayName ??
+          selectedIncomingLike.likerUserName,
+        ...(selectedIncomingProfile ?? {}),
+        ...(selectedIncomingPreferences ?? {}),
+        photos:
+          selectedIncomingProfile?.photos ??
+          (selectedIncomingLike.likerUserPhoto
+            ? [selectedIncomingLike.likerUserPhoto]
+            : []),
+      })
+    : null;
 
   const renderMatchRow = ({ item }: { item: MatchWithProfile }) => (
     <TouchableOpacity
@@ -118,6 +152,64 @@ const Messages = () => {
     </TouchableOpacity>
   );
 
+  const handleConnectIncomingLike = () => {
+    if (!selectedIncomingLike || !selectedIncomingLikeCard) return;
+
+    swipeMutation.mutate(
+      {
+        targetUserId: String(selectedIncomingLike.likerUserId),
+        direction: "like",
+      },
+      {
+        onSuccess: (response) => {
+          if (response?.match) {
+            navigation.navigate(
+              "Match" as never,
+              { profile: selectedIncomingLikeCard } as never,
+            );
+          }
+          setSelectedIncomingLike(null);
+        },
+        onError: (error) =>
+          handleApiError(error, { toastTitle: "Connect Error" }),
+      },
+    );
+  };
+
+  const handleDismissIncomingLike = () => {
+    if (!selectedIncomingLike) return;
+
+    swipeMutation.mutate(
+      {
+        targetUserId: String(selectedIncomingLike.likerUserId),
+        direction: "pass",
+      },
+      {
+        onSuccess: () => {
+          setSelectedIncomingLike(null);
+        },
+        onError: (error) =>
+          handleApiError(error, { toastTitle: "Dismiss Error" }),
+      },
+    );
+  };
+
+  const renderIncomingLike = ({ item }: { item: IncomingLike }) => (
+    <TouchableOpacity
+      style={localStyles.newConnBubble}
+      activeOpacity={0.8}
+      onPress={() => setSelectedIncomingLike(item)}
+    >
+      <Image
+        source={item.likerUserPhoto ? { uri: item.likerUserPhoto } : LOGO}
+        style={localStyles.newConnAvatar}
+      />
+      <Text style={localStyles.newConnName} numberOfLines={1}>
+        {item.likerUserName}
+      </Text>
+    </TouchableOpacity>
+  );
+
   const renderGroupRow = ({ item }: { item: EventGroupSummary }) => {
     const imgSource =
       typeof item.image === "string" ? { uri: item.image } : item.image;
@@ -161,27 +253,44 @@ const Messages = () => {
         style={[styles.containerMessages, { justifyContent: "flex-start" }]}
       >
         <View style={styles.flowTop}>
-          <TouchableOpacity style={styles.flowTopIcon}>
-            <Icon name="infinite" color={DARK_GRAY} size={20} />
-          </TouchableOpacity>
           <View style={styles.flowTopCenter}>
-            <Icon name="chatbubble-ellipses" color="#AEBFD1" size={26} />
+            <Icon name="chatbubble-ellipses" color={DARK_GRAY} size={26} />
           </View>
-          <TouchableOpacity style={styles.flowTopIcon}>
-            <Icon name="ellipsis-vertical" color={DARK_GRAY} size={20} />
-          </TouchableOpacity>
         </View>
+
+        {incomingLikes.length > 0 && (
+          <>
+            <View style={styles.flowSectionHeader}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Icon name="sparkles-outline" color={DARK_GRAY} size={16} />
+                <Text style={[styles.flowSectionTitle, { marginLeft: 8 }]}>
+                  Quieren conectar con vos
+                </Text>
+              </View>
+              <View style={styles.flowSectionCount}>
+                <Text style={styles.flowSectionCountText}>
+                  {incomingLikes.length}
+                </Text>
+              </View>
+            </View>
+
+            <FlatList
+              data={incomingLikes}
+              keyExtractor={(item) => item.id}
+              renderItem={renderIncomingLike}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={localStyles.newConnList}
+              contentContainerStyle={{ paddingHorizontal: 12 }}
+            />
+          </>
+        )}
 
         {/* New Connections (no messages yet) */}
         <View style={styles.flowSectionHeader}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Icon name="heart" color="#AEBFD1" size={16} />
-            <Text
-              style={[
-                styles.flowSectionTitle,
-                { marginLeft: 8, color: "#AEBFD1" },
-              ]}
-            >
+            <Icon name="heart" color={DARK_GRAY} size={16} />
+            <Text style={[styles.flowSectionTitle, { marginLeft: 8 }]}>
               New Connections
             </Text>
           </View>
@@ -209,13 +318,8 @@ const Messages = () => {
           <>
             <View style={styles.flowSectionHeader}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Icon name="people" color="#AEBFD1" size={16} />
-                <Text
-                  style={[
-                    styles.flowSectionTitle,
-                    { marginLeft: 8, color: "#AEBFD1" },
-                  ]}
-                >
+                <Icon name="people" color={DARK_GRAY} size={16} />
+                <Text style={[styles.flowSectionTitle, { marginLeft: 8 }]}>
                   Grupos
                 </Text>
               </View>
@@ -270,6 +374,53 @@ const Messages = () => {
           />
         )}
       </View>
+
+      <Modal
+        visible={Boolean(selectedIncomingLike && selectedIncomingLikeCard)}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedIncomingLike(null)}
+      >
+        <View style={styles.discoverSheetRoot}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.discoverSheetBackdrop}
+            onPress={() => setSelectedIncomingLike(null)}
+          />
+          <TouchableOpacity
+            style={styles.discoverSheetCloseButton}
+            onPress={() => setSelectedIncomingLike(null)}
+            activeOpacity={0.9}
+          >
+            <Icon name="close" size={20} color="#2B2B2B" />
+          </TouchableOpacity>
+          <View style={styles.discoverSheetContainer}>
+            <View style={styles.discoverSheetHandle} />
+            {selectedIncomingLikeCard ? (
+              <CardItem
+                variant="discover"
+                image={selectedIncomingLikeCard.image}
+                name={selectedIncomingLikeCard.name}
+                age={selectedIncomingLikeCard.age}
+                location={selectedIncomingLikeCard.location}
+                description={selectedIncomingLikeCard.description}
+                vibe={selectedIncomingLikeCard.vibe}
+                intention={selectedIncomingLikeCard.intention}
+                prompt={selectedIncomingLikeCard.prompt}
+                tags={selectedIncomingLikeCard.tags}
+                preferences={selectedIncomingLikeCard.preferences}
+                vegetarian={selectedIncomingLikeCard.vegetarian}
+                smoking={selectedIncomingLikeCard.smoking}
+                pets={selectedIncomingLikeCard.pets}
+                images={selectedIncomingLikeCard.images}
+                onContactPress={handleConnectIncomingLike}
+                secondaryActionLabel="Dismiss"
+                onSecondaryActionPress={handleDismissIncomingLike}
+              />
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

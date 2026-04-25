@@ -7,7 +7,7 @@ import type { GetCandidatesResponse } from "../api/modules/candidates/candidates
 
 type SwipeInput = {
   targetUserId: string;
-  direction: "like" | "pass";
+  direction: "like" | "pass" | "nope";
 };
 
 type SwipeResult = {
@@ -27,45 +27,38 @@ export const useSwipeMutation = () => {
     mutationFn: async (payload) => {
       const userId = session?.user?.id;
       if (!userId) throw new Error("Not authenticated");
+      const persistedDirection =
+        payload.direction === "pass" ? "nope" : payload.direction;
 
-      console.log("[swipe] userId:", userId, "target:", payload.targetUserId, "dir:", payload.direction);
+      console.log("[swipe] userId:", userId, "target:", payload.targetUserId, "dir:", persistedDirection);
 
-      // 1. Insert swipe (or find existing if duplicate)
-      let swipeId: string;
+      // 1. Upsert swipe so actions like dismiss/connect are idempotent.
       const { data: swipe, error: swipeErr } = await supabase
         .from("swipes")
-        .insert({
-          swiper_id: userId,
-          target_id: payload.targetUserId,
-          direction: payload.direction,
-        })
-        .select("id")
+        .upsert(
+          {
+            swiper_id: userId,
+            target_id: payload.targetUserId,
+            direction: persistedDirection,
+          },
+          { onConflict: "swiper_id,target_id" },
+        )
+        .select("id, direction")
         .single();
 
       if (swipeErr) {
-        // Duplicate key — swipe already exists, find it
-        if (swipeErr.code === "23505") {
-          console.log("[swipe] duplicate, finding existing swipe");
-          const { data: existing } = await supabase
-            .from("swipes")
-            .select("id")
-            .eq("swiper_id", userId)
-            .eq("target_id", payload.targetUserId)
-            .single();
-          if (!existing) throw new Error("Swipe exists but cannot be found");
-          swipeId = existing.id;
-        } else {
-          console.log("[swipe] insert error:", swipeErr.message);
-          throw new Error(swipeErr.message);
-        }
+        console.log("[swipe] upsert error:", swipeErr.message);
+        throw new Error(swipeErr.message);
       } else {
-        swipeId = swipe.id;
+        console.log("[swipe] persisted direction:", swipe.direction);
       }
+
+      const swipeId = swipe.id;
 
       console.log("[swipe] swipeId:", swipeId);
 
       // 2. If "like", check if the other person also liked us
-      if (payload.direction === "like") {
+      if (persistedDirection === "like") {
         const { data: mutual, error: mutualErr } = await supabase
           .from("swipes")
           .select("id")

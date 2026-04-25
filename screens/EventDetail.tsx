@@ -43,8 +43,10 @@ import {
   useIsEventParticipantQuery,
   useJoinEventMutation,
   useChallengeParticipantsQuery,
+  useEventParticipantsQuery,
 } from "../src/queries/events.queries";
 import {
+  extractChallengePresetFromDescription,
   getChallengeMediaPreset,
   parseChallengeMediaPreset,
 } from "../src/constants/challengeMediaPresets";
@@ -89,9 +91,24 @@ const getMilestoneMessage = (streak: number, milestone: number | null) => {
   return `Te faltan ${remainingDays} ${dayLabel} para llegar a ${milestone} días seguidos.`;
 };
 
-const getStreakHeadline = (streak: number, totalCheckins: number) => {
+const getStreakHeadline = (
+  streak: number,
+  totalCheckins: number,
+  startDate?: Date | null,
+  referenceDate?: Date,
+) => {
   if (streak === 0 && totalCheckins > 0) return "Racha en pausa";
-  if (streak === 0) return "Hoy empieza";
+  if (streak === 0) {
+    if (startDate && referenceDate && isAfterDay(startDate, referenceDate)) {
+      return "Empieza pronto";
+    }
+
+    if (startDate && referenceDate && isBeforeDay(startDate, referenceDate)) {
+      return "Todavía no arrancaste";
+    }
+
+    return "Hoy empieza";
+  }
   if (streak === 1) return "1 día";
   return `${streak} días`;
 };
@@ -152,6 +169,9 @@ const formatDayKey = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+const isBeforeDay = (left: Date, right: Date) => formatDayKey(left) < formatDayKey(right);
+const isAfterDay = (left: Date, right: Date) => formatDayKey(left) > formatDayKey(right);
+
 const getStaticMapPreviewUrl = (location: string, apiKey: string) =>
   `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(location)}&zoom=15&size=900x320&scale=2&maptype=roadmap&markers=color:red%7C${encodeURIComponent(location)}&key=${apiKey}`;
 
@@ -184,17 +204,48 @@ const EventDetail = () => {
   const leaveMutation = useLeaveChallengeMutation();
   const deleteMutation = useDeleteChallengeMutation();
 
-  const { data: isEventParticipant, isLoading: eventParticipantLoading } =
-    useIsEventParticipantQuery(!isChallenge ? event?.id : undefined, userId);
+  const { data: isEventParticipant } = useIsEventParticipantQuery(
+    !isChallenge ? event?.id : undefined,
+    userId,
+  );
   const joinEventMutation = useJoinEventMutation();
 
   const { data: challengeParticipants = [] } = useChallengeParticipantsQuery(
     isChallenge ? event?.id : undefined,
   );
+  const { data: eventParticipants = [] } = useEventParticipantsQuery(
+    event?.id,
+  );
 
   const isAdmin = Boolean(
     userId && event?.createdBy && userId === event.createdBy,
   );
+  const challengeParticipantsMerged = Array.from(
+    new Map(
+      [...challengeParticipants, ...eventParticipants].map((item) => [
+        item.userId,
+        item,
+      ]),
+    ).values(),
+  );
+  const hasAdminInParticipants = Boolean(
+    event?.createdBy &&
+      eventParticipants.some((item) => item.userId === event.createdBy),
+  );
+  const eventParticipantsWithAdmin =
+    !isChallenge && event?.createdBy && !hasAdminInParticipants
+      ? [
+          {
+            id: `admin-${event.createdBy}`,
+            userId: event.createdBy,
+            joinedAt: event?.createdAt ?? event?.startsAt ?? new Date().toISOString(),
+            displayName: event?.hostName ?? "Organizador",
+            avatarUrl: typeof event?.hostImage === "string" ? event.hostImage : null,
+          },
+          ...eventParticipants,
+        ]
+      : eventParticipants;
+  const isEventJoined = Boolean(isEventParticipant || isAdmin);
 
   const [checkInModalVisible, setCheckInModalVisible] = useState(false);
   const [checkInNote, setCheckInNote] = useState("");
@@ -224,11 +275,16 @@ const EventDetail = () => {
   const challengeStartDate = formatStartDate(
     event?.startsAt ?? event?.createdAt,
   );
+  const normalizedPresetId =
+    getChallengeMediaPreset(event?.imagePresetId ?? null)?.id ??
+    parseChallengeMediaPreset(event?.imageUrl) ??
+    extractChallengePresetFromDescription(event?.description);
+  const defaultEventPreset = getChallengeMediaPreset("events");
   const selectedChallengePreset = getChallengeMediaPreset(
-    event?.imagePresetId ?? parseChallengeMediaPreset(event?.imageUrl),
+    normalizedPresetId,
   );
   const selectedEventPreset = getChallengeMediaPreset(
-    event?.imagePresetId ?? parseChallengeMediaPreset(event?.imageUrl),
+    normalizedPresetId ?? (!isChallenge ? "events" : null),
   );
   const challengeVideoSource =
     selectedChallengePreset?.video ||
@@ -242,10 +298,17 @@ const EventDetail = () => {
       ? parsedStartDate
       : null;
   const checkinSet = new Set(challengeCheckins);
-  const participantCount = Math.max(
-    challengeParticipants.length,
+  const participantCount = challengeParticipantsMerged.length;
+  const eventParticipantCount = Math.max(
+    eventParticipantsWithAdmin.length,
     getParticipantCountFallback(event?.attendees),
   );
+  const visibleParticipants = isChallenge
+    ? challengeParticipantsMerged
+    : eventParticipantsWithAdmin;
+  const visibleParticipantCount = isChallenge
+    ? participantCount
+    : eventParticipantCount;
   const totalCheckins = Math.max(
     participant?.totalCheckins ?? 0,
     challengeCheckins.length,
@@ -266,6 +329,13 @@ const EventDetail = () => {
     : isVideoMedia(event?.image)
     ? { uri: event.image }
     : null;
+  const eventHeroImageSource =
+    selectedEventPreset?.image ||
+    (typeof event?.imageUrl === "string" && event.imageUrl.trim()
+      ? { uri: event.imageUrl.trim() }
+      : typeof event?.image === "string" && event.image.trim()
+        ? { uri: event.image.trim() }
+        : defaultEventPreset?.image || null);
   const selectedParticipantCard = selectedParticipant
     ? mapCandidateToConnectionProfile({
         id: selectedParticipant.userId,
@@ -379,18 +449,23 @@ const EventDetail = () => {
       );
     }
 
-    if (eventParticipantLoading) return null;
-
-    if (isEventParticipant) {
+    if (isEventJoined) {
       return (
         <View style={localStyles.fixedFooterContent}>
           <TouchableOpacity
-            style={styles.eventDetailJoinButton}
+            style={[styles.eventDetailJoinButton, localStyles.footerActionButton]}
             onPress={() =>
               navigation.navigate("EventChat" as never, { event } as never)
             }
           >
-            <Text style={styles.eventDetailJoinButtonText}>Ir al chat del evento</Text>
+            <Text
+              style={[styles.eventDetailJoinButtonText, localStyles.footerActionText]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
+              Ir al chat del evento
+            </Text>
             <Icon name="arrow-forward" size={24} color={WHITE} />
           </TouchableOpacity>
         </View>
@@ -400,7 +475,7 @@ const EventDetail = () => {
     return (
       <View style={localStyles.fixedFooterContent}>
         <TouchableOpacity
-          style={styles.eventDetailJoinButton}
+          style={[styles.eventDetailJoinButton, localStyles.footerActionButton]}
           onPress={async () => {
             if (!userId) {
               Alert.alert("Sesión requerida", "Necesitás iniciar sesión.");
@@ -426,7 +501,12 @@ const EventDetail = () => {
             <ActivityIndicator color={WHITE} size="small" />
           ) : (
             <>
-              <Text style={styles.eventDetailJoinButtonText}>
+              <Text
+                style={[styles.eventDetailJoinButtonText, localStyles.footerActionText]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
                 Unirse al evento
               </Text>
               <Icon name="arrow-forward" size={24} color={WHITE} />
@@ -483,6 +563,8 @@ const EventDetail = () => {
       ? event.subtitle.trim()
       : "Entrá a un espacio sereno para compartir presencia y conexión.";
   const eventLeadText = eventDescription || eventSubtitle;
+  const modalityLabel = modality === "online" ? "Online" : "Presencial";
+  const pricingLabel = pricingType === "paid" ? "Pago" : "Gratis";
   const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!event) return null;
@@ -762,6 +844,12 @@ const EventDetail = () => {
           <>
             {eventVideoSource ? (
               <View style={localStyles.eventHeroMedia}>
+                {eventHeroImageSource ? (
+                  <Image
+                    source={eventHeroImageSource}
+                    style={localStyles.eventHeroImage}
+                  />
+                ) : null}
                 <Video
                   source={eventVideoSource}
                   style={localStyles.eventHeroVideo}
@@ -771,6 +859,25 @@ const EventDetail = () => {
                   isLooping
                 />
                 <View style={localStyles.eventHeroScrim} />
+                <View style={localStyles.eventHeroOrganizerBadge}>
+                  {eventHostImage ? (
+                    <Image
+                      source={eventHostImage}
+                      style={localStyles.eventHeroOrganizerAvatar}
+                    />
+                  ) : (
+                    <View style={localStyles.eventHeroOrganizerAvatarFallback}>
+                      <Icon name="person" size={14} color={WHITE} />
+                    </View>
+                  )}
+                  <Text
+                    style={localStyles.eventHeroOrganizerName}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {eventHostName || "Comunidad Vibes"}
+                  </Text>
+                </View>
                 <View style={localStyles.eventHeroContent}>
                   <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
                   <Text style={localStyles.eventHeroSubtitle}>
@@ -779,50 +886,109 @@ const EventDetail = () => {
                 </View>
               </View>
             ) : (
-              <View style={styles.eventDetailTitleBlock}>
-                <Text style={styles.eventDetailTitle}>{event.title}</Text>
-                <Text style={styles.eventDetailSubtitle}>{eventLeadText}</Text>
+              <View style={localStyles.eventHeroMedia}>
+                {eventHeroImageSource ? (
+                  <Image
+                    source={eventHeroImageSource}
+                    style={localStyles.eventHeroImage}
+                  />
+                ) : null}
+                <View style={localStyles.eventHeroScrim} />
+                <View style={localStyles.eventHeroOrganizerBadge}>
+                  {eventHostImage ? (
+                    <Image
+                      source={eventHostImage}
+                      style={localStyles.eventHeroOrganizerAvatar}
+                    />
+                  ) : (
+                    <View style={localStyles.eventHeroOrganizerAvatarFallback}>
+                      <Icon name="person" size={14} color={WHITE} />
+                    </View>
+                  )}
+                  <Text
+                    style={localStyles.eventHeroOrganizerName}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {eventHostName || "Comunidad Vibes"}
+                  </Text>
+                </View>
+                <View style={localStyles.eventHeroContent}>
+                  <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
+                  <Text style={localStyles.eventHeroSubtitle}>
+                    {eventLeadText}
+                  </Text>
+                </View>
               </View>
             )}
 
             <View style={styles.eventDetailInfoCard}>
-              <View
-                style={[
-                  styles.eventDetailOrganizerRow,
-                  localStyles.eventOrganizerStack,
-                ]}
-              >
-                <View
-                  style={[
-                    styles.eventDetailOrganizerAvatarWrap,
-                    localStyles.eventOrganizerAvatarStack,
-                  ]}
-                >
-                  {eventHostImage ? (
-                    <Image
-                      source={eventHostImage}
-                      style={styles.eventDetailHostAvatar}
+                <View style={localStyles.eventMetaPillsRow}>
+                  <View style={localStyles.eventMetaPill}>
+                    <Icon
+                      name={modality === "online" ? "videocam-outline" : "location"}
+                      size={14}
+                      color={PRIMARY_COLOR}
                     />
-                  ) : (
-                    <View style={styles.eventDetailHostAvatarFallback}>
-                      <Icon name="person" size={24} color={WHITE} />
-                    </View>
-                  )}
+                    <Text style={localStyles.eventMetaPillText}>{modalityLabel}</Text>
+                  </View>
+                  <View style={localStyles.eventMetaPill}>
+                    <Icon
+                      name={pricingType === "paid" ? "card-outline" : "sparkles-outline"}
+                      size={14}
+                      color={PRIMARY_COLOR}
+                    />
+                    <Text style={localStyles.eventMetaPillText}>{pricingLabel}</Text>
+                  </View>
                 </View>
-                <View
-                  style={[
-                    styles.eventDetailOrganizerLabelWrap,
-                    localStyles.eventOrganizerLabelStack,
-                  ]}
-                >
-                  <Text style={styles.eventDetailOrganizerLabel}>Organizador</Text>
-                  <Text style={styles.eventDetailHostName}>
-                    {eventHostName || "Comunidad Vibes"}
-                  </Text>
-                </View>
-              </View>
 
               <View style={styles.eventDetailInfoSection}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.eventDetailInfoRow}
+                  onPress={() => setParticipantsVisible(true)}
+                >
+                  <View style={styles.eventDetailInfoIconWrap}>
+                    <Icon name="people" size={18} color={PRIMARY_COLOR} />
+                  </View>
+                  <View style={styles.eventDetailInfoCopy}>
+                    <Text style={styles.eventDetailInfoText}>
+                      {visibleParticipantCount} participantes
+                    </Text>
+                    <Text style={styles.eventDetailInfoLabel}>
+                      Ver usuarios del evento
+                    </Text>
+                    {eventParticipantsWithAdmin.length > 0 ? (
+                      <View style={localStyles.participantsPreviewRow}>
+                        {eventParticipantsWithAdmin.slice(0, 4).map((item, index) => (
+                          <Image
+                            key={item.id}
+                            source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
+                            style={[
+                              localStyles.participantPreviewAvatar,
+                              index > 0 && localStyles.participantPreviewAvatarOverlap,
+                            ]}
+                          />
+                        ))}
+                        {visibleParticipantCount > 4 ? (
+                          <View
+                            style={[
+                              localStyles.participantPreviewAvatar,
+                              localStyles.participantPreviewMore,
+                              localStyles.participantPreviewAvatarOverlap,
+                            ]}
+                          >
+                            <Text style={localStyles.participantPreviewMoreText}>
+                              +{visibleParticipantCount - 4}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : null}
+                  </View>
+                  <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   activeOpacity={0.85}
                   style={styles.eventDetailInfoRow}
@@ -1112,7 +1278,12 @@ const EventDetail = () => {
                   </Text>
                   <View style={localStyles.streakTextWrap}>
                     <Text style={localStyles.streakCount}>
-                      {getStreakHeadline(streak, totalCheckins)}
+                      {getStreakHeadline(
+                        streak,
+                        totalCheckins,
+                        validStartDate,
+                        todayDate,
+                      )}
                     </Text>
                     <Text style={localStyles.streakLabel}>
                       {getStreakMessage(streak, totalCheckins)}
@@ -1161,12 +1332,7 @@ const EventDetail = () => {
               <View style={localStyles.joinSpacer} />
             )}
           </>
-        ) : eventParticipantLoading ? (
-          <ActivityIndicator
-            color={PRIMARY_COLOR}
-            style={{ marginVertical: 24 }}
-          />
-        ) : isEventParticipant ? (
+        ) : isEventJoined ? (
           <View style={localStyles.joinSpacer} />
         ) : (
           <View style={localStyles.joinSpacer} />
@@ -1251,12 +1417,12 @@ const EventDetail = () => {
           >
             <Icon name="people" size={20} color={DARK_GRAY} />
             <Text style={localStyles.menuItemText}>
-              Participantes ({participantCount})
+              Participantes ({visibleParticipantCount})
             </Text>
             <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
           </TouchableOpacity>
 
-          {isJoined ? (
+          {isChallenge && isJoined ? (
             <TouchableOpacity
               style={localStyles.menuItem}
               onPress={() => {
@@ -1341,15 +1507,15 @@ const EventDetail = () => {
         <View style={localStyles.participantsModalOverlay}>
           <View style={localStyles.participantsModalCard}>
             <View style={localStyles.participantsModalHeader}>
-              <Text style={localStyles.participantsModalTitle}>
-                Participantes ({participantCount})
+            <Text style={localStyles.participantsModalTitle}>
+                Participantes ({visibleParticipantCount})
               </Text>
               <TouchableOpacity onPress={() => setParticipantsVisible(false)}>
                 <Icon name="close" size={24} color={DARK_GRAY} />
               </TouchableOpacity>
             </View>
           <FlatList
-            data={challengeParticipants}
+            data={visibleParticipants}
             keyExtractor={(item) => item.id}
             style={{ maxHeight: 380 }}
             renderItem={({ item }) => (
@@ -1472,6 +1638,17 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
+    width: "100%",
+    height: "100%",
+  },
+  eventHeroImage: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
   },
   eventHeroScrim: {
     position: "absolute",
@@ -1481,9 +1658,46 @@ const localStyles = StyleSheet.create({
     left: 0,
     backgroundColor: "rgba(37, 26, 11, 0.36)",
   },
+  eventHeroOrganizerBadge: {
+    position: "absolute",
+    right: 16,
+    bottom: 18,
+    zIndex: 2,
+    maxWidth: 124,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.24)",
+  },
+  eventHeroOrganizerAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+  },
+  eventHeroOrganizerAvatarFallback: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(229, 188, 149, 0.95)",
+  },
+  eventHeroOrganizerName: {
+    flex: 1,
+    color: WHITE,
+    fontSize: 11,
+    lineHeight: 13,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
   eventHeroContent: {
     paddingHorizontal: 20,
-    paddingVertical: 22,
+    paddingTop: 22,
+    paddingBottom: 74,
   },
   eventHeroTitle: {
     color: WHITE,
@@ -1611,7 +1825,7 @@ const localStyles = StyleSheet.create({
     color: PRIMARY_COLOR,
   },
   scrollContent: {
-    paddingBottom: 180,
+    paddingBottom: 132,
   },
   scrollContentChallenge: {
     paddingTop: 72,
@@ -1637,16 +1851,29 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  eventOrganizerStack: {
-    flexDirection: "column",
-    alignItems: "center",
+  eventMetaPillsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: -4,
+    marginBottom: 12,
   },
-  eventOrganizerAvatarStack: {
-    marginRight: 0,
-    marginBottom: 10,
-  },
-  eventOrganizerLabelStack: {
+  eventMetaPill: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FBF5EA",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.24)",
+  },
+  eventMetaPillText: {
+    color: DARK_GRAY,
+    fontSize: 13,
+    fontFamily: "CormorantGaramond_700Bold",
   },
   headerSpacer: {
     width: 40,
@@ -1654,6 +1881,44 @@ const localStyles = StyleSheet.create({
   },
   fixedFooterNote: {
     marginBottom: 8,
+  },
+  footerActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingHorizontal: 18,
+  },
+  footerActionText: {
+    flexShrink: 1,
+    textAlign: "center",
+  },
+  participantsPreviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    paddingLeft: 2,
+  },
+  participantPreviewAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: WHITE,
+    backgroundColor: "#F6F6F4",
+  },
+  participantPreviewAvatarOverlap: {
+    marginLeft: -8,
+  },
+  participantPreviewMore: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: PRIMARY_COLOR,
+  },
+  participantPreviewMoreText: {
+    color: WHITE,
+    fontSize: 10,
+    fontWeight: "700",
   },
   streakRow: {
     flexDirection: "row",

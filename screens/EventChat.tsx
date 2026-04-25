@@ -16,6 +16,8 @@ import {
   Modal,
   FlatList,
   Linking,
+  Animated,
+  Easing,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, {
@@ -104,7 +106,15 @@ const EventChat = () => {
     displayName: string | null;
     avatarUrl: string | null;
   } | null>(null);
+  const [participantSheetVisible, setParticipantSheetVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const membersBackdropOpacity = useRef(new Animated.Value(0)).current;
+  const membersCardOpacity = useRef(new Animated.Value(0)).current;
+  const membersCardScale = useRef(new Animated.Value(0.92)).current;
+  const membersCardTranslateY = useRef(new Animated.Value(22)).current;
+  const participantBackdropOpacity = useRef(new Animated.Value(0)).current;
+  const participantSheetTranslateY = useRef(new Animated.Value(48)).current;
+  const participantSheetScale = useRef(new Animated.Value(0.96)).current;
   const { data: selectedParticipantProfile } = useProfileQuery(
     selectedParticipant?.userId,
   );
@@ -147,6 +157,168 @@ const EventChat = () => {
       },
     );
   };
+
+  const openMembersModal = useCallback(() => {
+    setMembersModalVisible(true);
+    membersBackdropOpacity.setValue(0);
+    membersCardOpacity.setValue(0);
+    membersCardScale.setValue(0.92);
+    membersCardTranslateY.setValue(22);
+
+    requestAnimationFrame(() => {
+      Animated.parallel([
+        Animated.timing(membersBackdropOpacity, {
+          toValue: 1,
+          duration: 180,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(membersCardOpacity, {
+          toValue: 1,
+          duration: 150,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(membersCardScale, {
+          toValue: 1,
+          damping: 16,
+          stiffness: 210,
+          mass: 0.85,
+          useNativeDriver: true,
+        }),
+        Animated.spring(membersCardTranslateY, {
+          toValue: 0,
+          damping: 18,
+          stiffness: 220,
+          mass: 0.9,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  }, [
+    membersBackdropOpacity,
+    membersCardOpacity,
+    membersCardScale,
+    membersCardTranslateY,
+  ]);
+
+  const closeMembersModal = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(membersBackdropOpacity, {
+        toValue: 0,
+        duration: 160,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(membersCardOpacity, {
+        toValue: 0,
+        duration: 120,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(membersCardScale, {
+        toValue: 0.97,
+        duration: 160,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(membersCardTranslateY, {
+        toValue: 14,
+        duration: 160,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) {
+        setMembersModalVisible(false);
+      }
+    });
+  }, [
+    membersBackdropOpacity,
+    membersCardOpacity,
+    membersCardScale,
+    membersCardTranslateY,
+  ]);
+
+  const animateParticipantSheetIn = useCallback(() => {
+    participantBackdropOpacity.setValue(0);
+    participantSheetTranslateY.setValue(48);
+    participantSheetScale.setValue(0.96);
+
+    Animated.parallel([
+      Animated.timing(participantBackdropOpacity, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.spring(participantSheetTranslateY, {
+        toValue: 0,
+        damping: 18,
+        stiffness: 190,
+        mass: 0.9,
+        useNativeDriver: true,
+      }),
+      Animated.spring(participantSheetScale, {
+        toValue: 1,
+        damping: 16,
+        stiffness: 200,
+        mass: 0.85,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [
+    participantBackdropOpacity,
+    participantSheetScale,
+    participantSheetTranslateY,
+  ]);
+
+  const handleOpenParticipant = useCallback(
+    (nextParticipant: {
+      userId: string;
+      displayName: string | null;
+      avatarUrl: string | null;
+    }) => {
+      setSelectedParticipant(nextParticipant);
+      setParticipantSheetVisible(true);
+      requestAnimationFrame(() => {
+        animateParticipantSheetIn();
+      });
+    },
+    [animateParticipantSheetIn],
+  );
+
+  const handleCloseParticipant = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(participantBackdropOpacity, {
+        toValue: 0,
+        duration: 160,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(participantSheetTranslateY, {
+        toValue: 28,
+        duration: 160,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(participantSheetScale, {
+        toValue: 0.985,
+        duration: 160,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) {
+        setParticipantSheetVisible(false);
+        setSelectedParticipant(null);
+      }
+    });
+  }, [
+    participantBackdropOpacity,
+    participantSheetScale,
+    participantSheetTranslateY,
+  ]);
 
   // Build a lookup for sender info from participants
   const participantMap = useRef<
@@ -337,7 +509,7 @@ const EventChat = () => {
           </View>
           <TouchableOpacity
             style={styles.eventChatMenuButton}
-            onPress={() => setMembersModalVisible(true)}
+            onPress={openMembersModal}
           >
             <Icon name="people" size={24} color={TEXT_SECONDARY} />
           </TouchableOpacity>
@@ -439,7 +611,15 @@ const EventChat = () => {
               return (
                 <TouchableOpacity
                   key={msg.id}
-                  activeOpacity={0.7}
+                  activeOpacity={isMe ? 0.7 : 0.82}
+                  onPress={() => {
+                    if (isMe) return;
+                    handleOpenParticipant({
+                      userId: msg.senderId,
+                      displayName: sender.name,
+                      avatarUrl: sender.avatar,
+                    });
+                  }}
                   onLongPress={() => handleLongPressMessage(msg)}
                   style={[
                     localStyles.messageRow,
@@ -535,16 +715,39 @@ const EventChat = () => {
       <Modal
         visible={membersModalVisible}
         transparent
-        animationType="slide"
-        onRequestClose={() => setMembersModalVisible(false)}
+        animationType="none"
+        onRequestClose={closeMembersModal}
       >
         <View style={localStyles.modalOverlay}>
-          <View style={localStyles.modalCard}>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              localStyles.modalBackdrop,
+              { opacity: membersBackdropOpacity },
+            ]}
+          />
+          <TouchableOpacity
+            activeOpacity={1}
+            style={StyleSheet.absoluteFillObject}
+            onPress={closeMembersModal}
+          />
+          <Animated.View
+            style={[
+              localStyles.modalCard,
+              {
+                opacity: membersCardOpacity,
+                transform: [
+                  { translateY: membersCardTranslateY },
+                  { scale: membersCardScale },
+                ],
+              },
+            ]}
+          >
             <View style={localStyles.modalHeader}>
               <Text style={localStyles.modalTitle}>
                 Participantes ({participants.length})
               </Text>
-              <TouchableOpacity onPress={() => setMembersModalVisible(false)}>
+              <TouchableOpacity onPress={closeMembersModal}>
                 <Icon name="close" size={24} color={DARK_GRAY} />
               </TouchableOpacity>
             </View>
@@ -560,7 +763,7 @@ const EventChat = () => {
                     style={localStyles.memberRow}
                     activeOpacity={0.85}
                     onPress={() =>
-                      setSelectedParticipant({
+                      handleOpenParticipant({
                         userId: item.userId,
                         displayName: item.displayName,
                         avatarUrl: item.avatarUrl,
@@ -592,30 +795,49 @@ const EventChat = () => {
                 );
               }}
             />
-          </View>
+          </Animated.View>
         </View>
       </Modal>
 
       <Modal
-        visible={Boolean(selectedParticipant && selectedParticipantCard)}
+        visible={participantSheetVisible}
         transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedParticipant(null)}
+        animationType="none"
+        onRequestClose={handleCloseParticipant}
       >
         <View style={styles.discoverSheetRoot}>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.discoverSheetBackdrop,
+              { opacity: participantBackdropOpacity },
+            ]}
+          />
           <TouchableOpacity
             activeOpacity={1}
-            style={styles.discoverSheetBackdrop}
-            onPress={() => setSelectedParticipant(null)}
+            style={StyleSheet.absoluteFillObject}
+            onPress={handleCloseParticipant}
           />
           <TouchableOpacity
             style={styles.discoverSheetCloseButton}
-            onPress={() => setSelectedParticipant(null)}
+            onPress={handleCloseParticipant}
             activeOpacity={0.9}
           >
             <Icon name="close" size={20} color="#2B2B2B" />
           </TouchableOpacity>
-          <View style={styles.discoverSheetContainer}>
+          <Animated.View
+            style={[
+              styles.discoverSheetContainer,
+              localStyles.participantSheetAnimated,
+              {
+                opacity: participantBackdropOpacity,
+                transform: [
+                  { translateY: participantSheetTranslateY },
+                  { scale: participantSheetScale },
+                ],
+              },
+            ]}
+          >
             <View style={styles.discoverSheetHandle} />
             {selectedParticipantCard ? (
               <CardItem
@@ -636,8 +858,12 @@ const EventChat = () => {
                 images={selectedParticipantCard.images}
                 onContactPress={handleConnectParticipant}
               />
-            ) : null}
-          </View>
+            ) : (
+              <View style={localStyles.participantSheetLoading}>
+                <ActivityIndicator color={PRIMARY_COLOR} />
+              </View>
+            )}
+          </Animated.View>
         </View>
       </Modal>
     </KeyboardAvoidingView>
@@ -806,15 +1032,27 @@ const localStyles = StyleSheet.create({
   // Members modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.5)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(43, 43, 43, 0.22)",
   },
   modalCard: {
     backgroundColor: WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    width: "100%",
+    maxWidth: 390,
+    maxHeight: "74%",
+    borderRadius: 28,
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.14,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 18 },
+    elevation: 14,
   },
   modalHeader: {
     flexDirection: "row",
@@ -853,6 +1091,14 @@ const localStyles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "CormorantGaramond_600SemiBold",
     color: "#D32F2F",
+  },
+  participantSheetAnimated: {
+    overflow: "hidden",
+  },
+  participantSheetLoading: {
+    minHeight: 360,
+    alignItems: "center",
+    justifyContent: "center",
   },
   inputAvatar: {
     width: 32,

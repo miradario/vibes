@@ -31,6 +31,14 @@ export type MatchWithProfile = MatchRow & {
   lastMessageAt: string | null;
 };
 
+export type IncomingLike = {
+  id: string;
+  likerUserId: string;
+  likerUserName: string;
+  likerUserPhoto: string | null;
+  createdAt: string;
+};
+
 export type DirectMessage = {
   id: string;
   matchId: string;
@@ -46,6 +54,8 @@ export type DirectMessage = {
 export const matchKeys = {
   all: ["matches"] as const,
   list: (userId?: string) => [...matchKeys.all, userId ?? "anon"] as const,
+  incomingLikes: (userId?: string) =>
+    [...matchKeys.all, "incomingLikes", userId ?? "anon"] as const,
 };
 
 export const dmKeys = {
@@ -168,6 +178,80 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
   });
 }
 
+async function fetchIncomingLikes(userId: string): Promise<IncomingLike[]> {
+  const [{ data: swipeRows, error: swipeError }, { data: matchRows, error: matchError }] =
+    await Promise.all([
+      supabase
+        .from("swipes")
+        .select("id, swiper_id, created_at")
+        .eq("target_id", userId)
+        .eq("direction", "like")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("matches")
+        .select("user1_id, user2_id")
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`),
+    ]);
+
+  if (swipeError) throw swipeError;
+  if (matchError) throw matchError;
+
+  const matchedUserIds = new Set(
+    (matchRows ?? []).map((row: any) =>
+      String(row.user1_id) === userId ? String(row.user2_id) : String(row.user1_id),
+    ),
+  );
+
+  const likerIds = Array.from(
+    new Set(
+      (swipeRows ?? [])
+        .map((row: any) => String(row.swiper_id ?? ""))
+        .filter((id) => id.length > 0 && !matchedUserIds.has(id)),
+    ),
+  );
+
+  if (likerIds.length === 0) return [];
+
+  const { data: myOutgoingSwipes, error: outgoingError } = await supabase
+    .from("swipes")
+    .select("target_id")
+    .eq("swiper_id", userId)
+    .in("target_id", likerIds);
+
+  if (outgoingError) throw outgoingError;
+
+  const dismissedOrLikedIds = new Set(
+    (myOutgoingSwipes ?? []).map((row: any) => String(row.target_id ?? "")),
+  );
+
+  const profileMap = await fetchProfileSummaries(
+    likerIds.filter((id) => !dismissedOrLikedIds.has(id)),
+  );
+
+  return (swipeRows ?? [])
+    .filter((row: any) => {
+      const likerId = String(row.swiper_id ?? "");
+      return (
+        likerId.length > 0 &&
+        !matchedUserIds.has(likerId) &&
+        !dismissedOrLikedIds.has(likerId) &&
+        profileMap.has(likerId)
+      );
+    })
+    .map((row: any) => {
+      const likerId = String(row.swiper_id);
+      const profile = profileMap.get(likerId);
+
+      return {
+        id: String(row.id),
+        likerUserId: likerId,
+        likerUserName: profile?.name ?? "Vibes",
+        likerUserPhoto: profile?.photo ?? null,
+        createdAt: String(row.created_at ?? ""),
+      };
+    });
+}
+
 export const useMatchesQuery = () => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
@@ -175,6 +259,18 @@ export const useMatchesQuery = () => {
   return useQuery<MatchWithProfile[]>({
     queryKey: matchKeys.list(userId),
     queryFn: () => fetchMatches(userId!),
+    enabled: Boolean(userId),
+    staleTime: 30_000,
+  });
+};
+
+export const useIncomingLikesQuery = () => {
+  const { data: session } = useAuthSession();
+  const userId = session?.user?.id;
+
+  return useQuery<IncomingLike[]>({
+    queryKey: matchKeys.incomingLikes(userId),
+    queryFn: () => fetchIncomingLikes(userId!),
     enabled: Boolean(userId),
     staleTime: 30_000,
   });

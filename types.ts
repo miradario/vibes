@@ -27,6 +27,8 @@ export type CardItemT = {
   pets?: string;
   images?: any[];
   onContactPress?: () => void;
+  secondaryActionLabel?: string;
+  onSecondaryActionPress?: () => void;
 };
 
 export type IconT = {
