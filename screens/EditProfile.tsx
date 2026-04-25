@@ -902,10 +902,10 @@ const EditProfile = () => {
           <Text style={styles.editSectionTitle}>{t("editProfile.location")}</Text>
           <View style={localStyles.readOnlyField}>
             <Text style={localStyles.readOnlyValue}>
-              {profileData?.locationLabel ??
+              {(profileData?.locationLabel ??
                 [profileData?.neighborhood, profileData?.city, profileData?.country]
                   .filter((item) => typeof item === "string" && item.trim())
-                  .join(", ") ||
+                  .join(", ")) ||
                 "-"}
             </Text>
           </View>

@@ -303,6 +303,18 @@ const EventChat = () => {
     }
   }, [eventLocation]);
 
+  const openParticipantCard = useCallback(
+    (participantUserId: string) => {
+      const sender = getSenderInfo(participantUserId);
+      setSelectedParticipant({
+        userId: participantUserId,
+        displayName: sender.name,
+        avatarUrl: sender.avatar,
+      });
+    },
+    [messages, participants],
+  );
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -436,10 +448,15 @@ const EventChat = () => {
                 >
                   {/* Avatar for other people's messages */}
                   {!isMe && (
-                    <Image
-                      source={sender.avatar ? { uri: sender.avatar } : LOGO}
-                      style={localStyles.messageAvatar}
-                    />
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={() => openParticipantCard(msg.senderId)}
+                    >
+                      <Image
+                        source={sender.avatar ? { uri: sender.avatar } : LOGO}
+                        style={localStyles.messageAvatar}
+                      />
+                    </TouchableOpacity>
                   )}
                   <View
                     style={[
@@ -450,9 +467,14 @@ const EventChat = () => {
                     ]}
                   >
                     {!isMe && (
-                      <Text style={localStyles.messageSender}>
-                        {sender.name || "Participante"}
-                      </Text>
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => openParticipantCard(msg.senderId)}
+                      >
+                        <Text style={localStyles.messageSender}>
+                          {sender.name || "Participante"}
+                        </Text>
+                      </TouchableOpacity>
                     )}
                     <Text
                       style={[

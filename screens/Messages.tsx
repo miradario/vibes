@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
-import styles, { DARK_GRAY } from "../assets/styles";
+import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
 import {
   useMatchesQuery,
   type MatchWithProfile,
@@ -364,7 +364,9 @@ const localStyles = {
     width: 50,
     height: 50,
     borderRadius: 12,
-    backgroundColor: "#E4B76E",
+    backgroundColor: BG_MAIN,
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.45)",
   },
   groupBadge: {
     marginLeft: 6,

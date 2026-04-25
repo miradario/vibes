@@ -132,10 +132,15 @@ const Chat = () => {
 
     return (
       <View style={localStyles.incomingMessageRow}>
-        <Image
-          source={otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
-          style={localStyles.messageAvatar}
-        />
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setShowProfileModal(true)}
+        >
+          <Image
+            source={otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
+            style={localStyles.messageAvatar}
+          />
+        </TouchableOpacity>
         {bubble}
       </View>
     );
