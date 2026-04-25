@@ -897,6 +897,19 @@ const EditProfile = () => {
             </Text>
           </View>
         </View>
+
+        <View style={styles.editSection}>
+          <Text style={styles.editSectionTitle}>{t("editProfile.location")}</Text>
+          <View style={localStyles.readOnlyField}>
+            <Text style={localStyles.readOnlyValue}>
+              {profileData?.locationLabel ??
+                [profileData?.neighborhood, profileData?.city, profileData?.country]
+                  .filter((item) => typeof item === "string" && item.trim())
+                  .join(", ") ||
+                "-"}
+            </Text>
+          </View>
+        </View>
       </ScrollView>
 
       <Modal

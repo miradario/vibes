@@ -44,6 +44,7 @@ const CardItem = ({
   name,
   age,
   location,
+  distanceLabel,
   vibe,
   intention,
   prompt,
@@ -86,8 +87,8 @@ const CardItem = ({
   };
 
   const discoverSubtitle =
+    [location, distanceLabel].filter(Boolean).join(" \u00b7 ") ||
     [vibe, intention].filter(Boolean).join(" \u00b7 ") ||
-    location ||
     (description ? description.slice(0, 64) : "");
   const discoverAgeLabel = age ? `${age} años` : null;
   const discoverPathDetails = normalizeSpiritualPathDetails(spiritualPathDetails);

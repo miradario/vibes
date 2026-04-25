@@ -875,6 +875,7 @@ const Home = () => {
                   name={selectedProfile.name}
                   age={selectedProfile.age}
                   location={selectedProfile.location}
+                  distanceLabel={selectedProfile.distanceLabel}
                   description={selectedProfile.description}
                   vibe={selectedProfile.vibe}
                   intention={selectedProfile.intention}

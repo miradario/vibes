@@ -144,9 +144,16 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
 
-        {ownProfile.preferences && ownProfile.preferences.length > 0 ? (
+        {location || (ownProfile.preferences && ownProfile.preferences.length > 0) ? (
           <View style={localStyles.preferencesCard}>
             <View style={localStyles.preferencesWrap}>
+              {location ? (
+                <View style={localStyles.preferenceChip}>
+                  <Text style={localStyles.preferenceChipText}>
+                    {location}
+                  </Text>
+                </View>
+              ) : null}
               {ownProfile.preferences.map((preference, index) => (
                 <View
                   key={`${preference}-${index}`}
