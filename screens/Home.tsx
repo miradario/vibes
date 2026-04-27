@@ -132,9 +132,12 @@ const matchesNumberRange = (
   value: number | null,
   min: number | null,
   max: number | null,
+  options?: {
+    includeNullValue?: boolean;
+  },
 ) => {
   if (min === null && max === null) return true;
-  if (value === null) return false;
+  if (value === null) return Boolean(options?.includeNullValue);
   if (min !== null && value < min) return false;
   if (max !== null && value > max) return false;
   return true;
@@ -252,6 +255,7 @@ const Home = () => {
             candidateAge,
             discoverFilters.ageMin,
             discoverFilters.ageMax,
+            { includeNullValue: true },
           )
         ) {
           return false;
