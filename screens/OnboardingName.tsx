@@ -8,12 +8,13 @@ import {
   TextInput,
   StyleSheet,
 } from "react-native";
-import { ResizeMode, Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import OnboardingVideo from "../components/OnboardingVideo";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
+import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingName = () => {
   const { t } = useI18n();
@@ -21,7 +22,7 @@ const OnboardingName = () => {
   const { draft, updateDraft } = useOnboardingDraft();
   const [name, setName] = useState(draft.displayName ?? "");
 
-  const progress = 16; // 1/6 steps
+  const progress = getOnboardingProgress("OnboardingName");
 
   return (
     <View style={styles.bg}>
@@ -32,11 +33,11 @@ const OnboardingName = () => {
           </TouchableOpacity>
           <View style={styles.onboardProgressTrack}>
             <View
-              style={[styles.onboardProgressFill, { width: `${progress}%` }]}
+              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
             />
           </View>
           <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress}%</Text>
+            <Text style={styles.onboardSkip}>{progress.label}</Text>
           </View>
         </View>
 
@@ -55,15 +56,7 @@ const OnboardingName = () => {
           />
         </View>
 
-        <View style={localStyles.videoWrap}>
-          <Video
-            source={require("../assets/videos/name.mp4")}
-            style={localStyles.video}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay
-            isMuted
-          />
-        </View>
+        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity
@@ -94,9 +87,5 @@ const localStyles = StyleSheet.create({
     minHeight: 320,
     marginTop: 18,
     marginBottom: 12,
-  },
-  video: {
-    width: "100%",
-    height: "100%",
   },
 });

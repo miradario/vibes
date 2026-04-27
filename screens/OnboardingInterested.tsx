@@ -9,10 +9,10 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
-import { ResizeMode, Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import OnboardingVideo from "../components/OnboardingVideo";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   useCompleteOnboardingMutation,
@@ -68,15 +68,7 @@ const OnboardingInterested = () => {
           ))}
         </View>
 
-        <View style={localStyles.videoWrap}>
-          <Video
-            source={require("../assets/videos/name.mp4")}
-            style={localStyles.video}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay
-            isMuted
-          />
-        </View>
+        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity
@@ -136,9 +128,5 @@ const localStyles = StyleSheet.create({
     minHeight: 320,
     marginTop: 18,
     marginBottom: 12,
-  },
-  video: {
-    width: "100%",
-    height: "100%",
   },
 });

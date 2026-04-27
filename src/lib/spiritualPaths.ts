@@ -54,6 +54,9 @@ type SpiritualPathDetailField = SpiritualPathDetailFieldConfig;
 const sanitizeText = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
+const sanitizeNotes = (value: unknown) =>
+  typeof value === "string" ? value : "";
+
 export const normalizeSpiritualPathDetail = (
   value: unknown,
 ): SpiritualPathDetail => {
@@ -69,6 +72,8 @@ export const normalizeSpiritualPathDetail = (
       const nextValue =
         field.key === "role"
           ? legacyRole
+          : field.key === "notes"
+            ? sanitizeNotes(source[field.key])
           : sanitizeText(source[field.key]);
       if (nextValue) {
         acc[field.key] = nextValue;

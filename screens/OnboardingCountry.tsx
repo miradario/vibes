@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
-import { ResizeMode, Video } from "expo-av";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import OnboardingVideo from "../components/OnboardingVideo";
 import { useI18n } from "../src/i18n";
+import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingCountry = () => {
   const { t } = useI18n();
@@ -22,7 +23,7 @@ const OnboardingCountry = () => {
   const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const progress = 50; // 3/6 steps
+  const progress = getOnboardingProgress("OnboardingCountry");
 
   const requestLocation = async () => {
     setLoading(true);
@@ -62,11 +63,11 @@ const OnboardingCountry = () => {
           </TouchableOpacity>
           <View style={styles.onboardProgressTrack}>
             <View
-              style={[styles.onboardProgressFill, { width: `${progress}%` }]}
+              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
             />
           </View>
           <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress}%</Text>
+            <Text style={styles.onboardSkip}>{progress.label}</Text>
           </View>
         </View>
 
@@ -100,15 +101,7 @@ const OnboardingCountry = () => {
           </Text>
         </TouchableOpacity>
 
-        <View style={localStyles.videoWrap}>
-          <Video
-            source={require("../assets/videos/name.mp4")}
-            style={localStyles.video}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay
-            isMuted
-          />
-        </View>
+        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity
@@ -135,9 +128,5 @@ const localStyles = StyleSheet.create({
     minHeight: 320,
     marginTop: 18,
     marginBottom: 12,
-  },
-  video: {
-    width: "100%",
-    height: "100%",
   },
 });

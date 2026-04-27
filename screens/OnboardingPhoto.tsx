@@ -5,6 +5,7 @@ import {
   Alert,
   Image,
   Modal,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,6 +16,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import styles, { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
+import OnboardingVideo from "../components/OnboardingVideo";
+import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
@@ -103,7 +106,7 @@ const OnboardingPhoto = () => {
   const [photoUris, setPhotoUris] = useState<string[]>(initialPhotos);
   const [showPickerModal, setShowPickerModal] = useState(false);
 
-  const progress = 83;
+  const progress = getOnboardingProgress("OnboardingPhoto");
 
   useEffect(() => {
     setPhotoUris(initialPhotos);
@@ -221,78 +224,87 @@ const OnboardingPhoto = () => {
           </TouchableOpacity>
           <View style={styles.onboardProgressTrack}>
             <View
-              style={[styles.onboardProgressFill, { width: `${progress}%` }]}
+              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
             />
           </View>
-          <View style={localStyles.headerSpacer} />
+          <View style={localStyles.headerValueWrap}>
+            <Text style={styles.onboardSkip}>{progress.label}</Text>
+          </View>
         </View>
+        <ScrollView
+          style={localStyles.scrollView}
+          contentContainerStyle={localStyles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.onboardTitle}>Add your photo</Text>
+          <Text style={styles.onboardSubtitle}>Show your authentic self</Text>
+          {draft.locationLabel || draft.country ? (
+            <Text style={localStyles.locationText}>
+              Ubicación: {draft.locationLabel || draft.country}
+            </Text>
+          ) : null}
 
-        <Text style={styles.onboardTitle}>Add your photo</Text>
-        <Text style={styles.onboardSubtitle}>Show your authentic self</Text>
-        {draft.locationLabel || draft.country ? (
-          <Text style={localStyles.locationText}>
-            Ubicación: {draft.locationLabel || draft.country}
-          </Text>
-        ) : null}
+          <View style={localStyles.previewSection}>
+            {primaryUri ? (
+              <Image
+                source={{ uri: primaryUri }}
+                style={localStyles.primaryPhoto}
+              />
+            ) : (
+              <View style={localStyles.emptyPrimaryPhoto}>
+                <Icon name="person" size={56} color={TEXT_SECONDARY} />
+                <Text style={localStyles.emptyPrimaryLabel}>No photo yet</Text>
+              </View>
+            )}
+            <Text style={localStyles.primaryBadge}>Primary</Text>
+          </View>
 
-        <View style={localStyles.previewSection}>
-          {primaryUri ? (
-            <Image
-              source={{ uri: primaryUri }}
-              style={localStyles.primaryPhoto}
-            />
-          ) : (
-            <View style={localStyles.emptyPrimaryPhoto}>
-              <Icon name="person" size={56} color={TEXT_SECONDARY} />
-              <Text style={localStyles.emptyPrimaryLabel}>No photo yet</Text>
+          {extraPhotos.length > 0 ? (
+            <View style={localStyles.thumbsRow}>
+              {extraPhotos.map((uri, index) => (
+                <TouchableOpacity
+                  key={`${uri}-${index}`}
+                  onPress={() => setAsPrimary(index + 1)}
+                  style={localStyles.thumbWrap}
+                >
+                  <Image source={{ uri }} style={localStyles.thumbPhoto} />
+                </TouchableOpacity>
+              ))}
             </View>
-          )}
-          <Text style={localStyles.primaryBadge}>Primary</Text>
-        </View>
+          ) : null}
 
-        {extraPhotos.length > 0 ? (
-          <View style={localStyles.thumbsRow}>
-            {extraPhotos.map((uri, index) => (
-              <TouchableOpacity
-                key={`${uri}-${index}`}
-                onPress={() => setAsPrimary(index + 1)}
-                style={localStyles.thumbWrap}
-              >
-                <Image source={{ uri }} style={localStyles.thumbPhoto} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : null}
-
-        <View style={styles.onboardOptions}>
-          <TouchableOpacity
-            style={styles.welcomeSecondary}
-            onPress={uploadPhoto}
-          >
-            <Icon
-              name="images"
-              size={18}
-              color="#D88C7A"
-              style={localStyles.buttonIcon}
-            />
-            <Text style={styles.welcomeSecondaryText}>Upload photo</Text>
-          </TouchableOpacity>
-
-          {photoUris.length > 0 && canUploadMore ? (
+          <View style={styles.onboardOptions}>
             <TouchableOpacity
               style={styles.welcomeSecondary}
               onPress={uploadPhoto}
             >
               <Icon
-                name="add"
+                name="images"
                 size={18}
                 color="#D88C7A"
                 style={localStyles.buttonIcon}
               />
-              <Text style={styles.welcomeSecondaryText}>Upload another</Text>
+              <Text style={styles.welcomeSecondaryText}>Upload photo</Text>
             </TouchableOpacity>
-          ) : null}
-        </View>
+
+            {photoUris.length > 0 && canUploadMore ? (
+              <TouchableOpacity
+                style={styles.welcomeSecondary}
+                onPress={uploadPhoto}
+              >
+                <Icon
+                  name="add"
+                  size={18}
+                  color="#D88C7A"
+                  style={localStyles.buttonIcon}
+                />
+                <Text style={styles.welcomeSecondaryText}>Upload another</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          <OnboardingVideo containerStyle={localStyles.videoWrap} />
+        </ScrollView>
 
         <View style={localStyles.footer}>
           <TouchableOpacity style={styles.onboardNext} onPress={onContinue}>
@@ -358,13 +370,20 @@ const OnboardingPhoto = () => {
 };
 
 const localStyles = StyleSheet.create({
-  headerSpacer: {
+  headerValueWrap: {
     width: 42,
+    alignItems: "flex-end",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   previewSection: {
     alignItems: "center",
-    marginTop: 24,
-    marginBottom: 18,
+    marginTop: 18,
+    marginBottom: 14,
   },
   locationText: {
     marginTop: 8,
@@ -374,16 +393,16 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
   },
   primaryPhoto: {
-    width: 210,
-    height: 210,
-    borderRadius: 105,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
     borderWidth: 2,
     borderColor: "#D88C7A",
   },
   emptyPrimaryPhoto: {
-    width: 210,
-    height: 210,
-    borderRadius: 105,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
     borderWidth: 2,
     borderColor: "#D88C7A",
     borderStyle: "dashed",
@@ -426,10 +445,15 @@ const localStyles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
+  videoWrap: {
+    height: 140,
+    marginTop: 10,
+    marginBottom: 4,
+  },
   footer: {
-    marginTop: 28,
-    paddingTop: 8,
-    paddingBottom: 24,
+    paddingTop: 10,
+    paddingBottom: 8,
+    backgroundColor: styles.bg.backgroundColor,
   },
   skipButton: {
     marginTop: 12,

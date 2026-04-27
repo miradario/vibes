@@ -11,12 +11,13 @@ import {
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { ResizeMode, Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import OnboardingVideo from "../components/OnboardingVideo";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
+import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingAge = () => {
   const { t } = useI18n();
@@ -29,7 +30,7 @@ const OnboardingAge = () => {
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   });
 
-  const progress = 33; // 2/6 steps
+  const progress = getOnboardingProgress("OnboardingAge");
 
   const maxDate = useMemo(() => {
     const today = new Date();
@@ -56,6 +57,7 @@ const OnboardingAge = () => {
   };
 
   const isValidAge = birthDate ? getAge(birthDate) >= 18 : false;
+  const showUnderageError = birthDate ? !isValidAge : false;
 
   const handleChange = (_event: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS === "android") {
@@ -75,11 +77,11 @@ const OnboardingAge = () => {
           </TouchableOpacity>
           <View style={styles.onboardProgressTrack}>
             <View
-              style={[styles.onboardProgressFill, { width: `${progress}%` }]}
+              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
             />
           </View>
           <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress}%</Text>
+            <Text style={styles.onboardSkip}>{progress.label}</Text>
           </View>
         </View>
 
@@ -108,15 +110,13 @@ const OnboardingAge = () => {
           />
         ) : null}
 
-        <View style={localStyles.videoWrap}>
-          <Video
-            source={require("../assets/videos/name.mp4")}
-            style={localStyles.video}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay
-            isMuted
-          />
-        </View>
+        {showUnderageError ? (
+          <Text style={localStyles.ageError}>
+            Debés tener al menos 18 años para continuar.
+          </Text>
+        ) : null}
+
+        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity
@@ -126,9 +126,9 @@ const OnboardingAge = () => {
             ]}
             disabled={!isValidAge}
             onPress={() => {
-              if (!birthDate) return;
+              if (!birthDate || !isValidAge) return;
               updateDraft({ birthDate: formatDate(birthDate) });
-              navigation.navigate("OnboardingPhoto" as never);
+              navigation.navigate("OnboardingGender" as never);
             }}
           >
             <Text style={styles.onboardNextText}>{t("common.next")}</Text>
@@ -148,8 +148,9 @@ const localStyles = StyleSheet.create({
     marginTop: 18,
     marginBottom: 12,
   },
-  video: {
-    width: "100%",
-    height: "100%",
+  ageError: {
+    marginTop: 10,
+    color: "#C65353",
+    fontSize: 14,
   },
 });

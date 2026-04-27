@@ -2,17 +2,20 @@
 
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { ResizeMode, Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import OnboardingVideo from "../components/OnboardingVideo";
 import SpiritualPathDetailsModal from "../components/SpiritualPathDetailsModal";
+import { useAuthSession } from "../src/auth/auth.queries";
 import {
   getSelectedSpiritualPaths,
   hasSpiritualPathDetail,
@@ -22,14 +25,20 @@ import {
   type SpiritualPathDetail,
   type SpiritualPathDetails,
 } from "../src/lib/spiritualPaths";
-import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import {
+  useCompleteOnboardingMutation,
+  useOnboardingDraft,
+} from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
+import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingSpiritualPath = () => {
   const { locale, t } = useI18n();
   const navigation = useNavigation();
-  const { draft, updateDraft } = useOnboardingDraft();
+  const { data: session } = useAuthSession();
+  const { draft, updateDraft, resetDraft } = useOnboardingDraft();
+  const completeMutation = useCompleteOnboardingMutation();
   const [selectedPaths, setSelectedPaths] = useState<string[]>(
     getSelectedSpiritualPaths(draft.spiritualPath, draft.spiritualPathDetails),
   );
@@ -38,7 +47,7 @@ const OnboardingSpiritualPath = () => {
   );
   const [activePath, setActivePath] = useState<string | null>(null);
 
-  const progress = 66;
+  const progress = getOnboardingProgress("OnboardingSpiritualPath");
 
   const openPathEditor = (path: string) => {
     setSelectedPaths((prev) => (prev.includes(path) ? prev : [...prev, path]));
@@ -62,12 +71,38 @@ const OnboardingSpiritualPath = () => {
     setActivePath(null);
   };
 
-  const continueOnboarding = () => {
+  const continueOnboarding = async () => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      Alert.alert(t("common.error"), t("onboarding.onboardingError"));
+      return;
+    }
+
+    const nextDraft = {
+      ...draft,
+      spiritualPath: selectedPaths,
+      spiritualPathDetails: pathDetails,
+    };
+
     updateDraft({
       spiritualPath: selectedPaths,
       spiritualPathDetails: pathDetails,
     });
-    navigation.navigate("OnboardingGender" as never);
+
+    try {
+      await completeMutation.mutateAsync({
+        userId,
+        draft: nextDraft,
+      });
+      resetDraft();
+      navigation.navigate("Tab" as never);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("onboarding.onboardingError");
+      Alert.alert(t("common.error"), message);
+    }
   };
 
   return (
@@ -79,11 +114,11 @@ const OnboardingSpiritualPath = () => {
           </TouchableOpacity>
           <View style={styles.onboardProgressTrack}>
             <View
-              style={[styles.onboardProgressFill, { width: `${progress}%` }]}
+              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
             />
           </View>
           <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress}%</Text>
+            <Text style={styles.onboardSkip}>{progress.label}</Text>
           </View>
         </View>
 
@@ -122,21 +157,28 @@ const OnboardingSpiritualPath = () => {
           ))}
         </ScrollView>
 
-        <View style={localStyles.videoWrap}>
-          <Video
-            source={require("../assets/videos/name.mp4")}
-            style={localStyles.video}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay
-            isMuted
-          />
-        </View>
+        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
-          <TouchableOpacity style={styles.onboardNext} onPress={continueOnboarding}>
-            <Text style={styles.onboardNextText}>{t("common.continue")}</Text>
+          <TouchableOpacity
+            style={[
+              styles.onboardNext,
+              completeMutation.isPending && styles.onboardNextDisabled,
+            ]}
+            onPress={continueOnboarding}
+            disabled={completeMutation.isPending}
+          >
+            {completeMutation.isPending ? (
+              <ActivityIndicator color={DARK_GRAY} />
+            ) : (
+              <Text style={styles.onboardNextText}>{t("common.continue")}</Text>
+            )}
           </TouchableOpacity>
-          <TouchableOpacity style={localStyles.skipButton} onPress={continueOnboarding}>
+          <TouchableOpacity
+            style={localStyles.skipButton}
+            onPress={continueOnboarding}
+            disabled={completeMutation.isPending}
+          >
             <Text style={styles.onboardSkip}>{t("common.skip")}</Text>
           </TouchableOpacity>
         </View>
@@ -165,10 +207,6 @@ const localStyles = StyleSheet.create({
     height: 220,
     marginTop: 18,
     marginBottom: 12,
-  },
-  video: {
-    width: "100%",
-    height: "100%",
   },
   selectedPathHint: {
     color: "#8C7B63",
