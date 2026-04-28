@@ -9,6 +9,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type VibesActionButtonProps = {
@@ -51,6 +52,18 @@ const VibesActionButton = ({
       activeOpacity={0.9}
       disabled={disabled}
     >
+      <View pointerEvents="none" style={styles.startGradientWrap}>
+        <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <Defs>
+            <LinearGradient id="VibesActionGradient" x1="0" y1="0.5" x2="1" y2="0.5">
+              <Stop offset="0" stopColor="#FFE2C8" />
+              <Stop offset="0.5" stopColor="#C1D5FF" />
+              <Stop offset="1" stopColor="#7680BE" />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100" height="100" rx="50" ry="50" fill="url(#VibesActionGradient)" />
+        </Svg>
+      </View>
       <Text style={styles.startText}>{label}</Text>
     </TouchableOpacity>
   );
@@ -63,16 +76,22 @@ const styles = StyleSheet.create({
     borderRadius: vibesTheme.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-    shadowColor: "#E4B76E",
-    shadowOpacity: 0.22,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#8B97CF",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.62)",
+    shadowColor: "#8B97CF",
+    shadowOpacity: 0.32,
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 22,
     elevation: 3,
   },
+  startGradientWrap: {
+    ...StyleSheet.absoluteFillObject,
+  },
   startText: {
-    color: "#F6F6F4",
-    fontSize: 18,
+    color: vibesTheme.colors.primaryText,
+    fontSize: 19,
     fontFamily: "CormorantGaramond_600SemiBold",
   },
   skipWrap: {
@@ -83,7 +102,7 @@ const styles = StyleSheet.create({
   skipDivider: {
     width: "100%",
     height: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.12)",
+    backgroundColor: "rgba(36, 61, 142, 0.14)",
     marginBottom: 14,
   },
   skipButton: {

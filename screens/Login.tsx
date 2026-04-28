@@ -52,6 +52,11 @@ const Login = () => {
 
   return (
     <View style={styles.bg}>
+      <View pointerEvents="none" style={localStyles.authBackdrop}>
+        <View style={localStyles.blobTopLeft} />
+        <View style={localStyles.blobTopRight} />
+        <View style={localStyles.blobBottom} />
+      </View>
       <View style={localStyles.heroWrap}>
         <LoopingVideo
           source={require("../assets/videos/login.mp4")}
@@ -80,7 +85,7 @@ const Login = () => {
               <TextInput
                 style={styles.loginInput}
                 placeholder={t("login.emailPlaceholder")}
-                placeholderTextColor="#6E6E6E"
+                placeholderTextColor="rgba(118, 128, 190, 0.72)"
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
@@ -94,7 +99,7 @@ const Login = () => {
                 <TextInput
                   style={[styles.loginInput, localStyles.passwordInput]}
                   placeholder=""
-                  placeholderTextColor="#6E6E6E"
+                  placeholderTextColor="rgba(118, 128, 190, 0.72)"
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
@@ -107,7 +112,7 @@ const Login = () => {
                   <Icon
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
                     size={20}
-                    color="#8C7B63"
+                    color="#8B97CF"
                   />
                 </TouchableOpacity>
               </View>
@@ -139,6 +144,37 @@ const Login = () => {
 export default Login;
 
 const localStyles = StyleSheet.create({
+  authBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  blobTopLeft: {
+    position: "absolute",
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: "rgba(255, 226, 200, 0.62)",
+    top: -70,
+    right: -60,
+  },
+  blobTopRight: {
+    position: "absolute",
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: "rgba(247, 210, 201, 0.56)",
+    top: 220,
+    left: -80,
+  },
+  blobBottom: {
+    position: "absolute",
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: "rgba(193, 213, 255, 0.4)",
+    bottom: -90,
+    right: -70,
+  },
   actions: {
     marginTop: 28,
   },

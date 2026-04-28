@@ -26,6 +26,11 @@ const Welcome = () => {
 
   return (
     <View style={localStyles.container}>
+      <View pointerEvents="none" style={localStyles.authBackdrop}>
+        <View style={localStyles.blobTopLeft} />
+        <View style={localStyles.blobTopRight} />
+        <View style={localStyles.blobBottom} />
+      </View>
       <View style={localStyles.content}>
         <View style={localStyles.top}>
           <View style={localStyles.illustrationWrap}>
@@ -64,6 +69,37 @@ const localStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: vibesTheme.colors.background,
+  },
+  authBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  blobTopLeft: {
+    position: "absolute",
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: "rgba(255, 226, 200, 0.6)",
+    top: -60,
+    right: -60,
+  },
+  blobTopRight: {
+    position: "absolute",
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: "rgba(247, 210, 201, 0.48)",
+    top: 300,
+    left: -90,
+  },
+  blobBottom: {
+    position: "absolute",
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: "rgba(193, 213, 255, 0.4)",
+    bottom: -100,
+    right: -70,
   },
   content: {
     flex: 1,

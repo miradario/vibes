@@ -4,7 +4,7 @@ import React from "react";
 import { View, TouchableOpacity, Text } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import Icon from "./Icon";
-import styles, { PRIMARY_COLOR, WHITE } from "../assets/styles";
+import styles, { PRIMARY_COLOR, TEXT_SECONDARY, WHITE } from "../assets/styles";
 
 const CustomTabBar = ({
   state,
@@ -42,32 +42,38 @@ const CustomTabBar = ({
               onPress={onPress}
               style={styles.tabItem}
             >
-              {isFocused && <View style={styles.tabBump} />}
-              {isFocused ? (
-                <View style={styles.tabCircle}>
-                  {icon ? (
-                    icon({ focused: true })
-                  ) : (
-                    <Icon name="heart" size={22} color={WHITE} />
-                  )}
-                </View>
-              ) : (
-                icon && icon({ focused: false })
-              )}
-              {isFocused ? (
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[styles.tabButtonText, { color: PRIMARY_COLOR }]}
-                >
-                  {String(label)}
-                </Text>
-              ) : (
-                <View style={{ height: 18 }} />
-              )}
+              <View
+                style={[
+                  styles.tabCircle,
+                  !isFocused && styles.tabCircleInactive,
+                ]}
+              >
+                {icon ? (
+                  icon({ focused: isFocused })
+                ) : (
+                  <Icon
+                    name="heart"
+                    size={22}
+                    color={isFocused ? PRIMARY_COLOR : TEXT_SECONDARY}
+                  />
+                )}
+              </View>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  styles.tabButtonText,
+                  isFocused
+                    ? styles.tabButtonTextActive
+                    : styles.tabButtonTextInactive,
+                ]}
+              >
+                {String(label)}
+              </Text>
             </TouchableOpacity>
           );
         })}
+        <View pointerEvents="none" style={styles.tabBarHandle} />
       </View>
     </View>
   );
