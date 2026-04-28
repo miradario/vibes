@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,13 @@ import {
   useEventsFeedQuery,
 } from "../src/queries/events.queries";
 
+const normalizeSearchText = (value: string | null | undefined) =>
+  (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 const Events = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -32,12 +39,36 @@ const Events = () => {
     isLoading,
     error,
   } = section === "challenge" ? challengesQuery : eventsQuery;
+  const [search, setSearch] = useState("");
   const errorMessage =
     error instanceof Error && error.message.trim()
       ? error.message
       : section === "challenge"
         ? "No se pudieron cargar los challenges."
         : "No se pudieron cargar los eventos.";
+  const normalizedSearch = normalizeSearchText(search);
+  const filteredItems = useMemo(() => {
+    if (!normalizedSearch) return items;
+
+    return items.filter((item) => {
+      const haystack = normalizeSearchText(
+        [
+          item.title,
+          item.subtitle,
+          item.description,
+          item.date,
+          item.location,
+          item.hostName,
+          item.modality === "online" ? "online" : "presencial",
+          item.pricingType === "paid" ? "pago" : "gratis",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      );
+
+      return haystack.includes(normalizedSearch);
+    });
+  }, [items, normalizedSearch]);
 
   return (
     <View style={styles.bg}>
@@ -71,12 +102,17 @@ const Events = () => {
             style={styles.eventsSearchInput}
             placeholder={searchPlaceholder}
             placeholderTextColor={TEXT_SECONDARY}
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
           />
           <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
         </View>
 
         <FlatList
-          data={items}
+          data={filteredItems}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.eventsListContent}
           showsVerticalScrollIndicator={false}
@@ -85,10 +121,14 @@ const Events = () => {
               <Text style={localStyles.emptyTitle}>
                 {isLoading
                   ? section === "challenge"
-                    ? "Loading challenges..."
+                  ? "Loading challenges..."
                     : "Loading events..."
                   : error
                     ? "No se pudieron cargar"
+                    : normalizedSearch
+                      ? section === "challenge"
+                        ? "No encontramos challenges"
+                        : "No encontramos eventos"
                     : section === "challenge"
                       ? "No real challenges yet"
                       : "No real events yet"}
@@ -98,6 +138,8 @@ const Events = () => {
                   ? "Consultando Supabase..."
                   : error
                     ? errorMessage
+                    : normalizedSearch
+                      ? "Probá con otro nombre, lugar o fecha."
                     : section === "challenge"
                       ? "Create a challenge or connect a real source to populate this list."
                       : "Create an event or connect a real events source to populate this list."}

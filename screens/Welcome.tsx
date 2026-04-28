@@ -2,10 +2,11 @@
 
 import React, { useEffect } from "react";
 import { View, StyleSheet } from "react-native";
-import { ResizeMode, Video } from "expo-av";
+import { ResizeMode } from "expo-av";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import VibesActionButton from "../components/VibesActionButton";
+import LoopingVideo from "../components/LoopingVideo";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesHeader from "../src/components/VibesHeader";
 import { useI18n } from "../src/i18n";
@@ -28,12 +29,11 @@ const Welcome = () => {
       <View style={localStyles.content}>
         <View style={localStyles.top}>
           <View style={localStyles.illustrationWrap}>
-            <Video
+            <LoopingVideo
               source={require("../assets/videos/bienvenidx.mp4")}
+              posterSource={require("../assets/images/challenges/vibesLogo.png")}
               style={localStyles.video}
               resizeMode={ResizeMode.CONTAIN}
-              shouldPlay
-              isMuted
             />
           </View>
           <VibesHeader subtitle={t("welcome.subtitle")} />

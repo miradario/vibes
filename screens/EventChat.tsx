@@ -27,7 +27,7 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
-import CardItem from "../components/CardItem";
+import UserProfileCard from "../components/UserProfileCard";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
@@ -840,22 +840,8 @@ const EventChat = () => {
           >
             <View style={styles.discoverSheetHandle} />
             {selectedParticipantCard ? (
-              <CardItem
-                variant="discover"
-                image={selectedParticipantCard.image}
-                name={selectedParticipantCard.name}
-                age={selectedParticipantCard.age}
-                location={selectedParticipantCard.location}
-                description={selectedParticipantCard.description}
-                vibe={selectedParticipantCard.vibe}
-                intention={selectedParticipantCard.intention}
-                prompt={selectedParticipantCard.prompt}
-                tags={selectedParticipantCard.tags}
-                preferences={selectedParticipantCard.preferences}
-                vegetarian={selectedParticipantCard.vegetarian}
-                smoking={selectedParticipantCard.smoking}
-                pets={selectedParticipantCard.pets}
-                images={selectedParticipantCard.images}
+              <UserProfileCard
+                profile={selectedParticipantCard}
                 onContactPress={handleConnectParticipant}
               />
             ) : (

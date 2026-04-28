@@ -15,10 +15,9 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from "expo-location";
-
-import { CardItem } from "../components";
 import DiscoverOrbitCanvas from "../components/DiscoverOrbitCanvas";
 import Filters from "../components/Filters";
+import UserProfileSheet from "../components/UserProfileSheet";
 import styles, { DIMENSION_WIDTH } from "../assets/styles";
 import Icon from "../components/Icon";
 import type { DataT } from "../types";
@@ -851,60 +850,22 @@ const Home = () => {
           </View>
         </Modal>
 
-        <Modal
+        <UserProfileSheet
           visible={showProfileSheet}
-          transparent
-          animationType="slide"
-          onRequestClose={closeProfileSheet}
-        >
-          <View style={styles.discoverSheetRoot}>
-            <TouchableOpacity
-              activeOpacity={1}
-              style={styles.discoverSheetBackdrop}
-              onPress={closeProfileSheet}
-            />
-            <TouchableOpacity
-              style={styles.discoverSheetCloseButton}
-              onPress={closeProfileSheet}
-              activeOpacity={0.9}
-            >
-              <Icon name="close" size={20} color="#2B2B2B" />
-            </TouchableOpacity>
-            <View style={styles.discoverSheetContainer}>
-              <View style={styles.discoverSheetHandle} />
-              {selectedProfile ? (
-                <CardItem
-                  variant="discover"
-                  image={selectedProfile.image}
-                  name={selectedProfile.name}
-                  age={selectedProfile.age}
-                  location={selectedProfile.location}
-                  distanceLabel={selectedProfile.distanceLabel}
-                  description={selectedProfile.description}
-                  vibe={selectedProfile.vibe}
-                  intention={selectedProfile.intention}
-                  prompt={selectedProfile.prompt}
-                  tags={selectedProfile.tags}
-                  preferences={selectedProfile.preferences}
-                  spiritualPath={selectedProfile.spiritualPath}
-                  spiritualPathDetails={selectedProfile.spiritualPathDetails}
-                  vegetarian={selectedProfile.vegetarian}
-                  smoking={selectedProfile.smoking}
-                  pets={selectedProfile.pets}
-                  images={selectedProfile.images}
-                  matches={selectedProfile.match}
-                  onImagePress={(_image, index) =>
-                    openGallery(
-                      selectedProfile.images || [selectedProfile.image],
-                      index ?? 0,
-                    )
-                  }
-                  onContactPress={() => connectProfile(selectedProfile)}
-                />
-              ) : null}
-            </View>
-          </View>
-        </Modal>
+          profile={selectedProfile}
+          onClose={closeProfileSheet}
+          onImagePress={(_image, index) =>
+            selectedProfile
+              ? openGallery(
+                  selectedProfile.images || [selectedProfile.image],
+                  index ?? 0,
+                )
+              : undefined
+          }
+          onContactPress={() =>
+            selectedProfile ? connectProfile(selectedProfile) : undefined
+          }
+        />
 
         <View style={styles.containerHome}>
           <View style={localStyles.discoverTop}>

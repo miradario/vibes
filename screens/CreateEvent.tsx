@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
-import { ResizeMode, Video } from "expo-av";
+import { ResizeMode } from "expo-av";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -30,6 +30,7 @@ import styles, {
   BLACK,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import LoopingVideo from "../components/LoopingVideo";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import {
@@ -600,13 +601,11 @@ const CreateEvent = () => {
           </View>
           {activePreset ? (
             <View style={localStyles.videoPreviewCard}>
-              <Video
+              <LoopingVideo
                 source={activePreset.video}
+                posterSource={activePreset.image}
                 style={localStyles.videoPreview}
                 resizeMode={ResizeMode.CONTAIN}
-                isMuted
-                isLooping
-                shouldPlay
               />
             </View>
           ) : null}

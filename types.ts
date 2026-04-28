@@ -13,6 +13,7 @@ export type CardItemT = {
   matches?: string;
   name: string;
   age?: string;
+  gender?: string;
   location?: string;
   distanceLabel?: string;
   vibe?: string;
@@ -20,6 +21,8 @@ export type CardItemT = {
   prompt?: string;
   tags?: string[];
   preferences?: string[];
+  sharedEvents?: string[];
+  sharedChallenges?: string[];
   spiritualPath?: string[];
   spiritualPathDetails?: SpiritualPathDetails;
   vegetarian?: string;
@@ -75,6 +78,7 @@ export type DataT = {
   image: any;
   images?: any[];
   age?: string;
+  gender?: string;
   info1?: string;
   info2?: string;
   info3?: string;

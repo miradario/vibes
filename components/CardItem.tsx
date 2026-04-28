@@ -43,6 +43,7 @@ const CardItem = ({
   matches,
   name,
   age,
+  gender,
   location,
   distanceLabel,
   vibe,
@@ -50,6 +51,8 @@ const CardItem = ({
   prompt,
   tags,
   preferences,
+  sharedEvents,
+  sharedChallenges,
   spiritualPath,
   spiritualPathDetails,
   vegetarian,
@@ -88,11 +91,20 @@ const CardItem = ({
     fontFamily: "CormorantGaramond_500Medium",
   };
 
+  const discoverLocationLine =
+    location && distanceLabel && location.includes(distanceLabel)
+      ? location
+      : [location, distanceLabel].filter(Boolean).join(" \u00b7 ");
   const discoverSubtitle =
-    [location, distanceLabel].filter(Boolean).join(" \u00b7 ") ||
+    discoverLocationLine ||
     [vibe, intention].filter(Boolean).join(" \u00b7 ") ||
     (description ? description.slice(0, 64) : "");
   const discoverAgeLabel = age ? `${age} años` : null;
+  const discoverBasics = [
+    discoverAgeLabel,
+    gender ? `Género: ${gender}` : null,
+    location,
+  ].filter(Boolean) as string[];
   const discoverPathDetails = normalizeSpiritualPathDetails(spiritualPathDetails);
   const discoverSpiritualPaths = getSelectedSpiritualPaths(
     spiritualPath,
@@ -119,8 +131,10 @@ const CardItem = ({
   addIf('Estilo de amor', spiritualPathDetails?.love_style);
   addIf('Mascotas', spiritualPathDetails?.pets);
   const discoverPreferences = extraPrefs;
+  const sharedEventsList = (sharedEvents ?? []).filter(Boolean);
+  const sharedChallengesList = (sharedChallenges ?? []).filter(Boolean);
   const discoverHabits = [
-    vegetarian ? `Vegetariano: ${vegetarian}` : null,
+    vegetarian ? `Vegetarianismo: ${vegetarian}` : null,
     smoking ? `Fuma: ${smoking}` : null,
     pets ? `Mascotas: ${pets}` : null,
   ].filter(Boolean) as string[];
@@ -223,6 +237,19 @@ const CardItem = ({
             </View>
           ) : null}
 
+          {discoverBasics.length > 0 ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>Datos básicos</Text>
+              <View style={styles.discoverTagRowLeft}>
+                {discoverBasics.map((item, index) => (
+                  <View key={`${item}-${index}`} style={styles.discoverTagPill}>
+                    <Text style={styles.discoverTagText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
           {(vibe || intention) ? (
             <View style={styles.discoverInfoSection}>
               <Text style={styles.discoverSectionTitle}>Datos</Text>
@@ -283,11 +310,58 @@ const CardItem = ({
 
           {discoverPreferences.length > 0 ? (
             <View style={styles.discoverInfoSection}>
-              <Text style={styles.discoverSectionTitle}>Preferencias</Text>
+              <Text
+                style={[
+                  styles.discoverSectionTitle,
+                  styles.discoverPreferencesSectionTitle,
+                ]}
+              >
+                Preferencias
+              </Text>
               <View style={styles.discoverTagRowLeft}>
                 {discoverPreferences.map((preference, index) => (
-                  <View key={`${preference}-${index}`} style={styles.discoverTagPill}>
-                    <Text style={styles.discoverTagText}>{preference}</Text>
+                  <View
+                    key={`${preference}-${index}`}
+                    style={[styles.discoverTagPill, styles.discoverPreferencePill]}
+                  >
+                    <Text
+                      style={[styles.discoverTagText, styles.discoverPreferenceTagText]}
+                    >
+                      {preference}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {sharedEventsList.length > 0 || sharedChallengesList.length > 0 ? (
+            <View style={styles.discoverInfoSection}>
+              <Text style={styles.discoverSectionTitle}>En común</Text>
+              <View style={styles.discoverSharedSection}>
+                {sharedEventsList.map((eventTitle, index) => (
+                  <View key={`shared-event-${eventTitle}-${index}`} style={styles.discoverSharedItem}>
+                    <View style={styles.discoverSharedIconWrap}>
+                      <Icon name="calendar-outline" size={16} color={TEXT_PRIMARY} />
+                    </View>
+                    <View style={styles.discoverSharedTextWrap}>
+                      <Text style={styles.discoverSharedLabel}>Evento</Text>
+                      <Text style={styles.discoverSharedValue}>{eventTitle}</Text>
+                    </View>
+                  </View>
+                ))}
+                {sharedChallengesList.map((challengeTitle, index) => (
+                  <View
+                    key={`shared-challenge-${challengeTitle}-${index}`}
+                    style={styles.discoverSharedItem}
+                  >
+                    <View style={styles.discoverSharedIconWrap}>
+                      <Icon name="sparkles-outline" size={16} color={TEXT_PRIMARY} />
+                    </View>
+                    <View style={styles.discoverSharedTextWrap}>
+                      <Text style={styles.discoverSharedLabel}>Challenge</Text>
+                      <Text style={styles.discoverSharedValue}>{challengeTitle}</Text>
+                    </View>
                   </View>
                 ))}
               </View>

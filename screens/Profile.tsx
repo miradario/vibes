@@ -20,12 +20,6 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useI18n } from "../src/i18n";
 
-const stripPreferenceLabel = (value: string) => {
-  const index = value.indexOf(":");
-  if (index === -1) return value;
-  return value.slice(index + 1).trim() || value;
-};
-
 const Profile = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
@@ -55,7 +49,6 @@ const Profile = () => {
 
   const menuItems = [
     { icon: "options", label: t("profile.preferences"), screen: "Settings" },
-    { icon: "mail", label: t("profile.contact"), screen: "Contact" },
     {
       icon: "document-text",
       label: t("profile.terms"),
@@ -144,30 +137,6 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
 
-        {location || (ownProfile.preferences && ownProfile.preferences.length > 0) ? (
-          <View style={localStyles.preferencesCard}>
-            <View style={localStyles.preferencesWrap}>
-              {location ? (
-                <View style={localStyles.preferenceChip}>
-                  <Text style={localStyles.preferenceChipText}>
-                    {location}
-                  </Text>
-                </View>
-              ) : null}
-              {ownProfile.preferences.map((preference, index) => (
-                <View
-                  key={`${preference}-${index}`}
-                  style={localStyles.preferenceChip}
-                >
-                  <Text style={localStyles.preferenceChipText}>
-                    {stripPreferenceLabel(preference)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        ) : null}
-
         <View style={styles.auraFooter}>
           <Text style={styles.auraFooterTitle}>{t("profile.aboutVibes")}</Text>
           <Text style={styles.auraFooterVersion}>version 1.1.4</Text>
@@ -175,38 +144,6 @@ const Profile = () => {
       </ScrollView>
     </View>
   );
-};
-
-const localStyles = {
-  preferencesCard: {
-    marginTop: 18,
-    marginHorizontal: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    borderRadius: 22,
-    backgroundColor: "#FBF7F4",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-  },
-  preferencesWrap: {
-    flexDirection: "row" as const,
-    flexWrap: "wrap" as const,
-  },
-  preferenceChip: {
-    backgroundColor: "#F6F6F4",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  preferenceChipText: {
-    color: "#2B2B2B",
-    fontSize: 14,
-    fontFamily: "CormorantGaramond_500Medium",
-  },
 };
 
 export default Profile;

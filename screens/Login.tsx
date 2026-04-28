@@ -12,12 +12,13 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { ResizeMode, Video } from "expo-av";
+import { ResizeMode } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
 import VibesHeader from "../src/components/VibesHeader";
 import Icon from "../components/Icon";
+import LoopingVideo from "../components/LoopingVideo";
 import { useI18n } from "../src/i18n";
 
 const Login = () => {
@@ -52,12 +53,11 @@ const Login = () => {
   return (
     <View style={styles.bg}>
       <View style={localStyles.heroWrap}>
-        <Video
+        <LoopingVideo
           source={require("../assets/videos/login.mp4")}
+          posterSource={require("../assets/images/challenges/login.png")}
           style={localStyles.loginIllustration}
           resizeMode={ResizeMode.CONTAIN}
-          shouldPlay
-          isMuted
         />
       </View>
       <KeyboardAvoidingView

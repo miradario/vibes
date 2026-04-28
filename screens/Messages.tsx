@@ -8,12 +8,11 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
-  Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
 import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
-import CardItem from "../components/CardItem";
+import UserProfileSheet from "../components/UserProfileSheet";
 import {
   useMatchesQuery,
   useIncomingLikesQuery,
@@ -375,52 +374,14 @@ const Messages = () => {
         )}
       </View>
 
-      <Modal
+      <UserProfileSheet
         visible={Boolean(selectedIncomingLike && selectedIncomingLikeCard)}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedIncomingLike(null)}
-      >
-        <View style={styles.discoverSheetRoot}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.discoverSheetBackdrop}
-            onPress={() => setSelectedIncomingLike(null)}
-          />
-          <TouchableOpacity
-            style={styles.discoverSheetCloseButton}
-            onPress={() => setSelectedIncomingLike(null)}
-            activeOpacity={0.9}
-          >
-            <Icon name="close" size={20} color="#2B2B2B" />
-          </TouchableOpacity>
-          <View style={styles.discoverSheetContainer}>
-            <View style={styles.discoverSheetHandle} />
-            {selectedIncomingLikeCard ? (
-              <CardItem
-                variant="discover"
-                image={selectedIncomingLikeCard.image}
-                name={selectedIncomingLikeCard.name}
-                age={selectedIncomingLikeCard.age}
-                location={selectedIncomingLikeCard.location}
-                description={selectedIncomingLikeCard.description}
-                vibe={selectedIncomingLikeCard.vibe}
-                intention={selectedIncomingLikeCard.intention}
-                prompt={selectedIncomingLikeCard.prompt}
-                tags={selectedIncomingLikeCard.tags}
-                preferences={selectedIncomingLikeCard.preferences}
-                vegetarian={selectedIncomingLikeCard.vegetarian}
-                smoking={selectedIncomingLikeCard.smoking}
-                pets={selectedIncomingLikeCard.pets}
-                images={selectedIncomingLikeCard.images}
-                onContactPress={handleConnectIncomingLike}
-                secondaryActionLabel="Dismiss"
-                onSecondaryActionPress={handleDismissIncomingLike}
-              />
-            ) : null}
-          </View>
-        </View>
-      </Modal>
+        profile={selectedIncomingLikeCard}
+        onClose={() => setSelectedIncomingLike(null)}
+        onContactPress={handleConnectIncomingLike}
+        secondaryActionLabel="Dismiss"
+        onSecondaryActionPress={handleDismissIncomingLike}
+      />
     </View>
   );
 };

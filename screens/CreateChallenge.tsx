@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ResizeMode } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import DateTimePicker, {
   type DateTimePickerEvent,
@@ -25,6 +26,7 @@ import styles, {
   WHITE,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import LoopingVideo from "../components/LoopingVideo";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useCreateChallengeMutation } from "../src/queries/events.queries";
@@ -55,6 +57,13 @@ const CreateChallenge = () => {
   const [challengeStartDate, setChallengeStartDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const activePreset = getChallengeMediaPreset(selectedPresetId);
+  const parsedDays = days.trim() ? Number.parseInt(days, 10) : 0;
+  const isFormReady =
+    title.trim().length > 0 &&
+    subtitle.trim().length > 0 &&
+    Boolean(challengeStartDate) &&
+    Number.isFinite(parsedDays) &&
+    parsedDays > 0;
 
   const openDatePicker = () => {
     setShowDatePicker(true);
@@ -86,8 +95,19 @@ const CreateChallenge = () => {
   };
 
   const handleCreate = async () => {
-    if (!title.trim()) {
-      Alert.alert("Faltan datos", "Completá al menos el título del challenge.");
+    const missing: string[] = [];
+
+    if (!title.trim()) missing.push("título");
+    if (!subtitle.trim()) missing.push("descripción corta");
+    if (!challengeStartDate) missing.push("fecha de comienzo");
+
+    if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
+      missing.push("duración en días");
+    }
+
+    if (missing.length > 0) {
+      const fields = missing.join(", ");
+      Alert.alert("Faltan datos", `Completá: ${fields}.`);
       return;
     }
 
@@ -96,7 +116,6 @@ const CreateChallenge = () => {
       return;
     }
 
-    const parsedDays = days.trim() ? Number.parseInt(days, 10) : 0;
     const hostName =
       (typeof profile?.displayName === "string" && profile.displayName.trim()) ||
       session.user.email?.split("@")[0] ||
@@ -191,10 +210,16 @@ const CreateChallenge = () => {
               );
             })}
           </View>
-          <Image
-            source={activePreset?.image}
-            style={localStyles.imagePreview}
-          />
+          {activePreset ? (
+            <View style={localStyles.videoPreviewCard}>
+              <LoopingVideo
+                source={activePreset.video}
+                posterSource={activePreset.image}
+                style={localStyles.videoPreview}
+                resizeMode={ResizeMode.CONTAIN}
+              />
+            </View>
+          ) : null}
 
           <Text style={localStyles.label}>Fecha de comienzo</Text>
           <TouchableOpacity
@@ -238,23 +263,30 @@ const CreateChallenge = () => {
           />
         </View>
 
+      </ScrollView>
+
+      <View style={localStyles.fixedFooter}>
         <TouchableOpacity
-          style={localStyles.createButton}
+          style={[
+            localStyles.createButton,
+            (!isFormReady || createChallengeMutation.isPending) &&
+              localStyles.createButtonDisabled,
+          ]}
           onPress={handleCreate}
-          disabled={createChallengeMutation.isPending}
+          disabled={!isFormReady || createChallengeMutation.isPending}
         >
           <Text style={localStyles.createButtonText}>
             {createChallengeMutation.isPending ? "Creando..." : "Crear challenge"}
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </View>
   );
 };
 
 const localStyles = StyleSheet.create({
   content: {
-    paddingBottom: 32,
+    paddingBottom: 132,
   },
   formCard: {
     backgroundColor: WHITE,
@@ -320,11 +352,19 @@ const localStyles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
   },
-  imagePreview: {
-    marginTop: 10,
+  videoPreviewCard: {
+    marginTop: 12,
     width: "100%",
-    height: 170,
-    borderRadius: 12,
+    height: 160,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#F6F6F4",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.24)",
+  },
+  videoPreview: {
+    width: "100%",
+    height: "100%",
   },
   dateButton: {
     marginTop: 6,
@@ -344,7 +384,6 @@ const localStyles = StyleSheet.create({
     fontWeight: "600",
   },
   createButton: {
-    marginTop: 20,
     backgroundColor: PRIMARY_COLOR,
     borderRadius: 24,
     paddingVertical: 14,
@@ -354,10 +393,25 @@ const localStyles = StyleSheet.create({
     shadowColor: PRIMARY_COLOR,
     shadowOffset: { width: 0, height: 6 },
   },
+  createButtonDisabled: {
+    opacity: 0.45,
+  },
   createButtonText: {
     color: WHITE,
     fontWeight: "700",
     fontSize: 15,
+  },
+  fixedFooter: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 28,
+    backgroundColor: "rgba(251, 247, 244, 0.96)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(43,43,43,0.08)",
   },
 });
 

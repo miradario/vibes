@@ -24,6 +24,7 @@ import styles, {
 } from "../assets/styles";
 import Icon from "../components/Icon";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -196,6 +197,15 @@ type PhotoSlotLayout = {
   y: number;
   width: number;
   height: number;
+};
+
+type ResolvedLocationMeta = {
+  label: string;
+  neighborhood: string | null;
+  city: string | null;
+  country: string | null;
+  latitude: number;
+  longitude: number;
 };
 
 const ensureProfileExists = async (
@@ -417,11 +427,89 @@ const EditProfile = () => {
     (profileData as any)?.displayName ?? "",
   );
   const [savingName, setSavingName] = useState(false);
+  const [location, setLocation] = useState("");
+  const [currentLocation, setCurrentLocation] = useState("");
+  const [currentLocationMeta, setCurrentLocationMeta] =
+    useState<ResolvedLocationMeta | null>(null);
+  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
+  const [savingLocation, setSavingLocation] = useState(false);
 
   useEffect(() => {
     const name = (profileData as any)?.displayName;
     if (typeof name === "string") setDisplayName(name);
   }, [(profileData as any)?.displayName]);
+
+  useEffect(() => {
+    const nextLocation =
+      profileData?.locationLabel ??
+      [profileData?.neighborhood, profileData?.city, profileData?.country]
+        .filter((item) => typeof item === "string" && item.trim())
+        .join(", ");
+
+    if (typeof nextLocation === "string") {
+      setLocation(nextLocation);
+    }
+  }, [
+    profileData?.city,
+    profileData?.country,
+    profileData?.locationLabel,
+    profileData?.neighborhood,
+  ]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCurrentLocation = async () => {
+      setIsResolvingLocation(true);
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (!active || permission.status !== "granted") return;
+
+        const current = await Location.getCurrentPositionAsync({});
+        if (!active) return;
+
+        const [address] = await Location.reverseGeocodeAsync({
+          latitude: current.coords.latitude,
+          longitude: current.coords.longitude,
+        });
+        if (!active) return;
+
+        const neighborhood =
+          (address as any)?.district ??
+          address?.subregion ??
+          address?.name ??
+          null;
+        const city =
+          address?.city ?? address?.region ?? null;
+        const country = address?.country ?? null;
+        const label = [neighborhood, city, country].filter(Boolean).join(", ");
+
+        if (!label) return;
+
+        setCurrentLocation(label);
+        setCurrentLocationMeta({
+          label,
+          neighborhood,
+          city,
+          country,
+          latitude: current.coords.latitude,
+          longitude: current.coords.longitude,
+        });
+      } catch (_error) {
+        // Keep editing available even if geolocation fails.
+      } finally {
+        if (active) {
+          setIsResolvingLocation(false);
+        }
+      }
+    };
+
+    loadCurrentLocation();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const saveDisplayName = async () => {
     const userId = session?.user?.id;
@@ -442,6 +530,73 @@ const EditProfile = () => {
       console.error("saveDisplayName:error", err);
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const saveLocation = async (nextValue?: string) => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    const trimmedLocation = (nextValue ?? location).trim();
+    setSavingLocation(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          location_label: trimmedLocation || null,
+        })
+        .eq("id", userId);
+
+      if (error) {
+        Alert.alert(t("common.error"), t("settings.saveError"));
+        console.error("saveLocation:error", error);
+      } else {
+        await refetch();
+      }
+    } catch (error) {
+      console.error("saveLocation:error", error);
+    } finally {
+      setSavingLocation(false);
+    }
+  };
+
+  const applyCurrentLocation = async () => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    if (!currentLocationMeta) {
+      if (currentLocation) {
+        setLocation(currentLocation);
+        await saveLocation(currentLocation);
+      }
+      return;
+    }
+
+    setLocation(currentLocationMeta.label);
+    setSavingLocation(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          location_label: currentLocationMeta.label,
+          neighborhood: currentLocationMeta.neighborhood,
+          city: currentLocationMeta.city,
+          country: currentLocationMeta.country,
+          latitude: currentLocationMeta.latitude,
+          longitude: currentLocationMeta.longitude,
+        })
+        .eq("id", userId);
+
+      if (error) {
+        Alert.alert(t("common.error"), t("settings.saveError"));
+        console.error("applyCurrentLocation:error", error);
+      } else {
+        await refetch();
+      }
+    } catch (error) {
+      console.error("applyCurrentLocation:error", error);
+    } finally {
+      setSavingLocation(false);
     }
   };
 
@@ -776,6 +931,7 @@ const EditProfile = () => {
         style={styles.editContainer}
         showsVerticalScrollIndicator={false}
         scrollEnabled={scrollEnabled}
+        contentContainerStyle={localStyles.scrollContent}
       >
         <View style={styles.top}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -787,6 +943,7 @@ const EditProfile = () => {
           <TouchableOpacity
             onPress={async () => {
               await saveDisplayName();
+              await saveLocation();
               navigation.goBack();
             }}
           >
@@ -900,15 +1057,41 @@ const EditProfile = () => {
 
         <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>{t("editProfile.location")}</Text>
-          <View style={localStyles.readOnlyField}>
-            <Text style={localStyles.readOnlyValue}>
-              {(profileData?.locationLabel ??
-                [profileData?.neighborhood, profileData?.city, profileData?.country]
-                  .filter((item) => typeof item === "string" && item.trim())
-                  .join(", ")) ||
-                "-"}
+          {currentLocation ? (
+            <View style={localStyles.currentLocationCard}>
+              <Text style={localStyles.currentLocationLabel}>
+                {t("settings.currentLocation")}
+              </Text>
+              <Text style={localStyles.currentLocationValue}>
+                {currentLocation}
+              </Text>
+              <TouchableOpacity
+                style={localStyles.currentLocationButton}
+                onPress={() => void applyCurrentLocation()}
+                disabled={savingLocation}
+              >
+                <Text style={localStyles.currentLocationButtonText}>
+                  {t("settings.useCurrentLocation")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : isResolvingLocation ? (
+            <Text style={localStyles.helperText}>
+              {t("settings.resolvingLocation")}
             </Text>
-          </View>
+          ) : null}
+          <TextInput
+            style={localStyles.nameInput}
+            value={location}
+            onChangeText={setLocation}
+            onBlur={() => void saveLocation()}
+            onSubmitEditing={() => void saveLocation()}
+            placeholder={t("settings.locationPlaceholder")}
+            placeholderTextColor={GRAY}
+            autoCapitalize="words"
+            returnKeyType="done"
+            editable={!savingLocation}
+          />
         </View>
       </ScrollView>
 
@@ -1029,6 +1212,9 @@ const modalStyles = StyleSheet.create({
 });
 
 const localStyles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 72,
+  },
   primaryBadge: {
     position: "absolute",
     left: 6,
@@ -1065,6 +1251,45 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 16,
     fontFamily: "CormorantGaramond_500Medium",
+  },
+  helperText: {
+    color: GRAY,
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  currentLocationCard: {
+    backgroundColor: "#F6F6F4",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(216, 140, 122, 0.2)",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  currentLocationLabel: {
+    color: PRIMARY_COLOR,
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 6,
+  },
+  currentLocationValue: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  currentLocationButton: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: PRIMARY_COLOR,
+  },
+  currentLocationButtonText: {
+    color: WHITE,
+    fontSize: 14,
+    fontFamily: "CormorantGaramond_600SemiBold",
   },
   languageRow: {
     flexDirection: "row",

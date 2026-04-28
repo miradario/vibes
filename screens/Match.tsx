@@ -10,7 +10,7 @@ import {
   StyleSheet,
   Easing,
 } from "react-native";
-import { ResizeMode, Video } from "expo-av";
+import { ResizeMode } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesHeader from "../src/components/VibesHeader";
@@ -19,6 +19,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useFindMatchQuery } from "../src/queries/matches.queries";
 import ConexionReveal from "../components/ConexionReveal";
+import LoopingVideo from "../components/LoopingVideo";
 import { useWindowDimensions } from "react-native";
 
 const Match = () => {
@@ -129,12 +130,11 @@ const Match = () => {
       <View style={styles.matchScreen}>
         <View style={matchVideoStyles.matchCard}>
           <View style={matchVideoStyles.heroWrap}>
-            <Video
+            <LoopingVideo
               source={require("../assets/videos/connection.mp4")}
+              posterSource={require("../assets/images/challenges/events.png")}
               style={matchVideoStyles.heroVideo}
               resizeMode={ResizeMode.CONTAIN}
-              shouldPlay
-              isMuted
             />
           </View>
 

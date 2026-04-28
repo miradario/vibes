@@ -12,11 +12,10 @@ import {
   Image,
   Alert,
   ActivityIndicator,
-  Modal,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Icon } from "../components";
-import CardItem from "../components/CardItem";
+import UserProfileSheet from "../components/UserProfileSheet";
 import styles, { DARK_GRAY } from "../assets/styles";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -41,12 +40,20 @@ const Chat = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const { data: profile } = useProfileQuery(otherUserId);
   const { data: preferences } = useUserPreferencesQuery(otherUserId);
-  const profileCard = profile
-    ? mapCandidateToConnectionProfile({
-        ...profile,
-        ...(preferences ?? {}),
-      })
-    : null;
+  const profileCard = mapCandidateToConnectionProfile({
+    id: otherUserId ?? matchId ?? "chat-user",
+    displayName:
+      profile?.displayName ??
+      profile?.display_name ??
+      profile?.name ??
+      otherUserName ??
+      "Chat",
+    photos:
+      profile?.photos ??
+      (otherUserPhoto ? [otherUserPhoto] : []),
+    ...profile,
+    ...(preferences ?? {}),
+  });
 
   const { data: session } = useAuthSession();
   const myId = session?.user?.id;
@@ -181,51 +188,11 @@ const Chat = () => {
           <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
         </TouchableOpacity>
       </View>
-      <Modal
+      <UserProfileSheet
         visible={showProfileModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowProfileModal(false)}
-      >
-        <View style={styles.discoverSheetRoot}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.discoverSheetBackdrop}
-            onPress={() => setShowProfileModal(false)}
-          />
-          <TouchableOpacity
-            style={styles.discoverSheetCloseButton}
-            onPress={() => setShowProfileModal(false)}
-            activeOpacity={0.9}
-          >
-            <Icon name="close" size={20} color="#2B2B2B" />
-          </TouchableOpacity>
-          <View style={styles.discoverSheetContainer}>
-            <View style={styles.discoverSheetHandle} />
-            {profileCard ? (
-              <CardItem
-                variant="discover"
-                image={profileCard.image}
-                name={profileCard.name}
-                age={profileCard.age}
-                location={profileCard.location}
-                description={profileCard.description}
-                vibe={profileCard.vibe}
-                intention={profileCard.intention}
-                prompt={profileCard.prompt}
-                tags={profileCard.tags}
-                preferences={profileCard.preferences}
-                spiritualPath={profileCard.spiritualPath}
-                spiritualPathDetails={profileCard.spiritualPathDetails}
-                vegetarian={profileCard.vegetarian}
-                smoking={profileCard.smoking}
-                pets={profileCard.pets}
-                images={profileCard.images}
-              />
-            ) : null}
-          </View>
-        </View>
-      </Modal>
+        profile={profileCard}
+        onClose={() => setShowProfileModal(false)}
+      />
 
       {/* Messages */}
       {isLoading ? (

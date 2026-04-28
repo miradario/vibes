@@ -95,6 +95,9 @@ export type OnboardingDraft = {
   intentId?: number;
   spiritualPath?: string[];
   spiritualPathDetails?: SpiritualPathDetails;
+  aboutMe?: string;
+  vegetarian?: "Sí" | "No" | "";
+  otherTags?: string[];
   photoUris?: string[];
   primaryPhotoUri?: string;
 };
@@ -113,6 +116,9 @@ const defaultDraft: OnboardingDraft = {
   intentId: undefined,
   spiritualPath: [],
   spiritualPathDetails: {},
+  aboutMe: "",
+  vegetarian: "",
+  otherTags: [],
   photoUris: [],
   primaryPhotoUri: "",
 };
@@ -248,6 +254,9 @@ export const useCompleteOnboardingMutation = () => {
       await upsertUserPreferences(userId, {
         spiritual_path: draft.spiritualPath ?? [],
         spiritual_path_details: draft.spiritualPathDetails ?? {},
+        vegetarian: draft.vegetarian || "No",
+        about_me: draft.aboutMe?.trim() ?? "",
+        other_tags: draft.otherTags ?? [],
       });
 
       // Upload photos to Supabase Storage + profile_photos table

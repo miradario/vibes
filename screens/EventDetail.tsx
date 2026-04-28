@@ -16,7 +16,7 @@ import {
   Linking,
   Platform,
 } from "react-native";
-import { ResizeMode, Video } from "expo-av";
+import { ResizeMode } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, {
   TEXT_SECONDARY,
@@ -25,7 +25,8 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
-import CardItem from "../components/CardItem";
+import LoopingVideo from "../components/LoopingVideo";
+import UserProfileSheet from "../components/UserProfileSheet";
 import ChallengeTreeProgress from "../components/ChallengeTreeProgress";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -74,6 +75,9 @@ const getStreakMessage = (streak: number, totalCheckins: number) => {
   return `${streak} días 🔥🔥🔥 ¡MAESTRO!`;
 };
 
+const getChallengeFinishedMessage = () =>
+  "Challenge terminó. Iniciá otro si lo deseás.";
+
 const nextMilestone = (streak: number) => {
   return STREAK_MILESTONES.find((m) => m > streak) ?? null;
 };
@@ -96,7 +100,9 @@ const getStreakHeadline = (
   totalCheckins: number,
   startDate?: Date | null,
   referenceDate?: Date,
+  isFinished?: boolean,
 ) => {
+  if (isFinished) return "Challenge terminó";
   if (streak === 0 && totalCheckins > 0) return "Racha en pausa";
   if (streak === 0) {
     if (startDate && referenceDate && isAfterDay(startDate, referenceDate)) {
@@ -297,6 +303,18 @@ const EventDetail = () => {
     parsedStartDate && !Number.isNaN(parsedStartDate.getTime())
       ? parsedStartDate
       : null;
+  const challengeEndDate = validStartDate
+    ? new Date(
+        validStartDate.getFullYear(),
+        validStartDate.getMonth(),
+        validStartDate.getDate() + Math.max(durationDays - 1, 0),
+      )
+    : null;
+  const isChallengeFinished = Boolean(
+    isChallenge &&
+      challengeEndDate &&
+      isBeforeDay(challengeEndDate, todayDate),
+  );
   const checkinSet = new Set(challengeCheckins);
   const participantCount = challengeParticipantsMerged.length;
   const eventParticipantCount = Math.max(
@@ -381,6 +399,40 @@ const EventDetail = () => {
   const renderBottomActions = () => {
     if (isChallenge) {
       if (participantLoading) return null;
+
+      if (isChallengeFinished) {
+        if (isJoined) {
+          return (
+            <View style={localStyles.fixedFooterContent}>
+              <TouchableOpacity
+                style={styles.eventDetailJoinButton}
+                onPress={() =>
+                  navigation.navigate("EventChat" as never, { event } as never)
+                }
+              >
+                <Text style={styles.eventDetailJoinButtonText}>
+                  Entrar al chat del challenge
+                </Text>
+              </TouchableOpacity>
+              <Text
+                style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}
+              >
+                {getChallengeFinishedMessage()}
+              </Text>
+            </View>
+          );
+        }
+
+        return (
+          <View style={localStyles.fixedFooterContent}>
+            <Text
+              style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}
+            >
+              {getChallengeFinishedMessage()}
+            </Text>
+          </View>
+        );
+      }
 
       if (isJoined) {
         return (
@@ -850,13 +902,11 @@ const EventDetail = () => {
                     style={localStyles.eventHeroImage}
                   />
                 ) : null}
-                <Video
+                <LoopingVideo
                   source={eventVideoSource}
+                  posterSource={eventHeroImageSource}
                   style={localStyles.eventHeroVideo}
                   resizeMode={ResizeMode.COVER}
-                  isMuted
-                  shouldPlay
-                  isLooping
                 />
                 <View style={localStyles.eventHeroScrim} />
                 <View style={localStyles.eventHeroOrganizerBadge}>
@@ -1283,10 +1333,13 @@ const EventDetail = () => {
                         totalCheckins,
                         validStartDate,
                         todayDate,
+                        isChallengeFinished,
                       )}
                     </Text>
                     <Text style={localStyles.streakLabel}>
-                      {getStreakMessage(streak, totalCheckins)}
+                      {isChallengeFinished
+                        ? getChallengeFinishedMessage()
+                        : getStreakMessage(streak, totalCheckins)}
                     </Text>
                   </View>
                   <View style={localStyles.totalBadge}>
@@ -1299,7 +1352,7 @@ const EventDetail = () => {
                   </View>
                 </View>
 
-                {milestone ? (
+                {!isChallengeFinished && milestone ? (
                   <View style={localStyles.milestoneWrap}>
                     <View style={localStyles.milestoneBarBg}>
                       <View
@@ -1318,11 +1371,11 @@ const EventDetail = () => {
                       {getMilestoneMessage(streak, milestone)}
                     </Text>
                   </View>
-                ) : (
+                ) : !isChallengeFinished ? (
                   <Text style={localStyles.milestoneLabel}>
                     {getMilestoneMessage(streak, milestone)}
                   </Text>
-                )}
+                ) : null}
 
                 {showTreeProgress ? (
                   <ChallengeTreeProgress progress={treeProgress} size={200} />
@@ -1552,50 +1605,12 @@ const EventDetail = () => {
         </View>
       </Modal>
 
-      <Modal
+      <UserProfileSheet
         visible={Boolean(selectedParticipant && selectedParticipantCard)}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedParticipant(null)}
-      >
-        <View style={styles.discoverSheetRoot}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.discoverSheetBackdrop}
-            onPress={() => setSelectedParticipant(null)}
-          />
-          <TouchableOpacity
-            style={styles.discoverSheetCloseButton}
-            onPress={() => setSelectedParticipant(null)}
-            activeOpacity={0.9}
-          >
-            <Icon name="close" size={20} color="#2B2B2B" />
-          </TouchableOpacity>
-          <View style={styles.discoverSheetContainer}>
-            <View style={styles.discoverSheetHandle} />
-            {selectedParticipantCard ? (
-              <CardItem
-                variant="discover"
-                image={selectedParticipantCard.image}
-                name={selectedParticipantCard.name}
-                age={selectedParticipantCard.age}
-                location={selectedParticipantCard.location}
-                description={selectedParticipantCard.description}
-                vibe={selectedParticipantCard.vibe}
-                intention={selectedParticipantCard.intention}
-                prompt={selectedParticipantCard.prompt}
-                tags={selectedParticipantCard.tags}
-                preferences={selectedParticipantCard.preferences}
-                vegetarian={selectedParticipantCard.vegetarian}
-                smoking={selectedParticipantCard.smoking}
-                pets={selectedParticipantCard.pets}
-                images={selectedParticipantCard.images}
-                onContactPress={handleConnectParticipant}
-              />
-            ) : null}
-          </View>
-        </View>
-      </Modal>
+        profile={selectedParticipantCard}
+        onClose={() => setSelectedParticipant(null)}
+        onContactPress={handleConnectParticipant}
+      />
     </View>
   );
 };

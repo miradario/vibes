@@ -7,9 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Linking,
-  Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import VibesHeader from "../src/components/VibesHeader";
@@ -17,7 +15,6 @@ import { useI18n } from "../src/i18n";
 
 const Contact = () => {
   const { t } = useI18n();
-  const navigation = useNavigation();
   const CONTACT_ITEMS = [
     {
       icon: "mail-open-outline",
@@ -30,15 +27,6 @@ const Contact = () => {
       title: "Instagram",
       subtitle: "@esvibes",
       action: () => Linking.openURL("https://instagram.com/esvibes"),
-    },
-    {
-      icon: "bulb-outline",
-      title: t("contact.suggestions"),
-      subtitle: t("contact.suggestionsSubtitle"),
-      action: () =>
-        Linking.openURL(
-          "mailto:hola@esvibes.com?subject=Sugerencias%20Vibes&body=Hola%20equipo%20Vibes,"
-        ),
     },
   ];
 
