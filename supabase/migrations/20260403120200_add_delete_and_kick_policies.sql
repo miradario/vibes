@@ -3,12 +3,14 @@
 -- ============================================================
 
 -- Sender can delete their own messages (for everyone)
+drop policy if exists "event_messages_delete_own" on public.event_messages;
 create policy "event_messages_delete_own"
 on public.event_messages for delete
 to authenticated
 using (auth.uid() = sender_id);
 
 -- Event/challenge creator (admin) can delete any message
+drop policy if exists "event_messages_delete_admin" on public.event_messages;
 create policy "event_messages_delete_admin"
 on public.event_messages for delete
 to authenticated
@@ -30,6 +32,7 @@ using (
 -- ============================================================
 
 -- Event/challenge creator (admin) can kick participants
+drop policy if exists "event_participants_delete_admin" on public.event_participants;
 create policy "event_participants_delete_admin"
 on public.event_participants for delete
 to authenticated

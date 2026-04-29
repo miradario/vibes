@@ -5,17 +5,12 @@ import React from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, CommonActions } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Toast from "react-native-toast-message";
 import { useFonts } from "expo-font";
-import {
-  CormorantGaramond_400Regular,
-  CormorantGaramond_500Medium,
-  CormorantGaramond_600SemiBold,
-  CormorantGaramond_700Bold,
-} from "@expo-google-fonts/cormorant-garamond";
+import { CormorantGaramond_400Regular, CormorantGaramond_500Medium, CormorantGaramond_600SemiBold, CormorantGaramond_700Bold } from "@expo-google-fonts/cormorant-garamond";
 import {
   Home,
   Matches,
@@ -54,10 +49,14 @@ import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
 import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboarding";
 import { I18nProvider, useI18n } from "./src/i18n";
+import { PushNotificationsBootstrap } from "./src/notifications/pushNotifications";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const navigationRef = React.createRef<any>();
 let hasAppliedGlobalFont = false;
+let isNavigationReady = false;
+let pendingNavigateToMessages = false;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,15 +79,9 @@ const AppNavigator = () => {
 
   if (!hasAppliedGlobalFont) {
     (Text as any).defaultProps = (Text as any).defaultProps || {};
-    (Text as any).defaultProps.style = [
-      { fontFamily: "CormorantGaramond_500Medium" },
-      (Text as any).defaultProps.style,
-    ];
+    (Text as any).defaultProps.style = [{ fontFamily: "CormorantGaramond_500Medium" }, (Text as any).defaultProps.style];
     (TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
-    (TextInput as any).defaultProps.style = [
-      { fontFamily: "CormorantGaramond_500Medium" },
-      (TextInput as any).defaultProps.style,
-    ];
+    (TextInput as any).defaultProps.style = [{ fontFamily: "CormorantGaramond_500Medium" }, (TextInput as any).defaultProps.style];
     hasAppliedGlobalFont = true;
   }
 
@@ -100,10 +93,34 @@ const AppNavigator = () => {
     );
   }
 
+  const navigateToMessages = () => {
+    if (!isNavigationReady || !navigationRef.current) {
+      pendingNavigateToMessages = true;
+      return;
+    }
+
+    navigationRef.current.dispatch(
+      CommonActions.navigate({
+        name: "Tab",
+        params: {
+          screen: "Flow",
+        },
+      }),
+    );
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <NavigationContainer>
+        <NavigationContainer
+          ref={navigationRef}
+          onReady={() => {
+            isNavigationReady = true;
+            if (!pendingNavigateToMessages) return;
+            pendingNavigateToMessages = false;
+            navigateToMessages();
+          }}>
+          <PushNotificationsBootstrap navigateToMessages={navigateToMessages} />
           <Stack.Navigator
             initialRouteName="VibesMinimalOnboarding"
             screenOptions={{
@@ -120,8 +137,7 @@ const AppNavigator = () => {
                   ],
                 },
               }),
-            }}
-          >
+            }}>
             <Stack.Screen
               name="Welcome"
               component={Welcome}
@@ -157,10 +173,7 @@ const AppNavigator = () => {
                 }),
               }}
             />
-            <Stack.Screen
-              name="Tab"
-              options={{ headerShown: false, animationEnabled: false }}
-            >
+            <Stack.Screen name="Tab" options={{ headerShown: false, animationEnabled: false }}>
               {() => (
                 <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />}>
                   <Tab.Screen
@@ -168,9 +181,7 @@ const AppNavigator = () => {
                     component={Home}
                     options={{
                       tabBarLabel: t("tabs.discover"),
-                      tabBarIcon: ({ focused }) => (
-                        <TabBarIcon focused={focused} iconName="compass" />
-                      ),
+                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="compass" />,
                     }}
                   />
                   <Tab.Screen
@@ -179,9 +190,7 @@ const AppNavigator = () => {
                     initialParams={{ section: "challenge" }}
                     options={{
                       tabBarLabel: t("tabs.challenges"),
-                      tabBarIcon: ({ focused }) => (
-                        <TabBarIcon focused={focused} iconName="leaf" />
-                      ),
+                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="leaf" />,
                     }}
                   />
                   <Tab.Screen
@@ -189,12 +198,7 @@ const AppNavigator = () => {
                     component={Messages}
                     options={{
                       tabBarLabel: t("tabs.flow"),
-                      tabBarIcon: ({ focused }) => (
-                        <TabBarIcon
-                          focused={focused}
-                          iconName="chatbubble-ellipses"
-                        />
-                      ),
+                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="chatbubble-ellipses" />,
                     }}
                   />
                   <Tab.Screen
@@ -203,9 +207,7 @@ const AppNavigator = () => {
                     initialParams={{ section: "event" }}
                     options={{
                       tabBarLabel: t("tabs.events"),
-                      tabBarIcon: ({ focused }) => (
-                        <TabBarIcon focused={focused} iconName="calendar" />
-                      ),
+                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="calendar" />,
                     }}
                   />
                   <Tab.Screen
@@ -213,157 +215,40 @@ const AppNavigator = () => {
                     component={Profile}
                     options={{
                       tabBarLabel: t("tabs.aura"),
-                      tabBarIcon: ({ focused }) => (
-                        <TabBarIcon
-                          focused={focused}
-                          iconName="person-circle"
-                        />
-                      ),
+                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="person-circle" />,
                     }}
                   />
                 </Tab.Navigator>
               )}
             </Stack.Screen>
-            <Stack.Screen
-              name="Meditations"
-              component={Meditations}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Login"
-              component={Login}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Signup"
-              component={Signup}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="VibesMinimalOnboarding"
-              component={VibesMinimalOnboarding}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="OnboardingName"
-              component={OnboardingName}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="OnboardingAge"
-              component={OnboardingAge}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="OnboardingCountry"
-              component={OnboardingCountry}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="OnboardingPhoto"
-              component={OnboardingPhoto}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="OnboardingSpiritualPath"
-              component={OnboardingSpiritualPath}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Videos"
-              component={Videos}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Events"
-              component={Events}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="EventDetail"
-              component={EventDetail}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="EventChat"
-              component={EventChat}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="CreateEvent"
-              component={CreateEvent}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="CreateChallenge"
-              component={CreateChallenge}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="EditProfile"
-              component={EditProfile}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Premium"
-              component={Premium}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Chat"
-              component={Chat}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Match"
-              component={Match}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Settings"
-              component={Settings}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="PreferenceDetail"
-              component={PreferenceDetail}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Contact"
-              component={Contact}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Faq"
-              component={Faq}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="TermsConditions"
-              component={TermsConditions}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Session"
-              component={Session}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="OnboardingGender"
-              component={OnboardingGender}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="OnboardingOrientation"
-              component={OnboardingOrientation}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="OnboardingInterested"
-              component={OnboardingInterested}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
+            <Stack.Screen name="Meditations" component={Meditations} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Login" component={Login} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Signup" component={Signup} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="VibesMinimalOnboarding" component={VibesMinimalOnboarding} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="OnboardingName" component={OnboardingName} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="OnboardingAge" component={OnboardingAge} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="OnboardingCountry" component={OnboardingCountry} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="OnboardingPhoto" component={OnboardingPhoto} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="OnboardingSpiritualPath" component={OnboardingSpiritualPath} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Videos" component={Videos} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Events" component={Events} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="EventDetail" component={EventDetail} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="EventChat" component={EventChat} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="CreateEvent" component={CreateEvent} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="CreateChallenge" component={CreateChallenge} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Premium" component={Premium} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Chat" component={Chat} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Match" component={Match} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="PreferenceDetail" component={PreferenceDetail} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Contact" component={Contact} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Faq" component={Faq} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="TermsConditions" component={TermsConditions} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Session" component={Session} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="OnboardingGender" component={OnboardingGender} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="OnboardingOrientation" component={OnboardingOrientation} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="OnboardingInterested" component={OnboardingInterested} options={{ headerShown: false, animationEnabled: true }} />
           </Stack.Navigator>
         </NavigationContainer>
         <Toast />
