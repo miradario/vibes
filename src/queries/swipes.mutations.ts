@@ -70,14 +70,29 @@ export const useSwipeMutation = () => {
         console.log("[swipe] mutual check:", mutual?.id ?? "none", "error:", mutualErr?.message);
 
         if (mutual) {
+          const findExistingMatch = async () => {
+            const { data, error } = await supabase
+              .from("matches")
+              .select("id")
+              .or(
+                `and(user1_id.eq.${userId},user2_id.eq.${payload.targetUserId}),and(user1_id.eq.${payload.targetUserId},user2_id.eq.${userId})`,
+              )
+              .maybeSingle();
+
+            if (error) {
+              console.error("[swipe] findExistingMatch error:", error);
+              throw new Error(error.message);
+            }
+
+            return data ?? null;
+          };
+
           // Mutual like! Create match if it doesn't exist
-          const { data: existingMatch, error: existErr } = await supabase
-            .from("matches")
-            .select("id")
-            .or(
-              `and(user1_id.eq.${userId},user2_id.eq.${payload.targetUserId}),and(user1_id.eq.${payload.targetUserId},user2_id.eq.${userId})`,
-            )
-            .maybeSingle();
+          const existingMatch = await findExistingMatch().catch((error) => {
+            console.error("[swipe] existing match lookup failed:", error);
+            throw error;
+          });
+          const existErr = null;
 
           console.log("[swipe] existing match:", existingMatch?.id ?? "none", "error:", existErr?.message);
 
@@ -116,9 +131,10 @@ export const useSwipeMutation = () => {
 
             console.log("[swipe] created match:", newMatch?.id, "error:", matchErr?.message);
             if (matchErr) {
-              // If it's a duplicate match, that's OK
-              if (matchErr.code !== "23505") {
-                console.error("[swipe] match insert failed:", matchErr);
+              const retryMatch = await findExistingMatch();
+              if (!retryMatch) {
+                console.error("[swipe] match insert failed without persisted row:", matchErr);
+                throw new Error(matchErr.message || "No se pudo crear el match.");
               }
             }
           }
