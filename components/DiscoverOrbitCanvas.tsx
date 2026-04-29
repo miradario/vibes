@@ -46,6 +46,24 @@ type DiscoverOrbitCanvasProps = {
   onUserPress: (user: DataT) => void;
 };
 
+const buildOrbitUserLabel = (user: DataT) => {
+  const name = typeof user.name === "string" ? user.name.trim() : "";
+  const age = typeof user.age === "string" ? user.age.trim() : "";
+  const distanceFromLabel =
+    typeof user.distanceLabel === "string" ? user.distanceLabel.trim() : "";
+  const distanceFromLocation =
+    typeof user.location === "string"
+      ? user.location.match(/(\d+\s?km)/i)?.[1] ?? ""
+      : "";
+  const distance = distanceFromLabel || distanceFromLocation;
+
+  const nameAndAge = [name, age ? `${age} años` : ""]
+    .filter(Boolean)
+    .join(", ");
+
+  return [nameAndAge, distance].filter(Boolean).join(" · ");
+};
+
 const clamp = (value: number, min: number, max: number) => {
   "worklet";
   return Math.min(Math.max(value, min), max);
@@ -203,7 +221,7 @@ const DiscoverOrbitCanvas = ({
 
         {users.map((user, index) => {
           const config = userConfigs[index];
-          const userPresenceLabel = user.location ?? user.distanceLabel;
+          const userPresenceLabel = buildOrbitUserLabel(user);
           return (
             <MovingNode
               key={`drift-user-${user.id}`}
@@ -235,7 +253,8 @@ const DiscoverOrbitCanvas = ({
                   <View style={localStyles.distancePill}>
                     <Text
                       style={localStyles.distancePillText}
-                      numberOfLines={2}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                     >
                       {userPresenceLabel}
                     </Text>
@@ -258,14 +277,16 @@ const localStyles = {
   },
   distancePill: {
     marginTop: 6,
-    maxWidth: 116,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    maxWidth: 158,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.78)",
+    backgroundColor: "rgba(254, 254, 254, 0.96)",
+    borderWidth: 1,
+    borderColor: "rgba(193, 213, 255, 0.72)",
   },
   distancePillText: {
-    color: "#F6F6F4",
+    color: "#243D8E",
     fontSize: 11,
     fontFamily: "CormorantGaramond_700Bold",
     letterSpacing: 0.2,
