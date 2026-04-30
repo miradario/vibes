@@ -48,10 +48,10 @@ export const useProfileQuery = (userId?: string) => {
     queryKey: profileKeys.byUser(userId),
     queryFn: () => fetchProfile(userId as string),
     enabled: Boolean(userId),
-    staleTime: 60_000,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-    refetchInterval: 15_000,
-    refetchIntervalInBackground: false,
+    staleTime: 5 * 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
   });
 };

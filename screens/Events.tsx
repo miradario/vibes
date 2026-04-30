@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -28,7 +28,9 @@ const normalizeSearchText = (value: string | null | undefined) =>
 const Events = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const section = route.params?.section === "challenge" ? "challenge" : "event";
+  const [section, setSection] = useState<"event" | "challenge">(
+    route.params?.section === "challenge" ? "challenge" : "event",
+  );
   const title = section === "challenge" ? "Challenges" : "Eventos";
   const searchPlaceholder =
     section === "challenge" ? "Buscar challenges..." : "Buscar eventos...";
@@ -40,6 +42,11 @@ const Events = () => {
     error,
   } = section === "challenge" ? challengesQuery : eventsQuery;
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setSection(route.params?.section === "challenge" ? "challenge" : "event");
+  }, [route.params?.section]);
+
   const errorMessage =
     error instanceof Error && error.message.trim()
       ? error.message
@@ -94,6 +101,36 @@ const Events = () => {
             <Text style={styles.eventCardButtonText}>Crear</Text>
             <Icon name="add" size={16} color={TEXT_SECONDARY} />
           </TouchableOpacity>
+        </View>
+
+        <View style={localStyles.segmentedControl}>
+          {(
+            [
+              { value: "event", label: "Eventos" },
+              { value: "challenge", label: "Challenges" },
+            ] as const
+          ).map((item) => {
+            const isActive = section === item.value;
+            return (
+              <TouchableOpacity
+                key={item.value}
+                style={[
+                  localStyles.segmentButton,
+                  isActive && localStyles.segmentButtonActive,
+                ]}
+                onPress={() => setSection(item.value)}
+              >
+                <Text
+                  style={[
+                    localStyles.segmentText,
+                    isActive && localStyles.segmentTextActive,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <View style={styles.eventsSearchBar}>
@@ -204,6 +241,34 @@ const Events = () => {
 export default Events;
 
 const localStyles = StyleSheet.create({
+  segmentedControl: {
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(255, 255, 255, 0.78)",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    flexDirection: "row",
+    padding: 4,
+    marginTop: 18,
+    marginBottom: 14,
+  },
+  segmentButton: {
+    flex: 1,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  segmentButtonActive: {
+    backgroundColor: "#2B2B2B",
+  },
+  segmentText: {
+    color: "#6E6E6E",
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  segmentTextActive: {
+    color: "#F6F6F4",
+  },
   emptyState: {
     paddingHorizontal: 28,
     paddingVertical: 48,

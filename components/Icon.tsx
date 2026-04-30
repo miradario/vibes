@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { IconT } from "../types";
 
 const Icon = ({ color, name, size, style }: IconT) => (
-  <Ionicons name={name} size={26} color={color} style={style} />
+  <Ionicons name={name} size={size ?? 26} color={color} style={style} />
 );
 
 export default Icon;
