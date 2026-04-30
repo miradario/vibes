@@ -242,10 +242,10 @@ export const useCandidatesQuery = (params?: GetCandidatesParams) => {
   return useQuery<GetCandidatesResponse>({
     queryKey: candidatesKeys.list(currentUserId, params),
     queryFn: () => fetchCandidates(currentUserId, params),
-    staleTime: 30_000,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-    refetchInterval: 10_000,
-    refetchIntervalInBackground: false,
+    staleTime: 5 * 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
   });
 };

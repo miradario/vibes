@@ -14,9 +14,10 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ResizeMode } from "expo-av";
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import DiscoverOrbitCanvas from "../components/DiscoverOrbitCanvas";
-import Filters from "../components/Filters";
+import LoopingVideo from "../components/LoopingVideo";
 import UserProfileSheet from "../components/UserProfileSheet";
 import styles, { DIMENSION_WIDTH } from "../assets/styles";
 import Icon from "../components/Icon";
@@ -30,6 +31,7 @@ import { getGenderLabel } from "../src/constants/lookups";
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
+import { useEventsFeedQuery } from "../src/queries/events.queries";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
@@ -142,14 +144,6 @@ const matchesNumberRange = (
   return true;
 };
 
-const getActiveFilterCount = (filters: DiscoverFiltersState) =>
-  [
-    filters.ageMin !== null || filters.ageMax !== null,
-    filters.genderId !== null,
-    filters.distanceMinKm !== null || filters.maxDistanceKm !== null,
-    filters.smoking !== "all",
-  ].filter(Boolean).length;
-
 const clampRange = (
   nextValue: number | null,
   minLimit: number,
@@ -218,6 +212,7 @@ const Home = () => {
     isError,
     error,
   } = useCandidatesQuery();
+  const { data: events = [], isLoading: isEventsLoading } = useEventsFeedQuery();
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
@@ -314,18 +309,44 @@ const Home = () => {
     error instanceof Error && error.message.trim()
       ? error.message
       : "Could not load real profiles.";
-  const orbitUsers = profiles.filter((item) => item.id !== centerProfile.id);
   const [showGallery, setShowGallery] = useState<boolean>(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryInitialIndex, setGalleryInitialIndex] = useState<number>(0);
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
   const swipeMutation = useSwipeMutation();
-  const activeFilterCount = getActiveFilterCount(discoverFilters);
-  const filtersSummary =
-    activeFilterCount > 0
-      ? `${activeFilterCount} activo${activeFilterCount > 1 ? "s" : ""}`
-      : "Edad, género, distancia";
+  const firstName =
+    (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
+      .split(" ")[0]
+      .trim() || "miradario";
+  const futureEvents = useMemo(() => {
+    const now = Date.now();
+    return events
+      .filter((event) => {
+        if (!event.startsAt) return false;
+        const timestamp = new Date(event.startsAt).getTime();
+        return Number.isFinite(timestamp) && timestamp > now;
+      })
+      .sort((left, right) => {
+        const leftTime = new Date(left.startsAt as string).getTime();
+        const rightTime = new Date(right.startsAt as string).getTime();
+        return leftTime - rightTime;
+      });
+  }, [events]);
+  const summaryStats = [
+    {
+      icon: "people-outline" as const,
+      value: profiles.length || 12,
+      label: "Conexiones",
+    },
+    {
+      icon: "calendar-outline" as const,
+      value: futureEvents.length,
+      label: "Eventos asistidos",
+    },
+  ];
+  const upcomingEvents = futureEvents.slice(0, 2);
+  const suggestedProfile = profiles[0] ?? null;
 
   const ageSummary = formatRangeSummary(
     discoverFilters.ageMin,
@@ -867,57 +888,182 @@ const Home = () => {
           }
         />
 
-        <View style={styles.containerHome}>
-          <View style={localStyles.discoverTop}>
-            <Text style={localStyles.discoverTitle}>Vibes</Text>
+        <ScrollView
+          style={localStyles.homeScroll}
+          contentContainerStyle={localStyles.homeContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={localStyles.heroHeader}>
+            <View>
+              <Text style={localStyles.heroTitle}>Hola, {firstName}</Text>
+              <Text style={localStyles.heroSubtitle}>
+                Conéctate contigo antes de conectar con otros.
+              </Text>
+            </View>
           </View>
 
-          <View style={localStyles.discoverOrbitWrap}>
-            {isLoading ? (
-              <View style={localStyles.emptyState}>
-                <ActivityIndicator color="#2B2B2B" />
-                <Text style={localStyles.emptyStateText}>
-                  Loading real profiles...
-                </Text>
-              </View>
-            ) : isError ? (
-              <View style={localStyles.emptyState}>
-                <Text style={localStyles.emptyStateTitle}>
-                  Could not load profiles
-                </Text>
-                <Text style={localStyles.emptyStateText}>{errorMessage}</Text>
-              </View>
-            ) : (
-              <View style={localStyles.discoverOrbitContent}>
-                <DiscoverOrbitCanvas
-                  users={orbitUsers}
-                  centerUser={centerProfile}
-                  onCenterPress={() => navigation.navigate("Aura" as never)}
-                  onUserPress={openProfileSheet}
-                />
-                {profiles.length === 0 ? (
-                  <View style={localStyles.discoverOrbitHint}>
-                    <Text style={localStyles.emptyStateTitle}>
-                      No real profiles yet
-                    </Text>
-                    <Text style={localStyles.emptyStateText}>
-                      Your profile stays in the center. Other users will appear
-                      around it.
-                    </Text>
+          <View style={localStyles.summaryCard}>
+            <LoopingVideo
+              source={require("../assets/videos/bienvenidx.mp4")}
+              style={localStyles.summaryArt}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay
+              isMuted
+              isLooping={false}
+            />
+            <View style={localStyles.summaryContent}>
+              <Text style={localStyles.cardTitle}>Tu resumen</Text>
+              <View style={localStyles.statsRow}>
+                {summaryStats.map((stat, index) => (
+                  <View key={stat.label} style={localStyles.statItem}>
+                    {index > 0 ? <View style={localStyles.statDivider} /> : null}
+                    <Ionicons name={stat.icon} size={22} color="#DCA453" />
+                    <Text style={localStyles.statValue}>{stat.value}</Text>
+                    <Text style={localStyles.statLabel}>{stat.label}</Text>
                   </View>
-                ) : null}
+                ))}
               </View>
+            </View>
+          </View>
+
+          <View style={localStyles.challengeCard}>
+            <View style={localStyles.challengeIcon}>
+              <Ionicons name="leaf-outline" size={34} color="#FFFFFF" />
+            </View>
+            <View style={localStyles.challengeCopy}>
+              <Text style={localStyles.challengeTitle}>Reto de hoy</Text>
+              <Text style={localStyles.challengeText}>
+                Toma 3 minutos para respirar antes de iniciar una conversación.
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={localStyles.challengeButton}
+              onPress={() =>
+                navigation.navigate("Calendar" as never, { section: "challenge" } as never)
+              }
+            >
+              <Text style={localStyles.challengeButtonText}>Comenzar reto</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={localStyles.sectionCard}>
+            <View style={localStyles.sectionHeader}>
+              <Text style={localStyles.sectionTitle}>Próximos eventos</Text>
+              <TouchableOpacity
+                style={localStyles.sectionLink}
+                onPress={() =>
+                  navigation.navigate("Calendar" as never, { section: "event" } as never)
+                }
+              >
+                <Text style={localStyles.sectionLinkText}>Ver todos</Text>
+                <Ionicons name="chevron-forward" size={20} color="#766F68" />
+              </TouchableOpacity>
+            </View>
+            {isEventsLoading ? (
+              <View style={localStyles.inlineLoading}>
+                <ActivityIndicator color="#DCA453" />
+              </View>
+            ) : upcomingEvents.length === 0 ? (
+              <Text style={localStyles.emptyStateText}>
+                No hay próximos eventos disponibles.
+              </Text>
+            ) : (
+              upcomingEvents.map((event, index) => (
+                <TouchableOpacity
+                  key={event.id}
+                  style={[
+                    localStyles.eventRow,
+                    index > 0 && localStyles.eventRowSpacing,
+                  ]}
+                  onPress={() =>
+                    navigation.navigate("Calendar" as never, { section: "event" } as never)
+                  }
+                >
+                  <Image
+                    source={
+                      typeof event.image === "string"
+                        ? { uri: event.image }
+                        : event.image
+                    }
+                    style={localStyles.eventThumb}
+                  />
+                  <View style={localStyles.eventInfo}>
+                    <Text style={localStyles.eventTitle} numberOfLines={1}>
+                      {event.title}
+                    </Text>
+                    <View style={localStyles.eventMetaRow}>
+                      <Ionicons name="calendar-outline" size={15} color="#6F6A64" />
+                      <Text style={localStyles.eventMeta} numberOfLines={1}>
+                        {event.date}
+                      </Text>
+                    </View>
+                    <View style={localStyles.eventMetaRow}>
+                      <Ionicons name="location-outline" size={15} color="#6F6A64" />
+                      <Text style={localStyles.eventMeta} numberOfLines={1}>
+                        {event.location ?? "Online"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={localStyles.rowArrow}>
+                    <Ionicons name="chevron-forward" size={21} color="#2B2B2B" />
+                  </View>
+                </TouchableOpacity>
+              ))
             )}
           </View>
 
-          <View style={localStyles.discoverFiltersRow}>
-            <Filters
-              label="Filtros"
-              value={filtersSummary}
-              onPress={() => setIsFiltersVisible(true)}
-            />
+          <View style={localStyles.connectionCard}>
+            <View style={localStyles.sectionHeader}>
+              <Text style={localStyles.sectionTitle}>Nueva conexión para ti</Text>
+              <TouchableOpacity
+                style={localStyles.sectionLink}
+                onPress={() => navigation.navigate("Discover" as never)}
+              >
+                <Text style={localStyles.sectionLinkText}>Ver más</Text>
+                <Ionicons name="chevron-forward" size={20} color="#766F68" />
+              </TouchableOpacity>
+            </View>
+            {isLoading ? (
+              <View style={localStyles.inlineLoading}>
+                <ActivityIndicator color="#DCA453" />
+              </View>
+            ) : isError ? (
+              <Text style={localStyles.emptyStateText}>{errorMessage}</Text>
+            ) : suggestedProfile ? (
+              <View style={localStyles.connectionBody}>
+                <Image
+                  source={suggestedProfile.image}
+                  style={localStyles.connectionAvatar}
+                />
+                <View style={localStyles.connectionInfo}>
+                  <Text style={localStyles.connectionName}>
+                    {suggestedProfile.name}
+                  </Text>
+                  <Text style={localStyles.connectionDescription} numberOfLines={2}>
+                    {suggestedProfile.description ||
+                      "Yoga, meditación & conversaciones significativas"}
+                  </Text>
+                  <View style={localStyles.moodRow}>
+                    <Ionicons name="leaf-outline" size={18} color="#5F8A52" />
+                    <Text style={localStyles.moodText}>
+                      {suggestedProfile.vibe || "Calm & Open"}
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={localStyles.profileButton}
+                  onPress={() => openProfileSheet(suggestedProfile)}
+                >
+                  <Text style={localStyles.profileButtonText}>Ver perfil</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Text style={localStyles.emptyStateText}>
+                No hay perfiles reales todavía.
+              </Text>
+            )}
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -930,6 +1076,308 @@ const localStyles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  homeScroll: {
+    flex: 1,
+  },
+  homeContent: {
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 112,
+  },
+  heroHeader: {
+    marginBottom: 26,
+  },
+  heroTitle: {
+    color: "#252323",
+    fontSize: 40,
+    lineHeight: 45,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  heroSubtitle: {
+    marginTop: 8,
+    color: "#58534E",
+    fontSize: 23,
+    lineHeight: 30,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  summaryCard: {
+    minHeight: 132,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowColor: "#3E352B",
+    shadowOffset: { height: 8, width: 0 },
+    flexDirection: "row",
+    padding: 16,
+    gap: 14,
+    marginBottom: 18,
+  },
+  summaryArt: {
+    width: 92,
+    borderRadius: 16,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  summaryContent: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  cardTitle: {
+    color: "#252323",
+    fontSize: 23,
+    lineHeight: 27,
+    fontFamily: "CormorantGaramond_700Bold",
+    marginBottom: 18,
+  },
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  statItem: {
+    flex: 1,
+    minHeight: 78,
+    justifyContent: "flex-start",
+    position: "relative",
+    paddingLeft: 8,
+  },
+  statDivider: {
+    position: "absolute",
+    left: 0,
+    top: 23,
+    bottom: 18,
+    width: 1,
+    backgroundColor: "rgba(43, 43, 43, 0.1)",
+  },
+  statValue: {
+    marginTop: 8,
+    color: "#4B3728",
+    fontSize: 31,
+    lineHeight: 34,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  statLabel: {
+    marginTop: 4,
+    color: "#4D4945",
+    fontSize: 15,
+    lineHeight: 18,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  challengeCard: {
+    minHeight: 112,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowColor: "#3E352B",
+    shadowOffset: { height: 7, width: 0 },
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 16,
+    marginBottom: 18,
+  },
+  challengeIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#E5B762",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  challengeCopy: {
+    flex: 1,
+  },
+  challengeTitle: {
+    color: "#252323",
+    fontSize: 22,
+    lineHeight: 25,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  challengeText: {
+    marginTop: 5,
+    color: "#59534D",
+    fontSize: 17,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  challengeButton: {
+    minWidth: 122,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#E4B762",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+  },
+  challengeButtonText: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  sectionCard: {
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowColor: "#3E352B",
+    shadowOffset: { height: 7, width: 0 },
+    padding: 18,
+    marginBottom: 18,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    flex: 1,
+    color: "#252323",
+    fontSize: 23,
+    lineHeight: 27,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  sectionLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  sectionLinkText: {
+    color: "#8A8178",
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  inlineLoading: {
+    minHeight: 74,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  eventRow: {
+    minHeight: 104,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    gap: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.86)",
+  },
+  eventRowSpacing: {
+    marginTop: 12,
+  },
+  eventThumb: {
+    width: 76,
+    height: 76,
+    borderRadius: 14,
+    backgroundColor: "#E9E4DD",
+  },
+  eventInfo: {
+    flex: 1,
+  },
+  eventTitle: {
+    color: "#252323",
+    fontSize: 20,
+    lineHeight: 24,
+    fontFamily: "CormorantGaramond_700Bold",
+    marginBottom: 7,
+  },
+  eventMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 3,
+  },
+  eventMeta: {
+    flex: 1,
+    color: "#625D57",
+    fontSize: 15,
+    lineHeight: 18,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  rowArrow: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.07)",
+  },
+  connectionCard: {
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowColor: "#3E352B",
+    shadowOffset: { height: 7, width: 0 },
+    padding: 18,
+  },
+  connectionBody: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  connectionAvatar: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: "#F3EFE9",
+  },
+  connectionInfo: {
+    flex: 1,
+  },
+  connectionName: {
+    color: "#252323",
+    fontSize: 28,
+    lineHeight: 31,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  connectionDescription: {
+    marginTop: 4,
+    color: "#534E49",
+    fontSize: 17,
+    lineHeight: 21,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  moodRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  moodText: {
+    color: "#5F8A52",
+    fontSize: 17,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  profileButton: {
+    minWidth: 122,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#DCA453",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+  },
+  profileButtonText: {
+    color: "#DCA453",
+    fontSize: 18,
+    fontFamily: "CormorantGaramond_700Bold",
   },
   discoverTop: {
     alignItems: "center",

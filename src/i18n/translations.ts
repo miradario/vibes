@@ -34,9 +34,11 @@ const translations = {
     },
     tabs: {
       discover: "Descubrir",
+      home: "Home",
       challenges: "Challenges",
       flow: "Mensajes",
       events: "Eventos",
+      calendar: "Calendar",
       aura: "Perfil",
     },
     welcome: {
@@ -324,9 +326,11 @@ const translations = {
     },
     tabs: {
       discover: "Discover",
+      home: "Home",
       challenges: "Challenges",
       flow: "Messages",
       events: "Events",
+      calendar: "Calendar",
       aura: "Profile",
     },
     welcome: {

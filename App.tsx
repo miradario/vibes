@@ -13,6 +13,7 @@ import { useFonts } from "expo-font";
 import { CormorantGaramond_400Regular, CormorantGaramond_500Medium, CormorantGaramond_600SemiBold, CormorantGaramond_700Bold } from "@expo-google-fonts/cormorant-garamond";
 import {
   Home,
+  Discover,
   Matches,
   Messages,
   Match,
@@ -175,22 +176,16 @@ const AppNavigator = () => {
             />
             <Stack.Screen name="Tab" options={{ headerShown: false, animationEnabled: false }}>
               {() => (
-                <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />}>
+                <Tab.Navigator
+                  initialRouteName="Home"
+                  tabBar={(props) => <CustomTabBar {...props} />}
+                >
                   <Tab.Screen
                     name="Discover"
-                    component={Home}
+                    component={Discover}
                     options={{
                       tabBarLabel: t("tabs.discover"),
                       tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="compass" />,
-                    }}
-                  />
-                  <Tab.Screen
-                    name="Soulmates"
-                    component={Events}
-                    initialParams={{ section: "challenge" }}
-                    options={{
-                      tabBarLabel: t("tabs.challenges"),
-                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="leaf" />,
                     }}
                   />
                   <Tab.Screen
@@ -202,11 +197,19 @@ const AppNavigator = () => {
                     }}
                   />
                   <Tab.Screen
-                    name="Events"
+                    name="Home"
+                    component={Home}
+                    options={{
+                      tabBarLabel: t("tabs.home"),
+                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="home" />,
+                    }}
+                  />
+                  <Tab.Screen
+                    name="Calendar"
                     component={Events}
                     initialParams={{ section: "event" }}
                     options={{
-                      tabBarLabel: t("tabs.events"),
+                      tabBarLabel: t("tabs.calendar"),
                       tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="calendar" />,
                     }}
                   />
