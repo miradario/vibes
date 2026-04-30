@@ -20,6 +20,7 @@ import {
 } from "../src/queries/onboarding.queries";
 import { getIntentLabel, INTENTS } from "../src/constants/lookups";
 import { useI18n } from "../src/i18n";
+import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingInterested = () => {
   const { locale, t } = useI18n();
@@ -27,6 +28,7 @@ const OnboardingInterested = () => {
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
   const completeMutation = useCompleteOnboardingMutation();
+  const progress = getOnboardingProgress("OnboardingInterested");
   const [selected, setSelected] = useState<number | null>(
     draft.intentId ?? null
   );
@@ -39,9 +41,13 @@ const OnboardingInterested = () => {
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
           <View style={styles.onboardProgressTrack}>
-            <View style={[styles.onboardProgressFill, { width: "100%" }]} />
+            <View
+              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
+            />
           </View>
-          <View style={{ width: 40 }} />
+          <View style={{ width: 40 }}>
+            <Text style={styles.onboardSkip}>{progress.label}</Text>
+          </View>
         </View>
 
         <Text style={styles.onboardTitle}>{t("onboarding.interestedTitle")}</Text>

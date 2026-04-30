@@ -2505,7 +2505,7 @@ export default StyleSheet.create({
   onboardProgressTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: "#E4B76E",
+    backgroundColor: "rgba(228, 183, 110, 0.22)",
     borderRadius: 2,
     marginHorizontal: 12,
     overflow: "hidden",

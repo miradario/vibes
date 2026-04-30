@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from "react-native";
-import VibesHeader from "../src/components/VibesHeader";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
@@ -13,6 +12,7 @@ import {
   useOnboardingDraft,
 } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
+import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OPTIONS = [
   "Straight",
@@ -32,6 +32,7 @@ const OnboardingOrientation = () => {
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
   const completeMutation = useCompleteOnboardingMutation();
+  const progress = getOnboardingProgress("OnboardingOrientation");
   const [selected, setSelected] = useState<string[]>(draft.orientation ?? []);
 
   const toggle = (value: string) => {
@@ -46,10 +47,22 @@ const OnboardingOrientation = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <VibesHeader
-          title={t("onboarding.orientationTitle")}
-          subtitle={t("onboarding.orientationSubtitle")}
-        />
+        <View style={styles.onboardHeader}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
+          </TouchableOpacity>
+          <View style={styles.onboardProgressTrack}>
+            <View
+              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
+            />
+          </View>
+          <View style={{ width: 40 }}>
+            <Text style={styles.onboardSkip}>{progress.label}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.onboardTitle}>{t("onboarding.orientationTitle")}</Text>
+        <Text style={styles.onboardSubtitle}>{t("onboarding.orientationSubtitle")}</Text>
 
         <View style={styles.onboardList}>
           {OPTIONS.map((option) => (

@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import {
   Image,
   StyleSheet,
-  TouchableOpacity,
   View,
   type ImageSourcePropType,
   type StyleProp,
@@ -55,7 +54,8 @@ const OnboardingVideo = ({
   containerStyle,
   resizeMode = ResizeMode.CONTAIN,
 }: Props) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const media = useMemo(
     () =>
       ONBOARDING_VIDEO_SOURCES[
@@ -66,25 +66,28 @@ const OnboardingVideo = ({
 
   return (
     <View style={[localStyles.videoWrap, containerStyle]}>
-      {!isPlaying ? (
-        <TouchableOpacity
-          activeOpacity={0.92}
-          style={localStyles.posterPressable}
-          onPress={() => setIsPlaying(true)}
-        >
-          <Image
-            source={media.poster ?? DEFAULT_POSTER}
-            style={localStyles.poster}
-          />
-        </TouchableOpacity>
-      ) : null}
+      <Image
+        source={media.poster ?? DEFAULT_POSTER}
+        style={[
+          localStyles.poster,
+          isReady && !hasError ? localStyles.posterHidden : null,
+        ]}
+      />
       <Video
         source={media.source}
         style={localStyles.video}
         resizeMode={resizeMode}
-        shouldPlay={isPlaying}
+        shouldPlay
         isMuted
         isLooping
+        onReadyForDisplay={() => {
+          setHasError(false);
+          setIsReady(true);
+        }}
+        onError={() => {
+          setHasError(true);
+          setIsReady(false);
+        }}
       />
     </View>
   );
@@ -95,17 +98,18 @@ const localStyles = StyleSheet.create({
     width: "100%",
     overflow: "hidden",
   },
-  posterPressable: {
+  poster: {
     position: "absolute",
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    zIndex: 1,
-  },
-  poster: {
     width: "100%",
     height: "100%",
+    zIndex: 1,
+  },
+  posterHidden: {
+    opacity: 0,
   },
   video: {
     width: "100%",
