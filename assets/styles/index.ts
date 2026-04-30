@@ -588,15 +588,9 @@ export default StyleSheet.create({
     borderRadius: 999,
   },
   discoverOrbitDecorativeDotBlue: {
-    position: "absolute",
-    left: 0,
-    top: 0,
     backgroundColor: "rgba(174, 191, 209, 0.72)",
   },
   discoverOrbitDecorativeDotOrange: {
-    position: "absolute",
-    left: 0,
-    top: 0,
     backgroundColor: "rgba(229, 188, 149, 0.78)",
   },
   discoverSheetRoot: {
