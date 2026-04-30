@@ -13,7 +13,7 @@ const CustomTabBar = ({
 }: BottomTabBarProps) => {
   return (
     <View style={styles.tabBarWrapper}>
-      <View style={[styles.tabBarContainer, localStyles.tabBarContainer]}>
+      <View style={styles.tabBarContainer}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label = options.tabBarLabel ?? options.title ?? route.name;
@@ -46,7 +46,6 @@ const CustomTabBar = ({
               {isFocused && !isHome && <View style={styles.tabBump} />}
               {isHome ? (
                 <>
-                  <View style={localStyles.homeBorderMask} />
                   <View
                     style={[
                       localStyles.homeCircle,
@@ -61,6 +60,17 @@ const CustomTabBar = ({
                       color={isFocused ? WHITE : TEXT_SECONDARY}
                     />
                   </View>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={[
+                      styles.tabButtonText,
+                      localStyles.homeLabel,
+                      { color: isFocused ? PRIMARY_COLOR : TEXT_SECONDARY },
+                    ]}
+                  >
+                    {String(label)}
+                  </Text>
                 </>
               ) : isFocused ? (
                 <View style={styles.tabCircle}>
@@ -95,19 +105,8 @@ const CustomTabBar = ({
 export default CustomTabBar;
 
 const localStyles = StyleSheet.create({
-  tabBarContainer: {
-    overflow: "visible",
-  },
   homeTabItem: {
     flex: 1.08,
-  },
-  homeBorderMask: {
-    position: "absolute",
-    top: -2,
-    width: 96,
-    height: 38,
-    backgroundColor: "#F6F6F4",
-    zIndex: 1,
   },
   homeCircle: {
     top: -18,
@@ -121,9 +120,8 @@ const localStyles = StyleSheet.create({
     shadowRadius: 12,
     shadowColor: PRIMARY_COLOR,
     shadowOffset: { height: 6, width: 0 },
-    borderWidth: 1,
+    borderWidth: 1  ,
     borderColor: "#F6F6F4",
-    zIndex: 2,
   },
   homeCircleFocused: {
     transform: [{ scale: 1.04 }],
@@ -132,5 +130,8 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#F6F6F4",
     borderColor: "#AEBFD1",
     shadowOpacity: 0,
+  },
+  homeLabel: {
+    marginTop: -14,
   },
 });
