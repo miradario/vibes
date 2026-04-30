@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions } from "react-native";
+import { StyleSheet, Dimensions, Platform } from "react-native";
 
 export const PRIMARY_COLOR = "#E4B76E";
 export const SECONDARY_COLOR = "#AEBFD1";
@@ -477,7 +477,12 @@ export default StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5BC95",
+    backgroundColor: CTA_PRIMARY,
+    shadowColor: CTA_PRIMARY,
+    shadowOpacity: 0.22,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 14,
+    elevation: 3,
     zIndex: 2,
   },
   discoverFixedFooter: {
@@ -817,10 +822,14 @@ export default StyleSheet.create({
     borderRadius: 22,
     paddingVertical: 24,
     paddingHorizontal: 20,
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowColor: BLACK,
-    shadowOffset: { height: 8, width: 0 },
+    ...(Platform.OS === "ios"
+      ? {}
+      : {
+          shadowOpacity: 0.18,
+          shadowRadius: 18,
+          shadowColor: BLACK,
+          shadowOffset: { height: 8, width: 0 },
+        }),
     zIndex: 1,
   },
   loginTitle: {
