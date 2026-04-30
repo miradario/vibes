@@ -6,10 +6,10 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 import OnboardingVideo from "../components/OnboardingVideo";
+import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { GENDERS, getGenderLabel } from "../src/constants/lookups";
 import { useI18n } from "../src/i18n";
-import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingGender = () => {
   const { locale, t } = useI18n();
@@ -18,8 +18,6 @@ const OnboardingGender = () => {
   const [selected, setSelected] = useState<number | null>(
     draft.genderId ?? null
   );
-  const progress = getOnboardingProgress("OnboardingGender");
-
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
@@ -27,14 +25,7 @@ const OnboardingGender = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <View style={styles.onboardProgressTrack}>
-            <View
-              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
-            />
-          </View>
-          <View style={localStyles.headerValueWrap}>
-            <Text style={styles.onboardSkip}>{progress.label}</Text>
-          </View>
+          <OnboardingProgressBar screenName="OnboardingGender" />
         </View>
 
         <Text style={styles.onboardTitle}>{t("onboarding.genderTitle")}</Text>
@@ -87,10 +78,6 @@ const OnboardingGender = () => {
 export default OnboardingGender;
 
 const localStyles = StyleSheet.create({
-  headerValueWrap: {
-    width: 40,
-    alignItems: "flex-end",
-  },
   videoWrap: {
     flex: 1,
     minHeight: 320,

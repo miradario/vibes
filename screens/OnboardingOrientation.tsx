@@ -6,13 +6,13 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 import OnboardingVideo from "../components/OnboardingVideo";
+import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   useCompleteOnboardingMutation,
   useOnboardingDraft,
 } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
-import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OPTIONS = [
   "Straight",
@@ -32,7 +32,6 @@ const OnboardingOrientation = () => {
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
   const completeMutation = useCompleteOnboardingMutation();
-  const progress = getOnboardingProgress("OnboardingOrientation");
   const [selected, setSelected] = useState<string[]>(draft.orientation ?? []);
 
   const toggle = (value: string) => {
@@ -51,14 +50,7 @@ const OnboardingOrientation = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <View style={styles.onboardProgressTrack}>
-            <View
-              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
-            />
-          </View>
-          <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress.label}</Text>
-          </View>
+          <OnboardingProgressBar screenName="OnboardingOrientation" />
         </View>
 
         <Text style={styles.onboardTitle}>{t("onboarding.orientationTitle")}</Text>

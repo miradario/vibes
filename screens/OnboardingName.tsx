@@ -12,9 +12,9 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 import OnboardingVideo from "../components/OnboardingVideo";
+import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
-import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingName = () => {
   const { t } = useI18n();
@@ -22,7 +22,13 @@ const OnboardingName = () => {
   const { draft, updateDraft } = useOnboardingDraft();
   const [name, setName] = useState(draft.displayName ?? "");
 
-  const progress = getOnboardingProgress("OnboardingName");
+  const goToNextStep = () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
+    updateDraft({ displayName: trimmedName });
+    navigation.navigate("OnboardingAge" as never);
+  };
 
   return (
     <View style={styles.bg}>
@@ -31,14 +37,7 @@ const OnboardingName = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <View style={styles.onboardProgressTrack}>
-            <View
-              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
-            />
-          </View>
-          <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress.label}</Text>
-          </View>
+          <OnboardingProgressBar screenName="OnboardingName" />
         </View>
 
         <Text style={styles.onboardTitle}>{t("onboarding.nameTitle")}</Text>
@@ -50,9 +49,11 @@ const OnboardingName = () => {
             placeholder={t("onboarding.namePlaceholder")}
             placeholderTextColor="#6E6E6E"
             autoCapitalize="words"
+            returnKeyType="done"
             value={name}
             onChangeText={setName}
             maxLength={50}
+            onSubmitEditing={goToNextStep}
           />
         </View>
 
@@ -65,10 +66,7 @@ const OnboardingName = () => {
               !name.trim() && styles.onboardNextDisabled,
             ]}
             disabled={!name.trim()}
-            onPress={() => {
-              updateDraft({ displayName: name.trim() });
-              navigation.navigate("OnboardingAge" as never);
-            }}
+            onPress={goToNextStep}
           >
             <Text style={styles.onboardNextText}>{t("common.next")}</Text>
           </TouchableOpacity>

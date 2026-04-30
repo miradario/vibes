@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useSignupMutation } from "../src/auth/auth.queries";
 import {
   View,
@@ -30,6 +30,7 @@ const Signup = () => {
   const [error, setError] = useState<string | null>(null);
   const signupMutation = useSignupMutation();
   const loading = signupMutation.isPending;
+  const passwordInputRef = useRef<TextInput | null>(null);
 
   const handleSignup = async () => {
     if (!email || !password) {
@@ -92,8 +93,11 @@ const Signup = () => {
                 placeholderTextColor="rgba(110,110,110,0.45)"
                 autoCapitalize="none"
                 keyboardType="email-address"
+                returnKeyType="next"
+                blurOnSubmit={false}
                 value={email}
                 onChangeText={setEmail}
+                onSubmitEditing={() => passwordInputRef.current?.focus()}
               />
             </View>
 
@@ -101,12 +105,15 @@ const Signup = () => {
               <Text style={styles.loginLabel}>{t("common.password")}</Text>
               <View style={localStyles.passwordField}>
                 <TextInput
+                  ref={passwordInputRef}
                   style={[styles.loginInput, localStyles.passwordInput]}
                   placeholder=""
                   placeholderTextColor="#6E6E6E"
                   secureTextEntry={!showPassword}
+                  returnKeyType="done"
                   value={password}
                   onChangeText={setPassword}
+                  onSubmitEditing={() => void handleSignup()}
                 />
                 <TouchableOpacity
                   style={localStyles.passwordToggle}

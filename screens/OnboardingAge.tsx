@@ -15,9 +15,9 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 import OnboardingVideo from "../components/OnboardingVideo";
+import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
-import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingAge = () => {
   const { t } = useI18n();
@@ -29,8 +29,6 @@ const OnboardingAge = () => {
     const parsed = new Date(draft.birthDate);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   });
-
-  const progress = getOnboardingProgress("OnboardingAge");
 
   const maxDate = useMemo(() => {
     const today = new Date();
@@ -75,14 +73,7 @@ const OnboardingAge = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <View style={styles.onboardProgressTrack}>
-            <View
-              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
-            />
-          </View>
-          <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress.label}</Text>
-          </View>
+          <OnboardingProgressBar screenName="OnboardingAge" />
         </View>
 
         <Text style={styles.onboardTitle}>{t("onboarding.ageTitle")}</Text>

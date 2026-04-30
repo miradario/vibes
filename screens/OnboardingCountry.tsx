@@ -14,8 +14,8 @@ import * as Location from "expo-location";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
 import OnboardingVideo from "../components/OnboardingVideo";
+import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useI18n } from "../src/i18n";
-import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const OnboardingCountry = () => {
   const { t } = useI18n();
@@ -23,7 +23,10 @@ const OnboardingCountry = () => {
   const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const progress = getOnboardingProgress("OnboardingCountry");
+  const goToNextStep = () => {
+    if (!country.trim()) return;
+    navigation.navigate("OnboardingPhoto" as never);
+  };
 
   const requestLocation = async () => {
     setLoading(true);
@@ -61,14 +64,7 @@ const OnboardingCountry = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <View style={styles.onboardProgressTrack}>
-            <View
-              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
-            />
-          </View>
-          <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress.label}</Text>
-          </View>
+          <OnboardingProgressBar screenName="OnboardingCountry" />
         </View>
 
         <Text style={styles.onboardTitle}>{t("onboarding.countryTitle")}</Text>
@@ -80,8 +76,10 @@ const OnboardingCountry = () => {
             placeholder={t("onboarding.countryPlaceholder")}
             placeholderTextColor="#6E6E6E"
             autoCapitalize="words"
+            returnKeyType="done"
             value={country}
             onChangeText={setCountry}
+            onSubmitEditing={goToNextStep}
           />
         </View>
 
@@ -110,7 +108,7 @@ const OnboardingCountry = () => {
               !country.trim() && styles.onboardNextDisabled,
             ]}
             disabled={!country.trim()}
-            onPress={() => navigation.navigate("OnboardingPhoto" as never)}
+            onPress={goToNextStep}
           >
             <Text style={styles.onboardNextText}>{t("common.next")}</Text>
           </TouchableOpacity>

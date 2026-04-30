@@ -17,8 +17,11 @@ const FLOW_STEP_INDEX: Record<string, number> = {
   OnboardingInterested: 4,
 };
 
+export const getOnboardingStepIndex = (screenName: string) =>
+  FLOW_STEP_INDEX[screenName];
+
 export const getOnboardingProgress = (screenName: string) => {
-  const stepIndex = FLOW_STEP_INDEX[screenName];
+  const stepIndex = getOnboardingStepIndex(screenName);
 
   if (typeof stepIndex !== "number") {
     return {

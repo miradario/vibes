@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import OnboardingVideo from "../components/OnboardingVideo";
+import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import SpiritualPathDetailsModal from "../components/SpiritualPathDetailsModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -32,7 +33,6 @@ import {
 } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
-import { getOnboardingProgress } from "../src/lib/onboardingFlow";
 
 const ONBOARDING_OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
 
@@ -65,8 +65,6 @@ const OnboardingSpiritualPath = () => {
     draft.otherTags ?? [],
   );
   const [customTag, setCustomTag] = useState("");
-
-  const progress = getOnboardingProgress("OnboardingSpiritualPath");
 
   const openPathEditor = (path: string) => {
     setSelectedPaths((prev) => (prev.includes(path) ? prev : [...prev, path]));
@@ -159,14 +157,7 @@ const OnboardingSpiritualPath = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <View style={styles.onboardProgressTrack}>
-            <View
-              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
-            />
-          </View>
-          <View style={{ width: 40 }}>
-            <Text style={styles.onboardSkip}>{progress.label}</Text>
-          </View>
+          <OnboardingProgressBar screenName="OnboardingSpiritualPath" />
         </View>
 
         <Text style={styles.onboardTitle}>{t("onboarding.spiritualTitle")}</Text>
@@ -286,8 +277,10 @@ const OnboardingSpiritualPath = () => {
                 style={[styles.loginInput, localStyles.otherInput]}
                 placeholder={t("settings.newInterestPlaceholder")}
                 placeholderTextColor={GRAY}
+                returnKeyType="done"
                 value={customTag}
                 onChangeText={setCustomTag}
+                onSubmitEditing={addCustomTag}
               />
               <TouchableOpacity
                 style={localStyles.addButton}

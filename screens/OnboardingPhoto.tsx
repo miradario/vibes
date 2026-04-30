@@ -17,7 +17,7 @@ import * as Location from "expo-location";
 import styles, { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 import OnboardingVideo from "../components/OnboardingVideo";
-import { getOnboardingProgress } from "../src/lib/onboardingFlow";
+import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
@@ -105,8 +105,6 @@ const OnboardingPhoto = () => {
   );
   const [photoUris, setPhotoUris] = useState<string[]>(initialPhotos);
   const [showPickerModal, setShowPickerModal] = useState(false);
-
-  const progress = getOnboardingProgress("OnboardingPhoto");
 
   useEffect(() => {
     setPhotoUris(initialPhotos);
@@ -222,14 +220,7 @@ const OnboardingPhoto = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-          <View style={styles.onboardProgressTrack}>
-            <View
-              style={[styles.onboardProgressFill, { width: `${progress.value}%` }]}
-            />
-          </View>
-          <View style={localStyles.headerValueWrap}>
-            <Text style={styles.onboardSkip}>{progress.label}</Text>
-          </View>
+          <OnboardingProgressBar screenName="OnboardingPhoto" />
         </View>
         <ScrollView
           style={localStyles.scrollView}
@@ -370,10 +361,6 @@ const OnboardingPhoto = () => {
 };
 
 const localStyles = StyleSheet.create({
-  headerValueWrap: {
-    width: 42,
-    alignItems: "flex-end",
-  },
   scrollView: {
     flex: 1,
   },
