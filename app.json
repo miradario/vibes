@@ -18,7 +18,9 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.miradario.vibe"
+      "bundleIdentifier": "com.miradario.vibe",
+      "deploymentTarget": "15.4",
+      "appleTeamId": "4CKS7Q9UL2"
     },
     "android": {
       "adaptiveIcon": {
@@ -36,6 +38,14 @@
     "plugins": [
       "expo-font",
       "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.4"
+          }
+        }
+      ],
       "@lottiefiles/dotlottie-react-native/plugin",
       [
         "expo-image-picker",
