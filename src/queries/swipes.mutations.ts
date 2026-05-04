@@ -19,6 +19,11 @@ type SwipeContext = {
   previous: Array<[readonly unknown[], GetCandidatesResponse | undefined]>;
 };
 
+const normalizeMatchPair = (leftUserId: string, rightUserId: string) =>
+  leftUserId < rightUserId
+    ? { user1Id: leftUserId, user2Id: rightUserId }
+    : { user1Id: rightUserId, user2Id: leftUserId };
+
 export const useSwipeMutation = () => {
   const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
@@ -59,6 +64,7 @@ export const useSwipeMutation = () => {
 
       // 2. If "like", check if the other person also liked us
       if (persistedDirection === "like") {
+        const normalizedPair = normalizeMatchPair(userId, payload.targetUserId);
         const { data: mutual, error: mutualErr } = await supabase
           .from("swipes")
           .select("id")
@@ -69,74 +75,69 @@ export const useSwipeMutation = () => {
 
         console.log("[swipe] mutual check:", mutual?.id ?? "none", "error:", mutualErr?.message);
 
+        if (mutualErr) {
+          throw new Error(mutualErr.message);
+        }
+
         if (mutual) {
-          const findExistingMatch = async () => {
-            const { data, error } = await supabase
+          // Mutual like! Only treat it as a match once the canonical row exists.
+          const findExistingMatch = async () =>
+            supabase
               .from("matches")
               .select("id")
-              .or(
-                `and(user1_id.eq.${userId},user2_id.eq.${payload.targetUserId}),and(user1_id.eq.${payload.targetUserId},user2_id.eq.${userId})`,
-              )
+              .eq("user1_id", normalizedPair.user1Id)
+              .eq("user2_id", normalizedPair.user2Id)
               .maybeSingle();
 
-            if (error) {
-              console.error("[swipe] findExistingMatch error:", error);
-              throw new Error(error.message);
-            }
-
-            return data ?? null;
-          };
-
-          // Mutual like! Create match if it doesn't exist
-          const existingMatch = await findExistingMatch().catch((error) => {
-            console.error("[swipe] existing match lookup failed:", error);
-            throw error;
-          });
-          const existErr = null;
+          const { data: existingMatch, error: existErr } = await findExistingMatch();
 
           console.log("[swipe] existing match:", existingMatch?.id ?? "none", "error:", existErr?.message);
 
-          if (!existingMatch) {
-            // Try with is_active first, fallback without it
-            let matchErr: any = null;
-            let newMatch: any = null;
+          if (existErr) {
+            throw new Error(existErr.message);
+          }
 
-            const res1 = await supabase
-              .from("matches")
-              .insert({
-                user1_id: userId,
-                user2_id: payload.targetUserId,
-                is_active: true,
-              })
-              .select("id")
-              .single();
+          if (existingMatch) {
+            console.log("[swipe] → MATCH! existing canonical row found");
+            return { match: true, swipeId };
+          }
 
-            if (res1.error) {
-              // Column might not exist, try without is_active
-              console.log("[swipe] match insert with is_active failed:", res1.error.message);
-              const res2 = await supabase
-                .from("matches")
-                .insert({
-                  user1_id: userId,
-                  user2_id: payload.targetUserId,
-                })
-                .select("id")
-                .single();
-              matchErr = res2.error;
-              newMatch = res2.data;
-            } else {
-              matchErr = res1.error;
-              newMatch = res1.data;
+          const { data: createdMatch, error: createMatchErr } = await supabase
+            .from("matches")
+            .insert({
+              user1_id: normalizedPair.user1Id,
+              user2_id: normalizedPair.user2Id,
+            })
+            .select("id")
+            .single();
+
+          console.log("[swipe] created match:", createdMatch?.id ?? "none", "error:", createMatchErr?.message);
+
+          if (createMatchErr) {
+            const { data: recoveredMatch, error: recoverErr } = await findExistingMatch();
+
+            console.log(
+              "[swipe] recovered canonical match:",
+              recoveredMatch?.id ?? "none",
+              "error:",
+              recoverErr?.message,
+            );
+
+            if (recoverErr) {
+              throw new Error(recoverErr.message);
             }
 
-            console.log("[swipe] created match:", newMatch?.id, "error:", matchErr?.message);
-            if (matchErr) {
-              const retryMatch = await findExistingMatch();
-              if (!retryMatch) {
-                console.error("[swipe] match insert failed without persisted row:", matchErr);
-                throw new Error(matchErr.message || "No se pudo crear el match.");
+            if (recoveredMatch) {
+              if (createMatchErr.code === "23505") {
+                console.log("[swipe] → MATCH! duplicate insert resolved via canonical lookup");
+              } else {
+                console.warn("[swipe] match insert recovered after error:", createMatchErr);
               }
+              return { match: true, swipeId };
             }
+
+            console.error("[swipe] match insert failed without persisted row:", createMatchErr);
+            throw new Error(createMatchErr.message);
           }
 
           console.log("[swipe] → MATCH! returning true");
