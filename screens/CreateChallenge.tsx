@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +15,10 @@ import {
 } from "react-native";
 import { ResizeMode } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -46,6 +50,7 @@ const formatChallengeDate = (value: Date) =>
 
 const CreateChallenge = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
   const createChallengeMutation = useCreateChallengeMutation();
@@ -162,129 +167,157 @@ const CreateChallenge = () => {
   };
 
   return (
-    <View style={styles.bg}>
-      <ScrollView
-        style={styles.editContainer}
-        contentContainerStyle={localStyles.content}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.bg} edges={["top", "left", "right"]}>
+      <KeyboardAvoidingView
+        style={localStyles.keyboardAvoiding}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Math.max(insets.top - 8, 0)}
       >
-        <View style={styles.top}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={styles.title}>Crear challenge</Text>
-          </View>
-          <View style={{ width: 22 }} />
-        </View>
-
-        <View style={localStyles.formCard}>
-          <Text style={localStyles.label}>Título</Text>
-          <TextInput
-            style={localStyles.input}
-            placeholder="Ej: 21 días de gratitud"
-            placeholderTextColor={TEXT_SECONDARY}
-            value={title}
-            onChangeText={setTitle}
-          />
-
-          <Text style={localStyles.label}>Imagen y video del challenge</Text>
-          <View style={localStyles.presetGrid}>
-            {challengeMediaPresets.map((preset) => {
-              const isSelected = selectedPresetId === preset.id;
-
-              return (
-                <Pressable
-                  key={preset.id}
-                  style={[
-                    localStyles.presetCard,
-                    isSelected && localStyles.presetCardSelected,
-                  ]}
-                  onPress={() => setSelectedPresetId(preset.id)}
-                >
-                  <View style={localStyles.presetImageWrap}>
-                    <Image source={preset.image} style={localStyles.presetImage} />
-                  </View>
-                  <Text style={localStyles.presetLabel}>{preset.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          {activePreset ? (
-            <View style={localStyles.videoPreviewCard}>
-              <LoopingVideo
-                source={activePreset.video}
-                posterSource={activePreset.image}
-                style={localStyles.videoPreview}
-                resizeMode={ResizeMode.CONTAIN}
-              />
+        <ScrollView
+          style={styles.editContainer}
+          contentContainerStyle={[
+            localStyles.content,
+            { paddingBottom: 132 + insets.bottom },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          contentInsetAdjustmentBehavior="automatic"
+        >
+          <View style={styles.top}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Icon name="chevron-back" size={22} color={DARK_GRAY} />
+            </TouchableOpacity>
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <Text style={styles.title}>Crear challenge</Text>
             </View>
-          ) : null}
+            <View style={{ width: 22 }} />
+          </View>
 
-          <Text style={localStyles.label}>Fecha de comienzo</Text>
+          <View style={localStyles.formCard}>
+            <Text style={localStyles.label}>Título</Text>
+            <TextInput
+              style={localStyles.input}
+              placeholder="Ej: 21 días de gratitud"
+              placeholderTextColor={TEXT_SECONDARY}
+              value={title}
+              onChangeText={setTitle}
+              returnKeyType="next"
+            />
+
+            <Text style={localStyles.label}>Imagen y video del challenge</Text>
+            <View style={localStyles.presetGrid}>
+              {challengeMediaPresets.map((preset) => {
+                const isSelected = selectedPresetId === preset.id;
+
+                return (
+                  <TouchableOpacity
+                    key={preset.id}
+                    style={[
+                      localStyles.presetCard,
+                      isSelected && localStyles.presetCardSelected,
+                    ]}
+                    onPress={() => setSelectedPresetId(preset.id)}
+                  >
+                    <View style={localStyles.presetImageWrap}>
+                      <Image source={preset.image} style={localStyles.presetImage} />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {activePreset ? (
+              <View style={localStyles.videoPreviewCard}>
+                <LoopingVideo
+                  source={activePreset.video}
+                  posterSource={activePreset.image}
+                  style={localStyles.videoPreview}
+                  resizeMode={ResizeMode.CONTAIN}
+                />
+              </View>
+            ) : null}
+
+            <Text style={localStyles.label}>Fecha de comienzo</Text>
+            <TouchableOpacity
+              style={localStyles.dateButton}
+              onPress={openDatePicker}
+            >
+              <Icon name="calendar" size={18} color={DARK_GRAY} />
+              <Text style={localStyles.dateButtonText}>
+                {challengeStartDate
+                  ? formatChallengeDate(challengeStartDate)
+                  : "Seleccionar fecha"}
+              </Text>
+            </TouchableOpacity>
+            {showDatePicker ? (
+              <View style={localStyles.datePickerWrap}>
+                <DateTimePicker
+                  value={challengeStartDate ?? new Date()}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "inline" : "default"}
+                  onChange={handleDateChange}
+                  minimumDate={new Date()}
+                  accentColor={PRIMARY_COLOR}
+                  textColor={DARK_GRAY}
+                  themeVariant="light"
+                />
+              </View>
+            ) : null}
+
+            <Text style={localStyles.label}>Descripción corta</Text>
+            <TextInput
+              style={[localStyles.input, localStyles.descriptionInput]}
+              placeholder="Ej: Un hábito diario para sostener en comunidad"
+              placeholderTextColor={TEXT_SECONDARY}
+              value={subtitle}
+              onChangeText={setSubtitle}
+              multiline
+              scrollEnabled={false}
+              textAlignVertical="top"
+              returnKeyType="default"
+            />
+
+            <Text style={localStyles.label}>Duración en días</Text>
+            <TextInput
+              style={localStyles.input}
+              placeholder="Ej: 21"
+              placeholderTextColor={TEXT_SECONDARY}
+              value={days}
+              onChangeText={(value) => setDays(normalizeDaysInput(value))}
+              keyboardType="number-pad"
+            />
+          </View>
+
+        </ScrollView>
+
+        <View
+          style={[
+            localStyles.fixedFooter,
+            { paddingBottom: Math.max(insets.bottom + 12, 28) },
+          ]}
+        >
           <TouchableOpacity
-            style={localStyles.dateButton}
-            onPress={openDatePicker}
+            style={[
+              localStyles.createButton,
+              (!isFormReady || createChallengeMutation.isPending) &&
+                localStyles.createButtonDisabled,
+            ]}
+            onPress={handleCreate}
+            disabled={!isFormReady || createChallengeMutation.isPending}
           >
-            <Icon name="calendar" size={18} color={DARK_GRAY} />
-            <Text style={localStyles.dateButtonText}>
-              {challengeStartDate
-                ? formatChallengeDate(challengeStartDate)
-                : "Seleccionar fecha"}
+            <Text style={localStyles.createButtonText}>
+              {createChallengeMutation.isPending ? "Creando..." : "Crear challenge"}
             </Text>
           </TouchableOpacity>
-          {showDatePicker ? (
-            <DateTimePicker
-              value={challengeStartDate ?? new Date()}
-              mode="date"
-              display={Platform.OS === "ios" ? "inline" : "default"}
-              onChange={handleDateChange}
-              minimumDate={new Date()}
-            />
-          ) : null}
-
-          <Text style={localStyles.label}>Descripción corta</Text>
-          <TextInput
-            style={localStyles.input}
-            placeholder="Ej: Un hábito diario para sostener en comunidad"
-            placeholderTextColor={TEXT_SECONDARY}
-            value={subtitle}
-            onChangeText={setSubtitle}
-          />
-
-          <Text style={localStyles.label}>Duración en días</Text>
-          <TextInput
-            style={localStyles.input}
-            placeholder="Ej: 21"
-            placeholderTextColor={TEXT_SECONDARY}
-            value={days}
-            onChangeText={(value) => setDays(normalizeDaysInput(value))}
-            keyboardType="number-pad"
-          />
         </View>
-
-      </ScrollView>
-
-      <View style={localStyles.fixedFooter}>
-        <TouchableOpacity
-          style={[
-            localStyles.createButton,
-            (!isFormReady || createChallengeMutation.isPending) &&
-              localStyles.createButtonDisabled,
-          ]}
-          onPress={handleCreate}
-          disabled={!isFormReady || createChallengeMutation.isPending}
-        >
-          <Text style={localStyles.createButtonText}>
-            {createChallengeMutation.isPending ? "Creando..." : "Crear challenge"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const localStyles = StyleSheet.create({
+  keyboardAvoiding: {
+    flex: 1,
+  },
   content: {
     paddingBottom: 132,
   },
@@ -313,6 +346,10 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
     color: DARK_GRAY,
   },
+  descriptionInput: {
+    minHeight: 92,
+    lineHeight: 20,
+  },
   presetGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -321,7 +358,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   presetCard: {
-    width: "48%",
+    width: "31%",
     backgroundColor: WHITE,
     borderRadius: 14,
     borderWidth: 1,
@@ -334,23 +371,18 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(228,183,110,0.12)",
   },
   presetImage: {
-    width: 56,
-    height: 56,
-    resizeMode: "contain",
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   presetImageWrap: {
-    width: 88,
-    height: 88,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     backgroundColor: WHITE,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
-  },
-  presetLabel: {
-    color: DARK_GRAY,
-    fontWeight: "600",
-    fontSize: 14,
   },
   videoPreviewCard: {
     marginTop: 12,
@@ -382,6 +414,14 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 15,
     fontWeight: "600",
+  },
+  datePickerWrap: {
+    marginTop: 10,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#FFFDF8",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.28)",
   },
   createButton: {
     backgroundColor: PRIMARY_COLOR,

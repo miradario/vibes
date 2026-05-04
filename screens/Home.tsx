@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import LoopingVideo from "../components/LoopingVideo";
 import UserProfileSheet from "../components/UserProfileSheet";
+import type { UserProfileCardData } from "../components/UserProfileCard";
 import styles, { DIMENSION_WIDTH } from "../assets/styles";
 import Icon from "../components/Icon";
 import type { DataT } from "../types";
@@ -31,7 +32,11 @@ import { getGenderLabel } from "../src/constants/lookups";
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
-import { useEventsFeedQuery } from "../src/queries/events.queries";
+import {
+  useChallengesFeedQuery,
+  useEventsFeedQuery,
+  useMyEventGroupsQuery,
+} from "../src/queries/events.queries";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
@@ -213,6 +218,14 @@ const Home = () => {
     error,
   } = useCandidatesQuery();
   const { data: events = [], isLoading: isEventsLoading } = useEventsFeedQuery();
+  const {
+    data: challenges = [],
+    isLoading: isChallengesLoading,
+  } = useChallengesFeedQuery();
+  const {
+    data: myEventGroups = [],
+    isLoading: isMyEventGroupsLoading,
+  } = useMyEventGroupsQuery(session?.user?.id);
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
@@ -333,6 +346,64 @@ const Home = () => {
         return leftTime - rightTime;
       });
   }, [events]);
+  const activeChallenges = useMemo(() => {
+    const now = Date.now();
+
+    return challenges
+      .filter((challenge) => {
+        if (!challenge.startsAt) return true;
+
+        const startTime = new Date(challenge.startsAt).getTime();
+        if (!Number.isFinite(startTime)) return true;
+
+        const durationDays =
+          typeof challenge.durationDays === "number" && challenge.durationDays > 0
+            ? challenge.durationDays
+            : null;
+        const endTime = durationDays
+          ? startTime + durationDays * 24 * 60 * 60 * 1000
+          : null;
+
+        return startTime <= now && (endTime === null || endTime >= now);
+      })
+      .sort((left, right) => {
+        const leftTime = left.startsAt
+          ? new Date(left.startsAt).getTime()
+          : new Date(left.createdAt ?? 0).getTime();
+        const rightTime = right.startsAt
+          ? new Date(right.startsAt).getTime()
+          : new Date(right.createdAt ?? 0).getTime();
+
+        return (rightTime || 0) - (leftTime || 0);
+      });
+  }, [challenges]);
+  const joinedChallengeIds = useMemo(
+    () =>
+      new Set(
+        myEventGroups
+          .filter((group) => group.eventType === "challenge")
+          .map((group) => group.eventId),
+      ),
+    [myEventGroups],
+  );
+  const joinedActiveChallenges = useMemo(
+    () =>
+      activeChallenges.filter((challenge) =>
+        joinedChallengeIds.has(challenge.id),
+      ),
+    [activeChallenges, joinedChallengeIds],
+  );
+  const suggestedChallenge = useMemo(
+    () =>
+      joinedActiveChallenges.length > 0
+        ? null
+        : activeChallenges.find(
+            (challenge) => !joinedChallengeIds.has(challenge.id),
+          ) ?? null,
+    [activeChallenges, joinedActiveChallenges.length, joinedChallengeIds],
+  );
+  const isChallengesSectionLoading =
+    isChallengesLoading || (Boolean(session?.user?.id) && isMyEventGroupsLoading);
   const summaryStats = [
     {
       icon: "people-outline" as const,
@@ -346,7 +417,18 @@ const Home = () => {
     },
   ];
   const upcomingEvents = futureEvents.slice(0, 2);
+  const visibleJoinedActiveChallenges = joinedActiveChallenges.slice(0, 2);
   const suggestedProfile = profiles[0] ?? null;
+  const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
+    () =>
+      selectedProfile
+        ? {
+            ...selectedProfile,
+            id: String(selectedProfile.id),
+          }
+        : null,
+    [selectedProfile],
+  );
 
   const ageSummary = formatRangeSummary(
     discoverFilters.ageMin,
@@ -873,7 +955,7 @@ const Home = () => {
 
         <UserProfileSheet
           visible={showProfileSheet}
-          profile={selectedProfile}
+          profile={selectedProfileForSheet}
           onClose={closeProfileSheet}
           onImagePress={(_image, index) =>
             selectedProfile
@@ -944,6 +1026,118 @@ const Home = () => {
             >
               <Text style={localStyles.challengeButtonText}>Comenzar reto</Text>
             </TouchableOpacity>
+          </View>
+
+          <View style={localStyles.sectionCard}>
+            <View style={localStyles.sectionHeader}>
+              <Text style={localStyles.sectionTitle}>
+                {visibleJoinedActiveChallenges.length > 0
+                  ? "Tus challenges vigentes"
+                  : "Challenge sugerido"}
+              </Text>
+              <TouchableOpacity
+                style={localStyles.sectionLink}
+                onPress={() =>
+                  navigation.navigate("Calendar" as never, { section: "challenge" } as never)
+                }
+              >
+                <Text style={localStyles.sectionLinkText}>Ver todos</Text>
+                <Ionicons name="chevron-forward" size={20} color="#766F68" />
+              </TouchableOpacity>
+            </View>
+            {isChallengesSectionLoading ? (
+              <View style={localStyles.inlineLoading}>
+                <ActivityIndicator color="#DCA453" />
+              </View>
+            ) : visibleJoinedActiveChallenges.length > 0 ? (
+              visibleJoinedActiveChallenges.map((challenge, index) => (
+                <TouchableOpacity
+                  key={challenge.id}
+                  style={[
+                    localStyles.challengeRow,
+                    index > 0 && localStyles.eventRowSpacing,
+                  ]}
+                  onPress={() =>
+                    navigation.navigate(
+                      "EventDetail" as never,
+                      { event: challenge } as never,
+                    )
+                  }
+                >
+                  <Image
+                    source={
+                      typeof challenge.image === "string"
+                        ? { uri: challenge.image }
+                        : challenge.image
+                    }
+                    style={localStyles.challengeThumb}
+                  />
+                  <View style={localStyles.eventInfo}>
+                    <Text style={localStyles.eventTitle} numberOfLines={1}>
+                      {challenge.title}
+                    </Text>
+                    <View style={localStyles.eventMetaRow}>
+                      <Ionicons name="flame-outline" size={15} color="#6F6A64" />
+                      <Text style={localStyles.eventMeta} numberOfLines={1}>
+                        {challenge.date}
+                      </Text>
+                    </View>
+                    <View style={localStyles.eventMetaRow}>
+                      <Ionicons name="people-outline" size={15} color="#6F6A64" />
+                      <Text style={localStyles.eventMeta} numberOfLines={1}>
+                        {challenge.attendees}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={localStyles.rowArrow}>
+                    <Ionicons name="chevron-forward" size={21} color="#2B2B2B" />
+                  </View>
+                </TouchableOpacity>
+              ))
+            ) : suggestedChallenge ? (
+              <TouchableOpacity
+                style={localStyles.challengeRow}
+                onPress={() =>
+                  navigation.navigate(
+                    "EventDetail" as never,
+                    { event: suggestedChallenge } as never,
+                  )
+                }
+              >
+                <Image
+                  source={
+                    typeof suggestedChallenge.image === "string"
+                      ? { uri: suggestedChallenge.image }
+                      : suggestedChallenge.image
+                  }
+                  style={localStyles.challengeThumb}
+                />
+                <View style={localStyles.eventInfo}>
+                  <Text style={localStyles.eventTitle} numberOfLines={1}>
+                    {suggestedChallenge.title}
+                  </Text>
+                  <View style={localStyles.eventMetaRow}>
+                    <Ionicons name="sparkles-outline" size={15} color="#6F6A64" />
+                    <Text style={localStyles.eventMeta} numberOfLines={1}>
+                      Sugerido para empezar
+                    </Text>
+                  </View>
+                  <View style={localStyles.eventMetaRow}>
+                    <Ionicons name="flame-outline" size={15} color="#6F6A64" />
+                    <Text style={localStyles.eventMeta} numberOfLines={1}>
+                      {suggestedChallenge.date}
+                    </Text>
+                  </View>
+                </View>
+                <View style={localStyles.rowArrow}>
+                  <Ionicons name="chevron-forward" size={21} color="#2B2B2B" />
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <Text style={localStyles.emptyStateText}>
+                No hay challenges activos por ahora.
+              </Text>
+            )}
           </View>
 
           <View style={localStyles.sectionCard}>
@@ -1276,11 +1470,28 @@ const localStyles = StyleSheet.create({
   eventRowSpacing: {
     marginTop: 12,
   },
+  challengeRow: {
+    minHeight: 104,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(95, 138, 82, 0.18)",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    gap: 14,
+    backgroundColor: "rgba(247, 250, 242, 0.92)",
+  },
   eventThumb: {
     width: 76,
     height: 76,
     borderRadius: 14,
     backgroundColor: "#E9E4DD",
+  },
+  challengeThumb: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "#E7EEDC",
   },
   eventInfo: {
     flex: 1,

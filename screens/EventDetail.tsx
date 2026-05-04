@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
   Modal,
   TextInput,
   FlatList,
@@ -18,6 +19,7 @@ import {
 } from "react-native";
 import { ResizeMode } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles, {
   TEXT_SECONDARY,
   PRIMARY_COLOR,
@@ -192,6 +194,7 @@ const isVideoMedia = (value: unknown) => {
 const EventDetail = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const event = (route.params as any)?.event;
   const isChallenge = event?.type === "challenge";
 
@@ -405,12 +408,13 @@ const EventDetail = () => {
           return (
             <View style={localStyles.fixedFooterContent}>
               <TouchableOpacity
-                style={styles.eventDetailJoinButton}
+                style={localStyles.challengeChatButton}
                 onPress={() =>
                   navigation.navigate("EventChat" as never, { event } as never)
                 }
               >
-                <Text style={styles.eventDetailJoinButtonText}>
+                <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
+                <Text style={localStyles.challengeChatButtonText}>
                   Entrar al chat del challenge
                 </Text>
               </TouchableOpacity>
@@ -438,12 +442,13 @@ const EventDetail = () => {
         return (
           <View style={localStyles.fixedFooterContent}>
             <TouchableOpacity
-              style={styles.eventDetailJoinButton}
+              style={localStyles.challengeChatButton}
               onPress={() =>
                 navigation.navigate("EventChat" as never, { event } as never)
               }
             >
-              <Text style={styles.eventDetailJoinButtonText}>
+              <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
+              <Text style={localStyles.challengeChatButtonText}>
                 Entrar al chat del challenge
               </Text>
             </TouchableOpacity>
@@ -865,7 +870,12 @@ const EventDetail = () => {
         </>
       ) : null}
 
-      <View style={styles.eventDetailHeader}>
+      <View
+        style={[
+          styles.eventDetailHeader,
+          { top: Math.max(insets.top + 10, 24) },
+        ]}
+      >
         <TouchableOpacity
           style={styles.eventDetailBackButton}
           onPress={() => navigation.goBack()}
@@ -1393,7 +1403,14 @@ const EventDetail = () => {
       </ScrollView>
 
       {renderBottomActions() ? (
-        <View style={localStyles.fixedFooter}>{renderBottomActions()}</View>
+        <View
+          style={[
+            localStyles.fixedFooter,
+            { bottom: Math.max(insets.bottom + 12, 22) },
+          ]}
+        >
+          {renderBottomActions()}
+        </View>
       ) : null}
 
       {/* Modal check-in con nota opcional */}
@@ -1403,8 +1420,17 @@ const EventDetail = () => {
         animationType="slide"
         onRequestClose={() => setCheckInModalVisible(false)}
       >
-        <View style={localStyles.modalOverlay}>
-          <View style={localStyles.modalCard}>
+        <KeyboardAvoidingView
+          style={localStyles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Math.max(insets.top, 0)}
+        >
+          <View
+            style={[
+              localStyles.modalCard,
+              { paddingBottom: Math.max(insets.bottom + 18, 24) },
+            ]}
+          >
             <Text style={localStyles.modalTitle}>
               {getStreakEmoji(streak + 1)} Check-in del día
             </Text>
@@ -1440,7 +1466,7 @@ const EventDetail = () => {
               <Text style={localStyles.modalCancelText}>Cancelar</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Menú hamburguesa ── */}
@@ -2025,6 +2051,24 @@ const localStyles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
     elevation: 4,
+  },
+  challengeChatButton: {
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: WHITE,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.14)",
+    paddingVertical: 13,
+    marginBottom: 12,
+  },
+  challengeChatButtonText: {
+    color: DARK_GRAY,
+    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 16,
   },
   checkInButtonText: {
     color: WHITE,
