@@ -105,7 +105,7 @@ const AppNavigator = () => {
       CommonActions.navigate({
         name: "Tab",
         params: {
-          screen: "Flow",
+          screen: "Calendar",
         },
       }),
     );
@@ -191,10 +191,11 @@ const AppNavigator = () => {
                   />
                   <Tab.Screen
                     name="Flow"
-                    component={Messages}
+                    component={Events}
+                    initialParams={{ section: "challenge" }}
                     options={{
-                      tabBarLabel: t("tabs.flow"),
-                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="chatbubble-ellipses" />,
+                      tabBarLabel: t("tabs.challenges"),
+                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="trophy-outline" />,
                     }}
                   />
                   <Tab.Screen
@@ -207,11 +208,10 @@ const AppNavigator = () => {
                   />
                   <Tab.Screen
                     name="Calendar"
-                    component={Events}
-                    initialParams={{ section: "event" }}
+                    component={Messages}
                     options={{
-                      tabBarLabel: t("tabs.calendar"),
-                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="calendar" />,
+                      tabBarLabel: t("tabs.flow"),
+                      tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="chatbubble-ellipses" />,
                     }}
                   />
                   <Tab.Screen

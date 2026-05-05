@@ -1749,7 +1749,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2B2B2B",
+    backgroundColor: "#AEBFD1",
   },
   rangeButtonText: {
     color: "#F6F6F4",
@@ -1783,8 +1783,8 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   filterPillActive: {
-    backgroundColor: "#2B2B2B",
-    borderColor: "#2B2B2B",
+    backgroundColor: "#AEBFD1",
+    borderColor: "#AEBFD1",
   },
   filterPillText: {
     color: "#2B2B2B",
@@ -1820,7 +1820,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2B2B2B",
+    backgroundColor: "#AEBFD1",
   },
   filtersPrimaryButtonText: {
     color: "#F6F6F4",

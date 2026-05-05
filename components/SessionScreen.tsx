@@ -27,15 +27,8 @@ try {
   useConversation = sdk.useConversation;
   isElevenLabsAvailable = true;
 } catch (error) {
-  try {
-    const sdk = require("@elevenlabs/react-native/dist/lib.js");
-    ElevenLabsProvider = sdk.ElevenLabsProvider;
-    useConversation = sdk.useConversation;
-    isElevenLabsAvailable = true;
-  } catch (fallbackError) {
-    elevenLabsLoadError = fallbackError;
-    console.error("Failed to load ElevenLabs SDK:", fallbackError);
-  }
+  elevenLabsLoadError = error;
+  console.error("Failed to load ElevenLabs SDK:", error);
 }
 
 type SessionScreenProps = {
