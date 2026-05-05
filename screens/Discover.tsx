@@ -138,15 +138,6 @@ const matchesNumberRange = (
   return true;
 };
 
-const clampRange = (
-  nextValue: number | null,
-  minLimit: number,
-  maxLimit: number,
-) => {
-  if (nextValue === null) return null;
-  return Math.max(minLimit, Math.min(maxLimit, nextValue));
-};
-
 const formatRangeSummary = (
   min: number | null,
   max: number | null,
@@ -411,59 +402,6 @@ const Discover = () => {
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
   );
 
-  const updateAgeBoundary = (key: "ageMin" | "ageMax", delta: number) => {
-    setDiscoverFilters((prev) => {
-      const current = key === "ageMin" ? prev.ageMin : prev.ageMax;
-      const rawNext = clampRange(
-        (current ?? (key === "ageMin" ? 18 : 99)) + delta,
-        18,
-        99,
-      );
-      const next = rawNext === current ? current : rawNext;
-      const ageMin = key === "ageMin" ? next : prev.ageMin;
-      const ageMax = key === "ageMax" ? next : prev.ageMax;
-
-      if (ageMin !== null && ageMax !== null && ageMin > ageMax) {
-        return {
-          ...prev,
-          ageMin: key === "ageMin" ? ageMax : ageMin,
-          ageMax: key === "ageMin" ? ageMax : ageMin,
-        };
-      }
-
-      return { ...prev, ageMin, ageMax };
-    });
-  };
-
-  const updateDistanceBoundary = (
-    key: "distanceMinKm" | "maxDistanceKm",
-    delta: number,
-  ) => {
-    setDiscoverFilters((prev) => {
-      const fallback = key === "distanceMinKm" ? 0 : 100;
-      const current = key === "distanceMinKm" ? prev.distanceMinKm : prev.maxDistanceKm;
-      const rawNext = clampRange((current ?? fallback) + delta, 0, 500);
-      const stepAdjusted = rawNext === null ? null : Math.round(rawNext / 5) * 5;
-      const next = stepAdjusted === current ? current : stepAdjusted;
-      const distanceMinKm = key === "distanceMinKm" ? next : prev.distanceMinKm;
-      const maxDistanceKm = key === "maxDistanceKm" ? next : prev.maxDistanceKm;
-
-      if (
-        distanceMinKm !== null &&
-        maxDistanceKm !== null &&
-        distanceMinKm > maxDistanceKm
-      ) {
-        return {
-          ...prev,
-          distanceMinKm: key === "distanceMinKm" ? maxDistanceKm : distanceMinKm,
-          maxDistanceKm: key === "distanceMinKm" ? maxDistanceKm : distanceMinKm,
-        };
-      }
-
-      return { ...prev, distanceMinKm, maxDistanceKm };
-    });
-  };
-
   return (
     <View style={localStyles.screen}>
       <SafeAreaView style={localStyles.safeArea} edges={["top", "left", "right"]}>
@@ -555,41 +493,17 @@ const Discover = () => {
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>Mínima</Text>
                       <View style={localStyles.rangeControls}>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateAgeBoundary("ageMin", -1)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>-</Text>
-                        </TouchableOpacity>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.ageMin ?? "Sin límite"}
                         </Text>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateAgeBoundary("ageMin", 1)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>+</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>Máxima</Text>
                       <View style={localStyles.rangeControls}>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateAgeBoundary("ageMax", -1)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>-</Text>
-                        </TouchableOpacity>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.ageMax ?? "Sin límite"}
                         </Text>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateAgeBoundary("ageMax", 1)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>+</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                   </View>
@@ -663,45 +577,21 @@ const Discover = () => {
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>Mínima</Text>
                       <View style={localStyles.rangeControls}>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateDistanceBoundary("distanceMinKm", -5)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>-</Text>
-                        </TouchableOpacity>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.distanceMinKm === null
                             ? "Sin límite"
                             : `${discoverFilters.distanceMinKm} km`}
                         </Text>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateDistanceBoundary("distanceMinKm", 5)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>+</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>Máxima</Text>
                       <View style={localStyles.rangeControls}>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateDistanceBoundary("maxDistanceKm", -5)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>-</Text>
-                        </TouchableOpacity>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.maxDistanceKm === null
                             ? "Sin límite"
                             : `${discoverFilters.maxDistanceKm} km`}
                         </Text>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateDistanceBoundary("maxDistanceKm", 5)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>+</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                   </View>
@@ -999,20 +889,6 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-  },
-  rangeButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#AEBFD1",
-  },
-  rangeButtonText: {
-    color: "#F6F6F4",
-    fontSize: 18,
-    lineHeight: 20,
-    fontFamily: "CormorantGaramond_700Bold",
   },
   rangeValue: {
     flex: 1,

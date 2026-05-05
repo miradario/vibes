@@ -149,15 +149,6 @@ const matchesNumberRange = (
   return true;
 };
 
-const clampRange = (
-  nextValue: number | null,
-  minLimit: number,
-  maxLimit: number,
-) => {
-  if (nextValue === null) return null;
-  return Math.max(minLimit, Math.min(maxLimit, nextValue));
-};
-
 const formatRangeSummary = (
   min: number | null,
   max: number | null,
@@ -592,63 +583,6 @@ const Home = () => {
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
   );
 
-  const updateAgeBoundary = (key: "ageMin" | "ageMax", delta: number) => {
-    setDiscoverFilters((prev) => {
-      const current = key === "ageMin" ? prev.ageMin : prev.ageMax;
-      const rawNext = clampRange((current ?? (key === "ageMin" ? 18 : 99)) + delta, 18, 99);
-      const next = rawNext === current ? current : rawNext;
-      const ageMin = key === "ageMin" ? next : prev.ageMin;
-      const ageMax = key === "ageMax" ? next : prev.ageMax;
-
-      if (ageMin !== null && ageMax !== null && ageMin > ageMax) {
-        return {
-          ...prev,
-          ageMin: key === "ageMin" ? ageMax : ageMin,
-          ageMax: key === "ageMin" ? ageMax : ageMin,
-        };
-      }
-
-      return {
-        ...prev,
-        ageMin,
-        ageMax,
-      };
-    });
-  };
-
-  const updateDistanceBoundary = (
-    key: "distanceMinKm" | "maxDistanceKm",
-    delta: number,
-  ) => {
-    setDiscoverFilters((prev) => {
-      const fallback = key === "distanceMinKm" ? 0 : 100;
-      const current = key === "distanceMinKm" ? prev.distanceMinKm : prev.maxDistanceKm;
-      const rawNext = clampRange((current ?? fallback) + delta, 0, 500);
-      const stepAdjusted = rawNext === null ? null : Math.round(rawNext / 5) * 5;
-      const next = stepAdjusted === current ? current : stepAdjusted;
-      const distanceMinKm = key === "distanceMinKm" ? next : prev.distanceMinKm;
-      const maxDistanceKm = key === "maxDistanceKm" ? next : prev.maxDistanceKm;
-
-      if (
-        distanceMinKm !== null &&
-        maxDistanceKm !== null &&
-        distanceMinKm > maxDistanceKm
-      ) {
-        return {
-          ...prev,
-          distanceMinKm: key === "distanceMinKm" ? maxDistanceKm : distanceMinKm,
-          maxDistanceKm: key === "distanceMinKm" ? maxDistanceKm : distanceMinKm,
-        };
-      }
-
-      return {
-        ...prev,
-        distanceMinKm,
-        maxDistanceKm,
-      };
-    });
-  };
-
   return (
     <View style={localStyles.screen}>
       <SafeAreaView
@@ -708,41 +642,17 @@ const Home = () => {
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>Mínima</Text>
                       <View style={localStyles.rangeControls}>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateAgeBoundary("ageMin", -1)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>-</Text>
-                        </TouchableOpacity>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.ageMin ?? "Sin límite"}
                         </Text>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateAgeBoundary("ageMin", 1)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>+</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>Máxima</Text>
                       <View style={localStyles.rangeControls}>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateAgeBoundary("ageMax", -1)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>-</Text>
-                        </TouchableOpacity>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.ageMax ?? "Sin límite"}
                         </Text>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateAgeBoundary("ageMax", 1)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>+</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                   </View>
@@ -816,45 +726,21 @@ const Home = () => {
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>Mínima</Text>
                       <View style={localStyles.rangeControls}>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateDistanceBoundary("distanceMinKm", -5)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>-</Text>
-                        </TouchableOpacity>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.distanceMinKm === null
                             ? "Sin límite"
                             : `${discoverFilters.distanceMinKm} km`}
                         </Text>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateDistanceBoundary("distanceMinKm", 5)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>+</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>Máxima</Text>
                       <View style={localStyles.rangeControls}>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateDistanceBoundary("maxDistanceKm", -5)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>-</Text>
-                        </TouchableOpacity>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.maxDistanceKm === null
                             ? "Sin límite"
                             : `${discoverFilters.maxDistanceKm} km`}
                         </Text>
-                        <TouchableOpacity
-                          style={localStyles.rangeButton}
-                          onPress={() => updateDistanceBoundary("maxDistanceKm", 5)}
-                        >
-                          <Text style={localStyles.rangeButtonText}>+</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                   </View>
@@ -985,14 +871,15 @@ const Home = () => {
           </View>
 
           <View style={localStyles.summaryCard}>
-            <LoopingVideo
-              source={require("../assets/videos/bienvenidx.mp4")}
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Ir a tu perfil"
+              activeOpacity={0.84}
+              onPress={() => navigation.navigate("Aura" as never)}
               style={localStyles.summaryArt}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay
-              isMuted
-              isLooping={false}
-            />
+            >
+              <Image source={centerProfile.image} style={localStyles.summaryAvatarLarge} />
+            </TouchableOpacity>
             <View style={localStyles.summaryContent}>
               <Text style={localStyles.cardTitle}>Tu resumen</Text>
               <View style={localStyles.statsRow}>
@@ -1325,7 +1212,7 @@ const localStyles = StyleSheet.create({
     fontFamily: "CormorantGaramond_500Medium",
   },
   summaryCard: {
-    minHeight: 132,
+    minHeight: 108,
     borderRadius: 18,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -1335,16 +1222,21 @@ const localStyles = StyleSheet.create({
     shadowColor: "#3E352B",
     shadowOffset: { height: 8, width: 0 },
     flexDirection: "row",
-    padding: 16,
-    gap: 14,
+    padding: 14,
+    gap: 12,
     marginBottom: 18,
   },
   summaryArt: {
-    width: 92,
-    borderRadius: 16,
-    overflow: "hidden",
+    width: 78,
+    minHeight: 78,
     alignItems: "center",
     justifyContent: "center",
+  },
+  summaryAvatarLarge: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "#E9E4DD",
   },
   summaryContent: {
     flex: 1,
@@ -1355,7 +1247,7 @@ const localStyles = StyleSheet.create({
     fontSize: 23,
     lineHeight: 27,
     fontFamily: "CormorantGaramond_700Bold",
-    marginBottom: 18,
+    marginBottom: 12,
   },
   statsRow: {
     flexDirection: "row",
@@ -1363,7 +1255,7 @@ const localStyles = StyleSheet.create({
   },
   statItem: {
     flex: 1,
-    minHeight: 78,
+    minHeight: 66,
     justifyContent: "flex-start",
     position: "relative",
     paddingLeft: 8,
@@ -1844,20 +1736,6 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-  },
-  rangeButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#AEBFD1",
-  },
-  rangeButtonText: {
-    color: "#F6F6F4",
-    fontSize: 18,
-    lineHeight: 20,
-    fontFamily: "CormorantGaramond_700Bold",
   },
   rangeValue: {
     flex: 1,

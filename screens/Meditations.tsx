@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   View,
-  type ViewStyle,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -17,9 +16,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { Audio, ResizeMode, type AVPlaybackStatus } from "expo-av";
+import { Audio, ResizeMode, Video, type AVPlaybackStatus } from "expo-av";
 import Icon from "../components/Icon";
-import LoopingVideo from "../components/LoopingVideo";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type MeditationType = "silent" | "guided";
@@ -107,11 +105,8 @@ const AUDIO_BY_DURATION: Record<DurationOption, number> = {
   20: require("../assets/audio/meditation/meditation20min.mp3"),
 };
 
-const VIDEO_RATE_BY_DURATION: Record<DurationOption, number> = {
-  5: 1.2,
-  10: 1,
-  20: 0.82,
-};
+const FINISH_SOUND = require("../assets/audio/meditation/finish.mp3");
+const MEDITATION_VIDEO_BACKGROUND = "#E0E0E0";
 
 const formatDuration = (minutes: number) => `${String(minutes).padStart(2, "0")}:00`;
 const formatMillis = (millis: number) => {
@@ -245,41 +240,6 @@ const DurationCard = ({
   );
 };
 
-const CTAButton = ({
-  label,
-  onPress,
-  style,
-}: {
-  label: string;
-  onPress: () => void;
-  style?: ViewStyle;
-}) => {
-  const pressScale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
-  }));
-
-  return (
-    <Animated.View style={[animatedStyle, style]}>
-      <Pressable
-        accessibilityRole="button"
-        onPress={onPress}
-        onPressIn={() => {
-          pressScale.value = withTiming(0.985, { duration: 90 });
-        }}
-        onPressOut={() => {
-          pressScale.value = withTiming(1, { duration: 110 });
-        }}
-        style={localStyles.ctaButton}
-      >
-        <Icon name="play" size={18} color="#F6F6F4" />
-        <Text style={localStyles.ctaLabel}>{label}</Text>
-      </Pressable>
-    </Animated.View>
-  );
-};
-
 const BottomTabPreview = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -380,18 +340,23 @@ const MeditationScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const soundRef = useRef<Audio.Sound | null>(null);
+  const finishSoundRef = useRef<Audio.Sound | null>(null);
+  const videoRef = useRef<Video | null>(null);
+  const silentStartedAtRef = useRef<number | null>(null);
   const shouldResumeOnReloadRef = useRef(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [selectedType, setSelectedType] = useState<MeditationType>("silent");
-  const [selectedDuration, setSelectedDuration] = useState<DurationOption>(10);
+  const [selectedType, setSelectedType] = useState<MeditationType>("guided");
+  const [selectedDuration, setSelectedDuration] = useState<DurationOption>(20);
   const [selectedMusic, setSelectedMusic] = useState<MusicValue>(null);
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPreparingAudio, setIsPreparingAudio] = useState(false);
   const [positionMillis, setPositionMillis] = useState(0);
-  const [durationMillis, setDurationMillis] = useState(selectedDuration * 60 * 1000);
+  const [videoDurationMillis, setVideoDurationMillis] = useState<number | null>(null);
+  const [videoResetKey, setVideoResetKey] = useState(0);
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
+  const targetDurationMillis = selectedDuration * 60 * 1000;
 
   const selectedMusicOption = useMemo(
     () => MUSIC_OPTIONS.find((option) => option.value === selectedMusic) ?? MUSIC_OPTIONS[0],
@@ -401,24 +366,18 @@ const MeditationScreen = () => {
     () => AUDIO_BY_DURATION[selectedDuration],
     [selectedDuration],
   );
-  const selectedVideoRate = useMemo(
-    () => VIDEO_RATE_BY_DURATION[selectedDuration],
-    [selectedDuration],
-  );
+  const isSilentMode = selectedType === "silent";
+  const selectedVideoRate = useMemo(() => {
+    if (!videoDurationMillis || targetDurationMillis <= 0) return 1;
+    return Math.max(0.05, Math.min(4, videoDurationMillis / targetDurationMillis));
+  }, [targetDurationMillis, videoDurationMillis]);
 
-  const meditationPayload = useMemo(
-    () => ({
-      type: selectedType,
-      duration: selectedDuration,
-      music: selectedMusic,
-    }),
-    [selectedDuration, selectedMusic, selectedType],
-  );
-
-  const totalDurationLabel = formatMillis(durationMillis);
+  const totalDurationLabel = formatMillis(targetDurationMillis);
   const currentTimeLabel = formatMillis(positionMillis);
   const progressRatio =
-    durationMillis > 0 ? Math.min(Math.max(positionMillis / durationMillis, 0), 1) : 0;
+    targetDurationMillis > 0
+      ? Math.min(Math.max(positionMillis / targetDurationMillis, 0), 1)
+      : 0;
   const playerTitle =
     selectedType === "guided" ? "Conexión profunda" : "Silencio interior";
   const playerSubtitle =
@@ -430,13 +389,45 @@ const MeditationScreen = () => {
       ? "Respira y vuelve a ti."
       : "Respira y escucha tu interior.";
 
+  const playFinishSound = useCallback(async () => {
+    try {
+      const previousFinishSound = finishSoundRef.current;
+      finishSoundRef.current = null;
+      previousFinishSound?.setOnPlaybackStatusUpdate(null);
+      await previousFinishSound?.unloadAsync();
+
+      const finishSound = new Audio.Sound();
+      finishSoundRef.current = finishSound;
+      finishSound.setOnPlaybackStatusUpdate((status) => {
+        if (!status.isLoaded || !status.didJustFinish) return;
+        finishSound.setOnPlaybackStatusUpdate(null);
+        finishSound.unloadAsync().catch(() => undefined);
+        if (finishSoundRef.current === finishSound) {
+          finishSoundRef.current = null;
+        }
+      });
+      await finishSound.loadAsync(FINISH_SOUND, { shouldPlay: true }, true);
+    } catch {
+      // The finish chime is secondary; do not interrupt the meditation flow.
+    }
+  }, []);
+
+  const finishSession = useCallback(() => {
+    silentStartedAtRef.current = null;
+    setIsPlaying(false);
+    setPositionMillis(0);
+    void soundRef.current?.stopAsync().catch(() => undefined);
+    void soundRef.current?.setPositionAsync(0).catch(() => undefined);
+    void videoRef.current?.setPositionAsync(0).catch(() => undefined);
+    void playFinishSound();
+  }, [playFinishSound]);
+
   const updatePlaybackState = useCallback(
     (status: AVPlaybackStatus) => {
       if (!status.isLoaded) {
         setIsPlayerReady(false);
         setIsPlaying(false);
         setPositionMillis(0);
-        setDurationMillis(selectedDuration * 60 * 1000);
         if (status.error) {
           console.warn("[MeditationScreen] playback error", status.error);
         }
@@ -445,19 +436,26 @@ const MeditationScreen = () => {
 
       setIsPlayerReady(true);
       setIsPlaying(status.isPlaying);
-      setPositionMillis(status.positionMillis ?? 0);
-      setDurationMillis(
-        typeof status.durationMillis === "number"
-          ? status.durationMillis
-          : selectedDuration * 60 * 1000,
-      );
+      const nextPosition = Math.min(status.positionMillis ?? 0, targetDurationMillis);
+      setPositionMillis(nextPosition);
+      if (nextPosition >= targetDurationMillis || status.didJustFinish) {
+        finishSession();
+      }
     },
-    [selectedDuration],
+    [finishSession, targetDurationMillis],
   );
 
   const unloadSound = useCallback(async () => {
     const activeSound = soundRef.current;
     soundRef.current = null;
+    if (!activeSound) return;
+    activeSound.setOnPlaybackStatusUpdate(null);
+    await activeSound.unloadAsync();
+  }, []);
+
+  const unloadFinishSound = useCallback(async () => {
+    const activeSound = finishSoundRef.current;
+    finishSoundRef.current = null;
     if (!activeSound) return;
     activeSound.setOnPlaybackStatusUpdate(null);
     await activeSound.unloadAsync();
@@ -469,6 +467,15 @@ const MeditationScreen = () => {
 
       try {
         await unloadSound();
+
+        if (isSilentMode) {
+          soundRef.current = null;
+          setIsPlayerReady(true);
+          setIsPlaying(false);
+          setPositionMillis(0);
+          silentStartedAtRef.current = null;
+          return;
+        }
 
         const sound = new Audio.Sound();
         soundRef.current = sound;
@@ -487,7 +494,7 @@ const MeditationScreen = () => {
         setIsPreparingAudio(false);
       }
     },
-    [selectedAudioSource, unloadSound, updatePlaybackState],
+    [isSilentMode, selectedAudioSource, unloadSound, updatePlaybackState],
   );
 
   useEffect(() => {
@@ -515,8 +522,103 @@ const MeditationScreen = () => {
     };
   }, [loadMeditationAudio, unloadSound]);
 
+  useEffect(() => {
+    if (!isSilentMode || !isPlaying) return undefined;
+
+    silentStartedAtRef.current = Date.now() - positionMillis;
+
+    const intervalId = setInterval(() => {
+      const startedAt = silentStartedAtRef.current;
+      if (startedAt === null) return;
+
+      const elapsed = Math.min(Date.now() - startedAt, targetDurationMillis);
+      setPositionMillis(elapsed);
+
+      if (elapsed < targetDurationMillis) return;
+      clearInterval(intervalId);
+      finishSession();
+    }, 250);
+
+    return () => clearInterval(intervalId);
+  }, [finishSession, isPlaying, isSilentMode, positionMillis, targetDurationMillis]);
+
+  useEffect(() => {
+    return () => {
+      unloadFinishSound().catch(() => undefined);
+    };
+  }, [unloadFinishSound]);
+
+  const showActiveSessionAlert = useCallback(() => {
+    Alert.alert(
+      "Meditación en curso",
+      "Pausá la meditación antes de cambiar el tipo o la duración.",
+    );
+  }, []);
+
+  const resetSessionToBeginning = useCallback(() => {
+    shouldResumeOnReloadRef.current = false;
+    silentStartedAtRef.current = null;
+    setIsPlaying(false);
+    setPositionMillis(0);
+    setVideoResetKey((current) => current + 1);
+    void soundRef.current?.setPositionAsync(0).catch(() => undefined);
+    void videoRef.current?.setPositionAsync(0).catch(() => undefined);
+  }, []);
+
+  const handleSelectType = useCallback(
+    (nextType: MeditationType) => {
+      if (nextType === selectedType) return;
+      if (isPlaying || isPreparingAudio) {
+        showActiveSessionAlert();
+        return;
+      }
+
+      resetSessionToBeginning();
+      setSelectedType(nextType);
+    },
+    [
+      isPlaying,
+      isPreparingAudio,
+      resetSessionToBeginning,
+      selectedType,
+      showActiveSessionAlert,
+    ],
+  );
+
+  const handleSelectDuration = useCallback(
+    (nextDuration: DurationOption) => {
+      if (nextDuration === selectedDuration) return;
+      if (isPlaying || isPreparingAudio) {
+        showActiveSessionAlert();
+        return;
+      }
+
+      resetSessionToBeginning();
+      setSelectedDuration(nextDuration);
+    },
+    [
+      isPlaying,
+      isPreparingAudio,
+      resetSessionToBeginning,
+      selectedDuration,
+      showActiveSessionAlert,
+    ],
+  );
+
   const togglePlayback = useCallback(async () => {
     try {
+      if (isSilentMode) {
+        setIsPlayerReady(true);
+        if (isPlaying) {
+          silentStartedAtRef.current = null;
+          setIsPlaying(false);
+        } else {
+          silentStartedAtRef.current = Date.now() - positionMillis;
+          setIsPlaying(true);
+        }
+        return;
+      }
+
       if (!soundRef.current || !isPlayerReady) {
         await loadMeditationAudio(true);
         return;
@@ -530,30 +632,35 @@ const MeditationScreen = () => {
     } catch {
       Alert.alert("No se pudo reproducir", "Intentá nuevamente en unos segundos.");
     }
-  }, [isPlayerReady, isPlaying, loadMeditationAudio]);
-
-  const skipBySeconds = useCallback(
-    async (seconds: number) => {
-      if (!soundRef.current || !isPlayerReady) return;
-      const nextPosition = Math.max(
-        0,
-        Math.min(durationMillis, positionMillis + seconds * 1000),
-      );
-      await soundRef.current.setPositionAsync(nextPosition);
-    },
-    [durationMillis, isPlayerReady, positionMillis],
-  );
+  }, [isPlayerReady, isPlaying, isSilentMode, loadMeditationAudio, positionMillis]);
 
   const handleSeekPress = useCallback(
     async (event: any) => {
-      if (!soundRef.current || !isPlayerReady || progressTrackWidth <= 0) return;
+      if (!isPlayerReady || progressTrackWidth <= 0) return;
       const ratio = Math.min(
         Math.max(event.nativeEvent.locationX / progressTrackWidth, 0),
         1,
       );
-      await soundRef.current.setPositionAsync(ratio * durationMillis);
+      const nextPosition = ratio * targetDurationMillis;
+      setPositionMillis(nextPosition);
+      if (isSilentMode && isPlaying) {
+        silentStartedAtRef.current = Date.now() - nextPosition;
+      }
+      if (!isSilentMode) {
+        await soundRef.current?.setPositionAsync(nextPosition);
+      }
+      if (videoDurationMillis) {
+        await videoRef.current?.setPositionAsync(ratio * videoDurationMillis);
+      }
     },
-    [durationMillis, isPlayerReady, progressTrackWidth],
+    [
+      isPlayerReady,
+      isPlaying,
+      isSilentMode,
+      progressTrackWidth,
+      targetDurationMillis,
+      videoDurationMillis,
+    ],
   );
 
   const handleProgressLayout = useCallback((event: LayoutChangeEvent) => {
@@ -610,7 +717,7 @@ const MeditationScreen = () => {
                   key={option.value}
                   option={option}
                   selected={selectedType === option.value}
-                  onPress={() => setSelectedType(option.value)}
+                  onPress={() => handleSelectType(option.value)}
                 />
               ))}
             </View>
@@ -624,7 +731,7 @@ const MeditationScreen = () => {
                   key={duration}
                   value={duration}
                   selected={selectedDuration === duration}
-                  onPress={() => setSelectedDuration(duration)}
+                  onPress={() => handleSelectDuration(duration)}
                 />
               ))}
             </View>
@@ -713,23 +820,26 @@ const MeditationScreen = () => {
             </View>
 
             <View style={localStyles.previewMediaFrame}>
-              <LoopingVideo
+              <Video
+                key={`meditation-video-${selectedType}-${selectedDuration}-${videoResetKey}`}
+                ref={videoRef}
                 source={require("../assets/videos/meditation/videoMeditation.mp4")}
-                resizeMode={ResizeMode.COVER}
-                shouldPlay={isPlaying || isPreparingAudio}
-                isMuted
-                isLooping
-                rate={selectedVideoRate}
                 style={localStyles.previewVideo}
+                resizeMode={ResizeMode.COVER}
+                shouldPlay={isPlaying}
+                isMuted
+                isLooping={false}
+                rate={selectedVideoRate}
+                shouldCorrectPitch={false}
+                progressUpdateIntervalMillis={250}
+                onPlaybackStatusUpdate={(status) => {
+                  if (!status.isLoaded) return;
+                  if (typeof status.durationMillis === "number") {
+                    setVideoDurationMillis(status.durationMillis);
+                  }
+                }}
               />
               <View style={localStyles.previewOverlay} />
-              <View style={localStyles.previewTopRow}>
-                <View style={localStyles.durationBadge}>
-                  <Text style={localStyles.durationBadgeText}>
-                    {totalDurationLabel}
-                  </Text>
-                </View>
-              </View>
             </View>
 
             <View style={localStyles.previewBottom}>
@@ -779,28 +889,10 @@ const MeditationScreen = () => {
                     color="#F6F6F4"
                   />
                 </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    void skipBySeconds(15);
-                  }}
-                  style={localStyles.secondaryControl}
-                >
-                  <Text style={localStyles.secondaryControlText}>15s</Text>
-                  <Icon name="refresh-outline" size={20} color={vibesTheme.colors.primaryText} style={localStyles.forwardIcon} />
-                </Pressable>
               </View>
             </View>
           </View>
 
-          <CTAButton
-            label="Comenzar meditación"
-            onPress={() => {
-              console.log("[MeditationScreen] startMeditation", meditationPayload);
-              void togglePlayback();
-            }}
-            style={localStyles.ctaWrap}
-          />
         </ScrollView>
       </SafeAreaView>
 
@@ -1051,7 +1143,7 @@ const localStyles = StyleSheet.create({
   previewCard: {
     marginTop: 22,
     borderRadius: 28,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: MEDITATION_VIDEO_BACKGROUND,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.04)",
     shadowColor: "#2B2B2B",
@@ -1096,35 +1188,16 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
     position: "relative",
-    backgroundColor: "#D7D2CB",
+    backgroundColor: MEDITATION_VIDEO_BACKGROUND,
   },
   previewVideo: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#D7D2CB",
+    backgroundColor: MEDITATION_VIDEO_BACKGROUND,
   },
   previewOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(43, 43, 43, 0.02)",
-  },
-  previewTopRow: {
-    position: "absolute",
-    top: 14,
-    left: 14,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  durationBadge: {
-    borderRadius: vibesTheme.radii.pill,
-    backgroundColor: "rgba(43, 43, 43, 0.56)",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  durationBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    lineHeight: 16,
-    fontFamily: "CormorantGaramond_700Bold",
   },
   previewBottom: {
     paddingTop: 18,
@@ -1175,23 +1248,6 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 24,
-  },
-  secondaryControl: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "rgba(43, 43, 43, 0.03)",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  },
-  secondaryControlText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    lineHeight: 16,
-    fontFamily: "CormorantGaramond_700Bold",
   },
   primaryControl: {
     width: 88,
@@ -1206,34 +1262,6 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 22,
     elevation: 3,
-  },
-  forwardIcon: {
-    transform: [{ rotate: "180deg" }],
-  },
-  ctaWrap: {
-    marginTop: 20,
-  },
-  ctaButton: {
-    height: 56,
-    borderRadius: vibesTheme.radii.pill,
-    backgroundColor: vibesTheme.colors.accentBlue,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#AEBFD1",
-    shadowOpacity: 0.22,
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: 24,
-    elevation: 3,
-  },
-  ctaLabel: {
-    marginLeft: 10,
-    color: "#F6F6F4",
-    fontSize: 16,
-    lineHeight: 18,
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-    fontFamily: "CormorantGaramond_700Bold",
   },
   bottomBarOuter: {
     position: "absolute",
