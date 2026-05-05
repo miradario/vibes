@@ -47,6 +47,13 @@ export type DirectMessage = {
   createdAt: string;
 };
 
+export type ReportReason =
+  | "Spam o contenido irrelevante"
+  | "Lenguaje ofensivo"
+  | "Acoso o incomodidad"
+  | "Contenido inapropiado"
+  | "Perfil falso o engañoso";
+
 // ---------------------------------------------------------------------------
 // Query keys
 // ---------------------------------------------------------------------------
@@ -333,6 +340,40 @@ export const useUnmatchMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
+    },
+  });
+};
+
+// ---------------------------------------------------------------------------
+// useReportUserMutation – report a direct connection
+// ---------------------------------------------------------------------------
+
+export const useReportUserMutation = () => {
+  const { data: session } = useAuthSession();
+
+  return useMutation<
+    void,
+    Error,
+    {
+      reportedUserId: string;
+      matchId?: string | null;
+      reason: ReportReason;
+      details?: string;
+    }
+  >({
+    mutationFn: async ({ reportedUserId, matchId, reason, details }) => {
+      const reporterId = session?.user?.id;
+      if (!reporterId) throw new Error("Not authenticated");
+
+      const { error } = await supabase.from("user_reports").insert({
+        reporter_id: reporterId,
+        reported_user_id: reportedUserId,
+        match_id: matchId || null,
+        reason,
+        details: details?.trim() || null,
+      });
+
+      if (error) throw error;
     },
   });
 };

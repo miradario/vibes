@@ -12,8 +12,12 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Modal,
+  Pressable,
+  StyleSheet,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import UserProfileSheet from "../components/UserProfileSheet";
 import styles, { DARK_GRAY } from "../assets/styles";
@@ -22,6 +26,9 @@ import {
   useDirectMessagesQuery,
   useSendDirectMessageMutation,
   useDeleteDirectMessageMutation,
+  useReportUserMutation,
+  useUnmatchMutation,
+  type ReportReason,
   type DirectMessage,
 } from "../src/queries/matches.queries";
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
@@ -30,9 +37,18 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 
 const LOGO = require("../assets/images/logo.png");
 
+const REPORT_REASONS: ReportReason[] = [
+  "Spam o contenido irrelevante",
+  "Lenguaje ofensivo",
+  "Acoso o incomodidad",
+  "Contenido inapropiado",
+  "Perfil falso o engañoso",
+];
+
 const Chat = () => {
   const navigation = useNavigation();
   const route = useRoute() as any;
+  const insets = useSafeAreaInsets();
   const { matchId, otherUserId, otherUserName, otherUserPhoto } =
     route?.params ?? {};
 
@@ -61,8 +77,15 @@ const Chat = () => {
   const { data: messages, isLoading } = useDirectMessagesQuery(matchId);
   const sendMutation = useSendDirectMessageMutation();
   const deleteMutation = useDeleteDirectMessageMutation();
+  const unmatchMutation = useUnmatchMutation();
+  const reportMutation = useReportUserMutation();
 
   const [text, setText] = useState("");
+  const [showActionsModal, setShowActionsModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedReportReason, setSelectedReportReason] =
+    useState<ReportReason | null>(null);
+  const [reportDetails, setReportDetails] = useState("");
   const flatListRef = useRef<FlatList>(null);
 
   // Auto-scroll when new messages arrive
@@ -82,7 +105,7 @@ const Chat = () => {
       { matchId, body },
       {
         onError: (err) => {
-          Alert.alert("Error", err.message || "Could not send message");
+          Alert.alert("Error", err.message || "No se pudo enviar el mensaje");
         },
       },
     );
@@ -90,15 +113,96 @@ const Chat = () => {
 
   const handleLongPress = (msg: DirectMessage) => {
     if (msg.senderId !== myId) return;
-    Alert.alert("Delete message?", msg.text.slice(0, 60), [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("¿Eliminar mensaje?", msg.text.slice(0, 60), [
+      { text: "Cancelar", style: "cancel" },
       {
-        text: "Delete",
+        text: "Eliminar",
         style: "destructive",
         onPress: () =>
           deleteMutation.mutate({ messageId: msg.id, matchId: msg.matchId }),
       },
     ]);
+  };
+
+  const handleAbandonConnection = () => {
+    setShowActionsModal(false);
+    if (!matchId) return;
+
+    Alert.alert(
+      "Abandonar conexión",
+      "Se eliminará esta conexión y ya no vas a poder ver este chat.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Abandonar",
+          style: "destructive",
+          onPress: () => {
+            unmatchMutation.mutate(matchId, {
+              onSuccess: () => navigation.goBack(),
+              onError: (err) =>
+                Alert.alert(
+                  "Error",
+                  err.message || "No se pudo abandonar la conexión.",
+                ),
+            });
+          },
+        },
+      ],
+    );
+  };
+
+  const openReportModal = () => {
+    setShowActionsModal(false);
+    setShowReportModal(true);
+  };
+
+  const closeReportModal = () => {
+    setShowReportModal(false);
+    setSelectedReportReason(null);
+    setReportDetails("");
+  };
+
+  const submitReport = () => {
+    if (!otherUserId || !selectedReportReason) return;
+
+    reportMutation.mutate(
+      {
+        reportedUserId: String(otherUserId),
+        matchId,
+        reason: selectedReportReason,
+        details: reportDetails,
+      },
+      {
+        onSuccess: () => {
+          if (!matchId) {
+            closeReportModal();
+            Alert.alert("Reporte enviado", "Gracias por contarnos qué pasó.");
+            return;
+          }
+
+          unmatchMutation.mutate(matchId, {
+            onSuccess: () => {
+              closeReportModal();
+              Alert.alert(
+                "Reporte enviado",
+                "Gracias por contarnos qué pasó. También quitamos esta conexión.",
+                [{ text: "OK", onPress: () => navigation.goBack() }],
+              );
+            },
+            onError: (err) => {
+              closeReportModal();
+              Alert.alert(
+                "Reporte enviado",
+                err.message ||
+                  "El reporte fue enviado, pero no se pudo quitar la conexión.",
+              );
+            },
+          });
+        },
+        onError: (err) =>
+          Alert.alert("Error", err.message || "No se pudo enviar el reporte."),
+      },
+    );
   };
 
   const formatTime = (iso: string) => {
@@ -184,7 +288,7 @@ const Chat = () => {
             })()}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => setShowActionsModal(true)}>
           <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
         </TouchableOpacity>
       </View>
@@ -193,6 +297,120 @@ const Chat = () => {
         profile={profileCard}
         onClose={() => setShowProfileModal(false)}
       />
+
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showActionsModal}
+        onRequestClose={() => setShowActionsModal(false)}
+      >
+        <Pressable
+          style={localStyles.modalBackdrop}
+          onPress={() => setShowActionsModal(false)}
+        >
+          <Pressable style={localStyles.actionsSheet} onPress={() => undefined}>
+            <Text style={localStyles.modalTitle}>Opciones de conexión</Text>
+            <TouchableOpacity
+              style={localStyles.actionRow}
+              onPress={handleAbandonConnection}
+              disabled={unmatchMutation.isPending}
+            >
+              <Icon name="close-circle-outline" size={21} color="#D88C7A" />
+              <Text style={[localStyles.actionText, localStyles.dangerText]}>
+                Abandonar conexión
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={localStyles.actionRow}
+              onPress={openReportModal}
+            >
+              <Icon name="flag-outline" size={21} color={DARK_GRAY} />
+              <Text style={localStyles.actionText}>Reportar persona</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        transparent
+        animationType="slide"
+        visible={showReportModal}
+        onRequestClose={closeReportModal}
+      >
+        <Pressable style={localStyles.modalBackdrop} onPress={closeReportModal}>
+          <Pressable
+            style={[
+              localStyles.reportSheet,
+              { paddingBottom: Math.max(insets.bottom + 20, 30) },
+            ]}
+            onPress={() => undefined}
+          >
+            <Text style={localStyles.modalTitle}>¿Por qué querés reportar?</Text>
+            <Text style={localStyles.modalSubtitle}>
+              Tu reporte nos ayuda a cuidar la comunidad.
+            </Text>
+
+            {REPORT_REASONS.map((reason) => {
+              const selected = selectedReportReason === reason;
+              return (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    localStyles.reasonRow,
+                    selected && localStyles.reasonRowSelected,
+                  ]}
+                  onPress={() => setSelectedReportReason(reason)}
+                  activeOpacity={0.85}
+                >
+                  <View
+                    style={[
+                      localStyles.radio,
+                      selected && localStyles.radioSelected,
+                    ]}
+                  >
+                    {selected ? <View style={localStyles.radioDot} /> : null}
+                  </View>
+                  <Text style={localStyles.reasonText}>{reason}</Text>
+                </TouchableOpacity>
+              );
+            })}
+
+            <TextInput
+              style={localStyles.reportInput}
+              placeholder="Contanos qué pasó..."
+              placeholderTextColor="#999"
+              value={reportDetails}
+              onChangeText={setReportDetails}
+              multiline
+              textAlignVertical="top"
+              maxLength={800}
+            />
+
+            <TouchableOpacity
+              style={[
+                localStyles.reportButton,
+                (!selectedReportReason ||
+                  reportMutation.isPending ||
+                  unmatchMutation.isPending) &&
+                  localStyles.reportButtonDisabled,
+              ]}
+              disabled={
+                !selectedReportReason ||
+                reportMutation.isPending ||
+                unmatchMutation.isPending
+              }
+              onPress={submitReport}
+              activeOpacity={0.9}
+            >
+              <Text style={localStyles.reportButtonText}>
+                {reportMutation.isPending || unmatchMutation.isPending
+                  ? "Enviando..."
+                  : "Enviar reporte"}
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Messages */}
       {isLoading ? (
@@ -208,9 +426,9 @@ const Chat = () => {
           contentContainerStyle={localStyles.messageList}
           ListHeaderComponent={
             <Text style={styles.chatMatchedText}>
-              You connected with {otherUserName || "them"}
+              Conectaste con {otherUserName || "esta persona"}
               {matchDate
-                ? ` on ${new Date(matchDate).toLocaleDateString()}`
+                ? ` el ${new Date(matchDate).toLocaleDateString()}`
                 : ""}
               .
             </Text>
@@ -218,7 +436,7 @@ const Chat = () => {
           ListEmptyComponent={
             <View style={localStyles.emptyWrap}>
               <Text style={localStyles.emptyText}>
-                Say hi to {otherUserName || "your connection"}!
+                Saludá a {otherUserName || "tu conexión"}.
               </Text>
             </View>
           }
@@ -229,10 +447,17 @@ const Chat = () => {
       )}
 
       {/* Input */}
-      <View style={styles.chatInputBar}>
+      <View
+        style={[
+          styles.chatInputBar,
+          {
+            paddingBottom: Math.max(insets.bottom + 12, 20),
+          },
+        ]}
+      >
         <TextInput
           style={localStyles.input}
-          placeholder="Type a message ..."
+          placeholder="Escribí un mensaje..."
           placeholderTextColor="#999"
           value={text}
           onChangeText={setText}
@@ -242,7 +467,7 @@ const Chat = () => {
         />
         <TouchableOpacity onPress={handleSend} disabled={!text.trim()}>
           <Text style={[styles.chatSend, !text.trim() && { opacity: 0.4 }]}>
-            SEND
+            ENVIAR
           </Text>
         </TouchableOpacity>
       </View>
@@ -252,7 +477,7 @@ const Chat = () => {
 
 export default Chat;
 
-const localStyles = {
+const localStyles = StyleSheet.create({
   messageList: {
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -260,12 +485,12 @@ const localStyles = {
     flexGrow: 1,
   },
   incomingMessageRow: {
-    flexDirection: "row" as const,
-    alignItems: "flex-end" as const,
+    flexDirection: "row",
+    alignItems: "flex-end",
     marginBottom: 12,
   },
   ownMessageRow: {
-    alignItems: "flex-end" as const,
+    alignItems: "flex-end",
     marginBottom: 12,
   },
   messageBubble: {
@@ -284,7 +509,7 @@ const localStyles = {
   },
   msgTimeRight: {
     color: "rgba(0,0,0,0.35)",
-    textAlign: "right" as const,
+    textAlign: "right",
   },
   msgTimeLeft: {
     color: "rgba(0,0,0,0.35)",
@@ -298,13 +523,13 @@ const localStyles = {
   },
   loadingWrap: {
     flex: 1,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyWrap: {
     flex: 1,
-    alignItems: "center" as const,
-    justifyContent: "flex-start" as const,
+    alignItems: "center",
+    justifyContent: "flex-start",
     paddingTop: 180,
   },
   emptyText: {
@@ -312,4 +537,137 @@ const localStyles = {
     fontSize: 16,
     fontFamily: "CormorantGaramond_500Medium",
   },
-};
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(43, 43, 43, 0.34)",
+  },
+  actionsSheet: {
+    marginHorizontal: 16,
+    marginBottom: 18,
+    borderRadius: 22,
+    backgroundColor: "#F6F6F4",
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 12,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+  reportSheet: {
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    backgroundColor: "#F6F6F4",
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: -8 },
+    elevation: 10,
+  },
+  modalTitle: {
+    color: DARK_GRAY,
+    fontSize: 22,
+    lineHeight: 27,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  modalSubtitle: {
+    marginTop: 4,
+    marginBottom: 14,
+    color: "#6E6E6E",
+    fontSize: 15,
+    lineHeight: 21,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  actionRow: {
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(43, 43, 43, 0.08)",
+  },
+  actionText: {
+    color: DARK_GRAY,
+    fontSize: 17,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  dangerText: {
+    color: "#D88C7A",
+  },
+  reasonRow: {
+    minHeight: 48,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.52)",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.07)",
+  },
+  reasonRowSelected: {
+    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    borderColor: "rgba(228, 183, 110, 0.52)",
+  },
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.24)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  radioSelected: {
+    borderColor: "#E4B76E",
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#E4B76E",
+  },
+  reasonText: {
+    flex: 1,
+    color: DARK_GRAY,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  reportInput: {
+    minHeight: 96,
+    maxHeight: 140,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 4,
+    color: DARK_GRAY,
+    fontSize: 15,
+    lineHeight: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.58)",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  reportButton: {
+    minHeight: 54,
+    borderRadius: 27,
+    marginTop: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E4B76E",
+  },
+  reportButtonDisabled: {
+    opacity: 0.48,
+  },
+  reportButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+});

@@ -2,29 +2,45 @@
 
 import React, { useEffect, useMemo, useRef } from "react";
 import {
-  View,
-  Text,
-  Animated,
-  TouchableOpacity,
   Image,
+  ScrollView,
   StyleSheet,
-  Easing,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { ResizeMode } from "expo-av";
+import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import styles from "../assets/styles";
-import VibesHeader from "../src/components/VibesHeader";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import LoopingVideo from "../components/LoopingVideo";
+import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useFindMatchQuery } from "../src/queries/matches.queries";
-import ConexionReveal from "../components/ConexionReveal";
-import LoopingVideo from "../components/LoopingVideo";
-import { useWindowDimensions } from "react-native";
+
+const getFirstName = (value?: string | null) =>
+  value?.trim()?.split(" ")?.[0] || "Vibes";
+
+const getPrimaryPhotoUri = (profile: any) => {
+  if (!profile) return null;
+  const image = Array.isArray(profile.images) && profile.images[0]
+    ? profile.images[0]
+    : profile.image;
+
+  if (typeof image === "object" && image && "uri" in image) {
+    return String((image as { uri?: string }).uri ?? "") || null;
+  }
+
+  return null;
+};
 
 const Match = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
+  const insets = useSafeAreaInsets();
+  const didPlayMatchHaptic = useRef(false);
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const ownProfile = useMemo(
@@ -36,373 +52,364 @@ const Match = () => {
     [ownProfileData, session?.user?.email],
   );
   const profile = route?.params?.profile ?? null;
-  const dimensions = useWindowDimensions();
   const { data: matchData } = useFindMatchQuery(profile?.id);
-
-  // Avatar slide-in
-  const leftAvatarX = useRef(new Animated.Value(-120)).current;
-  const rightAvatarX = useRef(new Animated.Value(120)).current;
-
-  // Background animations
-  const bgOpacity = useRef(new Animated.Value(0)).current;
-  const bgScale = useRef(new Animated.Value(0.85)).current;
-  const glowOpacity = useRef(new Animated.Value(0)).current;
+  const ownName = getFirstName(ownProfile.name);
+  const otherName = getFirstName(profile?.name);
 
   useEffect(() => {
-    // 1. Fade-in + scale the background image
-    Animated.parallel([
-      Animated.timing(bgOpacity, {
-        toValue: 1,
-        duration: 1200,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.spring(bgScale, {
-        toValue: 1,
-        speed: 4,
-        bounciness: 4,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    if (didPlayMatchHaptic.current) return;
 
-    // 2. Glow pulse loop (soft breathing)
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowOpacity, {
-          toValue: 0.35,
-          duration: 2000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowOpacity, {
-          toValue: 0.1,
-          duration: 2000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
+    didPlayMatchHaptic.current = true;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, []);
 
-    // 3. Avatar slide-in (delayed slightly)
-    setTimeout(() => {
-      Animated.parallel([
-        Animated.spring(leftAvatarX, {
-          toValue: 0,
-          speed: 12,
-          bounciness: 6,
-          useNativeDriver: true,
-        }),
-        Animated.spring(rightAvatarX, {
-          toValue: 0,
-          speed: 12,
-          bounciness: 6,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }, 400);
-  }, [bgOpacity, bgScale, glowOpacity, leftAvatarX, rightAvatarX]);
+  const openChat = () => {
+    if (!profile || !matchData) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate(
+      "Chat" as never,
+      {
+        matchId: matchData.id,
+        otherUserId: String(profile.id),
+        otherUserName: profile.name,
+        otherUserPhoto: getPrimaryPhotoUri(profile),
+      } as never,
+    );
+  };
 
   return (
-    <View style={[styles.matchScreen, matchVideoStyles.container]}>
-      <VibesHeader title="¡Es un match!" subtitle="Two energies aligned—something meaningful begins here. ✨" />
-      {/* Full-screen hand-drawn conexion animation */}
-      <Animated.View
-        style={[
-          matchVideoStyles.fullBg,
-          { opacity: bgOpacity, transform: [{ scale: bgScale }] },
+    <SafeAreaView style={localStyles.screen} edges={["top", "left", "right"]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          localStyles.content,
+          { paddingBottom: Math.max(insets.bottom + 22, 34) },
         ]}
-        pointerEvents="none"
       >
-        <ConexionReveal
-          width={dimensions.width}
-          height={dimensions.height}
-          durationMs={3200}
-        />
-      </Animated.View>
-
-      {/* Radial glow pulse */}
-      <Animated.View
-        style={[matchVideoStyles.glowCircle, { opacity: glowOpacity }]}
-        pointerEvents="none"
-      />
-      <View style={matchVideoStyles.overlay} />
-
-      <View style={styles.matchScreen}>
-        <View style={matchVideoStyles.matchCard}>
-          <View style={matchVideoStyles.heroWrap}>
-            <LoopingVideo
-              source={require("../assets/videos/connection.mp4")}
-              posterSource={require("../assets/images/challenges/events.png")}
-              style={matchVideoStyles.heroVideo}
-              resizeMode={ResizeMode.CONTAIN}
-            />
+        <View style={localStyles.header}>
+          <View style={localStyles.sparkleCluster}>
+            <Text style={localStyles.sparkleLarge}>✦</Text>
+            <Text style={localStyles.sparkleSmall}>✧</Text>
           </View>
-
-          <View style={matchVideoStyles.avatarBackground}>
-            <View style={matchVideoStyles.matchAvatarRow}>
-              {/* Left Avatar */}
-              <Animated.View
-                style={[
-                  matchVideoStyles.matchAvatarContainer,
-                  { transform: [{ translateX: leftAvatarX }] },
-                ]}
-              >
-                <View style={matchVideoStyles.matchHaloWrap}>
-                  <Image
-                    source={ownProfile.image}
-                    style={matchVideoStyles.matchAvatar}
-                  />
-                  <Image
-                    source={require("../assets/images/sparklings.png")}
-                    style={matchVideoStyles.matchSparkles}
-                    resizeMode="contain"
-                    pointerEvents="none"
-                  />
-                </View>
-              </Animated.View>
-
-              {/* Center heart */}
-              <View style={matchVideoStyles.centerHeart}>
-                <Text style={matchVideoStyles.heartText}>♡</Text>
-              </View>
-
-              {/* Right Avatar */}
-              <Animated.View
-                style={[
-                  matchVideoStyles.matchAvatarContainer,
-                  { transform: [{ translateX: rightAvatarX }] },
-                ]}
-              >
-                <View style={matchVideoStyles.matchHaloWrap}>
-                  <Image
-                    source={
-                      profile?.image
-                    }
-                    style={matchVideoStyles.matchAvatar}
-                  />
-                  <Image
-                    source={require("../assets/images/sparklings.png")}
-                    style={matchVideoStyles.matchSparkles}
-                    resizeMode="contain"
-                    pointerEvents="none"
-                  />
-                </View>
-              </Animated.View>
-            </View>
-          </View>
-
-          <View style={matchVideoStyles.buttonsBackground}>
-            <View style={matchVideoStyles.matchActions}>
-              <TouchableOpacity
-                style={matchVideoStyles.matchPrimaryButton}
-                disabled={!profile || !matchData}
-                onPress={() => {
-                  if (profile && matchData) {
-                    const primaryPhoto =
-                      Array.isArray(profile.images) && profile.images[0]
-                        ? typeof profile.images[0] === "object" &&
-                          "uri" in profile.images[0]
-                          ? (profile.images[0] as { uri: string }).uri
-                          : null
-                        : null;
-                    navigation.navigate(
-                      "Chat" as never,
-                      {
-                        matchId: matchData.id,
-                        otherUserId: String(profile.id),
-                        otherUserName: profile.name,
-                        otherUserPhoto: primaryPhoto,
-                      } as never,
-                    );
-                  } else {
-                    navigation.goBack();
-                  }
-                }}
-              >
-                <Text style={matchVideoStyles.matchPrimaryButtonText}>
-                  {profile
-                    ? `Chat with ${
-                        profile?.name?.split(" ")[0] || "your soulmate"
-                      }`
-                    : "Back to discover"}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={matchVideoStyles.matchSecondaryButton}
-                onPress={() =>
-                  navigation.navigate(
-                    "Tab" as never,
-                    { screen: "Discover" } as never,
-                  )
-                }
-              >
-                <Text style={matchVideoStyles.matchSecondaryButtonText}>
-                  Later
-                </Text>
-              </TouchableOpacity>
-            </View>
+          <Text style={localStyles.title}>Conexión lograda</Text>
+          <View style={localStyles.divider}>
+            <View style={localStyles.dividerLine} />
+            <View style={localStyles.dividerDot} />
+            <View style={localStyles.dividerLine} />
           </View>
         </View>
-      </View>
-    </View>
+
+        <View style={localStyles.heroWrap}>
+          <LoopingVideo
+            source={require("../assets/videos/connection.mp4")}
+            posterSource={require("../assets/images/conexion.png")}
+            style={localStyles.heroVideo}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay
+            isMuted
+          />
+        </View>
+
+        <View style={localStyles.peopleRow}>
+          <View style={localStyles.personBlock}>
+            <View style={[localStyles.avatar, localStyles.avatarBlue]}>
+              <Image source={ownProfile.image} style={localStyles.avatarImage} />
+            </View>
+            <Text style={localStyles.personName}>{ownName}</Text>
+          </View>
+
+          <View style={localStyles.centerMark}>
+            <View style={localStyles.dottedLine} />
+            <View style={localStyles.centerSeal}>
+              <Icon name="leaf-outline" size={24} color="#DCA453" />
+            </View>
+            <View style={localStyles.dottedLine} />
+          </View>
+
+          <View style={localStyles.personBlock}>
+            <View style={[localStyles.avatar, localStyles.avatarGold]}>
+              <Image
+                source={profile?.image ?? ownProfile.image}
+                style={localStyles.avatarImage}
+              />
+            </View>
+            <Text style={localStyles.personName}>{otherName}</Text>
+          </View>
+        </View>
+
+        <View style={localStyles.messageCard}>
+          <View style={localStyles.messageIcon}>
+            <Icon name="leaf-outline" size={27} color="#7B766E" />
+          </View>
+          <Text style={localStyles.messageText}>
+            Este es un espacio para compartir desde la presencia.
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={[
+            localStyles.primaryButton,
+            (!profile || !matchData) && localStyles.primaryButtonDisabled,
+          ]}
+          disabled={!profile || !matchData}
+          onPress={openChat}
+          activeOpacity={0.9}
+        >
+          <Text style={localStyles.primaryButtonText}>Conectar ahora</Text>
+          <Icon name="arrow-forward" size={27} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={localStyles.secondaryButton}
+          onPress={() =>
+            navigation.navigate(
+              "Tab" as never,
+              { screen: "Discover" } as never,
+            )
+          }
+          activeOpacity={0.86}
+        >
+          <Text style={localStyles.secondaryButtonText}>Más tarde</Text>
+        </TouchableOpacity>
+
+        <View style={localStyles.footer}>
+          <Text style={localStyles.footerSparkle}>✦</Text>
+          <Text style={localStyles.footerText}>
+            Cada encuentro puede transformar algo en vos.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
-export default Match;
-
-const matchVideoStyles = StyleSheet.create({
-  container: {
+const localStyles = StyleSheet.create({
+  screen: {
     flex: 1,
     backgroundColor: "#F6F6F4",
   },
-  fullBg: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  fullBgImage: {
-    width: "100%",
-    height: "100%",
-  },
-  glowCircle: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#E4B76E",
-    opacity: 0.18,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(246, 246, 244, 0.15)",
-  },
-  matchCard: {
-    width: "100%",
-    backgroundColor: "transparent",
-    borderRadius: 0,
-    paddingTop: 12,
-    paddingBottom: 24,
+  content: {
     paddingHorizontal: 24,
+    paddingTop: 18,
     alignItems: "center",
-    shadowOpacity: 0,
+  },
+  header: {
+    width: "100%",
+    alignItems: "center",
+  },
+  sparkleCluster: {
+    position: "absolute",
+    left: 18,
+    top: 0,
+    width: 34,
+    height: 34,
+  },
+  sparkleLarge: {
+    position: "absolute",
+    left: 0,
+    top: 4,
+    color: "#E7B75E",
+    fontSize: 24,
+  },
+  sparkleSmall: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    color: "#E7B75E",
+    fontSize: 16,
+  },
+  title: {
+    color: "#47423C",
+    fontSize: 36,
+    lineHeight: 39,
+    textAlign: "center",
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  divider: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dividerLine: {
+    width: 40,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: "#E7B75E",
+  },
+  dividerDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#E7B75E",
   },
   heroWrap: {
     width: "100%",
-    height: 220,
-    marginBottom: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    height: 260,
+    marginTop: 8,
+    marginBottom: 0,
   },
   heroVideo: {
     width: "100%",
     height: "100%",
   },
-  matchTitle: {
-    fontSize: 28,
-    color: "#6E6E6E",
-    fontWeight: "600",
-    fontFamily: "CormorantGaramond_500Medium",
-    textAlign: "center",
+  peopleRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 0,
     marginBottom: 18,
   },
-  matchSubtitle: {
-    marginTop: 6,
-    color: "#6E6E6E",
-    fontSize: 18,
+  personBlock: {
+    width: 102,
+    alignItems: "center",
+  },
+  avatar: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    overflow: "hidden",
+    shadowColor: "#B99B68",
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+  },
+  avatarBlue: {
+    backgroundColor: "#E2ECF1",
+    borderColor: "#BFD2DC",
+  },
+  avatarGold: {
+    backgroundColor: "#F2E5C7",
+    borderColor: "#E8CE9D",
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 38,
+  },
+  personName: {
+    marginTop: 8,
+    color: "#47423C",
+    fontSize: 20,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_500Medium",
-    marginBottom: 32,
+    fontFamily: "CormorantGaramond_700Bold",
   },
-  avatarBackground: {
-    borderRadius: 24,
-    paddingVertical: 32,
-    paddingHorizontal: 4,
-    marginBottom: 24,
-  },
-  matchAvatarRow: {
+  centerMark: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    position: "relative",
-    height: 220,
+    gap: 10,
   },
-  matchAvatarContainer: {
-    marginHorizontal: 8,
+  dottedLine: {
+    flex: 1,
+    maxWidth: 78,
+    borderTopWidth: 4,
+    borderStyle: "dotted",
+    borderColor: "#EAC978",
   },
-  matchHaloWrap: {
-    height: 160,
-    width: 160,
+  centerSeal: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
-    position: "relative",
+    backgroundColor: "#F8F4EA",
+    borderWidth: 1,
+    borderColor: "rgba(231, 183, 94, 0.32)",
+    shadowColor: "#B99B68",
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
   },
-  matchSparkles: {
-    position: "absolute",
-    width: 220,
-    height: 220,
-    top: -30,
-    left: -30,
-    opacity: 0.7,
-    zIndex: 5,
-  },
-  matchHalo: {
-    position: "absolute",
-    width: 170,
-    height: 170,
-    top: -5,
-    left: -5,
-    opacity: 0.75,
-    zIndex: 1,
-  },
-  matchAvatar: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    borderWidth: 3,
-    borderColor: "rgba(246, 246, 244, 0.95)",
-    zIndex: 2,
-  },
-  centerHeart: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 4,
-    zIndex: 10,
-  },
-  heartText: {
-    fontSize: 28,
-    color: "#AEBFD1",
-  },
-  buttonsBackground: {
-    backgroundColor: "rgba(246, 246, 244, 0.6)",
-    borderRadius: 24,
-    paddingVertical: 34,
-    paddingHorizontal: 24,
-  },
-  matchActions: {
-    width: 330,
-    alignItems: "center",
-  },
-  matchPrimaryButton: {
-    backgroundColor: "#AEBFD1",
+  messageCard: {
+    width: "100%",
+    minHeight: 112,
+    borderRadius: 18,
+    backgroundColor: "rgba(247, 244, 238, 0.78)",
+    paddingHorizontal: 18,
     paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+  },
+  messageIcon: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(236, 233, 226, 0.92)",
+  },
+  messageText: {
+    flex: 1,
+    color: "#47423C",
+    fontSize: 19,
+    lineHeight: 25,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  primaryButton: {
+    width: "100%",
+    minHeight: 60,
+    borderRadius: 30,
+    marginTop: 24,
+    backgroundColor: "#9EBED4",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 52,
+    shadowColor: "#7FA9C3",
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  primaryButtonDisabled: {
+    opacity: 0.55,
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  secondaryButton: {
+    width: "100%",
+    minHeight: 56,
     borderRadius: 28,
+    marginTop: 12,
     alignItems: "center",
-    width: "100%",
-    marginBottom: 14,
+    justifyContent: "center",
+    backgroundColor: "rgba(247, 244, 238, 0.36)",
+    borderWidth: 1,
+    borderColor: "rgba(123, 113, 96, 0.24)",
   },
-  matchPrimaryButtonText: {
-    color: "#F6F6F4",
-    fontSize: 20,
-    fontWeight: "600",
-    fontFamily: "CormorantGaramond_500Medium",
-    letterSpacing: 0.4,
+  secondaryButtonText: {
+    color: "#47423C",
+    fontSize: 24,
+    fontFamily: "CormorantGaramond_700Bold",
   },
-  matchSecondaryButton: {
-    backgroundColor: "rgba(246, 246, 244, 0.95)",
-    paddingVertical: 14,
-    borderRadius: 26,
+  footer: {
+    marginTop: 24,
     alignItems: "center",
-    width: "100%",
+    gap: 14,
   },
-  matchSecondaryButtonText: {
-    color: "#6E6E6E",
-    fontSize: 20,
-    fontWeight: "500",
+  footerSparkle: {
+    color: "#E7B75E",
+    fontSize: 22,
+  },
+  footerText: {
+    color: "#786F66",
+    fontSize: 19,
+    lineHeight: 24,
+    textAlign: "center",
     fontFamily: "CormorantGaramond_500Medium",
   },
 });
+
+export default Match;
