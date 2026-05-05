@@ -188,7 +188,9 @@ const Events = () => {
               style={styles.eventCard}
               onPress={() =>
                 navigation.navigate(
-                  "EventDetail" as never,
+                  (item.type === "challenge"
+                    ? "ChallengeDetailScreen"
+                    : "EventDetail") as never,
                   { event: item } as never,
                 )
               }
@@ -213,7 +215,9 @@ const Events = () => {
                     style={styles.eventCardButton}
                     onPress={() =>
                       navigation.navigate(
-                        "EventDetail" as never,
+                        (item.type === "challenge"
+                          ? "ChallengeDetailScreen"
+                          : "EventDetail") as never,
                         { event: item } as never,
                       )
                     }

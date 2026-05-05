@@ -38,6 +38,7 @@ import {
   Login,
   Signup,
   EventDetail,
+  ChallengeDetailScreen,
   EventChat,
   CreateEvent,
   CreateChallenge,
@@ -236,6 +237,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Videos" component={Videos} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="Events" component={Events} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="EventDetail" component={EventDetail} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="ChallengeDetailScreen" component={ChallengeDetailScreen} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="EventChat" component={EventChat} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="CreateEvent" component={CreateEvent} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="CreateChallenge" component={CreateChallenge} options={{ headerShown: false, animationEnabled: true }} />

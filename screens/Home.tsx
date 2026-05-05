@@ -1059,7 +1059,7 @@ const Home = () => {
                   ]}
                   onPress={() =>
                     navigation.navigate(
-                      "EventDetail" as never,
+                      "ChallengeDetailScreen" as never,
                       { event: challenge } as never,
                     )
                   }
@@ -1099,7 +1099,7 @@ const Home = () => {
                 style={localStyles.challengeRow}
                 onPress={() =>
                   navigation.navigate(
-                    "EventDetail" as never,
+                    "ChallengeDetailScreen" as never,
                     { event: suggestedChallenge } as never,
                   )
                 }
