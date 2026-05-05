@@ -20,6 +20,7 @@ import {
   Easing,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles, {
   TEXT_SECONDARY,
   WHITE,
@@ -72,6 +73,7 @@ const formatEventChatTime = (value: Date | null) => {
 const EventChat = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const event = (route.params as any)?.event;
   const eventId = event?.id as string | undefined;
   const eventType = (event?.type ?? "event") as EventType;
@@ -679,7 +681,15 @@ const EventChat = () => {
           )}
         </ScrollView>
 
-        <View style={styles.eventChatInputContainer}>
+        <View
+          style={[
+            styles.eventChatInputContainer,
+            {
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom + 14, 24),
+            },
+          ]}
+        >
           <Image
             source={
               userId && participantMap.current[userId]?.avatar
