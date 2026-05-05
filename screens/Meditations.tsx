@@ -1,4 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+/** @format */
+
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   LayoutChangeEvent,
@@ -8,7 +16,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Animated, {
   useAnimatedStyle,
@@ -108,13 +119,17 @@ const AUDIO_BY_DURATION: Record<DurationOption, number> = {
 const FINISH_SOUND = require("../assets/audio/meditation/finish.mp3");
 const MEDITATION_VIDEO_BACKGROUND = "#E0E0E0";
 
-const formatDuration = (minutes: number) => `${String(minutes).padStart(2, "0")}:00`;
+const formatDuration = (minutes: number) =>
+  `${String(minutes).padStart(2, "0")}:00`;
 const formatMillis = (millis: number) => {
   const safeMillis = Math.max(0, Math.floor(millis));
   const totalSeconds = Math.floor(safeMillis / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+    2,
+    "0",
+  )}`;
 };
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
@@ -300,7 +315,9 @@ const BottomTabPreview = () => {
                       color={vibesTheme.colors.primaryText}
                     />
                   </View>
-                  <Text style={[localStyles.tabLabel, localStyles.homeTabLabel]}>
+                  <Text
+                    style={[localStyles.tabLabel, localStyles.homeTabLabel]}
+                  >
                     {item.label}
                   </Text>
                 </>
@@ -353,13 +370,17 @@ const MeditationScreen = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPreparingAudio, setIsPreparingAudio] = useState(false);
   const [positionMillis, setPositionMillis] = useState(0);
-  const [videoDurationMillis, setVideoDurationMillis] = useState<number | null>(null);
+  const [videoDurationMillis, setVideoDurationMillis] = useState<number | null>(
+    null,
+  );
   const [videoResetKey, setVideoResetKey] = useState(0);
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
   const targetDurationMillis = selectedDuration * 60 * 1000;
 
   const selectedMusicOption = useMemo(
-    () => MUSIC_OPTIONS.find((option) => option.value === selectedMusic) ?? MUSIC_OPTIONS[0],
+    () =>
+      MUSIC_OPTIONS.find((option) => option.value === selectedMusic) ??
+      MUSIC_OPTIONS[0],
     [selectedMusic],
   );
   const selectedAudioSource = useMemo(
@@ -369,7 +390,10 @@ const MeditationScreen = () => {
   const isSilentMode = selectedType === "silent";
   const selectedVideoRate = useMemo(() => {
     if (!videoDurationMillis || targetDurationMillis <= 0) return 1;
-    return Math.max(0.05, Math.min(4, videoDurationMillis / targetDurationMillis));
+    return Math.max(
+      0.05,
+      Math.min(4, videoDurationMillis / targetDurationMillis),
+    );
   }, [targetDurationMillis, videoDurationMillis]);
 
   const totalDurationLabel = formatMillis(targetDurationMillis);
@@ -436,7 +460,10 @@ const MeditationScreen = () => {
 
       setIsPlayerReady(true);
       setIsPlaying(status.isPlaying);
-      const nextPosition = Math.min(status.positionMillis ?? 0, targetDurationMillis);
+      const nextPosition = Math.min(
+        status.positionMillis ?? 0,
+        targetDurationMillis,
+      );
       setPositionMillis(nextPosition);
       if (nextPosition >= targetDurationMillis || status.didJustFinish) {
         finishSession();
@@ -540,7 +567,13 @@ const MeditationScreen = () => {
     }, 250);
 
     return () => clearInterval(intervalId);
-  }, [finishSession, isPlaying, isSilentMode, positionMillis, targetDurationMillis]);
+  }, [
+    finishSession,
+    isPlaying,
+    isSilentMode,
+    positionMillis,
+    targetDurationMillis,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -630,9 +663,18 @@ const MeditationScreen = () => {
         await soundRef.current.playAsync();
       }
     } catch {
-      Alert.alert("No se pudo reproducir", "Intentá nuevamente en unos segundos.");
+      Alert.alert(
+        "No se pudo reproducir",
+        "Intentá nuevamente en unos segundos.",
+      );
     }
-  }, [isPlayerReady, isPlaying, isSilentMode, loadMeditationAudio, positionMillis]);
+  }, [
+    isPlayerReady,
+    isPlaying,
+    isSilentMode,
+    loadMeditationAudio,
+    positionMillis,
+  ]);
 
   const handleSeekPress = useCallback(
     async (event: any) => {
@@ -669,13 +711,15 @@ const MeditationScreen = () => {
 
   return (
     <View style={localStyles.screen}>
-      <SafeAreaView style={localStyles.safeArea} edges={["top", "left", "right"]}>
+      <SafeAreaView
+        style={localStyles.safeArea}
+        edges={["top", "left", "right"]}
+      >
         <ScrollView
           contentContainerStyle={[
             localStyles.scrollContent,
             {
-              paddingBottom:
-                Math.max(insets.bottom, 18) + 190,
+              paddingBottom: Math.max(insets.bottom, 18) + 190,
             },
           ]}
           showsVerticalScrollIndicator={false}
@@ -797,7 +841,9 @@ const MeditationScreen = () => {
                         </Text>
                       </View>
                       <Icon
-                        name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+                        name={
+                          isSelected ? "checkmark-circle" : "ellipse-outline"
+                        }
                         size={20}
                         color={
                           isSelected
@@ -815,7 +861,9 @@ const MeditationScreen = () => {
           <View style={localStyles.previewCard}>
             <View style={localStyles.previewPlayerHeader}>
               <Text style={localStyles.previewPlayerTitle}>{playerTitle}</Text>
-              <Text style={localStyles.previewPlayerSubtitle}>{playerSubtitle}</Text>
+              <Text style={localStyles.previewPlayerSubtitle}>
+                {playerSubtitle}
+              </Text>
               <View style={localStyles.previewPlayerDivider} />
             </View>
 
@@ -846,7 +894,9 @@ const MeditationScreen = () => {
               <Text style={localStyles.previewMantra}>{playerMantra}</Text>
               <View style={localStyles.progressMetaRow}>
                 <Text style={localStyles.progressTime}>{currentTimeLabel}</Text>
-                <Text style={localStyles.progressTime}>{totalDurationLabel}</Text>
+                <Text style={localStyles.progressTime}>
+                  {totalDurationLabel}
+                </Text>
               </View>
               <Pressable
                 accessibilityRole="adjustable"
@@ -859,7 +909,7 @@ const MeditationScreen = () => {
                 <View
                   style={[
                     localStyles.progressFill,
-                  { width: `${progressRatio * 100}%` },
+                    { width: `${progressRatio * 100}%` },
                   ]}
                 />
                 <View
@@ -882,8 +932,8 @@ const MeditationScreen = () => {
                       isPreparingAudio
                         ? "hourglass-outline"
                         : isPlaying
-                          ? "pause"
-                          : "play"
+                        ? "pause"
+                        : "play"
                     }
                     size={24}
                     color="#F6F6F4"
@@ -892,7 +942,6 @@ const MeditationScreen = () => {
               </View>
             </View>
           </View>
-
         </ScrollView>
       </SafeAreaView>
 
@@ -1143,7 +1192,7 @@ const localStyles = StyleSheet.create({
   previewCard: {
     marginTop: 22,
     borderRadius: 28,
-    backgroundColor: MEDITATION_VIDEO_BACKGROUND,
+    backgroundColor: "#fafafa",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.04)",
     shadowColor: "#2B2B2B",
