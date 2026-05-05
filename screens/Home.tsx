@@ -1028,6 +1028,35 @@ const Home = () => {
             </TouchableOpacity>
           </View>
 
+          <TouchableOpacity
+            style={localStyles.meditationCard}
+            onPress={() => navigation.navigate("Meditations" as never)}
+          >
+            <LoopingVideo
+              source={require("../assets/videos/bienvenidx.mp4")}
+              style={localStyles.meditationArt}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay
+              isMuted
+              isLooping
+            />
+            <View style={localStyles.meditationOverlay} />
+            <View style={localStyles.meditationContent}>
+              <View style={localStyles.meditationBadge}>
+                <Ionicons name="moon-outline" size={15} color="#2B2B2B" />
+                <Text style={localStyles.meditationBadgeText}>Vibes</Text>
+              </View>
+              <Text style={localStyles.meditationTitle}>Meditación guiada</Text>
+              <Text style={localStyles.meditationText}>
+                Elegí tu práctica, tu duración y empezá a bajar el ritmo desde acá.
+              </Text>
+              <View style={localStyles.meditationButton}>
+                <Ionicons name="play" size={16} color="#F6F6F4" />
+                <Text style={localStyles.meditationButtonText}>Ir a meditar</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
           <View style={localStyles.sectionCard}>
             <View style={localStyles.sectionHeader}>
               <Text style={localStyles.sectionTitle}>
@@ -1413,6 +1442,79 @@ const localStyles = StyleSheet.create({
   challengeButtonText: {
     color: "#FFFFFF",
     fontSize: 17,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  meditationCard: {
+    minHeight: 188,
+    borderRadius: 22,
+    overflow: "hidden",
+    backgroundColor: "#D8E3EC",
+    marginBottom: 18,
+    position: "relative",
+    shadowOpacity: 0.09,
+    shadowRadius: 18,
+    shadowColor: "#3E352B",
+    shadowOffset: { height: 8, width: 0 },
+  },
+  meditationArt: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+  },
+  meditationOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(43, 43, 43, 0.2)",
+  },
+  meditationContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    justifyContent: "space-between",
+    minHeight: 188,
+  },
+  meditationBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(246, 246, 244, 0.86)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  meditationBadgeText: {
+    color: "#2B2B2B",
+    fontSize: 14,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  meditationTitle: {
+    marginTop: 18,
+    color: "#F6F6F4",
+    fontSize: 31,
+    lineHeight: 34,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  meditationText: {
+    marginTop: 8,
+    maxWidth: "82%",
+    color: "rgba(246, 246, 244, 0.92)",
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  meditationButton: {
+    marginTop: 16,
+    alignSelf: "flex-start",
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#AEBFD1",
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  meditationButtonText: {
+    color: "#F6F6F4",
+    fontSize: 16,
     fontFamily: "CormorantGaramond_700Bold",
   },
   sectionCard: {
