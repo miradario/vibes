@@ -11,6 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { ResizeMode } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +25,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import Icon from "../components/Icon";
+import LoopingVideo from "../components/LoopingVideo";
 import {
   useChallengeCheckinsQuery,
   useChallengeParticipantQuery,
@@ -31,6 +33,11 @@ import {
   type EventFeedItem,
 } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
+import {
+  getChallengeMediaPreset,
+  getChallengeProgressVideo,
+  type ChallengeMediaPresetId,
+} from "../src/constants/challengeMediaPresets";
 
 type CheckInStatus = "pending" | "completed" | "broken";
 type ProgressMode = "path" | "compact" | "calendar";
@@ -73,7 +80,7 @@ const FALLBACK_CHALLENGE: ChallengeDetailData = {
 };
 
 const palette = {
-  bg: "#F7F4EE",
+  bg: "#F6F6F4",
   surface: "#FFFDF8",
   surfaceAlt: "#FDF6EA",
   text: "#2D2924",
@@ -81,8 +88,8 @@ const palette = {
   faint: "#E9E0D3",
   gold: "#E2A84F",
   goldDeep: "#B7772F",
-  green: "#5F8A52",
-  greenSoft: "#EAF4E4",
+  accentBlue: "#AEBFD1",
+  accentBlueSoft: "rgba(174, 191, 209, 0.18)",
   red: "#C9695D",
   redSoft: "#FCE9E6",
 };
@@ -478,10 +485,17 @@ export const CalendarProgress = memo(
 
 type GrowthIllustrationProps = {
   percent: number;
+  presetId?: ChallengeMediaPresetId | null;
 };
 
-export const GrowthIllustration = memo(({ percent }: GrowthIllustrationProps) => {
-  const stage = getGrowthStage(percent);
+const getProgressVideoStage = (percent: number) =>
+  Math.min(4, Math.floor(clamp(percent, 0, 100) / 20));
+
+export const GrowthIllustration = memo(({ percent, presetId }: GrowthIllustrationProps) => {
+  const stage = getProgressVideoStage(percent);
+  const treeStage = getGrowthStage(percent);
+  const preset = getChallengeMediaPreset(presetId);
+  const progressVideo = getChallengeProgressVideo(presetId, percent);
   const imageOpacity = useSharedValue(1);
 
   useEffect(() => {
@@ -490,7 +504,7 @@ export const GrowthIllustration = memo(({ percent }: GrowthIllustrationProps) =>
       duration: 520,
       easing: Easing.out(Easing.cubic),
     });
-  }, [stage]);
+  }, [stage, presetId]);
 
   const imageStyle = useAnimatedStyle(() => ({
     opacity: imageOpacity.value,
@@ -503,13 +517,26 @@ export const GrowthIllustration = memo(({ percent }: GrowthIllustrationProps) =>
 
   return (
     <View style={localStyles.illustrationCard}>
-      <Animated.Image
-        source={treeStageImages[stage]}
-        style={[localStyles.growthImage, imageStyle]}
-        resizeMode="contain"
-      />
-      <Text style={localStyles.growthTitle}>Etapa {stage + 1} de 6</Text>
-      <Text style={localStyles.growthSubtitle}>{getGrowthStageCopy(stage)}</Text>
+      {progressVideo ? (
+        <Animated.View style={[localStyles.growthVideoWrap, imageStyle]}>
+          <LoopingVideo
+            key={`${presetId ?? "fallback"}-${stage}`}
+            source={progressVideo}
+            posterSource={preset?.image ?? treeStageImages[treeStage]}
+            style={localStyles.growthVideo}
+            resizeMode={ResizeMode.CONTAIN}
+            isLooping={false}
+          />
+        </Animated.View>
+      ) : (
+        <Animated.Image
+          source={treeStageImages[treeStage]}
+          style={[localStyles.growthImage, imageStyle]}
+          resizeMode="contain"
+        />
+      )}
+      <Text style={localStyles.growthTitle}>Etapa {stage + 1} de 5</Text>
+      <Text style={localStyles.growthSubtitle}>{getGrowthStageCopy(treeStage)}</Text>
     </View>
   );
 });
@@ -603,7 +630,7 @@ export const CheckInButton = memo(({ status, isLoading, onPress }: CheckInButton
 
 export const MotivationalMessageCard = memo(() => (
   <View style={localStyles.messageCard}>
-    <Icon name="leaf-outline" size={21} color={palette.green} />
+    <Icon name="leaf-outline" size={21} color={palette.accentBlue} />
     <Text style={localStyles.messageText}>Respirá. Este momento cuenta.</Text>
   </View>
 ));
@@ -732,7 +759,10 @@ const ChallengeDetailScreen = () => {
           challenge={challenge}
           onBack={() => navigation.goBack()}
         />
-        <GrowthIllustration percent={percent} />
+        <GrowthIllustration
+          percent={percent}
+          presetId={event?.imagePresetId ?? null}
+        />
         <InfoCardsRow challenge={challenge} percent={percent} />
         <StreakSummaryCard
           streak={challenge.streak}
@@ -819,7 +849,7 @@ const localStyles = StyleSheet.create({
   illustrationCard: {
     minHeight: 286,
     borderRadius: 26,
-    backgroundColor: palette.surface,
+    backgroundColor: palette.bg,
     borderWidth: 1,
     borderColor: "rgba(45, 41, 36, 0.07)",
     paddingHorizontal: 16,
@@ -833,6 +863,17 @@ const localStyles = StyleSheet.create({
   growthImage: {
     width: "100%",
     height: 230,
+  },
+  growthVideoWrap: {
+    width: "100%",
+    height: 230,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: palette.bg,
+  },
+  growthVideo: {
+    width: "100%",
+    height: "100%",
   },
   growthTitle: {
     color: palette.text,
@@ -961,8 +1002,8 @@ const localStyles = StyleSheet.create({
     shadowColor: palette.gold,
   },
   dayCompleted: {
-    backgroundColor: palette.green,
-    borderColor: palette.green,
+    backgroundColor: palette.accentBlue,
+    borderColor: palette.accentBlue,
   },
   dayActive: {
     backgroundColor: palette.gold,
@@ -1053,7 +1094,7 @@ const localStyles = StyleSheet.create({
   summaryFill: {
     height: "100%",
     borderRadius: 5,
-    backgroundColor: palette.green,
+    backgroundColor: palette.accentBlue,
   },
   summaryCopy: {
     marginTop: 10,
@@ -1064,9 +1105,9 @@ const localStyles = StyleSheet.create({
   messageCard: {
     minHeight: 70,
     borderRadius: 22,
-    backgroundColor: "#F4FAEF",
+    backgroundColor: palette.accentBlueSoft,
     borderWidth: 1,
-    borderColor: "rgba(95, 138, 82, 0.14)",
+    borderColor: "rgba(174, 191, 209, 0.28)",
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
@@ -1094,7 +1135,7 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
   },
   checkInCompleted: {
-    backgroundColor: palette.green,
+    backgroundColor: palette.accentBlue,
   },
   checkInBroken: {
     backgroundColor: palette.red,

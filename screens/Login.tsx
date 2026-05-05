@@ -54,7 +54,7 @@ const Login = () => {
     <View style={styles.bg}>
       <View style={localStyles.heroWrap}>
         <LoopingVideo
-          source={require("../assets/videos/login.mp4")}
+          source={require("../assets/videos/challenges/login/login.mp4")}
           posterSource={require("../assets/images/challenges/login.png")}
           style={localStyles.loginIllustration}
           resizeMode={ResizeMode.CONTAIN}

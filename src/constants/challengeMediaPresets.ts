@@ -2,9 +2,11 @@ import type { AVPlaybackSource } from "expo-av";
 import type { ImageSourcePropType } from "react-native";
 
 export type ChallengeMediaPresetId =
+  | "VibesHome"
   | "welcome"
   | "challenge"
   | "events"
+  | "name"
   | "signup"
   | "login";
 
@@ -13,6 +15,13 @@ export type ChallengeMediaPreset = {
   label: string;
   image: ImageSourcePropType;
   video: AVPlaybackSource;
+  progressVideos?: [
+    AVPlaybackSource,
+    AVPlaybackSource,
+    AVPlaybackSource,
+    AVPlaybackSource,
+    AVPlaybackSource,
+  ];
 };
 
 const PRESET_PREFIX = "preset:";
@@ -22,6 +31,19 @@ const STARTS_AT_DESCRIPTION_MARKER_START = "[[starts_at:";
 const STARTS_AT_DESCRIPTION_MARKER_END = "]]";
 
 export const challengeMediaPresets: ChallengeMediaPreset[] = [
+  {
+    id: "VibesHome",
+    label: "Vibes Home",
+    image: require("../../assets/images/challenges/vibesLogo.png"),
+    video: require("../../assets/videos/challenges/VibesHome/VibesHome.mp4"),
+    progressVideos: [
+      require("../../assets/videos/challenges/VibesHome/VibesHome_part_01.mp4"),
+      require("../../assets/videos/challenges/VibesHome/VibesHome_part_02.mp4"),
+      require("../../assets/videos/challenges/VibesHome/VibesHome_part_03.mp4"),
+      require("../../assets/videos/challenges/VibesHome/VibesHome_part_04.mp4"),
+      require("../../assets/videos/challenges/VibesHome/VibesHome_part_05.mp4"),
+    ],
+  },
   {
     id: "welcome",
     label: "Bienvenida",
@@ -38,7 +60,27 @@ export const challengeMediaPresets: ChallengeMediaPreset[] = [
     id: "events",
     label: "Evento",
     image: require("../../assets/images/challenges/events.png"),
-    video: require("../../assets/videos/events.mp4"),
+    video: require("../../assets/videos/challenges/events/events.mp4"),
+    progressVideos: [
+      require("../../assets/videos/challenges/events/events_part_01.mp4"),
+      require("../../assets/videos/challenges/events/events_part_02.mp4"),
+      require("../../assets/videos/challenges/events/events_part_03.mp4"),
+      require("../../assets/videos/challenges/events/events_part_04.mp4"),
+      require("../../assets/videos/challenges/events/events_part_05.mp4"),
+    ],
+  },
+  {
+    id: "name",
+    label: "Nombre",
+    image: require("../../assets/images/challenges/login.png"),
+    video: require("../../assets/videos/challenges/name/name.mp4"),
+    progressVideos: [
+      require("../../assets/videos/challenges/name/name_part_01.mp4"),
+      require("../../assets/videos/challenges/name/name_part_02.mp4"),
+      require("../../assets/videos/challenges/name/name_part_03.mp4"),
+      require("../../assets/videos/challenges/name/name_part_04.mp4"),
+      require("../../assets/videos/challenges/name/name_part_05.mp4"),
+    ],
   },
   {
     id: "signup",
@@ -50,9 +92,19 @@ export const challengeMediaPresets: ChallengeMediaPreset[] = [
     id: "login",
     label: "Login",
     image: require("../../assets/images/challenges/login.png"),
-    video: require("../../assets/videos/login.mp4"),
+    video: require("../../assets/videos/challenges/login/login.mp4"),
+    progressVideos: [
+      require("../../assets/videos/challenges/login/login_part_01.mp4"),
+      require("../../assets/videos/challenges/login/login_part_02.mp4"),
+      require("../../assets/videos/challenges/login/login_part_03.mp4"),
+      require("../../assets/videos/challenges/login/login_part_04.mp4"),
+      require("../../assets/videos/challenges/login/login_part_05.mp4"),
+    ],
   },
 ];
+
+const CHALLENGE_PRESET_PATTERN =
+  "VibesHome|welcome|challenge|events|name|signup|login";
 
 export const serializeChallengeMediaPreset = (
   presetId: ChallengeMediaPresetId,
@@ -103,7 +155,9 @@ export const extractChallengePresetFromDescription = (
 ): ChallengeMediaPresetId | null => {
   if (!description) return null;
 
-  const match = description.match(/\[\[preset:(welcome|challenge|events|signup|login)\]\]/);
+  const match = description.match(
+    new RegExp(`\\[\\[preset:(${CHALLENGE_PRESET_PATTERN})\\]\\]`),
+  );
   return match?.[1] ? (match[1] as ChallengeMediaPresetId) : null;
 };
 
@@ -113,11 +167,26 @@ export const stripChallengePresetFromDescription = (
   if (!description) return null;
 
   const cleaned = description
-    .replace(/\n?\[\[preset:(welcome|challenge|events|signup|login)\]\]/g, "")
+    .replace(
+      new RegExp(`\\n?\\[\\[preset:(${CHALLENGE_PRESET_PATTERN})\\]\\]`, "g"),
+      "",
+    )
     .replace(/\n?\[\[starts_at:[^\]]+\]\]/g, "")
     .trim();
 
   return cleaned || null;
+};
+
+export const getChallengeProgressVideo = (
+  presetId: ChallengeMediaPresetId | null | undefined,
+  percent: number,
+) => {
+  const preset = getChallengeMediaPreset(presetId);
+  if (!preset?.progressVideos) return preset?.video ?? null;
+
+  const normalizedPercent = Math.max(0, Math.min(100, percent));
+  const stage = Math.min(4, Math.floor(normalizedPercent / 20));
+  return preset.progressVideos[stage] ?? preset.video;
 };
 
 export const extractChallengeStartsAtFromDescription = (

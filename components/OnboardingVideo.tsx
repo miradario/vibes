@@ -28,7 +28,7 @@ const ONBOARDING_VIDEO_SOURCES: Array<{
     poster: require("../assets/images/challenges/events.png"),
   },
   {
-    source: require("../assets/videos/name.mp4"),
+    source: require("../assets/videos/challenges/name/name.mp4"),
     poster: require("../assets/images/challenges/login.png"),
   },
   {
