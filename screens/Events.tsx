@@ -263,7 +263,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   segmentButtonActive: {
-    backgroundColor: "#2B2B2B",
+    backgroundColor: "#AEBFD1",
   },
   segmentText: {
     color: "#6E6E6E",

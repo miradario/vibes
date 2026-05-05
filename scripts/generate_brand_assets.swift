@@ -10,7 +10,7 @@ let aqua = NSColor(calibratedRed: 0.78, green: 0.92, blue: 0.92, alpha: 1.0)
 let aquaLine = NSColor(calibratedRed: 0.66, green: 0.87, blue: 0.87, alpha: 1.0)
 let orange = NSColor(calibratedRed: 0.98, green: 0.69, blue: 0.34, alpha: 1.0)
 let peach = NSColor(calibratedRed: 0.99, green: 0.91, blue: 0.84, alpha: 1.0)
-let white = NSColor(calibratedWhite: 1.0, alpha: 1.0)
+let white = NSColor(calibratedRed: 0.9647, green: 0.9647, blue: 0.9569, alpha: 1.0)
 
 func makeBitmap(size: CGSize) -> NSBitmapImageRep {
   guard let rep = NSBitmapImageRep(
