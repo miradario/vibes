@@ -2,14 +2,16 @@
 
 import React, { useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  FlatList,
-  Image,
-  ActivityIndicator,
+  View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -32,31 +34,46 @@ import { handleApiError } from "../src/utils/handleApiError";
 
 const LOGO = require("../assets/images/logo.png");
 
+type NewConnectionItem =
+  | { type: "match"; item: MatchWithProfile }
+  | { type: "incoming"; item: IncomingLike };
+
 const formatTime = (iso: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffDays = Math.floor(diffMs / 86_400_000);
+
   if (diffDays === 0) {
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString("es-AR", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
   }
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return d.toLocaleDateString([], { weekday: "short" });
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  if (diffDays === 1) return "Ayer";
+  if (diffDays < 7) {
+    const value = d.toLocaleDateString("es-AR", { weekday: "short" });
+    return value.charAt(0).toUpperCase() + value.slice(1).replace(".", "");
+  }
+  return d.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
 };
+
+const getFirstName = (name: string) => name.trim().split(" ")[0] || "Vibes";
 
 const Messages = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
-  const { data: matches, isLoading, error } = useMatchesQuery();
+  const { data: matches, isLoading } = useMatchesQuery();
   const { data: incomingLikes = [] } = useIncomingLikesQuery();
   const swipeMutation = useSwipeMutation();
   const { data: eventGroups = [], isLoading: groupsLoading } =
     useMyEventGroupsQuery(userId);
   const [selectedIncomingLike, setSelectedIncomingLike] =
     useState<IncomingLike | null>(null);
+  const [groupsCollapsed, setGroupsCollapsed] = useState(false);
   const { data: selectedIncomingProfile } = useProfileQuery(
     selectedIncomingLike?.likerUserId,
   );
@@ -64,17 +81,12 @@ const Messages = () => {
     selectedIncomingLike?.likerUserId,
   );
 
-  console.log(
-    "[Messages] matches:",
-    matches?.length,
-    "loading:",
-    isLoading,
-    "error:",
-    error,
-  );
-
   const withMessages = (matches ?? []).filter((m) => m.lastMessage);
   const newConnections = (matches ?? []).filter((m) => !m.lastMessage);
+  const topConnections: NewConnectionItem[] = [
+    ...newConnections.map((item) => ({ type: "match" as const, item })),
+    ...incomingLikes.map((item) => ({ type: "incoming" as const, item })),
+  ];
   const selectedIncomingLikeCard = selectedIncomingLike
     ? mapCandidateToConnectionProfile({
         id: selectedIncomingLike.likerUserId,
@@ -91,65 +103,21 @@ const Messages = () => {
       })
     : null;
 
-  const renderMatchRow = ({ item }: { item: MatchWithProfile }) => (
-    <TouchableOpacity
-      style={localStyles.matchRow}
-      activeOpacity={0.7}
-      onPress={() =>
-        navigation.navigate(
-          "Chat" as never,
-          {
-            matchId: item.id,
-            otherUserId: item.otherUserId,
-            otherUserName: item.otherUserName,
-            otherUserPhoto: item.otherUserPhoto,
-          } as never,
-        )
-      }
-    >
-      <Image
-        source={item.otherUserPhoto ? { uri: item.otherUserPhoto } : LOGO}
-        style={localStyles.avatar}
-      />
-      <View style={localStyles.matchInfo}>
-        <Text style={localStyles.matchName} numberOfLines={1}>
-          {item.otherUserName}
-        </Text>
-        <Text style={localStyles.lastMsg} numberOfLines={1}>
-          {item.lastMessage ?? "New connection – say hi!"}
-        </Text>
-      </View>
-      {item.lastMessageAt && (
-        <Text style={localStyles.time}>{formatTime(item.lastMessageAt)}</Text>
-      )}
-    </TouchableOpacity>
-  );
+  const openMatchChat = (item: MatchWithProfile) => {
+    navigation.navigate(
+      "Chat" as never,
+      {
+        matchId: item.id,
+        otherUserId: item.otherUserId,
+        otherUserName: item.otherUserName,
+        otherUserPhoto: item.otherUserPhoto,
+      } as never,
+    );
+  };
 
-  const renderNewConnection = ({ item }: { item: MatchWithProfile }) => (
-    <TouchableOpacity
-      style={localStyles.newConnBubble}
-      activeOpacity={0.7}
-      onPress={() =>
-        navigation.navigate(
-          "Chat" as never,
-          {
-            matchId: item.id,
-            otherUserId: item.otherUserId,
-            otherUserName: item.otherUserName,
-            otherUserPhoto: item.otherUserPhoto,
-          } as never,
-        )
-      }
-    >
-      <Image
-        source={item.otherUserPhoto ? { uri: item.otherUserPhoto } : LOGO}
-        style={localStyles.newConnAvatar}
-      />
-      <Text style={localStyles.newConnName} numberOfLines={1}>
-        {item.otherUserName}
-      </Text>
-    </TouchableOpacity>
-  );
+  const openGroupChat = (item: EventGroupSummary) => {
+    navigation.navigate("EventChat" as never, { event: item.event } as never);
+  };
 
   const handleConnectIncomingLike = () => {
     if (!selectedIncomingLike || !selectedIncomingLikeCard) return;
@@ -170,7 +138,7 @@ const Messages = () => {
           setSelectedIncomingLike(null);
         },
         onError: (error) =>
-          handleApiError(error, { toastTitle: "Connect Error" }),
+          handleApiError(error, { toastTitle: "Error al conectar" }),
       },
     );
   };
@@ -184,202 +152,243 @@ const Messages = () => {
         direction: "pass",
       },
       {
-        onSuccess: () => {
-          setSelectedIncomingLike(null);
-        },
+        onSuccess: () => setSelectedIncomingLike(null),
         onError: (error) =>
-          handleApiError(error, { toastTitle: "Dismiss Error" }),
+          handleApiError(error, { toastTitle: "Error al descartar" }),
       },
     );
   };
 
-  const renderIncomingLike = ({ item }: { item: IncomingLike }) => (
-    <TouchableOpacity
-      style={localStyles.newConnBubble}
-      activeOpacity={0.8}
-      onPress={() => setSelectedIncomingLike(item)}
-    >
-      <Image
-        source={item.likerUserPhoto ? { uri: item.likerUserPhoto } : LOGO}
-        style={localStyles.newConnAvatar}
-      />
-      <Text style={localStyles.newConnName} numberOfLines={1}>
-        {item.likerUserName}
-      </Text>
-    </TouchableOpacity>
+  const renderSectionHeader = (
+    icon: string,
+    title: string,
+    count: number,
+    seeAllLabel: string,
+    options?: { collapsible?: boolean; collapsed?: boolean; onPress?: () => void },
+  ) => (
+    <View style={localStyles.sectionHeader}>
+      <View style={localStyles.sectionTitleWrap}>
+        <Icon name={icon as any} color={DARK_GRAY} size={19} />
+        <Text style={localStyles.sectionTitle}>{title}</Text>
+        <View style={localStyles.countBadge}>
+          <Text style={localStyles.countText}>{count}</Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        activeOpacity={0.75}
+        style={localStyles.seeAllButton}
+        onPress={options?.onPress}
+      >
+        <Text style={localStyles.seeAllText}>{seeAllLabel}</Text>
+        <Icon
+          name={
+            options?.collapsible
+              ? options.collapsed
+                ? "chevron-down"
+                : "chevron-up"
+              : "chevron-forward"
+          }
+          color="#7B746C"
+          size={17}
+        />
+      </TouchableOpacity>
+    </View>
   );
 
-  const renderGroupRow = ({ item }: { item: EventGroupSummary }) => {
-    const imgSource =
-      typeof item.image === "string" ? { uri: item.image } : item.image;
+  const renderNewConnection = (connection: NewConnectionItem) => {
+    const isMatch = connection.type === "match";
+    const name = isMatch
+      ? connection.item.otherUserName
+      : connection.item.likerUserName;
+    const photo = isMatch
+      ? connection.item.otherUserPhoto
+      : connection.item.likerUserPhoto;
+
     return (
       <TouchableOpacity
-        style={localStyles.matchRow}
-        activeOpacity={0.7}
+        key={`${connection.type}-${connection.item.id}`}
+        style={localStyles.newConnectionItem}
+        activeOpacity={0.78}
         onPress={() =>
-          navigation.navigate(
-            "EventChat" as never,
-            { event: item.event } as never,
-          )
+          isMatch
+            ? openMatchChat(connection.item)
+            : setSelectedIncomingLike(connection.item)
         }
       >
-        <Image source={imgSource} style={localStyles.groupAvatar} />
-        <View style={localStyles.matchInfo}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={localStyles.matchName} numberOfLines={1}>
-              {item.title}
-            </Text>
-            <View style={localStyles.groupBadge}>
-              <Text style={localStyles.groupBadgeText}>
-                {item.eventType === "challenge" ? "Challenge" : "Evento"}
-              </Text>
-            </View>
-          </View>
-          <Text style={localStyles.lastMsg} numberOfLines={1}>
-            {item.lastMessage ?? "No hay mensajes aún"}
-          </Text>
+        <View style={localStyles.newAvatarFrame}>
+          <Image
+            source={photo ? { uri: photo } : LOGO}
+            style={localStyles.newAvatar}
+          />
+          {isMatch ? <View style={localStyles.onlineDot} /> : null}
         </View>
-        {item.lastMessageAt && (
-          <Text style={localStyles.time}>{formatTime(item.lastMessageAt)}</Text>
-        )}
+        <Text style={localStyles.newName} numberOfLines={1}>
+          {getFirstName(name)}
+        </Text>
+        <Text style={localStyles.newSubtitle}>Nueva conexión</Text>
       </TouchableOpacity>
     );
   };
 
+  const renderGroupRow = (item: EventGroupSummary, index: number) => {
+    const imgSource =
+      typeof item.image === "string" ? { uri: item.image } : item.image;
+    const isChallenge = item.eventType === "challenge";
+
+    return (
+      <TouchableOpacity
+        key={item.eventId}
+        style={[
+          localStyles.cardRow,
+          index > 0 && localStyles.cardRowWithDivider,
+        ]}
+        activeOpacity={0.78}
+        onPress={() => openGroupChat(item)}
+      >
+        <Image source={imgSource} style={localStyles.groupAvatar} />
+        <View style={localStyles.rowBody}>
+          <View style={localStyles.rowTitleLine}>
+            <Text style={localStyles.rowTitle} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <View
+              style={[
+                localStyles.typeBadge,
+                isChallenge ? localStyles.challengeBadge : localStyles.eventBadge,
+              ]}
+            >
+              <Text
+                style={[
+                  localStyles.typeBadgeText,
+                  isChallenge
+                    ? localStyles.challengeBadgeText
+                    : localStyles.eventBadgeText,
+                ]}
+              >
+                {isChallenge ? "Challenge" : "Evento"}
+              </Text>
+            </View>
+          </View>
+          <Text style={localStyles.lastMessage} numberOfLines={2}>
+            {item.lastMessage ?? "No hay mensajes aún"}
+          </Text>
+        </View>
+        <View style={localStyles.rowMeta}>
+          <Text style={localStyles.rowTime}>{formatTime(item.lastMessageAt)}</Text>
+          {item.lastMessageAt ? <View style={localStyles.unreadDot} /> : null}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderDirectRow = (item: MatchWithProfile, index: number) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[localStyles.cardRow, index > 0 && localStyles.cardRowWithDivider]}
+      activeOpacity={0.78}
+      onPress={() => openMatchChat(item)}
+    >
+      <Image
+        source={item.otherUserPhoto ? { uri: item.otherUserPhoto } : LOGO}
+        style={localStyles.directAvatar}
+      />
+      <View style={localStyles.rowBody}>
+        <Text style={localStyles.rowTitle} numberOfLines={1}>
+          {item.otherUserName}
+        </Text>
+        <Text style={localStyles.lastMessage} numberOfLines={1}>
+          {item.lastMessage ?? "Nueva conexión"}
+        </Text>
+      </View>
+      <View style={localStyles.rowMeta}>
+        <Text style={localStyles.rowTime}>{formatTime(item.lastMessageAt)}</Text>
+        {item.lastMessageAt ? <View style={localStyles.unreadDot} /> : null}
+      </View>
+    </TouchableOpacity>
+  );
+
+  const loading = isLoading || groupsLoading;
+
   return (
     <View style={styles.bg}>
-      <View
-        style={[styles.containerMessages, { justifyContent: "flex-start" }]}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          localStyles.content,
+          {
+            paddingTop: Math.max(insets.top + 18, 46),
+            paddingBottom: Math.max(insets.bottom + 90, 118),
+          },
+        ]}
       >
-        <View style={styles.flowTop}>
-          <View style={styles.flowTopCenter}>
-            <Icon name="chatbubble-ellipses" color={DARK_GRAY} size={26} />
-          </View>
-        </View>
-
-        {incomingLikes.length > 0 && (
-          <>
-            <View style={styles.flowSectionHeader}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Icon name="sparkles-outline" color={DARK_GRAY} size={16} />
-                <Text style={[styles.flowSectionTitle, { marginLeft: 8 }]}>
-                  Quieren conectar con vos
-                </Text>
-              </View>
-              <View style={styles.flowSectionCount}>
-                <Text style={styles.flowSectionCountText}>
-                  {incomingLikes.length}
-                </Text>
-              </View>
-            </View>
-
-            <FlatList
-              data={incomingLikes}
-              keyExtractor={(item) => item.id}
-              renderItem={renderIncomingLike}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={localStyles.newConnList}
-              contentContainerStyle={{ paddingHorizontal: 12 }}
-            />
-          </>
+        {renderSectionHeader(
+          "heart",
+          "NUEVAS CONEXIONES",
+          topConnections.length,
+          "Ver todas",
         )}
-
-        {/* New Connections (no messages yet) */}
-        <View style={styles.flowSectionHeader}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Icon name="heart" color={DARK_GRAY} size={16} />
-            <Text style={[styles.flowSectionTitle, { marginLeft: 8 }]}>
-              New Connections
-            </Text>
-          </View>
-          <View style={styles.flowSectionCount}>
-            <Text style={styles.flowSectionCountText}>
-              {newConnections.length}
-            </Text>
-          </View>
-        </View>
-
-        {newConnections.length > 0 && (
-          <FlatList
-            data={newConnections}
-            keyExtractor={(item) => item.id}
-            renderItem={renderNewConnection}
+        {topConnections.length > 0 ? (
+          <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={localStyles.newConnList}
-            contentContainerStyle={{ paddingHorizontal: 12 }}
-          />
-        )}
-
-        {/* Event Groups */}
-        {eventGroups.length > 0 && (
-          <>
-            <View style={styles.flowSectionHeader}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Icon name="people" color={DARK_GRAY} size={16} />
-                <Text style={[styles.flowSectionTitle, { marginLeft: 8 }]}>
-                  Grupos
-                </Text>
-              </View>
-              <View style={styles.flowSectionCount}>
-                <Text style={styles.flowSectionCountText}>
-                  {eventGroups.length}
-                </Text>
-              </View>
-            </View>
-            {eventGroups.map((group) => (
-              <React.Fragment key={group.eventId}>
-                {renderGroupRow({ item: group })}
-              </React.Fragment>
-            ))}
-          </>
-        )}
-
-        {/* Messages */}
-        <View style={styles.flowSectionHeader}>
-          <Text style={styles.flowSectionTitle}>Messages</Text>
-        </View>
-
-        {isLoading || groupsLoading ? (
-          <View style={localStyles.emptyState}>
-            <ActivityIndicator color="#E4B76E" size="large" />
-          </View>
-        ) : withMessages.length === 0 && eventGroups.length === 0 ? (
-          <View style={localStyles.emptyState}>
-            <Text style={localStyles.emptyTitle}>
-              {(matches ?? []).length === 0
-                ? "No connections yet"
-                : "No messages yet"}
-            </Text>
-            <Text style={localStyles.emptyText}>
-              {(matches ?? []).length === 0
-                ? "Swipe right on someone you vibe with to start a conversation."
-                : "Start a conversation with one of your new connections!"}
-            </Text>
-          </View>
-        ) : withMessages.length === 0 ? (
-          <View style={localStyles.emptyMsgHint}>
-            <Text style={localStyles.emptyText}>
-              No direct messages yet. Start a conversation!
-            </Text>
-          </View>
+            contentContainerStyle={localStyles.newConnectionsList}
+          >
+            {topConnections.map(renderNewConnection)}
+          </ScrollView>
         ) : (
-          <FlatList
-            data={withMessages}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMatchRow}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          />
+          <Text style={localStyles.sectionEmpty}>No hay conexiones nuevas.</Text>
         )}
-      </View>
+
+        {renderSectionHeader(
+          "people",
+          "GRUPOS",
+          eventGroups.length,
+          groupsCollapsed ? "Mostrar" : "Ocultar",
+          {
+            collapsible: true,
+            collapsed: groupsCollapsed,
+            onPress: () => setGroupsCollapsed((value) => !value),
+          },
+        )}
+        {!groupsCollapsed ? (
+          <View style={localStyles.rowsCard}>
+            {loading ? (
+              <View style={localStyles.loadingWrap}>
+                <ActivityIndicator color="#E4B76E" size="small" />
+              </View>
+            ) : eventGroups.length > 0 ? (
+              eventGroups.map(renderGroupRow)
+            ) : (
+              <Text style={localStyles.cardEmpty}>No hay grupos activos.</Text>
+            )}
+          </View>
+        ) : null}
+
+        {renderSectionHeader(
+          "chatbubble-ellipses-outline",
+          "MENSAJES",
+          withMessages.length,
+          "Ver todos",
+        )}
+        <View style={localStyles.rowsCard}>
+          {loading ? (
+            <View style={localStyles.loadingWrap}>
+              <ActivityIndicator color="#E4B76E" size="small" />
+            </View>
+          ) : withMessages.length > 0 ? (
+            withMessages.map(renderDirectRow)
+          ) : (
+            <Text style={localStyles.cardEmpty}>No hay mensajes todavía.</Text>
+          )}
+        </View>
+      </ScrollView>
 
       <UserProfileSheet
         visible={Boolean(selectedIncomingLike && selectedIncomingLikeCard)}
         profile={selectedIncomingLikeCard}
         onClose={() => setSelectedIncomingLike(null)}
         onContactPress={handleConnectIncomingLike}
-        secondaryActionLabel="Dismiss"
+        secondaryActionLabel="Descartar"
         onSecondaryActionPress={handleDismissIncomingLike}
       />
     </View>
@@ -388,108 +397,222 @@ const Messages = () => {
 
 export default Messages;
 
-const localStyles = {
-  matchRow: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(174, 191, 209, 0.3)",
+const localStyles = StyleSheet.create({
+  content: {
+    paddingHorizontal: 18,
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#E4B76E",
+  sectionHeader: {
+    marginTop: 8,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  matchInfo: {
-    flex: 1,
-    marginLeft: 12,
+  sectionTitleWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 1,
   },
-  matchName: {
-    color: "#2B2B2B",
-    fontSize: 16,
-    fontFamily: "CormorantGaramond_600SemiBold",
-  },
-  lastMsg: {
-    color: "#6E6E6E",
-    fontSize: 14,
-    fontFamily: "CormorantGaramond_500Medium",
-    marginTop: 2,
-  },
-  time: {
-    color: "#AEBFD1",
-    fontSize: 11,
+  sectionTitle: {
     marginLeft: 8,
+    color: DARK_GRAY,
+    fontSize: 16,
+    letterSpacing: 0,
+    fontFamily: "CormorantGaramond_700Bold",
   },
-  newConnList: {
-    maxHeight: 100,
-    marginBottom: 4,
+  countBadge: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    marginLeft: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(228, 183, 110, 0.22)",
   },
-  newConnBubble: {
-    alignItems: "center" as const,
-    marginHorizontal: 6,
-    width: 64,
+  countText: {
+    color: DARK_GRAY,
+    fontSize: 15,
+    fontFamily: "CormorantGaramond_700Bold",
   },
-  newConnAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: "#E4B76E",
+  seeAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 10,
+  },
+  seeAllText: {
+    color: "#7B746C",
+    fontSize: 14,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  newConnectionsList: {
+    paddingBottom: 14,
+    gap: 12,
+  },
+  newConnectionItem: {
+    width: 86,
+    alignItems: "center",
+  },
+  newAvatarFrame: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    padding: 3,
+    backgroundColor: "rgba(228, 183, 110, 0.26)",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.42)",
+  },
+  newAvatar: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 31,
     backgroundColor: "#E4B76E",
   },
-  newConnName: {
-    marginTop: 4,
+  onlineDot: {
+    position: "absolute",
+    right: 2,
+    bottom: 7,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#F99A2D",
+    borderWidth: 2,
+    borderColor: BG_MAIN,
+  },
+  newName: {
+    marginTop: 5,
+    color: DARK_GRAY,
+    fontSize: 15,
+    lineHeight: 18,
+    textAlign: "center",
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  newSubtitle: {
+    marginTop: 1,
+    color: "#5F82A5",
     fontSize: 12,
-    color: "#2B2B2B",
+    textAlign: "center",
     fontFamily: "CormorantGaramond_500Medium",
-    textAlign: "center" as const,
   },
-  emptyState: {
-    flex: 1,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    paddingHorizontal: 28,
-  },
-  emptyMsgHint: {
-    alignItems: "center" as const,
-    paddingHorizontal: 28,
-    paddingVertical: 16,
-  },
-  emptyTitle: {
-    color: "#2B2B2B",
-    fontSize: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
-    textAlign: "center" as const,
-  },
-  emptyText: {
-    marginTop: 10,
-    color: "#6E6E6E",
-    fontSize: 16,
-    lineHeight: 22,
+  sectionEmpty: {
+    marginBottom: 14,
+    color: "#7B746C",
+    fontSize: 15,
     fontFamily: "CormorantGaramond_500Medium",
-    textAlign: "center" as const,
+  },
+  rowsCard: {
+    marginBottom: 18,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "rgba(255, 255, 255, 0.82)",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.04)",
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 2,
+  },
+  cardRow: {
+    minHeight: 72,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  cardRowWithDivider: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(43, 43, 43, 0.07)",
   },
   groupAvatar: {
-    width: 50,
-    height: 50,
+    width: 52,
+    height: 52,
     borderRadius: 12,
     backgroundColor: BG_MAIN,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.45)",
+    borderColor: "rgba(228, 183, 110, 0.38)",
   },
-  groupBadge: {
-    marginLeft: 6,
-    backgroundColor: "rgba(228, 183, 110, 0.15)",
-    borderRadius: 6,
-    paddingHorizontal: 6,
+  directAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#E4B76E",
+  },
+  rowBody: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 12,
+  },
+  rowTitleLine: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  rowTitle: {
+    flexShrink: 1,
+    color: DARK_GRAY,
+    fontSize: 17,
+    lineHeight: 21,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  typeBadge: {
+    borderRadius: 9,
+    paddingHorizontal: 7,
     paddingVertical: 2,
+    marginLeft: 7,
   },
-  groupBadgeText: {
-    fontSize: 10,
-    color: "#E4B76E",
-    fontFamily: "CormorantGaramond_600SemiBold",
+  challengeBadge: {
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
   },
-};
+  eventBadge: {
+    backgroundColor: "rgba(95, 130, 165, 0.13)",
+  },
+  typeBadgeText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  challengeBadgeText: {
+    color: "#E19628",
+  },
+  eventBadgeText: {
+    color: "#5F82A5",
+  },
+  lastMessage: {
+    marginTop: 3,
+    color: "#6E6E6E",
+    fontSize: 15,
+    lineHeight: 19,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  rowMeta: {
+    width: 50,
+    minHeight: 50,
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    marginLeft: 8,
+  },
+  rowTime: {
+    color: "#6E6E6E",
+    fontSize: 13,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  unreadDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: "#4F7EA8",
+    marginBottom: 6,
+  },
+  loadingWrap: {
+    height: 82,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardEmpty: {
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    color: "#7B746C",
+    fontSize: 14,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+});
