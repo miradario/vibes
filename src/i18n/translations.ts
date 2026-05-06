@@ -242,6 +242,11 @@ const translations = {
     home: {
       filters: "Filtros",
       filtersSubtitle: "Ajustá qué perfiles querés ver en discover.",
+      connectFirstTitle: "Antes de conectar con otros, conectá con vos mismo.",
+      connectFirstBody:
+        "Volvé a vos. Escuchá lo que sentís, entendé lo que necesitás y elegí desde tu bienestar.",
+      connectWithMe: "Conectar conmigo",
+      relax: "Relax",
       age: "Edad",
       min: "Mínima",
       max: "Máxima",
@@ -534,6 +539,11 @@ const translations = {
     home: {
       filters: "Filters",
       filtersSubtitle: "Adjust which profiles you want to see in discover.",
+      connectFirstTitle: "Before connecting with others, connect with yourself.",
+      connectFirstBody:
+        "Come back to yourself. Listen to what you feel, understand what you need, and choose from your wellbeing.",
+      connectWithMe: "Connect with me",
+      relax: "Relax",
       age: "Age",
       min: "Minimum",
       max: "Maximum",

@@ -22,6 +22,8 @@ import {
 } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Animated, {
+  Easing,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -369,12 +371,14 @@ const MeditationScreen = () => {
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPreparingAudio, setIsPreparingAudio] = useState(false);
+  const [showImmersivePlayer, setShowImmersivePlayer] = useState(false);
   const [positionMillis, setPositionMillis] = useState(0);
   const [videoDurationMillis, setVideoDurationMillis] = useState<number | null>(
     null,
   );
   const [videoResetKey, setVideoResetKey] = useState(0);
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
+  const immersivePlayerProgress = useSharedValue(0);
   const targetDurationMillis = selectedDuration * 60 * 1000;
 
   const selectedMusicOption = useMemo(
@@ -412,6 +416,42 @@ const MeditationScreen = () => {
     selectedType === "guided"
       ? "Respira y vuelve a ti."
       : "Respira y escucha tu interior.";
+  const showPreviewVideo = isPlaying;
+
+  useEffect(() => {
+    if (isPlaying) {
+      setShowImmersivePlayer(true);
+      immersivePlayerProgress.value = withTiming(1, {
+        duration: 680,
+        easing: Easing.bezier(0.22, 1, 0.36, 1),
+      });
+      return undefined;
+    }
+
+    if (!showImmersivePlayer) return undefined;
+
+    immersivePlayerProgress.value = withTiming(0, {
+      duration: 520,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+    });
+    const timeoutId = setTimeout(() => {
+      setShowImmersivePlayer(false);
+    }, 520);
+
+    return () => clearTimeout(timeoutId);
+  }, [immersivePlayerProgress, isPlaying, showImmersivePlayer]);
+
+  const immersiveOverlayAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(immersivePlayerProgress.value, [0, 1], [0, 1]),
+  }));
+
+  const immersivePlayerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(immersivePlayerProgress.value, [0, 0.2, 1], [0, 0.25, 1]),
+    transform: [
+      { translateY: interpolate(immersivePlayerProgress.value, [0, 1], [72, 0]) },
+      { scale: interpolate(immersivePlayerProgress.value, [0, 1], [0.92, 1]) },
+    ],
+  }));
 
   const playFinishSound = useCallback(async () => {
     try {
@@ -581,13 +621,6 @@ const MeditationScreen = () => {
     };
   }, [unloadFinishSound]);
 
-  const showActiveSessionAlert = useCallback(() => {
-    Alert.alert(
-      "Meditación en curso",
-      "Pausá la meditación antes de cambiar el tipo o la duración.",
-    );
-  }, []);
-
   const resetSessionToBeginning = useCallback(() => {
     shouldResumeOnReloadRef.current = false;
     silentStartedAtRef.current = null;
@@ -601,41 +634,23 @@ const MeditationScreen = () => {
   const handleSelectType = useCallback(
     (nextType: MeditationType) => {
       if (nextType === selectedType) return;
-      if (isPlaying || isPreparingAudio) {
-        showActiveSessionAlert();
-        return;
-      }
+      if (isPlaying || isPreparingAudio) return;
 
       resetSessionToBeginning();
       setSelectedType(nextType);
     },
-    [
-      isPlaying,
-      isPreparingAudio,
-      resetSessionToBeginning,
-      selectedType,
-      showActiveSessionAlert,
-    ],
+    [isPlaying, isPreparingAudio, resetSessionToBeginning, selectedType],
   );
 
   const handleSelectDuration = useCallback(
     (nextDuration: DurationOption) => {
       if (nextDuration === selectedDuration) return;
-      if (isPlaying || isPreparingAudio) {
-        showActiveSessionAlert();
-        return;
-      }
+      if (isPlaying || isPreparingAudio) return;
 
       resetSessionToBeginning();
       setSelectedDuration(nextDuration);
     },
-    [
-      isPlaying,
-      isPreparingAudio,
-      resetSessionToBeginning,
-      selectedDuration,
-      showActiveSessionAlert,
-    ],
+    [isPlaying, isPreparingAudio, resetSessionToBeginning, selectedDuration],
   );
 
   const togglePlayback = useCallback(async () => {
@@ -858,43 +873,97 @@ const MeditationScreen = () => {
             ) : null}
           </View>
 
-          <View style={localStyles.previewCard}>
-            <View style={localStyles.previewPlayerHeader}>
-              <Text style={localStyles.previewPlayerTitle}>{playerTitle}</Text>
-              <Text style={localStyles.previewPlayerSubtitle}>
+          {!showImmersivePlayer ? (
+            <View
+              style={[
+                localStyles.previewCard,
+                !showPreviewVideo ? localStyles.previewCardCompact : null,
+              ]}
+            >
+            <View
+              style={[
+                localStyles.previewPlayerHeader,
+                !showPreviewVideo ? localStyles.previewPlayerHeaderCompact : null,
+              ]}
+            >
+              <Text
+                style={[
+                  localStyles.previewPlayerTitle,
+                  !showPreviewVideo ? localStyles.previewPlayerTitleCompact : null,
+                ]}
+              >
+                {playerTitle}
+              </Text>
+              <Text
+                style={[
+                  localStyles.previewPlayerSubtitle,
+                  !showPreviewVideo ? localStyles.previewPlayerSubtitleCompact : null,
+                ]}
+              >
                 {playerSubtitle}
               </Text>
-              <View style={localStyles.previewPlayerDivider} />
-            </View>
-
-            <View style={localStyles.previewMediaFrame}>
-              <Video
-                key={`meditation-video-${selectedType}-${selectedDuration}-${videoResetKey}`}
-                ref={videoRef}
-                source={require("../assets/videos/meditation/videoMeditation.mp4")}
-                style={localStyles.previewVideo}
-                resizeMode={ResizeMode.COVER}
-                shouldPlay={isPlaying}
-                isMuted
-                isLooping={false}
-                rate={selectedVideoRate}
-                shouldCorrectPitch={false}
-                progressUpdateIntervalMillis={250}
-                onPlaybackStatusUpdate={(status) => {
-                  if (!status.isLoaded) return;
-                  if (typeof status.durationMillis === "number") {
-                    setVideoDurationMillis(status.durationMillis);
-                  }
-                }}
+              <View
+                style={[
+                  localStyles.previewPlayerDivider,
+                  !showPreviewVideo ? localStyles.previewPlayerDividerCompact : null,
+                ]}
               />
-              <View style={localStyles.previewOverlay} />
             </View>
 
-            <View style={localStyles.previewBottom}>
-              <Text style={localStyles.previewMantra}>{playerMantra}</Text>
+            {showPreviewVideo ? (
+              <View style={localStyles.previewMediaFrame}>
+                <Video
+                  key={`meditation-video-${selectedType}-${selectedDuration}-${videoResetKey}`}
+                  ref={videoRef}
+                  source={require("../assets/videos/meditation/videoMeditation.mp4")}
+                  style={localStyles.previewVideo}
+                  resizeMode={ResizeMode.COVER}
+                  shouldPlay={isPlaying}
+                  isMuted
+                  isLooping={false}
+                  rate={selectedVideoRate}
+                  shouldCorrectPitch={false}
+                  progressUpdateIntervalMillis={250}
+                  onPlaybackStatusUpdate={(status) => {
+                    if (!status.isLoaded) return;
+                    if (typeof status.durationMillis === "number") {
+                      setVideoDurationMillis(status.durationMillis);
+                    }
+                  }}
+                />
+                <View style={localStyles.previewOverlay} />
+              </View>
+            ) : null}
+
+            <View
+              style={[
+                localStyles.previewBottom,
+                !showPreviewVideo ? localStyles.previewBottomCompact : null,
+              ]}
+            >
+              <Text
+                style={[
+                  localStyles.previewMantra,
+                  !showPreviewVideo ? localStyles.previewMantraCompact : null,
+                ]}
+              >
+                {playerMantra}
+              </Text>
               <View style={localStyles.progressMetaRow}>
-                <Text style={localStyles.progressTime}>{currentTimeLabel}</Text>
-                <Text style={localStyles.progressTime}>
+                <Text
+                  style={[
+                    localStyles.progressTime,
+                    !showPreviewVideo ? localStyles.progressTimeCompact : null,
+                  ]}
+                >
+                  {currentTimeLabel}
+                </Text>
+                <Text
+                  style={[
+                    localStyles.progressTime,
+                    !showPreviewVideo ? localStyles.progressTimeCompact : null,
+                  ]}
+                >
                   {totalDurationLabel}
                 </Text>
               </View>
@@ -919,13 +988,21 @@ const MeditationScreen = () => {
                   ]}
                 />
               </Pressable>
-              <View style={localStyles.controlRow}>
+              <View
+                style={[
+                  localStyles.controlRow,
+                  !showPreviewVideo ? localStyles.controlRowCompact : null,
+                ]}
+              >
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => {
                     void togglePlayback();
                   }}
-                  style={localStyles.primaryControl}
+                  style={[
+                    localStyles.primaryControl,
+                    !showPreviewVideo ? localStyles.primaryControlCompact : null,
+                  ]}
                 >
                   <Icon
                     name={
@@ -942,10 +1019,127 @@ const MeditationScreen = () => {
               </View>
             </View>
           </View>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
 
       <BottomTabPreview />
+
+      {showImmersivePlayer ? (
+        <Animated.View
+          pointerEvents="auto"
+          style={[
+            localStyles.immersivePlayerOverlay,
+            immersiveOverlayAnimatedStyle,
+          ]}
+        >
+          <SafeAreaView
+            style={localStyles.immersivePlayerSafeArea}
+            edges={["top", "bottom", "left", "right"]}
+          >
+            <Animated.View
+              style={[
+                localStyles.previewCardImmersive,
+                immersivePlayerAnimatedStyle,
+              ]}
+            >
+              <View style={localStyles.previewPlayerHeaderImmersive}>
+                <Text style={localStyles.previewPlayerTitleImmersive}>
+                  {playerTitle}
+                </Text>
+                <Text style={localStyles.previewPlayerSubtitleImmersive}>
+                  {playerSubtitle}
+                </Text>
+                <View style={localStyles.previewPlayerDivider} />
+              </View>
+
+              {showPreviewVideo ? (
+                <View style={localStyles.previewMediaFrameImmersive}>
+                  <Video
+                    key={`meditation-video-${selectedType}-${selectedDuration}-${videoResetKey}-immersive`}
+                    ref={videoRef}
+                    source={require("../assets/videos/meditation/videoMeditation.mp4")}
+                    style={localStyles.previewVideo}
+                    resizeMode={ResizeMode.COVER}
+                    shouldPlay={isPlaying}
+                    isMuted
+                    isLooping={false}
+                    rate={selectedVideoRate}
+                    shouldCorrectPitch={false}
+                    progressUpdateIntervalMillis={250}
+                    onPlaybackStatusUpdate={(status) => {
+                      if (!status.isLoaded) return;
+                      if (typeof status.durationMillis === "number") {
+                        setVideoDurationMillis(status.durationMillis);
+                      }
+                    }}
+                  />
+                  <View style={localStyles.previewOverlay} />
+                </View>
+              ) : null}
+
+              <View
+                style={[
+                  localStyles.previewBottomImmersive,
+                  !showPreviewVideo ? localStyles.previewBottomCompact : null,
+                ]}
+              >
+                <Text style={localStyles.previewMantraImmersive}>
+                  {playerMantra}
+                </Text>
+                <View style={localStyles.progressMetaRow}>
+                  <Text style={localStyles.progressTime}>{currentTimeLabel}</Text>
+                  <Text style={localStyles.progressTime}>
+                    {totalDurationLabel}
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityRole="adjustable"
+                  onLayout={handleProgressLayout}
+                  onPress={(event) => {
+                    void handleSeekPress(event);
+                  }}
+                  style={localStyles.progressTrack}
+                >
+                  <View
+                    style={[
+                      localStyles.progressFill,
+                      { width: `${progressRatio * 100}%` },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      localStyles.progressThumb,
+                      { left: `${progressRatio * 100}%` },
+                    ]}
+                  />
+                </Pressable>
+                <View style={localStyles.controlRow}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                      void togglePlayback();
+                    }}
+                    style={localStyles.primaryControl}
+                  >
+                    <Icon
+                      name={
+                        isPreparingAudio
+                          ? "hourglass-outline"
+                          : isPlaying
+                          ? "pause"
+                          : "play"
+                      }
+                      size={24}
+                      color="#F6F6F4"
+                    />
+                  </Pressable>
+                </View>
+              </View>
+            </Animated.View>
+          </SafeAreaView>
+        </Animated.View>
+      ) : null}
     </View>
   );
 };
@@ -960,8 +1154,8 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 10,
+    paddingHorizontal: 18,
+    paddingTop: 4,
   },
   headerRow: {
     flexDirection: "row",
@@ -969,9 +1163,9 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
   },
   headerButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.74)",
@@ -982,43 +1176,43 @@ const localStyles = StyleSheet.create({
     elevation: 2,
   },
   title: {
-    marginTop: 18,
+    marginTop: 8,
     color: vibesTheme.colors.primaryText,
-    fontSize: 50,
-    lineHeight: 52,
+    fontSize: 26,
+    lineHeight: 28,
     fontFamily: "CormorantGaramond_700Bold",
   },
   subtitle: {
-    marginTop: 4,
+    marginTop: 2,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 17,
-    lineHeight: 21,
+    fontSize: 11,
+    lineHeight: 13,
     fontFamily: "CormorantGaramond_500Medium",
   },
   section: {
-    marginTop: 26,
+    marginTop: 14,
   },
   sectionLabel: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 16,
-    letterSpacing: 1.8,
+    fontSize: 10,
+    lineHeight: 12,
+    letterSpacing: 1.2,
     fontFamily: "CormorantGaramond_700Bold",
   },
   practiceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 14,
+    marginTop: 8,
   },
   practiceCardWrap: {
-    width: "46.5%",
+    width: "47.6%",
   },
   practiceCard: {
-    minHeight: 156,
-    borderRadius: 20,
+    minHeight: 96,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#2B2B2B",
@@ -1035,43 +1229,43 @@ const localStyles = StyleSheet.create({
   },
   checkWrap: {
     position: "absolute",
-    top: 12,
-    right: 12,
+    top: 8,
+    right: 8,
   },
   practiceIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 6,
   },
   practiceTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 15,
     textAlign: "center",
     fontFamily: "CormorantGaramond_700Bold",
   },
   practiceSubtitle: {
-    marginTop: 6,
+    marginTop: 3,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 12,
-    lineHeight: 15,
+    fontSize: 8,
+    lineHeight: 10,
     textAlign: "center",
     fontFamily: "CormorantGaramond_500Medium",
   },
   durationRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 14,
+    marginTop: 8,
   },
   durationCardWrap: {
-    width: "29.5%",
+    width: "30.2%",
   },
   durationCard: {
-    height: 116,
-    borderRadius: 20,
+    height: 70,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
@@ -1089,20 +1283,20 @@ const localStyles = StyleSheet.create({
   },
   durationCheckWrap: {
     position: "absolute",
-    top: 10,
-    right: 10,
+    top: 6,
+    right: 6,
   },
   durationValue: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 34,
-    lineHeight: 36,
+    fontSize: 16,
+    lineHeight: 18,
     fontFamily: "CormorantGaramond_700Bold",
   },
   durationLabel: {
-    marginTop: 2,
+    marginTop: 1,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 15,
+    fontSize: 8,
+    lineHeight: 10,
     fontFamily: "CormorantGaramond_500Medium",
   },
   musicSelector: {
@@ -1205,15 +1399,50 @@ const localStyles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 20,
   },
+  previewCardCompact: {
+    marginTop: 16,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+  },
+  previewCardImmersive: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 22,
+    paddingTop: 14,
+    paddingBottom: 28,
+    justifyContent: "center",
+  },
   previewPlayerHeader: {
     alignItems: "center",
     paddingTop: 4,
     paddingBottom: 14,
   },
+  previewPlayerHeaderCompact: {
+    paddingTop: 0,
+    paddingBottom: 8,
+  },
+  previewPlayerHeaderImmersive: {
+    alignItems: "center",
+    paddingTop: 10,
+    paddingBottom: 22,
+  },
   previewPlayerTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 28,
     lineHeight: 32,
+    textAlign: "center",
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  previewPlayerTitleCompact: {
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  previewPlayerTitleImmersive: {
+    color: vibesTheme.colors.primaryText,
+    fontSize: 34,
+    lineHeight: 38,
     textAlign: "center",
     fontFamily: "CormorantGaramond_700Bold",
   },
@@ -1225,6 +1454,18 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "CormorantGaramond_500Medium",
   },
+  previewPlayerSubtitleCompact: {
+    fontSize: 13,
+    lineHeight: 15,
+  },
+  previewPlayerSubtitleImmersive: {
+    marginTop: 4,
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 18,
+    lineHeight: 22,
+    textAlign: "center",
+    fontFamily: "CormorantGaramond_500Medium",
+  },
   previewPlayerDivider: {
     marginTop: 10,
     width: 42,
@@ -1232,9 +1473,22 @@ const localStyles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: vibesTheme.colors.accentMustard,
   },
+  previewPlayerDividerCompact: {
+    marginTop: 8,
+    width: 32,
+    height: 2,
+  },
   previewMediaFrame: {
     height: 214,
     borderRadius: 24,
+    overflow: "hidden",
+    position: "relative",
+    backgroundColor: MEDITATION_VIDEO_BACKGROUND,
+  },
+  previewMediaFrameImmersive: {
+    flex: 1,
+    minHeight: 360,
+    borderRadius: 32,
     overflow: "hidden",
     position: "relative",
     backgroundColor: MEDITATION_VIDEO_BACKGROUND,
@@ -1251,6 +1505,12 @@ const localStyles = StyleSheet.create({
   previewBottom: {
     paddingTop: 18,
   },
+  previewBottomCompact: {
+    paddingTop: 4,
+  },
+  previewBottomImmersive: {
+    paddingTop: 24,
+  },
   previewMantra: {
     color: vibesTheme.colors.secondaryText,
     fontSize: 18,
@@ -1258,6 +1518,19 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "CormorantGaramond_500Medium",
     marginBottom: 14,
+  },
+  previewMantraCompact: {
+    fontSize: 14,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  previewMantraImmersive: {
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 22,
+    lineHeight: 28,
+    textAlign: "center",
+    fontFamily: "CormorantGaramond_500Medium",
+    marginBottom: 20,
   },
   progressMetaRow: {
     flexDirection: "row",
@@ -1269,6 +1542,10 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 18,
     fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  progressTimeCompact: {
+    fontSize: 13,
+    lineHeight: 15,
   },
   progressTrack: {
     height: 6,
@@ -1298,6 +1575,9 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  controlRowCompact: {
+    marginTop: 12,
+  },
   primaryControl: {
     width: 88,
     height: 88,
@@ -1311,6 +1591,23 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 22,
     elevation: 3,
+  },
+  primaryControlCompact: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    shadowOpacity: 0.16,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 14,
+  },
+  immersivePlayerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#FFFFFF",
+    zIndex: 60,
+  },
+  immersivePlayerSafeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
   },
   bottomBarOuter: {
     position: "absolute",

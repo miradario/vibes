@@ -14,10 +14,8 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ResizeMode } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import LoopingVideo from "../components/LoopingVideo";
 import UserProfileSheet from "../components/UserProfileSheet";
 import type { UserProfileCardData } from "../components/UserProfileCard";
 import styles, { DIMENSION_WIDTH } from "../assets/styles";
@@ -41,6 +39,7 @@ import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { handleApiError } from "../src/utils/handleApiError";
+import { useI18n } from "../src/i18n";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -199,6 +198,7 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
 
 const Home = () => {
   const navigation = useNavigation();
+  const { t } = useI18n();
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
@@ -400,6 +400,11 @@ const Home = () => {
       icon: "people-outline" as const,
       value: profiles.length || 12,
       label: "Conexiones",
+    },
+    {
+      icon: "trophy-outline" as const,
+      value: joinedActiveChallenges.length,
+      label: "Challenges",
     },
     {
       icon: "calendar-outline" as const,
@@ -899,27 +904,16 @@ const Home = () => {
             style={localStyles.meditationCard}
             onPress={() => navigation.navigate("Meditations" as never)}
           >
-            <LoopingVideo
-              source={require("../assets/videos/bienvenidx.mp4")}
+            <Image
+              source={require("../assets/images/meditate.png")}
               style={localStyles.meditationArt}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay
-              isMuted
-              isLooping
+              resizeMode="contain"
             />
-            <View style={localStyles.meditationOverlay} />
             <View style={localStyles.meditationContent}>
-              <View style={localStyles.meditationBadge}>
-                <Ionicons name="moon-outline" size={15} color="#2B2B2B" />
-                <Text style={localStyles.meditationBadgeText}>Vibes</Text>
-              </View>
-              <Text style={localStyles.meditationTitle}>Meditación guiada</Text>
-              <Text style={localStyles.meditationText}>
-                Elegí tu práctica, tu duración y empezá a bajar el ritmo desde acá.
-              </Text>
+              <Text style={localStyles.meditationTitle}>{t("home.connectFirstTitle")}</Text>
               <View style={localStyles.meditationButton}>
-                <Ionicons name="play" size={16} color="#F6F6F4" />
-                <Text style={localStyles.meditationButtonText}>Ir a meditar</Text>
+                <Ionicons name="leaf-outline" size={16} color="#2B2B2B" />
+                <Text style={localStyles.meditationButtonText}>{t("home.relax")}</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -934,7 +928,10 @@ const Home = () => {
               <TouchableOpacity
                 style={localStyles.sectionLink}
                 onPress={() =>
-                  navigation.navigate("Calendar" as never, { section: "challenge" } as never)
+                  navigation.navigate(
+                    "Tab" as never,
+                    { screen: "Flow", params: { section: "challenge" } } as never,
+                  )
                 }
               >
                 <Text style={localStyles.sectionLinkText}>Ver todos</Text>
@@ -955,8 +952,8 @@ const Home = () => {
                   ]}
                   onPress={() =>
                     navigation.navigate(
-                      "ChallengeDetailScreen" as never,
-                      { event: challenge } as never,
+                      "Tab" as never,
+                      { screen: "Flow", params: { section: "challenge" } } as never,
                     )
                   }
                 >
@@ -995,8 +992,8 @@ const Home = () => {
                 style={localStyles.challengeRow}
                 onPress={() =>
                   navigation.navigate(
-                    "ChallengeDetailScreen" as never,
-                    { event: suggestedChallenge } as never,
+                    "Tab" as never,
+                    { screen: "Flow", params: { section: "challenge" } } as never,
                   )
                 }
               >
@@ -1134,7 +1131,7 @@ const Home = () => {
                       "Yoga, meditación & conversaciones significativas"}
                   </Text>
                   <View style={localStyles.moodRow}>
-                    <Ionicons name="leaf-outline" size={18} color="#5F8A52" />
+                    <Ionicons name="leaf-outline" size={18} color="#AEBFD1" />
                     <Text style={localStyles.moodText}>
                       {suggestedProfile.vibe || "Calm & Open"}
                     </Text>
@@ -1180,8 +1177,8 @@ const localStyles = StyleSheet.create({
   },
   heroTitle: {
     color: "#252323",
-    fontSize: 40,
-    lineHeight: 45,
+    fontSize: 30,
+    lineHeight: 34,
     fontFamily: "CormorantGaramond_700Bold",
   },
   heroSubtitle: {
@@ -1263,10 +1260,12 @@ const localStyles = StyleSheet.create({
     fontFamily: "CormorantGaramond_500Medium",
   },
   meditationCard: {
-    minHeight: 188,
+    minHeight: 154,
     borderRadius: 22,
     overflow: "hidden",
-    backgroundColor: "#D8E3EC",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
     marginBottom: 18,
     position: "relative",
     shadowOpacity: 0.09,
@@ -1275,64 +1274,39 @@ const localStyles = StyleSheet.create({
     shadowOffset: { height: 8, width: 0 },
   },
   meditationArt: {
-    ...StyleSheet.absoluteFillObject,
-    width: "100%",
-    height: "100%",
-  },
-  meditationOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(43, 43, 43, 0.2)",
+    position: "absolute",
+    right: 10,
+    top: 8,
+    width: "36%",
+    height: "82%",
   },
   meditationContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     justifyContent: "space-between",
-    minHeight: 188,
-  },
-  meditationBadge: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(246, 246, 244, 0.86)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  meditationBadgeText: {
-    color: "#2B2B2B",
-    fontSize: 14,
-    fontFamily: "CormorantGaramond_700Bold",
+    minHeight: 154,
+    width: "64%",
   },
   meditationTitle: {
-    marginTop: 18,
-    color: "#F6F6F4",
-    fontSize: 31,
-    lineHeight: 34,
+    color: "#2B2B2B",
+    fontSize: 18,
+    lineHeight: 26,
     fontFamily: "CormorantGaramond_700Bold",
   },
-  meditationText: {
-    marginTop: 8,
-    maxWidth: "82%",
-    color: "rgba(246, 246, 244, 0.92)",
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
-  },
   meditationButton: {
-    marginTop: 16,
+    marginTop: 10,
     alignSelf: "flex-start",
-    height: 42,
-    borderRadius: 21,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: "#AEBFD1",
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
   meditationButtonText: {
-    color: "#F6F6F4",
-    fontSize: 16,
+    color: "#2B2B2B",
+    fontSize: 14,
     fontFamily: "CormorantGaramond_700Bold",
   },
   sectionCard: {
@@ -1394,12 +1368,12 @@ const localStyles = StyleSheet.create({
     minHeight: 104,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(95, 138, 82, 0.18)",
+    borderColor: "rgba(228, 183, 110, 0.30)",
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
     gap: 14,
-    backgroundColor: "rgba(247, 250, 242, 0.92)",
+    backgroundColor: "rgba(255, 246, 234, 0.96)",
   },
   eventThumb: {
     width: 76,
@@ -1411,7 +1385,7 @@ const localStyles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: "#E7EEDC",
+    backgroundColor: "#F7E7CC",
   },
   eventInfo: {
     flex: 1,
@@ -1491,7 +1465,7 @@ const localStyles = StyleSheet.create({
     gap: 7,
   },
   moodText: {
-    color: "#5F8A52",
+    color: "#AEBFD1",
     fontSize: 17,
     fontFamily: "CormorantGaramond_600SemiBold",
   },
