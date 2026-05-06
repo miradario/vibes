@@ -58,9 +58,9 @@ const routeAccent: Record<
   { text: ColorValue; gradient: [string, string]; shadow: string; glow: string }
 > = {
   Discover: { text: "#AEBFD1", gradient: ["#C4D2DF", "#AEBFD1"], shadow: "#AEBFD1", glow: "rgba(174, 191, 209, 0.14)" },
-  Flow: { text: "#E4B76E", gradient: ["#EBC57F", "#E4B76E"], shadow: "#E4B76E", glow: "rgba(228, 183, 110, 0.14)" },
-  Home: { text: "#AEBFD1", gradient: ["#C4D2DF", "#AEBFD1"], shadow: "#AEBFD1", glow: "rgba(174, 191, 209, 0.14)" },
-  Calendar: { text: "#E4B76E", gradient: ["#EBC57F", "#E4B76E"], shadow: "#E4B76E", glow: "rgba(228, 183, 110, 0.14)" },
+  Flow: { text: "#AEBFD1", gradient: ["#C4D2DF", "#AEBFD1"], shadow: "#AEBFD1", glow: "rgba(174, 191, 209, 0.14)" },
+  Home: { text: "#E4B76E", gradient: ["#EBC57F", "#E4B76E"], shadow: "#E4B76E", glow: "rgba(228, 183, 110, 0.18)" },
+  Calendar: { text: "#AEBFD1", gradient: ["#C4D2DF", "#AEBFD1"], shadow: "#AEBFD1", glow: "rgba(174, 191, 209, 0.14)" },
   Aura: { text: "#AEBFD1", gradient: ["#C4D2DF", "#AEBFD1"], shadow: "#AEBFD1", glow: "rgba(174, 191, 209, 0.14)" },
 };
 

@@ -17,6 +17,7 @@ type Props = {
   shouldPlay?: boolean;
   isMuted?: boolean;
   isLooping?: boolean;
+  rate?: number;
 };
 
 const LoopingVideo = ({
@@ -27,6 +28,7 @@ const LoopingVideo = ({
   shouldPlay = true,
   isMuted = true,
   isLooping = true,
+  rate = 1,
 }: Props) => {
   const [isReady, setIsReady] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -49,6 +51,8 @@ const LoopingVideo = ({
         shouldPlay={shouldPlay}
         isMuted={isMuted}
         isLooping={isLooping}
+        rate={rate}
+        shouldCorrectPitch={false}
         onReadyForDisplay={() => {
           setHasError(false);
           setIsReady(true);
