@@ -1,4 +1,5 @@
 import { StyleSheet, Dimensions, Platform } from "react-native";
+import { vibesTheme } from "../../src/theme/vibesTheme";
 
 export const PRIMARY_COLOR = "#E4B76E";
 export const SECONDARY_COLOR = "#AEBFD1";
@@ -16,7 +17,7 @@ export const GLOW_HIGHLIGHT = "rgba(43, 43, 43, 0.06)";
 export const BUTTON_CREAM = "#F6F6F4";
 export const BUTTON_BORDER = "rgba(43, 43, 43, 0.08)";
 export const WARM_SHADOW = "rgba(43, 43, 43, 0.10)";
-export const SERIF_FONT = "CormorantGaramond_500Medium";
+export const SERIF_FONT = vibesTheme.fonts.primary;
 
 export const ONLINE_STATUS = "#AEBFD1";
 export const OFFLINE_STATUS = "#D88C7A";
@@ -872,11 +873,20 @@ export default StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   loginError: {
-    marginTop: 12,
-    color: DISLIKE_ACTIONS,
+    color: "#8A3F35",
     textAlign: "center",
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: SERIF_FONT,
+  },
+  loginErrorBox: {
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: "rgba(216, 140, 122, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(216, 140, 122, 0.32)",
   },
   loginButton: {
     backgroundColor: CTA_PRIMARY,

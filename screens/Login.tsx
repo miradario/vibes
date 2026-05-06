@@ -113,7 +113,11 @@ const Login = () => {
               </View>
             </View>
 
-            {error ? <Text style={styles.loginError}>{error}</Text> : null}
+            {error ? (
+              <View style={styles.loginErrorBox}>
+                <Text style={styles.loginError}>{error}</Text>
+              </View>
+            ) : null}
 
             <View style={localStyles.actions}>
               <VibesActionButton

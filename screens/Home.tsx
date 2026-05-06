@@ -895,26 +895,6 @@ const Home = () => {
             </View>
           </View>
 
-          <View style={localStyles.challengeCard}>
-            <View style={localStyles.challengeIcon}>
-              <Ionicons name="leaf-outline" size={34} color="#FFFFFF" />
-            </View>
-            <View style={localStyles.challengeCopy}>
-              <Text style={localStyles.challengeTitle}>Reto de hoy</Text>
-              <Text style={localStyles.challengeText}>
-                Toma 3 minutos para respirar antes de iniciar una conversación.
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={localStyles.challengeButton}
-              onPress={() =>
-                navigation.navigate("Calendar" as never, { section: "challenge" } as never)
-              }
-            >
-              <Text style={localStyles.challengeButtonText}>Comenzar reto</Text>
-            </TouchableOpacity>
-          </View>
-
           <TouchableOpacity
             style={localStyles.meditationCard}
             onPress={() => navigation.navigate("Meditations" as never)}
@@ -1281,60 +1261,6 @@ const localStyles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 18,
     fontFamily: "CormorantGaramond_500Medium",
-  },
-  challengeCard: {
-    minHeight: 112,
-    borderRadius: 18,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    shadowColor: "#3E352B",
-    shadowOffset: { height: 7, width: 0 },
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 16,
-    marginBottom: 18,
-  },
-  challengeIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#E5B762",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  challengeCopy: {
-    flex: 1,
-  },
-  challengeTitle: {
-    color: "#252323",
-    fontSize: 22,
-    lineHeight: 25,
-    fontFamily: "CormorantGaramond_700Bold",
-  },
-  challengeText: {
-    marginTop: 5,
-    color: "#59534D",
-    fontSize: 17,
-    lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
-  },
-  challengeButton: {
-    minWidth: 122,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: "#E4B762",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 14,
-  },
-  challengeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontFamily: "CormorantGaramond_700Bold",
   },
   meditationCard: {
     minHeight: 188,

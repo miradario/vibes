@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
     fontSize: 54,
     color: vibesTheme.colors.primaryText,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     letterSpacing: 0.3,
     textAlign: "center",
   },

@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   startText: {
     color: "#F6F6F4",
     fontSize: 18,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   skipWrap: {
     width: "100%",
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   skipText: {
     color: vibesTheme.colors.secondaryText,
     fontSize: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.primary,
   },
   disabled: {
     opacity: 0.55,

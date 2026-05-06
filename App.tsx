@@ -10,7 +10,6 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Toast from "react-native-toast-message";
 import { useFonts } from "expo-font";
-import { CormorantGaramond_400Regular, CormorantGaramond_500Medium, CormorantGaramond_600SemiBold, CormorantGaramond_700Bold } from "@expo-google-fonts/cormorant-garamond";
 import {
   Home,
   Discover,
@@ -52,6 +51,7 @@ import CustomTabBar from "./components/CustomTabBar";
 import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboarding";
 import { I18nProvider, useI18n } from "./src/i18n";
 import { PushNotificationsBootstrap } from "./src/notifications/pushNotifications";
+import { vibesTheme } from "./src/theme/vibesTheme";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -73,17 +73,22 @@ const queryClient = new QueryClient({
 const AppNavigator = () => {
   const { t } = useI18n();
   const [fontsLoaded] = useFonts({
-    CormorantGaramond_400Regular,
-    CormorantGaramond_500Medium,
-    CormorantGaramond_600SemiBold,
-    CormorantGaramond_700Bold,
+    [vibesTheme.fonts.primary]: require("./assets/font/JosefinSans-ExtraLight.ttf"),
+    [vibesTheme.fonts.regular]: require("./assets/font/JosefinSans-ExtraLight.ttf"),
+    [vibesTheme.fonts.medium]: require("./assets/font/JosefinSans-Light.ttf"),
+    [vibesTheme.fonts.semibold]: require("./assets/font/JosefinSans-Light.ttf"),
+    [vibesTheme.fonts.bold]: require("./assets/font/JosefinSans-Light.ttf"),
+    CormorantGaramond_400Regular: require("./assets/font/JosefinSans-ExtraLight.ttf"),
+    CormorantGaramond_500Medium: require("./assets/font/JosefinSans-ExtraLight.ttf"),
+    CormorantGaramond_600SemiBold: require("./assets/font/JosefinSans-Light.ttf"),
+    CormorantGaramond_700Bold: require("./assets/font/JosefinSans-Light.ttf"),
   });
 
   if (!hasAppliedGlobalFont) {
     (Text as any).defaultProps = (Text as any).defaultProps || {};
-    (Text as any).defaultProps.style = [{ fontFamily: "CormorantGaramond_500Medium" }, (Text as any).defaultProps.style];
+    (Text as any).defaultProps.style = [{ fontFamily: vibesTheme.fonts.primary }, (Text as any).defaultProps.style];
     (TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
-    (TextInput as any).defaultProps.style = [{ fontFamily: "CormorantGaramond_500Medium" }, (TextInput as any).defaultProps.style];
+    (TextInput as any).defaultProps.style = [{ fontFamily: vibesTheme.fonts.primary }, (TextInput as any).defaultProps.style];
     hasAppliedGlobalFont = true;
   }
 
