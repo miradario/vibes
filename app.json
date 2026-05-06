@@ -5,11 +5,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F6F6F4"
-    },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -36,6 +31,15 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F6F6F4",
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "enableFullScreenImage_legacy": true
+        }
+      ],
       "expo-font",
       "expo-notifications",
       [
