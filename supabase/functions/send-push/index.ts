@@ -243,6 +243,28 @@ const fetchDisplayNames = async (supabase: SupabaseClient, userIds: string[]) =>
   return names;
 };
 
+const fetchNotificationPreferences = async (
+  supabase: SupabaseClient,
+  userIds: string[],
+) => {
+  if (userIds.length === 0) return new Map<string, boolean>();
+
+  const { data, error } = await supabase
+    .from("user_preferences")
+    .select("user_id, notifications_enabled")
+    .in("user_id", userIds);
+
+  if (error) throw error;
+
+  const preferences = new Map<string, boolean>();
+  for (const row of data ?? []) {
+    const typedRow = row as { user_id: string; notifications_enabled: boolean | null };
+    preferences.set(typedRow.user_id, typedRow.notifications_enabled !== false);
+  }
+
+  return preferences;
+};
+
 const buildDirectMessageNotifications = async (
   supabase: SupabaseClient,
   record: Record<string, unknown>,
@@ -421,14 +443,29 @@ serve(async (req) => {
     }
 
     const recipientIds = Array.from(new Set(notifications.map((item) => item.recipientId)));
-    const tokensByUser = await getPushTokens(supabase, recipientIds);
+    const notificationPreferences = await fetchNotificationPreferences(supabase, recipientIds);
+    const allowedNotifications = notifications.filter(
+      (item) => notificationPreferences.get(item.recipientId) !== false,
+    );
+
+    if (allowedNotifications.length === 0) {
+      return new Response(JSON.stringify({ sent: 0, skipped: true, reason: "notifications_disabled" }), {
+        status: 200,
+        headers: jsonHeaders,
+      });
+    }
+
+    const allowedRecipientIds = Array.from(
+      new Set(allowedNotifications.map((item) => item.recipientId)),
+    );
+    const tokensByUser = await getPushTokens(supabase, allowedRecipientIds);
     const account = getFirebaseServiceAccount();
     const accessToken = await getAccessToken(account);
 
     let sentCount = 0;
     let inactiveCount = 0;
 
-    for (const notification of notifications) {
+    for (const notification of allowedNotifications) {
       const tokens = tokensByUser.get(notification.recipientId) ?? [];
       for (const token of tokens) {
         const result = await sendFirebaseMessage(

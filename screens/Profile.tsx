@@ -48,7 +48,16 @@ const Profile = () => {
     : firstName;
 
   const menuItems = [
-    { icon: "options", label: t("profile.preferences"), screen: "Settings" },
+    {
+      icon: "heart-outline",
+      label: t("profile.preferences"),
+      screen: "Settings",
+    },
+    {
+      icon: "options",
+      label: t("profile.configuration"),
+      screen: "Configuration",
+    },
     {
       icon: "document-text",
       label: t("profile.terms"),

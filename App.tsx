@@ -25,6 +25,7 @@ import {
   Premium,
   Chat,
   Settings,
+  Configuration,
   PreferenceDetail,
   OnboardingGender,
   OnboardingOrientation,
@@ -251,6 +252,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Chat" component={Chat} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="Match" component={Match} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="Configuration" component={Configuration} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="PreferenceDetail" component={PreferenceDetail} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="Contact" component={Contact} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="Faq" component={Faq} options={{ headerShown: false, animationEnabled: true }} />

@@ -4,6 +4,7 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
+import { useUserPreferencesQuery } from "../queries/userPreferences.queries";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -32,6 +33,21 @@ const upsertPushToken = async (userId: string, token: Notifications.DevicePushTo
     },
     { onConflict: "token" },
   );
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const deactivateUserPushTokens = async (userId: string) => {
+  const { error } = await supabase
+    .from("push_tokens")
+    .update({
+      is_active: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("is_active", true);
 
   if (error) {
     throw error;
@@ -89,12 +105,26 @@ export const PushNotificationsBootstrap = ({
 }: PushNotificationsBootstrapProps) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const preferencesQuery = useUserPreferencesQuery(userId);
+  const notificationsEnabled = preferencesQuery.data?.notificationsEnabled;
   const lastHandledResponseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
+    if (!preferencesQuery.isFetched) return;
 
     let isActive = true;
+
+    if (notificationsEnabled === false) {
+      void deactivateUserPushTokens(userId).catch((error) => {
+        if (!isActive) return;
+        console.warn("[push] failed to deactivate user push tokens", error);
+      });
+
+      return () => {
+        isActive = false;
+      };
+    }
 
     void registerPushToken(userId).catch((error) => {
       if (!isActive) return;
@@ -111,7 +141,7 @@ export const PushNotificationsBootstrap = ({
       isActive = false;
       tokenSubscription.remove();
     };
-  }, [userId]);
+  }, [notificationsEnabled, preferencesQuery.isFetched, userId]);
 
   useEffect(() => {
     const responseSubscription = Notifications.addNotificationResponseReceivedListener(
