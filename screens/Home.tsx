@@ -35,11 +35,13 @@ import {
   useEventsFeedQuery,
   useMyEventGroupsQuery,
 } from "../src/queries/events.queries";
+import type { EventFeedItem } from "../src/queries/events.queries";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -162,6 +164,34 @@ const formatRangeSummary = (
 const formatDistanceLabel = (distanceKm: number | null) => {
   if (distanceKm === null || !Number.isFinite(distanceKm)) return undefined;
   return `${Math.max(1, Math.round(distanceKm))} km`;
+};
+
+const parseParticipantCount = (attendees: string | null | undefined) => {
+  if (!attendees) return 0;
+  const slashMatch = attendees.match(/^(\d+)\s*\//);
+  if (slashMatch) return Number(slashMatch[1] ?? 0);
+  const plainMatch = attendees.match(/(\d+)/);
+  return plainMatch ? Number(plainMatch[1] ?? 0) : 0;
+};
+
+const getChallengeProgress = (item: EventFeedItem) => {
+  if (item.type !== "challenge" || !item.startsAt || !item.durationDays) return null;
+
+  const startDate = new Date(item.startsAt);
+  const today = new Date();
+  const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diffDays = Math.floor((current.getTime() - start.getTime()) / 86_400_000);
+
+  if (diffDays < 0) {
+    return { label: `Empieza en ${Math.abs(diffDays)}d`, tone: "pending" as const };
+  }
+
+  if (diffDays >= item.durationDays) {
+    return { label: "Finalizado", tone: "done" as const };
+  }
+
+  return { label: `Día ${diffDays + 1}/${item.durationDays}`, tone: "active" as const };
 };
 
 const areFiltersEqual = (
@@ -413,7 +443,7 @@ const Home = () => {
     },
   ];
   const upcomingEvents = futureEvents.slice(0, 2);
-  const visibleJoinedActiveChallenges = joinedActiveChallenges.slice(0, 2);
+  const visibleJoinedActiveChallenges = joinedActiveChallenges.slice(0, 4);
   const suggestedProfile = profiles[0] ?? null;
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
@@ -943,53 +973,96 @@ const Home = () => {
                 <ActivityIndicator color="#DCA453" />
               </View>
             ) : visibleJoinedActiveChallenges.length > 0 ? (
-              visibleJoinedActiveChallenges.map((challenge, index) => (
-                <TouchableOpacity
-                  key={challenge.id}
-                  style={[
-                    localStyles.challengeRow,
-                    index > 0 && localStyles.eventRowSpacing,
-                  ]}
-                  onPress={() =>
-                    navigation.navigate(
-                      "Tab" as never,
-                      { screen: "Flow", params: { section: "challenge" } } as never,
-                    )
-                  }
-                >
-                  <Image
-                    source={
-                      typeof challenge.image === "string"
-                        ? { uri: challenge.image }
-                        : challenge.image
+              visibleJoinedActiveChallenges.map((challenge, index) => {
+                const progress = getChallengeProgress(challenge as EventFeedItem);
+                const participantCount = parseParticipantCount(challenge.attendees);
+
+                return (
+                  <TouchableOpacity
+                    key={challenge.id}
+                    style={[
+                      localStyles.feedListRow,
+                      localStyles.feedListRowChallenge,
+                      index > 0 && localStyles.eventRowSpacing,
+                    ]}
+                    onPress={() =>
+                      navigation.navigate(
+                        "Tab" as never,
+                        { screen: "Flow", params: { section: "challenge" } } as never,
+                      )
                     }
-                    style={localStyles.challengeThumb}
-                  />
-                  <View style={localStyles.eventInfo}>
-                    <Text style={localStyles.eventTitle} numberOfLines={1}>
-                      {challenge.title}
-                    </Text>
-                    <View style={localStyles.eventMetaRow}>
-                      <Ionicons name="flame-outline" size={15} color="#6F6A64" />
-                      <Text style={localStyles.eventMeta} numberOfLines={1}>
-                        {challenge.date}
+                  >
+                    <Image
+                      source={
+                        typeof challenge.image === "string"
+                          ? { uri: challenge.image }
+                          : challenge.image
+                      }
+                      style={localStyles.feedListThumb}
+                    />
+                    <View style={localStyles.feedListInfo}>
+                      <Text style={localStyles.feedListTitle} numberOfLines={1}>
+                        {challenge.title}
                       </Text>
-                    </View>
-                    <View style={localStyles.eventMetaRow}>
-                      <Ionicons name="people-outline" size={15} color="#6F6A64" />
-                      <Text style={localStyles.eventMeta} numberOfLines={1}>
-                        {challenge.attendees}
+                      <Text style={localStyles.feedListMeta} numberOfLines={1}>
+                        {challenge.date} {"  •  "} {challenge.attendees}
                       </Text>
+                      {progress ? (
+                        <View
+                          style={[
+                            localStyles.feedProgressPill,
+                            progress.tone === "done"
+                              ? localStyles.feedProgressPillDone
+                              : progress.tone === "pending"
+                                ? localStyles.feedProgressPillPending
+                                : null,
+                          ]}
+                        >
+                          <Text style={localStyles.feedProgressText}>
+                            {progress.label}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
-                  </View>
-                  <View style={localStyles.rowArrow}>
-                    <Ionicons name="chevron-forward" size={21} color="#2B2B2B" />
-                  </View>
-                </TouchableOpacity>
-              ))
+                    <View style={localStyles.feedListRight}>
+                      <View style={localStyles.feedAvatarStack}>
+                        {Array.from({
+                          length: Math.max(1, Math.min(participantCount || 1, 3)),
+                        }).map((_, avatarIndex) => {
+                          const useHostImage =
+                            avatarIndex === 0 && typeof challenge.hostImage === "string" && challenge.hostImage.trim();
+
+                          return useHostImage ? (
+                            <Image
+                              key={`${challenge.id}-avatar-${avatarIndex}`}
+                              source={{ uri: challenge.hostImage as string }}
+                              style={[
+                                localStyles.feedAvatar,
+                                { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
+                              ]}
+                            />
+                          ) : (
+                            <View
+                              key={`${challenge.id}-avatar-${avatarIndex}`}
+                              style={[
+                                localStyles.feedAvatar,
+                                localStyles.feedAvatarPlaceholder,
+                                { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
+                              ]}
+                            />
+                          );
+                        })}
+                      </View>
+                      <View style={localStyles.feedArrowWrap}>
+                        <Ionicons name="chevron-forward" size={18} color="#7D7771" />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
             ) : suggestedChallenge ? (
               <TouchableOpacity
-                style={localStyles.challengeRow}
+                style={[localStyles.feedListRow, localStyles.feedListRowChallenge]}
                 onPress={() =>
                   navigation.navigate(
                     "Tab" as never,
@@ -1003,27 +1076,18 @@ const Home = () => {
                       ? { uri: suggestedChallenge.image }
                       : suggestedChallenge.image
                   }
-                  style={localStyles.challengeThumb}
+                  style={localStyles.feedListThumb}
                 />
-                <View style={localStyles.eventInfo}>
-                  <Text style={localStyles.eventTitle} numberOfLines={1}>
+                <View style={localStyles.feedListInfo}>
+                  <Text style={localStyles.feedListTitle} numberOfLines={1}>
                     {suggestedChallenge.title}
                   </Text>
-                  <View style={localStyles.eventMetaRow}>
-                    <Ionicons name="sparkles-outline" size={15} color="#6F6A64" />
-                    <Text style={localStyles.eventMeta} numberOfLines={1}>
-                      Sugerido para empezar
-                    </Text>
-                  </View>
-                  <View style={localStyles.eventMetaRow}>
-                    <Ionicons name="flame-outline" size={15} color="#6F6A64" />
-                    <Text style={localStyles.eventMeta} numberOfLines={1}>
-                      {suggestedChallenge.date}
-                    </Text>
-                  </View>
+                  <Text style={localStyles.feedListMeta} numberOfLines={1}>
+                    {suggestedChallenge.date} {"  •  "} Sugerido para empezar
+                  </Text>
                 </View>
-                <View style={localStyles.rowArrow}>
-                  <Ionicons name="chevron-forward" size={21} color="#2B2B2B" />
+                <View style={localStyles.feedArrowWrap}>
+                  <Ionicons name="chevron-forward" size={18} color="#7D7771" />
                 </View>
               </TouchableOpacity>
             ) : (
@@ -1055,47 +1119,69 @@ const Home = () => {
                 No hay próximos eventos disponibles.
               </Text>
             ) : (
-              upcomingEvents.map((event, index) => (
-                <TouchableOpacity
-                  key={event.id}
-                  style={[
-                    localStyles.eventRow,
-                    index > 0 && localStyles.eventRowSpacing,
-                  ]}
-                  onPress={() =>
-                    navigation.navigate("Calendar" as never, { section: "event" } as never)
-                  }
-                >
-                  <Image
-                    source={
-                      typeof event.image === "string"
-                        ? { uri: event.image }
-                        : event.image
+              upcomingEvents.map((event, index) => {
+                const participantCount = parseParticipantCount(event.attendees);
+
+                return (
+                  <TouchableOpacity
+                    key={event.id}
+                    style={[localStyles.feedListRow, index > 0 && localStyles.eventRowSpacing]}
+                    onPress={() =>
+                      navigation.navigate("Calendar" as never, { section: "event" } as never)
                     }
-                    style={localStyles.eventThumb}
-                  />
-                  <View style={localStyles.eventInfo}>
-                    <Text style={localStyles.eventTitle} numberOfLines={1}>
-                      {event.title}
-                    </Text>
-                    <View style={localStyles.eventMetaRow}>
-                      <Ionicons name="calendar-outline" size={15} color="#6F6A64" />
-                      <Text style={localStyles.eventMeta} numberOfLines={1}>
-                        {event.date}
+                  >
+                    <Image
+                      source={
+                        typeof event.image === "string"
+                          ? { uri: event.image }
+                          : event.image
+                      }
+                      style={localStyles.feedListThumb}
+                    />
+                    <View style={localStyles.feedListInfo}>
+                      <Text style={localStyles.feedListTitle} numberOfLines={1}>
+                        {event.title}
+                      </Text>
+                      <Text style={localStyles.feedListMeta} numberOfLines={1}>
+                        {event.date} {"  •  "} {event.location ?? "Online"}
                       </Text>
                     </View>
-                    <View style={localStyles.eventMetaRow}>
-                      <Ionicons name="location-outline" size={15} color="#6F6A64" />
-                      <Text style={localStyles.eventMeta} numberOfLines={1}>
-                        {event.location ?? "Online"}
-                      </Text>
+                    <View style={localStyles.feedListRight}>
+                      <View style={localStyles.feedAvatarStack}>
+                        {Array.from({
+                          length: Math.max(1, Math.min(participantCount || 1, 3)),
+                        }).map((_, avatarIndex) => {
+                          const useHostImage =
+                            avatarIndex === 0 && typeof event.hostImage === "string" && event.hostImage.trim();
+
+                          return useHostImage ? (
+                            <Image
+                              key={`${event.id}-avatar-${avatarIndex}`}
+                              source={{ uri: event.hostImage as string }}
+                              style={[
+                                localStyles.feedAvatar,
+                                { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
+                              ]}
+                            />
+                          ) : (
+                            <View
+                              key={`${event.id}-avatar-${avatarIndex}`}
+                              style={[
+                                localStyles.feedAvatar,
+                                localStyles.feedAvatarPlaceholder,
+                                { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
+                              ]}
+                            />
+                          );
+                        })}
+                      </View>
+                      <View style={localStyles.feedArrowWrap}>
+                        <Ionicons name="chevron-forward" size={18} color="#7D7771" />
+                      </View>
                     </View>
-                  </View>
-                  <View style={localStyles.rowArrow}>
-                    <Ionicons name="chevron-forward" size={21} color="#2B2B2B" />
-                  </View>
-                </TouchableOpacity>
-              ))
+                  </TouchableOpacity>
+                );
+              })
             )}
           </View>
 
@@ -1296,18 +1382,21 @@ const localStyles = StyleSheet.create({
   meditationButton: {
     marginTop: 10,
     alignSelf: "flex-start",
-    height: 38,
-    borderRadius: 19,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "#AEBFD1",
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
   },
   meditationButtonText: {
     color: "#2B2B2B",
-    fontSize: 14,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 15,
+    letterSpacing: 0.2,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   sectionCard: {
     borderRadius: 18,
@@ -1386,6 +1475,97 @@ const localStyles = StyleSheet.create({
     height: 76,
     borderRadius: 38,
     backgroundColor: "#F7E7CC",
+  },
+  feedListRow: {
+    minHeight: 96,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 18,
+    elevation: 2,
+  },
+  feedListRowChallenge: {
+    backgroundColor: "rgba(255, 246, 234, 0.96)",
+    borderColor: "rgba(228, 183, 110, 0.30)",
+  },
+  feedListThumb: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: "#F0E8DE",
+  },
+  feedListInfo: {
+    flex: 1,
+  },
+  feedListTitle: {
+    color: "#252323",
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_700Bold",
+    marginBottom: 4,
+  },
+  feedListMeta: {
+    color: "#7A746D",
+    fontSize: 14,
+    lineHeight: 17,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  feedListRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  feedAvatarStack: {
+    flexDirection: "row",
+    alignItems: "center",
+    minWidth: 56,
+    justifyContent: "flex-end",
+  },
+  feedAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  feedAvatarPlaceholder: {
+    backgroundColor: "#E7D9C8",
+  },
+  feedArrowWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  feedProgressPill: {
+    alignSelf: "flex-start",
+    marginTop: 8,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: "rgba(174, 191, 209, 0.18)",
+  },
+  feedProgressPillPending: {
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
+  },
+  feedProgressPillDone: {
+    backgroundColor: "rgba(216, 140, 122, 0.18)",
+  },
+  feedProgressText: {
+    color: "#5F6E7D",
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: "CormorantGaramond_600SemiBold",
   },
   eventInfo: {
     flex: 1,

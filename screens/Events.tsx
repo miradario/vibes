@@ -17,6 +17,7 @@ import {
   useChallengesFeedQuery,
   useEventsFeedQuery,
 } from "../src/queries/events.queries";
+import type { EventFeedItem } from "../src/queries/events.queries";
 
 const normalizeSearchText = (value: string | null | undefined) =>
   (value ?? "")
@@ -24,6 +25,71 @@ const normalizeSearchText = (value: string | null | undefined) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+
+const parseParticipantCount = (attendees: string | null | undefined) => {
+  if (!attendees) return 0;
+  const slashMatch = attendees.match(/^(\d+)\s*\//);
+  if (slashMatch) return Number(slashMatch[1] ?? 0);
+  const plainMatch = attendees.match(/(\d+)/);
+  return plainMatch ? Number(plainMatch[1] ?? 0) : 0;
+};
+
+const getChallengeProgress = (item: EventFeedItem) => {
+  if (item.type !== "challenge" || !item.startsAt || !item.durationDays) return null;
+
+  const startDate = new Date(item.startsAt);
+  const today = new Date();
+  const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diffDays = Math.floor((current.getTime() - start.getTime()) / 86_400_000);
+
+  if (diffDays < 0) {
+    return { label: `Empieza en ${Math.abs(diffDays)}d`, tone: "pending" as const };
+  }
+
+  if (diffDays >= item.durationDays) {
+    return { label: "Finalizado", tone: "done" as const };
+  }
+
+  return { label: `Día ${diffDays + 1}/${item.durationDays}`, tone: "active" as const };
+};
+
+const ParticipantStack = ({
+  count,
+  hostImage,
+}: {
+  count: number;
+  hostImage?: string | null;
+}) => {
+  const totalVisible = Math.max(1, Math.min(count || 1, 3));
+
+  return (
+    <View style={localStyles.avatarStack}>
+      {Array.from({ length: totalVisible }).map((_, index) => {
+        const useHostImage = index === 0 && hostImage;
+        return useHostImage ? (
+          <Image
+            key={`${hostImage}-${index}`}
+            source={{ uri: hostImage }}
+            style={[
+              localStyles.stackAvatar,
+              { marginLeft: index === 0 ? 0 : -10, zIndex: totalVisible - index },
+            ]}
+          />
+        ) : (
+          <View
+            key={`placeholder-${index}`}
+            style={[
+              localStyles.stackAvatar,
+              localStyles.stackAvatarPlaceholder,
+              { marginLeft: index === 0 ? 0 : -10, zIndex: totalVisible - index },
+            ]}
+          />
+        );
+      })}
+    </View>
+  );
+};
 
 const Events = () => {
   const navigation = useNavigation();
@@ -183,9 +249,13 @@ const Events = () => {
               </Text>
             </View>
           }
-          renderItem={({ item }) => (
+          renderItem={({ item }) => {
+            const participantCount = parseParticipantCount(item.attendees);
+            const challengeProgress = getChallengeProgress(item);
+
+            return (
             <TouchableOpacity
-              style={styles.eventCard}
+              style={localStyles.feedRowCard}
               onPress={() =>
                 navigation.navigate(
                   (item.type === "challenge"
@@ -199,42 +269,45 @@ const Events = () => {
                 source={
                   typeof item.image === "string" ? { uri: item.image } : item.image
                 }
-                style={styles.eventCardImage}
+                style={localStyles.feedRowThumb}
               />
-              <View style={styles.eventCardContent}>
-                <View style={styles.eventCardHeader}>
-                  <Text style={styles.eventCardTitle}>{item.title}</Text>
-                  <Text style={styles.eventCardAttendees}>
-                    {item.attendees}
+              <View style={localStyles.feedRowContent}>
+                <View style={localStyles.feedRowCopy}>
+                  <Text style={localStyles.feedRowTitle} numberOfLines={1}>
+                    {item.title}
                   </Text>
+                  <Text style={localStyles.feedRowMeta} numberOfLines={1}>
+                    {item.date} {"  •  "} {item.attendees}
+                  </Text>
+                  {item.type === "challenge" && challengeProgress ? (
+                    <View
+                      style={[
+                        localStyles.progressPill,
+                        challengeProgress.tone === "done"
+                          ? localStyles.progressPillDone
+                          : challengeProgress.tone === "pending"
+                            ? localStyles.progressPillPending
+                            : null,
+                      ]}
+                    >
+                      <Text style={localStyles.progressPillText}>
+                        {challengeProgress.label}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
-                <Text style={styles.eventCardSubtitle}>{item.subtitle}</Text>
-                <View style={styles.eventCardFooter}>
-                  <Text style={styles.eventCardDate}>{item.date}</Text>
-                  <TouchableOpacity
-                    style={styles.eventCardButton}
-                    onPress={() =>
-                      navigation.navigate(
-                        (item.type === "challenge"
-                          ? "ChallengeDetailScreen"
-                          : "EventDetail") as never,
-                        { event: item } as never,
-                      )
-                    }
-                  >
-                    <Text style={styles.eventCardButtonText}>
-                      {item.type === "challenge" ? "Ver challenge" : "Ver evento"}
-                    </Text>
-                    <Icon
-                      name="chevron-forward"
-                      size={14}
-                      color={TEXT_SECONDARY}
-                    />
-                  </TouchableOpacity>
+                <View style={localStyles.feedRowRight}>
+                  <ParticipantStack
+                    count={participantCount}
+                    hostImage={item.hostImage}
+                  />
+                  <View style={localStyles.feedRowArrow}>
+                    <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
+                  </View>
                 </View>
               </View>
             </TouchableOpacity>
-          )}
+          )}}
         />
       </View>
 
@@ -272,6 +345,102 @@ const localStyles = StyleSheet.create({
   },
   segmentTextActive: {
     color: "#F6F6F4",
+  },
+  feedRowCard: {
+    minHeight: 98,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: 12,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 18,
+    elevation: 2,
+  },
+  feedRowThumb: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#F6F6F4",
+  },
+  feedRowContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  feedRowCopy: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  feedRowTitle: {
+    color: "#252323",
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  feedRowMeta: {
+    marginTop: 4,
+    color: "#7A746D",
+    fontSize: 14,
+    lineHeight: 17,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  feedRowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  avatarStack: {
+    flexDirection: "row",
+    alignItems: "center",
+    minWidth: 56,
+    justifyContent: "flex-end",
+  },
+  stackAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    backgroundColor: "#F1EAE2",
+  },
+  stackAvatarPlaceholder: {
+    backgroundColor: "#E7D9C8",
+  },
+  feedRowArrow: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressPill: {
+    alignSelf: "flex-start",
+    marginTop: 8,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: "rgba(174, 191, 209, 0.18)",
+  },
+  progressPillPending: {
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
+  },
+  progressPillDone: {
+    backgroundColor: "rgba(216, 140, 122, 0.18)",
+  },
+  progressPillText: {
+    color: "#5F6E7D",
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: "CormorantGaramond_600SemiBold",
   },
   emptyState: {
     paddingHorizontal: 28,
