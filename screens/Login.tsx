@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useLoginMutation } from "../src/auth/auth.queries";
 import {
   View,
@@ -30,6 +30,7 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const loginMutation = useLoginMutation();
   const loading = loginMutation.isPending;
+  const passwordInputRef = useRef<TextInput | null>(null);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -80,11 +81,14 @@ const Login = () => {
               <TextInput
                 style={styles.loginInput}
                 placeholder={t("login.emailPlaceholder")}
-                placeholderTextColor="#6E6E6E"
+                placeholderTextColor="rgba(110,110,110,0.45)"
                 autoCapitalize="none"
                 keyboardType="email-address"
+                returnKeyType="next"
+                blurOnSubmit={false}
                 value={email}
                 onChangeText={setEmail}
+                onSubmitEditing={() => passwordInputRef.current?.focus()}
               />
             </View>
 
@@ -92,12 +96,15 @@ const Login = () => {
               <Text style={styles.loginLabel}>{t("common.password")}</Text>
               <View style={localStyles.passwordField}>
                 <TextInput
+                  ref={passwordInputRef}
                   style={[styles.loginInput, localStyles.passwordInput]}
                   placeholder=""
                   placeholderTextColor="#6E6E6E"
                   secureTextEntry={!showPassword}
+                  returnKeyType="done"
                   value={password}
                   onChangeText={setPassword}
+                  onSubmitEditing={() => void handleLogin()}
                 />
                 <TouchableOpacity
                   style={localStyles.passwordToggle}

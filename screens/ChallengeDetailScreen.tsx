@@ -628,13 +628,6 @@ export const CheckInButton = memo(({ status, isLoading, onPress }: CheckInButton
   );
 });
 
-export const MotivationalMessageCard = memo(() => (
-  <View style={localStyles.messageCard}>
-    <Icon name="leaf-outline" size={21} color={palette.accentBlue} />
-    <Text style={localStyles.messageText}>Respirá. Este momento cuenta.</Text>
-  </View>
-));
-
 type ChatEntryRowProps = {
   onPress: () => void;
 };
@@ -778,7 +771,6 @@ const ChallengeDetailScreen = () => {
           completedDays={challenge.completedDays}
           totalDays={challenge.totalDays}
         />
-        <MotivationalMessageCard />
         <CheckInButton
           status={challenge.checkInStatus}
           isLoading={checkInMutation.isPending}
@@ -1101,24 +1093,6 @@ const localStyles = StyleSheet.create({
     color: palette.muted,
     fontSize: 16,
     fontFamily: "CormorantGaramond_500Medium",
-  },
-  messageCard: {
-    minHeight: 70,
-    borderRadius: 22,
-    backgroundColor: palette.accentBlueSoft,
-    borderWidth: 1,
-    borderColor: "rgba(174, 191, 209, 0.28)",
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  messageText: {
-    flex: 1,
-    color: palette.text,
-    fontSize: 20,
-    lineHeight: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
   },
   checkInButton: {
     minHeight: 58,
