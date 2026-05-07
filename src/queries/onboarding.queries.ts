@@ -83,7 +83,10 @@ const DEFAULT_INTENT_ID = 3; // "Everyone"
 
 export type OnboardingDraft = {
   displayName?: string;
+  ageRange?: string;
   birthDate?: string;
+  purpose?: string[];
+  energy?: string[];
   country?: string;
   city?: string;
   neighborhood?: string;
@@ -104,7 +107,10 @@ export type OnboardingDraft = {
 
 const defaultDraft: OnboardingDraft = {
   displayName: "",
+  ageRange: "25-34",
   birthDate: "",
+  purpose: [],
+  energy: [],
   country: "",
   city: "",
   neighborhood: "",
@@ -213,6 +219,7 @@ export const useCompleteOnboardingMutation = () => {
         intent_id: draft.intentId ?? DEFAULT_INTENT_ID,
       };
 
+      if (draft.ageRange?.trim()) payload.age_range = draft.ageRange.trim();
       if (draft.birthDate) payload.birth_date = draft.birthDate;
       if (draft.country?.trim()) payload.country = draft.country.trim();
       if (draft.city?.trim()) payload.city = draft.city.trim();

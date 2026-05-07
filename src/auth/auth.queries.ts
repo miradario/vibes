@@ -63,6 +63,20 @@ export const useSignupMutation = () => {
   });
 };
 
+export const useGoogleLoginMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<AuthSession, unknown, void>({
+    mutationFn: authService.loginWithGoogle,
+    onSuccess: (session) => {
+      queryClient.setQueryData(authKeys.session, session ?? null);
+      if (session) {
+        queryClient.invalidateQueries();
+      }
+    },
+  });
+};
+
 export const useLogoutMutation = () => {
   const queryClient = useQueryClient();
 

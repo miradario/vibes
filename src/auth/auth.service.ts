@@ -21,6 +21,8 @@ export const signup = async ({ email, password }: LoginInput) => {
   return data.session ?? null;
 };
 
+export const loginWithGoogle = async () => authClient.signInWithGoogle();
+
 export const logout = async () => {
   const { error } = await authClient.signOut();
   if (error) {

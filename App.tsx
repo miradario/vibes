@@ -35,6 +35,7 @@ import {
   OnboardingCountry,
   OnboardingPhoto,
   OnboardingSpiritualPath,
+  VibesOnboardingFlow,
   Login,
   Signup,
   EventDetail,
@@ -75,10 +76,7 @@ const AppNavigator = () => {
   const { t } = useI18n();
   const [fontsLoaded] = useFonts({
     [vibesTheme.fonts.primary]: require("./assets/font/JosefinSans-ExtraLight.ttf"),
-    [vibesTheme.fonts.regular]: require("./assets/font/JosefinSans-ExtraLight.ttf"),
     [vibesTheme.fonts.medium]: require("./assets/font/JosefinSans-Light.ttf"),
-    [vibesTheme.fonts.semibold]: require("./assets/font/JosefinSans-Light.ttf"),
-    [vibesTheme.fonts.bold]: require("./assets/font/JosefinSans-Light.ttf"),
     CormorantGaramond_400Regular: require("./assets/font/JosefinSans-ExtraLight.ttf"),
     CormorantGaramond_500Medium: require("./assets/font/JosefinSans-ExtraLight.ttf"),
     CormorantGaramond_600SemiBold: require("./assets/font/JosefinSans-Light.ttf"),
@@ -130,7 +128,7 @@ const AppNavigator = () => {
           }}>
           <PushNotificationsBootstrap navigateToMessages={navigateToMessages} />
           <Stack.Navigator
-            initialRouteName="VibesMinimalOnboarding"
+            initialRouteName="Tab"
             screenOptions={{
               gestureDirection: "horizontal",
               cardStyleInterpolator: ({ current, layouts }) => ({
@@ -235,6 +233,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="Signup" component={Signup} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="VibesMinimalOnboarding" component={VibesMinimalOnboarding} options={{ headerShown: false, animationEnabled: true }} />
+            <Stack.Screen name="VibesOnboardingFlow" component={VibesOnboardingFlow} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="OnboardingName" component={OnboardingName} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="OnboardingAge" component={OnboardingAge} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="OnboardingCountry" component={OnboardingCountry} options={{ headerShown: false, animationEnabled: true }} />

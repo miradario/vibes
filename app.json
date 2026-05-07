@@ -2,6 +2,7 @@
   "expo": {
     "name": "Vibe",
     "slug": "vibe",
+    "scheme": "com.miradario.vibe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -57,7 +58,8 @@
           "photosPermission": "Allow Vibe to access your photos.",
           "cameraPermission": "Allow Vibe to access your camera."
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

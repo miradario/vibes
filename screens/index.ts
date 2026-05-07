@@ -24,6 +24,7 @@ export { default as OnboardingAge } from "./OnboardingAge";
 export { default as OnboardingCountry } from "./OnboardingCountry";
 export { default as OnboardingPhoto } from "./OnboardingPhoto";
 export { default as OnboardingSpiritualPath } from "./OnboardingSpiritualPath";
+export { default as VibesOnboardingFlow } from "../src/screens/Onboarding/VibesOnboardingFlow";
 export { default as EventDetail } from "./EventDetail";
 export { default as ChallengeDetailScreen } from "./ChallengeDetailScreen";
 export { default as EventChat } from "./EventChat";

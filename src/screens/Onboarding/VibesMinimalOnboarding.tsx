@@ -25,7 +25,19 @@ import Icon from "../../../components/Icon";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const VibesMinimalOnboarding = () => {
+type VibesMinimalOnboardingProps = {
+  title?: string;
+  body?: string;
+  ctaLabel?: string;
+  onContinue?: () => void;
+};
+
+const VibesMinimalOnboarding = ({
+  title = "Find Your\nTrue Vibe",
+  body = "Connect with like-minded souls and explore a more conscious way of living.",
+  ctaLabel,
+  onContinue: onContinueProp,
+}: VibesMinimalOnboardingProps) => {
   const navigation = useNavigation();
   const { height } = useWindowDimensions();
   const illustrationHeight = Math.max(300, height * 0.5);
@@ -75,6 +87,10 @@ const VibesMinimalOnboarding = () => {
       withTiming(1, { duration: 120 }),
     );
     setTimeout(() => {
+      if (onContinueProp) {
+        onContinueProp();
+        return;
+      }
       navigation.navigate("Welcome" as never);
     }, 110);
   };
@@ -134,22 +150,23 @@ const VibesMinimalOnboarding = () => {
       </Animated.View>
 
       <Animated.View style={[styles.textBlock, titleStyle]}>
-        <Text style={styles.title}>Find Your{"\n"}True Vibe</Text>
-        <Text style={styles.body}>
-          Connect with like-minded souls and explore a more conscious way of
-          living.
-        </Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.body}>{body}</Text>
       </Animated.View>
 
       <AnimatedPressable
-        style={[styles.ctaButton, ctaStyle]}
+        style={[ctaLabel ? styles.ctaPillButton : styles.ctaButton, ctaStyle]}
         onPress={onContinue}
       >
-        <Icon
-          name="chevron-forward"
-          size={26}
-          color={vibesTheme.colors.lineArt}
-        />
+        {ctaLabel ? (
+          <Text style={styles.ctaPillText}>{ctaLabel}</Text>
+        ) : (
+          <Icon
+            name="chevron-forward"
+            size={26}
+            color={vibesTheme.colors.lineArt}
+          />
+        )}
       </AnimatedPressable>
     </SafeAreaView>
   );
@@ -212,6 +229,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
+  },
+  ctaPillButton: {
+    marginTop: "auto",
+    marginBottom: 40,
+    minWidth: 220,
+    height: 58,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: vibesTheme.colors.accentMustard,
+    shadowColor: vibesTheme.colors.accentMustard,
+    shadowOpacity: 0.24,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  ctaPillText: {
+    color: "#FFFFFF",
+    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 16,
   },
 });
 

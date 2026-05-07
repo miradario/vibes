@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import styles, { DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
+import { vibesTheme } from "../src/theme/vibesTheme";
 import type { SpiritualPathDetail } from "../src/lib/spiritualPaths";
 import {
   getSpiritualPathDetailEntries,
@@ -44,6 +45,7 @@ const SpiritualPathDetailsModal = ({
   readOnly = false,
 }: SpiritualPathDetailsModalProps) => {
   const { locale, t } = useI18n();
+  const [yearsError, setYearsError] = useState<string | null>(null);
   const filledEntries = getSpiritualPathDetailEntries(detail);
 
   const getNextFieldValue = (key: keyof SpiritualPathDetail, text: string) => {
@@ -52,6 +54,22 @@ const SpiritualPathDetailsModal = ({
     }
 
     return text;
+  };
+
+  const closeWithValidation = () => {
+    if (!readOnly) {
+      const rawYears = detail.years?.trim();
+      if (rawYears) {
+        const years = Number(rawYears);
+        if (!Number.isInteger(years) || years < 1 || years > 50) {
+          setYearsError("Ingresá un valor entre 1 y 50.");
+          return;
+        }
+      }
+    }
+
+    setYearsError(null);
+    onClose();
   };
 
   return (
@@ -156,14 +174,20 @@ const SpiritualPathDetailsModal = ({
                         numberOfLines={field.multiline ? 4 : 1}
                         textAlignVertical={field.multiline ? "top" : "center"}
                         value={detail[field.key] ?? ""}
-                        onChangeText={(text) =>
+                        onChangeText={(text) => {
+                          if (field.key === "years") {
+                            setYearsError(null);
+                          }
                           onChange?.({
                             ...detail,
                             [field.key]: getNextFieldValue(field.key, text),
-                          })
-                        }
+                          });
+                        }}
                       />
                     )}
+                    {field.key === "years" && yearsError ? (
+                      <Text style={localStyles.errorText}>{yearsError}</Text>
+                    ) : null}
                   </View>
                 ))
               )}
@@ -182,7 +206,7 @@ const SpiritualPathDetailsModal = ({
 
               <TouchableOpacity
                 style={localStyles.primaryButton}
-                onPress={onClose}
+                onPress={closeWithValidation}
                 activeOpacity={0.9}
               >
                 <Text style={localStyles.primaryButtonText}>
@@ -200,10 +224,10 @@ const SpiritualPathDetailsModal = ({
 const localStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(17, 17, 17, 0.4)",
+    backgroundColor: "rgba(17, 17, 17, 0.34)",
     justifyContent: "center",
     paddingVertical: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   keyboardWrap: {
     width: "100%",
@@ -212,73 +236,95 @@ const localStyles = StyleSheet.create({
   card: {
     width: "100%",
     maxHeight: "84%",
-    borderRadius: 24,
+    borderRadius: 28,
     backgroundColor: WHITE,
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 16,
+    paddingHorizontal: 26,
+    paddingTop: 24,
+    paddingBottom: 22,
+    shadowColor: "#8C7B63",
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 4,
   },
   title: {
     color: DARK_GRAY,
-    fontSize: 28,
-    lineHeight: 30,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 30,
+    lineHeight: 36,
+    fontFamily: vibesTheme.fonts.primary,
+    letterSpacing: 0.2,
   },
   subtitle: {
-    color: GRAY,
+    color: "rgba(43, 43, 43, 0.58)",
     fontSize: 15,
-    marginTop: 6,
+    lineHeight: 22,
+    marginTop: 8,
+    fontFamily: vibesTheme.fonts.primary,
   },
   content: {
-    marginTop: 16,
+    marginTop: 24,
     flexGrow: 0,
   },
   contentInner: {
-    paddingBottom: 6,
+    paddingBottom: 12,
   },
   fieldWrap: {
-    marginBottom: 12,
+    marginBottom: 22,
   },
   fieldLabel: {
     color: DARK_GRAY,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 15,
+    fontFamily: vibesTheme.fonts.medium,
+    letterSpacing: 0.2,
   },
   optionRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-    marginTop: 8,
+    gap: 12,
+    marginTop: 12,
   },
   optionChip: {
-    minHeight: 42,
-    borderRadius: 24,
+    minHeight: 46,
+    borderRadius: 23,
     borderWidth: 1,
-    borderColor: "#E4B76E",
-    backgroundColor: "#F6F6F4",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    borderColor: "rgba(228, 183, 110, 0.44)",
+    backgroundColor: "rgba(255, 253, 248, 0.86)",
+    paddingHorizontal: 20,
+    paddingVertical: 11,
     alignItems: "center",
     justifyContent: "center",
   },
   optionChipActive: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
+    backgroundColor: "rgba(228, 183, 110, 0.16)",
+    borderColor: "#E4B76E",
   },
   optionChipText: {
     color: DARK_GRAY,
     fontSize: 15,
-    fontWeight: "600",
+    fontFamily: vibesTheme.fonts.medium,
   },
   optionChipTextActive: {
     color: DARK_GRAY,
   },
   input: {
-    marginTop: 6,
+    marginTop: 10,
+    minHeight: 54,
+    borderRadius: 18,
+    borderColor: "rgba(228, 183, 110, 0.36)",
+    backgroundColor: "rgba(255, 253, 248, 0.92)",
+    fontSize: 17,
+    fontFamily: vibesTheme.fonts.primary,
   },
   notesInput: {
-    minHeight: 108,
-    paddingTop: 12,
+    minHeight: 118,
+    paddingTop: 16,
+  },
+  errorText: {
+    color: "#B45A4D",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 7,
+    fontFamily: vibesTheme.fonts.medium,
   },
   readOnlyItem: {
     borderWidth: 1,
@@ -311,36 +357,42 @@ const localStyles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 12,
-    paddingTop: 4,
+    gap: 14,
+    marginTop: 18,
+    paddingTop: 0,
   },
   removeButton: {
     flex: 1,
-    height: 48,
-    borderRadius: 16,
+    height: 56,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: "rgba(216, 140, 122, 0.35)",
+    borderColor: "rgba(216, 140, 122, 0.28)",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
   },
   removeButtonText: {
     color: PRIMARY_COLOR,
     fontSize: 15,
-    fontWeight: "700",
+    fontFamily: vibesTheme.fonts.medium,
   },
   primaryButton: {
     flex: 1,
-    height: 48,
-    borderRadius: 16,
+    height: 56,
+    borderRadius: 20,
     backgroundColor: PRIMARY_COLOR,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: PRIMARY_COLOR,
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 3,
   },
   primaryButtonText: {
     color: WHITE,
     fontSize: 15,
-    fontWeight: "700",
+    fontFamily: vibesTheme.fonts.medium,
   },
 });
 

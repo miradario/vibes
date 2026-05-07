@@ -1,7 +1,7 @@
 /** @format */
 
 import React, { useRef, useState } from "react";
-import { useSignupMutation } from "../src/auth/auth.queries";
+import { useGoogleLoginMutation, useSignupMutation } from "../src/auth/auth.queries";
 import {
   View,
   Text,
@@ -17,9 +17,12 @@ import { CommonActions, useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesHeader from "../src/components/VibesHeader";
 import VibesActionButton from "../components/VibesActionButton";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import Icon from "../components/Icon";
 import LoopingVideo from "../components/LoopingVideo";
 import { useI18n } from "../src/i18n";
+
+const ONBOARDING_ONLY_EMAIL = "miradario9999@gmail.com";
 
 const Signup = () => {
   const { t } = useI18n();
@@ -29,10 +32,30 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const signupMutation = useSignupMutation();
+  const googleLoginMutation = useGoogleLoginMutation();
   const loading = signupMutation.isPending;
+  const googleLoading = googleLoginMutation.isPending;
   const passwordInputRef = useRef<TextInput | null>(null);
 
   const handleSignup = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (normalizedEmail === ONBOARDING_ONLY_EMAIL) {
+      setError(null);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            {
+              name: "VibesOnboardingFlow" as never,
+              params: { skipAccountCreation: true } as never,
+            },
+          ],
+        }),
+      );
+      return;
+    }
+
     if (!email || !password) {
       setError(t("signup.missingFields"));
       return;
@@ -50,13 +73,35 @@ const Signup = () => {
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: "OnboardingName" as never }],
+          routes: [{ name: "VibesOnboardingFlow" as never }],
         }),
       );
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : t("signup.failed");
       setError(msg || t("signup.failed"));
+    }
+  };
+
+  const isOnboardingOnlyEmail =
+    email.trim().toLowerCase() === ONBOARDING_ONLY_EMAIL;
+
+  const handleGoogleSignup = async () => {
+    setError(null);
+
+    try {
+      const session = await googleLoginMutation.mutateAsync();
+      if (session?.user?.id) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "VibesOnboardingFlow" as never }],
+          }),
+        );
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t("signup.googleFailed");
+      setError(msg || t("signup.googleFailed"));
     }
   };
 
@@ -84,6 +129,20 @@ const Signup = () => {
             <VibesHeader title={t("signup.header")} subtitle="" style={localStyles.header} />
             <Text style={styles.loginTitle}>{t("signup.title")}</Text>
             <Text style={styles.loginSubtitle}>{t("signup.subtitle")}</Text>
+
+            <GoogleAuthButton
+              label={googleLoading ? t("signup.googleSubmitting") : t("signup.google")}
+              onPress={handleGoogleSignup}
+              disabled={loading}
+              loading={googleLoading}
+              style={localStyles.googleButton}
+            />
+
+            <View style={localStyles.divider}>
+              <View style={localStyles.dividerLine} />
+              <Text style={localStyles.dividerText}>{t("common.or")}</Text>
+              <View style={localStyles.dividerLine} />
+            </View>
 
             <View style={styles.loginField}>
               <Text style={styles.loginLabel}>{t("common.email")}</Text>
@@ -136,7 +195,12 @@ const Signup = () => {
                 label={loading ? t("signup.submitting") : t("signup.submit")}
                 variant="start"
                 onPress={handleSignup}
-                disabled={!email || !password || loading}
+                disabled={
+                  !email ||
+                  (!password && !isOnboardingOnlyEmail) ||
+                  loading ||
+                  googleLoading
+                }
               />
 
               <VibesActionButton
@@ -157,6 +221,27 @@ export default Signup;
 const localStyles = StyleSheet.create({
   actions: {
     marginTop: 28,
+  },
+  divider: {
+    marginTop: 18,
+    marginBottom: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(43, 43, 43, 0.1)",
+  },
+  dividerText: {
+    color: "#8C7B63",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  googleButton: {
+    marginTop: 22,
   },
   header: {
     marginBottom: 14,

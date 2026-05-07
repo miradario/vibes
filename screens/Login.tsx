@@ -1,7 +1,7 @@
 /** @format */
 
 import React, { useRef, useState } from "react";
-import { useLoginMutation } from "../src/auth/auth.queries";
+import { useGoogleLoginMutation, useLoginMutation } from "../src/auth/auth.queries";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { ResizeMode } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import VibesHeader from "../src/components/VibesHeader";
 import Icon from "../components/Icon";
 import LoopingVideo from "../components/LoopingVideo";
@@ -29,7 +30,9 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loginMutation = useLoginMutation();
+  const googleLoginMutation = useGoogleLoginMutation();
   const loading = loginMutation.isPending;
+  const googleLoading = googleLoginMutation.isPending;
   const passwordInputRef = useRef<TextInput | null>(null);
 
   const handleLogin = async () => {
@@ -49,7 +52,21 @@ const Login = () => {
     }
   };
 
-  const isDisabled = !email || !password || loading;
+  const handleGoogleLogin = async () => {
+    setError(null);
+
+    try {
+      const session = await googleLoginMutation.mutateAsync();
+      if (session?.user?.id) {
+        navigation.navigate("Tab" as never);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t("login.googleFailed");
+      setError(msg || t("login.googleFailed"));
+    }
+  };
+
+  const isDisabled = !email || !password || loading || googleLoading;
 
   return (
     <View style={styles.bg}>
@@ -75,6 +92,20 @@ const Login = () => {
             <VibesHeader title={t("login.header")} subtitle="" style={localStyles.header} />
             <Text style={styles.loginTitle}>{t("login.title")}</Text>
             <Text style={styles.loginSubtitle}>{t("login.subtitle")}</Text>
+
+            <GoogleAuthButton
+              label={googleLoading ? t("login.googleSubmitting") : t("login.google")}
+              onPress={handleGoogleLogin}
+              disabled={loading}
+              loading={googleLoading}
+              style={localStyles.googleButton}
+            />
+
+            <View style={localStyles.divider}>
+              <View style={localStyles.dividerLine} />
+              <Text style={localStyles.dividerText}>{t("common.or")}</Text>
+              <View style={localStyles.dividerLine} />
+            </View>
 
             <View style={styles.loginField}>
               <Text style={styles.loginLabel}>{t("common.email")}</Text>
@@ -152,6 +183,27 @@ export default Login;
 const localStyles = StyleSheet.create({
   actions: {
     marginTop: 28,
+  },
+  divider: {
+    marginTop: 18,
+    marginBottom: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(43, 43, 43, 0.1)",
+  },
+  dividerText: {
+    color: "#8C7B63",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  googleButton: {
+    marginTop: 22,
   },
   header: {
     marginBottom: 14,

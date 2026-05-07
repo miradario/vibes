@@ -1,8 +1,13 @@
 import type { Session } from "@supabase/supabase-js";
+import * as WebBrowser from "expo-web-browser";
 import { supabase } from "../lib/supabase";
 import { recoverInvalidRefreshToken } from "./session.recovery";
 
 type AuthChangeEvent = string;
+
+const OAUTH_REDIRECT_URL = "com.miradario.vibe://auth-callback";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export const signInWithPassword = async (email: string, password: string) => {
   const auth = supabase.auth as any;
@@ -18,6 +23,50 @@ export const signUp = async (email: string, password: string) => {
     return auth.signUp({ email, password });
   }
   return auth.signIn({ email, password });
+};
+
+export const signInWithGoogle = async (): Promise<Session | null> => {
+  const auth = supabase.auth as any;
+  const { data, error } = await auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: OAUTH_REDIRECT_URL,
+      skipBrowserRedirect: true,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data?.url) {
+    throw new Error("Google auth URL was not returned.");
+  }
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, OAUTH_REDIRECT_URL);
+  if (result.type !== "success") {
+    return null;
+  }
+
+  const callbackUrl = new URL(result.url);
+  const oauthError =
+    callbackUrl.searchParams.get("error_description") ??
+    callbackUrl.searchParams.get("error");
+  if (oauthError) {
+    throw new Error(oauthError);
+  }
+
+  const code = callbackUrl.searchParams.get("code");
+  if (!code) {
+    throw new Error("Google auth code was not returned.");
+  }
+
+  const sessionResponse = await auth.exchangeCodeForSession(code);
+  if (sessionResponse.error) {
+    throw sessionResponse.error;
+  }
+
+  return sessionResponse.data?.session ?? null;
 };
 
 export const signOut = async () => supabase.auth.signOut();
