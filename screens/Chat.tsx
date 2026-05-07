@@ -16,7 +16,7 @@ import {
   Pressable,
   StyleSheet,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -24,6 +24,7 @@ import styles, { DARK_GRAY } from "../assets/styles";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   useDirectMessagesQuery,
+  useMarkDirectMessagesReadMutation,
   useSendDirectMessageMutation,
   useDeleteDirectMessageMutation,
   useReportUserMutation,
@@ -48,6 +49,7 @@ const REPORT_REASONS: ReportReason[] = [
 const Chat = () => {
   const navigation = useNavigation();
   const route = useRoute() as any;
+  const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   const { matchId, otherUserId, otherUserName, otherUserPhoto } =
     route?.params ?? {};
@@ -75,6 +77,7 @@ const Chat = () => {
   const myId = session?.user?.id;
 
   const { data: messages, isLoading } = useDirectMessagesQuery(matchId);
+  const markReadMutation = useMarkDirectMessagesReadMutation();
   const sendMutation = useSendDirectMessageMutation();
   const deleteMutation = useDeleteDirectMessageMutation();
   const unmatchMutation = useUnmatchMutation();
@@ -87,6 +90,7 @@ const Chat = () => {
     useState<ReportReason | null>(null);
   const [reportDetails, setReportDetails] = useState("");
   const flatListRef = useRef<FlatList>(null);
+  const lastMarkedReadAtRef = useRef<string | null>(null);
 
   // Auto-scroll when new messages arrive
   useEffect(() => {
@@ -96,6 +100,21 @@ const Chat = () => {
       }, 100);
     }
   }, [messages?.length]);
+
+  useEffect(() => {
+    if (!isFocused || !matchId || !messages?.length || markReadMutation.isPending) return;
+
+    const latestMessage = messages[messages.length - 1];
+    if (!latestMessage?.createdAt) return;
+    if (lastMarkedReadAtRef.current === latestMessage.createdAt) return;
+
+    lastMarkedReadAtRef.current = latestMessage.createdAt;
+
+    markReadMutation.mutate({
+      matchId,
+      readAt: latestMessage.createdAt,
+    });
+  }, [isFocused, markReadMutation, matchId, messages]);
 
   const handleSend = () => {
     const body = text.trim();

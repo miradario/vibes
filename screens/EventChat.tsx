@@ -19,7 +19,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles, {
   TEXT_SECONDARY,
@@ -38,6 +38,7 @@ import { handleApiError } from "../src/utils/handleApiError";
 import {
   useEventParticipantsQuery,
   useEventMessagesQuery,
+  useMarkEventGroupReadMutation,
   useSendEventMessageMutation,
   useDeleteEventMessageMutation,
   useKickParticipantMutation,
@@ -73,6 +74,7 @@ const formatEventChatTime = (value: Date | null) => {
 const EventChat = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   const event = (route.params as any)?.event;
   const eventId = event?.id as string | undefined;
@@ -96,6 +98,7 @@ const EventChat = () => {
     error: messagesError,
   } =
     useEventMessagesQuery(eventId);
+  const markReadMutation = useMarkEventGroupReadMutation();
   const sendMutation = useSendEventMessageMutation();
   const deleteMutation = useDeleteEventMessageMutation();
   const kickMutation = useKickParticipantMutation();
@@ -117,6 +120,7 @@ const EventChat = () => {
   const participantBackdropOpacity = useRef(new Animated.Value(0)).current;
   const participantSheetTranslateY = useRef(new Animated.Value(48)).current;
   const participantSheetScale = useRef(new Animated.Value(0.96)).current;
+  const lastMarkedReadAtRef = useRef<string | null>(null);
   const { data: selectedParticipantProfile } = useProfileQuery(
     selectedParticipant?.userId,
   );
@@ -340,6 +344,23 @@ const EventChat = () => {
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [messages.length]);
+
+  useEffect(() => {
+    if (!isFocused || !eventId || messages.length === 0 || markReadMutation.isPending) {
+      return;
+    }
+
+    const latestMessage = messages[messages.length - 1];
+    if (!latestMessage?.createdAt) return;
+    if (lastMarkedReadAtRef.current === latestMessage.createdAt) return;
+
+    lastMarkedReadAtRef.current = latestMessage.createdAt;
+    markReadMutation.mutate({
+      eventId,
+      eventType,
+      readAt: latestMessage.createdAt,
+    });
+  }, [eventId, eventType, isFocused, markReadMutation, messages]);
 
   useEffect(() => {
     if (!messagesLoading) {

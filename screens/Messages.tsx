@@ -275,7 +275,7 @@ const Messages = () => {
         </View>
         <View style={localStyles.rowMeta}>
           <Text style={localStyles.rowTime}>{formatTime(item.lastMessageAt)}</Text>
-          {item.lastMessageAt ? <View style={localStyles.unreadDot} /> : null}
+          {item.hasUnread ? <View style={localStyles.unreadDot} /> : null}
         </View>
       </TouchableOpacity>
     );
@@ -302,7 +302,7 @@ const Messages = () => {
       </View>
       <View style={localStyles.rowMeta}>
         <Text style={localStyles.rowTime}>{formatTime(item.lastMessageAt)}</Text>
-        {item.lastMessageAt ? <View style={localStyles.unreadDot} /> : null}
+        {item.hasUnread ? <View style={localStyles.unreadDot} /> : null}
       </View>
     </TouchableOpacity>
   );
@@ -600,7 +600,7 @@ const localStyles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: "#4F7EA8",
+    backgroundColor: "#F99A2D",
     marginBottom: 6,
   },
   loadingWrap: {

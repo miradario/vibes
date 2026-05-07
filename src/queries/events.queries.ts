@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { uploadImageToSupabase } from "../lib/supabaseStorage";
 import {
@@ -1008,6 +1009,7 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
               },
             ],
           );
+          queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
         },
       )
       .subscribe();
@@ -1207,8 +1209,27 @@ export type EventGroupSummary = {
   participantCount: number;
   lastMessage: string | null;
   lastMessageAt: string | null;
+  lastMessageSenderId: string | null;
+  lastReadAt: string | null;
+  hasUnread: boolean;
   /** Full EventFeedItem so we can navigate to EventChat */
   event: EventFeedItem;
+};
+
+const getEventGroupReadKey = (eventId: string, eventType: EventType) =>
+  `${eventType}:${eventId}`;
+
+const isLaterTimestamp = (value: string | null, reference: string | null) => {
+  if (!value) return false;
+  if (!reference) return true;
+
+  const valueTime = new Date(value).getTime();
+  const referenceTime = new Date(reference).getTime();
+
+  if (Number.isNaN(valueTime)) return false;
+  if (Number.isNaN(referenceTime)) return true;
+
+  return valueTime > referenceTime;
 };
 
 export const myEventGroupsKeys = {
@@ -1216,7 +1237,10 @@ export const myEventGroupsKeys = {
 };
 
 export const useMyEventGroupsQuery = (userId: string | undefined) => {
-  return useQuery<EventGroupSummary[]>({
+  const queryClient = useQueryClient();
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
+  const query = useQuery<EventGroupSummary[]>({
     queryKey: myEventGroupsKeys.all(userId ?? ""),
     queryFn: async () => {
       if (!userId) return [];
@@ -1266,28 +1290,61 @@ export const useMyEventGroupsQuery = (userId: string | undefined) => {
       if (challengesRes.error) throw challengesRes.error;
 
       const allIds = [...eventIds, ...challengeIds];
+      const lastReadMap = new Map<string, string>();
 
       // 3. Fetch last message per event group
       // event_messages doesn't have a "last per group" aggregate, so fetch
       // last message for each event_id we care about
-      const { data: lastMsgs, error: msgErr } = await supabase
-        .from("event_messages")
-        .select("event_id, body, created_at")
-        .in("event_id", allIds)
-        .order("created_at", { ascending: false });
+      const [{ data: lastMsgs, error: msgErr }, { data: readRows, error: readErr }] =
+        await Promise.all([
+          supabase
+            .from("event_messages")
+            .select("event_id, event_type, sender_id, body, created_at")
+            .in("event_id", allIds)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("event_group_reads")
+            .select("event_id, event_type, last_read_at")
+            .eq("user_id", userId)
+            .in("event_id", allIds),
+        ]);
 
       if (msgErr) throw msgErr;
+      if (readErr) throw readErr;
 
       // Build a map: eventId -> last message
-      const lastMsgMap: Record<string, { body: string; createdAt: string }> = {};
+      const lastMsgMap: Record<
+        string,
+        { body: string; createdAt: string; senderId: string | null }
+      > = {};
       for (const m of lastMsgs ?? []) {
-        const eid = String((m as any).event_id);
-        if (!lastMsgMap[eid]) {
-          lastMsgMap[eid] = {
-            body: String((m as any).body),
-            createdAt: String((m as any).created_at),
-          };
-        }
+        const eventId = String((m as any).event_id ?? "");
+        const eventType =
+          (m as any).event_type === "challenge" ? "challenge" : "event";
+        const key = getEventGroupReadKey(eventId, eventType);
+        if (!eventId || lastMsgMap[key]) continue;
+
+        lastMsgMap[key] = {
+          body: String((m as any).body),
+          createdAt: String((m as any).created_at),
+          senderId:
+            typeof (m as any).sender_id === "string" && (m as any).sender_id.trim()
+              ? String((m as any).sender_id)
+              : null,
+        };
+      }
+
+      for (const row of readRows ?? []) {
+        const eventId = String((row as any).event_id ?? "");
+        const eventType =
+          (row as any).event_type === "challenge" ? "challenge" : "event";
+        const lastReadAt =
+          typeof (row as any).last_read_at === "string" &&
+          (row as any).last_read_at.trim()
+            ? String((row as any).last_read_at)
+            : null;
+        if (!eventId || !lastReadAt) continue;
+        lastReadMap.set(getEventGroupReadKey(eventId, eventType), lastReadAt);
       }
 
       // 4. Map to summaries
@@ -1295,7 +1352,8 @@ export const useMyEventGroupsQuery = (userId: string | undefined) => {
 
       for (const row of eventsRes.data ?? []) {
         const mapped = mapEventRow(row as any);
-        const last = lastMsgMap[mapped.id];
+        const last = lastMsgMap[getEventGroupReadKey(mapped.id, "event")];
+        const lastReadAt = lastReadMap.get(getEventGroupReadKey(mapped.id, "event")) ?? null;
         groups.push({
           eventId: mapped.id,
           eventType: "event",
@@ -1305,13 +1363,23 @@ export const useMyEventGroupsQuery = (userId: string | undefined) => {
             Number((row as any).participant_count ?? 0) || 0,
           lastMessage: last?.body ?? null,
           lastMessageAt: last?.createdAt ?? null,
+          lastMessageSenderId: last?.senderId ?? null,
+          lastReadAt,
+          hasUnread: Boolean(
+            last?.createdAt &&
+              last.senderId &&
+              last.senderId !== userId &&
+              isLaterTimestamp(last.createdAt, lastReadAt),
+          ),
           event: mapped,
         });
       }
 
       for (const row of challengesRes.data ?? []) {
         const mapped = mapChallengeRow(row as any);
-        const last = lastMsgMap[mapped.id];
+        const last = lastMsgMap[getEventGroupReadKey(mapped.id, "challenge")];
+        const lastReadAt =
+          lastReadMap.get(getEventGroupReadKey(mapped.id, "challenge")) ?? null;
         groups.push({
           eventId: mapped.id,
           eventType: "challenge",
@@ -1321,6 +1389,14 @@ export const useMyEventGroupsQuery = (userId: string | undefined) => {
             Number((row as any).participant_count ?? 0) || 0,
           lastMessage: last?.body ?? null,
           lastMessageAt: last?.createdAt ?? null,
+          lastMessageSenderId: last?.senderId ?? null,
+          lastReadAt,
+          hasUnread: Boolean(
+            last?.createdAt &&
+              last.senderId &&
+              last.senderId !== userId &&
+              isLaterTimestamp(last.createdAt, lastReadAt),
+          ),
           event: mapped,
         });
       }
@@ -1338,5 +1414,60 @@ export const useMyEventGroupsQuery = (userId: string | undefined) => {
     },
     enabled: Boolean(userId),
     staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`event-groups:summary:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "event_messages",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
+        },
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [queryClient, userId]);
+
+  return query;
+};
+
+export const useMarkEventGroupReadMutation = () => {
+  const queryClient = useQueryClient();
+  const { data: session } = useAuthSession();
+  const userId = session?.user?.id;
+
+  return useMutation<void, Error, { eventId: string; eventType: EventType; readAt?: string }>({
+    mutationFn: async ({ eventId, eventType, readAt }) => {
+      if (!userId) throw new Error("Not authenticated");
+
+      const { error } = await supabase.from("event_group_reads").upsert(
+        {
+          event_id: eventId,
+          event_type: eventType,
+          user_id: userId,
+          last_read_at: readAt ?? new Date().toISOString(),
+        },
+        { onConflict: "event_id,event_type,user_id" },
+      );
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
+    },
   });
 };

@@ -29,6 +29,9 @@ export type MatchWithProfile = MatchRow & {
   otherUserPhoto: string | null;
   lastMessage: string | null;
   lastMessageAt: string | null;
+  lastMessageSenderId: string | null;
+  lastReadAt: string | null;
+  hasUnread: boolean;
 };
 
 export type IncomingLike = {
@@ -68,6 +71,19 @@ export const matchKeys = {
 export const dmKeys = {
   all: ["direct-messages"] as const,
   byMatch: (matchId?: string) => [...dmKeys.all, matchId ?? "none"] as const,
+};
+
+const isLaterTimestamp = (value: string | null, reference: string | null) => {
+  if (!value) return false;
+  if (!reference) return true;
+
+  const valueTime = new Date(value).getTime();
+  const referenceTime = new Date(reference).getTime();
+
+  if (Number.isNaN(valueTime)) return false;
+  if (Number.isNaN(referenceTime)) return true;
+
+  return valueTime > referenceTime;
 };
 
 // ---------------------------------------------------------------------------
@@ -152,21 +168,55 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
 
   // Fetch last message for each match
   const matchIds = matches.map((m) => m.id);
-  let lastMsgMap = new Map<string, { body: string; createdAt: string }>();
+  let lastMsgMap = new Map<
+    string,
+    { body: string; createdAt: string; senderId: string | null }
+  >();
+  let lastReadMap = new Map<string, string>();
 
   if (matchIds.length > 0) {
-    // Get the most recent message per match using a single query
-    const { data: msgRows } = await supabase
-      .from("messages")
-      .select("match_id, text, created_at")
-      .in("match_id", matchIds)
-      .order("created_at", { ascending: false });
+    const [messagesRes, readsRes] = await Promise.all([
+      supabase
+        .from("messages")
+        .select("match_id, sender_id, text, created_at")
+        .in("match_id", matchIds)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("direct_message_reads")
+        .select("match_id, last_read_at")
+        .eq("user_id", userId)
+        .in("match_id", matchIds),
+    ]);
+
+    if (messagesRes.error) throw messagesRes.error;
+    if (readsRes.error) throw readsRes.error;
+
+    const msgRows = messagesRes.data;
+    const readRows = readsRes.data;
 
     const msgs = mapSupabaseSelect(msgRows ?? []) as Record<string, any>[];
     for (const msg of msgs) {
       const mid = String(msg.matchId ?? "");
       if (!mid || lastMsgMap.has(mid)) continue; // first = most recent
-      lastMsgMap.set(mid, { body: String(msg.text), createdAt: String(msg.createdAt) });
+      lastMsgMap.set(mid, {
+        body: String(msg.text),
+        createdAt: String(msg.createdAt),
+        senderId:
+          typeof msg.senderId === "string" && msg.senderId.trim()
+            ? msg.senderId
+            : null,
+      });
+    }
+
+    const reads = mapSupabaseSelect(readRows ?? []) as Record<string, any>[];
+    for (const read of reads) {
+      const mid = String(read.matchId ?? "");
+      const lastReadAt =
+        typeof read.lastReadAt === "string" && read.lastReadAt.trim()
+          ? read.lastReadAt
+          : null;
+      if (!mid || !lastReadAt) continue;
+      lastReadMap.set(mid, lastReadAt);
     }
   }
 
@@ -174,6 +224,14 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
     const otherId = m.user1Id === userId ? m.user2Id : m.user1Id;
     const profile = profileMap.get(otherId);
     const lastMsg = lastMsgMap.get(m.id);
+    const lastReadAt = lastReadMap.get(m.id) ?? null;
+    const hasUnread = Boolean(
+      lastMsg?.createdAt &&
+        lastMsg.senderId &&
+        lastMsg.senderId !== userId &&
+        isLaterTimestamp(lastMsg.createdAt, lastReadAt),
+    );
+
     return {
       ...m,
       otherUserId: otherId,
@@ -181,6 +239,9 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
       otherUserPhoto: profile?.photo ?? null,
       lastMessage: lastMsg?.body ?? null,
       lastMessageAt: lastMsg?.createdAt ?? null,
+      lastMessageSenderId: lastMsg?.senderId ?? null,
+      lastReadAt,
+      hasUnread,
     };
   });
 }
@@ -260,14 +321,70 @@ async function fetchIncomingLikes(userId: string): Promise<IncomingLike[]> {
 }
 
 export const useMatchesQuery = () => {
+  const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
-  return useQuery<MatchWithProfile[]>({
+  const query = useQuery<MatchWithProfile[]>({
     queryKey: matchKeys.list(userId),
     queryFn: () => fetchMatches(userId!),
     enabled: Boolean(userId),
     staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`matches:summary:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        },
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      channel.unsubscribe();
+      channelRef.current = null;
+    };
+  }, [queryClient, userId]);
+
+  return query;
+};
+
+export const useMarkDirectMessagesReadMutation = () => {
+  const queryClient = useQueryClient();
+  const { data: session } = useAuthSession();
+  const userId = session?.user?.id;
+
+  return useMutation<void, Error, { matchId: string; readAt?: string }>({
+    mutationFn: async ({ matchId, readAt }) => {
+      if (!userId) throw new Error("Not authenticated");
+
+      const { error } = await supabase.from("direct_message_reads").upsert(
+        {
+          match_id: matchId,
+          user_id: userId,
+          last_read_at: readAt ?? new Date().toISOString(),
+        },
+        { onConflict: "match_id,user_id" },
+      );
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: matchKeys.all });
+    },
   });
 };
 

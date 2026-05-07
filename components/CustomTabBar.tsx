@@ -30,6 +30,9 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react-native";
+import { useAuthSession } from "../src/auth/auth.queries";
+import { useMyEventGroupsQuery } from "../src/queries/events.queries";
+import { useMatchesQuery } from "../src/queries/matches.queries";
 
 const TAB_BAR_HEIGHT = 82;
 const FLOATING_BUTTON_SIZE = 64;
@@ -92,7 +95,10 @@ type TabButtonProps = {
   onPress: () => void;
   accessibilityLabel: string;
   accentColor: ColorValue;
+  unreadCount?: number;
 };
+
+const formatUnreadBadge = (count: number) => (count > 9 ? "9+" : String(count));
 
 const TabButton = memo(
   ({
@@ -102,6 +108,7 @@ const TabButton = memo(
     onPress,
     accessibilityLabel,
     accentColor,
+    unreadCount = 0,
   }: TabButtonProps) => {
     const focusProgress = useSharedValue(isFocused ? 1 : 0);
 
@@ -136,7 +143,16 @@ const TabButton = memo(
         style={localStyles.tabItem}
       >
         <Animated.View style={[localStyles.tabContent, contentStyle]}>
-          <Icon size={27} color={localColors.inactiveIcon} strokeWidth={2.05} />
+          <View style={localStyles.iconWrap}>
+            <Icon size={27} color={localColors.inactiveIcon} strokeWidth={2.05} />
+            {unreadCount > 0 ? (
+              <View style={localStyles.unreadBadge}>
+                <Text style={localStyles.unreadBadgeText}>
+                  {formatUnreadBadge(unreadCount)}
+                </Text>
+              </View>
+            ) : null}
+          </View>
           <Text
             numberOfLines={1}
             adjustsFontSizeToFit
@@ -159,12 +175,19 @@ const CustomTabBar = ({
   descriptors,
   navigation,
 }: BottomTabBarProps) => {
+  const { data: session } = useAuthSession();
+  const userId = session?.user?.id;
+  const { data: matches = [] } = useMatchesQuery();
+  const { data: eventGroups = [] } = useMyEventGroupsQuery(userId);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const selectedIndex = useSharedValue(state.index);
   const selectedIconProgress = useSharedValue(1);
   const selectedRoute = state.routes[state.index];
   const SelectedIcon = getRouteIcon(selectedRoute?.name ?? "Home");
+  const directUnreadCount = matches.filter((item) => item.hasUnread).length;
+  const groupUnreadCount = eventGroups.filter((item) => item.hasUnread).length;
+  const vibesUnreadCount = directUnreadCount + groupUnreadCount;
   const tabCount = Math.max(state.routes.length, 1);
   const barWidth = Math.min(width - HORIZONTAL_MARGIN * 2, 620);
   const barLeft = (width - barWidth) / 2;
@@ -266,6 +289,7 @@ const CustomTabBar = ({
                 isFocused={isFocused}
                 label={label}
                 onPress={() => handlePress(route, isFocused)}
+                unreadCount={route.name === "Calendar" ? vibesUnreadCount : 0}
               />
             );
           })}
@@ -306,6 +330,13 @@ const CustomTabBar = ({
               <Animated.View style={floatingIconStyle}>
                 <SelectedIcon size={29} color={localColors.primaryText} strokeWidth={2.25} />
               </Animated.View>
+              {selectedRoute?.name === "Calendar" && vibesUnreadCount > 0 ? (
+                <View style={localStyles.floatingUnreadBadge}>
+                  <Text style={localStyles.unreadBadgeText}>
+                    {formatUnreadBadge(vibesUnreadCount)}
+                  </Text>
+                </View>
+              ) : null}
             </LinearGradient>
           </View>
         </TouchableOpacity>
@@ -378,6 +409,9 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
+  iconWrap: {
+    position: "relative",
+  },
   tabLabel: {
     maxWidth: 74,
     color: localColors.muted,
@@ -436,6 +470,40 @@ const localStyles = StyleSheet.create({
     borderRadius: (FLOATING_BUTTON_SIZE - 8) / 2,
     alignItems: "center",
     justifyContent: "center",
+  },
+  unreadBadge: {
+    position: "absolute",
+    top: -7,
+    right: -13,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F99A2D",
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+  },
+  floatingUnreadBadge: {
+    position: "absolute",
+    top: -2,
+    right: -1,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F99A2D",
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+  },
+  unreadBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+    lineHeight: 12,
   },
 });
 
