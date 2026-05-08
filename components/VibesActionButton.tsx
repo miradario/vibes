@@ -33,12 +33,14 @@ const VibesActionButton = ({
       <View style={[styles.skipWrap, style]}>
         <View style={styles.skipDivider} />
         <TouchableOpacity
-          style={[styles.skipButton, disabled && styles.disabled]}
+          style={[styles.skipButton, disabled && styles.skipButtonDisabled]}
           onPress={onPress}
           activeOpacity={0.8}
           disabled={disabled}
         >
-          <Text style={styles.skipText}>{label}</Text>
+          <Text style={[styles.skipText, disabled && styles.skipTextDisabled]}>
+            {label}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -46,7 +48,7 @@ const VibesActionButton = ({
 
   return (
     <TouchableOpacity
-      style={[styles.startButton, style, disabled && styles.disabled]}
+      style={[styles.startButton, style, disabled && styles.startButtonDisabled]}
       onPress={onPress}
       activeOpacity={0.9}
       disabled={disabled}
@@ -70,10 +72,16 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 3,
   },
+  startButtonDisabled: {
+    backgroundColor: "#E9C98B",
+    shadowOpacity: 0.08,
+    elevation: 1,
+  },
   startText: {
-    color: "#F6F6F4",
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.semibold,
+    color: "#FFFFFF",
+    fontSize: 21,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
   },
   skipWrap: {
     width: "100%",
@@ -95,8 +103,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: vibesTheme.fonts.primary,
   },
-  disabled: {
-    opacity: 0.55,
+  skipButtonDisabled: {
+    opacity: 0.7,
+  },
+  skipTextDisabled: {
+    color: "rgba(110, 110, 110, 0.78)",
   },
 });
 
