@@ -330,13 +330,6 @@ const CustomTabBar = ({
               <Animated.View style={floatingIconStyle}>
                 <SelectedIcon size={29} color={localColors.primaryText} strokeWidth={2.25} />
               </Animated.View>
-              {selectedRoute?.name === "Calendar" && vibesUnreadCount > 0 ? (
-                <View style={localStyles.floatingUnreadBadge}>
-                  <Text style={localStyles.unreadBadgeText}>
-                    {formatUnreadBadge(vibesUnreadCount)}
-                  </Text>
-                </View>
-              ) : null}
             </LinearGradient>
           </View>
         </TouchableOpacity>
@@ -475,20 +468,6 @@ const localStyles = StyleSheet.create({
     position: "absolute",
     top: -7,
     right: -13,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F99A2D",
-    borderWidth: 1.5,
-    borderColor: "#FFFFFF",
-  },
-  floatingUnreadBadge: {
-    position: "absolute",
-    top: -2,
-    right: -1,
     minWidth: 18,
     height: 18,
     borderRadius: 9,

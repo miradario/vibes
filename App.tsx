@@ -10,6 +10,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Toast from "react-native-toast-message";
 import { useFonts } from "expo-font";
+import { StatusBar } from "expo-status-bar";
 import {
   Home,
   Discover,
@@ -118,6 +119,7 @@ const AppNavigator = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
+        <StatusBar style="dark" />
         <NavigationContainer
           ref={navigationRef}
           onReady={() => {

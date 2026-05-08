@@ -1110,6 +1110,10 @@ const localStyles = StyleSheet.create({
   },
   checkInCompleted: {
     backgroundColor: palette.accentBlue,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
   },
   checkInBroken: {
     backgroundColor: palette.red,

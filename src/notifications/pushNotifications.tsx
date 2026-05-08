@@ -4,6 +4,7 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
+import { useMatchesQuery } from "../queries/matches.queries";
 import { useUserPreferencesQuery } from "../queries/userPreferences.queries";
 
 Notifications.setNotificationHandler({
@@ -11,7 +12,7 @@ Notifications.setNotificationHandler({
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: true,
-    shouldSetBadge: false,
+    shouldSetBadge: true,
   }),
 });
 
@@ -66,9 +67,16 @@ const registerPushToken = async (userId: string) => {
 
   const permissions = await Notifications.getPermissionsAsync();
   let status = permissions.status;
+  const needsBadgePermission = Platform.OS === "ios" && permissions.ios?.allowsBadge !== true;
 
-  if (status !== "granted") {
-    const request = await Notifications.requestPermissionsAsync();
+  if (status !== "granted" || needsBadgePermission) {
+    const request = await Notifications.requestPermissionsAsync({
+      ios: {
+        allowAlert: true,
+        allowBadge: true,
+        allowSound: true,
+      },
+    });
     status = request.status;
   }
 
@@ -105,9 +113,25 @@ export const PushNotificationsBootstrap = ({
 }: PushNotificationsBootstrapProps) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const { data: matches = [] } = useMatchesQuery();
   const preferencesQuery = useUserPreferencesQuery(userId);
   const notificationsEnabled = preferencesQuery.data?.notificationsEnabled;
   const lastHandledResponseIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const directUnreadCount = matches.filter((item) => item.hasUnread).length;
+
+    if (!userId) {
+      void Notifications.setBadgeCountAsync(0).catch((error) => {
+        console.warn("[push] failed to clear badge without session", error);
+      });
+      return;
+    }
+
+    void Notifications.setBadgeCountAsync(directUnreadCount).catch((error) => {
+      console.warn("[push] failed to sync app badge", error);
+    });
+  }, [matches, userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -116,6 +140,11 @@ export const PushNotificationsBootstrap = ({
     let isActive = true;
 
     if (notificationsEnabled === false) {
+      void Notifications.setBadgeCountAsync(0).catch((error) => {
+        if (!isActive) return;
+        console.warn("[push] failed to clear badge when notifications disabled", error);
+      });
+
       void deactivateUserPushTokens(userId).catch((error) => {
         if (!isActive) return;
         console.warn("[push] failed to deactivate user push tokens", error);

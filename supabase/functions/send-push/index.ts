@@ -18,6 +18,14 @@ type PushTokenRow = {
   provider: string;
 };
 
+type OutgoingNotification = {
+  recipientId: string;
+  title: string;
+  body: string;
+  data: Record<string, string>;
+  badgeCount?: number;
+};
+
 type FirebaseServiceAccount = {
   project_id: string;
   client_email: string;
@@ -192,6 +200,7 @@ const sendFirebaseMessage = async (
   title: string,
   body: string,
   data: Record<string, string>,
+  badgeCount?: number,
 ) => {
   const response = await fetch(
     `https://fcm.googleapis.com/v1/projects/${account.project_id}/messages:send`,
@@ -211,8 +220,21 @@ const sendFirebaseMessage = async (
             notification: {
               channel_id: "default",
               sound: "default",
+              ...(typeof badgeCount === "number" ? { notification_count: badgeCount } : {}),
             },
           },
+          ...(pushToken.platform === "ios"
+            ? {
+                apns: {
+                  payload: {
+                    aps: {
+                      sound: "default",
+                      ...(typeof badgeCount === "number" ? { badge: badgeCount } : {}),
+                    },
+                  },
+                },
+              }
+            : {}),
         },
       }),
     },
@@ -265,6 +287,84 @@ const fetchNotificationPreferences = async (
   return preferences;
 };
 
+const isLaterTimestamp = (value: string | null, reference: string | null) => {
+  if (!value) return false;
+  if (!reference) return true;
+
+  const valueTime = new Date(value).getTime();
+  const referenceTime = new Date(reference).getTime();
+
+  if (Number.isNaN(valueTime)) return false;
+  if (Number.isNaN(referenceTime)) return true;
+
+  return valueTime > referenceTime;
+};
+
+const fetchDirectUnreadCountForUser = async (
+  supabase: SupabaseClient,
+  userId: string,
+) => {
+  const { data: matchRows, error: matchError } = await supabase
+    .from("matches")
+    .select("id, user1_id, user2_id")
+    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+
+  if (matchError) throw matchError;
+
+  const matchIds = (matchRows ?? []).map((row) => String((row as { id: string }).id));
+  if (matchIds.length === 0) return 0;
+
+  const [messagesRes, readsRes] = await Promise.all([
+    supabase
+      .from("messages")
+      .select("match_id, sender_id, created_at")
+      .in("match_id", matchIds)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("direct_message_reads")
+      .select("match_id, last_read_at")
+      .eq("user_id", userId)
+      .in("match_id", matchIds),
+  ]);
+
+  if (messagesRes.error) throw messagesRes.error;
+  if (readsRes.error) throw readsRes.error;
+
+  const lastMessageByMatch = new Map<string, { createdAt: string | null; senderId: string | null }>();
+  for (const row of messagesRes.data ?? []) {
+    const matchId = String((row as { match_id: string }).match_id ?? "");
+    if (!matchId || lastMessageByMatch.has(matchId)) continue;
+
+    lastMessageByMatch.set(matchId, {
+      createdAt: String((row as { created_at: string | null }).created_at ?? "") || null,
+      senderId: String((row as { sender_id: string | null }).sender_id ?? "") || null,
+    });
+  }
+
+  const lastReadByMatch = new Map<string, string>();
+  for (const row of readsRes.data ?? []) {
+    const matchId = String((row as { match_id: string }).match_id ?? "");
+    const lastReadAt = String((row as { last_read_at: string | null }).last_read_at ?? "") || null;
+    if (!matchId || !lastReadAt) continue;
+    lastReadByMatch.set(matchId, lastReadAt);
+  }
+
+  let unreadCount = 0;
+  for (const matchId of matchIds) {
+    const lastMessage = lastMessageByMatch.get(matchId);
+    if (!lastMessage?.createdAt || !lastMessage.senderId || lastMessage.senderId === userId) {
+      continue;
+    }
+
+    const lastReadAt = lastReadByMatch.get(matchId) ?? null;
+    if (isLaterTimestamp(lastMessage.createdAt, lastReadAt)) {
+      unreadCount += 1;
+    }
+  }
+
+  return unreadCount;
+};
+
 const buildDirectMessageNotifications = async (
   supabase: SupabaseClient,
   record: Record<string, unknown>,
@@ -302,7 +402,7 @@ const buildDirectMessageNotifications = async (
         senderId,
       },
     },
-  ];
+  ] satisfies OutgoingNotification[];
 };
 
 const buildEventMessageNotifications = async (
@@ -351,7 +451,7 @@ const buildEventMessageNotifications = async (
         messageId,
         senderId,
       },
-    }));
+    })) satisfies OutgoingNotification[];
 };
 
 const buildMatchNotifications = async (
@@ -389,10 +489,13 @@ const buildMatchNotifications = async (
         otherUserId: user1Id,
       },
     },
-  ];
+  ] satisfies OutgoingNotification[];
 };
 
-const buildNotifications = async (supabase: SupabaseClient, payload: WebhookPayload) => {
+const buildNotifications = async (
+  supabase: SupabaseClient,
+  payload: WebhookPayload,
+): Promise<OutgoingNotification[]> => {
   const table = payload.table;
   const record = getRecord(payload);
 
@@ -458,6 +561,30 @@ serve(async (req) => {
     const allowedRecipientIds = Array.from(
       new Set(allowedNotifications.map((item) => item.recipientId)),
     );
+    const directMessageRecipientIds = Array.from(
+      new Set(
+        allowedNotifications
+          .filter((item) => item.data.type === "direct_message")
+          .map((item) => item.recipientId),
+      ),
+    );
+    const directBadgeCounts = new Map<string, number>();
+
+    await Promise.all(
+      directMessageRecipientIds.map(async (recipientId) => {
+        const badgeCount = await fetchDirectUnreadCountForUser(supabase, recipientId);
+        directBadgeCounts.set(recipientId, badgeCount);
+      }),
+    );
+
+    const notificationsWithBadges = allowedNotifications.map((item) => ({
+      ...item,
+      badgeCount:
+        item.data.type === "direct_message"
+          ? directBadgeCounts.get(item.recipientId) ?? 0
+          : undefined,
+    }));
+
     const tokensByUser = await getPushTokens(supabase, allowedRecipientIds);
     const account = getFirebaseServiceAccount();
     const accessToken = await getAccessToken(account);
@@ -465,7 +592,7 @@ serve(async (req) => {
     let sentCount = 0;
     let inactiveCount = 0;
 
-    for (const notification of allowedNotifications) {
+    for (const notification of notificationsWithBadges) {
       const tokens = tokensByUser.get(notification.recipientId) ?? [];
       for (const token of tokens) {
         const result = await sendFirebaseMessage(
@@ -475,6 +602,7 @@ serve(async (req) => {
           notification.title,
           notification.body,
           notification.data,
+          notification.badgeCount,
         );
 
         if (result.ok) {

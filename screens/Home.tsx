@@ -987,8 +987,8 @@ const Home = () => {
                     ]}
                     onPress={() =>
                       navigation.navigate(
-                        "Tab" as never,
-                        { screen: "Flow", params: { section: "challenge" } } as never,
+                        "ChallengeDetailScreen" as never,
+                        { event: challenge } as never,
                       )
                     }
                   >
@@ -1065,8 +1065,8 @@ const Home = () => {
                 style={[localStyles.feedListRow, localStyles.feedListRowChallenge]}
                 onPress={() =>
                   navigation.navigate(
-                    "Tab" as never,
-                    { screen: "Flow", params: { section: "challenge" } } as never,
+                    "ChallengeDetailScreen" as never,
+                    { event: suggestedChallenge } as never,
                   )
                 }
               >
