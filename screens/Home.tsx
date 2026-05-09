@@ -926,6 +926,24 @@ const Home = () => {
             </View>
           </View>
 
+          <View style={localStyles.guruCard}>
+            <View style={localStyles.guruCardHeader}>
+              <View style={localStyles.guruBadge}>
+                <Ionicons name="sparkles-outline" size={16} color="#FFFFFF" />
+              </View>
+              <View style={localStyles.guruCopy}>
+                <Text style={localStyles.guruTitle}>
+                  {t("common.challengeGuideName")}
+                </Text>
+                <Text style={localStyles.guruSubtitle}>
+                  {t("home.guruHomeSubtitle")}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={localStyles.guruBody}>{t("home.guruHomeBody")}</Text>
+          </View>
+
           <View style={localStyles.summaryCard}>
             <TouchableOpacity
               accessibilityRole="button"
@@ -1424,6 +1442,62 @@ const localStyles = StyleSheet.create({
     fontSize: 15,
     letterSpacing: 0.2,
     fontFamily: vibesTheme.fonts.semibold,
+  },
+  guruCard: {
+    borderRadius: 20,
+    backgroundColor: "#FFF9EF",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.22)",
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    marginBottom: 18,
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowColor: "#3E352B",
+    shadowOffset: { height: 7, width: 0 },
+  },
+  guruCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  guruBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#DCA453",
+  },
+  guruCopy: {
+    flex: 1,
+  },
+  guruTitle: {
+    color: "#2B2B2B",
+    fontSize: 20,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  guruSubtitle: {
+    marginTop: 2,
+    color: "#7A746D",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  guruChallengeName: {
+    marginTop: 12,
+    color: "#4B3728",
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  guruBody: {
+    marginTop: 10,
+    color: "#2F2C29",
+    fontSize: 16,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
   },
   sectionCard: {
     borderRadius: 18,

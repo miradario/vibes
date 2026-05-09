@@ -31,11 +31,13 @@ import LoopingVideo from "../components/LoopingVideo";
 import UserProfileSheet from "../components/UserProfileSheet";
 import ChallengeTreeProgress from "../components/ChallengeTreeProgress";
 import { useAuthSession } from "../src/auth/auth.queries";
+import { useI18n } from "../src/i18n";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
+import { useDailyChallengeCoachMessageQuery } from "../src/queries/challengeCoach.queries";
 import {
   useChallengeParticipantQuery,
   useChallengeCheckinsQuery,
@@ -192,6 +194,7 @@ const isVideoMedia = (value: unknown) => {
 };
 
 const EventDetail = () => {
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
@@ -204,6 +207,22 @@ const EventDetail = () => {
 
   const { data: participant, isLoading: participantLoading } =
     useChallengeParticipantQuery(isChallenge ? event?.id : undefined, userId);
+  const { data: personalChallengeMessage, isLoading: personalChallengeMessageLoading } =
+    useDailyChallengeCoachMessageQuery(
+      isChallenge && event?.id
+        ? {
+            challengeId: event.id,
+            title: event?.title ?? "Challenge",
+            subtitle: event?.subtitle ?? event?.description ?? null,
+            durationDays:
+              typeof event?.durationDays === "number" ? event.durationDays : null,
+            startsAt: event?.startsAt ?? null,
+            participant: participant ?? null,
+            locale,
+          }
+        : null,
+      userId,
+    );
   const { data: challengeCheckins = [] } = useChallengeCheckinsQuery(
     isChallenge ? event?.id : undefined,
     userId,
@@ -1233,6 +1252,31 @@ const EventDetail = () => {
               <Text style={styles.eventDetailDescription}>{eventDescription}</Text>
             ) : null}
 
+            {personalChallengeMessageLoading || personalChallengeMessage ? (
+              <View style={localStyles.personalCoachCard}>
+                <View style={localStyles.personalCoachHeader}>
+                  <View style={localStyles.personalCoachBadge}>
+                    <Icon name="sparkles-outline" size={15} color={WHITE} />
+                  </View>
+                  <View style={localStyles.personalCoachCopy}>
+                    <Text style={localStyles.personalCoachTitle}>
+                      {t("common.challengeGuideName")}
+                    </Text>
+                    <Text style={localStyles.personalCoachSubtitle}>
+                      {t("common.personalMessage")}
+                    </Text>
+                  </View>
+                </View>
+                {personalChallengeMessageLoading && !personalChallengeMessage ? (
+                  <ActivityIndicator color={PRIMARY_COLOR} style={{ marginTop: 6 }} />
+                ) : (
+                  <Text style={localStyles.personalCoachBody}>
+                    {personalChallengeMessage?.body}
+                  </Text>
+                )}
+              </View>
+            ) : null}
+
             <View style={styles.eventDetailInfoSection}>
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -1987,6 +2031,55 @@ const localStyles = StyleSheet.create({
     color: WHITE,
     fontSize: 10,
     fontWeight: "700",
+  },
+  personalCoachCard: {
+    marginTop: 14,
+    marginBottom: 8,
+    backgroundColor: "#FFF9EF",
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.22)",
+    shadowColor: PRIMARY_COLOR,
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  personalCoachHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  personalCoachBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: PRIMARY_COLOR,
+  },
+  personalCoachCopy: {
+    flex: 1,
+  },
+  personalCoachTitle: {
+    color: DARK_GRAY,
+    fontSize: 18,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  personalCoachSubtitle: {
+    marginTop: 1,
+    color: TEXT_SECONDARY,
+    fontSize: 12,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  personalCoachBody: {
+    marginTop: 12,
+    color: DARK_GRAY,
+    fontSize: 16,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_500Medium",
   },
   streakRow: {
     flexDirection: "row",

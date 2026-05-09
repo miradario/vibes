@@ -32,6 +32,10 @@ const translations = {
       all: "Todos",
       yes: "Sí",
       no: "No",
+      dailyGuide: "Guru del día",
+      dailyGuideSubtitle: "Mensaje diario para tu práctica",
+      challengeGuideName: "Guru Vibes",
+      personalMessage: "Mensaje para vos",
     },
     tabs: {
       discover: "Descubrir",
@@ -266,6 +270,9 @@ const translations = {
         "Volvé a vos. Escuchá lo que sentís, entendé lo que necesitás y elegí desde tu bienestar.",
       connectWithMe: "Conectar conmigo",
       relax: "Relax",
+      guruHomeSubtitle: "Un mensaje para hoy",
+      guruHomeBody:
+        "Respirá hondo. No hace falta apurarte. Elegí desde la calma, escuchá tu energía y dejá que Vibes te acerque a lo que hoy sí resuena con vos.",
       age: "Edad",
       min: "Mínima",
       max: "Máxima",
@@ -348,6 +355,10 @@ const translations = {
       all: "All",
       yes: "Yes",
       no: "No",
+      dailyGuide: "Daily guru",
+      dailyGuideSubtitle: "A daily message for your practice",
+      challengeGuideName: "Vibes Guru",
+      personalMessage: "A message for you",
     },
     tabs: {
       discover: "Discover",
@@ -582,6 +593,9 @@ const translations = {
         "Come back to yourself. Listen to what you feel, understand what you need, and choose from your wellbeing.",
       connectWithMe: "Connect with me",
       relax: "Relax",
+      guruHomeSubtitle: "A message for today",
+      guruHomeBody:
+        "Take a deep breath. There is no need to rush. Choose from calm, listen to your energy, and let Vibes bring you closer to what truly resonates today.",
       age: "Age",
       min: "Minimum",
       max: "Maximum",

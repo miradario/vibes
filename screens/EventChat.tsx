@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -42,9 +42,16 @@ import {
   useSendEventMessageMutation,
   useDeleteEventMessageMutation,
   useKickParticipantMutation,
+  useChallengeParticipantQuery,
   type EventType,
   type EventMessage,
 } from "../src/queries/events.queries";
+import {
+  useChallengeCoachMessagesQuery,
+  useDailyChallengeCoachMessageQuery,
+  type ChallengeCoachMessage,
+} from "../src/queries/challengeCoach.queries";
+import { useI18n } from "../src/i18n";
 
 const LOGO = require("../assets/images/logo.png");
 
@@ -71,7 +78,21 @@ const formatEventChatTime = (value: Date | null) => {
   });
 };
 
+type TimelineMessage =
+  | ({ kind: "event" } & EventMessage)
+  | {
+      kind: "coach";
+      id: string;
+      body: string;
+      createdAt: string;
+      senderId: "challenge-coach";
+      senderName: string;
+      senderAvatar: null;
+      coachDate: string;
+    };
+
 const EventChat = () => {
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const route = useRoute();
   const isFocused = useIsFocused();
@@ -90,6 +111,31 @@ const EventChat = () => {
   const userId = session?.user?.id;
   const isAdmin = Boolean(userId && createdBy && userId === createdBy);
   const swipeMutation = useSwipeMutation();
+  const challengeParticipantQuery = useChallengeParticipantQuery(
+    eventType === "challenge" ? eventId : undefined,
+    userId,
+  );
+  const { data: dailyCoachMessage, isLoading: coachMessageLoading } =
+    useDailyChallengeCoachMessageQuery(
+      eventType === "challenge" && eventId
+        ? {
+            challengeId: eventId,
+            title: event?.title ?? "Challenge",
+            subtitle: event?.subtitle ?? event?.description ?? null,
+            durationDays:
+              typeof event?.durationDays === "number" ? event.durationDays : null,
+            startsAt: event?.startsAt ?? null,
+            participant: challengeParticipantQuery.data ?? null,
+            locale,
+          }
+        : null,
+      userId,
+    );
+  const { data: coachHistory = [], isLoading: coachHistoryLoading } =
+    useChallengeCoachMessagesQuery(
+      eventType === "challenge" ? eventId : undefined,
+      userId,
+    );
 
   const { data: participants = [] } = useEventParticipantsQuery(eventId);
   const {
@@ -344,6 +390,43 @@ const EventChat = () => {
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [messages.length]);
+
+  const timelineMessages = useMemo<TimelineMessage[]>(() => {
+    const coachMap = new Map<string, ChallengeCoachMessage>();
+    for (const item of coachHistory) {
+      coachMap.set(item.id, item);
+    }
+    if (dailyCoachMessage) {
+      coachMap.set(dailyCoachMessage.id, dailyCoachMessage);
+    }
+
+    const coachTimeline: TimelineMessage[] = Array.from(coachMap.values()).map((item) => ({
+      kind: "coach",
+      id: item.id,
+      body: item.body,
+      createdAt: item.createdAt,
+      senderId: "challenge-coach",
+      senderName: t("common.challengeGuideName"),
+      senderAvatar: null,
+      coachDate: item.messageDate,
+    }));
+
+    const eventTimeline: TimelineMessage[] = messages.map((item) => ({
+      ...item,
+      kind: "event",
+    }));
+
+    return [...eventTimeline, ...coachTimeline].sort(
+      (left, right) =>
+        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+    );
+  }, [coachHistory, dailyCoachMessage, messages, t]);
+
+  useEffect(() => {
+    if (timelineMessages.length > 0) {
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }, [timelineMessages.length]);
 
   useEffect(() => {
     if (!isFocused || !eventId || messages.length === 0 || markReadMutation.isPending) {
@@ -614,7 +697,7 @@ const EventChat = () => {
                 Probá salir y volver a entrar al chat.
               </Text>
             </View>
-          ) : messages.length === 0 ? (
+          ) : timelineMessages.length === 0 ? (
             <View style={localStyles.emptyMessages}>
               <Text style={localStyles.emptyMessagesTitle}>
                 {messagesLoadingTimedOut
@@ -628,15 +711,18 @@ const EventChat = () => {
               </Text>
             </View>
           ) : (
-            messages.map((msg) => {
-              const isMe = msg.senderId === userId;
-              const sender = getSenderInfo(msg.senderId);
+            timelineMessages.map((msg) => {
+              const isCoach = msg.kind === "coach";
+              const isMe = !isCoach && msg.senderId === userId;
+              const sender = isCoach
+                ? { name: msg.senderName, avatar: null }
+                : getSenderInfo(msg.senderId);
               return (
                 <TouchableOpacity
                   key={msg.id}
                   activeOpacity={isMe ? 0.7 : 0.82}
                   onPress={() => {
-                    if (isMe) return;
+                    if (isMe || isCoach) return;
                     handleOpenParticipant({
                       userId: msg.senderId,
                       displayName: sender.name,
@@ -650,31 +736,46 @@ const EventChat = () => {
                   ]}
                 >
                   {/* Avatar for other people's messages */}
-                  {!isMe && (
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => openParticipantCard(msg.senderId)}
-                    >
-                      <Image
-                        source={sender.avatar ? { uri: sender.avatar } : LOGO}
-                        style={localStyles.messageAvatar}
-                      />
-                    </TouchableOpacity>
-                  )}
+                  {!isMe &&
+                    (isCoach ? (
+                      <View style={localStyles.coachAvatar}>
+                        <Icon name="sparkles-outline" size={15} color={WHITE} />
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => openParticipantCard(msg.senderId)}
+                      >
+                        <Image
+                          source={sender.avatar ? { uri: sender.avatar } : LOGO}
+                          style={localStyles.messageAvatar}
+                        />
+                      </TouchableOpacity>
+                    ))}
                   <View
                     style={[
                       localStyles.messageBubble,
                       isMe
                         ? localStyles.messageBubbleMe
+                        : isCoach
+                          ? localStyles.messageBubbleCoach
                         : localStyles.messageBubbleOther,
                     ]}
                   >
                     {!isMe && (
                       <TouchableOpacity
-                        activeOpacity={0.85}
-                        onPress={() => openParticipantCard(msg.senderId)}
+                        activeOpacity={isCoach ? 1 : 0.85}
+                        onPress={() => {
+                          if (isCoach) return;
+                          openParticipantCard(msg.senderId);
+                        }}
                       >
-                        <Text style={localStyles.messageSender}>
+                        <Text
+                          style={[
+                            localStyles.messageSender,
+                            isCoach && localStyles.messageSenderCoach,
+                          ]}
+                        >
                           {sender.name || "Participante"}
                         </Text>
                       </TouchableOpacity>
@@ -690,6 +791,7 @@ const EventChat = () => {
                     <Text
                       style={[
                         localStyles.messageTime,
+                        isCoach && localStyles.messageTimeCoach,
                         isMe && { color: "rgba(255,255,255,0.7)" },
                       ]}
                     >
@@ -998,6 +1100,15 @@ const localStyles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 2,
   },
+  coachAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginBottom: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: PRIMARY_COLOR,
+  },
   messageBubble: {
     maxWidth: "72%",
     borderRadius: 16,
@@ -1019,11 +1130,21 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
+  messageBubbleCoach: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FFF9EF",
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.22)",
+  },
   messageSender: {
     fontSize: 12,
     fontFamily: "CormorantGaramond_700Bold",
     color: PRIMARY_COLOR,
     marginBottom: 2,
+  },
+  messageSenderCoach: {
+    color: "#B7843F",
   },
   messageText: {
     fontSize: 15,
@@ -1035,6 +1156,9 @@ const localStyles = StyleSheet.create({
     color: TEXT_SECONDARY,
     marginTop: 4,
     alignSelf: "flex-end",
+  },
+  messageTimeCoach: {
+    color: "#B39A74",
   },
   moreAvatar: {
     backgroundColor: "#F0EDE8",
