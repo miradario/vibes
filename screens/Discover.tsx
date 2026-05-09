@@ -398,6 +398,20 @@ const Discover = () => {
     setShowProfileSheet(false);
   };
 
+  const dismissProfile = (profile: DataT | null) => {
+    if (!profile) return;
+
+    swipeMutation.mutate(
+      { targetUserId: String(profile.id), direction: "pass" },
+      {
+        onError: (dismissError) =>
+          handleApiError(dismissError, { toastTitle: "Dismiss Error" }),
+      },
+    );
+
+    setShowProfileSheet(false);
+  };
+
   const filterSectionTitle = (title: string) => (
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
   );
@@ -668,6 +682,8 @@ const Discover = () => {
               : undefined
           }
           onContactPress={() => connectProfile(selectedProfile)}
+          secondaryActionLabel="Dismiss"
+          onSecondaryActionPress={() => dismissProfile(selectedProfile)}
         />
 
         <View style={localStyles.header}>

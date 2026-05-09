@@ -605,6 +605,23 @@ const Home = () => {
     closeProfileSheet();
   };
 
+  const dismissProfile = (profile: DataT | null) => {
+    if (!profile) return;
+
+    swipeMutation.mutate(
+      {
+        targetUserId: String(profile.id),
+        direction: "pass",
+      },
+      {
+        onError: (error) =>
+          handleApiError(error, { toastTitle: "Dismiss Error" }),
+      },
+    );
+
+    closeProfileSheet();
+  };
+
   const openProfileSheet = (profile: DataT) => {
     setSelectedProfile(profile);
     setShowProfileSheet(true);
@@ -889,6 +906,10 @@ const Home = () => {
           onContactPress={() =>
             selectedProfile ? connectProfile(selectedProfile) : undefined
           }
+          secondaryActionLabel="Dismiss"
+          onSecondaryActionPress={() =>
+            selectedProfile ? dismissProfile(selectedProfile) : undefined
+          }
         />
 
         <ScrollView
@@ -1103,7 +1124,10 @@ const Home = () => {
               <TouchableOpacity
                 style={localStyles.sectionLink}
                 onPress={() =>
-                  navigation.navigate("Calendar" as never, { section: "event" } as never)
+                  navigation.navigate(
+                    "Tab" as never,
+                    { screen: "Flow", params: { section: "event" } } as never,
+                  )
                 }
               >
                 <Text style={localStyles.sectionLinkText}>Ver todos</Text>
@@ -1127,7 +1151,10 @@ const Home = () => {
                     key={event.id}
                     style={[localStyles.feedListRow, index > 0 && localStyles.eventRowSpacing]}
                     onPress={() =>
-                      navigation.navigate("Calendar" as never, { section: "event" } as never)
+                      navigation.navigate(
+                        "Tab" as never,
+                        { screen: "Flow", params: { section: "event" } } as never,
+                      )
                     }
                   >
                     <Image

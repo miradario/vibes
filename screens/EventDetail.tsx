@@ -66,7 +66,7 @@ const getStreakEmoji = (streak: number) => {
 
 const getStreakMessage = (streak: number, totalCheckins: number) => {
   if (streak === 0 && totalCheckins > 0) {
-    return "Ya tenés avances. Hacé el check-in de hoy para retomar la racha.";
+    return "Tu práctica sigue viva. Volvé hoy con calma y retomá el ritmo.";
   }
   if (streak === 0) return "¡Hacé tu primer check-in!";
   if (streak === 1) return "¡Arrancaste! Mantené la racha";
@@ -105,7 +105,7 @@ const getStreakHeadline = (
   isFinished?: boolean,
 ) => {
   if (isFinished) return "Challenge terminó";
-  if (streak === 0 && totalCheckins > 0) return "Racha en pausa";
+  if (streak === 0 && totalCheckins > 0) return "Volvé a tu ritmo";
   if (streak === 0) {
     if (startDate && referenceDate && isAfterDay(startDate, referenceDate)) {
       return "Empieza pronto";
@@ -134,7 +134,7 @@ const getParticipantCountFallback = (attendees: unknown) => {
 
 const getCheckInModalMessage = (streak: number, totalCheckins: number) => {
   if (streak === 0 && totalCheckins > 0) {
-    return "Tu racha está en pausa. Si hacés el check-in de hoy, volvés a 1 día.";
+    return "Hoy podés retomar tu práctica con suavidad y volver a empezar la racha.";
   }
   return `Racha actual: ${streak} días · si hacés el check-in de hoy, pasás a ${streak + 1}.`;
 };
@@ -1264,6 +1264,33 @@ const EventDetail = () => {
                     {participantCount} participantes
                   </Text>
                   <Text style={styles.eventDetailInfoLabel}>Ver participantes</Text>
+                  {visibleParticipants.length > 0 ? (
+                    <View style={localStyles.participantsPreviewRow}>
+                      {visibleParticipants.slice(0, 4).map((item, index) => (
+                        <Image
+                          key={item.id}
+                          source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
+                          style={[
+                            localStyles.participantPreviewAvatar,
+                            index > 0 && localStyles.participantPreviewAvatarOverlap,
+                          ]}
+                        />
+                      ))}
+                      {visibleParticipantCount > 4 ? (
+                        <View
+                          style={[
+                            localStyles.participantPreviewAvatar,
+                            localStyles.participantPreviewMore,
+                            localStyles.participantPreviewAvatarOverlap,
+                          ]}
+                        >
+                          <Text style={localStyles.participantPreviewMoreText}>
+                            +{visibleParticipantCount - 4}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
                 </View>
                 <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
               </TouchableOpacity>
@@ -1836,8 +1863,8 @@ const localStyles = StyleSheet.create({
     borderColor: PRIMARY_COLOR,
   },
   dayPillMissed: {
-    backgroundColor: "#FFF1EE",
-    borderColor: "#E7A596",
+    backgroundColor: "#FBF4E8",
+    borderColor: "#E6D1AA",
   },
   dayPillCurrent: {
     backgroundColor: "#FFF8ED",
@@ -1860,7 +1887,7 @@ const localStyles = StyleSheet.create({
     color: WHITE,
   },
   dayPillTextMissed: {
-    color: "#C96A54",
+    color: "#B48A52",
   },
   dayPillTextCurrent: {
     color: PRIMARY_COLOR,
