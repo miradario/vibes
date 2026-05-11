@@ -270,6 +270,8 @@ const translations = {
         "Volvé a vos. Escuchá lo que sentís, entendé lo que necesitás y elegí desde tu bienestar.",
       connectWithMe: "Conectar conmigo",
       relax: "Relax",
+      breathe: "Respirar",
+      breatheMinutes: "5 min para vos",
       guruHomeSubtitle: "Un mensaje para hoy",
       guruHomeBody:
         "Respirá hondo. No hace falta apurarte. Elegí desde la calma, escuchá tu energía y dejá que Vibes te acerque a lo que hoy sí resuena con vos.",
@@ -593,6 +595,8 @@ const translations = {
         "Come back to yourself. Listen to what you feel, understand what you need, and choose from your wellbeing.",
       connectWithMe: "Connect with me",
       relax: "Relax",
+      breathe: "Breathe",
+      breatheMinutes: "5 min for you",
       guruHomeSubtitle: "A message for today",
       guruHomeBody:
         "Take a deep breath. There is no need to rush. Choose from calm, listen to your energy, and let Vibes bring you closer to what truly resonates today.",

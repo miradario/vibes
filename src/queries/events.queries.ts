@@ -46,6 +46,7 @@ export type EventFeedItem = {
   imagePresetId?: ChallengeMediaPresetId | null;
   hostName?: string | null;
   hostImage?: string | null;
+  participantPreviewImages?: string[];
   tags?: string[];
   createdAt?: string | null;
   createdBy?: string | null;
@@ -304,6 +305,146 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
   };
 };
 
+type ParticipantPreviewRow = {
+  eventId: string;
+  userId: string;
+  joinedAt: string | null;
+};
+
+const createParticipantPreviewMap = async (rows: ParticipantPreviewRow[]) => {
+  if (!rows.length) return {} as Record<string, string[]>;
+
+  const eventUserIdsMap = new Map<string, string[]>();
+
+  for (const row of rows) {
+    const current = eventUserIdsMap.get(row.eventId) ?? [];
+    if (!current.includes(row.userId)) {
+      current.push(row.userId);
+      eventUserIdsMap.set(row.eventId, current);
+    }
+  }
+
+  const uniqueUserIds = Array.from(
+    new Set(rows.map((row) => row.userId).filter(Boolean)),
+  );
+  if (!uniqueUserIds.length) return {} as Record<string, string[]>;
+
+  const { data: photoRows, error: photoError } = await supabase
+    .from("profile_photos")
+    .select("profile_id, url")
+    .in("profile_id", uniqueUserIds)
+    .order("order", { ascending: true });
+
+  if (photoError) throw photoError;
+
+  const firstPhotoByUser = new Map<string, string>();
+  for (const photoRow of photoRows ?? []) {
+    const profileId = String((photoRow as any).profile_id);
+    if (!firstPhotoByUser.has(profileId) && typeof (photoRow as any).url === "string") {
+      firstPhotoByUser.set(profileId, String((photoRow as any).url));
+    }
+  }
+
+  const previewMap: Record<string, string[]> = {};
+  await Promise.all(
+    Array.from(eventUserIdsMap.entries()).map(async ([eventId, userIds]) => {
+      const previewUsers = userIds.slice(0, 3);
+      const urls = await Promise.all(
+        previewUsers.map(async (userId) => {
+          const rawPhoto = firstPhotoByUser.get(userId);
+          if (!rawPhoto) return null;
+          return createSignedProfilePhotoUrl(rawPhoto);
+        }),
+      );
+      previewMap[eventId] = urls.filter(
+        (value): value is string => typeof value === "string" && value.trim().length > 0,
+      );
+    }),
+  );
+
+  return previewMap;
+};
+
+const fetchEventParticipantPreviewMap = async (eventIds: string[]) => {
+  if (!eventIds.length) return {} as Record<string, string[]>;
+
+  const { data, error } = await supabase
+    .from("event_participants")
+    .select("event_id, user_id, joined_at")
+    .in("event_id", eventIds)
+    .order("joined_at", { ascending: true });
+
+  if (error) throw error;
+
+  return createParticipantPreviewMap(
+    (data ?? []).map((row: any) => ({
+      eventId: String(row.event_id),
+      userId: String(row.user_id),
+      joinedAt: typeof row.joined_at === "string" ? row.joined_at : null,
+    })),
+  );
+};
+
+const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
+  if (!challengeIds.length) return {} as Record<string, string[]>;
+
+  const [{ data: challengeRows, error: challengeError }, { data: eventRows, error: eventError }] =
+    await Promise.all([
+      supabase
+        .from("challenge_participants")
+        .select("challenge_id, user_id, joined_at")
+        .in("challenge_id", challengeIds)
+        .order("joined_at", { ascending: true }),
+      supabase
+        .from("event_participants")
+        .select("event_id, user_id, joined_at")
+        .eq("event_type", "challenge")
+        .in("event_id", challengeIds)
+        .order("joined_at", { ascending: true }),
+    ]);
+
+  if (challengeError) throw challengeError;
+  if (eventError) throw eventError;
+
+  return createParticipantPreviewMap([
+    ...(challengeRows ?? []).map((row: any) => ({
+      eventId: String(row.challenge_id),
+      userId: String(row.user_id),
+      joinedAt: typeof row.joined_at === "string" ? row.joined_at : null,
+    })),
+    ...(eventRows ?? []).map((row: any) => ({
+      eventId: String(row.event_id),
+      userId: String(row.user_id),
+      joinedAt: typeof row.joined_at === "string" ? row.joined_at : null,
+    })),
+  ]);
+};
+
+const enrichFeedItemsWithProfileImages = async (
+  items: EventFeedItem[],
+  previewMap: Record<string, string[]>,
+) => {
+  return Promise.all(
+    items.map(async (item) => {
+      const signedHostImage = item.hostImage
+        ? await createSignedProfilePhotoUrl(item.hostImage)
+        : null;
+      const participantPreviewImages =
+        previewMap[item.id]?.length
+          ? previewMap[item.id]
+          : signedHostImage
+            ? [signedHostImage]
+            : [];
+
+      return {
+        ...item,
+        hostImage: signedHostImage,
+        participantPreviewImages,
+      };
+    }),
+  );
+};
+
 const fetchEvents = async (): Promise<EventFeedItem[]> => {
   const { data, error } = await supabase
     .from("events")
@@ -315,7 +456,9 @@ const fetchEvents = async (): Promise<EventFeedItem[]> => {
     throw error;
   }
 
-  return (data ?? []).map(mapEventRow);
+  const items = (data ?? []).map(mapEventRow);
+  const previewMap = await fetchEventParticipantPreviewMap(items.map((item) => item.id));
+  return enrichFeedItemsWithProfileImages(items, previewMap);
 };
 
 const fetchChallenges = async (): Promise<EventFeedItem[]> => {
@@ -328,7 +471,11 @@ const fetchChallenges = async (): Promise<EventFeedItem[]> => {
     throw error;
   }
 
-  return (data ?? []).map(mapChallengeRow);
+  const items = (data ?? []).map(mapChallengeRow);
+  const previewMap = await fetchChallengeParticipantPreviewMap(
+    items.map((item) => item.id),
+  );
+  return enrichFeedItemsWithProfileImages(items, previewMap);
 };
 
 const maybeUploadEventImage = async (

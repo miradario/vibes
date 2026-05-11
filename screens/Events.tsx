@@ -18,6 +18,7 @@ import {
   useEventsFeedQuery,
 } from "../src/queries/events.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const normalizeSearchText = (value: string | null | undefined) =>
   (value ?? "")
@@ -57,20 +58,25 @@ const getChallengeProgress = (item: EventFeedItem) => {
 const ParticipantStack = ({
   count,
   hostImage,
+  avatarUrls,
 }: {
   count: number;
   hostImage?: string | null;
+  avatarUrls?: string[];
 }) => {
-  const totalVisible = Math.max(1, Math.min(count || 1, 3));
+  const uniqueAvatarUrls = Array.from(
+    new Set((avatarUrls ?? []).filter((value) => typeof value === "string" && value.trim())),
+  );
+  const totalVisible = Math.max(1, Math.min(count || uniqueAvatarUrls.length || 1, 3));
 
   return (
     <View style={localStyles.avatarStack}>
       {Array.from({ length: totalVisible }).map((_, index) => {
-        const useHostImage = index === 0 && hostImage;
-        return useHostImage ? (
+        const avatarUrl = uniqueAvatarUrls[index] ?? (index === 0 ? hostImage : null);
+        return avatarUrl ? (
           <Image
-            key={`${hostImage}-${index}`}
-            source={{ uri: hostImage }}
+            key={`${avatarUrl}-${index}`}
+            source={{ uri: avatarUrl }}
             style={[
               localStyles.stackAvatar,
               { marginLeft: index === 0 ? 0 : -10, zIndex: totalVisible - index },
@@ -155,7 +161,7 @@ const Events = () => {
         >
           <Text style={styles.eventsTitle}>{title}</Text>
           <TouchableOpacity
-            style={styles.eventCardButton}
+            style={[styles.eventCardButton, localStyles.createButton]}
             onPress={() => {
               if (section === "challenge") {
                 navigation.navigate("CreateChallenge" as never);
@@ -164,7 +170,9 @@ const Events = () => {
               navigation.navigate("CreateEvent" as never);
             }}
           >
-            <Text style={styles.eventCardButtonText}>Crear</Text>
+            <Text style={[styles.eventCardButtonText, localStyles.createButtonText]}>
+              Crear
+            </Text>
             <Icon name="add" size={16} color={TEXT_SECONDARY} />
           </TouchableOpacity>
         </View>
@@ -202,7 +210,7 @@ const Events = () => {
         <View style={styles.eventsSearchBar}>
           <Icon name="search" size={20} color={TEXT_SECONDARY} />
           <TextInput
-            style={styles.eventsSearchInput}
+            style={[styles.eventsSearchInput, localStyles.searchInput]}
             placeholder={searchPlaceholder}
             placeholderTextColor={TEXT_SECONDARY}
             value={search}
@@ -300,6 +308,7 @@ const Events = () => {
                   <ParticipantStack
                     count={participantCount}
                     hostImage={item.hostImage}
+                    avatarUrls={item.participantPreviewImages}
                   />
                   <View style={localStyles.feedRowArrow}>
                     <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
@@ -318,6 +327,15 @@ const Events = () => {
 export default Events;
 
 const localStyles = StyleSheet.create({
+  createButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  createButtonText: {
+    fontSize: 18,
+    color: "#6C6965",
+    fontFamily: vibesTheme.fonts.medium,
+  },
   segmentedControl: {
     height: 46,
     borderRadius: 23,
@@ -339,12 +357,17 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#AEBFD1",
   },
   segmentText: {
-    color: "#6E6E6E",
-    fontSize: 16,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    color: "#5F5A55",
+    fontSize: 17,
+    fontFamily: vibesTheme.fonts.medium,
   },
   segmentTextActive: {
-    color: "#F6F6F4",
+    color: "#FFFFFF",
+  },
+  searchInput: {
+    fontSize: 18,
+    fontFamily: vibesTheme.fonts.medium,
+    color: "#2B2B2B",
   },
   feedRowCard: {
     minHeight: 98,
@@ -382,16 +405,16 @@ const localStyles = StyleSheet.create({
   },
   feedRowTitle: {
     color: "#252323",
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 20,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
   },
   feedRowMeta: {
     marginTop: 4,
-    color: "#7A746D",
-    fontSize: 14,
-    lineHeight: 17,
-    fontFamily: "CormorantGaramond_500Medium",
+    color: "#66605B",
+    fontSize: 15,
+    lineHeight: 19,
+    fontFamily: vibesTheme.fonts.medium,
   },
   feedRowRight: {
     flexDirection: "row",
@@ -405,9 +428,9 @@ const localStyles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   stackAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: "#FFFFFF",
     backgroundColor: "#F1EAE2",
@@ -438,9 +461,9 @@ const localStyles = StyleSheet.create({
   },
   progressPillText: {
     color: "#5F6E7D",
-    fontSize: 12,
-    lineHeight: 14,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
   },
   emptyState: {
     paddingHorizontal: 28,
@@ -450,7 +473,7 @@ const localStyles = StyleSheet.create({
   emptyTitle: {
     color: "#2B2B2B",
     fontSize: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
   emptyText: {
@@ -458,7 +481,7 @@ const localStyles = StyleSheet.create({
     color: "#6E6E6E",
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
 });

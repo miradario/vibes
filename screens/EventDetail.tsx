@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import {
   FlatList,
   Linking,
   Platform,
+  Animated,
+  PanResponder,
 } from "react-native";
 import { ResizeMode } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -58,6 +60,10 @@ import {
 
 const LOGO = require("../assets/images/logo.png");
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
+const CHECKIN_SLIDER_HANDLE_SIZE = 72;
+const CHECKIN_SLIDER_HORIZONTAL_PADDING = 12;
+const FOOTER_CHECKIN_SLIDER_HANDLE_SIZE = 36;
+const FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING = 8;
 
 const getStreakEmoji = (streak: number) => {
   if (streak >= 30) return "🔥🔥🔥";
@@ -417,26 +423,205 @@ const EventDetail = () => {
     { length: durationDays },
     (_, index) => index + 1,
   );
+  const sliderTranslateX = useRef(new Animated.Value(0)).current;
+  const [sliderWidth, setSliderWidth] = useState(0);
+  const sliderMaxTranslate = Math.max(
+    sliderWidth - CHECKIN_SLIDER_HANDLE_SIZE - CHECKIN_SLIDER_HORIZONTAL_PADDING * 2,
+    0,
+  );
+  const footerSliderTranslateX = useRef(new Animated.Value(0)).current;
+  const [footerSliderWidth, setFooterSliderWidth] = useState(0);
+  const footerSliderMaxTranslate = Math.max(
+    footerSliderWidth -
+      FOOTER_CHECKIN_SLIDER_HANDLE_SIZE -
+      FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING * 2,
+    0,
+  );
+
+  const resetCheckInSlider = () => {
+    sliderTranslateX.stopAnimation();
+    sliderTranslateX.setValue(0);
+    footerSliderTranslateX.stopAnimation();
+    footerSliderTranslateX.setValue(0);
+  };
+
+  useEffect(() => {
+    if (!checkInModalVisible) {
+      resetCheckInSlider();
+    }
+  }, [checkInModalVisible]);
+
+  const submitCheckInFromSlider = async () => {
+    if (checkInMutation.isPending) return;
+    try {
+      await handleCheckIn();
+    } finally {
+      resetCheckInSlider();
+    }
+  };
+
+  const checkInPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          !checkInMutation.isPending &&
+          !checkedInToday &&
+          Math.abs(gestureState.dx) > 6,
+        onPanResponderMove: (_, gestureState) => {
+          const next = Math.max(0, Math.min(gestureState.dx, sliderMaxTranslate));
+          sliderTranslateX.setValue(next);
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          const next = Math.max(0, Math.min(gestureState.dx, sliderMaxTranslate));
+          const shouldComplete =
+            sliderMaxTranslate > 0 && next >= sliderMaxTranslate * 0.72;
+
+          Animated.spring(sliderTranslateX, {
+            toValue: shouldComplete ? sliderMaxTranslate : 0,
+            useNativeDriver: true,
+            bounciness: shouldComplete ? 0 : 8,
+            speed: 16,
+          }).start(({ finished }) => {
+            if (finished && shouldComplete) {
+              void submitCheckInFromSlider();
+            }
+          });
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(sliderTranslateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 8,
+            speed: 16,
+          }).start();
+        },
+      }),
+    [checkInMutation.isPending, checkedInToday, sliderMaxTranslate],
+  );
+  const footerCheckInPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          !checkInMutation.isPending &&
+          !checkedInToday &&
+          Math.abs(gestureState.dx) > 6,
+        onPanResponderMove: (_, gestureState) => {
+          const next = Math.max(
+            0,
+            Math.min(gestureState.dx, footerSliderMaxTranslate),
+          );
+          footerSliderTranslateX.setValue(next);
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          const next = Math.max(
+            0,
+            Math.min(gestureState.dx, footerSliderMaxTranslate),
+          );
+          const shouldComplete =
+            footerSliderMaxTranslate > 0 &&
+            next >= footerSliderMaxTranslate * 0.72;
+
+          Animated.spring(footerSliderTranslateX, {
+            toValue: shouldComplete ? footerSliderMaxTranslate : 0,
+            useNativeDriver: true,
+            bounciness: shouldComplete ? 0 : 8,
+            speed: 16,
+          }).start(({ finished }) => {
+            if (finished && shouldComplete) {
+              void submitCheckInFromSlider();
+            }
+          });
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(footerSliderTranslateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 8,
+            speed: 16,
+          }).start();
+        },
+      }),
+    [checkInMutation.isPending, checkedInToday, footerSliderMaxTranslate],
+  );
+
+  const renderInlineCheckInSlider = () => (
+    <View
+      style={localStyles.footerCheckInSliderWrap}
+      onLayout={(event) => {
+        setFooterSliderWidth(event.nativeEvent.layout.width);
+      }}
+    >
+      <View style={localStyles.footerCheckInSliderTrack}>
+        <View
+          style={localStyles.footerCheckInSliderGlow}
+          pointerEvents="none"
+        />
+        <View style={localStyles.footerCheckInSliderCopy}>
+          <Text style={localStyles.footerCheckInSliderTitle}>
+            Marcar challenge como hecho
+          </Text>
+          <Text style={localStyles.footerCheckInSliderSubtitle}>
+            Deslizá para completar tu día
+          </Text>
+        </View>
+        <View
+          style={localStyles.footerCheckInSliderChevrons}
+          pointerEvents="none"
+        >
+          <Icon name="chevron-forward" size={16} color="#E4B76E" />
+          <Icon name="chevron-forward" size={16} color="#E4B76E" />
+          <Icon name="chevron-forward" size={16} color="#E4B76E" />
+        </View>
+      </View>
+
+      <Animated.View
+        style={[
+          localStyles.footerCheckInSliderHandle,
+          {
+            transform: [{ translateX: footerSliderTranslateX }],
+          },
+        ]}
+        {...(!checkedInToday && !checkInMutation.isPending
+          ? footerCheckInPanResponder.panHandlers
+          : {})}
+      >
+        {checkInMutation.isPending ? (
+          <ActivityIndicator color="#D77E4E" size="small" />
+        ) : (
+          <Icon name="sunny-outline" size={22} color="#D77E4E" />
+        )}
+      </Animated.View>
+    </View>
+  );
 
   const renderBottomActions = () => {
     if (isChallenge) {
-      if (participantLoading) return null;
-
       if (isChallengeFinished) {
         if (isJoined) {
           return (
             <View style={localStyles.fixedFooterContent}>
-              <TouchableOpacity
-                style={localStyles.challengeChatButton}
-                onPress={() =>
-                  navigation.navigate("EventChat" as never, { event } as never)
-                }
-              >
-                <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
-                <Text style={localStyles.challengeChatButtonText}>
-                  Entrar al chat del challenge
-                </Text>
-              </TouchableOpacity>
+              <View style={localStyles.challengeFooterButtonGroup}>
+                <TouchableOpacity
+                  style={localStyles.challengeChatButton}
+                  onPress={() =>
+                    navigation.navigate("EventChat" as never, { event } as never)
+                  }
+                >
+                  <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
+                  <Text style={localStyles.challengeChatButtonText}>
+                    Entrar al chat del challenge
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
+                  disabled
+                >
+                  <Icon name="checkmark-circle" size={18} color={WHITE} />
+                  <Text style={localStyles.checkInButtonText}>
+                    Challenge finalizado
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <Text
                 style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}
               >
@@ -448,11 +633,69 @@ const EventDetail = () => {
 
         return (
           <View style={localStyles.fixedFooterContent}>
-            <Text
-              style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}
-            >
+            <View style={localStyles.challengeFooterButtonGroup}>
+              <TouchableOpacity
+                style={[
+                  localStyles.challengeChatButton,
+                  localStyles.challengeChatButtonDisabled,
+                ]}
+                disabled
+              >
+                <Icon name="chatbubbles-outline" size={19} color="#9D968F" />
+                <Text
+                  style={[
+                    localStyles.challengeChatButtonText,
+                    localStyles.challengeChatButtonTextDisabled,
+                  ]}
+                >
+                  Chat del challenge
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
+                disabled
+              >
+                <Icon name="checkmark-circle" size={18} color={WHITE} />
+                <Text style={localStyles.checkInButtonText}>
+                  Challenge finalizado
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}>
               {getChallengeFinishedMessage()}
             </Text>
+          </View>
+        );
+      }
+
+      if (participantLoading) {
+        return (
+          <View style={localStyles.fixedFooterContent}>
+            <View style={localStyles.challengeFooterButtonGroup}>
+              <TouchableOpacity
+                style={[
+                  localStyles.challengeChatButton,
+                  localStyles.challengeChatButtonDisabled,
+                ]}
+                disabled
+              >
+                <Icon name="chatbubbles-outline" size={19} color="#9D968F" />
+                <Text
+                  style={[
+                    localStyles.challengeChatButtonText,
+                    localStyles.challengeChatButtonTextDisabled,
+                  ]}
+                >
+                  Cargando chat
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
+                disabled
+              >
+                <ActivityIndicator color={WHITE} size="small" />
+              </TouchableOpacity>
+            </View>
           </View>
         );
       }
@@ -460,62 +703,73 @@ const EventDetail = () => {
       if (isJoined) {
         return (
           <View style={localStyles.fixedFooterContent}>
-            <TouchableOpacity
-              style={localStyles.challengeChatButton}
-              onPress={() =>
-                navigation.navigate("EventChat" as never, { event } as never)
-              }
-            >
-              <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
-              <Text style={localStyles.challengeChatButtonText}>
-                Entrar al chat del challenge
-              </Text>
-            </TouchableOpacity>
-
-            {checkedInToday ? (
-              <View style={localStyles.checkedInBadge}>
-                <Icon name="checkmark-circle" size={18} color="#4CAF50" />
-                <Text style={localStyles.checkedInText}>
-                  Check-in de hoy completo
-                </Text>
-              </View>
-            ) : (
+            <View style={localStyles.challengeFooterButtonGroup}>
               <TouchableOpacity
-                style={localStyles.checkInButton}
-                onPress={() => setCheckInModalVisible(true)}
-                disabled={checkInMutation.isPending}
+                style={localStyles.challengeChatButton}
+                onPress={() =>
+                  navigation.navigate("EventChat" as never, { event } as never)
+                }
               >
-                {checkInMutation.isPending ? (
-                  <ActivityIndicator color={WHITE} size="small" />
-                ) : (
-                  <>
-                    <Icon name="flame" size={18} color={WHITE} />
-                    <Text style={localStyles.checkInButtonText}>
-                      Hacer check-in de hoy
-                    </Text>
-                  </>
-                )}
+                <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
+                <Text style={localStyles.challengeChatButtonText}>
+                  Entrar al chat del challenge
+                </Text>
               </TouchableOpacity>
-            )}
+              {checkedInToday ? (
+                <TouchableOpacity
+                  style={[
+                    localStyles.checkInButton,
+                    localStyles.checkInButtonDone,
+                  ]}
+                  disabled
+                >
+                  <Icon name="checkmark-circle" size={18} color={WHITE} />
+                  <Text style={localStyles.checkInButtonText}>
+                    Challenge hecho hoy
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                renderInlineCheckInSlider()
+              )}
+            </View>
           </View>
         );
       }
 
       return (
         <View style={localStyles.fixedFooterContent}>
-          <TouchableOpacity
-            style={styles.eventDetailJoinButton}
-            onPress={handleJoin}
-            disabled={joinMutation.isPending}
-          >
-            {joinMutation.isPending ? (
-              <ActivityIndicator color={WHITE} size="small" />
-            ) : (
-              <Text style={styles.eventDetailJoinButtonText}>
-                Sumarme al challenge
+          <View style={localStyles.challengeFooterButtonGroup}>
+            <TouchableOpacity
+              style={[
+                localStyles.challengeChatButton,
+                localStyles.challengeChatButtonDisabled,
+              ]}
+              disabled
+            >
+              <Icon name="chatbubbles-outline" size={19} color="#9D968F" />
+              <Text
+                style={[
+                  localStyles.challengeChatButtonText,
+                  localStyles.challengeChatButtonTextDisabled,
+                ]}
+              >
+                Uníte para entrar al chat
               </Text>
-            )}
-          </TouchableOpacity>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[localStyles.checkInButton, styles.eventDetailJoinButton]}
+              onPress={handleJoin}
+              disabled={joinMutation.isPending}
+            >
+              {joinMutation.isPending ? (
+                <ActivityIndicator color={WHITE} size="small" />
+              ) : (
+                <Text style={styles.eventDetailJoinButtonText}>
+                  Sumarme al challenge
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
           <Text
             style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}
           >
@@ -892,6 +1146,7 @@ const EventDetail = () => {
       <View
         style={[
           styles.eventDetailHeader,
+          localStyles.persistentHeader,
           { top: Math.max(insets.top + 10, 24) },
         ]}
       >
@@ -1477,6 +1732,7 @@ const EventDetail = () => {
         <View
           style={[
             localStyles.fixedFooter,
+            localStyles.persistentFooter,
             { bottom: Math.max(insets.bottom + 12, 22) },
           ]}
         >
@@ -1517,19 +1773,51 @@ const EventDetail = () => {
               multiline
               maxLength={200}
             />
-            <TouchableOpacity
-              style={localStyles.modalConfirmButton}
-              onPress={handleCheckIn}
-              disabled={checkInMutation.isPending}
+            <View
+              style={localStyles.checkInSliderWrap}
+              onLayout={(event) => {
+                setSliderWidth(event.nativeEvent.layout.width);
+              }}
             >
-              {checkInMutation.isPending ? (
-                <ActivityIndicator color={WHITE} size="small" />
-              ) : (
-                <Text style={localStyles.modalConfirmText}>
-                  Confirmar check-in 🔥
-                </Text>
-              )}
-            </TouchableOpacity>
+              <View style={localStyles.checkInSliderTrack}>
+                <View style={localStyles.checkInSliderGlow} pointerEvents="none" />
+                <View style={localStyles.checkInSliderCopy}>
+                  <Text style={localStyles.checkInSliderTitle}>
+                    Check-in diario
+                  </Text>
+                  <Text style={localStyles.checkInSliderSubtitle}>
+                    Deslizá para completar tu día
+                  </Text>
+                </View>
+                <View style={localStyles.checkInSliderChevrons} pointerEvents="none">
+                  <Icon name="chevron-forward" size={18} color="#E4B76E" />
+                  <Icon name="chevron-forward" size={18} color="#E4B76E" />
+                  <Icon name="chevron-forward" size={18} color="#E4B76E" />
+                </View>
+              </View>
+
+              <Animated.View
+                style={[
+                  localStyles.checkInSliderHandle,
+                  {
+                    transform: [{ translateX: sliderTranslateX }],
+                  },
+                ]}
+                {...(!checkedInToday && !checkInMutation.isPending
+                  ? checkInPanResponder.panHandlers
+                  : {})}
+              >
+                {checkInMutation.isPending ? (
+                  <ActivityIndicator color="#D77E4E" size="small" />
+                ) : (
+                  <Icon
+                    name={checkedInToday ? "checkmark" : "sunny-outline"}
+                    size={28}
+                    color="#D77E4E"
+                  />
+                )}
+              </Animated.View>
+            </View>
             <TouchableOpacity
               style={localStyles.modalCancelButton}
               onPress={() => setCheckInModalVisible(false)}
@@ -1937,10 +2225,11 @@ const localStyles = StyleSheet.create({
     color: PRIMARY_COLOR,
   },
   scrollContent: {
-    paddingBottom: 132,
+    paddingTop: 12,
+    paddingBottom: 186,
   },
   scrollContentChallenge: {
-    paddingTop: 72,
+    paddingTop: 84,
   },
   joinSpacer: {
     height: 12,
@@ -1950,6 +2239,16 @@ const localStyles = StyleSheet.create({
     left: 24,
     right: 24,
     bottom: 22,
+    zIndex: 40,
+    elevation: 20,
+  },
+  persistentHeader: {
+    zIndex: 60,
+    elevation: 24,
+  },
+  persistentFooter: {
+    zIndex: 60,
+    elevation: 24,
   },
   fixedFooterContent: {
     backgroundColor: "rgba(246, 246, 244, 0.96)",
@@ -1962,6 +2261,11 @@ const localStyles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+  },
+  challengeFooterButtonGroup: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: 10,
   },
   eventMetaPillsRow: {
     flexDirection: "row",
@@ -2158,7 +2462,73 @@ const localStyles = StyleSheet.create({
     fontFamily: "CormorantGaramond_600SemiBold",
     fontSize: 14,
   },
+  footerCheckInSliderWrap: {
+    flex: 1,
+    minHeight: 52,
+    justifyContent: "center",
+  },
+  footerCheckInSliderTrack: {
+    minHeight: 52,
+    borderRadius: 26,
+    backgroundColor: "#FFF9EF",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.22)",
+    overflow: "hidden",
+    justifyContent: "center",
+    paddingLeft: 84,
+    paddingRight: 16,
+  },
+  footerCheckInSliderGlow: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: "42%",
+    backgroundColor: "rgba(255, 223, 177, 0.46)",
+  },
+  footerCheckInSliderCopy: {
+    gap: 1,
+  },
+  footerCheckInSliderTitle: {
+    color: DARK_GRAY,
+    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 13,
+    lineHeight: 15,
+  },
+  footerCheckInSliderSubtitle: {
+    color: TEXT_SECONDARY,
+    fontFamily: "CormorantGaramond_500Medium",
+    fontSize: 11,
+    lineHeight: 13,
+  },
+  footerCheckInSliderChevrons: {
+    position: "absolute",
+    left: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 0,
+  },
+  footerCheckInSliderHandle: {
+    position: "absolute",
+    left: 8,
+    top: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF7E6",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.92)",
+    shadowColor: "#F0AE7C",
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
   checkInButton: {
+    flex: 1,
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -2171,8 +2541,16 @@ const localStyles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
     elevation: 4,
+    paddingHorizontal: 12,
+  },
+  checkInButtonDone: {
+    backgroundColor: "#7FA3C4",
+  },
+  checkInButtonDisabled: {
+    backgroundColor: "#C7B8A2",
   },
   challengeChatButton: {
+    flex: 1,
     minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
@@ -2183,17 +2561,28 @@ const localStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.14)",
     paddingVertical: 13,
-    marginBottom: 12,
+    paddingHorizontal: 12,
+  },
+  challengeChatButtonDisabled: {
+    backgroundColor: "#F2EEE8",
+    borderColor: "rgba(43, 43, 43, 0.08)",
   },
   challengeChatButtonText: {
     color: DARK_GRAY,
     fontFamily: "CormorantGaramond_700Bold",
-    fontSize: 16,
+    fontSize: 14,
+    textAlign: "center",
+    flexShrink: 1,
+  },
+  challengeChatButtonTextDisabled: {
+    color: "#9D968F",
   },
   checkInButtonText: {
     color: WHITE,
     fontFamily: "CormorantGaramond_700Bold",
-    fontSize: 16,
+    fontSize: 14,
+    textAlign: "center",
+    flexShrink: 1,
   },
   modalOverlay: {
     flex: 1,
@@ -2228,6 +2617,74 @@ const localStyles = StyleSheet.create({
     fontSize: 15,
     minHeight: 72,
     textAlignVertical: "top",
+  },
+  checkInSliderWrap: {
+    marginTop: 4,
+    minHeight: 88,
+    justifyContent: "center",
+  },
+  checkInSliderTrack: {
+    minHeight: 88,
+    borderRadius: 44,
+    backgroundColor: "#FFF9EF",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.22)",
+    overflow: "hidden",
+    justifyContent: "center",
+    paddingLeft: 114,
+    paddingRight: 24,
+    shadowColor: "#E4B76E",
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  checkInSliderGlow: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: "54%",
+    backgroundColor: "rgba(255, 223, 177, 0.58)",
+  },
+  checkInSliderCopy: {
+    gap: 3,
+  },
+  checkInSliderTitle: {
+    color: DARK_GRAY,
+    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 18,
+  },
+  checkInSliderSubtitle: {
+    color: TEXT_SECONDARY,
+    fontFamily: "CormorantGaramond_500Medium",
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  checkInSliderChevrons: {
+    position: "absolute",
+    left: 84,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  checkInSliderHandle: {
+    position: "absolute",
+    left: CHECKIN_SLIDER_HORIZONTAL_PADDING,
+    top: 8,
+    width: CHECKIN_SLIDER_HANDLE_SIZE,
+    height: CHECKIN_SLIDER_HANDLE_SIZE,
+    borderRadius: CHECKIN_SLIDER_HANDLE_SIZE / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF7E6",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.92)",
+    shadowColor: "#F0AE7C",
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   modalConfirmButton: {
     backgroundColor: PRIMARY_COLOR,

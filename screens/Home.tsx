@@ -981,8 +981,23 @@ const Home = () => {
             <View style={localStyles.meditationContent}>
               <Text style={localStyles.meditationTitle}>{t("home.connectFirstTitle")}</Text>
               <View style={localStyles.meditationButton}>
-                <Ionicons name="leaf-outline" size={16} color="#2B2B2B" />
-                <Text style={localStyles.meditationButtonText}>{t("home.relax")}</Text>
+                <View style={localStyles.meditationButtonIconWrap}>
+                  <Ionicons name="leaf-outline" size={28} color="#314762" />
+                </View>
+                <View style={localStyles.meditationButtonCopy}>
+                  <Text style={localStyles.meditationButtonTitle}>
+                    {t("home.breathe")}
+                  </Text>
+                  <Text style={localStyles.meditationButtonSubtitle}>
+                    {t("home.breatheMinutes")}
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={28}
+                  color="#FFFFFF"
+                  style={localStyles.meditationButtonArrow}
+                />
               </View>
             </View>
           </TouchableOpacity>
@@ -1392,56 +1407,83 @@ const localStyles = StyleSheet.create({
   },
   meditationCard: {
     minHeight: 154,
-    borderRadius: 22,
+    borderRadius: 24,
     overflow: "hidden",
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     marginBottom: 18,
     position: "relative",
-    shadowOpacity: 0.09,
+    shadowOpacity: 0.08,
     shadowRadius: 18,
     shadowColor: "#3E352B",
     shadowOffset: { height: 8, width: 0 },
+    paddingHorizontal: 18,
+    paddingVertical: 14,
   },
   meditationArt: {
     position: "absolute",
-    right: 10,
-    top: 8,
-    width: "36%",
-    height: "82%",
+    right: 12,
+    top: 16,
+    width: "24%",
+    height: "52%",
+    opacity: 0.94,
   },
   meditationContent: {
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    justifyContent: "space-between",
-    minHeight: 154,
-    width: "64%",
+    justifyContent: "flex-end",
+    minHeight: 122,
+    width: "72%",
   },
   meditationTitle: {
     color: "#2B2B2B",
-    fontSize: 18,
-    lineHeight: 26,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.light,
+    marginBottom: 10,
   },
   meditationButton: {
-    marginTop: 10,
+    marginTop: 0,
     alignSelf: "flex-start",
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#AEBFD1",
-    paddingHorizontal: 16,
+    minHeight: 54,
+    minWidth: 212,
+    borderRadius: 29,
+    backgroundColor: "rgba(174, 191, 209, 0.28)",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
+    borderColor: "rgba(174, 191, 209, 0.24)",
   },
-  meditationButtonText: {
-    color: "#2B2B2B",
+  meditationButtonIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.84)",
+  },
+  meditationButtonCopy: {
+    flex: 1,
+  },
+  meditationButtonTitle: {
+    color: "#24364A",
     fontSize: 15,
-    letterSpacing: 0.2,
-    fontFamily: vibesTheme.fonts.semibold,
+    lineHeight: 17,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  meditationButtonSubtitle: {
+    marginTop: 2,
+    color: "#5E7898",
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  meditationButtonArrow: {
+    marginLeft: 2,
   },
   guruCard: {
     borderRadius: 20,

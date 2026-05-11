@@ -4,6 +4,7 @@ import React, { memo, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
@@ -93,6 +94,9 @@ const palette = {
   red: "#C9695D",
   redSoft: "#FCE9E6",
 };
+
+const FOOTER_SLIDER_HANDLE_SIZE = 42;
+const FOOTER_SLIDER_HORIZONTAL_PADDING = 8;
 
 export const getProgressMode = (totalDays: number): ProgressMode => {
   if (totalDays <= 10) return "path";
@@ -688,6 +692,8 @@ const ChallengeDetailScreen = () => {
   const checkInMutation = useCheckInChallengeMutation();
   const [localCompletedDays, setLocalCompletedDays] = useState<number[]>([]);
   const [localStatus, setLocalStatus] = useState<CheckInStatus | null>(null);
+  const [footerSliderWidth, setFooterSliderWidth] = useState(0);
+  const [footerSliderOffset, setFooterSliderOffset] = useState(0);
 
   const baseChallenge = useMemo(
     () => mapEventToChallengeData(event, remoteCheckins, participant),
@@ -716,6 +722,22 @@ const ChallengeDetailScreen = () => {
   const percent = getCompletionPercent(challenge.completedDays, challenge.totalDays);
   const daysLeft = getDaysLeft(challenge.totalDays, challenge.completedDays);
   const contentMaxWidth = width >= 700 ? 620 : undefined;
+  const footerSliderMaxOffset = Math.max(
+    footerSliderWidth -
+      FOOTER_SLIDER_HANDLE_SIZE -
+      FOOTER_SLIDER_HORIZONTAL_PADDING * 2,
+    0,
+  );
+  const footerSliderFillWidth = Math.min(
+    footerSliderOffset +
+      FOOTER_SLIDER_HANDLE_SIZE +
+      FOOTER_SLIDER_HORIZONTAL_PADDING * 2,
+    footerSliderWidth,
+  );
+
+  const resetFooterSlider = () => {
+    setFooterSliderOffset(0);
+  };
 
   const handleCheckIn = async () => {
     if (challenge.checkInStatus === "completed") return;
@@ -731,16 +753,128 @@ const ChallengeDetailScreen = () => {
       Array.from(new Set([...prev, challenge.currentDay])),
     );
     setLocalStatus("completed");
+    setFooterSliderOffset(footerSliderMaxOffset);
     triggerHaptic();
+  };
+
+  useEffect(() => {
+    if (challenge.checkInStatus !== "completed") {
+      resetFooterSlider();
+      return;
+    }
+
+    setFooterSliderOffset(footerSliderMaxOffset);
+  }, [challenge.checkInStatus, footerSliderMaxOffset]);
+
+  const footerSliderResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          challenge.checkInStatus !== "completed" &&
+          !checkInMutation.isPending &&
+          Math.abs(gestureState.dx) > 6,
+        onPanResponderMove: (_, gestureState) => {
+          const next = clamp(gestureState.dx, 0, footerSliderMaxOffset);
+          setFooterSliderOffset(next);
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          const next = clamp(gestureState.dx, 0, footerSliderMaxOffset);
+          const shouldComplete =
+            footerSliderMaxOffset > 0 && next >= footerSliderMaxOffset * 0.72;
+
+          if (shouldComplete) {
+            setFooterSliderOffset(footerSliderMaxOffset);
+            void handleCheckIn();
+          } else {
+            resetFooterSlider();
+          }
+        },
+        onPanResponderTerminate: () => {
+          resetFooterSlider();
+        },
+      }),
+    [challenge.checkInStatus, checkInMutation.isPending, footerSliderMaxOffset],
+  );
+
+  const renderFooterCheckIn = () => {
+    if (challenge.checkInStatus === "completed") {
+      return (
+        <View style={[localStyles.footerSliderTrack, localStyles.footerSliderTrackCompleted]}>
+          <View style={[localStyles.footerSliderHandle, localStyles.footerSliderHandleCompleted]}>
+            <Icon name="checkmark" size={22} color="#FFFFFF" />
+          </View>
+          <View style={localStyles.footerSliderCopy}>
+            <Text style={localStyles.footerSliderTitle}>Día completado</Text>
+            <Text style={localStyles.footerSliderSubtitle}>
+              Gracias por elegirte hoy
+            </Text>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View
+        style={localStyles.footerSliderWrap}
+        onLayout={(event) =>
+          setFooterSliderWidth(event.nativeEvent.layout.width)
+        }
+      >
+        <View style={localStyles.footerSliderTrack}>
+          <View
+            style={[
+              localStyles.footerSliderFill,
+              { width: footerSliderFillWidth || FOOTER_SLIDER_HANDLE_SIZE + FOOTER_SLIDER_HORIZONTAL_PADDING * 2 },
+            ]}
+            pointerEvents="none"
+          />
+          <View style={localStyles.footerSliderChevrons} pointerEvents="none">
+            <Icon name="chevron-forward" size={16} color="#E2A84F" />
+            <Icon name="chevron-forward" size={16} color="#E2A84F" />
+          </View>
+          <View style={localStyles.footerSliderCopy}>
+            <Text style={localStyles.footerSliderTitle}>Check-in diario</Text>
+            <Text style={localStyles.footerSliderSubtitle}>
+              Deslizá para completar tu día
+            </Text>
+          </View>
+        </View>
+        <View
+          style={[
+            localStyles.footerSliderHandle,
+            { transform: [{ translateX: footerSliderOffset }] },
+          ]}
+          {...footerSliderResponder.panHandlers}
+        >
+          {checkInMutation.isPending ? (
+            <ActivityIndicator color={palette.goldDeep} />
+          ) : (
+            <Icon name="sunny-outline" size={22} color={palette.goldDeep} />
+          )}
+        </View>
+      </View>
+    );
   };
 
   return (
     <SafeAreaView style={localStyles.screen} edges={["top", "left", "right"]}>
+      <View
+        style={[
+          localStyles.stickyHeader,
+          { top: Math.max(insets.top + 8, 16), maxWidth: contentMaxWidth, alignSelf: "center" },
+        ]}
+      >
+        <ChallengeHeader
+          challenge={challenge}
+          onBack={() => navigation.goBack()}
+        />
+      </View>
       <ScrollView
         contentContainerStyle={[
           localStyles.content,
           {
-            paddingBottom: insets.bottom + 28,
+            paddingTop: 128,
+            paddingBottom: insets.bottom + 188,
             maxWidth: contentMaxWidth,
             alignSelf: "center",
             width: "100%",
@@ -748,10 +882,6 @@ const ChallengeDetailScreen = () => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ChallengeHeader
-          challenge={challenge}
-          onBack={() => navigation.goBack()}
-        />
         <GrowthIllustration
           percent={percent}
           presetId={event?.imagePresetId ?? null}
@@ -771,21 +901,29 @@ const ChallengeDetailScreen = () => {
           completedDays={challenge.completedDays}
           totalDays={challenge.totalDays}
         />
-        <CheckInButton
-          status={challenge.checkInStatus}
-          isLoading={checkInMutation.isPending}
-          onPress={() => {
-            void handleCheckIn();
-          }}
-        />
-        <ChatEntryRow
-          onPress={() =>
-            event
-              ? navigation.navigate("EventChat" as never, { event } as never)
-              : undefined
-          }
-        />
       </ScrollView>
+
+      <View
+        style={[
+          localStyles.stickyFooter,
+          {
+            bottom: Math.max(insets.bottom + 12, 20),
+            maxWidth: contentMaxWidth,
+            alignSelf: "center",
+          },
+        ]}
+      >
+        <View style={localStyles.stickyFooterCard}>
+          {renderFooterCheckIn()}
+          <ChatEntryRow
+            onPress={() =>
+              event
+                ? navigation.navigate("EventChat" as never, { event } as never)
+                : undefined
+            }
+          />
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -800,10 +938,38 @@ const localStyles = StyleSheet.create({
     paddingTop: 10,
     gap: 16,
   },
+  stickyHeader: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    zIndex: 40,
+    elevation: 16,
+  },
+  stickyFooter: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    zIndex: 40,
+    elevation: 16,
+  },
+  stickyFooterCard: {
+    borderRadius: 26,
+    backgroundColor: "rgba(246, 246, 244, 0.96)",
+    padding: 12,
+    gap: 10,
+    shadowColor: "#6F5536",
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+  },
   header: {
     flexDirection: "row",
     gap: 14,
     alignItems: "flex-start",
+    backgroundColor: "rgba(246, 246, 244, 0.96)",
+    borderRadius: 24,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   iconButton: {
     width: 42,
@@ -1117,6 +1283,81 @@ const localStyles = StyleSheet.create({
   },
   checkInBroken: {
     backgroundColor: palette.red,
+  },
+  footerSliderWrap: {
+    minHeight: 68,
+    justifyContent: "center",
+  },
+  footerSliderTrack: {
+    minHeight: 68,
+    borderRadius: 34,
+    backgroundColor: "#FFF9EF",
+    borderWidth: 1,
+    borderColor: "rgba(226, 168, 79, 0.24)",
+    overflow: "hidden",
+    justifyContent: "center",
+    paddingLeft: 124,
+    paddingRight: 20,
+  },
+  footerSliderTrackCompleted: {
+    backgroundColor: "rgba(174, 191, 209, 0.24)",
+    borderColor: "rgba(174, 191, 209, 0.34)",
+  },
+  footerSliderFill: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 34,
+    backgroundColor: "rgba(255, 223, 177, 0.58)",
+  },
+  footerSliderHandle: {
+    position: "absolute",
+    left: FOOTER_SLIDER_HORIZONTAL_PADDING,
+    top: 13,
+    width: FOOTER_SLIDER_HANDLE_SIZE,
+    height: FOOTER_SLIDER_HANDLE_SIZE,
+    borderRadius: FOOTER_SLIDER_HANDLE_SIZE / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF7E6",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.92)",
+    shadowColor: "#F0AE7C",
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  footerSliderHandleCompleted: {
+    backgroundColor: palette.accentBlue,
+    shadowOpacity: 0,
+  },
+  footerSliderCopy: {
+    justifyContent: "center",
+    gap: 2,
+    zIndex: 1,
+  },
+  footerSliderTitle: {
+    color: palette.text,
+    fontSize: 17,
+    lineHeight: 20,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  footerSliderSubtitle: {
+    color: palette.muted,
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  footerSliderChevrons: {
+    position: "absolute",
+    left: 62,
+    top: 0,
+    bottom: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    opacity: 0.82,
   },
   checkInText: {
     color: "#FFFFFF",
