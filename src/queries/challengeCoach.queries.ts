@@ -1,4 +1,3 @@
-import { Platform } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { ChallengeParticipant } from "./events.queries";
@@ -34,16 +33,10 @@ const challengeCoachKeys = {
 
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
 
-const getOllamaBaseUrl = () => {
-  const fromEnv = process.env.EXPO_PUBLIC_OLLAMA_BASE_URL?.trim();
-  if (fromEnv) return fromEnv.replace(/\/+$/, "");
-  return Platform.OS === "android"
-    ? "http://10.0.2.2:11434"
-    : "http://127.0.0.1:11434";
-};
+const getOpenAIModel = () =>
+  process.env.EXPO_PUBLIC_OPENAI_MODEL?.trim() || "gpt-4o-mini";
 
-const getOllamaModel = () =>
-  process.env.EXPO_PUBLIC_OLLAMA_MODEL?.trim() || "minimax-m2.5:cloud";
+const getOpenAIAPIKey = () => process.env.EXPO_PUBLIC_OPENAI_API_KEY?.trim();
 
 const getChallengeDay = (startsAt?: string | null) => {
   if (!startsAt) return null;
@@ -71,7 +64,7 @@ const buildFallbackMessage = (input: DailyChallengeCoachInput) => {
       return `You're still with ${input.title}${day ? `, day ${day}` : ""}. Give yourself one simple moment today to protect your rhythm without pressure.`;
     }
 
-    return `${input.title} can begin softly today. Choose one small, present and kind gesture to come back to the challenge.`;
+    return `${input.title} puede empezar suave hoy. Elegí un gesto pequeño, presente y amable para volver al desafío.`;
   }
 
   if (checkedInToday) {
@@ -95,15 +88,15 @@ const buildPrompt = (input: DailyChallengeCoachInput) => {
     const checkedInToday = input.participant?.checkedInToday ? "yes" : "no";
 
     return [
-      "You are a brief, warm guide for a wellbeing challenge inside an app called Vibes.",
+      "You are a brief, warm guide for a wellbeing desafio inside an app called Vibes.",
       "Write ONLY one short message in English, human, calm, spiritual and concrete.",
       "Do not use lists, quotes, markdown or hashtags.",
       "Maximum 220 characters.",
       "It should feel encouraging, serene and intimate.",
-      `Challenge: ${input.title}.`,
+      `Desafío: ${input.title}.`,
       input.subtitle ? `Context: ${input.subtitle}.` : null,
       input.durationDays ? `Total duration: ${input.durationDays} days.` : null,
-      challengeDay ? `Current challenge day: ${challengeDay}.` : null,
+      challengeDay ? `Current desafío day: ${challengeDay}.` : null,
       `Current streak: ${streak}.`,
       `Total check-ins: ${totalCheckins}.`,
       `Checked in today: ${checkedInToday}.`,
@@ -116,15 +109,15 @@ const buildPrompt = (input: DailyChallengeCoachInput) => {
   const checkedInToday = input.participant?.checkedInToday ? "sí" : "no";
 
   return [
-    "Sos una guia breve y calida para un challenge de bienestar dentro de una app llamada Vibes.",
+    "Sos una guía breve y cálida para un desafío de bienestar dentro de una app llamada Vibes.",
     "Escribí SOLO un mensaje corto en español rioplatense, humano, espiritual y concreto.",
     "No uses listas, no uses comillas, no uses markdown, no uses hashtags.",
     "Máximo 220 caracteres.",
     "Tiene que sonar alentador, sereno y íntimo.",
-    `Challenge: ${input.title}.`,
+    `Desafío: ${input.title}.`,
     input.subtitle ? `Contexto: ${input.subtitle}.` : null,
     input.durationDays ? `Duración total: ${input.durationDays} días.` : null,
-    challengeDay ? `Día actual del challenge: ${challengeDay}.` : null,
+    challengeDay ? `Día actual del desafío: ${challengeDay}.` : null,
     `Racha actual del usuario: ${streak}.`,
     `Check-ins totales: ${totalCheckins}.`,
     `¿Ya hizo check-in hoy?: ${checkedInToday}.`,
@@ -134,35 +127,53 @@ const buildPrompt = (input: DailyChallengeCoachInput) => {
     .join(" ");
 };
 
-const generateWithOllama = async (input: DailyChallengeCoachInput) => {
-  const response = await fetch(`${getOllamaBaseUrl()}/api/generate`, {
+const generateWithOpenAI = async (input: DailyChallengeCoachInput) => {
+  const apiKey = getOpenAIAPIKey();
+  const model = getOpenAIModel();
+
+  if (!apiKey) {
+    throw new Error("Falta EXPO_PUBLIC_OPENAI_API_KEY");
+  }
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: getOllamaModel(),
-      prompt: buildPrompt(input),
-      stream: false,
-      options: {
-        temperature: 0.85,
-      },
+      model,
+      temperature: 0.85,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Respond only with the final user-facing message. No markdown, no quotes, no alternatives.",
+        },
+        {
+          role: "user",
+          content: buildPrompt(input),
+        },
+      ],
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`Ollama respondió ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(`OpenAI respondió ${response.status}: ${errorText}`);
   }
 
-  const data = (await response.json()) as { response?: string };
-  const message = typeof data.response === "string" ? data.response.trim() : "";
+  const data = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string | null } }>;
+  };
+  const message = data.choices?.[0]?.message?.content?.trim() ?? "";
   if (!message) {
-    throw new Error("Ollama no devolvió contenido");
+    throw new Error("OpenAI no devolvió contenido");
   }
 
   return {
     body: message.replace(/\s+/g, " ").trim(),
-    model: getOllamaModel(),
+    model,
   };
 };
 
@@ -197,11 +208,11 @@ async function fetchOrCreateDailyChallengeCoachMessage(
   let model: string | null = null;
 
   try {
-    const generated = await generateWithOllama(input);
+    const generated = await generateWithOpenAI(input);
     generatedBody = generated.body;
     model = generated.model;
   } catch (error) {
-    console.warn("challenge_coach:ollama_fallback", error);
+    console.warn("challenge_coach:openai_fallback", error);
   }
 
   const { data: inserted, error: insertError } = await supabase

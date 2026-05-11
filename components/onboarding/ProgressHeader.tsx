@@ -9,18 +9,23 @@ import {
 type ProgressHeaderProps = {
   progress: number;
   onBack: () => void;
+  showBack?: boolean;
 };
 
-const ProgressHeader = ({ progress, onBack }: ProgressHeaderProps) => (
+const ProgressHeader = ({ progress, onBack, showBack = true }: ProgressHeaderProps) => (
   <View style={styles.wrap}>
-    <TouchableOpacity
-      onPress={onBack}
-      activeOpacity={0.8}
-      style={styles.backButton}
-      accessibilityRole="button"
-    >
-      <Icon name="chevron-back" size={22} color={ONBOARDING_COLORS.text} />
-    </TouchableOpacity>
+    {showBack ? (
+      <TouchableOpacity
+        onPress={onBack}
+        activeOpacity={0.8}
+        style={styles.backButton}
+        accessibilityRole="button"
+      >
+        <Icon name="chevron-back" size={22} color={ONBOARDING_COLORS.text} />
+      </TouchableOpacity>
+    ) : (
+      <View style={styles.backSpacer} />
+    )}
     <View style={styles.track}>
       <View style={[styles.fill, { width: `${Math.max(0, Math.min(progress, 1)) * 100}%` }]} />
     </View>
@@ -39,6 +44,11 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
+    marginRight: isCompactOnboardingScreen ? 8 : 14,
+  },
+  backSpacer: {
+    width: 34,
+    height: 34,
     marginRight: isCompactOnboardingScreen ? 8 : 14,
   },
   track: {

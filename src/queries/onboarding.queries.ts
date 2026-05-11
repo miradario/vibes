@@ -98,6 +98,7 @@ export type OnboardingDraft = {
   intentId?: number;
   spiritualPath?: string[];
   spiritualPathDetails?: SpiritualPathDetails;
+  briefDescription?: string;
   aboutMe?: string;
   vegetarian?: "Sí" | "No" | "";
   otherTags?: string[];
@@ -122,6 +123,7 @@ const defaultDraft: OnboardingDraft = {
   intentId: undefined,
   spiritualPath: [],
   spiritualPathDetails: {},
+  briefDescription: "",
   aboutMe: "",
   vegetarian: "",
   otherTags: [],

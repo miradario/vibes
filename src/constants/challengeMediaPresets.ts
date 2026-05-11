@@ -52,7 +52,7 @@ export const challengeMediaPresets: ChallengeMediaPreset[] = [
   },
   {
     id: "challenge",
-    label: "Challenge",
+    label: "Desafío",
     image: require("../../assets/images/challenges/challengetree.png"),
     video: require("../../assets/videos/challenge.mp4"),
   },

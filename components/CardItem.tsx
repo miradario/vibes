@@ -359,7 +359,7 @@ const CardItem = ({
                       <Icon name="sparkles-outline" size={16} color={TEXT_PRIMARY} />
                     </View>
                     <View style={styles.discoverSharedTextWrap}>
-                      <Text style={styles.discoverSharedLabel}>Challenge</Text>
+                      <Text style={styles.discoverSharedLabel}>Desafío</Text>
                       <Text style={styles.discoverSharedValue}>{challengeTitle}</Text>
                     </View>
                   </View>

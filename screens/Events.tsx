@@ -103,9 +103,9 @@ const Events = () => {
   const [section, setSection] = useState<"event" | "challenge">(
     route.params?.section === "challenge" ? "challenge" : "event",
   );
-  const title = section === "challenge" ? "Challenges" : "Eventos";
+  const title = section === "challenge" ? "Desafíos" : "Eventos";
   const searchPlaceholder =
-    section === "challenge" ? "Buscar challenges..." : "Buscar eventos...";
+    section === "challenge" ? "Buscar desafíos..." : "Buscar eventos...";
   const eventsQuery = useEventsFeedQuery();
   const challengesQuery = useChallengesFeedQuery();
   const {
@@ -123,7 +123,7 @@ const Events = () => {
     error instanceof Error && error.message.trim()
       ? error.message
       : section === "challenge"
-        ? "No se pudieron cargar los challenges."
+        ? "No se pudieron cargar los desafíos."
         : "No se pudieron cargar los eventos.";
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
@@ -181,7 +181,7 @@ const Events = () => {
           {(
             [
               { value: "event", label: "Eventos" },
-              { value: "challenge", label: "Challenges" },
+              { value: "challenge", label: "Desafíos" },
             ] as const
           ).map((item) => {
             const isActive = section === item.value;
@@ -232,16 +232,16 @@ const Events = () => {
               <Text style={localStyles.emptyTitle}>
                 {isLoading
                   ? section === "challenge"
-                  ? "Loading challenges..."
+                  ? "Cargando desafíos..."
                     : "Loading events..."
                   : error
                     ? "No se pudieron cargar"
                     : normalizedSearch
                       ? section === "challenge"
-                        ? "No encontramos challenges"
+                        ? "No encontramos desafíos"
                         : "No encontramos eventos"
                     : section === "challenge"
-                      ? "No real challenges yet"
+                      ? "Todavía no hay desafíos reales"
                       : "No real events yet"}
               </Text>
               <Text style={localStyles.emptyText}>
@@ -252,7 +252,7 @@ const Events = () => {
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
                     : section === "challenge"
-                      ? "Create a challenge or connect a real source to populate this list."
+                      ? "Creá un desafío o conectá una fuente real para poblar esta lista."
                       : "Create an event or connect a real events source to populate this list."}
               </Text>
             </View>

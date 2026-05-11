@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -19,17 +19,22 @@ import Animated, {
   withSequence,
 } from "react-native-reanimated";
 import { useNavigation } from "@react-navigation/native";
-import { ResizeMode, Video } from "expo-av";
+import { ResizeMode, Video, type AVPlaybackStatus } from "expo-av";
+import * as Haptics from "expo-haptics";
 import { vibesTheme } from "../../theme/vibesTheme";
 import Icon from "../../../components/Icon";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const REVERSE_FRAME_MS = 16;
+const REVERSE_STEP_MS = 180;
+const MAX_REVERSE_DURATION_MS = 520;
 
 type VibesMinimalOnboardingProps = {
   title?: string;
   body?: string;
   ctaLabel?: string;
   onContinue?: () => void;
+  reverseVideoOnContinue?: boolean;
 };
 
 const VibesMinimalOnboarding = ({
@@ -37,16 +42,24 @@ const VibesMinimalOnboarding = ({
   body = "Connect with like-minded souls and explore a more conscious way of living.",
   ctaLabel,
   onContinue: onContinueProp,
+  reverseVideoOnContinue = false,
 }: VibesMinimalOnboardingProps) => {
   const navigation = useNavigation();
   const { height } = useWindowDimensions();
   const illustrationHeight = Math.max(300, height * 0.5);
+  const videoRef = useRef<Video>(null);
+  const durationRef = useRef(0);
+  const positionRef = useRef(0);
+  const isContinuingRef = useRef(false);
+  const [videoShouldPlay, setVideoShouldPlay] = useState(true);
 
   const illustrationOpacity = useSharedValue(0);
   const titleY = useSharedValue(8);
   const titleOpacity = useSharedValue(0);
   const ctaOpacity = useSharedValue(0);
   const ctaScale = useSharedValue(1);
+  const blurOpacity = useSharedValue(0);
+  const blurScale = useSharedValue(0.98);
 
   useEffect(() => {
     illustrationOpacity.value = withTiming(1, {
@@ -81,18 +94,79 @@ const VibesMinimalOnboarding = ({
     transform: [{ scale: ctaScale.value }],
   }));
 
-  const onContinue = () => {
+  const blurStyle = useAnimatedStyle(() => ({
+    opacity: blurOpacity.value,
+    transform: [{ scale: blurScale.value }],
+  }));
+
+  const continueToNext = () => {
+    if (onContinueProp) {
+      onContinueProp();
+      return;
+    }
+    navigation.navigate("Welcome" as never);
+  };
+
+  const wait = (ms: number) =>
+    new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+
+  const updatePlaybackStatus = (status: AVPlaybackStatus) => {
+    if (!status.isLoaded) return;
+    positionRef.current = status.positionMillis;
+    durationRef.current = status.durationMillis ?? durationRef.current;
+  };
+
+  const playVideoBackToStart = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    setVideoShouldPlay(false);
+    const status = await video.getStatusAsync();
+    if (!status.isLoaded) return;
+
+    const duration = status.durationMillis ?? durationRef.current;
+    let position = status.positionMillis || positionRef.current || duration;
+    const startedAt = Date.now();
+
+    while (position > 0 && Date.now() - startedAt < MAX_REVERSE_DURATION_MS) {
+      position = Math.max(0, position - REVERSE_STEP_MS);
+      await video.setPositionAsync(position);
+      await wait(REVERSE_FRAME_MS);
+    }
+
+    await video.setPositionAsync(0);
+  };
+
+  const showBlurAndContinue = () => {
+    blurOpacity.value = withTiming(1, {
+      duration: 360,
+      easing: Easing.out(Easing.cubic),
+    });
+    blurScale.value = withTiming(1.04, {
+      duration: 360,
+      easing: Easing.out(Easing.cubic),
+    });
+    setTimeout(continueToNext, 220);
+  };
+
+  const onContinue = async () => {
+    if (isContinuingRef.current) return;
+    isContinuingRef.current = true;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     ctaScale.value = withSequence(
       withTiming(0.96, { duration: 90 }),
       withTiming(1, { duration: 120 }),
     );
-    setTimeout(() => {
-      if (onContinueProp) {
-        onContinueProp();
-        return;
-      }
-      navigation.navigate("Welcome" as never);
-    }, 110);
+
+    if (!reverseVideoOnContinue) {
+      setTimeout(continueToNext, 110);
+      return;
+    }
+
+    setTimeout(showBlurAndContinue, 220);
+    await playVideoBackToStart();
   };
 
   return (
@@ -141,11 +215,13 @@ const VibesMinimalOnboarding = ({
         ]}
       >
         <Video
+          ref={videoRef}
           source={require("../../../assets/videos/boarding.mp4")}
           style={styles.video}
           resizeMode={ResizeMode.CONTAIN}
-          shouldPlay
+          shouldPlay={videoShouldPlay}
           isMuted
+          onPlaybackStatusUpdate={updatePlaybackStatus}
         />
       </Animated.View>
 
@@ -168,6 +244,8 @@ const VibesMinimalOnboarding = ({
           />
         )}
       </AnimatedPressable>
+
+      <Animated.View pointerEvents="none" style={[styles.blurOverlay, blurStyle]} />
     </SafeAreaView>
   );
 };
@@ -249,6 +327,11 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 16,
+  },
+  blurOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(246, 246, 244, 0.92)",
+    zIndex: 10,
   },
 });
 

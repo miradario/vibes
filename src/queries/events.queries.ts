@@ -173,7 +173,7 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
       typeof row.subtitle === "string" && row.subtitle.trim()
         ? row.subtitle
         : type === "challenge"
-          ? "Challenge creado por la comunidad"
+          ? "Desafío creado por la comunidad"
           : "Evento creado por la comunidad",
     description:
       rawDescription && rawDescription.trim()
@@ -189,7 +189,7 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
           : "Sin fecha definida",
     startsAt,
     attendees:
-      type === "challenge" ? "Challenge" : `${participantCount}/${capacity || 0}`,
+      type === "challenge" ? "Desafío" : `${participantCount}/${capacity || 0}`,
     capacity: type === "event" ? capacity : null,
     durationDays: type === "challenge" ? durationDays : null,
     location:
@@ -266,14 +266,14 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
     subtitle:
       typeof row.subtitle === "string" && row.subtitle.trim()
         ? row.subtitle
-        : "Challenge creado por la comunidad",
+        : "Desafío creado por la comunidad",
     description:
       rawDescription && rawDescription.trim()
         ? stripChallengePresetFromDescription(rawDescription)
         : null,
     date: durationDays > 0 ? `${durationDays} días` : "Sin duración definida",
     startsAt,
-    attendees: participantCount > 0 ? `${participantCount} participantes` : "Challenge",
+    attendees: participantCount > 0 ? `${participantCount} participantes` : "Desafío",
     capacity: null,
     durationDays,
     location: null,

@@ -35,6 +35,7 @@ import {
   useEventsFeedQuery,
   useMyEventGroupsQuery,
 } from "../src/queries/events.queries";
+import { useMatchesQuery } from "../src/queries/matches.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
@@ -247,6 +248,7 @@ const Home = () => {
     data: myEventGroups = [],
     isLoading: isMyEventGroupsLoading,
   } = useMyEventGroupsQuery(session?.user?.id);
+  const { data: matches = [] } = useMatchesQuery();
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
@@ -428,13 +430,13 @@ const Home = () => {
   const summaryStats = [
     {
       icon: "people-outline" as const,
-      value: profiles.length || 12,
+      value: matches.length,
       label: "Conexiones",
     },
     {
       icon: "trophy-outline" as const,
       value: joinedActiveChallenges.length,
-      label: "Challenges",
+      label: "Desafíos",
     },
     {
       icon: "calendar-outline" as const,
@@ -1006,8 +1008,8 @@ const Home = () => {
             <View style={localStyles.sectionHeader}>
               <Text style={localStyles.sectionTitle}>
                 {visibleJoinedActiveChallenges.length > 0
-                  ? "Tus challenges vigentes"
-                  : "Challenge sugerido"}
+                  ? "Tus desafíos vigentes"
+                  : "Desafío sugerido"}
               </Text>
               <TouchableOpacity
                 style={localStyles.sectionLink}
@@ -1146,7 +1148,7 @@ const Home = () => {
               </TouchableOpacity>
             ) : (
               <Text style={localStyles.emptyStateText}>
-                No hay challenges activos por ahora.
+                No hay desafíos activos por ahora.
               </Text>
             )}
           </View>

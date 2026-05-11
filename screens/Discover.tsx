@@ -201,6 +201,7 @@ const Discover = () => {
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [hasHydratedStoredFilters, setHasHydratedStoredFilters] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
+  const [hiddenProfileIds, setHiddenProfileIds] = useState<Set<string>>(new Set());
   const [showProfileSheet, setShowProfileSheet] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
@@ -221,6 +222,7 @@ const Discover = () => {
 
   const profiles = useMemo<DataT[]>(() => {
     return candidates
+      .filter((candidate) => !hiddenProfileIds.has(String((candidate as Record<string, any>).id)))
       .map((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
         const distanceKm = getDistanceKm(
@@ -300,6 +302,7 @@ const Discover = () => {
   }, [
     candidates,
     discoverFilters,
+    hiddenProfileIds,
     ownProfileRecord?.latitude,
     ownProfileRecord?.longitude,
   ]);
@@ -381,35 +384,55 @@ const Discover = () => {
 
   const connectProfile = (profile: DataT | null) => {
     if (!profile) return;
+    const profileId = String(profile.id);
+
+    setHiddenProfileIds((prev) => new Set(prev).add(profileId));
 
     swipeMutation.mutate(
-      { targetUserId: String(profile.id), direction: "like" },
+      { targetUserId: profileId, direction: "like" },
       {
         onSuccess: (response) => {
           if (response?.match) {
             navigation.navigate("Match" as never, { profile } as never);
           }
         },
-        onError: (connectError) =>
-          handleApiError(connectError, { toastTitle: "Connect Error" }),
+        onError: (connectError) => {
+          setHiddenProfileIds((prev) => {
+            const next = new Set(prev);
+            next.delete(profileId);
+            return next;
+          });
+          handleApiError(connectError, { toastTitle: "Connect Error" });
+        },
       },
     );
 
     setShowProfileSheet(false);
+    setSelectedProfile(null);
   };
 
   const dismissProfile = (profile: DataT | null) => {
     if (!profile) return;
+    const profileId = String(profile.id);
+
+    setHiddenProfileIds((prev) => new Set(prev).add(profileId));
 
     swipeMutation.mutate(
-      { targetUserId: String(profile.id), direction: "pass" },
+      { targetUserId: profileId, direction: "pass" },
       {
-        onError: (dismissError) =>
-          handleApiError(dismissError, { toastTitle: "Dismiss Error" }),
+        onError: (dismissError) => {
+          setHiddenProfileIds((prev) => {
+            const next = new Set(prev);
+            next.delete(profileId);
+            return next;
+          });
+          handleApiError(dismissError, { toastTitle: "Dismiss Error" });
+        },
       },
     );
 
     setShowProfileSheet(false);
+    setSelectedProfile(null);
   };
 
   const filterSectionTitle = (title: string) => (
@@ -739,7 +762,7 @@ const Discover = () => {
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FFFDF8",
   },
   safeArea: {
     flex: 1,
@@ -757,15 +780,20 @@ const localStyles = StyleSheet.create({
   },
   filtersButton: {
     marginTop: 8,
-    minHeight: 38,
-    borderRadius: 19,
+    minHeight: 42,
+    borderRadius: 21,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.10)",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 14,
+    borderColor: "rgba(255, 255, 255, 0.82)",
+    backgroundColor: "rgba(255, 253, 248, 0.88)",
+    paddingHorizontal: 17,
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 14,
+    elevation: 3,
   },
   filtersButtonText: {
     color: "#2B2B2B",

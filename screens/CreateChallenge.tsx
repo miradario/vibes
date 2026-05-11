@@ -117,7 +117,7 @@ const CreateChallenge = () => {
     }
 
     if (!session?.user?.id) {
-      Alert.alert("Sesión requerida", "Necesitás iniciar sesión para crear un challenge.");
+      Alert.alert("Sesión requerida", "Necesitás iniciar sesión para crear un desafío.");
       return;
     }
 
@@ -129,7 +129,7 @@ const CreateChallenge = () => {
       await createChallengeMutation.mutateAsync({
         createdBy: session.user.id,
         title: title.trim(),
-        subtitle: subtitle.trim() || "Challenge creado por la comunidad",
+        subtitle: subtitle.trim() || "Desafío creado por la comunidad",
         description: subtitle.trim() || null,
         durationDays: parsedDays,
         startsAt: challengeStartDate?.toISOString() ?? null,
@@ -147,7 +147,7 @@ const CreateChallenge = () => {
       );
     } catch (error) {
       console.log("createChallenge:error", error);
-      const fallback = "No se pudo crear el challenge.";
+      const fallback = "No se pudo crear el desafío.";
       const message =
         error instanceof Error
           ? error.message || fallback
@@ -188,7 +188,7 @@ const CreateChallenge = () => {
               <Icon name="chevron-back" size={22} color={DARK_GRAY} />
             </TouchableOpacity>
             <View style={{ flex: 1, alignItems: "center" }}>
-              <Text style={styles.title}>Crear challenge</Text>
+              <Text style={styles.title}>Crear desafío</Text>
             </View>
             <View style={{ width: 22 }} />
           </View>
@@ -204,7 +204,7 @@ const CreateChallenge = () => {
               returnKeyType="next"
             />
 
-            <Text style={localStyles.label}>Imagen y video del challenge</Text>
+            <Text style={localStyles.label}>Imagen y video del desafío</Text>
             <View style={localStyles.presetGrid}>
               {challengeMediaPresets.map((preset) => {
                 const isSelected = selectedPresetId === preset.id;
@@ -305,7 +305,7 @@ const CreateChallenge = () => {
             disabled={!isFormReady || createChallengeMutation.isPending}
           >
             <Text style={localStyles.createButtonText}>
-              {createChallengeMutation.isPending ? "Creando..." : "Crear challenge"}
+              {createChallengeMutation.isPending ? "Creando..." : "Crear desafío"}
             </Text>
           </TouchableOpacity>
         </View>

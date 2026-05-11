@@ -104,7 +104,7 @@ const fetchSharedActivities = async (
     ),
     challenges: uniq(
       (challengesRes.data ?? []).map(
-        (row: any) => String(row.title ?? "Challenge"),
+        (row: any) => String(row.title ?? "Desafío"),
       ),
     ),
   };

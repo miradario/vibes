@@ -33,14 +33,14 @@ export const onboardingStyles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: isCompactOnboardingScreen ? 18 : 24,
     paddingTop: 12,
-    paddingBottom: 24,
+    paddingBottom: 0,
   },
   card: {
     flex: 1,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: isCompactOnboardingScreen ? 18 : 22,
     paddingTop: 16,
-    paddingBottom: 20,
+    paddingBottom: 12,
   },
   body: {
     flexGrow: 1,
@@ -203,11 +203,22 @@ export const onboardingStyles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
   },
+  textAreaRow: {
+    minHeight: 92,
+    alignItems: "flex-start",
+    paddingTop: 16,
+    paddingBottom: 14,
+  },
   input: {
     flex: 1,
     color: ONBOARDING_COLORS.text,
     fontSize: 16,
     marginLeft: 12,
+  },
+  textAreaInput: {
+    minHeight: 62,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   ageValue: {
     flex: 1,

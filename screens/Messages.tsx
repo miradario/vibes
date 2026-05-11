@@ -265,7 +265,7 @@ const Messages = () => {
                     : localStyles.eventBadgeText,
                 ]}
               >
-                {isChallenge ? "Challenge" : "Evento"}
+                {isChallenge ? "Desafío" : "Evento"}
               </Text>
             </View>
           </View>

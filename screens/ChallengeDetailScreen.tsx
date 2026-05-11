@@ -215,7 +215,7 @@ export const ChallengeHeader = memo(({ challenge, onBack }: ChallengeHeaderProps
       <Icon name="chevron-back" size={23} color={palette.text} />
     </TouchableOpacity>
     <View style={localStyles.headerCopy}>
-      <Text style={localStyles.eyebrow}>Challenge</Text>
+      <Text style={localStyles.eyebrow}>Desafío</Text>
       <Text style={localStyles.title}>{challenge.title}</Text>
       <Text style={localStyles.subtitle}>{challenge.subtitle}</Text>
     </View>
@@ -256,7 +256,7 @@ export const StreakSummaryCard = memo(
       <View>
         <Text style={localStyles.cardTitle}>Tu racha</Text>
         <Text style={localStyles.cardSubtitle}>
-          {daysLeft === 0 ? "Challenge completo" : `${daysLeft} días por delante`}
+          {daysLeft === 0 ? "Desafío completo" : `${daysLeft} días por delante`}
         </Text>
       </View>
       <View style={localStyles.streakMetrics}>
@@ -395,7 +395,7 @@ export const PathProgress = memo(
 
     return (
       <View style={localStyles.progressCard}>
-        <Text style={localStyles.sectionTitle}>Camino del challenge</Text>
+        <Text style={localStyles.sectionTitle}>Camino del desafío</Text>
         <View style={localStyles.pathRow}>
           {days.map((day, index) => {
             const state = getDayState(day, currentDay, completedDays);
@@ -552,7 +552,7 @@ const getGrowthStageCopy = (stage: number) => {
     "Tu constancia gana forma.",
     "La energía se expande.",
     "El árbol sostiene tu avance.",
-    "El challenge está floreciendo.",
+    "El desafío está floreciendo.",
   ];
   return copy[stage] ?? copy[0];
 };
@@ -642,7 +642,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
       <Icon name="chatbubbles-outline" size={21} color={palette.text} />
     </View>
     <View style={localStyles.chatCopy}>
-      <Text style={localStyles.chatTitle}>Entrar al chat del challenge</Text>
+      <Text style={localStyles.chatTitle}>Entrar al chat del desafío</Text>
       <Text style={localStyles.chatSubtitle}>Compartí avances con la comunidad.</Text>
     </View>
     <Icon name="chevron-forward" size={20} color={palette.muted} />

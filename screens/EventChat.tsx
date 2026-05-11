@@ -120,7 +120,7 @@ const EventChat = () => {
       eventType === "challenge" && eventId
         ? {
             challengeId: eventId,
-            title: event?.title ?? "Challenge",
+            title: event?.title ?? "Desafío",
             subtitle: event?.subtitle ?? event?.description ?? null,
             durationDays:
               typeof event?.durationDays === "number" ? event.durationDays : null,

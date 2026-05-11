@@ -67,6 +67,15 @@ const buildAboutMe = (purposeIds: string[], energyIds: string[]) => {
     .join(" ");
 };
 
+const buildProfileAboutMe = (
+  briefDescription: string,
+  purposeIds: string[],
+  energyIds: string[],
+) =>
+  [briefDescription.trim(), buildAboutMe(purposeIds, energyIds)]
+    .filter(Boolean)
+    .join(" ");
+
 const VibesOnboardingFlow = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -78,11 +87,13 @@ const VibesOnboardingFlow = () => {
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
   const completeMutation = useCompleteOnboardingMutation();
   const transition = useRef(new Animated.Value(1)).current;
-  const [showWelcome, setShowWelcome] = useState(true);
   const [stepIndex, setStepIndex] = useState(0);
   const [purposeIds, setPurposeIds] = useState<string[]>(draft.purpose ?? []);
   const [energyIds, setEnergyIds] = useState<string[]>(draft.energy ?? []);
   const [displayName, setDisplayName] = useState(draft.displayName ?? "");
+  const [briefDescription, setBriefDescription] = useState(
+    draft.briefDescription ?? "",
+  );
   const [ageRange, setAgeRange] = useState(draft.ageRange ?? DEFAULT_AGE_RANGE);
   const [ageModalVisible, setAgeModalVisible] = useState(false);
   const [photoUri, setPhotoUri] = useState(draft.primaryPhotoUri ?? "");
@@ -127,10 +138,11 @@ const VibesOnboardingFlow = () => {
       purpose: purposeIds,
       energy: energyIds,
       displayName,
+      briefDescription,
       ageRange,
       spiritualPath: selectedPractices,
       spiritualPathDetails: practiceDetails,
-      aboutMe: buildAboutMe(purposeIds, energyIds),
+      aboutMe: buildProfileAboutMe(briefDescription, purposeIds, energyIds),
       otherTags: [
         ...purposeIds,
         ...energyIds,
@@ -142,6 +154,7 @@ const VibesOnboardingFlow = () => {
     }),
     [
       ageRange,
+      briefDescription,
       displayName,
       draft,
       energyIds,
@@ -170,7 +183,7 @@ const VibesOnboardingFlow = () => {
 
   const goBack = () => {
     if (stepIndex === 0) {
-      setShowWelcome(true);
+      navigation.goBack();
       return;
     }
     setStepIndex((prev) => Math.max(0, prev - 1));
@@ -365,6 +378,20 @@ const VibesOnboardingFlow = () => {
             />
           </View>
 
+          <View style={[onboardingStyles.inputRow, onboardingStyles.textAreaRow]}>
+            <Icon name="document-text-outline" size={20} color={ONBOARDING_COLORS.mustard} />
+            <TextInput
+              style={[onboardingStyles.input, onboardingStyles.textAreaInput]}
+              placeholder="Una breve descripción sobre ti"
+              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              value={briefDescription}
+              onChangeText={setBriefDescription}
+              multiline
+              maxLength={160}
+              textAlignVertical="top"
+            />
+          </View>
+
           <View style={onboardingStyles.inputRow}>
             <Icon name="calendar-outline" size={20} color={ONBOARDING_COLORS.mustard} />
             <Text style={onboardingStyles.ageValue}>Rango de edad</Text>
@@ -415,13 +442,12 @@ const VibesOnboardingFlow = () => {
 
   return (
     <>
-      {showWelcome ? (
-        <VibesMinimalOnboarding onContinue={() => setShowWelcome(false)} />
-      ) : step === "completion" ? (
+      {step === "completion" ? (
         <VibesMinimalOnboarding
           title={copy.title}
           body={copy.subtitle}
           ctaLabel={copy.button}
+          reverseVideoOnContinue
           onContinue={() => void goNext()}
         />
       ) : (
@@ -435,7 +461,11 @@ const VibesOnboardingFlow = () => {
             />
           }
         >
-          <ProgressHeader progress={getProgress(stepIndex)} onBack={goBack} />
+          <ProgressHeader
+            progress={getProgress(stepIndex)}
+            onBack={goBack}
+            showBack={stepIndex > 0}
+          />
           <Animated.View style={animatedStyle}>{renderStep()}</Animated.View>
         </OnboardingScreenContainer>
       )}

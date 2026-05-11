@@ -35,7 +35,6 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 
 type MeditationType = "silent" | "guided";
 type DurationOption = 5 | 10 | 20;
-type MusicValue = null | "nature" | "bowls" | "soft_mantra" | "rain";
 
 type PracticeOption = {
   value: MeditationType;
@@ -43,13 +42,6 @@ type PracticeOption = {
   subtitle: string;
   iconName: string;
   iconTint: string;
-};
-
-type MusicOption = {
-  value: MusicValue;
-  title: string;
-  subtitle: string;
-  iconName: string;
 };
 
 const PRACTICE_OPTIONS: PracticeOption[] = [
@@ -69,40 +61,7 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
   },
 ];
 
-const DURATION_OPTIONS: DurationOption[] = [5, 10, 20];
-
-const MUSIC_OPTIONS: MusicOption[] = [
-  {
-    value: null,
-    title: "Sin música",
-    subtitle: "Ambiente en silencio",
-    iconName: "musical-notes-outline",
-  },
-  {
-    value: "nature",
-    title: "Naturaleza",
-    subtitle: "Viento, hojas y pájaros suaves",
-    iconName: "leaf-outline",
-  },
-  {
-    value: "bowls",
-    title: "Cuencos",
-    subtitle: "Resonancia cálida y envolvente",
-    iconName: "radio-outline",
-  },
-  {
-    value: "soft_mantra",
-    title: "Mantra suave",
-    subtitle: "Voz serena de fondo",
-    iconName: "sparkles-outline",
-  },
-  {
-    value: "rain",
-    title: "Lluvia",
-    subtitle: "Gotas delicadas y calma profunda",
-    iconName: "rainy-outline",
-  },
-];
+const DURATION_OPTIONS: DurationOption[] = [5, 10];
 
 const TAB_ITEMS = [
   { key: "explore", label: "Explorar", icon: "compass-outline" },
@@ -113,13 +72,21 @@ const TAB_ITEMS = [
 ] as const;
 
 const AUDIO_BY_DURATION: Record<DurationOption, number> = {
-  5: require("../assets/audio/meditation/meditation5min.mp3"),
-  10: require("../assets/audio/meditation/meditation10min.mp3"),
+  5: require("../assets/audio/meditation/meditation5minLoud.mp3"),
+  10: require("../assets/audio/meditation/10minVozMeditacionLooud.mp3"),
   20: require("../assets/audio/meditation/meditation20min.mp3"),
 };
 
+const BACKGROUND_MUSIC_BY_DURATION: Record<DurationOption, number> = {
+  5: require("../assets/audio/meditation/music5min.mp3"),
+  10: require("../assets/audio/meditation/music10min.mp3"),
+  20: require("../assets/audio/meditation/music10min.mp3"),
+};
+
 const FINISH_SOUND = require("../assets/audio/meditation/finish.mp3");
-const MEDITATION_VIDEO_BACKGROUND = "#E0E0E0";
+const MEDITATION_VIDEO_BACKGROUND = "#FFFFFF";
+const MEDITATION_AUDIO_VOLUME = 1;
+const BACKGROUND_MUSIC_VOLUME = 0.08;
 
 const formatDuration = (minutes: number) =>
   `${String(minutes).padStart(2, "0")}:00`;
@@ -359,15 +326,16 @@ const MeditationScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const soundRef = useRef<Audio.Sound | null>(null);
+  const backgroundMusicRef = useRef<Audio.Sound | null>(null);
   const finishSoundRef = useRef<Audio.Sound | null>(null);
   const videoRef = useRef<Video | null>(null);
   const silentStartedAtRef = useRef<number | null>(null);
   const shouldResumeOnReloadRef = useRef(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedType, setSelectedType] = useState<MeditationType>("guided");
-  const [selectedDuration, setSelectedDuration] = useState<DurationOption>(20);
-  const [selectedMusic, setSelectedMusic] = useState<MusicValue>(null);
-  const [isMusicOpen, setIsMusicOpen] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState<DurationOption>(10);
+  const [isBackgroundMusicEnabled, setIsBackgroundMusicEnabled] =
+    useState(true);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPreparingAudio, setIsPreparingAudio] = useState(false);
@@ -381,14 +349,12 @@ const MeditationScreen = () => {
   const immersivePlayerProgress = useSharedValue(0);
   const targetDurationMillis = selectedDuration * 60 * 1000;
 
-  const selectedMusicOption = useMemo(
-    () =>
-      MUSIC_OPTIONS.find((option) => option.value === selectedMusic) ??
-      MUSIC_OPTIONS[0],
-    [selectedMusic],
-  );
   const selectedAudioSource = useMemo(
     () => AUDIO_BY_DURATION[selectedDuration],
+    [selectedDuration],
+  );
+  const selectedBackgroundMusicSource = useMemo(
+    () => BACKGROUND_MUSIC_BY_DURATION[selectedDuration],
     [selectedDuration],
   );
   const isSilentMode = selectedType === "silent";
@@ -482,6 +448,8 @@ const MeditationScreen = () => {
     setPositionMillis(0);
     void soundRef.current?.stopAsync().catch(() => undefined);
     void soundRef.current?.setPositionAsync(0).catch(() => undefined);
+    void backgroundMusicRef.current?.stopAsync().catch(() => undefined);
+    void backgroundMusicRef.current?.setPositionAsync(0).catch(() => undefined);
     void videoRef.current?.setPositionAsync(0).catch(() => undefined);
     void playFinishSound();
   }, [playFinishSound]);
@@ -520,6 +488,14 @@ const MeditationScreen = () => {
     await activeSound.unloadAsync();
   }, []);
 
+  const unloadBackgroundMusic = useCallback(async () => {
+    const activeSound = backgroundMusicRef.current;
+    backgroundMusicRef.current = null;
+    if (!activeSound) return;
+    activeSound.setOnPlaybackStatusUpdate(null);
+    await activeSound.unloadAsync();
+  }, []);
+
   const unloadFinishSound = useCallback(async () => {
     const activeSound = finishSoundRef.current;
     finishSoundRef.current = null;
@@ -527,6 +503,29 @@ const MeditationScreen = () => {
     activeSound.setOnPlaybackStatusUpdate(null);
     await activeSound.unloadAsync();
   }, []);
+
+  const loadBackgroundMusic = useCallback(
+    async (shouldPlay: boolean, startPositionMillis = 0) => {
+      await unloadBackgroundMusic();
+
+      const sound = new Audio.Sound();
+      backgroundMusicRef.current = sound;
+      await sound.loadAsync(
+        selectedBackgroundMusicSource,
+        {
+          shouldPlay,
+          volume: BACKGROUND_MUSIC_VOLUME,
+          positionMillis: Math.min(startPositionMillis, targetDurationMillis),
+        },
+        true,
+      );
+    },
+    [
+      selectedBackgroundMusicSource,
+      targetDurationMillis,
+      unloadBackgroundMusic,
+    ],
+  );
 
   const loadMeditationAudio = useCallback(
     async (shouldPlay: boolean) => {
@@ -552,6 +551,7 @@ const MeditationScreen = () => {
           selectedAudioSource,
           {
             shouldPlay,
+            volume: MEDITATION_AUDIO_VOLUME,
             progressUpdateIntervalMillis: 250,
             positionMillis: 0,
           },
@@ -590,6 +590,25 @@ const MeditationScreen = () => {
   }, [loadMeditationAudio, unloadSound]);
 
   useEffect(() => {
+    if (!isBackgroundMusicEnabled) {
+      unloadBackgroundMusic().catch(() => undefined);
+      return undefined;
+    }
+
+    loadBackgroundMusic(isPlaying, positionMillis).catch(() => {
+      Alert.alert("Música no disponible", "No se pudo cargar la música de fondo.");
+      setIsBackgroundMusicEnabled(false);
+    });
+
+    return undefined;
+  }, [
+    isBackgroundMusicEnabled,
+    loadBackgroundMusic,
+    selectedBackgroundMusicSource,
+    unloadBackgroundMusic,
+  ]);
+
+  useEffect(() => {
     if (!isSilentMode || !isPlaying) return undefined;
 
     silentStartedAtRef.current = Date.now() - positionMillis;
@@ -617,9 +636,10 @@ const MeditationScreen = () => {
 
   useEffect(() => {
     return () => {
+      unloadBackgroundMusic().catch(() => undefined);
       unloadFinishSound().catch(() => undefined);
     };
-  }, [unloadFinishSound]);
+  }, [unloadBackgroundMusic, unloadFinishSound]);
 
   const resetSessionToBeginning = useCallback(() => {
     shouldResumeOnReloadRef.current = false;
@@ -628,6 +648,8 @@ const MeditationScreen = () => {
     setPositionMillis(0);
     setVideoResetKey((current) => current + 1);
     void soundRef.current?.setPositionAsync(0).catch(() => undefined);
+    void backgroundMusicRef.current?.stopAsync().catch(() => undefined);
+    void backgroundMusicRef.current?.setPositionAsync(0).catch(() => undefined);
     void videoRef.current?.setPositionAsync(0).catch(() => undefined);
   }, []);
 
@@ -653,6 +675,30 @@ const MeditationScreen = () => {
     [isPlaying, isPreparingAudio, resetSessionToBeginning, selectedDuration],
   );
 
+  const playBackgroundMusicFromCurrentPosition = useCallback(async () => {
+    if (!isBackgroundMusicEnabled) return;
+
+    if (!backgroundMusicRef.current) {
+      await loadBackgroundMusic(true, positionMillis);
+      return;
+    }
+
+    await backgroundMusicRef.current.setPositionAsync(positionMillis);
+    await backgroundMusicRef.current.playAsync();
+  }, [isBackgroundMusicEnabled, loadBackgroundMusic, positionMillis]);
+
+  const handleBackgroundMusicToggle = useCallback(async () => {
+    const nextEnabled = !isBackgroundMusicEnabled;
+    setIsBackgroundMusicEnabled(nextEnabled);
+
+    if (!nextEnabled) {
+      await unloadBackgroundMusic().catch(() => undefined);
+    }
+  }, [
+    isBackgroundMusicEnabled,
+    unloadBackgroundMusic,
+  ]);
+
   const togglePlayback = useCallback(async () => {
     try {
       if (isSilentMode) {
@@ -660,22 +706,27 @@ const MeditationScreen = () => {
         if (isPlaying) {
           silentStartedAtRef.current = null;
           setIsPlaying(false);
+          await backgroundMusicRef.current?.pauseAsync();
         } else {
           silentStartedAtRef.current = Date.now() - positionMillis;
           setIsPlaying(true);
+          await playBackgroundMusicFromCurrentPosition();
         }
         return;
       }
 
       if (!soundRef.current || !isPlayerReady) {
         await loadMeditationAudio(true);
+        await playBackgroundMusicFromCurrentPosition();
         return;
       }
 
       if (isPlaying) {
         await soundRef.current.pauseAsync();
+        await backgroundMusicRef.current?.pauseAsync();
       } else {
         await soundRef.current.playAsync();
+        await playBackgroundMusicFromCurrentPosition();
       }
     } catch {
       Alert.alert(
@@ -688,6 +739,7 @@ const MeditationScreen = () => {
     isPlaying,
     isSilentMode,
     loadMeditationAudio,
+    playBackgroundMusicFromCurrentPosition,
     positionMillis,
   ]);
 
@@ -706,6 +758,9 @@ const MeditationScreen = () => {
       if (!isSilentMode) {
         await soundRef.current?.setPositionAsync(nextPosition);
       }
+      if (isBackgroundMusicEnabled) {
+        await backgroundMusicRef.current?.setPositionAsync(nextPosition);
+      }
       if (videoDurationMillis) {
         await videoRef.current?.setPositionAsync(ratio * videoDurationMillis);
       }
@@ -714,6 +769,7 @@ const MeditationScreen = () => {
       isPlayerReady,
       isPlaying,
       isSilentMode,
+      isBackgroundMusicEnabled,
       progressTrackWidth,
       targetDurationMillis,
       videoDurationMillis,
@@ -801,76 +857,53 @@ const MeditationScreen = () => {
 
             <Pressable
               accessibilityRole="button"
-              onPress={() => setIsMusicOpen((current) => !current)}
-              style={localStyles.musicSelector}
+              accessibilityState={{ selected: isBackgroundMusicEnabled }}
+              onPress={() => {
+                void handleBackgroundMusicToggle();
+              }}
+              style={[
+                localStyles.musicSelector,
+                isBackgroundMusicEnabled ? localStyles.musicSelectorActive : null,
+              ]}
             >
               <View style={localStyles.musicSelectorLeft}>
-                <View style={localStyles.musicIconBubble}>
+                <View
+                  style={[
+                    localStyles.musicIconBubble,
+                    isBackgroundMusicEnabled ? localStyles.musicIconBubbleActive : null,
+                  ]}
+                >
                   <Icon
-                    name={selectedMusicOption.iconName}
+                    name="musical-notes-outline"
                     size={22}
-                    color={vibesTheme.colors.primaryText}
+                    color={
+                      isBackgroundMusicEnabled
+                        ? "#FFFFFF"
+                        : vibesTheme.colors.primaryText
+                    }
                   />
                 </View>
                 <View style={localStyles.musicTextWrap}>
-                  <Text style={localStyles.musicTitle}>
-                    {selectedMusicOption.title}
-                  </Text>
+                  <Text style={localStyles.musicTitle}>Con música de fondo</Text>
                   <Text style={localStyles.musicSubtitle}>
-                    {selectedMusicOption.subtitle}
+                    {isBackgroundMusicEnabled
+                      ? "Ambiente suave activado"
+                      : "Sumá una capa suave a tu meditación"}
                   </Text>
                 </View>
               </View>
               <Icon
-                name={isMusicOpen ? "chevron-up" : "chevron-down"}
-                size={20}
-                color={vibesTheme.colors.secondaryText}
+                name={
+                  isBackgroundMusicEnabled ? "checkmark-circle" : "ellipse-outline"
+                }
+                size={24}
+                color={
+                  isBackgroundMusicEnabled
+                    ? vibesTheme.colors.accentMustard
+                    : "rgba(43, 43, 43, 0.28)"
+                }
               />
             </Pressable>
-
-            {isMusicOpen ? (
-              <View style={localStyles.musicOptionsPanel}>
-                {MUSIC_OPTIONS.map((option, index) => {
-                  const isSelected = selectedMusic === option.value;
-
-                  return (
-                    <Pressable
-                      key={String(option.value ?? "none")}
-                      onPress={() => {
-                        setSelectedMusic(option.value);
-                        setIsMusicOpen(false);
-                      }}
-                      style={[
-                        localStyles.musicOptionRow,
-                        index < MUSIC_OPTIONS.length - 1
-                          ? localStyles.musicOptionDivider
-                          : null,
-                      ]}
-                    >
-                      <View style={localStyles.musicOptionCopy}>
-                        <Text style={localStyles.musicOptionTitle}>
-                          {option.title}
-                        </Text>
-                        <Text style={localStyles.musicOptionSubtitle}>
-                          {option.subtitle}
-                        </Text>
-                      </View>
-                      <Icon
-                        name={
-                          isSelected ? "checkmark-circle" : "ellipse-outline"
-                        }
-                        size={20}
-                        color={
-                          isSelected
-                            ? vibesTheme.colors.accentBlue
-                            : "rgba(43, 43, 43, 0.24)"
-                        }
-                      />
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : null}
           </View>
 
           {!showImmersivePlayer ? (
@@ -917,7 +950,7 @@ const MeditationScreen = () => {
                   ref={videoRef}
                   source={require("../assets/videos/meditation/videoMeditation.mp4")}
                   style={localStyles.previewVideo}
-                  resizeMode={ResizeMode.COVER}
+                  resizeMode={ResizeMode.CONTAIN}
                   shouldPlay={isPlaying}
                   isMuted
                   isLooping={false}
@@ -1060,7 +1093,7 @@ const MeditationScreen = () => {
                     ref={videoRef}
                     source={require("../assets/videos/meditation/videoMeditation.mp4")}
                     style={localStyles.previewVideo}
-                    resizeMode={ResizeMode.COVER}
+                    resizeMode={ResizeMode.CONTAIN}
                     shouldPlay={isPlaying}
                     isMuted
                     isLooping={false}
@@ -1184,20 +1217,20 @@ const localStyles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 2,
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 11,
-    lineHeight: 13,
-    fontFamily: "CormorantGaramond_500Medium",
+    color: "#6F6A65",
+    fontSize: 16,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.medium,
   },
   section: {
     marginTop: 14,
   },
   sectionLabel: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 10,
-    lineHeight: 12,
-    letterSpacing: 1.2,
-    fontFamily: "CormorantGaramond_700Bold",
+    color: "#6F6A65",
+    fontSize: 14,
+    lineHeight: 19,
+    letterSpacing: 1,
+    fontFamily: vibesTheme.fonts.medium,
   },
   practiceRow: {
     flexDirection: "row",
@@ -1208,7 +1241,7 @@ const localStyles = StyleSheet.create({
     width: "47.6%",
   },
   practiceCard: {
-    minHeight: 96,
+    minHeight: 108,
     borderRadius: 16,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 10,
@@ -1242,18 +1275,18 @@ const localStyles = StyleSheet.create({
   },
   practiceTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 12,
-    lineHeight: 15,
+    fontSize: 15,
+    lineHeight: 19,
     textAlign: "center",
     fontFamily: "CormorantGaramond_700Bold",
   },
   practiceSubtitle: {
     marginTop: 3,
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 8,
-    lineHeight: 10,
+    color: "#7B756F",
+    fontSize: 14,
+    lineHeight: 18,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   durationRow: {
     flexDirection: "row",
@@ -1264,7 +1297,7 @@ const localStyles = StyleSheet.create({
     width: "30.2%",
   },
   durationCard: {
-    height: 70,
+    height: 82,
     borderRadius: 16,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
@@ -1288,16 +1321,16 @@ const localStyles = StyleSheet.create({
   },
   durationValue: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    lineHeight: 18,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 28,
+    lineHeight: 32,
+    fontFamily: vibesTheme.fonts.medium,
   },
   durationLabel: {
     marginTop: 1,
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 8,
-    lineHeight: 10,
-    fontFamily: "CormorantGaramond_500Medium",
+    color: "#6F6A65",
+    fontSize: 15,
+    lineHeight: 19,
+    fontFamily: vibesTheme.fonts.medium,
   },
   musicSelector: {
     marginTop: 16,
@@ -1316,6 +1349,10 @@ const localStyles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 1,
   },
+  musicSelectorActive: {
+    borderColor: "rgba(228, 183, 110, 0.62)",
+    backgroundColor: "#FFFFFF",
+  },
   musicSelectorLeft: {
     flexDirection: "row",
     alignItems: "center",
@@ -1330,6 +1367,9 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 14,
   },
+  musicIconBubbleActive: {
+    backgroundColor: vibesTheme.colors.accentMustard,
+  },
   musicTextWrap: {
     flex: 1,
     paddingRight: 12,
@@ -1342,10 +1382,10 @@ const localStyles = StyleSheet.create({
   },
   musicSubtitle: {
     marginTop: 4,
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    color: "#6F6A65",
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.medium,
   },
   musicOptionsPanel: {
     marginTop: 12,
@@ -1378,10 +1418,10 @@ const localStyles = StyleSheet.create({
   },
   musicOptionSubtitle: {
     marginTop: 2,
-    color: vibesTheme.colors.secondaryText,
+    color: "#6F6A65",
     fontSize: 16,
-    lineHeight: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.medium,
   },
   previewCard: {
     marginTop: 22,
@@ -1448,23 +1488,23 @@ const localStyles = StyleSheet.create({
   },
   previewPlayerSubtitle: {
     marginTop: 2,
-    color: vibesTheme.colors.secondaryText,
+    color: "#6F6A65",
     fontSize: 16,
-    lineHeight: 18,
+    lineHeight: 20,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   previewPlayerSubtitleCompact: {
-    fontSize: 13,
-    lineHeight: 15,
+    fontSize: 16,
+    lineHeight: 20,
   },
   previewPlayerSubtitleImmersive: {
     marginTop: 4,
-    color: vibesTheme.colors.secondaryText,
+    color: "#6F6A65",
     fontSize: 18,
     lineHeight: 22,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   previewPlayerDivider: {
     marginTop: 10,
@@ -1512,24 +1552,24 @@ const localStyles = StyleSheet.create({
     paddingTop: 24,
   },
   previewMantra: {
-    color: vibesTheme.colors.secondaryText,
+    color: "#6F6A65",
     fontSize: 18,
     lineHeight: 22,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     marginBottom: 14,
   },
   previewMantraCompact: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     marginBottom: 10,
   },
   previewMantraImmersive: {
-    color: vibesTheme.colors.secondaryText,
+    color: "#6F6A65",
     fontSize: 22,
     lineHeight: 28,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     marginBottom: 20,
   },
   progressMetaRow: {
@@ -1540,12 +1580,12 @@ const localStyles = StyleSheet.create({
   progressTime: {
     color: vibesTheme.colors.primaryText,
     fontSize: 16,
-    lineHeight: 18,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.medium,
   },
   progressTimeCompact: {
-    fontSize: 13,
-    lineHeight: 15,
+    fontSize: 16,
+    lineHeight: 20,
   },
   progressTrack: {
     height: 6,
@@ -1673,10 +1713,10 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(174, 191, 209, 0.22)",
   },
   tabLabel: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    lineHeight: 16,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    color: "#6F6A65",
+    fontSize: 15,
+    lineHeight: 19,
+    fontFamily: vibesTheme.fonts.medium,
   },
   homeTabLabel: {
     marginTop: 8,

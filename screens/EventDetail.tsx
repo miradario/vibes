@@ -86,7 +86,7 @@ const getStreakMessage = (streak: number, totalCheckins: number) => {
 };
 
 const getChallengeFinishedMessage = () =>
-  "Challenge terminó. Iniciá otro si lo deseás.";
+  "Desafío terminó. Iniciá otro si lo deseás.";
 
 const nextMilestone = (streak: number) => {
   return STREAK_MILESTONES.find((m) => m > streak) ?? null;
@@ -112,7 +112,7 @@ const getStreakHeadline = (
   referenceDate?: Date,
   isFinished?: boolean,
 ) => {
-  if (isFinished) return "Challenge terminó";
+  if (isFinished) return "Desafío terminó";
   if (streak === 0 && totalCheckins > 0) return "Volvé a tu ritmo";
   if (streak === 0) {
     if (startDate && referenceDate && isAfterDay(startDate, referenceDate)) {
@@ -218,7 +218,7 @@ const EventDetail = () => {
       isChallenge && event?.id
         ? {
             challengeId: event.id,
-            title: event?.title ?? "Challenge",
+            title: event?.title ?? "Desafío",
             subtitle: event?.subtitle ?? event?.description ?? null,
             durationDays:
               typeof event?.durationDays === "number" ? event.durationDays : null,
@@ -558,7 +558,7 @@ const EventDetail = () => {
         />
         <View style={localStyles.footerCheckInSliderCopy}>
           <Text style={localStyles.footerCheckInSliderTitle}>
-            Marcar challenge como hecho
+            Marcar desafío como hecho
           </Text>
           <Text style={localStyles.footerCheckInSliderSubtitle}>
             Deslizá para completar tu día
@@ -609,7 +609,7 @@ const EventDetail = () => {
                 >
                   <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
                   <Text style={localStyles.challengeChatButtonText}>
-                    Entrar al chat del challenge
+                    Entrar al chat del desafío
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -618,7 +618,7 @@ const EventDetail = () => {
                 >
                   <Icon name="checkmark-circle" size={18} color={WHITE} />
                   <Text style={localStyles.checkInButtonText}>
-                    Challenge finalizado
+                    Desafío finalizado
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -648,7 +648,7 @@ const EventDetail = () => {
                     localStyles.challengeChatButtonTextDisabled,
                   ]}
                 >
-                  Chat del challenge
+                  Chat del desafío
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -657,7 +657,7 @@ const EventDetail = () => {
               >
                 <Icon name="checkmark-circle" size={18} color={WHITE} />
                 <Text style={localStyles.checkInButtonText}>
-                  Challenge finalizado
+                  Desafío finalizado
                 </Text>
               </TouchableOpacity>
             </View>
@@ -712,7 +712,7 @@ const EventDetail = () => {
               >
                 <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
                 <Text style={localStyles.challengeChatButtonText}>
-                  Entrar al chat del challenge
+                  Entrar al chat del desafío
                 </Text>
               </TouchableOpacity>
               {checkedInToday ? (
@@ -725,7 +725,7 @@ const EventDetail = () => {
                 >
                   <Icon name="checkmark-circle" size={18} color={WHITE} />
                   <Text style={localStyles.checkInButtonText}>
-                    Challenge hecho hoy
+                    Desafío hecho hoy
                   </Text>
                 </TouchableOpacity>
               ) : (
@@ -765,7 +765,7 @@ const EventDetail = () => {
                 <ActivityIndicator color={WHITE} size="small" />
               ) : (
                 <Text style={styles.eventDetailJoinButtonText}>
-                  Sumarme al challenge
+                  Sumarme al desafío
                 </Text>
               )}
             </TouchableOpacity>
@@ -958,7 +958,7 @@ const EventDetail = () => {
       return value.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
     };
 
-    const title = event?.title ?? (isChallenge ? "Challenge" : "Evento");
+    const title = event?.title ?? (isChallenge ? "Desafío" : "Evento");
     const details = eventDescription ?? eventSubtitle ?? "";
     const location = isChallenge ? "" : eventLocation ?? "";
     const calendarUrl =
@@ -1025,8 +1025,8 @@ const EventDetail = () => {
       await joinMutation.mutateAsync({ challengeId: event.id, userId });
     } catch (error: any) {
       const message = error?.message?.includes("unique")
-        ? "Ya estás en este challenge."
-        : error?.message ?? "No se pudo unir al challenge.";
+        ? "Ya estás en este desafío."
+        : error?.message ?? "No se pudo unir al desafío.";
       Alert.alert("Error", message);
     }
   };
@@ -1034,7 +1034,7 @@ const EventDetail = () => {
   const handleLeave = () => {
     if (!userId) return;
     Alert.alert(
-      "Salir del challenge",
+      "Salir del desafío",
       "¿Seguro que querés salir? Perdés tu racha y progreso.",
       [
         { text: "Cancelar", style: "cancel" },
@@ -1052,7 +1052,7 @@ const EventDetail = () => {
             } catch (error: any) {
               Alert.alert(
                 "Error",
-                error?.message ?? "No se pudo salir del challenge.",
+                error?.message ?? "No se pudo salir del desafío.",
               );
             }
           },
@@ -1063,8 +1063,8 @@ const EventDetail = () => {
 
   const handleDelete = () => {
     Alert.alert(
-      "Eliminar challenge",
-      "¿Eliminar este challenge para todos? Esta acción no se puede deshacer.",
+      "Eliminar desafío",
+      "¿Eliminar este desafío para todos? Esta acción no se puede deshacer.",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -1078,7 +1078,7 @@ const EventDetail = () => {
             } catch (error: any) {
               Alert.alert(
                 "Error",
-                error?.message ?? "No se pudo eliminar el challenge.",
+                error?.message ?? "No se pudo eliminar el desafío.",
               );
             }
           },
@@ -1597,7 +1597,7 @@ const EventDetail = () => {
           </>
         )}
 
-        {/* ── Tracking section (solo challenges) ── */}
+        {/* ── Tracking section (solo desafíos) ── */}
         {isChallenge ? (
           <>
             {participantLoading ? (
@@ -1869,7 +1869,7 @@ const EventDetail = () => {
               }}
             >
               <Icon name="chatbubbles" size={20} color={DARK_GRAY} />
-              <Text style={localStyles.menuItemText}>Chat del challenge</Text>
+              <Text style={localStyles.menuItemText}>Chat del desafío</Text>
               <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           ) : null}
@@ -1896,7 +1896,7 @@ const EventDetail = () => {
             >
               <Icon name="exit" size={20} color="#D32F2F" />
               <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>
-                Salir del challenge
+                Salir del desafío
               </Text>
             </TouchableOpacity>
           ) : null}
@@ -1911,7 +1911,7 @@ const EventDetail = () => {
               >
                 <Icon name="exit" size={20} color="#D32F2F" />
                 <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>
-                  Abandonar challenge
+                  Abandonar desafío
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1920,7 +1920,7 @@ const EventDetail = () => {
               >
                 <Icon name="trash" size={20} color="#D32F2F" />
                 <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>
-                  Eliminar challenge
+                  Eliminar desafío
                 </Text>
               </TouchableOpacity>
             </>
