@@ -19,6 +19,7 @@ import {
 } from "../src/queries/events.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { useI18n } from "../src/i18n";
 
 const normalizeSearchText = (value: string | null | undefined) =>
   (value ?? "")
@@ -53,6 +54,16 @@ const getChallengeProgress = (item: EventFeedItem) => {
   }
 
   return { label: `Día ${diffDays + 1}/${item.durationDays}`, tone: "active" as const };
+};
+
+const getVisibilityMeta = (visibility?: EventFeedItem["visibility"]) => {
+  if (visibility === "friends") {
+    return { icon: "people-outline" as const, label: "Solo amigos" };
+  }
+  if (visibility === "private") {
+    return { icon: "lock-closed-outline" as const, label: "Privado" };
+  }
+  return { icon: "earth-outline" as const, label: "Público" };
 };
 
 const ParticipantStack = ({
@@ -100,6 +111,7 @@ const ParticipantStack = ({
 const Events = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
+  const { t } = useI18n();
   const [section, setSection] = useState<"event" | "challenge">(
     route.params?.section === "challenge" ? "challenge" : "event",
   );
@@ -260,6 +272,11 @@ const Events = () => {
           renderItem={({ item }) => {
             const participantCount = parseParticipantCount(item.attendees);
             const challengeProgress = getChallengeProgress(item);
+            const checkedInTodayCount = Math.max(
+              0,
+              Number(item.checkedInTodayCount ?? 0) || 0,
+            );
+            const visibilityMeta = getVisibilityMeta(item.visibility);
 
             return (
             <TouchableOpacity
@@ -287,6 +304,28 @@ const Events = () => {
                   <Text style={localStyles.feedRowMeta} numberOfLines={1}>
                     {item.date} {"  •  "} {item.attendees}
                   </Text>
+                  {item.type === "challenge" ? (
+                    <View style={localStyles.visibilityRow}>
+                      <Icon
+                        name={visibilityMeta.icon}
+                        size={13}
+                        color="#7A746D"
+                      />
+                      <Text style={localStyles.visibilityText}>
+                        {visibilityMeta.label}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {item.type === "challenge" ? (
+                    <View style={localStyles.communityTodayRow}>
+                      <Icon name="sparkles-outline" size={14} color="#D19443" />
+                      <Text style={localStyles.communityTodayText} numberOfLines={1}>
+                        {t("home.challengeCheckedInToday", {
+                          count: checkedInTodayCount,
+                        })}
+                      </Text>
+                    </View>
+                  ) : null}
                   {item.type === "challenge" && challengeProgress ? (
                     <View
                       style={[
@@ -414,6 +453,31 @@ const localStyles = StyleSheet.create({
     color: "#66605B",
     fontSize: 15,
     lineHeight: 19,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  communityTodayRow: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  communityTodayText: {
+    flex: 1,
+    color: "#916E39",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  visibilityRow: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  visibilityText: {
+    color: "#7A746D",
+    fontSize: 12,
+    lineHeight: 15,
     fontFamily: vibesTheme.fonts.medium,
   },
   feedRowRight: {

@@ -23,6 +23,8 @@ const EVENT_FALLBACK_IMAGE = require("../../assets/images/challenges/challengetr
 export type EventType = "event" | "challenge";
 export type EventPricingType = "free" | "paid";
 export type EventModality = "in_person" | "online";
+export type ChallengeVisibility = "public" | "friends" | "private";
+export type ChallengeJoinRequestStatus = "pending" | "approved" | "declined";
 
 export type EventFeedItem = {
   id: string;
@@ -47,6 +49,8 @@ export type EventFeedItem = {
   hostName?: string | null;
   hostImage?: string | null;
   participantPreviewImages?: string[];
+  checkedInTodayCount?: number;
+  visibility?: ChallengeVisibility;
   tags?: string[];
   createdAt?: string | null;
   createdBy?: string | null;
@@ -100,6 +104,19 @@ type CreateChallengeInput = {
   imagePresetId?: ChallengeMediaPresetId | null;
   hostName?: string | null;
   hostImage?: string | null;
+  visibility?: ChallengeVisibility;
+};
+
+export type ChallengeJoinRequest = {
+  id: string;
+  challengeId: string;
+  requesterId: string;
+  status: ChallengeJoinRequestStatus;
+  createdAt: string;
+  respondedAt: string | null;
+  responderId: string | null;
+  requesterName?: string | null;
+  requesterAvatar?: string | null;
 };
 
 export const eventsKeys = {
@@ -108,6 +125,7 @@ export const eventsKeys = {
 
 export const challengesKeys = {
   all: ["challenges"] as const,
+  list: (userId?: string) => [...challengesKeys.all, userId ?? "anon"] as const,
 };
 
 export const challengeParticipantKeys = {
@@ -258,6 +276,10 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
     parseChallengeMediaPreset(imageUrl) ??
       extractChallengePresetFromDescription(rawDescription),
   );
+  const visibility: ChallengeVisibility =
+    row.visibility === "friends" || row.visibility === "private"
+      ? row.visibility
+      : "public";
 
   return {
     id: String(row.id),
@@ -288,6 +310,7 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
       typeof row.host_image_url === "string" && row.host_image_url.trim()
         ? row.host_image_url
         : null,
+    visibility,
     tags: Array.isArray(row.tags)
       ? row.tags.filter(
           (tag: unknown): tag is string =>
@@ -420,9 +443,82 @@ const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
   ]);
 };
 
+const fetchChallengeTodayCheckinCountMap = async (challengeIds: string[]) => {
+  if (!challengeIds.length) return {} as Record<string, number>;
+
+  const today = new Date().toISOString().split("T")[0];
+  const { data, error } = await supabase
+    .from("challenge_checkins")
+    .select("challenge_id, user_id")
+    .in("challenge_id", challengeIds)
+    .eq("checkin_date", today);
+
+  if (error) throw error;
+
+  const counts = new Map<string, Set<string>>();
+
+  for (const row of data ?? []) {
+    const challengeId = String((row as any).challenge_id);
+    const userId = String((row as any).user_id);
+    const users = counts.get(challengeId) ?? new Set<string>();
+    users.add(userId);
+    counts.set(challengeId, users);
+  }
+
+  return Object.fromEntries(
+    Array.from(counts.entries()).map(([challengeId, users]) => [
+      challengeId,
+      users.size,
+    ]),
+  ) as Record<string, number>;
+};
+
+const fetchConnectedUserIds = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("matches")
+    .select("user1_id, user2_id")
+    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+
+  if (error) throw error;
+
+  return new Set(
+    (data ?? []).map((row: any) =>
+      String(row.user1_id) === userId
+        ? String(row.user2_id)
+        : String(row.user1_id),
+    ),
+  );
+};
+
+const fetchJoinedChallengeIds = async (userId: string) => {
+  const [{ data: directRows, error: directError }, { data: eventRows, error: eventError }] =
+    await Promise.all([
+      supabase
+        .from("challenge_participants")
+        .select("challenge_id")
+        .eq("user_id", userId),
+      supabase
+        .from("event_participants")
+        .select("event_id")
+        .eq("event_type", "challenge")
+        .eq("user_id", userId),
+    ]);
+
+  if (directError) throw directError;
+  if (eventError) throw eventError;
+
+  return new Set(
+    [
+      ...(directRows ?? []).map((row: any) => String(row.challenge_id)),
+      ...(eventRows ?? []).map((row: any) => String(row.event_id)),
+    ],
+  );
+};
+
 const enrichFeedItemsWithProfileImages = async (
   items: EventFeedItem[],
   previewMap: Record<string, string[]>,
+  todayCheckinCountMap?: Record<string, number>,
 ) => {
   return Promise.all(
     items.map(async (item) => {
@@ -440,6 +536,10 @@ const enrichFeedItemsWithProfileImages = async (
         ...item,
         hostImage: signedHostImage,
         participantPreviewImages,
+        checkedInTodayCount:
+          typeof todayCheckinCountMap?.[item.id] === "number"
+            ? todayCheckinCountMap[item.id]
+            : item.checkedInTodayCount ?? 0,
       };
     }),
   );
@@ -461,7 +561,32 @@ const fetchEvents = async (): Promise<EventFeedItem[]> => {
   return enrichFeedItemsWithProfileImages(items, previewMap);
 };
 
-const fetchChallenges = async (): Promise<EventFeedItem[]> => {
+const filterChallengesForViewer = async (
+  items: EventFeedItem[],
+  viewerId?: string,
+) => {
+  if (!viewerId) {
+    return items.filter((item) => (item.visibility ?? "public") === "public");
+  }
+
+  const [connectedUserIds, joinedChallengeIds] = await Promise.all([
+    fetchConnectedUserIds(viewerId),
+    fetchJoinedChallengeIds(viewerId),
+  ]);
+
+  return items.filter((item) => {
+    const visibility = item.visibility ?? "public";
+    if (item.createdBy === viewerId) return true;
+    if (joinedChallengeIds.has(item.id)) return true;
+    if (visibility === "public") return true;
+    if (visibility === "friends") {
+      return Boolean(item.createdBy && connectedUserIds.has(item.createdBy));
+    }
+    return false;
+  });
+};
+
+const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
   const { data, error } = await supabase
     .from("challenges")
     .select("*")
@@ -471,11 +596,16 @@ const fetchChallenges = async (): Promise<EventFeedItem[]> => {
     throw error;
   }
 
-  const items = (data ?? []).map(mapChallengeRow);
-  const previewMap = await fetchChallengeParticipantPreviewMap(
-    items.map((item) => item.id),
+  const items = await filterChallengesForViewer(
+    (data ?? []).map(mapChallengeRow),
+    viewerId,
   );
-  return enrichFeedItemsWithProfileImages(items, previewMap);
+  const challengeIds = items.map((item) => item.id);
+  const [previewMap, todayCheckinCountMap] = await Promise.all([
+    fetchChallengeParticipantPreviewMap(challengeIds),
+    fetchChallengeTodayCheckinCountMap(challengeIds),
+  ]);
+  return enrichFeedItemsWithProfileImages(items, previewMap, todayCheckinCountMap);
 };
 
 const maybeUploadEventImage = async (
@@ -502,9 +632,12 @@ export const useEventsFeedQuery = () => {
 };
 
 export const useChallengesFeedQuery = () => {
+  const { data: session } = useAuthSession();
+  const userId = session?.user?.id;
+
   return useQuery<EventFeedItem[]>({
-    queryKey: challengesKeys.all,
-    queryFn: fetchChallenges,
+    queryKey: challengesKeys.list(userId),
+    queryFn: () => fetchChallenges(userId),
     staleTime: 30_000,
   });
 };
@@ -697,6 +830,36 @@ export const useChallengeParticipantQuery = (
   });
 };
 
+export const useChallengeTodayCheckinsCountQuery = (
+  challengeId: string | undefined,
+) => {
+  return useQuery<number>({
+    queryKey: ["challenge_checkins_today_count", challengeId ?? ""],
+    queryFn: async () => {
+      if (!challengeId) return 0;
+
+      const today = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("challenge_checkins")
+        .select("user_id")
+        .eq("challenge_id", challengeId)
+        .eq("checkin_date", today);
+
+      if (error) throw error;
+
+      return new Set(
+        (data ?? [])
+          .map((row: any) =>
+            typeof row.user_id === "string" ? row.user_id : null,
+          )
+          .filter((value: string | null): value is string => Boolean(value)),
+      ).size;
+    },
+    enabled: Boolean(challengeId),
+    staleTime: 30_000,
+  });
+};
+
 export const useJoinChallengeMutation = () => {
   const queryClient = useQueryClient();
 
@@ -760,6 +923,10 @@ export const useCheckInChallengeMutation = () => {
       queryClient.invalidateQueries({
         queryKey: challengeCheckinsKeys.list(challengeId, userId),
       });
+      queryClient.invalidateQueries({
+        queryKey: ["challenge_checkins_today_count", challengeId],
+      });
+      queryClient.invalidateQueries({ queryKey: challengesKeys.all });
     },
   });
 };
@@ -890,6 +1057,7 @@ export const useCreateChallengeMutation = () => {
         title: input.title,
         subtitle: input.subtitle,
         duration_days: input.durationDays,
+        visibility: input.visibility ?? "public",
       };
 
       const encodedDescription = encodeChallengeDescriptionWithPreset(
@@ -917,9 +1085,244 @@ export const useCreateChallengeMutation = () => {
         throw error;
       }
 
+      const { error: participantError } = await supabase
+        .from("challenge_participants")
+        .upsert(
+          {
+            challenge_id: String(data.id),
+            user_id: input.createdBy,
+          },
+          { onConflict: "challenge_id,user_id" },
+        );
+      if (participantError) {
+        throw participantError;
+      }
+
+      const { error: eventParticipantError } = await supabase
+        .from("event_participants")
+        .upsert(
+          {
+            event_id: String(data.id),
+            event_type: "challenge",
+            user_id: input.createdBy,
+          },
+          { onConflict: "event_id,user_id" },
+        );
+      if (eventParticipantError) {
+        throw eventParticipantError;
+      }
+
       return mapChallengeRow(data);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: challengesKeys.all });
+    },
+  });
+};
+
+export const challengeJoinRequestKeys = {
+  all: ["challengeJoinRequests"] as const,
+  own: (challengeId?: string, userId?: string) =>
+    [...challengeJoinRequestKeys.all, "own", challengeId ?? "", userId ?? ""] as const,
+  byChallenge: (challengeId?: string) =>
+    [...challengeJoinRequestKeys.all, "byChallenge", challengeId ?? ""] as const,
+};
+
+export const useChallengeJoinRequestQuery = (
+  challengeId: string | undefined,
+  userId: string | undefined,
+) => {
+  return useQuery<ChallengeJoinRequest | null>({
+    queryKey: challengeJoinRequestKeys.own(challengeId, userId),
+    queryFn: async () => {
+      if (!challengeId || !userId) return null;
+
+      const { data, error } = await supabase
+        .from("challenge_join_requests")
+        .select("*")
+        .eq("challenge_id", challengeId)
+        .eq("requester_id", userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      return {
+        id: String((data as any).id),
+        challengeId: String((data as any).challenge_id),
+        requesterId: String((data as any).requester_id),
+        status: ((data as any).status as ChallengeJoinRequestStatus) ?? "pending",
+        createdAt: String((data as any).created_at),
+        respondedAt:
+          typeof (data as any).responded_at === "string"
+            ? String((data as any).responded_at)
+            : null,
+        responderId:
+          typeof (data as any).responder_id === "string"
+            ? String((data as any).responder_id)
+            : null,
+      };
+    },
+    enabled: Boolean(challengeId && userId),
+    staleTime: 30_000,
+  });
+};
+
+export const useChallengeJoinRequestsQuery = (challengeId: string | undefined) => {
+  return useQuery<ChallengeJoinRequest[]>({
+    queryKey: challengeJoinRequestKeys.byChallenge(challengeId),
+    queryFn: async () => {
+      if (!challengeId) return [];
+
+      const { data, error } = await supabase
+        .from("challenge_join_requests")
+        .select("*")
+        .eq("challenge_id", challengeId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      const requesterIds = Array.from(
+        new Set((data ?? []).map((row: any) => String(row.requester_id))),
+      );
+      const [{ data: profiles }, { data: photoRows }] = requesterIds.length
+        ? await Promise.all([
+            supabase
+              .from("profiles")
+              .select("id, display_name")
+              .in("id", requesterIds),
+            supabase
+              .from("profile_photos")
+              .select("profile_id, url")
+              .in("profile_id", requesterIds)
+              .order("order", { ascending: true }),
+          ])
+        : [{ data: [] }, { data: [] }];
+
+      const profileMap = new Map<string, string>();
+      for (const profile of profiles ?? []) {
+        profileMap.set(
+          String((profile as any).id),
+          typeof (profile as any).display_name === "string"
+            ? String((profile as any).display_name)
+            : "Participante",
+        );
+      }
+
+      const firstPhotoMap = new Map<string, string>();
+      for (const photo of photoRows ?? []) {
+        const requesterId = String((photo as any).profile_id);
+        if (!firstPhotoMap.has(requesterId) && typeof (photo as any).url === "string") {
+          firstPhotoMap.set(requesterId, String((photo as any).url));
+        }
+      }
+
+      return await Promise.all((data ?? []).map(async (row: any) => ({
+        id: String(row.id),
+        challengeId: String(row.challenge_id),
+        requesterId: String(row.requester_id),
+        status: (row.status as ChallengeJoinRequestStatus) ?? "pending",
+        createdAt: String(row.created_at),
+        respondedAt: typeof row.responded_at === "string" ? row.responded_at : null,
+        responderId: typeof row.responder_id === "string" ? row.responder_id : null,
+        requesterName: profileMap.get(String(row.requester_id)) ?? "Participante",
+        requesterAvatar: firstPhotoMap.has(String(row.requester_id))
+          ? await createSignedProfilePhotoUrl(firstPhotoMap.get(String(row.requester_id)) as string)
+          : null,
+      })));
+    },
+    enabled: Boolean(challengeId),
+    staleTime: 30_000,
+  });
+};
+
+export const useRequestChallengeJoinMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, unknown, { challengeId: string; userId: string }>({
+    mutationFn: async ({ challengeId, userId }) => {
+      const { error } = await supabase
+        .from("challenge_join_requests")
+        .upsert(
+          {
+            challenge_id: challengeId,
+            requester_id: userId,
+            status: "pending",
+            responded_at: null,
+            responder_id: null,
+          },
+          { onConflict: "challenge_id,requester_id" },
+        );
+
+      if (error) throw error;
+    },
+    onSuccess: (_data, { challengeId, userId }) => {
+      queryClient.invalidateQueries({
+        queryKey: challengeJoinRequestKeys.own(challengeId, userId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: challengeJoinRequestKeys.byChallenge(challengeId),
+      });
+    },
+  });
+};
+
+export const useApproveChallengeJoinRequestMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    unknown,
+    { requestId: string; challengeId: string; requesterId: string; responderId: string }
+  >({
+    mutationFn: async ({ requestId, challengeId, requesterId, responderId }) => {
+      const { error: updateError } = await supabase
+        .from("challenge_join_requests")
+        .update({
+          status: "approved",
+          responded_at: new Date().toISOString(),
+          responder_id: responderId,
+        })
+        .eq("id", requestId);
+
+      if (updateError) throw updateError;
+
+      const { error: joinError } = await supabase
+        .from("challenge_participants")
+        .upsert(
+          {
+            challenge_id: challengeId,
+            user_id: requesterId,
+          },
+          { onConflict: "challenge_id,user_id" },
+        );
+      if (joinError) throw joinError;
+
+      const { error: eventParticipantError } = await supabase
+        .from("event_participants")
+        .upsert(
+          {
+            event_id: challengeId,
+            event_type: "challenge",
+            user_id: requesterId,
+          },
+          { onConflict: "event_id,user_id" },
+        );
+      if (eventParticipantError) throw eventParticipantError;
+    },
+    onSuccess: (_data, { challengeId, requesterId }) => {
+      queryClient.invalidateQueries({
+        queryKey: challengeJoinRequestKeys.byChallenge(challengeId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: challengeJoinRequestKeys.own(challengeId, requesterId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: challengeParticipantKeys.participant(challengeId, requesterId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["challenge_participants_list", challengeId],
+      });
       queryClient.invalidateQueries({ queryKey: challengesKeys.all });
     },
   });
