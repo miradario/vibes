@@ -464,6 +464,24 @@ const Messages = () => {
         )}
 
         {renderSectionHeader(
+          "chatbubble-ellipses-outline",
+          "MENSAJES",
+          activeDirectMessages.length,
+          "Ver todos",
+        )}
+        <View style={localStyles.rowsCard}>
+          {loading ? (
+            <View style={localStyles.loadingWrap}>
+              <ActivityIndicator color="#E4B76E" size="small" />
+            </View>
+          ) : activeDirectMessages.length > 0 ? (
+            activeDirectMessages.map((item, index) => renderDirectRow(item, index))
+          ) : (
+            <Text style={localStyles.cardEmpty}>No hay mensajes todavía.</Text>
+          )}
+        </View>
+
+        {renderSectionHeader(
           "people",
           "GRUPOS",
           activeGroups.length,
@@ -503,24 +521,6 @@ const Messages = () => {
             finishedChallengeGroups.map((item, index) => renderGroupRow(item, index))
           ) : (
             <Text style={localStyles.cardEmpty}>No hay challenges finalizados.</Text>
-          )}
-        </View>
-
-        {renderSectionHeader(
-          "chatbubble-ellipses-outline",
-          "MENSAJES",
-          activeDirectMessages.length,
-          "Ver todos",
-        )}
-        <View style={localStyles.rowsCard}>
-          {loading ? (
-            <View style={localStyles.loadingWrap}>
-              <ActivityIndicator color="#E4B76E" size="small" />
-            </View>
-          ) : activeDirectMessages.length > 0 ? (
-            activeDirectMessages.map((item, index) => renderDirectRow(item, index))
-          ) : (
-            <Text style={localStyles.cardEmpty}>No hay mensajes todavía.</Text>
           )}
         </View>
 
