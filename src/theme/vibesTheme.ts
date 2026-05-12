@@ -32,6 +32,19 @@ export const vibesTheme = {
     xl: 32,
     xxl: 48,
   },
+  motion: {
+    modal: {
+      backdropColor: "rgba(17, 17, 17, 0.28)",
+      offsetY: 320,
+      backdropInDuration: 120,
+      backdropOutDuration: 110,
+      sheetInDuration: 220,
+      sheetOutDuration: 170,
+      sheetInDelay: 50,
+      sheetInOpacityDuration: 190,
+      sheetOutOpacityDuration: 130,
+    },
+  },
 } as const;
 
 export type VibesTheme = typeof vibesTheme;

@@ -20,20 +20,16 @@ type PushNotificationsBootstrapProps = {
   navigateToMessages: () => void;
 };
 
-const upsertPushToken = async (userId: string, token: Notifications.DevicePushToken) => {
+const upsertPushToken = async (token: Notifications.DevicePushToken) => {
   const tokenValue = typeof token.data === "string" ? token.data : String(token.data);
 
-  const { error } = await supabase.from("push_tokens").upsert(
-    {
-      user_id: userId,
+  const { error } = await supabase.functions.invoke("register-push-token", {
+    body: {
       token: tokenValue,
       platform: Platform.OS === "ios" ? "ios" : "android",
       provider: Platform.OS === "ios" ? "apns" : "fcm",
-      is_active: true,
-      last_seen_at: new Date().toISOString(),
     },
-    { onConflict: "token" },
-  );
+  });
 
   if (error) {
     throw error;
@@ -91,7 +87,7 @@ const registerPushToken = async (userId: string) => {
   }
 
   const deviceToken = await Notifications.getDevicePushTokenAsync();
-  await upsertPushToken(userId, deviceToken);
+  await upsertPushToken(deviceToken);
 };
 
 const handleNotificationResponse = (
@@ -161,7 +157,7 @@ export const PushNotificationsBootstrap = ({
     });
 
     const tokenSubscription = Notifications.addPushTokenListener((token) => {
-      void upsertPushToken(userId, token).catch((error) => {
+      void upsertPushToken(token).catch((error) => {
         console.warn("[push] failed to refresh device push token", error);
       });
     });

@@ -29,6 +29,7 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import LoopingVideo from "../components/LoopingVideo";
 import UserProfileSheet from "../components/UserProfileSheet";
 import ChallengeTreeProgress from "../components/ChallengeTreeProgress";
@@ -1829,20 +1830,13 @@ const EventDetail = () => {
       </Modal>
 
       {/* ── Menú hamburguesa ── */}
-      <Modal
+      <AnimatedSheetModal
         visible={menuVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setMenuVisible(false)}
+        onClose={() => setMenuVisible(false)}
+        offsetY={320}
+        sheetStyle={localStyles.menuSheet}
       >
-        <View style={localStyles.menuBackdrop}>
-          <TouchableOpacity
-            style={{ flex: 1 }}
-            activeOpacity={1}
-            onPress={() => setMenuVisible(false)}
-          />
-        </View>
-        <View style={localStyles.menuSheet}>
+        <>
           <View style={localStyles.menuHandle} />
           <Text style={localStyles.menuTitle}>{event.title}</Text>
 
@@ -1932,18 +1926,16 @@ const EventDetail = () => {
           >
             <Text style={localStyles.menuCancelText}>Cancelar</Text>
           </TouchableOpacity>
-        </View>
-      </Modal>
+        </>
+      </AnimatedSheetModal>
 
       {/* ── Modal participantes ── */}
-      <Modal
+      <AnimatedSheetModal
         visible={participantsVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setParticipantsVisible(false)}
+        onClose={() => setParticipantsVisible(false)}
+        offsetY={320}
+        sheetStyle={localStyles.participantsModalCard}
       >
-        <View style={localStyles.participantsModalOverlay}>
-          <View style={localStyles.participantsModalCard}>
             <View style={localStyles.participantsModalHeader}>
             <Text style={localStyles.participantsModalTitle}>
                 Participantes ({visibleParticipantCount})
@@ -1986,9 +1978,7 @@ const EventDetail = () => {
               </Text>
             }
           />
-          </View>
-        </View>
-      </Modal>
+      </AnimatedSheetModal>
 
       <UserProfileSheet
         visible={Boolean(selectedParticipant && selectedParticipantCard)}
@@ -2728,10 +2718,6 @@ const localStyles = StyleSheet.create({
     fontSize: 15,
   },
   // ── Menú hamburguesa ──
-  menuBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(43,43,43,0.45)",
-  },
   menuSheet: {
     position: "absolute",
     bottom: 0,
@@ -2800,11 +2786,6 @@ const localStyles = StyleSheet.create({
     color: TEXT_SECONDARY,
   },
   // ── Participantes ──
-  participantsModalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.5)",
-    justifyContent: "flex-end",
-  },
   participantsModalCard: {
     backgroundColor: WHITE,
     borderTopLeftRadius: 24,

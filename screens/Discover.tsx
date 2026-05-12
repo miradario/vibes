@@ -15,6 +15,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DiscoverOrbitCanvas from "../components/DiscoverOrbitCanvas";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Icon from "../components/Icon";
 import UserProfileSheet from "../components/UserProfileSheet";
 import type { UserProfileCardData } from "../components/UserProfileCard";
@@ -477,19 +478,13 @@ const Discover = () => {
           </View>
         </Modal>
 
-        <Modal
+        <AnimatedSheetModal
           visible={isFiltersVisible}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setIsFiltersVisible(false)}
+          onClose={() => setIsFiltersVisible(false)}
+          offsetY={320}
+          sheetStyle={localStyles.filtersSheet}
         >
-          <View style={localStyles.filtersModalRoot}>
-            <TouchableOpacity
-              style={localStyles.filtersBackdrop}
-              activeOpacity={1}
-              onPress={() => setIsFiltersVisible(false)}
-            />
-            <View style={localStyles.filtersSheet}>
+            <>
               <View style={localStyles.filtersHandle} />
               <View style={localStyles.filtersHeader}>
                 <View style={localStyles.filtersHeaderText}>
@@ -688,9 +683,8 @@ const Discover = () => {
                   <Text style={localStyles.filtersPrimaryButtonText}>Aplicar</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </View>
-        </Modal>
+            </>
+        </AnimatedSheetModal>
 
         <UserProfileSheet
           visible={showProfileSheet}
@@ -829,14 +823,6 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: "CormorantGaramond_500Medium",
     textAlign: "center",
-  },
-  filtersModalRoot: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  filtersBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(17, 17, 17, 0.28)",
   },
   filtersSheet: {
     backgroundColor: "#F6F6F4",

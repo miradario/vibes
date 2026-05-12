@@ -1,6 +1,7 @@
 import React from "react";
-import { Modal, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import styles from "../assets/styles";
+import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
 import UserProfileCard, { type UserProfileCardData } from "./UserProfileCard";
 
@@ -12,7 +13,6 @@ type Props = {
   secondaryActionLabel?: string;
   onSecondaryActionPress?: () => void;
   onImagePress?: (image?: any, index?: number) => void;
-  animationType?: "none" | "slide" | "fade";
 };
 
 const UserProfileSheet = ({
@@ -23,40 +23,33 @@ const UserProfileSheet = ({
   secondaryActionLabel,
   onSecondaryActionPress,
   onImagePress,
-  animationType = "slide",
 }: Props) => {
   return (
-    <Modal
+    <AnimatedSheetModal
       visible={visible}
-      transparent
-      animationType={animationType}
-      onRequestClose={onClose}
+      onClose={onClose}
+      sheetStyle={styles.discoverSheetContainer}
+      offsetY={320}
     >
-      <View style={styles.discoverSheetRoot}>
+      <>
         <TouchableOpacity
           activeOpacity={1}
-          style={styles.discoverSheetBackdrop}
-          onPress={onClose}
-        />
-        <TouchableOpacity
           style={styles.discoverSheetCloseButton}
           onPress={onClose}
           activeOpacity={0.9}
         >
           <Icon name="close" size={20} color="#2B2B2B" />
         </TouchableOpacity>
-        <View style={styles.discoverSheetContainer}>
-          <View style={styles.discoverSheetHandle} />
-          <UserProfileCard
-            profile={profile}
-            onContactPress={onContactPress}
-            secondaryActionLabel={secondaryActionLabel}
-            onSecondaryActionPress={onSecondaryActionPress}
-            onImagePress={onImagePress}
-          />
-        </View>
-      </View>
-    </Modal>
+        <View style={styles.discoverSheetHandle} />
+        <UserProfileCard
+          profile={profile}
+          onContactPress={onContactPress}
+          secondaryActionLabel={secondaryActionLabel}
+          onSecondaryActionPress={onSecondaryActionPress}
+          onImagePress={onImagePress}
+        />
+      </>
+    </AnimatedSheetModal>
   );
 };
 

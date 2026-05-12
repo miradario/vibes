@@ -19,6 +19,7 @@ import {
 import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import UserProfileSheet from "../components/UserProfileSheet";
 import styles, { DARK_GRAY } from "../assets/styles";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -350,20 +351,16 @@ const Chat = () => {
         </Pressable>
       </Modal>
 
-      <Modal
-        transparent
-        animationType="slide"
+      <AnimatedSheetModal
         visible={showReportModal}
-        onRequestClose={closeReportModal}
+        onClose={closeReportModal}
+        offsetY={320}
+        sheetStyle={[
+          localStyles.reportSheet,
+          { paddingBottom: Math.max(insets.bottom + 20, 30) },
+        ]}
       >
-        <Pressable style={localStyles.modalBackdrop} onPress={closeReportModal}>
-          <Pressable
-            style={[
-              localStyles.reportSheet,
-              { paddingBottom: Math.max(insets.bottom + 20, 30) },
-            ]}
-            onPress={() => undefined}
-          >
+          <Pressable onPress={() => undefined}>
             <Text style={localStyles.modalTitle}>¿Por qué querés reportar?</Text>
             <Text style={localStyles.modalSubtitle}>
               Tu reporte nos ayuda a cuidar la comunidad.
@@ -428,8 +425,7 @@ const Chat = () => {
               </Text>
             </TouchableOpacity>
           </Pressable>
-        </Pressable>
-      </Modal>
+      </AnimatedSheetModal>
 
       {/* Messages */}
       {isLoading ? (
