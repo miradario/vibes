@@ -13,6 +13,7 @@
       "**/*"
     ],
     "ios": {
+      "icon": "./assets/icon-ios.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.miradario.vibe",
       "deploymentTarget": "15.4",

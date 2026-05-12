@@ -196,7 +196,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - LottieFiles-dotLottie-iOS (0.15.2)
+  - LottieFiles-dotLottie-iOS (0.15.4)
   - RCTDeprecation (0.81.5)
   - RCTRequired (0.81.5)
   - RCTTypeSafety (0.81.5):
@@ -2587,7 +2587,7 @@ SPEC CHECKSUMS:
   livekit-react-native-webrtc: c03e72c608fbb8284a99e095dd7835a85bdb0279
   lottie-ios: 8f959969761e9c45d70353667d00af0e5b9cadb3
   lottie-react-native: 6a080b2f109ef611c75c503a33ebb8ea75db0c91
-  LottieFiles-dotLottie-iOS: a82c19fca1cbe7b0668a70de707f27144cba1619
+  LottieFiles-dotLottie-iOS: 044d32af28bc38871c944c8daa9d9fde8f7e2d99
   RCTDeprecation: 943572d4be82d480a48f4884f670135ae30bf990
   RCTRequired: 8f3cfc90cc25cf6e420ddb3e7caaaabc57df6043
   RCTTypeSafety: 16a4144ca3f959583ab019b57d5633df10b5e97c

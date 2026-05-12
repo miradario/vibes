@@ -28,6 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>com.miradario.vibe</string>
+          <string>com.miradario.vibe</string>
         </array>
       </dict>
     </array>
