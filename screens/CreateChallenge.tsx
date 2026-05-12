@@ -34,6 +34,7 @@ import LoopingVideo from "../components/LoopingVideo";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useCreateChallengeMutation } from "../src/queries/events.queries";
+import { vibesTheme } from "../src/theme/vibesTheme";
 import {
   challengeMediaPresets,
   getChallengeMediaPreset,
@@ -217,7 +218,7 @@ const CreateChallenge = () => {
               <Icon name="chevron-back" size={22} color={DARK_GRAY} />
             </TouchableOpacity>
             <View style={{ flex: 1, alignItems: "center" }}>
-              <Text style={styles.title}>Crear desafío</Text>
+              <Text style={localStyles.screenTitle}>Crear desafío</Text>
             </View>
             <View style={{ width: 22 }} />
           </View>
@@ -389,6 +390,12 @@ const localStyles = StyleSheet.create({
   keyboardAvoiding: {
     flex: 1,
   },
+  screenTitle: {
+    color: DARK_GRAY,
+    fontSize: 30,
+    lineHeight: 34,
+    fontFamily: vibesTheme.fonts.light,
+  },
   content: {
     paddingBottom: 132,
   },
@@ -406,7 +413,7 @@ const localStyles = StyleSheet.create({
   label: {
     color: DARK_GRAY,
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: vibesTheme.fonts.medium,
     marginBottom: 8,
     marginTop: 12,
   },
@@ -416,6 +423,7 @@ const localStyles = StyleSheet.create({
     lineHeight: 18,
     marginTop: -2,
     marginBottom: 10,
+    fontFamily: vibesTheme.fonts.medium,
   },
   input: {
     backgroundColor: "#F6F6F4",
@@ -491,7 +499,7 @@ const localStyles = StyleSheet.create({
   dateButtonText: {
     color: DARK_GRAY,
     fontSize: 15,
-    fontWeight: "600",
+    fontFamily: vibesTheme.fonts.medium,
   },
   datePickerWrap: {
     marginTop: 10,
@@ -534,13 +542,14 @@ const localStyles = StyleSheet.create({
   visibilityTitle: {
     color: DARK_GRAY,
     fontSize: 15,
-    fontWeight: "600",
+    fontFamily: vibesTheme.fonts.medium,
   },
   visibilitySubtitle: {
     color: TEXT_SECONDARY,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 2,
+    fontFamily: vibesTheme.fonts.medium,
   },
   createButton: {
     backgroundColor: PRIMARY_COLOR,
@@ -557,8 +566,8 @@ const localStyles = StyleSheet.create({
   },
   createButtonText: {
     color: WHITE,
-    fontWeight: "700",
     fontSize: 15,
+    fontFamily: vibesTheme.fonts.medium,
   },
   fixedFooter: {
     position: "absolute",

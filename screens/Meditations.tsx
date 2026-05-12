@@ -34,7 +34,6 @@ import Icon from "../components/Icon";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
-import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import {
   useUpsertMeditationPresenceMutation,
   type MeditationPresenceVisibility,
@@ -955,47 +954,6 @@ const MeditationScreen = () => {
               />
             </Pressable>
 
-            <View style={localStyles.presenceVisibilityRow}>
-              {(
-                [
-                  { value: "friends", label: "Amigos" },
-                  { value: "private", label: "Solo yo" },
-                  { value: "public", label: "Público" },
-                ] as const
-              ).map((option) => {
-                const isSelected = presenceVisibility === option.value;
-                return (
-                  <Pressable
-                    key={option.value}
-                    onPress={() => {
-                      setPresenceVisibility(option.value);
-                      if (session?.user?.id) {
-                        void upsertUserPreferences(session.user.id, {
-                          meditation_presence_visibility: option.value,
-                        });
-                      }
-                    }}
-                    style={[
-                      localStyles.presenceVisibilityChip,
-                      isSelected
-                        ? localStyles.presenceVisibilityChipActive
-                        : null,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        localStyles.presenceVisibilityChipText,
-                        isSelected
-                          ? localStyles.presenceVisibilityChipTextActive
-                          : null,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
           </View>
 
           {!showImmersivePlayer ? (
@@ -1541,32 +1499,6 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,
-  },
-  presenceVisibilityRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 14,
-  },
-  presenceVisibilityChip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-  },
-  presenceVisibilityChipActive: {
-    backgroundColor: "rgba(174, 191, 209, 0.22)",
-    borderColor: "rgba(174, 191, 209, 0.44)",
-  },
-  presenceVisibilityChipText: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 15,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  presenceVisibilityChipTextActive: {
-    color: vibesTheme.colors.primaryText,
   },
   previewCard: {
     marginTop: 22,
