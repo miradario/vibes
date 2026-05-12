@@ -2,7 +2,7 @@ import { StyleSheet, Dimensions, Platform } from "react-native";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 
 export const PRIMARY_COLOR = "#E4B76E";
-export const SECONDARY_COLOR = "#AEBFD1";
+export const SECONDARY_COLOR = vibesTheme.colors.accentBlue;
 export const WHITE = "#F6F6F4";
 export const GRAY = "#6E6E6E";
 export const DARK_GRAY = "#2B2B2B";
@@ -19,13 +19,13 @@ export const BUTTON_BORDER = "rgba(43, 43, 43, 0.08)";
 export const WARM_SHADOW = "rgba(43, 43, 43, 0.10)";
 export const SERIF_FONT = vibesTheme.fonts.primary;
 
-export const ONLINE_STATUS = "#AEBFD1";
+export const ONLINE_STATUS = vibesTheme.colors.accentBlue;
 export const OFFLINE_STATUS = "#D88C7A";
 
 export const STAR_ACTIONS = "#E4B76E";
 export const LIKE_ACTIONS = "#E4B76E";
 export const DISLIKE_ACTIONS = "#D88C7A";
-export const FLASH_ACTIONS = "#AEBFD1";
+export const FLASH_ACTIONS = vibesTheme.colors.accentBlue;
 
 export const DIMENSION_WIDTH = Dimensions.get("window").width;
 export const DIMENSION_HEIGHT = Dimensions.get("window").height;
