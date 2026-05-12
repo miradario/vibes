@@ -4,6 +4,7 @@ import React, { memo, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   PanResponder,
   ScrollView,
   StyleSheet,
@@ -30,6 +31,12 @@ import LoopingVideo from "../components/LoopingVideo";
 import {
   useChallengeCheckinsQuery,
   useChallengeParticipantQuery,
+  useChallengeJoinRequestQuery,
+  useChallengeJoinRequestsQuery,
+  useChallengeTodayCheckinsCountQuery,
+  useJoinChallengeMutation,
+  useRequestChallengeJoinMutation,
+  useApproveChallengeJoinRequestMutation,
   useCheckInChallengeMutation,
   type EventFeedItem,
 } from "../src/queries/events.queries";
@@ -39,6 +46,7 @@ import {
   getChallengeProgressVideo,
   type ChallengeMediaPresetId,
 } from "../src/constants/challengeMediaPresets";
+import { shareChallengeInvite, shareChallengeProgress } from "../src/lib/socialShare";
 
 type CheckInStatus = "pending" | "completed" | "broken";
 type ProgressMode = "path" | "compact" | "calendar";
@@ -187,6 +195,28 @@ const getStatusFromData = (
   return "pending";
 };
 
+const getVisibilityMeta = (visibility?: EventFeedItem["visibility"]) => {
+  if (visibility === "friends") {
+    return {
+      icon: "people-outline" as const,
+      label: "Solo amigos",
+      subtitle: "Una práctica reservada para tus conexiones",
+    };
+  }
+  if (visibility === "private") {
+    return {
+      icon: "lock-closed-outline" as const,
+      label: "Privado",
+      subtitle: "Un espacio íntimo para sostenerte",
+    };
+  }
+  return {
+    icon: "earth-outline" as const,
+    label: "Público",
+    subtitle: "La comunidad puede descubrirlo y sumarse",
+  };
+};
+
 const triggerHaptic = () => {
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 };
@@ -207,9 +237,12 @@ const useAnimatedProgress = (percent: number) => {
 type ChallengeHeaderProps = {
   challenge: ChallengeDetailData;
   onBack: () => void;
+  onShare?: () => void;
+  statusLabel?: string;
+  statusTone?: "active" | "done" | "warm";
 };
 
-export const ChallengeHeader = memo(({ challenge, onBack }: ChallengeHeaderProps) => (
+export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, statusTone = "active" }: ChallengeHeaderProps) => (
   <View style={localStyles.header}>
     <TouchableOpacity style={localStyles.iconButton} onPress={onBack}>
       <Icon name="chevron-back" size={23} color={palette.text} />
@@ -218,7 +251,24 @@ export const ChallengeHeader = memo(({ challenge, onBack }: ChallengeHeaderProps
       <Text style={localStyles.eyebrow}>Desafío</Text>
       <Text style={localStyles.title}>{challenge.title}</Text>
       <Text style={localStyles.subtitle}>{challenge.subtitle}</Text>
+      {statusLabel ? (
+        <View
+          style={[
+            localStyles.headerStatusPill,
+            statusTone === "done"
+              ? localStyles.headerStatusPillDone
+              : statusTone === "warm"
+                ? localStyles.headerStatusPillWarm
+                : null,
+          ]}
+        >
+          <Text style={localStyles.headerStatusText}>{statusLabel}</Text>
+        </View>
+      ) : null}
     </View>
+    <TouchableOpacity style={localStyles.iconButton} onPress={onShare}>
+      <Icon name="share-social-outline" size={21} color={palette.text} />
+    </TouchableOpacity>
   </View>
 ));
 
@@ -269,6 +319,93 @@ export const StreakSummaryCard = memo(
           <Text style={localStyles.streakValue}>{bestStreak}</Text>
           <Text style={localStyles.streakLabel}>mejor</Text>
         </View>
+      </View>
+    </View>
+  ),
+);
+
+const getStreakCelebrationCopy = (streak: number) => {
+  if (streak >= 21) {
+    return {
+      title: `Racha de ${streak} días`,
+      body: "Tu práctica ya tiene una raíz profunda. Lo que sostenés también te sostiene.",
+    };
+  }
+  if (streak >= 14) {
+    return {
+      title: `Racha de ${streak} días`,
+      body: "Tu constancia ya cambió el ritmo del challenge. Se nota en tu energía.",
+    };
+  }
+  if (streak >= 7) {
+    return {
+      title: `Racha de ${streak} días`,
+      body: "Una semana presente. Seguí así: la comunidad también empuja con vos.",
+    };
+  }
+  return {
+    title: `Racha de ${streak} días`,
+    body: "Buen ritmo. Cada check-in suma presencia y te acerca al cierre del challenge.",
+  };
+};
+
+const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
+  const glow = useSharedValue(0.92);
+
+  useEffect(() => {
+    glow.value = withRepeat(
+      withSequence(
+        withTiming(1.02, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0.96, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
+      ),
+      -1,
+      true,
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: glow.value }],
+    opacity: interpolate(glow.value, [0.96, 1.02], [0.76, 1]),
+  }));
+  const copy = getStreakCelebrationCopy(streak);
+
+  return (
+    <View style={localStyles.celebrationCard}>
+      <Animated.View style={[localStyles.celebrationGlow, animatedStyle]} />
+      <View style={localStyles.celebrationBadge}>
+        <Icon name="sparkles-outline" size={17} color={palette.goldDeep} />
+      </View>
+      <View style={localStyles.celebrationCopy}>
+        <Text style={localStyles.celebrationTitle}>{copy.title}</Text>
+        <Text style={localStyles.celebrationBody}>{copy.body}</Text>
+      </View>
+    </View>
+  );
+});
+
+const CommunityPulseCard = memo(
+  ({
+    checkedInTodayCount,
+    participantsCount,
+  }: {
+    checkedInTodayCount: number;
+    participantsCount: number;
+  }) => (
+    <View style={localStyles.communityCard}>
+      <View style={localStyles.communityBadge}>
+        <Icon name="people-outline" size={17} color={palette.goldDeep} />
+      </View>
+      <View style={localStyles.communityCopy}>
+        <Text style={localStyles.communityTitle}>
+          {checkedInTodayCount > 0
+            ? `${checkedInTodayCount} personas ya hicieron check-in hoy`
+            : "Todavía nadie hizo check-in hoy"}
+        </Text>
+        <Text style={localStyles.communitySubtitle}>
+          {participantsCount > 0
+            ? `${participantsCount} personas están transitando este challenge`
+            : "Tu presencia puede abrir el ritmo del día"}
+        </Text>
       </View>
     </View>
   ),
@@ -688,12 +825,23 @@ const ChallengeDetailScreen = () => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const { data: participant } = useChallengeParticipantQuery(event?.id, userId);
+  const joinChallengeMutation = useJoinChallengeMutation();
+  const requestChallengeJoinMutation = useRequestChallengeJoinMutation();
+  const approveJoinRequestMutation = useApproveChallengeJoinRequestMutation();
+  const { data: ownJoinRequest } = useChallengeJoinRequestQuery(event?.id, userId);
+  const { data: challengeJoinRequests = [] } = useChallengeJoinRequestsQuery(
+    event?.id,
+  );
   const { data: remoteCheckins = [] } = useChallengeCheckinsQuery(event?.id, userId);
+  const { data: remoteCheckedInTodayCount = 0 } = useChallengeTodayCheckinsCountQuery(event?.id);
   const checkInMutation = useCheckInChallengeMutation();
   const [localCompletedDays, setLocalCompletedDays] = useState<number[]>([]);
   const [localStatus, setLocalStatus] = useState<CheckInStatus | null>(null);
   const [footerSliderWidth, setFooterSliderWidth] = useState(0);
   const [footerSliderOffset, setFooterSliderOffset] = useState(0);
+  const [celebrationVisible, setCelebrationVisible] = useState(false);
+  const [celebrationTitle, setCelebrationTitle] = useState("Día completado");
+  const [celebrationBody, setCelebrationBody] = useState("Gracias por elegirte hoy");
 
   const baseChallenge = useMemo(
     () => mapEventToChallengeData(event, remoteCheckins, participant),
@@ -719,9 +867,33 @@ const ChallengeDetailScreen = () => {
         : baseChallenge.streak,
     bestStreak: Math.max(baseChallenge.bestStreak, completedDays.length),
   };
+  const isAdmin = Boolean(userId && event?.createdBy && userId === event.createdBy);
+  const isJoined = Boolean(participant);
+  const visibilityMeta = getVisibilityMeta(event?.visibility);
+  const pendingJoinRequests = challengeJoinRequests.filter(
+    (request) => request.status === "pending",
+  );
   const percent = getCompletionPercent(challenge.completedDays, challenge.totalDays);
   const daysLeft = getDaysLeft(challenge.totalDays, challenge.completedDays);
+  const todayKey = new Date().toISOString().split("T")[0];
+  const hasRemoteTodayCheckin =
+    participant?.checkedInToday ||
+    remoteCheckins.includes(todayKey);
+  const checkedInTodayCount =
+    remoteCheckedInTodayCount +
+    (challenge.checkInStatus === "completed" && !hasRemoteTodayCheckin ? 1 : 0);
   const contentMaxWidth = width >= 700 ? 620 : undefined;
+  const isChallengeCompleted =
+    challenge.checkInStatus === "completed" &&
+    (challenge.currentDay >= challenge.totalDays ||
+      challenge.completedDays.length >= challenge.totalDays);
+  const headerStatus = isChallengeCompleted
+    ? { label: "Challenge completado", tone: "done" as const }
+    : challenge.checkInStatus === "completed"
+      ? { label: "Hecho hoy", tone: "active" as const }
+      : challenge.checkInStatus === "broken"
+        ? { label: "Retomá hoy", tone: "warm" as const }
+        : { label: `Día ${challenge.currentDay} activo`, tone: "active" as const };
   const footerSliderMaxOffset = Math.max(
     footerSliderWidth -
       FOOTER_SLIDER_HANDLE_SIZE -
@@ -734,6 +906,7 @@ const ChallengeDetailScreen = () => {
       FOOTER_SLIDER_HORIZONTAL_PADDING * 2,
     footerSliderWidth,
   );
+  const celebrationProgress = useSharedValue(0);
 
   const resetFooterSlider = () => {
     setFooterSliderOffset(0);
@@ -749,12 +922,71 @@ const ChallengeDetailScreen = () => {
       });
     }
 
-    setLocalCompletedDays((prev) =>
-      Array.from(new Set([...prev, challenge.currentDay])),
+    const nextCompletedDays = Array.from(
+      new Set([...completedDays, challenge.currentDay]),
     );
+    const reachedFinalCheckIn =
+      challenge.currentDay >= challenge.totalDays ||
+      nextCompletedDays.length >= challenge.totalDays;
+    setLocalCompletedDays(nextCompletedDays);
     setLocalStatus("completed");
     setFooterSliderOffset(footerSliderMaxOffset);
+    setCelebrationTitle(
+      reachedFinalCheckIn ? "Challenge completado" : "Día completado",
+    );
+    setCelebrationBody(
+      reachedFinalCheckIn
+        ? "Sostuviste el proceso hasta el final. Tu energía cambió."
+        : "Gracias por volver a vos y sostener tu ritmo hoy.",
+    );
+    setCelebrationVisible(true);
+    if (reachedFinalCheckIn) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     triggerHaptic();
+  };
+
+  const handleShare = async () => {
+    if (!event) return;
+
+    if (isJoined) {
+      await shareChallengeProgress(event, {
+        currentDay: challenge.currentDay,
+        totalDays: challenge.totalDays,
+        streak: challenge.streak,
+      });
+      return;
+    }
+
+    await shareChallengeInvite(event);
+  };
+
+  const handleJoinOrRequest = async () => {
+    if (!event?.id || !userId) return;
+
+    if ((event.visibility ?? "public") === "public") {
+      await joinChallengeMutation.mutateAsync({
+        challengeId: event.id,
+        userId,
+      });
+      return;
+    }
+
+    await requestChallengeJoinMutation.mutateAsync({
+      challengeId: event.id,
+      userId,
+    });
+  };
+
+  const handleApproveJoinRequest = async (requestId: string, requesterId: string) => {
+    if (!event?.id || !userId) return;
+
+    await approveJoinRequestMutation.mutateAsync({
+      requestId,
+      challengeId: event.id,
+      requesterId,
+      responderId: userId,
+    });
   };
 
   useEffect(() => {
@@ -765,6 +997,42 @@ const ChallengeDetailScreen = () => {
 
     setFooterSliderOffset(footerSliderMaxOffset);
   }, [challenge.checkInStatus, footerSliderMaxOffset]);
+
+  useEffect(() => {
+    if (!celebrationVisible) {
+      celebrationProgress.value = 0;
+      return;
+    }
+
+    celebrationProgress.value = withTiming(1, {
+      duration: 320,
+      easing: Easing.out(Easing.cubic),
+    });
+
+    const hideTimer = setTimeout(() => {
+      celebrationProgress.value = withTiming(0, {
+        duration: 240,
+        easing: Easing.inOut(Easing.quad),
+      });
+      setTimeout(() => {
+        setCelebrationVisible(false);
+      }, 240);
+    }, 2200);
+
+    return () => clearTimeout(hideTimer);
+  }, [celebrationProgress, celebrationVisible]);
+
+  const celebrationAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: celebrationProgress.value,
+    transform: [
+      {
+        translateY: interpolate(celebrationProgress.value, [0, 1], [20, 0]),
+      },
+      {
+        scale: interpolate(celebrationProgress.value, [0, 1], [0.96, 1]),
+      },
+    ],
+  }));
 
   const footerSliderResponder = useMemo(
     () =>
@@ -804,9 +1072,13 @@ const ChallengeDetailScreen = () => {
             <Icon name="checkmark" size={22} color="#FFFFFF" />
           </View>
           <View style={localStyles.footerSliderCopy}>
-            <Text style={localStyles.footerSliderTitle}>Día completado</Text>
+            <Text style={localStyles.footerSliderTitle}>
+              {isChallengeCompleted ? "Challenge completado" : "Día completado"}
+            </Text>
             <Text style={localStyles.footerSliderSubtitle}>
-              Gracias por elegirte hoy
+              {isChallengeCompleted
+                ? "Lo sostuviste hasta el final"
+                : "Gracias por elegirte hoy"}
             </Text>
           </View>
         </View>
@@ -867,6 +1139,11 @@ const ChallengeDetailScreen = () => {
         <ChallengeHeader
           challenge={challenge}
           onBack={() => navigation.goBack()}
+          onShare={() => {
+            void handleShare();
+          }}
+          statusLabel={headerStatus.label}
+          statusTone={headerStatus.tone}
         />
       </View>
       <ScrollView
@@ -887,6 +1164,69 @@ const ChallengeDetailScreen = () => {
           presetId={event?.imagePresetId ?? null}
         />
         <InfoCardsRow challenge={challenge} percent={percent} />
+        <View style={localStyles.visibilityCard}>
+          <View style={localStyles.visibilityBadge}>
+            <Icon
+              name={visibilityMeta.icon}
+              size={18}
+              color={palette.goldDeep}
+            />
+          </View>
+          <View style={localStyles.visibilityCopy}>
+            <Text style={localStyles.visibilityTitle}>{visibilityMeta.label}</Text>
+            <Text style={localStyles.visibilitySubtitle}>
+              {visibilityMeta.subtitle}
+            </Text>
+          </View>
+        </View>
+        <CommunityPulseCard
+          checkedInTodayCount={checkedInTodayCount}
+          participantsCount={challenge.participantsCount}
+        />
+        {isAdmin && pendingJoinRequests.length > 0 ? (
+          <View style={localStyles.requestCard}>
+            <View style={localStyles.requestCardHeader}>
+              <Text style={localStyles.requestCardTitle}>Solicitudes</Text>
+              <Text style={localStyles.requestCardCount}>
+                {pendingJoinRequests.length}
+              </Text>
+            </View>
+            {pendingJoinRequests.slice(0, 2).map((request) => (
+              <View key={request.id} style={localStyles.requestRow}>
+                <View style={localStyles.requestProfile}>
+                  {request.requesterAvatar ? (
+                    <Image
+                      source={{ uri: request.requesterAvatar }}
+                      style={localStyles.requestAvatar}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        localStyles.requestAvatar,
+                        localStyles.requestAvatarPlaceholder,
+                      ]}
+                    >
+                      <Icon name="person-outline" size={14} color={palette.muted} />
+                    </View>
+                  )}
+                  <Text style={localStyles.requestName} numberOfLines={1}>
+                    {request.requesterName ?? "Participante"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={localStyles.requestApproveButton}
+                  disabled={approveJoinRequestMutation.isPending}
+                  onPress={() => {
+                    void handleApproveJoinRequest(request.id, request.requesterId);
+                  }}
+                >
+                  <Text style={localStyles.requestApproveText}>Aprobar</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        ) : null}
+        {challenge.streak >= 3 ? <StreakCelebrationCard streak={challenge.streak} /> : null}
         <StreakSummaryCard
           streak={challenge.streak}
           bestStreak={challenge.bestStreak}
@@ -914,16 +1254,118 @@ const ChallengeDetailScreen = () => {
         ]}
       >
         <View style={localStyles.stickyFooterCard}>
-          {renderFooterCheckIn()}
-          <ChatEntryRow
-            onPress={() =>
-              event
-                ? navigation.navigate("EventChat" as never, { event } as never)
-                : undefined
-            }
-          />
+          {isJoined ? (
+            <>
+              {renderFooterCheckIn()}
+              <ChatEntryRow
+                onPress={() =>
+                  event
+                    ? navigation.navigate("EventChat" as never, { event } as never)
+                    : undefined
+                }
+              />
+            </>
+          ) : isAdmin ? (
+            <>
+              <TouchableOpacity
+                style={localStyles.joinRequestButton}
+                disabled={joinChallengeMutation.isPending}
+                onPress={() => {
+                  if (!event?.id || !userId) return;
+                  void joinChallengeMutation.mutateAsync({
+                    challengeId: event.id,
+                    userId,
+                  });
+                }}
+              >
+                {joinChallengeMutation.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={localStyles.joinRequestButtonTitle}>
+                      Empezar mi challenge
+                    </Text>
+                    <Text style={localStyles.joinRequestButtonSubtitle}>
+                      Activá tu propio espacio y entrá al chat del challenge
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <View style={localStyles.chatLockedRow}>
+                <Icon name="trophy-outline" size={18} color={palette.muted} />
+                <Text style={localStyles.chatLockedText}>
+                  Cuando lo actives, también aparece tu progreso diario.
+                </Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={localStyles.joinRequestButton}
+                disabled={
+                  joinChallengeMutation.isPending ||
+                  requestChallengeJoinMutation.isPending ||
+                  ownJoinRequest?.status === "pending"
+                }
+                onPress={() => {
+                  void handleJoinOrRequest();
+                }}
+              >
+                {(joinChallengeMutation.isPending ||
+                  requestChallengeJoinMutation.isPending) ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={localStyles.joinRequestButtonTitle}>
+                      {(event?.visibility ?? "public") === "public"
+                        ? "Sumarme al challenge"
+                        : ownJoinRequest?.status === "pending"
+                          ? "Solicitud enviada"
+                          : "Solicitar acceso"}
+                    </Text>
+                    <Text style={localStyles.joinRequestButtonSubtitle}>
+                      {(event?.visibility ?? "public") === "public"
+                        ? "Entrás directo al espacio compartido"
+                        : "El creador lo puede aprobar cuando quiera"}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <View style={localStyles.chatLockedRow}>
+                <Icon name="chatbubbles-outline" size={18} color={palette.muted} />
+                <Text style={localStyles.chatLockedText}>
+                  Uníte o pedí acceso para entrar al chat
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       </View>
+
+      {celebrationVisible ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            localStyles.completionCelebration,
+            { top: Math.max(insets.top + 110, 148) },
+            celebrationAnimatedStyle,
+          ]}
+        >
+          <View style={localStyles.completionCelebrationBadge}>
+            <Icon
+              name={isChallengeCompleted ? "trophy-outline" : "sparkles-outline"}
+              size={20}
+              color="#FFFFFF"
+            />
+          </View>
+          <Text style={localStyles.completionCelebrationTitle}>
+            {celebrationTitle}
+          </Text>
+          <Text style={localStyles.completionCelebrationBody}>
+            {celebrationBody}
+          </Text>
+        </Animated.View>
+      ) : null}
     </SafeAreaView>
   );
 };
@@ -961,6 +1403,91 @@ const localStyles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
+  },
+  joinRequestButton: {
+    borderRadius: 24,
+    backgroundColor: palette.gold,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: palette.goldDeep,
+    shadowOpacity: 0.20,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  joinRequestButtonTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    lineHeight: 20,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  joinRequestButtonSubtitle: {
+    marginTop: 4,
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  chatLockedRow: {
+    borderRadius: 18,
+    backgroundColor: "#FFFDF8",
+    borderWidth: 1,
+    borderColor: "rgba(45, 41, 36, 0.08)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  chatLockedText: {
+    flex: 1,
+    color: palette.muted,
+    fontSize: 14,
+    lineHeight: 17,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  completionCelebration: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    zIndex: 55,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 252, 247, 0.98)",
+    borderWidth: 1,
+    borderColor: "rgba(226, 168, 79, 0.22)",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    alignItems: "center",
+    shadowColor: "#6F5536",
+    shadowOpacity: 0.18,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+  completionCelebrationBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: palette.gold,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  completionCelebrationTitle: {
+    marginTop: 12,
+    color: palette.text,
+    fontSize: 24,
+    lineHeight: 28,
+    fontFamily: "CormorantGaramond_700Bold",
+    textAlign: "center",
+  },
+  completionCelebrationBody: {
+    marginTop: 6,
+    color: palette.muted,
+    fontSize: 16,
+    lineHeight: 21,
+    fontFamily: "CormorantGaramond_500Medium",
+    textAlign: "center",
   },
   header: {
     flexDirection: "row",
@@ -1003,6 +1530,26 @@ const localStyles = StyleSheet.create({
     fontSize: 19,
     lineHeight: 24,
     fontFamily: "CormorantGaramond_500Medium",
+  },
+  headerStatusPill: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "rgba(174, 191, 209, 0.20)",
+  },
+  headerStatusPillDone: {
+    backgroundColor: "rgba(174, 209, 178, 0.22)",
+  },
+  headerStatusPillWarm: {
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
+  },
+  headerStatusText: {
+    color: palette.text,
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: "CormorantGaramond_700Bold",
   },
   illustrationCard: {
     minHeight: 286,
@@ -1071,6 +1618,186 @@ const localStyles = StyleSheet.create({
     color: palette.muted,
     fontSize: 14,
     fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  communityCard: {
+    borderRadius: 22,
+    backgroundColor: "#FFF9EF",
+    borderWidth: 1,
+    borderColor: "rgba(226, 168, 79, 0.18)",
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  visibilityCard: {
+    borderRadius: 22,
+    backgroundColor: "#FFFDF8",
+    borderWidth: 1,
+    borderColor: "rgba(45, 41, 36, 0.07)",
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  visibilityBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 223, 177, 0.32)",
+  },
+  visibilityCopy: {
+    flex: 1,
+  },
+  visibilityTitle: {
+    color: palette.text,
+    fontSize: 18,
+    lineHeight: 21,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  visibilitySubtitle: {
+    marginTop: 3,
+    color: palette.muted,
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  communityBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 223, 177, 0.42)",
+  },
+  communityCopy: {
+    flex: 1,
+  },
+  communityTitle: {
+    color: palette.text,
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  communitySubtitle: {
+    marginTop: 4,
+    color: palette.muted,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  requestCard: {
+    borderRadius: 22,
+    backgroundColor: "#FFF9EF",
+    borderWidth: 1,
+    borderColor: "rgba(226, 168, 79, 0.18)",
+    padding: 16,
+    gap: 12,
+  },
+  requestCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  requestCardTitle: {
+    color: palette.text,
+    fontSize: 20,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  requestCardCount: {
+    color: palette.goldDeep,
+    fontSize: 20,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  requestRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  requestProfile: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  requestAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F3ECE0",
+  },
+  requestAvatarPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  requestName: {
+    flex: 1,
+    color: palette.text,
+    fontSize: 16,
+    lineHeight: 18,
+    fontFamily: "CormorantGaramond_600SemiBold",
+  },
+  requestApproveButton: {
+    borderRadius: 999,
+    backgroundColor: "rgba(174, 191, 209, 0.22)",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  requestApproveText: {
+    color: palette.text,
+    fontSize: 14,
+    lineHeight: 16,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  celebrationCard: {
+    overflow: "hidden",
+    borderRadius: 24,
+    backgroundColor: "#FFF9EF",
+    borderWidth: 1,
+    borderColor: "rgba(226, 168, 79, 0.18)",
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  celebrationGlow: {
+    position: "absolute",
+    left: -12,
+    top: -20,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255, 223, 177, 0.24)",
+  },
+  celebrationBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF2D8",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.82)",
+  },
+  celebrationCopy: {
+    flex: 1,
+  },
+  celebrationTitle: {
+    color: palette.text,
+    fontSize: 22,
+    lineHeight: 24,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  celebrationBody: {
+    marginTop: 4,
+    color: palette.muted,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: "CormorantGaramond_500Medium",
   },
   streakCard: {
     borderRadius: 24,
@@ -1300,8 +2027,8 @@ const localStyles = StyleSheet.create({
     paddingRight: 20,
   },
   footerSliderTrackCompleted: {
-    backgroundColor: "rgba(174, 191, 209, 0.24)",
-    borderColor: "rgba(174, 191, 209, 0.34)",
+    backgroundColor: "rgba(210, 231, 213, 0.52)",
+    borderColor: "rgba(152, 186, 147, 0.34)",
   },
   footerSliderFill: {
     position: "absolute",
@@ -1329,7 +2056,7 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
   },
   footerSliderHandleCompleted: {
-    backgroundColor: palette.accentBlue,
+    backgroundColor: "#8CB389",
     shadowOpacity: 0,
   },
   footerSliderCopy: {

@@ -783,7 +783,7 @@ const EventChat = () => {
                     <Text
                       style={[
                         localStyles.messageText,
-                        isMe && { color: WHITE },
+                        isMe && { color: DARK_GRAY },
                       ]}
                     >
                       {msg.body}
@@ -792,7 +792,7 @@ const EventChat = () => {
                       style={[
                         localStyles.messageTime,
                         isCoach && localStyles.messageTimeCoach,
-                        isMe && { color: "rgba(255,255,255,0.7)" },
+                        isMe && { color: "#2B2B2B", opacity: 0.68 },
                       ]}
                     >
                       {formatTime(msg.createdAt)}
@@ -1107,18 +1107,25 @@ const localStyles = StyleSheet.create({
     marginBottom: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: "#F2C98E",
   },
   messageBubble: {
     maxWidth: "72%",
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: 18,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
   },
   messageBubbleMe: {
     alignSelf: "flex-end",
-    backgroundColor: PRIMARY_COLOR,
-    borderBottomRightRadius: 4,
+    backgroundColor: "#FFF3E2",
+    borderBottomRightRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.30)",
+    shadowColor: "#D9B07B",
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   messageBubbleOther: {
     alignSelf: "flex-start",
@@ -1132,10 +1139,10 @@ const localStyles = StyleSheet.create({
   },
   messageBubbleCoach: {
     alignSelf: "flex-start",
-    backgroundColor: "#FFF9EF",
+    backgroundColor: "#FFF9F1",
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.22)",
+    borderColor: "rgba(228, 183, 110, 0.24)",
   },
   messageSender: {
     fontSize: 12,
@@ -1144,21 +1151,23 @@ const localStyles = StyleSheet.create({
     marginBottom: 2,
   },
   messageSenderCoach: {
-    color: "#B7843F",
+    color: "#2B2B2B",
   },
   messageText: {
-    fontSize: 15,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontSize: 16,
+    lineHeight: 21,
+    fontFamily: "CormorantGaramond_600SemiBold",
     color: DARK_GRAY,
   },
   messageTime: {
-    fontSize: 10,
+    fontSize: 11,
     color: TEXT_SECONDARY,
     marginTop: 4,
     alignSelf: "flex-end",
   },
   messageTimeCoach: {
-    color: "#B39A74",
+    color: "#2B2B2B",
+    opacity: 0.68,
   },
   moreAvatar: {
     backgroundColor: "#F0EDE8",

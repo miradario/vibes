@@ -1,6 +1,7 @@
 /** @format */
 
 import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   ActivityIndicator,
   Image,
@@ -38,6 +39,10 @@ type NewConnectionItem =
   | { type: "match"; item: MatchWithProfile }
   | { type: "incoming"; item: IncomingLike };
 
+type ArchivedChatItem =
+  | { kind: "group"; item: EventGroupSummary }
+  | { kind: "direct"; item: MatchWithProfile };
+
 const formatTime = (iso: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -61,6 +66,31 @@ const formatTime = (iso: string | null) => {
 
 const getFirstName = (name: string) => name.trim().split(" ")[0] || "Vibes";
 
+const getArchiveStorageKey = (userId?: string) =>
+  `vibes:archived-chats:${userId ?? "guest"}`;
+
+const getArchiveItemKey = (item: ArchivedChatItem | { kind: "group"; item: EventGroupSummary } | { kind: "direct"; item: MatchWithProfile }) =>
+  item.kind === "group"
+    ? `group:${item.item.eventType}:${item.item.eventId}`
+    : `direct:${item.item.id}`;
+
+const isFinishedChallengeGroup = (group: EventGroupSummary) => {
+  if (group.eventType !== "challenge") return false;
+  const startsAt = group.event?.startsAt;
+  const durationDays = group.event?.durationDays;
+  if (!startsAt || !durationDays) return false;
+
+  const startDate = new Date(startsAt);
+  if (Number.isNaN(startDate.getTime())) return false;
+
+  const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const today = new Date();
+  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diffDays = Math.floor((current.getTime() - start.getTime()) / 86_400_000);
+
+  return diffDays >= durationDays;
+};
+
 const Messages = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -74,6 +104,7 @@ const Messages = () => {
   const [selectedIncomingLike, setSelectedIncomingLike] =
     useState<IncomingLike | null>(null);
   const [groupsCollapsed, setGroupsCollapsed] = useState(false);
+  const [archivedKeys, setArchivedKeys] = useState<string[]>([]);
   const { data: selectedIncomingProfile } = useProfileQuery(
     selectedIncomingLike?.likerUserId,
   );
@@ -102,6 +133,77 @@ const Messages = () => {
             : []),
       })
     : null;
+
+  React.useEffect(() => {
+    let active = true;
+
+    const loadArchived = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(getArchiveStorageKey(userId));
+        if (!active) return;
+        const parsed = raw ? JSON.parse(raw) : [];
+        setArchivedKeys(Array.isArray(parsed) ? parsed.filter((value) => typeof value === "string") : []);
+      } catch {
+        if (active) setArchivedKeys([]);
+      }
+    };
+
+    void loadArchived();
+
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  const persistArchivedKeys = async (nextKeys: string[]) => {
+    setArchivedKeys(nextKeys);
+    try {
+      await AsyncStorage.setItem(
+        getArchiveStorageKey(userId),
+        JSON.stringify(nextKeys),
+      );
+    } catch {}
+  };
+
+  const toggleArchivedChat = async (item: ArchivedChatItem) => {
+    const key = getArchiveItemKey(item);
+    const nextKeys = archivedKeys.includes(key)
+      ? archivedKeys.filter((value) => value !== key)
+      : [...archivedKeys, key];
+    await persistArchivedKeys(nextKeys);
+  };
+
+  const activeGroups = eventGroups.filter(
+    (group) =>
+      !isFinishedChallengeGroup(group) &&
+      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
+  );
+  const finishedChallengeGroups = eventGroups.filter(
+    (group) =>
+      isFinishedChallengeGroup(group) &&
+      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
+  );
+  const activeDirectMessages = withMessages.filter(
+    (item) => !archivedKeys.includes(getArchiveItemKey({ kind: "direct", item })),
+  );
+  const archivedChats: ArchivedChatItem[] = [
+    ...eventGroups
+      .filter((group) =>
+        archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
+      )
+      .map((item) => ({ kind: "group" as const, item })),
+    ...withMessages
+      .filter((item) =>
+        archivedKeys.includes(getArchiveItemKey({ kind: "direct", item })),
+      )
+      .map((item) => ({ kind: "direct" as const, item })),
+  ].sort((left, right) => {
+    const leftTime =
+      left.kind === "group" ? left.item.lastMessageAt : left.item.lastMessageAt;
+    const rightTime =
+      right.kind === "group" ? right.item.lastMessageAt : right.item.lastMessageAt;
+    return new Date(rightTime ?? 0).getTime() - new Date(leftTime ?? 0).getTime();
+  });
 
   const openMatchChat = (item: MatchWithProfile) => {
     navigation.navigate(
@@ -230,7 +332,7 @@ const Messages = () => {
     );
   };
 
-  const renderGroupRow = (item: EventGroupSummary, index: number) => {
+  const renderGroupRow = (item: EventGroupSummary, index: number, options?: { archived?: boolean }) => {
     const imgSource =
       typeof item.image === "string" ? { uri: item.image } : item.image;
     const isChallenge = item.eventType === "challenge";
@@ -275,13 +377,24 @@ const Messages = () => {
         </View>
         <View style={localStyles.rowMeta}>
           <Text style={localStyles.rowTime}>{formatTime(item.lastMessageAt)}</Text>
+          <TouchableOpacity
+            activeOpacity={0.75}
+            style={localStyles.archiveButton}
+            onPress={() => toggleArchivedChat({ kind: "group", item })}
+          >
+            <Icon
+              name={options?.archived ? "arrow-up-circle-outline" : "archive-outline"}
+              color="#7B746C"
+              size={16}
+            />
+          </TouchableOpacity>
           {item.hasUnread ? <View style={localStyles.unreadDot} /> : null}
         </View>
       </TouchableOpacity>
     );
   };
 
-  const renderDirectRow = (item: MatchWithProfile, index: number) => (
+  const renderDirectRow = (item: MatchWithProfile, index: number, options?: { archived?: boolean }) => (
     <TouchableOpacity
       key={item.id}
       style={[localStyles.cardRow, index > 0 && localStyles.cardRowWithDivider]}
@@ -302,6 +415,17 @@ const Messages = () => {
       </View>
       <View style={localStyles.rowMeta}>
         <Text style={localStyles.rowTime}>{formatTime(item.lastMessageAt)}</Text>
+        <TouchableOpacity
+          activeOpacity={0.75}
+          style={localStyles.archiveButton}
+          onPress={() => toggleArchivedChat({ kind: "direct", item })}
+        >
+          <Icon
+            name={options?.archived ? "arrow-up-circle-outline" : "archive-outline"}
+            color="#7B746C"
+            size={16}
+          />
+        </TouchableOpacity>
         {item.hasUnread ? <View style={localStyles.unreadDot} /> : null}
       </View>
     </TouchableOpacity>
@@ -340,9 +464,27 @@ const Messages = () => {
         )}
 
         {renderSectionHeader(
+          "chatbubble-ellipses-outline",
+          "MENSAJES",
+          activeDirectMessages.length,
+          "Ver todos",
+        )}
+        <View style={localStyles.rowsCard}>
+          {loading ? (
+            <View style={localStyles.loadingWrap}>
+              <ActivityIndicator color="#E4B76E" size="small" />
+            </View>
+          ) : activeDirectMessages.length > 0 ? (
+            activeDirectMessages.map((item, index) => renderDirectRow(item, index))
+          ) : (
+            <Text style={localStyles.cardEmpty}>No hay mensajes todavía.</Text>
+          )}
+        </View>
+
+        {renderSectionHeader(
           "people",
           "GRUPOS",
-          eventGroups.length,
+          activeGroups.length,
           groupsCollapsed ? "Mostrar" : "Ocultar",
           {
             collapsible: true,
@@ -356,8 +498,8 @@ const Messages = () => {
               <View style={localStyles.loadingWrap}>
                 <ActivityIndicator color="#E4B76E" size="small" />
               </View>
-            ) : eventGroups.length > 0 ? (
-              eventGroups.map(renderGroupRow)
+            ) : activeGroups.length > 0 ? (
+              activeGroups.map((item, index) => renderGroupRow(item, index))
             ) : (
               <Text style={localStyles.cardEmpty}>No hay grupos activos.</Text>
             )}
@@ -365,9 +507,9 @@ const Messages = () => {
         ) : null}
 
         {renderSectionHeader(
-          "chatbubble-ellipses-outline",
-          "MENSAJES",
-          withMessages.length,
+          "trophy-outline",
+          "CHALLENGES FINALIZADOS",
+          finishedChallengeGroups.length,
           "Ver todos",
         )}
         <View style={localStyles.rowsCard}>
@@ -375,10 +517,32 @@ const Messages = () => {
             <View style={localStyles.loadingWrap}>
               <ActivityIndicator color="#E4B76E" size="small" />
             </View>
-          ) : withMessages.length > 0 ? (
-            withMessages.map(renderDirectRow)
+          ) : finishedChallengeGroups.length > 0 ? (
+            finishedChallengeGroups.map((item, index) => renderGroupRow(item, index))
           ) : (
-            <Text style={localStyles.cardEmpty}>No hay mensajes todavía.</Text>
+            <Text style={localStyles.cardEmpty}>No hay challenges finalizados.</Text>
+          )}
+        </View>
+
+        {renderSectionHeader(
+          "archive-outline",
+          "ARCHIVADOS",
+          archivedChats.length,
+          "Ver todos",
+        )}
+        <View style={localStyles.rowsCard}>
+          {loading ? (
+            <View style={localStyles.loadingWrap}>
+              <ActivityIndicator color="#E4B76E" size="small" />
+            </View>
+          ) : archivedChats.length > 0 ? (
+            archivedChats.map((entry, index) =>
+              entry.kind === "group"
+                ? renderGroupRow(entry.item, index, { archived: true })
+                : renderDirectRow(entry.item, index, { archived: true }),
+            )
+          ) : (
+            <Text style={localStyles.cardEmpty}>Todavía no archivaste chats.</Text>
           )}
         </View>
       </ScrollView>
@@ -595,6 +759,15 @@ const localStyles = StyleSheet.create({
     color: "#6E6E6E",
     fontSize: 13,
     fontFamily: "CormorantGaramond_500Medium",
+  },
+  archiveButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(123, 116, 108, 0.08)",
+    marginTop: 4,
   },
   unreadDot: {
     width: 7,

@@ -58,6 +58,7 @@ import {
   getChallengeMediaPreset,
   parseChallengeMediaPreset,
 } from "../src/constants/challengeMediaPresets";
+import { shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 
 const LOGO = require("../assets/images/logo.png");
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -1114,6 +1115,14 @@ const EventDetail = () => {
     }
   };
 
+  const handleShare = async () => {
+    if (isChallenge) {
+      await shareChallengeInvite(event);
+      return;
+    }
+    await shareEventInvite(event);
+  };
+
   return (
     <View
       style={[
@@ -1157,16 +1166,24 @@ const EventDetail = () => {
         >
           <Icon name="chevron-back" size={24} color={DARK_GRAY} />
         </TouchableOpacity>
-        {isJoined || isAdmin ? (
+        <View style={localStyles.headerActions}>
           <TouchableOpacity
             style={styles.eventDetailMenuButton}
-            onPress={() => setMenuVisible(true)}
+            onPress={() => {
+              void handleShare();
+            }}
           >
-            <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
+            <Icon name="share-social-outline" size={22} color={DARK_GRAY} />
           </TouchableOpacity>
-        ) : (
-          <View style={localStyles.headerSpacer} />
-        )}
+          {isJoined || isAdmin ? (
+            <TouchableOpacity
+              style={styles.eventDetailMenuButton}
+              onPress={() => setMenuVisible(true)}
+            >
+              <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
       <ScrollView
@@ -2281,9 +2298,10 @@ const localStyles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "CormorantGaramond_700Bold",
   },
-  headerSpacer: {
-    width: 40,
-    height: 40,
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   fixedFooterNote: {
     marginBottom: 8,

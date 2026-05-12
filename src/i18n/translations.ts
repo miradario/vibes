@@ -275,6 +275,10 @@ const translations = {
       guruHomeSubtitle: "Un mensaje para hoy",
       guruHomeBody:
         "Respirá hondo. No hace falta apurarte. Elegí desde la calma, escuchá tu energía y dejá que Vibes te acerque a lo que hoy sí resuena con vos.",
+      guruDismiss: "Ocultar por hoy",
+      challengeCheckedInToday: "{{count}} conectaron con su día hoy",
+      meditatedTodayTitle: "Quién meditó hoy",
+      meditatedTodaySubtitle: "Dejate inspirar por tu círculo",
       age: "Edad",
       min: "Mínima",
       max: "Máxima",
@@ -600,6 +604,10 @@ const translations = {
       guruHomeSubtitle: "A message for today",
       guruHomeBody:
         "Take a deep breath. There is no need to rush. Choose from calm, listen to your energy, and let Vibes bring you closer to what truly resonates today.",
+      guruDismiss: "Hide for today",
+      challengeCheckedInToday: "{{count}} checked in today",
+      meditatedTodayTitle: "Who meditated today",
+      meditatedTodaySubtitle: "Inspired by your circle",
       age: "Age",
       min: "Minimum",
       max: "Maximum",

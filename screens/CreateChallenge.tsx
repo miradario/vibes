@@ -39,6 +39,33 @@ import {
   getChallengeMediaPreset,
   type ChallengeMediaPresetId,
 } from "../src/constants/challengeMediaPresets";
+import type { ChallengeVisibility } from "../src/queries/events.queries";
+
+const VISIBILITY_OPTIONS: Array<{
+  value: ChallengeVisibility;
+  title: string;
+  subtitle: string;
+  icon: string;
+}> = [
+  {
+    value: "public",
+    title: "Público",
+    subtitle: "Cualquiera lo puede descubrir y unirse",
+    icon: "earth-outline",
+  },
+  {
+    value: "friends",
+    title: "Solo amigos",
+    subtitle: "Visible para tus conexiones",
+    icon: "people-outline",
+  },
+  {
+    value: "private",
+    title: "Privado",
+    subtitle: "Un espacio íntimo y personal",
+    icon: "lock-closed-outline",
+  },
+];
 
 const normalizeDaysInput = (value: string) => value.replace(/\D+/g, "");
 const formatChallengeDate = (value: Date) =>
@@ -59,6 +86,7 @@ const CreateChallenge = () => {
   const [days, setDays] = useState("");
   const [selectedPresetId, setSelectedPresetId] =
     useState<ChallengeMediaPresetId>("challenge");
+  const [visibility, setVisibility] = useState<ChallengeVisibility>("public");
   const [challengeStartDate, setChallengeStartDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const activePreset = getChallengeMediaPreset(selectedPresetId);
@@ -136,6 +164,7 @@ const CreateChallenge = () => {
         imagePresetId: selectedPresetId,
         hostName,
         hostImage: null,
+        visibility,
       });
 
       navigation.navigate(
@@ -285,6 +314,48 @@ const CreateChallenge = () => {
               onChangeText={(value) => setDays(normalizeDaysInput(value))}
               keyboardType="number-pad"
             />
+
+            <Text style={localStyles.label}>Quién puede verlo</Text>
+            <Text style={localStyles.helperText}>
+              Elegí si querés abrirlo a la comunidad, compartirlo con tus conexiones o sostenerlo sólo para vos.
+            </Text>
+            <View style={localStyles.visibilityStack}>
+              {VISIBILITY_OPTIONS.map((option) => {
+                const isSelected = visibility === option.value;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      localStyles.visibilityCard,
+                      isSelected && localStyles.visibilityCardSelected,
+                    ]}
+                    onPress={() => setVisibility(option.value)}
+                    activeOpacity={0.9}
+                  >
+                    <View style={localStyles.visibilityIconWrap}>
+                      <Icon
+                        name={option.icon as any}
+                        size={18}
+                        color={isSelected ? PRIMARY_COLOR : DARK_GRAY}
+                      />
+                    </View>
+                    <View style={localStyles.visibilityCopy}>
+                      <Text style={localStyles.visibilityTitle}>{option.title}</Text>
+                      <Text style={localStyles.visibilitySubtitle}>
+                        {option.subtitle}
+                      </Text>
+                    </View>
+                    {isSelected ? (
+                      <Icon
+                        name="checkmark-circle"
+                        size={20}
+                        color={PRIMARY_COLOR}
+                      />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
         </ScrollView>
@@ -338,6 +409,13 @@ const localStyles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 8,
     marginTop: 12,
+  },
+  helperText: {
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: -2,
+    marginBottom: 10,
   },
   input: {
     backgroundColor: "#F6F6F4",
@@ -422,6 +500,47 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#FFFDF8",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.28)",
+  },
+  visibilityStack: {
+    gap: 10,
+    marginTop: 4,
+  },
+  visibilityCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(43,43,43,0.08)",
+    backgroundColor: "#FFFDF8",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  visibilityCardSelected: {
+    borderColor: "rgba(228, 183, 110, 0.42)",
+    backgroundColor: "rgba(228, 183, 110, 0.10)",
+  },
+  visibilityIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(228, 183, 110, 0.12)",
+  },
+  visibilityCopy: {
+    flex: 1,
+  },
+  visibilityTitle: {
+    color: DARK_GRAY,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  visibilitySubtitle: {
+    color: TEXT_SECONDARY,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
   },
   createButton: {
     backgroundColor: PRIMARY_COLOR,

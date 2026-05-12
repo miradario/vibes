@@ -1,6 +1,7 @@
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
   Text,
@@ -31,6 +32,7 @@ import { getGenderLabel } from "../src/constants/lookups";
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
+import { useMeditatedTodayFriendsQuery } from "../src/queries/meditationPresence.queries";
 import {
   useChallengesFeedQuery,
   useEventsFeedQuery,
@@ -351,7 +353,11 @@ const Home = () => {
   const [galleryInitialIndex, setGalleryInitialIndex] = useState<number>(0);
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
+  const [showGuruCard, setShowGuruCard] = useState(true);
   const swipeMutation = useSwipeMutation();
+  const { data: meditatedTodayFriends = [] } = useMeditatedTodayFriendsQuery(
+    session?.user?.id,
+  );
   const firstName =
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
       .split(" ")[0]
@@ -448,6 +454,10 @@ const Home = () => {
   const upcomingEvents = futureEvents.slice(0, 2);
   const visibleJoinedActiveChallenges = joinedActiveChallenges.slice(0, 4);
   const suggestedProfile = profiles[0] ?? null;
+  const guruDismissStorageKey = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return `vibes:home-guru-dismissed:${today}`;
+  }, []);
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
       selectedProfile
@@ -468,6 +478,36 @@ const Home = () => {
     discoverFilters.maxDistanceKm,
     " km",
   );
+
+  const dismissGuruCard = async () => {
+    setShowGuruCard(false);
+    try {
+      await AsyncStorage.setItem(guruDismissStorageKey, "1");
+    } catch {}
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    const loadGuruDismissState = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(guruDismissStorageKey);
+        if (active) {
+          setShowGuruCard(stored !== "1");
+        }
+      } catch {
+        if (active) {
+          setShowGuruCard(true);
+        }
+      }
+    };
+
+    void loadGuruDismissState();
+
+    return () => {
+      active = false;
+    };
+  }, [guruDismissStorageKey]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -922,23 +962,86 @@ const Home = () => {
             </View>
           </View>
 
-          <View style={localStyles.guruCard}>
-            <View style={localStyles.guruCardHeader}>
-              <View style={localStyles.guruBadge}>
-                <Ionicons name="sparkles-outline" size={16} color="#FFFFFF" />
+          {showGuruCard ? (
+            <View style={localStyles.guruCard}>
+              <View style={localStyles.guruCardHeader}>
+                <View style={localStyles.guruCardHeading}>
+                  <View style={localStyles.guruBadge}>
+                    <Ionicons name="sparkles-outline" size={16} color="#FFFFFF" />
+                  </View>
+                  <View style={localStyles.guruCopy}>
+                    <Text style={localStyles.guruTitle}>
+                      {t("common.challengeGuideName")}
+                    </Text>
+                    <Text style={localStyles.guruSubtitle}>
+                      {t("home.guruHomeSubtitle")}
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={localStyles.guruDismissButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("home.guruDismiss")}
+                  activeOpacity={0.84}
+                  onPress={dismissGuruCard}
+                >
+                  <Ionicons name="close" size={16} color="#7A746D" />
+                </TouchableOpacity>
               </View>
-              <View style={localStyles.guruCopy}>
-                <Text style={localStyles.guruTitle}>
-                  {t("common.challengeGuideName")}
-                </Text>
-                <Text style={localStyles.guruSubtitle}>
-                  {t("home.guruHomeSubtitle")}
-                </Text>
-              </View>
-            </View>
 
-            <Text style={localStyles.guruBody}>{t("home.guruHomeBody")}</Text>
-          </View>
+              <Text style={localStyles.guruBody}>{t("home.guruHomeBody")}</Text>
+            </View>
+          ) : null}
+
+          {meditatedTodayFriends.length > 0 ? (
+            <View style={localStyles.presenceCard}>
+              <View style={localStyles.presenceHeader}>
+                <View>
+                  <Text style={localStyles.presenceTitle}>
+                    {t("home.meditatedTodayTitle")}
+                  </Text>
+                  <Text style={localStyles.presenceSubtitle}>
+                    {t("home.meditatedTodaySubtitle")}
+                  </Text>
+                </View>
+                <View style={localStyles.presenceBadge}>
+                  <Ionicons name="sparkles-outline" size={16} color="#D19443" />
+                </View>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={localStyles.presenceRow}
+              >
+                {meditatedTodayFriends.map((item) => (
+                  <View key={item.userId} style={localStyles.presenceBubble}>
+                    <View style={localStyles.presenceAvatarGlow} />
+                    {item.avatarUrl ? (
+                      <Image
+                        source={{ uri: item.avatarUrl }}
+                        style={localStyles.presenceAvatar}
+                      />
+                    ) : (
+                      <View
+                        style={[
+                          localStyles.presenceAvatar,
+                          localStyles.presenceAvatarPlaceholder,
+                        ]}
+                      >
+                        <Ionicons name="person-outline" size={18} color="#7F776F" />
+                      </View>
+                    )}
+                    <Text style={localStyles.presenceName} numberOfLines={1}>
+                      {item.displayName}
+                    </Text>
+                    <Text style={localStyles.presenceMeta} numberOfLines={1}>
+                      {item.durationMinutes} min · {item.streak}d
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
 
           <View style={localStyles.summaryCard}>
             <TouchableOpacity
@@ -974,24 +1077,23 @@ const Home = () => {
               style={localStyles.meditationArt}
               resizeMode="contain"
             />
-            <View style={localStyles.meditationContent}>
-              <Text style={localStyles.meditationTitle}>{t("home.connectFirstTitle")}</Text>
-              <View style={localStyles.meditationButton}>
-                <View style={localStyles.meditationButtonIconWrap}>
-                  <Ionicons name="leaf-outline" size={28} color="#314762" />
-                </View>
-                <View style={localStyles.meditationButtonCopy}>
-                  <Text style={localStyles.meditationButtonTitle}>
-                    {t("home.breathe")}
-                  </Text>
-                  <Text style={localStyles.meditationButtonSubtitle}>
-                    {t("home.breatheMinutes")}
-                  </Text>
-                </View>
+            <View style={localStyles.meditationButtonSurface}>
+              <View style={localStyles.meditationButtonIconWrap}>
+                <Ionicons name="leaf-outline" size={28} color="#314762" />
+              </View>
+              <View style={localStyles.meditationButtonCopy}>
+                <Text style={localStyles.meditationButtonTitle}>
+                  Meditar
+                </Text>
+                <Text style={localStyles.meditationButtonSubtitle}>
+                  {t("home.breatheMinutes")}
+                </Text>
+              </View>
+              <View style={localStyles.meditationArrowWrap}>
                 <Ionicons
                   name="chevron-forward"
                   size={28}
-                  color="#FFFFFF"
+                  color="#314762"
                   style={localStyles.meditationButtonArrow}
                 />
               </View>
@@ -1026,6 +1128,18 @@ const Home = () => {
               visibleJoinedActiveChallenges.map((challenge, index) => {
                 const progress = getChallengeProgress(challenge as EventFeedItem);
                 const participantCount = parseParticipantCount(challenge.attendees);
+                const challengeCheckedInToday = Math.max(
+                  0,
+                  Number(challenge.checkedInTodayCount ?? 0) || 0,
+                );
+                const previewImages = Array.from(
+                  new Set(
+                    (challenge.participantPreviewImages ?? []).filter(
+                      (value): value is string =>
+                        typeof value === "string" && value.trim().length > 0,
+                    ),
+                  ),
+                );
 
                 return (
                   <TouchableOpacity
@@ -1057,6 +1171,14 @@ const Home = () => {
                       <Text style={localStyles.feedListMeta} numberOfLines={1}>
                         {challenge.date} {"  •  "} {challenge.attendees}
                       </Text>
+                      <View style={localStyles.feedCommunityRow}>
+                        <Ionicons name="sparkles-outline" size={13} color="#D19443" />
+                        <Text style={localStyles.feedCommunityText} numberOfLines={1}>
+                          {t("home.challengeCheckedInToday", {
+                            count: challengeCheckedInToday,
+                          })}
+                        </Text>
+                      </View>
                       {progress ? (
                         <View
                           style={[
@@ -1077,15 +1199,23 @@ const Home = () => {
                     <View style={localStyles.feedListRight}>
                       <View style={localStyles.feedAvatarStack}>
                         {Array.from({
-                          length: Math.max(1, Math.min(participantCount || 1, 3)),
+                          length: Math.max(
+                            1,
+                            Math.min(participantCount || previewImages.length || 1, 3),
+                          ),
                         }).map((_, avatarIndex) => {
-                          const useHostImage =
-                            avatarIndex === 0 && typeof challenge.hostImage === "string" && challenge.hostImage.trim();
+                          const avatarUrl =
+                            previewImages[avatarIndex] ??
+                            (avatarIndex === 0 &&
+                            typeof challenge.hostImage === "string" &&
+                            challenge.hostImage.trim()
+                              ? challenge.hostImage
+                              : null);
 
-                          return useHostImage ? (
+                          return avatarUrl ? (
                             <Image
                               key={`${challenge.id}-avatar-${avatarIndex}`}
-                              source={{ uri: challenge.hostImage as string }}
+                              source={{ uri: avatarUrl }}
                               style={[
                                 localStyles.feedAvatar,
                                 { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
@@ -1174,6 +1304,14 @@ const Home = () => {
             ) : (
               upcomingEvents.map((event, index) => {
                 const participantCount = parseParticipantCount(event.attendees);
+                const previewImages = Array.from(
+                  new Set(
+                    (event.participantPreviewImages ?? []).filter(
+                      (value): value is string =>
+                        typeof value === "string" && value.trim().length > 0,
+                    ),
+                  ),
+                );
 
                 return (
                   <TouchableOpacity
@@ -1205,15 +1343,23 @@ const Home = () => {
                     <View style={localStyles.feedListRight}>
                       <View style={localStyles.feedAvatarStack}>
                         {Array.from({
-                          length: Math.max(1, Math.min(participantCount || 1, 3)),
+                          length: Math.max(
+                            1,
+                            Math.min(participantCount || previewImages.length || 1, 3),
+                          ),
                         }).map((_, avatarIndex) => {
-                          const useHostImage =
-                            avatarIndex === 0 && typeof event.hostImage === "string" && event.hostImage.trim();
+                          const avatarUrl =
+                            previewImages[avatarIndex] ??
+                            (avatarIndex === 0 &&
+                            typeof event.hostImage === "string" &&
+                            event.hostImage.trim()
+                              ? event.hostImage
+                              : null);
 
-                          return useHostImage ? (
+                          return avatarUrl ? (
                             <Image
                               key={`${event.id}-avatar-${avatarIndex}`}
-                              source={{ uri: event.hostImage as string }}
+                              source={{ uri: avatarUrl }}
                               style={[
                                 localStyles.feedAvatar,
                                 { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
@@ -1402,63 +1548,46 @@ const localStyles = StyleSheet.create({
     fontFamily: "CormorantGaramond_500Medium",
   },
   meditationCard: {
-    minHeight: 154,
-    borderRadius: 24,
+    minHeight: 102,
+    borderRadius: 28,
     overflow: "hidden",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(174, 191, 209, 0.20)",
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
+    borderColor: "rgba(255, 255, 255, 0.74)",
     marginBottom: 18,
     position: "relative",
     shadowOpacity: 0.08,
     shadowRadius: 18,
-    shadowColor: "#3E352B",
+    shadowColor: "#CFD7E5",
     shadowOffset: { height: 8, width: 0 },
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    justifyContent: "center",
   },
   meditationArt: {
     position: "absolute",
-    right: 12,
-    top: 16,
-    width: "24%",
-    height: "52%",
-    opacity: 0.94,
+    right: 14,
+    top: 8,
+    width: "18%",
+    height: "58%",
+    opacity: 0.22,
   },
-  meditationContent: {
-    justifyContent: "flex-end",
-    minHeight: 122,
-    width: "72%",
-  },
-  meditationTitle: {
-    color: "#2B2B2B",
-    fontSize: 15,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.light,
-    marginBottom: 10,
-  },
-  meditationButton: {
-    marginTop: 0,
-    alignSelf: "flex-start",
-    minHeight: 54,
-    minWidth: 212,
-    borderRadius: 29,
-    backgroundColor: "rgba(174, 191, 209, 0.28)",
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+  meditationButtonSurface: {
+    minHeight: 78,
+    borderRadius: 24,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    borderWidth: 1,
-    borderColor: "rgba(174, 191, 209, 0.24)",
   },
   meditationButtonIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.72)",
+    backgroundColor: "rgba(255,255,255,0.64)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.84)",
   },
@@ -1467,16 +1596,26 @@ const localStyles = StyleSheet.create({
   },
   meditationButtonTitle: {
     color: "#24364A",
-    fontSize: 15,
-    lineHeight: 17,
+    fontSize: 24,
+    lineHeight: 26,
     fontFamily: vibesTheme.fonts.medium,
   },
   meditationButtonSubtitle: {
-    marginTop: 2,
+    marginTop: 4,
     color: "#5E7898",
-    fontSize: 12,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 16,
     fontFamily: vibesTheme.fonts.medium,
+  },
+  meditationArrowWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.64)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.84)",
   },
   meditationButtonArrow: {
     marginLeft: 2,
@@ -1497,6 +1636,13 @@ const localStyles = StyleSheet.create({
   guruCardHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  guruCardHeading: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   guruBadge: {
@@ -1509,6 +1655,14 @@ const localStyles = StyleSheet.create({
   },
   guruCopy: {
     flex: 1,
+  },
+  guruDismissButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(122, 116, 109, 0.08)",
   },
   guruTitle: {
     color: "#2B2B2B",
@@ -1535,6 +1689,89 @@ const localStyles = StyleSheet.create({
     color: "#2F2C29",
     fontSize: 16,
     lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  presenceCard: {
+    borderRadius: 20,
+    backgroundColor: "#FDFBF7",
+    borderWidth: 1,
+    borderColor: "rgba(174, 191, 209, 0.20)",
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    marginBottom: 18,
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowColor: "#3E352B",
+    shadowOffset: { height: 6, width: 0 },
+  },
+  presenceHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  presenceTitle: {
+    color: "#2B2B2B",
+    fontSize: 19,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  presenceSubtitle: {
+    marginTop: 3,
+    color: "#7A746D",
+    fontSize: 13,
+    lineHeight: 17,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  presenceBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(228, 183, 110, 0.14)",
+  },
+  presenceRow: {
+    gap: 14,
+    paddingTop: 14,
+    paddingBottom: 2,
+  },
+  presenceBubble: {
+    width: 84,
+    alignItems: "center",
+  },
+  presenceAvatarGlow: {
+    position: "absolute",
+    top: -4,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "rgba(174, 191, 209, 0.18)",
+  },
+  presenceAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    backgroundColor: "#EEF2F6",
+  },
+  presenceAvatarPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  presenceName: {
+    marginTop: 8,
+    color: "#2B2B2B",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  presenceMeta: {
+    marginTop: 2,
+    color: "#7A746D",
+    fontSize: 11,
+    lineHeight: 14,
     fontFamily: vibesTheme.fonts.medium,
   },
   sectionCard: {
@@ -1657,6 +1894,19 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 17,
     fontFamily: "CormorantGaramond_500Medium",
+  },
+  feedCommunityRow: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  feedCommunityText: {
+    flex: 1,
+    color: "#916E39",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
   },
   feedListRight: {
     flexDirection: "row",

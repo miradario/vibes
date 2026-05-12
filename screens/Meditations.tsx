@@ -32,6 +32,14 @@ import Animated, {
 import { Audio, ResizeMode, Video, type AVPlaybackStatus } from "expo-av";
 import Icon from "../components/Icon";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { useAuthSession } from "../src/auth/auth.queries";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
+import {
+  useUpsertMeditationPresenceMutation,
+  type MeditationPresenceVisibility,
+} from "../src/queries/meditationPresence.queries";
+import { shareMeditationMilestone } from "../src/lib/socialShare";
 
 type MeditationType = "silent" | "guided";
 type DurationOption = 5 | 10 | 20;
@@ -325,6 +333,9 @@ const BottomTabPreview = () => {
 const MeditationScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { data: session } = useAuthSession();
+  const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
+  const meditationPresenceMutation = useUpsertMeditationPresenceMutation();
   const soundRef = useRef<Audio.Sound | null>(null);
   const backgroundMusicRef = useRef<Audio.Sound | null>(null);
   const finishSoundRef = useRef<Audio.Sound | null>(null);
@@ -336,6 +347,8 @@ const MeditationScreen = () => {
   const [selectedDuration, setSelectedDuration] = useState<DurationOption>(10);
   const [isBackgroundMusicEnabled, setIsBackgroundMusicEnabled] =
     useState(true);
+  const [presenceVisibility, setPresenceVisibility] =
+    useState<MeditationPresenceVisibility>("friends");
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPreparingAudio, setIsPreparingAudio] = useState(false);
@@ -346,9 +359,23 @@ const MeditationScreen = () => {
   );
   const [videoResetKey, setVideoResetKey] = useState(0);
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
+  const [lastCompletedSession, setLastCompletedSession] = useState<{
+    durationMinutes: DurationOption;
+    meditationType: MeditationType;
+  } | null>(null);
   const immersivePlayerProgress = useSharedValue(0);
   const targetDurationMillis = selectedDuration * 60 * 1000;
 
+  useEffect(() => {
+    const storedVisibility = userPreferences?.meditationPresenceVisibility;
+    if (
+      storedVisibility === "public" ||
+      storedVisibility === "friends" ||
+      storedVisibility === "private"
+    ) {
+      setPresenceVisibility(storedVisibility);
+    }
+  }, [userPreferences?.meditationPresenceVisibility]);
   const selectedAudioSource = useMemo(
     () => AUDIO_BY_DURATION[selectedDuration],
     [selectedDuration],
@@ -446,13 +473,32 @@ const MeditationScreen = () => {
     silentStartedAtRef.current = null;
     setIsPlaying(false);
     setPositionMillis(0);
+    setLastCompletedSession({
+      durationMinutes: selectedDuration,
+      meditationType: selectedType,
+    });
     void soundRef.current?.stopAsync().catch(() => undefined);
     void soundRef.current?.setPositionAsync(0).catch(() => undefined);
     void backgroundMusicRef.current?.stopAsync().catch(() => undefined);
     void backgroundMusicRef.current?.setPositionAsync(0).catch(() => undefined);
     void videoRef.current?.setPositionAsync(0).catch(() => undefined);
     void playFinishSound();
-  }, [playFinishSound]);
+    if (session?.user?.id) {
+      void meditationPresenceMutation.mutateAsync({
+        userId: session.user.id,
+        durationMinutes: selectedDuration,
+        meditationType: selectedType,
+        visibility: presenceVisibility,
+      });
+    }
+  }, [
+    meditationPresenceMutation,
+    playFinishSound,
+    presenceVisibility,
+    selectedDuration,
+    selectedType,
+    session?.user?.id,
+  ]);
 
   const updatePlaybackState = useCallback(
     (status: AVPlaybackStatus) => {
@@ -658,6 +704,7 @@ const MeditationScreen = () => {
       if (nextType === selectedType) return;
       if (isPlaying || isPreparingAudio) return;
 
+      setLastCompletedSession(null);
       resetSessionToBeginning();
       setSelectedType(nextType);
     },
@@ -669,6 +716,7 @@ const MeditationScreen = () => {
       if (nextDuration === selectedDuration) return;
       if (isPlaying || isPreparingAudio) return;
 
+      setLastCompletedSession(null);
       resetSessionToBeginning();
       setSelectedDuration(nextDuration);
     },
@@ -708,6 +756,7 @@ const MeditationScreen = () => {
           setIsPlaying(false);
           await backgroundMusicRef.current?.pauseAsync();
         } else {
+          setLastCompletedSession(null);
           silentStartedAtRef.current = Date.now() - positionMillis;
           setIsPlaying(true);
           await playBackgroundMusicFromCurrentPosition();
@@ -725,6 +774,7 @@ const MeditationScreen = () => {
         await soundRef.current.pauseAsync();
         await backgroundMusicRef.current?.pauseAsync();
       } else {
+        setLastCompletedSession(null);
         await soundRef.current.playAsync();
         await playBackgroundMusicFromCurrentPosition();
       }
@@ -892,7 +942,7 @@ const MeditationScreen = () => {
                   </Text>
                 </View>
               </View>
-              <Icon
+            <Icon
                 name={
                   isBackgroundMusicEnabled ? "checkmark-circle" : "ellipse-outline"
                 }
@@ -900,10 +950,52 @@ const MeditationScreen = () => {
                 color={
                   isBackgroundMusicEnabled
                     ? vibesTheme.colors.accentMustard
-                    : "rgba(43, 43, 43, 0.28)"
+                  : "rgba(43, 43, 43, 0.28)"
                 }
               />
             </Pressable>
+
+            <View style={localStyles.presenceVisibilityRow}>
+              {(
+                [
+                  { value: "friends", label: "Amigos" },
+                  { value: "private", label: "Solo yo" },
+                  { value: "public", label: "Público" },
+                ] as const
+              ).map((option) => {
+                const isSelected = presenceVisibility === option.value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => {
+                      setPresenceVisibility(option.value);
+                      if (session?.user?.id) {
+                        void upsertUserPreferences(session.user.id, {
+                          meditation_presence_visibility: option.value,
+                        });
+                      }
+                    }}
+                    style={[
+                      localStyles.presenceVisibilityChip,
+                      isSelected
+                        ? localStyles.presenceVisibilityChipActive
+                        : null,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        localStyles.presenceVisibilityChipText,
+                        isSelected
+                          ? localStyles.presenceVisibilityChipTextActive
+                          : null,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
 
           {!showImmersivePlayer ? (
@@ -1052,6 +1144,33 @@ const MeditationScreen = () => {
               </View>
             </View>
           </View>
+          ) : null}
+
+          {lastCompletedSession ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                void shareMeditationMilestone({
+                  durationMinutes: lastCompletedSession.durationMinutes,
+                  meditationType: lastCompletedSession.meditationType,
+                })
+              }
+              style={localStyles.shareSessionCard}
+            >
+              <View style={localStyles.shareSessionCopy}>
+                <Text style={localStyles.shareSessionTitle}>
+                  Compartir este momento
+                </Text>
+                <Text style={localStyles.shareSessionSubtitle}>
+                  Tu práctica de hoy también puede inspirar a alguien más.
+                </Text>
+              </View>
+              <Icon
+                name="share-social-outline"
+                size={22}
+                color={vibesTheme.colors.primaryText}
+              />
+            </Pressable>
           ) : null}
         </ScrollView>
       </SafeAreaView>
@@ -1423,6 +1542,32 @@ const localStyles = StyleSheet.create({
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,
   },
+  presenceVisibilityRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 14,
+  },
+  presenceVisibilityChip: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+  },
+  presenceVisibilityChipActive: {
+    backgroundColor: "rgba(174, 191, 209, 0.22)",
+    borderColor: "rgba(174, 191, 209, 0.44)",
+  },
+  presenceVisibilityChipText: {
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 13,
+    lineHeight: 15,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  presenceVisibilityChipTextActive: {
+    color: vibesTheme.colors.primaryText,
+  },
   previewCard: {
     marginTop: 22,
     borderRadius: 28,
@@ -1541,6 +1686,34 @@ const localStyles = StyleSheet.create({
   previewOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(43, 43, 43, 0.02)",
+  },
+  shareSessionCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    backgroundColor: "#FFF9EF",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.20)",
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  shareSessionCopy: {
+    flex: 1,
+  },
+  shareSessionTitle: {
+    color: vibesTheme.colors.primaryText,
+    fontSize: 20,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  shareSessionSubtitle: {
+    marginTop: 4,
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 15,
+    lineHeight: 19,
+    fontFamily: "CormorantGaramond_500Medium",
   },
   previewBottom: {
     paddingTop: 18,
