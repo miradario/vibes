@@ -326,12 +326,7 @@ export const useMatchesQuery = () => {
   const userId = session?.user?.id;
   const channelRef = useRef<RealtimeChannel | null>(null);
 
-  const query = useQuery<MatchWithProfile[]>({
-    queryKey: matchKeys.list(userId),
-    queryFn: () => fetchMatches(userId!),
-    enabled: Boolean(userId),
-    staleTime: 30_000,
-  });
+  const query = useQuery<MatchWithProfile[]>(matchesQueryOptions(userId));
 
   useEffect(() => {
     if (!userId) return;
@@ -361,6 +356,13 @@ export const useMatchesQuery = () => {
 
   return query;
 };
+
+export const matchesQueryOptions = (userId?: string) => ({
+  queryKey: matchKeys.list(userId),
+  queryFn: () => fetchMatches(userId as string),
+  enabled: Boolean(userId),
+  staleTime: 30_000,
+});
 
 export const useMarkDirectMessagesReadMutation = () => {
   const queryClient = useQueryClient();

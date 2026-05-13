@@ -10,10 +10,12 @@ export const userPreferencesKeys = {
 };
 
 export const useUserPreferencesQuery = (userId?: string) => {
-  return useQuery<UserPreferences | null>({
-    queryKey: userPreferencesKeys.byUser(userId),
-    queryFn: async () => getUserPreferences(userId as string),
-    enabled: Boolean(userId),
-    staleTime: 60_000,
-  });
+  return useQuery<UserPreferences | null>(userPreferencesQueryOptions(userId));
 };
+
+export const userPreferencesQueryOptions = (userId?: string) => ({
+  queryKey: userPreferencesKeys.byUser(userId),
+  queryFn: async () => getUserPreferences(userId as string),
+  enabled: Boolean(userId),
+  staleTime: 60_000,
+});

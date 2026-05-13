@@ -13,10 +13,16 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Avatar from "../components/Avatar";
 import AvatarGroup from "../components/AvatarGroup";
@@ -66,6 +72,8 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   maxDistanceKm: null,
   smoking: "all",
 };
+
+let hasPlayedHomeEntryFade = false;
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -234,7 +242,11 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
 
 const Home = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const { t } = useI18n();
+  const shouldRunHomeEntryFade =
+    Boolean(route.params?.startupFadeIn) && !hasPlayedHomeEntryFade;
+  const homeEntryOverlayOpacity = useSharedValue(shouldRunHomeEntryFade ? 1 : 0);
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
@@ -679,6 +691,24 @@ const Home = () => {
   const filterSectionTitle = (title: string) => (
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
   );
+
+  useEffect(() => {
+    if (!shouldRunHomeEntryFade) return;
+
+    hasPlayedHomeEntryFade = true;
+    homeEntryOverlayOpacity.value = withTiming(0, {
+      duration: 680,
+      easing: Easing.out(Easing.cubic),
+    });
+
+    if (typeof (navigation as any).setParams === "function") {
+      (navigation as any).setParams({ startupFadeIn: false });
+    }
+  }, [homeEntryOverlayOpacity, navigation, shouldRunHomeEntryFade]);
+
+  const homeEntryOverlayStyle = useAnimatedStyle(() => ({
+    opacity: homeEntryOverlayOpacity.value,
+  }));
 
   return (
     <View style={localStyles.screen}>
@@ -1398,6 +1428,10 @@ const Home = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
+      <Animated.View
+        pointerEvents="none"
+        style={[localStyles.homeEntryOverlay, homeEntryOverlayStyle]}
+      />
     </View>
   );
 };
@@ -1406,6 +1440,11 @@ const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#F6F6F4",
+  },
+  homeEntryOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: vibesTheme.colors.background,
+    zIndex: 999,
   },
   safeArea: {
     flex: 1,

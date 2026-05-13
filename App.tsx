@@ -2,7 +2,7 @@
 
 import "react-native-url-polyfill/auto";
 import React from "react";
-import { ActivityIndicator, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer, CommonActions } from "@react-navigation/native";
@@ -11,6 +11,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Toast from "react-native-toast-message";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 import {
   Home,
   Discover,
@@ -48,6 +49,7 @@ import {
   Faq,
   TermsConditions,
   Session,
+  Startup,
 } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
@@ -63,6 +65,11 @@ const navigationRef = React.createRef<any>();
 let hasAppliedGlobalFont = false;
 let isNavigationReady = false;
 let pendingNavigateToMessages = false;
+let hasHiddenNativeSplash = false;
+
+void SplashScreen.preventAutoHideAsync().catch(() => {
+  return;
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -122,11 +129,14 @@ const AppNavigator = () => {
   }
 
   if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: vibesTheme.colors.background }} />;
+  }
+
+  if (!hasHiddenNativeSplash) {
+    hasHiddenNativeSplash = true;
+    void SplashScreen.hideAsync().catch(() => {
+      return;
+    });
   }
 
   const navigateToMessages = () => {
@@ -159,7 +169,7 @@ const AppNavigator = () => {
           }}>
           <PushNotificationsBootstrap navigateToMessages={navigateToMessages} />
           <Stack.Navigator
-            initialRouteName={DEBUG_ONBOARDING_HOME_TRANSITION ? "DebugVibesHomeTransition" : "Tab"}
+            initialRouteName={DEBUG_ONBOARDING_HOME_TRANSITION ? "DebugVibesHomeTransition" : "Startup"}
             screenOptions={{
               gestureDirection: "horizontal",
               cardStyleInterpolator: ({ current, layouts }) => ({
@@ -175,6 +185,11 @@ const AppNavigator = () => {
                 },
               }),
             }}>
+            <Stack.Screen
+              name="Startup"
+              component={Startup}
+              options={{ headerShown: false, animationEnabled: false }}
+            />
             <Stack.Screen
               name="Welcome"
               component={Welcome}

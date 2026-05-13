@@ -1,0 +1,223 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
+import { useAuthSession } from "../src/auth/auth.queries";
+import { profileQueryOptions } from "../src/queries/profile.queries";
+import { userPreferencesQueryOptions } from "../src/queries/userPreferences.queries";
+import {
+  challengesFeedQueryOptions,
+  eventsFeedQueryOptions,
+  myEventGroupsQueryOptions,
+} from "../src/queries/events.queries";
+import { matchesQueryOptions } from "../src/queries/matches.queries";
+import AnimatedIllustration from "../src/components/illustrations/AnimatedIllustration";
+import { startupIllustrationConfig } from "../src/components/illustrations/presets/startupIllustrationConfig";
+import { vibesTheme } from "../src/theme/vibesTheme";
+
+const STARTUP_VISUAL_MS =
+  (startupIllustrationConfig.drawDurationMs ?? 0) +
+  (startupIllustrationConfig.fillRevealDurationMs ?? 0);
+const MIN_STARTUP_MS = STARTUP_VISUAL_MS + 180;
+const HOLD_ON_STARTUP = false;
+
+const Startup = () => {
+  const navigation = useNavigation();
+  const queryClient = useQueryClient();
+  const { data: session, isLoading: isSessionLoading } = useAuthSession();
+  const startedAtRef = useRef(Date.now());
+  const didNavigateRef = useRef(false);
+  const [isReadyToExit, setIsReadyToExit] = useState(false);
+
+  const contentOpacity = useSharedValue(0);
+  const contentScale = useSharedValue(0.96);
+  const glowOpacity = useSharedValue(0);
+  const fadeOverlayOpacity = useSharedValue(0);
+
+  const userId = session?.user?.id;
+
+  useEffect(() => {
+    contentOpacity.value = withTiming(1, {
+      duration: 540,
+      easing: Easing.out(Easing.cubic),
+    });
+    contentScale.value = withTiming(1, {
+      duration: 560,
+      easing: Easing.out(Easing.cubic),
+    });
+    glowOpacity.value = withDelay(
+      120,
+      withTiming(1, {
+        duration: 680,
+        easing: Easing.out(Easing.cubic),
+      }),
+    );
+  }, [contentOpacity, contentScale, glowOpacity]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const prefetch = async () => {
+      if (isSessionLoading) return;
+
+      if (userId) {
+        await Promise.allSettled([
+          queryClient.prefetchQuery(profileQueryOptions(userId)),
+          queryClient.prefetchQuery(userPreferencesQueryOptions(userId)),
+          queryClient.prefetchQuery(matchesQueryOptions(userId)),
+          queryClient.prefetchQuery(myEventGroupsQueryOptions(userId)),
+          queryClient.prefetchQuery(eventsFeedQueryOptions()),
+          queryClient.prefetchQuery(challengesFeedQueryOptions(userId)),
+        ]);
+      }
+
+      const elapsed = Date.now() - startedAtRef.current;
+      const waitMs = Math.max(0, MIN_STARTUP_MS - elapsed);
+
+      if (waitMs > 0) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, waitMs);
+        });
+      }
+
+      if (!cancelled) {
+        setIsReadyToExit(true);
+      }
+    };
+
+    void prefetch();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSessionLoading, queryClient, userId]);
+
+  useEffect(() => {
+    if (HOLD_ON_STARTUP) return;
+    if (!isReadyToExit || didNavigateRef.current) return;
+    didNavigateRef.current = true;
+
+    fadeOverlayOpacity.value = withTiming(1, {
+      duration: 420,
+      easing: Easing.out(Easing.cubic),
+    });
+
+    const timeout = setTimeout(() => {
+      const hasSession = Boolean(userId);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: hasSession
+            ? [
+                {
+                  name: "Tab",
+                  params: {
+                    screen: "Home",
+                    params: { startupFadeIn: true },
+                  },
+                },
+              ]
+            : [{ name: "Welcome" }],
+        }),
+      );
+    }, 280);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [fadeOverlayOpacity, isReadyToExit, navigation, userId]);
+
+  const contentStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+    transform: [{ scale: contentScale.value }],
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+
+  const fadeOverlayStyle = useAnimatedStyle(() => ({
+    opacity: fadeOverlayOpacity.value,
+  }));
+
+  const glowColor = useMemo(() => "rgba(228, 183, 110, 0.24)", []);
+
+  return (
+    <View style={styles.container}>
+      <Animated.View style={[styles.glow, { backgroundColor: glowColor }, glowStyle]} />
+      <Animated.View style={[styles.content, contentStyle]}>
+        <View style={styles.illustrationWrap}>
+          <AnimatedIllustration
+            {...startupIllustrationConfig}
+            style={styles.illustration}
+          />
+        </View>
+        <Text style={styles.title}>Respira hondo.</Text>
+        <Text style={styles.body}>Todo se esta acomodando para vos.</Text>
+      </Animated.View>
+      <Animated.View pointerEvents="none" style={[styles.fadeOverlay, fadeOverlayStyle]} />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: vibesTheme.colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  content: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: -36,
+  },
+  illustrationWrap: {
+    width: "100%",
+    maxWidth: 300,
+    height: 300,
+    marginBottom: 58,
+  },
+  illustration: {
+    width: "100%",
+    height: "100%",
+  },
+  title: {
+    fontSize: 34,
+    textAlign: "center",
+    color: vibesTheme.colors.primaryText,
+    fontFamily: "CormorantGaramond_600SemiBold",
+    letterSpacing: 0.2,
+  },
+  body: {
+    marginTop: 10,
+    fontSize: 19,
+    lineHeight: 24,
+    textAlign: "center",
+    color: vibesTheme.colors.secondaryText,
+    fontFamily: "CormorantGaramond_500Medium",
+    maxWidth: 300,
+  },
+  glow: {
+    position: "absolute",
+    top: "26%",
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    transform: [{ scale: 1.1 }],
+  },
+  fadeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: vibesTheme.colors.background,
+  },
+});
+
+export default Startup;

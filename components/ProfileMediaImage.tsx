@@ -26,7 +26,7 @@ const ProfileMediaImage = ({
   style,
   fallbackBackgroundColor = "#E9E4DD",
   fallbackIconColor = "#7F776F",
-  transition = 150,
+  transition = 250,
 }: ProfileMediaImageProps) => {
   const [hasError, setHasError] = useState(false);
 

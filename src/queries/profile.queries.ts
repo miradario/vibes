@@ -44,14 +44,15 @@ const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
 };
 
 export const useProfileQuery = (userId?: string) => {
-  return useQuery<ProfileRow | null>({
-    queryKey: profileKeys.byUser(userId),
-    queryFn: () => fetchProfile(userId as string),
-    enabled: Boolean(userId),
-    staleTime: 5 * 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchInterval: false,
-  });
+  return useQuery<ProfileRow | null>(profileQueryOptions(userId));
 };
+
+export const profileQueryOptions = (userId?: string) => ({
+  queryKey: profileKeys.byUser(userId),
+  queryFn: () => fetchProfile(userId as string),
+  enabled: Boolean(userId),
+  staleTime: 5 * 60_000,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+});

@@ -80,7 +80,7 @@ const Avatar = ({
           style={[StyleSheet.absoluteFillObject, { borderRadius: resolvedRadius }]}
           contentFit="cover"
           cachePolicy="memory-disk"
-          transition={150}
+          transition={250}
           onError={() => setHasError(true)}
         />
       ) : null}
