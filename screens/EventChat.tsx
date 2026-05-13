@@ -5,7 +5,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   TextInput,
   ScrollView,
   KeyboardAvoidingView,
@@ -28,6 +27,7 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import Avatar from "../components/Avatar";
 import UserProfileCard from "../components/UserProfileCard";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -52,8 +52,6 @@ import {
   type ChallengeCoachMessage,
 } from "../src/queries/challengeCoach.queries";
 import { useI18n } from "../src/i18n";
-
-const LOGO = require("../assets/images/logo.png");
 
 const parseEventDate = (value?: string | null) => {
   if (!value) return null;
@@ -746,10 +744,7 @@ const EventChat = () => {
                         activeOpacity={0.85}
                         onPress={() => openParticipantCard(msg.senderId)}
                       >
-                        <Image
-                          source={sender.avatar ? { uri: sender.avatar } : LOGO}
-                          style={localStyles.messageAvatar}
-                        />
+                        <Avatar uri={sender.avatar} size={28} />
                       </TouchableOpacity>
                     ))}
                   <View
@@ -813,13 +808,9 @@ const EventChat = () => {
             },
           ]}
         >
-          <Image
-            source={
-              userId && participantMap.current[userId]?.avatar
-                ? { uri: participantMap.current[userId].avatar! }
-                : LOGO
-            }
-            style={localStyles.inputAvatar}
+          <Avatar
+            uri={userId ? participantMap.current[userId]?.avatar : null}
+            size={32}
           />
           <TextInput
             style={styles.eventChatInput}
@@ -903,10 +894,7 @@ const EventChat = () => {
                       })
                     }
                   >
-                    <Image
-                      source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
-                      style={localStyles.memberAvatar}
-                    />
+                    <Avatar uri={item.avatarUrl} size={40} />
                     <View style={{ flex: 1 }}>
                       <Text style={localStyles.memberName}>
                         {item.displayName || "Participante"}

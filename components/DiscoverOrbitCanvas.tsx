@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState } from "react";
 import {
-  Image,
   LayoutChangeEvent,
   StyleSheet,
   Text,
@@ -18,6 +17,24 @@ import Animated, {
 } from "react-native-reanimated";
 import type { DataT } from "../types";
 import styles from "../assets/styles";
+import Avatar from "./Avatar";
+
+const getImageUri = (value: unknown): string | null => {
+  if (!value || typeof value !== "object" || !("uri" in value)) {
+    return null;
+  }
+
+  const uri = (value as { uri?: unknown }).uri;
+  return typeof uri === "string" && uri.trim() ? uri.trim() : null;
+};
+
+const getAvatarUri = (user?: DataT | null): string | null => {
+  if (!user) return null;
+  if (typeof user.avatarUri === "string" && user.avatarUri.trim()) {
+    return user.avatarUri.trim();
+  }
+  return getImageUri(user.image);
+};
 
 type OrbitNodeConfig = {
   size: number;
@@ -205,7 +222,11 @@ const DiscoverOrbitCanvas = ({
                 colors={["rgba(255,255,255,0.92)", "rgba(228,183,110,0.18)", "rgba(174,191,209,0.2)"]}
                 style={StyleSheet.absoluteFill}
               />
-              <Image source={centerUser.image} style={styles.discoverCenterProfileImage} />
+              <Avatar
+                uri={getAvatarUri(centerUser)}
+                size={114}
+                style={styles.discoverCenterProfileImage}
+              />
             </View>
           </TouchableOpacity>
         ) : null}
@@ -274,7 +295,11 @@ const DiscoverOrbitCanvas = ({
                       colors={["rgba(255,255,255,0.96)", "rgba(228,183,110,0.2)", "rgba(174,191,209,0.24)"]}
                       style={StyleSheet.absoluteFill}
                     />
-                    <Image source={user.image} style={styles.discoverOrbitUserImage} />
+                    <Avatar
+                      uri={getAvatarUri(user)}
+                      size={Math.max(config.size - 10, 18)}
+                      style={styles.discoverOrbitUserImage}
+                    />
                     <View style={localStyles.userBubbleHighlight} />
                   </View>
                   <View style={localStyles.matchBadge}>

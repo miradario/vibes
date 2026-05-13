@@ -14,6 +14,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
+import Avatar from "../components/Avatar";
 import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
 import UserProfileSheet from "../components/UserProfileSheet";
 import {
@@ -32,8 +33,6 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
-
-const LOGO = require("../assets/images/logo.png");
 
 type NewConnectionItem =
   | { type: "match"; item: MatchWithProfile }
@@ -318,10 +317,7 @@ const Messages = () => {
         }
       >
         <View style={localStyles.newAvatarFrame}>
-          <Image
-            source={photo ? { uri: photo } : LOGO}
-            style={localStyles.newAvatar}
-          />
+          <Avatar uri={photo} size={62} />
           {isMatch ? <View style={localStyles.onlineDot} /> : null}
         </View>
         <Text style={localStyles.newName} numberOfLines={1}>
@@ -401,10 +397,7 @@ const Messages = () => {
       activeOpacity={0.78}
       onPress={() => openMatchChat(item)}
     >
-      <Image
-        source={item.otherUserPhoto ? { uri: item.otherUserPhoto } : LOGO}
-        style={localStyles.directAvatar}
-      />
+      <Avatar uri={item.otherUserPhoto} size={48} />
       <View style={localStyles.rowBody}>
         <Text style={localStyles.rowTitle} numberOfLines={1}>
           {item.otherUserName}

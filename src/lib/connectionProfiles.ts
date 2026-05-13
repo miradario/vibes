@@ -21,6 +21,7 @@ type ProfileLike = Record<string, any>;
 export type ConnectionProfile = {
   id: string;
   name: string;
+  avatarUri?: string | null;
   age?: string;
   gender?: string;
   image: ImageSourcePropType;
@@ -308,6 +309,7 @@ export const mapCandidateToConnectionProfile = (
   return {
     id: String((candidate as ProfileLike).id ?? displayName),
     name: displayName,
+    avatarUri: photos[0] ?? null,
     age,
     gender,
     image: photoSources[0] ?? FALLBACK_PROFILE_IMAGE,
@@ -369,6 +371,7 @@ export const mapOwnProfileToConnectionProfile = (
     return {
       id: "self",
       name: isNonEmptyString(fallbackName) ? fallbackName.trim() : "Vibes",
+      avatarUri: null,
       image: FALLBACK_PROFILE_IMAGE,
       images: [FALLBACK_PROFILE_IMAGE],
       isOnline: true,
@@ -382,6 +385,7 @@ export const mapOwnProfileToConnectionProfile = (
       (isNonEmptyString(profile.name) && profile.name.trim()) ||
       (isNonEmptyString(fallbackName) && fallbackName.trim()) ||
       "Vibes",
+    avatarUri: getPhotoUrls(profile.photos)[0] ?? null,
     image: toImageSource(getPhotoUrls(profile.photos)[0]),
   };
 };

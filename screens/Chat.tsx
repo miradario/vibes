@@ -9,7 +9,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Image,
   Alert,
   ActivityIndicator,
   Modal,
@@ -19,6 +18,7 @@ import {
 import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
+import Avatar from "../components/Avatar";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import UserProfileSheet from "../components/UserProfileSheet";
 import styles, { DARK_GRAY } from "../assets/styles";
@@ -36,8 +36,6 @@ import {
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
-
-const LOGO = require("../assets/images/logo.png");
 
 const REPORT_REASONS: ReportReason[] = [
   "Spam o contenido irrelevante",
@@ -267,10 +265,7 @@ const Chat = () => {
           activeOpacity={0.85}
           onPress={() => setShowProfileModal(true)}
         >
-          <Image
-            source={otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
-            style={localStyles.messageAvatar}
-          />
+          <Avatar uri={otherUserPhoto} size={28} />
         </TouchableOpacity>
         {bubble}
       </View>
@@ -291,10 +286,7 @@ const Chat = () => {
           <Icon name="chevron-back" size={22} color={DARK_GRAY} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.chatHeaderCenter} onPress={() => setShowProfileModal(true)}>
-          <Image
-            source={otherUserPhoto ? { uri: otherUserPhoto } : LOGO}
-            style={styles.chatAvatarWrap}
-          />
+          <Avatar uri={otherUserPhoto} size={32} />
           <Text style={styles.chatName}>
             {(() => {
               const name = profile?.display_name || profile?.name || otherUserName || "Chat";

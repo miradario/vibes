@@ -6,11 +6,11 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
-  Image,
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
+import Avatar from "../components/Avatar";
 import styles, { DARK_GRAY } from "../assets/styles";
 import {
   useMatchesQuery,
@@ -39,10 +39,7 @@ const Matches = () => {
         )
       }
     >
-      <Image
-        source={item.otherUserPhoto ? { uri: item.otherUserPhoto } : LOGO}
-        style={localStyles.avatar}
-      />
+      <Avatar uri={item.otherUserPhoto} size={50} />
       <View style={localStyles.info}>
         <Text style={localStyles.name} numberOfLines={1}>
           {item.otherUserName}

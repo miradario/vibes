@@ -13,6 +13,7 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
+import AvatarGroup from "../components/AvatarGroup";
 import {
   useChallengesFeedQuery,
   useEventsFeedQuery,
@@ -81,30 +82,16 @@ const ParticipantStack = ({
   const totalVisible = Math.max(1, Math.min(count || uniqueAvatarUrls.length || 1, 3));
 
   return (
-    <View style={localStyles.avatarStack}>
-      {Array.from({ length: totalVisible }).map((_, index) => {
-        const avatarUrl = uniqueAvatarUrls[index] ?? (index === 0 ? hostImage : null);
-        return avatarUrl ? (
-          <Image
-            key={`${avatarUrl}-${index}`}
-            source={{ uri: avatarUrl }}
-            style={[
-              localStyles.stackAvatar,
-              { marginLeft: index === 0 ? 0 : -10, zIndex: totalVisible - index },
-            ]}
-          />
-        ) : (
-          <View
-            key={`placeholder-${index}`}
-            style={[
-              localStyles.stackAvatar,
-              localStyles.stackAvatarPlaceholder,
-              { marginLeft: index === 0 ? 0 : -10, zIndex: totalVisible - index },
-            ]}
-          />
-        );
-      })}
-    </View>
+    <AvatarGroup
+      size={36}
+      overlap={10}
+      max={3}
+      items={Array.from({ length: totalVisible }).map((_, index) => ({
+        id: `participant-${index}`,
+        uri: uniqueAvatarUrls[index] ?? (index === 0 ? hostImage : null),
+      }))}
+      style={localStyles.avatarStack}
+    />
   );
 };
 
@@ -503,9 +490,6 @@ const localStyles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#FFFFFF",
     backgroundColor: "#F1EAE2",
-  },
-  stackAvatarPlaceholder: {
-    backgroundColor: "#E7D9C8",
   },
   feedRowArrow: {
     width: 34,

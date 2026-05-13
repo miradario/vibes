@@ -76,6 +76,7 @@ export type DataT = {
   description: string;
   message: string;
   image: any;
+  avatarUri?: string | null;
   images?: any[];
   age?: string;
   gender?: string;

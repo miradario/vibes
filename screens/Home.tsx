@@ -18,6 +18,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
+import Avatar from "../components/Avatar";
+import AvatarGroup from "../components/AvatarGroup";
 import UserProfileSheet from "../components/UserProfileSheet";
 import type { UserProfileCardData } from "../components/UserProfileCard";
 import styles, { DIMENSION_WIDTH } from "../assets/styles";
@@ -1016,21 +1018,7 @@ const Home = () => {
                 {meditatedTodayFriends.map((item) => (
                   <View key={item.userId} style={localStyles.presenceBubble}>
                     <View style={localStyles.presenceAvatarGlow} />
-                    {item.avatarUrl ? (
-                      <Image
-                        source={{ uri: item.avatarUrl }}
-                        style={localStyles.presenceAvatar}
-                      />
-                    ) : (
-                      <View
-                        style={[
-                          localStyles.presenceAvatar,
-                          localStyles.presenceAvatarPlaceholder,
-                        ]}
-                      >
-                        <Ionicons name="person-outline" size={18} color="#7F776F" />
-                      </View>
-                    )}
+                    <Avatar uri={item.avatarUrl} size={54} />
                     <Text style={localStyles.presenceName} numberOfLines={1}>
                       {item.displayName}
                     </Text>
@@ -1051,7 +1039,7 @@ const Home = () => {
               onPress={() => navigation.navigate("Aura" as never)}
               style={localStyles.summaryArt}
             >
-              <Image source={centerProfile.image} style={localStyles.summaryAvatarLarge} />
+              <Avatar uri={centerProfile.avatarUri ?? null} size={76} />
             </TouchableOpacity>
             <View style={localStyles.summaryContent}>
               <Text style={localStyles.cardTitle}>Tu resumen</Text>
@@ -1197,42 +1185,27 @@ const Home = () => {
                       ) : null}
                     </View>
                     <View style={localStyles.feedListRight}>
-                      <View style={localStyles.feedAvatarStack}>
-                        {Array.from({
+                      <AvatarGroup
+                        style={localStyles.feedAvatarStack}
+                        size={34}
+                        overlap={10}
+                        max={3}
+                        items={Array.from({
                           length: Math.max(
                             1,
                             Math.min(participantCount || previewImages.length || 1, 3),
                           ),
-                        }).map((_, avatarIndex) => {
-                          const avatarUrl =
+                        }).map((_, avatarIndex) => ({
+                          id: `${challenge.id}-avatar-${avatarIndex}`,
+                          uri:
                             previewImages[avatarIndex] ??
                             (avatarIndex === 0 &&
                             typeof challenge.hostImage === "string" &&
                             challenge.hostImage.trim()
                               ? challenge.hostImage
-                              : null);
-
-                          return avatarUrl ? (
-                            <Image
-                              key={`${challenge.id}-avatar-${avatarIndex}`}
-                              source={{ uri: avatarUrl }}
-                              style={[
-                                localStyles.feedAvatar,
-                                { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
-                              ]}
-                            />
-                          ) : (
-                            <View
-                              key={`${challenge.id}-avatar-${avatarIndex}`}
-                              style={[
-                                localStyles.feedAvatar,
-                                localStyles.feedAvatarPlaceholder,
-                                { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
-                              ]}
-                            />
-                          );
-                        })}
-                      </View>
+                              : null),
+                        }))}
+                      />
                       <View style={localStyles.feedArrowWrap}>
                         <Ionicons name="chevron-forward" size={18} color="#7D7771" />
                       </View>
@@ -1341,42 +1314,27 @@ const Home = () => {
                       </Text>
                     </View>
                     <View style={localStyles.feedListRight}>
-                      <View style={localStyles.feedAvatarStack}>
-                        {Array.from({
+                      <AvatarGroup
+                        style={localStyles.feedAvatarStack}
+                        size={34}
+                        overlap={10}
+                        max={3}
+                        items={Array.from({
                           length: Math.max(
                             1,
                             Math.min(participantCount || previewImages.length || 1, 3),
                           ),
-                        }).map((_, avatarIndex) => {
-                          const avatarUrl =
+                        }).map((_, avatarIndex) => ({
+                          id: `${event.id}-avatar-${avatarIndex}`,
+                          uri:
                             previewImages[avatarIndex] ??
                             (avatarIndex === 0 &&
                             typeof event.hostImage === "string" &&
                             event.hostImage.trim()
                               ? event.hostImage
-                              : null);
-
-                          return avatarUrl ? (
-                            <Image
-                              key={`${event.id}-avatar-${avatarIndex}`}
-                              source={{ uri: avatarUrl }}
-                              style={[
-                                localStyles.feedAvatar,
-                                { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
-                              ]}
-                            />
-                          ) : (
-                            <View
-                              key={`${event.id}-avatar-${avatarIndex}`}
-                              style={[
-                                localStyles.feedAvatar,
-                                localStyles.feedAvatarPlaceholder,
-                                { marginLeft: avatarIndex === 0 ? 0 : -10, zIndex: 3 - avatarIndex },
-                              ]}
-                            />
-                          );
-                        })}
-                      </View>
+                              : null),
+                        }))}
+                      />
                       <View style={localStyles.feedArrowWrap}>
                         <Ionicons name="chevron-forward" size={18} color="#7D7771" />
                       </View>
@@ -1756,10 +1714,6 @@ const localStyles = StyleSheet.create({
     borderColor: "#FFFFFF",
     backgroundColor: "#EEF2F6",
   },
-  presenceAvatarPlaceholder: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
   presenceName: {
     marginTop: 8,
     color: "#2B2B2B",
@@ -1925,9 +1879,6 @@ const localStyles = StyleSheet.create({
     borderRadius: 17,
     borderWidth: 2,
     borderColor: "#FFFFFF",
-  },
-  feedAvatarPlaceholder: {
-    backgroundColor: "#E7D9C8",
   },
   feedArrowWrap: {
     width: 34,

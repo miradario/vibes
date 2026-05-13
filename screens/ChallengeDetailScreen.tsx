@@ -27,6 +27,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import Icon from "../components/Icon";
+import Avatar from "../components/Avatar";
 import LoopingVideo from "../components/LoopingVideo";
 import {
   useChallengeCheckinsQuery,
@@ -1194,21 +1195,12 @@ const ChallengeDetailScreen = () => {
             {pendingJoinRequests.slice(0, 2).map((request) => (
               <View key={request.id} style={localStyles.requestRow}>
                 <View style={localStyles.requestProfile}>
-                  {request.requesterAvatar ? (
-                    <Image
-                      source={{ uri: request.requesterAvatar }}
-                      style={localStyles.requestAvatar}
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        localStyles.requestAvatar,
-                        localStyles.requestAvatarPlaceholder,
-                      ]}
-                    >
-                      <Icon name="person-outline" size={14} color={palette.muted} />
-                    </View>
-                  )}
+                  <Avatar
+                    uri={request.requesterAvatar}
+                    size={38}
+                    fallbackBackgroundColor="#E9E4DD"
+                    fallbackIconColor={palette.muted}
+                  />
                   <Text style={localStyles.requestName} numberOfLines={1}>
                     {request.requesterName ?? "Participante"}
                   </Text>
@@ -1729,10 +1721,6 @@ const localStyles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     backgroundColor: "#F3ECE0",
-  },
-  requestAvatarPlaceholder: {
-    alignItems: "center",
-    justifyContent: "center",
   },
   requestName: {
     flex: 1,

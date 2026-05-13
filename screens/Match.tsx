@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useRef } from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +13,7 @@ import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import LoopingVideo from "../components/LoopingVideo";
+import Avatar from "../components/Avatar";
 import Icon from "../components/Icon";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -116,7 +116,7 @@ const Match = () => {
         <View style={localStyles.peopleRow}>
           <View style={localStyles.personBlock}>
             <View style={[localStyles.avatar, localStyles.avatarBlue]}>
-              <Image source={ownProfile.image} style={localStyles.avatarImage} />
+              <Avatar uri={ownProfile.avatarUri ?? null} size={76} />
             </View>
             <Text style={localStyles.personName}>{ownName}</Text>
           </View>
@@ -131,10 +131,7 @@ const Match = () => {
 
           <View style={localStyles.personBlock}>
             <View style={[localStyles.avatar, localStyles.avatarGold]}>
-              <Image
-                source={profile?.image ?? ownProfile.image}
-                style={localStyles.avatarImage}
-              />
+              <Avatar uri={profile?.avatarUri ?? ownProfile.avatarUri ?? null} size={76} />
             </View>
             <Text style={localStyles.personName}>{otherName}</Text>
           </View>

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Icon from "./Icon";
+import ProfileMediaImage from "./ProfileMediaImage";
 import DiscoverCirclesOverlay from "./DiscoverCirclesOverlay";
 import SpiritualPathDetailsModal from "./SpiritualPathDetailsModal";
 import { CardItemT } from "../types";
@@ -196,7 +197,7 @@ const CardItem = ({
               disabled={!onImagePress}
               style={styles.discoverPhotoTouch}
             >
-              <Image source={activeDiscoverImage} style={styles.discoverPhoto} />
+              <ProfileMediaImage source={activeDiscoverImage} style={styles.discoverPhoto} />
               <View pointerEvents="none" style={styles.discoverPhotoFade}>
                 <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <Defs>
@@ -224,7 +225,7 @@ const CardItem = ({
                   onPress={() => setActiveDiscoverImage(thumb)}
                   activeOpacity={0.85}
                 >
-                  <Image source={thumb} style={styles.discoverGalleryThumb} />
+                  <ProfileMediaImage source={thumb} style={styles.discoverGalleryThumb} />
                 </TouchableOpacity>
               ))}
             </View>

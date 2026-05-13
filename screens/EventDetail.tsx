@@ -29,6 +29,8 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import Avatar from "../components/Avatar";
+import AvatarGroup from "../components/AvatarGroup";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import LoopingVideo from "../components/LoopingVideo";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -60,7 +62,6 @@ import {
 } from "../src/constants/challengeMediaPresets";
 import { shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 
-const LOGO = require("../assets/images/logo.png");
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
 const CHECKIN_SLIDER_HANDLE_SIZE = 72;
 const CHECKIN_SLIDER_HORIZONTAL_PADDING = 12;
@@ -1310,20 +1311,19 @@ const EventDetail = () => {
                     <Text style={styles.eventDetailInfoLabel}>
                       Ver usuarios del evento
                     </Text>
-                    {eventParticipantsWithAdmin.length > 0 ? (
-                      <View style={localStyles.participantsPreviewRow}>
-                        {eventParticipantsWithAdmin.slice(0, 4).map((item, index) => (
-                          <Image
-                            key={item.id}
-                            source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
-                            style={[
-                              localStyles.participantPreviewAvatar,
-                              index > 0 && localStyles.participantPreviewAvatarOverlap,
-                            ]}
-                          />
-                        ))}
-                        {visibleParticipantCount > 4 ? (
-                          <View
+                      {eventParticipantsWithAdmin.length > 0 ? (
+                       <View style={localStyles.participantsPreviewRow}>
+                         <AvatarGroup
+                           size={28}
+                           max={4}
+                           overlap={8}
+                           items={eventParticipantsWithAdmin.map((item) => ({
+                             id: item.id,
+                             uri: item.avatarUrl,
+                           }))}
+                         />
+                         {visibleParticipantCount > 4 ? (
+                           <View
                             style={[
                               localStyles.participantPreviewAvatar,
                               localStyles.participantPreviewMore,
@@ -1583,16 +1583,15 @@ const EventDetail = () => {
                   <Text style={styles.eventDetailInfoLabel}>Ver participantes</Text>
                   {visibleParticipants.length > 0 ? (
                     <View style={localStyles.participantsPreviewRow}>
-                      {visibleParticipants.slice(0, 4).map((item, index) => (
-                        <Image
-                          key={item.id}
-                          source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
-                          style={[
-                            localStyles.participantPreviewAvatar,
-                            index > 0 && localStyles.participantPreviewAvatarOverlap,
-                          ]}
-                        />
-                      ))}
+                      <AvatarGroup
+                        size={28}
+                        max={4}
+                        overlap={8}
+                        items={visibleParticipants.map((item) => ({
+                          id: item.id,
+                          uri: item.avatarUrl,
+                        }))}
+                      />
                       {visibleParticipantCount > 4 ? (
                         <View
                           style={[
@@ -1977,10 +1976,7 @@ const EventDetail = () => {
                   })
                 }
               >
-                <Image
-                  source={item.avatarUrl ? { uri: item.avatarUrl } : LOGO}
-                  style={localStyles.memberAvatar}
-                />
+                <Avatar uri={item.avatarUrl} size={40} />
                 <View style={{ flex: 1 }}>
                   <Text style={localStyles.memberName}>
                     {item.displayName || "Participante"}

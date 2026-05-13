@@ -6,10 +6,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
 } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
+import Avatar from "../components/Avatar";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import {
   useAuthSession,
@@ -41,6 +41,7 @@ const Profile = () => {
   const location =
     ownProfile.location ||
     "Buenos Aires";
+  const ownAvatarUri = ownProfile.avatarUri ?? null;
 
   const [firstName, ...restNames] = displayName.split(" ").filter(Boolean);
   const shortName = restNames.length
@@ -94,10 +95,7 @@ const Profile = () => {
 
         <View style={styles.auraProfileCard}>
           <View style={styles.auraProfileAvatarWrap}>
-            <Image
-              source={ownProfile.image}
-              style={styles.auraProfileAvatar}
-            />
+            <Avatar uri={ownAvatarUri} size={70} />
           </View>
           <View style={styles.auraProfileInfo}>
             <Text style={styles.auraProfileName}>{shortName}</Text>
