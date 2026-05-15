@@ -1,31 +1,12 @@
 /** @format */
 
 import React, { memo, useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  PanResponder,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { ActivityIndicator, FlatList, Image, PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { ResizeMode } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, {
-  Easing,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import Icon from "../components/Icon";
 import Avatar from "../components/Avatar";
 import LoopingVideo from "../components/LoopingVideo";
@@ -42,11 +23,7 @@ import {
   type EventFeedItem,
 } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
-import {
-  getChallengeMediaPreset,
-  getChallengeProgressVideo,
-  type ChallengeMediaPresetId,
-} from "../src/constants/challengeMediaPresets";
+import { getChallengeMediaPreset, getChallengeProgressVideo, type ChallengeMediaPresetId } from "../src/constants/challengeMediaPresets";
 import { shareChallengeInvite, shareChallengeProgress } from "../src/lib/socialShare";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -106,6 +83,8 @@ const palette = {
 
 const FOOTER_SLIDER_HANDLE_SIZE = 42;
 const FOOTER_SLIDER_HORIZONTAL_PADDING = 8;
+const FOOTER_SLIDER_TRACK_HEIGHT = 68;
+const FOOTER_SLIDER_FILL_LEFT = FOOTER_SLIDER_HORIZONTAL_PADDING + FOOTER_SLIDER_HANDLE_SIZE / 2 - FOOTER_SLIDER_TRACK_HEIGHT / 2;
 
 export const getProgressMode = (totalDays: number): ProgressMode => {
   if (totalDays <= 10) return "path";
@@ -113,10 +92,7 @@ export const getProgressMode = (totalDays: number): ProgressMode => {
   return "calendar";
 };
 
-export const getCompletionPercent = (
-  completedDays: number[],
-  totalDays: number,
-) => {
+export const getCompletionPercent = (completedDays: number[], totalDays: number) => {
   if (totalDays <= 0) return 0;
   const uniqueCompleted = new Set(completedDays.filter((day) => day >= 1 && day <= totalDays));
   return Math.min(100, Math.round((uniqueCompleted.size / totalDays) * 100));
@@ -131,14 +107,11 @@ export const getGrowthStage = (percent: number) => {
   return 0;
 };
 
-export const getDaysLeft = (totalDays: number, completedDays: number[]) =>
-  Math.max(totalDays - new Set(completedDays).size, 0);
+export const getDaysLeft = (totalDays: number, completedDays: number[]) => Math.max(totalDays - new Set(completedDays).size, 0);
 
-export const isDayCompleted = (day: number, completedDays: number[]) =>
-  completedDays.includes(day);
+export const isDayCompleted = (day: number, completedDays: number[]) => completedDays.includes(day);
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.max(min, Math.min(max, value));
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 const formatDisplayDate = (value?: string | null) => {
   if (!value) return FALLBACK_CHALLENGE.date;
@@ -162,11 +135,7 @@ const getCurrentDayFromStart = (startsAt: string | null | undefined, totalDays: 
   return clamp(diff, 1, Math.max(totalDays, 1));
 };
 
-const getCompletedDaysFromCheckins = (
-  checkins: string[],
-  startsAt: string | null | undefined,
-  totalDays: number,
-) => {
+const getCompletedDaysFromCheckins = (checkins: string[], startsAt: string | null | undefined, totalDays: number) => {
   if (!startsAt || checkins.length === 0) return [];
   const start = new Date(startsAt);
   if (Number.isNaN(start.getTime())) return [];
@@ -186,11 +155,7 @@ const getCompletedDaysFromCheckins = (
   ).sort((left, right) => left - right);
 };
 
-const getStatusFromData = (
-  currentDay: number,
-  completedDays: number[],
-  participantCheckedToday?: boolean,
-): CheckInStatus => {
+const getStatusFromData = (currentDay: number, completedDays: number[], participantCheckedToday?: boolean): CheckInStatus => {
   if (participantCheckedToday || completedDays.includes(currentDay)) return "completed";
   if (currentDay > 1 && !completedDays.includes(currentDay - 1)) return "broken";
   return "pending";
@@ -253,16 +218,7 @@ export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, 
       <Text style={localStyles.title}>{challenge.title}</Text>
       <Text style={localStyles.subtitle}>{challenge.subtitle}</Text>
       {statusLabel ? (
-        <View
-          style={[
-            localStyles.headerStatusPill,
-            statusTone === "done"
-              ? localStyles.headerStatusPillDone
-              : statusTone === "warm"
-                ? localStyles.headerStatusPillWarm
-                : null,
-          ]}
-        >
+        <View style={[localStyles.headerStatusPill, statusTone === "done" ? localStyles.headerStatusPillDone : statusTone === "warm" ? localStyles.headerStatusPillWarm : null]}>
           <Text style={localStyles.headerStatusText}>{statusLabel}</Text>
         </View>
       ) : null}
@@ -301,29 +257,25 @@ type StreakSummaryCardProps = {
   daysLeft: number;
 };
 
-export const StreakSummaryCard = memo(
-  ({ streak, bestStreak, daysLeft }: StreakSummaryCardProps) => (
-    <View style={localStyles.streakCard}>
+export const StreakSummaryCard = memo(({ streak, bestStreak, daysLeft }: StreakSummaryCardProps) => (
+  <View style={localStyles.streakCard}>
+    <View>
+      <Text style={localStyles.cardTitle}>Tu racha</Text>
+      <Text style={localStyles.cardSubtitle}>{daysLeft === 0 ? "Desafío completo" : `${daysLeft} días por delante`}</Text>
+    </View>
+    <View style={localStyles.streakMetrics}>
       <View>
-        <Text style={localStyles.cardTitle}>Tu racha</Text>
-        <Text style={localStyles.cardSubtitle}>
-          {daysLeft === 0 ? "Desafío completo" : `${daysLeft} días por delante`}
-        </Text>
+        <Text style={localStyles.streakValue}>{streak}</Text>
+        <Text style={localStyles.streakLabel}>actual</Text>
       </View>
-      <View style={localStyles.streakMetrics}>
-        <View>
-          <Text style={localStyles.streakValue}>{streak}</Text>
-          <Text style={localStyles.streakLabel}>actual</Text>
-        </View>
-        <View style={localStyles.metricDivider} />
-        <View>
-          <Text style={localStyles.streakValue}>{bestStreak}</Text>
-          <Text style={localStyles.streakLabel}>mejor</Text>
-        </View>
+      <View style={localStyles.metricDivider} />
+      <View>
+        <Text style={localStyles.streakValue}>{bestStreak}</Text>
+        <Text style={localStyles.streakLabel}>mejor</Text>
       </View>
     </View>
-  ),
-);
+  </View>
+));
 
 const getStreakCelebrationCopy = (streak: number) => {
   if (streak >= 21) {
@@ -354,14 +306,7 @@ const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
   const glow = useSharedValue(0.92);
 
   useEffect(() => {
-    glow.value = withRepeat(
-      withSequence(
-        withTiming(1.02, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
-        withTiming(0.96, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
-      ),
-      -1,
-      true,
-    );
+    glow.value = withRepeat(withSequence(withTiming(1.02, { duration: 1600, easing: Easing.inOut(Easing.quad) }), withTiming(0.96, { duration: 1600, easing: Easing.inOut(Easing.quad) })), -1, true);
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -384,41 +329,21 @@ const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
   );
 });
 
-const CommunityPulseCard = memo(
-  ({
-    checkedInTodayCount,
-    participantsCount,
-  }: {
-    checkedInTodayCount: number;
-    participantsCount: number;
-  }) => (
-    <View style={localStyles.communityCard}>
-      <View style={localStyles.communityBadge}>
-        <Icon name="people-outline" size={17} color={palette.goldDeep} />
-      </View>
-      <View style={localStyles.communityCopy}>
-        <Text style={localStyles.communityTitle}>
-          {checkedInTodayCount > 0
-            ? `${checkedInTodayCount} personas ya hicieron check-in hoy`
-            : "Todavía nadie hizo check-in hoy"}
-        </Text>
-        <Text style={localStyles.communitySubtitle}>
-          {participantsCount > 0
-            ? `${participantsCount} personas están transitando este challenge`
-            : "Tu presencia puede abrir el ritmo del día"}
-        </Text>
-      </View>
+const CommunityPulseCard = memo(({ checkedInTodayCount, participantsCount }: { checkedInTodayCount: number; participantsCount: number }) => (
+  <View style={localStyles.communityCard}>
+    <View style={localStyles.communityBadge}>
+      <Icon name="people-outline" size={17} color={palette.goldDeep} />
     </View>
-  ),
-);
+    <View style={localStyles.communityCopy}>
+      <Text style={localStyles.communityTitle}>{checkedInTodayCount > 0 ? `${checkedInTodayCount} personas ya hicieron check-in hoy` : "Todavía nadie hizo check-in hoy"}</Text>
+      <Text style={localStyles.communitySubtitle}>{participantsCount > 0 ? `${participantsCount} personas están transitando este challenge` : "Tu presencia puede abrir el ritmo del día"}</Text>
+    </View>
+  </View>
+));
 
 type DayState = "completed" | "active" | "future" | "missed";
 
-const getDayState = (
-  day: number,
-  currentDay: number,
-  completedDays: number[],
-): DayState => {
+const getDayState = (day: number, currentDay: number, completedDays: number[]): DayState => {
   if (completedDays.includes(day)) return "completed";
   if (day === currentDay) return "active";
   if (day < currentDay) return "missed";
@@ -438,14 +363,7 @@ const DayCircle = memo(({ day, state, size = 38, showLabel = true }: DayCirclePr
 
   useEffect(() => {
     if (!isActive) return;
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1.08, { duration: 900, easing: Easing.inOut(Easing.quad) }),
-        withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }),
-      ),
-      -1,
-      true,
-    );
+    pulse.value = withRepeat(withSequence(withTiming(1.08, { duration: 900, easing: Easing.inOut(Easing.quad) }), withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) })), -1, true);
   }, [isActive]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -467,21 +385,11 @@ const DayCircle = memo(({ day, state, size = 38, showLabel = true }: DayCirclePr
         state === "future" && localStyles.dayFuture,
         state === "missed" && localStyles.dayMissed,
         animatedStyle,
-      ]}
-    >
+      ]}>
       {state === "completed" ? (
         <Icon name="checkmark" size={Math.max(14, size * 0.42)} color="#FFFFFF" />
       ) : (
-        <Text
-          style={[
-            localStyles.dayText,
-            state === "active" && localStyles.dayTextActive,
-            state === "future" && localStyles.dayTextFuture,
-            state === "missed" && localStyles.dayTextMissed,
-          ]}
-        >
-          {showLabel ? day : ""}
-        </Text>
+        <Text style={[localStyles.dayText, state === "active" && localStyles.dayTextActive, state === "future" && localStyles.dayTextFuture, state === "missed" && localStyles.dayTextMissed]}>{showLabel ? day : ""}</Text>
       )}
     </Animated.View>
   );
@@ -493,145 +401,95 @@ type AdaptiveProgressProps = {
   completedDays: number[];
 };
 
-export const AdaptiveProgress = memo(
-  ({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
-    const mode = getProgressMode(totalDays);
-    if (mode === "path") {
-      return (
-        <PathProgress
-          totalDays={totalDays}
-          currentDay={currentDay}
-          completedDays={completedDays}
-        />
-      );
-    }
-    if (mode === "compact") {
-      return (
-        <CompactProgress
-          totalDays={totalDays}
-          currentDay={currentDay}
-          completedDays={completedDays}
-        />
-      );
-    }
-    return (
-      <CalendarProgress
-        totalDays={totalDays}
-        currentDay={currentDay}
-        completedDays={completedDays}
+export const AdaptiveProgress = memo(({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
+  const mode = getProgressMode(totalDays);
+  if (mode === "path") {
+    return <PathProgress totalDays={totalDays} currentDay={currentDay} completedDays={completedDays} />;
+  }
+  if (mode === "compact") {
+    return <CompactProgress totalDays={totalDays} currentDay={currentDay} completedDays={completedDays} />;
+  }
+  return <CalendarProgress totalDays={totalDays} currentDay={currentDay} completedDays={completedDays} />;
+});
+
+export const PathProgress = memo(({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
+  const days = useMemo(() => Array.from({ length: totalDays }, (_, index) => index + 1), [totalDays]);
+
+  return (
+    <View style={localStyles.progressCard}>
+      <Text style={localStyles.sectionTitle}>Camino del desafío</Text>
+      <View style={localStyles.pathRow}>
+        {days.map((day, index) => {
+          const state = getDayState(day, currentDay, completedDays);
+          return (
+            <View key={day} style={localStyles.pathItem}>
+              <DayCircle day={day} state={state} />
+              {index < days.length - 1 ? <View style={[localStyles.pathConnector, isDayCompleted(day, completedDays) && localStyles.pathConnectorDone]} /> : null}
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+});
+
+export const CompactProgress = memo(({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
+  const percent = getCompletionPercent(completedDays, totalDays);
+  const progress = useAnimatedProgress(percent);
+  const milestones = useMemo(() => {
+    const points = [1, Math.ceil(totalDays * 0.25), Math.ceil(totalDays * 0.5), Math.ceil(totalDays * 0.75), totalDays];
+    return Array.from(new Set(points)).sort((left, right) => left - right);
+  }, [totalDays]);
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
+
+  return (
+    <View style={localStyles.progressCard}>
+      <Text style={localStyles.sectionTitle}>Progreso compacto</Text>
+      <View style={localStyles.compactTrack}>
+        <Animated.View style={[localStyles.compactFill, fillStyle]} />
+      </View>
+      <View style={localStyles.milestonesRow}>
+        {milestones.map((day) => (
+          <View key={day} style={localStyles.milestoneItem}>
+            <DayCircle day={day} state={getDayState(day, currentDay, completedDays)} size={34} showLabel />
+            <Text style={localStyles.milestoneText}>Día {day}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+});
+
+export const CalendarProgress = memo(({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
+  const days = useMemo(() => Array.from({ length: totalDays }, (_, index) => index + 1), [totalDays]);
+
+  return (
+    <View style={localStyles.progressCard}>
+      <Text style={localStyles.sectionTitle}>Calendario de avance</Text>
+      <FlatList
+        data={days}
+        keyExtractor={(day) => `calendar-day-${day}`}
+        numColumns={7}
+        scrollEnabled={false}
+        columnWrapperStyle={localStyles.calendarRow}
+        renderItem={({ item }) => (
+          <View style={localStyles.calendarCell}>
+            <DayCircle day={item} state={getDayState(item, currentDay, completedDays)} size={34} showLabel={item % 5 === 0 || item === currentDay || item === 1} />
+          </View>
+        )}
       />
-    );
-  },
-);
-
-export const PathProgress = memo(
-  ({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
-    const days = useMemo(
-      () => Array.from({ length: totalDays }, (_, index) => index + 1),
-      [totalDays],
-    );
-
-    return (
-      <View style={localStyles.progressCard}>
-        <Text style={localStyles.sectionTitle}>Camino del desafío</Text>
-        <View style={localStyles.pathRow}>
-          {days.map((day, index) => {
-            const state = getDayState(day, currentDay, completedDays);
-            return (
-              <View key={day} style={localStyles.pathItem}>
-                <DayCircle day={day} state={state} />
-                {index < days.length - 1 ? (
-                  <View
-                    style={[
-                      localStyles.pathConnector,
-                      isDayCompleted(day, completedDays) && localStyles.pathConnectorDone,
-                    ]}
-                  />
-                ) : null}
-              </View>
-            );
-          })}
-        </View>
-      </View>
-    );
-  },
-);
-
-export const CompactProgress = memo(
-  ({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
-    const percent = getCompletionPercent(completedDays, totalDays);
-    const progress = useAnimatedProgress(percent);
-    const milestones = useMemo(() => {
-      const points = [1, Math.ceil(totalDays * 0.25), Math.ceil(totalDays * 0.5), Math.ceil(totalDays * 0.75), totalDays];
-      return Array.from(new Set(points)).sort((left, right) => left - right);
-    }, [totalDays]);
-    const fillStyle = useAnimatedStyle(() => ({
-      width: `${progress.value * 100}%`,
-    }));
-
-    return (
-      <View style={localStyles.progressCard}>
-        <Text style={localStyles.sectionTitle}>Progreso compacto</Text>
-        <View style={localStyles.compactTrack}>
-          <Animated.View style={[localStyles.compactFill, fillStyle]} />
-        </View>
-        <View style={localStyles.milestonesRow}>
-          {milestones.map((day) => (
-            <View key={day} style={localStyles.milestoneItem}>
-              <DayCircle
-                day={day}
-                state={getDayState(day, currentDay, completedDays)}
-                size={34}
-                showLabel
-              />
-              <Text style={localStyles.milestoneText}>Día {day}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  },
-);
-
-export const CalendarProgress = memo(
-  ({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
-    const days = useMemo(
-      () => Array.from({ length: totalDays }, (_, index) => index + 1),
-      [totalDays],
-    );
-
-    return (
-      <View style={localStyles.progressCard}>
-        <Text style={localStyles.sectionTitle}>Calendario de avance</Text>
-        <FlatList
-          data={days}
-          keyExtractor={(day) => `calendar-day-${day}`}
-          numColumns={7}
-          scrollEnabled={false}
-          columnWrapperStyle={localStyles.calendarRow}
-          renderItem={({ item }) => (
-            <View style={localStyles.calendarCell}>
-              <DayCircle
-                day={item}
-                state={getDayState(item, currentDay, completedDays)}
-                size={34}
-                showLabel={item % 5 === 0 || item === currentDay || item === 1}
-              />
-            </View>
-          )}
-        />
-      </View>
-    );
-  },
-);
+    </View>
+  );
+});
 
 type GrowthIllustrationProps = {
   percent: number;
   presetId?: ChallengeMediaPresetId | null;
 };
 
-const getProgressVideoStage = (percent: number) =>
-  Math.min(4, Math.floor(clamp(percent, 0, 100) / 20));
+const getProgressVideoStage = (percent: number) => Math.min(4, Math.floor(clamp(percent, 0, 100) / 20));
 
 export const GrowthIllustration = memo(({ percent, presetId }: GrowthIllustrationProps) => {
   const stage = getProgressVideoStage(percent);
@@ -661,21 +519,10 @@ export const GrowthIllustration = memo(({ percent, presetId }: GrowthIllustratio
     <View style={localStyles.illustrationCard}>
       {progressVideo ? (
         <Animated.View style={[localStyles.growthVideoWrap, imageStyle]}>
-          <LoopingVideo
-            key={`${presetId ?? "fallback"}-${stage}`}
-            source={progressVideo}
-            posterSource={preset?.image ?? treeStageImages[treeStage]}
-            style={localStyles.growthVideo}
-            resizeMode={ResizeMode.CONTAIN}
-            isLooping={false}
-          />
+          <LoopingVideo key={`${presetId ?? "fallback"}-${stage}`} source={progressVideo} posterSource={preset?.image ?? treeStageImages[treeStage]} style={localStyles.growthVideo} resizeMode={ResizeMode.CONTAIN} isLooping={false} />
         </Animated.View>
       ) : (
-        <Animated.Image
-          source={treeStageImages[treeStage]}
-          style={[localStyles.growthImage, imageStyle]}
-          resizeMode="contain"
-        />
+        <Animated.Image source={treeStageImages[treeStage]} style={[localStyles.growthImage, imageStyle]} resizeMode="contain" />
       )}
       <Text style={localStyles.growthTitle}>Etapa {stage + 1} de 5</Text>
       <Text style={localStyles.growthSubtitle}>{getGrowthStageCopy(treeStage)}</Text>
@@ -684,14 +531,7 @@ export const GrowthIllustration = memo(({ percent, presetId }: GrowthIllustratio
 });
 
 const getGrowthStageCopy = (stage: number) => {
-  const copy = [
-    "La semilla está lista.",
-    "El hábito empieza a brotar.",
-    "Tu constancia gana forma.",
-    "La energía se expande.",
-    "El árbol sostiene tu avance.",
-    "El desafío está floreciendo.",
-  ];
+  const copy = ["La semilla está lista.", "El hábito empieza a brotar.", "Tu constancia gana forma.", "La energía se expande.", "El árbol sostiene tu avance.", "El desafío está floreciendo."];
   return copy[stage] ?? copy[0];
 };
 
@@ -700,30 +540,28 @@ type ProgressSummaryCardProps = {
   totalDays: number;
 };
 
-export const ProgressSummaryCard = memo(
-  ({ completedDays, totalDays }: ProgressSummaryCardProps) => {
-    const percent = getCompletionPercent(completedDays, totalDays);
-    const progress = useAnimatedProgress(percent);
-    const fillStyle = useAnimatedStyle(() => ({
-      width: `${progress.value * 100}%`,
-    }));
+export const ProgressSummaryCard = memo(({ completedDays, totalDays }: ProgressSummaryCardProps) => {
+  const percent = getCompletionPercent(completedDays, totalDays);
+  const progress = useAnimatedProgress(percent);
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
 
-    return (
-      <View style={localStyles.summaryCard}>
-        <View style={localStyles.summaryHeader}>
-          <Text style={localStyles.cardTitle}>Resumen</Text>
-          <Text style={localStyles.percentText}>{percent}%</Text>
-        </View>
-        <View style={localStyles.summaryTrack}>
-          <Animated.View style={[localStyles.summaryFill, fillStyle]} />
-        </View>
-        <Text style={localStyles.summaryCopy}>
-          {completedDays.length} de {totalDays} días completados.
-        </Text>
+  return (
+    <View style={localStyles.summaryCard}>
+      <View style={localStyles.summaryHeader}>
+        <Text style={localStyles.cardTitle}>Resumen</Text>
+        <Text style={localStyles.percentText}>{percent}%</Text>
       </View>
-    );
-  },
-);
+      <View style={localStyles.summaryTrack}>
+        <Animated.View style={[localStyles.summaryFill, fillStyle]} />
+      </View>
+      <Text style={localStyles.summaryCopy}>
+        {completedDays.length} de {totalDays} días completados.
+      </Text>
+    </View>
+  );
+});
 
 type CheckInButtonProps = {
   status: CheckInStatus;
@@ -732,32 +570,13 @@ type CheckInButtonProps = {
 };
 
 export const CheckInButton = memo(({ status, isLoading, onPress }: CheckInButtonProps) => {
-  const label =
-    status === "completed"
-      ? "¡Check-in completado!"
-      : status === "broken"
-        ? "Racha interrumpida — Volvé a empezar hoy"
-        : "Hacer check-in de hoy";
-  const icon =
-    status === "completed"
-      ? "checkmark-circle"
-      : status === "broken"
-        ? "refresh-circle"
-        : "flame";
+  const label = status === "completed" ? "¡Check-in completado!" : status === "broken" ? "Racha interrumpida — Volvé a empezar hoy" : "Hacer check-in de hoy";
+  const icon = status === "completed" ? "checkmark-circle" : status === "broken" ? "refresh-circle" : "flame";
   const isCompleted = status === "completed";
   const isBroken = status === "broken";
 
   return (
-    <TouchableOpacity
-      style={[
-        localStyles.checkInButton,
-        isCompleted && localStyles.checkInCompleted,
-        isBroken && localStyles.checkInBroken,
-      ]}
-      onPress={onPress}
-      disabled={isLoading || isCompleted}
-      activeOpacity={0.88}
-    >
+    <TouchableOpacity style={[localStyles.checkInButton, isCompleted && localStyles.checkInCompleted, isBroken && localStyles.checkInBroken]} onPress={onPress} disabled={isLoading || isCompleted} activeOpacity={0.88}>
       {isLoading ? (
         <ActivityIndicator color="#FFFFFF" />
       ) : (
@@ -787,19 +606,12 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
   </TouchableOpacity>
 ));
 
-const mapEventToChallengeData = (
-  event: EventFeedItem | undefined,
-  checkins: string[],
-  participant: any,
-): ChallengeDetailData => {
+const mapEventToChallengeData = (event: EventFeedItem | undefined, checkins: string[], participant: any): ChallengeDetailData => {
   if (!event) return FALLBACK_CHALLENGE;
   const totalDays = Math.max(Number(event.durationDays ?? 0) || 0, 1);
   const currentDay = getCurrentDayFromStart(event.startsAt, totalDays);
   const completedDays = getCompletedDaysFromCheckins(checkins, event.startsAt, totalDays);
-  const streak = Math.max(
-    Number(participant?.streak ?? 0) || 0,
-    completedDays.filter((day) => day <= currentDay).length,
-  );
+  const streak = Math.max(Number(participant?.streak ?? 0) || 0, completedDays.filter((day) => day <= currentDay).length);
 
   return {
     id: event.id,
@@ -830,9 +642,7 @@ const ChallengeDetailScreen = () => {
   const requestChallengeJoinMutation = useRequestChallengeJoinMutation();
   const approveJoinRequestMutation = useApproveChallengeJoinRequestMutation();
   const { data: ownJoinRequest } = useChallengeJoinRequestQuery(event?.id, userId);
-  const { data: challengeJoinRequests = [] } = useChallengeJoinRequestsQuery(
-    event?.id,
-  );
+  const { data: challengeJoinRequests = [] } = useChallengeJoinRequestsQuery(event?.id);
   const { data: remoteCheckins = [] } = useChallengeCheckinsQuery(event?.id, userId);
   const { data: remoteCheckedInTodayCount = 0 } = useChallengeTodayCheckinsCountQuery(event?.id);
   const checkInMutation = useCheckInChallengeMutation();
@@ -844,10 +654,7 @@ const ChallengeDetailScreen = () => {
   const [celebrationTitle, setCelebrationTitle] = useState("Día completado");
   const [celebrationBody, setCelebrationBody] = useState("Gracias por elegirte hoy");
 
-  const baseChallenge = useMemo(
-    () => mapEventToChallengeData(event, remoteCheckins, participant),
-    [event, participant, remoteCheckins],
-  );
+  const baseChallenge = useMemo(() => mapEventToChallengeData(event, remoteCheckins, participant), [event, participant, remoteCheckins]);
   const completedDays = useMemo(
     () =>
       Array.from(new Set([...baseChallenge.completedDays, ...localCompletedDays]))
@@ -855,58 +662,34 @@ const ChallengeDetailScreen = () => {
         .sort((left, right) => left - right),
     [baseChallenge.completedDays, baseChallenge.totalDays, localCompletedDays],
   );
-  const status =
-    localStatus ??
-    getStatusFromData(baseChallenge.currentDay, completedDays, participant?.checkedInToday);
+  const status = localStatus ?? getStatusFromData(baseChallenge.currentDay, completedDays, participant?.checkedInToday);
   const challenge: ChallengeDetailData = {
     ...baseChallenge,
     completedDays,
     checkInStatus: status,
-    streak:
-      status === "completed"
-        ? Math.max(baseChallenge.streak, completedDays.length)
-        : baseChallenge.streak,
+    streak: status === "completed" ? Math.max(baseChallenge.streak, completedDays.length) : baseChallenge.streak,
     bestStreak: Math.max(baseChallenge.bestStreak, completedDays.length),
   };
   const isAdmin = Boolean(userId && event?.createdBy && userId === event.createdBy);
   const isJoined = Boolean(participant);
   const visibilityMeta = getVisibilityMeta(event?.visibility);
-  const pendingJoinRequests = challengeJoinRequests.filter(
-    (request) => request.status === "pending",
-  );
+  const pendingJoinRequests = challengeJoinRequests.filter((request) => request.status === "pending");
   const percent = getCompletionPercent(challenge.completedDays, challenge.totalDays);
   const daysLeft = getDaysLeft(challenge.totalDays, challenge.completedDays);
   const todayKey = new Date().toISOString().split("T")[0];
-  const hasRemoteTodayCheckin =
-    participant?.checkedInToday ||
-    remoteCheckins.includes(todayKey);
-  const checkedInTodayCount =
-    remoteCheckedInTodayCount +
-    (challenge.checkInStatus === "completed" && !hasRemoteTodayCheckin ? 1 : 0);
+  const hasRemoteTodayCheckin = participant?.checkedInToday || remoteCheckins.includes(todayKey);
+  const checkedInTodayCount = remoteCheckedInTodayCount + (challenge.checkInStatus === "completed" && !hasRemoteTodayCheckin ? 1 : 0);
   const contentMaxWidth = width >= 700 ? 620 : undefined;
-  const isChallengeCompleted =
-    challenge.checkInStatus === "completed" &&
-    (challenge.currentDay >= challenge.totalDays ||
-      challenge.completedDays.length >= challenge.totalDays);
+  const isChallengeCompleted = challenge.checkInStatus === "completed" && (challenge.currentDay >= challenge.totalDays || challenge.completedDays.length >= challenge.totalDays);
   const headerStatus = isChallengeCompleted
     ? { label: "Challenge completado", tone: "done" as const }
     : challenge.checkInStatus === "completed"
-      ? { label: "Hecho hoy", tone: "active" as const }
-      : challenge.checkInStatus === "broken"
-        ? { label: "Retomá hoy", tone: "warm" as const }
-        : { label: `Día ${challenge.currentDay} activo`, tone: "active" as const };
-  const footerSliderMaxOffset = Math.max(
-    footerSliderWidth -
-      FOOTER_SLIDER_HANDLE_SIZE -
-      FOOTER_SLIDER_HORIZONTAL_PADDING * 2,
-    0,
-  );
-  const footerSliderFillWidth = Math.min(
-    footerSliderOffset +
-      FOOTER_SLIDER_HANDLE_SIZE +
-      FOOTER_SLIDER_HORIZONTAL_PADDING * 2,
-    footerSliderWidth,
-  );
+    ? { label: "Hecho hoy", tone: "active" as const }
+    : challenge.checkInStatus === "broken"
+    ? { label: "Retomá hoy", tone: "warm" as const }
+    : { label: `Día ${challenge.currentDay} activo`, tone: "active" as const };
+  const footerSliderMaxOffset = Math.max(footerSliderWidth - FOOTER_SLIDER_HANDLE_SIZE - FOOTER_SLIDER_HORIZONTAL_PADDING * 2, 0);
+  const footerSliderFillWidth = Math.min(footerSliderOffset + FOOTER_SLIDER_TRACK_HEIGHT, Math.max(footerSliderWidth - FOOTER_SLIDER_FILL_LEFT, 0));
   const celebrationProgress = useSharedValue(0);
 
   const resetFooterSlider = () => {
@@ -923,23 +706,13 @@ const ChallengeDetailScreen = () => {
       });
     }
 
-    const nextCompletedDays = Array.from(
-      new Set([...completedDays, challenge.currentDay]),
-    );
-    const reachedFinalCheckIn =
-      challenge.currentDay >= challenge.totalDays ||
-      nextCompletedDays.length >= challenge.totalDays;
+    const nextCompletedDays = Array.from(new Set([...completedDays, challenge.currentDay]));
+    const reachedFinalCheckIn = challenge.currentDay >= challenge.totalDays || nextCompletedDays.length >= challenge.totalDays;
     setLocalCompletedDays(nextCompletedDays);
     setLocalStatus("completed");
     setFooterSliderOffset(footerSliderMaxOffset);
-    setCelebrationTitle(
-      reachedFinalCheckIn ? "Challenge completado" : "Día completado",
-    );
-    setCelebrationBody(
-      reachedFinalCheckIn
-        ? "Sostuviste el proceso hasta el final. Tu energía cambió."
-        : "Gracias por volver a vos y sostener tu ritmo hoy.",
-    );
+    setCelebrationTitle(reachedFinalCheckIn ? "Challenge completado" : "Día completado");
+    setCelebrationBody(reachedFinalCheckIn ? "Sostuviste el proceso hasta el final. Tu energía cambió." : "Gracias por volver a vos y sostener tu ritmo hoy.");
     setCelebrationVisible(true);
     if (reachedFinalCheckIn) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -1038,18 +811,14 @@ const ChallengeDetailScreen = () => {
   const footerSliderResponder = useMemo(
     () =>
       PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          challenge.checkInStatus !== "completed" &&
-          !checkInMutation.isPending &&
-          Math.abs(gestureState.dx) > 6,
+        onMoveShouldSetPanResponder: (_, gestureState) => challenge.checkInStatus !== "completed" && !checkInMutation.isPending && Math.abs(gestureState.dx) > 6,
         onPanResponderMove: (_, gestureState) => {
           const next = clamp(gestureState.dx, 0, footerSliderMaxOffset);
           setFooterSliderOffset(next);
         },
         onPanResponderRelease: (_, gestureState) => {
           const next = clamp(gestureState.dx, 0, footerSliderMaxOffset);
-          const shouldComplete =
-            footerSliderMaxOffset > 0 && next >= footerSliderMaxOffset * 0.72;
+          const shouldComplete = footerSliderMaxOffset > 0 && next >= footerSliderMaxOffset * 0.72;
 
           if (shouldComplete) {
             setFooterSliderOffset(footerSliderMaxOffset);
@@ -1073,57 +842,28 @@ const ChallengeDetailScreen = () => {
             <Icon name="checkmark" size={22} color="#FFFFFF" />
           </View>
           <View style={localStyles.footerSliderCopy}>
-            <Text style={localStyles.footerSliderTitle}>
-              {isChallengeCompleted ? "Challenge completado" : "Día completado"}
-            </Text>
-            <Text style={localStyles.footerSliderSubtitle}>
-              {isChallengeCompleted
-                ? "Lo sostuviste hasta el final"
-                : "Gracias por elegirte hoy"}
-            </Text>
+            <Text style={localStyles.footerSliderTitle}>{isChallengeCompleted ? "Challenge completado" : "Día completado"}</Text>
+            <Text style={localStyles.footerSliderSubtitle}>{isChallengeCompleted ? "Lo sostuviste hasta el final" : "Gracias por elegirte hoy"}</Text>
           </View>
         </View>
       );
     }
 
     return (
-      <View
-        style={localStyles.footerSliderWrap}
-        onLayout={(event) =>
-          setFooterSliderWidth(event.nativeEvent.layout.width)
-        }
-      >
+      <View style={localStyles.footerSliderWrap} onLayout={(event) => setFooterSliderWidth(event.nativeEvent.layout.width)}>
         <View style={localStyles.footerSliderTrack}>
-          <View
-            style={[
-              localStyles.footerSliderFill,
-              { width: footerSliderFillWidth || FOOTER_SLIDER_HANDLE_SIZE + FOOTER_SLIDER_HORIZONTAL_PADDING * 2 },
-            ]}
-            pointerEvents="none"
-          />
+          <View style={[localStyles.footerSliderFill, { width: footerSliderFillWidth || FOOTER_SLIDER_TRACK_HEIGHT }]} pointerEvents="none" />
           <View style={localStyles.footerSliderChevrons} pointerEvents="none">
             <Icon name="chevron-forward" size={16} color="#E2A84F" />
             <Icon name="chevron-forward" size={16} color="#E2A84F" />
           </View>
           <View style={localStyles.footerSliderCopy}>
             <Text style={localStyles.footerSliderTitle}>Check-in diario</Text>
-            <Text style={localStyles.footerSliderSubtitle}>
-              Deslizá para completar tu día
-            </Text>
+            <Text style={localStyles.footerSliderSubtitle}>Deslizá para completar tu día</Text>
           </View>
         </View>
-        <View
-          style={[
-            localStyles.footerSliderHandle,
-            { transform: [{ translateX: footerSliderOffset }] },
-          ]}
-          {...footerSliderResponder.panHandlers}
-        >
-          {checkInMutation.isPending ? (
-            <ActivityIndicator color={palette.goldDeep} />
-          ) : (
-            <Icon name="sunny-outline" size={22} color={palette.goldDeep} />
-          )}
+        <View style={[localStyles.footerSliderHandle, { transform: [{ translateX: footerSliderOffset }] }]} {...footerSliderResponder.panHandlers}>
+          {checkInMutation.isPending ? <ActivityIndicator color={palette.goldDeep} /> : <Icon name="sunny-outline" size={22} color={palette.goldDeep} />}
         </View>
       </View>
     );
@@ -1131,12 +871,7 @@ const ChallengeDetailScreen = () => {
 
   return (
     <SafeAreaView style={localStyles.screen} edges={["top", "left", "right"]}>
-      <View
-        style={[
-          localStyles.stickyHeader,
-          { top: Math.max(insets.top + 8, 16), maxWidth: contentMaxWidth, alignSelf: "center" },
-        ]}
-      >
+      <View style={[localStyles.stickyHeader, { top: Math.max(insets.top + 8, 16), maxWidth: contentMaxWidth, alignSelf: "center" }]}>
         <ChallengeHeader
           challenge={challenge}
           onBack={() => navigation.goBack()}
@@ -1158,49 +893,29 @@ const ChallengeDetailScreen = () => {
             width: "100%",
           },
         ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <GrowthIllustration
-          percent={percent}
-          presetId={event?.imagePresetId ?? null}
-        />
+        showsVerticalScrollIndicator={false}>
+        <GrowthIllustration percent={percent} presetId={event?.imagePresetId ?? null} />
         <InfoCardsRow challenge={challenge} percent={percent} />
         <View style={localStyles.visibilityCard}>
           <View style={localStyles.visibilityBadge}>
-            <Icon
-              name={visibilityMeta.icon}
-              size={18}
-              color={palette.goldDeep}
-            />
+            <Icon name={visibilityMeta.icon} size={18} color={palette.goldDeep} />
           </View>
           <View style={localStyles.visibilityCopy}>
             <Text style={localStyles.visibilityTitle}>{visibilityMeta.label}</Text>
-            <Text style={localStyles.visibilitySubtitle}>
-              {visibilityMeta.subtitle}
-            </Text>
+            <Text style={localStyles.visibilitySubtitle}>{visibilityMeta.subtitle}</Text>
           </View>
         </View>
-        <CommunityPulseCard
-          checkedInTodayCount={checkedInTodayCount}
-          participantsCount={challenge.participantsCount}
-        />
+        <CommunityPulseCard checkedInTodayCount={checkedInTodayCount} participantsCount={challenge.participantsCount} />
         {isAdmin && pendingJoinRequests.length > 0 ? (
           <View style={localStyles.requestCard}>
             <View style={localStyles.requestCardHeader}>
               <Text style={localStyles.requestCardTitle}>Solicitudes</Text>
-              <Text style={localStyles.requestCardCount}>
-                {pendingJoinRequests.length}
-              </Text>
+              <Text style={localStyles.requestCardCount}>{pendingJoinRequests.length}</Text>
             </View>
             {pendingJoinRequests.slice(0, 2).map((request) => (
               <View key={request.id} style={localStyles.requestRow}>
                 <View style={localStyles.requestProfile}>
-                  <Avatar
-                    uri={request.requesterAvatar}
-                    size={38}
-                    fallbackBackgroundColor="#E9E4DD"
-                    fallbackIconColor={palette.muted}
-                  />
+                  <Avatar uri={request.requesterAvatar} size={38} fallbackBackgroundColor="#E9E4DD" fallbackIconColor={palette.muted} />
                   <Text style={localStyles.requestName} numberOfLines={1}>
                     {request.requesterName ?? "Participante"}
                   </Text>
@@ -1210,8 +925,7 @@ const ChallengeDetailScreen = () => {
                   disabled={approveJoinRequestMutation.isPending}
                   onPress={() => {
                     void handleApproveJoinRequest(request.id, request.requesterId);
-                  }}
-                >
+                  }}>
                   <Text style={localStyles.requestApproveText}>Aprobar</Text>
                 </TouchableOpacity>
               </View>
@@ -1219,20 +933,9 @@ const ChallengeDetailScreen = () => {
           </View>
         ) : null}
         {challenge.streak >= 3 ? <StreakCelebrationCard streak={challenge.streak} /> : null}
-        <StreakSummaryCard
-          streak={challenge.streak}
-          bestStreak={challenge.bestStreak}
-          daysLeft={daysLeft}
-        />
-        <AdaptiveProgress
-          totalDays={challenge.totalDays}
-          currentDay={challenge.currentDay}
-          completedDays={challenge.completedDays}
-        />
-        <ProgressSummaryCard
-          completedDays={challenge.completedDays}
-          totalDays={challenge.totalDays}
-        />
+        <StreakSummaryCard streak={challenge.streak} bestStreak={challenge.bestStreak} daysLeft={daysLeft} />
+        <AdaptiveProgress totalDays={challenge.totalDays} currentDay={challenge.currentDay} completedDays={challenge.completedDays} />
+        <ProgressSummaryCard completedDays={challenge.completedDays} totalDays={challenge.totalDays} />
       </ScrollView>
 
       <View
@@ -1243,19 +946,12 @@ const ChallengeDetailScreen = () => {
             maxWidth: contentMaxWidth,
             alignSelf: "center",
           },
-        ]}
-      >
+        ]}>
         <View style={localStyles.stickyFooterCard}>
           {isJoined ? (
             <>
               {renderFooterCheckIn()}
-              <ChatEntryRow
-                onPress={() =>
-                  event
-                    ? navigation.navigate("EventChat" as never, { event } as never)
-                    : undefined
-                }
-              />
+              <ChatEntryRow onPress={() => (event ? navigation.navigate("EventChat" as never, { event } as never) : undefined)} />
             </>
           ) : isAdmin ? (
             <>
@@ -1268,66 +964,41 @@ const ChallengeDetailScreen = () => {
                     challengeId: event.id,
                     userId,
                   });
-                }}
-              >
+                }}>
                 {joinChallengeMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <>
-                    <Text style={localStyles.joinRequestButtonTitle}>
-                      Empezar mi challenge
-                    </Text>
-                    <Text style={localStyles.joinRequestButtonSubtitle}>
-                      Activá tu propio espacio y entrá al chat del challenge
-                    </Text>
+                    <Text style={localStyles.joinRequestButtonTitle}>Empezar mi challenge</Text>
+                    <Text style={localStyles.joinRequestButtonSubtitle}>Activá tu propio espacio y entrá al chat del challenge</Text>
                   </>
                 )}
               </TouchableOpacity>
               <View style={localStyles.chatLockedRow}>
                 <Icon name="trophy-outline" size={18} color={palette.muted} />
-                <Text style={localStyles.chatLockedText}>
-                  Cuando lo actives, también aparece tu progreso diario.
-                </Text>
+                <Text style={localStyles.chatLockedText}>Cuando lo actives, también aparece tu progreso diario.</Text>
               </View>
             </>
           ) : (
             <>
               <TouchableOpacity
                 style={localStyles.joinRequestButton}
-                disabled={
-                  joinChallengeMutation.isPending ||
-                  requestChallengeJoinMutation.isPending ||
-                  ownJoinRequest?.status === "pending"
-                }
+                disabled={joinChallengeMutation.isPending || requestChallengeJoinMutation.isPending || ownJoinRequest?.status === "pending"}
                 onPress={() => {
                   void handleJoinOrRequest();
-                }}
-              >
-                {(joinChallengeMutation.isPending ||
-                  requestChallengeJoinMutation.isPending) ? (
+                }}>
+                {joinChallengeMutation.isPending || requestChallengeJoinMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <>
-                    <Text style={localStyles.joinRequestButtonTitle}>
-                      {(event?.visibility ?? "public") === "public"
-                        ? "Sumarme al challenge"
-                        : ownJoinRequest?.status === "pending"
-                          ? "Solicitud enviada"
-                          : "Solicitar acceso"}
-                    </Text>
-                    <Text style={localStyles.joinRequestButtonSubtitle}>
-                      {(event?.visibility ?? "public") === "public"
-                        ? "Entrás directo al espacio compartido"
-                        : "El creador lo puede aprobar cuando quiera"}
-                    </Text>
+                    <Text style={localStyles.joinRequestButtonTitle}>{(event?.visibility ?? "public") === "public" ? "Sumarme al challenge" : ownJoinRequest?.status === "pending" ? "Solicitud enviada" : "Solicitar acceso"}</Text>
+                    <Text style={localStyles.joinRequestButtonSubtitle}>{(event?.visibility ?? "public") === "public" ? "Entrás directo al espacio compartido" : "El creador lo puede aprobar cuando quiera"}</Text>
                   </>
                 )}
               </TouchableOpacity>
               <View style={localStyles.chatLockedRow}>
                 <Icon name="chatbubbles-outline" size={18} color={palette.muted} />
-                <Text style={localStyles.chatLockedText}>
-                  Uníte o pedí acceso para entrar al chat
-                </Text>
+                <Text style={localStyles.chatLockedText}>Uníte o pedí acceso para entrar al chat</Text>
               </View>
             </>
           )}
@@ -1335,27 +1006,12 @@ const ChallengeDetailScreen = () => {
       </View>
 
       {celebrationVisible ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            localStyles.completionCelebration,
-            { top: Math.max(insets.top + 110, 148) },
-            celebrationAnimatedStyle,
-          ]}
-        >
+        <Animated.View pointerEvents="none" style={[localStyles.completionCelebration, { top: Math.max(insets.top + 110, 148) }, celebrationAnimatedStyle]}>
           <View style={localStyles.completionCelebrationBadge}>
-            <Icon
-              name={isChallengeCompleted ? "trophy-outline" : "sparkles-outline"}
-              size={20}
-              color="#FFFFFF"
-            />
+            <Icon name={isChallengeCompleted ? "trophy-outline" : "sparkles-outline"} size={20} color="#FFFFFF" />
           </View>
-          <Text style={localStyles.completionCelebrationTitle}>
-            {celebrationTitle}
-          </Text>
-          <Text style={localStyles.completionCelebrationBody}>
-            {celebrationBody}
-          </Text>
+          <Text style={localStyles.completionCelebrationTitle}>{celebrationTitle}</Text>
+          <Text style={localStyles.completionCelebrationBody}>{celebrationBody}</Text>
         </Animated.View>
       ) : null}
     </SafeAreaView>
@@ -1404,7 +1060,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     shadowColor: palette.goldDeep,
-    shadowOpacity: 0.20,
+    shadowOpacity: 0.2,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
   },
@@ -2020,7 +1676,7 @@ const localStyles = StyleSheet.create({
   },
   footerSliderFill: {
     position: "absolute",
-    left: 0,
+    left: FOOTER_SLIDER_FILL_LEFT,
     top: 0,
     bottom: 0,
     borderRadius: 34,
@@ -2028,7 +1684,7 @@ const localStyles = StyleSheet.create({
   },
   footerSliderHandle: {
     position: "absolute",
-    left: FOOTER_SLIDER_HORIZONTAL_PADDING,
+    left: FOOTER_SLIDER_HORIZONTAL_PADDING + 2,
     top: 13,
     width: FOOTER_SLIDER_HANDLE_SIZE,
     height: FOOTER_SLIDER_HANDLE_SIZE,
@@ -2066,7 +1722,7 @@ const localStyles = StyleSheet.create({
   },
   footerSliderChevrons: {
     position: "absolute",
-    left: 62,
+    left: 70,
     top: 0,
     bottom: 0,
     flexDirection: "row",
