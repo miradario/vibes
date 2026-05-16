@@ -22,8 +22,6 @@ import Icon from "../components/Icon";
 import LoopingVideo from "../components/LoopingVideo";
 import { useI18n } from "../src/i18n";
 
-const ONBOARDING_ONLY_EMAIL = "miradario9999@gmail.com";
-
 const Signup = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
@@ -38,24 +36,6 @@ const Signup = () => {
   const passwordInputRef = useRef<TextInput | null>(null);
 
   const handleSignup = async () => {
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if (normalizedEmail === ONBOARDING_ONLY_EMAIL) {
-      setError(null);
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: "VibesOnboardingFlow" as never,
-              params: { skipAccountCreation: true } as never,
-            },
-          ],
-        }),
-      );
-      return;
-    }
-
     if (!email || !password) {
       setError(t("signup.missingFields"));
       return;
@@ -82,9 +62,6 @@ const Signup = () => {
       setError(msg || t("signup.failed"));
     }
   };
-
-  const isOnboardingOnlyEmail =
-    email.trim().toLowerCase() === ONBOARDING_ONLY_EMAIL;
 
   const handleGoogleSignup = async () => {
     setError(null);
@@ -197,7 +174,7 @@ const Signup = () => {
                 onPress={handleSignup}
                 disabled={
                   !email ||
-                  (!password && !isOnboardingOnlyEmail) ||
+                  !password ||
                   loading ||
                   googleLoading
                 }

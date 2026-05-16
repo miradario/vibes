@@ -60,7 +60,6 @@ import { vibesTheme } from "./src/theme/vibesTheme";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-const DEBUG_ONBOARDING_HOME_TRANSITION = false;
 const navigationRef = React.createRef<any>();
 let hasAppliedGlobalFont = false;
 let isNavigationReady = false;
@@ -80,34 +79,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const DebugVibesHomeTransition = ({ navigation }: { navigation: any }) => {
-  const resetToHome = () => {
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [
-          {
-            name: "Tab",
-            params: { screen: "Home" },
-          },
-        ],
-      }),
-    );
-  };
-
-  return (
-    <>
-      <VibesMinimalOnboarding
-        title="Tu vibe está listo."
-        body="Comencemos este viaje juntos."
-        ctaLabel="Entrar a Vibes"
-        reverseVideoOnContinue
-        onContinue={resetToHome}
-      />
-    </>
-  );
-};
 
 const AppNavigator = () => {
   const { t } = useI18n();
@@ -169,7 +140,7 @@ const AppNavigator = () => {
           }}>
           <PushNotificationsBootstrap navigateToMessages={navigateToMessages} />
           <Stack.Navigator
-            initialRouteName={DEBUG_ONBOARDING_HOME_TRANSITION ? "DebugVibesHomeTransition" : "Startup"}
+            initialRouteName="Startup"
             screenOptions={{
               gestureDirection: "horizontal",
               cardStyleInterpolator: ({ current, layouts }) => ({
@@ -224,11 +195,6 @@ const AppNavigator = () => {
                   },
                 }),
               }}
-            />
-            <Stack.Screen
-              name="DebugVibesHomeTransition"
-              component={DebugVibesHomeTransition}
-              options={{ headerShown: false, animationEnabled: false }}
             />
             <Stack.Screen name="Tab" options={{ headerShown: false, animationEnabled: false }}>
               {() => (

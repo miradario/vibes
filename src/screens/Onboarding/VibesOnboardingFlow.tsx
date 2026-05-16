@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import Icon from "../../../components/Icon";
 import SpiritualPathDetailsModal from "../../../components/SpiritualPathDetailsModal";
 import OnboardingScreenContainer from "../../../components/onboarding/OnboardingScreenContainer";
@@ -78,11 +78,6 @@ const buildProfileAboutMe = (
 
 const VibesOnboardingFlow = () => {
   const navigation = useNavigation();
-  const route = useRoute();
-  const skipAccountCreation = Boolean(
-    (route.params as { skipAccountCreation?: boolean } | undefined)
-      ?.skipAccountCreation,
-  );
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
   const completeMutation = useCompleteOnboardingMutation();
@@ -200,17 +195,6 @@ const VibesOnboardingFlow = () => {
     }
 
     const userId = session?.user?.id;
-    if (skipAccountCreation && !userId) {
-      resetDraft();
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: "Tab" as never }],
-        }),
-      );
-      return;
-    }
-
     if (!userId) {
       Alert.alert("Error", "No se pudo completar el onboarding.");
       return;
