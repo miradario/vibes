@@ -1010,14 +1010,15 @@ const Home = () => {
               <Avatar uri={centerProfile.avatarUri ?? null} size={76} />
             </TouchableOpacity>
             <View style={localStyles.summaryContent}>
-              <Text style={localStyles.cardTitle}>Tu resumen</Text>
               <View style={localStyles.statsRow}>
                 {summaryStats.map((stat, index) => (
                   <View key={stat.label} style={localStyles.statItem}>
                     {index > 0 ? <View style={localStyles.statDivider} /> : null}
-                    <Ionicons name={stat.icon} size={22} color="#DCA453" />
+                    <View style={localStyles.statLead}>
+                      <Ionicons name={stat.icon} size={19} color="#DCA453" />
+                      <Text style={localStyles.statLabel}>{stat.label}</Text>
+                    </View>
                     <Text style={localStyles.statValue}>{stat.value}</Text>
-                    <Text style={localStyles.statLabel}>{stat.label}</Text>
                   </View>
                 ))}
               </View>
@@ -1412,75 +1413,75 @@ const localStyles = StyleSheet.create({
     fontFamily: "CormorantGaramond_500Medium",
   },
   summaryCard: {
-    minHeight: 108,
-    borderRadius: 18,
+    minHeight: 92,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     shadowOpacity: 0.08,
-    shadowRadius: 18,
+    shadowRadius: 14,
     shadowColor: "#3E352B",
-    shadowOffset: { height: 8, width: 0 },
+    shadowOffset: { height: 6, width: 0 },
     flexDirection: "row",
-    padding: 14,
-    gap: 12,
-    marginBottom: 18,
+    padding: 12,
+    gap: 10,
+    marginBottom: 16,
   },
   summaryArt: {
-    width: 78,
-    minHeight: 78,
+    width: 62,
+    minHeight: 62,
     alignItems: "center",
     justifyContent: "center",
   },
   summaryAvatarLarge: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "#E9E4DD",
   },
   summaryContent: {
     flex: 1,
     justifyContent: "center",
   },
-  cardTitle: {
-    color: "#252323",
-    fontSize: 23,
-    lineHeight: 27,
-    fontFamily: "CormorantGaramond_700Bold",
-    marginBottom: 12,
-  },
   statsRow: {
-    flexDirection: "row",
-    alignItems: "stretch",
+    gap: 6,
   },
   statItem: {
-    flex: 1,
-    minHeight: 66,
-    justifyContent: "flex-start",
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     position: "relative",
-    paddingLeft: 8,
+    paddingLeft: 0,
   },
   statDivider: {
     position: "absolute",
     left: 0,
-    top: 23,
-    bottom: 18,
-    width: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.1)",
+    right: 0,
+    top: -3,
+    height: 1,
+    backgroundColor: "rgba(43, 43, 43, 0.08)",
+  },
+  statLead: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    minWidth: 0,
+    gap: 8,
   },
   statValue: {
-    marginTop: 8,
     color: "#4B3728",
-    fontSize: 31,
-    lineHeight: 34,
+    fontSize: 22,
+    lineHeight: 24,
     fontFamily: "CormorantGaramond_600SemiBold",
+    marginLeft: 10,
   },
   statLabel: {
-    marginTop: 4,
     color: "#4D4945",
-    fontSize: 15,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 16,
     fontFamily: "CormorantGaramond_500Medium",
+    flexShrink: 1,
   },
   meditationCard: {
     minHeight: 102,
