@@ -325,33 +325,57 @@ const Events = () => {
                 )
               }
             >
-              <Image
-                source={
-                  typeof item.image === "string" ? { uri: item.image } : item.image
-                }
-                style={localStyles.feedRowThumb}
-              />
-              <View style={localStyles.feedRowContent}>
+              <View style={localStyles.feedRowThumbWrap}>
+                <Image
+                  source={
+                    typeof item.image === "string" ? { uri: item.image } : item.image
+                  }
+                  style={localStyles.feedRowThumb}
+                />
+                {item.type === "challenge" && challengeProgress ? (
+                  <View
+                    style={[
+                      localStyles.feedThumbProgressPill,
+                      challengeProgress.tone === "done"
+                        ? localStyles.progressPillDone
+                        : challengeProgress.tone === "pending"
+                          ? localStyles.progressPillPending
+                          : null,
+                    ]}
+                  >
+                    <Text style={localStyles.feedThumbProgressText}>
+                      {challengeProgress.label}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+              <View
+                style={[
+                  localStyles.feedRowContent,
+                  item.type === "challenge" || item.type === "event"
+                    ? localStyles.feedRowContentChallenge
+                    : null,
+                ]}
+              >
                 <View style={localStyles.feedRowCopy}>
-                  <Text style={localStyles.feedRowTitle} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={localStyles.feedRowMeta} numberOfLines={1}>
-                    {item.date} {"  •  "} {item.attendees}
-                  </Text>
-                  {item.type === "challenge" ? (
-                    <View style={localStyles.visibilityRow}>
+                  <View style={localStyles.feedRowTitleLine}>
+                    {item.type === "challenge" ? (
                       <Icon
                         name={visibilityMeta.icon}
                         size={13}
                         color="#7A746D"
                       />
-                      <Text style={localStyles.visibilityText}>
-                        {visibilityMeta.label}
-                      </Text>
-                    </View>
+                    ) : null}
+                    <Text style={localStyles.feedRowTitle} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                  </View>
+                  {item.type !== "challenge" ? (
+                    <Text style={localStyles.feedRowMeta} numberOfLines={1}>
+                      {item.date} {"  •  "} {item.attendees}
+                    </Text>
                   ) : null}
-                  {item.type === "challenge" ? (
+                  {item.type === "challenge" && checkedInTodayCount > 0 ? (
                     <View style={localStyles.communityTodayRow}>
                       <Icon name="sparkles-outline" size={14} color="#D19443" />
                       <Text style={localStyles.communityTodayText} numberOfLines={1}>
@@ -361,32 +385,35 @@ const Events = () => {
                       </Text>
                     </View>
                   ) : null}
-                  {item.type === "challenge" && challengeProgress ? (
-                    <View
-                      style={[
-                        localStyles.progressPill,
-                        challengeProgress.tone === "done"
-                          ? localStyles.progressPillDone
-                          : challengeProgress.tone === "pending"
-                            ? localStyles.progressPillPending
-                            : null,
-                      ]}
-                    >
-                      <Text style={localStyles.progressPillText}>
-                        {challengeProgress.label}
-                      </Text>
+                  {item.type === "challenge" ? (
+                    <View style={localStyles.feedRowBottom}>
+                      <View style={localStyles.feedParticipantsWrap}>
+                        <ParticipantStack
+                          count={participantCount}
+                          hostImage={item.hostImage}
+                          avatarUrls={item.participantPreviewImages}
+                        />
+                        <Text style={localStyles.feedParticipantsCount}>
+                          ({participantCount})
+                        </Text>
+                      </View>
+                      <View style={localStyles.feedRowArrow}>
+                        <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
+                      </View>
                     </View>
                   ) : null}
-                </View>
-                <View style={localStyles.feedRowRight}>
-                  <ParticipantStack
-                    count={participantCount}
-                    hostImage={item.hostImage}
-                    avatarUrls={item.participantPreviewImages}
-                  />
-                  <View style={localStyles.feedRowArrow}>
-                    <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
-                  </View>
+                  {item.type === "event" ? (
+                    <View style={localStyles.feedRowBottom}>
+                      <ParticipantStack
+                        count={participantCount}
+                        hostImage={item.hostImage}
+                        avatarUrls={item.participantPreviewImages}
+                      />
+                      <View style={localStyles.feedRowArrow}>
+                        <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
+                      </View>
+                    </View>
+                  ) : null}
                 </View>
               </View>
             </TouchableOpacity>
@@ -472,17 +499,33 @@ const localStyles = StyleSheet.create({
     borderRadius: 32,
     backgroundColor: "#F6F6F4",
   },
+  feedRowThumbWrap: {
+    width: 64,
+    height: 64,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
   feedRowContent: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
+  feedRowContentChallenge: {
+    alignItems: "flex-start",
+  },
   feedRowCopy: {
     flex: 1,
     justifyContent: "center",
   },
+  feedRowTitleLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   feedRowTitle: {
+    flex: 1,
     color: "#252323",
     fontSize: 20,
     lineHeight: 24,
@@ -508,16 +551,39 @@ const localStyles = StyleSheet.create({
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.medium,
   },
-  visibilityRow: {
-    marginTop: 6,
+  feedThumbProgressPill: {
+    position: "absolute",
+    top: -6,
+    alignSelf: "center",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: "rgba(174, 191, 209, 0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.9)",
+  },
+  feedThumbProgressText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    lineHeight: 13,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  feedRowBottom: {
+    marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    justifyContent: "space-between",
+    gap: 10,
   },
-  visibilityText: {
+  feedParticipantsWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  feedParticipantsCount: {
     color: "#7A746D",
-    fontSize: 12,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 16,
     fontFamily: vibesTheme.fonts.medium,
   },
   feedRowRight: {

@@ -924,7 +924,16 @@ const Home = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={localStyles.heroHeader}>
-            <View>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Ir a tu perfil"
+              activeOpacity={0.84}
+              onPress={() => navigation.navigate("Aura" as never)}
+              style={localStyles.heroAvatarWrap}
+            >
+              <Avatar uri={centerProfile.avatarUri ?? null} size={42} />
+            </TouchableOpacity>
+            <View style={localStyles.heroCopy}>
               <Text style={localStyles.heroTitle}>Hola, {firstName}</Text>
               <Text style={localStyles.heroSubtitle}>
                 Conéctate contigo antes de conectar con otros.
@@ -1000,15 +1009,6 @@ const Home = () => {
           ) : null}
 
           <View style={localStyles.summaryCard}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Ir a tu perfil"
-              activeOpacity={0.84}
-              onPress={() => navigation.navigate("Aura" as never)}
-              style={localStyles.summaryArt}
-            >
-              <Avatar uri={centerProfile.avatarUri ?? null} size={76} />
-            </TouchableOpacity>
             <View style={localStyles.summaryContent}>
               <View style={localStyles.statsRow}>
                 {summaryStats.map((stat, index) => (
@@ -1152,31 +1152,31 @@ const Home = () => {
                           </Text>
                         </View>
                       ) : null}
-                    </View>
-                    <View style={localStyles.feedListRight}>
-                      <AvatarGroup
-                        style={localStyles.feedAvatarStack}
-                        size={34}
-                        overlap={10}
-                        max={3}
-                        items={Array.from({
-                          length: Math.max(
-                            1,
-                            Math.min(participantCount || previewImages.length || 1, 3),
-                          ),
-                        }).map((_, avatarIndex) => ({
-                          id: `${challenge.id}-avatar-${avatarIndex}`,
-                          uri:
-                            previewImages[avatarIndex] ??
-                            (avatarIndex === 0 &&
-                            typeof challenge.hostImage === "string" &&
-                            challenge.hostImage.trim()
-                              ? challenge.hostImage
-                              : null),
-                        }))}
-                      />
-                      <View style={localStyles.feedArrowWrap}>
-                        <Ionicons name="chevron-forward" size={18} color="#7D7771" />
+                      <View style={localStyles.feedListBottomRow}>
+                        <AvatarGroup
+                          style={localStyles.feedAvatarStack}
+                          size={34}
+                          overlap={10}
+                          max={3}
+                          items={Array.from({
+                            length: Math.max(
+                              1,
+                              Math.min(participantCount || previewImages.length || 1, 3),
+                            ),
+                          }).map((_, avatarIndex) => ({
+                            id: `${challenge.id}-avatar-${avatarIndex}`,
+                            uri:
+                              previewImages[avatarIndex] ??
+                              (avatarIndex === 0 &&
+                              typeof challenge.hostImage === "string" &&
+                              challenge.hostImage.trim()
+                                ? challenge.hostImage
+                                : null),
+                          }))}
+                        />
+                        <View style={localStyles.feedArrowWrap}>
+                          <Ionicons name="chevron-forward" size={18} color="#7D7771" />
+                        </View>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -1281,31 +1281,31 @@ const Home = () => {
                       <Text style={localStyles.feedListMeta} numberOfLines={1}>
                         {event.date} {"  •  "} {event.location ?? "Online"}
                       </Text>
-                    </View>
-                    <View style={localStyles.feedListRight}>
-                      <AvatarGroup
-                        style={localStyles.feedAvatarStack}
-                        size={34}
-                        overlap={10}
-                        max={3}
-                        items={Array.from({
-                          length: Math.max(
-                            1,
-                            Math.min(participantCount || previewImages.length || 1, 3),
-                          ),
-                        }).map((_, avatarIndex) => ({
-                          id: `${event.id}-avatar-${avatarIndex}`,
-                          uri:
-                            previewImages[avatarIndex] ??
-                            (avatarIndex === 0 &&
-                            typeof event.hostImage === "string" &&
-                            event.hostImage.trim()
-                              ? event.hostImage
-                              : null),
-                        }))}
-                      />
-                      <View style={localStyles.feedArrowWrap}>
-                        <Ionicons name="chevron-forward" size={18} color="#7D7771" />
+                      <View style={localStyles.feedListBottomRow}>
+                        <AvatarGroup
+                          style={localStyles.feedAvatarStack}
+                          size={34}
+                          overlap={10}
+                          max={3}
+                          items={Array.from({
+                            length: Math.max(
+                              1,
+                              Math.min(participantCount || previewImages.length || 1, 3),
+                            ),
+                          }).map((_, avatarIndex) => ({
+                            id: `${event.id}-avatar-${avatarIndex}`,
+                            uri:
+                              previewImages[avatarIndex] ??
+                              (avatarIndex === 0 &&
+                              typeof event.hostImage === "string" &&
+                              event.hostImage.trim()
+                                ? event.hostImage
+                                : null),
+                          }))}
+                        />
+                        <View style={localStyles.feedArrowWrap}>
+                          <Ionicons name="chevron-forward" size={18} color="#7D7771" />
+                        </View>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -1314,57 +1314,6 @@ const Home = () => {
             )}
           </View>
 
-          <View style={localStyles.connectionCard}>
-            <View style={localStyles.sectionHeader}>
-              <Text style={localStyles.sectionTitle}>Nueva conexión para ti</Text>
-              <TouchableOpacity
-                style={localStyles.sectionLink}
-                onPress={() => navigation.navigate("Discover" as never)}
-              >
-                <Text style={localStyles.sectionLinkText}>Ver más</Text>
-                <Ionicons name="chevron-forward" size={20} color="#766F68" />
-              </TouchableOpacity>
-            </View>
-            {isLoading ? (
-              <View style={localStyles.inlineLoading}>
-                <ActivityIndicator color="#DCA453" />
-              </View>
-            ) : isError ? (
-              <Text style={localStyles.emptyStateText}>{errorMessage}</Text>
-            ) : suggestedProfile ? (
-              <View style={localStyles.connectionBody}>
-                <Image
-                  source={suggestedProfile.image}
-                  style={localStyles.connectionAvatar}
-                />
-                <View style={localStyles.connectionInfo}>
-                  <Text style={localStyles.connectionName}>
-                    {suggestedProfile.name}
-                  </Text>
-                  <Text style={localStyles.connectionDescription} numberOfLines={2}>
-                    {suggestedProfile.description ||
-                      "Yoga, meditación & conversaciones significativas"}
-                  </Text>
-                  <View style={localStyles.moodRow}>
-                    <Ionicons name="leaf-outline" size={18} color="#AEBFD1" />
-                    <Text style={localStyles.moodText}>
-                      {suggestedProfile.vibe || "Calm & Open"}
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={localStyles.profileButton}
-                  onPress={() => openProfileSheet(suggestedProfile)}
-                >
-                  <Text style={localStyles.profileButtonText}>Ver perfil</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <Text style={localStyles.emptyStateText}>
-                No hay perfiles reales todavía.
-              </Text>
-            )}
-          </View>
         </ScrollView>
       </SafeAreaView>
       <Animated.View
@@ -1397,7 +1346,19 @@ const localStyles = StyleSheet.create({
     paddingBottom: 112,
   },
   heroHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     marginBottom: 26,
+  },
+  heroAvatarWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    overflow: "hidden",
+  },
+  heroCopy: {
+    flex: 1,
   },
   heroTitle: {
     color: "#252323",
@@ -1406,11 +1367,11 @@ const localStyles = StyleSheet.create({
     fontFamily: "CormorantGaramond_700Bold",
   },
   heroSubtitle: {
-    marginTop: 8,
+    marginTop: 4,
     color: "#58534E",
-    fontSize: 23,
-    lineHeight: 30,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.medium,
   },
   summaryCard: {
     minHeight: 92,
@@ -1422,25 +1383,10 @@ const localStyles = StyleSheet.create({
     shadowRadius: 14,
     shadowColor: "#3E352B",
     shadowOffset: { height: 6, width: 0 },
-    flexDirection: "row",
     padding: 12,
-    gap: 10,
     marginBottom: 16,
   },
-  summaryArt: {
-    width: 62,
-    minHeight: 62,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  summaryAvatarLarge: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#E9E4DD",
-  },
   summaryContent: {
-    flex: 1,
     justifyContent: "center",
   },
   statsRow: {
@@ -1793,7 +1739,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12,
     shadowColor: "#2B2B2B",
     shadowOpacity: 0.05,
@@ -1840,16 +1786,17 @@ const localStyles = StyleSheet.create({
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.medium,
   },
-  feedListRight: {
+  feedListBottomRow: {
+    marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     gap: 10,
   },
   feedAvatarStack: {
     flexDirection: "row",
     alignItems: "center",
     minWidth: 56,
-    justifyContent: "flex-end",
   },
   feedAvatar: {
     width: 34,
@@ -1917,70 +1864,6 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.07)",
-  },
-  connectionCard: {
-    borderRadius: 18,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    shadowColor: "#3E352B",
-    shadowOffset: { height: 7, width: 0 },
-    padding: 18,
-  },
-  connectionBody: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  connectionAvatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: "#F3EFE9",
-  },
-  connectionInfo: {
-    flex: 1,
-  },
-  connectionName: {
-    color: "#252323",
-    fontSize: 28,
-    lineHeight: 31,
-    fontFamily: "CormorantGaramond_700Bold",
-  },
-  connectionDescription: {
-    marginTop: 4,
-    color: "#534E49",
-    fontSize: 17,
-    lineHeight: 21,
-    fontFamily: "CormorantGaramond_500Medium",
-  },
-  moodRow: {
-    marginTop: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-  },
-  moodText: {
-    color: "#AEBFD1",
-    fontSize: 17,
-    fontFamily: "CormorantGaramond_600SemiBold",
-  },
-  profileButton: {
-    minWidth: 122,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "#DCA453",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
-  },
-  profileButtonText: {
-    color: "#DCA453",
-    fontSize: 18,
-    fontFamily: "CormorantGaramond_700Bold",
   },
   discoverTop: {
     alignItems: "center",

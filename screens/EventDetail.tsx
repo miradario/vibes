@@ -77,7 +77,7 @@ const getStreakEmoji = (streak: number) => {
 
 const getStreakMessage = (streak: number, totalCheckins: number) => {
   if (streak === 0 && totalCheckins > 0) {
-    return "Tu práctica sigue viva. Volvé hoy con calma y retomá el ritmo.";
+    return "Tu práctica sigue viva. Cada presencia suma a tu proceso.";
   }
   if (streak === 0) return "¡Hacé tu primer check-in!";
   if (streak === 1) return "¡Arrancaste! Mantené la racha";
@@ -116,7 +116,7 @@ const getStreakHeadline = (
   isFinished?: boolean,
 ) => {
   if (isFinished) return "Desafío terminó";
-  if (streak === 0 && totalCheckins > 0) return "Volvé a tu ritmo";
+  if (streak === 0 && totalCheckins > 0) return "Tu práctica sigue viva";
   if (streak === 0) {
     if (startDate && referenceDate && isAfterDay(startDate, referenceDate)) {
       return "Empieza pronto";
@@ -145,7 +145,7 @@ const getParticipantCountFallback = (attendees: unknown) => {
 
 const getCheckInModalMessage = (streak: number, totalCheckins: number) => {
   if (streak === 0 && totalCheckins > 0) {
-    return "Hoy podés retomar tu práctica con suavidad y volver a empezar la racha.";
+    return "Tu práctica sigue viva. Cada vez que volvés, también cuenta.";
   }
   return `Racha actual: ${streak} días · si hacés el check-in de hoy, pasás a ${streak + 1}.`;
 };

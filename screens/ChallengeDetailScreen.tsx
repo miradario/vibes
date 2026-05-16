@@ -206,9 +206,10 @@ type ChallengeHeaderProps = {
   onShare?: () => void;
   statusLabel?: string;
   statusTone?: "active" | "done" | "warm";
+  showSubtitle?: boolean;
 };
 
-export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, statusTone = "active" }: ChallengeHeaderProps) => (
+export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, statusTone = "active", showSubtitle = true }: ChallengeHeaderProps) => (
   <View style={localStyles.header}>
     <TouchableOpacity style={localStyles.iconButton} onPress={onBack}>
       <Icon name="chevron-back" size={23} color={palette.text} />
@@ -216,7 +217,7 @@ export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, 
     <View style={localStyles.headerCopy}>
       <Text style={localStyles.eyebrow}>Desafío</Text>
       <Text style={localStyles.title}>{challenge.title}</Text>
-      <Text style={localStyles.subtitle}>{challenge.subtitle}</Text>
+      {showSubtitle ? <Text style={localStyles.subtitle}>{challenge.subtitle}</Text> : null}
       {statusLabel ? (
         <View style={[localStyles.headerStatusPill, statusTone === "done" ? localStyles.headerStatusPillDone : statusTone === "warm" ? localStyles.headerStatusPillWarm : null]}>
           <Text style={localStyles.headerStatusText}>{statusLabel}</Text>
@@ -879,6 +880,7 @@ const ChallengeDetailScreen = () => {
           }}
           statusLabel={headerStatus.label}
           statusTone={headerStatus.tone}
+          showSubtitle={false}
         />
       </View>
       <ScrollView
@@ -893,6 +895,7 @@ const ChallengeDetailScreen = () => {
           },
         ]}
         showsVerticalScrollIndicator={false}>
+        <Text style={localStyles.contentSubtitle}>{challenge.subtitle}</Text>
         <GrowthIllustration percent={percent} presetId={event?.imagePresetId ?? null} />
         <InfoCardsRow challenge={challenge} percent={percent} />
         <View style={localStyles.visibilityCard}>
@@ -1167,8 +1170,8 @@ const localStyles = StyleSheet.create({
   title: {
     marginTop: 2,
     color: palette.text,
-    fontSize: 36,
-    lineHeight: 39,
+    fontSize: 28,
+    lineHeight: 31,
     fontFamily: "CormorantGaramond_700Bold",
   },
   subtitle: {
@@ -1176,6 +1179,13 @@ const localStyles = StyleSheet.create({
     color: palette.muted,
     fontSize: 19,
     lineHeight: 24,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  contentSubtitle: {
+    marginBottom: 14,
+    color: palette.muted,
+    fontSize: 17,
+    lineHeight: 22,
     fontFamily: "CormorantGaramond_500Medium",
   },
   headerStatusPill: {
