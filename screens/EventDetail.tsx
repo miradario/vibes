@@ -355,6 +355,9 @@ const EventDetail = () => {
   const visibleParticipants = isChallenge
     ? challengeParticipantsMerged
     : eventParticipantsWithAdmin;
+  const connectableParticipants = visibleParticipants.filter(
+    (item) => !userId || item.userId !== userId,
+  );
   const visibleParticipantCount = isChallenge
     ? participantCount
     : eventParticipantCount;
@@ -401,6 +404,13 @@ const EventDetail = () => {
     : null;
   const handleConnectParticipant = () => {
     if (!selectedParticipant || !selectedParticipantCard) return;
+    if (selectedParticipant.userId === userId) {
+      setSelectedParticipant(null);
+      return;
+    }
+    const participantCard = selectedParticipantCard;
+    setSelectedParticipant(null);
+
     swipeMutation.mutate(
       {
         targetUserId: String(selectedParticipant.userId),
@@ -411,10 +421,9 @@ const EventDetail = () => {
           if (response?.match) {
             navigation.navigate(
               "Match" as never,
-              { profile: selectedParticipantCard } as never,
+              { profile: participantCard } as never,
             );
           }
-          setSelectedParticipant(null);
         },
         onError: (error) =>
           handleApiError(error, { toastTitle: "Connect Error" }),
@@ -1961,7 +1970,7 @@ const EventDetail = () => {
               </TouchableOpacity>
             </View>
           <FlatList
-            data={visibleParticipants}
+            data={connectableParticipants}
             keyExtractor={(item) => item.id}
             style={{ maxHeight: 380 }}
             renderItem={({ item }) => (

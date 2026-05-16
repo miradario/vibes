@@ -15,6 +15,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 import styles, {
   BLACK,
   DARK_GRAY,
@@ -29,7 +30,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../src/lib/profilePhotoStorage";
-import { useProfileQuery } from "../src/queries/profile.queries";
+import { profileKeys, useProfileQuery } from "../src/queries/profile.queries";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -211,7 +212,6 @@ type ResolvedLocationMeta = {
 const ensureProfileExists = async (
   userId: string,
   displayName?: string | null,
-  genderId?: number | null,
   intentId?: number | null,
 ) => {
   const resolvedDisplayName =
@@ -223,7 +223,7 @@ const ensureProfileExists = async (
     {
       id: userId,
       display_name: resolvedDisplayName,
-      gender_id: genderId ?? DEFAULT_GENDER_ID,
+      gender_id: DEFAULT_GENDER_ID,
       intent_id: intentId ?? DEFAULT_INTENT_ID,
     },
     { onConflict: "id" },
@@ -389,6 +389,7 @@ const DraggablePhotoSlot = ({
 const EditProfile = () => {
   const { locale, setLocale, t } = useI18n();
   const navigation = useNavigation();
+  const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
   const { data: profileData, refetch } = useProfileQuery(session?.user?.id);
 
@@ -433,6 +434,16 @@ const EditProfile = () => {
     useState<ResolvedLocationMeta | null>(null);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [savingLocation, setSavingLocation] = useState(false);
+
+  const refreshProfileCache = async () => {
+    const userId = session?.user?.id;
+    const refreshed = await refetch();
+
+    if (!userId || refreshed.data === undefined) return;
+
+    queryClient.setQueryData(profileKeys.byUser(userId), refreshed.data);
+    await queryClient.invalidateQueries({ queryKey: profileKeys.all });
+  };
 
   useEffect(() => {
     const name = (profileData as any)?.displayName;
@@ -524,7 +535,7 @@ const EditProfile = () => {
         Alert.alert(t("common.error"), t("editProfile.saveNameError"));
         console.error("saveDisplayName:error", error);
       } else {
-        await refetch();
+        await refreshProfileCache();
       }
     } catch (err) {
       console.error("saveDisplayName:error", err);
@@ -551,7 +562,7 @@ const EditProfile = () => {
         Alert.alert(t("common.error"), t("settings.saveError"));
         console.error("saveLocation:error", error);
       } else {
-        await refetch();
+        await refreshProfileCache();
       }
     } catch (error) {
       console.error("saveLocation:error", error);
@@ -591,7 +602,7 @@ const EditProfile = () => {
         Alert.alert(t("common.error"), t("settings.saveError"));
         console.error("applyCurrentLocation:error", error);
       } else {
-        await refetch();
+        await refreshProfileCache();
       }
     } catch (error) {
       console.error("applyCurrentLocation:error", error);
@@ -664,11 +675,11 @@ const EditProfile = () => {
         if (error) throw error;
       }
 
-      await refetch();
+      await refreshProfileCache();
     } catch (error) {
       console.error("handleReorder:error", error);
       setMediaSlots(previousSlots);
-      await refetch();
+      await refreshProfileCache();
     }
   };
 
@@ -728,27 +739,17 @@ const EditProfile = () => {
     await ensureProfileExists(
       userId,
       profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
-      profileData?.genderId ?? null,
       profileData?.intentId ?? null,
     );
 
-    console.log("uploadPhoto:start", { userId, slotIndex, uri });
     const uriWithoutQuery = uri.split("?")[0];
     const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
-    const ext = rawExt.toLowerCase();
+    const normalizedExt = rawExt.toLowerCase();
+    const ext = EXTENSION_TO_CONTENT_TYPE[normalizedExt] ? normalizedExt : "jpg";
     const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";
     const arrayBuffer = await readUriAsArrayBuffer(uri);
     const uploadBody = new Uint8Array(arrayBuffer).buffer;
-    console.log("uploadPhoto:fetched_bytes", {
-      contentType,
-      byteLength: arrayBuffer.byteLength,
-      isArrayBuffer: isArrayBuffer(uploadBody),
-    });
     const filePath = `${userId}/${Date.now()}-${slotIndex}.${ext}`;
-    console.log("uploadPhoto:uploading", {
-      bucket: PROFILE_PICTURES_BUCKET,
-      filePath,
-    });
 
     const { error: uploadError } = await supabase.storage
       .from(PROFILE_PICTURES_BUCKET)
@@ -762,7 +763,6 @@ const EditProfile = () => {
     }
 
     const signedUrl = await createSignedProfilePhotoUrl(filePath);
-    console.log("uploadPhoto:signed_url", signedUrl);
 
     const nextPhotos = Array.from(
       { length: maxPhotos },
@@ -807,8 +807,7 @@ const EditProfile = () => {
     }
 
     setMediaSlots(nextPhotos);
-    await refetch();
-    console.log("uploadPhoto:success", { slotIndex });
+    await refreshProfileCache();
   };
 
   const pickFromLibrary = async (slotIndex: number) => {
@@ -854,6 +853,7 @@ const EditProfile = () => {
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
+        cameraType: (ImagePicker as any).CameraType?.front ?? "front",
         quality: 0.8,
       });
     } catch (error) {
@@ -887,7 +887,6 @@ const EditProfile = () => {
     await ensureProfileExists(
       userId,
       profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
-      profileData?.genderId ?? null,
       profileData?.intentId ?? null,
     );
 
@@ -906,7 +905,7 @@ const EditProfile = () => {
 
     if (!existingForSlot?.id) {
       setMediaSlots(nextPhotos);
-      await refetch();
+      await refreshProfileCache();
       return;
     }
 
@@ -922,7 +921,7 @@ const EditProfile = () => {
     }
 
     setMediaSlots(nextPhotos);
-    await refetch();
+    await refreshProfileCache();
   };
 
   return (
@@ -974,20 +973,6 @@ const EditProfile = () => {
               />
             ))}
           </View>
-          <TouchableOpacity
-            style={styles.editPrimaryButton}
-            onPress={() => {
-              const firstEmpty = mediaSlots.findIndex((item) => !item);
-              if (firstEmpty === -1) {
-                Alert.alert(t("editProfile.maxPhotosTitle"), t("editProfile.maxPhotosBody"));
-                return;
-              }
-              handleAddMedia(firstEmpty);
-            }}
-            disabled={busyIndex !== null}
-          >
-            <Text style={styles.editPrimaryText}>{t("editProfile.addMedia")}</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.editSection}>

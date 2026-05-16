@@ -187,6 +187,13 @@ const EventChat = () => {
     : null;
   const handleConnectParticipant = () => {
     if (!selectedParticipant || !selectedParticipantCard) return;
+    if (selectedParticipant.userId === userId) {
+      handleCloseParticipant();
+      return;
+    }
+    const participantCard = selectedParticipantCard;
+    handleCloseParticipant();
+
     swipeMutation.mutate(
       {
         targetUserId: String(selectedParticipant.userId),
@@ -197,10 +204,9 @@ const EventChat = () => {
           if (response?.match) {
             navigation.navigate(
               "Match" as never,
-              { profile: selectedParticipantCard } as never,
+              { profile: participantCard } as never,
             );
           }
-          setSelectedParticipant(null);
         },
         onError: (error) =>
           handleApiError(error, { toastTitle: "Connect Error" }),
@@ -329,13 +335,14 @@ const EventChat = () => {
       displayName: string | null;
       avatarUrl: string | null;
     }) => {
+      if (nextParticipant.userId === userId) return;
       setSelectedParticipant(nextParticipant);
       setParticipantSheetVisible(true);
       requestAnimationFrame(() => {
         animateParticipantSheetIn();
       });
     },
-    [animateParticipantSheetIn],
+    [animateParticipantSheetIn, userId],
   );
 
   const handleCloseParticipant = useCallback(() => {
@@ -619,49 +626,51 @@ const EventChat = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={localStyles.eventMetaSection}>
-          <View style={localStyles.eventMetaCard}>
-            <View style={localStyles.eventMetaMain}>
-              <View style={localStyles.eventMetaDateBlock}>
-                <View style={localStyles.eventMetaLine}>
-                  <Icon name="calendar" size={15} color={PRIMARY_COLOR} />
-                  <Text style={localStyles.eventMetaDateText}>
-                    {formatEventChatDate(eventStartsAt)}
-                  </Text>
+        {eventType !== "challenge" ? (
+          <View style={localStyles.eventMetaSection}>
+            <View style={localStyles.eventMetaCard}>
+              <View style={localStyles.eventMetaMain}>
+                <View style={localStyles.eventMetaDateBlock}>
+                  <View style={localStyles.eventMetaLine}>
+                    <Icon name="calendar" size={15} color={PRIMARY_COLOR} />
+                    <Text style={localStyles.eventMetaDateText}>
+                      {formatEventChatDate(eventStartsAt)}
+                    </Text>
+                  </View>
+                  <View style={localStyles.eventMetaLine}>
+                    <Icon name="time" size={15} color={PRIMARY_COLOR} />
+                    <Text style={localStyles.eventMetaTimeText}>
+                      {formatEventChatTime(eventStartsAt)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={localStyles.eventMetaLine}>
-                  <Icon name="time" size={15} color={PRIMARY_COLOR} />
-                  <Text style={localStyles.eventMetaTimeText}>
-                    {formatEventChatTime(eventStartsAt)}
-                  </Text>
-                </View>
+
+                {eventLocation ? (
+                  <TouchableOpacity
+                    style={localStyles.eventMapButton}
+                    onPress={handleOpenMap}
+                    activeOpacity={0.85}
+                  >
+                    <Icon name="location" size={15} color={WHITE} />
+                    <Text style={localStyles.eventMapButtonText}>Ver mapa</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               {eventLocation ? (
-                <TouchableOpacity
-                  style={localStyles.eventMapButton}
-                  onPress={handleOpenMap}
-                  activeOpacity={0.85}
-                >
-                  <Icon name="location" size={15} color={WHITE} />
-                  <Text style={localStyles.eventMapButtonText}>Ver mapa</Text>
-                </TouchableOpacity>
+                <Text style={localStyles.eventLocationText} numberOfLines={2}>
+                  {eventLocation}
+                </Text>
+              ) : null}
+
+              {event?.description ? (
+                <Text style={localStyles.eventDescriptionText} numberOfLines={2}>
+                  {event.description}
+                </Text>
               ) : null}
             </View>
-
-            {eventLocation ? (
-              <Text style={localStyles.eventLocationText} numberOfLines={2}>
-                {eventLocation}
-              </Text>
-            ) : null}
-
-            {event?.description ? (
-              <Text style={localStyles.eventDescriptionText} numberOfLines={2}>
-                {event.description}
-              </Text>
-            ) : null}
           </View>
-        </View>
+        ) : null}
 
         <ScrollView
           ref={scrollRef}
@@ -783,15 +792,6 @@ const EventChat = () => {
                     >
                       {msg.body}
                     </Text>
-                    <Text
-                      style={[
-                        localStyles.messageTime,
-                        isCoach && localStyles.messageTimeCoach,
-                        isMe && { color: "#2B2B2B", opacity: 0.68 },
-                      ]}
-                    >
-                      {formatTime(msg.createdAt)}
-                    </Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -876,7 +876,7 @@ const EventChat = () => {
               </TouchableOpacity>
             </View>
             <FlatList
-              data={participants}
+              data={participants.filter((item) => !userId || item.userId !== userId)}
               keyExtractor={(item) => item.id}
               style={{ maxHeight: 400 }}
               renderItem={({ item }) => {

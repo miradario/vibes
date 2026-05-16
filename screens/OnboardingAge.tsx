@@ -119,7 +119,7 @@ const OnboardingAge = () => {
             onPress={() => {
               if (!birthDate || !isValidAge) return;
               updateDraft({ birthDate: formatDate(birthDate) });
-              navigation.navigate("OnboardingGender" as never);
+              navigation.navigate("OnboardingPhoto" as never);
             }}
           >
             <Text style={styles.onboardNextText}>{t("common.next")}</Text>

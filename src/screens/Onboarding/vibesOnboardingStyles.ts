@@ -2,7 +2,7 @@ import { Dimensions, StyleSheet } from "react-native";
 import { vibesTheme } from "../../theme/vibesTheme";
 
 export const ONBOARDING_COLORS = {
-  background: "#FFFDF8",
+  background: vibesTheme.colors.background,
   surface: "#FFFFFF",
   text: "#2B2B2B",
   muted: "#6E6E6E",
@@ -30,7 +30,7 @@ export const onboardingStyles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flexGrow: 1,
+    flex: 1,
     paddingHorizontal: isCompactOnboardingScreen ? 18 : 24,
     paddingTop: 12,
     paddingBottom: 0,
@@ -38,13 +38,19 @@ export const onboardingStyles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    overflow: "hidden",
+    position: "relative",
     paddingHorizontal: isCompactOnboardingScreen ? 18 : 22,
     paddingTop: 16,
     paddingBottom: 12,
   },
   body: {
     flexGrow: 1,
-    paddingBottom: 18,
+    paddingBottom: 104,
+  },
+  bodyScroll: {
+    flex: 1,
   },
   title: {
     color: ONBOARDING_COLORS.text,
@@ -70,7 +76,13 @@ export const onboardingStyles = StyleSheet.create({
     maxWidth: 280,
   },
   footer: {
-    paddingTop: 8,
+    position: "absolute",
+    left: isCompactOnboardingScreen ? 18 : 22,
+    right: isCompactOnboardingScreen ? 18 : 22,
+    bottom: 12,
+    paddingTop: 10,
+    paddingBottom: 0,
+    backgroundColor: "#FFFFFF",
   },
   primaryButton: {
     minHeight: 56,

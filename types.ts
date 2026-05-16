@@ -13,7 +13,6 @@ export type CardItemT = {
   matches?: string;
   name: string;
   age?: string;
-  gender?: string;
   location?: string;
   distanceLabel?: string;
   vibe?: string;
@@ -79,7 +78,6 @@ export type DataT = {
   avatarUri?: string | null;
   images?: any[];
   age?: string;
-  gender?: string;
   info1?: string;
   info2?: string;
   info3?: string;

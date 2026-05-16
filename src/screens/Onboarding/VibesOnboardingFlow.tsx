@@ -30,7 +30,6 @@ import {
   useOnboardingDraft,
 } from "../../queries/onboarding.queries";
 import {
-  AGE_RANGES,
   ENERGY_OPTIONS,
   PRACTICE_OPTIONS,
   PURPOSE_OPTIONS,
@@ -45,11 +44,15 @@ import {
 } from "./vibesOnboardingStyles";
 import VibesMinimalOnboarding from "./VibesMinimalOnboarding";
 
-const DEFAULT_AGE_RANGE = "25-34";
 const ANIMATION_DURATION = 240;
+const MIN_AGE = 18;
+const MAX_AGE = 99;
 
 const getProgress = (stepIndex: number) =>
   (stepIndex + 1) / VIBES_ONBOARDING_STEPS.length;
+const getOpenAIModel = () =>
+  process.env.EXPO_PUBLIC_OPENAI_MODEL?.trim() || "gpt-4o-mini";
+const getOpenAIAPIKey = () => process.env.EXPO_PUBLIC_OPENAI_API_KEY?.trim();
 
 const buildAboutMe = (purposeIds: string[], energyIds: string[]) => {
   const purposeLabels = PURPOSE_OPTIONS
@@ -67,6 +70,14 @@ const buildAboutMe = (purposeIds: string[], energyIds: string[]) => {
     .join(" ");
 };
 
+const getSelectedLabels = (
+  selectedIds: string[],
+  options: { id: string; label: string }[],
+) =>
+  options
+    .filter((option) => selectedIds.includes(option.id))
+    .map((option) => option.label);
+
 const buildProfileAboutMe = (
   briefDescription: string,
   purposeIds: string[],
@@ -75,6 +86,145 @@ const buildProfileAboutMe = (
   [briefDescription.trim(), buildAboutMe(purposeIds, energyIds)]
     .filter(Boolean)
     .join(" ");
+
+const normalizeAgeInput = (value: string) =>
+  value.replace(/\D/g, "").slice(0, 2);
+
+const getApproximateBirthDateFromAge = (ageValue: string) => {
+  const age = Number.parseInt(ageValue, 10);
+  if (!Number.isFinite(age) || age < MIN_AGE || age > MAX_AGE) return "";
+  const now = new Date();
+  return `${now.getFullYear() - age}-01-01`;
+};
+
+const getOptionLabels = (
+  selectedIds: string[],
+  options: { id: string; label: string }[],
+) =>
+  options
+    .filter((option) => selectedIds.includes(option.id))
+    .map((option) => option.label.toLowerCase());
+
+const formatShortList = (items: string[], maxItems = 2) => {
+  const visibleItems = items.slice(0, maxItems);
+  if (!visibleItems.length) return "";
+  if (visibleItems.length === 1) return visibleItems[0];
+  return `${visibleItems.slice(0, -1).join(", ")} y ${visibleItems[visibleItems.length - 1]}`;
+};
+
+const buildCompletionSummary = ({
+  displayName,
+  purposeIds,
+  energyIds,
+  selectedPractices,
+  briefDescription,
+}: {
+  displayName: string;
+  purposeIds: string[];
+  energyIds: string[];
+  selectedPractices: string[];
+  briefDescription: string;
+}) => {
+  const name = displayName.trim();
+  const purposes = formatShortList(getOptionLabels(purposeIds, PURPOSE_OPTIONS));
+  const energies = formatShortList(getOptionLabels(energyIds, ENERGY_OPTIONS));
+  const practices = formatShortList(
+    selectedPractices
+      .filter((practice) => practice !== "Otras")
+      .map((practice) => practice.toLowerCase()),
+  );
+  const selfDescription = briefDescription.trim();
+  const intro = name ? `${name}, tu vibe combina` : "Tu vibe combina";
+  const parts = [
+    purposes || selfDescription
+      ? `${purposes || selfDescription.toLowerCase()}`
+      : "",
+    energies ? `energía ${energies}` : "",
+    practices ? `prácticas como ${practices}` : "",
+  ].filter(Boolean);
+
+  if (!parts.length) {
+    return `${intro} calma, presencia y apertura.`;
+  }
+
+  return `${intro} ${parts.join(", ")}.`;
+};
+
+const generateCompletionSummaryWithAI = async ({
+  displayName,
+  purposeIds,
+  energyIds,
+  selectedPractices,
+  briefDescription,
+  ageRange,
+}: {
+  displayName: string;
+  purposeIds: string[];
+  energyIds: string[];
+  selectedPractices: string[];
+  briefDescription: string;
+  ageRange: string;
+}) => {
+  const apiKey = getOpenAIAPIKey();
+  if (!apiKey) {
+    throw new Error("Missing OpenAI API key");
+  }
+
+  const purposeLabels = getOptionLabels(purposeIds, PURPOSE_OPTIONS);
+  const energyLabels = getOptionLabels(energyIds, ENERGY_OPTIONS);
+  const practiceLabels = selectedPractices.filter((practice) => practice !== "Otras");
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: getOpenAIModel(),
+      temperature: 0.82,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Escribí sólo el texto final para una app espiritual premium llamada Vibes. Sin comillas, sin markdown, sin emojis.",
+        },
+        {
+          role: "user",
+          content: [
+            "Creá un resumen breve, cálido y emocional de esta persona para cerrar su onboarding.",
+            "Debe sonar humano, minimalista, espiritual y premium.",
+            "Máximo 145 caracteres.",
+            "No digas que fue creado con IA.",
+            displayName.trim() ? `Nombre: ${displayName.trim()}.` : null,
+            ageRange ? `Edad: ${ageRange} años.` : null,
+            briefDescription.trim()
+              ? `Descripción propia: ${briefDescription.trim()}.`
+              : null,
+            purposeLabels.length ? `Viene a Vibes por: ${purposeLabels.join(", ")}.` : null,
+            energyLabels.length ? `Energía actual: ${energyLabels.join(", ")}.` : null,
+            practiceLabels.length ? `Prácticas: ${practiceLabels.join(", ")}.` : null,
+          ]
+            .filter(Boolean)
+            .join(" "),
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI summary failed: ${response.status}`);
+  }
+
+  const data = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string | null } }>;
+  };
+  const summary = data.choices?.[0]?.message?.content?.trim();
+  if (!summary) {
+    throw new Error("OpenAI summary was empty");
+  }
+
+  return summary.replace(/\s+/g, " ");
+};
 
 const VibesOnboardingFlow = () => {
   const navigation = useNavigation();
@@ -89,8 +239,7 @@ const VibesOnboardingFlow = () => {
   const [briefDescription, setBriefDescription] = useState(
     draft.briefDescription ?? "",
   );
-  const [ageRange, setAgeRange] = useState(draft.ageRange ?? DEFAULT_AGE_RANGE);
-  const [ageModalVisible, setAgeModalVisible] = useState(false);
+  const [age, setAge] = useState(draft.age ?? "");
   const [photoUri, setPhotoUri] = useState(draft.primaryPhotoUri ?? "");
   const [selectedPractices, setSelectedPractices] = useState<string[]>(
     draft.spiritualPath ?? [],
@@ -101,9 +250,22 @@ const VibesOnboardingFlow = () => {
   const [activePractice, setActivePractice] = useState<string | null>(null);
   const [customPracticeModalVisible, setCustomPracticeModalVisible] = useState(false);
   const [customPracticeName, setCustomPracticeName] = useState("");
+  const [aiCompletionSummary, setAiCompletionSummary] = useState<string | null>(null);
 
   const step = VIBES_ONBOARDING_STEPS[stepIndex];
   const copy = STEP_COPY[step];
+  const fallbackCompletionSummary = useMemo(
+    () =>
+      buildCompletionSummary({
+        displayName,
+        purposeIds,
+        energyIds,
+        selectedPractices,
+        briefDescription,
+      }),
+    [briefDescription, displayName, energyIds, purposeIds, selectedPractices],
+  );
+  const completionSummary = aiCompletionSummary ?? fallbackCompletionSummary;
 
   useEffect(() => {
     transition.setValue(0);
@@ -114,6 +276,41 @@ const VibesOnboardingFlow = () => {
       useNativeDriver: true,
     }).start();
   }, [stepIndex, transition]);
+
+  useEffect(() => {
+    if (step !== "completion") return undefined;
+
+    let cancelled = false;
+    setAiCompletionSummary(null);
+
+    generateCompletionSummaryWithAI({
+      displayName,
+      purposeIds,
+      energyIds,
+      selectedPractices,
+      briefDescription,
+      ageRange: age,
+    })
+      .then((summary) => {
+        if (!cancelled) setAiCompletionSummary(summary);
+      })
+      .catch(() => {
+        if (!cancelled) setAiCompletionSummary(fallbackCompletionSummary);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    age,
+    briefDescription,
+    displayName,
+    energyIds,
+    fallbackCompletionSummary,
+    purposeIds,
+    selectedPractices,
+    step,
+  ]);
 
   const animatedStyle = {
     opacity: transition,
@@ -130,25 +327,29 @@ const VibesOnboardingFlow = () => {
   const currentDraft = useMemo(
     () => ({
       ...draft,
-      purpose: purposeIds,
-      energy: energyIds,
+      purposeIds,
+      energyIds,
       displayName,
       briefDescription,
-      ageRange,
+      age,
+      ageRange: age,
+      birthDate: getApproximateBirthDateFromAge(age),
       spiritualPath: selectedPractices,
       spiritualPathDetails: practiceDetails,
       aboutMe: buildProfileAboutMe(briefDescription, purposeIds, energyIds),
+      purpose: getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
+      energy: getSelectedLabels(energyIds, ENERGY_OPTIONS),
       otherTags: [
-        ...purposeIds,
-        ...energyIds,
+        ...getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
+        ...getSelectedLabels(energyIds, ENERGY_OPTIONS),
         ...selectedPractices,
-        `age:${ageRange}`,
-      ],
+        age ? `age:${age}` : "",
+      ].filter(Boolean),
       photoUris: photoUri ? [photoUri] : [],
       primaryPhotoUri: photoUri,
     }),
     [
-      ageRange,
+      age,
       briefDescription,
       displayName,
       draft,
@@ -163,7 +364,10 @@ const VibesOnboardingFlow = () => {
   const canContinue =
     (step === "purpose" && purposeIds.length > 0) ||
     (step === "energy" && energyIds.length > 0) ||
-    (step === "profile" && Boolean(displayName.trim())) ||
+    (step === "profile" &&
+      Boolean(displayName.trim()) &&
+      Number.parseInt(age, 10) >= MIN_AGE &&
+      Number.parseInt(age, 10) <= MAX_AGE) ||
     step === "practices" ||
     step === "completion";
 
@@ -191,13 +395,16 @@ const VibesOnboardingFlow = () => {
       setStepIndex((prev) =>
         Math.min(VIBES_ONBOARDING_STEPS.length - 1, prev + 1),
       );
-      return;
+      return true;
     }
 
     const userId = session?.user?.id;
     if (!userId) {
-      Alert.alert("Error", "No se pudo completar el onboarding.");
-      return;
+      Alert.alert(
+        "Sesión requerida",
+        "Tu cuenta fue creada, pero todavía no hay una sesión activa. Iniciá sesión para completar el onboarding.",
+      );
+      return false;
     }
 
     try {
@@ -212,11 +419,13 @@ const VibesOnboardingFlow = () => {
           routes: [{ name: "Tab" as never }],
         }),
       );
+      return true;
     } catch (error) {
       Alert.alert(
         "Error",
         error instanceof Error ? error.message : "No se pudo completar el onboarding.",
       );
+      return false;
     }
   };
 
@@ -378,17 +587,20 @@ const VibesOnboardingFlow = () => {
 
           <View style={onboardingStyles.inputRow}>
             <Icon name="calendar-outline" size={20} color={ONBOARDING_COLORS.mustard} />
-            <Text style={onboardingStyles.ageValue}>Rango de edad</Text>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setAgeModalVisible(true)}
-              style={{ flexDirection: "row", alignItems: "center" }}
-            >
-              <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: 0 }]}>
-                {ageRange}
+            <TextInput
+              style={onboardingStyles.input}
+              placeholder="Edad"
+              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              value={age}
+              onChangeText={(value) => setAge(normalizeAgeInput(value))}
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+            {age ? (
+              <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: 8 }]}>
+                años
               </Text>
-              <Icon name="chevron-down" size={18} color={ONBOARDING_COLORS.text} />
-            </TouchableOpacity>
+            ) : null}
           </View>
         </View>
       </View>
@@ -429,10 +641,10 @@ const VibesOnboardingFlow = () => {
       {step === "completion" ? (
         <VibesMinimalOnboarding
           title={copy.title}
-          body={copy.subtitle}
+          body={completionSummary}
           ctaLabel={copy.button}
           reverseVideoOnContinue
-          onContinue={() => void goNext()}
+          onContinue={goNext}
         />
       ) : (
         <OnboardingScreenContainer
@@ -473,38 +685,6 @@ const VibesOnboardingFlow = () => {
           setActivePractice(null);
         }}
       />
-
-      <Modal
-        visible={ageModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAgeModalVisible(false)}
-      >
-        <TouchableOpacity
-          activeOpacity={1}
-          style={onboardingStyles.modalOverlay}
-          onPress={() => setAgeModalVisible(false)}
-        >
-          <View style={onboardingStyles.modalCard}>
-            {AGE_RANGES.map((range) => (
-              <TouchableOpacity
-                key={range}
-                style={onboardingStyles.modalOption}
-                onPress={() => {
-                  setAgeRange(range);
-                  setAgeModalVisible(false);
-                }}
-                activeOpacity={0.82}
-              >
-                <Text style={onboardingStyles.modalOptionText}>{range}</Text>
-                {ageRange === range ? (
-                  <Icon name="checkmark-circle" size={20} color={ONBOARDING_COLORS.mustard} />
-                ) : null}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
 
       <Modal
         visible={customPracticeModalVisible}

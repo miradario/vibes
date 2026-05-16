@@ -124,6 +124,7 @@ const fetchCandidates = async (
         .from("profile_photos")
         .select("*")
         .in("profile_id", profileIds)
+        .order("is_primary", { ascending: false })
         .order("order", { ascending: true }),
       supabase
         .from("user_preferences")

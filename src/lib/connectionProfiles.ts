@@ -1,6 +1,9 @@
 import type { ImageSourcePropType } from "react-native";
 import type { Candidate } from "../api/modules/candidates/candidates.types";
-import { getGenderLabel } from "../constants/lookups";
+import {
+  ENERGY_OPTIONS,
+  PURPOSE_OPTIONS,
+} from "../screens/Onboarding/vibesOnboardingContent";
 import {
   getSelectedSpiritualPaths,
   normalizeSpiritualPathDetails,
@@ -23,7 +26,6 @@ export type ConnectionProfile = {
   name: string;
   avatarUri?: string | null;
   age?: string;
-  gender?: string;
   image: ImageSourcePropType;
   images: ImageSourcePropType[];
   location?: string;
@@ -181,12 +183,29 @@ const getTaggedValue = (tags: string[], prefixes: string[]) => {
   return match.trim();
 };
 
+const onboardingLabelById = new Map(
+  [...PURPOSE_OPTIONS, ...ENERGY_OPTIONS].map((option) => [option.id, option.label]),
+);
+
+const formatOtherTag = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const ageMatch = trimmed.match(/^age:(\d+)$/i);
+  if (ageMatch?.[1]) return null;
+
+  return onboardingLabelById.get(trimmed) ?? trimmed;
+};
+
 const buildPreferences = (profile: ProfileLike): string[] => {
   const preferences: string[] = [];
   const tags = buildTags(profile);
   const pushPreference = (label: string, value: unknown) => {
     if (Array.isArray(value)) {
-      const cleaned = value.filter(isNonEmptyString).map((item) => item.trim());
+      const cleaned = value
+        .filter(isNonEmptyString)
+        .map((item) => formatOtherTag(item) ?? item.trim())
+        .filter(isNonEmptyString);
       if (cleaned.length > 0) {
         preferences.push(`${label}: ${cleaned.join(", ")}`);
       }
@@ -210,12 +229,13 @@ const buildPreferences = (profile: ProfileLike): string[] => {
     preferences.push("Es guía/teacher");
   }
 
-  pushPreference("Género", profile.gender);
   pushPreference("Camino espiritual", profile.spiritualPath ?? profile.spiritual_path);
+  pushPreference("Energía", profile.energy);
+  pushPreference("Propósito", profile.purpose);
   pushPreference("Vegetarianismo", normalizeVegetarianValue(profile.vegetarian));
   pushPreference("Fuma", profile.smoking);
   pushPreference("Sobre mí", profile.aboutMe ?? profile.about_me);
-  pushPreference("Otros", profile.otherTags ?? profile.other_tags);
+  pushPreference("Intereses", profile.otherTags ?? profile.other_tags);
   pushPreference("Open to", profile.openTo ?? profile.open_to);
   pushPreference("Idiomas", profile.languages);
   pushPreference("Zodiaco", profile.zodiac);
@@ -265,6 +285,15 @@ export const mapCandidateToConnectionProfile = (
   const photos = getPhotoUrls((candidate as ProfileLike).photos);
   const photoSources = photos.map((url) => ({ uri: url }));
   const tags = buildTags(candidate as ProfileLike);
+  const otherTags = Array.isArray((candidate as ProfileLike).otherTags)
+    ? (candidate as ProfileLike).otherTags
+    : (candidate as ProfileLike).other_tags;
+  const onboardingTags = Array.isArray(otherTags)
+    ? otherTags
+        .filter(isNonEmptyString)
+        .map(formatOtherTag)
+        .filter(isNonEmptyString)
+    : [];
   const displayName =
     (isNonEmptyString((candidate as ProfileLike).displayName) &&
       (candidate as ProfileLike).displayName.trim()) ||
@@ -276,14 +305,6 @@ export const mapCandidateToConnectionProfile = (
     toAge((candidate as ProfileLike).age) ??
     toAge((candidate as ProfileLike).birthDate) ??
     toAge((candidate as ProfileLike).birth_date);
-  const gender =
-    getGenderLabel(
-      toFiniteNumber(
-        (candidate as ProfileLike).genderId ??
-          (candidate as ProfileLike).gender_id,
-      ) ?? undefined,
-      "es",
-    ) ?? undefined;
   const vegetarian =
     normalizeVegetarianValue((candidate as ProfileLike).vegetarian) ||
     normalizeVegetarianValue(getTaggedValue(tags, ["vegetarian", "vegetariano"]));
@@ -311,7 +332,6 @@ export const mapCandidateToConnectionProfile = (
     name: displayName,
     avatarUri: photos[0] ?? null,
     age,
-    gender,
     image: photoSources[0] ?? FALLBACK_PROFILE_IMAGE,
     images: photoSources.length > 0 ? photoSources : [FALLBACK_PROFILE_IMAGE],
     location,
@@ -320,6 +340,10 @@ export const mapCandidateToConnectionProfile = (
         ? (candidate as ProfileLike).distanceLabel
         : undefined,
     description:
+      (isNonEmptyString((candidate as ProfileLike).aboutMe) &&
+        (candidate as ProfileLike).aboutMe.trim()) ||
+      (isNonEmptyString((candidate as ProfileLike).about_me) &&
+        (candidate as ProfileLike).about_me.trim()) ||
       (isNonEmptyString((candidate as ProfileLike).bio) &&
         (candidate as ProfileLike).bio.trim()) ||
       (isNonEmptyString((candidate as ProfileLike).about) &&
@@ -341,10 +365,9 @@ export const mapCandidateToConnectionProfile = (
       (isNonEmptyString((candidate as ProfileLike).prompt) &&
         (candidate as ProfileLike).prompt.trim()) ||
       undefined,
-    tags,
+    tags: Array.from(new Set([...onboardingTags, ...tags])).slice(0, 6),
     preferences: buildPreferences({
       ...(candidate as ProfileLike),
-      gender,
       spiritualPath,
       spiritualPathDetails,
     }),

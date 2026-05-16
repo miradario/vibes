@@ -524,7 +524,6 @@ export const GrowthIllustration = memo(({ percent, presetId }: GrowthIllustratio
       ) : (
         <Animated.Image source={treeStageImages[treeStage]} style={[localStyles.growthImage, imageStyle]} resizeMode="contain" />
       )}
-      <Text style={localStyles.growthTitle}>Etapa {stage + 1} de 5</Text>
       <Text style={localStyles.growthSubtitle}>{getGrowthStageCopy(treeStage)}</Text>
     </View>
   );

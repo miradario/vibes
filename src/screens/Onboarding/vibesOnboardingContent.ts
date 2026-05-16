@@ -74,7 +74,6 @@ export const AGE_RANGES = [
 export const PRACTICE_OPTIONS = [
   "Meditación",
   "Yoga",
-  "Breathwork",
   "Art of Living",
   "Mindfulness",
   "Running",

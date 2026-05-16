@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Alert, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { CameraType } from "expo-image-picker";
 import Icon from "../Icon";
 import {
   ONBOARDING_COLORS,
@@ -10,7 +11,6 @@ import {
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
   : ["images"];
-
 type ProfilePhotoPickerProps = {
   uri?: string;
   onChange: (uri: string) => void;
@@ -43,6 +43,7 @@ const pickFromCamera = async () => {
 
   const result = await ImagePicker.launchCameraAsync({
     mediaTypes: IMAGE_MEDIA_TYPE,
+    cameraType: CameraType.front,
     allowsEditing: true,
     aspect: [1, 1],
     quality: 0.82,

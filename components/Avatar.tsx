@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import Icon from "./Icon";
@@ -48,6 +48,17 @@ const Avatar = ({
     const separator = trimmedUri.includes("?") ? "&" : "?";
     return `${trimmedUri}${separator}v=${encodeURIComponent(String(version))}`;
   }, [hasUri, trimmedUri, version]);
+
+  const sourceKey =
+    typeof source === "number"
+      ? `asset:${source}`
+      : sourceUri
+        ? `uri:${sourceUri}`
+        : "";
+
+  useEffect(() => {
+    setHasError(false);
+  }, [resolvedUri, sourceKey]);
 
   const resolvedRadius =
     typeof borderRadius === "number"

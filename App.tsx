@@ -29,7 +29,6 @@ import {
   Settings,
   Configuration,
   PreferenceDetail,
-  OnboardingGender,
   OnboardingOrientation,
   OnboardingInterested,
   OnboardingName,
@@ -274,7 +273,6 @@ const AppNavigator = () => {
             <Stack.Screen name="Faq" component={Faq} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="TermsConditions" component={TermsConditions} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="Session" component={Session} options={{ headerShown: false, animationEnabled: true }} />
-            <Stack.Screen name="OnboardingGender" component={OnboardingGender} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="OnboardingOrientation" component={OnboardingOrientation} options={{ headerShown: false, animationEnabled: true }} />
             <Stack.Screen name="OnboardingInterested" component={OnboardingInterested} options={{ headerShown: false, animationEnabled: true }} />
           </Stack.Navigator>

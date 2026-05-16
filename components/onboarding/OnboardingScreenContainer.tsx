@@ -1,7 +1,5 @@
 import React from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleProp,
   View,
@@ -23,21 +21,21 @@ const OnboardingScreenContainer = ({
 }: OnboardingScreenContainerProps) => (
   <View style={onboardingStyles.screen}>
     <SafeAreaView style={onboardingStyles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={onboardingStyles.keyboard}
-      >
-        <ScrollView
-          contentContainerStyle={[onboardingStyles.content, contentStyle]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+      <View style={onboardingStyles.keyboard}>
+        <View style={[onboardingStyles.content, contentStyle]}>
           <View style={onboardingStyles.card}>
-            <View style={onboardingStyles.body}>{children}</View>
+            <ScrollView
+              style={onboardingStyles.bodyScroll}
+              contentContainerStyle={onboardingStyles.body}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </ScrollView>
             {footer ? <View style={onboardingStyles.footer}>{footer}</View> : null}
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </View>
     </SafeAreaView>
   </View>
 );

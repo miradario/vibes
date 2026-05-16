@@ -44,7 +44,6 @@ const CardItem = ({
   matches,
   name,
   age,
-  gender,
   location,
   distanceLabel,
   vibe,
@@ -103,7 +102,6 @@ const CardItem = ({
   const discoverAgeLabel = age ? `${age} años` : null;
   const discoverBasics = [
     discoverAgeLabel,
-    gender ? `Género: ${gender}` : null,
     location,
   ].filter(Boolean) as string[];
   const discoverPathDetails = normalizeSpiritualPathDetails(spiritualPathDetails);

@@ -49,7 +49,12 @@ const Signup = () => {
     setError(null);
 
     try {
-      await signupMutation.mutateAsync({ email, password });
+      const authResult = await signupMutation.mutateAsync({ email, password });
+      const signupUserId = authResult.session?.user?.id ?? authResult.user?.id;
+      if (!authResult.session?.user?.id) {
+        setError("La cuenta se creó, pero falta iniciar sesión. Revisá tu email o intentá ingresar.");
+        return;
+      }
       navigation.dispatch(
         CommonActions.reset({
           index: 0,

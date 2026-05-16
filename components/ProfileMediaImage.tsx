@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, type ImageStyle, type StyleProp } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import Icon from "./Icon";
@@ -35,6 +35,17 @@ const ProfileMediaImage = ({
     if (hasValidUri(source)) return true;
     return false;
   }, [source]);
+
+  const sourceKey =
+    typeof source === "number"
+      ? `asset:${source}`
+      : hasValidUri(source)
+        ? `uri:${source.uri}`
+        : "";
+
+  useEffect(() => {
+    setHasError(false);
+  }, [sourceKey]);
 
   return (
     <View style={[styles.container, { backgroundColor: fallbackBackgroundColor }, style]}>

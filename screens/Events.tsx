@@ -57,6 +57,9 @@ const getChallengeProgress = (item: EventFeedItem) => {
   return { label: `Día ${diffDays + 1}/${item.durationDays}`, tone: "active" as const };
 };
 
+const isFinishedChallenge = (item: EventFeedItem) =>
+  item.type === "challenge" && getChallengeProgress(item)?.tone === "done";
+
 const getVisibilityMeta = (visibility?: EventFeedItem["visibility"]) => {
   if (visibility === "friends") {
     return { icon: "people-outline" as const, label: "Solo amigos" };
@@ -113,6 +116,7 @@ const Events = () => {
     error,
   } = section === "challenge" ? challengesQuery : eventsQuery;
   const [search, setSearch] = useState("");
+  const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
 
   useEffect(() => {
     setSection(route.params?.section === "challenge" ? "challenge" : "event");
@@ -147,6 +151,21 @@ const Events = () => {
       return haystack.includes(normalizedSearch);
     });
   }, [items, normalizedSearch]);
+
+  const visibleItems = useMemo(() => {
+    if (section !== "challenge") return filteredItems;
+    return filteredItems.filter((item) => !isFinishedChallenge(item));
+  }, [filteredItems, section]);
+
+  const finishedChallengeItems = useMemo(() => {
+    if (section !== "challenge") return [];
+    return filteredItems.filter(isFinishedChallenge);
+  }, [filteredItems, section]);
+
+  const listItems = useMemo(() => {
+    if (section !== "challenge" || !showFinishedChallenges) return visibleItems;
+    return [...visibleItems, ...finishedChallengeItems];
+  }, [finishedChallengeItems, section, showFinishedChallenges, visibleItems]);
 
   return (
     <View style={styles.bg}>
@@ -222,7 +241,7 @@ const Events = () => {
         </View>
 
         <FlatList
-          data={filteredItems}
+          data={listItems}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.eventsListContent}
           showsVerticalScrollIndicator={false}
@@ -239,6 +258,8 @@ const Events = () => {
                       ? section === "challenge"
                         ? "No encontramos desafíos"
                         : "No encontramos eventos"
+                    : section === "challenge" && finishedChallengeItems.length > 0
+                      ? "No hay desafíos vigentes"
                     : section === "challenge"
                       ? "Todavía no hay desafíos reales"
                       : "No real events yet"}
@@ -250,11 +271,38 @@ const Events = () => {
                     ? errorMessage
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
+                    : section === "challenge" && finishedChallengeItems.length > 0
+                      ? "Tus desafíos finalizados están guardados abajo."
                     : section === "challenge"
                       ? "Creá un desafío o conectá una fuente real para poblar esta lista."
                       : "Create an event or connect a real events source to populate this list."}
               </Text>
             </View>
+          }
+          ListFooterComponent={
+            section === "challenge" && finishedChallengeItems.length > 0 ? (
+              <TouchableOpacity
+                style={localStyles.finishedSectionToggle}
+                onPress={() => setShowFinishedChallenges((prev) => !prev)}
+                activeOpacity={0.85}
+              >
+                <View>
+                  <Text style={localStyles.finishedSectionTitle}>
+                    Desafíos finalizados
+                  </Text>
+                  <Text style={localStyles.finishedSectionSubtitle}>
+                    {showFinishedChallenges
+                      ? "Ocultar finalizados"
+                      : `${finishedChallengeItems.length} guardados`}
+                  </Text>
+                </View>
+                <Icon
+                  name={showFinishedChallenges ? "chevron-up" : "chevron-down"}
+                  size={22}
+                  color="#7A746D"
+                />
+              </TouchableOpacity>
+            ) : null
           }
           renderItem={({ item }) => {
             const participantCount = parseParticipantCount(item.attendees);
@@ -516,6 +564,33 @@ const localStyles = StyleSheet.create({
     color: "#5F6E7D",
     fontSize: 13,
     lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  finishedSectionToggle: {
+    minHeight: 72,
+    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    marginTop: 4,
+    marginBottom: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  finishedSectionTitle: {
+    color: "#2B2B2B",
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  finishedSectionSubtitle: {
+    marginTop: 3,
+    color: "#7A746D",
+    fontSize: 14,
+    lineHeight: 18,
     fontFamily: vibesTheme.fonts.medium,
   },
   emptyState: {

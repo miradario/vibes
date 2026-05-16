@@ -33,7 +33,7 @@ type VibesMinimalOnboardingProps = {
   title?: string;
   body?: string;
   ctaLabel?: string;
-  onContinue?: () => void;
+  onContinue?: () => void | boolean | Promise<void | boolean>;
   reverseVideoOnContinue?: boolean;
 };
 
@@ -99,12 +99,13 @@ const VibesMinimalOnboarding = ({
     transform: [{ scale: blurScale.value }],
   }));
 
-  const continueToNext = () => {
+  const continueToNext = async () => {
     if (onContinueProp) {
-      onContinueProp();
-      return;
+      const result = await onContinueProp();
+      return result !== false;
     }
     navigation.navigate("Welcome" as never);
+    return true;
   };
 
   const wait = (ms: number) =>
@@ -139,7 +140,7 @@ const VibesMinimalOnboarding = ({
     await video.setPositionAsync(0);
   };
 
-  const showBlurAndContinue = () => {
+  const showBlur = () => {
     blurOpacity.value = withTiming(1, {
       duration: 360,
       easing: Easing.out(Easing.cubic),
@@ -148,7 +149,17 @@ const VibesMinimalOnboarding = ({
       duration: 360,
       easing: Easing.out(Easing.cubic),
     });
-    setTimeout(continueToNext, 220);
+  };
+
+  const hideBlur = () => {
+    blurOpacity.value = withTiming(0, {
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+    });
+    blurScale.value = withTiming(0.98, {
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+    });
   };
 
   const onContinue = async () => {
@@ -161,12 +172,26 @@ const VibesMinimalOnboarding = ({
     );
 
     if (!reverseVideoOnContinue) {
-      setTimeout(continueToNext, 110);
+      setTimeout(() => {
+        void continueToNext().then((completed) => {
+          if (!completed) isContinuingRef.current = false;
+        });
+      }, 110);
       return;
     }
 
-    setTimeout(showBlurAndContinue, 220);
-    await playVideoBackToStart();
+    try {
+      await playVideoBackToStart();
+      showBlur();
+      const completed = await continueToNext();
+      if (!completed) {
+        hideBlur();
+        isContinuingRef.current = false;
+      }
+    } catch {
+      hideBlur();
+      isContinuingRef.current = false;
+    }
   };
 
   return (

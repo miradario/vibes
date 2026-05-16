@@ -18,7 +18,19 @@ export const signup = async ({ email, password }: LoginInput) => {
   if (error) {
     throw error;
   }
-  return data.session ?? null;
+
+  let session = data.session ?? null;
+  if (!session) {
+    const loginResponse = await authClient.signInWithPassword(email, password);
+    if (!loginResponse.error) {
+      session = loginResponse.data.session ?? null;
+    }
+  }
+
+  return {
+    session,
+    user: data.user ?? data.session?.user ?? null,
+  };
 };
 
 export const loginWithGoogle = async () => authClient.signInWithGoogle();

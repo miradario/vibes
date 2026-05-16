@@ -36,7 +36,6 @@ import {
   mapCandidateToConnectionProfile,
   mapOwnProfileToConnectionProfile,
 } from "../src/lib/connectionProfiles";
-import { getGenderLabel } from "../src/constants/lookups";
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
@@ -58,7 +57,6 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 type DiscoverFiltersState = {
   ageMin: number | null;
   ageMax: number | null;
-  genderId: number | null;
   distanceMinKm: number | null;
   maxDistanceKm: number | null;
   smoking: "all" | "no" | "occasionally" | "yes";
@@ -67,7 +65,6 @@ type DiscoverFiltersState = {
 const DEFAULT_FILTERS: DiscoverFiltersState = {
   ageMin: null,
   ageMax: null,
-  genderId: null,
   distanceMinKm: null,
   maxDistanceKm: null,
   smoking: "all",
@@ -214,7 +211,6 @@ const areFiltersEqual = (
 ) =>
   left.ageMin === right.ageMin &&
   left.ageMax === right.ageMax &&
-  left.genderId === right.genderId &&
   left.distanceMinKm === right.distanceMinKm &&
   left.maxDistanceKm === right.maxDistanceKm &&
   left.smoking === right.smoking;
@@ -225,9 +221,6 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
   ),
   ageMax: toFiniteNumber(
     preferences?.discoverAgeMax ?? preferences?.discover_age_max,
-  ),
-  genderId: toFiniteNumber(
-    preferences?.discoverGenderId ?? preferences?.discover_gender_id,
   ),
   distanceMinKm: toFiniteNumber(
     preferences?.discoverDistanceMinKm ?? preferences?.discover_distance_min_km,
@@ -292,9 +285,6 @@ const Home = () => {
         const candidateAge = parseAge(
           candidateRecord.age ?? candidateRecord.birthDate ?? candidateRecord.birth_date,
         );
-        const candidateGenderId = toFiniteNumber(
-          candidateRecord.genderId ?? candidateRecord.gender_id,
-        );
         const candidateSmoking = normalizeSmoking(candidateRecord.smoking);
 
         if (
@@ -304,12 +294,6 @@ const Home = () => {
             discoverFilters.ageMax,
             { includeNullValue: true },
           )
-        ) {
-          return false;
-        }
-        if (
-          discoverFilters.genderId !== null &&
-          candidateGenderId !== discoverFilters.genderId
         ) {
           return false;
         }
@@ -351,12 +335,15 @@ const Home = () => {
     () =>
       ({
         ...mapOwnProfileToConnectionProfile(
-          ownProfileData,
+          {
+            ...(ownProfileData ?? {}),
+            ...(userPreferences ?? {}),
+          },
           session?.user?.email?.split("@")[0],
         ),
         match: "0",
       } as DataT),
-    [ownProfileData, session?.user?.email],
+    [ownProfileData, session?.user?.email, userPreferences],
   );
   const errorMessage =
     error instanceof Error && error.message.trim()
@@ -551,7 +538,6 @@ const Home = () => {
       void upsertUserPreferences(userId, {
         discover_age_min: discoverFilters.ageMin,
         discover_age_max: discoverFilters.ageMax,
-        discover_gender_id: discoverFilters.genderId,
         discover_distance_min_km: discoverFilters.distanceMinKm,
         discover_distance_max_km: discoverFilters.maxDistanceKm,
         discover_smoking: discoverFilters.smoking,
@@ -776,54 +762,6 @@ const Home = () => {
                         </Text>
                       </View>
                     </View>
-                  </View>
-                </View>
-
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle("Género")}
-                  <View style={localStyles.filtersPillRow}>
-                    <TouchableOpacity
-                      style={[
-                        localStyles.filterPill,
-                        discoverFilters.genderId === null && localStyles.filterPillActive,
-                      ]}
-                      onPress={() =>
-                        setDiscoverFilters((prev) => ({ ...prev, genderId: null }))
-                      }
-                    >
-                      <Text
-                        style={[
-                          localStyles.filterPillText,
-                          discoverFilters.genderId === null &&
-                            localStyles.filterPillTextActive,
-                        ]}
-                      >
-                        Todos
-                      </Text>
-                    </TouchableOpacity>
-                    {[1, 2, 3].map((genderId) => (
-                      <TouchableOpacity
-                        key={genderId}
-                        style={[
-                          localStyles.filterPill,
-                          discoverFilters.genderId === genderId &&
-                            localStyles.filterPillActive,
-                        ]}
-                        onPress={() =>
-                          setDiscoverFilters((prev) => ({ ...prev, genderId }))
-                        }
-                      >
-                        <Text
-                          style={[
-                            localStyles.filterPillText,
-                            discoverFilters.genderId === genderId &&
-                              localStyles.filterPillTextActive,
-                          ]}
-                        >
-                          {getGenderLabel(genderId) ?? `Género ${genderId}`}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
                   </View>
                 </View>
 

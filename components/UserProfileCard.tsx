@@ -9,7 +9,6 @@ export type UserProfileCardData = {
   image: any;
   name: string;
   age?: string;
-  gender?: string;
   location?: string;
   distanceLabel?: string;
   description?: string;
@@ -57,7 +56,6 @@ const UserProfileCard = ({
       image={profile.image}
       name={profile.name}
       age={profile.age}
-      gender={profile.gender}
       location={profile.location}
       distanceLabel={profile.distanceLabel}
       description={profile.description}

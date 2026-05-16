@@ -24,6 +24,45 @@ const normalizeMatchPair = (leftUserId: string, rightUserId: string) =>
     ? { user1Id: leftUserId, user2Id: rightUserId }
     : { user1Id: rightUserId, user2Id: leftUserId };
 
+const DEFAULT_GENDER_ID = 3;
+const DEFAULT_INTENT_ID = 3;
+const SWIPE_TIMEOUT_MS = 12_000;
+
+const withTimeout = async <T,>(promise: PromiseLike<T>, message: string) => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), SWIPE_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([Promise.resolve(promise), timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
+const ensureProfileExists = async (userId: string, fallbackName?: string | null) => {
+  const displayName =
+    typeof fallbackName === "string" && fallbackName.trim().length > 0
+      ? fallbackName.trim()
+      : "Vibes";
+
+  const { error } = await supabase
+    .from("profiles")
+    .upsert(
+      {
+        id: userId,
+        display_name: displayName,
+        gender_id: DEFAULT_GENDER_ID,
+        intent_id: DEFAULT_INTENT_ID,
+      },
+      { onConflict: "id" },
+    );
+
+  if (error) throw new Error(`Perfil: ${error.message}`);
+};
+
 export const useSwipeMutation = () => {
   const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
@@ -32,48 +71,66 @@ export const useSwipeMutation = () => {
     mutationFn: async (payload) => {
       const userId = session?.user?.id;
       if (!userId) throw new Error("Not authenticated");
+      if (payload.targetUserId === userId) {
+        throw new Error("No podés conectar con tu propio perfil.");
+      }
+
       const persistedDirection =
         payload.direction === "pass" ? "nope" : payload.direction;
 
-      console.log("[swipe] userId:", userId, "target:", payload.targetUserId, "dir:", persistedDirection);
+      await ensureProfileExists(userId, session.user.email?.split("@")[0]);
 
-      // 1. Upsert swipe so actions like dismiss/connect are idempotent.
-      const { data: swipe, error: swipeErr } = await supabase
-        .from("swipes")
-        .upsert(
-          {
+      // 1. Persist swipe. Insert first, then update if the pair already exists.
+      let { data: swipe, error: swipeErr } = await withTimeout(
+        supabase
+          .from("swipes")
+          .insert({
             swiper_id: userId,
             target_id: payload.targetUserId,
             direction: persistedDirection,
-          },
-          { onConflict: "swiper_id,target_id" },
-        )
-        .select("id, direction")
-        .single();
+          })
+          .select("id, direction")
+          .single(),
+        "No se pudo conectar. Revisá tu conexión e intentá de nuevo.",
+      );
+
+      if (swipeErr?.code === "23505") {
+        const updateResponse = await withTimeout(
+          supabase
+            .from("swipes")
+            .update({ direction: persistedDirection })
+            .eq("swiper_id", userId)
+            .eq("target_id", payload.targetUserId)
+            .select("id, direction")
+            .single(),
+          "No se pudo actualizar la conexión. Intentá de nuevo.",
+        );
+        swipe = updateResponse.data;
+        swipeErr = updateResponse.error;
+      }
 
       if (swipeErr) {
-        console.log("[swipe] upsert error:", swipeErr.message);
         throw new Error(swipeErr.message);
-      } else {
-        console.log("[swipe] persisted direction:", swipe.direction);
+      }
+      if (!swipe) {
+        throw new Error("No se pudo guardar la conexión.");
       }
 
       const swipeId = swipe.id;
 
-      console.log("[swipe] swipeId:", swipeId);
-
       // 2. If "like", check if the other person also liked us
       if (persistedDirection === "like") {
         const normalizedPair = normalizeMatchPair(userId, payload.targetUserId);
-        const { data: mutual, error: mutualErr } = await supabase
-          .from("swipes")
-          .select("id")
-          .eq("swiper_id", payload.targetUserId)
-          .eq("target_id", userId)
-          .eq("direction", "like")
-          .maybeSingle();
-
-        console.log("[swipe] mutual check:", mutual?.id ?? "none", "error:", mutualErr?.message);
+        const { data: mutual, error: mutualErr } = await withTimeout(
+          supabase
+            .from("swipes")
+            .select("id")
+            .eq("swiper_id", payload.targetUserId)
+            .eq("target_id", userId)
+            .eq("direction", "like")
+            .maybeSingle(),
+          "No se pudo confirmar la conexión. Intentá de nuevo.",
+        );
 
         if (mutualErr) {
           throw new Error(mutualErr.message);
@@ -89,38 +146,35 @@ export const useSwipeMutation = () => {
               .eq("user2_id", normalizedPair.user2Id)
               .maybeSingle();
 
-          const { data: existingMatch, error: existErr } = await findExistingMatch();
-
-          console.log("[swipe] existing match:", existingMatch?.id ?? "none", "error:", existErr?.message);
+          const { data: existingMatch, error: existErr } = await withTimeout(
+            findExistingMatch(),
+            "No se pudo verificar el match. Intentá de nuevo.",
+          );
 
           if (existErr) {
             throw new Error(existErr.message);
           }
 
           if (existingMatch) {
-            console.log("[swipe] → MATCH! existing canonical row found");
             return { match: true, swipeId };
           }
 
-          const { data: createdMatch, error: createMatchErr } = await supabase
-            .from("matches")
-            .insert({
-              user1_id: normalizedPair.user1Id,
-              user2_id: normalizedPair.user2Id,
-            })
-            .select("id")
-            .single();
-
-          console.log("[swipe] created match:", createdMatch?.id ?? "none", "error:", createMatchErr?.message);
+          const { error: createMatchErr } = await withTimeout(
+            supabase
+              .from("matches")
+              .insert({
+                user1_id: normalizedPair.user1Id,
+                user2_id: normalizedPair.user2Id,
+              })
+              .select("id")
+              .single(),
+            "No se pudo crear el match. Intentá de nuevo.",
+          );
 
           if (createMatchErr) {
-            const { data: recoveredMatch, error: recoverErr } = await findExistingMatch();
-
-            console.log(
-              "[swipe] recovered canonical match:",
-              recoveredMatch?.id ?? "none",
-              "error:",
-              recoverErr?.message,
+            const { data: recoveredMatch, error: recoverErr } = await withTimeout(
+              findExistingMatch(),
+              "No se pudo verificar el match. Intentá de nuevo.",
             );
 
             if (recoverErr) {
@@ -128,24 +182,16 @@ export const useSwipeMutation = () => {
             }
 
             if (recoveredMatch) {
-              if (createMatchErr.code === "23505") {
-                console.log("[swipe] → MATCH! duplicate insert resolved via canonical lookup");
-              } else {
-                console.warn("[swipe] match insert recovered after error:", createMatchErr);
-              }
               return { match: true, swipeId };
             }
 
-            console.error("[swipe] match insert failed without persisted row:", createMatchErr);
             throw new Error(createMatchErr.message);
           }
 
-          console.log("[swipe] → MATCH! returning true");
           return { match: true, swipeId };
         }
       }
 
-      console.log("[swipe] → no match, returning false");
       return { match: false, swipeId };
     },
     onMutate: async (payload) => {

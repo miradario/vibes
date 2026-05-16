@@ -18,6 +18,7 @@ const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
       .from("profile_photos")
       .select("*")
       .eq("profile_id", userId)
+      .order("is_primary", { ascending: false })
       .order("order", { ascending: true }),
   ]);
 
@@ -52,7 +53,7 @@ export const profileQueryOptions = (userId?: string) => ({
   queryFn: () => fetchProfile(userId as string),
   enabled: Boolean(userId),
   staleTime: 5 * 60_000,
-  refetchOnMount: false,
-  refetchOnWindowFocus: false,
-  refetchOnReconnect: false,
+  refetchOnMount: "always" as const,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
 });
