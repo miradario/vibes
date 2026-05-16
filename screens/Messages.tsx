@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import Avatar from "../components/Avatar";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
 import UserProfileSheet from "../components/UserProfileSheet";
 import {
@@ -33,6 +34,7 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
+import { useI18n } from "../src/i18n";
 
 type NewConnectionItem =
   | { type: "match"; item: MatchWithProfile }
@@ -41,6 +43,8 @@ type NewConnectionItem =
 type ArchivedChatItem =
   | { kind: "group"; item: EventGroupSummary }
   | { kind: "direct"; item: MatchWithProfile };
+
+type ConnectionsSheet = "incoming" | "new" | null;
 
 const formatTime = (iso: string | null) => {
   if (!iso) return "";
@@ -62,8 +66,6 @@ const formatTime = (iso: string | null) => {
   }
   return d.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
 };
-
-const getFirstName = (name: string) => name.trim().split(" ")[0] || "Vibes";
 
 const getArchiveStorageKey = (userId?: string) =>
   `vibes:archived-chats:${userId ?? "guest"}`;
@@ -90,9 +92,25 @@ const isFinishedChallengeGroup = (group: EventGroupSummary) => {
   return diffDays >= durationDays;
 };
 
+const isFinishedEventGroup = (group: EventGroupSummary) => {
+  if (group.eventType !== "event") return false;
+  const startsAt = group.event?.startsAt;
+  if (!startsAt) return false;
+
+  const eventDate = new Date(startsAt);
+  if (Number.isNaN(eventDate.getTime())) return false;
+
+  const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+  const today = new Date();
+  const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return eventDay.getTime() < currentDay.getTime();
+};
+
 const Messages = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const { data: matches, isLoading } = useMatchesQuery();
@@ -102,6 +120,8 @@ const Messages = () => {
     useMyEventGroupsQuery(userId);
   const [selectedIncomingLike, setSelectedIncomingLike] =
     useState<IncomingLike | null>(null);
+  const [connectionsSheet, setConnectionsSheet] =
+    useState<ConnectionsSheet>(null);
   const [groupsCollapsed, setGroupsCollapsed] = useState(false);
   const [archivedKeys, setArchivedKeys] = useState<string[]>([]);
   const { data: selectedIncomingProfile } = useProfileQuery(
@@ -113,10 +133,15 @@ const Messages = () => {
 
   const withMessages = (matches ?? []).filter((m) => m.lastMessage);
   const newConnections = (matches ?? []).filter((m) => !m.lastMessage);
-  const topConnections: NewConnectionItem[] = [
-    ...newConnections.map((item) => ({ type: "match" as const, item })),
-    ...incomingLikes.map((item) => ({ type: "incoming" as const, item })),
-  ];
+  const topConnections: NewConnectionItem[] = newConnections.map((item) => ({
+    type: "match" as const,
+    item,
+  }));
+  const incomingConnectionRequests: NewConnectionItem[] = incomingLikes.map((item) => ({
+    type: "incoming" as const,
+    item,
+  }));
+  const sectionTitle = (key: string) => t(key).toLocaleUpperCase(locale);
   const selectedIncomingLikeCard = selectedIncomingLike
     ? mapCandidateToConnectionProfile({
         id: selectedIncomingLike.likerUserId,
@@ -175,11 +200,17 @@ const Messages = () => {
   const activeGroups = eventGroups.filter(
     (group) =>
       !isFinishedChallengeGroup(group) &&
+      !isFinishedEventGroup(group) &&
       !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
   );
   const finishedChallengeGroups = eventGroups.filter(
     (group) =>
       isFinishedChallengeGroup(group) &&
+      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
+  );
+  const finishedEventGroups = eventGroups.filter(
+    (group) =>
+      isFinishedEventGroup(group) &&
       !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
   );
   const activeDirectMessages = withMessages.filter(
@@ -270,7 +301,9 @@ const Messages = () => {
     <View style={localStyles.sectionHeader}>
       <View style={localStyles.sectionTitleWrap}>
         <Icon name={icon as any} color={DARK_GRAY} size={19} />
-        <Text style={localStyles.sectionTitle}>{title}</Text>
+        <Text style={localStyles.sectionTitle} numberOfLines={1}>
+          {title}
+        </Text>
         <View style={localStyles.countBadge}>
           <Text style={localStyles.countText}>{count}</Text>
         </View>
@@ -296,37 +329,148 @@ const Messages = () => {
     </View>
   );
 
-  const renderNewConnection = (connection: NewConnectionItem) => {
-    const isMatch = connection.type === "match";
-    const name = isMatch
-      ? connection.item.otherUserName
-      : connection.item.likerUserName;
-    const photo = isMatch
+  const getPreviewPhoto = (connection: NewConnectionItem) =>
+    connection.type === "match"
       ? connection.item.otherUserPhoto
       : connection.item.likerUserPhoto;
 
-    return (
-      <TouchableOpacity
-        key={`${connection.type}-${connection.item.id}`}
-        style={localStyles.newConnectionItem}
-        activeOpacity={0.78}
-        onPress={() =>
-          isMatch
-            ? openMatchChat(connection.item)
-            : setSelectedIncomingLike(connection.item)
-        }
-      >
-        <View style={localStyles.newAvatarFrame}>
-          <Avatar uri={photo} size={62} />
-          {isMatch ? <View style={localStyles.onlineDot} /> : null}
+  const renderConnectionPreview = (
+    items: NewConnectionItem[],
+    blurred: boolean,
+  ) => {
+    const previewItems = items.slice(0, 3);
+
+    if (previewItems.length === 0) {
+      return (
+        <View style={localStyles.connectionPreviewEmpty}>
+          <Icon name="sparkles-outline" color="#D9A95C" size={22} />
         </View>
-        <Text style={localStyles.newName} numberOfLines={1}>
-          {getFirstName(name)}
-        </Text>
-        <Text style={localStyles.newSubtitle}>Nueva conexión</Text>
-      </TouchableOpacity>
+      );
+    }
+
+    return (
+      <View style={localStyles.connectionPreviewRow}>
+        {previewItems.map((item, index) => {
+          const uri = getPreviewPhoto(item);
+
+          return (
+            <View
+              key={`${item.type}-preview-${item.item.id}`}
+              style={[
+                localStyles.connectionPreviewAvatar,
+                index > 0 && localStyles.connectionPreviewAvatarStacked,
+              ]}
+            >
+              {uri ? (
+                <Image
+                  source={{ uri }}
+                  style={localStyles.connectionPreviewImage}
+                  blurRadius={blurred ? 10 : 0}
+                />
+              ) : (
+                <Avatar uri={null} size={38} />
+              )}
+              {blurred ? <View style={localStyles.connectionPreviewOverlay} /> : null}
+            </View>
+          );
+        })}
+      </View>
     );
   };
+
+  const renderConnectionSummaryCard = ({
+    title,
+    count,
+    icon,
+    items,
+    blurred,
+    onPress,
+  }: {
+    title: string;
+    count: number;
+    icon: string;
+    items: NewConnectionItem[];
+    blurred: boolean;
+    onPress: () => void;
+  }) => (
+    <TouchableOpacity
+      style={localStyles.connectionSummaryCard}
+      activeOpacity={0.84}
+      onPress={onPress}
+    >
+      <View style={localStyles.connectionCardHeader}>
+        <View style={localStyles.connectionIconWrap}>
+          <Icon name={icon as any} color="#B98235" size={17} />
+        </View>
+        <View style={localStyles.connectionCountBadge}>
+          <Text style={localStyles.connectionCountText}>{count}</Text>
+        </View>
+      </View>
+      <Text style={localStyles.connectionCardTitle} numberOfLines={2}>
+        {title}
+      </Text>
+      {renderConnectionPreview(items, blurred)}
+      <Text style={localStyles.connectionCardAction}>
+        {t("messages.viewAll")}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const openIncomingProfile = (item: IncomingLike) => {
+    setConnectionsSheet(null);
+    setSelectedIncomingLike(item);
+  };
+
+  const openNewConnectionChat = (item: MatchWithProfile) => {
+    setConnectionsSheet(null);
+    openMatchChat(item);
+  };
+
+  const renderIncomingSheetRow = (item: IncomingLike, index: number) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[
+        localStyles.connectionSheetRow,
+        index > 0 && localStyles.connectionSheetRowWithDivider,
+      ]}
+      activeOpacity={0.82}
+      onPress={() => openIncomingProfile(item)}
+    >
+      <Avatar uri={item.likerUserPhoto} size={48} />
+      <View style={localStyles.connectionSheetBody}>
+        <Text style={localStyles.connectionSheetName} numberOfLines={1}>
+          {item.likerUserName}
+        </Text>
+        <Text style={localStyles.connectionSheetHint} numberOfLines={1}>
+          {t("messages.wantsToConnectHint")}
+        </Text>
+      </View>
+      <Icon name="chevron-forward" color="#7B746C" size={18} />
+    </TouchableOpacity>
+  );
+
+  const renderNewConnectionSheetRow = (item: MatchWithProfile, index: number) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[
+        localStyles.connectionSheetRow,
+        index > 0 && localStyles.connectionSheetRowWithDivider,
+      ]}
+      activeOpacity={0.82}
+      onPress={() => openNewConnectionChat(item)}
+    >
+      <Avatar uri={item.otherUserPhoto} size={48} />
+      <View style={localStyles.connectionSheetBody}>
+        <Text style={localStyles.connectionSheetName} numberOfLines={1}>
+          {item.otherUserName}
+        </Text>
+        <Text style={localStyles.connectionSheetHint} numberOfLines={1}>
+          {t("messages.newConnectionHint")}
+        </Text>
+      </View>
+      <Icon name="chatbubble-ellipses-outline" color="#7B746C" size={18} />
+    </TouchableOpacity>
+  );
 
   const renderGroupRow = (item: EventGroupSummary, index: number, options?: { archived?: boolean }) => {
     const imgSource =
@@ -425,6 +569,14 @@ const Messages = () => {
   );
 
   const loading = isLoading || groupsLoading;
+  const hasConnectionRequests = incomingConnectionRequests.length > 0;
+  const hasConnectedNoChat = topConnections.length > 0;
+  const hasConnectionsSection = hasConnectionRequests || hasConnectedNoChat;
+  const hasDirectMessages = activeDirectMessages.length > 0;
+  const hasActiveGroups = activeGroups.length > 0;
+  const hasFinishedChallenges = finishedChallengeGroups.length > 0;
+  const hasFinishedEvents = finishedEventGroups.length > 0;
+  const hasArchivedChats = archivedChats.length > 0;
 
   return (
     <View style={styles.bg}>
@@ -438,107 +590,162 @@ const Messages = () => {
           },
         ]}
       >
-        {renderSectionHeader(
-          "heart",
-          "NUEVAS CONEXIONES",
-          topConnections.length,
-          "Ver todas",
-        )}
-        {topConnections.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={localStyles.newConnectionsList}
-          >
-            {topConnections.map(renderNewConnection)}
-          </ScrollView>
-        ) : (
-          <Text style={localStyles.sectionEmpty}>No hay conexiones nuevas.</Text>
-        )}
-
-        {renderSectionHeader(
-          "chatbubble-ellipses-outline",
-          "MENSAJES",
-          activeDirectMessages.length,
-          "Ver todos",
-        )}
-        <View style={localStyles.rowsCard}>
-          {loading ? (
-            <View style={localStyles.loadingWrap}>
-              <ActivityIndicator color="#E4B76E" size="small" />
+        {hasConnectionsSection ? (
+          <>
+            <View style={localStyles.connectionsHeader}>
+              <Text style={localStyles.connectionsTitle}>
+                {t("messages.connections")}
+              </Text>
             </View>
-          ) : activeDirectMessages.length > 0 ? (
-            activeDirectMessages.map((item, index) => renderDirectRow(item, index))
-          ) : (
-            <Text style={localStyles.cardEmpty}>No hay mensajes todavía.</Text>
-          )}
-        </View>
-
-        {renderSectionHeader(
-          "people",
-          "GRUPOS",
-          activeGroups.length,
-          groupsCollapsed ? "Mostrar" : "Ocultar",
-          {
-            collapsible: true,
-            collapsed: groupsCollapsed,
-            onPress: () => setGroupsCollapsed((value) => !value),
-          },
-        )}
-        {!groupsCollapsed ? (
-          <View style={localStyles.rowsCard}>
-            {loading ? (
-              <View style={localStyles.loadingWrap}>
-                <ActivityIndicator color="#E4B76E" size="small" />
-              </View>
-            ) : activeGroups.length > 0 ? (
-              activeGroups.map((item, index) => renderGroupRow(item, index))
-            ) : (
-              <Text style={localStyles.cardEmpty}>No hay grupos activos.</Text>
-            )}
-          </View>
+            <View style={localStyles.connectionsGrid}>
+              {hasConnectionRequests
+                ? renderConnectionSummaryCard({
+                    title: t("messages.wantsToConnectWithYou"),
+                    count: incomingConnectionRequests.length,
+                    icon: "heart-circle-outline",
+                    items: incomingConnectionRequests,
+                    blurred: true,
+                    onPress: () => setConnectionsSheet("incoming"),
+                  })
+                : null}
+              {hasConnectedNoChat
+                ? renderConnectionSummaryCard({
+                    title: t("messages.connectedNoChat"),
+                    count: topConnections.length,
+                    icon: "chatbubble-ellipses-outline",
+                    items: topConnections,
+                    blurred: false,
+                    onPress: () => setConnectionsSheet("new"),
+                  })
+                : null}
+            </View>
+          </>
         ) : null}
 
-        {renderSectionHeader(
-          "trophy-outline",
-          "CHALLENGES FINALIZADOS",
-          finishedChallengeGroups.length,
-          "Ver todos",
-        )}
-        <View style={localStyles.rowsCard}>
-          {loading ? (
-            <View style={localStyles.loadingWrap}>
-              <ActivityIndicator color="#E4B76E" size="small" />
+        {hasDirectMessages ? (
+          <>
+            {renderSectionHeader(
+              "chatbubble-ellipses-outline",
+              sectionTitle("messages.messages"),
+              activeDirectMessages.length,
+              "Ver todos",
+            )}
+            <View style={localStyles.rowsCard}>
+              {activeDirectMessages.map((item, index) => renderDirectRow(item, index))}
             </View>
-          ) : finishedChallengeGroups.length > 0 ? (
-            finishedChallengeGroups.map((item, index) => renderGroupRow(item, index))
-          ) : (
-            <Text style={localStyles.cardEmpty}>No hay challenges finalizados.</Text>
-          )}
-        </View>
+          </>
+        ) : null}
 
-        {renderSectionHeader(
-          "archive-outline",
-          "ARCHIVADOS",
-          archivedChats.length,
-          "Ver todos",
-        )}
-        <View style={localStyles.rowsCard}>
-          {loading ? (
-            <View style={localStyles.loadingWrap}>
-              <ActivityIndicator color="#E4B76E" size="small" />
+        {hasActiveGroups ? (
+          <>
+            {renderSectionHeader(
+              "people",
+              "GRUPOS",
+              activeGroups.length,
+              groupsCollapsed ? "Mostrar" : "Ocultar",
+              {
+                collapsible: true,
+                collapsed: groupsCollapsed,
+                onPress: () => setGroupsCollapsed((value) => !value),
+              },
+            )}
+            {!groupsCollapsed ? (
+              <View style={localStyles.rowsCard}>
+                {activeGroups.map((item, index) => renderGroupRow(item, index))}
+              </View>
+            ) : null}
+          </>
+        ) : null}
+
+        {hasFinishedChallenges ? (
+          <>
+            {renderSectionHeader(
+              "trophy-outline",
+              "CHALLENGES FINALIZADOS",
+              finishedChallengeGroups.length,
+              "Ver todos",
+            )}
+            <View style={localStyles.rowsCard}>
+              {finishedChallengeGroups.map((item, index) => renderGroupRow(item, index))}
             </View>
-          ) : archivedChats.length > 0 ? (
-            archivedChats.map((entry, index) =>
-              entry.kind === "group"
-                ? renderGroupRow(entry.item, index, { archived: true })
-                : renderDirectRow(entry.item, index, { archived: true }),
-            )
-          ) : (
-            <Text style={localStyles.cardEmpty}>Todavía no archivaste chats.</Text>
-          )}
-        </View>
+          </>
+        ) : null}
+
+        {hasFinishedEvents ? (
+          <>
+            {renderSectionHeader(
+              "calendar-outline",
+              sectionTitle("messages.finishedEvents"),
+              finishedEventGroups.length,
+              "Ver todos",
+            )}
+            <View style={localStyles.rowsCard}>
+              {finishedEventGroups.map((item, index) => renderGroupRow(item, index))}
+            </View>
+          </>
+        ) : null}
+
+        {hasArchivedChats ? (
+          <>
+            {renderSectionHeader(
+              "archive-outline",
+              "ARCHIVADOS",
+              archivedChats.length,
+              "Ver todos",
+            )}
+            <View style={localStyles.rowsCard}>
+              {archivedChats.map((entry, index) =>
+                entry.kind === "group"
+                  ? renderGroupRow(entry.item, index, { archived: true })
+                  : renderDirectRow(entry.item, index, { archived: true }),
+              )}
+            </View>
+          </>
+        ) : null}
+
+        {loading && !hasConnectionsSection && !hasDirectMessages && !hasActiveGroups ? (
+          <View style={localStyles.loadingWrap}>
+            <ActivityIndicator color="#E4B76E" size="small" />
+          </View>
+        ) : null}
       </ScrollView>
+
+      <AnimatedSheetModal
+        visible={connectionsSheet !== null}
+        onClose={() => setConnectionsSheet(null)}
+        offsetY={360}
+        sheetStyle={[
+          localStyles.connectionsSheet,
+          { paddingBottom: Math.max(insets.bottom + 18, 28) },
+        ]}
+      >
+        <View style={localStyles.connectionsSheetHandle} />
+        <Text style={localStyles.connectionsSheetTitle}>
+          {connectionsSheet === "incoming"
+            ? t("messages.wantsToConnectWithYou")
+            : t("messages.connectedNoChat")}
+        </Text>
+        <ScrollView
+          style={localStyles.connectionsSheetList}
+          showsVerticalScrollIndicator={false}
+        >
+          {connectionsSheet === "incoming" ? (
+            incomingLikes.length > 0 ? (
+              incomingLikes.map(renderIncomingSheetRow)
+            ) : (
+              <Text style={localStyles.connectionSheetEmpty}>
+                {t("messages.noWantsToConnect")}
+              </Text>
+            )
+          ) : newConnections.length > 0 ? (
+            newConnections.map(renderNewConnectionSheetRow)
+          ) : (
+            <Text style={localStyles.connectionSheetEmpty}>
+              {t("messages.noConnectedNoChat")}
+            </Text>
+          )}
+        </ScrollView>
+      </AnimatedSheetModal>
 
       <UserProfileSheet
         visible={Boolean(selectedIncomingLike && selectedIncomingLikeCard)}
@@ -558,17 +765,183 @@ const localStyles = StyleSheet.create({
   content: {
     paddingHorizontal: 18,
   },
+  connectionsHeader: {
+    marginBottom: 10,
+  },
+  connectionsTitle: {
+    color: DARK_GRAY,
+    fontSize: 30,
+    lineHeight: 34,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  connectionsGrid: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 18,
+  },
+  connectionSummaryCard: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 158,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.28)",
+    backgroundColor: "rgba(255, 253, 248, 0.9)",
+    padding: 12,
+    shadowColor: "#8C7B63",
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
+  },
+  connectionCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  connectionIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
+  },
+  connectionCountBadge: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(174, 191, 209, 0.24)",
+  },
+  connectionCountText: {
+    color: DARK_GRAY,
+    fontSize: 15,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  connectionCardTitle: {
+    minHeight: 39,
+    color: DARK_GRAY,
+    fontSize: 18,
+    lineHeight: 19,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  connectionPreviewRow: {
+    height: 46,
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  connectionPreviewAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "rgba(255, 253, 248, 0.96)",
+    backgroundColor: "rgba(228, 183, 110, 0.2)",
+  },
+  connectionPreviewAvatarStacked: {
+    marginLeft: -12,
+  },
+  connectionPreviewImage: {
+    width: "100%",
+    height: "100%",
+  },
+  connectionPreviewOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 248, 236, 0.34)",
+  },
+  connectionPreviewEmpty: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    marginTop: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(228, 183, 110, 0.14)",
+  },
+  connectionCardAction: {
+    marginTop: "auto",
+    color: "#B98235",
+    fontSize: 15,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  connectionsSheet: {
+    maxHeight: "76%",
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    backgroundColor: "#F6F6F4",
+    paddingHorizontal: 18,
+    paddingTop: 12,
+  },
+  connectionsSheetHandle: {
+    alignSelf: "center",
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 16,
+    backgroundColor: "rgba(123, 116, 108, 0.24)",
+  },
+  connectionsSheetTitle: {
+    color: DARK_GRAY,
+    fontSize: 27,
+    lineHeight: 31,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  connectionsSheetList: {
+    marginTop: 12,
+  },
+  connectionSheetRow: {
+    minHeight: 70,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  connectionSheetRowWithDivider: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(123, 116, 108, 0.12)",
+  },
+  connectionSheetBody: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 12,
+    marginRight: 8,
+  },
+  connectionSheetName: {
+    color: DARK_GRAY,
+    fontSize: 19,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  connectionSheetHint: {
+    marginTop: 2,
+    color: "#7B746C",
+    fontSize: 14,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  connectionSheetEmpty: {
+    paddingVertical: 22,
+    color: "#7B746C",
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
   sectionHeader: {
     marginTop: 8,
     marginBottom: 8,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 10,
   },
   sectionTitleWrap: {
     flexDirection: "row",
     alignItems: "center",
     flexShrink: 1,
+    flexGrow: 1,
+    minWidth: 0,
   },
   sectionTitle: {
     marginLeft: 8,
@@ -576,6 +949,8 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0,
     fontFamily: "CormorantGaramond_700Bold",
+    flexShrink: 1,
+    minWidth: 0,
   },
   countBadge: {
     minWidth: 28,
@@ -596,66 +971,12 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingLeft: 10,
+    flexShrink: 0,
   },
   seeAllText: {
     color: "#7B746C",
     fontSize: 14,
     fontFamily: "CormorantGaramond_600SemiBold",
-  },
-  newConnectionsList: {
-    paddingBottom: 14,
-    gap: 12,
-  },
-  newConnectionItem: {
-    width: 86,
-    alignItems: "center",
-  },
-  newAvatarFrame: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    padding: 3,
-    backgroundColor: "rgba(228, 183, 110, 0.26)",
-    borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.42)",
-  },
-  newAvatar: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 31,
-    backgroundColor: "#E4B76E",
-  },
-  onlineDot: {
-    position: "absolute",
-    right: 2,
-    bottom: 7,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#F99A2D",
-    borderWidth: 2,
-    borderColor: BG_MAIN,
-  },
-  newName: {
-    marginTop: 5,
-    color: DARK_GRAY,
-    fontSize: 15,
-    lineHeight: 18,
-    textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
-  },
-  newSubtitle: {
-    marginTop: 1,
-    color: "#5F82A5",
-    fontSize: 12,
-    textAlign: "center",
-    fontFamily: "CormorantGaramond_500Medium",
-  },
-  sectionEmpty: {
-    marginBottom: 14,
-    color: "#7B746C",
-    fontSize: 15,
-    fontFamily: "CormorantGaramond_500Medium",
   },
   rowsCard: {
     marginBottom: 18,
@@ -773,12 +1094,5 @@ const localStyles = StyleSheet.create({
     height: 82,
     alignItems: "center",
     justifyContent: "center",
-  },
-  cardEmpty: {
-    paddingHorizontal: 14,
-    paddingVertical: 16,
-    color: "#7B746C",
-    fontSize: 14,
-    fontFamily: "CormorantGaramond_500Medium",
   },
 });

@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { ResizeMode } from "expo-av";
@@ -15,6 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import LoopingVideo from "../components/LoopingVideo";
 import Avatar from "../components/Avatar";
 import Icon from "../components/Icon";
+import VibesActionButton from "../components/VibesActionButton";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
@@ -25,6 +25,10 @@ const getFirstName = (value?: string | null) =>
 
 const getPrimaryPhotoUri = (profile: any) => {
   if (!profile) return null;
+  if (typeof profile.avatarUri === "string" && profile.avatarUri.trim()) {
+    return profile.avatarUri.trim();
+  }
+
   const image = Array.isArray(profile.images) && profile.images[0]
     ? profile.images[0]
     : profile.image;
@@ -110,6 +114,7 @@ const Match = () => {
             resizeMode={ResizeMode.CONTAIN}
             shouldPlay
             isMuted
+            isLooping={false}
           />
         </View>
 
@@ -131,7 +136,7 @@ const Match = () => {
 
           <View style={localStyles.personBlock}>
             <View style={[localStyles.avatar, localStyles.avatarGold]}>
-              <Avatar uri={profile?.avatarUri ?? ownProfile.avatarUri ?? null} size={76} />
+              <Avatar uri={getPrimaryPhotoUri(profile)} size={76} />
             </View>
             <Text style={localStyles.personName}>{otherName}</Text>
           </View>
@@ -146,31 +151,25 @@ const Match = () => {
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={[
-            localStyles.primaryButton,
-            (!profile || !matchData) && localStyles.primaryButtonDisabled,
-          ]}
-          disabled={!profile || !matchData}
-          onPress={openChat}
-          activeOpacity={0.9}
-        >
-          <Text style={localStyles.primaryButtonText}>Conectar ahora</Text>
-          <Icon name="arrow-forward" size={27} color="#FFFFFF" />
-        </TouchableOpacity>
+        <View style={localStyles.actions}>
+          <VibesActionButton
+            label="Primer mensaje"
+            variant="start"
+            onPress={openChat}
+            disabled={!profile || !matchData}
+          />
 
-        <TouchableOpacity
-          style={localStyles.secondaryButton}
-          onPress={() =>
-            navigation.navigate(
-              "Tab" as never,
-              { screen: "Discover" } as never,
-            )
-          }
-          activeOpacity={0.86}
-        >
-          <Text style={localStyles.secondaryButtonText}>Más tarde</Text>
-        </TouchableOpacity>
+          <VibesActionButton
+            label="Más tarde"
+            variant="skip"
+            onPress={() =>
+              navigation.navigate(
+                "Tab" as never,
+                { screen: "Discover" } as never,
+              )
+            }
+          />
+        </View>
 
         <View style={localStyles.footer}>
           <Text style={localStyles.footerSparkle}>✦</Text>
@@ -352,44 +351,9 @@ const localStyles = StyleSheet.create({
     lineHeight: 25,
     fontFamily: "CormorantGaramond_600SemiBold",
   },
-  primaryButton: {
+  actions: {
     width: "100%",
-    minHeight: 60,
-    borderRadius: 30,
     marginTop: 24,
-    backgroundColor: "#9EBED4",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 52,
-    shadowColor: "#7FA9C3",
-    shadowOpacity: 0.24,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  primaryButtonDisabled: {
-    opacity: 0.55,
-  },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
-  },
-  secondaryButton: {
-    width: "100%",
-    minHeight: 56,
-    borderRadius: 28,
-    marginTop: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(247, 244, 238, 0.36)",
-    borderWidth: 1,
-    borderColor: "rgba(123, 113, 96, 0.24)",
-  },
-  secondaryButtonText: {
-    color: "#47423C",
-    fontSize: 24,
-    fontFamily: "CormorantGaramond_700Bold",
   },
   footer: {
     marginTop: 24,

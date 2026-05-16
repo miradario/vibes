@@ -1737,6 +1737,9 @@ export default StyleSheet.create({
   chatHeaderCenter: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
+    flexShrink: 1,
+    minWidth: 0,
   },
   chatAvatarWrap: {
     width: 32,
@@ -1750,6 +1753,7 @@ export default StyleSheet.create({
   chatName: {
     color: DARK_GRAY,
     fontSize: 16,
+    flexShrink: 1,
   },
   chatBody: {
     flex: 1,

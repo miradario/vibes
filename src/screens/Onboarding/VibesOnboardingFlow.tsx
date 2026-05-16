@@ -640,7 +640,7 @@ const VibesOnboardingFlow = () => {
     <>
       {step === "completion" ? (
         <VibesMinimalOnboarding
-          title={copy.title}
+          title=""
           body={completionSummary}
           ctaLabel={copy.button}
           reverseVideoOnContinue

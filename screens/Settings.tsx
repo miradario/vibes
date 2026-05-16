@@ -38,8 +38,38 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { showToast } from "../src/utils/toast";
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
+const GENDER_OPTIONS = [
+  "Mujer",
+  "Hombre",
+  "No binario",
+  "Otro",
+  "Prefiero no decir",
+];
+const LOOKING_FOR_OPTIONS = [
+  "Amistad",
+  "Conversaciones profundas",
+  "Eventos",
+  "Relación consciente",
+  "Comunidad",
+];
+const LANGUAGE_OPTIONS = [
+  "Español",
+  "Inglés",
+  "Portugués",
+  "Italiano",
+  "Francés",
+];
+
+const normalizeTextArray = (value: unknown) =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+
+const normalizeHeightInput = (value: string) =>
+  value.replace(/\D/g, "").slice(0, 3);
 
 const Settings = () => {
   const { locale, setLocale, t } = useI18n();
@@ -58,6 +88,10 @@ const Settings = () => {
   const [currentLocation, setCurrentLocation] = useState("");
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [aboutMe, setAboutMe] = useState("");
+  const [gender, setGender] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [lookingFor, setLookingFor] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<string[]>([]);
   const [smoking, setSmoking] = useState<"Sí" | "No">("No");
   const [otherOptions, setOtherOptions] = useState<string[]>(
     OTHER_DEFAULT_OPTIONS,
@@ -93,6 +127,23 @@ const Settings = () => {
     }
     if (typeof prefs.aboutMe === "string") {
       setAboutMe(prefs.aboutMe);
+    }
+    if (typeof (prefs.gender ?? prefs.genderLabel) === "string") {
+      setGender((prefs.gender ?? prefs.genderLabel) as string);
+    }
+    const nextHeight = prefs.heightCm ?? prefs.height_cm;
+    if (typeof nextHeight === "number" || typeof nextHeight === "string") {
+      setHeightCm(normalizeHeightInput(String(nextHeight)));
+    }
+    const nextLookingFor = normalizeTextArray(
+      prefs.lookingFor ?? prefs.looking_for ?? prefs.openTo ?? prefs.open_to,
+    );
+    if (nextLookingFor.length) {
+      setLookingFor(nextLookingFor);
+    }
+    const nextLanguages = normalizeTextArray(prefs.languages);
+    if (nextLanguages.length) {
+      setLanguages(nextLanguages);
     }
     if (Array.isArray(prefs.otherTags) && prefs.otherTags.length) {
       setSelectedOtherTags(prefs.otherTags);
@@ -148,6 +199,8 @@ const Settings = () => {
     () => new Set(selectedOtherTags),
     [selectedOtherTags],
   );
+  const selectedLookingFor = useMemo(() => new Set(lookingFor), [lookingFor]);
+  const selectedLanguages = useMemo(() => new Set(languages), [languages]);
 
   const openSpiritualPathEditor = (item: string) => {
     setSpiritualPath((prev) => (prev.includes(item) ? prev : [...prev, item]));
@@ -176,6 +229,18 @@ const Settings = () => {
 
   const toggleOther = (item: string) => {
     setSelectedOtherTags((prev) =>
+      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item],
+    );
+  };
+
+  const toggleLookingFor = (item: string) => {
+    setLookingFor((prev) =>
+      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item],
+    );
+  };
+
+  const toggleLanguage = (item: string) => {
+    setLanguages((prev) =>
       prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item],
     );
   };
@@ -210,6 +275,11 @@ const Settings = () => {
         vegetarian,
         location: location.trim(),
         about_me: aboutMe,
+        gender,
+        height_cm: heightCm ? Number.parseInt(heightCm, 10) : null,
+        looking_for: lookingFor,
+        open_to: lookingFor,
+        languages,
         smoking,
         other_tags: selectedOtherTags,
       });
@@ -376,6 +446,61 @@ const Settings = () => {
           />
         </View>
 
+        <View style={localStyles.preferencePanel}>
+          <View style={localStyles.sectionHeader}>
+            <Icon name="person-circle-outline" size={18} color={TEXT_SECONDARY} />
+            <Text style={localStyles.sectionTitle}>{t("settings.identity")}</Text>
+            <View style={localStyles.line} />
+          </View>
+
+          <Text style={localStyles.fieldLabel}>{t("settings.gender")}</Text>
+          <View style={localStyles.chipWrap}>
+            {GENDER_OPTIONS.map((item) =>
+              renderChip(item, gender === item, () => setGender(gender === item ? "" : item)),
+            )}
+          </View>
+
+          <Text style={localStyles.fieldLabel}>{t("settings.height")}</Text>
+          <View style={localStyles.heightRow}>
+            <TextInput
+              style={localStyles.heightInput}
+              value={heightCm}
+              onChangeText={(value) => setHeightCm(normalizeHeightInput(value))}
+              placeholder={t("settings.heightPlaceholder")}
+              placeholderTextColor={GRAY}
+              keyboardType="number-pad"
+              maxLength={3}
+            />
+            <Text style={localStyles.heightUnit}>cm</Text>
+          </View>
+        </View>
+
+        <View style={localStyles.preferencePanel}>
+          <View style={localStyles.sectionHeader}>
+            <Icon name="sparkles-outline" size={18} color={TEXT_SECONDARY} />
+            <Text style={localStyles.sectionTitle}>{t("settings.lookingFor")}</Text>
+            <View style={localStyles.line} />
+          </View>
+          <View style={localStyles.chipWrap}>
+            {LOOKING_FOR_OPTIONS.map((item) =>
+              renderChip(item, selectedLookingFor.has(item), () => toggleLookingFor(item)),
+            )}
+          </View>
+        </View>
+
+        <View style={localStyles.preferencePanel}>
+          <View style={localStyles.sectionHeader}>
+            <Icon name="language-outline" size={18} color={TEXT_SECONDARY} />
+            <Text style={localStyles.sectionTitle}>{t("settings.languages")}</Text>
+            <View style={localStyles.line} />
+          </View>
+          <View style={localStyles.chipWrap}>
+            {LANGUAGE_OPTIONS.map((item) =>
+              renderChip(item, selectedLanguages.has(item), () => toggleLanguage(item)),
+            )}
+          </View>
+        </View>
+
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>
             <Icon name="bonfire-outline" size={18} color={TEXT_SECONDARY} />
@@ -501,6 +626,20 @@ const localStyles = StyleSheet.create({
   section: {
     marginTop: 18,
   },
+  preferencePanel: {
+    marginTop: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.24)",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    shadowColor: "#8C7B63",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
+  },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -510,7 +649,7 @@ const localStyles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontWeight: "600",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   line: {
     flex: 1,
@@ -522,6 +661,16 @@ const localStyles = StyleSheet.create({
     color: GRAY,
     fontSize: 14,
     marginBottom: 10,
+    fontFamily: vibesTheme.fonts.primary,
+  },
+  fieldLabel: {
+    marginTop: 12,
+    marginBottom: 8,
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   chipWrap: {
     flexDirection: "row",
@@ -550,12 +699,12 @@ const localStyles = StyleSheet.create({
   },
   chipText: {
     color: DARK_GRAY,
-    fontWeight: "500",
     fontSize: 16,
+    fontFamily: vibesTheme.fonts.medium,
   },
   chipTextActive: {
     color: WHITE,
-    fontWeight: "700",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   detailList: {
     marginTop: 12,
@@ -572,12 +721,13 @@ const localStyles = StyleSheet.create({
   detailItemTitle: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontWeight: "700",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   detailItemSubtitle: {
     color: TEXT_SECONDARY,
     fontSize: 13,
     marginTop: 4,
+    fontFamily: vibesTheme.fonts.primary,
   },
   aboutInput: {
     backgroundColor: WHITE,
@@ -588,6 +738,8 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
     color: DARK_GRAY,
     minHeight: 120,
+    fontSize: 16,
+    fontFamily: vibesTheme.fonts.primary,
   },
   textInput: {
     backgroundColor: WHITE,
@@ -598,6 +750,30 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
     color: DARK_GRAY,
     minHeight: 52,
+    fontSize: 16,
+    fontFamily: vibesTheme.fonts.primary,
+  },
+  heightRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#AEBFD1",
+    backgroundColor: WHITE,
+    paddingHorizontal: 14,
+    minHeight: 54,
+  },
+  heightInput: {
+    flex: 1,
+    color: DARK_GRAY,
+    fontSize: 18,
+    fontFamily: vibesTheme.fonts.medium,
+    paddingVertical: 12,
+  },
+  heightUnit: {
+    color: TEXT_SECONDARY,
+    fontSize: 16,
+    fontFamily: vibesTheme.fonts.medium,
   },
   currentLocationCard: {
     backgroundColor: "#FBF8F4",
@@ -611,15 +787,15 @@ const localStyles = StyleSheet.create({
   currentLocationLabel: {
     color: TEXT_SECONDARY,
     fontSize: 12,
-    fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.5,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   currentLocationValue: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontWeight: "600",
     marginTop: 4,
+    fontFamily: vibesTheme.fonts.medium,
   },
   currentLocationButton: {
     alignSelf: "flex-start",
@@ -634,7 +810,7 @@ const localStyles = StyleSheet.create({
   currentLocationButtonText: {
     color: PRIMARY_COLOR,
     fontSize: 14,
-    fontWeight: "700",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   addRow: {
     marginTop: 10,
@@ -651,6 +827,8 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     color: DARK_GRAY,
+    fontSize: 16,
+    fontFamily: vibesTheme.fonts.primary,
   },
   addButton: {
     paddingHorizontal: 12,
@@ -666,7 +844,7 @@ const localStyles = StyleSheet.create({
   },
   addButtonText: {
     color: DARK_GRAY,
-    fontWeight: "600",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   saveButtonFixedWrap: {
     position: "absolute",
@@ -696,7 +874,7 @@ const localStyles = StyleSheet.create({
   saveButtonText: {
     color: WHITE,
     fontSize: 20,
-    fontWeight: "600",
+    fontFamily: vibesTheme.fonts.semibold,
   },
 });
 

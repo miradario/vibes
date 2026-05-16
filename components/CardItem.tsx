@@ -116,9 +116,16 @@ const CardItem = ({
   }
   // Agregar campos individuales si existen
   const addIf = (label: string, value: any) => {
+    if (Array.isArray(value) && value.length) {
+      extraPrefs.push(`${label}: ${value.filter(Boolean).join(", ")}`);
+      return;
+    }
     if (value && typeof value === 'string' && value.trim()) extraPrefs.push(`${label}: ${value}`);
   };
   addIf('Sobre mí', (spiritualPathDetails && spiritualPathDetails.about_me) || description);
+  addIf('Género', spiritualPathDetails?.gender);
+  addIf('Estatura', spiritualPathDetails?.height_cm ? `${spiritualPathDetails.height_cm} cm` : "");
+  addIf('Busca', spiritualPathDetails?.looking_for);
   addIf('Abierto a', spiritualPathDetails?.open_to);
   addIf('Idiomas', spiritualPathDetails?.languages);
   addIf('Signo', spiritualPathDetails?.zodiac);

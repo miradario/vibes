@@ -277,8 +277,8 @@ const Chat = () => {
   return (
     <KeyboardAvoidingView
       style={styles.bg}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={0}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(insets.top, 12) : 0}
     >
       {/* Header */}
       <View style={styles.chatHeader}>
@@ -419,64 +419,71 @@ const Chat = () => {
           </Pressable>
       </AnimatedSheetModal>
 
-      {/* Messages */}
-      {isLoading ? (
-        <View style={localStyles.loadingWrap}>
-          <ActivityIndicator color="#E4B76E" size="large" />
-        </View>
-      ) : (
-        <FlatList
-          ref={flatListRef}
-          data={messages ?? []}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={localStyles.messageList}
-          ListHeaderComponent={
-            <Text style={styles.chatMatchedText}>
-              Conectaste con {otherUserName || "esta persona"}
-              {matchDate
-                ? ` el ${new Date(matchDate).toLocaleDateString()}`
-                : ""}
-              .
-            </Text>
-          }
-          ListEmptyComponent={
-            <View style={localStyles.emptyWrap}>
-              <Text style={localStyles.emptyText}>
-                Saludá a {otherUserName || "tu conexión"}.
+      <View style={localStyles.chatBody}>
+        {/* Messages */}
+        {isLoading ? (
+          <View style={localStyles.loadingWrap}>
+            <ActivityIndicator color="#E4B76E" size="large" />
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages ?? []}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+            contentContainerStyle={[
+              localStyles.messageList,
+              { paddingBottom: Math.max(insets.bottom + 28, 44) },
+            ]}
+            ListHeaderComponent={
+              <Text style={styles.chatMatchedText}>
+                Conectaste con {otherUserName || "esta persona"}
+                {matchDate
+                  ? ` el ${new Date(matchDate).toLocaleDateString()}`
+                  : ""}
+                .
               </Text>
-            </View>
-          }
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: false })
-          }
-        />
-      )}
+            }
+            ListEmptyComponent={
+              <View style={localStyles.emptyWrap}>
+                <Text style={localStyles.emptyText}>
+                  Saludá a {otherUserName || "tu conexión"}.
+                </Text>
+              </View>
+            }
+            onContentSizeChange={() =>
+              flatListRef.current?.scrollToEnd({ animated: false })
+            }
+          />
+        )}
 
-      {/* Input */}
-      <View
-        style={[
-          styles.chatInputBar,
-          {
-            paddingBottom: Math.max(insets.bottom + 12, 20),
-          },
-        ]}
-      >
-        <TextInput
-          style={localStyles.input}
-          placeholder="Escribí un mensaje..."
-          placeholderTextColor="#999"
-          value={text}
-          onChangeText={setText}
-          multiline
-          maxLength={2000}
-          returnKeyType="default"
-        />
-        <TouchableOpacity onPress={handleSend} disabled={!text.trim()}>
-          <Text style={[styles.chatSend, !text.trim() && { opacity: 0.4 }]}>
-            ENVIAR
-          </Text>
-        </TouchableOpacity>
+        {/* Input */}
+        <View
+          style={[
+            styles.chatInputBar,
+            {
+              paddingBottom: Math.max(insets.bottom + 12, 20),
+            },
+          ]}
+        >
+          <TextInput
+            style={localStyles.input}
+            placeholder="Escribí un mensaje..."
+            placeholderTextColor="#999"
+            value={text}
+            onChangeText={setText}
+            multiline
+            maxLength={2000}
+            returnKeyType="default"
+          />
+          <TouchableOpacity onPress={handleSend} disabled={!text.trim()}>
+            <Text style={[styles.chatSend, !text.trim() && { opacity: 0.4 }]}>
+              ENVIAR
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -485,10 +492,12 @@ const Chat = () => {
 export default Chat;
 
 const localStyles = StyleSheet.create({
+  chatBody: {
+    flex: 1,
+  },
   messageList: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 20,
     flexGrow: 1,
   },
   incomingMessageRow: {

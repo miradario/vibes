@@ -47,6 +47,7 @@ const VibesMinimalOnboarding = ({
   const navigation = useNavigation();
   const { height } = useWindowDimensions();
   const illustrationHeight = Math.max(300, height * 0.5);
+  const hasTitle = Boolean(title.trim());
   const videoRef = useRef<Video>(null);
   const durationRef = useRef(0);
   const positionRef = useRef(0);
@@ -251,8 +252,10 @@ const VibesMinimalOnboarding = ({
       </Animated.View>
 
       <Animated.View style={[styles.textBlock, titleStyle]}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.body}>{body}</Text>
+        {hasTitle ? <Text style={styles.title}>{title}</Text> : null}
+        <Text style={[styles.body, !hasTitle && styles.bodyWithoutTitle]}>
+          {body}
+        </Text>
       </Animated.View>
 
       <AnimatedPressable
@@ -320,6 +323,9 @@ const styles = StyleSheet.create({
     color: vibesTheme.colors.secondaryText,
     fontFamily: "CormorantGaramond_500Medium",
     maxWidth: 380,
+  },
+  bodyWithoutTitle: {
+    marginTop: 0,
   },
   ctaButton: {
     marginTop: "auto",
