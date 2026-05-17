@@ -7,6 +7,7 @@ import {
   ONBOARDING_COLORS,
   onboardingStyles,
 } from "../../src/screens/Onboarding/vibesOnboardingStyles";
+import { useI18n } from "../../src/i18n";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -16,10 +17,13 @@ type ProfilePhotoPickerProps = {
   onChange: (uri: string) => void;
 };
 
-const pickFromGallery = async () => {
+const pickFromGallery = async (t: (key: string) => string) => {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== "granted") {
-    Alert.alert("Permiso requerido", "Permití acceso a tus fotos para continuar.");
+    Alert.alert(
+      t("onboarding.photoPermissionGalleryTitle"),
+      t("onboarding.photoPermissionGalleryMessage"),
+    );
     return null;
   }
 
@@ -34,10 +38,13 @@ const pickFromGallery = async () => {
   return result.assets[0].uri;
 };
 
-const pickFromCamera = async () => {
+const pickFromCamera = async (t: (key: string) => string) => {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== "granted") {
-    Alert.alert("Permiso requerido", "Permití acceso a tu cámara para continuar.");
+    Alert.alert(
+      t("onboarding.photoPermissionGalleryTitle"),
+      t("onboarding.photoPermissionCameraMessage"),
+    );
     return null;
   }
 
@@ -54,11 +61,13 @@ const pickFromCamera = async () => {
 };
 
 const ProfilePhotoPicker = ({ uri, onChange }: ProfilePhotoPickerProps) => {
+  const { t } = useI18n();
   const [modalVisible, setModalVisible] = useState(false);
 
   const choosePhoto = async (source: "camera" | "gallery") => {
     setModalVisible(false);
-    const nextUri = source === "camera" ? await pickFromCamera() : await pickFromGallery();
+    const nextUri =
+      source === "camera" ? await pickFromCamera(t) : await pickFromGallery(t);
     if (nextUri) onChange(nextUri);
   };
 
@@ -94,13 +103,13 @@ const ProfilePhotoPicker = ({ uri, onChange }: ProfilePhotoPickerProps) => {
         >
           <View style={styles.sheet}>
             <TouchableOpacity style={styles.row} onPress={() => void choosePhoto("camera")}>
-              <Text style={styles.rowText}>Usar cámara</Text>
+              <Text style={styles.rowText}>{t("onboarding.camera")}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.row} onPress={() => void choosePhoto("gallery")}>
-              <Text style={styles.rowText}>Elegir de galería</Text>
+              <Text style={styles.rowText}>{t("onboarding.gallery")}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancel} onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelText}>Cancelar</Text>
+              <Text style={styles.cancelText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

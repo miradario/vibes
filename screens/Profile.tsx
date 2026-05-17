@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Icon } from "../components";
+import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import {
@@ -19,6 +20,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useI18n } from "../src/i18n";
+import VibesLoader from "../components/VibesLoader";
 
 const Profile = () => {
   const { t } = useI18n();
@@ -91,7 +93,11 @@ const Profile = () => {
         style={styles.containerProfile}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.auraScreenTitle}>{t("profile.title")}</Text>
+        <AppHeader
+          title={t("profile.title")}
+          style={{ paddingHorizontal: 0, marginBottom: 8 }}
+          titleStyle={styles.auraScreenTitle}
+        />
 
         <View style={styles.auraProfileCard}>
           <View style={styles.auraProfileAvatarWrap}>
@@ -140,7 +146,11 @@ const Profile = () => {
             <Text style={styles.auraMenuLabel}>
               {isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
             </Text>
-            <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+            {isLoggingOut ? (
+              <VibesLoader size={28} />
+            ) : (
+              <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+            )}
           </TouchableOpacity>
         </View>
 

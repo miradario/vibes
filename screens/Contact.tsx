@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import styles, { DARK_GRAY, GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
-import VibesHeader from "../src/components/VibesHeader";
+import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
 
 const Contact = () => {
@@ -33,7 +33,11 @@ const Contact = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.settingsContainer}>
-        <VibesHeader title={t("contact.title")} subtitle={t("contact.subtitle")} />
+        <AppHeader
+          title={t("contact.title")}
+          subtitle={t("contact.subtitle")}
+          style={localStyles.header}
+        />
 
 
 
@@ -65,6 +69,10 @@ const Contact = () => {
 };
 
 const localStyles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 0,
+    marginBottom: 14,
+  },
   hero: {
     width: 160,
     height: 160,

@@ -2,7 +2,6 @@
 
 import React from "react";
 import {
-  ActivityIndicator,
   StyleProp,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import VibesLoader from "./VibesLoader";
 
 type GoogleAuthButtonProps = {
   label: string;
@@ -39,7 +39,7 @@ const GoogleAuthButton = ({
     >
       <View style={styles.iconWrap}>
         {loading ? (
-          <ActivityIndicator size="small" color={vibesTheme.colors.primaryText} />
+          <VibesLoader size={26} />
         ) : (
           <GoogleIcon />
         )}

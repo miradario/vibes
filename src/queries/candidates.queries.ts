@@ -50,7 +50,7 @@ const fetchCandidates = async (
   currentUserId?: string,
   params?: GetCandidatesParams,
 ): Promise<GetCandidatesResponse> => {
-  const limit = params?.limit ?? 20;
+  const limit = params?.limit ?? 200;
   let currentUserCoordinates:
     | { latitude: number; longitude: number }
     | null = null;
@@ -172,7 +172,7 @@ const fetchCandidates = async (
     }
   }
 
-  return Promise.all(profiles.map(async (profile) => {
+  const candidates = await Promise.all(profiles.map(async (profile) => {
     const id = String(profile.id);
     const tablePhotos = photosByProfileId.get(id) ?? [];
 
@@ -234,6 +234,23 @@ const fetchCandidates = async (
       photos: mergedPhotos,
     } as unknown as Candidate;
   }));
+
+  return candidates.sort((left, right) => {
+    const leftDistance = typeof (left as any).distanceKm === "number"
+      ? (left as any).distanceKm
+      : Number.POSITIVE_INFINITY;
+    const rightDistance = typeof (right as any).distanceKm === "number"
+      ? (right as any).distanceKm
+      : Number.POSITIVE_INFINITY;
+
+    if (leftDistance !== rightDistance) {
+      return leftDistance - rightDistance;
+    }
+
+    const leftCreatedAt = new Date((left as any).createdAt ?? (left as any).created_at ?? 0).getTime();
+    const rightCreatedAt = new Date((right as any).createdAt ?? (right as any).created_at ?? 0).getTime();
+    return rightCreatedAt - leftCreatedAt;
+  });
 };
 
 export const useCandidatesQuery = (params?: GetCandidatesParams) => {

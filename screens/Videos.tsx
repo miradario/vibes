@@ -8,6 +8,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import VideoPlayer from "../components/VideoPlayer";
 
 const VIDEOS = [
@@ -27,12 +28,16 @@ const Videos = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.containerMeditations}>
-        <View style={styles.top}>
-          <Text style={styles.title}>Videos</Text>
-          <TouchableOpacity>
-            <Icon name="ellipsis-vertical" color={DARK_GRAY} size={20} />
-          </TouchableOpacity>
-        </View>
+        <AppHeader
+          title="Videos"
+          style={styles.top}
+          titleStyle={styles.title}
+          right={
+            <TouchableOpacity>
+              <Icon name="ellipsis-vertical" color={DARK_GRAY} size={20} />
+            </TouchableOpacity>
+          }
+        />
 
         <FlatList
           data={VIDEOS}

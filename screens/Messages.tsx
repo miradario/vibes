@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -14,6 +13,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
+import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
@@ -35,6 +35,7 @@ import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
+import VibesLoader from "../components/VibesLoader";
 
 type NewConnectionItem =
   | { type: "match"; item: MatchWithProfile }
@@ -590,6 +591,11 @@ const Messages = () => {
           },
         ]}
       >
+        <AppHeader
+          title={t("messages.messages")}
+          style={localStyles.appHeader}
+          titleStyle={localStyles.appHeaderTitle}
+        />
         {hasConnectionsSection ? (
           <>
             <View style={localStyles.connectionsHeader}>
@@ -705,7 +711,7 @@ const Messages = () => {
 
         {loading && !hasConnectionsSection && !hasDirectMessages && !hasActiveGroups ? (
           <View style={localStyles.loadingWrap}>
-            <ActivityIndicator color="#E4B76E" size="small" />
+            <VibesLoader size={62} />
           </View>
         ) : null}
       </ScrollView>
@@ -764,6 +770,15 @@ export default Messages;
 const localStyles = StyleSheet.create({
   content: {
     paddingHorizontal: 18,
+  },
+  appHeader: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    marginBottom: 8,
+  },
+  appHeaderTitle: {
+    fontSize: 38,
+    lineHeight: 42,
   },
   connectionsHeader: {
     marginBottom: 10,

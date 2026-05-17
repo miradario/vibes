@@ -1,6 +1,7 @@
 import React from "react";
-import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity } from "react-native";
 import { onboardingStyles } from "../../src/screens/Onboarding/vibesOnboardingStyles";
+import VibesLoader from "../VibesLoader";
 
 type PrimaryButtonProps = {
   label: string;
@@ -28,7 +29,7 @@ const PrimaryButton = ({
       activeOpacity={0.88}
     >
       {loading ? (
-        <ActivityIndicator color="#FFFFFF" />
+        <VibesLoader size={34} />
       ) : (
         <Text style={onboardingStyles.primaryButtonText}>{label}</Text>
       )}

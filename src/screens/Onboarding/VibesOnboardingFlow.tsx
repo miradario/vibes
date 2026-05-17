@@ -33,7 +33,6 @@ import {
   ENERGY_OPTIONS,
   PRACTICE_OPTIONS,
   PURPOSE_OPTIONS,
-  STEP_COPY,
   VIBES_ONBOARDING_STEPS,
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
@@ -43,6 +42,7 @@ import {
   toneColor,
 } from "./vibesOnboardingStyles";
 import VibesMinimalOnboarding from "./VibesMinimalOnboarding";
+import { useI18n } from "../../i18n";
 
 const ANIMATION_DURATION = 240;
 const MIN_AGE = 18;
@@ -228,6 +228,7 @@ const generateCompletionSummaryWithAI = async ({
 
 const VibesOnboardingFlow = () => {
   const navigation = useNavigation();
+  const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
   const completeMutation = useCompleteOnboardingMutation();
@@ -253,17 +254,56 @@ const VibesOnboardingFlow = () => {
   const [aiCompletionSummary, setAiCompletionSummary] = useState<string | null>(null);
 
   const step = VIBES_ONBOARDING_STEPS[stepIndex];
-  const copy = STEP_COPY[step];
+  const copy = {
+    title: t(`vibesOnboarding.${step}.title`),
+    subtitle: t(`vibesOnboarding.${step}.subtitle`),
+    button: t(`vibesOnboarding.${step}.button`),
+  };
   const fallbackCompletionSummary = useMemo(
-    () =>
-      buildCompletionSummary({
+    () => {
+      if (locale === "en") {
+        const name = displayName.trim();
+        const purposes = formatShortList(
+          PURPOSE_OPTIONS.filter((option) => purposeIds.includes(option.id)).map((option) =>
+            t(`vibesOnboarding.purposeOptions.${option.id}`).toLowerCase(),
+          ),
+        );
+        const energies = formatShortList(
+          ENERGY_OPTIONS.filter((option) => energyIds.includes(option.id)).map((option) =>
+            t(`vibesOnboarding.energyOptions.${option.id}`).toLowerCase(),
+          ),
+        );
+        const practices = formatShortList(
+          selectedPractices
+            .filter((practice) => practice !== "Otras")
+            .map((practice) =>
+              t(`vibesOnboarding.practicesOptions.${practice}`).toLowerCase(),
+            ),
+        );
+        const parts = [
+          purposes,
+          energies ? `${energies} energy` : "",
+          practices ? `practices like ${practices}` : "",
+        ].filter(Boolean);
+
+        if (!parts.length) {
+          return name
+            ? `${name}, your vibe reflects presence, calm and openness.`
+            : "Your vibe reflects presence, calm and openness.";
+        }
+
+        return `${name ? `${name}, your vibe brings` : "Your vibe brings"} ${parts.join(", ")}.`;
+      }
+
+      return buildCompletionSummary({
         displayName,
         purposeIds,
         energyIds,
         selectedPractices,
         briefDescription,
-      }),
-    [briefDescription, displayName, energyIds, purposeIds, selectedPractices],
+      });
+    },
+    [briefDescription, displayName, energyIds, locale, purposeIds, selectedPractices, t],
   );
   const completionSummary = aiCompletionSummary ?? fallbackCompletionSummary;
 
@@ -282,6 +322,11 @@ const VibesOnboardingFlow = () => {
 
     let cancelled = false;
     setAiCompletionSummary(null);
+
+    if (locale === "en") {
+      setAiCompletionSummary(fallbackCompletionSummary);
+      return undefined;
+    }
 
     generateCompletionSummaryWithAI({
       displayName,
@@ -307,6 +352,7 @@ const VibesOnboardingFlow = () => {
     displayName,
     energyIds,
     fallbackCompletionSummary,
+    locale,
     purposeIds,
     selectedPractices,
     step,
@@ -401,8 +447,8 @@ const VibesOnboardingFlow = () => {
     const userId = session?.user?.id;
     if (!userId) {
       Alert.alert(
-        "Sesión requerida",
-        "Tu cuenta fue creada, pero todavía no hay una sesión activa. Iniciá sesión para completar el onboarding.",
+        t("vibesOnboarding.missingSessionTitle"),
+        t("vibesOnboarding.missingSessionMessage"),
       );
       return false;
     }
@@ -422,8 +468,8 @@ const VibesOnboardingFlow = () => {
       return true;
     } catch (error) {
       Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "No se pudo completar el onboarding.",
+        t("common.error"),
+        error instanceof Error ? error.message : t("onboarding.onboardingError"),
       );
       return false;
     }
@@ -481,6 +527,9 @@ const VibesOnboardingFlow = () => {
     }));
   };
 
+  const getPracticeLabel = (practice: string) =>
+    t(`vibesOnboarding.practicesOptions.${practice}`);
+
   const renderTitle = (targetStep: VibesOnboardingStep) => (
     <>
       <Text
@@ -509,7 +558,10 @@ const VibesOnboardingFlow = () => {
         {PURPOSE_OPTIONS.map((option) => (
           <OptionCard
             key={option.id}
-            option={option}
+            option={{
+              ...option,
+              label: t(`vibesOnboarding.purposeOptions.${option.id}`),
+            }}
             selected={purposeIds.includes(option.id)}
             onPress={() => togglePurpose(option.id)}
           />
@@ -544,7 +596,9 @@ const VibesOnboardingFlow = () => {
                   color={selected ? ONBOARDING_COLORS.mustard : ONBOARDING_COLORS.text}
                 />
               </View>
-              <Text style={onboardingStyles.energyLabel}>{option.label}</Text>
+              <Text style={onboardingStyles.energyLabel}>
+                {t(`vibesOnboarding.energyOptions.${option.id}`)}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -562,7 +616,7 @@ const VibesOnboardingFlow = () => {
             <Icon name="person-outline" size={20} color={ONBOARDING_COLORS.mustard} />
             <TextInput
               style={onboardingStyles.input}
-              placeholder="Tu nombre"
+              placeholder={t("vibesOnboarding.profile.namePlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={displayName}
               onChangeText={setDisplayName}
@@ -575,7 +629,7 @@ const VibesOnboardingFlow = () => {
             <Icon name="document-text-outline" size={20} color={ONBOARDING_COLORS.mustard} />
             <TextInput
               style={[onboardingStyles.input, onboardingStyles.textAreaInput]}
-              placeholder="Una breve descripción sobre ti"
+              placeholder={t("vibesOnboarding.profile.descriptionPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={briefDescription}
               onChangeText={setBriefDescription}
@@ -589,7 +643,7 @@ const VibesOnboardingFlow = () => {
             <Icon name="calendar-outline" size={20} color={ONBOARDING_COLORS.mustard} />
             <TextInput
               style={onboardingStyles.input}
-              placeholder="Edad"
+              placeholder={t("vibesOnboarding.profile.agePlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={age}
               onChangeText={(value) => setAge(normalizeAgeInput(value))}
@@ -598,7 +652,7 @@ const VibesOnboardingFlow = () => {
             />
             {age ? (
               <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: 8 }]}>
-                años
+                {t("vibesOnboarding.profile.years")}
               </Text>
             ) : null}
           </View>
@@ -614,7 +668,7 @@ const VibesOnboardingFlow = () => {
         {practiceOptions.map((practice) => (
           <SelectablePill
             key={practice}
-            label={practice}
+            label={getPracticeLabel(practice)}
             selected={selectedPractices.includes(practice)}
             isAddOption={practice === "Otras"}
             onPress={() => togglePractice(practice)}
@@ -668,7 +722,7 @@ const VibesOnboardingFlow = () => {
 
       <SpiritualPathDetailsModal
         visible={Boolean(activePractice)}
-        pathLabel={activePractice}
+        pathLabel={activePractice ? getPracticeLabel(activePractice) : activePractice}
         detail={activePracticeDetail}
         onClose={() => setActivePractice(null)}
         onChange={(next) => {
@@ -703,11 +757,11 @@ const VibesOnboardingFlow = () => {
             onPress={() => undefined}
           >
             <Text style={onboardingStyles.customPracticeTitle}>
-              Nombre de la práctica
+              {t("vibesOnboarding.practices.customPracticeTitle")}
             </Text>
             <TextInput
               style={onboardingStyles.customPracticeInput}
-              placeholder="Ej. Qi Gong"
+              placeholder={t("vibesOnboarding.practices.customPracticePlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.48)"
               value={customPracticeName}
               onChangeText={setCustomPracticeName}
@@ -721,7 +775,7 @@ const VibesOnboardingFlow = () => {
                 onPress={() => setCustomPracticeModalVisible(false)}
               >
                 <Text style={onboardingStyles.customPracticeSecondaryText}>
-                  Cancelar
+                  {t("common.cancel")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -734,7 +788,7 @@ const VibesOnboardingFlow = () => {
                 onPress={addCustomPractice}
               >
                 <Text style={onboardingStyles.customPracticePrimaryText}>
-                  Agregar
+                  {t("vibesOnboarding.practices.add")}
                 </Text>
               </TouchableOpacity>
             </View>

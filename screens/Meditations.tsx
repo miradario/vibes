@@ -31,6 +31,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Audio, ResizeMode, Video, type AVPlaybackStatus } from "expo-av";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
@@ -844,31 +845,24 @@ const MeditationScreen = () => {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={localStyles.headerRow}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => navigation.goBack()}
-              style={localStyles.headerButton}
-            >
-              <Icon
-                name="chevron-back"
-                size={26}
-                color={vibesTheme.colors.primaryText}
-              />
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setIsFavorite((current) => !current)}
-              style={localStyles.headerButton}
-            >
-              <Icon
-                name={isFavorite ? "heart" : "heart-outline"}
-                size={24}
-                color={vibesTheme.colors.primaryText}
-              />
-            </Pressable>
-          </View>
+          <AppHeader
+            showBack
+            onBack={() => navigation.goBack()}
+            style={localStyles.headerRow}
+            right={
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setIsFavorite((current) => !current)}
+                style={localStyles.headerButton}
+              >
+                <Icon
+                  name={isFavorite ? "heart" : "heart-outline"}
+                  size={24}
+                  color={vibesTheme.colors.primaryText}
+                />
+              </Pressable>
+            }
+          />
 
           <Text style={localStyles.title}>Meditación</Text>
           <Text style={localStyles.subtitle}>Elige tu práctica para hoy</Text>
@@ -1271,6 +1265,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 0,
   },
   headerButton: {
     width: 36,

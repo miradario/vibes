@@ -21,7 +21,7 @@ import styles, {
   WHITE,
 } from "../assets/styles";
 import Icon from "../components/Icon";
-import VibesHeader from "../src/components/VibesHeader";
+import AppHeader from "../components/AppHeader";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { deactivateUserPushTokens } from "../src/notifications/pushNotifications";
@@ -77,27 +77,16 @@ const Configuration = () => {
   return (
     <SafeAreaView style={styles.bg} edges={["top", "left", "right"]}>
       <View style={localStyles.fixedHeader}>
-        <View style={localStyles.headerRow}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={localStyles.backButton}
-            activeOpacity={0.85}
-          >
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <View style={localStyles.headerCopy}>
-            <VibesHeader
-              title={t("configuration.title")}
-              subtitle={t("configuration.subtitle")}
-              style={localStyles.headerTextWrap}
-              titleStyle={localStyles.headerTitle}
-              subtitleStyle={localStyles.headerSubtitle}
-              titleNumberOfLines={1}
-              titleAdjustsFontSizeToFit
-            />
-          </View>
-          <View style={localStyles.headerSpacer} />
-        </View>
+        <AppHeader
+          title={t("configuration.title")}
+          subtitle={t("configuration.subtitle")}
+          showBack
+          onBack={() => navigation.goBack()}
+          style={localStyles.appHeader}
+          contentStyle={localStyles.headerCopy}
+          titleStyle={localStyles.headerTitle}
+          subtitleStyle={localStyles.headerSubtitle}
+        />
       </View>
 
       <ScrollView
@@ -161,6 +150,10 @@ const localStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "rgba(43, 43, 43, 0.06)",
     zIndex: 10,
+  },
+  appHeader: {
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
   headerRow: {
     flexDirection: "row",

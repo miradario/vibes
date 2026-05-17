@@ -1,6 +1,7 @@
 export { default as CardItem } from "./CardItem";
 export { default as Avatar } from "./Avatar";
 export { default as AvatarGroup } from "./AvatarGroup";
+export { default as AppHeader } from "./AppHeader";
 export { default as City } from "./City";
 export { default as Filters } from "./Filters";
 export { default as Icon } from "./Icon";

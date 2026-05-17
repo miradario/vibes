@@ -6,16 +6,16 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
-  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Icon } from "../components";
+import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
-import styles, { DARK_GRAY } from "../assets/styles";
+import styles from "../assets/styles";
 import {
   useMatchesQuery,
   type MatchWithProfile,
 } from "../src/queries/matches.queries";
+import VibesLoader from "../components/VibesLoader";
 
 
 
@@ -54,17 +54,17 @@ const Matches = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.soulmateScreen}>
-        <View style={styles.soulmateHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <Text style={styles.soulmateTitle}>Resonances</Text>
-          <View style={{ width: 22 }} />
-        </View>
+        <AppHeader
+          title="Resonances"
+          showBack
+          onBack={() => navigation.goBack()}
+          style={localStyles.header}
+          titleStyle={styles.soulmateTitle}
+        />
 
         {isLoading ? (
           <View style={localStyles.emptyState}>
-            <ActivityIndicator color="#E4B76E" size="large" />
+            <VibesLoader size={82} />
           </View>
         ) : (matches ?? []).length === 0 ? (
           <View style={localStyles.emptyState}>
@@ -93,6 +93,10 @@ const Matches = () => {
 export default Matches;
 
 const localStyles = {
+  header: {
+    paddingHorizontal: 0,
+    marginBottom: 4,
+  },
   matchRow: {
     flexDirection: "row" as const,
     alignItems: "center" as const,

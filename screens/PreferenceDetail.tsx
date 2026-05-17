@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
-import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
@@ -176,13 +176,13 @@ const PreferenceDetail = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.settingsContainer}>
-        <View style={styles.settingsHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <Text style={styles.settingsTitle}>{config.label}</Text>
-          <View style={{ width: 22 }} />
-        </View>
+        <AppHeader
+          title={config.label}
+          showBack
+          onBack={() => navigation.goBack()}
+          style={{ paddingHorizontal: 0, marginBottom: 6 }}
+          titleStyle={styles.settingsTitle}
+        />
 
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.preferenceCard}>

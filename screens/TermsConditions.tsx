@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, WHITE } from "../assets/styles";
-import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
 
 const TermsConditions = () => {
@@ -21,13 +21,13 @@ const TermsConditions = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.settingsContainer}>
-        <View style={styles.settingsHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <Text style={styles.settingsTitle}>{t("terms.title")}</Text>
-          <View style={{ width: 22 }} />
-        </View>
+        <AppHeader
+          title={t("terms.title")}
+          showBack
+          onBack={() => navigation.goBack()}
+          style={localStyles.header}
+          titleStyle={styles.settingsTitle}
+        />
 
 
         <Text style={localStyles.subtitle}>
@@ -60,6 +60,10 @@ const TermsConditions = () => {
 };
 
 const localStyles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 0,
+    marginBottom: 6,
+  },
   hero: {
     width: 160,
     height: 160,

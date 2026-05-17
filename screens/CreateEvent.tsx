@@ -10,7 +10,6 @@ import {
   ScrollView,
   Alert,
   StyleSheet,
-  ActivityIndicator,
   Image,
   Modal,
   Platform,
@@ -30,6 +29,8 @@ import styles, {
   BLACK,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
+import VibesLoader from "../components/VibesLoader";
 import LoopingVideo from "../components/LoopingVideo";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -552,17 +553,13 @@ const CreateEvent = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
       >
-        <View style={styles.top}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={styles.title}>
-              {isEditing ? "Editar evento" : "Crear evento"}
-            </Text>
-          </View>
-          <View style={{ width: 22 }} />
-        </View>
+        <AppHeader
+          title={isEditing ? "Editar evento" : "Crear evento"}
+          showBack
+          onBack={() => navigation.goBack()}
+          style={localStyles.header}
+          titleStyle={styles.title}
+        />
 
         <View style={localStyles.formCard}>
           <Text style={localStyles.label}>Título</Text>
@@ -751,7 +748,7 @@ const CreateEvent = () => {
                 disabled={isValidatingLocation}
               >
                 {isValidatingLocation ? (
-                  <ActivityIndicator color={WHITE} />
+                  <VibesLoader size={30} />
                 ) : (
                   <Text style={localStyles.validateButtonText}>
                     Validar ubicación
@@ -958,6 +955,10 @@ const CreateEvent = () => {
 };
 
 const localStyles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 0,
+    marginBottom: 4,
+  },
   content: {
     paddingBottom: 32,
   },

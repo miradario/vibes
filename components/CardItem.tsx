@@ -430,7 +430,7 @@ const CardItem = ({
             <Image source={image} style={imageStyle} blurRadius={imageBlurRadius} />
           )}
         </TouchableOpacity>
-        {matches && (
+        {matches && Number(String(matches).match(/\d+/)?.[0] ?? 0) > 0 && (
           <View style={styles.matchesCardOverlay}>
             <View style={styles.matchesCardItem}>
               <Text style={styles.matchesTextCardItem}>

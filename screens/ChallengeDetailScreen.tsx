@@ -1,14 +1,16 @@
 /** @format */
 
 import React, { memo, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Image, PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { FlatList, Image, PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { ResizeMode } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
+import VibesLoader from "../components/VibesLoader";
 import LoopingVideo from "../components/LoopingVideo";
 import {
   useChallengeCheckinsQuery,
@@ -210,10 +212,18 @@ type ChallengeHeaderProps = {
 };
 
 export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, statusTone = "active", showSubtitle = true }: ChallengeHeaderProps) => (
-  <View style={localStyles.header}>
-    <TouchableOpacity style={localStyles.iconButton} onPress={onBack}>
-      <Icon name="chevron-back" size={23} color={palette.text} />
-    </TouchableOpacity>
+  <AppHeader
+    showBack
+    onBack={onBack}
+    style={localStyles.header}
+    backButtonStyle={localStyles.iconButton}
+    contentStyle={localStyles.headerCopy}
+    right={
+      <TouchableOpacity style={localStyles.iconButton} onPress={onShare}>
+        <Icon name="share-social-outline" size={21} color={palette.text} />
+      </TouchableOpacity>
+    }
+  >
     <View style={localStyles.headerCopy}>
       <Text style={localStyles.eyebrow}>Desafío</Text>
       <Text style={localStyles.title}>{challenge.title}</Text>
@@ -224,10 +234,7 @@ export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, 
         </View>
       ) : null}
     </View>
-    <TouchableOpacity style={localStyles.iconButton} onPress={onShare}>
-      <Icon name="share-social-outline" size={21} color={palette.text} />
-    </TouchableOpacity>
-  </View>
+  </AppHeader>
 ));
 
 type InfoCardsRowProps = {
@@ -578,7 +585,7 @@ export const CheckInButton = memo(({ status, isLoading, onPress }: CheckInButton
   return (
     <TouchableOpacity style={[localStyles.checkInButton, isCompleted && localStyles.checkInCompleted, isBroken && localStyles.checkInBroken]} onPress={onPress} disabled={isLoading || isCompleted} activeOpacity={0.88}>
       {isLoading ? (
-        <ActivityIndicator color="#FFFFFF" />
+        <VibesLoader size={30} />
       ) : (
         <>
           <Icon name={icon} size={21} color="#FFFFFF" />
@@ -863,7 +870,7 @@ const ChallengeDetailScreen = () => {
           </View>
         </View>
         <View style={[localStyles.footerSliderHandle, { transform: [{ translateX: footerSliderOffset }] }]} {...footerSliderResponder.panHandlers}>
-          {checkInMutation.isPending ? <ActivityIndicator color={palette.goldDeep} /> : <Icon name="sunny-outline" size={22} color={palette.goldDeep} />}
+          {checkInMutation.isPending ? <VibesLoader size={30} /> : <Icon name="sunny-outline" size={22} color={palette.goldDeep} />}
         </View>
       </View>
     );
@@ -968,7 +975,7 @@ const ChallengeDetailScreen = () => {
                   });
                 }}>
                 {joinChallengeMutation.isPending ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <VibesLoader size={32} />
                 ) : (
                   <>
                     <Text style={localStyles.joinRequestButtonTitle}>Empezar mi challenge</Text>
@@ -990,7 +997,7 @@ const ChallengeDetailScreen = () => {
                   void handleJoinOrRequest();
                 }}>
                 {joinChallengeMutation.isPending || requestChallengeJoinMutation.isPending ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <VibesLoader size={32} />
                 ) : (
                   <>
                     <Text style={localStyles.joinRequestButtonTitle}>{(event?.visibility ?? "public") === "public" ? "Sumarme al challenge" : ownJoinRequest?.status === "pending" ? "Solicitud enviada" : "Solicitar acceso"}</Text>

@@ -30,6 +30,7 @@ import styles, {
   WHITE,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import LoopingVideo from "../components/LoopingVideo";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -213,15 +214,13 @@ const CreateChallenge = () => {
           keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
           contentInsetAdjustmentBehavior="automatic"
         >
-          <View style={styles.top}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-            </TouchableOpacity>
-            <View style={{ flex: 1, alignItems: "center" }}>
-              <Text style={localStyles.screenTitle}>Crear desafío</Text>
-            </View>
-            <View style={{ width: 22 }} />
-          </View>
+          <AppHeader
+            title="Crear desafío"
+            showBack
+            onBack={() => navigation.goBack()}
+            style={styles.top}
+            titleStyle={localStyles.screenTitle}
+          />
 
           <View style={localStyles.formCard}>
             <Text style={localStyles.label}>Título</Text>

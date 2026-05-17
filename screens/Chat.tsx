@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ActivityIndicator,
   Modal,
   Pressable,
   StyleSheet,
@@ -18,6 +17,7 @@ import {
 import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
+import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -36,6 +36,7 @@ import {
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import VibesLoader from "../components/VibesLoader";
 
 const REPORT_REASONS: ReportReason[] = [
   "Spam o contenido irrelevante",
@@ -280,11 +281,16 @@ const Chat = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(insets.top, 12) : 0}
     >
-      {/* Header */}
-      <View style={styles.chatHeader}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-        </TouchableOpacity>
+      <AppHeader
+        showBack
+        onBack={() => navigation.goBack()}
+        style={styles.chatHeader}
+        right={
+          <TouchableOpacity onPress={() => setShowActionsModal(true)}>
+            <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
+          </TouchableOpacity>
+        }
+      >
         <TouchableOpacity style={styles.chatHeaderCenter} onPress={() => setShowProfileModal(true)}>
           <Avatar uri={otherUserPhoto} size={32} />
           <Text style={styles.chatName}>
@@ -300,10 +306,7 @@ const Chat = () => {
             })()}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowActionsModal(true)}>
-          <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
-        </TouchableOpacity>
-      </View>
+      </AppHeader>
       <UserProfileSheet
         visible={showProfileModal}
         profile={profileCard}
@@ -423,7 +426,7 @@ const Chat = () => {
         {/* Messages */}
         {isLoading ? (
           <View style={localStyles.loadingWrap}>
-            <ActivityIndicator color="#E4B76E" size="large" />
+            <VibesLoader size={78} />
           </View>
         ) : (
           <FlatList

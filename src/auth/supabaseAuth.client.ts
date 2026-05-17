@@ -5,7 +5,9 @@ import { recoverInvalidRefreshToken } from "./session.recovery";
 
 type AuthChangeEvent = string;
 
-const OAUTH_REDIRECT_URL = "com.miradario.vibe://auth-callback";
+const OAUTH_REDIRECT_URL =
+  process.env.EXPO_PUBLIC_OAUTH_REDIRECT_URL?.trim() ||
+  "com.miradario.vibe://auth-callback";
 
 WebBrowser.maybeCompleteAuthSession();
 

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   FlatList,
   Modal,
@@ -17,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DiscoverOrbitCanvas from "../components/DiscoverOrbitCanvas";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import UserProfileSheet from "../components/UserProfileSheet";
 import type { UserProfileCardData } from "../components/UserProfileCard";
 import styles, { DIMENSION_WIDTH } from "../assets/styles";
@@ -32,6 +32,8 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
+import { useI18n } from "../src/i18n";
+import VibesLoader from "../components/VibesLoader";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -48,6 +50,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   maxDistanceKm: null,
   smoking: "all",
 };
+const DISCOVER_PAGE_SIZE = 30;
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -140,11 +143,12 @@ const formatRangeSummary = (
   min: number | null,
   max: number | null,
   suffix = "",
+  labels: { any: string; from: string; until: string },
 ) => {
-  if (min === null && max === null) return "Cualquiera";
+  if (min === null && max === null) return labels.any;
   if (min !== null && max !== null) return `${min}-${max}${suffix}`;
-  if (min !== null) return `Desde ${min}${suffix}`;
-  return `Hasta ${max}${suffix}`;
+  if (min !== null) return `${labels.from} ${min}${suffix}`;
+  return `${labels.until} ${max}${suffix}`;
 };
 
 const formatDistanceLabel = (distanceKm: number | null) => {
@@ -182,13 +186,16 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
 
 const Discover = () => {
   const navigation = useNavigation();
+  const { t } = useI18n();
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const {
     data: userPreferences,
     isFetched: hasFetchedUserPreferences,
   } = useUserPreferencesQuery(session?.user?.id);
-  const { data: candidates = [], isLoading, isError, error } = useCandidatesQuery();
+  const { data: candidates = [], isLoading, isError, error } = useCandidatesQuery({
+    limit: 200,
+  });
   const swipeMutation = useSwipeMutation();
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
@@ -196,10 +203,12 @@ const Discover = () => {
   const [hasHydratedStoredFilters, setHasHydratedStoredFilters] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
   const [hiddenProfileIds, setHiddenProfileIds] = useState<Set<string>>(new Set());
+  const [dismissedProfiles, setDismissedProfiles] = useState<DataT[]>([]);
   const [showProfileSheet, setShowProfileSheet] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
+  const [visibleProfileCount, setVisibleProfileCount] = useState(DISCOVER_PAGE_SIZE);
   const ownProfileRecord = (ownProfileData ?? null) as Record<string, any> | null;
 
   const centerProfile = useMemo<DataT>(
@@ -273,6 +282,13 @@ const Discover = () => {
 
         return true;
       })
+      .sort((left, right) => {
+        const leftDistance =
+          typeof left.distanceKm === "number" ? left.distanceKm : Number.POSITIVE_INFINITY;
+        const rightDistance =
+          typeof right.distanceKm === "number" ? right.distanceKm : Number.POSITIVE_INFINITY;
+        return leftDistance - rightDistance;
+      })
       .map((candidate) => {
         const profile = mapCandidateToConnectionProfile(candidate);
         const candidateRecord = candidate as Record<string, any>;
@@ -297,15 +313,26 @@ const Discover = () => {
   const errorMessage =
     error instanceof Error && error.message.trim()
       ? error.message
-      : "No se pudieron cargar perfiles reales.";
+      : t("discover.loadFailed");
   const ageSummary = formatRangeSummary(
     discoverFilters.ageMin,
     discoverFilters.ageMax,
+    "",
+    {
+      any: t("common.any"),
+      from: t("common.from", { value: "" }).trim(),
+      until: t("common.until", { value: "" }).trim(),
+    },
   );
   const distanceSummary = formatRangeSummary(
     discoverFilters.distanceMinKm,
     discoverFilters.maxDistanceKm,
     " km",
+    {
+      any: t("common.any"),
+      from: t("common.from", { value: "" }).trim(),
+      until: t("common.until", { value: "" }).trim(),
+    },
   );
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
@@ -317,6 +344,15 @@ const Discover = () => {
         : null,
     [selectedProfile],
   );
+  const visibleProfiles = useMemo(
+    () => profiles.slice(0, visibleProfileCount),
+    [profiles, visibleProfileCount],
+  );
+  const canShowMoreProfiles = visibleProfileCount < profiles.length;
+
+  useEffect(() => {
+    setVisibleProfileCount(DISCOVER_PAGE_SIZE);
+  }, [discoverFilters, hiddenProfileIds]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -373,6 +409,9 @@ const Discover = () => {
     const profileId = String(profile.id);
 
     setHiddenProfileIds((prev) => new Set(prev).add(profileId));
+    setDismissedProfiles((prev) =>
+      prev.filter((item) => String(item.id) !== profileId),
+    );
 
     swipeMutation.mutate(
       { targetUserId: profileId, direction: "like" },
@@ -402,6 +441,10 @@ const Discover = () => {
     const profileId = String(profile.id);
 
     setHiddenProfileIds((prev) => new Set(prev).add(profileId));
+    setDismissedProfiles((prev) => [
+      profile,
+      ...prev.filter((item) => String(item.id) !== profileId),
+    ]);
 
     swipeMutation.mutate(
       { targetUserId: profileId, direction: "pass" },
@@ -412,6 +455,9 @@ const Discover = () => {
             next.delete(profileId);
             return next;
           });
+          setDismissedProfiles((prev) =>
+            prev.filter((item) => String(item.id) !== profileId),
+          );
           handleApiError(dismissError, { toastTitle: "Dismiss Error" });
         },
       },
@@ -473,9 +519,9 @@ const Discover = () => {
               <View style={localStyles.filtersHandle} />
               <View style={localStyles.filtersHeader}>
                 <View style={localStyles.filtersHeaderText}>
-                  <Text style={localStyles.filtersTitle}>Filtros</Text>
+                  <Text style={localStyles.filtersTitle}>{t("discover.filters")}</Text>
                   <Text style={localStyles.filtersSubtitle}>
-                    Ajustá qué perfiles querés ver en discover.
+                    {t("discover.filtersSubtitle")}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -491,7 +537,7 @@ const Discover = () => {
                 contentContainerStyle={localStyles.filtersContent}
               >
                 <View style={localStyles.filtersSection}>
-                  {filterSectionTitle("Edad")}
+                  {filterSectionTitle(t("discover.age"))}
                   <View style={localStyles.rangeHeader}>
                     <Text style={localStyles.rangeSummary}>{ageSummary}</Text>
                     <TouchableOpacity
@@ -503,23 +549,23 @@ const Discover = () => {
                         }))
                       }
                     >
-                      <Text style={localStyles.rangeReset}>Limpiar</Text>
+                      <Text style={localStyles.rangeReset}>{t("discover.clear")}</Text>
                     </TouchableOpacity>
                   </View>
                   <View style={localStyles.rangeRow}>
                     <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>Mínima</Text>
+                      <Text style={localStyles.rangeLabel}>{t("discover.min")}</Text>
                       <View style={localStyles.rangeControls}>
                         <Text style={localStyles.rangeValue}>
-                          {discoverFilters.ageMin ?? "Sin límite"}
+                          {discoverFilters.ageMin ?? t("discover.noLimit")}
                         </Text>
                       </View>
                     </View>
                     <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>Máxima</Text>
+                      <Text style={localStyles.rangeLabel}>{t("discover.max")}</Text>
                       <View style={localStyles.rangeControls}>
                         <Text style={localStyles.rangeValue}>
-                          {discoverFilters.ageMax ?? "Sin límite"}
+                          {discoverFilters.ageMax ?? t("discover.noLimit")}
                         </Text>
                       </View>
                     </View>
@@ -527,7 +573,7 @@ const Discover = () => {
                 </View>
 
                 <View style={localStyles.filtersSection}>
-                  {filterSectionTitle("Distancia")}
+                  {filterSectionTitle(t("discover.distance"))}
                   <View style={localStyles.rangeHeader}>
                     <Text style={localStyles.rangeSummary}>{distanceSummary}</Text>
                     <TouchableOpacity
@@ -539,26 +585,26 @@ const Discover = () => {
                         }))
                       }
                     >
-                      <Text style={localStyles.rangeReset}>Limpiar</Text>
+                      <Text style={localStyles.rangeReset}>{t("discover.clear")}</Text>
                     </TouchableOpacity>
                   </View>
                   <View style={localStyles.rangeRow}>
                     <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>Mínima</Text>
+                      <Text style={localStyles.rangeLabel}>{t("discover.min")}</Text>
                       <View style={localStyles.rangeControls}>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.distanceMinKm === null
-                            ? "Sin límite"
+                            ? t("discover.noLimit")
                             : `${discoverFilters.distanceMinKm} km`}
                         </Text>
                       </View>
                     </View>
                     <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>Máxima</Text>
+                      <Text style={localStyles.rangeLabel}>{t("discover.max")}</Text>
                       <View style={localStyles.rangeControls}>
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.maxDistanceKm === null
-                            ? "Sin límite"
+                            ? t("discover.noLimit")
                             : `${discoverFilters.maxDistanceKm} km`}
                         </Text>
                       </View>
@@ -567,14 +613,14 @@ const Discover = () => {
                 </View>
 
                 <View style={localStyles.filtersSection}>
-                  {filterSectionTitle("Fuma")}
+                  {filterSectionTitle(t("discover.smoking"))}
                   <View style={localStyles.filtersPillRow}>
                     {(
                       [
-                        { value: "all", label: "Indistinto" },
-                        { value: "no", label: "No fuma" },
-                        { value: "occasionally", label: "A veces" },
-                        { value: "yes", label: "Sí fuma" },
+                        { value: "all", label: t("discover.smokingAll") },
+                        { value: "no", label: t("discover.smokingNo") },
+                        { value: "occasionally", label: t("discover.smokingSometimes") },
+                        { value: "yes", label: t("discover.smokingYes") },
                       ] as const
                     ).map((option) => (
                       <TouchableOpacity
@@ -611,13 +657,17 @@ const Discover = () => {
                   style={localStyles.filtersSecondaryButton}
                   onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
                 >
-                  <Text style={localStyles.filtersSecondaryButtonText}>Limpiar</Text>
+                  <Text style={localStyles.filtersSecondaryButtonText}>
+                    {t("discover.clear")}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={localStyles.filtersPrimaryButton}
                   onPress={() => setIsFiltersVisible(false)}
                 >
-                  <Text style={localStyles.filtersPrimaryButtonText}>Aplicar</Text>
+                  <Text style={localStyles.filtersPrimaryButtonText}>
+                    {t("discover.apply")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -636,49 +686,71 @@ const Discover = () => {
               : undefined
           }
           onContactPress={() => connectProfile(selectedProfile)}
-          secondaryActionLabel="Dismiss"
+          secondaryActionLabel={t("discover.dismiss")}
           onSecondaryActionPress={() => dismissProfile(selectedProfile)}
         />
 
-        <View style={localStyles.header}>
-          <Text style={localStyles.title}>Descubrir</Text>
-          <TouchableOpacity
-            style={localStyles.filtersButton}
-            activeOpacity={0.84}
-            onPress={() => setIsFiltersVisible(true)}
-          >
-            <Icon name="options-outline" size={17} color="#2B2B2B" />
-            <Text style={localStyles.filtersButtonText}>Filtros</Text>
-          </TouchableOpacity>
-        </View>
+        <AppHeader
+          title={t("discover.title")}
+          style={localStyles.header}
+          titleStyle={localStyles.title}
+          right={
+            <TouchableOpacity
+              style={localStyles.filtersButton}
+              activeOpacity={0.84}
+              onPress={() => setIsFiltersVisible(true)}
+            >
+              <Icon name="options-outline" size={17} color="#2B2B2B" />
+              <Text style={localStyles.filtersButtonText}>{t("discover.filters")}</Text>
+            </TouchableOpacity>
+          }
+        />
 
         <View style={localStyles.orbitWrap}>
           {isLoading ? (
             <View style={localStyles.emptyState}>
-              <ActivityIndicator color="#2B2B2B" />
-              <Text style={localStyles.emptyText}>Cargando perfiles reales...</Text>
+              <VibesLoader size={86} />
+              <Text style={localStyles.emptyText}>{t("discover.loadingProfiles")}</Text>
             </View>
           ) : isError ? (
             <View style={localStyles.emptyState}>
-              <Text style={localStyles.emptyTitle}>No se pudieron cargar</Text>
+              <Text style={localStyles.emptyTitle}>{t("discover.loadFailed")}</Text>
               <Text style={localStyles.emptyText}>{errorMessage}</Text>
             </View>
           ) : (
             <>
               <DiscoverOrbitCanvas
-                users={profiles.filter((item) => item.id !== centerProfile.id)}
+                users={visibleProfiles.filter((item) => item.id !== centerProfile.id)}
+                dismissedUsers={dismissedProfiles}
                 centerUser={centerProfile}
                 onCenterPress={() => navigation.navigate("Aura" as never)}
                 onUserPress={(profile) => {
                   setSelectedProfile(profile);
                   setShowProfileSheet(true);
                 }}
+                onDismissedUserPress={(profile) => {
+                  setSelectedProfile(profile);
+                  setShowProfileSheet(true);
+                }}
               />
+              {canShowMoreProfiles ? (
+                <TouchableOpacity
+                  style={localStyles.showMoreButton}
+                  activeOpacity={0.86}
+                  onPress={() =>
+                    setVisibleProfileCount((count) => count + DISCOVER_PAGE_SIZE)
+                  }
+                >
+                  <Text style={localStyles.showMoreButtonText}>
+                    {t("discover.showMore")}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
               {profiles.length === 0 ? (
                 <View style={localStyles.orbitHint}>
-                  <Text style={localStyles.emptyTitle}>Todavía no hay perfiles reales</Text>
+                  <Text style={localStyles.emptyTitle}>{t("discover.noProfiles")}</Text>
                   <Text style={localStyles.emptyText}>
-                    Tu perfil queda en el centro. Las demás personas aparecerán alrededor.
+                    {t("discover.noProfilesHint")}
                   </Text>
                 </View>
               ) : null}
@@ -733,6 +805,29 @@ const localStyles = StyleSheet.create({
   },
   orbitWrap: {
     flex: 1,
+  },
+  showMoreButton: {
+    position: "absolute",
+    alignSelf: "center",
+    bottom: 24,
+    minHeight: 46,
+    borderRadius: 23,
+    paddingHorizontal: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 253, 248, 0.94)",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.38)",
+    shadowColor: "#8C7B63",
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  showMoreButtonText: {
+    color: "#2B2B2B",
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_700Bold",
   },
   orbitHint: {
     position: "absolute",

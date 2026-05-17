@@ -14,8 +14,9 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import styles, { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";
+import styles, { TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
@@ -216,12 +217,9 @@ const OnboardingPhoto = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <View style={styles.onboardHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
+        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingPhoto" />
-        </View>
+        </AppHeader>
         <ScrollView
           style={localStyles.scrollView}
           contentContainerStyle={localStyles.scrollContent}

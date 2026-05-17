@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   View,
   Text,
@@ -13,9 +12,10 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, WHITE } from "../assets/styles";
-import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
+import VibesLoader from "../components/VibesLoader";
 import SpiritualPathDetailsModal from "../components/SpiritualPathDetailsModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -153,12 +153,9 @@ const OnboardingSpiritualPath = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <View style={styles.onboardHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
+        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingSpiritualPath" />
-        </View>
+        </AppHeader>
 
         <Text style={styles.onboardTitle}>{t("onboarding.spiritualTitle")}</Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.spiritualSubtitle")}</Text>
@@ -305,7 +302,7 @@ const OnboardingSpiritualPath = () => {
             disabled={completeMutation.isPending}
           >
             {completeMutation.isPending ? (
-              <ActivityIndicator color={DARK_GRAY} />
+              <VibesLoader size={34} />
             ) : (
               <Text style={styles.onboardNextText}>{t("common.continue")}</Text>
             )}

@@ -23,6 +23,7 @@ import { ResizeMode, Video, type AVPlaybackStatus } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { vibesTheme } from "../../theme/vibesTheme";
 import Icon from "../../../components/Icon";
+import VibesLoader from "../../../components/VibesLoader";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const REVERSE_FRAME_MS = 16;
@@ -53,6 +54,7 @@ const VibesMinimalOnboarding = ({
   const positionRef = useRef(0);
   const isContinuingRef = useRef(false);
   const [videoShouldPlay, setVideoShouldPlay] = useState(true);
+  const [isContinuing, setIsContinuing] = useState(false);
 
   const illustrationOpacity = useSharedValue(0);
   const titleY = useSharedValue(8);
@@ -166,6 +168,7 @@ const VibesMinimalOnboarding = ({
   const onContinue = async () => {
     if (isContinuingRef.current) return;
     isContinuingRef.current = true;
+    setIsContinuing(true);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     ctaScale.value = withSequence(
       withTiming(0.96, { duration: 90 }),
@@ -175,7 +178,10 @@ const VibesMinimalOnboarding = ({
     if (!reverseVideoOnContinue) {
       setTimeout(() => {
         void continueToNext().then((completed) => {
-          if (!completed) isContinuingRef.current = false;
+          if (!completed) {
+            isContinuingRef.current = false;
+            setIsContinuing(false);
+          }
         });
       }, 110);
       return;
@@ -188,10 +194,12 @@ const VibesMinimalOnboarding = ({
       if (!completed) {
         hideBlur();
         isContinuingRef.current = false;
+        setIsContinuing(false);
       }
     } catch {
       hideBlur();
       isContinuingRef.current = false;
+      setIsContinuing(false);
     }
   };
 
@@ -274,6 +282,11 @@ const VibesMinimalOnboarding = ({
       </AnimatedPressable>
 
       <Animated.View pointerEvents="none" style={[styles.blurOverlay, blurStyle]} />
+      {isContinuing ? (
+        <View pointerEvents="none" style={styles.loaderOverlay}>
+          <VibesLoader size={94} />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 };
@@ -363,6 +376,13 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(246, 246, 244, 0.92)",
     zIndex: 10,
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(246, 246, 244, 0.42)",
   },
 });
 

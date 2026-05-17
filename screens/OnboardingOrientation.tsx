@@ -1,12 +1,13 @@
 /** @format */
 
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import styles, { DARK_GRAY } from "../assets/styles";
-import Icon from "../components/Icon";
+import styles from "../assets/styles";
+import AppHeader from "../components/AppHeader";
 import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
+import VibesLoader from "../components/VibesLoader";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   useCompleteOnboardingMutation,
@@ -46,12 +47,9 @@ const OnboardingOrientation = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <View style={styles.onboardHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
+        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingOrientation" />
-        </View>
+        </AppHeader>
 
         <Text style={styles.onboardTitle}>{t("onboarding.orientationTitle")}</Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.orientationSubtitle")}</Text>
@@ -112,7 +110,7 @@ const OnboardingOrientation = () => {
             }}
           >
             {completeMutation.isPending ? (
-              <ActivityIndicator color={DARK_GRAY} />
+              <VibesLoader size={34} />
             ) : (
               <Text style={styles.onboardNextText}>{t("common.next")}</Text>
             )}

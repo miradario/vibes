@@ -2534,6 +2534,11 @@ export default StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 20,
   },
+  onboardHeaderProgress: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
   onboardProgressTrack: {
     flex: 1,
     height: 4,

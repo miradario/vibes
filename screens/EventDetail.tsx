@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   TextInput,
@@ -29,8 +28,10 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AvatarGroup from "../components/AvatarGroup";
+import VibesLoader from "../components/VibesLoader";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import LoopingVideo from "../components/LoopingVideo";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -598,7 +599,7 @@ const EventDetail = () => {
           : {})}
       >
         {checkInMutation.isPending ? (
-          <ActivityIndicator color="#D77E4E" size="small" />
+          <VibesLoader size={30} />
         ) : (
           <Icon name="sunny-outline" size={22} color="#D77E4E" />
         )}
@@ -705,7 +706,7 @@ const EventDetail = () => {
                 style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
                 disabled
               >
-                <ActivityIndicator color={WHITE} size="small" />
+                <VibesLoader size={30} />
               </TouchableOpacity>
             </View>
           </View>
@@ -774,7 +775,7 @@ const EventDetail = () => {
               disabled={joinMutation.isPending}
             >
               {joinMutation.isPending ? (
-                <ActivityIndicator color={WHITE} size="small" />
+                <VibesLoader size={30} />
               ) : (
                 <Text style={styles.eventDetailJoinButtonText}>
                   Sumarme al desafío
@@ -840,7 +841,7 @@ const EventDetail = () => {
           disabled={joinEventMutation.isPending}
         >
           {joinEventMutation.isPending ? (
-            <ActivityIndicator color={WHITE} size="small" />
+            <VibesLoader size={30} />
           ) : (
             <>
               <Text
@@ -1163,38 +1164,35 @@ const EventDetail = () => {
         </>
       ) : null}
 
-      <View
+      <AppHeader
+        showBack
+        onBack={() => navigation.goBack()}
         style={[
           styles.eventDetailHeader,
           localStyles.persistentHeader,
           { top: Math.max(insets.top + 10, 24) },
         ]}
-      >
-        <TouchableOpacity
-          style={styles.eventDetailBackButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="chevron-back" size={24} color={DARK_GRAY} />
-        </TouchableOpacity>
-        <View style={localStyles.headerActions}>
-          <TouchableOpacity
-            style={styles.eventDetailMenuButton}
-            onPress={() => {
-              void handleShare();
-            }}
-          >
-            <Icon name="share-social-outline" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          {isJoined || isAdmin ? (
+        right={
+          <View style={localStyles.headerActions}>
+            <TouchableOpacity
+              style={styles.eventDetailMenuButton}
+              onPress={() => {
+                void handleShare();
+              }}
+            >
+              <Icon name="share-social-outline" size={22} color={DARK_GRAY} />
+            </TouchableOpacity>
+            {isJoined || isAdmin ? (
             <TouchableOpacity
               style={styles.eventDetailMenuButton}
               onPress={() => setMenuVisible(true)}
             >
               <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
             </TouchableOpacity>
-          ) : null}
-        </View>
-      </View>
+            ) : null}
+          </View>
+        }
+      />
 
       <ScrollView
         style={styles.eventDetailContent}
@@ -1550,7 +1548,7 @@ const EventDetail = () => {
                   </View>
                 </View>
                 {personalChallengeMessageLoading && !personalChallengeMessage ? (
-                  <ActivityIndicator color={PRIMARY_COLOR} style={{ marginTop: 6 }} />
+                  <VibesLoader size={42} style={{ marginTop: 6 }} />
                 ) : (
                   <Text style={localStyles.personalCoachBody}>
                     {personalChallengeMessage?.body}
@@ -1627,10 +1625,7 @@ const EventDetail = () => {
         {isChallenge ? (
           <>
             {participantLoading ? (
-              <ActivityIndicator
-                color={PRIMARY_COLOR}
-                style={{ marginVertical: 24 }}
-              />
+              <VibesLoader size={64} style={{ marginVertical: 24 }} />
             ) : isJoined ? (
               <View style={localStyles.trackingCard}>
                 <View style={localStyles.daysPanel}>
@@ -1834,7 +1829,7 @@ const EventDetail = () => {
                   : {})}
               >
                 {checkInMutation.isPending ? (
-                  <ActivityIndicator color="#D77E4E" size="small" />
+                  <VibesLoader size={30} />
                 ) : (
                   <Icon
                     name={checkedInToday ? "checkmark" : "sunny-outline"}

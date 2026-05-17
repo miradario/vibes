@@ -10,7 +10,6 @@ import {
   FlatList,
   Image,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -53,6 +52,7 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import VibesLoader from "../components/VibesLoader";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -968,6 +968,9 @@ const Home = () => {
                 </TouchableOpacity>
               </View>
 
+              <Text style={localStyles.guruBreathPrompt}>
+                {t("home.guruHomeBreathPrompt")}
+              </Text>
               <Text style={localStyles.guruBody}>{t("home.guruHomeBody")}</Text>
             </View>
           ) : null}
@@ -1079,7 +1082,7 @@ const Home = () => {
             </View>
             {isChallengesSectionLoading ? (
               <View style={localStyles.inlineLoading}>
-                <ActivityIndicator color="#DCA453" />
+                <VibesLoader size={54} />
               </View>
             ) : visibleJoinedActiveChallenges.length > 0 ? (
               visibleJoinedActiveChallenges.map((challenge, index) => {
@@ -1237,7 +1240,7 @@ const Home = () => {
             </View>
             {isEventsLoading ? (
               <View style={localStyles.inlineLoading}>
-                <ActivityIndicator color="#DCA453" />
+                <VibesLoader size={54} />
               </View>
             ) : upcomingEvents.length === 0 ? (
               <Text style={localStyles.emptyStateText}>
@@ -1566,9 +1569,16 @@ const localStyles = StyleSheet.create({
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,
   },
-  guruBody: {
+  guruBreathPrompt: {
     marginTop: 10,
     color: "#2F2C29",
+    fontSize: 17,
+    lineHeight: 23,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  guruBody: {
+    marginTop: 6,
+    color: "#6F655D",
     fontSize: 16,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,

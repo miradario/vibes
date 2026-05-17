@@ -45,15 +45,6 @@ type OrbitNodeConfig = {
   scale: number;
 };
 
-type DecorNodeConfig = {
-  size: number;
-  radiusX: number;
-  radiusY: number;
-  angle: number;
-  speed: number;
-  tone: "blue" | "orange";
-};
-
 type OrbitNodeProps = {
   config: OrbitNodeConfig;
   centerX: number;
@@ -64,9 +55,11 @@ type OrbitNodeProps = {
 
 type DiscoverOrbitCanvasProps = {
   users: DataT[];
+  dismissedUsers?: DataT[];
   centerUser?: DataT | null;
   onCenterPress?: () => void;
   onUserPress: (user: DataT) => void;
+  onDismissedUserPress?: (user: DataT) => void;
 };
 
 const buildOrbitUserLabel = (user: DataT) => {
@@ -89,7 +82,8 @@ const buildOrbitUserLabel = (user: DataT) => {
 
 const getMatchScore = (user: DataT, index: number) => {
   const parsed = String(user.match ?? "").match(/\d+/)?.[0];
-  if (parsed) return `${Math.min(Number(parsed), 99)}%`;
+  if (parsed && Number(parsed) > 0) return `${Math.min(Number(parsed), 99)}%`;
+  if (parsed) return null;
   return `${88 + (index % 7)}%`;
 };
 
@@ -131,9 +125,11 @@ const OrbitNode = ({ config, centerX, centerY, children, pointerEvents = "auto" 
 
 const DiscoverOrbitCanvas = ({
   users,
+  dismissedUsers = [],
   centerUser,
   onCenterPress,
   onUserPress,
+  onDismissedUserPress,
 }: DiscoverOrbitCanvasProps) => {
   const window = useWindowDimensions();
   const [layout, setLayout] = useState({ width: 0, height: 0 });
@@ -161,6 +157,21 @@ const DiscoverOrbitCanvas = ({
     });
   }, [baseRadiusX, baseRadiusY, users]);
 
+  const dismissedConfigs = useMemo<OrbitNodeConfig[]>(() => {
+    return dismissedUsers.map((_, index) => {
+      const size = 24 + (index % 2) * 4;
+      const layer = index % 3;
+      return {
+        size,
+        radiusX: baseRadiusX * (0.48 + layer * 0.2),
+        radiusY: baseRadiusY * (0.5 + layer * 0.14),
+        angle: (index / Math.max(dismissedUsers.length, 1)) * Math.PI * 2 + 0.7,
+        speed: (index % 2 === 0 ? -0.11 : 0.1) * (1 + layer * 0.06),
+        scale: 1,
+      };
+    });
+  }, [baseRadiusX, baseRadiusY, dismissedUsers]);
+
   useFrameCallback((frame) => {
     const dt = Math.min((frame.timeSincePreviousFrame ?? 16) / 1000, 0.05);
     centerSpin.value += dt * 40;
@@ -173,18 +184,6 @@ const DiscoverOrbitCanvas = ({
   const centerRingReverseStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${-centerSpin.value * 0.72}deg` }],
   }));
-
-  const decorativeConfigs = useMemo<DecorNodeConfig[]>(
-    () => [
-      { size: 18, radiusX: baseRadiusX * 0.68, radiusY: baseRadiusY * 0.58, angle: 0.8, speed: 0.24, tone: "orange" },
-      { size: 14, radiusX: baseRadiusX * 0.8, radiusY: baseRadiusY * 0.68, angle: 1.8, speed: -0.22, tone: "blue" },
-      { size: 16, radiusX: baseRadiusX * 1.03, radiusY: baseRadiusY * 0.92, angle: 2.7, speed: 0.18, tone: "orange" },
-      { size: 13, radiusX: baseRadiusX * 0.55, radiusY: baseRadiusY * 0.48, angle: 3.8, speed: -0.2, tone: "blue" },
-      { size: 20, radiusX: baseRadiusX * 1.12, radiusY: baseRadiusY * 1.04, angle: 5.1, speed: 0.14, tone: "orange" },
-      { size: 12, radiusX: baseRadiusX * 0.94, radiusY: baseRadiusY * 0.82, angle: 6.0, speed: -0.18, tone: "blue" },
-    ],
-    [baseRadiusX, baseRadiusY],
-  );
 
   const handleLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -231,39 +230,42 @@ const DiscoverOrbitCanvas = ({
           </TouchableOpacity>
         ) : null}
 
-        {decorativeConfigs.map((decor, index) => (
-          <OrbitNode
-            key={`decor-${index}`}
-            config={{
-              size: decor.size,
-              radiusX: decor.radiusX,
-              radiusY: decor.radiusY,
-              angle: decor.angle,
-              speed: decor.speed,
-              scale: 1,
-            }}
-            centerX={centerX}
-            centerY={centerY}
-            pointerEvents="none"
-          >
-            <View
-              style={[
-                decor.tone === "blue"
-                  ? styles.discoverOrbitDecorativeDotBlue
-                  : styles.discoverOrbitDecorativeDotOrange,
-                {
-                  width: decor.size,
-                  height: decor.size,
-                  borderRadius: decor.size / 2,
-                },
-              ]}
-            />
-          </OrbitNode>
-        ))}
+        {dismissedUsers.map((user, index) => {
+          const config = dismissedConfigs[index];
+          return (
+            <OrbitNode
+              key={`dismissed-user-${user.id}`}
+              config={config}
+              centerX={centerX}
+              centerY={centerY}
+            >
+              <TouchableOpacity
+                activeOpacity={0.88}
+                onPress={() => (onDismissedUserPress ?? onUserPress)(user)}
+                style={[
+                  localStyles.dismissedDot,
+                  {
+                    width: config.size,
+                    height: config.size,
+                    borderRadius: config.size / 2,
+                  },
+                ]}
+                accessibilityLabel={`Abrir perfil descartado de ${user.name}`}
+              >
+                <Avatar
+                  uri={getAvatarUri(user)}
+                  size={Math.max(config.size - 4, 16)}
+                  style={localStyles.dismissedAvatar}
+                />
+              </TouchableOpacity>
+            </OrbitNode>
+          );
+        })}
 
         {users.map((user, index) => {
           const config = userConfigs[index];
           const userPresenceLabel = buildOrbitUserLabel(user);
+          const matchScore = getMatchScore(user, index);
           return (
             <OrbitNode
               key={`drift-user-${user.id}`}
@@ -302,9 +304,11 @@ const DiscoverOrbitCanvas = ({
                     />
                     <View style={localStyles.userBubbleHighlight} />
                   </View>
-                  <View style={localStyles.matchBadge}>
-                    <Text style={localStyles.matchBadgeText}>{getMatchScore(user, index)}</Text>
-                  </View>
+                  {matchScore ? (
+                    <View style={localStyles.matchBadge}>
+                      <Text style={localStyles.matchBadgeText}>{matchScore}</Text>
+                    </View>
+                  ) : null}
                 </View>
                 {userPresenceLabel ? (
                   <View style={localStyles.distancePill}>
@@ -375,6 +379,22 @@ const localStyles = {
     shadowOpacity: 0.9,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
+  },
+  dismissedDot: {
+    overflow: "hidden" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    backgroundColor: "rgba(255, 253, 248, 0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.55)",
+    shadowColor: "#D88C7A",
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  dismissedAvatar: {
+    opacity: 0.82,
   },
   userBubbleGlow: {
     position: "absolute" as const,

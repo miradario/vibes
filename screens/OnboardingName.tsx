@@ -9,8 +9,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import styles, { DARK_GRAY } from "../assets/styles";
-import Icon from "../components/Icon";
+import styles from "../assets/styles";
+import AppHeader from "../components/AppHeader";
 import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
@@ -33,12 +33,9 @@ const OnboardingName = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <View style={styles.onboardHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
+        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingName" />
-        </View>
+        </AppHeader>
 
         <Text style={styles.onboardTitle}>{t("onboarding.nameTitle")}</Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.nameSubtitle")}</Text>

@@ -24,6 +24,7 @@ import styles, {
   WHITE,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import * as FileSystem from "expo-file-system/legacy";
@@ -932,23 +933,24 @@ const EditProfile = () => {
         scrollEnabled={scrollEnabled}
         contentContainerStyle={localStyles.scrollContent}
       >
-        <View style={styles.top}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={22} color={DARK_GRAY} />
-          </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={styles.title}>{t("editProfile.title")}</Text>
-          </View>
-          <TouchableOpacity
-            onPress={async () => {
-              await saveDisplayName();
-              await saveLocation();
-              navigation.goBack();
-            }}
-          >
-            <Icon name="checkmark" color={DARK_GRAY} size={22} />
-          </TouchableOpacity>
-        </View>
+        <AppHeader
+          title={t("editProfile.title")}
+          showBack
+          onBack={() => navigation.goBack()}
+          style={localStyles.header}
+          titleStyle={styles.title}
+          right={
+            <TouchableOpacity
+              onPress={async () => {
+                await saveDisplayName();
+                await saveLocation();
+                navigation.goBack();
+              }}
+            >
+              <Icon name="checkmark" color={DARK_GRAY} size={22} />
+            </TouchableOpacity>
+          }
+        />
 
         <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>{t("editProfile.photos")}</Text>
@@ -1197,6 +1199,10 @@ const modalStyles = StyleSheet.create({
 });
 
 const localStyles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 0,
+    marginBottom: 4,
+  },
   scrollContent: {
     paddingBottom: 72,
   },

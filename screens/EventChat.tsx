@@ -9,7 +9,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   StyleSheet,
   Alert,
   Modal,
@@ -27,7 +26,9 @@ import styles, {
   DARK_GRAY,
 } from "../assets/styles";
 import Icon from "../components/Icon";
+import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
+import VibesLoader from "../components/VibesLoader";
 import UserProfileCard from "../components/UserProfileCard";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -604,27 +605,21 @@ const EventChat = () => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.eventChatBackground}>
-        <View style={styles.eventChatHeader}>
-          <TouchableOpacity
-            style={styles.eventChatBackButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="chevron-back" size={24} color={TEXT_SECONDARY} />
-          </TouchableOpacity>
-          <View style={styles.eventChatHeaderInfo}>
-            <View>
-              <Text style={[styles.eventChatHeaderTitle, localStyles.headerTitle]}>
-                {event?.title || "Evento"}
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity
-            style={styles.eventChatMenuButton}
-            onPress={openMembersModal}
-          >
-            <Icon name="people" size={24} color={TEXT_SECONDARY} />
-          </TouchableOpacity>
-        </View>
+        <AppHeader
+          title={event?.title || "Evento"}
+          showBack
+          onBack={() => navigation.goBack()}
+          style={styles.eventChatHeader}
+          titleStyle={[styles.eventChatHeaderTitle, localStyles.headerTitle]}
+          right={
+            <TouchableOpacity
+              style={styles.eventChatMenuButton}
+              onPress={openMembersModal}
+            >
+              <Icon name="people" size={24} color={TEXT_SECONDARY} />
+            </TouchableOpacity>
+          }
+        />
 
         {eventType !== "challenge" ? (
           <View style={localStyles.eventMetaSection}>
@@ -691,10 +686,7 @@ const EventChat = () => {
               </Text>
             </View>
           ) : messagesLoading && !messagesLoadingTimedOut ? (
-            <ActivityIndicator
-              color={PRIMARY_COLOR}
-              style={{ marginVertical: 32 }}
-            />
+            <VibesLoader size={72} style={{ marginVertical: 32 }} />
           ) : messagesError ? (
             <View style={localStyles.emptyMessages}>
               <Text style={localStyles.emptyMessagesTitle}>
@@ -736,7 +728,9 @@ const EventChat = () => {
                       avatarUrl: sender.avatar,
                     });
                   }}
-                  onLongPress={() => handleLongPressMessage(msg)}
+                  onLongPress={() => {
+                    if (msg.kind === "event") handleLongPressMessage(msg);
+                  }}
                   style={[
                     localStyles.messageRow,
                     isMe && localStyles.messageRowMe,
@@ -967,7 +961,7 @@ const EventChat = () => {
               />
             ) : (
               <View style={localStyles.participantSheetLoading}>
-                <ActivityIndicator color={PRIMARY_COLOR} />
+                <VibesLoader size={64} />
               </View>
             )}
           </Animated.View>
