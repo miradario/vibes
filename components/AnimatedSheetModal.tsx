@@ -13,6 +13,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 type AnimatedSheetModalProps = {
   visible: boolean;
   onClose: () => void;
+  onClosed?: () => void;
   children: React.ReactNode;
   sheetStyle?: StyleProp<ViewStyle>;
   offsetY?: number;
@@ -30,6 +31,7 @@ type AnimatedSheetModalProps = {
 const AnimatedSheetModal = ({
   visible,
   onClose,
+  onClosed,
   children,
   sheetStyle,
   offsetY = vibesTheme.motion.modal.offsetY,
@@ -98,6 +100,7 @@ const AnimatedSheetModal = ({
     ]).start(({ finished }) => {
       if (finished) {
         setIsMounted(false);
+        onClosed?.();
       }
     });
   }, [
@@ -106,6 +109,7 @@ const AnimatedSheetModal = ({
     backdropOutDuration,
     isMounted,
     offsetY,
+    onClosed,
     sheetInDelay,
     sheetInDuration,
     sheetInOpacityDuration,

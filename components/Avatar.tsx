@@ -8,6 +8,7 @@ type AvatarProps = {
   uri?: string | null;
   size: number;
   version?: string | number | null;
+  blurRadius?: number;
   shape?: "circle" | "rounded";
   style?: StyleProp<ViewStyle>;
   iconSize?: number;
@@ -24,6 +25,7 @@ const Avatar = ({
   uri,
   size,
   version,
+  blurRadius,
   shape = "circle",
   style,
   iconSize,
@@ -92,6 +94,7 @@ const Avatar = ({
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={250}
+          blurRadius={blurRadius}
           onError={() => setHasError(true)}
         />
       ) : null}

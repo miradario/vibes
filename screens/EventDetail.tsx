@@ -294,6 +294,11 @@ const EventDetail = () => {
   const [selectedProgressDay, setSelectedProgressDay] = useState<string | null>(
     null,
   );
+  const [pendingParticipant, setPendingParticipant] = useState<{
+    userId: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null>(null);
   const [selectedParticipant, setSelectedParticipant] = useState<{
     userId: string;
     displayName: string | null;
@@ -431,6 +436,12 @@ const EventDetail = () => {
           handleApiError(error, { toastTitle: "Connect Error" }),
       },
     );
+  };
+
+  const handleParticipantsSheetClosed = () => {
+    if (!pendingParticipant) return;
+    setSelectedParticipant(pendingParticipant);
+    setPendingParticipant(null);
   };
 
   const progressDays = Array.from(
@@ -1955,6 +1966,7 @@ const EventDetail = () => {
       <AnimatedSheetModal
         visible={participantsVisible}
         onClose={() => setParticipantsVisible(false)}
+        onClosed={handleParticipantsSheetClosed}
         offsetY={320}
         sheetStyle={localStyles.participantsModalCard}
       >
@@ -1974,13 +1986,14 @@ const EventDetail = () => {
               <TouchableOpacity
                 style={localStyles.memberRow}
                 activeOpacity={0.85}
-                onPress={() =>
-                  setSelectedParticipant({
+                onPress={() => {
+                  setPendingParticipant({
                     userId: item.userId,
                     displayName: item.displayName,
                     avatarUrl: item.avatarUrl,
-                  })
-                }
+                  });
+                  setParticipantsVisible(false);
+                }}
               >
                 <Avatar uri={item.avatarUrl} size={40} />
                 <View style={{ flex: 1 }}>
@@ -2002,7 +2015,10 @@ const EventDetail = () => {
       <UserProfileSheet
         visible={Boolean(selectedParticipant && selectedParticipantCard)}
         profile={selectedParticipantCard}
-        onClose={() => setSelectedParticipant(null)}
+        onClose={() => {
+          setSelectedParticipant(null);
+          setPendingParticipant(null);
+        }}
         onContactPress={handleConnectParticipant}
       />
     </View>

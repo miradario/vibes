@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +15,7 @@ import { Icon } from "../components";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
+import ProfileMediaImage from "../components/ProfileMediaImage";
 import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
 import UserProfileSheet from "../components/UserProfileSheet";
 import {
@@ -119,6 +119,8 @@ const Messages = () => {
   const swipeMutation = useSwipeMutation();
   const { data: eventGroups = [], isLoading: groupsLoading } =
     useMyEventGroupsQuery(userId);
+  const [pendingIncomingLike, setPendingIncomingLike] =
+    useState<IncomingLike | null>(null);
   const [selectedIncomingLike, setSelectedIncomingLike] =
     useState<IncomingLike | null>(null);
   const [connectionsSheet, setConnectionsSheet] =
@@ -362,15 +364,12 @@ const Messages = () => {
                 index > 0 && localStyles.connectionPreviewAvatarStacked,
               ]}
             >
-              {uri ? (
-                <Image
-                  source={{ uri }}
-                  style={localStyles.connectionPreviewImage}
-                  blurRadius={blurred ? 10 : 0}
-                />
-              ) : (
-                <Avatar uri={null} size={38} />
-              )}
+              <Avatar
+                uri={uri}
+                size={42}
+                blurRadius={blurred ? 10 : 0}
+                style={localStyles.connectionPreviewImage}
+              />
               {blurred ? <View style={localStyles.connectionPreviewOverlay} /> : null}
             </View>
           );
@@ -418,8 +417,14 @@ const Messages = () => {
   );
 
   const openIncomingProfile = (item: IncomingLike) => {
+    setPendingIncomingLike(item);
     setConnectionsSheet(null);
-    setSelectedIncomingLike(item);
+  };
+
+  const handleConnectionsSheetClosed = () => {
+    if (!pendingIncomingLike) return;
+    setSelectedIncomingLike(pendingIncomingLike);
+    setPendingIncomingLike(null);
   };
 
   const openNewConnectionChat = (item: MatchWithProfile) => {
@@ -488,7 +493,7 @@ const Messages = () => {
         activeOpacity={0.78}
         onPress={() => openGroupChat(item)}
       >
-        <Image source={imgSource} style={localStyles.groupAvatar} />
+        <ProfileMediaImage source={imgSource} style={localStyles.groupAvatar} />
         <View style={localStyles.rowBody}>
           <View style={localStyles.rowTitleLine}>
             <Text style={localStyles.rowTitle} numberOfLines={1}>
@@ -719,6 +724,7 @@ const Messages = () => {
       <AnimatedSheetModal
         visible={connectionsSheet !== null}
         onClose={() => setConnectionsSheet(null)}
+        onClosed={handleConnectionsSheetClosed}
         offsetY={360}
         sheetStyle={[
           localStyles.connectionsSheet,
@@ -756,7 +762,10 @@ const Messages = () => {
       <UserProfileSheet
         visible={Boolean(selectedIncomingLike && selectedIncomingLikeCard)}
         profile={selectedIncomingLikeCard}
-        onClose={() => setSelectedIncomingLike(null)}
+        onClose={() => {
+          setSelectedIncomingLike(null);
+          setPendingIncomingLike(null);
+        }}
         onContactPress={handleConnectIncomingLike}
         secondaryActionLabel="Descartar"
         onSecondaryActionPress={handleDismissIncomingLike}
