@@ -210,7 +210,7 @@ const EventChat = () => {
           }
         },
         onError: (error) =>
-          handleApiError(error, { toastTitle: "Connect Error" }),
+          handleApiError(error, { toastTitle: "Error de conexión" }),
       },
     );
   };

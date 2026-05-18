@@ -28,7 +28,7 @@ const PreferenceDetail = () => {
   const config = useMemo(() => {
     const options = {
       open_to: {
-        label: "Open to",
+        label: "Abierto a",
         multiple: true,
         options: ["Mujeres", "Hombres", "Todos"],
       },
@@ -187,7 +187,7 @@ const PreferenceDetail = () => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.preferenceCard}>
             <Text style={styles.preferenceText}>
-              Selecciona tu preferencia para{" "}
+              Seleccioná tu preferencia para{" "}
               <Text style={styles.preferenceEmphasis}>{config.label}</Text>.
             </Text>
 
@@ -218,7 +218,7 @@ const PreferenceDetail = () => {
                     </Text>
                     {config.multiple && (
                       <Text style={{ color: GRAY, fontSize: 12, marginTop: 4 }}>
-                        {active ? "Seleccionado" : "Toca para seleccionar"}
+                        {active ? "Seleccionado" : "Tocá para seleccionar"}
                       </Text>
                     )}
                   </TouchableOpacity>

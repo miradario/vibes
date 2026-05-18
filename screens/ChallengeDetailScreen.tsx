@@ -299,7 +299,7 @@ const getStreakCelebrationCopy = (streak: number) => {
   if (streak >= 14) {
     return {
       title: `Racha de ${streak} días`,
-      body: "Tu constancia ya cambió el ritmo del challenge. Se nota en tu energía.",
+      body: "Tu constancia ya cambió el ritmo del desafío. Se nota en tu energía.",
     };
   }
   if (streak >= 7) {
@@ -310,7 +310,7 @@ const getStreakCelebrationCopy = (streak: number) => {
   }
   return {
     title: `Racha de ${streak} días`,
-    body: "Buen ritmo. Cada check-in suma presencia y te acerca al cierre del challenge.",
+    body: "Buen ritmo. Cada check-in suma presencia y te acerca al cierre del desafío.",
   };
 };
 
@@ -348,7 +348,7 @@ const CommunityPulseCard = memo(({ checkedInTodayCount, participantsCount }: { c
     </View>
     <View style={localStyles.communityCopy}>
       <Text style={localStyles.communityTitle}>{checkedInTodayCount > 0 ? `${checkedInTodayCount} personas ya hicieron check-in hoy` : "Todavía nadie hizo check-in hoy"}</Text>
-      <Text style={localStyles.communitySubtitle}>{participantsCount > 0 ? `${participantsCount} personas están transitando este challenge` : "Tu presencia puede abrir el ritmo del día"}</Text>
+      <Text style={localStyles.communitySubtitle}>{participantsCount > 0 ? `${participantsCount} personas están transitando este desafío` : "Tu presencia puede abrir el ritmo del día"}</Text>
     </View>
   </View>
 ));
@@ -438,7 +438,7 @@ export const PathProgress = memo(({ totalDays, currentDay, completedDays }: Adap
         <View style={localStyles.pathHeaderCopy}>
           <Text style={localStyles.sectionTitle}>Camino del desafío</Text>
           <Text style={localStyles.pathSubtitle}>
-            {totalDays} días para conectar contigo
+            {totalDays} días para conectar con vos
           </Text>
         </View>
         <View style={localStyles.pathPill}>
@@ -760,7 +760,7 @@ const ChallengeDetailScreen = () => {
   const contentMaxWidth = width >= 700 ? 620 : undefined;
   const isChallengeCompleted = challenge.checkInStatus === "completed" && (challenge.currentDay >= challenge.totalDays || challenge.completedDays.length >= challenge.totalDays);
   const headerStatus = isChallengeCompleted
-    ? { label: "Challenge completado", tone: "done" as const }
+    ? { label: "Desafío completado", tone: "done" as const }
     : challenge.checkInStatus === "completed"
     ? { label: "Hecho hoy", tone: "active" as const }
     : { label: `Día ${challenge.currentDay} activo`, tone: "active" as const };
@@ -787,7 +787,7 @@ const ChallengeDetailScreen = () => {
     setLocalCompletedDays(nextCompletedDays);
     setLocalStatus("completed");
     setFooterSliderOffset(footerSliderMaxOffset);
-    setCelebrationTitle(reachedFinalCheckIn ? "Challenge completado" : "Día completado");
+    setCelebrationTitle(reachedFinalCheckIn ? "Desafío completado" : "Día completado");
     setCelebrationBody(reachedFinalCheckIn ? "Sostuviste el proceso hasta el final. Tu energía cambió." : "Gracias por volver a vos y sostener tu ritmo hoy.");
     setCelebrationVisible(true);
     if (reachedFinalCheckIn) {
@@ -923,7 +923,7 @@ const ChallengeDetailScreen = () => {
             <Icon name="checkmark" size={22} color="#FFFFFF" />
           </View>
           <View style={localStyles.footerSliderCopy}>
-            <Text style={localStyles.footerSliderTitle}>{isChallengeCompleted ? "Challenge completado" : "Día completado"}</Text>
+            <Text style={localStyles.footerSliderTitle}>{isChallengeCompleted ? "Desafío completado" : "Día completado"}</Text>
             <Text style={localStyles.footerSliderSubtitle}>{isChallengeCompleted ? "Lo sostuviste hasta el final" : "Gracias por elegirte hoy"}</Text>
           </View>
         </View>
@@ -1055,8 +1055,8 @@ const ChallengeDetailScreen = () => {
                   <VibesLoader size={32} />
                 ) : (
                   <>
-                    <Text style={localStyles.joinRequestButtonTitle}>Empezar mi challenge</Text>
-                    <Text style={localStyles.joinRequestButtonSubtitle}>Activá tu propio espacio y entrá al chat del challenge</Text>
+                    <Text style={localStyles.joinRequestButtonTitle}>Empezar mi desafío</Text>
+                    <Text style={localStyles.joinRequestButtonSubtitle}>Activá tu propio espacio y entrá al chat del desafío</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -1077,7 +1077,7 @@ const ChallengeDetailScreen = () => {
                   <VibesLoader size={32} />
                 ) : (
                   <>
-                    <Text style={localStyles.joinRequestButtonTitle}>{(event?.visibility ?? "public") === "public" ? "Sumarme al challenge" : ownJoinRequest?.status === "pending" ? "Solicitud enviada" : "Solicitar acceso"}</Text>
+                    <Text style={localStyles.joinRequestButtonTitle}>{(event?.visibility ?? "public") === "public" ? "Sumarme al desafío" : ownJoinRequest?.status === "pending" ? "Solicitud enviada" : "Solicitar acceso"}</Text>
                     <Text style={localStyles.joinRequestButtonSubtitle}>{(event?.visibility ?? "public") === "public" ? "Entrás directo al espacio compartido" : "El creador lo puede aprobar cuando quiera"}</Text>
                   </>
                 )}

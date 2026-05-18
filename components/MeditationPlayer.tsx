@@ -27,7 +27,7 @@ const MeditationPlayer = ({ title, duration, level, progress = 0, isPlaying = fa
     <View style={styles.meditationPlayer}>
       <View style={styles.meditationPlayerHeader}>
         <View style={styles.meditationPlayerInfo}>
-          <Text style={styles.meditationPlayerLabel}>Now Playing</Text>
+          <Text style={styles.meditationPlayerLabel}>Reproduciendo</Text>
           <Text style={styles.meditationPlayerTitle}>{title}</Text>
           {(duration || level) && (
             <Text style={styles.meditationPlayerMeta}>
@@ -37,7 +37,7 @@ const MeditationPlayer = ({ title, duration, level, progress = 0, isPlaying = fa
         </View>
         <TouchableOpacity style={styles.meditationPlayerOpen} onPress={onOpen} disabled={!onOpen}>
           <Icon name="open-outline" size={16} color={WHITE} />
-          <Text style={styles.meditationPlayerOpenText}>Open</Text>
+          <Text style={styles.meditationPlayerOpenText}>Abrir</Text>
         </TouchableOpacity>
       </View>
 

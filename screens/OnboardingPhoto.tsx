@@ -20,6 +20,7 @@ import AppHeader from "../components/AppHeader";
 import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import { useI18n } from "../src/i18n";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -49,8 +50,8 @@ const pickFromGallery = async () => {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== "granted") {
     Alert.alert(
-      "Permission denied",
-      "Please allow gallery access to upload a picture.",
+      "Permiso denegado",
+      "Permití acceso a tus fotos para subir una imagen.",
     );
     return null;
   }
@@ -66,7 +67,7 @@ const pickFromGallery = async () => {
     if (result.canceled || !result.assets?.[0]?.uri) return null;
     return result.assets[0].uri;
   } catch (_error) {
-    Alert.alert("Error", "Could not open the gallery.");
+    Alert.alert("Error", "No se pudo abrir la galería.");
     return null;
   }
 };
@@ -75,8 +76,8 @@ const pickFromCamera = async () => {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== "granted") {
     Alert.alert(
-      "Permission denied",
-      "Please allow camera access to take a photo.",
+      "Permiso denegado",
+      "Permití acceso a tu cámara para sacar una foto.",
     );
     return null;
   }
@@ -92,13 +93,14 @@ const pickFromCamera = async () => {
     if (result.canceled || !result.assets?.[0]?.uri) return null;
     return result.assets[0].uri;
   } catch (_error) {
-    Alert.alert("Error", "Could not open the camera.");
+    Alert.alert("Error", "No se pudo abrir la cámara.");
     return null;
   }
 };
 
 const OnboardingPhoto = () => {
   const navigation = useNavigation();
+  const { t } = useI18n();
   const { draft, updateDraft } = useOnboardingDraft();
   const initialPhotos = useMemo(
     () => normalizeDraftPhotos(draft.photoUris, draft.primaryPhotoUri),
@@ -225,8 +227,8 @@ const OnboardingPhoto = () => {
           contentContainerStyle={localStyles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.onboardTitle}>Add your photo</Text>
-          <Text style={styles.onboardSubtitle}>Show your authentic self</Text>
+          <Text style={styles.onboardTitle}>{t("onboarding.photoTitle")}</Text>
+          <Text style={styles.onboardSubtitle}>{t("onboarding.photoSubtitle")}</Text>
           {draft.locationLabel || draft.country ? (
             <Text style={localStyles.locationText}>
               Ubicación: {draft.locationLabel || draft.country}
@@ -242,10 +244,10 @@ const OnboardingPhoto = () => {
             ) : (
               <View style={localStyles.emptyPrimaryPhoto}>
                 <Icon name="person" size={56} color={TEXT_SECONDARY} />
-                <Text style={localStyles.emptyPrimaryLabel}>No photo yet</Text>
+                <Text style={localStyles.emptyPrimaryLabel}>{t("onboarding.photoEmpty")}</Text>
               </View>
             )}
-            <Text style={localStyles.primaryBadge}>Primary</Text>
+            <Text style={localStyles.primaryBadge}>{t("onboarding.primary")}</Text>
           </View>
 
           {extraPhotos.length > 0 ? (
@@ -273,7 +275,7 @@ const OnboardingPhoto = () => {
                 color="#D88C7A"
                 style={localStyles.buttonIcon}
               />
-              <Text style={styles.welcomeSecondaryText}>Upload photo</Text>
+              <Text style={styles.welcomeSecondaryText}>{t("onboarding.uploadPhoto")}</Text>
             </TouchableOpacity>
 
             {photoUris.length > 0 && canUploadMore ? (
@@ -287,7 +289,7 @@ const OnboardingPhoto = () => {
                   color="#D88C7A"
                   style={localStyles.buttonIcon}
                 />
-                <Text style={styles.welcomeSecondaryText}>Upload another</Text>
+                <Text style={styles.welcomeSecondaryText}>{t("onboarding.uploadAnother")}</Text>
               </TouchableOpacity>
             ) : null}
           </View>
@@ -297,10 +299,10 @@ const OnboardingPhoto = () => {
 
         <View style={localStyles.footer}>
           <TouchableOpacity style={styles.onboardNext} onPress={onContinue}>
-            <Text style={styles.onboardNextText}>Continue</Text>
+            <Text style={styles.onboardNextText}>{t("common.continue")}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={localStyles.skipButton} onPress={onSkip}>
-            <Text style={styles.onboardSkip}>Skip</Text>
+            <Text style={styles.onboardSkip}>{t("common.skip")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -318,9 +320,9 @@ const OnboardingPhoto = () => {
           onPress={() => setShowPickerModal(false)}
         >
           <View style={localStyles.modalCard}>
-            <Text style={localStyles.modalTitle}>Choose source</Text>
+            <Text style={localStyles.modalTitle}>{t("onboarding.chooseSource")}</Text>
             <Text style={localStyles.modalSubtitle}>
-              How would you like to add your photo?
+              {t("onboarding.chooseSourceSubtitle")}
             </Text>
 
             <View style={localStyles.modalButtons}>
@@ -331,7 +333,7 @@ const OnboardingPhoto = () => {
                 <View style={localStyles.modalIconWrap}>
                   <Icon name="camera" size={26} color="#D88C7A" />
                 </View>
-                <Text style={localStyles.modalOptionText}>Camera</Text>
+                <Text style={localStyles.modalOptionText}>{t("onboarding.camera")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -341,7 +343,7 @@ const OnboardingPhoto = () => {
                 <View style={localStyles.modalIconWrap}>
                   <Icon name="images" size={26} color="#D88C7A" />
                 </View>
-                <Text style={localStyles.modalOptionText}>Gallery</Text>
+                <Text style={localStyles.modalOptionText}>{t("onboarding.gallery")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -349,7 +351,7 @@ const OnboardingPhoto = () => {
               style={localStyles.modalCancel}
               onPress={() => setShowPickerModal(false)}
             >
-              <Text style={localStyles.modalCancelText}>Cancel</Text>
+              <Text style={localStyles.modalCancelText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

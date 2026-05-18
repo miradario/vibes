@@ -244,7 +244,7 @@ const buildPreferences = (profile: ProfileLike): string[] => {
   );
   pushPreference("Busca", profile.lookingFor ?? profile.looking_for);
   pushPreference("Intereses", profile.otherTags ?? profile.other_tags);
-  pushPreference("Open to", profile.openTo ?? profile.open_to);
+  pushPreference("Abierto a", profile.openTo ?? profile.open_to);
   pushPreference("Idiomas", profile.languages);
   pushPreference("Zodiaco", profile.zodiac);
   pushPreference("Educación", profile.education);

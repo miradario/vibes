@@ -14,7 +14,7 @@ type I18nContextValue = {
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 export const I18nProvider = ({ children }: { children: React.ReactNode }) => {
-  const [locale, setLocaleState] = useState<Locale>("es");
+  const [locale, setLocaleState] = useState<Locale>("es-AR");
 
   useEffect(() => {
     let active = true;
@@ -23,7 +23,7 @@ export const I18nProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         if (!active) return;
-        if (stored === "es" || stored === "en") {
+        if (stored === "es-AR" || stored === "es" || stored === "en") {
           setLocaleState(stored);
         }
       } catch (_error) {

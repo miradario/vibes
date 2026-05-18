@@ -56,7 +56,7 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
   {
     value: "silent",
     title: "Silencio",
-    subtitle: "Solo tú y tu respiración",
+    subtitle: "Solo vos y tu respiración",
     iconName: "body-outline",
     iconTint: "rgba(174, 191, 209, 0.26)",
   },
@@ -74,7 +74,7 @@ const DURATION_OPTIONS: DurationOption[] = [5, 10];
 const TAB_ITEMS = [
   { key: "explore", label: "Explorar", icon: "compass-outline" },
   { key: "challenges", label: "Desafíos", icon: "trophy-outline" },
-  { key: "home", label: "Home", icon: "home-outline" },
+  { key: "home", label: "Inicio", icon: "home-outline" },
   { key: "vibes", label: "Vibes", icon: "musical-notes-outline" },
   { key: "profile", label: "Perfil", icon: "person-outline" },
 ] as const;
@@ -341,7 +341,6 @@ const MeditationScreen = () => {
   const finishSoundRef = useRef<Audio.Sound | null>(null);
   const videoRef = useRef<Video | null>(null);
   const silentStartedAtRef = useRef<number | null>(null);
-  const shouldResumeOnReloadRef = useRef(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedType, setSelectedType] = useState<MeditationType>("guided");
   const [selectedDuration, setSelectedDuration] = useState<DurationOption>(10);
@@ -611,10 +610,6 @@ const MeditationScreen = () => {
   );
 
   useEffect(() => {
-    shouldResumeOnReloadRef.current = isPlaying;
-  }, [isPlaying]);
-
-  useEffect(() => {
     Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       staysActiveInBackground: false,
@@ -626,33 +621,12 @@ const MeditationScreen = () => {
   }, []);
 
   useEffect(() => {
-    loadMeditationAudio(shouldResumeOnReloadRef.current).catch(() => {
-      Alert.alert("Audio no disponible", "No se pudo cargar esta meditación.");
-    });
+    setIsPlayerReady(isSilentMode);
 
     return () => {
       unloadSound().catch(() => undefined);
     };
-  }, [loadMeditationAudio, unloadSound]);
-
-  useEffect(() => {
-    if (!isBackgroundMusicEnabled) {
-      unloadBackgroundMusic().catch(() => undefined);
-      return undefined;
-    }
-
-    loadBackgroundMusic(isPlaying, positionMillis).catch(() => {
-      Alert.alert("Música no disponible", "No se pudo cargar la música de fondo.");
-      setIsBackgroundMusicEnabled(false);
-    });
-
-    return undefined;
-  }, [
-    isBackgroundMusicEnabled,
-    loadBackgroundMusic,
-    selectedBackgroundMusicSource,
-    unloadBackgroundMusic,
-  ]);
+  }, [isSilentMode, unloadSound]);
 
   useEffect(() => {
     if (!isSilentMode || !isPlaying) return undefined;
@@ -688,7 +662,6 @@ const MeditationScreen = () => {
   }, [unloadBackgroundMusic, unloadFinishSound]);
 
   const resetSessionToBeginning = useCallback(() => {
-    shouldResumeOnReloadRef.current = false;
     silentStartedAtRef.current = null;
     setIsPlaying(false);
     setPositionMillis(0);
@@ -741,9 +714,22 @@ const MeditationScreen = () => {
 
     if (!nextEnabled) {
       await unloadBackgroundMusic().catch(() => undefined);
+      return;
+    }
+
+    if (!isPlaying) return;
+
+    try {
+      await loadBackgroundMusic(true, positionMillis);
+    } catch {
+      Alert.alert("Música no disponible", "No se pudo cargar la música de fondo.");
+      setIsBackgroundMusicEnabled(false);
     }
   }, [
     isBackgroundMusicEnabled,
+    isPlaying,
+    loadBackgroundMusic,
+    positionMillis,
     unloadBackgroundMusic,
   ]);
 
@@ -865,7 +851,7 @@ const MeditationScreen = () => {
           />
 
           <Text style={localStyles.title}>Meditación</Text>
-          <Text style={localStyles.subtitle}>Elige tu práctica para hoy</Text>
+          <Text style={localStyles.subtitle}>Elegí tu práctica para hoy</Text>
 
           <View style={localStyles.section}>
             <SectionLabel>TIPO DE PRÁCTICA</SectionLabel>

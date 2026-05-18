@@ -5,6 +5,11 @@ export const INTENTS = [
 ] as const;
 
 const translations = {
+  "es-AR": {
+    "lookups.women": "Mujeres",
+    "lookups.men": "Hombres",
+    "lookups.everyone": "Todos",
+  },
   es: {
     "lookups.women": "Mujeres",
     "lookups.men": "Hombres",
@@ -17,7 +22,10 @@ const translations = {
   },
 } as const;
 
-export const getIntentLabel = (id?: number | null, locale: "es" | "en" = "en") => {
+export const getIntentLabel = (
+  id?: number | null,
+  locale: keyof typeof translations = "en",
+) => {
   const key = INTENTS.find((item) => item.id === id)?.labelKey;
   return key ? translations[locale][key] : null;
 };

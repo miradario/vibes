@@ -427,7 +427,7 @@ const Discover = () => {
             next.delete(profileId);
             return next;
           });
-          handleApiError(connectError, { toastTitle: "Connect Error" });
+          handleApiError(connectError, { toastTitle: "Error de conexión" });
         },
       },
     );
