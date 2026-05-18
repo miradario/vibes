@@ -1,13 +1,19 @@
 import type { Session } from "@supabase/supabase-js";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { supabase } from "../lib/supabase";
 import { recoverInvalidRefreshToken } from "./session.recovery";
 
 type AuthChangeEvent = string;
 
-const OAUTH_REDIRECT_URL =
-  process.env.EXPO_PUBLIC_OAUTH_REDIRECT_URL?.trim() ||
-  "com.miradario.vibe://auth-callback";
+const OAUTH_REDIRECT_URL = (() => {
+  const configuredRedirect = process.env.EXPO_PUBLIC_OAUTH_REDIRECT_URL?.trim();
+  if (configuredRedirect) return configuredRedirect;
+
+  return Linking.createURL("auth-callback", {
+    scheme: "com.miradario.vibe",
+  });
+})();
 
 WebBrowser.maybeCompleteAuthSession();
 

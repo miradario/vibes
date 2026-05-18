@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 21,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   skipWrap: {
     width: "100%",
