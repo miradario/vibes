@@ -1,4 +1,4 @@
-export type Locale = "es" | "en";
+export type Locale = "es-AR" | "es" | "en";
 
 type TranslationValue = string;
 
@@ -6,7 +6,7 @@ interface TranslationTree {
   [key: string]: TranslationValue | TranslationTree;
 }
 
-const translations = {
+const baseTranslations = {
   es: {
     common: {
       email: "Email",
@@ -474,7 +474,7 @@ const translations = {
     tabs: {
       discover: "Discover",
       home: "Home",
-      challenges: "Desafíos",
+      challenges: "Challenges",
       flow: "Messages",
       events: "Events",
       calendar: "Calendar",
@@ -762,7 +762,7 @@ const translations = {
     messages: {
       yesterday: "Yesterday",
       newConnectionHint: "New connection, say hi!",
-      groupChallenge: "Desafío",
+      groupChallenge: "Challenge",
       groupEvent: "Event",
       noMessagesYet: "No messages yet",
       connections: "Connections",
@@ -784,22 +784,22 @@ const translations = {
       noDirectHint: "No direct messages yet. Start a conversation.",
     },
     events: {
-      challenges: "Desafíos",
+      challenges: "Challenges",
       events: "Events",
-      searchChallenges: "Buscar desafíos...",
+      searchChallenges: "Search challenges...",
       searchEvents: "Search events...",
       create: "Create",
-      loadingChallenges: "Cargando desafíos...",
+      loadingChallenges: "Loading challenges...",
       loadingEvents: "Loading events...",
-      loadChallengesError: "No se pudieron cargar los desafíos.",
+      loadChallengesError: "Could not load challenges.",
       loadEventsError: "Could not load events.",
       couldNotLoad: "Could not load",
-      noChallengesYet: "Todavía no hay desafíos reales",
+      noChallengesYet: "No real challenges yet",
       noEventsYet: "No real events yet",
       queryingSupabase: "Querying Supabase...",
-      challengesEmpty: "Creá un desafío o conectá una fuente real para poblar esta lista.",
+      challengesEmpty: "Create a challenge or connect a real source to populate this list.",
       eventsEmpty: "Create an event or connect a real source to populate this list.",
-      viewChallenge: "Ver desafío",
+      viewChallenge: "View challenge",
       viewEvent: "View event",
     },
     home: {
@@ -875,7 +875,57 @@ const translations = {
       everyone: "Everyone",
     },
   },
-} as const satisfies Record<Locale, TranslationTree>;
+} as const satisfies Record<Exclude<Locale, "es-AR">, TranslationTree>;
+
+const ES_AR_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/\bcontigo\b/g, "con vos"],
+  [/\bContigo\b/g, "Con vos"],
+  [/\bconectarte\b/g, "conectarte"],
+  [/\bElige\b/g, "Elegí"],
+  [/\belige\b/g, "elegí"],
+  [/\bSelecciona\b/g, "Seleccioná"],
+  [/\bselecciona\b/g, "seleccioná"],
+  [/\bCuéntanos\b/g, "Contanos"],
+  [/\bcuéntanos\b/g, "contanos"],
+  [/\bCuentanos\b/g, "Contanos"],
+  [/\bcuentanos\b/g, "contanos"],
+  [/\bsientes\b/g, "sentís"],
+  [/\beres\b/g, "sos"],
+  [/\bpuedas\b/g, "puedas"],
+  [/\bpodrás\b/g, "vas a poder"],
+  [/\bmostrarnos\b/g, "mostrarte"],
+  [/\btal y como sos\b/g, "tal como sos"],
+  [/\bTu nombre\b/g, "Tu nombre"],
+  [/\bUna breve descripción sobre ti\b/g, "Una breve descripción sobre vos"],
+  [/\bComencemos este viaje juntos\b/g, "Empecemos este viaje juntos"],
+  [/\bHome\b/g, "Inicio"],
+  [/\bCalendar\b/g, "Vibes"],
+  [/\bLogin\b/g, "Ingresar"],
+  [/\bSignup\b/g, "Crear cuenta"],
+];
+
+const localizeArgentineSpanish = (source: TranslationTree): TranslationTree =>
+  Object.fromEntries(
+    Object.entries(source).map(([key, value]) => {
+      if (typeof value === "string") {
+        return [
+          key,
+          ES_AR_REPLACEMENTS.reduce(
+            (nextValue, [pattern, replacement]) =>
+              nextValue.replace(pattern, replacement),
+            value,
+          ),
+        ];
+      }
+
+      return [key, localizeArgentineSpanish(value)];
+    }),
+  );
+
+const translations = {
+  "es-AR": localizeArgentineSpanish(baseTranslations.es),
+  ...baseTranslations,
+} satisfies Record<Locale, TranslationTree>;
 
 const getNestedValue = (source: TranslationTree, key: string): string | null => {
   const value = key.split(".").reduce<TranslationValue | TranslationTree | undefined>(
@@ -893,6 +943,7 @@ export const translate = (
 ) => {
   const template =
     getNestedValue(translations[locale], key) ??
+    getNestedValue(translations["es-AR"], key) ??
     getNestedValue(translations.es, key) ??
     key;
 
@@ -905,7 +956,7 @@ export const translate = (
   );
 };
 
-const spiritualPathMap: Record<string, keyof typeof translations.es.spiritual> = {
+const spiritualPathMap: Record<string, keyof typeof baseTranslations.es.spiritual> = {
   Meditación: "meditation",
   Yoga: "yoga",
   Astrología: "astrology",
@@ -918,7 +969,7 @@ const spiritualPathMap: Record<string, keyof typeof translations.es.spiritual> =
   Otro: "other",
 };
 
-const spiritualFieldMap: Record<string, keyof typeof translations.es.spiritual> = {
+const spiritualFieldMap: Record<string, keyof typeof baseTranslations.es.spiritual> = {
   Rol: "role",
   "Años de práctica": "years",
   "Dato relevante": "notes",
@@ -926,14 +977,14 @@ const spiritualFieldMap: Record<string, keyof typeof translations.es.spiritual> 
 
 const spiritualPlaceholderMap: Record<
   string,
-  keyof typeof translations.es.spiritual
+  keyof typeof baseTranslations.es.spiritual
 > = {
   Opcional: "optional",
   "Ej. 5": "yearsPlaceholder",
   "Todo lo que quieras sumar": "notesPlaceholder",
 };
 
-const spiritualOptionMap: Record<string, keyof typeof translations.es.spiritual> = {
+const spiritualOptionMap: Record<string, keyof typeof baseTranslations.es.spiritual> = {
   Instructor: "instructor",
   Alumno: "student",
 };

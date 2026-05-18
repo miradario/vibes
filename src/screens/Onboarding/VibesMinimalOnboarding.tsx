@@ -39,8 +39,8 @@ type VibesMinimalOnboardingProps = {
 };
 
 const VibesMinimalOnboarding = ({
-  title = "Find Your\nTrue Vibe",
-  body = "Connect with like-minded souls and explore a more conscious way of living.",
+  title = "Encontrá tu\nVibe real",
+  body = "Conectá con personas afines y explorá una forma más consciente de vivir.",
   ctaLabel,
   onContinue: onContinueProp,
   reverseVideoOnContinue = false,

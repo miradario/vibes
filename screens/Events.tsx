@@ -130,7 +130,7 @@ const Events = () => {
   );
   const title = section === "challenge" ? "Desafíos" : "Eventos";
   const searchPlaceholder =
-    section === "challenge" ? "Buscar desafíos..." : "Buscar eventos...";
+    section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
   const eventsQuery = useEventsFeedQuery();
   const challengesQuery = useChallengesFeedQuery();
   const { data: myEventGroups = [], isLoading: myEventGroupsLoading } =
@@ -374,7 +374,7 @@ const Events = () => {
                 {listIsLoading
                   ? section === "challenge"
                     ? "Cargando desafíos..."
-                    : "Loading events..."
+                    : t("events.loadingEvents")
                   : error
                     ? "No se pudieron cargar"
                     : normalizedSearch
@@ -387,7 +387,7 @@ const Events = () => {
                       ? "No hay desafíos vigentes"
                     : section === "challenge"
                       ? "Todavía no hay desafíos reales"
-                      : "No real events yet"}
+                      : t("events.noEventsYet")}
               </Text>
               <Text style={localStyles.emptyText}>
                 {listIsLoading
@@ -402,7 +402,7 @@ const Events = () => {
                       ? "Tus desafíos finalizados están guardados abajo."
                     : section === "challenge"
                       ? "Creá un desafío o conectá una fuente real para poblar esta lista."
-                      : "Create an event or connect a real events source to populate this list."}
+                      : t("events.eventsEmpty")}
               </Text>
             </View>
           }

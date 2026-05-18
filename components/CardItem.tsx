@@ -31,6 +31,19 @@ import {
 } from "../src/lib/spiritualPaths";
 
 const SHOW_DISCOVER_DEBUG = false;
+const DISCOVER_PREFERENCE_EXCLUDED_PREFIXES = [
+  "camino espiritual:",
+  "vegetarianismo:",
+  "fuma:",
+  "mascotas:",
+];
+
+const shouldShowDiscoverPreference = (preference: string) => {
+  const normalizedPreference = preference.trim().toLowerCase();
+  return !DISCOVER_PREFERENCE_EXCLUDED_PREFIXES.some((prefix) =>
+    normalizedPreference.startsWith(prefix),
+  );
+};
 
 const CardItem = ({
   description,
@@ -112,7 +125,7 @@ const CardItem = ({
   // Construir lista de preferencias extendida
   const extraPrefs: string[] = [];
   if (preferences && Array.isArray(preferences)) {
-    extraPrefs.push(...preferences.filter((p) => !p.startsWith("Camino espiritual:")));
+    extraPrefs.push(...preferences.filter(shouldShowDiscoverPreference));
   }
   // Agregar campos individuales si existen
   const addIf = (label: string, value: any) => {
@@ -122,7 +135,7 @@ const CardItem = ({
     }
     if (value && typeof value === 'string' && value.trim()) extraPrefs.push(`${label}: ${value}`);
   };
-  addIf('Sobre mí', (spiritualPathDetails && spiritualPathDetails.about_me) || description);
+  addIf('Sobre mí', spiritualPathDetails?.about_me);
   addIf('Género', spiritualPathDetails?.gender);
   addIf('Estatura', spiritualPathDetails?.height_cm ? `${spiritualPathDetails.height_cm} cm` : "");
   addIf('Busca', spiritualPathDetails?.looking_for);
@@ -136,7 +149,7 @@ const CardItem = ({
   addIf('Comunicación', spiritualPathDetails?.communication_style);
   addIf('Estilo de amor', spiritualPathDetails?.love_style);
   addIf('Mascotas', spiritualPathDetails?.pets);
-  const discoverPreferences = extraPrefs;
+  const discoverPreferences = Array.from(new Set(extraPrefs));
   const sharedEventsList = (sharedEvents ?? []).filter(Boolean);
   const sharedChallengesList = (sharedChallenges ?? []).filter(Boolean);
   const discoverHabits = [

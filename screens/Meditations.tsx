@@ -56,7 +56,7 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
   {
     value: "silent",
     title: "Silencio",
-    subtitle: "Solo tú y tu respiración",
+    subtitle: "Solo vos y tu respiración",
     iconName: "body-outline",
     iconTint: "rgba(174, 191, 209, 0.26)",
   },
@@ -74,7 +74,7 @@ const DURATION_OPTIONS: DurationOption[] = [5, 10];
 const TAB_ITEMS = [
   { key: "explore", label: "Explorar", icon: "compass-outline" },
   { key: "challenges", label: "Desafíos", icon: "trophy-outline" },
-  { key: "home", label: "Home", icon: "home-outline" },
+  { key: "home", label: "Inicio", icon: "home-outline" },
   { key: "vibes", label: "Vibes", icon: "musical-notes-outline" },
   { key: "profile", label: "Perfil", icon: "person-outline" },
 ] as const;
@@ -851,7 +851,7 @@ const MeditationScreen = () => {
           />
 
           <Text style={localStyles.title}>Meditación</Text>
-          <Text style={localStyles.subtitle}>Elige tu práctica para hoy</Text>
+          <Text style={localStyles.subtitle}>Elegí tu práctica para hoy</Text>
 
           <View style={localStyles.section}>
             <SectionLabel>TIPO DE PRÁCTICA</SectionLabel>

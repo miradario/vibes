@@ -641,7 +641,7 @@ const Home = () => {
           }
         },
         onError: (error) =>
-          handleApiError(error, { toastTitle: "Connect Error" }),
+          handleApiError(error, { toastTitle: "Error de conexión" }),
       },
     );
 
@@ -936,7 +936,7 @@ const Home = () => {
             <View style={localStyles.heroCopy}>
               <Text style={localStyles.heroTitle}>Hola, {firstName}</Text>
               <Text style={localStyles.heroSubtitle}>
-                Conéctate contigo antes de conectar con otros.
+                Conectá con vos antes de conectar con otros.
               </Text>
             </View>
           </View>

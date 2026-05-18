@@ -27,7 +27,7 @@ const VideoPlayer = ({ title, duration, access, progress = 0, isPlaying = false,
     <View style={styles.meditationPlayer}>
       <View style={styles.meditationPlayerHeader}>
         <View style={styles.meditationPlayerInfo}>
-          <Text style={styles.meditationPlayerLabel}>Now Watching</Text>
+          <Text style={styles.meditationPlayerLabel}>Viendo ahora</Text>
           <Text style={styles.meditationPlayerTitle}>{title}</Text>
           {(duration || access) && (
             <Text style={styles.meditationPlayerMeta}>
@@ -37,7 +37,7 @@ const VideoPlayer = ({ title, duration, access, progress = 0, isPlaying = false,
         </View>
         <TouchableOpacity style={styles.meditationPlayerOpen} onPress={onOpen} disabled={!onOpen}>
           <Icon name="play" size={16} color={WHITE} />
-          <Text style={styles.meditationPlayerOpenText}>Watch</Text>
+          <Text style={styles.meditationPlayerOpenText}>Ver</Text>
         </TouchableOpacity>
       </View>
 

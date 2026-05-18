@@ -45,7 +45,7 @@ const Matches = () => {
           {item.otherUserName}
         </Text>
         <Text style={localStyles.subtitle} numberOfLines={1}>
-          {item.lastMessage ?? "New connection"}
+          {item.lastMessage ?? "Nueva conexión"}
         </Text>
       </View>
     </TouchableOpacity>
@@ -55,7 +55,7 @@ const Matches = () => {
     <View style={styles.bg}>
       <View style={styles.soulmateScreen}>
         <AppHeader
-          title="Resonances"
+          title="Conexiones"
           showBack
           onBack={() => navigation.goBack()}
           style={localStyles.header}
@@ -68,9 +68,9 @@ const Matches = () => {
           </View>
         ) : (matches ?? []).length === 0 ? (
           <View style={localStyles.emptyState}>
-            <Text style={localStyles.emptyTitle}>No resonances yet</Text>
+            <Text style={localStyles.emptyTitle}>Todavía no hay conexiones</Text>
             <Text style={localStyles.emptyText}>
-              When you connect with someone, they'll appear here.
+              Cuando conectes con alguien, va a aparecer acá.
             </Text>
           </View>
         ) : (
@@ -83,7 +83,7 @@ const Matches = () => {
         )}
 
         <TouchableOpacity style={styles.soulmateFooterButton}>
-          <Text style={styles.soulmateFooterText}>See previous resonances</Text>
+          <Text style={styles.soulmateFooterText}>Ver conexiones anteriores</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -428,7 +428,7 @@ const EventDetail = () => {
           }
         },
         onError: (error) =>
-          handleApiError(error, { toastTitle: "Connect Error" }),
+          handleApiError(error, { toastTitle: "Error de conexión" }),
       },
     );
   };

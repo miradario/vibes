@@ -93,27 +93,27 @@ export const STEP_COPY: Record<
 > = {
   purpose: {
     title: "¿Qué te trae a Vibes?",
-    subtitle: "Elige lo que más resuene contigo",
+    subtitle: "Elegí lo que más resuene con vos",
     button: "Siguiente",
   },
   energy: {
-    title: "¿Cómo te sientes hoy?",
+    title: "¿Cómo te sentís hoy?",
     subtitle: "Tu energía nos ayuda a crear mejores conexiones",
     button: "Siguiente",
   },
   profile: {
-    title: "Cuéntanos sobre ti",
-    subtitle: "Así podrás mostrarnos tal y como eres",
+    title: "Contanos sobre vos",
+    subtitle: "Así vas a poder mostrarte tal como sos",
     button: "Siguiente",
   },
   practices: {
     title: "Prácticas que te inspiran",
-    subtitle: "Selecciona las que forman parte de tu camino",
+    subtitle: "Seleccioná las que forman parte de tu camino",
     button: "Siguiente",
   },
   completion: {
     title: "Tu vibe está listo.",
-    subtitle: "Comencemos este viaje juntos.",
+    subtitle: "Empecemos este viaje juntos.",
     button: "Entrar a Vibes",
   },
 };

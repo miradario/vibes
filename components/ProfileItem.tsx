@@ -67,7 +67,7 @@ const ProfileItem = ({
 
       {meditations && (
         <View style={styles.profileSection}>
-          <Text style={styles.profileSectionTitle}>Meditations</Text>
+          <Text style={styles.profileSectionTitle}>Meditaciones</Text>
           {meditations.map((item, index) => (
             <View key={`meditation-${index}`} style={styles.profileRow}>
               <View>
@@ -101,7 +101,7 @@ const ProfileItem = ({
 
       {events && (
         <View style={styles.profileSection}>
-          <Text style={styles.profileSectionTitle}>Events</Text>
+          <Text style={styles.profileSectionTitle}>Eventos</Text>
           {events.map((item, index) => (
             <View key={`event-${index}`} style={styles.profileRow}>
               <View>
@@ -120,20 +120,20 @@ const ProfileItem = ({
 
       {(shareToCommunity !== undefined || pricing) && (
         <View style={styles.profileSection}>
-          <Text style={styles.profileSectionTitle}>Sharing</Text>
+          <Text style={styles.profileSectionTitle}>Compartir</Text>
           {shareToCommunity !== undefined && (
             <View style={styles.profileRow}>
-              <Text style={styles.profileRowTitle}>Community sharing</Text>
+              <Text style={styles.profileRowTitle}>Compartir con la comunidad</Text>
               <View style={styles.profileBadge}>
                 <Text style={styles.profileBadgeText}>
-                  {shareToCommunity ? "On" : "Off"}
+                  {shareToCommunity ? "Sí" : "No"}
                 </Text>
               </View>
             </View>
           )}
           {pricing && (
             <View style={styles.profileRow}>
-              <Text style={styles.profileRowTitle}>Pricing</Text>
+              <Text style={styles.profileRowTitle}>Precio</Text>
               <View style={styles.profileBadge}>
                 <Text style={styles.profileBadgeText}>{pricing}</Text>
               </View>
