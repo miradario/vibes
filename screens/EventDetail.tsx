@@ -23,6 +23,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles, {
   TEXT_SECONDARY,
+  TEXT_PRIMARY,
   PRIMARY_COLOR,
   WHITE,
   DARK_GRAY,
@@ -794,7 +795,12 @@ const EventDetail = () => {
 
     if (isEventJoined) {
       return (
-        <View style={localStyles.fixedFooterContent}>
+        <View
+          style={[
+            localStyles.fixedFooterContent,
+            localStyles.eventFixedFooterContent,
+          ]}
+        >
           <TouchableOpacity
             style={[styles.eventDetailJoinButton, localStyles.footerActionButton]}
             onPress={() =>
@@ -816,7 +822,12 @@ const EventDetail = () => {
     }
 
     return (
-      <View style={localStyles.fixedFooterContent}>
+      <View
+        style={[
+          localStyles.fixedFooterContent,
+          localStyles.eventFixedFooterContent,
+        ]}
+      >
         <TouchableOpacity
           style={[styles.eventDetailJoinButton, localStyles.footerActionButton]}
           onPress={async () => {
@@ -886,14 +897,6 @@ const EventDetail = () => {
   const onlineLink =
     typeof event?.onlineLink === "string" && event.onlineLink.trim()
       ? event.onlineLink.trim()
-      : null;
-  const eventHostName =
-    typeof event?.hostName === "string" && event.hostName.trim()
-      ? event.hostName.trim()
-      : null;
-  const eventHostImage =
-    typeof event?.hostImage === "string" && event.hostImage.trim()
-      ? { uri: event.hostImage.trim() }
       : null;
   const eventTags = Array.isArray(event?.tags)
     ? event.tags.filter(
@@ -1195,9 +1198,13 @@ const EventDetail = () => {
       />
 
       <ScrollView
-        style={styles.eventDetailContent}
+        style={[
+          styles.eventDetailContent,
+          !isChallenge && localStyles.eventDetailContentFullBleed,
+        ]}
         contentContainerStyle={[
           localStyles.scrollContent,
+          !isChallenge && localStyles.eventScrollContent,
           isChallenge && localStyles.scrollContentChallenge,
         ]}
         showsVerticalScrollIndicator={false}
@@ -1219,31 +1226,26 @@ const EventDetail = () => {
                   resizeMode={ResizeMode.COVER}
                 />
                 <View style={localStyles.eventHeroScrim} />
-                <View style={localStyles.eventHeroOrganizerBadge}>
-                  {eventHostImage ? (
-                    <Image
-                      source={eventHostImage}
-                      style={localStyles.eventHeroOrganizerAvatar}
-                    />
-                  ) : (
-                    <View style={localStyles.eventHeroOrganizerAvatarFallback}>
-                      <Icon name="person" size={14} color={WHITE} />
-                    </View>
-                  )}
-                  <Text
-                    style={localStyles.eventHeroOrganizerName}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {eventHostName || "Comunidad Vibes"}
-                  </Text>
-                </View>
                 <View style={localStyles.eventHeroContent}>
                   <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
                   <Text style={localStyles.eventHeroSubtitle}>
                     {eventLeadText}
                   </Text>
                 </View>
+                <TouchableOpacity
+                  activeOpacity={0.86}
+                  style={localStyles.eventHeroMessageButton}
+                  onPress={() =>
+                    navigation.navigate("EventChat" as never, { event } as never)
+                  }
+                >
+                  <Icon
+                    name="chatbox-ellipses-outline"
+                    size={20}
+                    color={DARK_GRAY}
+                  />
+                  <Text style={localStyles.eventHeroMessageText}>Mensaje</Text>
+                </TouchableOpacity>
               </View>
             ) : (
               <View style={localStyles.eventHeroMedia}>
@@ -1254,35 +1256,35 @@ const EventDetail = () => {
                   />
                 ) : null}
                 <View style={localStyles.eventHeroScrim} />
-                <View style={localStyles.eventHeroOrganizerBadge}>
-                  {eventHostImage ? (
-                    <Image
-                      source={eventHostImage}
-                      style={localStyles.eventHeroOrganizerAvatar}
-                    />
-                  ) : (
-                    <View style={localStyles.eventHeroOrganizerAvatarFallback}>
-                      <Icon name="person" size={14} color={WHITE} />
-                    </View>
-                  )}
-                  <Text
-                    style={localStyles.eventHeroOrganizerName}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {eventHostName || "Comunidad Vibes"}
-                  </Text>
-                </View>
                 <View style={localStyles.eventHeroContent}>
                   <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
                   <Text style={localStyles.eventHeroSubtitle}>
                     {eventLeadText}
                   </Text>
                 </View>
+                <TouchableOpacity
+                  activeOpacity={0.86}
+                  style={localStyles.eventHeroMessageButton}
+                  onPress={() =>
+                    navigation.navigate("EventChat" as never, { event } as never)
+                  }
+                >
+                  <Icon
+                    name="chatbox-ellipses-outline"
+                    size={20}
+                    color={DARK_GRAY}
+                  />
+                  <Text style={localStyles.eventHeroMessageText}>Mensaje</Text>
+                </TouchableOpacity>
               </View>
             )}
 
-            <View style={styles.eventDetailInfoCard}>
+            <View
+              style={[
+                styles.eventDetailInfoCard,
+                localStyles.eventDetailInfoCardFloating,
+              ]}
+            >
                 <View style={localStyles.eventMetaPillsRow}>
                   <View style={localStyles.eventMetaPill}>
                     <Icon
@@ -1417,7 +1419,7 @@ const EventDetail = () => {
                         </View>
                       )}
                       <View style={localStyles.eventMiniMapBadge}>
-                        <Icon name="navigate" size={12} color={WHITE} />
+                        <Icon name="navigate" size={18} color={DARK_GRAY} />
                         <Text style={localStyles.eventMiniMapBadgeText}>
                           Abrir mapa
                         </Text>
@@ -2032,12 +2034,12 @@ const localStyles = StyleSheet.create({
     borderColor: "#F0E1C7",
   },
   eventHeroMedia: {
-    minHeight: 232,
-    borderRadius: 28,
+    minHeight: 430,
+    borderRadius: 0,
     overflow: "hidden",
-    marginBottom: 18,
+    marginBottom: 0,
     justifyContent: "flex-end",
-    backgroundColor: "#C9B89A",
+    backgroundColor: "#EFE4D2",
   },
   eventHeroVideo: {
     position: "absolute",
@@ -2063,70 +2065,76 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "rgba(37, 26, 11, 0.36)",
-  },
-  eventHeroOrganizerBadge: {
-    position: "absolute",
-    right: 16,
-    bottom: 18,
-    zIndex: 2,
-    maxWidth: 124,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.16)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.24)",
-  },
-  eventHeroOrganizerAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-  },
-  eventHeroOrganizerAvatarFallback: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(229, 188, 149, 0.95)",
-  },
-  eventHeroOrganizerName: {
-    flex: 1,
-    color: WHITE,
-    fontSize: 11,
-    lineHeight: 13,
-    fontFamily: "CormorantGaramond_700Bold",
+    backgroundColor: "rgba(246, 246, 244, 0.16)",
   },
   eventHeroContent: {
-    paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 74,
+    position: "absolute",
+    top: 132,
+    left: 0,
+    right: 0,
+    zIndex: 2,
+    paddingHorizontal: 30,
   },
   eventHeroTitle: {
-    color: WHITE,
-    fontSize: 36,
-    lineHeight: 38,
+    color: TEXT_PRIMARY,
+    fontSize: 48,
+    lineHeight: 52,
     fontFamily: "CormorantGaramond_700Bold",
   },
   eventHeroSubtitle: {
-    marginTop: 6,
-    color: "rgba(255,255,255,0.92)",
-    fontSize: 16,
-    lineHeight: 20,
+    marginTop: 8,
+    color: TEXT_SECONDARY,
+    fontSize: 21,
+    lineHeight: 25,
     fontFamily: "CormorantGaramond_500Medium",
   },
+  eventHeroMessageButton: {
+    position: "absolute",
+    right: 28,
+    bottom: 58,
+    zIndex: 3,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    borderRadius: 999,
+    backgroundColor: "rgba(255, 255, 255, 0.88)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.72)",
+    shadowColor: "#A88A55",
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+  eventHeroMessageText: {
+    color: DARK_GRAY,
+    fontSize: 19,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  eventDetailContentFullBleed: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+  eventScrollContent: {
+    paddingTop: 0,
+  },
+  eventDetailInfoCardFloating: {
+    marginHorizontal: 24,
+    marginTop: -76,
+    paddingTop: 26,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+  },
   eventMiniMapCard: {
-    height: 116,
-    borderRadius: 18,
+    height: 190,
+    borderRadius: 24,
     overflow: "hidden",
     backgroundColor: "#FBF5EA",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.24)",
-    marginTop: 2,
+    marginTop: 12,
     marginBottom: 6,
   },
   eventMiniMapImage: {
@@ -2165,20 +2173,25 @@ const localStyles = StyleSheet.create({
   },
   eventMiniMapBadge: {
     position: "absolute",
-    right: 10,
-    bottom: 10,
+    right: 16,
+    bottom: 16,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(43, 43, 43, 0.72)",
+    gap: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: "#A88A55",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
   eventMiniMapBadgeText: {
-    color: WHITE,
-    fontSize: 11,
-    fontWeight: "700",
+    color: DARK_GRAY,
+    fontSize: 16,
+    fontFamily: "CormorantGaramond_700Bold",
   },
   daysWrap: {
     flexDirection: "row",
@@ -2269,6 +2282,13 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
+  eventFixedFooterContent: {
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderRadius: 30,
+    paddingTop: 14,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+  },
   challengeFooterButtonGroup: {
     flexDirection: "row",
     alignItems: "stretch",
@@ -2278,24 +2298,24 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     flexWrap: "wrap",
-    gap: 10,
-    marginTop: -4,
-    marginBottom: 12,
+    gap: 12,
+    marginTop: 0,
+    marginBottom: 18,
   },
   eventMetaPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
     backgroundColor: "#FBF5EA",
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.24)",
   },
   eventMetaPillText: {
     color: DARK_GRAY,
-    fontSize: 13,
+    fontSize: 16,
     fontFamily: "CormorantGaramond_700Bold",
   },
   headerActions: {

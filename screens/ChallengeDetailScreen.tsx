@@ -89,8 +89,7 @@ const FOOTER_SLIDER_TRACK_HEIGHT = 68;
 const FOOTER_SLIDER_FILL_LEFT = FOOTER_SLIDER_HORIZONTAL_PADDING + FOOTER_SLIDER_HANDLE_SIZE / 2 - FOOTER_SLIDER_TRACK_HEIGHT / 2;
 
 export const getProgressMode = (totalDays: number): ProgressMode => {
-  if (totalDays <= 10) return "path";
-  if (totalDays <= 30) return "compact";
+  if (totalDays <= 30) return "path";
   return "calendar";
 };
 
@@ -206,12 +205,13 @@ type ChallengeHeaderProps = {
   challenge: ChallengeDetailData;
   onBack: () => void;
   onShare?: () => void;
+  isSharing?: boolean;
   statusLabel?: string;
   statusTone?: "active" | "done" | "warm";
   showSubtitle?: boolean;
 };
 
-export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, statusTone = "active", showSubtitle = true }: ChallengeHeaderProps) => (
+export const ChallengeHeader = memo(({ challenge, onBack, onShare, isSharing = false, statusLabel, statusTone = "active", showSubtitle = true }: ChallengeHeaderProps) => (
   <AppHeader
     showBack
     onBack={onBack}
@@ -219,8 +219,12 @@ export const ChallengeHeader = memo(({ challenge, onBack, onShare, statusLabel, 
     backButtonStyle={localStyles.iconButton}
     contentStyle={localStyles.headerCopy}
     right={
-      <TouchableOpacity style={localStyles.iconButton} onPress={onShare}>
-        <Icon name="share-social-outline" size={21} color={palette.text} />
+      <TouchableOpacity style={localStyles.iconButton} onPress={onShare} disabled={isSharing}>
+        {isSharing ? (
+          <VibesLoader size={28} />
+        ) : (
+          <Icon name="share-social-outline" size={21} color={palette.text} />
+        )}
       </TouchableOpacity>
     }
   >
@@ -395,7 +399,7 @@ const DayCircle = memo(({ day, state, size = 38, showLabel = true }: DayCirclePr
         animatedStyle,
       ]}>
       {state === "completed" ? (
-        <Icon name="checkmark" size={Math.max(14, size * 0.42)} color="#FFFFFF" />
+        <Icon name="checkmark" size={Math.max(14, size * 0.42)} color="#A85F42" />
       ) : (
         <Text style={[localStyles.dayText, state === "active" && localStyles.dayTextActive, state === "future" && localStyles.dayTextFuture, state === "missed" && localStyles.dayTextMissed]}>{showLabel ? day : ""}</Text>
       )}
@@ -422,20 +426,86 @@ export const AdaptiveProgress = memo(({ totalDays, currentDay, completedDays }: 
 
 export const PathProgress = memo(({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
   const days = useMemo(() => Array.from({ length: totalDays }, (_, index) => index + 1), [totalDays]);
+  const completedCount = completedDays.filter((day) => day >= 1 && day <= totalDays).length;
+  const remainingCount = Math.max(totalDays - completedCount - 1, 0);
 
   return (
     <View style={localStyles.progressCard}>
-      <Text style={localStyles.sectionTitle}>Camino del desafío</Text>
-      <View style={localStyles.pathRow}>
+      <View style={localStyles.pathHeader}>
+        <View style={localStyles.pathIconWrap}>
+          <Icon name="flag-outline" size={26} color="#C47A55" />
+        </View>
+        <View style={localStyles.pathHeaderCopy}>
+          <Text style={localStyles.sectionTitle}>Camino del desafío</Text>
+          <Text style={localStyles.pathSubtitle}>
+            {totalDays} días para conectar contigo
+          </Text>
+        </View>
+        <View style={localStyles.pathPill}>
+          <Icon name="trending-up-outline" size={15} color="#C47A55" />
+          <Text style={localStyles.pathPillText}>Progreso</Text>
+        </View>
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={localStyles.pathScrollContent}
+      >
         {days.map((day, index) => {
           const state = getDayState(day, currentDay, completedDays);
           return (
-            <View key={day} style={localStyles.pathItem}>
-              <DayCircle day={day} state={state} />
-              {index < days.length - 1 ? <View style={[localStyles.pathConnector, isDayCompleted(day, completedDays) && localStyles.pathConnectorDone]} /> : null}
+            <View key={day} style={localStyles.pathNodeWrap}>
+              <DayCircle day={day} state={state} size={38} />
+              {index < days.length - 1 ? (
+                <View
+                  style={[
+                    localStyles.pathConnector,
+                    (isDayCompleted(day, completedDays) || day < currentDay) &&
+                      localStyles.pathConnectorDone,
+                  ]}
+                />
+              ) : null}
             </View>
           );
         })}
+      </ScrollView>
+
+      <View style={localStyles.pathMantraRow}>
+        <View style={localStyles.pathMantraIcon}>
+          <Icon name="leaf-outline" size={20} color="#7FA579" />
+        </View>
+        <Text style={localStyles.pathMantraText}>
+          Cada paso te acerca a tu mejor versión.
+        </Text>
+      </View>
+
+      <View style={localStyles.pathStatsCard}>
+        <View style={localStyles.pathStatItem}>
+          <View style={[localStyles.pathStatDot, localStyles.pathStatDotCompleted]}>
+            <Icon name="checkmark" size={16} color="#A85F42" />
+          </View>
+          <View>
+            <Text style={localStyles.pathStatValue}>{completedCount}</Text>
+            <Text style={localStyles.pathStatLabel}>Completados</Text>
+          </View>
+        </View>
+        <View style={localStyles.pathStatDivider} />
+        <View style={localStyles.pathStatItem}>
+          <View style={[localStyles.pathStatDot, localStyles.pathStatDotCurrent]} />
+          <View>
+            <Text style={localStyles.pathStatValue}>1</Text>
+            <Text style={localStyles.pathStatLabel}>Actual</Text>
+          </View>
+        </View>
+        <View style={localStyles.pathStatDivider} />
+        <View style={localStyles.pathStatItem}>
+          <View style={[localStyles.pathStatDot, localStyles.pathStatDotFuture]} />
+          <View>
+            <Text style={localStyles.pathStatValue}>{remainingCount}</Text>
+            <Text style={localStyles.pathStatLabel}>Por completar</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -660,6 +730,7 @@ const ChallengeDetailScreen = () => {
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [celebrationTitle, setCelebrationTitle] = useState("Día completado");
   const [celebrationBody, setCelebrationBody] = useState("Gracias por elegirte hoy");
+  const [isSharing, setIsSharing] = useState(false);
 
   const baseChallenge = useMemo(() => mapEventToChallengeData(event, remoteCheckins, participant), [event, participant, remoteCheckins]);
   const completedDays = useMemo(
@@ -692,8 +763,6 @@ const ChallengeDetailScreen = () => {
     ? { label: "Challenge completado", tone: "done" as const }
     : challenge.checkInStatus === "completed"
     ? { label: "Hecho hoy", tone: "active" as const }
-    : challenge.checkInStatus === "broken"
-    ? { label: "Retomá hoy", tone: "warm" as const }
     : { label: `Día ${challenge.currentDay} activo`, tone: "active" as const };
   const footerSliderMaxOffset = Math.max(footerSliderWidth - FOOTER_SLIDER_HANDLE_SIZE - FOOTER_SLIDER_HORIZONTAL_PADDING * 2, 0);
   const footerSliderFillWidth = Math.min(footerSliderOffset + FOOTER_SLIDER_TRACK_HEIGHT, Math.max(footerSliderWidth - FOOTER_SLIDER_FILL_LEFT, 0));
@@ -730,16 +799,21 @@ const ChallengeDetailScreen = () => {
   const handleShare = async () => {
     if (!event) return;
 
-    if (isJoined) {
-      await shareChallengeProgress(event, {
-        currentDay: challenge.currentDay,
-        totalDays: challenge.totalDays,
-        streak: challenge.streak,
-      });
-      return;
-    }
+    setIsSharing(true);
+    try {
+      if (isJoined) {
+        await shareChallengeProgress(event, {
+          currentDay: challenge.currentDay,
+          totalDays: challenge.totalDays,
+          streak: challenge.streak,
+        });
+        return;
+      }
 
-    await shareChallengeInvite(event);
+      await shareChallengeInvite(event);
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const handleJoinOrRequest = async () => {
@@ -885,6 +959,7 @@ const ChallengeDetailScreen = () => {
           onShare={() => {
             void handleShare();
           }}
+          isSharing={isSharing}
           statusLabel={headerStatus.label}
           statusTone={headerStatus.tone}
           showSubtitle={false}
@@ -894,7 +969,7 @@ const ChallengeDetailScreen = () => {
         contentContainerStyle={[
           localStyles.content,
           {
-            paddingTop: 128,
+            paddingTop: 154,
             paddingBottom: insets.bottom + 188,
             maxWidth: contentMaxWidth,
             alignSelf: "center",
@@ -902,7 +977,9 @@ const ChallengeDetailScreen = () => {
           },
         ]}
         showsVerticalScrollIndicator={false}>
-        <Text style={localStyles.contentSubtitle}>{challenge.subtitle}</Text>
+        <Text style={localStyles.contentSubtitle} numberOfLines={3}>
+          {challenge.subtitle}
+        </Text>
         <GrowthIllustration percent={percent} presetId={event?.imagePresetId ?? null} />
         <InfoCardsRow challenge={challenge} percent={percent} />
         <View style={localStyles.visibilityCard}>
@@ -1176,9 +1253,9 @@ const localStyles = StyleSheet.create({
   },
   title: {
     marginTop: 2,
-    color: palette.text,
-    fontSize: 28,
-    lineHeight: 31,
+    color: "rgba(45, 41, 36, 0.72)",
+    fontSize: 23,
+    lineHeight: 26,
     fontFamily: "CormorantGaramond_700Bold",
   },
   subtitle: {
@@ -1189,10 +1266,12 @@ const localStyles = StyleSheet.create({
     fontFamily: "CormorantGaramond_500Medium",
   },
   contentSubtitle: {
-    marginBottom: 14,
-    color: palette.muted,
-    fontSize: 17,
-    lineHeight: 22,
+    marginTop: 2,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+    color: "rgba(45, 41, 36, 0.74)",
+    fontSize: 16,
+    lineHeight: 21,
     fontFamily: "CormorantGaramond_500Medium",
   },
   headerStatusPill: {
@@ -1509,36 +1588,77 @@ const localStyles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: "rgba(45, 41, 36, 0.07)",
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
     shadowColor: "#6F5536",
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
   },
+  pathHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  pathIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(216, 140, 122, 0.12)",
+  },
+  pathHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
   sectionTitle: {
     color: palette.text,
-    fontSize: 24,
+    fontSize: 27,
+    lineHeight: 31,
     fontFamily: "CormorantGaramond_700Bold",
-    marginBottom: 16,
   },
-  pathRow: {
+  pathSubtitle: {
+    marginTop: 2,
+    color: "rgba(45, 41, 36, 0.58)",
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  pathPill: {
+    minHeight: 36,
+    borderRadius: 18,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 6,
+    backgroundColor: "rgba(246, 246, 244, 0.92)",
   },
-  pathItem: {
+  pathPillText: {
+    color: "#C47A55",
+    fontSize: 13,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  pathScrollContent: {
+    paddingTop: 28,
+    paddingBottom: 26,
+    paddingHorizontal: 2,
     flexDirection: "row",
     alignItems: "center",
-    flex: 1,
+  },
+  pathNodeWrap: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   pathConnector: {
-    flex: 1,
-    height: 3,
+    width: 20,
+    height: 4,
     borderRadius: 2,
-    backgroundColor: palette.faint,
+    marginHorizontal: -1,
+    backgroundColor: "rgba(233, 224, 211, 0.86)",
   },
   pathConnectorDone: {
-    backgroundColor: palette.gold,
+    backgroundColor: "rgba(216, 140, 122, 0.34)",
   },
   dayCircle: {
     alignItems: "center",
@@ -1547,16 +1667,20 @@ const localStyles = StyleSheet.create({
     shadowColor: palette.gold,
   },
   dayCompleted: {
-    backgroundColor: palette.accentBlue,
-    borderColor: palette.accentBlue,
+    backgroundColor: "rgba(216, 140, 122, 0.32)",
+    borderColor: "rgba(216, 140, 122, 0.18)",
   },
   dayActive: {
-    backgroundColor: palette.gold,
-    borderColor: "#F6D59B",
+    backgroundColor: palette.accentBlue,
+    borderColor: "rgba(174, 191, 209, 0.42)",
+    shadowColor: palette.accentBlue,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   dayFuture: {
-    backgroundColor: "#F0ECE4",
-    borderColor: palette.faint,
+    backgroundColor: "rgba(240, 236, 228, 0.9)",
+    borderColor: "rgba(233, 224, 211, 0.85)",
   },
   dayMissed: {
     backgroundColor: palette.redSoft,
@@ -1575,6 +1699,79 @@ const localStyles = StyleSheet.create({
   },
   dayTextMissed: {
     color: palette.red,
+  },
+  pathMantraRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+  },
+  pathMantraIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(127, 165, 121, 0.12)",
+  },
+  pathMantraText: {
+    flex: 1,
+    color: "rgba(45, 41, 36, 0.68)",
+    fontSize: 17,
+    lineHeight: 22,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  pathStatsCard: {
+    minHeight: 76,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(45, 41, 36, 0.08)",
+    backgroundColor: "rgba(255, 253, 248, 0.72)",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  pathStatItem: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+  },
+  pathStatDot: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pathStatDotCompleted: {
+    backgroundColor: "rgba(216, 140, 122, 0.24)",
+  },
+  pathStatDotCurrent: {
+    backgroundColor: palette.accentBlue,
+  },
+  pathStatDotFuture: {
+    backgroundColor: "rgba(240, 236, 228, 0.96)",
+  },
+  pathStatValue: {
+    color: palette.text,
+    fontSize: 21,
+    lineHeight: 24,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  pathStatLabel: {
+    color: "rgba(45, 41, 36, 0.62)",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: "CormorantGaramond_500Medium",
+  },
+  pathStatDivider: {
+    width: 1,
+    height: 42,
+    backgroundColor: "rgba(45, 41, 36, 0.08)",
   },
   compactTrack: {
     height: 12,

@@ -159,8 +159,10 @@ const Startup = () => {
             style={styles.illustration}
           />
         </View>
-        <Text style={styles.title}>Respira hondo.</Text>
-        <Text style={styles.body}>Todo se esta acomodando para vos.</Text>
+        <Text style={styles.title}>Toma una respiración profunda.</Text>
+        <Text style={styles.body}>
+          Tu energía se está ordenando para abrirte el camino correcto.
+        </Text>
       </Animated.View>
       <Animated.View pointerEvents="none" style={[styles.fadeOverlay, fadeOverlayStyle]} />
     </View>

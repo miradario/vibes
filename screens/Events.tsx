@@ -14,13 +14,28 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 import AvatarGroup from "../components/AvatarGroup";
+import VibesLoader from "../components/VibesLoader";
 import {
   useChallengesFeedQuery,
   useEventsFeedQuery,
+  useMyEventGroupsQuery,
 } from "../src/queries/events.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
+import { useAuthSession } from "../src/auth/auth.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
+
+type FeedListItem =
+  | {
+      kind: "section";
+      id: string;
+      title: string;
+      subtitle?: string;
+    }
+  | {
+      kind: "feed";
+      item: EventFeedItem;
+    };
 
 const normalizeSearchText = (value: string | null | undefined) =>
   (value ?? "")
@@ -59,6 +74,13 @@ const getChallengeProgress = (item: EventFeedItem) => {
 
 const isFinishedChallenge = (item: EventFeedItem) =>
   item.type === "challenge" && getChallengeProgress(item)?.tone === "done";
+
+const isExpiredEvent = (item: EventFeedItem) => {
+  if (item.type !== "event" || !item.startsAt) return false;
+  const startsAt = new Date(item.startsAt);
+  if (Number.isNaN(startsAt.getTime())) return false;
+  return startsAt.getTime() < Date.now();
+};
 
 const getVisibilityMeta = (visibility?: EventFeedItem["visibility"]) => {
   if (visibility === "friends") {
@@ -102,6 +124,7 @@ const Events = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { t } = useI18n();
+  const { data: session } = useAuthSession();
   const [section, setSection] = useState<"event" | "challenge">(
     route.params?.section === "challenge" ? "challenge" : "event",
   );
@@ -110,6 +133,8 @@ const Events = () => {
     section === "challenge" ? "Buscar desafíos..." : "Buscar eventos...";
   const eventsQuery = useEventsFeedQuery();
   const challengesQuery = useChallengesFeedQuery();
+  const { data: myEventGroups = [], isLoading: myEventGroupsLoading } =
+    useMyEventGroupsQuery(session?.user?.id);
   const {
     data: items = [],
     isLoading,
@@ -117,6 +142,7 @@ const Events = () => {
   } = section === "challenge" ? challengesQuery : eventsQuery;
   const [search, setSearch] = useState("");
   const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
+  const [showExpiredEvents, setShowExpiredEvents] = useState(false);
 
   useEffect(() => {
     setSection(route.params?.section === "challenge" ? "challenge" : "event");
@@ -153,8 +179,15 @@ const Events = () => {
   }, [items, normalizedSearch]);
 
   const visibleItems = useMemo(() => {
-    if (section !== "challenge") return filteredItems;
+    if (section !== "challenge") {
+      return filteredItems.filter((item) => !isExpiredEvent(item));
+    }
     return filteredItems.filter((item) => !isFinishedChallenge(item));
+  }, [filteredItems, section]);
+
+  const expiredEventItems = useMemo(() => {
+    if (section !== "event") return [];
+    return filteredItems.filter(isExpiredEvent);
   }, [filteredItems, section]);
 
   const finishedChallengeItems = useMemo(() => {
@@ -162,10 +195,99 @@ const Events = () => {
     return filteredItems.filter(isFinishedChallenge);
   }, [filteredItems, section]);
 
-  const listItems = useMemo(() => {
-    if (section !== "challenge" || !showFinishedChallenges) return visibleItems;
-    return [...visibleItems, ...finishedChallengeItems];
-  }, [finishedChallengeItems, section, showFinishedChallenges, visibleItems]);
+  const joinedChallengeIds = useMemo(
+    () =>
+      new Set(
+        myEventGroups
+          .filter((group) => group.eventType === "challenge")
+          .map((group) => group.eventId),
+      ),
+    [myEventGroups],
+  );
+
+  const joinedChallengeItems = useMemo(() => {
+    if (section !== "challenge") return [];
+    return visibleItems.filter((item) => joinedChallengeIds.has(item.id));
+  }, [joinedChallengeIds, section, visibleItems]);
+
+  const generalChallengeItems = useMemo(() => {
+    if (section !== "challenge") return [];
+    return visibleItems.filter((item) => !joinedChallengeIds.has(item.id));
+  }, [joinedChallengeIds, section, visibleItems]);
+
+  const listItems = useMemo<FeedListItem[]>(() => {
+    if (section !== "challenge") {
+      const nextItems: FeedListItem[] = visibleItems.map((item) => ({
+        kind: "feed",
+        item,
+      }));
+
+      if (showExpiredEvents && expiredEventItems.length > 0) {
+        nextItems.push({
+          kind: "section",
+          id: "expired-events",
+          title: "Eventos caducados",
+          subtitle: "Eventos que ya pasaron",
+        });
+        nextItems.push(
+          ...expiredEventItems.map((item) => ({ kind: "feed" as const, item })),
+        );
+      }
+
+      return nextItems;
+    }
+
+    const nextItems: FeedListItem[] = [];
+
+    if (joinedChallengeItems.length > 0) {
+      nextItems.push({
+        kind: "section",
+        id: "joined-challenges",
+        title: "Tus desafíos",
+        subtitle: "Los caminos que ya estás transitando",
+      });
+      nextItems.push(
+        ...joinedChallengeItems.map((item) => ({ kind: "feed" as const, item })),
+      );
+    }
+
+    if (generalChallengeItems.length > 0) {
+      nextItems.push({
+        kind: "section",
+        id: "general-challenges",
+        title: "Desafíos generales",
+        subtitle: "Explorá nuevas prácticas para sumarte",
+      });
+      nextItems.push(
+        ...generalChallengeItems.map((item) => ({ kind: "feed" as const, item })),
+      );
+    }
+
+    if (showFinishedChallenges && finishedChallengeItems.length > 0) {
+      nextItems.push({
+        kind: "section",
+        id: "finished-challenges",
+        title: "Desafíos finalizados",
+      });
+      nextItems.push(
+        ...finishedChallengeItems.map((item) => ({ kind: "feed" as const, item })),
+      );
+    }
+
+    return nextItems;
+  }, [
+    expiredEventItems,
+    finishedChallengeItems,
+    generalChallengeItems,
+    joinedChallengeItems,
+    section,
+    showExpiredEvents,
+    showFinishedChallenges,
+    visibleItems,
+  ]);
+
+  const listIsLoading =
+    isLoading || (section === "challenge" && Boolean(session?.user?.id) && myEventGroupsLoading);
 
   return (
     <View style={styles.bg}>
@@ -241,16 +363,17 @@ const Events = () => {
         </View>
 
         <FlatList
-          data={listItems}
-          keyExtractor={(item) => item.id}
+          data={listIsLoading ? [] : listItems}
+          keyExtractor={(item) => (item.kind === "section" ? item.id : item.item.id)}
           contentContainerStyle={styles.eventsListContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
+              {listIsLoading ? <VibesLoader size={72} /> : null}
               <Text style={localStyles.emptyTitle}>
-                {isLoading
+                {listIsLoading
                   ? section === "challenge"
-                  ? "Cargando desafíos..."
+                    ? "Cargando desafíos..."
                     : "Loading events..."
                   : error
                     ? "No se pudieron cargar"
@@ -258,6 +381,8 @@ const Events = () => {
                       ? section === "challenge"
                         ? "No encontramos desafíos"
                         : "No encontramos eventos"
+                    : section === "event" && expiredEventItems.length > 0
+                      ? "No hay eventos vigentes"
                     : section === "challenge" && finishedChallengeItems.length > 0
                       ? "No hay desafíos vigentes"
                     : section === "challenge"
@@ -265,12 +390,14 @@ const Events = () => {
                       : "No real events yet"}
               </Text>
               <Text style={localStyles.emptyText}>
-                {isLoading
+                {listIsLoading
                   ? "Consultando Supabase..."
-                  : error
+                    : error
                     ? errorMessage
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
+                    : section === "event" && expiredEventItems.length > 0
+                      ? "Los eventos caducados están guardados abajo."
                     : section === "challenge" && finishedChallengeItems.length > 0
                       ? "Tus desafíos finalizados están guardados abajo."
                     : section === "challenge"
@@ -280,7 +407,29 @@ const Events = () => {
             </View>
           }
           ListFooterComponent={
-            section === "challenge" && finishedChallengeItems.length > 0 ? (
+            section === "event" && expiredEventItems.length > 0 ? (
+              <TouchableOpacity
+                style={localStyles.finishedSectionToggle}
+                onPress={() => setShowExpiredEvents((prev) => !prev)}
+                activeOpacity={0.85}
+              >
+                <View>
+                  <Text style={localStyles.finishedSectionTitle}>
+                    Eventos caducados
+                  </Text>
+                  <Text style={localStyles.finishedSectionSubtitle}>
+                    {showExpiredEvents
+                      ? "Ocultar caducados"
+                      : `${expiredEventItems.length} guardados`}
+                  </Text>
+                </View>
+                <Icon
+                  name={showExpiredEvents ? "chevron-up" : "chevron-down"}
+                  size={22}
+                  color="#7A746D"
+                />
+              </TouchableOpacity>
+            ) : section === "challenge" && finishedChallengeItems.length > 0 ? (
               <TouchableOpacity
                 style={localStyles.finishedSectionToggle}
                 onPress={() => setShowFinishedChallenges((prev) => !prev)}
@@ -304,7 +453,21 @@ const Events = () => {
               </TouchableOpacity>
             ) : null
           }
-          renderItem={({ item }) => {
+          renderItem={({ item: listItem }) => {
+            if (listItem.kind === "section") {
+              return (
+                <View style={localStyles.feedSectionHeader}>
+                  <Text style={localStyles.feedSectionTitle}>{listItem.title}</Text>
+                  {listItem.subtitle ? (
+                    <Text style={localStyles.feedSectionSubtitle}>
+                      {listItem.subtitle}
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            }
+
+            const item = listItem.item;
             const participantCount = parseParticipantCount(item.attendees);
             const challengeProgress = getChallengeProgress(item);
             const checkedInTodayCount = Math.max(
@@ -474,6 +637,24 @@ const localStyles = StyleSheet.create({
     fontSize: 18,
     fontFamily: vibesTheme.fonts.medium,
     color: "#2B2B2B",
+  },
+  feedSectionHeader: {
+    marginTop: 4,
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+  feedSectionTitle: {
+    color: "#2B2B2B",
+    fontSize: 25,
+    lineHeight: 29,
+    fontFamily: "CormorantGaramond_700Bold",
+  },
+  feedSectionSubtitle: {
+    marginTop: 2,
+    color: "rgba(43, 43, 43, 0.58)",
+    fontSize: 15,
+    lineHeight: 19,
+    fontFamily: vibesTheme.fonts.medium,
   },
   feedRowCard: {
     minHeight: 98,
