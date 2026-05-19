@@ -20,6 +20,10 @@ import {
 import { matchesQueryOptions } from "../src/queries/matches.queries";
 import AnimatedIllustration from "../src/components/illustrations/AnimatedIllustration";
 import { startupIllustrationConfig } from "../src/components/illustrations/presets/startupIllustrationConfig";
+import {
+  getAppUpdateGateState,
+  type AppUpdateGateState,
+} from "../src/lib/appUpdateGate";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const STARTUP_VISUAL_MS =
@@ -35,6 +39,8 @@ const Startup = () => {
   const startedAtRef = useRef(Date.now());
   const didNavigateRef = useRef(false);
   const [isReadyToExit, setIsReadyToExit] = useState(false);
+  const [updateGateState, setUpdateGateState] =
+    useState<AppUpdateGateState | null>(null);
 
   const contentOpacity = useSharedValue(0);
   const contentScale = useSharedValue(0.96);
@@ -78,6 +84,13 @@ const Startup = () => {
         ]);
       }
 
+      const nextUpdateGateState = await getAppUpdateGateState().catch(
+        () => null,
+      );
+      if (!cancelled) {
+        setUpdateGateState(nextUpdateGateState);
+      }
+
       const elapsed = Date.now() - startedAtRef.current;
       const waitMs = Math.max(0, MIN_STARTUP_MS - elapsed);
 
@@ -114,17 +127,19 @@ const Startup = () => {
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: hasSession
-            ? [
-                {
-                  name: "Tab",
-                  params: {
-                    screen: "Home",
-                    params: { startupFadeIn: true },
+          routes: updateGateState
+            ? [{ name: "UpdateGate", params: updateGateState }]
+            : hasSession
+              ? [
+                  {
+                    name: "Tab",
+                    params: {
+                      screen: "Home",
+                      params: { startupFadeIn: true },
+                    },
                   },
-                },
-              ]
-            : [{ name: "Welcome" }],
+                ]
+              : [{ name: "Welcome" }],
         }),
       );
     }, 280);
@@ -132,7 +147,7 @@ const Startup = () => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [fadeOverlayOpacity, isReadyToExit, navigation, userId]);
+  }, [fadeOverlayOpacity, isReadyToExit, navigation, updateGateState, userId]);
 
   const contentStyle = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,

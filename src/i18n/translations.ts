@@ -37,6 +37,20 @@ const baseTranslations = {
       challengeGuideName: "Guru Vibes",
       personalMessage: "Mensaje para vos",
     },
+    update: {
+      forceEyebrow: "Actualización necesaria",
+      suggestedEyebrow: "Nueva versión disponible",
+      forceTitle: "Necesitás actualizar Vibes",
+      suggestedTitle: "Hay una versión más nueva para vos",
+      forceBody:
+        "Tu versión actual ({{current}}) ya no está soportada. Actualizá a la versión {{target}} para seguir usando la app.",
+      suggestedBody:
+        "Tu versión actual es {{current}}. Te recomendamos actualizar a la {{target}} para tener mejoras, correcciones y una experiencia más estable.",
+      currentVersion: "Versión actual",
+      targetVersion: "Versión recomendada",
+      updateNow: "Actualizar ahora",
+      later: "Más tarde",
+    },
     tabs: {
       discover: "Descubrir",
       home: "Home",
@@ -470,6 +484,20 @@ const baseTranslations = {
       dailyGuideSubtitle: "A daily message for your practice",
       challengeGuideName: "Vibes Guru",
       personalMessage: "A message for you",
+    },
+    update: {
+      forceEyebrow: "Update required",
+      suggestedEyebrow: "New version available",
+      forceTitle: "You need to update Vibes",
+      suggestedTitle: "A newer version is ready for you",
+      forceBody:
+        "Your current version ({{current}}) is no longer supported. Update to version {{target}} to keep using the app.",
+      suggestedBody:
+        "Your current version is {{current}}. We recommend updating to {{target}} for fixes, improvements, and a more stable experience.",
+      currentVersion: "Current version",
+      targetVersion: "Recommended version",
+      updateNow: "Update now",
+      later: "Later",
     },
     tabs: {
       discover: "Discover",

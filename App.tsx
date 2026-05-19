@@ -49,6 +49,7 @@ import {
   TermsConditions,
   Session,
   Startup,
+  UpdateGate,
 } from "./screens";
 import TabBarIcon from "./components/TabBarIcon";
 import CustomTabBar from "./components/CustomTabBar";
@@ -159,6 +160,15 @@ const AppNavigator = () => {
               name="Startup"
               component={Startup}
               options={{ headerShown: false, animationEnabled: false }}
+            />
+            <Stack.Screen
+              name="UpdateGate"
+              component={UpdateGate}
+              options={{
+                headerShown: false,
+                animationEnabled: true,
+                gestureEnabled: false,
+              }}
             />
             <Stack.Screen
               name="Welcome"
