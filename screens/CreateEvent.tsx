@@ -16,6 +16,7 @@ import {
   Linking,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { ResizeMode } from "expo-av";
 import DateTimePicker, {
@@ -159,12 +160,22 @@ const getInvalidEventLinks = (params: {
 const CreateEvent = () => {
   const navigation = useNavigation();
   const route = useRoute() as any;
+  const insets = useSafeAreaInsets();
   const editingEvent = route?.params?.event ?? null;
   const isEditing = Boolean(editingEvent?.id);
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
   const createEventMutation = useCreateEventMutation();
   const updateEventMutation = useUpdateEventMutation();
+  const isSubmitting =
+    createEventMutation.isPending || updateEventMutation.isPending;
+  const submitButtonLabel = isSubmitting
+    ? isEditing
+      ? "Guardando..."
+      : "Creando..."
+    : isEditing
+      ? "Guardar cambios"
+      : "Crear evento";
   const [title, setTitle] = useState(
     typeof editingEvent?.title === "string" ? editingEvent.title : "",
   );
@@ -557,7 +568,10 @@ const CreateEvent = () => {
           title={isEditing ? "Editar evento" : "Crear evento"}
           showBack
           onBack={() => navigation.goBack()}
-          style={localStyles.header}
+          style={[
+            localStyles.header,
+            { marginTop: Math.max(insets.top + 8, 24) },
+          ]}
           titleStyle={styles.title}
         />
 
@@ -891,25 +905,29 @@ const CreateEvent = () => {
           />
         </View>
 
+      </ScrollView>
+
+      <View
+        style={[
+          localStyles.fixedFooter,
+          { paddingBottom: Math.max(insets.bottom + 12, 18) },
+        ]}
+      >
         <TouchableOpacity
           style={[
             localStyles.createButton,
             !isFormComplete && localStyles.createButtonDisabled,
           ]}
           onPress={handleCreate}
-          disabled={createEventMutation.isPending || updateEventMutation.isPending}
+          disabled={isSubmitting}
         >
-          <Text style={localStyles.createButtonText}>
-            {createEventMutation.isPending || updateEventMutation.isPending
-              ? isEditing
-                ? "Guardando..."
-                : "Creando..."
-              : isEditing
-                ? "Guardar cambios"
-                : "Crear evento"}
-          </Text>
+          {isSubmitting ? (
+            <VibesLoader size={30} />
+          ) : (
+            <Text style={localStyles.createButtonText}>{submitButtonLabel}</Text>
+          )}
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       <Modal
         visible={photoModalVisible}
@@ -960,7 +978,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 4,
   },
   content: {
-    paddingBottom: 32,
+    paddingBottom: 128,
   },
   formCard: {
     backgroundColor: WHITE,
@@ -1057,7 +1075,6 @@ const localStyles = StyleSheet.create({
     fontWeight: "700",
   },
   createButton: {
-    marginTop: 20,
     backgroundColor: PRIMARY_COLOR,
     borderRadius: 24,
     paddingVertical: 14,
@@ -1074,6 +1091,22 @@ const localStyles = StyleSheet.create({
     color: WHITE,
     fontWeight: "700",
     fontSize: 15,
+  },
+  fixedFooter: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "rgba(246, 246, 244, 0.96)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(43, 43, 43, 0.06)",
+    shadowColor: BLACK,
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: -5 },
+    elevation: 10,
   },
   validateButton: {
     marginTop: 10,

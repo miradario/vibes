@@ -1,5 +1,6 @@
 {
   "expo": {
+    "owner": "miradario",
     "name": "Vibe",
     "slug": "vibe",
     "scheme": "com.miradario.vibe",
@@ -61,6 +62,11 @@
         }
       ],
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c87c9fea-6195-4213-8b60-07facbf1ef16"
+      }
+    }
   }
 }

@@ -1012,6 +1012,7 @@ const Home = () => {
           ) : null}
 
           <View style={localStyles.summaryCard}>
+            <Text style={localStyles.summaryTitle}>Tu resumen</Text>
             <View style={localStyles.summaryContent}>
               <View style={localStyles.statsRow}>
                 {summaryStats.map((stat, index) => (
@@ -1377,7 +1378,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   summaryCard: {
-    minHeight: 92,
+    minHeight: 116,
     borderRadius: 16,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -1388,6 +1389,13 @@ const localStyles = StyleSheet.create({
     shadowOffset: { height: 6, width: 0 },
     padding: 12,
     marginBottom: 16,
+  },
+  summaryTitle: {
+    color: "#2B2B2B",
+    fontSize: 24,
+    lineHeight: 28,
+    fontFamily: "CormorantGaramond_500Medium",
+    marginBottom: 8,
   },
   summaryContent: {
     justifyContent: "center",
@@ -1420,16 +1428,16 @@ const localStyles = StyleSheet.create({
   },
   statValue: {
     color: "#4B3728",
-    fontSize: 22,
-    lineHeight: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontSize: 24,
+    lineHeight: 26,
+    fontFamily: "CormorantGaramond_500Medium",
     marginLeft: 10,
   },
   statLabel: {
-    color: "#4D4945",
-    fontSize: 14,
-    lineHeight: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    color: "#3F3A36",
+    fontSize: 15,
+    lineHeight: 17,
+    fontFamily: "CormorantGaramond_600SemiBold",
     flexShrink: 1,
   },
   meditationCard: {
@@ -1487,10 +1495,10 @@ const localStyles = StyleSheet.create({
   },
   meditationButtonSubtitle: {
     marginTop: 4,
-    color: "#5E7898",
-    fontSize: 14,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    color: "#314762",
+    fontSize: 16,
+    lineHeight: 18,
+    fontFamily: "CormorantGaramond_600SemiBold",
   },
   meditationArrowWrap: {
     width: 46,
@@ -1551,9 +1559,9 @@ const localStyles = StyleSheet.create({
   },
   guruTitle: {
     color: "#2B2B2B",
-    fontSize: 20,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 22,
+    lineHeight: 26,
+    fontFamily: "CormorantGaramond_500Medium",
   },
   guruSubtitle: {
     marginTop: 2,
@@ -1571,17 +1579,17 @@ const localStyles = StyleSheet.create({
   },
   guruBreathPrompt: {
     marginTop: 10,
-    color: "#2F2C29",
-    fontSize: 17,
-    lineHeight: 23,
-    fontFamily: vibesTheme.fonts.medium,
+    color: "#2B2B2B",
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: "CormorantGaramond_600SemiBold",
   },
   guruBody: {
     marginTop: 6,
-    color: "#6F655D",
-    fontSize: 16,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    color: "#4D453F",
+    fontSize: 17,
+    lineHeight: 25,
+    fontFamily: "CormorantGaramond_600SemiBold",
   },
   presenceCard: {
     borderRadius: 20,

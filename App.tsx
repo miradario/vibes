@@ -83,12 +83,14 @@ const queryClient = new QueryClient({
 const AppNavigator = () => {
   const { t } = useI18n();
   const [fontsLoaded] = useFonts({
-    [vibesTheme.fonts.primary]: require("./assets/font/JosefinSans-ExtraLight.ttf"),
-    [vibesTheme.fonts.medium]: require("./assets/font/JosefinSans-Light.ttf"),
-    CormorantGaramond_400Regular: require("./assets/font/JosefinSans-ExtraLight.ttf"),
-    CormorantGaramond_500Medium: require("./assets/font/JosefinSans-ExtraLight.ttf"),
-    CormorantGaramond_600SemiBold: require("./assets/font/JosefinSans-Light.ttf"),
-    CormorantGaramond_700Bold: require("./assets/font/JosefinSans-Light.ttf"),
+    "JosefinSans-Regular": require("./assets/font/JosefinSans-Regular.ttf"),
+    "JosefinSans-Medium": require("./assets/font/JosefinSans-Medium.ttf"),
+    "JosefinSans-SemiBold": require("./assets/font/JosefinSans-SemiBold.ttf"),
+    "JosefinSans-Bold": require("./assets/font/JosefinSans-Bold.ttf"),
+    CormorantGaramond_400Regular: require("./assets/font/JosefinSans-Regular.ttf"),
+    CormorantGaramond_500Medium: require("./assets/font/JosefinSans-Medium.ttf"),
+    CormorantGaramond_600SemiBold: require("./assets/font/JosefinSans-SemiBold.ttf"),
+    CormorantGaramond_700Bold: require("./assets/font/JosefinSans-Bold.ttf"),
   });
 
   if (!hasAppliedGlobalFont) {

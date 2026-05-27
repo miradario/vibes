@@ -654,7 +654,7 @@ const localStyles = StyleSheet.create({
     color: "rgba(43, 43, 43, 0.58)",
     fontSize: 15,
     lineHeight: 19,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   feedRowCard: {
     minHeight: 98,
@@ -714,10 +714,10 @@ const localStyles = StyleSheet.create({
   },
   feedRowMeta: {
     marginTop: 4,
-    color: "#66605B",
+    color: "#4E4944",
     fontSize: 15,
     lineHeight: 19,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   communityTodayRow: {
     marginTop: 6,
@@ -727,10 +727,10 @@ const localStyles = StyleSheet.create({
   },
   communityTodayText: {
     flex: 1,
-    color: "#916E39",
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    color: "#7C5620",
+    fontSize: 14,
+    lineHeight: 17,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   feedThumbProgressPill: {
     position: "absolute",
@@ -745,9 +745,9 @@ const localStyles = StyleSheet.create({
   },
   feedThumbProgressText: {
     color: "#FFFFFF",
-    fontSize: 11,
-    lineHeight: 13,
-    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   feedRowBottom: {
     marginTop: 10,
@@ -762,10 +762,10 @@ const localStyles = StyleSheet.create({
     gap: 8,
   },
   feedParticipantsCount: {
-    color: "#7A746D",
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    color: "#4E4944",
+    fontSize: 14,
+    lineHeight: 17,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   feedRowRight: {
     flexDirection: "row",
@@ -811,7 +811,7 @@ const localStyles = StyleSheet.create({
     color: "#5F6E7D",
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   finishedSectionToggle: {
     minHeight: 72,

@@ -3114,6 +3114,14 @@ expo-linear-gradient@^55.0.13:
   resolved "https://registry.npmjs.org/expo-linear-gradient/-/expo-linear-gradient-55.0.13.tgz"
   integrity sha512-Qz2T4jpkA15RIk29DBqI1TwW+8O9AN8MyC4TJPbh/5UnihH0yNNz3waplUO8Szh5OZ3czTGvtPQU4ysF3RDxwQ==
 
+expo-linking@~8.0.12:
+  version "8.0.12"
+  resolved "https://registry.yarnpkg.com/expo-linking/-/expo-linking-8.0.12.tgz#773bb2d18b89750af87fa807a6298d519130bdb6"
+  integrity sha512-FpXeIpFgZuxihwT9lBo86YD3y6LphBuAhN680MMxm/Y7fmsc57vimn2d3vFu68VI0+Z9w457t494mu2wvlgWTQ==
+  dependencies:
+    expo-constants "~18.0.13"
+    invariant "^2.2.4"
+
 expo-location@^19.0.8:
   version "19.0.8"
   resolved "https://registry.npmjs.org/expo-location/-/expo-location-19.0.8.tgz"
