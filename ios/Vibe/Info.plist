@@ -27,8 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.miradario.vibe</string>
-          <string>com.miradario.vibe</string>
+          <string>com.gurudevelopers.vibes</string>
+          <string>com.gurudevelopers.vibes</string>
         </array>
       </dict>
     </array>

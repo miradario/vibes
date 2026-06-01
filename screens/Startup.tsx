@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     fontSize: 34,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     letterSpacing: 0.2,
   },
   body: {
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: "center",
     color: vibesTheme.colors.secondaryText,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     maxWidth: 300,
   },
   glow: {

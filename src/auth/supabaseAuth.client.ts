@@ -11,7 +11,7 @@ const OAUTH_REDIRECT_URL = (() => {
   if (configuredRedirect) return configuredRedirect;
 
   return Linking.createURL("auth-callback", {
-    scheme: "com.miradario.vibe",
+    scheme: "com.gurudevelopers.vibes",
   });
 })();
 

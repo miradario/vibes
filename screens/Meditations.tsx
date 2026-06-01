@@ -1271,7 +1271,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 26,
     lineHeight: 28,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   subtitle: {
     marginTop: 2,
@@ -1336,7 +1336,7 @@ const localStyles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 19,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   practiceSubtitle: {
     marginTop: 3,
@@ -1436,7 +1436,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   musicSubtitle: {
     marginTop: 4,
@@ -1472,7 +1472,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   musicOptionSubtitle: {
     marginTop: 2,
@@ -1531,7 +1531,7 @@ const localStyles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 32,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   previewPlayerTitleCompact: {
     fontSize: 22,
@@ -1542,7 +1542,7 @@ const localStyles = StyleSheet.create({
     fontSize: 34,
     lineHeight: 38,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   previewPlayerSubtitle: {
     marginTop: 2,
@@ -1619,14 +1619,14 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   shareSessionSubtitle: {
     marginTop: 4,
     color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 19,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   previewBottom: {
     paddingTop: 18,

@@ -18,6 +18,7 @@ import Animated, {
 import type { DataT } from "../types";
 import styles from "../assets/styles";
 import Avatar from "./Avatar";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const getImageUri = (value: unknown): string | null => {
   if (!value || typeof value !== "object" || !("uri" in value)) {
@@ -444,7 +445,7 @@ const localStyles = {
   matchBadgeText: {
     color: "#FFFFFF",
     fontSize: 11,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   distancePill: {
     marginTop: 6,
@@ -463,7 +464,7 @@ const localStyles = {
   distancePillText: {
     color: "#2B2B2B",
     fontSize: 11,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     letterSpacing: 0,
     textAlign: "center" as const,
   },

@@ -260,7 +260,11 @@ const VibesMinimalOnboarding = ({
       </Animated.View>
 
       <Animated.View style={[styles.textBlock, titleStyle]}>
-        {hasTitle ? <Text style={styles.title}>{title}</Text> : null}
+        {hasTitle ? (
+          <Text style={styles.title} maxFontSizeMultiplier={1}>
+            {title}
+          </Text>
+        ) : null}
         <Text style={[styles.body, !hasTitle && styles.bodyWithoutTitle]}>
           {body}
         </Text>
@@ -326,7 +330,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   body: {
     marginTop: vibesTheme.spacing.lg,
@@ -334,7 +338,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
     color: vibesTheme.colors.secondaryText,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     maxWidth: 380,
   },
   bodyWithoutTitle: {

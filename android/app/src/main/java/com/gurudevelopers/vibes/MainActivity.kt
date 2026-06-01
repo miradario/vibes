@@ -1,4 +1,4 @@
-package com.miradario.vibe
+package com.gurudevelopers.vibes
 
 import android.os.Build
 import android.os.Bundle

@@ -82,6 +82,7 @@ const AppHeader = ({
                 style={[styles.title, titleStyle]}
                 numberOfLines={titleNumberOfLines}
                 adjustsFontSizeToFit
+                maxFontSizeMultiplier={1}
               >
                 {title}
               </Text>
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
     color: TEXT_SECONDARY,
     fontSize: 14,
     lineHeight: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
 });

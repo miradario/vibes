@@ -8,6 +8,7 @@ import {
   FlatList,
   TextInput,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Alert,
   Modal,
@@ -36,6 +37,7 @@ import {
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
 
 const REPORT_REASONS: ReportReason[] = [
@@ -84,6 +86,7 @@ const Chat = () => {
   const reportMutation = useReportUserMutation();
 
   const [text, setText] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReportReason, setSelectedReportReason] =
@@ -115,6 +118,23 @@ const Chat = () => {
       readAt: latestMessage.createdAt,
     });
   }, [isFocused, markReadMutation, matchId, messages]);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", (event) => {
+      setKeyboardHeight(event.endCoordinates.height);
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 80);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const handleSend = () => {
     const body = text.trim();
@@ -278,8 +298,8 @@ const Chat = () => {
   return (
     <KeyboardAvoidingView
       style={styles.bg}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(insets.top, 12) : 0}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(insets.top + 8, 24) : 0}
     >
       <AppHeader
         showBack
@@ -438,7 +458,12 @@ const Chat = () => {
             keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
             contentContainerStyle={[
               localStyles.messageList,
-              { paddingBottom: Math.max(insets.bottom + 28, 44) },
+              {
+                paddingBottom:
+                  Platform.OS === "android" && keyboardHeight > 0
+                    ? keyboardHeight + 88
+                    : Math.max(insets.bottom + 28, 44),
+              },
             ]}
             ListHeaderComponent={
               <Text style={styles.chatMatchedText}>
@@ -468,6 +493,10 @@ const Chat = () => {
             styles.chatInputBar,
             {
               paddingBottom: Math.max(insets.bottom + 12, 20),
+              marginBottom:
+                Platform.OS === "android" && keyboardHeight > 0
+                  ? keyboardHeight
+                  : 0,
             },
           ]}
         >
@@ -480,6 +509,11 @@ const Chat = () => {
             multiline
             maxLength={2000}
             returnKeyType="default"
+            onFocus={() =>
+              setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+              }, 120)
+            }
           />
           <TouchableOpacity onPress={handleSend} disabled={!text.trim()}>
             <Text style={[styles.chatSend, !text.trim() && { opacity: 0.4 }]}>
@@ -554,7 +588,7 @@ const localStyles = StyleSheet.create({
   emptyText: {
     color: "#AEBFD1",
     fontSize: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   modalBackdrop: {
     flex: 1,
@@ -591,7 +625,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 22,
     lineHeight: 27,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   modalSubtitle: {
     marginTop: 4,
@@ -599,7 +633,7 @@ const localStyles = StyleSheet.create({
     color: "#6E6E6E",
     fontSize: 15,
     lineHeight: 21,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   actionRow: {
     minHeight: 52,
@@ -612,7 +646,7 @@ const localStyles = StyleSheet.create({
   actionText: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   dangerText: {
     color: "#D88C7A",
@@ -656,7 +690,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   reportInput: {
     minHeight: 96,
@@ -671,7 +705,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.58)",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   reportButton: {
     minHeight: 54,
@@ -687,6 +721,6 @@ const localStyles = StyleSheet.create({
   reportButtonText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
 });

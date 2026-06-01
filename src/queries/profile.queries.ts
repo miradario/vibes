@@ -34,6 +34,25 @@ const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
     return null;
   }
 
+  const signedProfileFallbackPhotos = Array.isArray((profileResponse.data as any).photos)
+    ? await Promise.all(
+        ((profileResponse.data as any).photos ?? []).map(async (photo: any) => {
+          if (typeof photo === "string") {
+            return await createSignedProfilePhotoUrl(photo);
+          }
+
+          if (photo && typeof photo === "object" && typeof photo.url === "string") {
+            return {
+              ...photo,
+              url: await createSignedProfilePhotoUrl(photo.url),
+            };
+          }
+
+          return photo;
+        }),
+      )
+    : undefined;
+
   const signedPhotoRows = await Promise.all(
     (photosResponse.data ?? []).map(async (photoRow) => ({
       ...photoRow,
@@ -41,7 +60,12 @@ const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
     })),
   );
 
-  return mapProfileWithPhotos(profileResponse.data, signedPhotoRows);
+  return mapProfileWithPhotos(
+    signedProfileFallbackPhotos
+      ? { ...profileResponse.data, photos: signedProfileFallbackPhotos }
+      : profileResponse.data,
+    signedPhotoRows,
+  );
 };
 
 export const useProfileQuery = (userId?: string) => {

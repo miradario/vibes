@@ -33,6 +33,7 @@ import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
 
 type DiscoverFiltersState = {
@@ -51,6 +52,8 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   smoking: "all",
 };
 const DISCOVER_PAGE_SIZE = 30;
+const MIN_DISCOVER_AGE = 18;
+const MAX_DISCOVER_AGE = 80;
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -64,8 +67,28 @@ const toFiniteNumber = (value: unknown) => {
 const parseAge = (value: unknown) => {
   const parsed = toFiniteNumber(value);
   if (parsed && parsed > 0) return Math.floor(parsed);
-  return null;
+
+  if (typeof value !== "string" || !value.trim()) return null;
+
+  const birthDate = new Date(value);
+  if (Number.isNaN(birthDate.getTime())) return null;
+
+  const now = new Date();
+  let age = now.getFullYear() - birthDate.getFullYear();
+  const hasHadBirthdayThisYear =
+    now.getMonth() > birthDate.getMonth() ||
+    (now.getMonth() === birthDate.getMonth() &&
+      now.getDate() >= birthDate.getDate());
+
+  if (!hasHadBirthdayThisYear) {
+    age -= 1;
+  }
+
+  return age > 0 ? age : null;
 };
+
+const clampAge = (value: number) =>
+  Math.min(MAX_DISCOVER_AGE, Math.max(MIN_DISCOVER_AGE, value));
 
 const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
   if (typeof value !== "string") return "all";
@@ -255,7 +278,6 @@ const Discover = () => {
             candidateAge,
             discoverFilters.ageMin,
             discoverFilters.ageMax,
-            { includeNullValue: true },
           )
         ) {
           return false;
@@ -471,6 +493,38 @@ const Discover = () => {
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
   );
 
+  const adjustAgeMin = (delta: number) => {
+    setDiscoverFilters((prev) => {
+      const current = prev.ageMin ?? MIN_DISCOVER_AGE;
+      let nextAgeMin = clampAge(current + delta);
+      if (prev.ageMax !== null) {
+        nextAgeMin = Math.min(nextAgeMin, prev.ageMax);
+      }
+      return { ...prev, ageMin: nextAgeMin };
+    });
+  };
+
+  const adjustAgeMax = (delta: number) => {
+    setDiscoverFilters((prev) => {
+      const current = prev.ageMax ?? MAX_DISCOVER_AGE;
+      let nextAgeMax = clampAge(current + delta);
+      if (prev.ageMin !== null) {
+        nextAgeMax = Math.max(nextAgeMax, prev.ageMin);
+      }
+      return { ...prev, ageMax: nextAgeMax };
+    });
+  };
+
+  const renderStepperButton = (label: string, onPress: () => void) => (
+    <TouchableOpacity
+      style={localStyles.rangeStepperButton}
+      activeOpacity={0.82}
+      onPress={onPress}
+    >
+      <Text style={localStyles.rangeStepperText}>{label}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={localStyles.screen}>
       <SafeAreaView style={localStyles.safeArea} edges={["top", "left", "right"]}>
@@ -556,17 +610,21 @@ const Discover = () => {
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>{t("discover.min")}</Text>
                       <View style={localStyles.rangeControls}>
+                        {renderStepperButton("-", () => adjustAgeMin(-1))}
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.ageMin ?? t("discover.noLimit")}
                         </Text>
+                        {renderStepperButton("+", () => adjustAgeMin(1))}
                       </View>
                     </View>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>{t("discover.max")}</Text>
                       <View style={localStyles.rangeControls}>
+                        {renderStepperButton("-", () => adjustAgeMax(-1))}
                         <Text style={localStyles.rangeValue}>
                           {discoverFilters.ageMax ?? t("discover.noLimit")}
                         </Text>
+                        {renderStepperButton("+", () => adjustAgeMax(1))}
                       </View>
                     </View>
                   </View>
@@ -779,7 +837,7 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 42,
     lineHeight: 46,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   filtersButton: {
     marginTop: 8,
@@ -801,7 +859,7 @@ const localStyles = StyleSheet.create({
   filtersButtonText: {
     color: "#2B2B2B",
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   orbitWrap: {
     flex: 1,
@@ -827,7 +885,7 @@ const localStyles = StyleSheet.create({
   showMoreButtonText: {
     color: "#2B2B2B",
     fontSize: 16,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   orbitHint: {
     position: "absolute",
@@ -845,7 +903,7 @@ const localStyles = StyleSheet.create({
   emptyTitle: {
     color: "#2B2B2B",
     fontSize: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     textAlign: "center",
   },
   emptyText: {
@@ -853,7 +911,7 @@ const localStyles = StyleSheet.create({
     color: "rgba(43, 43, 43, 0.7)",
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
   filtersSheet: {
@@ -886,14 +944,14 @@ const localStyles = StyleSheet.create({
   filtersTitle: {
     color: "#2B2B2B",
     fontSize: 30,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   filtersSubtitle: {
     marginTop: 4,
     color: "rgba(43, 43, 43, 0.64)",
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   filtersCloseButton: {
     width: 38,
@@ -919,12 +977,12 @@ const localStyles = StyleSheet.create({
   rangeSummary: {
     color: "rgba(43, 43, 43, 0.78)",
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   rangeReset: {
     color: "#2B2B2B",
     fontSize: 14,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   rangeRow: {
     flexDirection: "row",
@@ -943,7 +1001,7 @@ const localStyles = StyleSheet.create({
   rangeLabel: {
     color: "rgba(43, 43, 43, 0.64)",
     fontSize: 13,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     textTransform: "uppercase",
   },
   rangeControls: {
@@ -957,12 +1015,28 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
     color: "#2B2B2B",
     fontSize: 16,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  rangeStepperButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(174, 191, 209, 0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+  },
+  rangeStepperText: {
+    color: "#2B2B2B",
+    fontSize: 22,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.bold,
   },
   filtersSectionTitle: {
     color: "#2B2B2B",
     fontSize: 22,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   filtersPillRow: {
     flexDirection: "row",
@@ -984,7 +1058,7 @@ const localStyles = StyleSheet.create({
   filterPillText: {
     color: "#2B2B2B",
     fontSize: 14,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   filterPillTextActive: {
     color: "#F6F6F4",
@@ -1007,7 +1081,7 @@ const localStyles = StyleSheet.create({
   filtersSecondaryButtonText: {
     color: "#2B2B2B",
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   filtersPrimaryButton: {
     flex: 1,
@@ -1020,7 +1094,7 @@ const localStyles = StyleSheet.create({
   filtersPrimaryButtonText: {
     color: "#F6F6F4",
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
 });
 

@@ -19,6 +19,7 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useFindMatchQuery } from "../src/queries/matches.queries";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const getFirstName = (value?: string | null) =>
   value?.trim()?.split(" ")?.[0] || "Vibes";
@@ -163,10 +164,7 @@ const Match = () => {
             label="Más tarde"
             variant="skip"
             onPress={() =>
-              navigation.navigate(
-                "Tab" as never,
-                { screen: "Discover" } as never,
-              )
+              navigation.navigate("Tab" as never, { screen: "Discover" } as never)
             }
           />
         </View>
@@ -222,7 +220,7 @@ const localStyles = StyleSheet.create({
     fontSize: 36,
     lineHeight: 39,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   divider: {
     marginTop: 14,
@@ -295,7 +293,7 @@ const localStyles = StyleSheet.create({
     color: "#47423C",
     fontSize: 20,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   centerMark: {
     flex: 1,
@@ -349,7 +347,7 @@ const localStyles = StyleSheet.create({
     color: "#47423C",
     fontSize: 19,
     lineHeight: 25,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   actions: {
     width: "100%",
@@ -369,7 +367,7 @@ const localStyles = StyleSheet.create({
     fontSize: 19,
     lineHeight: 24,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
 });
 

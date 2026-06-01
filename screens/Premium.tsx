@@ -11,14 +11,16 @@ const Premium = () => (
         <Text style={styles.premiumBrand}>Vibe Gold</Text>
       </View>
 
-      <Text style={styles.premiumTitle}>
+      <Text style={styles.premiumTitle} maxFontSizeMultiplier={1}>
         Mirá quién resuena con vos y conectá al instante con Vibe Gold.
       </Text>
 
       <Text style={styles.premiumSectionLabel}>Elegí un plan</Text>
       <View style={styles.premiumPlans}>
         <View style={[styles.premiumPlanCard, styles.premiumPlanActive]}>
-          <Text style={styles.premiumPlanTitle}>1 mes</Text>
+          <Text style={styles.premiumPlanTitle} maxFontSizeMultiplier={1}>
+            1 mes
+          </Text>
           <Text style={styles.premiumPlanPrice}>$19.99 / mes</Text>
           <View style={styles.premiumPlanCheck}>
             <Icon name="checkmark" size={12} color={PRIMARY_COLOR} />
@@ -28,7 +30,9 @@ const Premium = () => (
           <View style={styles.premiumPlanBadge}>
             <Text style={styles.premiumPlanBadgeText}>Popular</Text>
           </View>
-          <Text style={styles.premiumPlanTitle}>6 meses</Text>
+          <Text style={styles.premiumPlanTitle} maxFontSizeMultiplier={1}>
+            6 meses
+          </Text>
           <Text style={styles.premiumPlanPrice}>$11.99 / mes</Text>
         </View>
       </View>

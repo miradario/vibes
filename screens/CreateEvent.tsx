@@ -14,6 +14,7 @@ import {
   Modal,
   Platform,
   Linking,
+  Keyboard,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -93,6 +94,13 @@ const isValidExternalUrl = (value: string) => {
   } catch {
     return false;
   }
+};
+
+const showAlertAfterKeyboard = (title: string, message: string) => {
+  Keyboard.dismiss();
+  setTimeout(() => {
+    Alert.alert(title, message);
+  }, Platform.OS === "android" ? 180 : 80);
 };
 
 const getMissingEventFields = (params: {
@@ -356,7 +364,7 @@ const CreateEvent = () => {
   const handleValidateLocation = async () => {
     const trimmedLocation = location.trim();
     if (!trimmedLocation) {
-      Alert.alert("Falta ubicación", "Ingresá una ubicación para validar.");
+      showAlertAfterKeyboard("Falta ubicación", "Ingresá una ubicación para validar.");
       return;
     }
 
@@ -367,7 +375,7 @@ const CreateEvent = () => {
         lng: null,
       });
       setMapPreviewFailed(false);
-      Alert.alert("Ubicación guardada", message);
+      showAlertAfterKeyboard("Ubicación guardada", message);
     };
 
     const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -400,7 +408,7 @@ const CreateEvent = () => {
       }
 
       if (data?.status !== "OK" || !data?.results?.length) {
-        Alert.alert(
+        showAlertAfterKeyboard(
           "Ubicación inválida",
           "No encontramos esa ubicación en Google Maps.",
         );
@@ -416,10 +424,10 @@ const CreateEvent = () => {
       });
       setMapPreviewFailed(false);
       setLocation(firstResult.formatted_address);
-      Alert.alert("Ubicación validada", firstResult.formatted_address);
+      showAlertAfterKeyboard("Ubicación validada", firstResult.formatted_address);
     } catch (error) {
       console.error("Error validating location with Google Maps", error);
-      Alert.alert("Error", "No se pudo validar la ubicación.");
+      showAlertAfterKeyboard("Error", "No se pudo validar la ubicación.");
       setValidatedLocation(null);
     } finally {
       setIsValidatingLocation(false);
@@ -994,7 +1002,7 @@ const localStyles = StyleSheet.create({
   label: {
     color: DARK_GRAY,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "400",
     marginBottom: 8,
     marginTop: 12,
   },
@@ -1031,7 +1039,7 @@ const localStyles = StyleSheet.create({
   choiceChipText: {
     color: DARK_GRAY,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   choiceChipTextActive: {
     color: WHITE,
@@ -1057,7 +1065,7 @@ const localStyles = StyleSheet.create({
     marginTop: 8,
     color: PRIMARY_COLOR,
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   pickerWrap: {
     marginTop: 10,
@@ -1072,7 +1080,7 @@ const localStyles = StyleSheet.create({
   },
   pickerDoneText: {
     color: PRIMARY_COLOR,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   createButton: {
     backgroundColor: PRIMARY_COLOR,
@@ -1089,7 +1097,7 @@ const localStyles = StyleSheet.create({
   },
   createButtonText: {
     color: WHITE,
-    fontWeight: "700",
+    fontWeight: "500",
     fontSize: 15,
   },
   fixedFooter: {
@@ -1123,13 +1131,13 @@ const localStyles = StyleSheet.create({
   },
   validateButtonText: {
     color: DARK_GRAY,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   validatedText: {
     marginTop: 8,
     color: PRIMARY_COLOR,
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   validatedLocationBlock: {
     marginTop: 8,
@@ -1166,7 +1174,7 @@ const localStyles = StyleSheet.create({
   mapPreviewFallbackTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "500",
     textAlign: "center",
   },
   mapPreviewFallbackText: {
@@ -1178,7 +1186,7 @@ const localStyles = StyleSheet.create({
   mapPreviewFallbackMeta: {
     color: TEXT_SECONDARY,
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "400",
     textAlign: "center",
   },
   mapPreviewOverlay: {
@@ -1198,7 +1206,7 @@ const localStyles = StyleSheet.create({
   mapPreviewBadgeText: {
     color: WHITE,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   presetGrid: {
     flexDirection: "row",
@@ -1271,7 +1279,7 @@ const localStyles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontWeight: "700",
+    fontWeight: "500",
     marginBottom: 12,
   },
   modalPrimaryButton: {
@@ -1286,7 +1294,7 @@ const localStyles = StyleSheet.create({
   },
   modalPrimaryText: {
     color: WHITE,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   modalSecondaryButton: {
     backgroundColor: "#F6F6F4",
@@ -1303,7 +1311,7 @@ const localStyles = StyleSheet.create({
   },
   modalSecondaryText: {
     color: DARK_GRAY,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   modalCancelButton: {
     marginTop: 14,
@@ -1311,7 +1319,7 @@ const localStyles = StyleSheet.create({
   },
   modalCancelText: {
     color: TEXT_SECONDARY,
-    fontWeight: "600",
+    fontWeight: "400",
   },
 });
 

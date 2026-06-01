@@ -14,6 +14,7 @@ import styles, { DARK_GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const Faq = () => {
   const { t } = useI18n();
@@ -76,7 +77,7 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     marginBottom: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   card: {
     backgroundColor: WHITE,
@@ -103,7 +104,7 @@ const localStyles = StyleSheet.create({
     flex: 1,
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
 });
 

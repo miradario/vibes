@@ -647,7 +647,7 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 25,
     lineHeight: 29,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   feedSectionSubtitle: {
     marginTop: 2,

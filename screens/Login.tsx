@@ -1,7 +1,10 @@
 /** @format */
 
 import React, { useRef, useState } from "react";
-import { useGoogleLoginMutation, useLoginMutation } from "../src/auth/auth.queries";
+import {
+  useGoogleLoginMutation,
+  useLoginMutation,
+} from "../src/auth/auth.queries";
 import {
   View,
   Text,
@@ -20,7 +23,19 @@ import GoogleAuthButton from "../components/GoogleAuthButton";
 import VibesHeader from "../src/components/VibesHeader";
 import Icon from "../components/Icon";
 import LoopingVideo from "../components/LoopingVideo";
+import CustomDialog from "../components/CustomDialog";
 import { useI18n } from "../src/i18n";
+
+const isUnknownUserError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalized = message.toLowerCase();
+
+  return (
+    normalized.includes("invalid login credentials") ||
+    normalized.includes("user not found") ||
+    normalized.includes("user does not exist")
+  );
+};
 
 const Login = () => {
   const { t } = useI18n();
@@ -29,6 +44,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateAccountDialog, setShowCreateAccountDialog] = useState(false);
   const loginMutation = useLoginMutation();
   const googleLoginMutation = useGoogleLoginMutation();
   const loading = loginMutation.isPending;
@@ -47,6 +63,11 @@ const Login = () => {
       await loginMutation.mutateAsync({ email, password });
       navigation.navigate("Tab" as never);
     } catch (e) {
+      if (isUnknownUserError(e)) {
+        setShowCreateAccountDialog(true);
+        return;
+      }
+
       const msg = e instanceof Error ? e.message : t("login.failed");
       setError(msg || t("login.failed"));
     }
@@ -67,6 +88,10 @@ const Login = () => {
   };
 
   const isDisabled = !email || !password || loading || googleLoading;
+  const goToSignup = () => {
+    setShowCreateAccountDialog(false);
+    (navigation as any).navigate("Signup", { email: email.trim() });
+  };
 
   return (
     <View style={styles.bg}>
@@ -94,7 +119,9 @@ const Login = () => {
             <Text style={styles.loginSubtitle}>{t("login.subtitle")}</Text>
 
             <GoogleAuthButton
-              label={googleLoading ? t("login.googleSubmitting") : t("login.google")}
+              label={
+                googleLoading ? t("login.googleSubmitting") : t("login.google")
+              }
               onPress={handleGoogleLogin}
               disabled={loading}
               loading={googleLoading}
@@ -174,6 +201,16 @@ const Login = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CustomDialog
+        visible={showCreateAccountDialog}
+        title={t("login.createAccountDialogTitle")}
+        message={t("login.createAccountDialogMessage")}
+        primaryLabel={t("login.createAccountDialogPrimary")}
+        secondaryLabel={t("common.back")}
+        onPrimaryPress={goToSignup}
+        onSecondaryPress={() => setShowCreateAccountDialog(false)}
+        onClose={() => setShowCreateAccountDialog(false)}
+      />
     </View>
   );
 };

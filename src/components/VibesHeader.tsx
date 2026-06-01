@@ -43,6 +43,7 @@ const VibesHeader = ({
         style={[styles.title, !isCenter && styles.leftText, titleStyle]}
         numberOfLines={titleNumberOfLines}
         adjustsFontSizeToFit={titleAdjustsFontSizeToFit}
+        maxFontSizeMultiplier={1}
       >
         {title}
       </Text>
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: vibesTheme.colors.secondaryText,
     fontSize: 20,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
 });

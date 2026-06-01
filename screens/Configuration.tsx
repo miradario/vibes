@@ -207,7 +207,7 @@ const localStyles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   line: {
     flex: 1,
@@ -267,7 +267,7 @@ const localStyles = StyleSheet.create({
   saveButtonText: {
     color: WHITE,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "400",
   },
 });
 

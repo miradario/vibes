@@ -21,6 +21,7 @@ import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -227,7 +228,9 @@ const OnboardingPhoto = () => {
           contentContainerStyle={localStyles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.onboardTitle}>{t("onboarding.photoTitle")}</Text>
+          <Text style={styles.onboardTitle} maxFontSizeMultiplier={1}>
+            {t("onboarding.photoTitle")}
+          </Text>
           <Text style={styles.onboardSubtitle}>{t("onboarding.photoSubtitle")}</Text>
           {draft.locationLabel || draft.country ? (
             <Text style={localStyles.locationText}>
@@ -376,7 +379,7 @@ const localStyles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     fontSize: 14,
   },
   primaryPhoto: {
@@ -400,13 +403,13 @@ const localStyles = StyleSheet.create({
   emptyPrimaryLabel: {
     marginTop: 10,
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     fontSize: 15,
   },
   primaryBadge: {
     marginTop: 10,
     color: "#D88C7A",
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 16,
   },
   thumbsRow: {
@@ -463,13 +466,13 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
   },
   modalTitle: {
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 22,
     color: "#3B3B3B",
     marginBottom: 4,
   },
   modalSubtitle: {
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     fontSize: 15,
     color: "#9B9B9B",
     marginBottom: 24,
@@ -502,7 +505,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 10,
   },
   modalOptionText: {
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 16,
     color: "#3B3B3B",
   },
@@ -511,7 +514,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   modalCancelText: {
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     fontSize: 16,
     color: "#9B9B9B",
   },

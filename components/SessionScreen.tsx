@@ -28,8 +28,12 @@ const SessionScreen = ({ title = "Sesión" }: SessionScreenProps) => {
       />
 
       <View style={localStyles.content}>
-        <Text style={localStyles.brandTitle}>guruVibe</Text>
-        <Text style={localStyles.title}>{title}</Text>
+        <Text style={localStyles.brandTitle} maxFontSizeMultiplier={1}>
+          guruVibe
+        </Text>
+        <Text style={localStyles.title} maxFontSizeMultiplier={1}>
+          {title}
+        </Text>
         <Text style={localStyles.subtitle}>
           Esta experiencia de voz no está disponible por el momento.
         </Text>

@@ -12,6 +12,7 @@ import styles, { DARK_GRAY, GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const Contact = () => {
   const { t } = useI18n();
@@ -86,7 +87,7 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     marginBottom: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   card: {
     backgroundColor: WHITE,
@@ -124,7 +125,7 @@ const localStyles = StyleSheet.create({
   rowTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   rowSubtitle: {
     color: GRAY,
@@ -136,7 +137,7 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
     color: GRAY,
     fontSize: 14,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
 });
 

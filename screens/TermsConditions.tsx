@@ -13,6 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, WHITE } from "../assets/styles";
 import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const TermsConditions = () => {
   const { t } = useI18n();
@@ -77,7 +78,7 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     marginBottom: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   card: {
     flex: 1,
@@ -93,7 +94,7 @@ const localStyles = StyleSheet.create({
   titleText: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     marginTop: 8,
     marginBottom: 6,
   },

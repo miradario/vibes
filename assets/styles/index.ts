@@ -170,7 +170,7 @@ export default StyleSheet.create({
     fontSize: 28,
     lineHeight: 32,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     letterSpacing: 0.4,
   },
   discoverAge: {
@@ -252,7 +252,7 @@ export default StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     marginTop: 0,
     marginBottom: 0,
   },
@@ -280,7 +280,7 @@ export default StyleSheet.create({
     color: "#17130F",
     fontSize: 17,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     marginBottom: 4,
     flexShrink: 1,
     flexWrap: 'nowrap',
@@ -359,14 +359,14 @@ export default StyleSheet.create({
     lineHeight: 12,
     letterSpacing: 0.3,
     textTransform: "uppercase",
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   discoverSharedValue: {
     marginTop: 2,
     color: "#17130F",
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   discoverPromptPill: {
     marginTop: 8,
@@ -455,7 +455,7 @@ export default StyleSheet.create({
     color: WHITE,
     fontSize: 22,
     lineHeight: 28,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   discoverSecondaryAction: {
     marginTop: 12,
@@ -470,7 +470,7 @@ export default StyleSheet.create({
     color: TEXT_SECONDARY,
     fontSize: 20,
     lineHeight: 26,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   discoverConnectButton: {
     width: "100%",
@@ -497,7 +497,7 @@ export default StyleSheet.create({
     color: WHITE,
     fontSize: 22,
     lineHeight: 28,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   discoverOrbitScreen: {
     flex: 1,
@@ -853,7 +853,7 @@ export default StyleSheet.create({
   loginTitle: {
     fontSize: 22,
     color: PRIMARY_COLOR,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     textAlign: "center",
   },
   loginSubtitle: {
@@ -3311,7 +3311,7 @@ export default StyleSheet.create({
     lineHeight: 42,
     color: TEXT_PRIMARY,
     marginBottom: 8,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   eventDetailSubtitle: {
     fontSize: 18,
@@ -3379,7 +3379,7 @@ export default StyleSheet.create({
   eventDetailHostName: {
     fontSize: 22,
     color: TEXT_PRIMARY,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   eventDetailInfoSection: {
     marginBottom: 0,
@@ -3414,7 +3414,7 @@ export default StyleSheet.create({
     fontSize: 18,
     lineHeight: 22,
     color: TEXT_PRIMARY,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   eventDetailClosingNoteWrap: {
     paddingHorizontal: 22,
@@ -3425,7 +3425,7 @@ export default StyleSheet.create({
     color: TEXT_SECONDARY,
     fontSize: 16,
     lineHeight: 26,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   eventDetailJoinButton: {
     backgroundColor: CTA_PRIMARY,
@@ -3442,7 +3442,7 @@ export default StyleSheet.create({
     fontSize: 18,
     letterSpacing: 0.3,
     color: WHITE,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   eventDetailJoinNote: {
     fontSize: 14,

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  ImageBackground,
   StyleSheet,
   ScrollView,
 } from "react-native";
@@ -38,7 +39,6 @@ import {
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
-import { useMeditatedTodayFriendsQuery } from "../src/queries/meditationPresence.queries";
 import {
   useChallengesFeedQuery,
   useEventsFeedQuery,
@@ -52,7 +52,6 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import VibesLoader from "../components/VibesLoader";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -62,6 +61,8 @@ type DiscoverFiltersState = {
   smoking: "all" | "no" | "occasionally" | "yes";
 };
 
+type MoodKey = "good" | "calm" | "recharge";
+
 const DEFAULT_FILTERS: DiscoverFiltersState = {
   ageMin: null,
   ageMax: null,
@@ -70,7 +71,17 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   smoking: "all",
 };
 
+const HOME_MOOD_STORAGE_PREFIX = "vibes:home-mood-selected";
+
 let hasPlayedHomeEntryFade = false;
+
+const getLocalDateKey = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -124,7 +135,7 @@ const getDistanceKm = (
   fromLatitude?: unknown,
   fromLongitude?: unknown,
   toLatitude?: unknown,
-  toLongitude?: unknown,
+  toLongitude?: unknown
 ) => {
   const lat1 = toFiniteNumber(fromLatitude);
   const lon1 = toFiniteNumber(fromLongitude);
@@ -152,7 +163,7 @@ const matchesNumberRange = (
   max: number | null,
   options?: {
     includeNullValue?: boolean;
-  },
+  }
 ) => {
   if (min === null && max === null) return true;
   if (value === null) return Boolean(options?.includeNullValue);
@@ -164,7 +175,7 @@ const matchesNumberRange = (
 const formatRangeSummary = (
   min: number | null,
   max: number | null,
-  suffix = "",
+  suffix = ""
 ) => {
   if (min === null && max === null) return "Cualquiera";
   if (min !== null && max !== null) return `${min}-${max}${suffix}`;
@@ -177,37 +188,63 @@ const formatDistanceLabel = (distanceKm: number | null) => {
   return `${Math.max(1, Math.round(distanceKm))} km`;
 };
 
-const parseParticipantCount = (attendees: string | null | undefined) => {
-  if (!attendees) return 0;
-  const slashMatch = attendees.match(/^(\d+)\s*\//);
-  if (slashMatch) return Number(slashMatch[1] ?? 0);
-  const plainMatch = attendees.match(/(\d+)/);
-  return plainMatch ? Number(plainMatch[1] ?? 0) : 0;
-};
+const getChallengeDayProgress = (item: EventFeedItem | null) => {
+  const totalDays =
+    typeof item?.durationDays === "number" && item.durationDays > 0
+      ? item.durationDays
+      : 21;
 
-const getChallengeProgress = (item: EventFeedItem) => {
-  if (item.type !== "challenge" || !item.startsAt || !item.durationDays) return null;
+  if (!item?.startsAt) {
+    return { currentDay: 4, totalDays, ratio: 0.35 };
+  }
 
   const startDate = new Date(item.startsAt);
+  if (Number.isNaN(startDate.getTime())) {
+    return { currentDay: 4, totalDays, ratio: 0.35 };
+  }
+
   const today = new Date();
-  const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const diffDays = Math.floor((current.getTime() - start.getTime()) / 86_400_000);
+  const start = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+  const current = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const diffDays = Math.floor(
+    (current.getTime() - start.getTime()) / 86_400_000
+  );
+  const currentDay = Math.min(totalDays, Math.max(1, diffDays + 1));
 
-  if (diffDays < 0) {
-    return { label: `Empieza en ${Math.abs(diffDays)}d`, tone: "pending" as const };
-  }
+  return {
+    currentDay,
+    totalDays,
+    ratio: Math.min(1, Math.max(0.08, currentDay / totalDays)),
+  };
+};
 
-  if (diffDays >= item.durationDays) {
-    return { label: "Finalizado", tone: "done" as const };
-  }
+const formatEventDayBox = (startsAt?: string | null) => {
+  const fallback = { weekday: "SÁB", day: "25" };
+  if (!startsAt) return fallback;
 
-  return { label: `Día ${diffDays + 1}/${item.durationDays}`, tone: "active" as const };
+  const parsed = new Date(startsAt);
+  if (Number.isNaN(parsed.getTime())) return fallback;
+
+  return {
+    weekday: parsed
+      .toLocaleDateString("es-AR", { weekday: "short" })
+      .slice(0, 3)
+      .toUpperCase(),
+    day: parsed.toLocaleDateString("es-AR", { day: "2-digit" }),
+  };
 };
 
 const areFiltersEqual = (
   left: DiscoverFiltersState,
-  right: DiscoverFiltersState,
+  right: DiscoverFiltersState
 ) =>
   left.ageMin === right.ageMin &&
   left.ageMax === right.ageMax &&
@@ -215,21 +252,23 @@ const areFiltersEqual = (
   left.maxDistanceKm === right.maxDistanceKm &&
   left.smoking === right.smoking;
 
-const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFiltersState => ({
+const readStoredFilters = (
+  preferences: Record<string, any> | null
+): DiscoverFiltersState => ({
   ageMin: toFiniteNumber(
-    preferences?.discoverAgeMin ?? preferences?.discover_age_min,
+    preferences?.discoverAgeMin ?? preferences?.discover_age_min
   ),
   ageMax: toFiniteNumber(
-    preferences?.discoverAgeMax ?? preferences?.discover_age_max,
+    preferences?.discoverAgeMax ?? preferences?.discover_age_max
   ),
   distanceMinKm: toFiniteNumber(
-    preferences?.discoverDistanceMinKm ?? preferences?.discover_distance_min_km,
+    preferences?.discoverDistanceMinKm ?? preferences?.discover_distance_min_km
   ),
   maxDistanceKm: toFiniteNumber(
-    preferences?.discoverDistanceMaxKm ?? preferences?.discover_distance_max_km,
+    preferences?.discoverDistanceMaxKm ?? preferences?.discover_distance_max_km
   ),
   smoking: normalizeSmoking(
-    preferences?.discoverSmoking ?? preferences?.discover_smoking,
+    preferences?.discoverSmoking ?? preferences?.discover_smoking
   ),
 });
 
@@ -239,31 +278,28 @@ const Home = () => {
   const { t } = useI18n();
   const shouldRunHomeEntryFade =
     Boolean(route.params?.startupFadeIn) && !hasPlayedHomeEntryFade;
-  const homeEntryOverlayOpacity = useSharedValue(shouldRunHomeEntryFade ? 1 : 0);
+  const homeEntryOverlayOpacity = useSharedValue(
+    shouldRunHomeEntryFade ? 1 : 0
+  );
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
-  const {
-    data: candidates = [],
-    isLoading,
-    isError,
-    error,
-  } = useCandidatesQuery();
-  const { data: events = [], isLoading: isEventsLoading } = useEventsFeedQuery();
-  const {
-    data: challenges = [],
-    isLoading: isChallengesLoading,
-  } = useChallengesFeedQuery();
-  const {
-    data: myEventGroups = [],
-    isLoading: isMyEventGroupsLoading,
-  } = useMyEventGroupsQuery(session?.user?.id);
+  const { data: candidates = [] } = useCandidatesQuery();
+  const { data: events = [] } = useEventsFeedQuery();
+  const { data: challenges = [] } = useChallengesFeedQuery();
+  const { data: myEventGroups = [] } = useMyEventGroupsQuery(session?.user?.id);
   const { data: matches = [] } = useMatchesQuery();
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
-  const [hasHydratedStoredFilters, setHasHydratedStoredFilters] = useState(false);
-  const ownProfileRecord = (ownProfileData ?? null) as Record<string, any> | null;
+  const [selectedMood, setSelectedMood] = useState<MoodKey>("calm");
+  const [showMoodCard, setShowMoodCard] = useState(true);
+  const [hasHydratedStoredFilters, setHasHydratedStoredFilters] =
+    useState(false);
+  const ownProfileRecord = (ownProfileData ?? null) as Record<
+    string,
+    any
+  > | null;
   const profiles = useMemo<DataT[]>(() => {
     return candidates
       .map((candidate) => {
@@ -272,7 +308,7 @@ const Home = () => {
           ownProfileRecord?.latitude,
           ownProfileRecord?.longitude,
           candidateRecord.latitude,
-          candidateRecord.longitude,
+          candidateRecord.longitude
         );
 
         return {
@@ -283,7 +319,9 @@ const Home = () => {
       .filter((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
         const candidateAge = parseAge(
-          candidateRecord.age ?? candidateRecord.birthDate ?? candidateRecord.birth_date,
+          candidateRecord.age ??
+            candidateRecord.birthDate ??
+            candidateRecord.birth_date
         );
         const candidateSmoking = normalizeSmoking(candidateRecord.smoking);
 
@@ -292,7 +330,7 @@ const Home = () => {
             candidateAge,
             discoverFilters.ageMin,
             discoverFilters.ageMax,
-            { includeNullValue: true },
+            { includeNullValue: true }
           )
         ) {
           return false;
@@ -303,7 +341,7 @@ const Home = () => {
               ? candidateRecord.distanceKm
               : null,
             discoverFilters.distanceMinKm,
-            discoverFilters.maxDistanceKm,
+            discoverFilters.maxDistanceKm
           )
         ) {
           return false;
@@ -325,12 +363,17 @@ const Home = () => {
           distanceLabel: formatDistanceLabel(
             typeof candidateRecord.distanceKm === "number"
               ? candidateRecord.distanceKm
-              : null,
+              : null
           ),
           match: profile.match ?? "0",
         };
       }) as DataT[];
-  }, [candidates, discoverFilters, ownProfileRecord?.latitude, ownProfileRecord?.longitude]);
+  }, [
+    candidates,
+    discoverFilters,
+    ownProfileRecord?.latitude,
+    ownProfileRecord?.longitude,
+  ]);
   const centerProfile = useMemo<DataT>(
     () =>
       ({
@@ -339,16 +382,12 @@ const Home = () => {
             ...(ownProfileData ?? {}),
             ...(userPreferences ?? {}),
           },
-          session?.user?.email?.split("@")[0],
+          session?.user?.email?.split("@")[0]
         ),
         match: "0",
       } as DataT),
-    [ownProfileData, session?.user?.email, userPreferences],
+    [ownProfileData, session?.user?.email, userPreferences]
   );
-  const errorMessage =
-    error instanceof Error && error.message.trim()
-      ? error.message
-      : "Could not load real profiles.";
   const [showGallery, setShowGallery] = useState<boolean>(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryInitialIndex, setGalleryInitialIndex] = useState<number>(0);
@@ -356,9 +395,6 @@ const Home = () => {
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
   const [showGuruCard, setShowGuruCard] = useState(true);
   const swipeMutation = useSwipeMutation();
-  const { data: meditatedTodayFriends = [] } = useMeditatedTodayFriendsQuery(
-    session?.user?.id,
-  );
   const firstName =
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
       .split(" ")[0]
@@ -388,7 +424,8 @@ const Home = () => {
         if (!Number.isFinite(startTime)) return true;
 
         const durationDays =
-          typeof challenge.durationDays === "number" && challenge.durationDays > 0
+          typeof challenge.durationDays === "number" &&
+          challenge.durationDays > 0
             ? challenge.durationDays
             : null;
         const endTime = durationDays
@@ -413,52 +450,69 @@ const Home = () => {
       new Set(
         myEventGroups
           .filter((group) => group.eventType === "challenge")
-          .map((group) => group.eventId),
+          .map((group) => group.eventId)
       ),
-    [myEventGroups],
+    [myEventGroups]
   );
   const joinedActiveChallenges = useMemo(
     () =>
       activeChallenges.filter((challenge) =>
-        joinedChallengeIds.has(challenge.id),
+        joinedChallengeIds.has(challenge.id)
       ),
-    [activeChallenges, joinedChallengeIds],
+    [activeChallenges, joinedChallengeIds]
   );
   const suggestedChallenge = useMemo(
     () =>
       joinedActiveChallenges.length > 0
         ? null
         : activeChallenges.find(
-            (challenge) => !joinedChallengeIds.has(challenge.id),
+            (challenge) => !joinedChallengeIds.has(challenge.id)
           ) ?? null,
-    [activeChallenges, joinedActiveChallenges.length, joinedChallengeIds],
+    [activeChallenges, joinedActiveChallenges.length, joinedChallengeIds]
   );
-  const isChallengesSectionLoading =
-    isChallengesLoading || (Boolean(session?.user?.id) && isMyEventGroupsLoading);
-  const summaryStats = [
+  const pathChallenge = joinedActiveChallenges[0] ?? suggestedChallenge;
+  const pathProgress = getChallengeDayProgress(pathChallenge);
+  const nextEvent = futureEvents[0] ?? events[0] ?? null;
+  const nextEventDate = formatEventDayBox(nextEvent?.startsAt);
+  const connectionPreviewProfiles = profiles.slice(0, 3);
+  const connectionCount = Math.max(profiles.length, matches.length);
+  const moodOptions = [
     {
-      icon: "people-outline" as const,
-      value: matches.length,
-      label: "Conexiones",
+      key: "good" as const,
+      icon: "happy-outline" as const,
+      title: "Bien",
+      subtitle: "Estoy bien",
+      color: "#8FA04D",
+      backgroundColor: "#F0F3E7",
     },
     {
-      icon: "trophy-outline" as const,
-      value: joinedActiveChallenges.length,
-      label: "Desafíos",
+      key: "calm" as const,
+      icon: "happy-outline" as const,
+      title: "En calma",
+      subtitle: "Tranquilo",
+      color: "#D9A23B",
+      backgroundColor: "#FBF0DE",
     },
     {
-      icon: "calendar-outline" as const,
-      value: futureEvents.length,
-      label: "Eventos asistidos",
+      key: "recharge" as const,
+      icon: "rainy-outline" as const,
+      title: "Recargar",
+      subtitle: "Un poco caótico",
+      color: "#8E78A8",
+      backgroundColor: "#F0EAF2",
     },
   ];
-  const upcomingEvents = futureEvents.slice(0, 2);
-  const visibleJoinedActiveChallenges = joinedActiveChallenges.slice(0, 4);
-  const suggestedProfile = profiles[0] ?? null;
   const guruDismissStorageKey = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
     return `vibes:home-guru-dismissed:${today}`;
   }, []);
+  const moodStorageKey = useMemo(
+    () =>
+      `${HOME_MOOD_STORAGE_PREFIX}:${
+        session?.user?.id ?? "anonymous"
+      }:${getLocalDateKey()}`,
+    [session?.user?.id]
+  );
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
       selectedProfile
@@ -467,25 +521,18 @@ const Home = () => {
             id: String(selectedProfile.id),
           }
         : null,
-    [selectedProfile],
+    [selectedProfile]
   );
 
   const ageSummary = formatRangeSummary(
     discoverFilters.ageMin,
-    discoverFilters.ageMax,
+    discoverFilters.ageMax
   );
   const distanceSummary = formatRangeSummary(
     discoverFilters.distanceMinKm,
     discoverFilters.maxDistanceKm,
-    " km",
+    " km"
   );
-
-  const dismissGuruCard = async () => {
-    setShowGuruCard(false);
-    try {
-      await AsyncStorage.setItem(guruDismissStorageKey, "1");
-    } catch {}
-  };
 
   useEffect(() => {
     let active = true;
@@ -511,6 +558,39 @@ const Home = () => {
   }, [guruDismissStorageKey]);
 
   useEffect(() => {
+    let active = true;
+
+    const loadMoodState = async () => {
+      try {
+        const storedMood = await AsyncStorage.getItem(moodStorageKey);
+        if (!active) return;
+
+        if (
+          storedMood === "good" ||
+          storedMood === "calm" ||
+          storedMood === "recharge"
+        ) {
+          setSelectedMood(storedMood);
+          setShowMoodCard(false);
+          return;
+        }
+
+        setShowMoodCard(true);
+      } catch {
+        if (active) {
+          setShowMoodCard(true);
+        }
+      }
+    };
+
+    void loadMoodState();
+
+    return () => {
+      active = false;
+    };
+  }, [moodStorageKey]);
+
+  useEffect(() => {
     if (!session?.user?.id) {
       setDiscoverFilters(DEFAULT_FILTERS);
       setHasHydratedStoredFilters(true);
@@ -525,7 +605,7 @@ const Home = () => {
 
     const storedFilters = readStoredFilters(userPreferences);
     setDiscoverFilters((prev) =>
-      areFiltersEqual(prev, storedFilters) ? prev : storedFilters,
+      areFiltersEqual(prev, storedFilters) ? prev : storedFilters
     );
     setHasHydratedStoredFilters(true);
   }, [session?.user?.id, userPreferences]);
@@ -570,12 +650,10 @@ const Home = () => {
         if (!active) return;
 
         const city =
-          address?.city ??
-          address?.subregion ??
-          address?.region ??
-          null;
+          address?.city ?? address?.subregion ?? address?.region ?? null;
         const country = address?.country ?? null;
-        const locationLabel = [city, country].filter(Boolean).join(", ") || null;
+        const locationLabel =
+          [city, country].filter(Boolean).join(", ") || null;
         const currentLatitude = current.coords.latitude;
         const currentLongitude = current.coords.longitude;
         const storedLatitude = toFiniteNumber(ownProfileRecord?.latitude);
@@ -598,7 +676,7 @@ const Home = () => {
             latitude: currentLatitude,
             longitude: currentLongitude,
           },
-          { onConflict: "id" },
+          { onConflict: "id" }
         );
       } catch (_error) {
         // Keep discover usable even if location sync fails.
@@ -621,7 +699,7 @@ const Home = () => {
     if (!images || images.length === 0) return;
     setGalleryImages(images);
     setGalleryInitialIndex(
-      initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0,
+      initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0
     );
     setShowGallery(true);
   };
@@ -642,7 +720,7 @@ const Home = () => {
         },
         onError: (error) =>
           handleApiError(error, { toastTitle: "Error de conexión" }),
-      },
+      }
     );
 
     closeProfileSheet();
@@ -659,7 +737,7 @@ const Home = () => {
       {
         onError: (error) =>
           handleApiError(error, { toastTitle: "Dismiss Error" }),
-      },
+      }
     );
 
     closeProfileSheet();
@@ -672,6 +750,12 @@ const Home = () => {
 
   const closeProfileSheet = () => {
     setShowProfileSheet(false);
+  };
+
+  const selectMoodForToday = (mood: MoodKey) => {
+    setSelectedMood(mood);
+    setShowMoodCard(false);
+    AsyncStorage.setItem(moodStorageKey, mood).catch(() => undefined);
   };
 
   const filterSectionTitle = (title: string) => (
@@ -709,156 +793,162 @@ const Home = () => {
           sheetStyle={localStyles.filtersSheet}
         >
           <>
-              <View style={localStyles.filtersHandle} />
-              <View style={localStyles.filtersHeader}>
-                <View>
-                  <Text style={localStyles.filtersTitle}>Filtros</Text>
-                  <Text style={localStyles.filtersSubtitle}>
-                    Ajustá qué perfiles querés ver en discover.
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => setIsFiltersVisible(false)}
-                  style={localStyles.filtersCloseButton}
-                >
-                  <Icon name="close" size={18} color="#2B2B2B" />
-                </TouchableOpacity>
+            <View style={localStyles.filtersHandle} />
+            <View style={localStyles.filtersHeader}>
+              <View>
+                <Text style={localStyles.filtersTitle}>Filtros</Text>
+                <Text style={localStyles.filtersSubtitle}>
+                  Ajustá qué perfiles querés ver en discover.
+                </Text>
               </View>
-
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={localStyles.filtersContent}
+              <TouchableOpacity
+                onPress={() => setIsFiltersVisible(false)}
+                style={localStyles.filtersCloseButton}
               >
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle("Edad")}
-                  <View style={localStyles.rangeHeader}>
-                    <Text style={localStyles.rangeSummary}>{ageSummary}</Text>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setDiscoverFilters((prev) => ({
-                          ...prev,
-                          ageMin: null,
-                          ageMax: null,
-                        }))
-                      }
-                    >
-                      <Text style={localStyles.rangeReset}>Limpiar</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={localStyles.rangeRow}>
-                    <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>Mínima</Text>
-                      <View style={localStyles.rangeControls}>
-                        <Text style={localStyles.rangeValue}>
-                          {discoverFilters.ageMin ?? "Sin límite"}
-                        </Text>
-                      </View>
+                <Icon name="close" size={18} color="#2B2B2B" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={localStyles.filtersContent}
+            >
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle("Edad")}
+                <View style={localStyles.rangeHeader}>
+                  <Text style={localStyles.rangeSummary}>{ageSummary}</Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setDiscoverFilters((prev) => ({
+                        ...prev,
+                        ageMin: null,
+                        ageMax: null,
+                      }))
+                    }
+                  >
+                    <Text style={localStyles.rangeReset}>Limpiar</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={localStyles.rangeRow}>
+                  <View style={localStyles.rangeCard}>
+                    <Text style={localStyles.rangeLabel}>Mínima</Text>
+                    <View style={localStyles.rangeControls}>
+                      <Text style={localStyles.rangeValue}>
+                        {discoverFilters.ageMin ?? "Sin límite"}
+                      </Text>
                     </View>
-                    <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>Máxima</Text>
-                      <View style={localStyles.rangeControls}>
-                        <Text style={localStyles.rangeValue}>
-                          {discoverFilters.ageMax ?? "Sin límite"}
-                        </Text>
-                      </View>
+                  </View>
+                  <View style={localStyles.rangeCard}>
+                    <Text style={localStyles.rangeLabel}>Máxima</Text>
+                    <View style={localStyles.rangeControls}>
+                      <Text style={localStyles.rangeValue}>
+                        {discoverFilters.ageMax ?? "Sin límite"}
+                      </Text>
                     </View>
                   </View>
                 </View>
-
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle("Distancia")}
-                  <View style={localStyles.rangeHeader}>
-                    <Text style={localStyles.rangeSummary}>{distanceSummary}</Text>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setDiscoverFilters((prev) => ({
-                          ...prev,
-                          distanceMinKm: null,
-                          maxDistanceKm: null,
-                        }))
-                      }
-                    >
-                      <Text style={localStyles.rangeReset}>Limpiar</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={localStyles.rangeRow}>
-                    <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>Mínima</Text>
-                      <View style={localStyles.rangeControls}>
-                        <Text style={localStyles.rangeValue}>
-                          {discoverFilters.distanceMinKm === null
-                            ? "Sin límite"
-                            : `${discoverFilters.distanceMinKm} km`}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>Máxima</Text>
-                      <View style={localStyles.rangeControls}>
-                        <Text style={localStyles.rangeValue}>
-                          {discoverFilters.maxDistanceKm === null
-                            ? "Sin límite"
-                            : `${discoverFilters.maxDistanceKm} km`}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle("Fuma")}
-                  <View style={localStyles.filtersPillRow}>
-                    {(
-                      [
-                        { value: "all", label: "Indistinto" },
-                        { value: "no", label: "No fuma" },
-                        { value: "occasionally", label: "A veces" },
-                        { value: "yes", label: "Sí fuma" },
-                      ] as const
-                    ).map((option) => (
-                      <TouchableOpacity
-                        key={option.value}
-                        style={[
-                          localStyles.filterPill,
-                          discoverFilters.smoking === option.value &&
-                            localStyles.filterPillActive,
-                        ]}
-                        onPress={() =>
-                          setDiscoverFilters((prev) => ({
-                            ...prev,
-                            smoking: option.value,
-                          }))
-                        }
-                      >
-                        <Text
-                          style={[
-                            localStyles.filterPillText,
-                            discoverFilters.smoking === option.value &&
-                              localStyles.filterPillTextActive,
-                          ]}
-                        >
-                          {option.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              </ScrollView>
-
-              <View style={localStyles.filtersFooter}>
-                <TouchableOpacity
-                  style={localStyles.filtersSecondaryButton}
-                  onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
-                >
-                  <Text style={localStyles.filtersSecondaryButtonText}>Limpiar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={localStyles.filtersPrimaryButton}
-                  onPress={() => setIsFiltersVisible(false)}
-                >
-                  <Text style={localStyles.filtersPrimaryButtonText}>Aplicar</Text>
-                </TouchableOpacity>
               </View>
+
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle("Distancia")}
+                <View style={localStyles.rangeHeader}>
+                  <Text style={localStyles.rangeSummary}>
+                    {distanceSummary}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setDiscoverFilters((prev) => ({
+                        ...prev,
+                        distanceMinKm: null,
+                        maxDistanceKm: null,
+                      }))
+                    }
+                  >
+                    <Text style={localStyles.rangeReset}>Limpiar</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={localStyles.rangeRow}>
+                  <View style={localStyles.rangeCard}>
+                    <Text style={localStyles.rangeLabel}>Mínima</Text>
+                    <View style={localStyles.rangeControls}>
+                      <Text style={localStyles.rangeValue}>
+                        {discoverFilters.distanceMinKm === null
+                          ? "Sin límite"
+                          : `${discoverFilters.distanceMinKm} km`}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={localStyles.rangeCard}>
+                    <Text style={localStyles.rangeLabel}>Máxima</Text>
+                    <View style={localStyles.rangeControls}>
+                      <Text style={localStyles.rangeValue}>
+                        {discoverFilters.maxDistanceKm === null
+                          ? "Sin límite"
+                          : `${discoverFilters.maxDistanceKm} km`}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle("Fuma")}
+                <View style={localStyles.filtersPillRow}>
+                  {(
+                    [
+                      { value: "all", label: "Indistinto" },
+                      { value: "no", label: "No fuma" },
+                      { value: "occasionally", label: "A veces" },
+                      { value: "yes", label: "Sí fuma" },
+                    ] as const
+                  ).map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        localStyles.filterPill,
+                        discoverFilters.smoking === option.value &&
+                          localStyles.filterPillActive,
+                      ]}
+                      onPress={() =>
+                        setDiscoverFilters((prev) => ({
+                          ...prev,
+                          smoking: option.value,
+                        }))
+                      }
+                    >
+                      <Text
+                        style={[
+                          localStyles.filterPillText,
+                          discoverFilters.smoking === option.value &&
+                            localStyles.filterPillTextActive,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={localStyles.filtersFooter}>
+              <TouchableOpacity
+                style={localStyles.filtersSecondaryButton}
+                onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
+              >
+                <Text style={localStyles.filtersSecondaryButtonText}>
+                  Limpiar
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={localStyles.filtersPrimaryButton}
+                onPress={() => setIsFiltersVisible(false)}
+              >
+                <Text style={localStyles.filtersPrimaryButtonText}>
+                  Aplicar
+                </Text>
+              </TouchableOpacity>
+            </View>
           </>
         </AnimatedSheetModal>
 
@@ -905,7 +995,7 @@ const Home = () => {
             selectedProfile
               ? openGallery(
                   selectedProfile.images || [selectedProfile.image],
-                  index ?? 0,
+                  index ?? 0
                 )
               : undefined
           }
@@ -924,400 +1014,239 @@ const Home = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={localStyles.heroHeader}>
+            <View style={localStyles.heroCopy}>
+              <Text style={localStyles.heroTitle}>Hola, {firstName} 👋</Text>
+              <Text style={localStyles.heroSubtitle}>
+                Antes de conectar con otros,{"\n"}
+                <Text style={localStyles.heroSubtitleStrong}>
+                  conectá con vos.
+                </Text>
+              </Text>
+            </View>
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Ir a tu perfil"
               activeOpacity={0.84}
               onPress={() => navigation.navigate("Aura" as never)}
-              style={localStyles.heroAvatarWrap}
+              style={localStyles.heroAvatarButton}
             >
-              <Avatar uri={centerProfile.avatarUri ?? null} size={42} />
+              <Ionicons name="person-outline" size={30} color="#2B2B2B" />
             </TouchableOpacity>
-            <View style={localStyles.heroCopy}>
-              <Text style={localStyles.heroTitle}>Hola, {firstName}</Text>
-              <Text style={localStyles.heroSubtitle}>
-                Conectá con vos antes de conectar con otros.
-              </Text>
-            </View>
           </View>
+
+          {showMoodCard ? (
+            <View style={localStyles.moodCard}>
+              <Text style={localStyles.moodTitle}>¿Cómo te sentís hoy?</Text>
+              <View style={localStyles.moodGrid}>
+                {moodOptions.map((mood) => {
+                  const selected = selectedMood === mood.key;
+                  return (
+                    <TouchableOpacity
+                      key={mood.key}
+                      activeOpacity={0.82}
+                      onPress={() => selectMoodForToday(mood.key)}
+                      style={[
+                        localStyles.moodOption,
+                        {
+                          backgroundColor: mood.backgroundColor,
+                          borderColor: selected ? mood.color : "transparent",
+                        },
+                      ]}
+                    >
+                      <Ionicons name={mood.icon} size={38} color={mood.color} />
+                      <View style={localStyles.moodCopy}>
+                        <Text style={localStyles.moodOptionTitle}>
+                          {mood.title}
+                        </Text>
+                        <Text style={localStyles.moodOptionSubtitle}>
+                          {mood.subtitle}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
 
           {showGuruCard ? (
-            <View style={localStyles.guruCard}>
-              <View style={localStyles.guruCardHeader}>
-                <View style={localStyles.guruCardHeading}>
-                  <View style={localStyles.guruBadge}>
-                    <Ionicons name="sparkles-outline" size={16} color="#FFFFFF" />
-                  </View>
-                  <View style={localStyles.guruCopy}>
-                    <Text style={localStyles.guruTitle}>
-                      {t("common.challengeGuideName")}
-                    </Text>
-                    <Text style={localStyles.guruSubtitle}>
-                      {t("home.guruHomeSubtitle")}
-                    </Text>
-                  </View>
+            <ImageBackground
+              source={require("../assets/images/guruVibes.png")}
+              imageStyle={localStyles.featureImage}
+              resizeMode="cover"
+              style={localStyles.guruFeatureCard}
+            >
+              <View style={localStyles.featureScrim} />
+              <View style={localStyles.guruBadgeRow}>
+                <View style={localStyles.guruFeatureBadge}>
+                  <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
                 </View>
-                <TouchableOpacity
-                  style={localStyles.guruDismissButton}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("home.guruDismiss")}
-                  activeOpacity={0.84}
-                  onPress={dismissGuruCard}
-                >
-                  <Ionicons name="close" size={16} color="#7A746D" />
-                </TouchableOpacity>
+                <Text style={localStyles.featureEyebrow}>GURU VIBES</Text>
               </View>
-
-              <Text style={localStyles.guruBreathPrompt}>
-                {t("home.guruHomeBreathPrompt")}
+              <Text style={localStyles.featureTitle}>
+                Toma una respiración profunda.
               </Text>
-              <Text style={localStyles.guruBody}>{t("home.guruHomeBody")}</Text>
-            </View>
+              <Text style={localStyles.featureBody}>
+                Tu energía ya sabe hacia dónde abrirse. Elegí desde la calma y
+                dejá que Vibes acerque lo que hoy resuena con vos.
+              </Text>
+            </ImageBackground>
           ) : null}
-
-          {meditatedTodayFriends.length > 0 ? (
-            <View style={localStyles.presenceCard}>
-              <View style={localStyles.presenceHeader}>
-                <View>
-                  <Text style={localStyles.presenceTitle}>
-                    {t("home.meditatedTodayTitle")}
-                  </Text>
-                  <Text style={localStyles.presenceSubtitle}>
-                    {t("home.meditatedTodaySubtitle")}
-                  </Text>
-                </View>
-                <View style={localStyles.presenceBadge}>
-                  <Ionicons name="sparkles-outline" size={16} color="#D19443" />
-                </View>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={localStyles.presenceRow}
-              >
-                {meditatedTodayFriends.map((item) => (
-                  <View key={item.userId} style={localStyles.presenceBubble}>
-                    <View style={localStyles.presenceAvatarGlow} />
-                    <Avatar uri={item.avatarUrl} size={54} />
-                    <Text style={localStyles.presenceName} numberOfLines={1}>
-                      {item.displayName}
-                    </Text>
-                    <Text style={localStyles.presenceMeta} numberOfLines={1}>
-                      {item.durationMinutes} min · {item.streak}d
-                    </Text>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          ) : null}
-
-          <View style={localStyles.summaryCard}>
-            <Text style={localStyles.summaryTitle}>Tu resumen</Text>
-            <View style={localStyles.summaryContent}>
-              <View style={localStyles.statsRow}>
-                {summaryStats.map((stat, index) => (
-                  <View key={stat.label} style={localStyles.statItem}>
-                    {index > 0 ? <View style={localStyles.statDivider} /> : null}
-                    <View style={localStyles.statLead}>
-                      <Ionicons name={stat.icon} size={19} color="#DCA453" />
-                      <Text style={localStyles.statLabel}>{stat.label}</Text>
-                    </View>
-                    <Text style={localStyles.statValue}>{stat.value}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
 
           <TouchableOpacity
-            style={localStyles.meditationCard}
-            onPress={() => navigation.navigate("Meditations" as never)}
+            activeOpacity={0.86}
+            style={localStyles.pathCard}
+            onPress={() =>
+              pathChallenge
+                ? navigation.navigate(
+                    "ChallengeDetailScreen" as never,
+                    { event: pathChallenge } as never
+                  )
+                : navigation.navigate(
+                    "Tab" as never,
+                    { screen: "Flow", params: { section: "challenge" } } as never
+                  )
+            }
           >
-            <Image
-              source={require("../assets/images/meditate.png")}
-              style={localStyles.meditationArt}
-              resizeMode="contain"
-            />
-            <View style={localStyles.meditationButtonSurface}>
-              <View style={localStyles.meditationButtonIconWrap}>
-                <Ionicons name="leaf-outline" size={28} color="#314762" />
-              </View>
-              <View style={localStyles.meditationButtonCopy}>
-                <Text style={localStyles.meditationButtonTitle}>
-                  Meditar
+            <View style={localStyles.pathCopy}>
+              <Text style={localStyles.pathEyebrow}>TU CAMINO</Text>
+              <Text style={localStyles.pathTitle}>
+                Día {pathProgress.currentDay} de {pathProgress.totalDays}
+              </Text>
+              <Text style={localStyles.pathSubtitle}>
+                Pequeños pasos, grandes cambios.
+              </Text>
+              <View style={localStyles.progressRow}>
+                {Array.from({ length: 7 }).map((_, index) => {
+                  const active = index < Math.round(pathProgress.ratio * 7);
+                  return (
+                    <View
+                      key={`progress-${index}`}
+                      style={[
+                        localStyles.progressSegment,
+                        active && localStyles.progressSegmentActive,
+                      ]}
+                    />
+                  );
+                })}
+                <Text style={localStyles.progressText}>
+                  {Math.round(pathProgress.ratio * 100)}%
                 </Text>
-                <Text style={localStyles.meditationButtonSubtitle}>
-                  {t("home.breatheMinutes")}
-                </Text>
               </View>
-              <View style={localStyles.meditationArrowWrap}>
-                <Ionicons
-                  name="chevron-forward"
-                  size={28}
-                  color="#314762"
-                  style={localStyles.meditationButtonArrow}
-                />
+            </View>
+            <View style={localStyles.pathIconWrap}>
+              <Ionicons name="leaf-outline" size={38} color="#8E9B52" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.86}
+            style={localStyles.connectionsCard}
+            onPress={() =>
+              navigation.navigate(
+                "Tab" as never,
+                { screen: "Discover" } as never
+              )
+            }
+          >
+            <Text style={localStyles.connectionsEyebrow}>
+              NUEVAS CONEXIONES
+            </Text>
+            <View style={localStyles.connectionsRow}>
+              <View style={localStyles.connectionAvatars}>
+                {connectionPreviewProfiles.length > 0
+                  ? connectionPreviewProfiles.map((profile, index) => (
+                      <View
+                        key={String(profile.id ?? index)}
+                        style={[
+                          localStyles.connectionAvatarWrap,
+                          index > 0 && localStyles.connectionAvatarOverlap,
+                        ]}
+                      >
+                        <Avatar uri={profile.avatarUri ?? null} size={52} />
+                        <View style={localStyles.connectionDot} />
+                      </View>
+                    ))
+                  : [0, 1, 2].map((item) => (
+                      <Image
+                        key={`placeholder-${item}`}
+                        source={require("../assets/images/01.jpg")}
+                        style={[
+                          localStyles.connectionAvatarPlaceholder,
+                          item > 0 && localStyles.connectionAvatarOverlap,
+                        ]}
+                      />
+                    ))}
+              </View>
+              <View style={localStyles.connectionIconCircle}>
+                <Ionicons name="people-outline" size={32} color="#8E78A8" />
+              </View>
+              <View style={localStyles.connectionsCopy}>
+                <Text style={localStyles.connectionsText}>
+                  {Math.max(3, connectionCount)} nuevas personas vibran parecido
+                  a vos
+                </Text>
+                <View style={localStyles.inlineLink}>
+                  <Text style={localStyles.inlineLinkText}>Ver más</Text>
+                  <Ionicons name="chevron-forward" size={18} color="#14283E" />
+                </View>
               </View>
             </View>
           </TouchableOpacity>
 
-          <View style={localStyles.sectionCard}>
-            <View style={localStyles.sectionHeader}>
-              <Text style={localStyles.sectionTitle}>
-                {visibleJoinedActiveChallenges.length > 0
-                  ? "Tus desafíos vigentes"
-                  : "Desafío sugerido"}
-              </Text>
-              <TouchableOpacity
-                style={localStyles.sectionLink}
-                onPress={() =>
-                  navigation.navigate(
+          <TouchableOpacity
+            activeOpacity={0.86}
+            style={localStyles.eventPreviewCard}
+            onPress={() =>
+              nextEvent
+                ? navigation.navigate(
+                    "EventDetail" as never,
+                    { event: nextEvent } as never
+                  )
+                : navigation.navigate(
                     "Tab" as never,
-                    { screen: "Flow", params: { section: "challenge" } } as never,
+                    { screen: "EventsTab", params: { section: "event" } } as never
                   )
-                }
-              >
-                <Text style={localStyles.sectionLinkText}>Ver todos</Text>
-                <Ionicons name="chevron-forward" size={20} color="#766F68" />
-              </TouchableOpacity>
-            </View>
-            {isChallengesSectionLoading ? (
-              <View style={localStyles.inlineLoading}>
-                <VibesLoader size={54} />
+            }
+          >
+            <Text style={localStyles.eventPreviewEyebrow}>
+              PRÓXIMOS EVENTOS
+            </Text>
+            <View style={localStyles.eventPreviewRow}>
+              <View style={localStyles.eventDateBox}>
+                <Text style={localStyles.eventDateWeekday}>
+                  {nextEventDate.weekday}
+                </Text>
+                <Text style={localStyles.eventDateDay}>{nextEventDate.day}</Text>
               </View>
-            ) : visibleJoinedActiveChallenges.length > 0 ? (
-              visibleJoinedActiveChallenges.map((challenge, index) => {
-                const progress = getChallengeProgress(challenge as EventFeedItem);
-                const participantCount = parseParticipantCount(challenge.attendees);
-                const challengeCheckedInToday = Math.max(
-                  0,
-                  Number(challenge.checkedInTodayCount ?? 0) || 0,
-                );
-                const previewImages = Array.from(
-                  new Set(
-                    (challenge.participantPreviewImages ?? []).filter(
-                      (value): value is string =>
-                        typeof value === "string" && value.trim().length > 0,
-                    ),
-                  ),
-                );
-
-                return (
-                  <TouchableOpacity
-                    key={challenge.id}
-                    style={[
-                      localStyles.feedListRow,
-                      localStyles.feedListRowChallenge,
-                      index > 0 && localStyles.eventRowSpacing,
-                    ]}
-                    onPress={() =>
-                      navigation.navigate(
-                        "ChallengeDetailScreen" as never,
-                        { event: challenge } as never,
-                      )
-                    }
-                  >
-                    <Image
-                      source={
-                        typeof challenge.image === "string"
-                          ? { uri: challenge.image }
-                          : challenge.image
-                      }
-                      style={localStyles.feedListThumb}
-                    />
-                    <View style={localStyles.feedListInfo}>
-                      <Text style={localStyles.feedListTitle} numberOfLines={1}>
-                        {challenge.title}
-                      </Text>
-                      <Text style={localStyles.feedListMeta} numberOfLines={1}>
-                        {challenge.date} {"  •  "} {challenge.attendees}
-                      </Text>
-                      <View style={localStyles.feedCommunityRow}>
-                        <Ionicons name="sparkles-outline" size={13} color="#D19443" />
-                        <Text style={localStyles.feedCommunityText} numberOfLines={1}>
-                          {t("home.challengeCheckedInToday", {
-                            count: challengeCheckedInToday,
-                          })}
-                        </Text>
-                      </View>
-                      {progress ? (
-                        <View
-                          style={[
-                            localStyles.feedProgressPill,
-                            progress.tone === "done"
-                              ? localStyles.feedProgressPillDone
-                              : progress.tone === "pending"
-                                ? localStyles.feedProgressPillPending
-                                : null,
-                          ]}
-                        >
-                          <Text style={localStyles.feedProgressText}>
-                            {progress.label}
-                          </Text>
-                        </View>
-                      ) : null}
-                      <View style={localStyles.feedListBottomRow}>
-                        <AvatarGroup
-                          style={localStyles.feedAvatarStack}
-                          size={34}
-                          overlap={10}
-                          max={3}
-                          items={Array.from({
-                            length: Math.max(
-                              1,
-                              Math.min(participantCount || previewImages.length || 1, 3),
-                            ),
-                          }).map((_, avatarIndex) => ({
-                            id: `${challenge.id}-avatar-${avatarIndex}`,
-                            uri:
-                              previewImages[avatarIndex] ??
-                              (avatarIndex === 0 &&
-                              typeof challenge.hostImage === "string" &&
-                              challenge.hostImage.trim()
-                                ? challenge.hostImage
-                                : null),
-                          }))}
-                        />
-                        <View style={localStyles.feedArrowWrap}>
-                          <Ionicons name="chevron-forward" size={18} color="#7D7771" />
-                        </View>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
-            ) : suggestedChallenge ? (
-              <TouchableOpacity
-                style={[localStyles.feedListRow, localStyles.feedListRowChallenge]}
-                onPress={() =>
-                  navigation.navigate(
-                    "ChallengeDetailScreen" as never,
-                    { event: suggestedChallenge } as never,
-                  )
-                }
-              >
-                <Image
-                  source={
-                    typeof suggestedChallenge.image === "string"
-                      ? { uri: suggestedChallenge.image }
-                      : suggestedChallenge.image
-                  }
-                  style={localStyles.feedListThumb}
-                />
-                <View style={localStyles.feedListInfo}>
-                  <Text style={localStyles.feedListTitle} numberOfLines={1}>
-                    {suggestedChallenge.title}
-                  </Text>
-                  <Text style={localStyles.feedListMeta} numberOfLines={1}>
-                    {suggestedChallenge.date} {"  •  "} Sugerido para empezar
+              <View style={localStyles.eventPreviewCopy}>
+                <Text style={localStyles.eventPreviewTitle} numberOfLines={1}>
+                  {nextEvent?.title ?? "Círculo de conexión"}
+                </Text>
+                <Text style={localStyles.eventPreviewMeta} numberOfLines={1}>
+                  {nextEvent?.date ?? "Sábado 25 de mayo · 18:00"}
+                </Text>
+                <View style={localStyles.eventParticipantsRow}>
+                  <AvatarGroup
+                    size={24}
+                    overlap={7}
+                    max={4}
+                    items={Array.from({ length: 4 }).map((_, index) => ({
+                      id: `event-preview-${index}`,
+                      uri:
+                        nextEvent?.participantPreviewImages?.[index] ??
+                        nextEvent?.hostImage ??
+                        null,
+                    }))}
+                  />
+                  <Text style={localStyles.eventParticipantsText}>
+                    {nextEvent?.attendees ?? "12 personas se suman"}
                   </Text>
                 </View>
-                <View style={localStyles.feedArrowWrap}>
-                  <Ionicons name="chevron-forward" size={18} color="#7D7771" />
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <Text style={localStyles.emptyStateText}>
-                No hay desafíos activos por ahora.
-              </Text>
-            )}
-          </View>
-
-          <View style={localStyles.sectionCard}>
-            <View style={localStyles.sectionHeader}>
-              <Text style={localStyles.sectionTitle}>Próximos eventos</Text>
-              <TouchableOpacity
-                style={localStyles.sectionLink}
-                onPress={() =>
-                  navigation.navigate(
-                    "Tab" as never,
-                    { screen: "Flow", params: { section: "event" } } as never,
-                  )
-                }
-              >
-                <Text style={localStyles.sectionLinkText}>Ver todos</Text>
-                <Ionicons name="chevron-forward" size={20} color="#766F68" />
-              </TouchableOpacity>
-            </View>
-            {isEventsLoading ? (
-              <View style={localStyles.inlineLoading}>
-                <VibesLoader size={54} />
               </View>
-            ) : upcomingEvents.length === 0 ? (
-              <Text style={localStyles.emptyStateText}>
-                No hay próximos eventos disponibles.
-              </Text>
-            ) : (
-              upcomingEvents.map((event, index) => {
-                const participantCount = parseParticipantCount(event.attendees);
-                const previewImages = Array.from(
-                  new Set(
-                    (event.participantPreviewImages ?? []).filter(
-                      (value): value is string =>
-                        typeof value === "string" && value.trim().length > 0,
-                    ),
-                  ),
-                );
-
-                return (
-                  <TouchableOpacity
-                    key={event.id}
-                    style={[localStyles.feedListRow, index > 0 && localStyles.eventRowSpacing]}
-                    onPress={() =>
-                      navigation.navigate(
-                        "Tab" as never,
-                        { screen: "Flow", params: { section: "event" } } as never,
-                      )
-                    }
-                  >
-                    <Image
-                      source={
-                        typeof event.image === "string"
-                          ? { uri: event.image }
-                          : event.image
-                      }
-                      style={localStyles.feedListThumb}
-                    />
-                    <View style={localStyles.feedListInfo}>
-                      <Text style={localStyles.feedListTitle} numberOfLines={1}>
-                        {event.title}
-                      </Text>
-                      <Text style={localStyles.feedListMeta} numberOfLines={1}>
-                        {event.date} {"  •  "} {event.location ?? "Online"}
-                      </Text>
-                      <View style={localStyles.feedListBottomRow}>
-                        <AvatarGroup
-                          style={localStyles.feedAvatarStack}
-                          size={34}
-                          overlap={10}
-                          max={3}
-                          items={Array.from({
-                            length: Math.max(
-                              1,
-                              Math.min(participantCount || previewImages.length || 1, 3),
-                            ),
-                          }).map((_, avatarIndex) => ({
-                            id: `${event.id}-avatar-${avatarIndex}`,
-                            uri:
-                              previewImages[avatarIndex] ??
-                              (avatarIndex === 0 &&
-                              typeof event.hostImage === "string" &&
-                              event.hostImage.trim()
-                                ? event.hostImage
-                                : null),
-                          }))}
-                        />
-                        <View style={localStyles.feedArrowWrap}>
-                          <Ionicons name="chevron-forward" size={18} color="#7D7771" />
-                        </View>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>
-
+              <Ionicons name="chevron-forward" size={32} color="#6D6D6D" />
+            </View>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
       <Animated.View
@@ -1331,7 +1260,7 @@ const Home = () => {
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#F8F7F4",
   },
   homeEntryOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -1345,37 +1274,397 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   homeContent: {
-    paddingHorizontal: 22,
-    paddingTop: 22,
-    paddingBottom: 112,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 118,
   },
   heroHeader: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+    alignItems: "flex-start",
+    gap: 18,
     marginBottom: 26,
   },
-  heroAvatarWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    overflow: "hidden",
+  heroAvatarButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
   },
   heroCopy: {
     flex: 1,
   },
   heroTitle: {
     color: "#252323",
-    fontSize: 30,
-    lineHeight: 34,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 40,
+    lineHeight: 47,
+    fontFamily: vibesTheme.fonts.regular,
   },
   heroSubtitle: {
-    marginTop: 4,
-    color: "#58534E",
+    marginTop: 10,
+    color: "#727070",
+    fontSize: 20,
+    lineHeight: 27,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  heroSubtitleStrong: {
+    color: "#142033",
+    fontFamily: vibesTheme.fonts.semibold,
+  },
+  moodCard: {
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 15,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.06)",
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  moodTitle: {
+    color: "#2B2B2B",
+    fontSize: 18,
+    lineHeight: 22,
+    textAlign: "center",
+    fontFamily: vibesTheme.fonts.medium,
+    marginBottom: 13,
+  },
+  moodGrid: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  moodOption: {
+    flex: 1,
+    minHeight: 70,
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 9,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  moodCopy: {
+    alignItems: "center",
+    minWidth: 0,
+  },
+  moodOptionTitle: {
+    color: "#272525",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
+    textAlign: "center",
+  },
+  moodOptionSubtitle: {
+    marginTop: 2,
+    color: "#68615C",
+    fontSize: 11,
+    lineHeight: 13,
+    fontFamily: vibesTheme.fonts.regular,
+    textAlign: "center",
+  },
+  featureImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: "148%",
+    height: "148%",
+    borderRadius: 20,
+    transform: [{ translateX: -58 }, { translateY: -38 }],
+  },
+  guruFeatureCard: {
+    minHeight: 184,
+    borderRadius: 20,
+    overflow: "hidden",
+    paddingHorizontal: 22,
+    paddingVertical: 18,
+    justifyContent: "flex-start",
+    marginBottom: 14,
+    backgroundColor: "#FFF1DE",
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  featureScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 244, 228, 0.28)",
+  },
+  guruBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  guruFeatureBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0C879",
+  },
+  featureEyebrow: {
+    color: "#D69A27",
+    fontSize: 12,
+    lineHeight: 15,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  featureTitle: {
+    maxWidth: "62%",
+    color: "#13263C",
+    fontSize: 22,
+    lineHeight: 27,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  featureBody: {
+    maxWidth: "58%",
+    marginTop: 8,
+    color: "#3D3A37",
+    fontSize: 13,
+    lineHeight: 17,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  pathCard: {
+    minHeight: 132,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.06)",
+    paddingHorizontal: 28,
+    paddingVertical: 20,
+    marginBottom: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 3,
+  },
+  pathCopy: {
+    flex: 1,
+  },
+  pathEyebrow: {
+    color: "#8E9B52",
     fontSize: 14,
     lineHeight: 18,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  pathTitle: {
+    marginTop: 8,
+    color: "#252323",
+    fontSize: 24,
+    lineHeight: 29,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  pathSubtitle: {
+    marginTop: 4,
+    color: "#625D57",
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  progressRow: {
+    marginTop: 19,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  progressSegment: {
+    width: 58,
+    maxWidth: "12%",
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "#E1E1E1",
+  },
+  progressSegmentActive: {
+    backgroundColor: "#8E9B52",
+  },
+  progressText: {
+    marginLeft: 8,
+    color: "#6B6B6B",
+    fontSize: 14,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  pathIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1F3E8",
+    marginLeft: 14,
+  },
+  connectionsCard: {
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.06)",
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    marginBottom: 18,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 3,
+  },
+  connectionsEyebrow: {
+    color: "#8E78A8",
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.bold,
+    marginBottom: 18,
+  },
+  connectionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  connectionAvatars: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  connectionAvatarWrap: {
+    position: "relative",
+  },
+  connectionAvatarOverlap: {
+    marginLeft: -12,
+  },
+  connectionAvatarPlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+  },
+  connectionDot: {
+    position: "absolute",
+    top: -2,
+    right: 1,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: "#DCA338",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  connectionIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0EAF2",
+    flexShrink: 0,
+  },
+  connectionsCopy: {
+    flex: 1,
+    minWidth: 116,
+  },
+  connectionsText: {
+    color: "#595754",
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  inlineLink: {
+    marginTop: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  inlineLinkText: {
+    color: "#14283E",
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.semibold,
+  },
+  eventPreviewCard: {
+    borderRadius: 20,
+    backgroundColor: "#FFF8EE",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.16)",
+    paddingHorizontal: 28,
+    paddingVertical: 22,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 3,
+  },
+  eventPreviewEyebrow: {
+    color: "#D69A27",
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.bold,
+    marginBottom: 18,
+  },
+  eventPreviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+  },
+  eventDateBox: {
+    width: 82,
+    height: 82,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.68)",
+  },
+  eventDateWeekday: {
+    color: "#625D57",
+    fontSize: 15,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.semibold,
+  },
+  eventDateDay: {
+    color: "#14283E",
+    fontSize: 36,
+    lineHeight: 40,
     fontFamily: vibesTheme.fonts.medium,
+  },
+  eventPreviewCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  eventPreviewTitle: {
+    color: "#252323",
+    fontSize: 20,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  eventPreviewMeta: {
+    marginTop: 6,
+    color: "#625D57",
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  eventParticipantsRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  eventParticipantsText: {
+    flex: 1,
+    color: "#716B65",
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.regular,
   },
   summaryCard: {
     minHeight: 116,
@@ -1394,7 +1683,7 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 24,
     lineHeight: 28,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 8,
   },
   summaryContent: {
@@ -1430,14 +1719,19 @@ const localStyles = StyleSheet.create({
     color: "#4B3728",
     fontSize: 24,
     lineHeight: 26,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  statMeta: {
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 10,
+    gap: 4,
   },
   statLabel: {
     color: "#3F3A36",
     fontSize: 15,
     lineHeight: 17,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
     flexShrink: 1,
   },
   meditationCard: {
@@ -1491,14 +1785,14 @@ const localStyles = StyleSheet.create({
     color: "#24364A",
     fontSize: 24,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.regular,
   },
   meditationButtonSubtitle: {
     marginTop: 4,
     color: "#314762",
     fontSize: 16,
     lineHeight: 18,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   meditationArrowWrap: {
     width: 46,
@@ -1561,35 +1855,35 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 22,
     lineHeight: 26,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.regular,
   },
   guruSubtitle: {
     marginTop: 2,
     color: "#7A746D",
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.regular,
   },
   guruChallengeName: {
     marginTop: 12,
     color: "#4B3728",
     fontSize: 16,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.regular,
   },
   guruBreathPrompt: {
     marginTop: 10,
     color: "#2B2B2B",
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   guruBody: {
     marginTop: 6,
     color: "#4D453F",
     fontSize: 17,
     lineHeight: 25,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   presenceCard: {
     borderRadius: 20,
@@ -1614,14 +1908,14 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 19,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.regular,
   },
   presenceSubtitle: {
     marginTop: 3,
     color: "#7A746D",
     fontSize: 13,
     lineHeight: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.regular,
   },
   presenceBadge: {
     width: 32,
@@ -1661,14 +1955,14 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.regular,
   },
   presenceMeta: {
     marginTop: 2,
     color: "#7A746D",
     fontSize: 11,
     lineHeight: 14,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.regular,
   },
   sectionCard: {
     borderRadius: 18,
@@ -1694,7 +1988,7 @@ const localStyles = StyleSheet.create({
     color: "#252323",
     fontSize: 23,
     lineHeight: 27,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   sectionLink: {
     flexDirection: "row",
@@ -1704,7 +1998,7 @@ const localStyles = StyleSheet.create({
   sectionLinkText: {
     color: "#8A8178",
     fontSize: 16,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   inlineLoading: {
     minHeight: 74,
@@ -1782,14 +2076,14 @@ const localStyles = StyleSheet.create({
     color: "#252323",
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 4,
   },
   feedListMeta: {
     color: "#7A746D",
     fontSize: 14,
     lineHeight: 17,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.regular,
   },
   feedCommunityRow: {
     marginTop: 6,
@@ -1802,7 +2096,7 @@ const localStyles = StyleSheet.create({
     color: "#916E39",
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.regular,
   },
   feedListBottomRow: {
     marginTop: 10,
@@ -1848,7 +2142,7 @@ const localStyles = StyleSheet.create({
     color: "#5F6E7D",
     fontSize: 12,
     lineHeight: 14,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   eventInfo: {
     flex: 1,
@@ -1857,7 +2151,7 @@ const localStyles = StyleSheet.create({
     color: "#252323",
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 7,
   },
   eventMetaRow: {
@@ -1871,7 +2165,7 @@ const localStyles = StyleSheet.create({
     color: "#625D57",
     fontSize: 15,
     lineHeight: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.regular,
   },
   rowArrow: {
     width: 44,
@@ -1892,7 +2186,7 @@ const localStyles = StyleSheet.create({
     fontSize: 42,
     lineHeight: 46,
     color: "#2B2B2B",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.regular,
     letterSpacing: 0.3,
   },
   discoverOrbitWrap: {
@@ -1924,7 +2218,7 @@ const localStyles = StyleSheet.create({
   emptyStateTitle: {
     color: "#2B2B2B",
     fontSize: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   emptyStateText: {
@@ -1932,7 +2226,7 @@ const localStyles = StyleSheet.create({
     color: "rgba(43, 43, 43, 0.7)",
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   filtersSheet: {
@@ -1962,14 +2256,14 @@ const localStyles = StyleSheet.create({
   filtersTitle: {
     color: "#2B2B2B",
     fontSize: 30,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersSubtitle: {
     marginTop: 4,
     color: "rgba(43, 43, 43, 0.64)",
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersCloseButton: {
     width: 38,
@@ -1995,12 +2289,12 @@ const localStyles = StyleSheet.create({
   rangeSummary: {
     color: "rgba(43, 43, 43, 0.78)",
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   rangeReset: {
     color: "#2B2B2B",
     fontSize: 14,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   rangeRow: {
     flexDirection: "row",
@@ -2019,7 +2313,7 @@ const localStyles = StyleSheet.create({
   rangeLabel: {
     color: "rgba(43, 43, 43, 0.64)",
     fontSize: 13,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
     textTransform: "uppercase",
   },
   rangeControls: {
@@ -2033,12 +2327,12 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
     color: "#2B2B2B",
     fontSize: 16,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersSectionTitle: {
     color: "#2B2B2B",
     fontSize: 22,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersPillRow: {
     flexDirection: "row",
@@ -2060,7 +2354,7 @@ const localStyles = StyleSheet.create({
   filterPillText: {
     color: "#2B2B2B",
     fontSize: 14,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   filterPillTextActive: {
     color: "#F6F6F4",
@@ -2083,7 +2377,7 @@ const localStyles = StyleSheet.create({
   filtersSecondaryButtonText: {
     color: "#2B2B2B",
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersPrimaryButton: {
     flex: 1,
@@ -2096,7 +2390,7 @@ const localStyles = StyleSheet.create({
   filtersPrimaryButtonText: {
     color: "#F6F6F4",
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.regular,
   },
 });
 

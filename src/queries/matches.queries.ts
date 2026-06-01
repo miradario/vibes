@@ -331,6 +331,10 @@ export const useMatchesQuery = () => {
   useEffect(() => {
     if (!userId) return;
 
+    const refreshMatches = () => {
+      queryClient.invalidateQueries({ queryKey: matchKeys.all });
+    };
+
     const channel = supabase
       .channel(`matches:summary:${userId}`)
       .on(
@@ -340,8 +344,23 @@ export const useMatchesQuery = () => {
           schema: "public",
           table: "messages",
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        refreshMatches,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "matches",
+        },
+        (payload) => {
+          const row = (payload.new ?? payload.old ?? {}) as Record<string, unknown>;
+          const user1Id = String(row.user1_id ?? "");
+          const user2Id = String(row.user2_id ?? "");
+
+          if (user1Id === userId || user2Id === userId) {
+            refreshMatches();
+          }
         },
       )
       .subscribe();
@@ -391,15 +410,68 @@ export const useMarkDirectMessagesReadMutation = () => {
 };
 
 export const useIncomingLikesQuery = () => {
+  const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
 
-  return useQuery<IncomingLike[]>({
+  const query = useQuery<IncomingLike[]>({
     queryKey: matchKeys.incomingLikes(userId),
     queryFn: () => fetchIncomingLikes(userId!),
     enabled: Boolean(userId),
     staleTime: 30_000,
   });
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const refreshIncomingLikes = () => {
+      queryClient.invalidateQueries({ queryKey: matchKeys.incomingLikes(userId) });
+    };
+
+    const channel = supabase
+      .channel(`incoming-likes:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "swipes",
+        },
+        (payload) => {
+          const row = (payload.new ?? payload.old ?? {}) as Record<string, unknown>;
+          const swiperId = String(row.swiper_id ?? "");
+          const targetId = String(row.target_id ?? "");
+
+          if (targetId === userId || swiperId === userId) {
+            refreshIncomingLikes();
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "matches",
+        },
+        (payload) => {
+          const row = (payload.new ?? payload.old ?? {}) as Record<string, unknown>;
+          const user1Id = String(row.user1_id ?? "");
+          const user2Id = String(row.user2_id ?? "");
+
+          if (user1Id === userId || user2Id === userId) {
+            refreshIncomingLikes();
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [queryClient, userId]);
+
+  return query;
 };
 
 // ---------------------------------------------------------------------------

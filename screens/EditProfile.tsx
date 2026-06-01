@@ -40,6 +40,7 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -1157,7 +1158,7 @@ const modalStyles = StyleSheet.create({
   title: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   subtitle: {
     marginTop: 6,
@@ -1176,7 +1177,7 @@ const modalStyles = StyleSheet.create({
   },
   primaryText: {
     color: WHITE,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   secondaryButton: {
     backgroundColor: "#F6F6F4",
@@ -1186,7 +1187,7 @@ const modalStyles = StyleSheet.create({
   },
   secondaryText: {
     color: DARK_GRAY,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   cancelButton: {
     marginTop: 14,
@@ -1194,7 +1195,7 @@ const modalStyles = StyleSheet.create({
   },
   cancelText: {
     color: GRAY,
-    fontWeight: "600",
+    fontWeight: "400",
   },
 });
 
@@ -1218,7 +1219,7 @@ const localStyles = StyleSheet.create({
   primaryBadgeText: {
     color: WHITE,
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   nameInput: {
     backgroundColor: "rgba(246, 246, 244, 0.6)",
@@ -1241,7 +1242,7 @@ const localStyles = StyleSheet.create({
   readOnlyValue: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   helperText: {
     color: GRAY,
@@ -1267,7 +1268,7 @@ const localStyles = StyleSheet.create({
   currentLocationValue: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   currentLocationButton: {
     alignSelf: "flex-start",
@@ -1280,7 +1281,7 @@ const localStyles = StyleSheet.create({
   currentLocationButtonText: {
     color: WHITE,
     fontSize: 14,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   languageRow: {
     flexDirection: "row",
@@ -1303,7 +1304,7 @@ const localStyles = StyleSheet.create({
   languageChipText: {
     color: DARK_GRAY,
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   languageChipTextActive: {
     color: WHITE,

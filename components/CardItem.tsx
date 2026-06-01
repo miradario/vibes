@@ -29,6 +29,7 @@ import {
   getSelectedSpiritualPaths,
   normalizeSpiritualPathDetails,
 } from "../src/lib/spiritualPaths";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const SHOW_DISCOVER_DEBUG = false;
 const DISCOVER_PREFERENCE_EXCLUDED_PREFIXES = [
@@ -101,7 +102,7 @@ const CardItem = ({
     color: DARK_GRAY,
     fontSize: hasVariant ? 15 : isDiscover ? 22 : 30,
     textAlign: isDiscover ? ("center" as const) : ("left" as const),
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   };
 
   const discoverLocationLine =

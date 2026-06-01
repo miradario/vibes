@@ -35,6 +35,7 @@ import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
 
 type NewConnectionItem =
@@ -71,7 +72,12 @@ const formatTime = (iso: string | null) => {
 const getArchiveStorageKey = (userId?: string) =>
   `vibes:archived-chats:${userId ?? "guest"}`;
 
-const getArchiveItemKey = (item: ArchivedChatItem | { kind: "group"; item: EventGroupSummary } | { kind: "direct"; item: MatchWithProfile }) =>
+const getArchiveItemKey = (
+  item:
+    | ArchivedChatItem
+    | { kind: "group"; item: EventGroupSummary }
+    | { kind: "direct"; item: MatchWithProfile }
+) =>
   item.kind === "group"
     ? `group:${item.item.eventType}:${item.item.eventId}`
     : `direct:${item.item.id}`;
@@ -85,10 +91,20 @@ const isFinishedChallengeGroup = (group: EventGroupSummary) => {
   const startDate = new Date(startsAt);
   if (Number.isNaN(startDate.getTime())) return false;
 
-  const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const start = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
   const today = new Date();
-  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const diffDays = Math.floor((current.getTime() - start.getTime()) / 86_400_000);
+  const current = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const diffDays = Math.floor(
+    (current.getTime() - start.getTime()) / 86_400_000
+  );
 
   return diffDays >= durationDays;
 };
@@ -101,9 +117,17 @@ const isFinishedEventGroup = (group: EventGroupSummary) => {
   const eventDate = new Date(startsAt);
   if (Number.isNaN(eventDate.getTime())) return false;
 
-  const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+  const eventDay = new Date(
+    eventDate.getFullYear(),
+    eventDate.getMonth(),
+    eventDate.getDate()
+  );
   const today = new Date();
-  const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const currentDay = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
 
   return eventDay.getTime() < currentDay.getTime();
 };
@@ -128,10 +152,10 @@ const Messages = () => {
   const [groupsCollapsed, setGroupsCollapsed] = useState(false);
   const [archivedKeys, setArchivedKeys] = useState<string[]>([]);
   const { data: selectedIncomingProfile } = useProfileQuery(
-    selectedIncomingLike?.likerUserId,
+    selectedIncomingLike?.likerUserId
   );
   const { data: selectedIncomingPreferences } = useUserPreferencesQuery(
-    selectedIncomingLike?.likerUserId,
+    selectedIncomingLike?.likerUserId
   );
 
   const withMessages = (matches ?? []).filter((m) => m.lastMessage);
@@ -140,10 +164,12 @@ const Messages = () => {
     type: "match" as const,
     item,
   }));
-  const incomingConnectionRequests: NewConnectionItem[] = incomingLikes.map((item) => ({
-    type: "incoming" as const,
-    item,
-  }));
+  const incomingConnectionRequests: NewConnectionItem[] = incomingLikes.map(
+    (item) => ({
+      type: "incoming" as const,
+      item,
+    })
+  );
   const sectionTitle = (key: string) => t(key).toLocaleUpperCase(locale);
   const selectedIncomingLikeCard = selectedIncomingLike
     ? mapCandidateToConnectionProfile({
@@ -169,7 +195,11 @@ const Messages = () => {
         const raw = await AsyncStorage.getItem(getArchiveStorageKey(userId));
         if (!active) return;
         const parsed = raw ? JSON.parse(raw) : [];
-        setArchivedKeys(Array.isArray(parsed) ? parsed.filter((value) => typeof value === "string") : []);
+        setArchivedKeys(
+          Array.isArray(parsed)
+            ? parsed.filter((value) => typeof value === "string")
+            : []
+        );
       } catch {
         if (active) setArchivedKeys([]);
       }
@@ -187,7 +217,7 @@ const Messages = () => {
     try {
       await AsyncStorage.setItem(
         getArchiveStorageKey(userId),
-        JSON.stringify(nextKeys),
+        JSON.stringify(nextKeys)
       );
     } catch {}
   };
@@ -204,38 +234,43 @@ const Messages = () => {
     (group) =>
       !isFinishedChallengeGroup(group) &&
       !isFinishedEventGroup(group) &&
-      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
+      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group }))
   );
   const finishedChallengeGroups = eventGroups.filter(
     (group) =>
       isFinishedChallengeGroup(group) &&
-      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
+      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group }))
   );
   const finishedEventGroups = eventGroups.filter(
     (group) =>
       isFinishedEventGroup(group) &&
-      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
+      !archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group }))
   );
   const activeDirectMessages = withMessages.filter(
-    (item) => !archivedKeys.includes(getArchiveItemKey({ kind: "direct", item })),
+    (item) =>
+      !archivedKeys.includes(getArchiveItemKey({ kind: "direct", item }))
   );
   const archivedChats: ArchivedChatItem[] = [
     ...eventGroups
       .filter((group) =>
-        archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group })),
+        archivedKeys.includes(getArchiveItemKey({ kind: "group", item: group }))
       )
       .map((item) => ({ kind: "group" as const, item })),
     ...withMessages
       .filter((item) =>
-        archivedKeys.includes(getArchiveItemKey({ kind: "direct", item })),
+        archivedKeys.includes(getArchiveItemKey({ kind: "direct", item }))
       )
       .map((item) => ({ kind: "direct" as const, item })),
   ].sort((left, right) => {
     const leftTime =
       left.kind === "group" ? left.item.lastMessageAt : left.item.lastMessageAt;
     const rightTime =
-      right.kind === "group" ? right.item.lastMessageAt : right.item.lastMessageAt;
-    return new Date(rightTime ?? 0).getTime() - new Date(leftTime ?? 0).getTime();
+      right.kind === "group"
+        ? right.item.lastMessageAt
+        : right.item.lastMessageAt;
+    return (
+      new Date(rightTime ?? 0).getTime() - new Date(leftTime ?? 0).getTime()
+    );
   });
 
   const openMatchChat = (item: MatchWithProfile) => {
@@ -246,7 +281,7 @@ const Messages = () => {
         otherUserId: item.otherUserId,
         otherUserName: item.otherUserName,
         otherUserPhoto: item.otherUserPhoto,
-      } as never,
+      } as never
     );
   };
 
@@ -267,14 +302,14 @@ const Messages = () => {
           if (response?.match) {
             navigation.navigate(
               "Match" as never,
-              { profile: selectedIncomingLikeCard } as never,
+              { profile: selectedIncomingLikeCard } as never
             );
           }
           setSelectedIncomingLike(null);
         },
         onError: (error) =>
           handleApiError(error, { toastTitle: "Error al conectar" }),
-      },
+      }
     );
   };
 
@@ -290,7 +325,7 @@ const Messages = () => {
         onSuccess: () => setSelectedIncomingLike(null),
         onError: (error) =>
           handleApiError(error, { toastTitle: "Error al descartar" }),
-      },
+      }
     );
   };
 
@@ -299,7 +334,11 @@ const Messages = () => {
     title: string,
     count: number,
     seeAllLabel: string,
-    options?: { collapsible?: boolean; collapsed?: boolean; onPress?: () => void },
+    options?: {
+      collapsible?: boolean;
+      collapsed?: boolean;
+      onPress?: () => void;
+    }
   ) => (
     <View style={localStyles.sectionHeader}>
       <View style={localStyles.sectionTitleWrap}>
@@ -339,7 +378,7 @@ const Messages = () => {
 
   const renderConnectionPreview = (
     items: NewConnectionItem[],
-    blurred: boolean,
+    blurred: boolean
   ) => {
     const previewItems = items.slice(0, 3);
 
@@ -370,7 +409,9 @@ const Messages = () => {
                 blurRadius={blurred ? 10 : 0}
                 style={localStyles.connectionPreviewImage}
               />
-              {blurred ? <View style={localStyles.connectionPreviewOverlay} /> : null}
+              {blurred ? (
+                <View style={localStyles.connectionPreviewOverlay} />
+              ) : null}
             </View>
           );
         })}
@@ -455,7 +496,10 @@ const Messages = () => {
     </TouchableOpacity>
   );
 
-  const renderNewConnectionSheetRow = (item: MatchWithProfile, index: number) => (
+  const renderNewConnectionSheetRow = (
+    item: MatchWithProfile,
+    index: number
+  ) => (
     <TouchableOpacity
       key={item.id}
       style={[
@@ -478,7 +522,11 @@ const Messages = () => {
     </TouchableOpacity>
   );
 
-  const renderGroupRow = (item: EventGroupSummary, index: number, options?: { archived?: boolean }) => {
+  const renderGroupRow = (
+    item: EventGroupSummary,
+    index: number,
+    options?: { archived?: boolean }
+  ) => {
     const imgSource =
       typeof item.image === "string" ? { uri: item.image } : item.image;
     const isChallenge = item.eventType === "challenge";
@@ -502,7 +550,9 @@ const Messages = () => {
             <View
               style={[
                 localStyles.typeBadge,
-                isChallenge ? localStyles.challengeBadge : localStyles.eventBadge,
+                isChallenge
+                  ? localStyles.challengeBadge
+                  : localStyles.eventBadge,
               ]}
             >
               <Text
@@ -522,14 +572,20 @@ const Messages = () => {
           </Text>
         </View>
         <View style={localStyles.rowMeta}>
-          <Text style={localStyles.rowTime}>{formatTime(item.lastMessageAt)}</Text>
+          <Text style={localStyles.rowTime}>
+            {formatTime(item.lastMessageAt)}
+          </Text>
           <TouchableOpacity
             activeOpacity={0.75}
             style={localStyles.archiveButton}
             onPress={() => toggleArchivedChat({ kind: "group", item })}
           >
             <Icon
-              name={options?.archived ? "arrow-up-circle-outline" : "archive-outline"}
+              name={
+                options?.archived
+                  ? "arrow-up-circle-outline"
+                  : "archive-outline"
+              }
               color="#7B746C"
               size={16}
             />
@@ -540,7 +596,11 @@ const Messages = () => {
     );
   };
 
-  const renderDirectRow = (item: MatchWithProfile, index: number, options?: { archived?: boolean }) => (
+  const renderDirectRow = (
+    item: MatchWithProfile,
+    index: number,
+    options?: { archived?: boolean }
+  ) => (
     <TouchableOpacity
       key={item.id}
       style={[localStyles.cardRow, index > 0 && localStyles.cardRowWithDivider]}
@@ -557,14 +617,18 @@ const Messages = () => {
         </Text>
       </View>
       <View style={localStyles.rowMeta}>
-        <Text style={localStyles.rowTime}>{formatTime(item.lastMessageAt)}</Text>
+        <Text style={localStyles.rowTime}>
+          {formatTime(item.lastMessageAt)}
+        </Text>
         <TouchableOpacity
           activeOpacity={0.75}
           style={localStyles.archiveButton}
           onPress={() => toggleArchivedChat({ kind: "direct", item })}
         >
           <Icon
-            name={options?.archived ? "arrow-up-circle-outline" : "archive-outline"}
+            name={
+              options?.archived ? "arrow-up-circle-outline" : "archive-outline"
+            }
             color="#7B746C"
             size={16}
           />
@@ -597,7 +661,7 @@ const Messages = () => {
         ]}
       >
         <AppHeader
-          title={t("messages.messages")}
+          title={t("messages.connections")}
           style={localStyles.appHeader}
           titleStyle={localStyles.appHeaderTitle}
         />
@@ -639,10 +703,12 @@ const Messages = () => {
               "chatbubble-ellipses-outline",
               sectionTitle("messages.messages"),
               activeDirectMessages.length,
-              "Ver todos",
+              "Ver todos"
             )}
             <View style={localStyles.rowsCard}>
-              {activeDirectMessages.map((item, index) => renderDirectRow(item, index))}
+              {activeDirectMessages.map((item, index) =>
+                renderDirectRow(item, index)
+              )}
             </View>
           </>
         ) : null}
@@ -658,7 +724,7 @@ const Messages = () => {
                 collapsible: true,
                 collapsed: groupsCollapsed,
                 onPress: () => setGroupsCollapsed((value) => !value),
-              },
+              }
             )}
             {!groupsCollapsed ? (
               <View style={localStyles.rowsCard}>
@@ -674,10 +740,12 @@ const Messages = () => {
               "trophy-outline",
               "CHALLENGES FINALIZADOS",
               finishedChallengeGroups.length,
-              "Ver todos",
+              "Ver todos"
             )}
             <View style={localStyles.rowsCard}>
-              {finishedChallengeGroups.map((item, index) => renderGroupRow(item, index))}
+              {finishedChallengeGroups.map((item, index) =>
+                renderGroupRow(item, index)
+              )}
             </View>
           </>
         ) : null}
@@ -688,10 +756,12 @@ const Messages = () => {
               "calendar-outline",
               sectionTitle("messages.finishedEvents"),
               finishedEventGroups.length,
-              "Ver todos",
+              "Ver todos"
             )}
             <View style={localStyles.rowsCard}>
-              {finishedEventGroups.map((item, index) => renderGroupRow(item, index))}
+              {finishedEventGroups.map((item, index) =>
+                renderGroupRow(item, index)
+              )}
             </View>
           </>
         ) : null}
@@ -702,19 +772,22 @@ const Messages = () => {
               "archive-outline",
               "ARCHIVADOS",
               archivedChats.length,
-              "Ver todos",
+              "Ver todos"
             )}
             <View style={localStyles.rowsCard}>
               {archivedChats.map((entry, index) =>
                 entry.kind === "group"
                   ? renderGroupRow(entry.item, index, { archived: true })
-                  : renderDirectRow(entry.item, index, { archived: true }),
+                  : renderDirectRow(entry.item, index, { archived: true })
               )}
             </View>
           </>
         ) : null}
 
-        {loading && !hasConnectionsSection && !hasDirectMessages && !hasActiveGroups ? (
+        {loading &&
+        !hasConnectionsSection &&
+        !hasDirectMessages &&
+        !hasActiveGroups ? (
           <View style={localStyles.loadingWrap}>
             <VibesLoader size={62} />
           </View>
@@ -796,7 +869,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 30,
     lineHeight: 34,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   connectionsGrid: {
     flexDirection: "row",
@@ -844,14 +917,14 @@ const localStyles = StyleSheet.create({
   connectionCountText: {
     color: DARK_GRAY,
     fontSize: 15,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   connectionCardTitle: {
     minHeight: 39,
     color: DARK_GRAY,
     fontSize: 18,
     lineHeight: 19,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   connectionPreviewRow: {
     height: 46,
@@ -892,7 +965,7 @@ const localStyles = StyleSheet.create({
     marginTop: "auto",
     color: "#B98235",
     fontSize: 15,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   connectionsSheet: {
     maxHeight: "76%",
@@ -914,7 +987,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 27,
     lineHeight: 31,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   connectionsSheetList: {
     marginTop: 12,
@@ -938,19 +1011,19 @@ const localStyles = StyleSheet.create({
   connectionSheetName: {
     color: DARK_GRAY,
     fontSize: 19,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   connectionSheetHint: {
     marginTop: 2,
     color: "#7B746C",
     fontSize: 14,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   connectionSheetEmpty: {
     paddingVertical: 22,
     color: "#7B746C",
     fontSize: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   sectionHeader: {
     marginTop: 8,
@@ -972,7 +1045,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 16,
     letterSpacing: 0,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     flexShrink: 1,
     minWidth: 0,
   },
@@ -989,7 +1062,7 @@ const localStyles = StyleSheet.create({
   countText: {
     color: DARK_GRAY,
     fontSize: 15,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   seeAllButton: {
     flexDirection: "row",
@@ -1000,7 +1073,7 @@ const localStyles = StyleSheet.create({
   seeAllText: {
     color: "#7B746C",
     fontSize: 14,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   rowsCard: {
     marginBottom: 18,
@@ -1054,7 +1127,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 17,
     lineHeight: 21,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   typeBadge: {
     borderRadius: 9,
@@ -1071,7 +1144,7 @@ const localStyles = StyleSheet.create({
   typeBadgeText: {
     fontSize: 11,
     lineHeight: 14,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   challengeBadgeText: {
     color: "#E19628",
@@ -1084,7 +1157,7 @@ const localStyles = StyleSheet.create({
     color: "#6E6E6E",
     fontSize: 15,
     lineHeight: 19,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   rowMeta: {
     width: 50,
@@ -1096,7 +1169,7 @@ const localStyles = StyleSheet.create({
   rowTime: {
     color: "#6E6E6E",
     fontSize: 13,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   archiveButton: {
     width: 22,

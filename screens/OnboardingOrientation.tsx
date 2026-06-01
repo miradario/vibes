@@ -51,7 +51,9 @@ const OnboardingOrientation = () => {
           <OnboardingProgressBar screenName="OnboardingOrientation" />
         </AppHeader>
 
-        <Text style={styles.onboardTitle}>{t("onboarding.orientationTitle")}</Text>
+        <Text style={styles.onboardTitle} maxFontSizeMultiplier={1}>
+          {t("onboarding.orientationTitle")}
+        </Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.orientationSubtitle")}</Text>
 
         <View style={styles.onboardList}>

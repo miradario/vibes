@@ -1,7 +1,7 @@
 import { Share } from "react-native";
 import type { EventFeedItem } from "../queries/events.queries";
 
-const APP_DEEP_LINK_SCHEME = "com.miradario.vibe";
+const APP_DEEP_LINK_SCHEME = "com.gurudevelopers.vibes";
 
 const formatVisibilityLabel = (visibility?: string | null) => {
   if (visibility === "friends") return "Solo amigos";

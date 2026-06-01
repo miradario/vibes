@@ -27,6 +27,7 @@ import {
 import { useAuthSession } from "../src/auth/auth.queries";
 import { getChallengeMediaPreset, getChallengeProgressVideo, type ChallengeMediaPresetId } from "../src/constants/challengeMediaPresets";
 import { shareChallengeInvite, shareChallengeProgress } from "../src/lib/socialShare";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 type CheckInStatus = "pending" | "completed" | "broken";
 type ProgressMode = "path" | "compact" | "calendar";
@@ -1154,14 +1155,14 @@ const localStyles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   joinRequestButtonSubtitle: {
     marginTop: 4,
     color: "rgba(255,255,255,0.88)",
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   chatLockedRow: {
     borderRadius: 18,
@@ -1179,7 +1180,7 @@ const localStyles = StyleSheet.create({
     color: palette.muted,
     fontSize: 14,
     lineHeight: 17,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   completionCelebration: {
     position: "absolute",
@@ -1212,7 +1213,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 24,
     lineHeight: 28,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     textAlign: "center",
   },
   completionCelebrationBody: {
@@ -1220,7 +1221,7 @@ const localStyles = StyleSheet.create({
     color: palette.muted,
     fontSize: 16,
     lineHeight: 21,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
   header: {
@@ -1248,7 +1249,7 @@ const localStyles = StyleSheet.create({
   eyebrow: {
     color: palette.goldDeep,
     fontSize: 14,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     textTransform: "uppercase",
   },
   title: {
@@ -1256,14 +1257,14 @@ const localStyles = StyleSheet.create({
     color: "rgba(45, 41, 36, 0.72)",
     fontSize: 23,
     lineHeight: 26,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   subtitle: {
     marginTop: 8,
     color: palette.muted,
     fontSize: 19,
     lineHeight: 24,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   contentSubtitle: {
     marginTop: 2,
@@ -1272,7 +1273,7 @@ const localStyles = StyleSheet.create({
     color: "rgba(45, 41, 36, 0.74)",
     fontSize: 16,
     lineHeight: 21,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   headerStatusPill: {
     alignSelf: "flex-start",
@@ -1292,7 +1293,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   illustrationCard: {
     minHeight: 286,
@@ -1327,14 +1328,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     textAlign: "center",
     fontSize: 23,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   growthSubtitle: {
     marginTop: 4,
     color: palette.muted,
     textAlign: "center",
     fontSize: 17,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   infoRow: {
     flexDirection: "row",
@@ -1354,13 +1355,13 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 30,
     lineHeight: 32,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   infoLabel: {
     marginTop: 4,
     color: palette.muted,
     fontSize: 14,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   communityCard: {
     borderRadius: 22,
@@ -1397,14 +1398,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 18,
     lineHeight: 21,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   visibilitySubtitle: {
     marginTop: 3,
     color: palette.muted,
     fontSize: 14,
     lineHeight: 18,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   communityBadge: {
     width: 42,
@@ -1421,14 +1422,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   communitySubtitle: {
     marginTop: 4,
     color: palette.muted,
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   requestCard: {
     borderRadius: 22,
@@ -1447,13 +1448,13 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   requestCardCount: {
     color: palette.goldDeep,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   requestRow: {
     flexDirection: "row",
@@ -1478,7 +1479,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 16,
     lineHeight: 18,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   requestApproveButton: {
     borderRadius: 999,
@@ -1490,7 +1491,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 14,
     lineHeight: 16,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   celebrationCard: {
     overflow: "hidden",
@@ -1529,14 +1530,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 22,
     lineHeight: 24,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   celebrationBody: {
     marginTop: 4,
     color: palette.muted,
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   streakCard: {
     borderRadius: 24,
@@ -1551,14 +1552,14 @@ const localStyles = StyleSheet.create({
   cardTitle: {
     color: palette.text,
     fontSize: 24,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   cardSubtitle: {
     marginTop: 4,
     color: palette.muted,
     fontSize: 16,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   streakMetrics: {
     flexDirection: "row",
@@ -1570,13 +1571,13 @@ const localStyles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 34,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   streakLabel: {
     color: palette.muted,
     fontSize: 13,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   metricDivider: {
     width: 1,
@@ -1616,14 +1617,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 27,
     lineHeight: 31,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   pathSubtitle: {
     marginTop: 2,
     color: "rgba(45, 41, 36, 0.58)",
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   pathPill: {
     minHeight: 36,
@@ -1637,7 +1638,7 @@ const localStyles = StyleSheet.create({
   pathPillText: {
     color: "#C47A55",
     fontSize: 13,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   pathScrollContent: {
     paddingTop: 28,
@@ -1689,7 +1690,7 @@ const localStyles = StyleSheet.create({
   dayText: {
     color: palette.text,
     fontSize: 14,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   dayTextActive: {
     color: "#FFFFFF",
@@ -1719,7 +1720,7 @@ const localStyles = StyleSheet.create({
     color: "rgba(45, 41, 36, 0.68)",
     fontSize: 17,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   pathStatsCard: {
     minHeight: 76,
@@ -1760,13 +1761,13 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 21,
     lineHeight: 24,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   pathStatLabel: {
     color: "rgba(45, 41, 36, 0.62)",
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   pathStatDivider: {
     width: 1,
@@ -1799,7 +1800,7 @@ const localStyles = StyleSheet.create({
     color: palette.muted,
     fontSize: 12,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   calendarRow: {
     justifyContent: "space-between",
@@ -1824,7 +1825,7 @@ const localStyles = StyleSheet.create({
   percentText: {
     color: palette.goldDeep,
     fontSize: 25,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   summaryTrack: {
     marginTop: 14,
@@ -1842,7 +1843,7 @@ const localStyles = StyleSheet.create({
     marginTop: 10,
     color: palette.muted,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   checkInButton: {
     minHeight: 58,
@@ -1925,13 +1926,13 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 17,
     lineHeight: 20,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   footerSliderSubtitle: {
     color: palette.muted,
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   footerSliderChevrons: {
     position: "absolute",
@@ -1947,7 +1948,7 @@ const localStyles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     textAlign: "center",
   },
   chatRow: {
@@ -1974,13 +1975,13 @@ const localStyles = StyleSheet.create({
   chatTitle: {
     color: palette.text,
     fontSize: 19,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   chatSubtitle: {
     marginTop: 2,
     color: palette.muted,
     fontSize: 14,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
 });
 

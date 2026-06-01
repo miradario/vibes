@@ -16,6 +16,7 @@ import {
   type MatchWithProfile,
 } from "../src/queries/matches.queries";
 import VibesLoader from "../components/VibesLoader";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 
 
@@ -118,12 +119,12 @@ const localStyles = {
   name: {
     color: "#2B2B2B",
     fontSize: 16,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   subtitle: {
     color: "#6E6E6E",
     fontSize: 14,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     marginTop: 2,
   },
   emptyState: {
@@ -135,7 +136,7 @@ const localStyles = {
   emptyTitle: {
     color: "#2B2B2B",
     fontSize: 24,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     textAlign: "center" as const,
   },
   emptyText: {
@@ -143,7 +144,7 @@ const localStyles = {
     color: "#6E6E6E",
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center" as const,
   },
 };

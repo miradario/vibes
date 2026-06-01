@@ -33,6 +33,7 @@ import {
 } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const ONBOARDING_OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
 
@@ -157,7 +158,9 @@ const OnboardingSpiritualPath = () => {
           <OnboardingProgressBar screenName="OnboardingSpiritualPath" />
         </AppHeader>
 
-        <Text style={styles.onboardTitle}>{t("onboarding.spiritualTitle")}</Text>
+        <Text style={styles.onboardTitle} maxFontSizeMultiplier={1}>
+          {t("onboarding.spiritualTitle")}
+        </Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.spiritualSubtitle")}</Text>
 
         <ScrollView
@@ -353,7 +356,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 18,
     marginBottom: 10,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   aboutInput: {
     minHeight: 104,
@@ -402,7 +405,7 @@ const localStyles = StyleSheet.create({
   addButtonText: {
     color: WHITE,
     fontSize: 13,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
   },
   skipButton: {
     alignItems: "center",

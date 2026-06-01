@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import Avatar from "./Avatar";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 type AvatarGroupItem = {
   id: string | number;
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
   moreText: {
     color: "#6A6259",
     fontSize: 11,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
 });
 

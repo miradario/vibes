@@ -1,10 +1,10 @@
 {
   "expo": {
     "owner": "miradario",
-    "name": "Vibe",
-    "slug": "vibe",
-    "scheme": "com.miradario.vibe",
-    "version": "1.0.0",
+    "name": "Vibes",
+    "slug": "vibes",
+    "scheme": "com.gurudevelopers.vibes",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "updates": {
@@ -16,7 +16,7 @@
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": true,
-      "bundleIdentifier": "com.miradario.vibe",
+      "bundleIdentifier": "com.gurudevelopers.vibes",
       "deploymentTarget": "15.4",
       "appleTeamId": "4CKS7Q9UL2"
     },
@@ -28,7 +28,7 @@
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.miradario.vibe"
+      "package": "com.gurudevelopers.vibes"
     },
     "web": {
       "favicon": "./assets/favicon.png"

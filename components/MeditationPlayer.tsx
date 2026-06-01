@@ -28,7 +28,9 @@ const MeditationPlayer = ({ title, duration, level, progress = 0, isPlaying = fa
       <View style={styles.meditationPlayerHeader}>
         <View style={styles.meditationPlayerInfo}>
           <Text style={styles.meditationPlayerLabel}>Reproduciendo</Text>
-          <Text style={styles.meditationPlayerTitle}>{title}</Text>
+          <Text style={styles.meditationPlayerTitle} maxFontSizeMultiplier={1}>
+            {title}
+          </Text>
           {(duration || level) && (
             <Text style={styles.meditationPlayerMeta}>
               {duration || "—"} {duration && level ? "·" : ""} {level || ""}

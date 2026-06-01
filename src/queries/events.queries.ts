@@ -624,14 +624,105 @@ const maybeUploadEventImage = async (
 };
 
 export const useEventsFeedQuery = () => {
-  return useQuery<EventFeedItem[]>(eventsFeedQueryOptions());
+  const queryClient = useQueryClient();
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
+  const query = useQuery<EventFeedItem[]>(eventsFeedQueryOptions());
+
+  useEffect(() => {
+    const invalidateEvents = () => {
+      queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+    };
+
+    const channel = supabase
+      .channel("events-feed")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "events",
+          filter: "type=eq.event",
+        },
+        invalidateEvents,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "event_participants",
+          filter: "event_type=eq.event",
+        },
+        invalidateEvents,
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [queryClient]);
+
+  return query;
 };
 
 export const useChallengesFeedQuery = () => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const queryClient = useQueryClient();
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
-  return useQuery<EventFeedItem[]>(challengesFeedQueryOptions(userId));
+  const query = useQuery<EventFeedItem[]>(challengesFeedQueryOptions(userId));
+
+  useEffect(() => {
+    const invalidateChallenges = () => {
+      queryClient.invalidateQueries({ queryKey: challengesKeys.all });
+    };
+
+    const channel = supabase
+      .channel(`challenges-feed:${userId ?? "anonymous"}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "challenges",
+        },
+        invalidateChallenges,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "event_participants",
+          filter: "event_type=eq.challenge",
+        },
+        invalidateChallenges,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "challenge_participants",
+        },
+        invalidateChallenges,
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [queryClient, userId]);
+
+  return query;
 };
 
 export const eventsFeedQueryOptions = () => ({

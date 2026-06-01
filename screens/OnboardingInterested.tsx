@@ -39,7 +39,9 @@ const OnboardingInterested = () => {
           <OnboardingProgressBar screenName="OnboardingInterested" />
         </AppHeader>
 
-        <Text style={styles.onboardTitle}>{t("onboarding.interestedTitle")}</Text>
+        <Text style={styles.onboardTitle} maxFontSizeMultiplier={1}>
+          {t("onboarding.interestedTitle")}
+        </Text>
 
         <View style={styles.onboardOptions}>
           {INTENTS.map((option) => (

@@ -520,6 +520,14 @@ const VibesOnboardingFlow = () => {
     setActivePractice(nextPractice);
   };
 
+  const handlePhotoChange = (nextUri: string) => {
+    setPhotoUri(nextUri);
+    updateDraft({
+      primaryPhotoUri: nextUri,
+      photoUris: nextUri ? [nextUri] : [],
+    });
+  };
+
   const updatePracticeDetail = (practice: string, nextDetail: SpiritualPathDetail) => {
     setPracticeDetails((prev) => ({
       ...prev,
@@ -537,6 +545,7 @@ const VibesOnboardingFlow = () => {
           onboardingStyles.title,
           targetStep === "completion" && onboardingStyles.centeredTitle,
         ]}
+        maxFontSizeMultiplier={1}
       >
         {copy.title}
       </Text>
@@ -610,7 +619,7 @@ const VibesOnboardingFlow = () => {
     <>
       {renderTitle("profile")}
       <View style={onboardingStyles.profileWrap}>
-        <ProfilePhotoPicker uri={photoUri} onChange={setPhotoUri} />
+        <ProfilePhotoPicker uri={photoUri} onChange={handlePhotoChange} />
         <View style={onboardingStyles.fieldGroup}>
           <View style={onboardingStyles.inputRow}>
             <Icon name="person-outline" size={20} color={ONBOARDING_COLORS.mustard} />

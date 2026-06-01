@@ -90,7 +90,7 @@ const UpdateGate = () => {
         <Text style={styles.eyebrow}>
           {isForce ? t("update.forceEyebrow") : t("update.suggestedEyebrow")}
         </Text>
-        <Text style={styles.title}>
+        <Text style={styles.title} maxFontSizeMultiplier={1}>
           {isForce ? t("update.forceTitle") : t("update.suggestedTitle")}
         </Text>
         <Text style={styles.body}>{body}</Text>
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 36,
     textAlign: "center",
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   body: {
     marginTop: 12,

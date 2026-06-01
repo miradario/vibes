@@ -63,6 +63,7 @@ import {
   parseChallengeMediaPreset,
 } from "../src/constants/challengeMediaPresets";
 import { shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
 const CHECKIN_SLIDER_HANDLE_SIZE = 72;
@@ -1028,19 +1029,16 @@ const EventDetail = () => {
             `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
           ];
 
-    try {
-      for (const url of candidateUrls) {
-        const supported = await Linking.canOpenURL(url);
-        if (supported) {
-          await Linking.openURL(url);
-          return;
-        }
+    for (const url of candidateUrls) {
+      try {
+        await Linking.openURL(url);
+        return;
+      } catch {
+        continue;
       }
-
-      Alert.alert("Mapa", "No se pudo abrir el mapa.");
-    } catch {
-      Alert.alert("Mapa", "No se pudo abrir el mapa.");
     }
+
+    Alert.alert("Mapa", "No se pudo abrir el mapa.");
   };
 
   const handleJoin = async () => {
@@ -2095,14 +2093,14 @@ const localStyles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 48,
     lineHeight: 52,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   eventHeroSubtitle: {
     marginTop: 8,
     color: TEXT_SECONDARY,
     fontSize: 21,
     lineHeight: 25,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   eventHeroMessageButton: {
     position: "absolute",
@@ -2128,7 +2126,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 19,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   eventDetailContentFullBleed: {
     paddingHorizontal: 0,
@@ -2179,12 +2177,12 @@ const localStyles = StyleSheet.create({
   eventMiniMapTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   eventMiniMapText: {
     color: TEXT_SECONDARY,
     fontSize: 13,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     marginTop: 2,
   },
   eventMiniMapBadge: {
@@ -2207,7 +2205,7 @@ const localStyles = StyleSheet.create({
   eventMiniMapBadgeText: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   daysWrap: {
     flexDirection: "row",
@@ -2249,7 +2247,7 @@ const localStyles = StyleSheet.create({
   dayPillText: {
     fontSize: 15,
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   dayPillTextDone: {
     color: WHITE,
@@ -2332,7 +2330,7 @@ const localStyles = StyleSheet.create({
   eventMetaPillText: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   headerActions: {
     flexDirection: "row",
@@ -2378,7 +2376,7 @@ const localStyles = StyleSheet.create({
   participantPreviewMoreText: {
     color: WHITE,
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   personalCoachCard: {
     marginTop: 14,
@@ -2414,20 +2412,20 @@ const localStyles = StyleSheet.create({
   personalCoachTitle: {
     color: DARK_GRAY,
     fontSize: 18,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
   },
   personalCoachSubtitle: {
     marginTop: 1,
     color: TEXT_SECONDARY,
     fontSize: 12,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   personalCoachBody: {
     marginTop: 12,
     color: DARK_GRAY,
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   streakRow: {
     flexDirection: "row",
@@ -2442,13 +2440,13 @@ const localStyles = StyleSheet.create({
   },
   streakCount: {
     fontSize: 24,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     color: DARK_GRAY,
   },
   streakLabel: {
     fontSize: 13,
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     marginTop: 2,
   },
   totalBadge: {
@@ -2463,13 +2461,13 @@ const localStyles = StyleSheet.create({
   },
   totalBadgeNumber: {
     fontSize: 18,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     color: PRIMARY_COLOR,
   },
   totalBadgeLabel: {
     fontSize: 10,
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   milestoneWrap: {
     gap: 6,
@@ -2488,7 +2486,7 @@ const localStyles = StyleSheet.create({
   milestoneLabel: {
     fontSize: 12,
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
   },
   checkedInBadge: {
     flexDirection: "row",
@@ -2503,7 +2501,7 @@ const localStyles = StyleSheet.create({
   },
   checkedInText: {
     color: "#2E7D32",
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 14,
   },
   footerCheckInSliderWrap: {
@@ -2535,13 +2533,13 @@ const localStyles = StyleSheet.create({
   },
   footerCheckInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     fontSize: 13,
     lineHeight: 15,
   },
   footerCheckInSliderSubtitle: {
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     fontSize: 11,
     lineHeight: 13,
   },
@@ -2613,7 +2611,7 @@ const localStyles = StyleSheet.create({
   },
   challengeChatButtonText: {
     color: DARK_GRAY,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     fontSize: 14,
     textAlign: "center",
     flexShrink: 1,
@@ -2623,7 +2621,7 @@ const localStyles = StyleSheet.create({
   },
   checkInButtonText: {
     color: WHITE,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     fontSize: 14,
     textAlign: "center",
     flexShrink: 1,
@@ -2642,14 +2640,14 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     color: DARK_GRAY,
     textAlign: "center",
   },
   modalSubtitle: {
     fontSize: 14,
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
   noteInput: {
@@ -2657,7 +2655,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     color: DARK_GRAY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     fontSize: 15,
     minHeight: 72,
     textAlignVertical: "top",
@@ -2696,12 +2694,12 @@ const localStyles = StyleSheet.create({
   },
   checkInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     fontSize: 18,
   },
   checkInSliderSubtitle: {
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     fontSize: 14,
     lineHeight: 18,
   },
@@ -2743,7 +2741,7 @@ const localStyles = StyleSheet.create({
   },
   modalConfirmText: {
     color: WHITE,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     fontSize: 16,
   },
   modalCancelButton: {
@@ -2752,7 +2750,7 @@ const localStyles = StyleSheet.create({
   },
   modalCancelText: {
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 14,
   },
   chatButton: {
@@ -2768,7 +2766,7 @@ const localStyles = StyleSheet.create({
   },
   chatButtonText: {
     color: PRIMARY_COLOR,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     fontSize: 15,
   },
   // ── Menú hamburguesa ──
@@ -2795,7 +2793,7 @@ const localStyles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 18,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     color: DARK_GRAY,
     marginBottom: 8,
   },
@@ -2813,7 +2811,7 @@ const localStyles = StyleSheet.create({
   menuItemText: {
     flex: 1,
     fontSize: 16,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     color: DARK_GRAY,
   },
   menuDivider: {
@@ -2823,7 +2821,7 @@ const localStyles = StyleSheet.create({
   },
   menuSectionLabel: {
     fontSize: 12,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     color: TEXT_SECONDARY,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -2836,7 +2834,7 @@ const localStyles = StyleSheet.create({
   },
   menuCancelText: {
     fontSize: 15,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     color: TEXT_SECONDARY,
   },
   // ── Participantes ──
@@ -2855,7 +2853,7 @@ const localStyles = StyleSheet.create({
   },
   participantsModalTitle: {
     fontSize: 20,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     color: DARK_GRAY,
   },
   memberRow: {
@@ -2873,14 +2871,14 @@ const localStyles = StyleSheet.create({
   },
   memberName: {
     fontSize: 16,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     color: DARK_GRAY,
   },
   emptyParticipants: {
     textAlign: "center",
     paddingVertical: 24,
     color: TEXT_SECONDARY,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     fontSize: 15,
   },
 });

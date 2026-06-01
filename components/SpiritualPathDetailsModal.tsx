@@ -89,7 +89,7 @@ const SpiritualPathDetailsModal = ({
           style={localStyles.keyboardWrap}
         >
           <View style={localStyles.card}>
-            <Text style={localStyles.title}>
+            <Text style={localStyles.title} maxFontSizeMultiplier={1}>
               {pathLabel
                 ? translateSpiritualPathLabel(locale, pathLabel)
                 : t("spiritual.defaultTitle")}
@@ -338,7 +338,7 @@ const localStyles = StyleSheet.create({
   readOnlyLabel: {
     color: PRIMARY_COLOR,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   readOnlyValue: {
     color: DARK_GRAY,

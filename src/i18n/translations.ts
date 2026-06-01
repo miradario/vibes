@@ -55,6 +55,7 @@ const baseTranslations = {
       discover: "Descubrir",
       home: "Home",
       challenges: "Desafíos",
+      connections: "Conexiones",
       flow: "Mensajes",
       events: "Eventos",
       calendar: "Calendar",
@@ -101,6 +102,10 @@ const baseTranslations = {
       googleFailed: "No se pudo conectar con Google.",
       missingFields: "Completá tu email y contraseña.",
       failed: "No se pudo iniciar sesión.",
+      createAccountDialogTitle: "No encontramos tu cuenta",
+      createAccountDialogMessage:
+        "Ese email todavía no tiene una cuenta en Vibes. Creá una cuenta para comenzar.",
+      createAccountDialogPrimary: "Crear cuenta",
     },
     signup: {
       header: "Signup",
@@ -124,12 +129,14 @@ const baseTranslations = {
       ageSubtitle: "Debés tener al menos 18 años",
       agePlaceholder: "Seleccioná tu fecha de nacimiento",
       countryTitle: "¿De dónde sos?",
-      countrySubtitle: "Usaremos tu ubicación para conectarte con personas cercanas",
+      countrySubtitle:
+        "Usaremos tu ubicación para conectarte con personas cercanas",
       countryPlaceholder: "Ingresá tu país",
       useMyLocation: "Usar mi ubicación",
       gettingLocation: "Obteniendo ubicación...",
       locationPermissionDeniedTitle: "Permiso denegado",
-      locationPermissionDeniedMessage: "Permití acceso a tu ubicación para usar esta función",
+      locationPermissionDeniedMessage:
+        "Permití acceso a tu ubicación para usar esta función",
       locationError: "No se pudo obtener tu ubicación",
       photoTitle: "Agregá tu foto",
       photoSubtitle: "Mostrá tu versión más auténtica",
@@ -143,8 +150,10 @@ const baseTranslations = {
       camera: "Cámara",
       gallery: "Galería",
       photoPermissionGalleryTitle: "Permiso requerido",
-      photoPermissionGalleryMessage: "Permití acceso a tus fotos para continuar.",
-      photoPermissionCameraMessage: "Permití acceso a tu cámara para continuar.",
+      photoPermissionGalleryMessage:
+        "Permití acceso a tus fotos para continuar.",
+      photoPermissionCameraMessage:
+        "Permití acceso a tu cámara para continuar.",
       galleryOpenError: "No se pudo abrir la galería.",
       cameraOpenError: "No se pudo abrir la cámara.",
       spiritualTitle: "Tu camino espiritual",
@@ -240,7 +249,8 @@ const baseTranslations = {
       title: "Preferencias",
       subtitle: "Comentá sobre vos y compartí tus elecciones conscientes.",
       spiritualPath: "Camino espiritual",
-      spiritualPathHint: "Tocá un camino para seleccionarlo y sumar datos opcionales.",
+      spiritualPathHint:
+        "Tocá un camino para seleccionarlo y sumar datos opcionales.",
       vegetarian: "Vegetarianismo",
       location: "Ubicación",
       currentLocation: "Ubicación actual",
@@ -329,15 +339,19 @@ const baseTranslations = {
       title: "Términos y condiciones",
       subtitle: "Leé con tranquilidad y conciencia nuestros términos.",
       welcomeTitle: "Bienvenido a Vibes",
-      welcomeBody: "Te invitamos a leer con conciencia estos Términos y Condiciones.",
+      welcomeBody:
+        "Te invitamos a leer con conciencia estos Términos y Condiciones.",
       acceptanceTitle: "Aceptación",
       acceptanceBody: "Al usar Vibes, confirmás que aceptás estos términos.",
       ageTitle: "Edad y uso",
-      ageBody: "Para usar Vibes, debés ser mayor de 18 años y utilizar la plataforma de forma respetuosa.",
+      ageBody:
+        "Para usar Vibes, debés ser mayor de 18 años y utilizar la plataforma de forma respetuosa.",
       privacyTitle: "Privacidad",
-      privacyBody: "Tus datos se procesan conforme a nuestra política de privacidad y se usan para mejorar tu experiencia.",
+      privacyBody:
+        "Tus datos se procesan conforme a nuestra política de privacidad y se usan para mejorar tu experiencia.",
       contentTitle: "Contenido",
-      contentBody: "No está permitido publicar contenido ofensivo, ilegal o que afecte la seguridad de otras personas.",
+      contentBody:
+        "No está permitido publicar contenido ofensivo, ilegal o que afecte la seguridad de otras personas.",
     },
     messages: {
       yesterday: "Ayer",
@@ -359,9 +373,12 @@ const baseTranslations = {
       messages: "Mensajes",
       noConnectionsYet: "Todavía no hay conexiones",
       noDirectMessagesYet: "Todavía no hay mensajes",
-      noConnectionsBody: "Deslizá a la derecha sobre alguien con quien conectes para empezar una conversación.",
-      noMessagesBody: "Empezá una conversación con una de tus nuevas conexiones.",
-      noDirectHint: "Todavía no hay mensajes directos. Empezá una conversación.",
+      noConnectionsBody:
+        "Deslizá a la derecha sobre alguien con quien conectes para empezar una conversación.",
+      noMessagesBody:
+        "Empezá una conversación con una de tus nuevas conexiones.",
+      noDirectHint:
+        "Todavía no hay mensajes directos. Empezá una conversación.",
     },
     events: {
       challenges: "Desafíos",
@@ -377,8 +394,10 @@ const baseTranslations = {
       noChallengesYet: "Todavía no hay desafíos reales",
       noEventsYet: "Todavía no hay eventos reales",
       queryingSupabase: "Consultando Supabase...",
-      challengesEmpty: "Creá un desafío o conectá una fuente real para poblar esta lista.",
-      eventsEmpty: "Creá un evento o conectá una fuente real para poblar esta lista.",
+      challengesEmpty:
+        "Creá un desafío o conectá una fuente real para poblar esta lista.",
+      eventsEmpty:
+        "Creá un evento o conectá una fuente real para poblar esta lista.",
       viewChallenge: "Ver desafío",
       viewEvent: "Ver evento",
     },
@@ -416,7 +435,8 @@ const baseTranslations = {
       activeCountOne: "{{count}} activo",
       activeCountMany: "{{count}} activos",
       noRealProfiles: "Todavía no hay perfiles reales",
-      noRealProfilesBody: "Tu perfil queda en el centro. Las demás personas aparecerán alrededor.",
+      noRealProfilesBody:
+        "Tu perfil queda en el centro. Las demás personas aparecerán alrededor.",
       profileLoadError: "No se pudieron cargar perfiles reales.",
       anyRange: "Cualquiera",
     },
@@ -503,6 +523,7 @@ const baseTranslations = {
       discover: "Discover",
       home: "Home",
       challenges: "Challenges",
+      connections: "Connections",
       flow: "Messages",
       events: "Events",
       calendar: "Calendar",
@@ -549,6 +570,10 @@ const baseTranslations = {
       googleFailed: "Could not connect with Google.",
       missingFields: "Please complete your email and password.",
       failed: "Could not log in.",
+      createAccountDialogTitle: "We could not find your account",
+      createAccountDialogMessage:
+        "That email does not have a Vibes account yet. Create an account to begin.",
+      createAccountDialogPrimary: "Create account",
     },
     signup: {
       header: "Signup",
@@ -572,12 +597,14 @@ const baseTranslations = {
       ageSubtitle: "You must be at least 18 years old",
       agePlaceholder: "Select your birth date",
       countryTitle: "Where are you from?",
-      countrySubtitle: "We'll use your location to connect you with nearby people",
+      countrySubtitle:
+        "We'll use your location to connect you with nearby people",
       countryPlaceholder: "Enter your country",
       useMyLocation: "Use my location",
       gettingLocation: "Getting location...",
       locationPermissionDeniedTitle: "Permission denied",
-      locationPermissionDeniedMessage: "Please allow location access to use this feature",
+      locationPermissionDeniedMessage:
+        "Please allow location access to use this feature",
       locationError: "Could not get your location",
       photoTitle: "Add your photo",
       photoSubtitle: "Show your authentic self",
@@ -732,7 +759,8 @@ const baseTranslations = {
     spiritual: {
       defaultTitle: "Spiritual path",
       sharedData: "Shared details for this path.",
-      optionalData: "Only fill in what you want to add. Everything is optional.",
+      optionalData:
+        "Only fill in what you want to add. Everything is optional.",
       noExtraData: "No additional details were added for this path.",
       removePath: "Remove path",
       role: "Role",
@@ -777,15 +805,20 @@ const baseTranslations = {
       title: "Terms and conditions",
       subtitle: "Read our terms with calm and awareness.",
       welcomeTitle: "Welcome to Vibes",
-      welcomeBody: "We invite you to read these Terms and Conditions mindfully.",
+      welcomeBody:
+        "We invite you to read these Terms and Conditions mindfully.",
       acceptanceTitle: "Acceptance",
-      acceptanceBody: "By using Vibes, you confirm that you accept these terms.",
+      acceptanceBody:
+        "By using Vibes, you confirm that you accept these terms.",
       ageTitle: "Age and use",
-      ageBody: "To use Vibes, you must be over 18 and use the platform respectfully.",
+      ageBody:
+        "To use Vibes, you must be over 18 and use the platform respectfully.",
       privacyTitle: "Privacy",
-      privacyBody: "Your data is processed according to our privacy policy and used to improve your experience.",
+      privacyBody:
+        "Your data is processed according to our privacy policy and used to improve your experience.",
       contentTitle: "Content",
-      contentBody: "Posting offensive, illegal, or unsafe content is not allowed.",
+      contentBody:
+        "Posting offensive, illegal, or unsafe content is not allowed.",
     },
     messages: {
       yesterday: "Yesterday",
@@ -807,7 +840,8 @@ const baseTranslations = {
       messages: "Messages",
       noConnectionsYet: "No connections yet",
       noDirectMessagesYet: "No messages yet",
-      noConnectionsBody: "Swipe right on someone you vibe with to start a conversation.",
+      noConnectionsBody:
+        "Swipe right on someone you vibe with to start a conversation.",
       noMessagesBody: "Start a conversation with one of your new connections.",
       noDirectHint: "No direct messages yet. Start a conversation.",
     },
@@ -825,15 +859,18 @@ const baseTranslations = {
       noChallengesYet: "No real challenges yet",
       noEventsYet: "No real events yet",
       queryingSupabase: "Querying Supabase...",
-      challengesEmpty: "Create a challenge or connect a real source to populate this list.",
-      eventsEmpty: "Create an event or connect a real source to populate this list.",
+      challengesEmpty:
+        "Create a challenge or connect a real source to populate this list.",
+      eventsEmpty:
+        "Create an event or connect a real source to populate this list.",
       viewChallenge: "View challenge",
       viewEvent: "View event",
     },
     home: {
       filters: "Filters",
       filtersSubtitle: "Adjust which profiles you want to see in discover.",
-      connectFirstTitle: "Before connecting with others, connect with yourself.",
+      connectFirstTitle:
+        "Before connecting with others, connect with yourself.",
       connectFirstBody:
         "Come back to yourself. Listen to what you feel, understand what you need, and choose from your wellbeing.",
       connectWithMe: "Connect with me",
@@ -864,7 +901,8 @@ const baseTranslations = {
       activeCountOne: "{{count}} active",
       activeCountMany: "{{count}} active",
       noRealProfiles: "No real profiles yet",
-      noRealProfilesBody: "Your profile stays in the center. Other users will appear around it.",
+      noRealProfilesBody:
+        "Your profile stays in the center. Other users will appear around it.",
       profileLoadError: "Could not load real profiles.",
       anyRange: "Any",
     },
@@ -941,13 +979,13 @@ const localizeArgentineSpanish = (source: TranslationTree): TranslationTree =>
           ES_AR_REPLACEMENTS.reduce(
             (nextValue, [pattern, replacement]) =>
               nextValue.replace(pattern, replacement),
-            value,
+            value
           ),
         ];
       }
 
       return [key, localizeArgentineSpanish(value)];
-    }),
+    })
   );
 
 const translations = {
@@ -955,11 +993,16 @@ const translations = {
   ...baseTranslations,
 } satisfies Record<Locale, TranslationTree>;
 
-const getNestedValue = (source: TranslationTree, key: string): string | null => {
-  const value = key.split(".").reduce<TranslationValue | TranslationTree | undefined>(
-    (acc, part) => (acc && typeof acc === "object" ? acc[part] : undefined),
-    source,
-  );
+const getNestedValue = (
+  source: TranslationTree,
+  key: string
+): string | null => {
+  const value = key
+    .split(".")
+    .reduce<TranslationValue | TranslationTree | undefined>(
+      (acc, part) => (acc && typeof acc === "object" ? acc[part] : undefined),
+      source
+    );
 
   return typeof value === "string" ? value : null;
 };
@@ -967,7 +1010,7 @@ const getNestedValue = (source: TranslationTree, key: string): string | null => 
 export const translate = (
   locale: Locale,
   key: string,
-  params?: Record<string, string | number>,
+  params?: Record<string, string | number>
 ) => {
   const template =
     getNestedValue(translations[locale], key) ??
@@ -980,11 +1023,14 @@ export const translate = (
   return Object.entries(params).reduce(
     (acc, [paramKey, value]) =>
       acc.replace(new RegExp(`{{${paramKey}}}`, "g"), String(value)),
-    template,
+    template
   );
 };
 
-const spiritualPathMap: Record<string, keyof typeof baseTranslations.es.spiritual> = {
+const spiritualPathMap: Record<
+  string,
+  keyof typeof baseTranslations.es.spiritual
+> = {
   Meditación: "meditation",
   Yoga: "yoga",
   Astrología: "astrology",
@@ -997,7 +1043,10 @@ const spiritualPathMap: Record<string, keyof typeof baseTranslations.es.spiritua
   Otro: "other",
 };
 
-const spiritualFieldMap: Record<string, keyof typeof baseTranslations.es.spiritual> = {
+const spiritualFieldMap: Record<
+  string,
+  keyof typeof baseTranslations.es.spiritual
+> = {
   Rol: "role",
   "Años de práctica": "years",
   "Dato relevante": "notes",
@@ -1012,7 +1061,10 @@ const spiritualPlaceholderMap: Record<
   "Todo lo que quieras sumar": "notesPlaceholder",
 };
 
-const spiritualOptionMap: Record<string, keyof typeof baseTranslations.es.spiritual> = {
+const spiritualOptionMap: Record<
+  string,
+  keyof typeof baseTranslations.es.spiritual
+> = {
   Instructor: "instructor",
   Alumno: "student",
 };
@@ -1027,7 +1079,10 @@ export const translateSpiritualFieldLabel = (locale: Locale, value: string) => {
   return key ? translate(locale, `spiritual.${key}`) : value;
 };
 
-export const translateSpiritualPlaceholder = (locale: Locale, value: string) => {
+export const translateSpiritualPlaceholder = (
+  locale: Locale,
+  value: string
+) => {
   const key = spiritualPlaceholderMap[value];
   return key ? translate(locale, `spiritual.${key}`) : value;
 };

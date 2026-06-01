@@ -53,6 +53,7 @@ import {
   type ChallengeCoachMessage,
 } from "../src/queries/challengeCoach.queries";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const parseEventDate = (value?: string | null) => {
   if (!value) return null;
@@ -572,19 +573,16 @@ const EventChat = () => {
             `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
           ];
 
-    try {
-      for (const url of candidateUrls) {
-        const supported = await Linking.canOpenURL(url);
-        if (supported) {
-          await Linking.openURL(url);
-          return;
-        }
+    for (const url of candidateUrls) {
+      try {
+        await Linking.openURL(url);
+        return;
+      } catch {
+        continue;
       }
-
-      Alert.alert("Mapa", "No se pudo abrir el mapa.");
-    } catch {
-      Alert.alert("Mapa", "No se pudo abrir el mapa.");
     }
+
+    Alert.alert("Mapa", "No se pudo abrir el mapa.");
   }, [eventLocation]);
 
   const openParticipantCard = useCallback(
@@ -976,7 +974,7 @@ export default EventChat;
 const localStyles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "500",
     color: "#222",
     letterSpacing: 0.2,
   },
@@ -1011,12 +1009,12 @@ const localStyles = StyleSheet.create({
   eventMetaDateText: {
     color: PRIMARY_COLOR,
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   eventMetaTimeText: {
     color: "#444",
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   eventMapButton: {
     flexDirection: "row",
@@ -1031,7 +1029,7 @@ const localStyles = StyleSheet.create({
   eventMapButtonText: {
     color: WHITE,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   eventLocationText: {
     marginTop: 10,
@@ -1056,7 +1054,7 @@ const localStyles = StyleSheet.create({
   emptyMessagesTitle: {
     color: DARK_GRAY,
     fontSize: 22,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     textAlign: "center",
   },
   emptyMessagesText: {
@@ -1064,7 +1062,7 @@ const localStyles = StyleSheet.create({
     color: TEXT_SECONDARY,
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: "CormorantGaramond_500Medium",
+    fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
   messageRow: {
@@ -1128,7 +1126,7 @@ const localStyles = StyleSheet.create({
   },
   messageSender: {
     fontSize: 12,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     color: PRIMARY_COLOR,
     marginBottom: 2,
   },
@@ -1138,7 +1136,7 @@ const localStyles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     lineHeight: 21,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     color: DARK_GRAY,
   },
   messageTime: {
@@ -1158,7 +1156,7 @@ const localStyles = StyleSheet.create({
   },
   moreAvatarText: {
     fontSize: 11,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     color: DARK_GRAY,
   },
   // Members modal
@@ -1194,7 +1192,7 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: vibesTheme.fonts.bold,
     color: DARK_GRAY,
   },
   memberRow: {
@@ -1210,7 +1208,7 @@ const localStyles = StyleSheet.create({
   },
   memberName: {
     fontSize: 16,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     color: DARK_GRAY,
   },
   kickButton: {
@@ -1221,7 +1219,7 @@ const localStyles = StyleSheet.create({
   },
   kickButtonText: {
     fontSize: 12,
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: vibesTheme.fonts.semibold,
     color: "#D32F2F",
   },
   participantSheetAnimated: {

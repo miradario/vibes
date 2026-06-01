@@ -1,7 +1,10 @@
 /** @format */
 
 import React, { useRef, useState } from "react";
-import { useGoogleLoginMutation, useSignupMutation } from "../src/auth/auth.queries";
+import {
+  useGoogleLoginMutation,
+  useSignupMutation,
+} from "../src/auth/auth.queries";
 import {
   View,
   Text,
@@ -13,7 +16,11 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { ResizeMode } from "expo-av";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import {
+  CommonActions,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesHeader from "../src/components/VibesHeader";
 import VibesActionButton from "../components/VibesActionButton";
@@ -25,7 +32,12 @@ import { useI18n } from "../src/i18n";
 const Signup = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
-  const [email, setEmail] = useState("");
+  const route = useRoute();
+  const initialEmail =
+    typeof (route.params as { email?: unknown } | undefined)?.email === "string"
+      ? (route.params as { email?: string }).email ?? ""
+      : "";
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,18 +64,19 @@ const Signup = () => {
       const authResult = await signupMutation.mutateAsync({ email, password });
       const signupUserId = authResult.session?.user?.id ?? authResult.user?.id;
       if (!authResult.session?.user?.id) {
-        setError("La cuenta se creó, pero falta iniciar sesión. Revisá tu email o intentá ingresar.");
+        setError(
+          "La cuenta se creó, pero falta iniciar sesión. Revisá tu email o intentá ingresar."
+        );
         return;
       }
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
           routes: [{ name: "VibesOnboardingFlow" as never }],
-        }),
+        })
       );
     } catch (e) {
-      const msg =
-        e instanceof Error ? e.message : t("signup.failed");
+      const msg = e instanceof Error ? e.message : t("signup.failed");
       setError(msg || t("signup.failed"));
     }
   };
@@ -78,7 +91,7 @@ const Signup = () => {
           CommonActions.reset({
             index: 0,
             routes: [{ name: "VibesOnboardingFlow" as never }],
-          }),
+          })
         );
       }
     } catch (e) {
@@ -113,7 +126,11 @@ const Signup = () => {
             <Text style={styles.loginSubtitle}>{t("signup.subtitle")}</Text>
 
             <GoogleAuthButton
-              label={googleLoading ? t("signup.googleSubmitting") : t("signup.google")}
+              label={
+                googleLoading
+                  ? t("signup.googleSubmitting")
+                  : t("signup.google")
+              }
               onPress={handleGoogleSignup}
               disabled={loading}
               loading={googleLoading}
@@ -177,12 +194,7 @@ const Signup = () => {
                 label={loading ? t("signup.submitting") : t("signup.submit")}
                 variant="start"
                 onPress={handleSignup}
-                disabled={
-                  !email ||
-                  !password ||
-                  loading ||
-                  googleLoading
-                }
+                disabled={!email || !password || loading || googleLoading}
               />
 
               <VibesActionButton

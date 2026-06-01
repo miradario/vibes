@@ -28,7 +28,9 @@ const VideoPlayer = ({ title, duration, access, progress = 0, isPlaying = false,
       <View style={styles.meditationPlayerHeader}>
         <View style={styles.meditationPlayerInfo}>
           <Text style={styles.meditationPlayerLabel}>Viendo ahora</Text>
-          <Text style={styles.meditationPlayerTitle}>{title}</Text>
+          <Text style={styles.meditationPlayerTitle} maxFontSizeMultiplier={1}>
+            {title}
+          </Text>
           {(duration || access) && (
             <Text style={styles.meditationPlayerMeta}>
               {duration || "—"} {duration && access ? "·" : ""} {access || ""}

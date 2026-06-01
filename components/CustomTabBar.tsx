@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { memo, useEffect } from "react";
+import React, { memo, useEffect, useState } from "react";
 import {
   Platform,
   StyleSheet,
@@ -28,11 +28,14 @@ import {
   Tag,
   Trophy,
   UserRound,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react-native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useMyEventGroupsQuery } from "../src/queries/events.queries";
 import { useMatchesQuery } from "../src/queries/matches.queries";
+import { vibesTheme } from "../src/theme/vibesTheme";
+import AnimatedSheetModal from "./AnimatedSheetModal";
 
 const TAB_BAR_HEIGHT = 82;
 const FLOATING_BUTTON_SIZE = 64;
@@ -45,14 +48,16 @@ const ANIMATION_CONFIG = { duration: 520 };
 const iconByRoute: Record<string, LucideIcon> = {
   Discover: Compass,
   Flow: Trophy,
+  EventsTab: CalendarDays,
   Home,
-  Calendar: MessageCircle,
+  Calendar: UsersRound,
   Aura: UserRound,
 };
 
 const fallbackIconByRoute: Record<string, LucideIcon> = {
   Discover: Tag,
   Flow: MessageCircle,
+  EventsTab: CalendarDays,
   Calendar: CalendarDays,
 };
 
@@ -60,18 +65,50 @@ const routeAccent: Record<
   string,
   { text: ColorValue; gradient: [string, string]; shadow: string; glow: string }
 > = {
-  Discover: { text: "#7F98B7", gradient: ["#AFC0D4", "#7F98B7"], shadow: "#7F98B7", glow: "rgba(127, 152, 183, 0.20)" },
-  Flow: { text: "#7F98B7", gradient: ["#AFC0D4", "#7F98B7"], shadow: "#7F98B7", glow: "rgba(127, 152, 183, 0.20)" },
-  Home: { text: "#E4B76E", gradient: ["#EBC57F", "#E4B76E"], shadow: "#E4B76E", glow: "rgba(228, 183, 110, 0.18)" },
-  Calendar: { text: "#7F98B7", gradient: ["#AFC0D4", "#7F98B7"], shadow: "#7F98B7", glow: "rgba(127, 152, 183, 0.20)" },
-  Aura: { text: "#7F98B7", gradient: ["#AFC0D4", "#7F98B7"], shadow: "#7F98B7", glow: "rgba(127, 152, 183, 0.20)" },
+  Discover: {
+    text: "#7F98B7",
+    gradient: ["#AFC0D4", "#7F98B7"],
+    shadow: "#7F98B7",
+    glow: "rgba(127, 152, 183, 0.20)",
+  },
+  Flow: {
+    text: "#7F98B7",
+    gradient: ["#AFC0D4", "#7F98B7"],
+    shadow: "#7F98B7",
+    glow: "rgba(127, 152, 183, 0.20)",
+  },
+  EventsTab: {
+    text: "#7F98B7",
+    gradient: ["#AFC0D4", "#7F98B7"],
+    shadow: "#7F98B7",
+    glow: "rgba(127, 152, 183, 0.20)",
+  },
+  Home: {
+    text: "#E4B76E",
+    gradient: ["#EBC57F", "#E4B76E"],
+    shadow: "#E4B76E",
+    glow: "rgba(228, 183, 110, 0.18)",
+  },
+  Calendar: {
+    text: "#7F98B7",
+    gradient: ["#AFC0D4", "#7F98B7"],
+    shadow: "#7F98B7",
+    glow: "rgba(127, 152, 183, 0.20)",
+  },
+  Aura: {
+    text: "#7F98B7",
+    gradient: ["#AFC0D4", "#7F98B7"],
+    shadow: "#7F98B7",
+    glow: "rgba(127, 152, 183, 0.20)",
+  },
 };
 
 const labelByRoute: Record<string, string> = {
   Discover: "Explorar",
   Flow: "Desafíos",
+  EventsTab: "Eventos",
   Home: "Inicio",
-  Calendar: "Vibes",
+  Calendar: "Conexiones",
   Aura: "Perfil",
 };
 
@@ -81,7 +118,7 @@ const getRouteIcon = (routeName: string) =>
 const getRouteLabel = (
   routeName: string,
   label: BottomTabBarProps["descriptors"][string]["options"]["tabBarLabel"],
-  title?: string,
+  title?: string
 ) => {
   if (labelByRoute[routeName]) return labelByRoute[routeName];
   if (typeof label === "string") return label;
@@ -117,18 +154,28 @@ const TabButton = memo(
     }, [focusProgress, isFocused]);
 
     const contentStyle = useAnimatedStyle(() => ({
-      opacity: interpolate(focusProgress.value, [0, 0.72, 1], [1, 0.15, 0], Extrapolation.CLAMP),
+      opacity: interpolate(
+        focusProgress.value,
+        [0, 0.72, 1],
+        [1, 0.15, 0],
+        Extrapolation.CLAMP
+      ),
       transform: [
         {
           translateY: interpolate(
             focusProgress.value,
             [0, 1],
             [0, SELECTED_RISE],
-            Extrapolation.CLAMP,
+            Extrapolation.CLAMP
           ),
         },
         {
-          scale: interpolate(focusProgress.value, [0, 1], [1, 0.84], Extrapolation.CLAMP),
+          scale: interpolate(
+            focusProgress.value,
+            [0, 1],
+            [1, 0.84],
+            Extrapolation.CLAMP
+          ),
         },
       ],
     }));
@@ -144,7 +191,11 @@ const TabButton = memo(
       >
         <Animated.View style={[localStyles.tabContent, contentStyle]}>
           <View style={localStyles.iconWrap}>
-            <Icon size={27} color={localColors.inactiveIcon} strokeWidth={2.05} />
+            <Icon
+              size={27}
+              color={localColors.inactiveIcon}
+              strokeWidth={2.05}
+            />
             {unreadCount > 0 ? (
               <View style={localStyles.unreadBadge}>
                 <Text style={localStyles.unreadBadgeText}>
@@ -157,17 +208,14 @@ const TabButton = memo(
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.82}
-            style={[
-              localStyles.tabLabel,
-              isFocused && { color: accentColor },
-            ]}
+            style={[localStyles.tabLabel, isFocused && { color: accentColor }]}
           >
             {label}
           </Text>
         </Animated.View>
       </TouchableOpacity>
     );
-  },
+  }
 );
 
 const CustomTabBar = ({
@@ -179,25 +227,36 @@ const CustomTabBar = ({
   const userId = session?.user?.id;
   const { data: matches = [] } = useMatchesQuery();
   const { data: eventGroups = [] } = useMyEventGroupsQuery(userId);
+  const [connectionsMenuVisible, setConnectionsMenuVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const selectedIndex = useSharedValue(state.index);
-  const selectedIconProgress = useSharedValue(1);
   const selectedRoute = state.routes[state.index];
-  const SelectedIcon = getRouteIcon(selectedRoute?.name ?? "Home");
+  const visibleRoutes = state.routes.filter((route) => route.name !== "Discover");
+  const selectedVisualRouteName =
+    selectedRoute?.name === "Discover" ? "Calendar" : selectedRoute?.name;
+  const selectedVisualIndex = Math.max(
+    visibleRoutes.findIndex((route) => route.name === selectedVisualRouteName),
+    0
+  );
+  const selectedIndex = useSharedValue(selectedVisualIndex);
+  const selectedIconProgress = useSharedValue(1);
+  const selectedVisualRoute =
+    visibleRoutes[selectedVisualIndex] ?? selectedRoute ?? visibleRoutes[0];
+  const SelectedIcon = getRouteIcon(selectedVisualRoute?.name ?? "Home");
   const directUnreadCount = matches.filter((item) => item.hasUnread).length;
   const groupUnreadCount = eventGroups.filter((item) => item.hasUnread).length;
   const vibesUnreadCount = directUnreadCount + groupUnreadCount;
-  const tabCount = Math.max(state.routes.length, 1);
+  const tabCount = Math.max(visibleRoutes.length, 1);
   const barWidth = Math.min(width - HORIZONTAL_MARGIN * 2, 620);
   const barLeft = (width - barWidth) / 2;
-  const selectedAccent = routeAccent[selectedRoute?.name ?? "Home"] ?? routeAccent.Home;
+  const selectedAccent =
+    routeAccent[selectedVisualRoute?.name ?? "Home"] ?? routeAccent.Home;
 
   useEffect(() => {
-    selectedIndex.value = withTiming(state.index, ANIMATION_CONFIG);
+    selectedIndex.value = withTiming(selectedVisualIndex, ANIMATION_CONFIG);
     selectedIconProgress.value = 0;
     selectedIconProgress.value = withTiming(1, { duration: 360 });
-  }, [selectedIconProgress, selectedIndex, state.index]);
+  }, [selectedIconProgress, selectedIndex, selectedVisualIndex]);
 
   const bubbleStyle = useAnimatedStyle(() => {
     const slotCenter = ((selectedIndex.value + 0.5) / tabCount) * barWidth;
@@ -208,9 +267,13 @@ const CustomTabBar = ({
         {
           translateY: interpolate(
             selectedIndex.value,
-            [state.index - 0.5, state.index, state.index + 0.5],
+            [
+              selectedVisualIndex - 0.5,
+              selectedVisualIndex,
+              selectedVisualIndex + 0.5,
+            ],
             [5, 0, 5],
-            Extrapolation.CLAMP,
+            Extrapolation.CLAMP
           ),
         },
       ],
@@ -233,7 +296,7 @@ const CustomTabBar = ({
           selectedIconProgress.value,
           [0, 1],
           [12, 0],
-          Extrapolation.CLAMP,
+          Extrapolation.CLAMP
         ),
       },
       {
@@ -241,22 +304,37 @@ const CustomTabBar = ({
           selectedIconProgress.value,
           [0, 1],
           [0.76, 1],
-          Extrapolation.CLAMP,
+          Extrapolation.CLAMP
         ),
       },
     ],
   }));
 
-  const handlePress = (route: (typeof state.routes)[number], isFocused: boolean) => {
+  const handlePress = (
+    route: (typeof state.routes)[number],
+    isFocused: boolean
+  ) => {
     const event = navigation.emit({
       type: "tabPress",
       target: route.key,
       canPreventDefault: true,
     });
 
-    if (!isFocused && !event.defaultPrevented) {
+    if (event.defaultPrevented) return;
+
+    if (route.name === "Calendar") {
+      setConnectionsMenuVisible(true);
+      return;
+    }
+
+    if (!isFocused) {
       navigation.navigate(route.name);
     }
+  };
+
+  const openConnectionsTarget = (routeName: "Calendar" | "Discover") => {
+    setConnectionsMenuVisible(false);
+    navigation.navigate(routeName);
   };
 
   return (
@@ -269,16 +347,24 @@ const CustomTabBar = ({
     >
       <View style={[localStyles.barShadow, { width: barWidth }]}>
         <View style={localStyles.bar}>
-          <Animated.View pointerEvents="none" style={[localStyles.notchPlate, notchStyle]} />
-          {state.routes.map((route, index) => {
+          <Animated.View
+            pointerEvents="none"
+            style={[localStyles.notchPlate, notchStyle]}
+          />
+          {visibleRoutes.map((route) => {
             const { options } = descriptors[route.key];
-            const isFocused = state.index === index;
+            const isFocused =
+              selectedRoute?.name === route.name ||
+              (selectedRoute?.name === "Discover" && route.name === "Calendar");
             const Icon = getRouteIcon(route.name);
             const routeColor = routeAccent[route.name] ?? routeAccent.Home;
-            const label = getRouteLabel(route.name, options.tabBarLabel, options.title);
+            const label = getRouteLabel(
+              route.name,
+              options.tabBarLabel,
+              options.title
+            );
             const accessibilityLabel =
-              options.tabBarAccessibilityLabel ??
-              String(label);
+              options.tabBarAccessibilityLabel ?? String(label);
 
             return (
               <TabButton
@@ -308,7 +394,7 @@ const CustomTabBar = ({
           accessibilityRole="button"
           accessibilityState={{ selected: true }}
           activeOpacity={0.88}
-          onPress={() => handlePress(selectedRoute, true)}
+          onPress={() => handlePress(selectedVisualRoute, true)}
           style={localStyles.floatingTouch}
         >
           <View
@@ -328,12 +414,58 @@ const CustomTabBar = ({
               style={localStyles.floatingButton}
             >
               <Animated.View style={floatingIconStyle}>
-                <SelectedIcon size={29} color={localColors.primaryText} strokeWidth={2.25} />
+                <SelectedIcon
+                  size={29}
+                  color={localColors.primaryText}
+                  strokeWidth={2.25}
+                />
               </Animated.View>
             </LinearGradient>
           </View>
         </TouchableOpacity>
       </Animated.View>
+
+      <AnimatedSheetModal
+        visible={connectionsMenuVisible}
+        onClose={() => setConnectionsMenuVisible(false)}
+        sheetStyle={[
+          localStyles.connectionsMenuSheet,
+          { paddingBottom: Math.max(insets.bottom + 18, 28) },
+        ]}
+      >
+        <View style={localStyles.connectionsMenuHandle} />
+        <Text style={localStyles.connectionsMenuTitle}>Conexiones</Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={localStyles.connectionsMenuItem}
+          onPress={() => openConnectionsTarget("Calendar")}
+        >
+          <View style={localStyles.connectionsMenuIconWrap}>
+            <MessageCircle size={21} color="#7F98B7" strokeWidth={2.1} />
+          </View>
+          <View style={localStyles.connectionsMenuCopy}>
+            <Text style={localStyles.connectionsMenuItemTitle}>Chat</Text>
+            <Text style={localStyles.connectionsMenuItemText}>
+              Ver tus conversaciones y conexiones.
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={localStyles.connectionsMenuItem}
+          onPress={() => openConnectionsTarget("Discover")}
+        >
+          <View style={localStyles.connectionsMenuIconWrap}>
+            <Compass size={21} color="#7F98B7" strokeWidth={2.1} />
+          </View>
+          <View style={localStyles.connectionsMenuCopy}>
+            <Text style={localStyles.connectionsMenuItemTitle}>Descubrir</Text>
+            <Text style={localStyles.connectionsMenuItemText}>
+              Encontrar nuevas personas para conectar.
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </AnimatedSheetModal>
     </View>
   );
 };
@@ -409,7 +541,7 @@ const localStyles = StyleSheet.create({
     maxWidth: 74,
     color: localColors.muted,
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "400",
     lineHeight: 15,
     textAlign: "center",
   },
@@ -481,8 +613,69 @@ const localStyles = StyleSheet.create({
   unreadBadgeText: {
     color: "#FFFFFF",
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "500",
     lineHeight: 12,
+  },
+  connectionsMenuSheet: {
+    paddingHorizontal: 18,
+  },
+  connectionsMenuHandle: {
+    alignSelf: "center",
+    width: 42,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "rgba(43, 43, 43, 0.16)",
+    marginBottom: 16,
+  },
+  connectionsMenuTitle: {
+    color: "#2B2B2B",
+    fontSize: 26,
+    lineHeight: 30,
+    fontFamily: vibesTheme.fonts.bold,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  connectionsMenuItem: {
+    minHeight: 72,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    marginTop: 10,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  connectionsMenuIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(127, 152, 183, 0.16)",
+    marginRight: 12,
+  },
+  connectionsMenuCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  connectionsMenuItemTitle: {
+    color: "#2B2B2B",
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  connectionsMenuItemText: {
+    color: "#6E6E6E",
+    fontSize: 13,
+    lineHeight: 17,
+    fontFamily: "JosefinSans-Medium",
+    marginTop: 3,
   },
 });
 

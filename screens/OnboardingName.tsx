@@ -37,7 +37,9 @@ const OnboardingName = () => {
           <OnboardingProgressBar screenName="OnboardingName" />
         </AppHeader>
 
-        <Text style={styles.onboardTitle}>{t("onboarding.nameTitle")}</Text>
+        <Text style={styles.onboardTitle} maxFontSizeMultiplier={1}>
+          {t("onboarding.nameTitle")}
+        </Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.nameSubtitle")}</Text>
 
         <View style={styles.loginField}>

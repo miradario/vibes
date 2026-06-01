@@ -44,7 +44,18 @@ const readUriAsArrayBuffer = async (uri: string): Promise<ArrayBuffer> => {
   return buf.slice(0);
 };
 
+const normalizeOnboardingPhotoUris = (draft: OnboardingDraft) => {
+  const allUris = [
+    draft.primaryPhotoUri,
+    ...(Array.isArray(draft.photoUris) ? draft.photoUris : []),
+  ].filter((uri): uri is string => typeof uri === "string" && uri.trim().length > 0);
+
+  return Array.from(new Set(allUris.map((uri) => uri.trim()))).slice(0, 6);
+};
+
 const uploadOnboardingPhotos = async (userId: string, uris: string[]) => {
+  const uploadedPaths: string[] = [];
+
   const { data: existingRows, error: existingRowsError } = await supabase
     .from("profile_photos")
     .select("id")
@@ -102,7 +113,11 @@ const uploadOnboardingPhotos = async (userId: string, uris: string[]) => {
       console.error("onboarding:photo_insert_error", insertError);
       throw insertError;
     }
+
+    uploadedPaths.push(filePath);
   }
+
+  return uploadedPaths;
 };
 
 const DEFAULT_INTENT_ID = 3; // "Everyone"
@@ -120,12 +135,12 @@ const getSupabaseErrorMessage = (error: unknown) => {
   return "Error desconocido";
 };
 
-const runOnboardingStep = async (
+const runOnboardingStep = async <T>(
   label: string,
-  action: () => Promise<void>,
-) => {
+  action: () => Promise<T>,
+): Promise<T> => {
   try {
-    await action();
+    return await action();
   } catch (error) {
     throw new Error(`${label}: ${getSupabaseErrorMessage(error)}`);
   }
@@ -299,15 +314,26 @@ export const useCompleteOnboardingMutation = () => {
         }),
       );
 
-      // Upload photos to Supabase Storage + profile_photos table
-      if (draft.photoUris?.length) {
-        await runOnboardingStep("Fotos", () =>
-          uploadOnboardingPhotos(userId, draft.photoUris ?? []),
+      const photoUris = normalizeOnboardingPhotoUris(draft);
+
+      if (photoUris.length) {
+        const uploadedPhotoPaths = await runOnboardingStep("Fotos", () =>
+          uploadOnboardingPhotos(userId, photoUris),
         );
+
+        if (uploadedPhotoPaths.length) {
+          await runOnboardingStep("Fotos del perfil", () =>
+            upsertProfileWithFallback({
+              id: userId,
+              photos: uploadedPhotoPaths,
+            }),
+          );
+        }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      queryClient.invalidateQueries({ queryKey: profileKeys.byUser(variables.userId) });
       queryClient.invalidateQueries({ queryKey: userPreferencesKeys.all });
       queryClient.invalidateQueries({ queryKey: onboardingKeys.pending });
     },
