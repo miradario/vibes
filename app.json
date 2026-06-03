@@ -4,7 +4,7 @@
     "name": "Vibes",
     "slug": "vibe",
     "scheme": "com.gurudevelopers.vibes",
-    "version": "1.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "updates": {
@@ -14,6 +14,7 @@
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": true,
+      "buildNumber": "2",
       "bundleIdentifier": "com.gurudevelopers.vibes",
       "deploymentTarget": "15.4",
       "appleTeamId": "4CKS7Q9UL2"
@@ -23,6 +24,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F6F6F4"
       },
+      "versionCode": 2,
       "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.gurudevelopers.vibes"
     },
