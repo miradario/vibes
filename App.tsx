@@ -38,6 +38,7 @@ import {
   OnboardingSpiritualPath,
   VibesOnboardingFlow,
   Login,
+  ResetPassword,
   Signup,
   EventDetail,
   ChallengeDetailScreen,
@@ -61,6 +62,14 @@ import { vibesTheme } from "./src/theme/vibesTheme";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const navigationRef = React.createRef<any>();
+const linking = {
+  prefixes: ["com.gurudevelopers.vibes://"],
+  config: {
+    screens: {
+      ResetPassword: "reset-password",
+    },
+  },
+};
 let hasAppliedGlobalFont = false;
 let isNavigationReady = false;
 let pendingNavigateToMessages = false;
@@ -140,6 +149,7 @@ const AppNavigator = () => {
         <StatusBar style="dark" />
         <NavigationContainer
           ref={navigationRef}
+          linking={linking}
           onReady={() => {
             isNavigationReady = true;
             if (!pendingNavigateToMessages) return;
@@ -310,6 +320,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="Login"
               component={Login}
+              options={{ headerShown: false, animationEnabled: true }}
+            />
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPassword}
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen

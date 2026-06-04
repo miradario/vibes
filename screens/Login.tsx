@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import {
   useGoogleLoginMutation,
   useLoginMutation,
+  useResetPasswordMutation,
 } from "../src/auth/auth.queries";
 import {
   View,
@@ -25,6 +26,7 @@ import Icon from "../components/Icon";
 import LoopingVideo from "../components/LoopingVideo";
 import CustomDialog from "../components/CustomDialog";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const isUnknownUserError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error ?? "");
@@ -45,10 +47,13 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreateAccountDialog, setShowCreateAccountDialog] = useState(false);
+  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const loginMutation = useLoginMutation();
   const googleLoginMutation = useGoogleLoginMutation();
+  const resetPasswordMutation = useResetPasswordMutation();
   const loading = loginMutation.isPending;
   const googleLoading = googleLoginMutation.isPending;
+  const resetPasswordLoading = resetPasswordMutation.isPending;
   const passwordInputRef = useRef<TextInput | null>(null);
 
   const handleLogin = async () => {
@@ -87,7 +92,27 @@ const Login = () => {
     }
   };
 
-  const isDisabled = !email || !password || loading || googleLoading;
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError(t("login.resetPasswordMissingEmail"));
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await resetPasswordMutation.mutateAsync({ email: trimmedEmail });
+      setShowResetPasswordDialog(true);
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : t("login.resetPasswordFailed");
+      setError(msg || t("login.resetPasswordFailed"));
+    }
+  };
+
+  const isDisabled =
+    !email || !password || loading || googleLoading || resetPasswordLoading;
   const goToSignup = () => {
     setShowCreateAccountDialog(false);
     (navigation as any).navigate("Signup", { email: email.trim() });
@@ -176,6 +201,18 @@ const Login = () => {
                   />
                 </TouchableOpacity>
               </View>
+              <TouchableOpacity
+                activeOpacity={0.74}
+                disabled={resetPasswordLoading}
+                onPress={handleForgotPassword}
+                style={localStyles.forgotPasswordButton}
+              >
+                <Text style={localStyles.forgotPasswordText}>
+                  {resetPasswordLoading
+                    ? t("login.resetPasswordSubmitting")
+                    : t("login.forgotPassword")}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {error ? (
@@ -211,6 +248,14 @@ const Login = () => {
         onSecondaryPress={() => setShowCreateAccountDialog(false)}
         onClose={() => setShowCreateAccountDialog(false)}
       />
+      <CustomDialog
+        visible={showResetPasswordDialog}
+        title={t("login.resetPasswordSentTitle")}
+        message={t("login.resetPasswordSentMessage")}
+        primaryLabel={t("login.resetPasswordSentPrimary")}
+        onPrimaryPress={() => setShowResetPasswordDialog(false)}
+        onClose={() => setShowResetPasswordDialog(false)}
+      />
     </View>
   );
 };
@@ -241,6 +286,15 @@ const localStyles = StyleSheet.create({
   },
   googleButton: {
     marginTop: 22,
+  },
+  forgotPasswordButton: {
+    marginTop: 10,
+    alignSelf: "flex-end",
+  },
+  forgotPasswordText: {
+    color: "#8C7B63",
+    fontSize: 13,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   header: {
     marginBottom: 14,

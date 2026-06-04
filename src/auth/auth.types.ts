@@ -16,3 +16,11 @@ export type SignupInput = {
   email: string;
   password: string;
 };
+
+export type ResetPasswordInput = {
+  email: string;
+};
+
+export type UpdatePasswordInput = {
+  password: string;
+};

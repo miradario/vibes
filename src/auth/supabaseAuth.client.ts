@@ -15,6 +15,16 @@ const OAUTH_REDIRECT_URL = (() => {
   });
 })();
 
+const PASSWORD_RESET_REDIRECT_URL = (() => {
+  const configuredRedirect =
+    process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL?.trim();
+  if (configuredRedirect) return configuredRedirect;
+
+  return Linking.createURL("reset-password", {
+    scheme: "com.gurudevelopers.vibes",
+  });
+})();
+
 WebBrowser.maybeCompleteAuthSession();
 
 export const signInWithPassword = async (email: string, password: string) => {
@@ -31,6 +41,41 @@ export const signUp = async (email: string, password: string) => {
     return auth.signUp({ email, password });
   }
   return auth.signIn({ email, password });
+};
+
+export const resetPasswordForEmail = async (email: string) => {
+  const auth = supabase.auth as any;
+  if (typeof auth.resetPasswordForEmail === "function") {
+    return auth.resetPasswordForEmail(email, {
+      redirectTo: PASSWORD_RESET_REDIRECT_URL,
+    });
+  }
+
+  if (typeof auth.api?.resetPasswordForEmail === "function") {
+    return auth.api.resetPasswordForEmail(email, {
+      redirectTo: PASSWORD_RESET_REDIRECT_URL,
+    });
+  }
+
+  throw new Error("Password reset is not supported by this auth client.");
+};
+
+export const exchangeCodeForSession = async (code: string) => {
+  const auth = supabase.auth as any;
+  if (typeof auth.exchangeCodeForSession !== "function") {
+    throw new Error("Password reset link is not supported by this auth client.");
+  }
+
+  return auth.exchangeCodeForSession(code);
+};
+
+export const updatePassword = async (password: string) => {
+  const auth = supabase.auth as any;
+  if (typeof auth.updateUser !== "function") {
+    throw new Error("Password update is not supported by this auth client.");
+  }
+
+  return auth.updateUser({ password });
 };
 
 export const signInWithGoogle = async (): Promise<Session | null> => {

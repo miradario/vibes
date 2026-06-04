@@ -5,7 +5,9 @@ import type {
   AuthSession,
   AuthSignupResult,
   LoginInput,
+  ResetPasswordInput,
   SignupInput,
+  UpdatePasswordInput,
 } from "./auth.types";
 
 export const authKeys = {
@@ -81,6 +83,32 @@ export const useGoogleLoginMutation = () => {
         queryClient.invalidateQueries();
       }
     },
+  });
+};
+
+export const useResetPasswordMutation = () => {
+  return useMutation<void, unknown, ResetPasswordInput>({
+    mutationFn: authService.resetPassword,
+  });
+};
+
+export const useExchangePasswordResetCodeMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<AuthSession, unknown, string>({
+    mutationFn: authService.exchangePasswordResetCode,
+    onSuccess: (session) => {
+      queryClient.setQueryData(authKeys.session, session ?? null);
+      if (session) {
+        queryClient.invalidateQueries();
+      }
+    },
+  });
+};
+
+export const useUpdatePasswordMutation = () => {
+  return useMutation<void, unknown, UpdatePasswordInput>({
+    mutationFn: authService.updatePassword,
   });
 };
 
