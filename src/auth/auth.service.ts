@@ -7,7 +7,9 @@ import * as authClient from "./supabaseAuth.client";
 import { bootstrapAuthSession } from "./session.bootstrap";
 import { recoverInvalidRefreshToken } from "./session.recovery";
 
-void bootstrapAuthSession();
+void bootstrapAuthSession().catch((error) => {
+  console.error("[boot] auth bootstrap failed", error);
+});
 
 export const login = async ({ email, password }: LoginInput) => {
   const { data, error } = await authClient.signInWithPassword(email, password);

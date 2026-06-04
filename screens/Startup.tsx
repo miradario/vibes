@@ -31,6 +31,7 @@ const STARTUP_VISUAL_MS =
   (startupIllustrationConfig.fillRevealDurationMs ?? 0);
 const MIN_STARTUP_MS = STARTUP_VISUAL_MS + 180;
 const HOLD_ON_STARTUP = false;
+const SESSION_BOOT_TIMEOUT_MS = 5000;
 
 const Startup = () => {
   const navigation = useNavigation();
@@ -39,6 +40,7 @@ const Startup = () => {
   const startedAtRef = useRef(Date.now());
   const didNavigateRef = useRef(false);
   const [isReadyToExit, setIsReadyToExit] = useState(false);
+  const [sessionLoadTimedOut, setSessionLoadTimedOut] = useState(false);
   const [updateGateState, setUpdateGateState] =
     useState<AppUpdateGateState | null>(null);
 
@@ -68,10 +70,23 @@ const Startup = () => {
   }, [contentOpacity, contentScale, glowOpacity]);
 
   useEffect(() => {
+    if (!isSessionLoading) return;
+
+    const timeout = setTimeout(() => {
+      console.warn("[boot] startup session load timed out, continuing");
+      setSessionLoadTimedOut(true);
+    }, SESSION_BOOT_TIMEOUT_MS);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [isSessionLoading]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const prefetch = async () => {
-      if (isSessionLoading) return;
+      if (isSessionLoading && !sessionLoadTimedOut) return;
 
       if (userId) {
         await Promise.allSettled([
@@ -101,6 +116,11 @@ const Startup = () => {
       }
 
       if (!cancelled) {
+        console.log("[boot] startup ready to exit", {
+          hasSession: Boolean(userId),
+          sessionLoadTimedOut,
+          hasUpdateGate: Boolean(nextUpdateGateState),
+        });
         setIsReadyToExit(true);
       }
     };
@@ -110,7 +130,7 @@ const Startup = () => {
     return () => {
       cancelled = true;
     };
-  }, [isSessionLoading, queryClient, userId]);
+  }, [isSessionLoading, queryClient, sessionLoadTimedOut, userId]);
 
   useEffect(() => {
     if (HOLD_ON_STARTUP) return;

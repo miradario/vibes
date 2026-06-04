@@ -74,8 +74,10 @@ let hasAppliedGlobalFont = false;
 let isNavigationReady = false;
 let pendingNavigateToMessages = false;
 let hasHiddenNativeSplash = false;
+const FONT_LOAD_TIMEOUT_MS = 3000;
 
 void SplashScreen.preventAutoHideAsync().catch(() => {
+  console.warn("[boot] failed to prevent native splash auto hide");
   return;
 });
 
@@ -91,14 +93,40 @@ const queryClient = new QueryClient({
 
 const AppNavigator = () => {
   const { t } = useI18n();
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     "JosefinSans-Regular": require("./assets/font/JosefinSans-Regular.ttf"),
     "JosefinSans-Medium": require("./assets/font/JosefinSans-Medium.ttf"),
     "JosefinSans-SemiBold": require("./assets/font/JosefinSans-SemiBold.ttf"),
     "JosefinSans-Bold": require("./assets/font/JosefinSans-Bold.ttf"),
   });
+  const [fontLoadTimedOut, setFontLoadTimedOut] = React.useState(false);
 
-  if (!hasAppliedGlobalFont) {
+  React.useEffect(() => {
+    console.log("[boot] AppNavigator mounted");
+  }, []);
+
+  React.useEffect(() => {
+    if (fontsLoaded) {
+      console.log("[boot] fonts loaded");
+      return;
+    }
+
+    if (fontError) {
+      console.error("[boot] fonts failed to load", fontError);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      console.warn("[boot] fonts load timed out, continuing without custom fonts");
+      setFontLoadTimedOut(true);
+    }, FONT_LOAD_TIMEOUT_MS);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [fontError, fontsLoaded]);
+
+  if (fontsLoaded && !hasAppliedGlobalFont) {
     (Text as any).defaultProps = (Text as any).defaultProps || {};
     (Text as any).defaultProps.style = [
       { fontFamily: vibesTheme.fonts.primary },
@@ -112,19 +140,27 @@ const AppNavigator = () => {
     hasAppliedGlobalFont = true;
   }
 
-  if (!fontsLoaded) {
+  React.useEffect(() => {
+    if (hasHiddenNativeSplash) return;
+    if (!fontsLoaded && !fontError && !fontLoadTimedOut) return;
+
+    hasHiddenNativeSplash = true;
+    console.log("[boot] hiding native splash", {
+      fontsLoaded,
+      hasFontError: Boolean(fontError),
+      fontLoadTimedOut,
+    });
+    void SplashScreen.hideAsync().catch((error) => {
+      console.warn("[boot] failed to hide native splash", error);
+    });
+  }, [fontError, fontLoadTimedOut, fontsLoaded]);
+
+  if (!fontsLoaded && !fontError && !fontLoadTimedOut) {
     return (
       <View
         style={{ flex: 1, backgroundColor: vibesTheme.colors.background }}
       />
     );
-  }
-
-  if (!hasHiddenNativeSplash) {
-    hasHiddenNativeSplash = true;
-    void SplashScreen.hideAsync().catch(() => {
-      return;
-    });
   }
 
   const navigateToMessages = () => {

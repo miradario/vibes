@@ -14,7 +14,7 @@
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": true,
-      "buildNumber": "3",
+      "buildNumber": "4",
       "bundleIdentifier": "com.gurudevelopers.vibes",
       "deploymentTarget": "15.4",
       "appleTeamId": "4CKS7Q9UL2"

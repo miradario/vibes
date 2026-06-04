@@ -1,6 +1,20 @@
 import { supabase } from "../lib/supabase";
 import { recoverInvalidRefreshToken } from "./session.recovery";
 
+const AUTH_BOOT_TIMEOUT_MS = 5000;
+type SessionResponse = Awaited<ReturnType<typeof supabase.auth.getSession>>;
+
+const withTimeout = async <T>(promise: Promise<T>, label: string): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`${label} timed out after ${AUTH_BOOT_TIMEOUT_MS}ms`));
+      }, AUTH_BOOT_TIMEOUT_MS);
+    }),
+  ]);
+};
+
 const isSessionExpired = (expiresAt?: number | null): boolean => {
   if (!expiresAt) return false;
   const nowSeconds = Math.floor(Date.now() / 1000);
@@ -8,7 +22,23 @@ const isSessionExpired = (expiresAt?: number | null): boolean => {
 };
 
 export const bootstrapAuthSession = async (): Promise<void> => {
-  const { data, error } = await supabase.auth.getSession();
+  console.log("[boot] auth bootstrap started");
+
+  let data;
+  let error;
+
+  try {
+    const response = (await withTimeout(
+      supabase.auth.getSession(),
+      "auth.getSession",
+    )) as SessionResponse;
+    data = response.data;
+    error = response.error;
+  } catch (bootstrapError) {
+    console.warn("[boot] auth bootstrap could not read session", bootstrapError);
+    return;
+  }
+
   if (error) {
     await recoverInvalidRefreshToken(error);
     return;
@@ -16,11 +46,19 @@ export const bootstrapAuthSession = async (): Promise<void> => {
 
   const session = data.session;
   if (session && isSessionExpired(session.expires_at)) {
-    const { error: refreshError } = await supabase.auth.refreshSession();
+    console.log("[boot] auth session expired, refreshing");
+    const { error: refreshError } = await withTimeout(
+      supabase.auth.refreshSession(),
+      "auth.refreshSession",
+    );
     if (refreshError) {
       await recoverInvalidRefreshToken(refreshError);
     }
   }
+
+  console.log("[boot] auth bootstrap finished", {
+    hasSession: Boolean(session),
+  });
 };
 
 export const verifyPersistedSession = async (): Promise<boolean> => {

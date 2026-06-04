@@ -5,24 +5,51 @@ import { supabase } from "../lib/supabase";
 import { recoverInvalidRefreshToken } from "./session.recovery";
 
 type AuthChangeEvent = string;
+type SessionResponse = Awaited<ReturnType<typeof supabase.auth.getSession>>;
+const APP_SCHEME = "com.gurudevelopers.vibes";
+const AUTH_SESSION_TIMEOUT_MS = 5000;
+
+const resolveRedirectUrl = (configuredRedirect: string | undefined, path: string) => {
+  const trimmedRedirect = configuredRedirect?.trim();
+  if (trimmedRedirect) {
+    if (trimmedRedirect.startsWith(`${APP_SCHEME}://`)) {
+      return trimmedRedirect;
+    }
+
+    console.warn("[boot] ignoring redirect URL with unexpected scheme", {
+      configuredRedirect: trimmedRedirect,
+      expectedScheme: APP_SCHEME,
+    });
+  }
+
+  return Linking.createURL(path, {
+    scheme: APP_SCHEME,
+  });
+};
+
+const withTimeout = async <T>(promise: Promise<T>, label: string): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`${label} timed out after ${AUTH_SESSION_TIMEOUT_MS}ms`));
+      }, AUTH_SESSION_TIMEOUT_MS);
+    }),
+  ]);
+};
 
 const OAUTH_REDIRECT_URL = (() => {
-  const configuredRedirect = process.env.EXPO_PUBLIC_OAUTH_REDIRECT_URL?.trim();
-  if (configuredRedirect) return configuredRedirect;
-
-  return Linking.createURL("auth-callback", {
-    scheme: "com.gurudevelopers.vibes",
-  });
+  return resolveRedirectUrl(
+    process.env.EXPO_PUBLIC_OAUTH_REDIRECT_URL,
+    "auth-callback",
+  );
 })();
 
 const PASSWORD_RESET_REDIRECT_URL = (() => {
-  const configuredRedirect =
-    process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL?.trim();
-  if (configuredRedirect) return configuredRedirect;
-
-  return Linking.createURL("reset-password", {
-    scheme: "com.gurudevelopers.vibes",
-  });
+  return resolveRedirectUrl(
+    process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL,
+    "reset-password",
+  );
 })();
 
 WebBrowser.maybeCompleteAuthSession();
@@ -127,7 +154,21 @@ export const signOut = async () => supabase.auth.signOut();
 export const getSession = async (): Promise<Session | null> => {
   const auth = supabase.auth as any;
   if (typeof auth.getSession === "function") {
-    const { data, error } = await auth.getSession();
+    let data;
+    let error;
+
+    try {
+      const response = (await withTimeout(
+        auth.getSession(),
+        "auth.getSession",
+      )) as SessionResponse;
+      data = response.data;
+      error = response.error;
+    } catch (sessionError) {
+      console.warn("[boot] auth getSession timed out or failed", sessionError);
+      return null;
+    }
+
     if (error) {
       await recoverInvalidRefreshToken(error);
       return null;
