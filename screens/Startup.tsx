@@ -32,6 +32,23 @@ const STARTUP_VISUAL_MS =
 const MIN_STARTUP_MS = STARTUP_VISUAL_MS + 180;
 const HOLD_ON_STARTUP = false;
 const SESSION_BOOT_TIMEOUT_MS = 5000;
+const STARTUP_PREFETCH_TIMEOUT_MS = 8000;
+const UPDATE_GATE_TIMEOUT_MS = 3000;
+
+const withTimeout = async <T,>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  label: string,
+): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+    }),
+  ]);
+};
 
 const Startup = () => {
   const navigation = useNavigation();
@@ -88,20 +105,77 @@ const Startup = () => {
     const prefetch = async () => {
       if (isSessionLoading && !sessionLoadTimedOut) return;
 
+      const startupTasks: Array<{ label: string; run: () => Promise<unknown> }> = [];
+
       if (userId) {
-        await Promise.allSettled([
-          queryClient.prefetchQuery(profileQueryOptions(userId)),
-          queryClient.prefetchQuery(userPreferencesQueryOptions(userId)),
-          queryClient.prefetchQuery(matchesQueryOptions(userId)),
-          queryClient.prefetchQuery(myEventGroupsQueryOptions(userId)),
-          queryClient.prefetchQuery(eventsFeedQueryOptions()),
-          queryClient.prefetchQuery(challengesFeedQueryOptions(userId)),
-        ]);
+        startupTasks.push(
+          {
+            label: "profile prefetch",
+            run: () => queryClient.prefetchQuery(profileQueryOptions(userId)),
+          },
+          {
+            label: "user preferences prefetch",
+            run: () => queryClient.prefetchQuery(userPreferencesQueryOptions(userId)),
+          },
+          {
+            label: "matches prefetch",
+            run: () => queryClient.prefetchQuery(matchesQueryOptions(userId)),
+          },
+          {
+            label: "event groups prefetch",
+            run: () => queryClient.prefetchQuery(myEventGroupsQueryOptions(userId)),
+          },
+          {
+            label: "events feed prefetch",
+            run: () => queryClient.prefetchQuery(eventsFeedQueryOptions()),
+          },
+          {
+            label: "challenges feed prefetch",
+            run: () => queryClient.prefetchQuery(challengesFeedQueryOptions(userId)),
+          },
+        );
       }
 
-      const nextUpdateGateState = await getAppUpdateGateState().catch(
-        () => null,
+      const prefetchPromise = Promise.allSettled(
+        startupTasks.map(async ({ label, run }) => {
+          console.log(`[boot] ${label} started`);
+
+          try {
+            const result = await run();
+            console.log(`[boot] ${label} finished`);
+            return result;
+          } catch (error) {
+            console.warn(`[boot] ${label} failed`, error);
+            throw error;
+          }
+        }),
       );
+
+      try {
+        await withTimeout(
+          prefetchPromise,
+          STARTUP_PREFETCH_TIMEOUT_MS,
+          "startup prefetch",
+        );
+      } catch (error) {
+        console.warn("[boot] startup prefetch timed out, continuing", error);
+      }
+
+      let nextUpdateGateState: AppUpdateGateState | null = null;
+      try {
+        console.log("[boot] update gate check started");
+        nextUpdateGateState = await withTimeout(
+          getAppUpdateGateState(),
+          UPDATE_GATE_TIMEOUT_MS,
+          "startup update gate",
+        );
+        console.log("[boot] update gate check finished", {
+          hasUpdateGate: Boolean(nextUpdateGateState),
+        });
+      } catch (error) {
+        console.warn("[boot] update gate check failed, continuing", error);
+      }
+
       if (!cancelled) {
         setUpdateGateState(nextUpdateGateState);
       }
