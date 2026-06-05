@@ -16,7 +16,7 @@ import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import ProfileMediaImage from "../components/ProfileMediaImage";
-import styles, { BG_MAIN, DARK_GRAY } from "../assets/styles";
+import styles, { BG_MAIN, DARK_GRAY, SERIF_FONT, TEXT_PRIMARY } from "../assets/styles";
 import UserProfileSheet from "../components/UserProfileSheet";
 import {
   useMatchesQuery,
@@ -913,17 +913,21 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   appHeaderTitle: {
-    fontSize: 38,
-    lineHeight: 42,
+    color: TEXT_PRIMARY,
+    fontSize: 32,
+    lineHeight: 38,
+    fontFamily: SERIF_FONT,
+    textAlign: "center",
   },
   connectionsHeader: {
     marginBottom: 10,
   },
   connectionsTitle: {
-    color: DARK_GRAY,
-    fontSize: 30,
-    lineHeight: 34,
-    fontFamily: vibesTheme.fonts.bold,
+    color: TEXT_PRIMARY,
+    fontSize: 32,
+    lineHeight: 38,
+    fontFamily: SERIF_FONT,
+    textAlign: "left",
   },
   connectionsGrid: {
     flexDirection: "row",

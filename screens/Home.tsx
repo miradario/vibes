@@ -1015,7 +1015,14 @@ const Home = () => {
         >
           <View style={localStyles.heroHeader}>
             <View style={localStyles.heroCopy}>
-              <Text style={localStyles.heroTitle}>Hola, {firstName} 👋</Text>
+              <Text
+                style={localStyles.heroTitle}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.68}
+              >
+                Hola, {firstName} 👋
+              </Text>
               <Text style={localStyles.heroSubtitle}>
                 Antes de conectar con otros,{"\n"}
                 <Text style={localStyles.heroSubtitleStrong}>

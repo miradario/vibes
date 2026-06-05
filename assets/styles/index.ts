@@ -2234,10 +2234,10 @@ export default StyleSheet.create({
   },
   auraScreenTitle: {
     fontSize: 32,
-    color: TEXT_SECONDARY,
-    textAlign: "center",
+    color: TEXT_PRIMARY,
+    textAlign: "left",
     marginTop: 60,
-    marginBottom: 30,
+    marginBottom: 4,
     fontFamily: SERIF_FONT,
   },
   auraProfileCard: {

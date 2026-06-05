@@ -96,6 +96,7 @@ const Profile = () => {
         <AppHeader
           title={t("profile.title")}
           style={{ paddingHorizontal: 0, marginBottom: 8 }}
+          contentStyle={{ alignItems: "flex-start", paddingHorizontal: 0 }}
           titleStyle={styles.auraScreenTitle}
         />
 

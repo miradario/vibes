@@ -25,7 +25,7 @@ import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import UserProfileSheet from "../components/UserProfileSheet";
 import type { UserProfileCardData } from "../components/UserProfileCard";
-import styles, { DIMENSION_WIDTH } from "../assets/styles";
+import styles, { DIMENSION_WIDTH, SERIF_FONT, TEXT_PRIMARY } from "../assets/styles";
 import type { DataT } from "../types";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -868,10 +868,11 @@ const localStyles = StyleSheet.create({
     paddingBottom: 10,
   },
   title: {
-    color: "#2B2B2B",
-    fontSize: 42,
-    lineHeight: 46,
-    fontFamily: vibesTheme.fonts.bold,
+    color: TEXT_PRIMARY,
+    fontSize: 32,
+    lineHeight: 38,
+    fontFamily: SERIF_FONT,
+    textAlign: "center",
   },
   filtersButton: {
     marginTop: 8,
