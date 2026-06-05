@@ -1,6 +1,12 @@
 /** @format */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import {
   Image,
   FlatList,
@@ -50,6 +56,14 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   distanceMinKm: null,
   maxDistanceKm: null,
   smoking: "all",
+};
+
+export type DiscoverContentHandle = {
+  openFilters: () => void;
+};
+
+type DiscoverContentProps = {
+  showHeader?: boolean;
 };
 const DISCOVER_PAGE_SIZE = 30;
 const MIN_DISCOVER_AGE = 18;
@@ -207,7 +221,10 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
   ),
 });
 
-const Discover = () => {
+export const DiscoverContent = forwardRef<
+  DiscoverContentHandle,
+  DiscoverContentProps
+>(({ showHeader = true }, ref) => {
   const navigation = useNavigation();
   const { t } = useI18n();
   const { data: session } = useAuthSession();
@@ -525,9 +542,20 @@ const Discover = () => {
     </TouchableOpacity>
   );
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      openFilters: () => setIsFiltersVisible(true),
+    }),
+    [],
+  );
+
   return (
     <View style={localStyles.screen}>
-      <SafeAreaView style={localStyles.safeArea} edges={["top", "left", "right"]}>
+      <SafeAreaView
+        style={localStyles.safeArea}
+        edges={showHeader ? ["top", "left", "right"] : ["left", "right"]}
+      >
         <Modal
           visible={showGallery}
           transparent
@@ -748,21 +776,23 @@ const Discover = () => {
           onSecondaryActionPress={() => dismissProfile(selectedProfile)}
         />
 
-        <AppHeader
-          title={t("discover.title")}
-          style={localStyles.header}
-          titleStyle={localStyles.title}
-          right={
-            <TouchableOpacity
-              style={localStyles.filtersButton}
-              activeOpacity={0.84}
-              onPress={() => setIsFiltersVisible(true)}
-            >
-              <Icon name="options-outline" size={17} color="#2B2B2B" />
-              <Text style={localStyles.filtersButtonText}>{t("discover.filters")}</Text>
-            </TouchableOpacity>
-          }
-        />
+        {showHeader ? (
+          <AppHeader
+            title={t("discover.title")}
+            style={localStyles.header}
+            titleStyle={localStyles.title}
+            right={
+              <TouchableOpacity
+                style={localStyles.filtersButton}
+                activeOpacity={0.84}
+                onPress={() => setIsFiltersVisible(true)}
+              >
+                <Icon name="options-outline" size={17} color="#2B2B2B" />
+                <Text style={localStyles.filtersButtonText}>{t("discover.filters")}</Text>
+              </TouchableOpacity>
+            }
+          />
+        ) : null}
 
         <View style={localStyles.orbitWrap}>
           {isLoading ? (
@@ -818,7 +848,11 @@ const Discover = () => {
       </SafeAreaView>
     </View>
   );
-};
+});
+
+DiscoverContent.displayName = "DiscoverContent";
+
+const Discover = () => <DiscoverContent />;
 
 const localStyles = StyleSheet.create({
   screen: {

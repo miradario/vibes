@@ -1145,7 +1145,10 @@ const Home = () => {
             onPress={() =>
               navigation.navigate(
                 "Tab" as never,
-                { screen: "Discover" } as never
+                {
+                  screen: "Calendar",
+                  params: { initialSection: "discover" },
+                } as never
               )
             }
           >

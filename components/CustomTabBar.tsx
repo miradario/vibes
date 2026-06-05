@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { memo, useEffect, useState } from "react";
+import React, { memo, useEffect } from "react";
 import {
   Platform,
   StyleSheet,
@@ -35,7 +35,6 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import { useMyEventGroupsQuery } from "../src/queries/events.queries";
 import { useMatchesQuery } from "../src/queries/matches.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import AnimatedSheetModal from "./AnimatedSheetModal";
 
 const TAB_BAR_HEIGHT = 82;
 const FLOATING_BUTTON_SIZE = 64;
@@ -227,7 +226,6 @@ const CustomTabBar = ({
   const userId = session?.user?.id;
   const { data: matches = [] } = useMatchesQuery();
   const { data: eventGroups = [] } = useMyEventGroupsQuery(userId);
-  const [connectionsMenuVisible, setConnectionsMenuVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const selectedRoute = state.routes[state.index];
@@ -322,19 +320,14 @@ const CustomTabBar = ({
 
     if (event.defaultPrevented) return;
 
-    if (route.name === "Calendar") {
-      setConnectionsMenuVisible(true);
-      return;
-    }
-
     if (!isFocused) {
+      if (route.name === "Calendar") {
+        navigation.navigate(route.name, { initialSection: "chat" });
+        return;
+      }
+
       navigation.navigate(route.name);
     }
-  };
-
-  const openConnectionsTarget = (routeName: "Calendar" | "Discover") => {
-    setConnectionsMenuVisible(false);
-    navigation.navigate(routeName);
   };
 
   return (
@@ -424,48 +417,6 @@ const CustomTabBar = ({
           </View>
         </TouchableOpacity>
       </Animated.View>
-
-      <AnimatedSheetModal
-        visible={connectionsMenuVisible}
-        onClose={() => setConnectionsMenuVisible(false)}
-        sheetStyle={[
-          localStyles.connectionsMenuSheet,
-          { paddingBottom: Math.max(insets.bottom + 18, 28) },
-        ]}
-      >
-        <View style={localStyles.connectionsMenuHandle} />
-        <Text style={localStyles.connectionsMenuTitle}>Conexiones</Text>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={localStyles.connectionsMenuItem}
-          onPress={() => openConnectionsTarget("Calendar")}
-        >
-          <View style={localStyles.connectionsMenuIconWrap}>
-            <MessageCircle size={21} color="#7F98B7" strokeWidth={2.1} />
-          </View>
-          <View style={localStyles.connectionsMenuCopy}>
-            <Text style={localStyles.connectionsMenuItemTitle}>Chat</Text>
-            <Text style={localStyles.connectionsMenuItemText}>
-              Ver tus conversaciones y conexiones.
-            </Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={localStyles.connectionsMenuItem}
-          onPress={() => openConnectionsTarget("Discover")}
-        >
-          <View style={localStyles.connectionsMenuIconWrap}>
-            <Compass size={21} color="#7F98B7" strokeWidth={2.1} />
-          </View>
-          <View style={localStyles.connectionsMenuCopy}>
-            <Text style={localStyles.connectionsMenuItemTitle}>Descubrir</Text>
-            <Text style={localStyles.connectionsMenuItemText}>
-              Encontrar nuevas personas para conectar.
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </AnimatedSheetModal>
     </View>
   );
 };
@@ -615,67 +566,6 @@ const localStyles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "500",
     lineHeight: 12,
-  },
-  connectionsMenuSheet: {
-    paddingHorizontal: 18,
-  },
-  connectionsMenuHandle: {
-    alignSelf: "center",
-    width: 42,
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.16)",
-    marginBottom: 16,
-  },
-  connectionsMenuTitle: {
-    color: "#2B2B2B",
-    fontSize: 26,
-    lineHeight: 30,
-    fontFamily: vibesTheme.fonts.bold,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  connectionsMenuItem: {
-    minHeight: 72,
-    borderRadius: 18,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    marginTop: 10,
-    shadowColor: "#2B2B2B",
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  connectionsMenuIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(127, 152, 183, 0.16)",
-    marginRight: 12,
-  },
-  connectionsMenuCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  connectionsMenuItemTitle: {
-    color: "#2B2B2B",
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  connectionsMenuItemText: {
-    color: "#6E6E6E",
-    fontSize: 13,
-    lineHeight: 17,
-    fontFamily: "JosefinSans-Medium",
-    marginTop: 3,
   },
 });
 

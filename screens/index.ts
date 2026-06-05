@@ -3,6 +3,7 @@ export { default as Discover } from "./Discover";
 export { default as Matches } from "./Matches";
 export { default as Messages } from "./Messages";
 export { default as Match } from "./Match";
+export { default as Connections } from "./Connections";
 export { default as Profile } from "./Profile";
 export { default as Meditations } from "./Meditations";
 export { default as Welcome } from "./Welcome";

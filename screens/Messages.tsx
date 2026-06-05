@@ -48,6 +48,12 @@ type ArchivedChatItem =
 
 type ConnectionsSheet = "incoming" | "new" | null;
 
+type MessagesContentProps = {
+  showHeader?: boolean;
+  contentTopPadding?: number;
+  contentBottomPadding?: number;
+};
+
 const MATCH_CONNECTION_DEADLINE_HOUR = 6;
 
 const formatTime = (iso: string | null) => {
@@ -158,7 +164,11 @@ const isFinishedEventGroup = (group: EventGroupSummary) => {
   return eventDay.getTime() < currentDay.getTime();
 };
 
-const Messages = () => {
+export const MessagesContent = ({
+  showHeader = true,
+  contentTopPadding,
+  contentBottomPadding,
+}: MessagesContentProps) => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { locale, t } = useI18n();
@@ -692,16 +702,21 @@ const Messages = () => {
         contentContainerStyle={[
           localStyles.content,
           {
-            paddingTop: Math.max(insets.top + 18, 46),
-            paddingBottom: Math.max(insets.bottom + 90, 118),
+            paddingTop:
+              contentTopPadding ??
+              (showHeader ? Math.max(insets.top + 18, 46) : 8),
+            paddingBottom:
+              contentBottomPadding ?? Math.max(insets.bottom + 90, 118),
           },
         ]}
       >
-        <AppHeader
-          title={t("messages.connections")}
-          style={localStyles.appHeader}
-          titleStyle={localStyles.appHeaderTitle}
-        />
+        {showHeader ? (
+          <AppHeader
+            title={t("messages.connections")}
+            style={localStyles.appHeader}
+            titleStyle={localStyles.appHeaderTitle}
+          />
+        ) : null}
         {hasConnectionsSection ? (
           <>
             <View style={localStyles.connectionsHeader}>
@@ -883,6 +898,8 @@ const Messages = () => {
     </View>
   );
 };
+
+const Messages = () => <MessagesContent />;
 
 export default Messages;
 

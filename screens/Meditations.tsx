@@ -238,7 +238,13 @@ const BottomTabPreview = () => {
 
   const handleTabPress = (key: (typeof TAB_ITEMS)[number]["key"]) => {
     if (key === "explore") {
-      navigation.navigate("Tab" as never, { screen: "Discover" } as never);
+      navigation.navigate(
+        "Tab" as never,
+        {
+          screen: "Calendar",
+          params: { initialSection: "discover" },
+        } as never,
+      );
       return;
     }
 

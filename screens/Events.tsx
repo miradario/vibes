@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -125,9 +125,8 @@ const Events = () => {
   const route = useRoute<any>();
   const { t } = useI18n();
   const { data: session } = useAuthSession();
-  const [section, setSection] = useState<"event" | "challenge">(
-    route.params?.section === "challenge" ? "challenge" : "event",
-  );
+  const section: "event" | "challenge" =
+    route.params?.section === "challenge" ? "challenge" : "event";
   const title = section === "challenge" ? "Desafíos" : "Eventos";
   const searchPlaceholder =
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
@@ -143,10 +142,6 @@ const Events = () => {
   const [search, setSearch] = useState("");
   const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
   const [showExpiredEvents, setShowExpiredEvents] = useState(false);
-
-  useEffect(() => {
-    setSection(route.params?.section === "challenge" ? "challenge" : "event");
-  }, [route.params?.section]);
 
   const errorMessage =
     error instanceof Error && error.message.trim()
@@ -316,37 +311,6 @@ const Events = () => {
             <Icon name="add" size={16} color={TEXT_SECONDARY} />
           </TouchableOpacity>
         </View>
-
-        <View style={localStyles.segmentedControl}>
-          {(
-            [
-              { value: "event", label: "Eventos" },
-              { value: "challenge", label: "Desafíos" },
-            ] as const
-          ).map((item) => {
-            const isActive = section === item.value;
-            return (
-              <TouchableOpacity
-                key={item.value}
-                style={[
-                  localStyles.segmentButton,
-                  isActive && localStyles.segmentButtonActive,
-                ]}
-                onPress={() => setSection(item.value)}
-              >
-                <Text
-                  style={[
-                    localStyles.segmentText,
-                    isActive && localStyles.segmentTextActive,
-                  ]}
-                >
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
         <View style={styles.eventsSearchBar}>
           <Icon name="search" size={20} color={TEXT_SECONDARY} />
           <TextInput
@@ -599,39 +563,6 @@ const localStyles = StyleSheet.create({
     fontSize: 18,
     color: "#6C6965",
     fontFamily: vibesTheme.fonts.medium,
-  },
-  segmentedControl: {
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
-    borderWidth: 1,
-    borderColor: "rgba(127, 152, 183, 0.34)",
-    flexDirection: "row",
-    padding: 4,
-    marginTop: 18,
-    marginBottom: 14,
-  },
-  segmentButton: {
-    flex: 1,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  segmentButtonActive: {
-    backgroundColor: vibesTheme.colors.accentBlue,
-    shadowColor: vibesTheme.colors.accentBlue,
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  segmentText: {
-    color: "#4A5A6C",
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  segmentTextActive: {
-    color: "#FFFFFF",
   },
   searchInput: {
     fontSize: 18,

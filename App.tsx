@@ -16,8 +16,8 @@ import {
   Home,
   Discover,
   Matches,
-  Messages,
   Match,
+  Connections,
   Profile,
   Meditations,
   Welcome,
@@ -174,6 +174,7 @@ const AppNavigator = () => {
         name: "Tab",
         params: {
           screen: "Calendar",
+          params: { initialSection: "chat" },
         },
       })
     );
@@ -310,7 +311,7 @@ const AppNavigator = () => {
                   />
                   <Tab.Screen
                     name="Calendar"
-                    component={Messages}
+                    component={Connections}
                     options={{
                       tabBarLabel: t("tabs.connections"),
                       tabBarIcon: ({ focused }) => (

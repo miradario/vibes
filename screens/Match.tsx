@@ -164,7 +164,13 @@ const Match = () => {
             label="Más tarde"
             variant="skip"
             onPress={() =>
-              navigation.navigate("Tab" as never, { screen: "Discover" } as never)
+              navigation.navigate(
+                "Tab" as never,
+                {
+                  screen: "Calendar",
+                  params: { initialSection: "discover" },
+                } as never
+              )
             }
           />
         </View>
