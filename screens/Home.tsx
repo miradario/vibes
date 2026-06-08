@@ -1119,27 +1119,16 @@ const Home = () => {
           ) : null}
 
           {homeChallenges.length > 0 ? (
-            <ScrollView
-              horizontal
-              pagingEnabled={homeChallenges.length > 1}
-              showsHorizontalScrollIndicator={false}
-              scrollEnabled={homeChallenges.length > 1}
-              contentContainerStyle={localStyles.pathCarouselContent}
-              style={localStyles.pathCarousel}
-            >
-              {homeChallenges.map((challenge, index) => {
+            homeChallenges.length === 1 ? (
+              (() => {
+                const challenge = homeChallenges[0];
                 const pathProgress = getChallengeDayProgress(challenge);
                 const isUpcoming = pathProgress.status === "upcoming";
 
                 return (
                   <TouchableOpacity
-                    key={challenge.id}
                     activeOpacity={0.86}
-                    style={[
-                      localStyles.pathCard,
-                      homeChallenges.length > 1 && localStyles.pathCardSlide,
-                      index < homeChallenges.length - 1 && localStyles.pathCardGap,
-                    ]}
+                    style={localStyles.pathCard}
                     onPress={() =>
                       navigation.navigate(
                         "ChallengeDetailScreen" as never,
@@ -1202,8 +1191,94 @@ const Home = () => {
                     </View>
                   </TouchableOpacity>
                 );
-              })}
-            </ScrollView>
+              })()
+            ) : (
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                scrollEnabled
+                contentContainerStyle={localStyles.pathCarouselContent}
+                style={localStyles.pathCarousel}
+              >
+                {homeChallenges.map((challenge, index) => {
+                  const pathProgress = getChallengeDayProgress(challenge);
+                  const isUpcoming = pathProgress.status === "upcoming";
+
+                  return (
+                    <TouchableOpacity
+                      key={challenge.id}
+                      activeOpacity={0.86}
+                      style={[
+                        localStyles.pathCard,
+                        localStyles.pathCardSlide,
+                        index < homeChallenges.length - 1 && localStyles.pathCardGap,
+                      ]}
+                      onPress={() =>
+                        navigation.navigate(
+                          "ChallengeDetailScreen" as never,
+                          { event: challenge } as never,
+                        )
+                      }
+                    >
+                      <View style={localStyles.pathCopy}>
+                        <Text style={localStyles.pathEyebrow}>TUS DESAFÍOS</Text>
+                        <Text style={localStyles.pathTitle}>{challenge.title}</Text>
+                        {!isUpcoming && challenge.viewerCheckedInToday ? (
+                          <View style={localStyles.pathCheckedTodayPill}>
+                            <Text style={localStyles.pathCheckedTodayPillText}>
+                              Check-in de hoy completo
+                            </Text>
+                          </View>
+                        ) : null}
+                        <Text style={localStyles.pathSubtitle}>
+                          {isUpcoming
+                            ? pathProgress.label
+                            : `${pathProgress.label} (${challenge.viewerCompletedDaysCount ?? 0} completados)`}
+                        </Text>
+                        {isUpcoming ? (
+                          <View style={localStyles.pathUpcomingPill}>
+                            <Text style={localStyles.pathUpcomingPillText}>{pathProgress.label}</Text>
+                          </View>
+                        ) : (
+                          <View style={localStyles.progressRow}>
+                            <View style={localStyles.progressSegmentsWrap}>
+                              {Array.from({ length: 7 }).map((_, segmentIndex) => {
+                                const active = segmentIndex < Math.round(pathProgress.ratio * 7);
+                                return (
+                                  <View
+                                    key={`${challenge.id}-progress-${segmentIndex}`}
+                                    style={[
+                                      localStyles.progressSegment,
+                                      active && localStyles.progressSegmentActive,
+                                    ]}
+                                  />
+                                );
+                              })}
+                            </View>
+                            <Text style={localStyles.progressText}>
+                              {Math.round(pathProgress.ratio * 100)}%
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <View
+                        style={[
+                          localStyles.pathIconWrap,
+                          isUpcoming && localStyles.pathIconWrapUpcoming,
+                        ]}
+                      >
+                        <Ionicons
+                          name={isUpcoming ? "time-outline" : "leaf-outline"}
+                          size={38}
+                          color={isUpcoming ? "#D38334" : "#8E9B52"}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )
           ) : (
             <TouchableOpacity
               activeOpacity={0.86}
@@ -1531,6 +1606,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.regular,
   },
   pathCard: {
+    width: "100%",
     minHeight: 132,
     borderRadius: 20,
     backgroundColor: "#FFFFFF",
@@ -1548,10 +1624,11 @@ const localStyles = StyleSheet.create({
     elevation: 3,
   },
   pathCarousel: {
+    width: "100%",
     marginBottom: 8,
   },
   pathCarouselContent: {
-    paddingRight: 8,
+    paddingRight: 0,
   },
   pathCardSlide: {
     width: DIMENSION_WIDTH - 48,

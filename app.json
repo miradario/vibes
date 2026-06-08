@@ -14,7 +14,10 @@
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": true,
-      "buildNumber": "7",
+      "buildNumber": "8",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "bundleIdentifier": "com.gurudevelopers.vibes",
       "deploymentTarget": "15.4",
       "appleTeamId": "4CKS7Q9UL2"
@@ -24,7 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F6F6F4"
       },
-      "versionCode": 4,
+      "versionCode": 8,
       "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.gurudevelopers.vibes"
     },
