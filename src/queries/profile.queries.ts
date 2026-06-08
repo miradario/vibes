@@ -13,7 +13,12 @@ export const profileKeys = {
 
 const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
   const [profileResponse, photosResponse] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .is("deleted_at", null)
+      .maybeSingle(),
     supabase
       .from("profile_photos")
       .select("*")

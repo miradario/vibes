@@ -12,6 +12,7 @@ import {
   ImageBackground,
   StyleSheet,
   ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -51,6 +52,10 @@ import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
+import {
+  getChallengeStartsInLabel,
+  getChallengeTimeline,
+} from "../src/lib/challengeTimeline";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type DiscoverFiltersState = {
@@ -194,35 +199,37 @@ const getChallengeDayProgress = (item: EventFeedItem | null) => {
       ? item.durationDays
       : 21;
 
-  if (!item?.startsAt) {
-    return { currentDay: 4, totalDays, ratio: 0.35 };
+  if (!item) {
+    return {
+      currentDay: 0,
+      totalDays,
+      ratio: 0,
+      status: "empty" as const,
+      label: "Todavía no te sumaste a ningún desafío",
+    };
   }
 
-  const startDate = new Date(item.startsAt);
-  if (Number.isNaN(startDate.getTime())) {
-    return { currentDay: 4, totalDays, ratio: 0.35 };
-  }
+  const timeline = getChallengeTimeline(item.startsAt, totalDays);
 
-  const today = new Date();
-  const start = new Date(
-    startDate.getFullYear(),
-    startDate.getMonth(),
-    startDate.getDate()
-  );
-  const current = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const diffDays = Math.floor(
-    (current.getTime() - start.getTime()) / 86_400_000
-  );
-  const currentDay = Math.min(totalDays, Math.max(1, diffDays + 1));
+  if (timeline.status === "upcoming") {
+    return {
+      currentDay: 0,
+      totalDays,
+      ratio: 0,
+      status: "upcoming" as const,
+      label: getChallengeStartsInLabel(timeline.startsInDays),
+    };
+  }
 
   return {
-    currentDay,
+    currentDay: timeline.currentDay,
     totalDays,
-    ratio: Math.min(1, Math.max(0.08, currentDay / totalDays)),
+    ratio: Math.min(1, Math.max(0.08, timeline.currentDay / totalDays)),
+    status: timeline.status,
+    label:
+      timeline.status === "finished"
+        ? "Desafío completado"
+        : `Día ${timeline.currentDay} de ${totalDays}`,
   };
 };
 
@@ -273,6 +280,7 @@ const readStoredFilters = (
 });
 
 const Home = () => {
+  const { width } = useWindowDimensions();
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { t } = useI18n();
@@ -461,20 +469,33 @@ const Home = () => {
       ),
     [activeChallenges, joinedChallengeIds]
   );
-  const suggestedChallenge = useMemo(
-    () =>
-      joinedActiveChallenges.length > 0
-        ? null
-        : activeChallenges.find(
-            (challenge) => !joinedChallengeIds.has(challenge.id)
-          ) ?? null,
-    [activeChallenges, joinedActiveChallenges.length, joinedChallengeIds]
+  const joinedUpcomingChallenges = useMemo(() => {
+    const now = Date.now();
+
+    return challenges
+      .filter((challenge) => {
+        if (!joinedChallengeIds.has(challenge.id) || !challenge.startsAt) {
+          return false;
+        }
+
+        const startTime = new Date(challenge.startsAt).getTime();
+        return Number.isFinite(startTime) && startTime > now;
+      })
+      .sort((left, right) => {
+        const leftTime = new Date(left.startsAt as string).getTime();
+        const rightTime = new Date(right.startsAt as string).getTime();
+        return leftTime - rightTime;
+      });
+  }, [challenges, joinedChallengeIds]);
+  const homeChallenges = useMemo(
+    () => [...joinedActiveChallenges, ...joinedUpcomingChallenges],
+    [joinedActiveChallenges, joinedUpcomingChallenges]
   );
-  const pathChallenge = joinedActiveChallenges[0] ?? suggestedChallenge;
-  const pathProgress = getChallengeDayProgress(pathChallenge);
   const nextEvent = futureEvents[0] ?? events[0] ?? null;
   const nextEventDate = formatEventDayBox(nextEvent?.startsAt);
-  const connectionPreviewProfiles = profiles.slice(0, 3);
+  const isCompactConnectionsCard = width < 390;
+  const visibleConnectionPreviewCount = isCompactConnectionsCard ? 2 : 3;
+  const connectionPreviewProfiles = profiles.slice(0, visibleConnectionPreviewCount);
   const connectionCount = Math.max(profiles.length, matches.length);
   const moodOptions = [
     {
@@ -1024,10 +1045,7 @@ const Home = () => {
                 Hola, {firstName} 👋
               </Text>
               <Text style={localStyles.heroSubtitle}>
-                Antes de conectar con otros,{"\n"}
-                <Text style={localStyles.heroSubtitleStrong}>
-                  conectá con vos.
-                </Text>
+                <Text style={localStyles.heroSubtitleStrong}>Conectá con vos</Text> para poder conectar con otros.
               </Text>
             </View>
             <TouchableOpacity
@@ -1100,51 +1118,115 @@ const Home = () => {
             </ImageBackground>
           ) : null}
 
-          <TouchableOpacity
-            activeOpacity={0.86}
-            style={localStyles.pathCard}
-            onPress={() =>
-              pathChallenge
-                ? navigation.navigate(
-                    "ChallengeDetailScreen" as never,
-                    { event: pathChallenge } as never
-                  )
-                : navigation.navigate(
-                    "Tab" as never,
-                    { screen: "Flow", params: { section: "challenge" } } as never
-                  )
-            }
-          >
-            <View style={localStyles.pathCopy}>
-              <Text style={localStyles.pathEyebrow}>TU CAMINO</Text>
-              <Text style={localStyles.pathTitle}>
-                Día {pathProgress.currentDay} de {pathProgress.totalDays}
-              </Text>
-              <Text style={localStyles.pathSubtitle}>
-                Pequeños pasos, grandes cambios.
-              </Text>
-              <View style={localStyles.progressRow}>
-                {Array.from({ length: 7 }).map((_, index) => {
-                  const active = index < Math.round(pathProgress.ratio * 7);
-                  return (
+          {homeChallenges.length > 0 ? (
+            <ScrollView
+              horizontal
+              pagingEnabled={homeChallenges.length > 1}
+              showsHorizontalScrollIndicator={false}
+              scrollEnabled={homeChallenges.length > 1}
+              contentContainerStyle={localStyles.pathCarouselContent}
+              style={localStyles.pathCarousel}
+            >
+              {homeChallenges.map((challenge, index) => {
+                const pathProgress = getChallengeDayProgress(challenge);
+                const isUpcoming = pathProgress.status === "upcoming";
+
+                return (
+                  <TouchableOpacity
+                    key={challenge.id}
+                    activeOpacity={0.86}
+                    style={[
+                      localStyles.pathCard,
+                      homeChallenges.length > 1 && localStyles.pathCardSlide,
+                      index < homeChallenges.length - 1 && localStyles.pathCardGap,
+                    ]}
+                    onPress={() =>
+                      navigation.navigate(
+                        "ChallengeDetailScreen" as never,
+                        { event: challenge } as never,
+                      )
+                    }
+                  >
+                    <View style={localStyles.pathCopy}>
+                      <Text style={localStyles.pathEyebrow}>TUS DESAFÍOS</Text>
+                      <Text style={localStyles.pathTitle}>{challenge.title}</Text>
+                      {!isUpcoming && challenge.viewerCheckedInToday ? (
+                        <View style={localStyles.pathCheckedTodayPill}>
+                          <Text style={localStyles.pathCheckedTodayPillText}>
+                            Check-in de hoy completo
+                          </Text>
+                        </View>
+                      ) : null}
+                      <Text style={localStyles.pathSubtitle}>
+                        {isUpcoming
+                          ? pathProgress.label
+                          : `${pathProgress.label} (${challenge.viewerCompletedDaysCount ?? 0} completados)`}
+                      </Text>
+                      {isUpcoming ? (
+                        <View style={localStyles.pathUpcomingPill}>
+                          <Text style={localStyles.pathUpcomingPillText}>{pathProgress.label}</Text>
+                        </View>
+                      ) : (
+                        <View style={localStyles.progressRow}>
+                          <View style={localStyles.progressSegmentsWrap}>
+                            {Array.from({ length: 7 }).map((_, segmentIndex) => {
+                              const active = segmentIndex < Math.round(pathProgress.ratio * 7);
+                              return (
+                                <View
+                                  key={`${challenge.id}-progress-${segmentIndex}`}
+                                  style={[
+                                    localStyles.progressSegment,
+                                    active && localStyles.progressSegmentActive,
+                                  ]}
+                                />
+                              );
+                            })}
+                          </View>
+                          <Text style={localStyles.progressText}>
+                            {Math.round(pathProgress.ratio * 100)}%
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                     <View
-                      key={`progress-${index}`}
                       style={[
-                        localStyles.progressSegment,
-                        active && localStyles.progressSegmentActive,
+                        localStyles.pathIconWrap,
+                        isUpcoming && localStyles.pathIconWrapUpcoming,
                       ]}
-                    />
-                  );
-                })}
-                <Text style={localStyles.progressText}>
-                  {Math.round(pathProgress.ratio * 100)}%
+                    >
+                      <Ionicons
+                        name={isUpcoming ? "time-outline" : "leaf-outline"}
+                        size={38}
+                        color={isUpcoming ? "#D38334" : "#8E9B52"}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <TouchableOpacity
+              activeOpacity={0.86}
+              style={localStyles.pathCard}
+              onPress={() =>
+                navigation.navigate(
+                  "Tab" as never,
+                  { screen: "Flow", params: { section: "challenge" } } as never,
+                )
+              }
+            >
+              <View style={localStyles.pathCopy}>
+                <Text style={localStyles.pathEyebrow}>TUS DESAFÍOS</Text>
+                <Text style={localStyles.pathTitle}>Todavía no te sumaste</Text>
+                <Text style={localStyles.pathSubtitle}>
+                  Explorá desafíos vigentes y próximos para empezar tu camino.
                 </Text>
               </View>
-            </View>
-            <View style={localStyles.pathIconWrap}>
-              <Ionicons name="leaf-outline" size={38} color="#8E9B52" />
-            </View>
-          </TouchableOpacity>
+              <View style={localStyles.pathIconWrap}>
+                <Ionicons name="trophy-outline" size={38} color="#8E9B52" />
+              </View>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             activeOpacity={0.86}
@@ -1177,7 +1259,7 @@ const Home = () => {
                         <View style={localStyles.connectionDot} />
                       </View>
                     ))
-                  : [0, 1, 2].map((item) => (
+                  : Array.from({ length: visibleConnectionPreviewCount }).map((_, item) => (
                       <Image
                         key={`placeholder-${item}`}
                         source={require("../assets/images/01.jpg")}
@@ -1188,9 +1270,11 @@ const Home = () => {
                       />
                     ))}
               </View>
-              <View style={localStyles.connectionIconCircle}>
-                <Ionicons name="people-outline" size={32} color="#8E78A8" />
-              </View>
+              {connectionPreviewProfiles.length === 0 ? (
+                <View style={localStyles.connectionIconCircle}>
+                  <Ionicons name="people-outline" size={32} color="#8E78A8" />
+                </View>
+              ) : null}
               <View style={localStyles.connectionsCopy}>
                 <Text style={localStyles.connectionsText}>
                   {Math.max(3, connectionCount)} nuevas personas vibran parecido
@@ -1454,7 +1538,7 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(43, 43, 43, 0.06)",
     paddingHorizontal: 28,
     paddingVertical: 20,
-    marginBottom: 18,
+    marginBottom: 8,
     flexDirection: "row",
     alignItems: "center",
     shadowColor: "#2B2B2B",
@@ -1462,6 +1546,19 @@ const localStyles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 7 },
     elevation: 3,
+  },
+  pathCarousel: {
+    marginBottom: 8,
+  },
+  pathCarouselContent: {
+    paddingRight: 8,
+  },
+  pathCardSlide: {
+    width: DIMENSION_WIDTH - 48,
+    marginBottom: 0,
+  },
+  pathCardGap: {
+    marginRight: 14,
   },
   pathCopy: {
     flex: 1,
@@ -1486,15 +1583,48 @@ const localStyles = StyleSheet.create({
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,
   },
+  pathCheckedTodayPill: {
+    alignSelf: "flex-start",
+    marginTop: 10,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "rgba(143, 160, 77, 0.16)",
+  },
+  pathCheckedTodayPillText: {
+    color: "#6F8640",
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  pathUpcomingPill: {
+    alignSelf: "flex-start",
+    marginTop: 16,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "rgba(228, 131, 52, 0.14)",
+  },
+  pathUpcomingPillText: {
+    color: "#D38334",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.bold,
+  },
   progressRow: {
     marginTop: 19,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
   },
+  progressSegmentsWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
   progressSegment: {
-    width: 58,
-    maxWidth: "12%",
+    flex: 1,
     height: 8,
     borderRadius: 999,
     backgroundColor: "#E1E1E1",
@@ -1516,6 +1646,9 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#F1F3E8",
     marginLeft: 14,
+  },
+  pathIconWrapUpcoming: {
+    backgroundColor: "#FDF1E2",
   },
   connectionsCard: {
     borderRadius: 20,
@@ -1540,7 +1673,7 @@ const localStyles = StyleSheet.create({
   },
   connectionsRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12,
   },
   connectionAvatars: {
@@ -1581,7 +1714,7 @@ const localStyles = StyleSheet.create({
   },
   connectionsCopy: {
     flex: 1,
-    minWidth: 116,
+    minWidth: 0,
   },
   connectionsText: {
     color: "#595754",

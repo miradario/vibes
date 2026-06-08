@@ -22,6 +22,10 @@ import {
 } from "../src/queries/events.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
+import {
+  getChallengeStartsInLabel,
+  getChallengeTimeline,
+} from "../src/lib/challengeTimeline";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
 
@@ -53,27 +57,36 @@ const parseParticipantCount = (attendees: string | null | undefined) => {
 };
 
 const getChallengeProgress = (item: EventFeedItem) => {
-  if (item.type !== "challenge" || !item.startsAt || !item.durationDays) return null;
+  if (item.type !== "challenge") return null;
 
-  const startDate = new Date(item.startsAt);
-  const today = new Date();
-  const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const diffDays = Math.floor((current.getTime() - start.getTime()) / 86_400_000);
+  const timeline = getChallengeTimeline(item.startsAt, item.durationDays);
 
-  if (diffDays < 0) {
-    return { label: `Empieza en ${Math.abs(diffDays)}d`, tone: "pending" as const };
+  if (timeline.status === "upcoming") {
+    return { label: getChallengeStartsInLabel(timeline.startsInDays), tone: "pending" as const };
   }
 
-  if (diffDays >= item.durationDays) {
+  if (timeline.status === "finished") {
     return { label: "Finalizado", tone: "done" as const };
   }
 
-  return { label: `Día ${diffDays + 1}/${item.durationDays}`, tone: "active" as const };
+  return {
+    label: `Día ${timeline.currentDay}/${timeline.totalDays}`,
+    tone: "active" as const,
+  };
 };
 
 const isFinishedChallenge = (item: EventFeedItem) =>
   item.type === "challenge" && getChallengeProgress(item)?.tone === "done";
+
+const isUpcomingChallenge = (item: EventFeedItem) =>
+  item.type === "challenge" && getChallengeTimeline(item.startsAt, item.durationDays).status === "upcoming";
+
+const sortChallengesByStartsAt = (items: EventFeedItem[]) =>
+  [...items].sort((left, right) => {
+    const leftTime = left.startsAt ? new Date(left.startsAt).getTime() : Number.POSITIVE_INFINITY;
+    const rightTime = right.startsAt ? new Date(right.startsAt).getTime() : Number.POSITIVE_INFINITY;
+    return leftTime - rightTime;
+  });
 
 const isExpiredEvent = (item: EventFeedItem) => {
   if (item.type !== "event" || !item.startsAt) return false;
@@ -141,6 +154,7 @@ const Events = () => {
   } = section === "challenge" ? challengesQuery : eventsQuery;
   const [search, setSearch] = useState("");
   const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
+  const [showUpcomingChallenges, setShowUpcomingChallenges] = useState(false);
   const [showExpiredEvents, setShowExpiredEvents] = useState(false);
 
   const errorMessage =
@@ -177,7 +191,7 @@ const Events = () => {
     if (section !== "challenge") {
       return filteredItems.filter((item) => !isExpiredEvent(item));
     }
-    return filteredItems.filter((item) => !isFinishedChallenge(item));
+    return filteredItems;
   }, [filteredItems, section]);
 
   const expiredEventItems = useMemo(() => {
@@ -188,6 +202,18 @@ const Events = () => {
   const finishedChallengeItems = useMemo(() => {
     if (section !== "challenge") return [];
     return filteredItems.filter(isFinishedChallenge);
+  }, [filteredItems, section]);
+
+  const upcomingChallengeItems = useMemo(() => {
+    if (section !== "challenge") return [];
+    return sortChallengesByStartsAt(filteredItems.filter(isUpcomingChallenge));
+  }, [filteredItems, section]);
+
+  const activeChallengeItems = useMemo(() => {
+    if (section !== "challenge") return [];
+    return filteredItems.filter(
+      (item) => item.type === "challenge" && !isFinishedChallenge(item) && !isUpcomingChallenge(item),
+    );
   }, [filteredItems, section]);
 
   const joinedChallengeIds = useMemo(
@@ -202,13 +228,23 @@ const Events = () => {
 
   const joinedChallengeItems = useMemo(() => {
     if (section !== "challenge") return [];
-    return visibleItems.filter((item) => joinedChallengeIds.has(item.id));
-  }, [joinedChallengeIds, section, visibleItems]);
+    return activeChallengeItems.filter((item) => joinedChallengeIds.has(item.id));
+  }, [activeChallengeItems, joinedChallengeIds, section]);
+
+  const joinedUpcomingChallengeItems = useMemo(() => {
+    if (section !== "challenge") return [];
+    return upcomingChallengeItems.filter((item) => joinedChallengeIds.has(item.id));
+  }, [joinedChallengeIds, section, upcomingChallengeItems]);
 
   const generalChallengeItems = useMemo(() => {
     if (section !== "challenge") return [];
-    return visibleItems.filter((item) => !joinedChallengeIds.has(item.id));
-  }, [joinedChallengeIds, section, visibleItems]);
+    return activeChallengeItems.filter((item) => !joinedChallengeIds.has(item.id));
+  }, [activeChallengeItems, joinedChallengeIds, section]);
+
+  const upcomingGeneralChallengeItems = useMemo(() => {
+    if (section !== "challenge") return [];
+    return upcomingChallengeItems.filter((item) => !joinedChallengeIds.has(item.id));
+  }, [joinedChallengeIds, section, upcomingChallengeItems]);
 
   const listItems = useMemo<FeedListItem[]>(() => {
     if (section !== "challenge") {
@@ -234,7 +270,7 @@ const Events = () => {
 
     const nextItems: FeedListItem[] = [];
 
-    if (joinedChallengeItems.length > 0) {
+    if (joinedChallengeItems.length > 0 || joinedUpcomingChallengeItems.length > 0) {
       nextItems.push({
         kind: "section",
         id: "joined-challenges",
@@ -243,6 +279,9 @@ const Events = () => {
       });
       nextItems.push(
         ...joinedChallengeItems.map((item) => ({ kind: "feed" as const, item })),
+      );
+      nextItems.push(
+        ...joinedUpcomingChallengeItems.map((item) => ({ kind: "feed" as const, item })),
       );
     }
 
@@ -255,6 +294,18 @@ const Events = () => {
       });
       nextItems.push(
         ...generalChallengeItems.map((item) => ({ kind: "feed" as const, item })),
+      );
+    }
+
+    if (showUpcomingChallenges && upcomingGeneralChallengeItems.length > 0) {
+      nextItems.push({
+        kind: "section",
+        id: "upcoming-challenges",
+        title: "Desafíos próximos",
+        subtitle: "Empiezan más adelante y todavía no te anotaste",
+      });
+      nextItems.push(
+        ...upcomingGeneralChallengeItems.map((item) => ({ kind: "feed" as const, item })),
       );
     }
 
@@ -275,9 +326,12 @@ const Events = () => {
     finishedChallengeItems,
     generalChallengeItems,
     joinedChallengeItems,
+    joinedUpcomingChallengeItems,
     section,
     showExpiredEvents,
     showFinishedChallenges,
+    showUpcomingChallenges,
+    upcomingGeneralChallengeItems,
     visibleItems,
   ]);
 
@@ -347,7 +401,7 @@ const Events = () => {
                         : "No encontramos eventos"
                     : section === "event" && expiredEventItems.length > 0
                       ? "No hay eventos vigentes"
-                    : section === "challenge" && finishedChallengeItems.length > 0
+                    : section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0)
                       ? "No hay desafíos vigentes"
                     : section === "challenge"
                       ? "Todavía no hay desafíos reales"
@@ -362,6 +416,8 @@ const Events = () => {
                       ? "Probá con otro nombre, lugar o fecha."
                     : section === "event" && expiredEventItems.length > 0
                       ? "Los eventos caducados están guardados abajo."
+                    : section === "challenge" && upcomingGeneralChallengeItems.length > 0
+                      ? "Los próximos están guardados abajo para que te sumes cuando quieras."
                     : section === "challenge" && finishedChallengeItems.length > 0
                       ? "Tus desafíos finalizados están guardados abajo."
                     : section === "challenge"
@@ -393,28 +449,55 @@ const Events = () => {
                   color="#7A746D"
                 />
               </TouchableOpacity>
-            ) : section === "challenge" && finishedChallengeItems.length > 0 ? (
-              <TouchableOpacity
-                style={localStyles.finishedSectionToggle}
-                onPress={() => setShowFinishedChallenges((prev) => !prev)}
-                activeOpacity={0.85}
-              >
-                <View>
-                  <Text style={localStyles.finishedSectionTitle}>
-                    Desafíos finalizados
-                  </Text>
-                  <Text style={localStyles.finishedSectionSubtitle}>
-                    {showFinishedChallenges
-                      ? "Ocultar finalizados"
-                      : `${finishedChallengeItems.length} guardados`}
-                  </Text>
-                </View>
-                <Icon
-                  name={showFinishedChallenges ? "chevron-up" : "chevron-down"}
-                  size={22}
-                  color="#7A746D"
-                />
-              </TouchableOpacity>
+            ) : section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0) ? (
+              <View style={localStyles.footerToggleGroup}>
+                {upcomingGeneralChallengeItems.length > 0 ? (
+                  <TouchableOpacity
+                    style={localStyles.finishedSectionToggle}
+                    onPress={() => setShowUpcomingChallenges((prev) => !prev)}
+                    activeOpacity={0.85}
+                  >
+                    <View>
+                      <Text style={localStyles.finishedSectionTitle}>
+                        Desafíos próximos
+                      </Text>
+                      <Text style={localStyles.finishedSectionSubtitle}>
+                        {showUpcomingChallenges
+                          ? "Ocultar próximos"
+                          : `${upcomingGeneralChallengeItems.length} guardados`}
+                      </Text>
+                    </View>
+                    <Icon
+                      name={showUpcomingChallenges ? "chevron-up" : "chevron-down"}
+                      size={22}
+                      color="#7A746D"
+                    />
+                  </TouchableOpacity>
+                ) : null}
+                {finishedChallengeItems.length > 0 ? (
+                  <TouchableOpacity
+                    style={localStyles.finishedSectionToggle}
+                    onPress={() => setShowFinishedChallenges((prev) => !prev)}
+                    activeOpacity={0.85}
+                  >
+                    <View>
+                      <Text style={localStyles.finishedSectionTitle}>
+                        Desafíos finalizados
+                      </Text>
+                      <Text style={localStyles.finishedSectionSubtitle}>
+                        {showFinishedChallenges
+                          ? "Ocultar finalizados"
+                          : `${finishedChallengeItems.length} guardados`}
+                      </Text>
+                    </View>
+                    <Icon
+                      name={showFinishedChallenges ? "chevron-up" : "chevron-down"}
+                      size={22}
+                      color="#7A746D"
+                    />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             ) : null
           }
           renderItem={({ item: listItem }) => {
@@ -459,7 +542,7 @@ const Events = () => {
                   }
                   style={localStyles.feedRowThumb}
                 />
-                {item.type === "challenge" && challengeProgress ? (
+                {item.type === "challenge" && challengeProgress && challengeProgress.tone !== "pending" ? (
                   <View
                     style={[
                       localStyles.feedThumbProgressPill,
@@ -485,6 +568,20 @@ const Events = () => {
                 ]}
               >
                 <View style={localStyles.feedRowCopy}>
+                  {item.type === "challenge" && challengeProgress?.tone === "pending" ? (
+                    <View style={localStyles.feedRowTopMeta}>
+                      <View
+                        style={[
+                          localStyles.feedInlineProgressPill,
+                          localStyles.progressPillPending,
+                        ]}
+                      >
+                        <Text style={localStyles.feedInlineProgressText}>
+                          {challengeProgress.label}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
                   <View style={localStyles.feedRowTitleLine}>
                     {item.type === "challenge" ? (
                       <Icon
@@ -631,6 +728,12 @@ const localStyles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
+  feedRowTopMeta: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 6,
+  },
   feedRowTitleLine: {
     flexDirection: "row",
     alignItems: "center",
@@ -676,6 +779,17 @@ const localStyles = StyleSheet.create({
   },
   feedThumbProgressText: {
     color: "#FFFFFF",
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: vibesTheme.fonts.semibold,
+  },
+  feedInlineProgressPill: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  feedInlineProgressText: {
+    color: "#7C5620",
     fontSize: 12,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.semibold,
@@ -757,6 +871,9 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  footerToggleGroup: {
+    gap: 12,
   },
   finishedSectionTitle: {
     color: "#2B2B2B",

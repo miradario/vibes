@@ -5,11 +5,12 @@ import { FlatList, Image, PanResponder, ScrollView, StyleSheet, Text, TouchableO
 import { ResizeMode } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
+import ScreenContainer from "../components/ScreenContainer";
 import VibesLoader from "../components/VibesLoader";
 import LoopingVideo from "../components/LoopingVideo";
 import {
@@ -25,6 +26,10 @@ import {
   type EventFeedItem,
 } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
+import {
+  getChallengeStartsInLabel,
+  getChallengeTimeline,
+} from "../src/lib/challengeTimeline";
 import { getChallengeMediaPreset, getChallengeProgressVideo, type ChallengeMediaPresetId } from "../src/constants/challengeMediaPresets";
 import { shareChallengeInvite, shareChallengeProgress } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -134,7 +139,7 @@ const getCurrentDayFromStart = (startsAt: string | null | undefined, totalDays: 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diff = Math.floor((today.getTime() - start.getTime()) / 86_400_000) + 1;
-  return clamp(diff, 1, Math.max(totalDays, 1));
+  return clamp(diff, 0, Math.max(totalDays, 1));
 };
 
 const getCompletedDaysFromCheckins = (checkins: string[], startsAt: string | null | undefined, totalDays: number) => {
@@ -251,15 +256,21 @@ export const InfoCardsRow = memo(({ challenge, percent }: InfoCardsRowProps) => 
   <View style={localStyles.infoRow}>
     <View style={localStyles.infoCard}>
       <Text style={localStyles.infoValue}>{challenge.currentDay}</Text>
-      <Text style={localStyles.infoLabel}>Día actual</Text>
+      <Text style={localStyles.infoLabel} numberOfLines={1} adjustsFontSizeToFit maxFontSizeMultiplier={1}>
+        Día actual
+      </Text>
     </View>
     <View style={localStyles.infoCard}>
       <Text style={localStyles.infoValue}>{percent}%</Text>
-      <Text style={localStyles.infoLabel}>Completado</Text>
+      <Text style={localStyles.infoLabel} numberOfLines={1} adjustsFontSizeToFit maxFontSizeMultiplier={1}>
+        Completado
+      </Text>
     </View>
     <View style={localStyles.infoCard}>
       <Text style={localStyles.infoValue}>{challenge.participantsCount}</Text>
-      <Text style={localStyles.infoLabel}>Personas</Text>
+      <Text style={localStyles.infoLabel} numberOfLines={1} adjustsFontSizeToFit maxFontSizeMultiplier={1}>
+        Personas
+      </Text>
     </View>
   </View>
 ));
@@ -428,7 +439,8 @@ export const AdaptiveProgress = memo(({ totalDays, currentDay, completedDays }: 
 export const PathProgress = memo(({ totalDays, currentDay, completedDays }: AdaptiveProgressProps) => {
   const days = useMemo(() => Array.from({ length: totalDays }, (_, index) => index + 1), [totalDays]);
   const completedCount = completedDays.filter((day) => day >= 1 && day <= totalDays).length;
-  const remainingCount = Math.max(totalDays - completedCount - 1, 0);
+  const safeCurrentDay = Math.max(Math.min(currentDay, totalDays), 0);
+  const remainingCount = Math.max(totalDays - completedCount - (safeCurrentDay > 0 ? 1 : 0), 0);
 
   return (
     <View style={localStyles.progressCard}>
@@ -437,7 +449,14 @@ export const PathProgress = memo(({ totalDays, currentDay, completedDays }: Adap
           <Icon name="flag-outline" size={26} color="#C47A55" />
         </View>
         <View style={localStyles.pathHeaderCopy}>
-          <Text style={localStyles.sectionTitle}>Camino del desafío</Text>
+          <Text
+            style={localStyles.sectionTitle}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            maxFontSizeMultiplier={1}
+          >
+            Camino del desafío
+          </Text>
           <Text style={localStyles.pathSubtitle}>
             {totalDays} días para conectar con vos
           </Text>
@@ -483,29 +502,35 @@ export const PathProgress = memo(({ totalDays, currentDay, completedDays }: Adap
 
       <View style={localStyles.pathStatsCard}>
         <View style={localStyles.pathStatItem}>
-          <View style={[localStyles.pathStatDot, localStyles.pathStatDotCompleted]}>
-            <Icon name="checkmark" size={16} color="#A85F42" />
-          </View>
-          <View>
+          <View style={localStyles.pathStatTopRow}>
+            <View style={[localStyles.pathStatDot, localStyles.pathStatDotCompleted]}>
+              <Icon name="checkmark" size={16} color="#A85F42" />
+            </View>
             <Text style={localStyles.pathStatValue}>{completedCount}</Text>
-            <Text style={localStyles.pathStatLabel}>Completados</Text>
           </View>
+          <Text style={localStyles.pathStatLabel} numberOfLines={2} adjustsFontSizeToFit maxFontSizeMultiplier={1}>
+            Completados
+          </Text>
         </View>
         <View style={localStyles.pathStatDivider} />
-        <View style={localStyles.pathStatItem}>
-          <View style={[localStyles.pathStatDot, localStyles.pathStatDotCurrent]} />
-          <View>
-            <Text style={localStyles.pathStatValue}>1</Text>
-            <Text style={localStyles.pathStatLabel}>Actual</Text>
+        <View style={[localStyles.pathStatItem, localStyles.pathStatItemIndented]}>
+          <View style={localStyles.pathStatTopRow}>
+            <View style={[localStyles.pathStatDot, localStyles.pathStatDotCurrent]} />
+            <Text style={localStyles.pathStatValue}>{safeCurrentDay}</Text>
           </View>
+          <Text style={localStyles.pathStatLabel} numberOfLines={2} adjustsFontSizeToFit maxFontSizeMultiplier={1}>
+            Actual
+          </Text>
         </View>
         <View style={localStyles.pathStatDivider} />
-        <View style={localStyles.pathStatItem}>
-          <View style={[localStyles.pathStatDot, localStyles.pathStatDotFuture]} />
-          <View>
+        <View style={[localStyles.pathStatItem, localStyles.pathStatItemIndented]}>
+          <View style={localStyles.pathStatTopRow}>
+            <View style={[localStyles.pathStatDot, localStyles.pathStatDotFuture]} />
             <Text style={localStyles.pathStatValue}>{remainingCount}</Text>
-            <Text style={localStyles.pathStatLabel}>Por completar</Text>
           </View>
+          <Text style={localStyles.pathStatLabel} numberOfLines={2} adjustsFontSizeToFit maxFontSizeMultiplier={1}>
+            Por completar
+          </Text>
         </View>
       </View>
     </View>
@@ -755,12 +780,18 @@ const ChallengeDetailScreen = () => {
   const pendingJoinRequests = challengeJoinRequests.filter((request) => request.status === "pending");
   const percent = getCompletionPercent(challenge.completedDays, challenge.totalDays);
   const daysLeft = getDaysLeft(challenge.totalDays, challenge.completedDays);
+  const challengeTimeline = getChallengeTimeline(challenge.startsAt, challenge.totalDays);
+  const isChallengeUpcoming = challengeTimeline.status === "upcoming";
   const todayKey = new Date().toISOString().split("T")[0];
   const hasRemoteTodayCheckin = participant?.checkedInToday || remoteCheckins.includes(todayKey);
-  const checkedInTodayCount = remoteCheckedInTodayCount + (challenge.checkInStatus === "completed" && !hasRemoteTodayCheckin ? 1 : 0);
+  const checkedInTodayCount = isChallengeUpcoming
+    ? 0
+    : remoteCheckedInTodayCount + (challenge.checkInStatus === "completed" && !hasRemoteTodayCheckin ? 1 : 0);
   const contentMaxWidth = width >= 700 ? 620 : undefined;
   const isChallengeCompleted = challenge.checkInStatus === "completed" && (challenge.currentDay >= challenge.totalDays || challenge.completedDays.length >= challenge.totalDays);
-  const headerStatus = isChallengeCompleted
+  const headerStatus = isChallengeUpcoming
+    ? { label: getChallengeStartsInLabel(challengeTimeline.startsInDays), tone: "warm" as const }
+    : isChallengeCompleted
     ? { label: "Desafío completado", tone: "done" as const }
     : challenge.checkInStatus === "completed"
     ? { label: "Hecho hoy", tone: "active" as const }
@@ -774,7 +805,7 @@ const ChallengeDetailScreen = () => {
   };
 
   const handleCheckIn = async () => {
-    if (challenge.checkInStatus === "completed") return;
+    if (challenge.checkInStatus === "completed" || challenge.currentDay <= 0) return;
 
     if (event?.id && userId) {
       await checkInMutation.mutateAsync({
@@ -917,6 +948,17 @@ const ChallengeDetailScreen = () => {
   );
 
   const renderFooterCheckIn = () => {
+    if (isChallengeUpcoming) {
+      return (
+        <View style={localStyles.chatLockedRow}>
+          <Icon name="time-outline" size={18} color={palette.goldDeep} />
+          <Text style={localStyles.chatLockedText}>
+            {getChallengeStartsInLabel(challengeTimeline.startsInDays)}. El check-in se habilita cuando empiece el desafío.
+          </Text>
+        </View>
+      );
+    }
+
     if (challenge.checkInStatus === "completed") {
       return (
         <View style={[localStyles.footerSliderTrack, localStyles.footerSliderTrackCompleted]}>
@@ -952,8 +994,8 @@ const ChallengeDetailScreen = () => {
   };
 
   return (
-    <SafeAreaView style={localStyles.screen} edges={["top", "left", "right"]}>
-      <View style={[localStyles.stickyHeader, { top: Math.max(insets.top + 8, 16), maxWidth: contentMaxWidth, alignSelf: "center" }]}>
+    <ScreenContainer style={localStyles.screen}>
+      <View style={[localStyles.stickyHeader, { top: insets.top, maxWidth: contentMaxWidth, alignSelf: "center" }]}>
         <ChallengeHeader
           challenge={challenge}
           onBack={() => navigation.goBack()}
@@ -970,7 +1012,7 @@ const ChallengeDetailScreen = () => {
         contentContainerStyle={[
           localStyles.content,
           {
-            paddingTop: 154,
+            paddingTop: 105,
             paddingBottom: insets.bottom + 188,
             maxWidth: contentMaxWidth,
             alignSelf: "center",
@@ -1101,7 +1143,7 @@ const ChallengeDetailScreen = () => {
           <Text style={localStyles.completionCelebrationBody}>{celebrationBody}</Text>
         </Animated.View>
       ) : null}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 };
 
@@ -1267,7 +1309,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   contentSubtitle: {
-    marginTop: 2,
+    marginTop: 0,
     marginBottom: 16,
     paddingHorizontal: 4,
     color: "rgba(45, 41, 36, 0.74)",
@@ -1616,7 +1658,7 @@ const localStyles = StyleSheet.create({
   sectionTitle: {
     color: palette.text,
     fontSize: 27,
-    lineHeight: 31,
+    lineHeight: 25,
     fontFamily: vibesTheme.fonts.bold,
   },
   pathSubtitle: {
@@ -1728,7 +1770,7 @@ const localStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(45, 41, 36, 0.08)",
     backgroundColor: "rgba(255, 253, 248, 0.72)",
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -1736,15 +1778,21 @@ const localStyles = StyleSheet.create({
   pathStatItem: {
     flex: 1,
     minWidth: 0,
+    justifyContent: "center",
+  },
+  pathStatItemIndented: {
+    paddingLeft: 10,
+  },
+  pathStatTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 9,
+    gap: 8,
+    minHeight: 28,
   },
   pathStatDot: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1759,14 +1807,15 @@ const localStyles = StyleSheet.create({
   },
   pathStatValue: {
     color: palette.text,
-    fontSize: 21,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 20,
     fontFamily: vibesTheme.fonts.bold,
   },
   pathStatLabel: {
+    marginTop: 6,
     color: "rgba(45, 41, 36, 0.62)",
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 13,
     fontFamily: vibesTheme.fonts.medium,
   },
   pathStatDivider: {

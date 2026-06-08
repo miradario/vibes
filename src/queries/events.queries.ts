@@ -50,6 +50,8 @@ export type EventFeedItem = {
   hostImage?: string | null;
   participantPreviewImages?: string[];
   checkedInTodayCount?: number;
+  viewerCompletedDaysCount?: number;
+  viewerCheckedInToday?: boolean;
   visibility?: ChallengeVisibility;
   tags?: string[];
   createdAt?: string | null;
@@ -473,6 +475,77 @@ const fetchChallengeTodayCheckinCountMap = async (challengeIds: string[]) => {
   ) as Record<string, number>;
 };
 
+const fetchChallengeViewerProgressMap = async (
+  items: EventFeedItem[],
+  viewerId?: string,
+) => {
+  if (!items.length || !viewerId) {
+    return {} as Record<string, { completedDaysCount: number; checkedInToday: boolean }>;
+  }
+
+  const challengeIds = items.map((item) => item.id);
+  const challengeById = new Map(items.map((item) => [item.id, item]));
+  const today = new Date().toISOString().split("T")[0];
+  const { data, error } = await supabase
+    .from("challenge_checkins")
+    .select("challenge_id, checkin_date")
+    .eq("user_id", viewerId)
+    .in("challenge_id", challengeIds)
+    .order("checkin_date", { ascending: true });
+
+  if (error) throw error;
+
+  const progressMap = new Map<string, { completedDaysCount: number; checkedInToday: boolean }>();
+  const validDayKeysByChallenge = new Map<string, Set<string>>();
+
+  for (const row of data ?? []) {
+    const challengeId = String((row as any).challenge_id ?? "");
+    if (!challengeId) continue;
+    const challenge = challengeById.get(challengeId);
+    if (!challenge) continue;
+    const checkinDate = typeof (row as any).checkin_date === "string" ? (row as any).checkin_date : null;
+    if (!checkinDate) continue;
+
+    if (challenge.startsAt) {
+      const start = new Date(challenge.startsAt);
+      const checkin = new Date(`${checkinDate}T00:00:00`);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(checkin.getTime())) {
+        continue;
+      }
+
+      start.setHours(0, 0, 0, 0);
+      const durationDays = Math.max(Number(challenge.durationDays ?? 0) || 0, 1);
+      const diffDays = Math.floor((checkin.getTime() - start.getTime()) / 86_400_000) + 1;
+      if (diffDays < 1 || diffDays > durationDays) {
+        continue;
+      }
+    }
+
+    const current = progressMap.get(challengeId) ?? {
+      completedDaysCount: 0,
+      checkedInToday: false,
+    };
+
+    const validDayKeys = validDayKeysByChallenge.get(challengeId) ?? new Set<string>();
+    if (!validDayKeys.has(checkinDate)) {
+      validDayKeys.add(checkinDate);
+      current.completedDaysCount += 1;
+      validDayKeysByChallenge.set(challengeId, validDayKeys);
+    }
+
+    if (checkinDate === today) {
+      current.checkedInToday = true;
+    }
+
+    progressMap.set(challengeId, current);
+  }
+
+  return Object.fromEntries(progressMap.entries()) as Record<
+    string,
+    { completedDaysCount: number; checkedInToday: boolean }
+  >;
+};
+
 const fetchConnectedUserIds = async (userId: string) => {
   const { data, error } = await supabase
     .from("matches")
@@ -519,6 +592,7 @@ const enrichFeedItemsWithProfileImages = async (
   items: EventFeedItem[],
   previewMap: Record<string, string[]>,
   todayCheckinCountMap?: Record<string, number>,
+  viewerProgressMap?: Record<string, { completedDaysCount: number; checkedInToday: boolean }>,
 ) => {
   return Promise.all(
     items.map(async (item) => {
@@ -540,6 +614,11 @@ const enrichFeedItemsWithProfileImages = async (
           typeof todayCheckinCountMap?.[item.id] === "number"
             ? todayCheckinCountMap[item.id]
             : item.checkedInTodayCount ?? 0,
+        viewerCompletedDaysCount:
+          typeof viewerProgressMap?.[item.id]?.completedDaysCount === "number"
+            ? viewerProgressMap[item.id].completedDaysCount
+            : 0,
+        viewerCheckedInToday: viewerProgressMap?.[item.id]?.checkedInToday ?? false,
       };
     }),
   );
@@ -601,11 +680,17 @@ const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
     viewerId,
   );
   const challengeIds = items.map((item) => item.id);
-  const [previewMap, todayCheckinCountMap] = await Promise.all([
+  const [previewMap, todayCheckinCountMap, viewerProgressMap] = await Promise.all([
     fetchChallengeParticipantPreviewMap(challengeIds),
     fetchChallengeTodayCheckinCountMap(challengeIds),
+    fetchChallengeViewerProgressMap(items, viewerId),
   ]);
-  return enrichFeedItemsWithProfileImages(items, previewMap, todayCheckinCountMap);
+  return enrichFeedItemsWithProfileImages(
+    items,
+    previewMap,
+    todayCheckinCountMap,
+    viewerProgressMap,
+  );
 };
 
 const maybeUploadEventImage = async (
@@ -709,6 +794,15 @@ export const useChallengesFeedQuery = () => {
           event: "*",
           schema: "public",
           table: "challenge_participants",
+        },
+        invalidateChallenges,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "challenge_checkins",
         },
         invalidateChallenges,
       )
@@ -1098,6 +1192,7 @@ export const useChallengeParticipantsQuery = (challengeId: string | undefined) =
         supabase
           .from("profiles")
           .select("id, display_name")
+          .is("deleted_at", null)
           .in("id", userIds),
         supabase
           .from("profile_photos")
@@ -1120,7 +1215,9 @@ export const useChallengeParticipantsQuery = (challengeId: string | undefined) =
       }
 
       return Promise.all(
-        rows.map(async (row: any) => {
+        rows
+          .filter((row: any) => profileMap[String(row.user_id)])
+          .map(async (row: any) => {
           const userId = String(row.user_id);
           const profile = profileMap[userId];
           const photoPath = firstPhotoMap[userId];
@@ -1285,6 +1382,7 @@ export const useChallengeJoinRequestsQuery = (challengeId: string | undefined) =
             supabase
               .from("profiles")
               .select("id, display_name")
+              .is("deleted_at", null)
               .in("id", requesterIds),
             supabase
               .from("profile_photos")
@@ -1312,19 +1410,23 @@ export const useChallengeJoinRequestsQuery = (challengeId: string | undefined) =
         }
       }
 
-      return await Promise.all((data ?? []).map(async (row: any) => ({
-        id: String(row.id),
-        challengeId: String(row.challenge_id),
-        requesterId: String(row.requester_id),
-        status: (row.status as ChallengeJoinRequestStatus) ?? "pending",
-        createdAt: String(row.created_at),
-        respondedAt: typeof row.responded_at === "string" ? row.responded_at : null,
-        responderId: typeof row.responder_id === "string" ? row.responder_id : null,
-        requesterName: profileMap.get(String(row.requester_id)) ?? "Participante",
-        requesterAvatar: firstPhotoMap.has(String(row.requester_id))
-          ? await createSignedProfilePhotoUrl(firstPhotoMap.get(String(row.requester_id)) as string)
-          : null,
-      })));
+      return await Promise.all(
+        (data ?? [])
+          .filter((row: any) => profileMap.has(String(row.requester_id)))
+          .map(async (row: any) => ({
+            id: String(row.id),
+            challengeId: String(row.challenge_id),
+            requesterId: String(row.requester_id),
+            status: (row.status as ChallengeJoinRequestStatus) ?? "pending",
+            createdAt: String(row.created_at),
+            respondedAt: typeof row.responded_at === "string" ? row.responded_at : null,
+            responderId: typeof row.responder_id === "string" ? row.responder_id : null,
+            requesterName: profileMap.get(String(row.requester_id)) ?? "Participante",
+            requesterAvatar: firstPhotoMap.has(String(row.requester_id))
+              ? await createSignedProfilePhotoUrl(firstPhotoMap.get(String(row.requester_id)) as string)
+              : null,
+          })),
+      );
     },
     enabled: Boolean(challengeId),
     staleTime: 30_000,
@@ -1562,6 +1664,7 @@ export const useEventParticipantsQuery = (eventId: string | undefined) => {
         supabase
           .from("profiles")
           .select("id, display_name")
+          .is("deleted_at", null)
           .in("id", userIds),
         supabase
           .from("profile_photos")
@@ -1583,7 +1686,9 @@ export const useEventParticipantsQuery = (eventId: string | undefined) => {
 
       // 3. Merge
       const participants = await Promise.all(
-        rows.map(async (row: any) => {
+        rows
+          .filter((row: any) => profileMap[String(row.user_id)])
+          .map(async (row: any) => {
           const uid = String(row.user_id);
           const profile = profileMap[uid];
           let avatarUrl: string | null = null;
@@ -1687,6 +1792,7 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
         supabase
           .from("profiles")
           .select("id, display_name")
+          .is("deleted_at", null)
           .in("id", senderIds),
         supabase
           .from("profile_photos")
@@ -1706,7 +1812,9 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
       }
 
       const messages = await Promise.all(
-        rows.map(async (row: any) => {
+        rows
+          .filter((row: any) => profileMap[String(row.sender_id)])
+          .map(async (row: any) => {
           const sid = String(row.sender_id);
           const profile = profileMap[sid];
           return {

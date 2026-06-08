@@ -9,7 +9,8 @@ import Animated, {
   withDelay,
   withTiming,
 } from "react-native-reanimated";
-import { useAuthSession } from "../src/auth/auth.queries";
+import { authKeys, useAuthSession } from "../src/auth/auth.queries";
+import { supabase } from "../src/lib/supabase";
 import { profileQueryOptions } from "../src/queries/profile.queries";
 import { userPreferencesQueryOptions } from "../src/queries/userPreferences.queries";
 import {
@@ -58,6 +59,7 @@ const Startup = () => {
   const didNavigateRef = useRef(false);
   const [isReadyToExit, setIsReadyToExit] = useState(false);
   const [sessionLoadTimedOut, setSessionLoadTimedOut] = useState(false);
+  const [forceWelcome, setForceWelcome] = useState(false);
   const [updateGateState, setUpdateGateState] =
     useState<AppUpdateGateState | null>(null);
 
@@ -104,6 +106,28 @@ const Startup = () => {
 
     const prefetch = async () => {
       if (isSessionLoading && !sessionLoadTimedOut) return;
+
+      if (userId && !forceWelcome) {
+        try {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          const isSoftDeleted = user?.app_metadata?.vibes_soft_deleted === true;
+
+          if (isSoftDeleted) {
+            setForceWelcome(true);
+            await supabase.auth.signOut({ scope: "local" });
+            queryClient.setQueryData(authKeys.session, null);
+            queryClient.invalidateQueries();
+            if (!cancelled) {
+              setIsReadyToExit(true);
+            }
+            return;
+          }
+        } catch (error) {
+          console.warn("[boot] failed to validate auth user", error);
+        }
+      }
 
       const startupTasks: Array<{ label: string; run: () => Promise<unknown> }> = [];
 
@@ -204,7 +228,7 @@ const Startup = () => {
     return () => {
       cancelled = true;
     };
-  }, [isSessionLoading, queryClient, sessionLoadTimedOut, userId]);
+  }, [forceWelcome, isSessionLoading, queryClient, sessionLoadTimedOut, userId]);
 
   useEffect(() => {
     if (HOLD_ON_STARTUP) return;
@@ -217,7 +241,7 @@ const Startup = () => {
     });
 
     const timeout = setTimeout(() => {
-      const hasSession = Boolean(userId);
+      const hasSession = Boolean(userId) && !forceWelcome;
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
@@ -241,7 +265,7 @@ const Startup = () => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [fadeOverlayOpacity, isReadyToExit, navigation, updateGateState, userId]);
+  }, [fadeOverlayOpacity, forceWelcome, isReadyToExit, navigation, updateGateState, userId]);
 
   const contentStyle = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,

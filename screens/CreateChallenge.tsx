@@ -172,7 +172,7 @@ const CreateChallenge = () => {
       navigation.navigate(
         "Tab" as never,
         {
-          screen: "Calendar",
+          screen: "Flow",
           params: { section: "challenge" },
         } as never,
       );

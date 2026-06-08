@@ -104,6 +104,7 @@ const fetchMeditatedTodayFriends = async (
       supabase
         .from("profiles")
         .select("id, display_name")
+        .is("deleted_at", null)
         .in("id", visibleUserIds),
       supabase
         .from("profile_photos")
@@ -140,7 +141,9 @@ const fetchMeditatedTodayFriends = async (
   );
 
   return Promise.all(
-    (todayRows ?? []).map(async (row: any) => {
+    (todayRows ?? [])
+      .filter((row: any) => profileMap.has(String(row.user_id)))
+      .map(async (row: any) => {
       const nextUserId = String(row.user_id);
       const rawPhoto = firstPhotoMap.get(nextUserId);
       return {

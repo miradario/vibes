@@ -6,7 +6,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  ScrollView,
   Alert,
   Modal,
   StyleSheet,
@@ -25,6 +24,7 @@ import styles, {
 } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
+import ScreenContainer from "../components/ScreenContainer";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import * as FileSystem from "expo-file-system/legacy";
@@ -927,11 +927,14 @@ const EditProfile = () => {
   };
 
   return (
-    <View style={styles.bg}>
-      <ScrollView
-        style={styles.editContainer}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={scrollEnabled}
+    <>
+      <ScreenContainer
+        scroll
+        scrollViewProps={{
+          style: styles.editContainer,
+          showsVerticalScrollIndicator: false,
+          scrollEnabled,
+        }}
         contentContainerStyle={localStyles.scrollContent}
       >
         <AppHeader
@@ -1081,7 +1084,7 @@ const EditProfile = () => {
             editable={!savingLocation}
           />
         </View>
-      </ScrollView>
+      </ScreenContainer>
 
       <Modal
         visible={photoModalVisible}
@@ -1128,7 +1131,7 @@ const EditProfile = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </>
   );
 };
 

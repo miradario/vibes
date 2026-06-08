@@ -101,6 +101,7 @@ async function fetchProfileSummaries(
     supabase
       .from("profiles")
       .select("id, display_name")
+      .is("deleted_at", null)
       .in("id", userIds),
     supabase
       .from("profile_photos")
@@ -220,7 +221,12 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
     }
   }
 
-  return matches.map((m): MatchWithProfile => {
+  return matches
+    .filter((m) => {
+      const otherId = m.user1Id === userId ? m.user2Id : m.user1Id;
+      return profileMap.has(otherId);
+    })
+    .map((m): MatchWithProfile => {
     const otherId = m.user1Id === userId ? m.user2Id : m.user1Id;
     const profile = profileMap.get(otherId);
     const lastMsg = lastMsgMap.get(m.id);

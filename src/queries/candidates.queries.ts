@@ -67,6 +67,7 @@ const fetchCandidates = async (
         .from("profiles")
         .select("latitude, longitude")
         .eq("id", currentUserId)
+        .is("deleted_at", null)
         .maybeSingle(),
     ]);
 
@@ -92,6 +93,7 @@ const fetchCandidates = async (
     .from("profiles")
     .select("*")
     .eq("is_active", true)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(limit);
 
