@@ -40,22 +40,12 @@ import {
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
-import {
-  useChallengesFeedQuery,
-  useEventsFeedQuery,
-  useMyEventGroupsQuery,
-} from "../src/queries/events.queries";
+import { useEventsFeedQuery } from "../src/queries/events.queries";
 import { useMatchesQuery } from "../src/queries/matches.queries";
-import type { EventFeedItem } from "../src/queries/events.queries";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { handleApiError } from "../src/utils/handleApiError";
-import { useI18n } from "../src/i18n";
-import {
-  getChallengeStartsInLabel,
-  getChallengeTimeline,
-} from "../src/lib/challengeTimeline";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type DiscoverFiltersState = {
@@ -66,8 +56,6 @@ type DiscoverFiltersState = {
   smoking: "all" | "no" | "occasionally" | "yes";
 };
 
-type MoodKey = "good" | "calm" | "recharge";
-
 const DEFAULT_FILTERS: DiscoverFiltersState = {
   ageMin: null,
   ageMax: null,
@@ -76,17 +64,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   smoking: "all",
 };
 
-const HOME_MOOD_STORAGE_PREFIX = "vibes:home-mood-selected";
-
 let hasPlayedHomeEntryFade = false;
-
-const getLocalDateKey = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -193,46 +171,6 @@ const formatDistanceLabel = (distanceKm: number | null) => {
   return `${Math.max(1, Math.round(distanceKm))} km`;
 };
 
-const getChallengeDayProgress = (item: EventFeedItem | null) => {
-  const totalDays =
-    typeof item?.durationDays === "number" && item.durationDays > 0
-      ? item.durationDays
-      : 21;
-
-  if (!item) {
-    return {
-      currentDay: 0,
-      totalDays,
-      ratio: 0,
-      status: "empty" as const,
-      label: "Todavía no te sumaste a ningún desafío",
-    };
-  }
-
-  const timeline = getChallengeTimeline(item.startsAt, totalDays);
-
-  if (timeline.status === "upcoming") {
-    return {
-      currentDay: 0,
-      totalDays,
-      ratio: 0,
-      status: "upcoming" as const,
-      label: getChallengeStartsInLabel(timeline.startsInDays),
-    };
-  }
-
-  return {
-    currentDay: timeline.currentDay,
-    totalDays,
-    ratio: Math.min(1, Math.max(0.08, timeline.currentDay / totalDays)),
-    status: timeline.status,
-    label:
-      timeline.status === "finished"
-        ? "Desafío completado"
-        : `Día ${timeline.currentDay} de ${totalDays}`,
-  };
-};
-
 const formatEventDayBox = (startsAt?: string | null) => {
   const fallback = { weekday: "SÁB", day: "25" };
   if (!startsAt) return fallback;
@@ -283,7 +221,6 @@ const Home = () => {
   const { width } = useWindowDimensions();
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const { t } = useI18n();
   const shouldRunHomeEntryFade =
     Boolean(route.params?.startupFadeIn) && !hasPlayedHomeEntryFade;
   const homeEntryOverlayOpacity = useSharedValue(
@@ -294,14 +231,10 @@ const Home = () => {
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
   const { data: candidates = [] } = useCandidatesQuery();
   const { data: events = [] } = useEventsFeedQuery();
-  const { data: challenges = [] } = useChallengesFeedQuery();
-  const { data: myEventGroups = [] } = useMyEventGroupsQuery(session?.user?.id);
   const { data: matches = [] } = useMatchesQuery();
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
-  const [selectedMood, setSelectedMood] = useState<MoodKey>("calm");
-  const [showMoodCard, setShowMoodCard] = useState(true);
   const [hasHydratedStoredFilters, setHasHydratedStoredFilters] =
     useState(false);
   const ownProfileRecord = (ownProfileData ?? null) as Record<
@@ -421,119 +354,16 @@ const Home = () => {
         return leftTime - rightTime;
       });
   }, [events]);
-  const activeChallenges = useMemo(() => {
-    const now = Date.now();
-
-    return challenges
-      .filter((challenge) => {
-        if (!challenge.startsAt) return true;
-
-        const startTime = new Date(challenge.startsAt).getTime();
-        if (!Number.isFinite(startTime)) return true;
-
-        const durationDays =
-          typeof challenge.durationDays === "number" &&
-          challenge.durationDays > 0
-            ? challenge.durationDays
-            : null;
-        const endTime = durationDays
-          ? startTime + durationDays * 24 * 60 * 60 * 1000
-          : null;
-
-        return startTime <= now && (endTime === null || endTime >= now);
-      })
-      .sort((left, right) => {
-        const leftTime = left.startsAt
-          ? new Date(left.startsAt).getTime()
-          : new Date(left.createdAt ?? 0).getTime();
-        const rightTime = right.startsAt
-          ? new Date(right.startsAt).getTime()
-          : new Date(right.createdAt ?? 0).getTime();
-
-        return (rightTime || 0) - (leftTime || 0);
-      });
-  }, [challenges]);
-  const joinedChallengeIds = useMemo(
-    () =>
-      new Set(
-        myEventGroups
-          .filter((group) => group.eventType === "challenge")
-          .map((group) => group.eventId)
-      ),
-    [myEventGroups]
-  );
-  const joinedActiveChallenges = useMemo(
-    () =>
-      activeChallenges.filter((challenge) =>
-        joinedChallengeIds.has(challenge.id)
-      ),
-    [activeChallenges, joinedChallengeIds]
-  );
-  const joinedUpcomingChallenges = useMemo(() => {
-    const now = Date.now();
-
-    return challenges
-      .filter((challenge) => {
-        if (!joinedChallengeIds.has(challenge.id) || !challenge.startsAt) {
-          return false;
-        }
-
-        const startTime = new Date(challenge.startsAt).getTime();
-        return Number.isFinite(startTime) && startTime > now;
-      })
-      .sort((left, right) => {
-        const leftTime = new Date(left.startsAt as string).getTime();
-        const rightTime = new Date(right.startsAt as string).getTime();
-        return leftTime - rightTime;
-      });
-  }, [challenges, joinedChallengeIds]);
-  const homeChallenges = useMemo(
-    () => [...joinedActiveChallenges, ...joinedUpcomingChallenges],
-    [joinedActiveChallenges, joinedUpcomingChallenges]
-  );
   const nextEvent = futureEvents[0] ?? events[0] ?? null;
   const nextEventDate = formatEventDayBox(nextEvent?.startsAt);
   const isCompactConnectionsCard = width < 390;
   const visibleConnectionPreviewCount = isCompactConnectionsCard ? 2 : 3;
   const connectionPreviewProfiles = profiles.slice(0, visibleConnectionPreviewCount);
   const connectionCount = Math.max(profiles.length, matches.length);
-  const moodOptions = [
-    {
-      key: "good" as const,
-      icon: "happy-outline" as const,
-      title: "Bien",
-      subtitle: "Estoy bien",
-      color: "#8FA04D",
-      backgroundColor: "#F0F3E7",
-    },
-    {
-      key: "calm" as const,
-      icon: "happy-outline" as const,
-      title: "En calma",
-      subtitle: "Tranquilo",
-      color: "#D9A23B",
-      backgroundColor: "#FBF0DE",
-    },
-    {
-      key: "recharge" as const,
-      icon: "rainy-outline" as const,
-      title: "Recargar",
-      subtitle: "Un poco caótico",
-      color: "#8E78A8",
-      backgroundColor: "#F0EAF2",
-    },
-  ];
   const guruDismissStorageKey = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
     return `vibes:home-guru-dismissed:${today}`;
   }, []);
-  const moodStorageKey = useMemo(
-    () =>
-      `${HOME_MOOD_STORAGE_PREFIX}:${
-        session?.user?.id ?? "anonymous"
-      }:${getLocalDateKey()}`,
-    [session?.user?.id]
-  );
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
       selectedProfile
@@ -577,39 +407,6 @@ const Home = () => {
       active = false;
     };
   }, [guruDismissStorageKey]);
-
-  useEffect(() => {
-    let active = true;
-
-    const loadMoodState = async () => {
-      try {
-        const storedMood = await AsyncStorage.getItem(moodStorageKey);
-        if (!active) return;
-
-        if (
-          storedMood === "good" ||
-          storedMood === "calm" ||
-          storedMood === "recharge"
-        ) {
-          setSelectedMood(storedMood);
-          setShowMoodCard(false);
-          return;
-        }
-
-        setShowMoodCard(true);
-      } catch {
-        if (active) {
-          setShowMoodCard(true);
-        }
-      }
-    };
-
-    void loadMoodState();
-
-    return () => {
-      active = false;
-    };
-  }, [moodStorageKey]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -771,12 +568,6 @@ const Home = () => {
 
   const closeProfileSheet = () => {
     setShowProfileSheet(false);
-  };
-
-  const selectMoodForToday = (mood: MoodKey) => {
-    setSelectedMood(mood);
-    setShowMoodCard(false);
-    AsyncStorage.setItem(moodStorageKey, mood).catch(() => undefined);
   };
 
   const filterSectionTitle = (title: string) => (
@@ -1040,9 +831,9 @@ const Home = () => {
                 style={localStyles.heroTitle}
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.68}
+                minimumFontScale={0.78}
               >
-                Hola, {firstName} 👋
+                Hola, {firstName}
               </Text>
               <Text style={localStyles.heroSubtitle}>
                 <Text style={localStyles.heroSubtitleStrong}>Conectá con vos</Text> para poder conectar con otros.
@@ -1058,41 +849,6 @@ const Home = () => {
               <Ionicons name="person-outline" size={30} color="#2B2B2B" />
             </TouchableOpacity>
           </View>
-
-          {showMoodCard ? (
-            <View style={localStyles.moodCard}>
-              <Text style={localStyles.moodTitle}>¿Cómo te sentís hoy?</Text>
-              <View style={localStyles.moodGrid}>
-                {moodOptions.map((mood) => {
-                  const selected = selectedMood === mood.key;
-                  return (
-                    <TouchableOpacity
-                      key={mood.key}
-                      activeOpacity={0.82}
-                      onPress={() => selectMoodForToday(mood.key)}
-                      style={[
-                        localStyles.moodOption,
-                        {
-                          backgroundColor: mood.backgroundColor,
-                          borderColor: selected ? mood.color : "transparent",
-                        },
-                      ]}
-                    >
-                      <Ionicons name={mood.icon} size={38} color={mood.color} />
-                      <View style={localStyles.moodCopy}>
-                        <Text style={localStyles.moodOptionTitle}>
-                          {mood.title}
-                        </Text>
-                        <Text style={localStyles.moodOptionSubtitle}>
-                          {mood.subtitle}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          ) : null}
 
           {showGuruCard ? (
             <ImageBackground
@@ -1117,191 +873,6 @@ const Home = () => {
               </Text>
             </ImageBackground>
           ) : null}
-
-          {homeChallenges.length > 0 ? (
-            homeChallenges.length === 1 ? (
-              (() => {
-                const challenge = homeChallenges[0];
-                const pathProgress = getChallengeDayProgress(challenge);
-                const isUpcoming = pathProgress.status === "upcoming";
-
-                return (
-                  <TouchableOpacity
-                    activeOpacity={0.86}
-                    style={localStyles.pathCard}
-                    onPress={() =>
-                      navigation.navigate(
-                        "ChallengeDetailScreen" as never,
-                        { event: challenge } as never,
-                      )
-                    }
-                  >
-                    <View style={localStyles.pathCopy}>
-                      <Text style={localStyles.pathEyebrow}>TUS DESAFÍOS</Text>
-                      <Text style={localStyles.pathTitle}>{challenge.title}</Text>
-                      {!isUpcoming && challenge.viewerCheckedInToday ? (
-                        <View style={localStyles.pathCheckedTodayPill}>
-                          <Text style={localStyles.pathCheckedTodayPillText}>
-                            Check-in de hoy completo
-                          </Text>
-                        </View>
-                      ) : null}
-                      <Text style={localStyles.pathSubtitle}>
-                        {isUpcoming
-                          ? pathProgress.label
-                          : `${pathProgress.label} (${challenge.viewerCompletedDaysCount ?? 0} completados)`}
-                      </Text>
-                      {isUpcoming ? (
-                        <View style={localStyles.pathUpcomingPill}>
-                          <Text style={localStyles.pathUpcomingPillText}>{pathProgress.label}</Text>
-                        </View>
-                      ) : (
-                        <View style={localStyles.progressRow}>
-                          <View style={localStyles.progressSegmentsWrap}>
-                            {Array.from({ length: 7 }).map((_, segmentIndex) => {
-                              const active = segmentIndex < Math.round(pathProgress.ratio * 7);
-                              return (
-                                <View
-                                  key={`${challenge.id}-progress-${segmentIndex}`}
-                                  style={[
-                                    localStyles.progressSegment,
-                                    active && localStyles.progressSegmentActive,
-                                  ]}
-                                />
-                              );
-                            })}
-                          </View>
-                          <Text style={localStyles.progressText}>
-                            {Math.round(pathProgress.ratio * 100)}%
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <View
-                      style={[
-                        localStyles.pathIconWrap,
-                        isUpcoming && localStyles.pathIconWrapUpcoming,
-                      ]}
-                    >
-                      <Ionicons
-                        name={isUpcoming ? "time-outline" : "leaf-outline"}
-                        size={38}
-                        color={isUpcoming ? "#D38334" : "#8E9B52"}
-                      />
-                    </View>
-                  </TouchableOpacity>
-                );
-              })()
-            ) : (
-              <ScrollView
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                scrollEnabled
-                contentContainerStyle={localStyles.pathCarouselContent}
-                style={localStyles.pathCarousel}
-              >
-                {homeChallenges.map((challenge, index) => {
-                  const pathProgress = getChallengeDayProgress(challenge);
-                  const isUpcoming = pathProgress.status === "upcoming";
-
-                  return (
-                    <TouchableOpacity
-                      key={challenge.id}
-                      activeOpacity={0.86}
-                      style={[
-                        localStyles.pathCard,
-                        localStyles.pathCardSlide,
-                        index < homeChallenges.length - 1 && localStyles.pathCardGap,
-                      ]}
-                      onPress={() =>
-                        navigation.navigate(
-                          "ChallengeDetailScreen" as never,
-                          { event: challenge } as never,
-                        )
-                      }
-                    >
-                      <View style={localStyles.pathCopy}>
-                        <Text style={localStyles.pathEyebrow}>TUS DESAFÍOS</Text>
-                        <Text style={localStyles.pathTitle}>{challenge.title}</Text>
-                        {!isUpcoming && challenge.viewerCheckedInToday ? (
-                          <View style={localStyles.pathCheckedTodayPill}>
-                            <Text style={localStyles.pathCheckedTodayPillText}>
-                              Check-in de hoy completo
-                            </Text>
-                          </View>
-                        ) : null}
-                        <Text style={localStyles.pathSubtitle}>
-                          {isUpcoming
-                            ? pathProgress.label
-                            : `${pathProgress.label} (${challenge.viewerCompletedDaysCount ?? 0} completados)`}
-                        </Text>
-                        {isUpcoming ? (
-                          <View style={localStyles.pathUpcomingPill}>
-                            <Text style={localStyles.pathUpcomingPillText}>{pathProgress.label}</Text>
-                          </View>
-                        ) : (
-                          <View style={localStyles.progressRow}>
-                            <View style={localStyles.progressSegmentsWrap}>
-                              {Array.from({ length: 7 }).map((_, segmentIndex) => {
-                                const active = segmentIndex < Math.round(pathProgress.ratio * 7);
-                                return (
-                                  <View
-                                    key={`${challenge.id}-progress-${segmentIndex}`}
-                                    style={[
-                                      localStyles.progressSegment,
-                                      active && localStyles.progressSegmentActive,
-                                    ]}
-                                  />
-                                );
-                              })}
-                            </View>
-                            <Text style={localStyles.progressText}>
-                              {Math.round(pathProgress.ratio * 100)}%
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                      <View
-                        style={[
-                          localStyles.pathIconWrap,
-                          isUpcoming && localStyles.pathIconWrapUpcoming,
-                        ]}
-                      >
-                        <Ionicons
-                          name={isUpcoming ? "time-outline" : "leaf-outline"}
-                          size={38}
-                          color={isUpcoming ? "#D38334" : "#8E9B52"}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            )
-          ) : (
-            <TouchableOpacity
-              activeOpacity={0.86}
-              style={localStyles.pathCard}
-              onPress={() =>
-                navigation.navigate(
-                  "Tab" as never,
-                  { screen: "Flow", params: { section: "challenge" } } as never,
-                )
-              }
-            >
-              <View style={localStyles.pathCopy}>
-                <Text style={localStyles.pathEyebrow}>TUS DESAFÍOS</Text>
-                <Text style={localStyles.pathTitle}>Todavía no te sumaste</Text>
-                <Text style={localStyles.pathSubtitle}>
-                  Explorá desafíos vigentes y próximos para empezar tu camino.
-                </Text>
-              </View>
-              <View style={localStyles.pathIconWrap}>
-                <Ionicons name="trophy-outline" size={38} color="#8E9B52" />
-              </View>
-            </TouchableOpacity>
-          )}
 
           <TouchableOpacity
             activeOpacity={0.86}
@@ -1374,7 +945,10 @@ const Home = () => {
                   )
                 : navigation.navigate(
                     "Tab" as never,
-                    { screen: "EventsTab", params: { section: "event" } } as never
+                    {
+                      screen: "EventsTab",
+                      params: { section: "event" },
+                    } as never
                   )
             }
           >
@@ -1386,7 +960,9 @@ const Home = () => {
                 <Text style={localStyles.eventDateWeekday}>
                   {nextEventDate.weekday}
                 </Text>
-                <Text style={localStyles.eventDateDay}>{nextEventDate.day}</Text>
+                <Text style={localStyles.eventDateDay}>
+                  {nextEventDate.day}
+                </Text>
               </View>
               <View style={localStyles.eventPreviewCopy}>
                 <Text style={localStyles.eventPreviewTitle} numberOfLines={1}>
@@ -1449,9 +1025,9 @@ const localStyles = StyleSheet.create({
   },
   heroHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 18,
-    marginBottom: 26,
+    marginBottom: 16,
   },
   heroAvatarButton: {
     width: 58,
@@ -1471,9 +1047,9 @@ const localStyles = StyleSheet.create({
   },
   heroTitle: {
     color: "#252323",
-    fontSize: 40,
-    lineHeight: 47,
-    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 17,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
   },
   heroSubtitle: {
     marginTop: 10,
@@ -1485,64 +1061,6 @@ const localStyles = StyleSheet.create({
   heroSubtitleStrong: {
     color: "#142033",
     fontFamily: vibesTheme.fonts.semibold,
-  },
-  moodCard: {
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 15,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.06)",
-    shadowColor: "#2B2B2B",
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
-  },
-  moodTitle: {
-    color: "#2B2B2B",
-    fontSize: 18,
-    lineHeight: 22,
-    textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
-    marginBottom: 13,
-  },
-  moodGrid: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  moodOption: {
-    flex: 1,
-    minHeight: 70,
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 9,
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  },
-  moodCopy: {
-    alignItems: "center",
-    minWidth: 0,
-  },
-  moodOptionTitle: {
-    color: "#272525",
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
-    textAlign: "center",
-  },
-  moodOptionSubtitle: {
-    marginTop: 2,
-    color: "#68615C",
-    fontSize: 11,
-    lineHeight: 13,
-    fontFamily: vibesTheme.fonts.regular,
-    textAlign: "center",
   },
   featureImage: {
     ...StyleSheet.absoluteFillObject,
@@ -1604,128 +1122,6 @@ const localStyles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.regular,
-  },
-  pathCard: {
-    width: "100%",
-    minHeight: 132,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.06)",
-    paddingHorizontal: 28,
-    paddingVertical: 20,
-    marginBottom: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: "#2B2B2B",
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 3,
-  },
-  pathCarousel: {
-    width: "100%",
-    marginBottom: 8,
-  },
-  pathCarouselContent: {
-    paddingRight: 0,
-  },
-  pathCardSlide: {
-    width: DIMENSION_WIDTH - 48,
-    marginBottom: 0,
-  },
-  pathCardGap: {
-    marginRight: 14,
-  },
-  pathCopy: {
-    flex: 1,
-  },
-  pathEyebrow: {
-    color: "#8E9B52",
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  pathTitle: {
-    marginTop: 8,
-    color: "#252323",
-    fontSize: 24,
-    lineHeight: 29,
-    fontFamily: vibesTheme.fonts.regular,
-  },
-  pathSubtitle: {
-    marginTop: 4,
-    color: "#625D57",
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.regular,
-  },
-  pathCheckedTodayPill: {
-    alignSelf: "flex-start",
-    marginTop: 10,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: "rgba(143, 160, 77, 0.16)",
-  },
-  pathCheckedTodayPillText: {
-    color: "#6F8640",
-    fontSize: 12,
-    lineHeight: 14,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  pathUpcomingPill: {
-    alignSelf: "flex-start",
-    marginTop: 16,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "rgba(228, 131, 52, 0.14)",
-  },
-  pathUpcomingPillText: {
-    color: "#D38334",
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  progressRow: {
-    marginTop: 19,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  progressSegmentsWrap: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  progressSegment: {
-    flex: 1,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: "#E1E1E1",
-  },
-  progressSegmentActive: {
-    backgroundColor: "#8E9B52",
-  },
-  progressText: {
-    marginLeft: 8,
-    color: "#6B6B6B",
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.regular,
-  },
-  pathIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F1F3E8",
-    marginLeft: 14,
-  },
-  pathIconWrapUpcoming: {
-    backgroundColor: "#FDF1E2",
   },
   connectionsCard: {
     borderRadius: 20,
