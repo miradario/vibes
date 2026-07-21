@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 36,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   body: {
     marginTop: 12,

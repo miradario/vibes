@@ -466,13 +466,13 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
   },
   modalTitle: {
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
     fontSize: 22,
     color: "#3B3B3B",
     marginBottom: 4,
   },
   modalSubtitle: {
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
     fontSize: 15,
     color: "#9B9B9B",
     marginBottom: 24,

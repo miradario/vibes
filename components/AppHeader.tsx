@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 28,
     lineHeight: 32,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   subtitle: {
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     color: TEXT_SECONDARY,
     fontSize: 14,
     lineHeight: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
     textAlign: "center",
   },
 });

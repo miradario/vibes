@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   body: {
     marginTop: vibesTheme.spacing.lg,

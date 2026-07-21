@@ -37,6 +37,10 @@ const DISCOVER_PREFERENCE_EXCLUDED_PREFIXES = [
   "vegetarianismo:",
   "fuma:",
   "mascotas:",
+  "sobre mí:",
+  "sobre mi:",
+  "intereses:",
+  "abierto a:",
 ];
 
 const shouldShowDiscoverPreference = (preference: string) => {
@@ -136,11 +140,9 @@ const CardItem = ({
     }
     if (value && typeof value === 'string' && value.trim()) extraPrefs.push(`${label}: ${value}`);
   };
-  addIf('Sobre mí', spiritualPathDetails?.about_me);
   addIf('Género', spiritualPathDetails?.gender);
   addIf('Estatura', spiritualPathDetails?.height_cm ? `${spiritualPathDetails.height_cm} cm` : "");
   addIf('Busca', spiritualPathDetails?.looking_for);
-  addIf('Abierto a', spiritualPathDetails?.open_to);
   addIf('Idiomas', spiritualPathDetails?.languages);
   addIf('Signo', spiritualPathDetails?.zodiac);
   addIf('Educación', spiritualPathDetails?.education);
@@ -336,7 +338,7 @@ const CardItem = ({
                   styles.discoverPreferencesSectionTitle,
                 ]}
               >
-                Preferencias
+                Detalles
               </Text>
               <View style={styles.discoverTagRowLeft}>
                 {discoverPreferences.map((preference, index) => (

@@ -603,6 +603,7 @@ const localStyles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 18,
     lineHeight: 22,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   headerSpacer: {
     width: 20,
@@ -642,7 +643,7 @@ const localStyles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   line: {
     flex: 1,
@@ -714,13 +715,13 @@ const localStyles = StyleSheet.create({
   detailItemTitle: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   detailItemSubtitle: {
     color: TEXT_SECONDARY,
     fontSize: 13,
     marginTop: 4,
-    fontFamily: vibesTheme.fonts.primary,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   aboutInput: {
     backgroundColor: WHITE,

@@ -356,7 +356,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 18,
     marginBottom: 10,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   aboutInput: {
     minHeight: 104,

@@ -94,10 +94,9 @@ const queryClient = new QueryClient({
 const AppNavigator = () => {
   const { t } = useI18n();
   const [fontsLoaded, fontError] = useFonts({
+    "JosefinSans-Thin": require("./assets/font/JosefinSans-Thin.ttf"),
     "JosefinSans-Regular": require("./assets/font/JosefinSans-Regular.ttf"),
     "JosefinSans-Medium": require("./assets/font/JosefinSans-Medium.ttf"),
-    "JosefinSans-SemiBold": require("./assets/font/JosefinSans-SemiBold.ttf"),
-    "JosefinSans-Bold": require("./assets/font/JosefinSans-Bold.ttf"),
   });
   const [fontLoadTimedOut, setFontLoadTimedOut] = React.useState(false);
 
@@ -129,12 +128,12 @@ const AppNavigator = () => {
   if (fontsLoaded && !hasAppliedGlobalFont) {
     (Text as any).defaultProps = (Text as any).defaultProps || {};
     (Text as any).defaultProps.style = [
-      { fontFamily: vibesTheme.fonts.primary },
+      { fontFamily: vibesTheme.fonts.regular },
       (Text as any).defaultProps.style,
     ];
     (TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
     (TextInput as any).defaultProps.style = [
-      { fontFamily: vibesTheme.fonts.primary },
+      { fontFamily: vibesTheme.fonts.regular },
       (TextInput as any).defaultProps.style,
     ];
     hasAppliedGlobalFont = true;

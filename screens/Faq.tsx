@@ -77,7 +77,7 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     marginBottom: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   card: {
     backgroundColor: WHITE,

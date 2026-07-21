@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     fontSize: 34,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
     letterSpacing: 0.2,
   },
   body: {

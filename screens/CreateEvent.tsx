@@ -46,6 +46,7 @@ import {
   challengeMediaPresets,
   type ChallengeMediaPresetId,
 } from "../src/constants/challengeMediaPresets";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const IMAGE_MEDIA_TYPE =
   (ImagePicker as any).MediaType?.Images
@@ -1080,7 +1081,7 @@ const localStyles = StyleSheet.create({
   },
   pickerDoneText: {
     color: PRIMARY_COLOR,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   createButton: {
     backgroundColor: PRIMARY_COLOR,
@@ -1097,7 +1098,7 @@ const localStyles = StyleSheet.create({
   },
   createButtonText: {
     color: WHITE,
-    fontWeight: "500",
+    fontWeight: "400",
     fontSize: 15,
   },
   fixedFooter: {
@@ -1131,7 +1132,7 @@ const localStyles = StyleSheet.create({
   },
   validateButtonText: {
     color: DARK_GRAY,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   validatedText: {
     marginTop: 8,
@@ -1174,13 +1175,13 @@ const localStyles = StyleSheet.create({
   mapPreviewFallbackTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontWeight: "500",
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   mapPreviewFallbackText: {
     color: DARK_GRAY,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "400",
     textAlign: "center",
   },
   mapPreviewFallbackMeta: {
@@ -1206,7 +1207,7 @@ const localStyles = StyleSheet.create({
   mapPreviewBadgeText: {
     color: WHITE,
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   presetGrid: {
     flexDirection: "row",
@@ -1279,7 +1280,7 @@ const localStyles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontWeight: "500",
+    fontFamily: vibesTheme.fonts.thin,
     marginBottom: 12,
   },
   modalPrimaryButton: {
@@ -1294,7 +1295,7 @@ const localStyles = StyleSheet.create({
   },
   modalPrimaryText: {
     color: WHITE,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   modalSecondaryButton: {
     backgroundColor: "#F6F6F4",

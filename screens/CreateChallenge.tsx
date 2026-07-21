@@ -393,7 +393,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 30,
     lineHeight: 34,
-    fontFamily: vibesTheme.fonts.light,
+    fontFamily: vibesTheme.fonts.thin,
   },
   content: {
     paddingBottom: 132,
@@ -541,14 +541,14 @@ const localStyles = StyleSheet.create({
   visibilityTitle: {
     color: DARK_GRAY,
     fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.thin,
   },
   visibilitySubtitle: {
     color: TEXT_SECONDARY,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 2,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   createButton: {
     backgroundColor: PRIMARY_COLOR,

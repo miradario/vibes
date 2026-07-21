@@ -211,7 +211,7 @@ const PreferenceDetail = () => {
                     <Text
                       style={{
                         color: active ? PRIMARY_COLOR : DARK_GRAY,
-                        fontWeight: active ? "700" : "500",
+                        fontWeight: "400",
                       }}
                     >
                       {option}

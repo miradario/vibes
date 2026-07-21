@@ -974,7 +974,7 @@ export default EventChat;
 const localStyles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
-    fontWeight: "500",
+    fontFamily: vibesTheme.fonts.thin,
     color: "#222",
     letterSpacing: 0.2,
   },
@@ -1009,7 +1009,7 @@ const localStyles = StyleSheet.create({
   eventMetaDateText: {
     color: PRIMARY_COLOR,
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   eventMetaTimeText: {
     color: "#444",
@@ -1029,7 +1029,7 @@ const localStyles = StyleSheet.create({
   eventMapButtonText: {
     color: WHITE,
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   eventLocationText: {
     marginTop: 10,
@@ -1054,7 +1054,7 @@ const localStyles = StyleSheet.create({
   emptyMessagesTitle: {
     color: DARK_GRAY,
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   emptyMessagesText: {
@@ -1192,7 +1192,7 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
     color: DARK_GRAY,
   },
   memberRow: {

@@ -675,14 +675,14 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 25,
     lineHeight: 29,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   feedSectionSubtitle: {
     marginTop: 2,
     color: "rgba(43, 43, 43, 0.58)",
     fontSize: 15,
     lineHeight: 19,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   feedRowCard: {
     minHeight: 98,
@@ -744,7 +744,7 @@ const localStyles = StyleSheet.create({
     color: "#252323",
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.thin,
   },
   feedRowMeta: {
     marginTop: 4,
@@ -879,14 +879,14 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.thin,
   },
   finishedSectionSubtitle: {
     marginTop: 3,
     color: "#7A746D",
     fontSize: 14,
     lineHeight: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   emptyState: {
     paddingHorizontal: 28,
@@ -896,7 +896,7 @@ const localStyles = StyleSheet.create({
   emptyTitle: {
     color: "#2B2B2B",
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   emptyText: {

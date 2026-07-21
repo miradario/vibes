@@ -251,7 +251,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 30,
     lineHeight: 36,
-    fontFamily: vibesTheme.fonts.primary,
+    fontFamily: vibesTheme.fonts.thin,
     letterSpacing: 0.2,
   },
   subtitle: {
@@ -259,7 +259,7 @@ const localStyles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     marginTop: 8,
-    fontFamily: vibesTheme.fonts.primary,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   content: {
     marginTop: 24,
@@ -338,7 +338,7 @@ const localStyles = StyleSheet.create({
   readOnlyLabel: {
     color: PRIMARY_COLOR,
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   readOnlyValue: {
     color: DARK_GRAY,

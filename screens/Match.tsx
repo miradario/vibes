@@ -226,7 +226,7 @@ const localStyles = StyleSheet.create({
     fontSize: 36,
     lineHeight: 39,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   divider: {
     marginTop: 14,

@@ -234,7 +234,6 @@ const buildPreferences = (profile: ProfileLike): string[] => {
   pushPreference("Propósito", profile.purpose);
   pushPreference("Vegetarianismo", normalizeVegetarianValue(profile.vegetarian));
   pushPreference("Fuma", profile.smoking);
-  pushPreference("Sobre mí", profile.aboutMe ?? profile.about_me);
   pushPreference("Género", profile.gender);
   pushPreference(
     "Estatura",
@@ -243,8 +242,6 @@ const buildPreferences = (profile: ProfileLike): string[] => {
       : profile.heightCm ?? profile.height_cm,
   );
   pushPreference("Busca", profile.lookingFor ?? profile.looking_for);
-  pushPreference("Intereses", profile.otherTags ?? profile.other_tags);
-  pushPreference("Abierto a", profile.openTo ?? profile.open_to);
   pushPreference("Idiomas", profile.languages);
   pushPreference("Zodiaco", profile.zodiac);
   pushPreference("Educación", profile.education);

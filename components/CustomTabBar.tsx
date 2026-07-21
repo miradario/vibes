@@ -107,7 +107,7 @@ const labelByRoute: Record<string, string> = {
   Flow: "Desafíos",
   EventsTab: "Eventos",
   Home: "Inicio",
-  Calendar: "Conexiones",
+  Calendar: "Comunidad",
   Aura: "Perfil",
 };
 
@@ -564,7 +564,7 @@ const localStyles = StyleSheet.create({
   unreadBadgeText: {
     color: "#FFFFFF",
     fontSize: 10,
-    fontWeight: "500",
+    fontWeight: "400",
     lineHeight: 12,
   },
 });

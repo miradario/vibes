@@ -25,7 +25,7 @@ import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import UserProfileSheet from "../components/UserProfileSheet";
 import type { UserProfileCardData } from "../components/UserProfileCard";
-import styles, { DIMENSION_WIDTH, SERIF_FONT, TEXT_PRIMARY } from "../assets/styles";
+import styles, { DIMENSION_WIDTH, TEXT_PRIMARY } from "../assets/styles";
 import type { DataT } from "../types";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -47,6 +47,7 @@ type DiscoverFiltersState = {
   ageMax: number | null;
   distanceMinKm: number | null;
   maxDistanceKm: number | null;
+  gender: "all" | "woman" | "man" | "nonbinary" | "other";
   smoking: "all" | "no" | "occasionally" | "yes";
 };
 
@@ -55,6 +56,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   ageMax: null,
   distanceMinKm: null,
   maxDistanceKm: null,
+  gender: "all",
   smoking: "all",
 };
 
@@ -135,6 +137,43 @@ const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
   return "all";
 };
 
+const normalizeGender = (
+  value: unknown,
+  genderId?: unknown,
+): DiscoverFiltersState["gender"] | "unknown" => {
+  if (typeof value === "string" && value.trim()) {
+    const normalized = value
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    if (["woman", "female", "mujer"].includes(normalized)) return "woman";
+    if (["man", "male", "hombre"].includes(normalized)) return "man";
+    if (["nonbinary", "non-binary", "no binario", "no binaria"].includes(normalized)) {
+      return "nonbinary";
+    }
+    if (["other", "otro", "otra", "more", "mas"].includes(normalized)) {
+      return "other";
+    }
+  }
+
+  const parsedGenderId = toFiniteNumber(genderId);
+  if (parsedGenderId === 1) return "woman";
+  if (parsedGenderId === 2) return "man";
+  if (parsedGenderId === 3) return "other";
+  if (parsedGenderId === 4) return "nonbinary";
+  return "unknown";
+};
+
+const getDiscoverGenderId = (gender: DiscoverFiltersState["gender"]) => {
+  if (gender === "woman") return 1;
+  if (gender === "man") return 2;
+  if (gender === "other") return 3;
+  if (gender === "nonbinary") return 4;
+  return null;
+};
+
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
 const getDistanceKm = (
@@ -201,6 +240,7 @@ const areFiltersEqual = (
   left.ageMax === right.ageMax &&
   left.distanceMinKm === right.distanceMinKm &&
   left.maxDistanceKm === right.maxDistanceKm &&
+  left.gender === right.gender &&
   left.smoking === right.smoking;
 
 const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFiltersState => ({
@@ -216,6 +256,13 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
   maxDistanceKm: toFiniteNumber(
     preferences?.discoverDistanceMaxKm ?? preferences?.discover_distance_max_km,
   ),
+  gender: (() => {
+    const storedGender = normalizeGender(
+      preferences?.discoverGender ?? preferences?.discover_gender,
+      preferences?.discoverGenderId ?? preferences?.discover_gender_id,
+    );
+    return storedGender === "unknown" ? "all" : storedGender;
+  })(),
   smoking: normalizeSmoking(
     preferences?.discoverSmoking ?? preferences?.discover_smoking,
   ),
@@ -289,6 +336,12 @@ export const DiscoverContent = forwardRef<
           candidateRecord.age ?? candidateRecord.birthDate ?? candidateRecord.birth_date,
         );
         const candidateSmoking = normalizeSmoking(candidateRecord.smoking);
+        const candidateGender = normalizeGender(
+          candidateRecord.gender ??
+            candidateRecord.genderLabel ??
+            candidateRecord.gender_label,
+          candidateRecord.genderId ?? candidateRecord.gender_id,
+        );
 
         if (
           !matchesNumberRange(
@@ -308,6 +361,13 @@ export const DiscoverContent = forwardRef<
             discoverFilters.distanceMinKm,
             discoverFilters.maxDistanceKm,
           )
+        ) {
+          return false;
+        }
+
+        if (
+          discoverFilters.gender !== "all" &&
+          candidateGender !== discoverFilters.gender
         ) {
           return false;
         }
@@ -425,6 +485,8 @@ export const DiscoverContent = forwardRef<
         discover_age_max: discoverFilters.ageMax,
         discover_distance_min_km: discoverFilters.distanceMinKm,
         discover_distance_max_km: discoverFilters.maxDistanceKm,
+        discover_gender: discoverFilters.gender,
+        discover_gender_id: getDiscoverGenderId(discoverFilters.gender),
         discover_smoking: discoverFilters.smoking,
       }).catch((persistError) => {
         console.warn("discover_filters:persist_error", persistError);
@@ -699,6 +761,49 @@ export const DiscoverContent = forwardRef<
                 </View>
 
                 <View style={localStyles.filtersSection}>
+                  {filterSectionTitle(t("discover.gender"))}
+                  <View style={localStyles.filtersPillRow}>
+                    {(
+                      [
+                        { value: "all", label: t("discover.genderAll") },
+                        { value: "woman", label: t("discover.genderWoman") },
+                        { value: "man", label: t("discover.genderMan") },
+                        {
+                          value: "nonbinary",
+                          label: t("discover.genderNonbinary"),
+                        },
+                        { value: "other", label: t("discover.genderOther") },
+                      ] as const
+                    ).map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          localStyles.filterPill,
+                          discoverFilters.gender === option.value &&
+                            localStyles.filterPillActive,
+                        ]}
+                        onPress={() =>
+                          setDiscoverFilters((prev) => ({
+                            ...prev,
+                            gender: option.value,
+                          }))
+                        }
+                      >
+                        <Text
+                          style={[
+                            localStyles.filterPillText,
+                            discoverFilters.gender === option.value &&
+                              localStyles.filterPillTextActive,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={localStyles.filtersSection}>
                   {filterSectionTitle(t("discover.smoking"))}
                   <View style={localStyles.filtersPillRow}>
                     {(
@@ -871,7 +976,7 @@ const localStyles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 32,
     lineHeight: 38,
-    fontFamily: SERIF_FONT,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   filtersButton: {
@@ -938,7 +1043,7 @@ const localStyles = StyleSheet.create({
   emptyTitle: {
     color: "#2B2B2B",
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   emptyText: {
@@ -979,14 +1084,14 @@ const localStyles = StyleSheet.create({
   filtersTitle: {
     color: "#2B2B2B",
     fontSize: 30,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   filtersSubtitle: {
     marginTop: 4,
     color: "rgba(43, 43, 43, 0.64)",
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   filtersCloseButton: {
     width: 38,
@@ -1071,7 +1176,7 @@ const localStyles = StyleSheet.create({
   filtersSectionTitle: {
     color: "#2B2B2B",
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   filtersPillRow: {
     flexDirection: "row",

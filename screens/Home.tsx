@@ -40,7 +40,7 @@ import {
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
-import { useEventsFeedQuery } from "../src/queries/events.queries";
+import { useMyEventGroupsQuery } from "../src/queries/events.queries";
 import { useMatchesQuery } from "../src/queries/matches.queries";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
@@ -53,6 +53,7 @@ type DiscoverFiltersState = {
   ageMax: number | null;
   distanceMinKm: number | null;
   maxDistanceKm: number | null;
+  gender: "all" | "woman" | "man" | "nonbinary" | "other";
   smoking: "all" | "no" | "occasionally" | "yes";
 };
 
@@ -61,6 +62,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   ageMax: null,
   distanceMinKm: null,
   maxDistanceKm: null,
+  gender: "all",
   smoking: "all",
 };
 
@@ -110,6 +112,43 @@ const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
     return "yes";
   }
   return "all";
+};
+
+const normalizeGender = (
+  value: unknown,
+  genderId?: unknown,
+): DiscoverFiltersState["gender"] | "unknown" => {
+  if (typeof value === "string" && value.trim()) {
+    const normalized = value
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    if (["woman", "female", "mujer"].includes(normalized)) return "woman";
+    if (["man", "male", "hombre"].includes(normalized)) return "man";
+    if (["nonbinary", "non-binary", "no binario", "no binaria"].includes(normalized)) {
+      return "nonbinary";
+    }
+    if (["other", "otro", "otra", "more", "mas"].includes(normalized)) {
+      return "other";
+    }
+  }
+
+  const parsedGenderId = toFiniteNumber(genderId);
+  if (parsedGenderId === 1) return "woman";
+  if (parsedGenderId === 2) return "man";
+  if (parsedGenderId === 3) return "other";
+  if (parsedGenderId === 4) return "nonbinary";
+  return "unknown";
+};
+
+const getDiscoverGenderId = (gender: DiscoverFiltersState["gender"]) => {
+  if (gender === "woman") return 1;
+  if (gender === "man") return 2;
+  if (gender === "other") return 3;
+  if (gender === "nonbinary") return 4;
+  return null;
 };
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
@@ -195,6 +234,7 @@ const areFiltersEqual = (
   left.ageMax === right.ageMax &&
   left.distanceMinKm === right.distanceMinKm &&
   left.maxDistanceKm === right.maxDistanceKm &&
+  left.gender === right.gender &&
   left.smoking === right.smoking;
 
 const readStoredFilters = (
@@ -212,6 +252,13 @@ const readStoredFilters = (
   maxDistanceKm: toFiniteNumber(
     preferences?.discoverDistanceMaxKm ?? preferences?.discover_distance_max_km
   ),
+  gender: (() => {
+    const storedGender = normalizeGender(
+      preferences?.discoverGender ?? preferences?.discover_gender,
+      preferences?.discoverGenderId ?? preferences?.discover_gender_id,
+    );
+    return storedGender === "unknown" ? "all" : storedGender;
+  })(),
   smoking: normalizeSmoking(
     preferences?.discoverSmoking ?? preferences?.discover_smoking
   ),
@@ -230,7 +277,7 @@ const Home = () => {
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
   const { data: candidates = [] } = useCandidatesQuery();
-  const { data: events = [] } = useEventsFeedQuery();
+  const { data: myEventGroups = [] } = useMyEventGroupsQuery(session?.user?.id);
   const { data: matches = [] } = useMatchesQuery();
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
@@ -265,6 +312,12 @@ const Home = () => {
             candidateRecord.birth_date
         );
         const candidateSmoking = normalizeSmoking(candidateRecord.smoking);
+        const candidateGender = normalizeGender(
+          candidateRecord.gender ??
+            candidateRecord.genderLabel ??
+            candidateRecord.gender_label,
+          candidateRecord.genderId ?? candidateRecord.gender_id,
+        );
 
         if (
           !matchesNumberRange(
@@ -284,6 +337,12 @@ const Home = () => {
             discoverFilters.distanceMinKm,
             discoverFilters.maxDistanceKm
           )
+        ) {
+          return false;
+        }
+        if (
+          discoverFilters.gender !== "all" &&
+          candidateGender !== discoverFilters.gender
         ) {
           return false;
         }
@@ -340,9 +399,11 @@ const Home = () => {
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
       .split(" ")[0]
       .trim() || "miradario";
-  const futureEvents = useMemo(() => {
+  const upcomingJoinedEvents = useMemo(() => {
     const now = Date.now();
-    return events
+    return myEventGroups
+      .filter((group) => group.eventType === "event")
+      .map((group) => group.event)
       .filter((event) => {
         if (!event.startsAt) return false;
         const timestamp = new Date(event.startsAt).getTime();
@@ -353,8 +414,8 @@ const Home = () => {
         const rightTime = new Date(right.startsAt as string).getTime();
         return leftTime - rightTime;
       });
-  }, [events]);
-  const nextEvent = futureEvents[0] ?? events[0] ?? null;
+  }, [myEventGroups]);
+  const nextEvent = upcomingJoinedEvents[0] ?? null;
   const nextEventDate = formatEventDayBox(nextEvent?.startsAt);
   const isCompactConnectionsCard = width < 390;
   const visibleConnectionPreviewCount = isCompactConnectionsCard ? 2 : 3;
@@ -438,6 +499,8 @@ const Home = () => {
         discover_age_max: discoverFilters.ageMax,
         discover_distance_min_km: discoverFilters.distanceMinKm,
         discover_distance_max_km: discoverFilters.maxDistanceKm,
+        discover_gender: discoverFilters.gender,
+        discover_gender_id: getDiscoverGenderId(discoverFilters.gender),
         discover_smoking: discoverFilters.smoking,
       }).catch((persistError) => {
         console.warn("discover_filters:persist_error", persistError);
@@ -704,6 +767,46 @@ const Home = () => {
               </View>
 
               <View style={localStyles.filtersSection}>
+                {filterSectionTitle("Género")}
+                <View style={localStyles.filtersPillRow}>
+                  {(
+                    [
+                      { value: "all", label: "Indistinto" },
+                      { value: "woman", label: "Mujer" },
+                      { value: "man", label: "Hombre" },
+                      { value: "nonbinary", label: "No binario" },
+                      { value: "other", label: "Otro" },
+                    ] as const
+                  ).map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        localStyles.filterPill,
+                        discoverFilters.gender === option.value &&
+                          localStyles.filterPillActive,
+                      ]}
+                      onPress={() =>
+                        setDiscoverFilters((prev) => ({
+                          ...prev,
+                          gender: option.value,
+                        }))
+                      }
+                    >
+                      <Text
+                        style={[
+                          localStyles.filterPillText,
+                          discoverFilters.gender === option.value &&
+                            localStyles.filterPillTextActive,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={localStyles.filtersSection}>
                 {filterSectionTitle("Fuma")}
                 <View style={localStyles.filtersPillRow}>
                   {(
@@ -831,9 +934,9 @@ const Home = () => {
                 style={localStyles.heroTitle}
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.78}
+                minimumFontScale={0.68}
               >
-                Hola, {firstName}
+                Hola, {firstName} 👋
               </Text>
               <Text style={localStyles.heroSubtitle}>
                 <Text style={localStyles.heroSubtitleStrong}>Conectá con vos</Text> para poder conectar con otros.
@@ -887,9 +990,7 @@ const Home = () => {
               )
             }
           >
-            <Text style={localStyles.connectionsEyebrow}>
-              NUEVAS CONEXIONES
-            </Text>
+            <Text style={localStyles.connectionsEyebrow}>COMUNIDAD</Text>
             <View style={localStyles.connectionsRow}>
               <View style={localStyles.connectionAvatars}>
                 {connectionPreviewProfiles.length > 0
@@ -953,44 +1054,59 @@ const Home = () => {
             }
           >
             <Text style={localStyles.eventPreviewEyebrow}>
-              PRÓXIMOS EVENTOS
+              {nextEvent ? "TU PRÓXIMO EVENTO" : "EVENTOS"}
             </Text>
-            <View style={localStyles.eventPreviewRow}>
-              <View style={localStyles.eventDateBox}>
-                <Text style={localStyles.eventDateWeekday}>
-                  {nextEventDate.weekday}
-                </Text>
-                <Text style={localStyles.eventDateDay}>
-                  {nextEventDate.day}
-                </Text>
-              </View>
-              <View style={localStyles.eventPreviewCopy}>
-                <Text style={localStyles.eventPreviewTitle} numberOfLines={1}>
-                  {nextEvent?.title ?? "Círculo de conexión"}
-                </Text>
-                <Text style={localStyles.eventPreviewMeta} numberOfLines={1}>
-                  {nextEvent?.date ?? "Sábado 25 de mayo · 18:00"}
-                </Text>
-                <View style={localStyles.eventParticipantsRow}>
-                  <AvatarGroup
-                    size={24}
-                    overlap={7}
-                    max={4}
-                    items={Array.from({ length: 4 }).map((_, index) => ({
-                      id: `event-preview-${index}`,
-                      uri:
-                        nextEvent?.participantPreviewImages?.[index] ??
-                        nextEvent?.hostImage ??
-                        null,
-                    }))}
-                  />
-                  <Text style={localStyles.eventParticipantsText}>
-                    {nextEvent?.attendees ?? "12 personas se suman"}
+            {nextEvent ? (
+              <View style={localStyles.eventPreviewRow}>
+                <View style={localStyles.eventDateBox}>
+                  <Text style={localStyles.eventDateWeekday}>
+                    {nextEventDate.weekday}
+                  </Text>
+                  <Text style={localStyles.eventDateDay}>
+                    {nextEventDate.day}
                   </Text>
                 </View>
+                <View style={localStyles.eventPreviewCopy}>
+                  <Text style={localStyles.eventPreviewTitle} numberOfLines={1}>
+                    {nextEvent.title}
+                  </Text>
+                  <Text style={localStyles.eventPreviewMeta} numberOfLines={1}>
+                    {nextEvent.date}
+                  </Text>
+                  <View style={localStyles.eventParticipantsRow}>
+                    <AvatarGroup
+                      size={24}
+                      overlap={7}
+                      max={4}
+                      items={Array.from({ length: 4 }).map((_, index) => ({
+                        id: `event-preview-${index}`,
+                        uri:
+                          nextEvent.participantPreviewImages?.[index] ??
+                          nextEvent.hostImage ??
+                          null,
+                      }))}
+                    />
+                    <Text style={localStyles.eventParticipantsText}>
+                      {nextEvent.attendees}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={32} color="#6D6D6D" />
               </View>
-              <Ionicons name="chevron-forward" size={32} color="#6D6D6D" />
-            </View>
+            ) : (
+              <View style={localStyles.eventPreviewRow}>
+                <View style={localStyles.eventDateBox}>
+                  <Ionicons name="calendar-outline" size={30} color="#D69A27" />
+                </View>
+                <View style={localStyles.eventPreviewCopy}>
+                  <Text style={localStyles.eventPreviewTitle}>Ver eventos</Text>
+                  <Text style={localStyles.eventPreviewMeta}>
+                    Descubrí próximos encuentros y sumate.
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={32} color="#6D6D6D" />
+              </View>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -1047,20 +1163,20 @@ const localStyles = StyleSheet.create({
   },
   heroTitle: {
     color: "#252323",
-    fontSize: 17,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 40,
+    lineHeight: 47,
+    fontFamily: vibesTheme.fonts.thin,
   },
   heroSubtitle: {
     marginTop: 10,
     color: "#727070",
     fontSize: 20,
     lineHeight: 27,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   heroSubtitleStrong: {
     color: "#142033",
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   featureImage: {
     ...StyleSheet.absoluteFillObject,
@@ -1110,10 +1226,10 @@ const localStyles = StyleSheet.create({
   },
   featureTitle: {
     maxWidth: "62%",
-    color: "#13263C",
+    color: "#18212B",
     fontSize: 22,
     lineHeight: 27,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   featureBody: {
     maxWidth: "58%",
@@ -1257,10 +1373,10 @@ const localStyles = StyleSheet.create({
     minWidth: 0,
   },
   eventPreviewTitle: {
-    color: "#252323",
+    color: "#181818",
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   eventPreviewMeta: {
     marginTop: 6,
@@ -1299,7 +1415,7 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 24,
     lineHeight: 28,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
     marginBottom: 8,
   },
   summaryContent: {
@@ -1401,14 +1517,14 @@ const localStyles = StyleSheet.create({
     color: "#24364A",
     fontSize: 24,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
   },
   meditationButtonSubtitle: {
     marginTop: 4,
     color: "#314762",
     fontSize: 16,
     lineHeight: 18,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   meditationArrowWrap: {
     width: 46,
@@ -1471,14 +1587,14 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 22,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
   },
   guruSubtitle: {
     marginTop: 2,
     color: "#7A746D",
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   guruChallengeName: {
     marginTop: 12,
@@ -1524,14 +1640,14 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 19,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
   },
   presenceSubtitle: {
     marginTop: 3,
     color: "#7A746D",
     fontSize: 13,
     lineHeight: 17,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   presenceBadge: {
     width: 32,
@@ -1604,7 +1720,7 @@ const localStyles = StyleSheet.create({
     color: "#252323",
     fontSize: 23,
     lineHeight: 27,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
   },
   sectionLink: {
     flexDirection: "row",
@@ -1692,7 +1808,7 @@ const localStyles = StyleSheet.create({
     color: "#252323",
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
     marginBottom: 4,
   },
   feedListMeta: {
@@ -1767,7 +1883,7 @@ const localStyles = StyleSheet.create({
     color: "#252323",
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
     marginBottom: 7,
   },
   eventMetaRow: {
@@ -1802,7 +1918,7 @@ const localStyles = StyleSheet.create({
     fontSize: 42,
     lineHeight: 46,
     color: "#2B2B2B",
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
     letterSpacing: 0.3,
   },
   discoverOrbitWrap: {
@@ -1834,7 +1950,7 @@ const localStyles = StyleSheet.create({
   emptyStateTitle: {
     color: "#2B2B2B",
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   emptyStateText: {
@@ -1872,14 +1988,14 @@ const localStyles = StyleSheet.create({
   filtersTitle: {
     color: "#2B2B2B",
     fontSize: 30,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
   },
   filtersSubtitle: {
     marginTop: 4,
     color: "rgba(43, 43, 43, 0.64)",
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   filtersCloseButton: {
     width: 38,
@@ -1948,7 +2064,7 @@ const localStyles = StyleSheet.create({
   filtersSectionTitle: {
     color: "#2B2B2B",
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.thin,
   },
   filtersPillRow: {
     flexDirection: "row",

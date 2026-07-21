@@ -54,7 +54,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   title: {
     color: ONBOARDING_COLORS.text,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.thin,
     fontSize: isCompactOnboardingScreen ? 25 : 28,
     lineHeight: isCompactOnboardingScreen ? 31 : 35,
     textAlign: "left",
@@ -62,7 +62,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   subtitle: {
     color: ONBOARDING_COLORS.muted,
-    fontFamily: vibesTheme.fonts.primary,
+    fontFamily: vibesTheme.fonts.subtitle,
     fontSize: 15,
     lineHeight: 22,
     marginTop: 10,
@@ -328,7 +328,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   customPracticeTitle: {
     color: ONBOARDING_COLORS.text,
-    fontFamily: vibesTheme.fonts.primary,
+    fontFamily: vibesTheme.fonts.thin,
     fontSize: 27,
     lineHeight: 32,
   },

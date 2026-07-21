@@ -1161,12 +1161,13 @@ const modalStyles = StyleSheet.create({
   title: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontWeight: "500",
+    fontFamily: vibesTheme.fonts.thin,
   },
   subtitle: {
     marginTop: 6,
     fontSize: 14,
     color: GRAY,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   actions: {
     marginTop: 18,
@@ -1180,7 +1181,7 @@ const modalStyles = StyleSheet.create({
   },
   primaryText: {
     color: WHITE,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   secondaryButton: {
     backgroundColor: "#F6F6F4",
@@ -1222,7 +1223,7 @@ const localStyles = StyleSheet.create({
   primaryBadgeText: {
     color: WHITE,
     fontSize: 10,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   nameInput: {
     backgroundColor: "rgba(246, 246, 244, 0.6)",

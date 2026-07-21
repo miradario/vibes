@@ -625,7 +625,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 22,
     lineHeight: 27,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   modalSubtitle: {
     marginTop: 4,
@@ -633,7 +633,7 @@ const localStyles = StyleSheet.create({
     color: "#6E6E6E",
     fontSize: 15,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   actionRow: {
     minHeight: 52,

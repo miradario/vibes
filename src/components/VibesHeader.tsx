@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
     fontSize: 54,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.thin,
     letterSpacing: 0.3,
     textAlign: "center",
   },
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: vibesTheme.colors.secondaryText,
     fontSize: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
     textAlign: "center",
   },
 });

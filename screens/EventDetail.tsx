@@ -2093,14 +2093,14 @@ const localStyles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 48,
     lineHeight: 52,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   eventHeroSubtitle: {
     marginTop: 8,
     color: TEXT_SECONDARY,
     fontSize: 21,
     lineHeight: 25,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   eventHeroMessageButton: {
     position: "absolute",
@@ -2177,7 +2177,7 @@ const localStyles = StyleSheet.create({
   eventMiniMapTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   eventMiniMapText: {
     color: TEXT_SECONDARY,
@@ -2376,7 +2376,7 @@ const localStyles = StyleSheet.create({
   participantPreviewMoreText: {
     color: WHITE,
     fontSize: 10,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   personalCoachCard: {
     marginTop: 14,
@@ -2412,13 +2412,13 @@ const localStyles = StyleSheet.create({
   personalCoachTitle: {
     color: DARK_GRAY,
     fontSize: 18,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   personalCoachSubtitle: {
     marginTop: 1,
     color: TEXT_SECONDARY,
     fontSize: 12,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   personalCoachBody: {
     marginTop: 12,
@@ -2533,13 +2533,13 @@ const localStyles = StyleSheet.create({
   },
   footerCheckInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
     fontSize: 13,
     lineHeight: 15,
   },
   footerCheckInSliderSubtitle: {
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
     fontSize: 11,
     lineHeight: 13,
   },
@@ -2640,14 +2640,14 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
     color: DARK_GRAY,
     textAlign: "center",
   },
   modalSubtitle: {
     fontSize: 14,
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
     textAlign: "center",
   },
   noteInput: {
@@ -2694,12 +2694,12 @@ const localStyles = StyleSheet.create({
   },
   checkInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
     fontSize: 18,
   },
   checkInSliderSubtitle: {
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
     fontSize: 14,
     lineHeight: 18,
   },
@@ -2793,7 +2793,7 @@ const localStyles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 18,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
     color: DARK_GRAY,
     marginBottom: 8,
   },
@@ -2853,7 +2853,7 @@ const localStyles = StyleSheet.create({
   },
   participantsModalTitle: {
     fontSize: 20,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
     color: DARK_GRAY,
   },
   memberRow: {

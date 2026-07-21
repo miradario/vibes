@@ -16,7 +16,7 @@ import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import ProfileMediaImage from "../components/ProfileMediaImage";
-import styles, { BG_MAIN, DARK_GRAY, SERIF_FONT, TEXT_PRIMARY } from "../assets/styles";
+import styles, { BG_MAIN, DARK_GRAY, TEXT_PRIMARY } from "../assets/styles";
 import UserProfileSheet from "../components/UserProfileSheet";
 import {
   useMatchesQuery,
@@ -916,7 +916,7 @@ const localStyles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 32,
     lineHeight: 38,
-    fontFamily: SERIF_FONT,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   connectionsHeader: {
@@ -926,7 +926,7 @@ const localStyles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 32,
     lineHeight: 38,
-    fontFamily: SERIF_FONT,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "left",
   },
   connectionsGrid: {
@@ -982,7 +982,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 18,
     lineHeight: 19,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   connectionPreviewRow: {
     height: 46,
@@ -1045,7 +1045,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 27,
     lineHeight: 31,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   connectionsSheetList: {
     marginTop: 12,
@@ -1103,7 +1103,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 16,
     letterSpacing: 0,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
     flexShrink: 1,
     minWidth: 0,
   },
@@ -1185,7 +1185,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 17,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   typeBadge: {
     borderRadius: 9,

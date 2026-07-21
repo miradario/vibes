@@ -1197,14 +1197,14 @@ const localStyles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   joinRequestButtonSubtitle: {
     marginTop: 4,
     color: "rgba(255,255,255,0.88)",
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   chatLockedRow: {
     borderRadius: 18,
@@ -1255,7 +1255,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 24,
     lineHeight: 28,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   completionCelebrationBody: {
@@ -1299,14 +1299,14 @@ const localStyles = StyleSheet.create({
     color: "rgba(45, 41, 36, 0.72)",
     fontSize: 23,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   subtitle: {
     marginTop: 8,
     color: palette.muted,
     fontSize: 19,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   contentSubtitle: {
     marginTop: 0,
@@ -1315,7 +1315,7 @@ const localStyles = StyleSheet.create({
     color: "rgba(45, 41, 36, 0.74)",
     fontSize: 16,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   headerStatusPill: {
     alignSelf: "flex-start",
@@ -1370,14 +1370,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     textAlign: "center",
     fontSize: 23,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   growthSubtitle: {
     marginTop: 4,
     color: palette.muted,
     textAlign: "center",
     fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   infoRow: {
     flexDirection: "row",
@@ -1440,14 +1440,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 18,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   visibilitySubtitle: {
     marginTop: 3,
     color: palette.muted,
     fontSize: 14,
     lineHeight: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   communityBadge: {
     width: 42,
@@ -1464,14 +1464,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   communitySubtitle: {
     marginTop: 4,
     color: palette.muted,
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   requestCard: {
     borderRadius: 22,
@@ -1490,7 +1490,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   requestCardCount: {
     color: palette.goldDeep,
@@ -1572,7 +1572,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 22,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   celebrationBody: {
     marginTop: 4,
@@ -1594,14 +1594,14 @@ const localStyles = StyleSheet.create({
   cardTitle: {
     color: palette.text,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   cardSubtitle: {
     marginTop: 4,
     color: palette.muted,
     fontSize: 16,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   streakMetrics: {
     flexDirection: "row",
@@ -1659,14 +1659,14 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 27,
     lineHeight: 25,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   pathSubtitle: {
     marginTop: 2,
     color: "rgba(45, 41, 36, 0.58)",
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   pathPill: {
     minHeight: 36,
@@ -1975,13 +1975,13 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 17,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   footerSliderSubtitle: {
     color: palette.muted,
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   footerSliderChevrons: {
     position: "absolute",
@@ -2024,13 +2024,13 @@ const localStyles = StyleSheet.create({
   chatTitle: {
     color: palette.text,
     fontSize: 19,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   chatSubtitle: {
     marginTop: 2,
     color: palette.muted,
     fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
 });
 

@@ -78,7 +78,7 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     marginBottom: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   card: {
     flex: 1,
@@ -94,7 +94,7 @@ const localStyles = StyleSheet.create({
   titleText: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.thin,
     marginTop: 8,
     marginBottom: 6,
   },

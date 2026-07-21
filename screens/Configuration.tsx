@@ -28,6 +28,7 @@ import { deactivateUserPushTokens } from "../src/notifications/pushNotifications
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { showToast } from "../src/utils/toast";
 import { useI18n } from "../src/i18n";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const Configuration = () => {
   const navigation = useNavigation();
@@ -182,6 +183,7 @@ const localStyles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 18,
     lineHeight: 22,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   headerSpacer: {
     width: 20,
@@ -207,7 +209,7 @@ const localStyles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontWeight: "400",
+    fontFamily: vibesTheme.fonts.thin,
   },
   line: {
     flex: 1,

@@ -56,7 +56,7 @@ const Matches = () => {
     <View style={styles.bg}>
       <View style={styles.soulmateScreen}>
         <AppHeader
-          title="Conexiones"
+          title="Comunidad"
           showBack
           onBack={() => navigation.goBack()}
           style={localStyles.header}
@@ -124,7 +124,7 @@ const localStyles = {
   subtitle: {
     color: "#6E6E6E",
     fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
     marginTop: 2,
   },
   emptyState: {
@@ -136,7 +136,7 @@ const localStyles = {
   emptyTitle: {
     color: "#2B2B2B",
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
     textAlign: "center" as const,
   },
   emptyText: {

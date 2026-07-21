@@ -415,7 +415,7 @@ export default StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 12,
     lineHeight: 18,
-    fontFamily: "Courier",
+    fontFamily: SERIF_FONT,
   },
   discoverGalleryRow: {
     marginTop: 14,
@@ -746,7 +746,7 @@ export default StyleSheet.create({
     fontSize: 38,
     color: TEXT_PRIMARY,
     marginBottom: 6,
-    fontWeight: "700",
+    fontWeight: "400",
     textShadowColor: "rgba(246, 246, 244, 0.9)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -806,7 +806,7 @@ export default StyleSheet.create({
   welcomePrimaryText: {
     color: WHITE,
     fontSize: 20,
-    fontWeight: "500",
+    fontWeight: "400",
     fontFamily: SERIF_FONT,
   },
   welcomeSecondary: {
@@ -826,7 +826,7 @@ export default StyleSheet.create({
   welcomeSecondaryText: {
     color: TEXT_PRIMARY,
     fontSize: 20,
-    fontWeight: "500",
+    fontWeight: "400",
     fontFamily: SERIF_FONT,
   },
   loginContainer: {
@@ -924,7 +924,7 @@ export default StyleSheet.create({
   loginButtonText: {
     color: WHITE,
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "400",
     fontFamily: SERIF_FONT,
   },
   loginSecondary: {
@@ -944,7 +944,7 @@ export default StyleSheet.create({
   loginSecondaryText: {
     color: TEXT_PRIMARY,
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "400",
     fontFamily: SERIF_FONT,
   },
   galleryOverlay: {
@@ -1037,7 +1037,7 @@ export default StyleSheet.create({
   },
   swipeBadgeTextLike: {
     fontSize: 28,
-    fontWeight: "800",
+    fontWeight: "400",
     color: "#AEBFD1",
     letterSpacing: 2,
   },
@@ -1055,7 +1055,7 @@ export default StyleSheet.create({
   },
   swipeBadgeTextNope: {
     fontSize: 28,
-    fontWeight: "800",
+    fontWeight: "400",
     color: "#D88C7A",
     letterSpacing: 2,
   },
@@ -1246,7 +1246,7 @@ export default StyleSheet.create({
   messageName: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "400",
   },
 
   // COMPONENT - PROFILE ITEM
@@ -1453,7 +1453,7 @@ export default StyleSheet.create({
   matchTitle: {
     fontSize: 26,
     color: TEXT_PRIMARY,
-    fontWeight: "600",
+    fontWeight: "400",
     fontFamily: SERIF_FONT,
     marginTop: -4,
   },
@@ -1531,7 +1531,7 @@ export default StyleSheet.create({
   matchPrimaryButtonText: {
     color: WHITE,
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "400",
     fontFamily: SERIF_FONT,
     letterSpacing: 0.4,
   },
@@ -1554,7 +1554,7 @@ export default StyleSheet.create({
   matchSecondaryButtonText: {
     color: TEXT_PRIMARY,
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "400",
     fontFamily: SERIF_FONT,
   },
   flowTop: {
@@ -1587,7 +1587,7 @@ export default StyleSheet.create({
   flowSectionTitle: {
     color: TEXT_PRIMARY,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "400",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
@@ -1603,7 +1603,7 @@ export default StyleSheet.create({
   flowSectionCountText: {
     color: TEXT_PRIMARY,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "400",
   },
   matchesRow: {
     paddingHorizontal: 14,
@@ -1624,7 +1624,7 @@ export default StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 18,
     fontFamily: SERIF_FONT,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   soulmateList: {
     paddingHorizontal: 16,
@@ -1667,7 +1667,7 @@ export default StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 20,
     fontFamily: SERIF_FONT,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   soulmateCity: {
     marginTop: 2,
@@ -1694,7 +1694,7 @@ export default StyleSheet.create({
     color: WHITE,
     fontSize: 16,
     fontFamily: SERIF_FONT,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   matchItem: {
     alignItems: "center",
@@ -1995,7 +1995,7 @@ export default StyleSheet.create({
   profileName: {
     fontSize: 30,
     color: DARK_GRAY,
-    fontWeight: "600",
+    fontWeight: "400",
     letterSpacing: 0.2,
   },
   profileEssence: {
@@ -2027,7 +2027,7 @@ export default StyleSheet.create({
   profileValueText: {
     color: TEXT_PRIMARY,
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   profilePracticeSection: {
     marginBottom: 26,
@@ -2071,7 +2071,7 @@ export default StyleSheet.create({
   profilePrimaryCtaText: {
     color: WHITE,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "400",
     letterSpacing: 0.2,
     marginLeft: 8,
   },
@@ -2281,7 +2281,7 @@ export default StyleSheet.create({
     fontSize: 20,
     color: TEXT_PRIMARY,
     fontFamily: SERIF_FONT,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   auraProfileLocation: {
     fontSize: 15,
@@ -2518,7 +2518,7 @@ export default StyleSheet.create({
   },
   preferenceEmphasis: {
     color: PRIMARY_COLOR,
-    fontWeight: "600",
+    fontWeight: "400",
   },
 
   // ONBOARDING
@@ -2822,7 +2822,7 @@ export default StyleSheet.create({
     color: PRIMARY_COLOR,
     fontSize: 18,
     marginLeft: 8,
-    fontWeight: "600",
+    fontWeight: "400",
   },
   premiumTitle: {
     color: DARK_GRAY,
@@ -3113,7 +3113,7 @@ export default StyleSheet.create({
   },
   eventsTitle: {
     fontSize: 32,
-    fontWeight: "600",
+    fontWeight: "400",
     color: TEXT_PRIMARY,
     textAlign: "center",
     marginBottom: 20,
@@ -3162,7 +3162,7 @@ export default StyleSheet.create({
   },
   eventCardTitle: {
     fontSize: 22,
-    fontWeight: "600",
+    fontWeight: "400",
     color: TEXT_PRIMARY,
     flex: 1,
     marginRight: 10,
@@ -3171,7 +3171,7 @@ export default StyleSheet.create({
   eventCardAttendees: {
     fontSize: 16,
     color: TEXT_SECONDARY,
-    fontWeight: "500",
+    fontWeight: "400",
   },
   eventCardSubtitle: {
     fontSize: 15,
@@ -3483,7 +3483,7 @@ export default StyleSheet.create({
   },
   eventChatHeaderTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "400",
     color: TEXT_PRIMARY,
   },
   eventChatHeaderSubtitle: {
@@ -3552,7 +3552,7 @@ export default StyleSheet.create({
   },
   eventChatMessageSender: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "400",
     color: TEXT_PRIMARY,
     marginBottom: 8,
   },

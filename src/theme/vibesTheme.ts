@@ -1,11 +1,13 @@
 export const vibesTheme = {
   fonts: {
+    thin: "JosefinSans-Thin",
+    subtitle: "JosefinSans-Medium",
     primary: "JosefinSans-Regular",
     light: "JosefinSans-Regular",
     regular: "JosefinSans-Regular",
-    medium: "JosefinSans-Medium",
-    semibold: "JosefinSans-SemiBold",
-    bold: "JosefinSans-Bold",
+    medium: "JosefinSans-Regular",
+    semibold: "JosefinSans-Regular",
+    bold: "JosefinSans-Regular",
   },
   colors: {
     background: "#F6F6F4",

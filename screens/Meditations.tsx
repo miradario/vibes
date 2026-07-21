@@ -1277,14 +1277,14 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 26,
     lineHeight: 28,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   subtitle: {
     marginTop: 2,
     color: "#6F6A65",
     fontSize: 16,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   section: {
     marginTop: 14,
@@ -1342,7 +1342,7 @@ const localStyles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 19,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   practiceSubtitle: {
     marginTop: 3,
@@ -1350,7 +1350,7 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   durationRow: {
     flexDirection: "row",
@@ -1442,14 +1442,14 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   musicSubtitle: {
     marginTop: 4,
     color: "#6F6A65",
     fontSize: 16,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   musicOptionsPanel: {
     marginTop: 12,
@@ -1478,14 +1478,14 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   musicOptionSubtitle: {
     marginTop: 2,
     color: "#6F6A65",
     fontSize: 16,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   previewCard: {
     marginTop: 22,
@@ -1537,7 +1537,7 @@ const localStyles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 32,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   previewPlayerTitleCompact: {
     fontSize: 22,
@@ -1548,7 +1548,7 @@ const localStyles = StyleSheet.create({
     fontSize: 34,
     lineHeight: 38,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   previewPlayerSubtitle: {
     marginTop: 2,
@@ -1556,11 +1556,12 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   previewPlayerSubtitleCompact: {
     fontSize: 16,
     lineHeight: 20,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   previewPlayerSubtitleImmersive: {
     marginTop: 4,
@@ -1568,7 +1569,7 @@ const localStyles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 22,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   previewPlayerDivider: {
     marginTop: 10,
@@ -1625,14 +1626,14 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    fontFamily: vibesTheme.fonts.thin,
   },
   shareSessionSubtitle: {
     marginTop: 4,
     color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 19,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   previewBottom: {
     paddingTop: 18,
