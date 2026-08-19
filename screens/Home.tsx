@@ -42,6 +42,10 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { useMyEventGroupsQuery } from "../src/queries/events.queries";
 import { useMatchesQuery } from "../src/queries/matches.queries";
+import {
+  DAILY_GURU_FALLBACK,
+  useDailyGuruMessageQuery,
+} from "../src/queries/dailyGuru.queries";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
@@ -394,6 +398,8 @@ const Home = () => {
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
   const [showGuruCard, setShowGuruCard] = useState(true);
+  const { data: dailyGuruMessage } = useDailyGuruMessageQuery();
+  const guruMessage = dailyGuruMessage ?? DAILY_GURU_FALLBACK;
   const swipeMutation = useSwipeMutation();
   const firstName =
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
@@ -968,12 +974,9 @@ const Home = () => {
                 <Text style={localStyles.featureEyebrow}>GURU VIBES</Text>
               </View>
               <Text style={localStyles.featureTitle}>
-                Toma una respiración profunda.
+                {guruMessage.title}
               </Text>
-              <Text style={localStyles.featureBody}>
-                Tu energía ya sabe hacia dónde abrirse. Elegí desde la calma y
-                dejá que Vibes acerque lo que hoy resuena con vos.
-              </Text>
+              <Text style={localStyles.featureBody}>{guruMessage.body}</Text>
             </ImageBackground>
           ) : null}
 
