@@ -110,8 +110,14 @@ async function fetchProfileSummaries(
       .order("order", { ascending: true }),
   ]);
 
-  const profiles = mapSupabaseSelect(profilesRes.data ?? []) as Record<string, any>[];
-  const photos = mapSupabaseSelect(photosRes.data ?? []) as Record<string, any>[];
+  const profiles = mapSupabaseSelect(profilesRes.data ?? []) as Record<
+    string,
+    any
+  >[];
+  const photos = mapSupabaseSelect(photosRes.data ?? []) as Record<
+    string,
+    any
+  >[];
 
   // Build a map of profileId -> first photo URL (signed)
   const firstPhotoByUser = new Map<string, string>();
@@ -126,7 +132,8 @@ async function fetchProfileSummaries(
     const id = String(profile.id ?? "");
     if (!id) continue;
     map.set(id, {
-      name: typeof profile.displayName === "string" ? profile.displayName : "Vibes",
+      name:
+        typeof profile.displayName === "string" ? profile.displayName : "Vibes",
       photo: firstPhotoByUser.get(id) ?? null,
     });
   }
@@ -147,7 +154,11 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
     .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
     .order("created_at", { ascending: false });
 
-  console.log("[matches] query result:", { rows: rows?.length, error, rawRows: rows });
+  console.log("[matches] query result:", {
+    rows: rows?.length,
+    error,
+    rawRows: rows,
+  });
 
   if (error) throw error;
 
@@ -227,52 +238,56 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
       return profileMap.has(otherId);
     })
     .map((m): MatchWithProfile => {
-    const otherId = m.user1Id === userId ? m.user2Id : m.user1Id;
-    const profile = profileMap.get(otherId);
-    const lastMsg = lastMsgMap.get(m.id);
-    const lastReadAt = lastReadMap.get(m.id) ?? null;
-    const hasUnread = Boolean(
-      lastMsg?.createdAt &&
-        lastMsg.senderId &&
-        lastMsg.senderId !== userId &&
-        isLaterTimestamp(lastMsg.createdAt, lastReadAt),
-    );
+      const otherId = m.user1Id === userId ? m.user2Id : m.user1Id;
+      const profile = profileMap.get(otherId);
+      const lastMsg = lastMsgMap.get(m.id);
+      const lastReadAt = lastReadMap.get(m.id) ?? null;
+      const hasUnread = Boolean(
+        lastMsg?.createdAt &&
+          lastMsg.senderId &&
+          lastMsg.senderId !== userId &&
+          isLaterTimestamp(lastMsg.createdAt, lastReadAt),
+      );
 
-    return {
-      ...m,
-      otherUserId: otherId,
-      otherUserName: profile?.name ?? "Vibes",
-      otherUserPhoto: profile?.photo ?? null,
-      lastMessage: lastMsg?.body ?? null,
-      lastMessageAt: lastMsg?.createdAt ?? null,
-      lastMessageSenderId: lastMsg?.senderId ?? null,
-      lastReadAt,
-      hasUnread,
-    };
-  });
+      return {
+        ...m,
+        otherUserId: otherId,
+        otherUserName: profile?.name ?? "Vibes",
+        otherUserPhoto: profile?.photo ?? null,
+        lastMessage: lastMsg?.body ?? null,
+        lastMessageAt: lastMsg?.createdAt ?? null,
+        lastMessageSenderId: lastMsg?.senderId ?? null,
+        lastReadAt,
+        hasUnread,
+      };
+    });
 }
 
 async function fetchIncomingLikes(userId: string): Promise<IncomingLike[]> {
-  const [{ data: swipeRows, error: swipeError }, { data: matchRows, error: matchError }] =
-    await Promise.all([
-      supabase
-        .from("swipes")
-        .select("id, swiper_id, created_at")
-        .eq("target_id", userId)
-        .eq("direction", "like")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("matches")
-        .select("user1_id, user2_id")
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`),
-    ]);
+  const [
+    { data: swipeRows, error: swipeError },
+    { data: matchRows, error: matchError },
+  ] = await Promise.all([
+    supabase
+      .from("swipes")
+      .select("id, swiper_id, created_at")
+      .eq("target_id", userId)
+      .eq("direction", "like")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("matches")
+      .select("user1_id, user2_id")
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`),
+  ]);
 
   if (swipeError) throw swipeError;
   if (matchError) throw matchError;
 
   const matchedUserIds = new Set(
     (matchRows ?? []).map((row: any) =>
-      String(row.user1_id) === userId ? String(row.user2_id) : String(row.user1_id),
+      String(row.user1_id) === userId
+        ? String(row.user2_id)
+        : String(row.user1_id),
     ),
   );
 
@@ -330,54 +345,74 @@ export const useMatchesQuery = () => {
   const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const accessToken = session?.access_token;
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   const query = useQuery<MatchWithProfile[]>(matchesQueryOptions(userId));
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !accessToken) return;
+
+    let active = true;
 
     const refreshMatches = () => {
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
     };
 
-    const channel = supabase
-      .channel(`matches:summary:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-        },
-        refreshMatches,
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "matches",
-        },
-        (payload) => {
-          const row = (payload.new ?? payload.old ?? {}) as Record<string, unknown>;
-          const user1Id = String(row.user1_id ?? "");
-          const user2Id = String(row.user2_id ?? "");
+    const subscribe = async () => {
+      await supabase.realtime.setAuth(accessToken);
+      if (!active) return;
 
-          if (user1Id === userId || user2Id === userId) {
-            refreshMatches();
-          }
-        },
-      )
-      .subscribe();
+      const channel = supabase
+        .channel(`matches:summary:${userId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "messages",
+          },
+          refreshMatches,
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "matches",
+          },
+          (payload) => {
+            const row = (payload.new ?? payload.old ?? {}) as Record<
+              string,
+              unknown
+            >;
+            const user1Id = String(row.user1_id ?? "");
+            const user2Id = String(row.user2_id ?? "");
 
-    channelRef.current = channel;
+            if (user1Id === userId || user2Id === userId) {
+              refreshMatches();
+            }
+          },
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") refreshMatches();
+        });
+
+      channelRef.current = channel;
+    };
+
+    void subscribe().catch((error) => {
+      console.warn("[realtime] matches subscription failed", error);
+    });
 
     return () => {
-      channel.unsubscribe();
+      active = false;
+      if (channelRef.current) {
+        void supabase.removeChannel(channelRef.current);
+      }
       channelRef.current = null;
     };
-  }, [queryClient, userId]);
+  }, [accessToken, queryClient, userId]);
 
   return query;
 };
@@ -387,6 +422,8 @@ export const matchesQueryOptions = (userId?: string) => ({
   queryFn: () => fetchMatches(userId as string),
   enabled: Boolean(userId),
   staleTime: 30_000,
+  refetchInterval: userId ? 10_000 : (false as const),
+  refetchIntervalInBackground: true,
 });
 
 export const useMarkDirectMessagesReadMutation = () => {
@@ -419,6 +456,7 @@ export const useIncomingLikesQuery = () => {
   const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const accessToken = session?.access_token;
 
   const query = useQuery<IncomingLike[]>({
     queryKey: matchKeys.incomingLikes(userId),
@@ -428,54 +466,78 @@ export const useIncomingLikesQuery = () => {
   });
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !accessToken) return;
+
+    let active = true;
 
     const refreshIncomingLikes = () => {
-      queryClient.invalidateQueries({ queryKey: matchKeys.incomingLikes(userId) });
+      queryClient.invalidateQueries({
+        queryKey: matchKeys.incomingLikes(userId),
+      });
     };
 
-    const channel = supabase
-      .channel(`incoming-likes:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "swipes",
-        },
-        (payload) => {
-          const row = (payload.new ?? payload.old ?? {}) as Record<string, unknown>;
-          const swiperId = String(row.swiper_id ?? "");
-          const targetId = String(row.target_id ?? "");
+    let channel: RealtimeChannel | null = null;
 
-          if (targetId === userId || swiperId === userId) {
-            refreshIncomingLikes();
-          }
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "matches",
-        },
-        (payload) => {
-          const row = (payload.new ?? payload.old ?? {}) as Record<string, unknown>;
-          const user1Id = String(row.user1_id ?? "");
-          const user2Id = String(row.user2_id ?? "");
+    const subscribe = async () => {
+      await supabase.realtime.setAuth(accessToken);
+      if (!active) return;
 
-          if (user1Id === userId || user2Id === userId) {
-            refreshIncomingLikes();
-          }
-        },
-      )
-      .subscribe();
+      channel = supabase
+        .channel(`incoming-likes:${userId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "swipes",
+          },
+          (payload) => {
+            const row = (payload.new ?? payload.old ?? {}) as Record<
+              string,
+              unknown
+            >;
+            const swiperId = String(row.swiper_id ?? "");
+            const targetId = String(row.target_id ?? "");
+
+            if (targetId === userId || swiperId === userId) {
+              refreshIncomingLikes();
+            }
+          },
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "matches",
+          },
+          (payload) => {
+            const row = (payload.new ?? payload.old ?? {}) as Record<
+              string,
+              unknown
+            >;
+            const user1Id = String(row.user1_id ?? "");
+            const user2Id = String(row.user2_id ?? "");
+
+            if (user1Id === userId || user2Id === userId) {
+              refreshIncomingLikes();
+            }
+          },
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") refreshIncomingLikes();
+        });
+    };
+
+    void subscribe().catch((error) => {
+      console.warn("[realtime] incoming likes subscription failed", error);
+    });
 
     return () => {
-      channel.unsubscribe();
+      active = false;
+      if (channel) void supabase.removeChannel(channel);
     };
-  }, [queryClient, userId]);
+  }, [accessToken, queryClient, userId]);
 
   return query;
 };
@@ -601,6 +663,8 @@ async function fetchDirectMessages(matchId: string): Promise<DirectMessage[]> {
 
 export const useDirectMessagesQuery = (matchId?: string) => {
   const queryClient = useQueryClient();
+  const { data: session } = useAuthSession();
+  const accessToken = session?.access_token;
   const channelRef = useRef<RealtimeChannel | null>(null);
   const queryKey = dmKeys.byMatch(matchId);
 
@@ -615,52 +679,70 @@ export const useDirectMessagesQuery = (matchId?: string) => {
   });
 
   useEffect(() => {
-    if (!matchId) return;
+    if (!matchId || !accessToken) return;
 
-    const channel = supabase
-      .channel(`dm:${matchId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-          filter: `match_id=eq.${matchId}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT" && payload.new) {
-            const mapped = mapSupabaseSelect([payload.new]);
-            const raw = (Array.isArray(mapped)
-              ? mapped[0]
-              : mapped) as Record<string, any>;
-            const msg: DirectMessage = {
-              id: String(raw.id),
-              matchId: String(raw.matchId),
-              senderId: String(raw.senderId),
-              text: String(raw.text),
-              createdAt: String(raw.createdAt),
-            };
+    let active = true;
 
-            queryClient.setQueryData<DirectMessage[]>(queryKey, (prev) => {
-              if (!prev) return [msg];
-              if (prev.some((m) => m.id === msg.id)) return prev;
-              return [...prev, msg];
-            });
+    const subscribe = async () => {
+      await supabase.realtime.setAuth(accessToken);
+      if (!active) return;
+
+      const channel = supabase
+        .channel(`dm:${matchId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "messages",
+            filter: `match_id=eq.${matchId}`,
+          },
+          (payload) => {
+            if (payload.eventType === "INSERT" && payload.new) {
+              const mapped = mapSupabaseSelect([payload.new]);
+              const raw = (
+                Array.isArray(mapped) ? mapped[0] : mapped
+              ) as Record<string, any>;
+              const msg: DirectMessage = {
+                id: String(raw.id),
+                matchId: String(raw.matchId),
+                senderId: String(raw.senderId),
+                text: String(raw.text),
+                createdAt: String(raw.createdAt),
+              };
+
+              queryClient.setQueryData<DirectMessage[]>(queryKey, (prev) => {
+                if (!prev) return [msg];
+                if (prev.some((m) => m.id === msg.id)) return prev;
+                return [...prev, msg];
+              });
+            }
+
+            queryClient.invalidateQueries({ queryKey });
+            queryClient.invalidateQueries({ queryKey: matchKeys.all });
+          },
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            queryClient.invalidateQueries({ queryKey });
           }
+        });
 
-          queryClient.invalidateQueries({ queryKey });
-          queryClient.invalidateQueries({ queryKey: matchKeys.all });
-        },
-      )
-      .subscribe();
+      channelRef.current = channel;
+    };
 
-    channelRef.current = channel;
+    void subscribe().catch((error) => {
+      console.warn("[realtime] direct messages subscription failed", error);
+    });
 
     return () => {
-      channel.unsubscribe();
+      active = false;
+      if (channelRef.current) {
+        void supabase.removeChannel(channelRef.current);
+      }
       channelRef.current = null;
     };
-  }, [matchId, queryClient]);
+  }, [accessToken, matchId, queryClient]);
 
   return query;
 };
@@ -673,11 +755,7 @@ export const useSendDirectMessageMutation = () => {
   const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
 
-  return useMutation<
-    DirectMessage,
-    Error,
-    { matchId: string; body: string }
-  >({
+  return useMutation<DirectMessage, Error, { matchId: string; body: string }>({
     mutationFn: async ({ matchId, body }) => {
       const senderId = session?.user?.id;
       if (!senderId) throw new Error("Not authenticated");

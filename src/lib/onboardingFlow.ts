@@ -1,3 +1,5 @@
+import { supabase } from "./supabase";
+
 export const ACTIVE_ONBOARDING_FLOW = [
   "OnboardingName",
   "OnboardingAge",
@@ -35,4 +37,40 @@ export const getOnboardingProgress = (screenName: string) => {
     value,
     label: `${value}%`,
   };
+};
+
+type OnboardingProfile = {
+  display_name?: unknown;
+  displayName?: unknown;
+  birth_date?: unknown;
+  birthDate?: unknown;
+} | null;
+
+export const isOnboardingComplete = (profile: OnboardingProfile) => {
+  if (!profile) return false;
+
+  const displayName = profile.display_name ?? profile.displayName;
+  const birthDate = profile.birth_date ?? profile.birthDate;
+
+  return (
+    typeof displayName === "string" &&
+    displayName.trim().length > 0 &&
+    typeof birthDate === "string" &&
+    birthDate.trim().length > 0
+  );
+};
+
+export const getPostAuthRoute = async (
+  userId: string,
+): Promise<"Tab" | "VibesOnboardingFlow"> => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("display_name, birth_date")
+    .eq("id", userId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return isOnboardingComplete(data) ? "Tab" : "VibesOnboardingFlow";
 };

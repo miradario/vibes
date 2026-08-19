@@ -11,7 +11,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { authKeys, useAuthSession } from "../src/auth/auth.queries";
 import { supabase } from "../src/lib/supabase";
-import { profileQueryOptions } from "../src/queries/profile.queries";
+import {
+  profileKeys,
+  profileQueryOptions,
+} from "../src/queries/profile.queries";
 import { userPreferencesQueryOptions } from "../src/queries/userPreferences.queries";
 import {
   challengesFeedQueryOptions,
@@ -26,6 +29,7 @@ import {
   type AppUpdateGateState,
 } from "../src/lib/appUpdateGate";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { isOnboardingComplete } from "../src/lib/onboardingFlow";
 
 const STARTUP_VISUAL_MS =
   (startupIllustrationConfig.drawDurationMs ?? 0) +
@@ -60,6 +64,7 @@ const Startup = () => {
   const [isReadyToExit, setIsReadyToExit] = useState(false);
   const [sessionLoadTimedOut, setSessionLoadTimedOut] = useState(false);
   const [forceWelcome, setForceWelcome] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [updateGateState, setUpdateGateState] =
     useState<AppUpdateGateState | null>(null);
 
@@ -129,7 +134,10 @@ const Startup = () => {
         }
       }
 
-      const startupTasks: Array<{ label: string; run: () => Promise<unknown> }> = [];
+      const startupTasks: Array<{
+        label: string;
+        run: () => Promise<unknown>;
+      }> = [];
 
       if (userId) {
         startupTasks.push(
@@ -139,7 +147,8 @@ const Startup = () => {
           },
           {
             label: "user preferences prefetch",
-            run: () => queryClient.prefetchQuery(userPreferencesQueryOptions(userId)),
+            run: () =>
+              queryClient.prefetchQuery(userPreferencesQueryOptions(userId)),
           },
           {
             label: "matches prefetch",
@@ -147,7 +156,8 @@ const Startup = () => {
           },
           {
             label: "event groups prefetch",
-            run: () => queryClient.prefetchQuery(myEventGroupsQueryOptions(userId)),
+            run: () =>
+              queryClient.prefetchQuery(myEventGroupsQueryOptions(userId)),
           },
           {
             label: "events feed prefetch",
@@ -155,7 +165,8 @@ const Startup = () => {
           },
           {
             label: "challenges feed prefetch",
-            run: () => queryClient.prefetchQuery(challengesFeedQueryOptions(userId)),
+            run: () =>
+              queryClient.prefetchQuery(challengesFeedQueryOptions(userId)),
           },
         );
       }
@@ -183,6 +194,19 @@ const Startup = () => {
         );
       } catch (error) {
         console.warn("[boot] startup prefetch timed out, continuing", error);
+      }
+
+      if (userId) {
+        const profileState = queryClient.getQueryState(
+          profileKeys.byUser(userId),
+        );
+        if (profileState?.status === "success") {
+          setNeedsOnboarding(
+            !isOnboardingComplete(
+              queryClient.getQueryData(profileKeys.byUser(userId)) as any,
+            ),
+          );
+        }
       }
 
       let nextUpdateGateState: AppUpdateGateState | null = null;
@@ -228,7 +252,13 @@ const Startup = () => {
     return () => {
       cancelled = true;
     };
-  }, [forceWelcome, isSessionLoading, queryClient, sessionLoadTimedOut, userId]);
+  }, [
+    forceWelcome,
+    isSessionLoading,
+    queryClient,
+    sessionLoadTimedOut,
+    userId,
+  ]);
 
   useEffect(() => {
     if (HOLD_ON_STARTUP) return;
@@ -248,7 +278,9 @@ const Startup = () => {
           routes: updateGateState
             ? [{ name: "UpdateGate", params: updateGateState }]
             : hasSession
-              ? [
+            ? needsOnboarding
+              ? [{ name: "VibesOnboardingFlow" }]
+              : [
                   {
                     name: "Tab",
                     params: {
@@ -257,7 +289,7 @@ const Startup = () => {
                     },
                   },
                 ]
-              : [{ name: "Welcome" }],
+            : [{ name: "Welcome" }],
         }),
       );
     }, 280);
@@ -265,7 +297,15 @@ const Startup = () => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [fadeOverlayOpacity, forceWelcome, isReadyToExit, navigation, updateGateState, userId]);
+  }, [
+    fadeOverlayOpacity,
+    forceWelcome,
+    isReadyToExit,
+    navigation,
+    needsOnboarding,
+    updateGateState,
+    userId,
+  ]);
 
   const contentStyle = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,
@@ -284,7 +324,9 @@ const Startup = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.glow, { backgroundColor: glowColor }, glowStyle]} />
+      <Animated.View
+        style={[styles.glow, { backgroundColor: glowColor }, glowStyle]}
+      />
       <Animated.View style={[styles.content, contentStyle]}>
         <View style={styles.illustrationWrap}>
           <AnimatedIllustration
@@ -297,7 +339,10 @@ const Startup = () => {
           Tu energía se está ordenando para abrirte el camino correcto.
         </Text>
       </Animated.View>
-      <Animated.View pointerEvents="none" style={[styles.fadeOverlay, fadeOverlayStyle]} />
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.fadeOverlay, fadeOverlayStyle]}
+      />
     </View>
   );
 };

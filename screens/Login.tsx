@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { ResizeMode } from "expo-av";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
@@ -27,6 +27,7 @@ import LoopingVideo from "../components/LoopingVideo";
 import CustomDialog from "../components/CustomDialog";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { getPostAuthRoute } from "../src/lib/onboardingFlow";
 
 const isUnknownUserError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error ?? "");
@@ -84,7 +85,13 @@ const Login = () => {
     try {
       const session = await googleLoginMutation.mutateAsync();
       if (session?.user?.id) {
-        navigation.navigate("Tab" as never);
+        const routeName = await getPostAuthRoute(session.user.id);
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: routeName as never }],
+          }),
+        );
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : t("login.googleFailed");
@@ -139,7 +146,11 @@ const Login = () => {
           contentContainerStyle={localStyles.formScrollContent}
         >
           <View style={styles.loginCard}>
-            <VibesHeader title={t("login.header")} subtitle="" style={localStyles.header} />
+            <VibesHeader
+              title={t("login.header")}
+              subtitle=""
+              style={localStyles.header}
+            />
             <Text style={styles.loginTitle}>{t("login.title")}</Text>
             <Text style={styles.loginSubtitle}>{t("login.subtitle")}</Text>
 
