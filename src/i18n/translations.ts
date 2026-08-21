@@ -214,7 +214,7 @@ const baseTranslations = {
         button: "Siguiente",
         namePlaceholder: "Tu nombre",
         descriptionPlaceholder: "Una breve descripción sobre ti",
-        agePlaceholder: "Edad",
+        birthDatePlaceholder: "Fecha de nacimiento",
         years: "años",
       },
       practices: {
@@ -711,7 +711,7 @@ const baseTranslations = {
         button: "Next",
         namePlaceholder: "Your name",
         descriptionPlaceholder: "A brief description about you",
-        agePlaceholder: "Age",
+        birthDatePlaceholder: "Birth date",
         years: "years old",
       },
       practices: {

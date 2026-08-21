@@ -4,11 +4,15 @@ import {
   Animated,
   Easing,
   Modal,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import Icon from "../../../components/Icon";
 import SpiritualPathDetailsModal from "../../../components/SpiritualPathDetailsModal";
@@ -20,6 +24,11 @@ import ProgressHeader from "../../../components/onboarding/ProgressHeader";
 import SelectablePill from "../../../components/onboarding/SelectablePill";
 import { useAuthSession } from "../../auth/auth.queries";
 import type { SpiritualPathDetails } from "../../lib/spiritualPaths";
+import {
+  calculateAge,
+  formatBirthDate,
+  parseBirthDate,
+} from "../../lib/birthDate";
 import {
   normalizeSpiritualPathDetail,
   normalizeSpiritualPathDetails,
@@ -86,16 +95,6 @@ const buildProfileAboutMe = (
   [briefDescription.trim(), buildAboutMe(purposeIds, energyIds)]
     .filter(Boolean)
     .join(" ");
-
-const normalizeAgeInput = (value: string) =>
-  value.replace(/\D/g, "").slice(0, 2);
-
-const getApproximateBirthDateFromAge = (ageValue: string) => {
-  const age = Number.parseInt(ageValue, 10);
-  if (!Number.isFinite(age) || age < MIN_AGE || age > MAX_AGE) return "";
-  const now = new Date();
-  return `${now.getFullYear() - age}-01-01`;
-};
 
 const getOptionLabels = (
   selectedIds: string[],
@@ -240,7 +239,10 @@ const VibesOnboardingFlow = () => {
   const [briefDescription, setBriefDescription] = useState(
     draft.briefDescription ?? "",
   );
-  const [age, setAge] = useState(draft.age ?? "");
+  const [birthDate, setBirthDate] = useState<Date | null>(() =>
+    parseBirthDate(draft.birthDate),
+  );
+  const [showBirthDatePicker, setShowBirthDatePicker] = useState(false);
   const [photoUri, setPhotoUri] = useState(draft.primaryPhotoUri ?? "");
   const [selectedPractices, setSelectedPractices] = useState<string[]>(
     draft.spiritualPath ?? [],
@@ -252,6 +254,22 @@ const VibesOnboardingFlow = () => {
   const [customPracticeModalVisible, setCustomPracticeModalVisible] = useState(false);
   const [customPracticeName, setCustomPracticeName] = useState("");
   const [aiCompletionSummary, setAiCompletionSummary] = useState<string | null>(null);
+
+  const age = birthDate ? String(calculateAge(birthDate)) : "";
+  const birthDateLimits = useMemo(() => {
+    const today = new Date();
+    const maximumDate = new Date(
+      today.getFullYear() - MIN_AGE,
+      today.getMonth(),
+      today.getDate(),
+    );
+    const minimumDate = new Date(
+      today.getFullYear() - MAX_AGE - 1,
+      today.getMonth(),
+      today.getDate() + 1,
+    );
+    return { minimumDate, maximumDate };
+  }, []);
 
   const step = VIBES_ONBOARDING_STEPS[stepIndex];
   const copy = {
@@ -379,7 +397,7 @@ const VibesOnboardingFlow = () => {
       briefDescription,
       age,
       ageRange: age,
-      birthDate: getApproximateBirthDateFromAge(age),
+      birthDate: birthDate ? formatBirthDate(birthDate) : "",
       spiritualPath: selectedPractices,
       spiritualPathDetails: practiceDetails,
       aboutMe: buildProfileAboutMe(briefDescription, purposeIds, energyIds),
@@ -396,6 +414,7 @@ const VibesOnboardingFlow = () => {
     }),
     [
       age,
+      birthDate,
       briefDescription,
       displayName,
       draft,
@@ -412,8 +431,9 @@ const VibesOnboardingFlow = () => {
     (step === "energy" && energyIds.length > 0) ||
     (step === "profile" &&
       Boolean(displayName.trim()) &&
-      Number.parseInt(age, 10) >= MIN_AGE &&
-      Number.parseInt(age, 10) <= MAX_AGE) ||
+      Boolean(birthDate) &&
+      Number(age) >= MIN_AGE &&
+      Number(age) <= MAX_AGE) ||
     step === "practices" ||
     step === "completion";
 
@@ -432,6 +452,11 @@ const VibesOnboardingFlow = () => {
       return;
     }
     setStepIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleBirthDateChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === "android") setShowBirthDatePicker(false);
+    if (date) setBirthDate(date);
   };
 
   const goNext = async () => {
@@ -648,23 +673,38 @@ const VibesOnboardingFlow = () => {
             />
           </View>
 
-          <View style={onboardingStyles.inputRow}>
+          <TouchableOpacity
+            style={onboardingStyles.inputRow}
+            activeOpacity={0.7}
+            onPress={() => setShowBirthDatePicker(true)}
+          >
             <Icon name="calendar-outline" size={20} color={ONBOARDING_COLORS.mustard} />
-            <TextInput
-              style={onboardingStyles.input}
-              placeholder={t("vibesOnboarding.profile.agePlaceholder")}
-              placeholderTextColor="rgba(110, 110, 110, 0.55)"
-              value={age}
-              onChangeText={(value) => setAge(normalizeAgeInput(value))}
-              keyboardType="number-pad"
-              maxLength={2}
-            />
+            <Text
+              style={[
+                onboardingStyles.ageValue,
+                !birthDate && { color: "rgba(110, 110, 110, 0.55)" },
+              ]}
+            >
+              {birthDate
+                ? birthDate.toLocaleDateString(locale === "en" ? "en-US" : "es-AR")
+                : t("vibesOnboarding.profile.birthDatePlaceholder")}
+            </Text>
             {age ? (
               <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: 8 }]}>
-                {t("vibesOnboarding.profile.years")}
+                {age} {t("vibesOnboarding.profile.years")}
               </Text>
             ) : null}
-          </View>
+          </TouchableOpacity>
+          {showBirthDatePicker ? (
+            <DateTimePicker
+              value={birthDate ?? birthDateLimits.maximumDate}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              minimumDate={birthDateLimits.minimumDate}
+              maximumDate={birthDateLimits.maximumDate}
+              onChange={handleBirthDateChange}
+            />
+          ) : null}
         </View>
       </View>
     </>

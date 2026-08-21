@@ -18,17 +18,20 @@ import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
+import {
+  calculateAge,
+  formatBirthDate,
+  parseBirthDate,
+} from "../src/lib/birthDate";
 
 const OnboardingAge = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
   const [showPicker, setShowPicker] = useState(Platform.OS === "ios");
-  const [birthDate, setBirthDate] = useState<Date | null>(() => {
-    if (!draft.birthDate) return null;
-    const parsed = new Date(draft.birthDate);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  });
+  const [birthDate, setBirthDate] = useState<Date | null>(() =>
+    parseBirthDate(draft.birthDate),
+  );
 
   const maxDate = useMemo(() => {
     const today = new Date();
@@ -39,22 +42,7 @@ const OnboardingAge = () => {
     );
   }, []);
 
-  const formatDate = (date: Date) => date.toISOString().split("T")[0];
-
-  const getAge = (date: Date) => {
-    const today = new Date();
-    let age = today.getFullYear() - date.getFullYear();
-    const monthDiff = today.getMonth() - date.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < date.getDate())
-    ) {
-      age -= 1;
-    }
-    return age;
-  };
-
-  const isValidAge = birthDate ? getAge(birthDate) >= 18 : false;
+  const isValidAge = birthDate ? calculateAge(birthDate) >= 18 : false;
   const showUnderageError = birthDate ? !isValidAge : false;
 
   const handleChange = (_event: DateTimePickerEvent, date?: Date) => {
@@ -83,7 +71,7 @@ const OnboardingAge = () => {
             activeOpacity={0.7}
           >
             <Text style={{ color: birthDate ? DARK_GRAY : "#6E6E6E" }}>
-              {birthDate ? formatDate(birthDate) : t("onboarding.agePlaceholder")}
+              {birthDate ? formatBirthDate(birthDate) : t("onboarding.agePlaceholder")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -115,7 +103,7 @@ const OnboardingAge = () => {
             disabled={!isValidAge}
             onPress={() => {
               if (!birthDate || !isValidAge) return;
-              updateDraft({ birthDate: formatDate(birthDate) });
+              updateDraft({ birthDate: formatBirthDate(birthDate) });
               navigation.navigate("OnboardingPhoto" as never);
             }}
           >

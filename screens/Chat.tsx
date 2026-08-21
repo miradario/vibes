@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import { Icon } from "../components";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
@@ -316,12 +317,8 @@ const Chat = () => {
           <Text style={styles.chatName}>
             {(() => {
               const name = profile?.display_name || profile?.name || otherUserName || "Chat";
-              let age = "";
-              if (profile?.birth_date) {
-                const birthYear = new Date(profile.birth_date).getFullYear();
-                const thisYear = new Date().getFullYear();
-                age = String(thisYear - birthYear);
-              }
+              const calculatedAge = calculateAgeFromBirthDate(profile?.birth_date);
+              const age = calculatedAge === null ? "" : String(calculatedAge);
               return age ? `${name}, ${age}` : name;
             })()}
           </Text>

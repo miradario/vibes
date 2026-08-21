@@ -54,8 +54,6 @@ type MessagesContentProps = {
   contentBottomPadding?: number;
 };
 
-const MATCH_CONNECTION_DEADLINE_HOUR = 6;
-
 const formatTime = (iso: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -76,30 +74,6 @@ const formatTime = (iso: string | null) => {
   }
   return d.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
 };
-
-const getMatchDeadlineTimestamp = (createdAt: string) => {
-  const createdDate = new Date(createdAt);
-  if (Number.isNaN(createdDate.getTime())) return 0;
-
-  const deadline = new Date(
-    createdDate.getFullYear(),
-    createdDate.getMonth(),
-    createdDate.getDate(),
-    MATCH_CONNECTION_DEADLINE_HOUR,
-    0,
-    0,
-    0
-  );
-
-  if (createdDate.getTime() >= deadline.getTime()) {
-    deadline.setDate(deadline.getDate() + 1);
-  }
-
-  return deadline.getTime();
-};
-
-const isBeforeMatchDeadline = (match: MatchWithProfile, now: number) =>
-  getMatchDeadlineTimestamp(match.createdAt) > now;
 
 const getArchiveStorageKey = (userId?: string) =>
   `vibes:archived-chats:${userId ?? "guest"}`;
@@ -187,7 +161,6 @@ export const MessagesContent = ({
     useState<ConnectionsSheet>(null);
   const [groupsCollapsed, setGroupsCollapsed] = useState(false);
   const [archivedKeys, setArchivedKeys] = useState<string[]>([]);
-  const [nowTimestamp, setNowTimestamp] = useState(() => Date.now());
   const { data: selectedIncomingProfile } = useProfileQuery(
     selectedIncomingLike?.likerUserId
   );
@@ -196,9 +169,7 @@ export const MessagesContent = ({
   );
 
   const withMessages = (matches ?? []).filter((m) => m.lastMessage);
-  const newConnections = (matches ?? []).filter(
-    (m) => !m.lastMessage && isBeforeMatchDeadline(m, nowTimestamp)
-  );
+  const newConnections = (matches ?? []).filter((m) => !m.lastMessage);
   const topConnections: NewConnectionItem[] = newConnections.map((item) => ({
     type: "match" as const,
     item,
@@ -250,14 +221,6 @@ export const MessagesContent = ({
       active = false;
     };
   }, [userId]);
-
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setNowTimestamp(Date.now());
-    }, 60_000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const persistArchivedKeys = async (nextKeys: string[]) => {
     setArchivedKeys(nextKeys);

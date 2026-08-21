@@ -40,6 +40,7 @@ import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import VibesLoader from "../components/VibesLoader";
 
 type DiscoverFiltersState = {
@@ -86,21 +87,8 @@ const parseAge = (value: unknown) => {
 
   if (typeof value !== "string" || !value.trim()) return null;
 
-  const birthDate = new Date(value);
-  if (Number.isNaN(birthDate.getTime())) return null;
-
-  const now = new Date();
-  let age = now.getFullYear() - birthDate.getFullYear();
-  const hasHadBirthdayThisYear =
-    now.getMonth() > birthDate.getMonth() ||
-    (now.getMonth() === birthDate.getMonth() &&
-      now.getDate() >= birthDate.getDate());
-
-  if (!hasHadBirthdayThisYear) {
-    age -= 1;
-  }
-
-  return age > 0 ? age : null;
+  const age = calculateAgeFromBirthDate(value);
+  return age && age > 0 ? age : null;
 };
 
 const clampAge = (value: number) =>

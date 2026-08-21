@@ -10,6 +10,7 @@ import {
   type SpiritualPathDetails,
 } from "./spiritualPaths";
 import FALLBACK_PROFILE_IMAGE from "../../assets/icon.png";
+import { calculateAgeFromBirthDate } from "./birthDate";
 
 
 
@@ -84,19 +85,8 @@ const toAge = (value: unknown): string | undefined => {
       return String(Math.floor(numericValue));
     }
 
-    const birthDate = new Date(trimmedValue);
-    if (!Number.isNaN(birthDate.getTime())) {
-      const now = new Date();
-      let age = now.getFullYear() - birthDate.getFullYear();
-      const monthDiff = now.getMonth() - birthDate.getMonth();
-      const hadBirthday =
-        monthDiff > 0 ||
-        (monthDiff === 0 && now.getDate() >= birthDate.getDate());
-
-      if (!hadBirthday) age -= 1;
-
-      return age > 0 ? String(age) : undefined;
-    }
+    const age = calculateAgeFromBirthDate(trimmedValue);
+    if (age && age > 0) return String(age);
   }
 
   if (value instanceof Date && !Number.isNaN(value.getTime())) {

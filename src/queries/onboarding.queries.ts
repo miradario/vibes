@@ -277,6 +277,33 @@ const upsertProfileWithFallback = async (payload: Record<string, unknown>) => {
   }
 };
 
+const updateProfileWithFallback = async (
+  userId: string,
+  payload: Record<string, unknown>,
+) => {
+  const workingPayload: Record<string, unknown> = { ...payload };
+
+  while (Object.keys(workingPayload).length > 0) {
+    const { error } = await supabase
+      .from("profiles")
+      .update(workingPayload)
+      .eq("id", userId);
+
+    if (!error) return;
+
+    if (error.code === "PGRST204") {
+      const match = error.message.match(/'([^']+)' column/);
+      const missingColumn = match?.[1];
+      if (missingColumn && missingColumn in workingPayload) {
+        delete workingPayload[missingColumn];
+        continue;
+      }
+    }
+
+    throw error;
+  }
+};
+
 export const useCompleteOnboardingMutation = () => {
   const queryClient = useQueryClient();
 
@@ -323,8 +350,7 @@ export const useCompleteOnboardingMutation = () => {
 
         if (uploadedPhotoPaths.length) {
           await runOnboardingStep("Fotos del perfil", () =>
-            upsertProfileWithFallback({
-              id: userId,
+            updateProfileWithFallback(userId, {
               photos: uploadedPhotoPaths,
             }),
           );

@@ -955,7 +955,13 @@ const Home = () => {
               onPress={() => navigation.navigate("Aura" as never)}
               style={localStyles.heroAvatarButton}
             >
-              <Ionicons name="person-outline" size={30} color="#2B2B2B" />
+              <Avatar
+                uri={centerProfile.avatarUri ?? null}
+                size={58}
+                iconSize={30}
+                fallbackBackgroundColor="#FFFFFF"
+                fallbackIconColor="#2B2B2B"
+              />
             </TouchableOpacity>
           </View>
 
