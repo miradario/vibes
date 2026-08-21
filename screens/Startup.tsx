@@ -139,7 +139,7 @@ const Startup = () => {
         run: () => Promise<unknown>;
       }> = [];
 
-      if (userId) {
+      if (userId && !cancelled) {
         startupTasks.push(
           {
             label: "profile prefetch",
@@ -203,7 +203,7 @@ const Startup = () => {
         if (profileState?.status === "success") {
           setNeedsOnboarding(
             !isOnboardingComplete(
-              queryClient.getQueryData(profileKeys.byUser(userId)) as any,
+              queryClient.getQueryData(profileKeys.byUser(userId)),
             ),
           );
         }

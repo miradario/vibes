@@ -44,13 +44,16 @@ type OnboardingProfile = {
   displayName?: unknown;
   birth_date?: unknown;
   birthDate?: unknown;
-} | null;
+};
 
-export const isOnboardingComplete = (profile: OnboardingProfile) => {
-  if (!profile) return false;
+export const isOnboardingComplete = (profile: unknown) => {
+  if (!profile || typeof profile !== "object") return false;
 
-  const displayName = profile.display_name ?? profile.displayName;
-  const birthDate = profile.birth_date ?? profile.birthDate;
+  const onboardingProfile = profile as OnboardingProfile;
+
+  const displayName =
+    onboardingProfile.display_name ?? onboardingProfile.displayName;
+  const birthDate = onboardingProfile.birth_date ?? onboardingProfile.birthDate;
 
   return (
     typeof displayName === "string" &&

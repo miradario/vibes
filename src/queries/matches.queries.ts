@@ -463,6 +463,8 @@ export const useIncomingLikesQuery = () => {
     queryFn: () => fetchIncomingLikes(userId!),
     enabled: Boolean(userId),
     staleTime: 30_000,
+    refetchInterval: userId ? 10_000 : (false as const),
+    refetchIntervalInBackground: true,
   });
 
   useEffect(() => {

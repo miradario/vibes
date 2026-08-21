@@ -12,6 +12,7 @@ import {
 } from "../src/lib/appUpdateGate";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { getPostAuthRoute } from "../src/lib/onboardingFlow";
 
 type UpdateGateRoute = {
   key: string;
@@ -45,22 +46,25 @@ const UpdateGate = () => {
     });
   }, [currentVersion, isForce, t, targetVersion]);
 
-  const continueIntoApp = () => {
-    const hasSession = Boolean(session?.user?.id);
+  const continueIntoApp = async () => {
+    const userId = session?.user?.id;
+    const routeName = userId ? await getPostAuthRoute(userId) : "Welcome";
+
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: hasSession
-          ? [
-              {
-                name: "Tab",
-                params: {
-                  screen: "Home",
-                  params: { startupFadeIn: true },
+        routes:
+          routeName === "Tab"
+            ? [
+                {
+                  name: "Tab",
+                  params: {
+                    screen: "Home",
+                    params: { startupFadeIn: true },
+                  },
                 },
-              },
-            ]
-          : [{ name: "Welcome" }],
+              ]
+            : [{ name: routeName }],
       }),
     );
   };
@@ -73,7 +77,7 @@ const UpdateGate = () => {
     if (targetVersion) {
       await dismissSuggestedUpdate(targetVersion);
     }
-    continueIntoApp();
+    await continueIntoApp();
   };
 
   return (

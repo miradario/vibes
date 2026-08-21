@@ -409,6 +409,7 @@ const baseTranslations = {
         "Empezá una conversación con una de tus nuevas conexiones.",
       noDirectHint:
         "Todavía no hay mensajes directos. Empezá una conversación.",
+      emptyCommunity: "Comenza a conectar con la comunidad",
     },
     events: {
       challenges: "Desafíos",
@@ -904,6 +905,7 @@ const baseTranslations = {
         "Swipe right on someone you vibe with to start a conversation.",
       noMessagesBody: "Start a conversation with one of your new connections.",
       noDirectHint: "No direct messages yet. Start a conversation.",
+      emptyCommunity: "Start connecting with the community",
     },
     events: {
       challenges: "Challenges",

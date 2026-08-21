@@ -694,6 +694,13 @@ export const MessagesContent = ({
   const hasFinishedChallenges = finishedChallengeGroups.length > 0;
   const hasFinishedEvents = finishedEventGroups.length > 0;
   const hasArchivedChats = archivedChats.length > 0;
+  const hasAnyContent =
+    hasConnectionsSection ||
+    hasDirectMessages ||
+    hasActiveGroups ||
+    hasFinishedChallenges ||
+    hasFinishedEvents ||
+    hasArchivedChats;
 
   return (
     <View style={styles.bg}>
@@ -842,6 +849,14 @@ export const MessagesContent = ({
         !hasActiveGroups ? (
           <View style={localStyles.loadingWrap}>
             <VibesLoader size={62} />
+          </View>
+        ) : null}
+
+        {!loading && !hasAnyContent ? (
+          <View style={localStyles.emptyState}>
+            <Text style={localStyles.emptyStateText}>
+              {t("messages.emptyCommunity")}
+            </Text>
           </View>
         ) : null}
       </ScrollView>
@@ -1081,6 +1096,19 @@ const localStyles = StyleSheet.create({
     paddingVertical: 22,
     color: "#7B746C",
     fontSize: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  emptyState: {
+    minHeight: 280,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyStateText: {
+    color: "#7B746C",
+    fontSize: 20,
+    lineHeight: 27,
+    textAlign: "center",
     fontFamily: vibesTheme.fonts.medium,
   },
   sectionHeader: {
