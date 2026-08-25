@@ -18,6 +18,7 @@ import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import ProfileMediaImage from "../components/ProfileMediaImage";
 import styles, { BG_MAIN, DARK_GRAY, TEXT_PRIMARY } from "../assets/styles";
 import UserProfileSheet from "../components/UserProfileSheet";
+import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import {
   useMatchesQuery,
   useIncomingLikesQuery,
@@ -676,7 +677,7 @@ export const MessagesContent = ({
               contentTopPadding ??
               (showHeader ? Math.max(insets.top + 18, 46) : 8),
             paddingBottom:
-              contentBottomPadding ?? Math.max(insets.bottom + 90, 118),
+              contentBottomPadding ?? getBottomTabContentPadding(insets.bottom, 118),
           },
         ]}
       >

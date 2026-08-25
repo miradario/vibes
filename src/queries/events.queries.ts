@@ -1306,8 +1306,9 @@ export const useCreateChallengeMutation = () => {
 
       return mapChallengeRow(data);
     },
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
       queryClient.invalidateQueries({ queryKey: challengesKeys.all });
+      queryClient.invalidateQueries({ queryKey: myEventGroupsKeys.all(input.createdBy) });
     },
   });
 };

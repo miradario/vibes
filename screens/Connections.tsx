@@ -11,6 +11,7 @@ import {
   type DiscoverContentHandle,
 } from "./Discover";
 import { useI18n } from "../src/i18n";
+import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type ConnectionSection = "chat" | "discover";
@@ -90,7 +91,7 @@ const Connections = () => {
           <MessagesContent
             showHeader={false}
             contentTopPadding={10}
-            contentBottomPadding={Math.max(insets.bottom + 90, 118)}
+            contentBottomPadding={getBottomTabContentPadding(insets.bottom, 118)}
           />
         </View>
 
@@ -98,7 +99,7 @@ const Connections = () => {
           pointerEvents={activeSection === "discover" ? "auto" : "none"}
           style={[
             localStyles.pane,
-            { paddingBottom: Math.max(insets.bottom + 90, 118) },
+            { paddingBottom: getBottomTabContentPadding(insets.bottom, 118) },
             activeSection === "discover"
               ? localStyles.visiblePane
               : localStyles.hiddenPane,

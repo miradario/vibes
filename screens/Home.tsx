@@ -15,7 +15,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import Animated, {
@@ -49,6 +49,7 @@ import {
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
@@ -269,6 +270,7 @@ const readStoredFilters = (
 });
 
 const Home = () => {
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -931,7 +933,10 @@ const Home = () => {
 
         <ScrollView
           style={localStyles.homeScroll}
-          contentContainerStyle={localStyles.homeContent}
+          contentContainerStyle={[
+            localStyles.homeContent,
+            { paddingBottom: getBottomTabContentPadding(insets.bottom, 118) },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           <View style={localStyles.heroHeader}>

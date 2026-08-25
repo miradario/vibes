@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,16 @@ import {
   TextInput,
   StyleSheet,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 import AvatarGroup from "../components/AvatarGroup";
 import VibesLoader from "../components/VibesLoader";
 import {
+  challengesKeys,
+  myEventGroupsKeys,
   useChallengesFeedQuery,
   useEventsFeedQuery,
   useMyEventGroupsQuery,
@@ -26,6 +30,7 @@ import {
   getChallengeStartsInLabel,
   getChallengeTimeline,
 } from "../src/lib/challengeTimeline";
+import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
 
@@ -136,6 +141,8 @@ const ParticipantStack = ({
 const Events = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
+  const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
   const { t } = useI18n();
   const { data: session } = useAuthSession();
   const section: "event" | "challenge" =
@@ -289,7 +296,7 @@ const Events = () => {
       nextItems.push({
         kind: "section",
         id: "general-challenges",
-        title: "Desafíos generales",
+        title: "Desafíos vigentes",
         subtitle: "Explorá nuevas prácticas para sumarte",
       });
       nextItems.push(
@@ -338,6 +345,24 @@ const Events = () => {
   const listIsLoading =
     isLoading || (section === "challenge" && Boolean(session?.user?.id) && myEventGroupsLoading);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (section !== "challenge") return;
+
+      void queryClient.refetchQueries({
+        queryKey: challengesKeys.all,
+        type: "active",
+      });
+
+      if (session?.user?.id) {
+        void queryClient.refetchQueries({
+          queryKey: myEventGroupsKeys.all(session.user.id),
+          type: "active",
+        });
+      }
+    }, [queryClient, section, session?.user?.id]),
+  );
+
   return (
     <View style={styles.bg}>
       <View style={styles.eventsContainer}>
@@ -383,7 +408,10 @@ const Events = () => {
         <FlatList
           data={listIsLoading ? [] : listItems}
           keyExtractor={(item) => (item.kind === "section" ? item.id : item.item.id)}
-          contentContainerStyle={styles.eventsListContent}
+          contentContainerStyle={[
+            styles.eventsListContent,
+            { paddingBottom: getBottomTabContentPadding(insets.bottom, 100) },
+          ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
@@ -866,8 +894,6 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(43, 43, 43, 0.08)",
     paddingHorizontal: 18,
     paddingVertical: 14,
-    marginTop: 4,
-    marginBottom: 18,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

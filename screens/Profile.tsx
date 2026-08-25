@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
@@ -19,12 +20,14 @@ import {
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
+import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { useI18n } from "../src/i18n";
 import VibesLoader from "../components/VibesLoader";
 
 const Profile = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
@@ -91,6 +94,7 @@ const Profile = () => {
     <View style={styles.bg}>
       <ScrollView
         style={styles.containerProfile}
+        contentContainerStyle={{ paddingBottom: getBottomTabContentPadding(insets.bottom, 48) }}
         showsVerticalScrollIndicator={false}
       >
         <AppHeader
