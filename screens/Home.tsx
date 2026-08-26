@@ -19,9 +19,12 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
+  withSequence,
   withTiming,
 } from "react-native-reanimated";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
@@ -74,6 +77,50 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
 };
 
 let hasPlayedHomeEntryFade = false;
+
+const VibesBreathingMark = () => {
+  const breathProgress = useSharedValue(0);
+
+  useEffect(() => {
+    breathProgress.value = withRepeat(
+      withSequence(
+        withTiming(1, {
+          duration: 2600,
+          easing: Easing.inOut(Easing.sin),
+        }),
+        withTiming(0, {
+          duration: 2600,
+          easing: Easing.inOut(Easing.sin),
+        }),
+      ),
+      -1,
+      false,
+    );
+
+    return () => cancelAnimation(breathProgress);
+  }, [breathProgress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: 0.72 + breathProgress.value * 0.28,
+    transform: [{ scale: 0.9 + breathProgress.value * 0.12 }],
+  }));
+
+  const outerRingStyle = useAnimatedStyle(() => ({
+    opacity: 0.16 + breathProgress.value * 0.16,
+    transform: [{ scale: 0.82 + breathProgress.value * 0.34 }],
+  }));
+
+  return (
+    <View style={localStyles.vibesBreathingWrap} pointerEvents="none">
+      <Animated.View
+        style={[localStyles.vibesBreathingOuterRing, outerRingStyle]}
+      />
+      <Animated.View style={[localStyles.vibesBreathingOrb, animatedStyle]}>
+        <Text style={localStyles.vibesBreathingText}>Vibes</Text>
+      </Animated.View>
+    </View>
+  );
+};
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -1100,6 +1147,7 @@ const Home = () => {
                 style={localStyles.guruFeatureBackground}
               >
                 <View style={localStyles.featureScrim} />
+                <VibesBreathingMark />
                 <View style={localStyles.guruBadgeRow}>
                   <View style={localStyles.guruFeatureBadge}>
                     <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
@@ -1385,6 +1433,44 @@ const localStyles = StyleSheet.create({
   featureScrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(255, 244, 228, 0.28)",
+  },
+  vibesBreathingWrap: {
+    position: "absolute",
+    top: 48,
+    right: 22,
+    width: 104,
+    height: 104,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vibesBreathingOuterRing: {
+    position: "absolute",
+    width: 98,
+    height: 98,
+    borderRadius: 49,
+    backgroundColor: "#F0C879",
+  },
+  vibesBreathingOrb: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 249, 240, 0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(154, 107, 32, 0.2)",
+    shadowColor: "#9A6B20",
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
+  },
+  vibesBreathingText: {
+    color: "#8A5F1C",
+    fontSize: 17,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.medium,
+    letterSpacing: 0.3,
   },
   guruBadgeRow: {
     flexDirection: "row",

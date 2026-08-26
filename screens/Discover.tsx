@@ -46,6 +46,7 @@ import VibesLoader from "../components/VibesLoader";
 import { showToast } from "../src/utils/toast";
 
 type DiscoverGender = "woman" | "man" | "other";
+type DiscoverDiet = "vegetarian" | "nonVegetarian" | "other";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -53,6 +54,7 @@ type DiscoverFiltersState = {
   distanceMinKm: number | null;
   maxDistanceKm: number | null;
   genders: DiscoverGender[];
+  diets: DiscoverDiet[];
   smoking: "all" | "no" | "occasionally" | "yes";
 };
 
@@ -62,6 +64,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   distanceMinKm: null,
   maxDistanceKm: null,
   genders: [],
+  diets: [],
   smoking: "all",
 };
 
@@ -159,6 +162,24 @@ const normalizeGender = (
   return "unknown";
 };
 
+const normalizeDiet = (value: unknown): DiscoverDiet | "unknown" => {
+  if (typeof value !== "string" || !value.trim()) return "unknown";
+
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (["si", "yes", "vegetarian", "vegetariano", "vegetariana"].includes(normalized)) {
+    return "vegetarian";
+  }
+  if (["no", "non-vegetarian", "no vegetariano", "no vegetariana"].includes(normalized)) {
+    return "nonVegetarian";
+  }
+  return "other";
+};
+
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
 const getDistanceKm = (
@@ -227,6 +248,8 @@ const areFiltersEqual = (
   left.maxDistanceKm === right.maxDistanceKm &&
   left.genders.length === right.genders.length &&
   left.genders.every((gender) => right.genders.includes(gender)) &&
+  left.diets.length === right.diets.length &&
+  left.diets.every((diet) => right.diets.includes(diet)) &&
   left.smoking === right.smoking;
 
 const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFiltersState => ({
@@ -259,6 +282,14 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
       preferences?.discoverGenderId ?? preferences?.discover_gender_id,
     );
     return storedGender === "unknown" ? [] : [storedGender];
+  })(),
+  diets: (() => {
+    const storedDiets =
+      preferences?.discoverDiets ?? preferences?.discover_diets;
+    if (!Array.isArray(storedDiets)) return [];
+    return storedDiets.filter((value): value is DiscoverDiet =>
+      ["vegetarian", "nonVegetarian", "other"].includes(String(value)),
+    );
   })(),
   smoking: normalizeSmoking(
     preferences?.discoverSmoking ?? preferences?.discover_smoking,
@@ -336,6 +367,7 @@ export const DiscoverContent = forwardRef<
           candidateRecord.age ?? candidateRecord.birthDate ?? candidateRecord.birth_date,
         );
         const candidateSmoking = normalizeSmoking(candidateRecord.smoking);
+        const candidateDiet = normalizeDiet(candidateRecord.vegetarian);
         const candidateGender = normalizeGender(
           candidateRecord.gender ??
             candidateRecord.genderLabel ??
@@ -377,6 +409,14 @@ export const DiscoverContent = forwardRef<
         if (
           discoverFilters.smoking !== "all" &&
           candidateSmoking !== discoverFilters.smoking
+        ) {
+          return false;
+        }
+
+        if (
+          discoverFilters.diets.length > 0 &&
+          (candidateDiet === "unknown" ||
+            !discoverFilters.diets.includes(candidateDiet))
         ) {
           return false;
         }
@@ -459,6 +499,7 @@ export const DiscoverContent = forwardRef<
           (discoverFilters.distanceMinKm !== null ||
             discoverFilters.maxDistanceKm !== null),
         discoverFilters.genders.length > 0,
+        discoverFilters.diets.length > 0,
         discoverFilters.smoking !== "all",
       ].filter(Boolean).length,
     [discoverFilters, hasLocation],
@@ -510,6 +551,7 @@ export const DiscoverContent = forwardRef<
             ? discoverFilters.genders[0]
             : "all",
         discover_gender_id: null,
+        discover_diets: discoverFilters.diets,
         discover_smoking: discoverFilters.smoking,
       }).catch((persistError) => {
         console.warn("discover_filters:persist_error", persistError);
@@ -838,6 +880,57 @@ export const DiscoverContent = forwardRef<
                           style={[
                             localStyles.filterPillText,
                             discoverFilters.genders.includes(option.value) &&
+                              localStyles.filterPillTextActive,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={localStyles.filtersSection}>
+                  {filterSectionTitle(t("discover.diet"))}
+                  <View style={localStyles.filtersPillRow}>
+                    {(
+                      [
+                        {
+                          value: "vegetarian",
+                          label: t("discover.dietVegetarian"),
+                        },
+                        {
+                          value: "nonVegetarian",
+                          label: t("discover.dietNonVegetarian"),
+                        },
+                        { value: "other", label: t("discover.dietOther") },
+                      ] as const
+                    ).map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          localStyles.filterPill,
+                          discoverFilters.diets.includes(option.value) &&
+                            localStyles.filterPillActive,
+                        ]}
+                        onPress={() =>
+                          setDiscoverFilters((prev) => {
+                            const selected = prev.diets.includes(option.value);
+                            return {
+                              ...prev,
+                              diets: selected
+                                ? prev.diets.filter(
+                                    (value) => value !== option.value,
+                                  )
+                                : [...prev.diets, option.value],
+                            };
+                          })
+                        }
+                      >
+                        <Text
+                          style={[
+                            localStyles.filterPillText,
+                            discoverFilters.diets.includes(option.value) &&
                               localStyles.filterPillTextActive,
                           ]}
                         >
