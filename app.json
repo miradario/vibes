@@ -14,7 +14,7 @@
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": true,
-      "buildNumber": "9",
+      "buildNumber": "13",
       "config": {
         "usesNonExemptEncryption": false
       },

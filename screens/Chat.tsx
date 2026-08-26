@@ -15,7 +15,11 @@ import {
   Pressable,
   StyleSheet,
 } from "react-native";
-import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
+import {
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import { Icon } from "../components";
@@ -23,7 +27,7 @@ import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import UserProfileSheet from "../components/UserProfileSheet";
-import styles, { DARK_GRAY } from "../assets/styles";
+import styles, { DARK_GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   useDirectMessagesQuery,
@@ -59,8 +63,13 @@ const Chat = () => {
 
   // Estado para mostrar CardItem modal
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const { data: session } = useAuthSession();
+  const myId = session?.user?.id;
   const { data: profile } = useProfileQuery(otherUserId);
+  const { data: myProfile } = useProfileQuery(myId);
   const { data: preferences } = useUserPreferencesQuery(otherUserId);
+  const otherUserAvatar = profile?.photos?.[0]?.url ?? otherUserPhoto ?? null;
+  const ownAvatar = myProfile?.photos?.[0]?.url ?? null;
   const profileCard = mapCandidateToConnectionProfile({
     id: otherUserId ?? matchId ?? "chat-user",
     displayName:
@@ -69,15 +78,10 @@ const Chat = () => {
       profile?.name ??
       otherUserName ??
       "Chat",
-    photos:
-      profile?.photos ??
-      (otherUserPhoto ? [otherUserPhoto] : []),
+    photos: profile?.photos ?? (otherUserPhoto ? [otherUserPhoto] : []),
     ...profile,
     ...(preferences ?? {}),
   });
-
-  const { data: session } = useAuthSession();
-  const myId = session?.user?.id;
 
   const { data: messages, isLoading } = useDirectMessagesQuery(matchId);
   const markReadMutation = useMarkDirectMessagesReadMutation();
@@ -106,7 +110,13 @@ const Chat = () => {
   }, [messages?.length]);
 
   useEffect(() => {
-    if (!isFocused || !matchId || !messages?.length || markReadMutation.isPending) return;
+    if (
+      !isFocused ||
+      !matchId ||
+      !messages?.length ||
+      markReadMutation.isPending
+    )
+      return;
 
     const latestMessage = messages[messages.length - 1];
     if (!latestMessage?.createdAt) return;
@@ -121,12 +131,15 @@ const Chat = () => {
   }, [isFocused, markReadMutation, matchId, messages]);
 
   useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", (event) => {
-      setKeyboardHeight(event.endCoordinates.height);
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 80);
-    });
+    const showSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 80);
+      }
+    );
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
       setKeyboardHeight(0);
     });
@@ -147,7 +160,7 @@ const Chat = () => {
         onError: (err) => {
           Alert.alert("Error", err.message || "No se pudo enviar el mensaje");
         },
-      },
+      }
     );
   };
 
@@ -182,12 +195,12 @@ const Chat = () => {
               onError: (err) =>
                 Alert.alert(
                   "Error",
-                  err.message || "No se pudo abandonar la conexión.",
+                  err.message || "No se pudo abandonar la conexión."
                 ),
             });
           },
         },
-      ],
+      ]
     );
   };
 
@@ -226,7 +239,7 @@ const Chat = () => {
               Alert.alert(
                 "Reporte enviado",
                 "Gracias por contarnos qué pasó. También quitamos esta conexión.",
-                [{ text: "OK", onPress: () => navigation.goBack() }],
+                [{ text: "OK", onPress: () => navigation.goBack() }]
               );
             },
             onError: (err) => {
@@ -234,14 +247,14 @@ const Chat = () => {
               Alert.alert(
                 "Reporte enviado",
                 err.message ||
-                  "El reporte fue enviado, pero no se pudo quitar la conexión.",
+                  "El reporte fue enviado, pero no se pudo quitar la conexión."
               );
             },
           });
         },
         onError: (err) =>
           Alert.alert("Error", err.message || "No se pudo enviar el reporte."),
-      },
+      }
     );
   };
 
@@ -257,12 +270,16 @@ const Chat = () => {
         activeOpacity={0.8}
         onLongPress={() => handleLongPress(item)}
         style={[
-          isOwn ? styles.chatBubbleRight : styles.chatBubbleLeft,
+          isOwn
+            ? localStyles.messageBubbleRight
+            : localStyles.messageBubbleLeft,
           localStyles.messageBubble,
         ]}
       >
         <Text
-          style={isOwn ? styles.chatBubbleTextRight : styles.chatBubbleTextLeft}
+          style={
+            isOwn ? localStyles.messageTextRight : localStyles.messageTextLeft
+          }
         >
           {item.text}
         </Text>
@@ -287,7 +304,7 @@ const Chat = () => {
           activeOpacity={0.85}
           onPress={() => setShowProfileModal(true)}
         >
-          <Avatar uri={otherUserPhoto} size={28} />
+          <Avatar uri={otherUserAvatar} size={28} />
         </TouchableOpacity>
         {bubble}
       </View>
@@ -300,7 +317,9 @@ const Chat = () => {
     <KeyboardAvoidingView
       style={styles.bg}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(insets.top + 8, 24) : 0}
+      keyboardVerticalOffset={
+        Platform.OS === "ios" ? Math.max(insets.top + 8, 24) : 0
+      }
     >
       <AppHeader
         showBack
@@ -312,12 +331,21 @@ const Chat = () => {
           </TouchableOpacity>
         }
       >
-        <TouchableOpacity style={styles.chatHeaderCenter} onPress={() => setShowProfileModal(true)}>
-          <Avatar uri={otherUserPhoto} size={32} />
+        <TouchableOpacity
+          style={styles.chatHeaderCenter}
+          onPress={() => setShowProfileModal(true)}
+        >
+          <Avatar uri={otherUserAvatar} size={32} />
           <Text style={styles.chatName}>
             {(() => {
-              const name = profile?.display_name || profile?.name || otherUserName || "Chat";
-              const calculatedAge = calculateAgeFromBirthDate(profile?.birth_date);
+              const name =
+                profile?.display_name ||
+                profile?.name ||
+                otherUserName ||
+                "Chat";
+              const calculatedAge = calculateAgeFromBirthDate(
+                profile?.birth_date
+              );
               const age = calculatedAge === null ? "" : String(calculatedAge);
               return age ? `${name}, ${age}` : name;
             })()}
@@ -372,71 +400,71 @@ const Chat = () => {
           { paddingBottom: Math.max(insets.bottom + 20, 30) },
         ]}
       >
-          <Pressable onPress={() => undefined}>
-            <Text style={localStyles.modalTitle}>¿Por qué querés reportar?</Text>
-            <Text style={localStyles.modalSubtitle}>
-              Tu reporte nos ayuda a cuidar la comunidad.
-            </Text>
+        <Pressable onPress={() => undefined}>
+          <Text style={localStyles.modalTitle}>¿Por qué querés reportar?</Text>
+          <Text style={localStyles.modalSubtitle}>
+            Tu reporte nos ayuda a cuidar la comunidad.
+          </Text>
 
-            {REPORT_REASONS.map((reason) => {
-              const selected = selectedReportReason === reason;
-              return (
-                <TouchableOpacity
-                  key={reason}
+          {REPORT_REASONS.map((reason) => {
+            const selected = selectedReportReason === reason;
+            return (
+              <TouchableOpacity
+                key={reason}
+                style={[
+                  localStyles.reasonRow,
+                  selected && localStyles.reasonRowSelected,
+                ]}
+                onPress={() => setSelectedReportReason(reason)}
+                activeOpacity={0.85}
+              >
+                <View
                   style={[
-                    localStyles.reasonRow,
-                    selected && localStyles.reasonRowSelected,
+                    localStyles.radio,
+                    selected && localStyles.radioSelected,
                   ]}
-                  onPress={() => setSelectedReportReason(reason)}
-                  activeOpacity={0.85}
                 >
-                  <View
-                    style={[
-                      localStyles.radio,
-                      selected && localStyles.radioSelected,
-                    ]}
-                  >
-                    {selected ? <View style={localStyles.radioDot} /> : null}
-                  </View>
-                  <Text style={localStyles.reasonText}>{reason}</Text>
-                </TouchableOpacity>
-              );
-            })}
+                  {selected ? <View style={localStyles.radioDot} /> : null}
+                </View>
+                <Text style={localStyles.reasonText}>{reason}</Text>
+              </TouchableOpacity>
+            );
+          })}
 
-            <TextInput
-              style={localStyles.reportInput}
-              placeholder="Contanos qué pasó..."
-              placeholderTextColor="#999"
-              value={reportDetails}
-              onChangeText={setReportDetails}
-              multiline
-              textAlignVertical="top"
-              maxLength={800}
-            />
+          <TextInput
+            style={localStyles.reportInput}
+            placeholder="Contanos qué pasó..."
+            placeholderTextColor="#999"
+            value={reportDetails}
+            onChangeText={setReportDetails}
+            multiline
+            textAlignVertical="top"
+            maxLength={800}
+          />
 
-            <TouchableOpacity
-              style={[
-                localStyles.reportButton,
-                (!selectedReportReason ||
-                  reportMutation.isPending ||
-                  unmatchMutation.isPending) &&
-                  localStyles.reportButtonDisabled,
-              ]}
-              disabled={
-                !selectedReportReason ||
+          <TouchableOpacity
+            style={[
+              localStyles.reportButton,
+              (!selectedReportReason ||
                 reportMutation.isPending ||
-                unmatchMutation.isPending
-              }
-              onPress={submitReport}
-              activeOpacity={0.9}
-            >
-              <Text style={localStyles.reportButtonText}>
-                {reportMutation.isPending || unmatchMutation.isPending
-                  ? "Enviando..."
-                  : "Enviar reporte"}
-              </Text>
-            </TouchableOpacity>
-          </Pressable>
+                unmatchMutation.isPending) &&
+                localStyles.reportButtonDisabled,
+            ]}
+            disabled={
+              !selectedReportReason ||
+              reportMutation.isPending ||
+              unmatchMutation.isPending
+            }
+            onPress={submitReport}
+            activeOpacity={0.9}
+          >
+            <Text style={localStyles.reportButtonText}>
+              {reportMutation.isPending || unmatchMutation.isPending
+                ? "Enviando..."
+                : "Enviar reporte"}
+            </Text>
+          </TouchableOpacity>
+        </Pressable>
       </AnimatedSheetModal>
 
       <View style={localStyles.chatBody}>
@@ -452,7 +480,9 @@ const Chat = () => {
             keyExtractor={(item) => item.id}
             renderItem={renderMessage}
             keyboardShouldPersistTaps="handled"
-            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+            keyboardDismissMode={
+              Platform.OS === "ios" ? "interactive" : "on-drag"
+            }
             contentContainerStyle={[
               localStyles.messageList,
               {
@@ -487,9 +517,10 @@ const Chat = () => {
         {/* Input */}
         <View
           style={[
-            styles.chatInputBar,
+            styles.eventChatInputContainer,
+            localStyles.inputContainer,
             {
-              paddingBottom: Math.max(insets.bottom + 12, 20),
+              paddingBottom: Math.max(insets.bottom + 14, 24),
               marginBottom:
                 Platform.OS === "android" && keyboardHeight > 0
                   ? keyboardHeight
@@ -497,10 +528,11 @@ const Chat = () => {
             },
           ]}
         >
+          <Avatar uri={ownAvatar} size={32} />
           <TextInput
-            style={localStyles.input}
+            style={styles.eventChatInput}
             placeholder="Escribí un mensaje..."
-            placeholderTextColor="#999"
+            placeholderTextColor={TEXT_SECONDARY}
             value={text}
             onChangeText={setText}
             multiline
@@ -512,10 +544,15 @@ const Chat = () => {
               }, 120)
             }
           />
-          <TouchableOpacity onPress={handleSend} disabled={!text.trim()}>
-            <Text style={[styles.chatSend, !text.trim() && { opacity: 0.4 }]}>
-              ENVIAR
-            </Text>
+          <TouchableOpacity
+            style={[
+              styles.eventChatSendButton,
+              (!text.trim() || sendMutation.isPending) && { opacity: 0.4 },
+            ]}
+            onPress={handleSend}
+            disabled={!text.trim() || sendMutation.isPending}
+          >
+            <Icon name="send" size={20} color={WHITE} />
           </TouchableOpacity>
         </View>
       </View>
@@ -537,39 +574,39 @@ const localStyles = StyleSheet.create({
   incomingMessageRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 12,
+    marginBottom: 8,
+    gap: 8,
   },
   ownMessageRow: {
     alignItems: "flex-end",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   messageBubble: {
     marginBottom: 0,
-  },
-  messageAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginRight: 10,
-    marginBottom: 4,
+    maxWidth: "72%",
+    borderRadius: 18,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   msgTime: {
-    fontSize: 10,
+    fontSize: 11,
     marginTop: 4,
+    color: TEXT_SECONDARY,
+    alignSelf: "flex-end",
   },
   msgTimeRight: {
-    color: "rgba(0,0,0,0.35)",
     textAlign: "right",
   },
-  msgTimeLeft: {
-    color: "rgba(0,0,0,0.35)",
-  },
-  input: {
-    flex: 1,
-    color: "#2B2B2B",
-    fontSize: 14,
-    maxHeight: 80,
-    marginRight: 8,
+  msgTimeLeft: {},
+  inputContainer: {
+    backgroundColor: "rgba(246, 246, 244, 0.95)",
+    borderTopColor: "rgba(174, 191, 209, 0.3)",
+    paddingTop: 10,
   },
   loadingWrap: {
     flex: 1,
@@ -583,7 +620,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 180,
   },
   emptyText: {
-    color: "#AEBFD1",
+    color: TEXT_SECONDARY,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.medium,
   },
@@ -719,5 +756,34 @@ const localStyles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontFamily: vibesTheme.fonts.bold,
+  },
+  messageBubbleLeft: {
+    alignSelf: "flex-start",
+    backgroundColor: WHITE,
+    borderBottomLeftRadius: 4,
+  },
+  messageBubbleRight: {
+    alignSelf: "flex-end",
+    backgroundColor: "#FFF3E2",
+    borderBottomRightRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.30)",
+    shadowColor: "#D9B07B",
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  messageTextLeft: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.semibold,
+  },
+  messageTextRight: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.semibold,
   },
 });

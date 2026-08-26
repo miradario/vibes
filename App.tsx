@@ -72,7 +72,7 @@ const linking = {
 };
 let hasAppliedGlobalFont = false;
 let isNavigationReady = false;
-let pendingNavigateToMessages = false;
+let pendingNotificationData: Record<string, unknown> | null = null;
 let hasHiddenNativeSplash = false;
 const FONT_LOAD_TIMEOUT_MS = 3000;
 
@@ -116,7 +116,9 @@ const AppNavigator = () => {
     }
 
     const timeout = setTimeout(() => {
-      console.warn("[boot] fonts load timed out, continuing without custom fonts");
+      console.warn(
+        "[boot] fonts load timed out, continuing without custom fonts"
+      );
       setFontLoadTimedOut(true);
     }, FONT_LOAD_TIMEOUT_MS);
 
@@ -164,7 +166,7 @@ const AppNavigator = () => {
 
   const navigateToMessages = () => {
     if (!isNavigationReady || !navigationRef.current) {
-      pendingNavigateToMessages = true;
+      pendingNotificationData = {};
       return;
     }
 
@@ -179,6 +181,32 @@ const AppNavigator = () => {
     );
   };
 
+  const navigateFromNotification = (data: Record<string, unknown>) => {
+    if (!isNavigationReady || !navigationRef.current) {
+      pendingNotificationData = data;
+      return;
+    }
+
+    if (
+      data.type === "direct_message" &&
+      typeof data.matchId === "string" &&
+      typeof data.senderId === "string"
+    ) {
+      navigationRef.current.dispatch(
+        CommonActions.navigate({
+          name: "Chat",
+          params: {
+            matchId: data.matchId,
+            otherUserId: data.senderId,
+          },
+        })
+      );
+      return;
+    }
+
+    navigateToMessages();
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
@@ -188,12 +216,15 @@ const AppNavigator = () => {
           linking={linking}
           onReady={() => {
             isNavigationReady = true;
-            if (!pendingNavigateToMessages) return;
-            pendingNavigateToMessages = false;
-            navigateToMessages();
+            if (!pendingNotificationData) return;
+            const nextData = pendingNotificationData;
+            pendingNotificationData = null;
+            navigateFromNotification(nextData);
           }}
         >
-          <PushNotificationsBootstrap navigateToMessages={navigateToMessages} />
+          <PushNotificationsBootstrap
+            navigateFromNotification={navigateFromNotification}
+          />
           <Stack.Navigator
             initialRouteName="Startup"
             screenOptions={{

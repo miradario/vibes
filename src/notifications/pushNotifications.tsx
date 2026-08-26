@@ -17,7 +17,18 @@ Notifications.setNotificationHandler({
 });
 
 type PushNotificationsBootstrapProps = {
-  navigateToMessages: () => void;
+  navigateFromNotification: (data: Record<string, unknown>) => void;
+};
+
+const getNotificationData = (
+  response: Notifications.NotificationResponse | null
+) => {
+  if (!response) return null;
+
+  const rawData = response.notification.request.content.data;
+  return rawData && typeof rawData === "object"
+    ? (rawData as Record<string, unknown>)
+    : null;
 };
 
 const upsertPushToken = async (token: Notifications.DevicePushToken) => {
@@ -115,7 +126,7 @@ const registerPushToken = async (userId: string) => {
 
 const handleNotificationResponse = (
   response: Notifications.NotificationResponse | null,
-  navigateToMessages: () => void,
+  navigateFromNotification: (data: Record<string, unknown>) => void,
   lastHandledIdRef: MutableRefObject<string | null>
 ) => {
   if (!response) return;
@@ -124,11 +135,11 @@ const handleNotificationResponse = (
   if (!responseId || lastHandledIdRef.current === responseId) return;
 
   lastHandledIdRef.current = responseId;
-  navigateToMessages();
+  navigateFromNotification(getNotificationData(response) ?? {});
 };
 
 export const PushNotificationsBootstrap = ({
-  navigateToMessages,
+  navigateFromNotification,
 }: PushNotificationsBootstrapProps) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
@@ -199,7 +210,7 @@ export const PushNotificationsBootstrap = ({
       Notifications.addNotificationResponseReceivedListener((response) => {
         handleNotificationResponse(
           response,
-          navigateToMessages,
+          navigateFromNotification,
           lastHandledResponseIdRef
         );
       });
@@ -207,7 +218,7 @@ export const PushNotificationsBootstrap = ({
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       handleNotificationResponse(
         response,
-        navigateToMessages,
+        navigateFromNotification,
         lastHandledResponseIdRef
       );
     });
@@ -215,7 +226,7 @@ export const PushNotificationsBootstrap = ({
     return () => {
       responseSubscription.remove();
     };
-  }, [navigateToMessages]);
+  }, [navigateFromNotification]);
 
   return null;
 };
