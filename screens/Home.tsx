@@ -1172,19 +1172,19 @@ const Home = () => {
           >
             <View style={localStyles.challengePreviewHeader}>
               <View style={localStyles.challengeIconCircle}>
-                <Ionicons name="trophy-outline" size={25} color="#8B6327" />
+                <Ionicons name="trophy-outline" size={21} color="#8B6327" />
               </View>
               <View style={localStyles.challengePreviewCopy}>
                 <Text style={localStyles.challengePreviewEyebrow}>DESAFÍO</Text>
-                <Text style={localStyles.challengePreviewTitle} numberOfLines={2}>
+                <Text style={localStyles.challengePreviewTitle} numberOfLines={1}>
                   {nextChallenge?.title ?? "Encontrá tu próximo desafío"}
                 </Text>
-                <Text style={localStyles.challengePreviewMeta} numberOfLines={2}>
+                <Text style={localStyles.challengePreviewMeta} numberOfLines={1}>
                   {nextChallenge?.subtitle ??
                     "Sumate a una práctica y compartí el camino con la comunidad."}
                 </Text>
               </View>
-              <Ionicons name="arrow-forward-circle" size={34} color="#8B6327" />
+              <Ionicons name="arrow-forward-circle" size={28} color="#8B6327" />
             </View>
           </TouchableOpacity>
 
@@ -1595,13 +1595,12 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   challengePreviewCard: {
-    minHeight: 150,
-    borderRadius: 24,
+    borderRadius: 18,
     backgroundColor: "#F7E8CF",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.38)",
-    paddingHorizontal: 20,
-    paddingVertical: 22,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
     marginBottom: 14,
     shadowColor: "#8B6327",
     shadowOpacity: 0.1,
@@ -1612,12 +1611,12 @@ const localStyles = StyleSheet.create({
   challengePreviewHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 11,
   },
   challengeIconCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.72)",
@@ -1627,22 +1626,22 @@ const localStyles = StyleSheet.create({
   },
   challengePreviewEyebrow: {
     color: "#8B6327",
-    fontSize: 12,
-    lineHeight: 15,
+    fontSize: 10,
+    lineHeight: 13,
     fontFamily: vibesTheme.fonts.bold,
   },
   challengePreviewTitle: {
-    marginTop: 4,
+    marginTop: 2,
     color: "#2B241B",
-    fontSize: 23,
-    lineHeight: 27,
+    fontSize: 18,
+    lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
   },
   challengePreviewMeta: {
-    marginTop: 6,
+    marginTop: 2,
     color: "#665744",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontFamily: vibesTheme.fonts.regular,
   },
   eventPreviewCard: {

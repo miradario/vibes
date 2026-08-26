@@ -45,7 +45,7 @@ import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import VibesLoader from "../components/VibesLoader";
 import { showToast } from "../src/utils/toast";
 
-type DiscoverGender = "woman" | "man" | "nonbinary" | "other";
+type DiscoverGender = "woman" | "man" | "other";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -144,7 +144,7 @@ const normalizeGender = (
     if (["woman", "female", "mujer"].includes(normalized)) return "woman";
     if (["man", "male", "hombre"].includes(normalized)) return "man";
     if (["nonbinary", "non-binary", "no binario", "no binaria"].includes(normalized)) {
-      return "nonbinary";
+      return "other";
     }
     if (["other", "otro", "otra", "more", "mas"].includes(normalized)) {
       return "other";
@@ -155,7 +155,7 @@ const normalizeGender = (
   if (parsedGenderId === 1) return "woman";
   if (parsedGenderId === 2) return "man";
   if (parsedGenderId === 3) return "other";
-  if (parsedGenderId === 4) return "nonbinary";
+  if (parsedGenderId === 4) return "other";
   return "unknown";
 };
 
@@ -246,8 +246,12 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
     const storedGenders =
       preferences?.discoverGenders ?? preferences?.discover_genders;
     if (Array.isArray(storedGenders)) {
-      return storedGenders.filter((value): value is DiscoverGender =>
-        ["woman", "man", "nonbinary", "other"].includes(String(value)),
+      return Array.from(
+        new Set(
+          storedGenders
+            .map((value) => normalizeGender(value))
+            .filter((value): value is DiscoverGender => value !== "unknown"),
+        ),
       );
     }
     const storedGender = normalizeGender(
@@ -806,13 +810,8 @@ export const DiscoverContent = forwardRef<
                   <View style={localStyles.filtersPillRow}>
                     {(
                       [
-                        { value: "all", label: t("discover.genderAll") },
-                        { value: "woman", label: t("discover.genderWoman") },
                         { value: "man", label: t("discover.genderMan") },
-                        {
-                          value: "nonbinary",
-                          label: t("discover.genderNonbinary"),
-                        },
+                        { value: "woman", label: t("discover.genderWoman") },
                         { value: "other", label: t("discover.genderOther") },
                       ] as const
                     ).map((option) => (
@@ -820,16 +819,11 @@ export const DiscoverContent = forwardRef<
                         key={option.value}
                         style={[
                           localStyles.filterPill,
-                          (option.value === "all"
-                            ? discoverFilters.genders.length === 0
-                            : discoverFilters.genders.includes(option.value)) &&
+                          discoverFilters.genders.includes(option.value) &&
                             localStyles.filterPillActive,
                         ]}
                         onPress={() =>
                           setDiscoverFilters((prev) => {
-                            if (option.value === "all") {
-                              return { ...prev, genders: [] };
-                            }
                             const selected = prev.genders.includes(option.value);
                             return {
                               ...prev,
@@ -843,9 +837,7 @@ export const DiscoverContent = forwardRef<
                         <Text
                           style={[
                             localStyles.filterPillText,
-                            (option.value === "all"
-                              ? discoverFilters.genders.length === 0
-                              : discoverFilters.genders.includes(option.value)) &&
+                            discoverFilters.genders.includes(option.value) &&
                               localStyles.filterPillTextActive,
                           ]}
                         >
