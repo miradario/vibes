@@ -1,8 +1,13 @@
 # send-push
 
-Edge Function para enviar notificaciones push via Firebase Cloud Messaging cuando Supabase recibe webhooks de `messages`, `event_messages` y `matches`.
+Edge Function para enviar notificaciones push cuando Supabase recibe webhooks de `messages`, `event_messages` y `matches`.
+
+- Android: Firebase Cloud Messaging (`provider = 'fcm'`)
+- iOS: Apple Push Notification service directo (`provider = 'apns'`)
 
 ## Secrets requeridos
+
+### Firebase para Android
 
 Opcion 1: un solo secret JSON.
 
@@ -14,7 +19,22 @@ Opcion 2: secrets separados.
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
 
-Ademas, la function usa los secrets estandar de Supabase:
+### APNs para iOS
+
+- `APNS_AUTH_KEY`
+- `APNS_KEY_ID`
+- `APNS_TEAM_ID`
+- `APNS_BUNDLE_ID`
+- `APNS_ENV`
+
+Valores esperados:
+
+- `APNS_ENV=production` para TestFlight/App Store
+- `APNS_ENV=sandbox` para builds internas que registren tokens sandbox
+
+`APNS_AUTH_KEY` debe contener el contenido completo del archivo `.p8`.
+
+### Supabase
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -50,6 +70,7 @@ Tambien acepta `new` en lugar de `record`.
 ## Notas
 
 - Solo envia a tokens activos en `push_tokens`.
-- Hoy solo despacha tokens con `provider = 'fcm'`.
-- Los tokens invalidos que respondan `400` o `404` se desactivan.
+- El provider se decide por fila en `push_tokens`.
+- Tokens FCM con respuesta `400` o `404` se desactivan.
+- Tokens APNs con `BadDeviceToken`, `Unregistered` o `DeviceTokenNotForTopic` se desactivan.
 - La navegacion cliente actual abre siempre `Messages` al tocar la notificacion.

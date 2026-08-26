@@ -21,7 +21,8 @@ type PushNotificationsBootstrapProps = {
 };
 
 const upsertPushToken = async (token: Notifications.DevicePushToken) => {
-  const tokenValue = typeof token.data === "string" ? token.data : String(token.data);
+  const tokenValue =
+    typeof token.data === "string" ? token.data : String(token.data);
 
   const { error } = await supabase.functions.invoke("register-push-token", {
     body: {
@@ -62,8 +63,19 @@ const registerPushToken = async (userId: string) => {
   }
 
   const permissions = await Notifications.getPermissionsAsync();
-  let status = permissions.status;
-  const needsBadgePermission = Platform.OS === "ios" && permissions.ios?.allowsBadge !== true;
+  let status =
+    Platform.OS === "ios"
+      ? permissions.ios?.status ===
+          Notifications.IosAuthorizationStatus.AUTHORIZED ||
+        permissions.ios?.status ===
+          Notifications.IosAuthorizationStatus.PROVISIONAL ||
+        permissions.ios?.status ===
+          Notifications.IosAuthorizationStatus.EPHEMERAL
+        ? "granted"
+        : permissions.status
+      : permissions.status;
+  const needsBadgePermission =
+    Platform.OS === "ios" && permissions.ios?.allowsBadge !== true;
 
   if (status !== "granted" || needsBadgePermission) {
     const request = await Notifications.requestPermissionsAsync({
@@ -73,7 +85,16 @@ const registerPushToken = async (userId: string) => {
         allowSound: true,
       },
     });
-    status = request.status;
+    status =
+      Platform.OS === "ios"
+        ? request.ios?.status ===
+            Notifications.IosAuthorizationStatus.AUTHORIZED ||
+          request.ios?.status ===
+            Notifications.IosAuthorizationStatus.PROVISIONAL ||
+          request.ios?.status === Notifications.IosAuthorizationStatus.EPHEMERAL
+          ? "granted"
+          : request.status
+        : request.status;
   }
 
   if (status !== "granted") {
@@ -82,7 +103,9 @@ const registerPushToken = async (userId: string) => {
   }
 
   if (!Device.isDevice) {
-    console.log("[push] permissions granted, skipping token registration on simulator/emulator");
+    console.log(
+      "[push] permissions granted, skipping token registration on simulator/emulator"
+    );
     return;
   }
 
@@ -93,7 +116,7 @@ const registerPushToken = async (userId: string) => {
 const handleNotificationResponse = (
   response: Notifications.NotificationResponse | null,
   navigateToMessages: () => void,
-  lastHandledIdRef: MutableRefObject<string | null>,
+  lastHandledIdRef: MutableRefObject<string | null>
 ) => {
   if (!response) return;
 
@@ -138,7 +161,10 @@ export const PushNotificationsBootstrap = ({
     if (notificationsEnabled === false) {
       void Notifications.setBadgeCountAsync(0).catch((error) => {
         if (!isActive) return;
-        console.warn("[push] failed to clear badge when notifications disabled", error);
+        console.warn(
+          "[push] failed to clear badge when notifications disabled",
+          error
+        );
       });
 
       void deactivateUserPushTokens(userId).catch((error) => {
@@ -169,18 +195,21 @@ export const PushNotificationsBootstrap = ({
   }, [notificationsEnabled, preferencesQuery.isFetched, userId]);
 
   useEffect(() => {
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
+    const responseSubscription =
+      Notifications.addNotificationResponseReceivedListener((response) => {
         handleNotificationResponse(
           response,
           navigateToMessages,
-          lastHandledResponseIdRef,
+          lastHandledResponseIdRef
         );
-      },
-    );
+      });
 
     void Notifications.getLastNotificationResponseAsync().then((response) => {
-      handleNotificationResponse(response, navigateToMessages, lastHandledResponseIdRef);
+      handleNotificationResponse(
+        response,
+        navigateToMessages,
+        lastHandledResponseIdRef
+      );
     });
 
     return () => {

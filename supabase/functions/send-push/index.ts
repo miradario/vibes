@@ -33,6 +33,25 @@ type FirebaseServiceAccount = {
   token_uri?: string;
 };
 
+type ApnsConfig = {
+  authKey: string;
+  keyId: string;
+  teamId: string;
+  bundleId: string;
+  baseUrl: string;
+};
+
+type SendFailure = {
+  ok: false;
+  status: number;
+  errorText?: string;
+  reason?: string;
+};
+
+type SendSuccess = { ok: true };
+
+type SendResult = SendSuccess | SendFailure;
+
 const jsonHeaders = { "Content-Type": "application/json" };
 const textEncoder = new TextEncoder();
 
@@ -43,7 +62,10 @@ const base64UrlEncode = (input: string | Uint8Array) => {
     binary += String.fromCharCode(byte);
   }
 
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 };
 
 const pemToArrayBuffer = (pem: string) => {
@@ -67,14 +89,18 @@ const getFirebaseServiceAccount = (): FirebaseServiceAccount => {
   if (rawJson) {
     const parsed = JSON.parse(rawJson) as FirebaseServiceAccount;
     if (!parsed.project_id || !parsed.client_email || !parsed.private_key) {
-      throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON is missing required fields");
+      throw new Error(
+        "FIREBASE_SERVICE_ACCOUNT_JSON is missing required fields"
+      );
     }
     return parsed;
   }
 
   const projectId = Deno.env.get("FIREBASE_PROJECT_ID");
   const clientEmail = Deno.env.get("FIREBASE_CLIENT_EMAIL");
-  const privateKey = Deno.env.get("FIREBASE_PRIVATE_KEY")?.replace(/\\n/g, "\n");
+  const privateKey = Deno.env
+    .get("FIREBASE_PRIVATE_KEY")
+    ?.replace(/\\n/g, "\n");
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error("Missing Firebase service account secrets");
@@ -84,6 +110,33 @@ const getFirebaseServiceAccount = (): FirebaseServiceAccount => {
     project_id: projectId,
     client_email: clientEmail,
     private_key: privateKey,
+  };
+};
+
+const getApnsConfig = (): ApnsConfig => {
+  const authKey = Deno.env.get("APNS_AUTH_KEY")?.replace(/\\n/g, "\n");
+  const keyId = Deno.env.get("APNS_KEY_ID");
+  const teamId = Deno.env.get("APNS_TEAM_ID");
+  const bundleId = Deno.env.get("APNS_BUNDLE_ID");
+  const environment = Deno.env.get("APNS_ENV") ?? "production";
+
+  if (!authKey || !keyId || !teamId || !bundleId) {
+    throw new Error("Missing APNs configuration secrets");
+  }
+
+  if (environment !== "production" && environment !== "sandbox") {
+    throw new Error("APNS_ENV must be either production or sandbox");
+  }
+
+  return {
+    authKey,
+    keyId,
+    teamId,
+    bundleId,
+    baseUrl:
+      environment === "production"
+        ? "https://api.push.apple.com"
+        : "https://api.sandbox.push.apple.com",
   };
 };
 
@@ -98,7 +151,9 @@ const getAccessToken = async (account: FirebaseServiceAccount) => {
     iat: now,
   };
 
-  const unsignedJwt = `${base64UrlEncode(JSON.stringify(header))}.${base64UrlEncode(JSON.stringify(claimSet))}`;
+  const unsignedJwt = `${base64UrlEncode(
+    JSON.stringify(header)
+  )}.${base64UrlEncode(JSON.stringify(claimSet))}`;
   const signingKey = await crypto.subtle.importKey(
     "pkcs8",
     pemToArrayBuffer(account.private_key),
@@ -107,13 +162,13 @@ const getAccessToken = async (account: FirebaseServiceAccount) => {
       hash: "SHA-256",
     },
     false,
-    ["sign"],
+    ["sign"]
   );
 
   const signature = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
     signingKey,
-    textEncoder.encode(unsignedJwt),
+    textEncoder.encode(unsignedJwt)
   );
 
   const jwt = `${unsignedJwt}.${base64UrlEncode(new Uint8Array(signature))}`;
@@ -140,6 +195,49 @@ const getAccessToken = async (account: FirebaseServiceAccount) => {
   return data.access_token;
 };
 
+const getApnsJwt = async (config: ApnsConfig) => {
+  const issuedAt = Math.floor(Date.now() / 1000);
+  const header = { alg: "ES256", kid: config.keyId };
+  const claimSet = {
+    iss: config.teamId,
+    iat: issuedAt,
+  };
+
+  const unsignedJwt = `${base64UrlEncode(
+    JSON.stringify(header)
+  )}.${base64UrlEncode(JSON.stringify(claimSet))}`;
+  const signingKey = await crypto.subtle.importKey(
+    "pkcs8",
+    pemToArrayBuffer(config.authKey),
+    {
+      name: "ECDSA",
+      namedCurve: "P-256",
+    },
+    false,
+    ["sign"]
+  );
+
+  const signature = new Uint8Array(
+    await crypto.subtle.sign(
+      {
+        name: "ECDSA",
+        hash: "SHA-256",
+      },
+      signingKey,
+      textEncoder.encode(unsignedJwt)
+    )
+  );
+
+  // WebCrypto ECDSA signs in IEEE P1363 format: r || s.
+  if (signature.byteLength !== 64) {
+    throw new Error(
+      `Unexpected APNs JWT signature length: ${signature.byteLength}`
+    );
+  }
+
+  return `${unsignedJwt}.${base64UrlEncode(signature)}`;
+};
+
 const createAdminClient = () => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -153,7 +251,8 @@ const createAdminClient = () => {
   });
 };
 
-const getRecord = (payload: WebhookPayload) => payload.record ?? payload.new ?? null;
+const getRecord = (payload: WebhookPayload) =>
+  payload.record ?? payload.new ?? null;
 
 const getPushTokens = async (supabase: SupabaseClient, userIds: string[]) => {
   if (userIds.length === 0) return new Map<string, PushTokenRow[]>();
@@ -168,7 +267,6 @@ const getPushTokens = async (supabase: SupabaseClient, userIds: string[]) => {
 
   const tokensByUser = new Map<string, PushTokenRow[]>();
   for (const row of (data ?? []) as Array<PushTokenRow & { user_id: string }>) {
-    if (row.provider !== "fcm") continue;
     const existing = tokensByUser.get(row.user_id) ?? [];
     existing.push({
       id: row.id,
@@ -189,7 +287,11 @@ const markTokenInactive = async (supabase: SupabaseClient, tokenId: string) => {
     .eq("id", tokenId);
 
   if (error) {
-    console.error("[send-push] failed to deactivate token", tokenId, error.message);
+    console.error(
+      "[send-push] failed to deactivate token",
+      tokenId,
+      error.message
+    );
   }
 };
 
@@ -200,8 +302,8 @@ const sendFirebaseMessage = async (
   title: string,
   body: string,
   data: Record<string, string>,
-  badgeCount?: number,
-) => {
+  badgeCount?: number
+): Promise<SendResult> => {
   const response = await fetch(
     `https://fcm.googleapis.com/v1/projects/${account.project_id}/messages:send`,
     {
@@ -220,7 +322,9 @@ const sendFirebaseMessage = async (
             notification: {
               channel_id: "default",
               sound: "default",
-              ...(typeof badgeCount === "number" ? { notification_count: badgeCount } : {}),
+              ...(typeof badgeCount === "number"
+                ? { notification_count: badgeCount }
+                : {}),
             },
           },
           ...(pushToken.platform === "ios"
@@ -229,7 +333,9 @@ const sendFirebaseMessage = async (
                   payload: {
                     aps: {
                       sound: "default",
-                      ...(typeof badgeCount === "number" ? { badge: badgeCount } : {}),
+                      ...(typeof badgeCount === "number"
+                        ? { badge: badgeCount }
+                        : {}),
                     },
                   },
                 },
@@ -237,18 +343,101 @@ const sendFirebaseMessage = async (
             : {}),
         },
       }),
-    },
+    }
   );
 
   if (response.ok) {
-    return { ok: true as const };
+    return { ok: true };
   }
 
   const errorText = await response.text();
-  return { ok: false as const, errorText, status: response.status };
+  return { ok: false, errorText, status: response.status };
 };
 
-const fetchDisplayNames = async (supabase: SupabaseClient, userIds: string[]) => {
+const sendApnsMessage = async (
+  jwt: string,
+  config: ApnsConfig,
+  pushToken: PushTokenRow,
+  title: string,
+  body: string,
+  data: Record<string, string>,
+  badgeCount?: number
+): Promise<SendResult> => {
+  const response = await fetch(
+    `${config.baseUrl}/3/device/${pushToken.token}`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `bearer ${jwt}`,
+        "apns-topic": config.bundleId,
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        aps: {
+          alert: {
+            title,
+            body,
+          },
+          sound: "default",
+          ...(typeof badgeCount === "number" ? { badge: badgeCount } : {}),
+        },
+        ...data,
+      }),
+    }
+  );
+
+  if (response.ok) {
+    return { ok: true };
+  }
+
+  const errorText = await response.text();
+  let reason: string | undefined;
+
+  try {
+    const parsed = JSON.parse(errorText) as { reason?: string };
+    reason = parsed.reason;
+  } catch {
+    reason = undefined;
+  }
+
+  return { ok: false, errorText, reason, status: response.status };
+};
+
+const shouldDeactivateToken = (result: SendFailure, provider: string) => {
+  if (provider === "fcm") {
+    return result.status === 400 || result.status === 404;
+  }
+
+  if (provider !== "apns") return false;
+
+  return (
+    result.reason === "BadDeviceToken" ||
+    result.reason === "Unregistered" ||
+    result.reason === "DeviceTokenNotForTopic"
+  );
+};
+
+const formatNotificationPersonName = (value: string | null | undefined) => {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  if (!trimmed) return "Alguien";
+
+  const firstWord = trimmed.split(/\s+/)[0] ?? trimmed;
+  const beforeDelimiter = firstWord.split(/[+@._-]/)[0] ?? firstWord;
+  const camelCasePrefix =
+    beforeDelimiter.match(/^[a-z]+(?=[A-Z])/u)?.[0] ?? beforeDelimiter;
+  const normalized = camelCasePrefix.trim();
+
+  if (!normalized) return "Alguien";
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
+const fetchDisplayNames = async (
+  supabase: SupabaseClient,
+  userIds: string[]
+) => {
   if (userIds.length === 0) return new Map<string, string>();
 
   const { data, error } = await supabase
@@ -260,14 +449,19 @@ const fetchDisplayNames = async (supabase: SupabaseClient, userIds: string[]) =>
 
   const names = new Map<string, string>();
   for (const row of data ?? []) {
-    names.set(String((row as { id: string }).id), String((row as { display_name: string }).display_name));
+    names.set(
+      String((row as { id: string }).id),
+      formatNotificationPersonName(
+        (row as { display_name: string | null }).display_name
+      )
+    );
   }
   return names;
 };
 
 const fetchNotificationPreferences = async (
   supabase: SupabaseClient,
-  userIds: string[],
+  userIds: string[]
 ) => {
   if (userIds.length === 0) return new Map<string, boolean>();
 
@@ -280,7 +474,10 @@ const fetchNotificationPreferences = async (
 
   const preferences = new Map<string, boolean>();
   for (const row of data ?? []) {
-    const typedRow = row as { user_id: string; notifications_enabled: boolean | null };
+    const typedRow = row as {
+      user_id: string;
+      notifications_enabled: boolean | null;
+    };
     preferences.set(typedRow.user_id, typedRow.notifications_enabled !== false);
   }
 
@@ -302,7 +499,7 @@ const isLaterTimestamp = (value: string | null, reference: string | null) => {
 
 const fetchDirectUnreadCountForUser = async (
   supabase: SupabaseClient,
-  userId: string,
+  userId: string
 ) => {
   const { data: matchRows, error: matchError } = await supabase
     .from("matches")
@@ -311,7 +508,9 @@ const fetchDirectUnreadCountForUser = async (
 
   if (matchError) throw matchError;
 
-  const matchIds = (matchRows ?? []).map((row) => String((row as { id: string }).id));
+  const matchIds = (matchRows ?? []).map((row: unknown) =>
+    String((row as { id: string }).id)
+  );
   if (matchIds.length === 0) return 0;
 
   const [messagesRes, readsRes] = await Promise.all([
@@ -330,21 +529,28 @@ const fetchDirectUnreadCountForUser = async (
   if (messagesRes.error) throw messagesRes.error;
   if (readsRes.error) throw readsRes.error;
 
-  const lastMessageByMatch = new Map<string, { createdAt: string | null; senderId: string | null }>();
+  const lastMessageByMatch = new Map<
+    string,
+    { createdAt: string | null; senderId: string | null }
+  >();
   for (const row of messagesRes.data ?? []) {
     const matchId = String((row as { match_id: string }).match_id ?? "");
     if (!matchId || lastMessageByMatch.has(matchId)) continue;
 
     lastMessageByMatch.set(matchId, {
-      createdAt: String((row as { created_at: string | null }).created_at ?? "") || null,
-      senderId: String((row as { sender_id: string | null }).sender_id ?? "") || null,
+      createdAt:
+        String((row as { created_at: string | null }).created_at ?? "") || null,
+      senderId:
+        String((row as { sender_id: string | null }).sender_id ?? "") || null,
     });
   }
 
   const lastReadByMatch = new Map<string, string>();
   for (const row of readsRes.data ?? []) {
     const matchId = String((row as { match_id: string }).match_id ?? "");
-    const lastReadAt = String((row as { last_read_at: string | null }).last_read_at ?? "") || null;
+    const lastReadAt =
+      String((row as { last_read_at: string | null }).last_read_at ?? "") ||
+      null;
     if (!matchId || !lastReadAt) continue;
     lastReadByMatch.set(matchId, lastReadAt);
   }
@@ -352,7 +558,11 @@ const fetchDirectUnreadCountForUser = async (
   let unreadCount = 0;
   for (const matchId of matchIds) {
     const lastMessage = lastMessageByMatch.get(matchId);
-    if (!lastMessage?.createdAt || !lastMessage.senderId || lastMessage.senderId === userId) {
+    if (
+      !lastMessage?.createdAt ||
+      !lastMessage.senderId ||
+      lastMessage.senderId === userId
+    ) {
       continue;
     }
 
@@ -367,7 +577,7 @@ const fetchDirectUnreadCountForUser = async (
 
 const buildDirectMessageNotifications = async (
   supabase: SupabaseClient,
-  record: Record<string, unknown>,
+  record: Record<string, unknown>
 ) => {
   const matchId = String(record.match_id ?? "");
   const senderId = String(record.sender_id ?? "");
@@ -386,14 +596,15 @@ const buildDirectMessageNotifications = async (
 
   if (matchError) throw matchError;
 
-  const recipientId = match.user1_id === senderId ? match.user2_id : match.user1_id;
+  const recipientId =
+    match.user1_id === senderId ? match.user2_id : match.user1_id;
   const names = await fetchDisplayNames(supabase, [senderId]);
   const senderName = names.get(senderId) ?? "Alguien";
 
   return [
     {
       recipientId,
-      title: `Nuevo mensaje de ${senderName}`,
+      title: senderName,
       body: text.slice(0, 120),
       data: {
         type: "direct_message",
@@ -407,7 +618,7 @@ const buildDirectMessageNotifications = async (
 
 const buildEventMessageNotifications = async (
   supabase: SupabaseClient,
-  record: Record<string, unknown>,
+  record: Record<string, unknown>
 ) => {
   const eventId = String(record.event_id ?? "");
   const eventType = String(record.event_type ?? "");
@@ -416,10 +627,16 @@ const buildEventMessageNotifications = async (
   const messageId = String(record.id ?? "");
 
   if (!eventId || !eventType || !senderId || !body) {
-    throw new Error("event_messages webhook missing event_id, event_type, sender_id, or body");
+    throw new Error(
+      "event_messages webhook missing event_id, event_type, sender_id, or body"
+    );
   }
 
-  const [{ data: participants, error: participantError }, senderNames, groupTitle] = await Promise.all([
+  const [
+    { data: participants, error: participantError },
+    senderNames,
+    groupTitle,
+  ] = await Promise.all([
     supabase
       .from("event_participants")
       .select("user_id")
@@ -427,7 +644,11 @@ const buildEventMessageNotifications = async (
     fetchDisplayNames(supabase, [senderId]),
     (async () => {
       const table = eventType === "challenge" ? "challenges" : "events";
-      const { data, error } = await supabase.from(table).select("title").eq("id", eventId).single();
+      const { data, error } = await supabase
+        .from(table)
+        .select("title")
+        .eq("id", eventId)
+        .single();
       if (error) throw error;
       return String((data as { title: string }).title ?? "Grupo");
     })(),
@@ -438,9 +659,11 @@ const buildEventMessageNotifications = async (
   const senderName = senderNames.get(senderId) ?? "Alguien";
 
   return (participants ?? [])
-    .map((participant) => String((participant as { user_id: string }).user_id))
-    .filter((userId) => userId && userId !== senderId)
-    .map((recipientId) => ({
+    .map((participant: unknown) =>
+      String((participant as { user_id: string }).user_id)
+    )
+    .filter((userId: string) => userId && userId !== senderId)
+    .map((recipientId: string) => ({
       recipientId,
       title: `${senderName} escribio en ${groupTitle}`,
       body: body.slice(0, 120),
@@ -456,7 +679,7 @@ const buildEventMessageNotifications = async (
 
 const buildMatchNotifications = async (
   supabase: SupabaseClient,
-  record: Record<string, unknown>,
+  record: Record<string, unknown>
 ) => {
   const user1Id = String(record.user1_id ?? "");
   const user2Id = String(record.user2_id ?? "");
@@ -472,7 +695,9 @@ const buildMatchNotifications = async (
     {
       recipientId: user1Id,
       title: "Tenes un nuevo match",
-      body: `Conectaste con ${names.get(user2Id) ?? "alguien"}. Abri Flow para verlo.`,
+      body: `Conectaste con ${
+        names.get(user2Id) ?? "alguien"
+      }. Abri Flow para verlo.`,
       data: {
         type: "new_match",
         matchId,
@@ -482,7 +707,9 @@ const buildMatchNotifications = async (
     {
       recipientId: user2Id,
       title: "Tenes un nuevo match",
-      body: `Conectaste con ${names.get(user1Id) ?? "alguien"}. Abri Flow para verlo.`,
+      body: `Conectaste con ${
+        names.get(user1Id) ?? "alguien"
+      }. Abri Flow para verlo.`,
       data: {
         type: "new_match",
         matchId,
@@ -494,7 +721,7 @@ const buildMatchNotifications = async (
 
 const buildNotifications = async (
   supabase: SupabaseClient,
-  payload: WebhookPayload,
+  payload: WebhookPayload
 ): Promise<OutgoingNotification[]> => {
   const table = payload.table;
   const record = getRecord(payload);
@@ -518,7 +745,7 @@ const buildNotifications = async (
   return [];
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
@@ -529,10 +756,13 @@ serve(async (req) => {
   try {
     const payload = (await req.json()) as WebhookPayload;
     if (payload.type && payload.type !== "INSERT") {
-      return new Response(JSON.stringify({ ignored: true, reason: "unsupported event type" }), {
-        status: 200,
-        headers: jsonHeaders,
-      });
+      return new Response(
+        JSON.stringify({ ignored: true, reason: "unsupported event type" }),
+        {
+          status: 200,
+          headers: jsonHeaders,
+        }
+      );
     }
 
     const supabase = createAdminClient();
@@ -545,36 +775,51 @@ serve(async (req) => {
       });
     }
 
-    const recipientIds = Array.from(new Set(notifications.map((item) => item.recipientId)));
-    const notificationPreferences = await fetchNotificationPreferences(supabase, recipientIds);
+    const recipientIds = Array.from(
+      new Set(notifications.map((item) => item.recipientId))
+    );
+    const notificationPreferences = await fetchNotificationPreferences(
+      supabase,
+      recipientIds
+    );
     const allowedNotifications = notifications.filter(
-      (item) => notificationPreferences.get(item.recipientId) !== false,
+      (item) => notificationPreferences.get(item.recipientId) !== false
     );
 
     if (allowedNotifications.length === 0) {
-      return new Response(JSON.stringify({ sent: 0, skipped: true, reason: "notifications_disabled" }), {
-        status: 200,
-        headers: jsonHeaders,
-      });
+      return new Response(
+        JSON.stringify({
+          sent: 0,
+          skipped: true,
+          reason: "notifications_disabled",
+        }),
+        {
+          status: 200,
+          headers: jsonHeaders,
+        }
+      );
     }
 
     const allowedRecipientIds = Array.from(
-      new Set(allowedNotifications.map((item) => item.recipientId)),
+      new Set(allowedNotifications.map((item) => item.recipientId))
     );
     const directMessageRecipientIds = Array.from(
       new Set(
         allowedNotifications
           .filter((item) => item.data.type === "direct_message")
-          .map((item) => item.recipientId),
-      ),
+          .map((item) => item.recipientId)
+      )
     );
     const directBadgeCounts = new Map<string, number>();
 
     await Promise.all(
       directMessageRecipientIds.map(async (recipientId) => {
-        const badgeCount = await fetchDirectUnreadCountForUser(supabase, recipientId);
+        const badgeCount = await fetchDirectUnreadCountForUser(
+          supabase,
+          recipientId
+        );
         directBadgeCounts.set(recipientId, badgeCount);
-      }),
+      })
     );
 
     const notificationsWithBadges = allowedNotifications.map((item) => ({
@@ -586,8 +831,16 @@ serve(async (req) => {
     }));
 
     const tokensByUser = await getPushTokens(supabase, allowedRecipientIds);
-    const account = getFirebaseServiceAccount();
-    const accessToken = await getAccessToken(account);
+    const allTokens = Array.from(tokensByUser.values()).flat();
+    const hasFcmTokens = allTokens.some((token) => token.provider === "fcm");
+    const hasApnsTokens = allTokens.some((token) => token.provider === "apns");
+
+    const firebaseAccount = hasFcmTokens ? getFirebaseServiceAccount() : null;
+    const firebaseAccessToken = firebaseAccount
+      ? await getAccessToken(firebaseAccount)
+      : null;
+    const apnsConfig = hasApnsTokens ? getApnsConfig() : null;
+    const apnsJwt = apnsConfig ? await getApnsJwt(apnsConfig) : null;
 
     let sentCount = 0;
     let inactiveCount = 0;
@@ -595,29 +848,63 @@ serve(async (req) => {
     for (const notification of notificationsWithBadges) {
       const tokens = tokensByUser.get(notification.recipientId) ?? [];
       for (const token of tokens) {
-        const result = await sendFirebaseMessage(
-          accessToken,
-          account,
-          token,
-          notification.title,
-          notification.body,
-          notification.data,
-          notification.badgeCount,
-        );
+        let result: SendResult;
+
+        if (token.provider === "fcm") {
+          if (!firebaseAccount || !firebaseAccessToken) {
+            throw new Error(
+              "Missing Firebase configuration for FCM token delivery"
+            );
+          }
+
+          result = await sendFirebaseMessage(
+            firebaseAccessToken,
+            firebaseAccount,
+            token,
+            notification.title,
+            notification.body,
+            notification.data,
+            notification.badgeCount
+          );
+        } else if (token.provider === "apns") {
+          if (!apnsConfig || !apnsJwt) {
+            throw new Error(
+              "Missing APNs configuration for iOS token delivery"
+            );
+          }
+
+          result = await sendApnsMessage(
+            apnsJwt,
+            apnsConfig,
+            token,
+            notification.title,
+            notification.body,
+            notification.data,
+            notification.badgeCount
+          );
+        } else {
+          console.warn("[send-push] skipping unsupported provider", {
+            provider: token.provider,
+            tokenId: token.id,
+          });
+          continue;
+        }
 
         if (result.ok) {
           sentCount += 1;
           continue;
         }
 
-        console.error("[send-push] firebase send failed", {
+        console.error("[send-push] provider send failed", {
+          provider: token.provider,
           tokenId: token.id,
           recipientId: notification.recipientId,
           status: result.status,
           errorText: result.errorText,
+          reason: result.reason,
         });
 
-        if (result.status === 400 || result.status === 404) {
+        if (shouldDeactivateToken(result, token.provider)) {
           await markTokenInactive(supabase, token.id);
           inactiveCount += 1;
         }
@@ -629,7 +916,7 @@ serve(async (req) => {
       {
         status: 200,
         headers: jsonHeaders,
-      },
+      }
     );
   } catch (error) {
     console.error("[send-push] unexpected error", error);
