@@ -115,7 +115,6 @@ const Match = () => {
             resizeMode={ResizeMode.CONTAIN}
             shouldPlay
             isMuted
-            isLooping={false}
           />
         </View>
 

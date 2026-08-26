@@ -49,8 +49,10 @@ export const readUriAsArrayBuffer = async (uri: string) => {
 
 const inferContentType = (uri: string) => {
   const uriWithoutQuery = uri.split("?")[0];
-  const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
-  const ext = rawExt.toLowerCase();
+  const rawExt = (uriWithoutQuery.split(".").pop() || "jpg").toLowerCase();
+  const dataUriType = uri.match(/^data:image\/(jpeg|jpg|png|webp|heic|heif);/i)?.[1];
+  const candidate = (dataUriType ?? rawExt).toLowerCase();
+  const ext = candidate in EXTENSION_TO_CONTENT_TYPE ? candidate : "jpg";
 
   return {
     ext,

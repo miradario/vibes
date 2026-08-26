@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -239,6 +240,24 @@ export const MessagesContent = ({
       ? archivedKeys.filter((value) => value !== key)
       : [...archivedKeys, key];
     await persistArchivedKeys(nextKeys);
+  };
+
+  const confirmArchiveChat = (item: ArchivedChatItem) => {
+    const key = getArchiveItemKey(item);
+    const isArchived = archivedKeys.includes(key);
+    Alert.alert(
+      isArchived ? "Recuperar conversación" : "Archivar conversación",
+      isArchived
+        ? "La conversación volverá a aparecer en Comunidad."
+        : "Podés recuperarla luego desde la sección Archivados.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: isArchived ? "Recuperar" : "Archivar",
+          onPress: () => void toggleArchivedChat(item),
+        },
+      ],
+    );
   };
 
   const activeGroups = eventGroups.filter(
@@ -589,7 +608,10 @@ export const MessagesContent = ({
           <TouchableOpacity
             activeOpacity={0.75}
             style={localStyles.archiveButton}
-            onPress={() => toggleArchivedChat({ kind: "group", item })}
+            onPress={(event) => {
+              event.stopPropagation();
+              confirmArchiveChat({ kind: "group", item });
+            }}
           >
             <Icon
               name={
@@ -634,7 +656,10 @@ export const MessagesContent = ({
         <TouchableOpacity
           activeOpacity={0.75}
           style={localStyles.archiveButton}
-          onPress={() => toggleArchivedChat({ kind: "direct", item })}
+          onPress={(event) => {
+            event.stopPropagation();
+            confirmArchiveChat({ kind: "direct", item });
+          }}
         >
           <Icon
             name={
@@ -667,7 +692,7 @@ export const MessagesContent = ({
     hasArchivedChats;
 
   return (
-    <View style={styles.bg}>
+    <View style={[styles.bg, localStyles.screenBackground]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -883,6 +908,9 @@ const Messages = () => <MessagesContent />;
 export default Messages;
 
 const localStyles = StyleSheet.create({
+  screenBackground: {
+    backgroundColor: vibesTheme.colors.background,
+  },
   content: {
     paddingHorizontal: 18,
   },
@@ -1177,7 +1205,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 17,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.medium,
   },
   typeBadge: {
     borderRadius: 9,
@@ -1210,7 +1238,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   rowMeta: {
-    width: 50,
+    width: 58,
     minHeight: 50,
     alignItems: "flex-end",
     justifyContent: "space-between",
@@ -1219,6 +1247,8 @@ const localStyles = StyleSheet.create({
   rowTime: {
     color: "#6E6E6E",
     fontSize: 13,
+    lineHeight: 18,
+    includeFontPadding: true,
     fontFamily: vibesTheme.fonts.medium,
   },
   archiveButton: {

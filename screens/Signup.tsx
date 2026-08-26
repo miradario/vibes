@@ -61,7 +61,10 @@ const Signup = () => {
     setError(null);
 
     try {
-      const authResult = await signupMutation.mutateAsync({ email, password });
+      const authResult = await signupMutation.mutateAsync({
+        email: email.trim().toLowerCase(),
+        password,
+      });
       const signupUserId = authResult.session?.user?.id ?? authResult.user?.id;
       if (!authResult.session?.user?.id) {
         setError(
@@ -76,7 +79,14 @@ const Signup = () => {
         })
       );
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t("signup.failed");
+      const rawMessage = e instanceof Error ? e.message : "";
+      const normalizedMessage = rawMessage.toLowerCase();
+      const msg =
+        normalizedMessage.includes("already registered") ||
+        normalizedMessage.includes("already exists") ||
+        normalizedMessage.includes("user already")
+          ? t("signup.accountExists")
+          : rawMessage || t("signup.failed");
       setError(msg || t("signup.failed"));
     }
   };

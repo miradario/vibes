@@ -29,12 +29,13 @@ import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getPostAuthRoute } from "../src/lib/onboardingFlow";
 
-const isUnknownUserError = (error: unknown) => {
+const isInvalidCredentialsError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error ?? "");
   const normalized = message.toLowerCase();
 
   return (
     normalized.includes("invalid login credentials") ||
+    normalized.includes("invalid email or password") ||
     normalized.includes("user not found") ||
     normalized.includes("user does not exist")
   );
@@ -47,7 +48,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateAccountDialog, setShowCreateAccountDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const loginMutation = useLoginMutation();
   const googleLoginMutation = useGoogleLoginMutation();
@@ -66,11 +66,14 @@ const Login = () => {
     setError(null);
 
     try {
-      await loginMutation.mutateAsync({ email, password });
+      await loginMutation.mutateAsync({
+        email: email.trim().toLowerCase(),
+        password,
+      });
       navigation.navigate("Tab" as never);
     } catch (e) {
-      if (isUnknownUserError(e)) {
-        setShowCreateAccountDialog(true);
+      if (isInvalidCredentialsError(e)) {
+        setError(t("login.invalidCredentials"));
         return;
       }
 
@@ -120,11 +123,6 @@ const Login = () => {
 
   const isDisabled =
     !email || !password || loading || googleLoading || resetPasswordLoading;
-  const goToSignup = () => {
-    setShowCreateAccountDialog(false);
-    (navigation as any).navigate("Signup", { email: email.trim() });
-  };
-
   return (
     <View style={styles.bg}>
       <View style={localStyles.heroWrap}>
@@ -249,16 +247,6 @@ const Login = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      <CustomDialog
-        visible={showCreateAccountDialog}
-        title={t("login.createAccountDialogTitle")}
-        message={t("login.createAccountDialogMessage")}
-        primaryLabel={t("login.createAccountDialogPrimary")}
-        secondaryLabel={t("common.back")}
-        onPrimaryPress={goToSignup}
-        onSecondaryPress={() => setShowCreateAccountDialog(false)}
-        onClose={() => setShowCreateAccountDialog(false)}
-      />
       <CustomDialog
         visible={showResetPasswordDialog}
         title={t("login.resetPasswordSentTitle")}
