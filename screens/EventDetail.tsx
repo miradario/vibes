@@ -60,7 +60,6 @@ import {
   getChallengeMediaPreset,
   parseChallengeMediaPreset,
 } from "../src/constants/challengeMediaPresets";
-import { shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -1172,14 +1171,6 @@ const EventDetail = () => {
     }
   };
 
-  const handleShare = async () => {
-    if (isChallenge) {
-      await shareChallengeInvite(event);
-      return;
-    }
-    await shareEventInvite(event);
-  };
-
   return (
     <View
       style={[
@@ -1218,26 +1209,16 @@ const EventDetail = () => {
           localStyles.persistentHeader,
           { top: Math.max(insets.top + 10, 24) },
         ]}
-        right={
+        right={isJoined || isAdmin ? (
           <View style={localStyles.headerActions}>
-            <TouchableOpacity
-              style={styles.eventDetailMenuButton}
-              onPress={() => {
-                void handleShare();
-              }}
-            >
-              <Icon name="share-social-outline" size={22} color={DARK_GRAY} />
-            </TouchableOpacity>
-            {isJoined || isAdmin ? (
             <TouchableOpacity
               style={styles.eventDetailMenuButton}
               onPress={() => setMenuVisible(true)}
             >
               <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
             </TouchableOpacity>
-            ) : null}
           </View>
-        }
+        ) : undefined}
       />
 
       <ScrollView
@@ -2041,7 +2022,7 @@ const localStyles = StyleSheet.create({
     borderColor: "#F0E1C7",
   },
   eventHeroMedia: {
-    minHeight: 430,
+    minHeight: 240,
     borderRadius: 0,
     overflow: "hidden",
     marginBottom: 0,
@@ -2063,11 +2044,11 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "rgba(24, 22, 20, 0.38)",
+    backgroundColor: "rgba(24, 22, 20, 0.54)",
   },
   eventHeroContent: {
     position: "absolute",
-    top: 132,
+    top: 105,
     left: 0,
     right: 0,
     zIndex: 2,
@@ -2075,18 +2056,18 @@ const localStyles = StyleSheet.create({
   },
   eventHeroTitle: {
     color: WHITE,
-    fontSize: 44,
-    lineHeight: 49,
+    fontSize: 28,
+    lineHeight: 33,
     fontFamily: vibesTheme.fonts.medium,
-    textShadowColor: "rgba(0, 0, 0, 0.28)",
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
   eventHeroSubtitle: {
     marginTop: 8,
     color: "rgba(255, 255, 255, 0.9)",
-    fontSize: 21,
-    lineHeight: 25,
+    fontSize: 17,
+    lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
   },
   eventDetailContentFullBleed: {
@@ -2095,10 +2076,11 @@ const localStyles = StyleSheet.create({
   },
   eventScrollContent: {
     paddingTop: 0,
+    paddingBottom: 124,
   },
   eventDetailInfoCardFloating: {
     marginHorizontal: 24,
-    marginTop: -76,
+    marginTop: -36,
     paddingTop: 26,
     backgroundColor: "rgba(255, 255, 255, 0.94)",
   },

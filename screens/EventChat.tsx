@@ -599,8 +599,15 @@ const EventChat = () => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={localStyles.keyboardAvoidingRoot}
+      behavior={
+        Platform.OS === "ios"
+          ? "padding"
+          : Platform.OS === "android"
+            ? "height"
+            : undefined
+      }
+      keyboardVerticalOffset={0}
     >
       <View style={styles.eventChatBackground}>
         <AppHeader
@@ -673,6 +680,8 @@ const EventChat = () => {
             localStyles.messagesContentCompact,
           ]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         >
           {!eventId ? (
             <View style={localStyles.emptyMessages}>
@@ -810,6 +819,11 @@ const EventChat = () => {
             placeholderTextColor={TEXT_SECONDARY}
             value={message}
             onChangeText={setMessage}
+            onFocus={() => {
+              setTimeout(() => {
+                scrollRef.current?.scrollToEnd({ animated: true });
+              }, 180);
+            }}
             onSubmitEditing={handleSend}
             returnKeyType="send"
             maxLength={2000}
@@ -972,6 +986,10 @@ const EventChat = () => {
 export default EventChat;
 
 const localStyles = StyleSheet.create({
+  keyboardAvoidingRoot: {
+    flex: 1,
+    backgroundColor: "#F6F6F4",
+  },
   headerTitle: {
     fontSize: 22,
     fontFamily: vibesTheme.fonts.thin,
