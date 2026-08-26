@@ -97,7 +97,9 @@ const isExpiredEvent = (item: EventFeedItem) => {
   if (item.type !== "event" || !item.startsAt) return false;
   const startsAt = new Date(item.startsAt);
   if (Number.isNaN(startsAt.getTime())) return false;
-  return startsAt.getTime() < Date.now();
+  const endOfEventDay = new Date(startsAt);
+  endOfEventDay.setHours(23, 59, 59, 999);
+  return endOfEventDay.getTime() < Date.now();
 };
 
 const getVisibilityMeta = (visibility?: EventFeedItem["visibility"]) => {
@@ -373,7 +375,7 @@ const Events = () => {
             alignItems: "center",
           }}
         >
-          <Text style={styles.eventsTitle}>{title}</Text>
+          <Text style={[styles.eventsTitle, localStyles.screenTitle]}>{title}</Text>
           <TouchableOpacity
             style={[styles.eventCardButton, localStyles.createButton]}
             onPress={() => {
@@ -395,7 +397,7 @@ const Events = () => {
           <TextInput
             style={[styles.eventsSearchInput, localStyles.searchInput]}
             placeholder={searchPlaceholder}
-            placeholderTextColor={TEXT_SECONDARY}
+            placeholderTextColor="rgba(43, 43, 43, 0.34)"
             value={search}
             onChangeText={setSearch}
             autoCapitalize="none"
@@ -410,8 +412,9 @@ const Events = () => {
           keyExtractor={(item) => (item.kind === "section" ? item.id : item.item.id)}
           contentContainerStyle={[
             styles.eventsListContent,
-            { paddingBottom: getBottomTabContentPadding(insets.bottom, 100) },
+            { paddingBottom: getBottomTabContentPadding(insets.bottom, 140) },
           ]}
+          ListFooterComponentStyle={localStyles.listFooter}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
@@ -576,9 +579,7 @@ const Events = () => {
                       localStyles.feedThumbProgressPill,
                       challengeProgress.tone === "done"
                         ? localStyles.progressPillDone
-                        : challengeProgress.tone === "pending"
-                          ? localStyles.progressPillPending
-                          : null,
+                        : null,
                     ]}
                   >
                     <Text style={localStyles.feedThumbProgressText}>
@@ -680,6 +681,17 @@ const Events = () => {
 export default Events;
 
 const localStyles = StyleSheet.create({
+  screenTitle: {
+    color: "#252321",
+    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 34,
+    lineHeight: 40,
+    textAlign: "left",
+  },
+  listFooter: {
+    marginTop: 8,
+    marginBottom: 20,
+  },
   createButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -772,7 +784,7 @@ const localStyles = StyleSheet.create({
     color: "#252323",
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.medium,
   },
   feedRowMeta: {
     marginTop: 4,

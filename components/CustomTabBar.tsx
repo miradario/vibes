@@ -37,11 +37,10 @@ import { useMatchesQuery } from "../src/queries/matches.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const TAB_BAR_HEIGHT = 82;
-const FLOATING_BUTTON_SIZE = 64;
-const NOTCH_SIZE = 104;
+const FLOATING_BUTTON_SIZE = 54;
 const HORIZONTAL_MARGIN = 18;
-const FLOATING_TOP = 16;
-const SELECTED_RISE = -52;
+const FLOATING_TOP = 8;
+const SELECTED_RISE = -38;
 const ANIMATION_CONFIG = { duration: 520 };
 
 const iconByRoute: Record<string, LucideIcon> = {
@@ -278,14 +277,6 @@ const CustomTabBar = ({
     };
   });
 
-  const notchStyle = useAnimatedStyle(() => {
-    const slotCenter = ((selectedIndex.value + 0.5) / tabCount) * barWidth;
-
-    return {
-      transform: [{ translateX: slotCenter - NOTCH_SIZE / 2 }],
-    };
-  });
-
   const floatingIconStyle = useAnimatedStyle(() => ({
     opacity: selectedIconProgress.value,
     transform: [
@@ -340,10 +331,6 @@ const CustomTabBar = ({
     >
       <View style={[localStyles.barShadow, { width: barWidth }]}>
         <View style={localStyles.bar}>
-          <Animated.View
-            pointerEvents="none"
-            style={[localStyles.notchPlate, notchStyle]}
-          />
           {visibleRoutes.map((route) => {
             const { options } = descriptors[route.key];
             const isFocused =
@@ -408,7 +395,7 @@ const CustomTabBar = ({
             >
               <Animated.View style={floatingIconStyle}>
                 <SelectedIcon
-                  size={29}
+                  size={25}
                   color={localColors.primaryText}
                   strokeWidth={2.25}
                 />
@@ -436,7 +423,7 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     alignItems: "center",
-    paddingTop: 46,
+    paddingTop: 32,
   },
   barShadow: {
     maxWidth: 620,
@@ -457,20 +444,6 @@ const localStyles = StyleSheet.create({
     justifyContent: "space-around",
     overflow: "visible",
     paddingHorizontal: 10,
-  },
-  notchPlate: {
-    position: "absolute",
-    top: -50,
-    left: 0,
-    width: NOTCH_SIZE,
-    height: NOTCH_SIZE,
-    borderRadius: NOTCH_SIZE / 2,
-    backgroundColor: localColors.surface,
-    shadowColor: "#2B2B2B",
-    shadowOpacity: 0.035,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
   },
   tabItem: {
     flex: 1,
@@ -510,10 +483,10 @@ const localStyles = StyleSheet.create({
   },
   glow: {
     position: "absolute",
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    opacity: 0.42,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    opacity: 0.34,
     ...Platform.select({
       ios: {
         shadowOpacity: 0.22,
@@ -531,9 +504,7 @@ const localStyles = StyleSheet.create({
     borderRadius: FLOATING_BUTTON_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 4,
-    borderColor: "#FFFFFF",
+    backgroundColor: "transparent",
     shadowColor: "#2B2B2B",
     shadowOpacity: 0.07,
     shadowRadius: 8,
@@ -541,9 +512,9 @@ const localStyles = StyleSheet.create({
     elevation: 7,
   },
   floatingButton: {
-    width: FLOATING_BUTTON_SIZE - 8,
-    height: FLOATING_BUTTON_SIZE - 8,
-    borderRadius: (FLOATING_BUTTON_SIZE - 8) / 2,
+    width: FLOATING_BUTTON_SIZE,
+    height: FLOATING_BUTTON_SIZE,
+    borderRadius: FLOATING_BUTTON_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
   },

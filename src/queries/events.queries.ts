@@ -35,9 +35,12 @@ export type EventFeedItem = {
   date: string;
   startsAt?: string | null;
   attendees: string;
+  participantCount?: number;
   capacity?: number | null;
   durationDays?: number | null;
   location?: string | null;
+  locationLatitude?: number | null;
+  locationLongitude?: number | null;
   eventLink?: string | null;
   pricingType?: EventPricingType;
   paymentLink?: string | null;
@@ -67,6 +70,8 @@ type CreateEventInput = {
   description?: string | null;
   startsAt: string;
   location?: string | null;
+  locationLatitude?: number | null;
+  locationLongitude?: number | null;
   eventLink?: string | null;
   pricingType: EventPricingType;
   paymentLink?: string | null;
@@ -81,11 +86,14 @@ type CreateEventInput = {
 
 type UpdateEventInput = {
   eventId: string;
+  updatedBy: string;
   title: string;
   subtitle: string;
   description?: string | null;
   startsAt: string;
   location?: string | null;
+  locationLatitude?: number | null;
+  locationLongitude?: number | null;
   eventLink?: string | null;
   pricingType: EventPricingType;
   paymentLink?: string | null;
@@ -210,10 +218,23 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
     startsAt,
     attendees:
       type === "challenge" ? "Desafío" : `${participantCount}/${capacity || 0}`,
+    participantCount: type === "event" ? participantCount : undefined,
     capacity: type === "event" ? capacity : null,
     durationDays: type === "challenge" ? durationDays : null,
     location:
       typeof row.location === "string" && row.location.trim() ? row.location : null,
+    locationLatitude:
+      row.location_latitude !== null &&
+      row.location_latitude !== undefined &&
+      Number.isFinite(Number(row.location_latitude))
+        ? Number(row.location_latitude)
+        : null,
+    locationLongitude:
+      row.location_longitude !== null &&
+      row.location_longitude !== undefined &&
+      Number.isFinite(Number(row.location_longitude))
+        ? Number(row.location_longitude)
+        : null,
     eventLink:
       typeof row.event_link === "string" && row.event_link.trim()
         ? row.event_link.trim()
@@ -390,8 +411,13 @@ const createParticipantPreviewMap = async (rows: ParticipantPreviewRow[]) => {
   return previewMap;
 };
 
-const fetchEventParticipantPreviewMap = async (eventIds: string[]) => {
-  if (!eventIds.length) return {} as Record<string, string[]>;
+const fetchEventParticipantMeta = async (eventIds: string[]) => {
+  if (!eventIds.length) {
+    return {
+      previewMap: {} as Record<string, string[]>,
+      countMap: {} as Record<string, number>,
+    };
+  }
 
   const { data, error } = await supabase
     .from("event_participants")
@@ -401,13 +427,24 @@ const fetchEventParticipantPreviewMap = async (eventIds: string[]) => {
 
   if (error) throw error;
 
-  return createParticipantPreviewMap(
-    (data ?? []).map((row: any) => ({
+  const rows = (data ?? []).map((row: any) => ({
       eventId: String(row.event_id),
       userId: String(row.user_id),
       joinedAt: typeof row.joined_at === "string" ? row.joined_at : null,
-    })),
-  );
+    }));
+  const countSets = rows.reduce<Map<string, Set<string>>>((acc, row) => {
+    const users = acc.get(row.eventId) ?? new Set<string>();
+    users.add(row.userId);
+    acc.set(row.eventId, users);
+    return acc;
+  }, new Map());
+
+  return {
+    previewMap: await createParticipantPreviewMap(rows),
+    countMap: Object.fromEntries(
+      Array.from(countSets.entries()).map(([eventId, users]) => [eventId, users.size]),
+    ) as Record<string, number>,
+  };
 };
 
 const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
@@ -593,6 +630,7 @@ const enrichFeedItemsWithProfileImages = async (
   previewMap: Record<string, string[]>,
   todayCheckinCountMap?: Record<string, number>,
   viewerProgressMap?: Record<string, { completedDaysCount: number; checkedInToday: boolean }>,
+  participantCountMap?: Record<string, number>,
 ) => {
   return Promise.all(
     items.map(async (item) => {
@@ -608,6 +646,14 @@ const enrichFeedItemsWithProfileImages = async (
 
       return {
         ...item,
+        participantCount:
+          typeof participantCountMap?.[item.id] === "number"
+            ? participantCountMap[item.id]
+            : item.participantCount,
+        attendees:
+          item.type === "event" && typeof participantCountMap?.[item.id] === "number"
+            ? `${participantCountMap[item.id]}/${item.capacity || 0}`
+            : item.attendees,
         hostImage: signedHostImage,
         participantPreviewImages,
         checkedInTodayCount:
@@ -636,8 +682,16 @@ const fetchEvents = async (): Promise<EventFeedItem[]> => {
   }
 
   const items = (data ?? []).map(mapEventRow);
-  const previewMap = await fetchEventParticipantPreviewMap(items.map((item) => item.id));
-  return enrichFeedItemsWithProfileImages(items, previewMap);
+  const { previewMap, countMap } = await fetchEventParticipantMeta(
+    items.map((item) => item.id),
+  );
+  return enrichFeedItemsWithProfileImages(
+    items,
+    previewMap,
+    undefined,
+    undefined,
+    countMap,
+  );
 };
 
 const filterChallengesForViewer = async (
@@ -697,15 +751,20 @@ const maybeUploadEventImage = async (
   uri: string | null | undefined,
   pathPrefix: string,
 ) => {
-  if (!uri || !uri.trim() || !uri.startsWith("file")) {
-    return uri ?? null;
-  }
+  const normalizedUri = uri?.trim() ?? "";
+  if (!normalizedUri) return null;
+  if (/^https?:\/\//i.test(normalizedUri)) return normalizedUri;
 
-  return uploadImageToSupabase({
-    uri,
-    bucket: EVENT_ASSETS_BUCKET,
-    pathPrefix,
-  });
+  try {
+    return await uploadImageToSupabase({
+      uri: normalizedUri,
+      bucket: EVENT_ASSETS_BUCKET,
+      pathPrefix,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`No se pudo subir la foto de portada: ${message}`);
+  }
 };
 
 export const useEventsFeedQuery = () => {
@@ -857,13 +916,16 @@ export const useCreateEventMutation = () => {
           description: encodedDescription,
           starts_at: input.startsAt,
           location: input.location ?? null,
+          location_latitude: input.locationLatitude ?? null,
+          location_longitude: input.locationLongitude ?? null,
           event_link: input.eventLink ?? null,
           pricing_type: input.pricingType,
           payment_link: input.paymentLink ?? null,
           modality: input.modality,
           online_link: input.onlineLink ?? null,
           capacity: input.capacity,
-          participant_count: 1,
+          // The event_participants trigger increments this when the organizer is added.
+          participant_count: 0,
           image_url: imageUrl,
           host_name: input.hostName ?? null,
           host_image_url: input.hostImage ?? null,
@@ -872,7 +934,7 @@ export const useCreateEventMutation = () => {
         .single();
 
       if (error) {
-        throw error;
+        throw new Error(`No se pudo guardar el evento: ${error.message}`);
       }
 
       const { error: participantError } = await supabase
@@ -887,7 +949,10 @@ export const useCreateEventMutation = () => {
         );
 
       if (participantError) {
-        throw participantError;
+        await supabase.from("events").delete().eq("id", String(data.id));
+        throw new Error(
+          `No se pudo registrar al organizador del evento: ${participantError.message}`,
+        );
       }
 
       return mapEventRow(data);
@@ -905,7 +970,10 @@ export const useUpdateEventMutation = () => {
     mutationFn: async (input) => {
       const imageUrl = input.imagePresetId
         ? null
-        : await maybeUploadEventImage(input.imageUri, `events/${input.eventId}`);
+        : await maybeUploadEventImage(
+            input.imageUri,
+            `${input.updatedBy}/events/${input.eventId}`,
+          );
       const encodedDescription = encodeChallengeDescriptionWithPreset(
         input.description ?? null,
         input.imagePresetId,
@@ -919,6 +987,8 @@ export const useUpdateEventMutation = () => {
           description: encodedDescription,
           starts_at: input.startsAt,
           location: input.location ?? null,
+          location_latitude: input.locationLatitude ?? null,
+          location_longitude: input.locationLongitude ?? null,
           event_link: input.eventLink ?? null,
           pricing_type: input.pricingType,
           payment_link: input.paymentLink ?? null,
@@ -939,6 +1009,25 @@ export const useUpdateEventMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+    },
+  });
+};
+
+export const useDeleteEventMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, unknown, { eventId: string }>({
+    mutationFn: async ({ eventId }) => {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId)
+        .eq("type", "event");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
     },
   });
 };

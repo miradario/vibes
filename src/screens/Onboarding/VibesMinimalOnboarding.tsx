@@ -255,6 +255,7 @@ const VibesMinimalOnboarding = ({
           resizeMode={ResizeMode.CONTAIN}
           shouldPlay={videoShouldPlay}
           isMuted
+          isLooping
           onPlaybackStatusUpdate={updatePlaybackStatus}
         />
       </Animated.View>

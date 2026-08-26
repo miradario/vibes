@@ -989,7 +989,7 @@ const MeditationScreen = () => {
                   resizeMode={ResizeMode.CONTAIN}
                   shouldPlay={isPlaying}
                   isMuted
-                  isLooping={false}
+                  isLooping
                   rate={selectedVideoRate}
                   shouldCorrectPitch={false}
                   progressUpdateIntervalMillis={250}
@@ -1159,7 +1159,7 @@ const MeditationScreen = () => {
                     resizeMode={ResizeMode.CONTAIN}
                     shouldPlay={isPlaying}
                     isMuted
-                    isLooping={false}
+                    isLooping
                     rate={selectedVideoRate}
                     shouldCorrectPitch={false}
                     progressUpdateIntervalMillis={250}

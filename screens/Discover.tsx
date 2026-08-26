@@ -14,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -42,13 +43,18 @@ import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import VibesLoader from "../components/VibesLoader";
+import { showToast } from "../src/utils/toast";
+
+type DiscoverGender = "woman" | "man" | "other";
+type DiscoverDiet = "vegetarian" | "nonVegetarian" | "other";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
   ageMax: number | null;
   distanceMinKm: number | null;
   maxDistanceKm: number | null;
-  gender: "all" | "woman" | "man" | "nonbinary" | "other";
+  genders: DiscoverGender[];
+  diets: DiscoverDiet[];
   smoking: "all" | "no" | "occasionally" | "yes";
 };
 
@@ -57,7 +63,8 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   ageMax: null,
   distanceMinKm: null,
   maxDistanceKm: null,
-  gender: "all",
+  genders: [],
+  diets: [],
   smoking: "all",
 };
 
@@ -67,6 +74,7 @@ export type DiscoverContentHandle = {
 
 type DiscoverContentProps = {
   showHeader?: boolean;
+  onFilterCountChange?: (count: number) => void;
 };
 const DISCOVER_PAGE_SIZE = 30;
 const MIN_DISCOVER_AGE = 18;
@@ -128,7 +136,7 @@ const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
 const normalizeGender = (
   value: unknown,
   genderId?: unknown,
-): DiscoverFiltersState["gender"] | "unknown" => {
+): DiscoverGender | "unknown" => {
   if (typeof value === "string" && value.trim()) {
     const normalized = value
       .trim()
@@ -139,7 +147,7 @@ const normalizeGender = (
     if (["woman", "female", "mujer"].includes(normalized)) return "woman";
     if (["man", "male", "hombre"].includes(normalized)) return "man";
     if (["nonbinary", "non-binary", "no binario", "no binaria"].includes(normalized)) {
-      return "nonbinary";
+      return "other";
     }
     if (["other", "otro", "otra", "more", "mas"].includes(normalized)) {
       return "other";
@@ -150,16 +158,26 @@ const normalizeGender = (
   if (parsedGenderId === 1) return "woman";
   if (parsedGenderId === 2) return "man";
   if (parsedGenderId === 3) return "other";
-  if (parsedGenderId === 4) return "nonbinary";
+  if (parsedGenderId === 4) return "other";
   return "unknown";
 };
 
-const getDiscoverGenderId = (gender: DiscoverFiltersState["gender"]) => {
-  if (gender === "woman") return 1;
-  if (gender === "man") return 2;
-  if (gender === "other") return 3;
-  if (gender === "nonbinary") return 4;
-  return null;
+const normalizeDiet = (value: unknown): DiscoverDiet | "unknown" => {
+  if (typeof value !== "string" || !value.trim()) return "unknown";
+
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (["si", "yes", "vegetarian", "vegetariano", "vegetariana"].includes(normalized)) {
+    return "vegetarian";
+  }
+  if (["no", "non-vegetarian", "no vegetariano", "no vegetariana"].includes(normalized)) {
+    return "nonVegetarian";
+  }
+  return "other";
 };
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
@@ -228,7 +246,10 @@ const areFiltersEqual = (
   left.ageMax === right.ageMax &&
   left.distanceMinKm === right.distanceMinKm &&
   left.maxDistanceKm === right.maxDistanceKm &&
-  left.gender === right.gender &&
+  left.genders.length === right.genders.length &&
+  left.genders.every((gender) => right.genders.includes(gender)) &&
+  left.diets.length === right.diets.length &&
+  left.diets.every((diet) => right.diets.includes(diet)) &&
   left.smoking === right.smoking;
 
 const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFiltersState => ({
@@ -244,12 +265,31 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
   maxDistanceKm: toFiniteNumber(
     preferences?.discoverDistanceMaxKm ?? preferences?.discover_distance_max_km,
   ),
-  gender: (() => {
+  genders: (() => {
+    const storedGenders =
+      preferences?.discoverGenders ?? preferences?.discover_genders;
+    if (Array.isArray(storedGenders)) {
+      return Array.from(
+        new Set(
+          storedGenders
+            .map((value) => normalizeGender(value))
+            .filter((value): value is DiscoverGender => value !== "unknown"),
+        ),
+      );
+    }
     const storedGender = normalizeGender(
       preferences?.discoverGender ?? preferences?.discover_gender,
       preferences?.discoverGenderId ?? preferences?.discover_gender_id,
     );
-    return storedGender === "unknown" ? "all" : storedGender;
+    return storedGender === "unknown" ? [] : [storedGender];
+  })(),
+  diets: (() => {
+    const storedDiets =
+      preferences?.discoverDiets ?? preferences?.discover_diets;
+    if (!Array.isArray(storedDiets)) return [];
+    return storedDiets.filter((value): value is DiscoverDiet =>
+      ["vegetarian", "nonVegetarian", "other"].includes(String(value)),
+    );
   })(),
   smoking: normalizeSmoking(
     preferences?.discoverSmoking ?? preferences?.discover_smoking,
@@ -259,7 +299,7 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
 export const DiscoverContent = forwardRef<
   DiscoverContentHandle,
   DiscoverContentProps
->(({ showHeader = true }, ref) => {
+>(({ showHeader = true, onFilterCountChange }, ref) => {
   const navigation = useNavigation();
   const { t } = useI18n();
   const { data: session } = useAuthSession();
@@ -285,6 +325,9 @@ export const DiscoverContent = forwardRef<
   const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
   const [visibleProfileCount, setVisibleProfileCount] = useState(DISCOVER_PAGE_SIZE);
   const ownProfileRecord = (ownProfileData ?? null) as Record<string, any> | null;
+  const hasLocation =
+    toFiniteNumber(ownProfileRecord?.latitude) !== null &&
+    toFiniteNumber(ownProfileRecord?.longitude) !== null;
 
   const centerProfile = useMemo<DataT>(
     () =>
@@ -324,6 +367,7 @@ export const DiscoverContent = forwardRef<
           candidateRecord.age ?? candidateRecord.birthDate ?? candidateRecord.birth_date,
         );
         const candidateSmoking = normalizeSmoking(candidateRecord.smoking);
+        const candidateDiet = normalizeDiet(candidateRecord.vegetarian);
         const candidateGender = normalizeGender(
           candidateRecord.gender ??
             candidateRecord.genderLabel ??
@@ -332,6 +376,7 @@ export const DiscoverContent = forwardRef<
         );
 
         if (
+          hasLocation &&
           !matchesNumberRange(
             candidateAge,
             discoverFilters.ageMin,
@@ -354,8 +399,9 @@ export const DiscoverContent = forwardRef<
         }
 
         if (
-          discoverFilters.gender !== "all" &&
-          candidateGender !== discoverFilters.gender
+          discoverFilters.genders.length > 0 &&
+          (candidateGender === "unknown" ||
+            !discoverFilters.genders.includes(candidateGender))
         ) {
           return false;
         }
@@ -363,6 +409,14 @@ export const DiscoverContent = forwardRef<
         if (
           discoverFilters.smoking !== "all" &&
           candidateSmoking !== discoverFilters.smoking
+        ) {
+          return false;
+        }
+
+        if (
+          discoverFilters.diets.length > 0 &&
+          (candidateDiet === "unknown" ||
+            !discoverFilters.diets.includes(candidateDiet))
         ) {
           return false;
         }
@@ -393,6 +447,7 @@ export const DiscoverContent = forwardRef<
     candidates,
     discoverFilters,
     hiddenProfileIds,
+    hasLocation,
     ownProfileRecord?.latitude,
     ownProfileRecord?.longitude,
   ]);
@@ -436,6 +491,23 @@ export const DiscoverContent = forwardRef<
     [profiles, visibleProfileCount],
   );
   const canShowMoreProfiles = visibleProfileCount < profiles.length;
+  const activeFilterCount = useMemo(
+    () =>
+      [
+        discoverFilters.ageMin !== null || discoverFilters.ageMax !== null,
+        hasLocation &&
+          (discoverFilters.distanceMinKm !== null ||
+            discoverFilters.maxDistanceKm !== null),
+        discoverFilters.genders.length > 0,
+        discoverFilters.diets.length > 0,
+        discoverFilters.smoking !== "all",
+      ].filter(Boolean).length,
+    [discoverFilters, hasLocation],
+  );
+
+  useEffect(() => {
+    onFilterCountChange?.(activeFilterCount);
+  }, [activeFilterCount, onFilterCountChange]);
 
   useEffect(() => {
     setVisibleProfileCount(DISCOVER_PAGE_SIZE);
@@ -473,8 +545,13 @@ export const DiscoverContent = forwardRef<
         discover_age_max: discoverFilters.ageMax,
         discover_distance_min_km: discoverFilters.distanceMinKm,
         discover_distance_max_km: discoverFilters.maxDistanceKm,
-        discover_gender: discoverFilters.gender,
-        discover_gender_id: getDiscoverGenderId(discoverFilters.gender),
+        discover_genders: discoverFilters.genders,
+        discover_gender:
+          discoverFilters.genders.length === 1
+            ? discoverFilters.genders[0]
+            : "all",
+        discover_gender_id: null,
+        discover_diets: discoverFilters.diets,
         discover_smoking: discoverFilters.smoking,
       }).catch((persistError) => {
         console.warn("discover_filters:persist_error", persistError);
@@ -508,6 +585,11 @@ export const DiscoverContent = forwardRef<
         onSuccess: (response) => {
           if (response?.match) {
             navigation.navigate("Match" as never, { profile } as never);
+          } else {
+            showToast("Conexión solicitada", {
+              type: "success",
+              text1: "¡Conexión solicitada!",
+            });
           }
         },
         onError: (connectError) => {
@@ -560,37 +642,38 @@ export const DiscoverContent = forwardRef<
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
   );
 
-  const adjustAgeMin = (delta: number) => {
+  const setAgeInput = (key: "ageMin" | "ageMax", value: string) => {
+    const digits = value.replace(/\D+/g, "");
+    setDiscoverFilters((prev) => ({
+      ...prev,
+      [key]: digits ? Math.min(MAX_DISCOVER_AGE, Number(digits)) : null,
+    }));
+  };
+
+  const normalizeAgeInputs = () => {
     setDiscoverFilters((prev) => {
-      const current = prev.ageMin ?? MIN_DISCOVER_AGE;
-      let nextAgeMin = clampAge(current + delta);
-      if (prev.ageMax !== null) {
-        nextAgeMin = Math.min(nextAgeMin, prev.ageMax);
-      }
-      return { ...prev, ageMin: nextAgeMin };
+      const ageMin = prev.ageMin === null ? null : clampAge(prev.ageMin);
+      const ageMax = prev.ageMax === null ? null : clampAge(prev.ageMax);
+      return {
+        ...prev,
+        ageMin:
+          ageMin !== null && ageMax !== null ? Math.min(ageMin, ageMax) : ageMin,
+        ageMax:
+          ageMin !== null && ageMax !== null ? Math.max(ageMin, ageMax) : ageMax,
+      };
     });
   };
 
-  const adjustAgeMax = (delta: number) => {
-    setDiscoverFilters((prev) => {
-      const current = prev.ageMax ?? MAX_DISCOVER_AGE;
-      let nextAgeMax = clampAge(current + delta);
-      if (prev.ageMin !== null) {
-        nextAgeMax = Math.max(nextAgeMax, prev.ageMin);
-      }
-      return { ...prev, ageMax: nextAgeMax };
-    });
+  const setDistanceInput = (
+    key: "distanceMinKm" | "maxDistanceKm",
+    value: string,
+  ) => {
+    const digits = value.replace(/\D+/g, "");
+    setDiscoverFilters((prev) => ({
+      ...prev,
+      [key]: digits ? Math.min(999, Number(digits)) : null,
+    }));
   };
-
-  const renderStepperButton = (label: string, onPress: () => void) => (
-    <TouchableOpacity
-      style={localStyles.rangeStepperButton}
-      activeOpacity={0.82}
-      onPress={onPress}
-    >
-      <Text style={localStyles.rangeStepperText}>{label}</Text>
-    </TouchableOpacity>
-  );
 
   useImperativeHandle(
     ref,
@@ -687,27 +770,34 @@ export const DiscoverContent = forwardRef<
                   <View style={localStyles.rangeRow}>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>{t("discover.min")}</Text>
-                      <View style={localStyles.rangeControls}>
-                        {renderStepperButton("-", () => adjustAgeMin(-1))}
-                        <Text style={localStyles.rangeValue}>
-                          {discoverFilters.ageMin ?? t("discover.noLimit")}
-                        </Text>
-                        {renderStepperButton("+", () => adjustAgeMin(1))}
-                      </View>
+                      <TextInput
+                        style={localStyles.rangeInput}
+                        value={discoverFilters.ageMin?.toString() ?? ""}
+                        onChangeText={(value) => setAgeInput("ageMin", value)}
+                        placeholder={t("discover.noLimit")}
+                        placeholderTextColor="rgba(43, 43, 43, 0.34)"
+                        keyboardType="number-pad"
+                        maxLength={2}
+                        onEndEditing={normalizeAgeInputs}
+                      />
                     </View>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>{t("discover.max")}</Text>
-                      <View style={localStyles.rangeControls}>
-                        {renderStepperButton("-", () => adjustAgeMax(-1))}
-                        <Text style={localStyles.rangeValue}>
-                          {discoverFilters.ageMax ?? t("discover.noLimit")}
-                        </Text>
-                        {renderStepperButton("+", () => adjustAgeMax(1))}
-                      </View>
+                      <TextInput
+                        style={localStyles.rangeInput}
+                        value={discoverFilters.ageMax?.toString() ?? ""}
+                        onChangeText={(value) => setAgeInput("ageMax", value)}
+                        placeholder={t("discover.noLimit")}
+                        placeholderTextColor="rgba(43, 43, 43, 0.34)"
+                        keyboardType="number-pad"
+                        maxLength={2}
+                        onEndEditing={normalizeAgeInputs}
+                      />
                     </View>
                   </View>
                 </View>
 
+                {hasLocation ? (
                 <View style={localStyles.filtersSection}>
                   {filterSectionTitle(t("discover.distance"))}
                   <View style={localStyles.rangeHeader}>
@@ -727,39 +817,43 @@ export const DiscoverContent = forwardRef<
                   <View style={localStyles.rangeRow}>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>{t("discover.min")}</Text>
-                      <View style={localStyles.rangeControls}>
-                        <Text style={localStyles.rangeValue}>
-                          {discoverFilters.distanceMinKm === null
-                            ? t("discover.noLimit")
-                            : `${discoverFilters.distanceMinKm} km`}
-                        </Text>
-                      </View>
+                      <TextInput
+                        style={localStyles.rangeInput}
+                        value={discoverFilters.distanceMinKm?.toString() ?? ""}
+                        onChangeText={(value) =>
+                          setDistanceInput("distanceMinKm", value)
+                        }
+                        placeholder={t("discover.noLimit")}
+                        placeholderTextColor="rgba(43, 43, 43, 0.34)"
+                        keyboardType="number-pad"
+                        maxLength={3}
+                      />
                     </View>
                     <View style={localStyles.rangeCard}>
                       <Text style={localStyles.rangeLabel}>{t("discover.max")}</Text>
-                      <View style={localStyles.rangeControls}>
-                        <Text style={localStyles.rangeValue}>
-                          {discoverFilters.maxDistanceKm === null
-                            ? t("discover.noLimit")
-                            : `${discoverFilters.maxDistanceKm} km`}
-                        </Text>
-                      </View>
+                      <TextInput
+                        style={localStyles.rangeInput}
+                        value={discoverFilters.maxDistanceKm?.toString() ?? ""}
+                        onChangeText={(value) =>
+                          setDistanceInput("maxDistanceKm", value)
+                        }
+                        placeholder={t("discover.noLimit")}
+                        placeholderTextColor="rgba(43, 43, 43, 0.34)"
+                        keyboardType="number-pad"
+                        maxLength={3}
+                      />
                     </View>
                   </View>
                 </View>
+                ) : null}
 
                 <View style={localStyles.filtersSection}>
                   {filterSectionTitle(t("discover.gender"))}
                   <View style={localStyles.filtersPillRow}>
                     {(
                       [
-                        { value: "all", label: t("discover.genderAll") },
-                        { value: "woman", label: t("discover.genderWoman") },
                         { value: "man", label: t("discover.genderMan") },
-                        {
-                          value: "nonbinary",
-                          label: t("discover.genderNonbinary"),
-                        },
+                        { value: "woman", label: t("discover.genderWoman") },
                         { value: "other", label: t("discover.genderOther") },
                       ] as const
                     ).map((option) => (
@@ -767,20 +861,76 @@ export const DiscoverContent = forwardRef<
                         key={option.value}
                         style={[
                           localStyles.filterPill,
-                          discoverFilters.gender === option.value &&
+                          discoverFilters.genders.includes(option.value) &&
                             localStyles.filterPillActive,
                         ]}
                         onPress={() =>
-                          setDiscoverFilters((prev) => ({
-                            ...prev,
-                            gender: option.value,
-                          }))
+                          setDiscoverFilters((prev) => {
+                            const selected = prev.genders.includes(option.value);
+                            return {
+                              ...prev,
+                              genders: selected
+                                ? prev.genders.filter((value) => value !== option.value)
+                                : [...prev.genders, option.value],
+                            };
+                          })
                         }
                       >
                         <Text
                           style={[
                             localStyles.filterPillText,
-                            discoverFilters.gender === option.value &&
+                            discoverFilters.genders.includes(option.value) &&
+                              localStyles.filterPillTextActive,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={localStyles.filtersSection}>
+                  {filterSectionTitle(t("discover.diet"))}
+                  <View style={localStyles.filtersPillRow}>
+                    {(
+                      [
+                        {
+                          value: "vegetarian",
+                          label: t("discover.dietVegetarian"),
+                        },
+                        {
+                          value: "nonVegetarian",
+                          label: t("discover.dietNonVegetarian"),
+                        },
+                        { value: "other", label: t("discover.dietOther") },
+                      ] as const
+                    ).map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          localStyles.filterPill,
+                          discoverFilters.diets.includes(option.value) &&
+                            localStyles.filterPillActive,
+                        ]}
+                        onPress={() =>
+                          setDiscoverFilters((prev) => {
+                            const selected = prev.diets.includes(option.value);
+                            return {
+                              ...prev,
+                              diets: selected
+                                ? prev.diets.filter(
+                                    (value) => value !== option.value,
+                                  )
+                                : [...prev.diets, option.value],
+                            };
+                          })
+                        }
+                      >
+                        <Text
+                          style={[
+                            localStyles.filterPillText,
+                            discoverFilters.diets.includes(option.value) &&
                               localStyles.filterPillTextActive,
                           ]}
                         >
@@ -882,6 +1032,11 @@ export const DiscoverContent = forwardRef<
               >
                 <Icon name="options-outline" size={17} color="#2B2B2B" />
                 <Text style={localStyles.filtersButtonText}>{t("discover.filters")}</Text>
+                {activeFilterCount > 0 ? (
+                  <View style={localStyles.filtersCountBadge}>
+                    <Text style={localStyles.filtersCountText}>{activeFilterCount}</Text>
+                  </View>
+                ) : null}
               </TouchableOpacity>
             }
           />
@@ -897,6 +1052,27 @@ export const DiscoverContent = forwardRef<
             <View style={localStyles.emptyState}>
               <Text style={localStyles.emptyTitle}>{t("discover.loadFailed")}</Text>
               <Text style={localStyles.emptyText}>{errorMessage}</Text>
+            </View>
+          ) : visibleProfiles.length === 0 ? (
+            <View style={localStyles.emptyState}>
+              <View style={localStyles.emptyIconCircle}>
+                <Icon name="compass-outline" size={34} color="#765B91" />
+              </View>
+              <Text style={localStyles.emptyTitle}>No hay perfiles para mostrar</Text>
+              <Text style={localStyles.emptyText}>
+                {activeFilterCount > 0
+                  ? "Probá ampliando tus filtros para encontrar más personas."
+                  : "Ya viste los perfiles disponibles. Volvé pronto para descubrir personas nuevas."}
+              </Text>
+              {activeFilterCount > 0 ? (
+                <TouchableOpacity
+                  style={localStyles.emptyActionButton}
+                  activeOpacity={0.84}
+                  onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
+                >
+                  <Text style={localStyles.emptyActionText}>Limpiar filtros</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : (
             <>
@@ -950,7 +1126,7 @@ const Discover = () => <DiscoverContent />;
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFDF8",
+    backgroundColor: vibesTheme.colors.background,
   },
   safeArea: {
     flex: 1,
@@ -988,6 +1164,20 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 15,
     fontFamily: vibesTheme.fonts.semibold,
+  },
+  filtersCountBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: vibesTheme.colors.accentMustard,
+  },
+  filtersCountText: {
+    color: "#2B2B2B",
+    fontSize: 12,
+    fontFamily: vibesTheme.fonts.bold,
   },
   orbitWrap: {
     flex: 1,
@@ -1028,6 +1218,15 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 32,
   },
+  emptyIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+    backgroundColor: "#F0EAF2",
+  },
   emptyTitle: {
     color: "#2B2B2B",
     fontSize: 24,
@@ -1041,6 +1240,21 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
+  },
+  emptyActionButton: {
+    marginTop: 22,
+    minHeight: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 22,
+    backgroundColor: "#765B91",
+  },
+  emptyActionText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    lineHeight: 19,
+    fontFamily: vibesTheme.fonts.bold,
   },
   filtersSheet: {
     backgroundColor: "#F6F6F4",
@@ -1145,21 +1359,16 @@ const localStyles = StyleSheet.create({
     fontSize: 16,
     fontFamily: vibesTheme.fonts.bold,
   },
-  rangeStepperButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(174, 191, 209, 0.2)",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-  },
-  rangeStepperText: {
+  rangeInput: {
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: "#F6F6F4",
     color: "#2B2B2B",
-    fontSize: 22,
-    lineHeight: 24,
+    fontSize: 17,
     fontFamily: vibesTheme.fonts.bold,
+    textAlign: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   filtersSectionTitle: {
     color: "#2B2B2B",

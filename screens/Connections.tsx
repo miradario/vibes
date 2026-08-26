@@ -27,10 +27,11 @@ const Connections = () => {
   const [activeSection, setActiveSection] = useState<ConnectionSection>(
     getInitialSection(route.params?.initialSection),
   );
+  const [activeFilterCount, setActiveFilterCount] = useState(0);
 
   useEffect(() => {
     setActiveSection(getInitialSection(route.params?.initialSection));
-  }, [route.params?.initialSection]);
+  }, [route.params?.discoverEntryKey, route.params?.initialSection]);
 
   return (
     <SafeAreaView style={localStyles.screen} edges={["top", "left", "right"]}>
@@ -75,6 +76,13 @@ const Connections = () => {
               <Text style={localStyles.filtersButtonText}>
                 {t("discover.filters")}
               </Text>
+              {activeFilterCount > 0 ? (
+                <View style={localStyles.filtersCountBadge}>
+                  <Text style={localStyles.filtersCountText}>
+                    {activeFilterCount}
+                  </Text>
+                </View>
+              ) : null}
             </TouchableOpacity>
           </View>
         ) : null}
@@ -105,7 +113,11 @@ const Connections = () => {
               : localStyles.hiddenPane,
           ]}
         >
-          <DiscoverContent ref={discoverRef} showHeader={false} />
+          <DiscoverContent
+            ref={discoverRef}
+            showHeader={false}
+            onFilterCountChange={setActiveFilterCount}
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -117,7 +129,7 @@ export default Connections;
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFDF8",
+    backgroundColor: vibesTheme.colors.background,
   },
   headerBlock: {
     paddingHorizontal: 18,
@@ -139,6 +151,20 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 14,
     fontFamily: vibesTheme.fonts.medium,
+  },
+  filtersCountBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: vibesTheme.colors.accentMustard,
+  },
+  filtersCountText: {
+    color: "#2B2B2B",
+    fontSize: 12,
+    fontFamily: vibesTheme.fonts.bold,
   },
   filtersRow: {
     marginTop: 12,

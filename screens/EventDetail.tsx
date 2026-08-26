@@ -18,12 +18,10 @@ import {
   Animated,
   PanResponder,
 } from "react-native";
-import { ResizeMode } from "expo-av";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles, {
   TEXT_SECONDARY,
-  TEXT_PRIMARY,
   PRIMARY_COLOR,
   WHITE,
   DARK_GRAY,
@@ -34,7 +32,6 @@ import Avatar from "../components/Avatar";
 import AvatarGroup from "../components/AvatarGroup";
 import VibesLoader from "../components/VibesLoader";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
-import LoopingVideo from "../components/LoopingVideo";
 import UserProfileSheet from "../components/UserProfileSheet";
 import ChallengeTreeProgress from "../components/ChallengeTreeProgress";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -52,6 +49,7 @@ import {
   useCheckInChallengeMutation,
   useLeaveChallengeMutation,
   useDeleteChallengeMutation,
+  useDeleteEventMutation,
   useIsEventParticipantQuery,
   useJoinEventMutation,
   useChallengeParticipantsQuery,
@@ -62,7 +60,6 @@ import {
   getChallengeMediaPreset,
   parseChallengeMediaPreset,
 } from "../src/constants/challengeMediaPresets";
-import { shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -243,6 +240,7 @@ const EventDetail = () => {
   const checkInMutation = useCheckInChallengeMutation();
   const leaveMutation = useLeaveChallengeMutation();
   const deleteMutation = useDeleteChallengeMutation();
+  const deleteEventMutation = useDeleteEventMutation();
 
   const { data: isEventParticipant } = useIsEventParticipantQuery(
     !isChallenge ? event?.id : undefined,
@@ -253,9 +251,10 @@ const EventDetail = () => {
   const { data: challengeParticipants = [] } = useChallengeParticipantsQuery(
     isChallenge ? event?.id : undefined,
   );
-  const { data: eventParticipants = [] } = useEventParticipantsQuery(
-    event?.id,
-  );
+  const {
+    data: eventParticipants = [],
+    isLoading: eventParticipantsLoading,
+  } = useEventParticipantsQuery(event?.id);
 
   const isAdmin = Boolean(
     userId && event?.createdBy && userId === event.createdBy,
@@ -325,15 +324,9 @@ const EventDetail = () => {
     parseChallengeMediaPreset(event?.imageUrl) ??
     extractChallengePresetFromDescription(event?.description);
   const defaultEventPreset = getChallengeMediaPreset("events");
-  const selectedChallengePreset = getChallengeMediaPreset(
-    normalizedPresetId,
-  );
   const selectedEventPreset = getChallengeMediaPreset(
     normalizedPresetId ?? (!isChallenge ? "events" : null),
   );
-  const challengeVideoSource =
-    selectedChallengePreset?.video ||
-    require("../assets/videos/challenge.mp4");
   const todayDate = new Date();
   const todayKey = formatDayKey(todayDate);
   const startDate = event?.startsAt ?? event?.createdAt;
@@ -358,7 +351,7 @@ const EventDetail = () => {
   const participantCount = challengeParticipantsMerged.length;
   const eventParticipantCount = Math.max(
     eventParticipantsWithAdmin.length,
-    getParticipantCountFallback(event?.attendees),
+    eventParticipantsLoading ? getParticipantCountFallback(event?.attendees) : 0,
   );
   const visibleParticipants = isChallenge
     ? challengeParticipantsMerged
@@ -382,20 +375,23 @@ const EventDetail = () => {
   const milestone = nextMilestone(streak);
   const treeProgress = Math.min(streak / durationDays, 1);
   const showTreeProgress = streak > 0;
-  const eventVideoSource = selectedEventPreset?.video
-    ? selectedEventPreset.video
-    : isVideoMedia(event?.imageUrl)
-    ? { uri: event.imageUrl }
-    : isVideoMedia(event?.image)
-    ? { uri: event.image }
-    : null;
-  const eventHeroImageSource =
-    selectedEventPreset?.image ||
-    (typeof event?.imageUrl === "string" && event.imageUrl.trim()
+  const customEventImageSource =
+    typeof event?.imageUrl === "string" &&
+    event.imageUrl.trim() &&
+    !parseChallengeMediaPreset(event.imageUrl) &&
+    !isVideoMedia(event.imageUrl)
       ? { uri: event.imageUrl.trim() }
-      : typeof event?.image === "string" && event.image.trim()
+      : typeof event?.image === "string" &&
+          event.image.trim() &&
+          !parseChallengeMediaPreset(event.image) &&
+          !isVideoMedia(event.image)
         ? { uri: event.image.trim() }
-        : defaultEventPreset?.image || null);
+        : null;
+  const eventHeroImageSource =
+    customEventImageSource ||
+    selectedEventPreset?.image ||
+    defaultEventPreset?.image ||
+    null;
   const selectedParticipantCard = selectedParticipant
     ? mapCandidateToConnectionProfile({
         id: selectedParticipant.userId,
@@ -896,6 +892,14 @@ const EventDetail = () => {
     typeof event?.location === "string" && event.location.trim()
       ? event.location.trim()
       : null;
+  const eventLocationLatitude =
+    typeof event?.locationLatitude === "number" ? event.locationLatitude : null;
+  const eventLocationLongitude =
+    typeof event?.locationLongitude === "number" ? event.locationLongitude : null;
+  const eventMapQuery =
+    eventLocationLatitude !== null && eventLocationLongitude !== null
+      ? `${eventLocationLatitude},${eventLocationLongitude}`
+      : eventLocation;
   const eventLink =
     typeof event?.eventLink === "string" && event.eventLink.trim()
       ? event.eventLink.trim()
@@ -1016,7 +1020,7 @@ const EventDetail = () => {
       return;
     }
 
-    const encodedLocation = encodeURIComponent(location);
+    const encodedLocation = encodeURIComponent(eventMapQuery ?? location);
     const candidateUrls =
       Platform.OS === "ios"
         ? [
@@ -1112,6 +1116,35 @@ const EventDetail = () => {
     );
   };
 
+  const handleDeleteEvent = () => {
+    Alert.alert(
+      "Eliminar evento",
+      "¿Eliminar este evento para todos? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            setMenuVisible(false);
+            try {
+              await deleteEventMutation.mutateAsync({ eventId: event.id });
+              navigation.navigate(
+                "Tab" as never,
+                { screen: "Events", params: { section: "event" } } as never,
+              );
+            } catch (error: any) {
+              Alert.alert(
+                "Error",
+                error?.message ?? "No se pudo eliminar el evento.",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handleEditEvent = () => {
     setMenuVisible(false);
     navigation.navigate(
@@ -1136,14 +1169,6 @@ const EventDetail = () => {
         : error?.message ?? "No se pudo registrar el check-in.";
       Alert.alert("Error", message);
     }
-  };
-
-  const handleShare = async () => {
-    if (isChallenge) {
-      await shareChallengeInvite(event);
-      return;
-    }
-    await shareEventInvite(event);
   };
 
   return (
@@ -1184,26 +1209,16 @@ const EventDetail = () => {
           localStyles.persistentHeader,
           { top: Math.max(insets.top + 10, 24) },
         ]}
-        right={
+        right={isJoined || isAdmin ? (
           <View style={localStyles.headerActions}>
-            <TouchableOpacity
-              style={styles.eventDetailMenuButton}
-              onPress={() => {
-                void handleShare();
-              }}
-            >
-              <Icon name="share-social-outline" size={22} color={DARK_GRAY} />
-            </TouchableOpacity>
-            {isJoined || isAdmin ? (
             <TouchableOpacity
               style={styles.eventDetailMenuButton}
               onPress={() => setMenuVisible(true)}
             >
               <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
             </TouchableOpacity>
-            ) : null}
           </View>
-        }
+        ) : undefined}
       />
 
       <ScrollView
@@ -1220,73 +1235,22 @@ const EventDetail = () => {
       >
         {!isChallenge ? (
           <>
-            {eventVideoSource ? (
-              <View style={localStyles.eventHeroMedia}>
-                {eventHeroImageSource ? (
-                  <Image
-                    source={eventHeroImageSource}
-                    style={localStyles.eventHeroImage}
-                  />
-                ) : null}
-                <LoopingVideo
-                  source={eventVideoSource}
-                  posterSource={eventHeroImageSource}
-                  style={localStyles.eventHeroVideo}
-                  resizeMode={ResizeMode.COVER}
+            <View style={localStyles.eventHeroMedia}>
+              {eventHeroImageSource ? (
+                <Image
+                  source={eventHeroImageSource}
+                  style={localStyles.eventHeroImage}
+                  resizeMode="cover"
                 />
-                <View style={localStyles.eventHeroScrim} />
-                <View style={localStyles.eventHeroContent}>
-                  <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
-                  <Text style={localStyles.eventHeroSubtitle}>
-                    {eventLeadText}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  activeOpacity={0.86}
-                  style={localStyles.eventHeroMessageButton}
-                  onPress={() =>
-                    navigation.navigate("EventChat" as never, { event } as never)
-                  }
-                >
-                  <Icon
-                    name="chatbox-ellipses-outline"
-                    size={20}
-                    color={DARK_GRAY}
-                  />
-                  <Text style={localStyles.eventHeroMessageText}>Mensaje</Text>
-                </TouchableOpacity>
+              ) : null}
+              <View style={localStyles.eventHeroScrim} />
+              <View style={localStyles.eventHeroContent}>
+                <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
+                <Text style={localStyles.eventHeroSubtitle}>
+                  {eventLeadText}
+                </Text>
               </View>
-            ) : (
-              <View style={localStyles.eventHeroMedia}>
-                {eventHeroImageSource ? (
-                  <Image
-                    source={eventHeroImageSource}
-                    style={localStyles.eventHeroImage}
-                  />
-                ) : null}
-                <View style={localStyles.eventHeroScrim} />
-                <View style={localStyles.eventHeroContent}>
-                  <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
-                  <Text style={localStyles.eventHeroSubtitle}>
-                    {eventLeadText}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  activeOpacity={0.86}
-                  style={localStyles.eventHeroMessageButton}
-                  onPress={() =>
-                    navigation.navigate("EventChat" as never, { event } as never)
-                  }
-                >
-                  <Icon
-                    name="chatbox-ellipses-outline"
-                    size={20}
-                    color={DARK_GRAY}
-                  />
-                  <Text style={localStyles.eventHeroMessageText}>Mensaje</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            </View>
 
             <View
               style={[
@@ -1402,7 +1366,7 @@ const EventDetail = () => {
                         <Image
                           source={{
                             uri: getStaticMapPreviewUrl(
-                              eventLocation,
+                              eventMapQuery ?? eventLocation,
                               googleMapsApiKey,
                             ),
                           }}
@@ -1911,6 +1875,16 @@ const EventDetail = () => {
                 <Text style={localStyles.menuItemText}>Editar evento</Text>
                 <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[localStyles.menuItem, localStyles.menuItemDanger]}
+                onPress={handleDeleteEvent}
+                disabled={deleteEventMutation.isPending}
+              >
+                <Icon name="trash" size={20} color="#D32F2F" />
+                <Text style={[localStyles.menuItemText, { color: "#D32F2F" }]}>
+                  Eliminar evento
+                </Text>
+              </TouchableOpacity>
             </>
           ) : null}
 
@@ -1926,7 +1900,7 @@ const EventDetail = () => {
             </TouchableOpacity>
           ) : null}
 
-          {isAdmin ? (
+          {isAdmin && isChallenge ? (
             <>
               <View style={localStyles.menuDivider} />
               <Text style={localStyles.menuSectionLabel}>Admin</Text>
@@ -2048,21 +2022,12 @@ const localStyles = StyleSheet.create({
     borderColor: "#F0E1C7",
   },
   eventHeroMedia: {
-    minHeight: 430,
+    minHeight: 240,
     borderRadius: 0,
     overflow: "hidden",
     marginBottom: 0,
     justifyContent: "flex-end",
     backgroundColor: "#EFE4D2",
-  },
-  eventHeroVideo: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
   },
   eventHeroImage: {
     position: "absolute",
@@ -2079,54 +2044,31 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "rgba(246, 246, 244, 0.16)",
+    backgroundColor: "rgba(24, 22, 20, 0.54)",
   },
   eventHeroContent: {
     position: "absolute",
-    top: 132,
+    top: 105,
     left: 0,
     right: 0,
     zIndex: 2,
     paddingHorizontal: 30,
   },
   eventHeroTitle: {
-    color: TEXT_PRIMARY,
-    fontSize: 48,
-    lineHeight: 52,
-    fontFamily: vibesTheme.fonts.thin,
+    color: WHITE,
+    fontSize: 28,
+    lineHeight: 33,
+    fontFamily: vibesTheme.fonts.medium,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   eventHeroSubtitle: {
     marginTop: 8,
-    color: TEXT_SECONDARY,
-    fontSize: 21,
-    lineHeight: 25,
-    fontFamily: vibesTheme.fonts.subtitle,
-  },
-  eventHeroMessageButton: {
-    position: "absolute",
-    right: 28,
-    bottom: 58,
-    zIndex: 3,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    borderRadius: 999,
-    backgroundColor: "rgba(255, 255, 255, 0.88)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.72)",
-    shadowColor: "#A88A55",
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
-  },
-  eventHeroMessageText: {
-    color: DARK_GRAY,
-    fontSize: 19,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 17,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.medium,
   },
   eventDetailContentFullBleed: {
     paddingHorizontal: 0,
@@ -2134,10 +2076,11 @@ const localStyles = StyleSheet.create({
   },
   eventScrollContent: {
     paddingTop: 0,
+    paddingBottom: 124,
   },
   eventDetailInfoCardFloating: {
     marginHorizontal: 24,
-    marginTop: -76,
+    marginTop: -36,
     paddingTop: 26,
     backgroundColor: "rgba(255, 255, 255, 0.94)",
   },

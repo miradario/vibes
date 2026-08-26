@@ -12,16 +12,19 @@ import {
   ImageBackground,
   StyleSheet,
   ScrollView,
-  useWindowDimensions,
+  Platform,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
+  withSequence,
   withTiming,
 } from "react-native-reanimated";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
@@ -41,17 +44,19 @@ import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { useMyEventGroupsQuery } from "../src/queries/events.queries";
-import { useMatchesQuery } from "../src/queries/matches.queries";
 import {
-  DAILY_GURU_FALLBACK,
+  getDailyGuruFallback,
   useDailyGuruMessageQuery,
 } from "../src/queries/dailyGuru.queries";
+import VibesActionButton from "../components/VibesActionButton";
+import { useI18n } from "../src/i18n";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -72,6 +77,50 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
 };
 
 let hasPlayedHomeEntryFade = false;
+
+const VibesBreathingMark = () => {
+  const breathProgress = useSharedValue(0);
+
+  useEffect(() => {
+    breathProgress.value = withRepeat(
+      withSequence(
+        withTiming(1, {
+          duration: 2600,
+          easing: Easing.inOut(Easing.sin),
+        }),
+        withTiming(0, {
+          duration: 2600,
+          easing: Easing.inOut(Easing.sin),
+        }),
+      ),
+      -1,
+      false,
+    );
+
+    return () => cancelAnimation(breathProgress);
+  }, [breathProgress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: 0.72 + breathProgress.value * 0.28,
+    transform: [{ scale: 0.9 + breathProgress.value * 0.12 }],
+  }));
+
+  const outerRingStyle = useAnimatedStyle(() => ({
+    opacity: 0.16 + breathProgress.value * 0.16,
+    transform: [{ scale: 0.82 + breathProgress.value * 0.34 }],
+  }));
+
+  return (
+    <View style={localStyles.vibesBreathingWrap} pointerEvents="none">
+      <Animated.View
+        style={[localStyles.vibesBreathingOuterRing, outerRingStyle]}
+      />
+      <Animated.View style={[localStyles.vibesBreathingOrb, animatedStyle]}>
+        <Text style={localStyles.vibesBreathingText}>Vibes</Text>
+      </Animated.View>
+    </View>
+  );
+};
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -231,6 +280,12 @@ const formatEventDayBox = (startsAt?: string | null) => {
   };
 };
 
+const parseEventParticipantCount = (value?: string | null) => {
+  if (!value) return 0;
+  const match = value.match(/^\s*(\d+)/);
+  return match ? Number(match[1]) : 0;
+};
+
 const areFiltersEqual = (
   left: DiscoverFiltersState,
   right: DiscoverFiltersState
@@ -270,8 +325,8 @@ const readStoredFilters = (
 });
 
 const Home = () => {
+  const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const navigation = useNavigation();
   const route = useRoute<any>();
   const shouldRunHomeEntryFade =
@@ -280,11 +335,12 @@ const Home = () => {
     shouldRunHomeEntryFade ? 1 : 0
   );
   const { data: session } = useAuthSession();
-  const { data: ownProfileData } = useProfileQuery(session?.user?.id);
-  const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
+  const { data: ownProfileData, isFetched: hasFetchedOwnProfile } =
+    useProfileQuery(session?.user?.id);
+  const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
+    useUserPreferencesQuery(session?.user?.id);
   const { data: candidates = [] } = useCandidatesQuery();
   const { data: myEventGroups = [] } = useMyEventGroupsQuery(session?.user?.id);
-  const { data: matches = [] } = useMatchesQuery();
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
@@ -400,13 +456,43 @@ const Home = () => {
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
   const [showGuruCard, setShowGuruCard] = useState(true);
-  const { data: dailyGuruMessage } = useDailyGuruMessageQuery();
-  const guruMessage = dailyGuruMessage ?? DAILY_GURU_FALLBACK;
+  const [isDailyGuideVisible, setIsDailyGuideVisible] = useState(false);
   const swipeMutation = useSwipeMutation();
   const firstName =
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
       .split(" ")[0]
       .trim() || "miradario";
+  const guruContext = useMemo(
+    () => ({
+      userId: session?.user?.id,
+      ready: hasFetchedOwnProfile && hasFetchedUserPreferences,
+      locale,
+      firstName,
+      age: centerProfile.age,
+      location: centerProfile.location,
+      preferences: Array.from(
+        new Set([
+          ...(centerProfile.spiritualPath ?? []),
+          ...(centerProfile.tags ?? []),
+          ...(centerProfile.preferences ?? []),
+        ]),
+      ).slice(0, 8),
+    }),
+    [
+      centerProfile.age,
+      centerProfile.location,
+      centerProfile.preferences,
+      centerProfile.spiritualPath,
+      centerProfile.tags,
+      firstName,
+      hasFetchedOwnProfile,
+      hasFetchedUserPreferences,
+      locale,
+      session?.user?.id,
+    ],
+  );
+  const { data: dailyGuruMessage } = useDailyGuruMessageQuery(guruContext);
+  const guruMessage = dailyGuruMessage ?? getDailyGuruFallback(locale);
   const upcomingJoinedEvents = useMemo(() => {
     const now = Date.now();
     return myEventGroups
@@ -425,10 +511,30 @@ const Home = () => {
   }, [myEventGroups]);
   const nextEvent = upcomingJoinedEvents[0] ?? null;
   const nextEventDate = formatEventDayBox(nextEvent?.startsAt);
-  const isCompactConnectionsCard = width < 390;
-  const visibleConnectionPreviewCount = isCompactConnectionsCard ? 2 : 3;
-  const connectionPreviewProfiles = profiles.slice(0, visibleConnectionPreviewCount);
-  const connectionCount = Math.max(profiles.length, matches.length);
+  const nextEventParticipantCount = nextEvent
+    ? nextEvent.participantCount ?? parseEventParticipantCount(nextEvent.attendees)
+    : 0;
+  const nextEventParticipantImages = (nextEvent?.participantPreviewImages ?? []).slice(
+    0,
+    Math.min(nextEventParticipantCount, 4),
+  );
+  const nextChallenge = useMemo(() => {
+    const challenges = myEventGroups
+      .filter((group) => group.eventType === "challenge")
+      .map((group) => group.event)
+      .filter(
+        (challenge) =>
+          getChallengeTimeline(challenge.startsAt, challenge.durationDays).status !==
+          "finished",
+      );
+    return (
+      challenges.find(
+        (challenge) =>
+          getChallengeTimeline(challenge.startsAt, challenge.durationDays).status ===
+          "active",
+      ) ?? challenges[0] ?? null
+    );
+  }, [myEventGroups]);
   const guruDismissStorageKey = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
     return `vibes:home-guru-dismissed:${today}`;
@@ -875,6 +981,59 @@ const Home = () => {
           </>
         </AnimatedSheetModal>
 
+        <AnimatedSheetModal
+          visible={isDailyGuideVisible}
+          onClose={() => setIsDailyGuideVisible(false)}
+          offsetY={420}
+          sheetStyle={localStyles.dailyGuideSheet}
+        >
+          <View style={localStyles.dailyGuideHandle} />
+          <View style={localStyles.dailyGuideHeader}>
+            <View style={localStyles.dailyGuideIcon}>
+              <Ionicons name="sunny-outline" size={24} color="#9A6B20" />
+            </View>
+            <View style={localStyles.dailyGuideHeaderCopy}>
+              <Text style={localStyles.dailyGuideEyebrow}>
+                {t("home.guruGuideEyebrow")}
+              </Text>
+              <Text style={localStyles.dailyGuideTitle}>{guruMessage.title}</Text>
+            </View>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t("home.guruGuideClose")}
+              activeOpacity={0.76}
+              style={localStyles.dailyGuideClose}
+              onPress={() => setIsDailyGuideVisible(false)}
+            >
+              <Icon name="close" size={19} color="#3E3934" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={localStyles.dailyGuideContent}
+          >
+            <Text style={localStyles.dailyGuideIntro}>{guruMessage.detail}</Text>
+            <Text style={localStyles.dailyGuideActionsTitle}>
+              {t("home.guruGuideActionsTitle")}
+            </Text>
+            {guruMessage.actions.map((action, index) => (
+              <View key={`${index}-${action}`} style={localStyles.dailyGuideActionRow}>
+                <View style={localStyles.dailyGuideActionNumber}>
+                  <Text style={localStyles.dailyGuideActionNumberText}>{index + 1}</Text>
+                </View>
+                <Text style={localStyles.dailyGuideActionText}>{action}</Text>
+              </View>
+            ))}
+            <VibesActionButton
+              label={t("home.guruGuideStart")}
+              variant="start"
+              style={localStyles.dailyGuideDoneButton}
+              onPress={() => setIsDailyGuideVisible(false)}
+            />
+          </ScrollView>
+        </AnimatedSheetModal>
+
         <Modal
           visible={showGallery}
           transparent
@@ -935,24 +1094,16 @@ const Home = () => {
           style={localStyles.homeScroll}
           contentContainerStyle={[
             localStyles.homeContent,
-            { paddingBottom: getBottomTabContentPadding(insets.bottom, 118) },
+            {
+              paddingBottom: getBottomTabContentPadding(
+                insets.bottom,
+                Platform.OS === "ios" ? 154 : 126,
+              ),
+            },
           ]}
           showsVerticalScrollIndicator={false}
         >
           <View style={localStyles.heroHeader}>
-            <View style={localStyles.heroCopy}>
-              <Text
-                style={localStyles.heroTitle}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.68}
-              >
-                Hola, {firstName} 👋
-              </Text>
-              <Text style={localStyles.heroSubtitle}>
-                <Text style={localStyles.heroSubtitleStrong}>Conectá con vos</Text> para poder conectar con otros.
-              </Text>
-            </View>
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Ir a tu perfil"
@@ -968,27 +1119,55 @@ const Home = () => {
                 fallbackIconColor="#2B2B2B"
               />
             </TouchableOpacity>
+            <View style={localStyles.heroCopy}>
+              <Text
+                style={localStyles.heroTitle}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.68}
+              >
+                Hola, {firstName} 👋
+              </Text>
+              <Text style={localStyles.heroSubtitle}>
+                <Text style={localStyles.heroSubtitleStrong}>Conectá con vos</Text> para poder conectar con otros.
+              </Text>
+            </View>
           </View>
 
           {showGuruCard ? (
-            <ImageBackground
-              source={require("../assets/images/guruVibes.png")}
-              imageStyle={localStyles.featureImage}
-              resizeMode="cover"
+            <TouchableOpacity
+              activeOpacity={0.9}
               style={localStyles.guruFeatureCard}
+              onPress={() => setIsDailyGuideVisible(true)}
             >
-              <View style={localStyles.featureScrim} />
-              <View style={localStyles.guruBadgeRow}>
-                <View style={localStyles.guruFeatureBadge}>
-                  <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
+              <ImageBackground
+                source={require("../assets/images/guruVibes.png")}
+                imageStyle={localStyles.featureImage}
+                resizeMode="cover"
+                style={localStyles.guruFeatureBackground}
+              >
+                <View style={localStyles.featureScrim} />
+                <VibesBreathingMark />
+                <View style={localStyles.guruBadgeRow}>
+                  <View style={localStyles.guruFeatureBadge}>
+                    <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
+                  </View>
+                  <Text style={localStyles.featureEyebrow}>
+                    {t("home.guruCardEyebrow")}
+                  </Text>
                 </View>
-                <Text style={localStyles.featureEyebrow}>GURU VIBES</Text>
-              </View>
-              <Text style={localStyles.featureTitle}>
-                {guruMessage.title}
-              </Text>
-              <Text style={localStyles.featureBody}>{guruMessage.body}</Text>
-            </ImageBackground>
+                <Text style={localStyles.featureTitle}>{guruMessage.title}</Text>
+                <Text style={localStyles.featureBody} numberOfLines={3}>
+                  {guruMessage.body}
+                </Text>
+                <View style={localStyles.featureOpenRow}>
+                  <Text style={localStyles.featureOpenText}>
+                    {t("home.guruGuideOpen")}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={16} color="#5B4323" />
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
           ) : null}
 
           <TouchableOpacity
@@ -999,53 +1178,61 @@ const Home = () => {
                 "Tab" as never,
                 {
                   screen: "Calendar",
-                  params: { initialSection: "discover" },
+                  params: {
+                    initialSection: "discover",
+                    discoverEntryKey: Date.now(),
+                  },
                 } as never
               )
             }
           >
-            <Text style={localStyles.connectionsEyebrow}>COMUNIDAD</Text>
             <View style={localStyles.connectionsRow}>
-              <View style={localStyles.connectionAvatars}>
-                {connectionPreviewProfiles.length > 0
-                  ? connectionPreviewProfiles.map((profile, index) => (
-                      <View
-                        key={String(profile.id ?? index)}
-                        style={[
-                          localStyles.connectionAvatarWrap,
-                          index > 0 && localStyles.connectionAvatarOverlap,
-                        ]}
-                      >
-                        <Avatar uri={profile.avatarUri ?? null} size={52} />
-                        <View style={localStyles.connectionDot} />
-                      </View>
-                    ))
-                  : Array.from({ length: visibleConnectionPreviewCount }).map((_, item) => (
-                      <Image
-                        key={`placeholder-${item}`}
-                        source={require("../assets/images/01.jpg")}
-                        style={[
-                          localStyles.connectionAvatarPlaceholder,
-                          item > 0 && localStyles.connectionAvatarOverlap,
-                        ]}
-                      />
-                    ))}
+              <View style={localStyles.connectionIconCircle}>
+                <Ionicons name="compass-outline" size={24} color="#765B91" />
               </View>
-              {connectionPreviewProfiles.length === 0 ? (
-                <View style={localStyles.connectionIconCircle}>
-                  <Ionicons name="people-outline" size={32} color="#8E78A8" />
-                </View>
-              ) : null}
               <View style={localStyles.connectionsCopy}>
-                <Text style={localStyles.connectionsText}>
-                  {Math.max(3, connectionCount)} nuevas personas vibran parecido
-                  a vos
+                <Text style={localStyles.connectionsEyebrow}>COMUNIDAD</Text>
+                <Text style={localStyles.connectionsTitle}>
+                  Descubrir personas
                 </Text>
-                <View style={localStyles.inlineLink}>
-                  <Text style={localStyles.inlineLinkText}>Ver más</Text>
-                  <Ionicons name="chevron-forward" size={18} color="#14283E" />
-                </View>
+                <Text style={localStyles.connectionsText} numberOfLines={1}>
+                  Explorá perfiles y nuevas conexiones
+                </Text>
               </View>
+              <Ionicons name="chevron-forward" size={22} color="#8A8178" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.86}
+            style={localStyles.challengePreviewCard}
+            onPress={() =>
+              nextChallenge
+                ? navigation.navigate(
+                    "ChallengeDetailScreen" as never,
+                    { event: nextChallenge } as never,
+                  )
+                : navigation.navigate(
+                    "Tab" as never,
+                    { screen: "Flow", params: { section: "challenge" } } as never,
+                  )
+            }
+          >
+            <View style={localStyles.challengePreviewHeader}>
+              <View style={localStyles.challengeIconCircle}>
+                <Ionicons name="trophy-outline" size={21} color="#8B6327" />
+              </View>
+              <View style={localStyles.challengePreviewCopy}>
+                <Text style={localStyles.challengePreviewEyebrow}>DESAFÍO</Text>
+                <Text style={localStyles.challengePreviewTitle} numberOfLines={1}>
+                  {nextChallenge?.title ?? "Encontrá tu próximo desafío"}
+                </Text>
+                <Text style={localStyles.challengePreviewMeta} numberOfLines={1}>
+                  {nextChallenge?.subtitle ??
+                    "Sumate a una práctica y compartí el camino con la comunidad."}
+                </Text>
+              </View>
+              <Ionicons name="arrow-forward-circle" size={28} color="#8B6327" />
             </View>
           </TouchableOpacity>
 
@@ -1084,24 +1271,50 @@ const Home = () => {
                   <Text style={localStyles.eventPreviewTitle} numberOfLines={1}>
                     {nextEvent.title}
                   </Text>
-                  <Text style={localStyles.eventPreviewMeta} numberOfLines={1}>
-                    {nextEvent.date}
-                  </Text>
+                  <View style={localStyles.eventPreviewMetaRow}>
+                    <Ionicons name="time-outline" size={14} color="#625D57" />
+                    <Text style={localStyles.eventPreviewMeta} numberOfLines={1}>
+                      {nextEvent.date}
+                    </Text>
+                  </View>
+                  {nextEvent.location || nextEvent.modality === "online" ? (
+                    <View style={localStyles.eventPreviewMetaRow}>
+                      <Ionicons
+                        name={
+                          nextEvent.modality === "online"
+                            ? "videocam-outline"
+                            : "location-outline"
+                        }
+                        size={14}
+                        color="#625D57"
+                      />
+                      <Text style={localStyles.eventPreviewMeta} numberOfLines={1}>
+                        {nextEvent.modality === "online"
+                          ? "Online"
+                          : nextEvent.location}
+                      </Text>
+                    </View>
+                  ) : null}
                   <View style={localStyles.eventParticipantsRow}>
-                    <AvatarGroup
-                      size={24}
-                      overlap={7}
-                      max={4}
-                      items={Array.from({ length: 4 }).map((_, index) => ({
-                        id: `event-preview-${index}`,
-                        uri:
-                          nextEvent.participantPreviewImages?.[index] ??
-                          nextEvent.hostImage ??
-                          null,
-                      }))}
-                    />
+                    {nextEventParticipantImages.length > 0 ? (
+                      <AvatarGroup
+                        size={24}
+                        overlap={7}
+                        max={4}
+                        items={nextEventParticipantImages.map((uri, index) => ({
+                          id: `event-preview-${index}`,
+                          uri,
+                        }))}
+                      />
+                    ) : null}
                     <Text style={localStyles.eventParticipantsText}>
-                      {nextEvent.attendees}
+                      {nextEventParticipantCount === 0
+                        ? t("home.eventNoParticipants")
+                        : nextEventParticipantCount === 1
+                          ? t("home.eventOneParticipant")
+                          : t("home.eventParticipantCount", {
+                              count: nextEventParticipantCount,
+                            })}
                     </Text>
                   </View>
                 </View>
@@ -1135,7 +1348,7 @@ const Home = () => {
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F8F7F4",
+    backgroundColor: vibesTheme.colors.background,
   },
   homeEntryOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -1203,9 +1416,6 @@ const localStyles = StyleSheet.create({
     minHeight: 184,
     borderRadius: 20,
     overflow: "hidden",
-    paddingHorizontal: 22,
-    paddingVertical: 18,
-    justifyContent: "flex-start",
     marginBottom: 14,
     backgroundColor: "#FFF1DE",
     shadowColor: "#2B2B2B",
@@ -1214,9 +1424,53 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
   },
+  guruFeatureBackground: {
+    minHeight: 184,
+    paddingHorizontal: 22,
+    paddingVertical: 18,
+    justifyContent: "flex-start",
+  },
   featureScrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(255, 244, 228, 0.28)",
+  },
+  vibesBreathingWrap: {
+    position: "absolute",
+    top: 48,
+    right: 22,
+    width: 104,
+    height: 104,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vibesBreathingOuterRing: {
+    position: "absolute",
+    width: 98,
+    height: 98,
+    borderRadius: 49,
+    backgroundColor: "#F0C879",
+  },
+  vibesBreathingOrb: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 249, 240, 0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(154, 107, 32, 0.2)",
+    shadowColor: "#9A6B20",
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
+  },
+  vibesBreathingText: {
+    color: "#8A5F1C",
+    fontSize: 17,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.medium,
+    letterSpacing: 0.3,
   },
   guruBadgeRow: {
     flexDirection: "row",
@@ -1253,63 +1507,157 @@ const localStyles = StyleSheet.create({
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.regular,
   },
-  connectionsCard: {
-    borderRadius: 20,
+  featureOpenRow: {
+    marginTop: 11,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  featureOpenText: {
+    color: "#5B4323",
+    fontSize: 13,
+    lineHeight: 17,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  dailyGuideSheet: {
+    maxHeight: "88%",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: "#FFF9F0",
+    paddingTop: 10,
+    paddingHorizontal: 22,
+    paddingBottom: 28,
+  },
+  dailyGuideHandle: {
+    alignSelf: "center",
+    width: 42,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 18,
+    backgroundColor: "rgba(62, 57, 52, 0.18)",
+  },
+  dailyGuideHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  dailyGuideIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F7E7C8",
+  },
+  dailyGuideHeaderCopy: {
+    flex: 1,
+  },
+  dailyGuideEyebrow: {
+    color: "#A8782A",
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  dailyGuideTitle: {
+    marginTop: 3,
+    color: "#26221E",
+    fontSize: 24,
+    lineHeight: 28,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  dailyGuideClose: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(62, 57, 52, 0.07)",
+  },
+  dailyGuideContent: {
+    paddingTop: 24,
+    paddingBottom: 8,
+  },
+  dailyGuideIntro: {
+    color: "#4B4540",
+    fontSize: 17,
+    lineHeight: 25,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  dailyGuideActionsTitle: {
+    marginTop: 26,
+    marginBottom: 12,
+    color: "#2F2924",
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  dailyGuideActionRow: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 13,
+    marginBottom: 10,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.06)",
-    paddingHorizontal: 20,
-    paddingVertical: 22,
-    marginBottom: 18,
-    shadowColor: "#2B2B2B",
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 3,
+    borderColor: "rgba(154, 107, 32, 0.12)",
   },
-  connectionsEyebrow: {
-    color: "#8E78A8",
+  dailyGuideActionNumber: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F7E7C8",
+  },
+  dailyGuideActionNumberText: {
+    color: "#8A5F1C",
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.bold,
-    marginBottom: 18,
+  },
+  dailyGuideActionText: {
+    flex: 1,
+    color: "#47413B",
+    fontSize: 15,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  dailyGuideDoneButton: {
+    marginTop: 14,
+  },
+  connectionsCard: {
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    marginBottom: 14,
+    shadowColor: "#2B2B2B",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  connectionsEyebrow: {
+    color: "#765B91",
+    fontSize: 10,
+    lineHeight: 13,
+    fontFamily: vibesTheme.fonts.bold,
+    marginBottom: 4,
   },
   connectionsRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  connectionAvatars: {
-    flexDirection: "row",
     alignItems: "center",
-    flexShrink: 0,
-  },
-  connectionAvatarWrap: {
-    position: "relative",
-  },
-  connectionAvatarOverlap: {
-    marginLeft: -12,
-  },
-  connectionAvatarPlaceholder: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-  },
-  connectionDot: {
-    position: "absolute",
-    top: -2,
-    right: 1,
-    width: 13,
-    height: 13,
-    borderRadius: 7,
-    backgroundColor: "#DCA338",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
+    gap: 13,
   },
   connectionIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F0EAF2",
@@ -1320,30 +1668,75 @@ const localStyles = StyleSheet.create({
     minWidth: 0,
   },
   connectionsText: {
-    color: "#595754",
-    fontSize: 15,
-    lineHeight: 20,
+    marginTop: 2,
+    color: "#77716B",
+    fontSize: 13,
+    lineHeight: 17,
     fontFamily: vibesTheme.fonts.regular,
   },
-  inlineLink: {
-    marginTop: 9,
+  connectionsTitle: {
+    color: "#29242E",
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  challengePreviewCard: {
+    borderRadius: 18,
+    backgroundColor: "#F7E8CF",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.38)",
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    marginBottom: 14,
+    shadowColor: "#8B6327",
+    shadowOpacity: 0.1,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+  },
+  challengePreviewHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 11,
   },
-  inlineLinkText: {
-    color: "#14283E",
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.semibold,
+  challengeIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+  },
+  challengePreviewCopy: {
+    flex: 1,
+  },
+  challengePreviewEyebrow: {
+    color: "#8B6327",
+    fontSize: 10,
+    lineHeight: 13,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  challengePreviewTitle: {
+    marginTop: 2,
+    color: "#2B241B",
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  challengePreviewMeta: {
+    marginTop: 2,
+    color: "#665744",
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.regular,
   },
   eventPreviewCard: {
     borderRadius: 20,
     backgroundColor: "#FFF8EE",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.16)",
-    paddingHorizontal: 28,
-    paddingVertical: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     shadowColor: "#2B2B2B",
     shadowOpacity: 0.07,
     shadowRadius: 16,
@@ -1355,17 +1748,17 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.bold,
-    marginBottom: 18,
+    marginBottom: 12,
   },
   eventPreviewRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 18,
+    gap: 12,
   },
   eventDateBox: {
-    width: 82,
-    height: 82,
-    borderRadius: 18,
+    width: 64,
+    height: 64,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.68)",
@@ -1378,8 +1771,8 @@ const localStyles = StyleSheet.create({
   },
   eventDateDay: {
     color: "#14283E",
-    fontSize: 36,
-    lineHeight: 40,
+    fontSize: 29,
+    lineHeight: 33,
     fontFamily: vibesTheme.fonts.medium,
   },
   eventPreviewCopy: {
@@ -1388,16 +1781,22 @@ const localStyles = StyleSheet.create({
   },
   eventPreviewTitle: {
     color: "#181818",
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
     fontFamily: vibesTheme.fonts.subtitle,
   },
   eventPreviewMeta: {
-    marginTop: 6,
+    flex: 1,
     color: "#625D57",
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,
+  },
+  eventPreviewMetaRow: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
   },
   eventParticipantsRow: {
     marginTop: 10,

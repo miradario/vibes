@@ -11,7 +11,6 @@ import {
   Alert,
   StyleSheet,
   Image,
-  Modal,
   Platform,
   Linking,
   Keyboard,
@@ -19,7 +18,7 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import { ResizeMode } from "expo-av";
+import * as ExpoLocation from "expo-location";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -33,7 +32,7 @@ import styles, {
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import VibesLoader from "../components/VibesLoader";
-import LoopingVideo from "../components/LoopingVideo";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import {
@@ -42,16 +41,13 @@ import {
   type EventPricingType,
   useUpdateEventMutation,
 } from "../src/queries/events.queries";
-import {
-  challengeMediaPresets,
-  type ChallengeMediaPresetId,
-} from "../src/constants/challengeMediaPresets";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const IMAGE_MEDIA_TYPE =
   (ImagePicker as any).MediaType?.Images
     ? [(ImagePicker as any).MediaType.Images]
     : ["images"];
+const PLACEHOLDER_COLOR = "rgba(43, 43, 43, 0.34)";
 
 const formatEventDate = (value: Date) =>
   value.toLocaleDateString("es-AR", {
@@ -91,7 +87,11 @@ const isValidExternalUrl = (value: string) => {
 
   try {
     const parsed = new URL(normalized);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
+    const hasSupportedProtocol =
+      parsed.protocol === "http:" || parsed.protocol === "https:";
+    const hasPublicHostname =
+      parsed.hostname === "localhost" || parsed.hostname.includes(".");
+    return hasSupportedProtocol && hasPublicHostname;
   } catch {
     return false;
   }
@@ -109,8 +109,6 @@ const getMissingEventFields = (params: {
   subtitle: string;
   eventDateTime: Date | null;
   location: string;
-  pricingType: EventPricingType;
-  paymentLink: string;
   modality: EventModality;
   onlineLink: string;
   capacity: string;
@@ -127,11 +125,8 @@ const getMissingEventFields = (params: {
   if (params.modality === "online" && !params.onlineLink.trim()) {
     missing.push("link online");
   }
-  if (params.pricingType === "paid" && !params.paymentLink.trim()) {
-    missing.push("link de pago");
-  }
   if (!params.capacity.trim()) missing.push("cupos");
-  if (!params.hasSelectedImage) missing.push("imagen");
+  if (!params.hasSelectedImage) missing.push("foto de portada");
 
   return missing;
 };
@@ -210,6 +205,7 @@ const CreateEvent = () => {
   const [eventLink, setEventLink] = useState(
     typeof editingEvent?.eventLink === "string" ? editingEvent.eventLink : "",
   );
+  const [eventLinkTouched, setEventLinkTouched] = useState(false);
   const [pricingType, setPricingType] = useState<EventPricingType>(
     editingEvent?.pricingType === "paid" ? "paid" : "free",
   );
@@ -227,34 +223,38 @@ const CreateEvent = () => {
   );
   const [isValidatingLocation, setIsValidatingLocation] = useState(false);
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
-  const [selectedPresetId, setSelectedPresetId] =
-    useState<ChallengeMediaPresetId | null>(
-      editingEvent
-        ? editingEvent?.imagePresetId ?? null
-        : "challenge",
-    );
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time" | null>(null);
   const [validatedLocation, setValidatedLocation] = useState<{
     address: string;
     lat: number | null;
     lng: number | null;
-  } | null>(null);
+  } | null>(() => {
+    if (!editingEvent?.location) return null;
+    return {
+      address: editingEvent.location,
+      lat:
+        typeof editingEvent.locationLatitude === "number"
+          ? editingEvent.locationLatitude
+          : null,
+      lng:
+        typeof editingEvent.locationLongitude === "number"
+          ? editingEvent.locationLongitude
+          : null,
+    };
+  });
   const [mapPreviewFailed, setMapPreviewFailed] = useState(false);
   const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const activePreset =
-    challengeMediaPresets.find((preset) => preset.id === selectedPresetId) ??
-    null;
-  const hasSelectedImage = Boolean(
-    eventImageUri || editingEvent?.imageUrl || activePreset?.image,
-  );
+  const existingCoverImageUri = editingEvent?.imagePresetId
+    ? null
+    : editingEvent?.imageUrl || null;
+  const coverImageUri = eventImageUri || existingCoverImageUri;
+  const hasSelectedImage = Boolean(coverImageUri);
   const missingFields = getMissingEventFields({
     title,
     subtitle,
     eventDateTime,
     location,
-    pricingType,
-    paymentLink,
     modality,
     onlineLink,
     capacity,
@@ -267,6 +267,9 @@ const CreateEvent = () => {
     modality,
     onlineLink,
   });
+  const hasEventLink = Boolean(eventLink.trim());
+  const isEventLinkValid = hasEventLink && isValidExternalUrl(eventLink);
+  const isEventLinkInvalid = hasEventLink && !isEventLinkValid;
   const isFormComplete = missingFields.length === 0;
 
   const openDatePicker = () => {
@@ -322,11 +325,11 @@ const CreateEvent = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
+        aspect: [16, 9],
         quality: 0.85,
       });
       if (!result.canceled && result.assets?.[0]?.uri) {
         setEventImageUri(result.assets[0].uri);
-        setSelectedPresetId(null);
       }
     } catch (error) {
       console.error("Error opening gallery for event image", error);
@@ -350,11 +353,11 @@ const CreateEvent = () => {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
+        aspect: [16, 9],
         quality: 0.85,
       });
       if (!result.canceled && result.assets?.[0]?.uri) {
         setEventImageUri(result.assets[0].uri);
-        setSelectedPresetId(null);
       }
     } catch (error) {
       console.error("Error opening camera for event image", error);
@@ -381,9 +384,40 @@ const CreateEvent = () => {
 
     const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      useManualLocationFallback(
-        "Google Maps no está configurado. Vamos a usar la ubicación escrita manualmente.",
-      );
+      setIsValidatingLocation(true);
+      try {
+        const permission = await ExpoLocation.requestForegroundPermissionsAsync();
+        if (permission.status !== "granted") {
+          useManualLocationFallback(
+            "Guardamos la dirección escrita. Podés habilitar ubicación para validarla en el mapa.",
+          );
+          return;
+        }
+
+        const matches = await ExpoLocation.geocodeAsync(trimmedLocation);
+        const firstMatch = matches[0];
+        if (!firstMatch) {
+          useManualLocationFallback(
+            "No pudimos ubicarla automáticamente; guardamos la dirección escrita.",
+          );
+          return;
+        }
+
+        setValidatedLocation({
+          address: trimmedLocation,
+          lat: firstMatch.latitude,
+          lng: firstMatch.longitude,
+        });
+        setMapPreviewFailed(false);
+        showAlertAfterKeyboard("Ubicación validada", trimmedLocation);
+      } catch (error) {
+        console.error("Error validating location with the native geocoder", error);
+        useManualLocationFallback(
+          "No pudimos consultar el mapa; guardamos la dirección escrita.",
+        );
+      } finally {
+        setIsValidatingLocation(false);
+      }
       return;
     }
 
@@ -472,7 +506,9 @@ const CreateEvent = () => {
       ? normalizeExternalUrl(eventLink)
       : null;
     const resolvedPaymentLink =
-      pricingType === "paid" ? normalizeExternalUrl(paymentLink) : null;
+      pricingType === "paid" && paymentLink.trim()
+        ? normalizeExternalUrl(paymentLink)
+        : null;
     const resolvedOnlineLink =
       modality === "online" ? normalizeExternalUrl(onlineLink) : null;
     const hostName =
@@ -491,19 +527,24 @@ const CreateEvent = () => {
       if (isEditing) {
         savedEvent = await updateEventMutation.mutateAsync({
           eventId: editingEvent.id,
+          updatedBy: session.user.id,
           title: title.trim(),
           subtitle: subtitle.trim() || "Evento creado por la comunidad",
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt,
           location: resolvedLocation,
+          locationLatitude:
+            modality === "in_person" ? validatedLocation?.lat ?? null : null,
+          locationLongitude:
+            modality === "in_person" ? validatedLocation?.lng ?? null : null,
           eventLink: resolvedEventLink,
           pricingType,
           paymentLink: resolvedPaymentLink,
           modality,
           onlineLink: resolvedOnlineLink,
           capacity: parsedCapacity,
-          imageUri: eventImageUri || editingEvent.imageUrl || null,
-          imagePresetId: eventImageUri ? null : selectedPresetId,
+          imageUri: eventImageUri || existingCoverImageUri,
+          imagePresetId: null,
         });
       } else {
         savedEvent = await createEventMutation.mutateAsync({
@@ -513,6 +554,10 @@ const CreateEvent = () => {
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt,
           location: resolvedLocation,
+          locationLatitude:
+            modality === "in_person" ? validatedLocation?.lat ?? null : null,
+          locationLongitude:
+            modality === "in_person" ? validatedLocation?.lng ?? null : null,
           eventLink: resolvedEventLink,
           pricingType,
           paymentLink: resolvedPaymentLink,
@@ -520,7 +565,7 @@ const CreateEvent = () => {
           onlineLink: resolvedOnlineLink,
           capacity: parsedCapacity,
           imageUri: eventImageUri,
-          imagePresetId: eventImageUri ? null : selectedPresetId,
+          imagePresetId: null,
           hostName,
           hostImage,
         });
@@ -589,67 +634,93 @@ const CreateEvent = () => {
           <TextInput
             style={localStyles.input}
             placeholder="Meditación de luna llena"
-            placeholderTextColor={TEXT_SECONDARY}
+            placeholderTextColor={PLACEHOLDER_COLOR}
             value={title}
             onChangeText={setTitle}
           />
 
-          <Text style={localStyles.label}>Imagen y video del evento</Text>
-          <View style={localStyles.presetGrid}>
-            {challengeMediaPresets.map((preset) => {
-              const isSelected =
-                !eventImageUri && selectedPresetId === preset.id;
-
-              return (
-                <TouchableOpacity
-                  key={preset.id}
-                  style={[
-                    localStyles.presetCard,
-                    isSelected && localStyles.presetCardSelected,
-                  ]}
-                  onPress={() => {
-                    setEventImageUri(null);
-                    setSelectedPresetId(preset.id);
-                  }}
-                >
-                  <View style={localStyles.presetImageWrap}>
-                    <Image source={preset.image} style={localStyles.presetImage} />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          {activePreset ? (
-            <View style={localStyles.videoPreviewCard}>
-              <LoopingVideo
-                source={activePreset.video}
-                posterSource={activePreset.image}
-                style={localStyles.videoPreview}
-                resizeMode={ResizeMode.CONTAIN}
-              />
-            </View>
-          ) : null}
+          <Text style={localStyles.label}>Foto de portada</Text>
+          <TouchableOpacity
+            style={localStyles.coverPicker}
+            activeOpacity={0.88}
+            onPress={() => setPhotoModalVisible(true)}
+          >
+            {coverImageUri ? (
+              <>
+                <Image
+                  source={{ uri: coverImageUri }}
+                  style={localStyles.coverImage}
+                />
+                <View style={localStyles.coverScrim} />
+                <View style={localStyles.coverChangeBadge}>
+                  <Icon name="camera-outline" size={17} color={WHITE} />
+                  <Text style={localStyles.coverChangeText}>Cambiar portada</Text>
+                </View>
+              </>
+            ) : (
+              <View style={localStyles.coverEmptyState}>
+                <View style={localStyles.coverIconCircle}>
+                  <Icon name="image-outline" size={28} color={PRIMARY_COLOR} />
+                </View>
+                <Text style={localStyles.uploadImageTitle}>Subir foto de portada</Text>
+                <Text style={localStyles.uploadImageHint}>
+                  Elegí una foto horizontal de tu galería o sacá una ahora
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
           <Text style={localStyles.label}>Descripción corta</Text>
           <TextInput
             style={localStyles.input}
             placeholder="Respiración, calma, conexión"
-            placeholderTextColor={TEXT_SECONDARY}
+            placeholderTextColor={PLACEHOLDER_COLOR}
             value={subtitle}
             onChangeText={setSubtitle}
           />
 
-          <Text style={localStyles.label}>Link del evento</Text>
+          <Text style={localStyles.label}>Link del evento (opcional)</Text>
           <TextInput
-            style={localStyles.input}
+            style={[
+              localStyles.input,
+              eventLinkTouched && isEventLinkInvalid && localStyles.inputInvalid,
+              eventLinkTouched && isEventLinkValid && localStyles.inputValid,
+            ]}
             placeholder="https://mipagina.com/evento"
-            placeholderTextColor={TEXT_SECONDARY}
+            placeholderTextColor={PLACEHOLDER_COLOR}
             value={eventLink}
             onChangeText={setEventLink}
+            onBlur={() => {
+              setEventLinkTouched(true);
+              if (isEventLinkValid) {
+                setEventLink(normalizeExternalUrl(eventLink));
+              }
+            }}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="url"
           />
+          {eventLinkTouched && hasEventLink ? (
+            <View style={localStyles.linkValidationRow}>
+              <Icon
+                name={isEventLinkValid ? "checkmark-circle" : "alert-circle"}
+                size={16}
+                color={isEventLinkValid ? "#4E8B63" : "#B45145"}
+              />
+              <Text
+                style={[
+                  localStyles.linkValidationText,
+                  isEventLinkValid
+                    ? localStyles.linkValidationTextValid
+                    : localStyles.linkValidationTextInvalid,
+                ]}
+              >
+                {isEventLinkValid
+                  ? "Link válido"
+                  : "Ingresá una URL completa, por ejemplo mipagina.com/evento"}
+              </Text>
+            </View>
+          ) : null}
 
           <Text style={localStyles.label}>Fecha y hora</Text>
           <View style={localStyles.dateTimeRow}>
@@ -757,7 +828,7 @@ const CreateEvent = () => {
               <TextInput
                 style={localStyles.input}
                 placeholder="Palermo, Buenos Aires"
-                placeholderTextColor={TEXT_SECONDARY}
+                placeholderTextColor={PLACEHOLDER_COLOR}
                 value={location}
                 onChangeText={(value) => {
                   setLocation(value);
@@ -841,7 +912,7 @@ const CreateEvent = () => {
               <TextInput
                 style={localStyles.input}
                 placeholder="https://meet.google.com/..."
-                placeholderTextColor={TEXT_SECONDARY}
+                placeholderTextColor={PLACEHOLDER_COLOR}
                 value={onlineLink}
                 onChangeText={setOnlineLink}
                 autoCapitalize="none"
@@ -889,11 +960,11 @@ const CreateEvent = () => {
 
           {pricingType === "paid" ? (
             <>
-              <Text style={localStyles.label}>Link de pago</Text>
+              <Text style={localStyles.label}>Link de pago (opcional)</Text>
               <TextInput
                 style={localStyles.input}
                 placeholder="https://mipagina.com/pago"
-                placeholderTextColor={TEXT_SECONDARY}
+                placeholderTextColor={PLACEHOLDER_COLOR}
                 value={paymentLink}
                 onChangeText={setPaymentLink}
                 autoCapitalize="none"
@@ -907,7 +978,7 @@ const CreateEvent = () => {
           <TextInput
             style={localStyles.input}
             placeholder="20"
-            placeholderTextColor={TEXT_SECONDARY}
+            placeholderTextColor={PLACEHOLDER_COLOR}
             value={capacity}
             onChangeText={(value) => setCapacity(normalizeCapacityInput(value))}
             keyboardType="number-pad"
@@ -925,10 +996,11 @@ const CreateEvent = () => {
         <TouchableOpacity
           style={[
             localStyles.createButton,
-            !isFormComplete && localStyles.createButtonDisabled,
+            (!isFormComplete || invalidLinks.length > 0) &&
+              localStyles.createButtonDisabled,
           ]}
           onPress={handleCreate}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isEventLinkInvalid}
         >
           {isSubmitting ? (
             <VibesLoader size={30} />
@@ -938,44 +1010,41 @@ const CreateEvent = () => {
         </TouchableOpacity>
       </View>
 
-      <Modal
+      <AnimatedSheetModal
         visible={photoModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPhotoModalVisible(false)}
+        onClose={() => setPhotoModalVisible(false)}
+        offsetY={300}
+        sheetStyle={localStyles.photoSheet}
       >
-        <View style={localStyles.modalOverlay}>
-          <View style={localStyles.modalCard}>
-            <Text style={localStyles.modalTitle}>Imagen del evento</Text>
-            <TouchableOpacity
-              style={localStyles.modalPrimaryButton}
-              onPress={async () => {
-                setPhotoModalVisible(false);
-                await new Promise((resolve) => setTimeout(resolve, 200));
-                await takePhoto();
-              }}
-            >
-              <Text style={localStyles.modalPrimaryText}>Usar cámara</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={localStyles.modalSecondaryButton}
-              onPress={async () => {
-                setPhotoModalVisible(false);
-                await new Promise((resolve) => setTimeout(resolve, 200));
-                await pickFromGallery();
-              }}
-            >
-              <Text style={localStyles.modalSecondaryText}>Elegir de galería</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={localStyles.modalCancelButton}
-              onPress={() => setPhotoModalVisible(false)}
-            >
-              <Text style={localStyles.modalCancelText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        <View style={localStyles.sheetHandle} />
+        <Text style={localStyles.modalTitle}>Foto de portada</Text>
+        <TouchableOpacity
+          style={localStyles.modalPrimaryButton}
+          onPress={async () => {
+            setPhotoModalVisible(false);
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            await takePhoto();
+          }}
+        >
+          <Text style={localStyles.modalPrimaryText}>Usar cámara</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={localStyles.modalSecondaryButton}
+          onPress={async () => {
+            setPhotoModalVisible(false);
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            await pickFromGallery();
+          }}
+        >
+          <Text style={localStyles.modalSecondaryText}>Elegir de galería</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={localStyles.modalCancelButton}
+          onPress={() => setPhotoModalVisible(false)}
+        >
+          <Text style={localStyles.modalCancelText}>Cancelar</Text>
+        </TouchableOpacity>
+      </AnimatedSheetModal>
       </View>
     </KeyboardAvoidingView>
   );
@@ -1010,9 +1079,36 @@ const localStyles = StyleSheet.create({
   input: {
     backgroundColor: "#F6F6F4",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "transparent",
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: DARK_GRAY,
+  },
+  inputInvalid: {
+    borderColor: "rgba(180, 81, 69, 0.72)",
+    backgroundColor: "rgba(180, 81, 69, 0.05)",
+  },
+  inputValid: {
+    borderColor: "rgba(78, 139, 99, 0.58)",
+  },
+  linkValidationRow: {
+    marginTop: 7,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  linkValidationText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  linkValidationTextValid: {
+    color: "#4E8B63",
+  },
+  linkValidationTextInvalid: {
+    color: "#B45145",
   },
   dateTimeRow: {
     flexDirection: "row",
@@ -1209,73 +1305,91 @@ const localStyles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "400",
   },
-  presetGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 6,
-    marginBottom: 8,
-  },
-  presetCard: {
-    width: "31%",
-    backgroundColor: WHITE,
-    borderRadius: 14,
+  coverPicker: {
+    width: "100%",
+    aspectRatio: 16 / 9,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(43,43,43,0.08)",
-    padding: 12,
-    alignItems: "center",
-  },
-  presetCardSelected: {
-    borderColor: "#E4B76E",
-    backgroundColor: "rgba(228,183,110,0.12)",
-  },
-  presetImageWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: WHITE,
+    borderColor: "rgba(228, 183, 110, 0.42)",
+    backgroundColor: "#FBF7EF",
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
   },
-  presetImage: {
+  coverImage: {
+    ...StyleSheet.absoluteFillObject,
     width: "100%",
     height: "100%",
     resizeMode: "cover",
   },
-  videoPreviewCard: {
-    marginTop: 12,
-    width: "100%",
-    height: 160,
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#F6F6F4",
-    borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
+  coverScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(25, 22, 18, 0.22)",
   },
-  videoPreview: {
-    width: "100%",
-    height: "100%",
+  coverChangeBadge: {
+    position: "absolute",
+    right: 12,
+    bottom: 12,
+    minHeight: 38,
+    borderRadius: 19,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 14,
+    backgroundColor: "rgba(34, 30, 26, 0.78)",
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.45)",
+  coverChangeText: {
+    color: WHITE,
+    fontSize: 13,
+    lineHeight: 17,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  coverEmptyState: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    paddingHorizontal: 28,
   },
-  modalCard: {
-    width: "100%",
-    maxWidth: 360,
+  coverIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+    backgroundColor: "rgba(228, 183, 110, 0.16)",
+  },
+  uploadImageTitle: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  uploadImageHint: {
+    marginTop: 5,
+    color: "rgba(43, 43, 43, 0.52)",
+    fontSize: 13,
+    lineHeight: 17,
+    textAlign: "center",
+  },
+  photoSheet: {
     backgroundColor: WHITE,
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 30,
     shadowColor: BLACK,
     shadowOpacity: 0.2,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
     elevation: 6,
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(43, 43, 43, 0.16)",
+    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 18,

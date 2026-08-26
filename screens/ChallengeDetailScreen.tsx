@@ -623,7 +623,13 @@ export const GrowthIllustration = memo(({ percent, presetId }: GrowthIllustratio
     <View style={localStyles.illustrationCard}>
       {progressVideo ? (
         <Animated.View style={[localStyles.growthVideoWrap, imageStyle]}>
-          <LoopingVideo key={`${presetId ?? "fallback"}-${stage}`} source={progressVideo} posterSource={preset?.image ?? treeStageImages[treeStage]} style={localStyles.growthVideo} resizeMode={ResizeMode.CONTAIN} isLooping={false} />
+          <LoopingVideo
+            key={`${presetId ?? "fallback"}-${stage}`}
+            source={progressVideo}
+            posterSource={preset?.image ?? treeStageImages[treeStage]}
+            style={localStyles.growthVideo}
+            resizeMode={ResizeMode.CONTAIN}
+          />
         </Animated.View>
       ) : (
         <Animated.Image source={treeStageImages[treeStage]} style={[localStyles.growthImage, imageStyle]} resizeMode="contain" />
@@ -1296,10 +1302,10 @@ const localStyles = StyleSheet.create({
   },
   title: {
     marginTop: 2,
-    color: "rgba(45, 41, 36, 0.72)",
-    fontSize: 23,
-    lineHeight: 26,
-    fontFamily: vibesTheme.fonts.thin,
+    color: palette.text,
+    fontSize: 25,
+    lineHeight: 29,
+    fontFamily: vibesTheme.fonts.medium,
   },
   subtitle: {
     marginTop: 8,
