@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { ResizeMode } from "expo-av";
+import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
 import {
   SafeAreaView,
@@ -31,16 +31,11 @@ import styles, {
 } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
-import LoopingVideo from "../components/LoopingVideo";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useCreateChallengeMutation } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import {
-  challengeMediaPresets,
-  getChallengeMediaPreset,
-  type ChallengeMediaPresetId,
-} from "../src/constants/challengeMediaPresets";
 import type { ChallengeVisibility } from "../src/queries/events.queries";
 
 const VISIBILITY_OPTIONS: Array<{
@@ -70,6 +65,9 @@ const VISIBILITY_OPTIONS: Array<{
 ];
 
 const normalizeDaysInput = (value: string) => value.replace(/\D+/g, "");
+const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
+  ? [(ImagePicker as any).MediaType.Images]
+  : ["images"];
 const formatChallengeDate = (value: Date) =>
   value.toLocaleDateString("es-AR", {
     day: "numeric",
@@ -86,19 +84,79 @@ const CreateChallenge = () => {
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [days, setDays] = useState("");
-  const [selectedPresetId, setSelectedPresetId] =
-    useState<ChallengeMediaPresetId>("challenge");
   const [visibility, setVisibility] = useState<ChallengeVisibility>("public");
-  const [challengeStartDate, setChallengeStartDate] = useState<Date | null>(null);
+  const [challengeStartDate, setChallengeStartDate] = useState<Date | null>(
+    null
+  );
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const activePreset = getChallengeMediaPreset(selectedPresetId);
+  const [challengeImageUri, setChallengeImageUri] = useState<string | null>(
+    null
+  );
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const parsedDays = days.trim() ? Number.parseInt(days, 10) : 0;
   const isFormReady =
     title.trim().length > 0 &&
     subtitle.trim().length > 0 &&
+    Boolean(challengeImageUri) &&
     Boolean(challengeStartDate) &&
     Number.isFinite(parsedDays) &&
     parsedDays > 0;
+
+  const pickFromGallery = async () => {
+    const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+    const permission =
+      current.status === "granted"
+        ? current
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permission.status !== "granted") {
+      Alert.alert("Permiso requerido", "Permite acceso a la galería.");
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: IMAGE_MEDIA_TYPE,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.85,
+      });
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setChallengeImageUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error opening gallery for challenge image", error);
+      Alert.alert("Error", "No se pudo abrir la galería.");
+    }
+  };
+
+  const takePhoto = async () => {
+    const current = await ImagePicker.getCameraPermissionsAsync();
+    const permission =
+      current.status === "granted"
+        ? current
+        : await ImagePicker.requestCameraPermissionsAsync();
+
+    if (permission.status !== "granted") {
+      Alert.alert("Permiso requerido", "Permite acceso a la cámara.");
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: IMAGE_MEDIA_TYPE,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.85,
+      });
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setChallengeImageUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error opening camera for challenge image", error);
+      Alert.alert("Error", "No se pudo abrir la cámara.");
+    }
+  };
 
   const openDatePicker = () => {
     setShowDatePicker(true);
@@ -106,7 +164,7 @@ const CreateChallenge = () => {
 
   const handleDateChange = (
     event: DateTimePickerEvent,
-    selectedValue?: Date,
+    selectedValue?: Date
   ) => {
     if (Platform.OS === "android") {
       setShowDatePicker(false);
@@ -123,7 +181,7 @@ const CreateChallenge = () => {
     nextDate.setFullYear(
       selectedValue.getFullYear(),
       selectedValue.getMonth(),
-      selectedValue.getDate(),
+      selectedValue.getDate()
     );
     nextDate.setHours(12, 0, 0, 0);
     setChallengeStartDate(nextDate);
@@ -134,6 +192,7 @@ const CreateChallenge = () => {
 
     if (!title.trim()) missing.push("título");
     if (!subtitle.trim()) missing.push("descripción corta");
+    if (!challengeImageUri) missing.push("foto de portada");
     if (!challengeStartDate) missing.push("fecha de comienzo");
 
     if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
@@ -147,12 +206,16 @@ const CreateChallenge = () => {
     }
 
     if (!session?.user?.id) {
-      Alert.alert("Sesión requerida", "Necesitás iniciar sesión para crear un desafío.");
+      Alert.alert(
+        "Sesión requerida",
+        "Necesitás iniciar sesión para crear un desafío."
+      );
       return;
     }
 
     const hostName =
-      (typeof profile?.displayName === "string" && profile.displayName.trim()) ||
+      (typeof profile?.displayName === "string" &&
+        profile.displayName.trim()) ||
       session.user.email?.split("@")[0] ||
       null;
     try {
@@ -163,7 +226,8 @@ const CreateChallenge = () => {
         description: subtitle.trim() || null,
         durationDays: parsedDays,
         startsAt: challengeStartDate?.toISOString() ?? null,
-        imagePresetId: selectedPresetId,
+        imageUri: challengeImageUri,
+        imagePresetId: null,
         hostName,
         hostImage: null,
         visibility,
@@ -174,7 +238,7 @@ const CreateChallenge = () => {
         {
           screen: "Flow",
           params: { section: "challenge" },
-        } as never,
+        } as never
       );
     } catch (error) {
       console.log("createChallenge:error", error);
@@ -183,8 +247,8 @@ const CreateChallenge = () => {
         error instanceof Error
           ? error.message || fallback
           : typeof error === "object" && error !== null && "message" in error
-            ? String((error as { message?: unknown }).message || fallback)
-            : fallback;
+          ? String((error as { message?: unknown }).message || fallback)
+          : fallback;
       const details =
         typeof error === "object" && error !== null && "details" in error
           ? String((error as { details?: unknown }).details || "")
@@ -211,7 +275,9 @@ const CreateChallenge = () => {
             { paddingBottom: 132 + insets.bottom },
           ]}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
           contentInsetAdjustmentBehavior="automatic"
         >
           <AppHeader
@@ -233,37 +299,44 @@ const CreateChallenge = () => {
               returnKeyType="next"
             />
 
-            <Text style={localStyles.label}>Imagen y video del desafío</Text>
-            <View style={localStyles.presetGrid}>
-              {challengeMediaPresets.map((preset) => {
-                const isSelected = selectedPresetId === preset.id;
-
-                return (
-                  <TouchableOpacity
-                    key={preset.id}
-                    style={[
-                      localStyles.presetCard,
-                      isSelected && localStyles.presetCardSelected,
-                    ]}
-                    onPress={() => setSelectedPresetId(preset.id)}
-                  >
-                    <View style={localStyles.presetImageWrap}>
-                      <Image source={preset.image} style={localStyles.presetImage} />
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            {activePreset ? (
-              <View style={localStyles.videoPreviewCard}>
-                <LoopingVideo
-                  source={activePreset.video}
-                  posterSource={activePreset.image}
-                  style={localStyles.videoPreview}
-                  resizeMode={ResizeMode.CONTAIN}
-                />
-              </View>
-            ) : null}
+            <Text style={localStyles.label}>Foto de portada</Text>
+            <TouchableOpacity
+              style={localStyles.coverPicker}
+              activeOpacity={0.88}
+              onPress={() => setPhotoModalVisible(true)}
+            >
+              {challengeImageUri ? (
+                <>
+                  <Image
+                    source={{ uri: challengeImageUri }}
+                    style={localStyles.coverImage}
+                  />
+                  <View style={localStyles.coverScrim} />
+                  <View style={localStyles.coverChangeBadge}>
+                    <Icon name="camera-outline" size={17} color={WHITE} />
+                    <Text style={localStyles.coverChangeText}>
+                      Cambiar portada
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <View style={localStyles.coverEmptyState}>
+                  <View style={localStyles.coverIconCircle}>
+                    <Icon
+                      name="image-outline"
+                      size={28}
+                      color={PRIMARY_COLOR}
+                    />
+                  </View>
+                  <Text style={localStyles.uploadImageTitle}>
+                    Subir foto de portada
+                  </Text>
+                  <Text style={localStyles.uploadImageHint}>
+                    Elegí una foto horizontal de tu galería o sacá una ahora
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
             <Text style={localStyles.label}>Fecha de comienzo</Text>
             <TouchableOpacity
@@ -317,7 +390,8 @@ const CreateChallenge = () => {
 
             <Text style={localStyles.label}>Quién puede verlo</Text>
             <Text style={localStyles.helperText}>
-              Elegí si querés abrirlo a la comunidad, compartirlo con tus conexiones o sostenerlo sólo para vos.
+              Elegí si querés abrirlo a la comunidad, compartirlo con tus
+              conexiones o sostenerlo sólo para vos.
             </Text>
             <View style={localStyles.visibilityStack}>
               {VISIBILITY_OPTIONS.map((option) => {
@@ -340,7 +414,9 @@ const CreateChallenge = () => {
                       />
                     </View>
                     <View style={localStyles.visibilityCopy}>
-                      <Text style={localStyles.visibilityTitle}>{option.title}</Text>
+                      <Text style={localStyles.visibilityTitle}>
+                        {option.title}
+                      </Text>
                       <Text style={localStyles.visibilitySubtitle}>
                         {option.subtitle}
                       </Text>
@@ -357,7 +433,6 @@ const CreateChallenge = () => {
               })}
             </View>
           </View>
-
         </ScrollView>
 
         <View
@@ -376,10 +451,50 @@ const CreateChallenge = () => {
             disabled={!isFormReady || createChallengeMutation.isPending}
           >
             <Text style={localStyles.createButtonText}>
-              {createChallengeMutation.isPending ? "Creando..." : "Crear desafío"}
+              {createChallengeMutation.isPending
+                ? "Creando..."
+                : "Crear desafío"}
             </Text>
           </TouchableOpacity>
         </View>
+
+        <AnimatedSheetModal
+          visible={photoModalVisible}
+          onClose={() => setPhotoModalVisible(false)}
+          offsetY={300}
+          sheetStyle={localStyles.photoSheet}
+        >
+          <View style={localStyles.sheetHandle} />
+          <Text style={localStyles.modalTitle}>Foto de portada</Text>
+          <TouchableOpacity
+            style={localStyles.modalPrimaryButton}
+            onPress={async () => {
+              setPhotoModalVisible(false);
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              await takePhoto();
+            }}
+          >
+            <Text style={localStyles.modalPrimaryText}>Usar cámara</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={localStyles.modalSecondaryButton}
+            onPress={async () => {
+              setPhotoModalVisible(false);
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              await pickFromGallery();
+            }}
+          >
+            <Text style={localStyles.modalSecondaryText}>
+              Elegir de galería
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={localStyles.modalCancelButton}
+            onPress={() => setPhotoModalVisible(false)}
+          >
+            <Text style={localStyles.modalCancelText}>Cancelar</Text>
+          </TouchableOpacity>
+        </AnimatedSheetModal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -435,53 +550,67 @@ const localStyles = StyleSheet.create({
     minHeight: 92,
     lineHeight: 20,
   },
-  presetGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
+  coverPicker: {
     marginTop: 6,
-    marginBottom: 8,
-  },
-  presetCard: {
-    width: "31%",
-    backgroundColor: WHITE,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(43,43,43,0.08)",
-    padding: 12,
-    alignItems: "center",
-  },
-  presetCardSelected: {
-    borderColor: "#E4B76E",
-    backgroundColor: "rgba(228,183,110,0.12)",
-  },
-  presetImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  presetImageWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: WHITE,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  videoPreviewCard: {
-    marginTop: 12,
-    width: "100%",
-    height: 160,
-    borderRadius: 16,
+    height: 190,
+    borderRadius: 18,
     overflow: "hidden",
     backgroundColor: "#F6F6F4",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
+    borderColor: "rgba(43,43,43,0.08)",
+    justifyContent: "center",
   },
-  videoPreview: {
+  coverImage: {
     width: "100%",
     height: "100%",
+  },
+  coverScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(20, 17, 15, 0.18)",
+  },
+  coverChangeBadge: {
+    position: "absolute",
+    right: 14,
+    bottom: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(20, 17, 15, 0.62)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  coverChangeText: {
+    color: WHITE,
+    fontSize: 13,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  coverEmptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+  },
+  coverIconCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+  },
+  uploadImageTitle: {
+    color: DARK_GRAY,
+    fontSize: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  uploadImageHint: {
+    marginTop: 6,
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    fontFamily: vibesTheme.fonts.medium,
   },
   dateButton: {
     marginTop: 6,
@@ -579,6 +708,60 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(251, 247, 244, 0.96)",
     borderTopWidth: 1,
     borderTopColor: "rgba(43,43,43,0.08)",
+  },
+  photoSheet: {
+    backgroundColor: WHITE,
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 18,
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 42,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(43,43,43,0.14)",
+    marginBottom: 14,
+  },
+  modalTitle: {
+    color: DARK_GRAY,
+    fontSize: 20,
+    textAlign: "center",
+    fontFamily: vibesTheme.fonts.medium,
+    marginBottom: 18,
+  },
+  modalPrimaryButton: {
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  modalPrimaryText: {
+    color: WHITE,
+    fontSize: 15,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  modalSecondaryButton: {
+    marginTop: 10,
+    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  modalSecondaryText: {
+    color: DARK_GRAY,
+    fontSize: 15,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  modalCancelButton: {
+    marginTop: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalCancelText: {
+    color: TEXT_SECONDARY,
+    fontSize: 14,
+    fontFamily: vibesTheme.fonts.medium,
   },
 });
 
