@@ -1,4 +1,4 @@
-package com.gurudevelopers.vibes
+package com.miradario.vibe
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

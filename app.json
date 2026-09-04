@@ -30,7 +30,7 @@
       },
       "versionCode": 8,
       "permissions": ["android.permission.RECORD_AUDIO"],
-      "package": "com.gurudevelopers.vibes"
+      "package": "com.miradario.vibe"
     },
     "web": {
       "favicon": "./assets/favicon.png"
