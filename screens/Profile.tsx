@@ -2,6 +2,8 @@
 
 import React from "react";
 import {
+  Alert,
+  Linking,
   ScrollView,
   View,
   Text,
@@ -23,6 +25,9 @@ import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles"
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { useI18n } from "../src/i18n";
 import VibesLoader from "../components/VibesLoader";
+
+const ACCOUNT_DELETION_URL =
+  "https://vibes.gurudevelopers.dev/eliminacion-de-datos";
 
 const Profile = () => {
   const { t } = useI18n();
@@ -90,6 +95,26 @@ const Profile = () => {
     });
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t("profile.deleteAccountTitle"),
+      t("profile.deleteAccountMessage"),
+      [
+        {
+          text: t("profile.deleteAccountCancel"),
+          style: "cancel",
+        },
+        {
+          text: t("profile.deleteAccountConfirm"),
+          style: "destructive",
+          onPress: () => {
+            void Linking.openURL(ACCOUNT_DELETION_URL);
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View style={styles.bg}>
       <ScrollView
@@ -139,6 +164,14 @@ const Profile = () => {
               <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           ))}
+
+          <TouchableOpacity style={styles.auraMenuItem} onPress={handleDeleteAccount}>
+            <View style={styles.auraMenuIconWrap}>
+              <Icon name="trash-outline" size={22} color={TEXT_SECONDARY} />
+            </View>
+            <Text style={styles.auraMenuLabel}>{t("profile.deleteAccount")}</Text>
+            <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.auraMenuItem, styles.auraMenuItemLast]}
