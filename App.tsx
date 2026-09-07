@@ -58,6 +58,10 @@ import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboard
 import { I18nProvider, useI18n } from "./src/i18n";
 import { PushNotificationsBootstrap } from "./src/notifications/pushNotifications";
 import { vibesTheme } from "./src/theme/vibesTheme";
+import {
+  fetchEventFeedItemById,
+  type EventType,
+} from "./src/queries/events.queries";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -181,7 +185,7 @@ const AppNavigator = () => {
     );
   };
 
-  const navigateFromNotification = (data: Record<string, unknown>) => {
+  const navigateFromNotification = async (data: Record<string, unknown>) => {
     if (!isNavigationReady || !navigationRef.current) {
       pendingNotificationData = data;
       return;
@@ -204,6 +208,26 @@ const AppNavigator = () => {
       return;
     }
 
+    if (data.type === "event_message" && typeof data.eventId === "string") {
+      const eventType: EventType =
+        data.eventType === "challenge" ? "challenge" : "event";
+
+      try {
+        const event = await fetchEventFeedItemById(data.eventId, eventType);
+        if (event) {
+          navigationRef.current.dispatch(
+            CommonActions.navigate({
+              name: "EventChat",
+              params: { event },
+            })
+          );
+          return;
+        }
+      } catch (error) {
+        console.warn("[push] failed to resolve event chat notification", error);
+      }
+    }
+
     navigateToMessages();
   };
 
@@ -224,6 +248,9 @@ const AppNavigator = () => {
         >
           <PushNotificationsBootstrap
             navigateFromNotification={navigateFromNotification}
+            getCurrentRoute={() =>
+              navigationRef.current?.getCurrentRoute() ?? null
+            }
           />
           <Stack.Navigator
             initialRouteName="Startup"

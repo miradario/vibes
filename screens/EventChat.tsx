@@ -1,12 +1,19 @@
 /** @format */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
   ScrollView,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -17,7 +24,11 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
+import {
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles, {
   TEXT_SECONDARY,
@@ -113,7 +124,7 @@ const EventChat = () => {
   const swipeMutation = useSwipeMutation();
   const challengeParticipantQuery = useChallengeParticipantQuery(
     eventType === "challenge" ? eventId : undefined,
-    userId,
+    userId
   );
   const { data: dailyCoachMessage, isLoading: coachMessageLoading } =
     useDailyChallengeCoachMessageQuery(
@@ -123,18 +134,20 @@ const EventChat = () => {
             title: event?.title ?? "Desafío",
             subtitle: event?.subtitle ?? event?.description ?? null,
             durationDays:
-              typeof event?.durationDays === "number" ? event.durationDays : null,
+              typeof event?.durationDays === "number"
+                ? event.durationDays
+                : null,
             startsAt: event?.startsAt ?? null,
             participant: challengeParticipantQuery.data ?? null,
             locale,
           }
         : null,
-      userId,
+      userId
     );
   const { data: coachHistory = [], isLoading: coachHistoryLoading } =
     useChallengeCoachMessagesQuery(
       eventType === "challenge" ? eventId : undefined,
-      userId,
+      userId
     );
 
   const { data: participants = [] } = useEventParticipantsQuery(eventId);
@@ -142,14 +155,14 @@ const EventChat = () => {
     data: messages = [],
     isLoading: messagesLoading,
     error: messagesError,
-  } =
-    useEventMessagesQuery(eventId);
+  } = useEventMessagesQuery(eventId);
   const markReadMutation = useMarkEventGroupReadMutation();
   const sendMutation = useSendEventMessageMutation();
   const deleteMutation = useDeleteEventMessageMutation();
   const kickMutation = useKickParticipantMutation();
 
   const [message, setMessage] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [membersModalVisible, setMembersModalVisible] = useState(false);
   const [messagesLoadingTimedOut, setMessagesLoadingTimedOut] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState<{
@@ -168,10 +181,10 @@ const EventChat = () => {
   const participantSheetScale = useRef(new Animated.Value(0.96)).current;
   const lastMarkedReadAtRef = useRef<string | null>(null);
   const { data: selectedParticipantProfile } = useProfileQuery(
-    selectedParticipant?.userId,
+    selectedParticipant?.userId
   );
   const { data: selectedParticipantPreferences } = useUserPreferencesQuery(
-    selectedParticipant?.userId,
+    selectedParticipant?.userId
   );
   const selectedParticipantCard = selectedParticipant
     ? mapCandidateToConnectionProfile({
@@ -184,7 +197,9 @@ const EventChat = () => {
         ...(selectedParticipantPreferences ?? {}),
         photos:
           selectedParticipantProfile?.photos ??
-          (selectedParticipant.avatarUrl ? [selectedParticipant.avatarUrl] : []),
+          (selectedParticipant.avatarUrl
+            ? [selectedParticipant.avatarUrl]
+            : []),
       })
     : null;
   const handleConnectParticipant = () => {
@@ -206,13 +221,13 @@ const EventChat = () => {
           if (response?.match) {
             navigation.navigate(
               "Match" as never,
-              { profile: participantCard } as never,
+              { profile: participantCard } as never
             );
           }
         },
         onError: (error) =>
           handleApiError(error, { toastTitle: "Error de conexión" }),
-      },
+      }
     );
   };
 
@@ -344,7 +359,7 @@ const EventChat = () => {
         animateParticipantSheetIn();
       });
     },
-    [animateParticipantSheetIn, userId],
+    [animateParticipantSheetIn, userId]
   );
 
   const handleCloseParticipant = useCallback(() => {
@@ -407,16 +422,18 @@ const EventChat = () => {
       coachMap.set(dailyCoachMessage.id, dailyCoachMessage);
     }
 
-    const coachTimeline: TimelineMessage[] = Array.from(coachMap.values()).map((item) => ({
-      kind: "coach",
-      id: item.id,
-      body: item.body,
-      createdAt: item.createdAt,
-      senderId: "challenge-coach",
-      senderName: t("common.challengeGuideName"),
-      senderAvatar: null,
-      coachDate: item.messageDate,
-    }));
+    const coachTimeline: TimelineMessage[] = Array.from(coachMap.values()).map(
+      (item) => ({
+        kind: "coach",
+        id: item.id,
+        body: item.body,
+        createdAt: item.createdAt,
+        senderId: "challenge-coach",
+        senderName: t("common.challengeGuideName"),
+        senderAvatar: null,
+        coachDate: item.messageDate,
+      })
+    );
 
     const eventTimeline: TimelineMessage[] = messages.map((item) => ({
       ...item,
@@ -425,7 +442,7 @@ const EventChat = () => {
 
     return [...eventTimeline, ...coachTimeline].sort(
       (left, right) =>
-        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
     );
   }, [coachHistory, dailyCoachMessage, messages, t]);
 
@@ -436,7 +453,12 @@ const EventChat = () => {
   }, [timelineMessages.length]);
 
   useEffect(() => {
-    if (!isFocused || !eventId || messages.length === 0 || markReadMutation.isPending) {
+    if (
+      !isFocused ||
+      !eventId ||
+      messages.length === 0 ||
+      markReadMutation.isPending
+    ) {
       return;
     }
 
@@ -451,6 +473,27 @@ const EventChat = () => {
       readAt: latestMessage.createdAt,
     });
   }, [eventId, eventType, isFocused, markReadMutation, messages]);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+        setTimeout(
+          () => scrollRef.current?.scrollToEnd({ animated: true }),
+          80
+        );
+      }
+    );
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (!messagesLoading) {
@@ -487,7 +530,7 @@ const EventChat = () => {
       console.error("[EventChat] Send error:", err);
       Alert.alert(
         "Error al enviar",
-        err?.message ?? "No se pudo enviar el mensaje.",
+        err?.message ?? "No se pudo enviar el mensaje."
       );
       setMessage(body);
     }
@@ -513,6 +556,7 @@ const EventChat = () => {
   const handleLongPressMessage = useCallback(
     (msg: EventMessage) => {
       if (!eventId) return;
+      if (msg.deliveryStatus === "sending") return;
       const canDelete = msg.senderId === userId || isAdmin;
       if (!canDelete) return;
 
@@ -530,7 +574,7 @@ const EventChat = () => {
         },
       ]);
     },
-    [eventId, userId, isAdmin, deleteMutation],
+    [eventId, userId, isAdmin, deleteMutation]
   );
 
   const handleKick = useCallback(
@@ -548,10 +592,10 @@ const EventChat = () => {
               kickMutation.mutate({ participantUserId, eventId, eventType });
             },
           },
-        ],
+        ]
       );
     },
-    [eventId, eventType, kickMutation],
+    [eventId, eventType, kickMutation]
   );
 
   const handleOpenMap = useCallback(async () => {
@@ -594,7 +638,7 @@ const EventChat = () => {
         avatarUrl: sender.avatar,
       });
     },
-    [messages, participants],
+    [messages, participants]
   );
 
   return (
@@ -604,8 +648,8 @@ const EventChat = () => {
         Platform.OS === "ios"
           ? "padding"
           : Platform.OS === "android"
-            ? "height"
-            : undefined
+          ? "height"
+          : undefined
       }
       keyboardVerticalOffset={0}
     >
@@ -664,7 +708,10 @@ const EventChat = () => {
               ) : null}
 
               {event?.description ? (
-                <Text style={localStyles.eventDescriptionText} numberOfLines={2}>
+                <Text
+                  style={localStyles.eventDescriptionText}
+                  numberOfLines={2}
+                >
                   {event.description}
                 </Text>
               ) : null}
@@ -681,7 +728,9 @@ const EventChat = () => {
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
         >
           {!eventId ? (
             <View style={localStyles.emptyMessages}>
@@ -763,7 +812,7 @@ const EventChat = () => {
                       isMe
                         ? localStyles.messageBubbleMe
                         : isCoach
-                          ? localStyles.messageBubbleCoach
+                        ? localStyles.messageBubbleCoach
                         : localStyles.messageBubbleOther,
                     ]}
                   >
@@ -793,6 +842,24 @@ const EventChat = () => {
                     >
                       {msg.body}
                     </Text>
+                    {!isCoach ? (
+                      <View style={localStyles.messageMetaRow}>
+                        <Text style={localStyles.messageTime}>
+                          {formatTime(msg.createdAt)}
+                        </Text>
+                        {isMe ? (
+                          <Icon
+                            name={
+                              msg.deliveryStatus === "sending"
+                                ? "time-outline"
+                                : "checkmark"
+                            }
+                            size={12}
+                            color={TEXT_SECONDARY}
+                          />
+                        ) : null}
+                      </View>
+                    ) : null}
                   </View>
                 </TouchableOpacity>
               );
@@ -805,7 +872,9 @@ const EventChat = () => {
             styles.eventChatInputContainer,
             {
               paddingTop: 10,
-              paddingBottom: Math.max(insets.bottom + 14, 24),
+              paddingBottom:
+                keyboardHeight > 0 ? 10 : Math.max(insets.bottom + 14, 24),
+              alignItems: "flex-end",
             },
           ]}
         >
@@ -814,18 +883,19 @@ const EventChat = () => {
             size={32}
           />
           <TextInput
-            style={styles.eventChatInput}
+            style={[styles.eventChatInput, localStyles.composerInput]}
             placeholder="Escribir mensaje..."
             placeholderTextColor={TEXT_SECONDARY}
             value={message}
             onChangeText={setMessage}
+            multiline
+            textAlignVertical="top"
             onFocus={() => {
               setTimeout(() => {
                 scrollRef.current?.scrollToEnd({ animated: true });
               }, 180);
             }}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
+            returnKeyType="default"
             maxLength={2000}
           />
           <TouchableOpacity
@@ -882,7 +952,9 @@ const EventChat = () => {
               </TouchableOpacity>
             </View>
             <FlatList
-              data={participants.filter((item) => !userId || item.userId !== userId)}
+              data={participants.filter(
+                (item) => !userId || item.userId !== userId
+              )}
               keyExtractor={(item) => item.id}
               style={{ maxHeight: 400 }}
               renderItem={({ item }) => {
@@ -1160,12 +1232,23 @@ const localStyles = StyleSheet.create({
   messageTime: {
     fontSize: 11,
     color: TEXT_SECONDARY,
+  },
+  messageMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 4,
     marginTop: 4,
-    alignSelf: "flex-end",
   },
   messageTimeCoach: {
     color: "#2B2B2B",
     opacity: 0.68,
+  },
+  composerInput: {
+    minHeight: 40,
+    maxHeight: 116,
+    lineHeight: 20,
+    paddingVertical: 8,
   },
   moreAvatar: {
     backgroundColor: "#F0EDE8",

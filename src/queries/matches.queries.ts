@@ -48,6 +48,7 @@ export type DirectMessage = {
   senderId: string;
   text: string;
   createdAt: string;
+  deliveryStatus?: "sending" | "sent";
 };
 
 export type ReportReason =
@@ -92,7 +93,7 @@ const isLaterTimestamp = (value: string | null, reference: string | null) => {
 
 /** Fetch profile name + primary photo for a list of user IDs */
 async function fetchProfileSummaries(
-  userIds: string[],
+  userIds: string[]
 ): Promise<Map<string, { name: string; photo: string | null }>> {
   const map = new Map<string, { name: string; photo: string | null }>();
   if (userIds.length === 0) return map;
@@ -169,12 +170,12 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
       user2Id: String(r.user2Id),
       createdAt: String(r.createdAt),
       isActive: Boolean(r.isActive),
-    }),
+    })
   );
 
   // Gather other user IDs
   const otherIds = matches.map((m) =>
-    m.user1Id === userId ? m.user2Id : m.user1Id,
+    m.user1Id === userId ? m.user2Id : m.user1Id
   );
   const profileMap = await fetchProfileSummaries(otherIds);
 
@@ -246,7 +247,7 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
         lastMsg?.createdAt &&
           lastMsg.senderId &&
           lastMsg.senderId !== userId &&
-          isLaterTimestamp(lastMsg.createdAt, lastReadAt),
+          isLaterTimestamp(lastMsg.createdAt, lastReadAt)
       );
 
       return {
@@ -287,16 +288,16 @@ async function fetchIncomingLikes(userId: string): Promise<IncomingLike[]> {
     (matchRows ?? []).map((row: any) =>
       String(row.user1_id) === userId
         ? String(row.user2_id)
-        : String(row.user1_id),
-    ),
+        : String(row.user1_id)
+    )
   );
 
   const likerIds = Array.from(
     new Set(
       (swipeRows ?? [])
         .map((row: any) => String(row.swiper_id ?? ""))
-        .filter((id) => id.length > 0 && !matchedUserIds.has(id)),
-    ),
+        .filter((id) => id.length > 0 && !matchedUserIds.has(id))
+    )
   );
 
   if (likerIds.length === 0) return [];
@@ -310,11 +311,11 @@ async function fetchIncomingLikes(userId: string): Promise<IncomingLike[]> {
   if (outgoingError) throw outgoingError;
 
   const dismissedOrLikedIds = new Set(
-    (myOutgoingSwipes ?? []).map((row: any) => String(row.target_id ?? "")),
+    (myOutgoingSwipes ?? []).map((row: any) => String(row.target_id ?? ""))
   );
 
   const profileMap = await fetchProfileSummaries(
-    likerIds.filter((id) => !dismissedOrLikedIds.has(id)),
+    likerIds.filter((id) => !dismissedOrLikedIds.has(id))
   );
 
   return (swipeRows ?? [])
@@ -372,7 +373,7 @@ export const useMatchesQuery = () => {
             schema: "public",
             table: "messages",
           },
-          refreshMatches,
+          refreshMatches
         )
         .on(
           "postgres_changes",
@@ -392,7 +393,7 @@ export const useMatchesQuery = () => {
             if (user1Id === userId || user2Id === userId) {
               refreshMatches();
             }
-          },
+          }
         )
         .subscribe((status) => {
           if (status === "SUBSCRIBED") refreshMatches();
@@ -441,7 +442,7 @@ export const useMarkDirectMessagesReadMutation = () => {
           user_id: userId,
           last_read_at: readAt ?? new Date().toISOString(),
         },
-        { onConflict: "match_id,user_id" },
+        { onConflict: "match_id,user_id" }
       );
 
       if (error) throw error;
@@ -504,7 +505,7 @@ export const useIncomingLikesQuery = () => {
             if (targetId === userId || swiperId === userId) {
               refreshIncomingLikes();
             }
-          },
+          }
         )
         .on(
           "postgres_changes",
@@ -524,7 +525,7 @@ export const useIncomingLikesQuery = () => {
             if (user1Id === userId || user2Id === userId) {
               refreshIncomingLikes();
             }
-          },
+          }
         )
         .subscribe((status) => {
           if (status === "SUBSCRIBED") refreshIncomingLikes();
@@ -659,9 +660,41 @@ async function fetchDirectMessages(matchId: string): Promise<DirectMessage[]> {
       senderId: String(r.senderId),
       text: String(r.text),
       createdAt: String(r.createdAt),
-    }),
+    })
   );
 }
+
+const keepPendingDirectMessages = (previous: unknown, next: unknown) => {
+  const previousMessages = Array.isArray(previous)
+    ? (previous as DirectMessage[])
+    : [];
+  const nextMessages = Array.isArray(next) ? (next as DirectMessage[]) : [];
+  const nextIds = new Set(nextMessages.map((message) => message.id));
+  const pending = previousMessages.filter(
+    (message) =>
+      message.deliveryStatus === "sending" &&
+      !nextIds.has(message.id) &&
+      !nextMessages.some((nextMessage) =>
+        isConfirmedDirectMessageForPending(message, nextMessage)
+      )
+  );
+  if (pending.length === 0) return nextMessages;
+
+  return [...nextMessages, ...pending].sort(
+    (left, right) =>
+      new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+  );
+};
+
+const isConfirmedDirectMessageForPending = (
+  pending: DirectMessage,
+  confirmed: DirectMessage
+) =>
+  pending.deliveryStatus === "sending" &&
+  confirmed.deliveryStatus !== "sending" &&
+  pending.matchId === confirmed.matchId &&
+  pending.senderId === confirmed.senderId &&
+  pending.text === confirmed.text;
 
 export const useDirectMessagesQuery = (matchId?: string) => {
   const queryClient = useQueryClient();
@@ -678,6 +711,7 @@ export const useDirectMessagesQuery = (matchId?: string) => {
     refetchInterval: matchId ? 2000 : false,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
+    structuralSharing: keepPendingDirectMessages,
   });
 
   useEffect(() => {
@@ -716,13 +750,19 @@ export const useDirectMessagesQuery = (matchId?: string) => {
               queryClient.setQueryData<DirectMessage[]>(queryKey, (prev) => {
                 if (!prev) return [msg];
                 if (prev.some((m) => m.id === msg.id)) return prev;
-                return [...prev, msg];
+                return [
+                  ...prev.filter(
+                    (message) =>
+                      !isConfirmedDirectMessageForPending(message, msg)
+                  ),
+                  msg,
+                ];
               });
             }
 
             queryClient.invalidateQueries({ queryKey });
             queryClient.invalidateQueries({ queryKey: matchKeys.all });
-          },
+          }
         )
         .subscribe((status) => {
           if (status === "SUBSCRIBED") {
@@ -757,7 +797,36 @@ export const useSendDirectMessageMutation = () => {
   const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
 
-  return useMutation<DirectMessage, Error, { matchId: string; body: string }>({
+  return useMutation<
+    DirectMessage,
+    Error,
+    { matchId: string; body: string },
+    { tempId: string; matchId: string }
+  >({
+    onMutate: async ({ matchId, body }) => {
+      const senderId = session?.user?.id;
+      const tempId = `pending-${Date.now()}`;
+
+      if (!senderId) return { tempId, matchId };
+
+      await queryClient.cancelQueries({ queryKey: dmKeys.byMatch(matchId) });
+      queryClient.setQueryData<DirectMessage[]>(
+        dmKeys.byMatch(matchId),
+        (prev) => [
+          ...(prev ?? []),
+          {
+            id: tempId,
+            matchId,
+            senderId,
+            text: body,
+            createdAt: new Date().toISOString(),
+            deliveryStatus: "sending",
+          },
+        ]
+      );
+
+      return { tempId, matchId };
+    },
     mutationFn: async ({ matchId, body }) => {
       const senderId = session?.user?.id;
       if (!senderId) throw new Error("Not authenticated");
@@ -776,16 +845,40 @@ export const useSendDirectMessageMutation = () => {
         senderId: String(raw.senderId),
         text: String(raw.text),
         createdAt: String(raw.createdAt),
+        deliveryStatus: "sent",
       };
     },
-    onSuccess: (msg) => {
+    onError: (_error, _variables, context) => {
+      if (!context) return;
+      queryClient.setQueryData<DirectMessage[]>(
+        dmKeys.byMatch(context.matchId),
+        (prev = []) => prev.filter((message) => message.id !== context.tempId)
+      );
+    },
+    onSuccess: (msg, _variables, context) => {
       queryClient.setQueryData<DirectMessage[]>(
         dmKeys.byMatch(msg.matchId),
         (prev) => {
           if (!prev) return [msg];
+          if (context?.tempId) {
+            let replaced = false;
+            const next = prev.map((message) => {
+              if (message.id !== context.tempId) return message;
+              replaced = true;
+              return msg;
+            });
+            if (replaced) {
+              return next.filter(
+                (message, index) =>
+                  message.id !== msg.id ||
+                  next.findIndex((candidate) => candidate.id === msg.id) ===
+                    index
+              );
+            }
+          }
           if (prev.some((m) => m.id === msg.id)) return prev;
           return [...prev, msg];
-        },
+        }
       );
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
     },
@@ -820,13 +913,13 @@ export const useDeleteDirectMessageMutation = () => {
 
 async function findMatch(
   userId: string,
-  otherUserId: string,
+  otherUserId: string
 ): Promise<{ id: string } | null> {
   const { data, error } = await supabase
     .from("matches")
     .select("id")
     .or(
-      `and(user1_id.eq.${userId},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${userId})`,
+      `and(user1_id.eq.${userId},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${userId})`
     )
     .maybeSingle();
 

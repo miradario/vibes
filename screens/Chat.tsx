@@ -158,6 +158,7 @@ const Chat = () => {
       { matchId, body },
       {
         onError: (err) => {
+          setText(body);
           Alert.alert("Error", err.message || "No se pudo enviar el mensaje");
         },
       }
@@ -165,6 +166,7 @@ const Chat = () => {
   };
 
   const handleLongPress = (msg: DirectMessage) => {
+    if (msg.deliveryStatus === "sending") return;
     if (msg.senderId !== myId) return;
     Alert.alert("¿Eliminar mensaje?", msg.text.slice(0, 60), [
       { text: "Cancelar", style: "cancel" },
@@ -283,14 +285,25 @@ const Chat = () => {
         >
           {item.text}
         </Text>
-        <Text
-          style={[
-            localStyles.msgTime,
-            isOwn ? localStyles.msgTimeRight : localStyles.msgTimeLeft,
-          ]}
-        >
-          {formatTime(item.createdAt)}
-        </Text>
+        <View style={localStyles.messageMetaRow}>
+          <Text
+            style={[
+              localStyles.msgTime,
+              isOwn ? localStyles.msgTimeRight : localStyles.msgTimeLeft,
+            ]}
+          >
+            {formatTime(item.createdAt)}
+          </Text>
+          {isOwn ? (
+            <Icon
+              name={
+                item.deliveryStatus === "sending" ? "time-outline" : "checkmark"
+              }
+              size={12}
+              color={TEXT_SECONDARY}
+            />
+          ) : null}
+        </View>
       </TouchableOpacity>
     );
 
@@ -316,10 +329,9 @@ const Chat = () => {
   return (
     <KeyboardAvoidingView
       style={styles.bg}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={
-        Platform.OS === "ios" ? Math.max(insets.top + 8, 24) : 0
-      }
+      behavior={Platform.OS === "ios" ? "position" : undefined}
+      contentContainerStyle={localStyles.keyboardAvoidingContent}
+      keyboardVerticalOffset={0}
     >
       <AppHeader
         showBack
@@ -520,7 +532,8 @@ const Chat = () => {
             styles.eventChatInputContainer,
             localStyles.inputContainer,
             {
-              paddingBottom: Math.max(insets.bottom + 14, 24),
+              paddingBottom:
+                keyboardHeight > 0 ? 10 : Math.max(insets.bottom + 14, 24),
               marginBottom:
                 Platform.OS === "android" && keyboardHeight > 0
                   ? keyboardHeight
@@ -530,12 +543,13 @@ const Chat = () => {
         >
           <Avatar uri={ownAvatar} size={32} />
           <TextInput
-            style={styles.eventChatInput}
+            style={[styles.eventChatInput, localStyles.composerInput]}
             placeholder="Escribí un mensaje..."
             placeholderTextColor={TEXT_SECONDARY}
             value={text}
             onChangeText={setText}
             multiline
+            textAlignVertical="top"
             maxLength={2000}
             returnKeyType="default"
             onFocus={() =>
@@ -564,6 +578,9 @@ export default Chat;
 
 const localStyles = StyleSheet.create({
   chatBody: {
+    flex: 1,
+  },
+  keyboardAvoidingContent: {
     flex: 1,
   },
   messageList: {
@@ -595,9 +612,14 @@ const localStyles = StyleSheet.create({
   },
   msgTime: {
     fontSize: 11,
-    marginTop: 4,
     color: TEXT_SECONDARY,
-    alignSelf: "flex-end",
+  },
+  messageMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 4,
+    marginTop: 4,
   },
   msgTimeRight: {
     textAlign: "right",
@@ -607,6 +629,13 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(246, 246, 244, 0.95)",
     borderTopColor: "rgba(174, 191, 209, 0.3)",
     paddingTop: 10,
+    alignItems: "flex-end",
+  },
+  composerInput: {
+    minHeight: 40,
+    maxHeight: 116,
+    lineHeight: 20,
+    paddingVertical: 8,
   },
   loadingWrap: {
     flex: 1,
