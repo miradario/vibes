@@ -2,22 +2,43 @@ import { useEffect, useRef, type MutableRefObject } from "react";
 import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
-import { useMatchesQuery } from "../queries/matches.queries";
+import { showToast } from "../utils/toast";
+import { dmKeys, matchKeys, useMatchesQuery } from "../queries/matches.queries";
+import { eventMessageKeys, myEventGroupsKeys } from "../queries/events.queries";
 import { useUserPreferencesQuery } from "../queries/userPreferences.queries";
 
+const isChatNotificationData = (
+  data: Record<string, unknown> | null
+): data is Record<string, unknown> =>
+  data?.type === "direct_message" || data?.type === "event_message";
+
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
+  handleNotification: async (notification) => {
+    const rawData = notification.request.content.data;
+    const data =
+      rawData && typeof rawData === "object"
+        ? (rawData as Record<string, unknown>)
+        : null;
+    const isChatNotification = isChatNotificationData(data);
+
+    return {
+      shouldShowBanner: !isChatNotification,
+      shouldShowList: !isChatNotification,
+      shouldPlaySound: !isChatNotification,
+      shouldSetBadge: true,
+    };
+  },
 });
 
 type PushNotificationsBootstrapProps = {
   navigateFromNotification: (data: Record<string, unknown>) => void;
+  getCurrentRoute: () => {
+    name?: string;
+    params?: Record<string, unknown>;
+  } | null;
 };
 
 const getNotificationData = (
@@ -138,10 +159,30 @@ const handleNotificationResponse = (
   navigateFromNotification(getNotificationData(response) ?? {});
 };
 
+const isCurrentChatRoute = (
+  route: { name?: string; params?: Record<string, unknown> } | null,
+  data: Record<string, unknown>
+) => {
+  if (!route) return false;
+
+  if (data.type === "direct_message" && route.name === "Chat") {
+    return route.params?.matchId === data.matchId;
+  }
+
+  if (data.type === "event_message" && route.name === "EventChat") {
+    const event = route.params?.event as { id?: unknown } | undefined;
+    return event?.id === data.eventId;
+  }
+
+  return false;
+};
+
 export const PushNotificationsBootstrap = ({
   navigateFromNotification,
+  getCurrentRoute,
 }: PushNotificationsBootstrapProps) => {
   const { data: session } = useAuthSession();
+  const queryClient = useQueryClient();
   const userId = session?.user?.id;
   const { data: matches = [] } = useMatchesQuery();
   const preferencesQuery = useUserPreferencesQuery(userId);
@@ -206,6 +247,51 @@ export const PushNotificationsBootstrap = ({
   }, [notificationsEnabled, preferencesQuery.isFetched, userId]);
 
   useEffect(() => {
+    const receivedSubscription = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        const rawData = notification.request.content.data;
+        const data =
+          rawData && typeof rawData === "object"
+            ? (rawData as Record<string, unknown>)
+            : null;
+
+        if (!isChatNotificationData(data)) return;
+
+        if (
+          data.type === "direct_message" &&
+          typeof data.matchId === "string"
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: dmKeys.byMatch(data.matchId),
+          });
+          queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        }
+
+        if (data.type === "event_message" && typeof data.eventId === "string") {
+          queryClient.invalidateQueries({
+            queryKey: eventMessageKeys.byEvent(data.eventId),
+          });
+          if (userId) {
+            queryClient.invalidateQueries({
+              queryKey: myEventGroupsKeys.all(userId),
+            });
+          } else {
+            queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
+          }
+        }
+
+        if (isCurrentChatRoute(getCurrentRoute(), data)) return;
+
+        showToast("Nuevo mensaje", {
+          type: "info",
+          text1: "Nuevo mensaje",
+          text2: "Recibiste una notificación de chat.",
+          visibilityTime: 2600,
+          onPress: () => navigateFromNotification(data),
+        });
+      }
+    );
+
     const responseSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
         handleNotificationResponse(
@@ -224,9 +310,10 @@ export const PushNotificationsBootstrap = ({
     });
 
     return () => {
+      receivedSubscription.remove();
       responseSubscription.remove();
     };
-  }, [navigateFromNotification]);
+  }, [getCurrentRoute, navigateFromNotification, queryClient, userId]);
 
   return null;
 };

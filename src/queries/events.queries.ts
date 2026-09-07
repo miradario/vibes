@@ -359,6 +359,25 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
   };
 };
 
+export const fetchEventFeedItemById = async (
+  eventId: string,
+  eventType: EventType
+): Promise<EventFeedItem | null> => {
+  const table = eventType === "challenge" ? "challenges" : "events";
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return eventType === "challenge"
+    ? mapChallengeRow(data as EventRow)
+    : mapEventRow(data as EventRow);
+};
+
 type ParticipantPreviewRow = {
   eventId: string;
   userId: string;
@@ -1902,7 +1921,18 @@ export type EventMessage = {
   senderAvatar: string | null;
   body: string;
   createdAt: string;
+  deliveryStatus?: "sending" | "sent";
 };
+
+const isConfirmedEventMessageForPending = (
+  pending: EventMessage,
+  confirmed: EventMessage
+) =>
+  pending.deliveryStatus === "sending" &&
+  confirmed.deliveryStatus !== "sending" &&
+  pending.eventId === confirmed.eventId &&
+  pending.senderId === confirmed.senderId &&
+  pending.body === confirmed.body;
 
 export const useEventMessagesQuery = (eventId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -1925,9 +1955,8 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
           const row = payload.new as any;
           queryClient.setQueryData<EventMessage[]>(
             eventMessageKeys.byEvent(eventId),
-            (old = []) => [
-              ...old,
-              {
+            (old = []) => {
+              const message = {
                 id: String(row.id),
                 eventId: String(row.event_id),
                 senderId: String(row.sender_id),
@@ -1935,8 +1964,17 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
                 senderAvatar: null,
                 body: String(row.body),
                 createdAt: String(row.created_at),
-              },
-            ]
+              };
+
+              if (old.some((item) => item.id === message.id)) return old;
+
+              return [
+                ...old.filter(
+                  (item) => !isConfirmedEventMessageForPending(item, message)
+                ),
+                message,
+              ];
+            }
           );
           queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
         }
@@ -2013,6 +2051,28 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
     },
     enabled: Boolean(eventId),
     staleTime: 10_000,
+    structuralSharing: (previous, next) => {
+      const previousMessages = Array.isArray(previous)
+        ? (previous as EventMessage[])
+        : [];
+      const nextMessages = Array.isArray(next) ? (next as EventMessage[]) : [];
+      const nextIds = new Set(nextMessages.map((message) => message.id));
+      const pending = previousMessages.filter(
+        (message) =>
+          message.deliveryStatus === "sending" &&
+          !nextIds.has(message.id) &&
+          !nextMessages.some((nextMessage) =>
+            isConfirmedEventMessageForPending(message, nextMessage)
+          )
+      );
+      if (pending.length === 0) return nextMessages;
+
+      return [...nextMessages, ...pending].sort(
+        (left, right) =>
+          new Date(left.createdAt).getTime() -
+          new Date(right.createdAt).getTime()
+      );
+    },
   });
 };
 
@@ -2022,10 +2082,36 @@ export const useSendEventMessageMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation<
-    void,
+    EventMessage,
     unknown,
-    { eventId: string; eventType: EventType; senderId: string; body: string }
+    { eventId: string; eventType: EventType; senderId: string; body: string },
+    { tempId: string; eventId: string }
   >({
+    onMutate: async ({ eventId, senderId, body }) => {
+      const tempId = `pending-${Date.now()}`;
+
+      await queryClient.cancelQueries({
+        queryKey: eventMessageKeys.byEvent(eventId),
+      });
+      queryClient.setQueryData<EventMessage[]>(
+        eventMessageKeys.byEvent(eventId),
+        (prev) => [
+          ...(prev ?? []),
+          {
+            id: tempId,
+            eventId,
+            senderId,
+            senderName: null,
+            senderAvatar: null,
+            body,
+            createdAt: new Date().toISOString(),
+            deliveryStatus: "sending",
+          },
+        ]
+      );
+
+      return { tempId, eventId };
+    },
     mutationFn: async ({ eventId, eventType, senderId, body }) => {
       if (eventType === "challenge") {
         const { data: existingParticipant, error: existingParticipantError } =
@@ -2050,15 +2136,61 @@ export const useSendEventMessageMutation = () => {
         }
       }
 
-      const { error } = await supabase.from("event_messages").insert({
-        event_id: eventId,
-        event_type: eventType,
-        sender_id: senderId,
-        body: body.trim(),
-      });
+      const { data, error } = await supabase
+        .from("event_messages")
+        .insert({
+          event_id: eventId,
+          event_type: eventType,
+          sender_id: senderId,
+          body: body.trim(),
+        })
+        .select("id, event_id, sender_id, body, created_at")
+        .single();
       if (error) throw error;
+
+      return {
+        id: String((data as any).id),
+        eventId: String((data as any).event_id),
+        senderId: String((data as any).sender_id),
+        senderName: null,
+        senderAvatar: null,
+        body: String((data as any).body),
+        createdAt: String((data as any).created_at),
+        deliveryStatus: "sent",
+      };
     },
-    onSuccess: (_data, { senderId }) => {
+    onError: (_error, _variables, context) => {
+      if (!context) return;
+      queryClient.setQueryData<EventMessage[]>(
+        eventMessageKeys.byEvent(context.eventId),
+        (prev = []) => prev.filter((message) => message.id !== context.tempId)
+      );
+    },
+    onSuccess: (message, { senderId }, context) => {
+      queryClient.setQueryData<EventMessage[]>(
+        eventMessageKeys.byEvent(message.eventId),
+        (prev) => {
+          if (!prev) return [message];
+          if (context?.tempId) {
+            let replaced = false;
+            const next = prev.map((item) => {
+              if (item.id !== context.tempId) return item;
+              replaced = true;
+              return message;
+            });
+            if (replaced) {
+              return next.filter(
+                (item, index) =>
+                  item.id !== message.id ||
+                  next.findIndex((candidate) => candidate.id === message.id) ===
+                    index
+              );
+            }
+          }
+          if (prev.some((item) => item.id === message.id)) return prev;
+          return [...prev, message];
+        }
+      );
       queryClient.invalidateQueries({
         queryKey: myEventGroupsKeys.all(senderId),
       });
