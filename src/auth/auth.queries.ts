@@ -28,10 +28,7 @@ export const useAuthSession = () => {
       queryClient.setQueryData(authKeys.session, session ?? null);
     }) ?? { data: null };
 
-    const subscription =
-      (data as any)?.subscription ??
-      (data as any) ??
-      null;
+    const subscription = (data as any)?.subscription ?? (data as any) ?? null;
 
     return () => {
       if (subscription?.unsubscribe) {
@@ -77,6 +74,20 @@ export const useGoogleLoginMutation = () => {
 
   return useMutation<AuthSession, unknown, void>({
     mutationFn: authService.loginWithGoogle,
+    onSuccess: (session) => {
+      queryClient.setQueryData(authKeys.session, session ?? null);
+      if (session) {
+        queryClient.invalidateQueries();
+      }
+    },
+  });
+};
+
+export const useAppleLoginMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<AuthSession, unknown, void>({
+    mutationFn: authService.loginWithApple,
     onSuccess: (session) => {
       queryClient.setQueryData(authKeys.session, session ?? null);
       if (session) {

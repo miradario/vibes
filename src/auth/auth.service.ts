@@ -41,6 +41,8 @@ export const signup = async ({ email, password }: LoginInput) => {
 
 export const loginWithGoogle = async () => authClient.signInWithGoogle();
 
+export const loginWithApple = async () => authClient.signInWithApple();
+
 export const resetPassword = async ({ email }: ResetPasswordInput) => {
   const { error } = await authClient.resetPasswordForEmail(email);
   if (error) {

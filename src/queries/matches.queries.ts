@@ -8,6 +8,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
+import { assertAcceptableContent } from "../lib/moderation";
 import { mapSupabaseSelect } from "../api/mappers/case.mapper";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -57,6 +58,14 @@ export type ReportReason =
   | "Acoso o incomodidad"
   | "Contenido inapropiado"
   | "Perfil falso o engañoso";
+
+const isMissingRelationError = (error: unknown) => {
+  if (!error || typeof error !== "object") return false;
+  const record = error as Record<string, unknown>;
+  const code = typeof record.code === "string" ? record.code : "";
+  const message = typeof record.message === "string" ? record.message : "";
+  return code === "42P01" || message.toLowerCase().includes("user_blocks");
+};
 
 // ---------------------------------------------------------------------------
 // Query keys
@@ -149,11 +158,19 @@ async function fetchProfileSummaries(
 async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
   console.log("[matches] fetchMatches for userId:", userId);
 
-  const { data: rows, error } = await supabase
-    .from("matches")
-    .select("*")
-    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-    .order("created_at", { ascending: false });
+  const [matchesResponse, blocksResponse] = await Promise.all([
+    supabase
+      .from("matches")
+      .select("*")
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("user_blocks")
+      .select("blocker_id, blocked_user_id")
+      .or(`blocker_id.eq.${userId},blocked_user_id.eq.${userId}`),
+  ]);
+
+  const { data: rows, error } = matchesResponse;
 
   console.log("[matches] query result:", {
     rows: rows?.length,
@@ -162,6 +179,19 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
   });
 
   if (error) throw error;
+  if (blocksResponse.error && !isMissingRelationError(blocksResponse.error)) {
+    throw blocksResponse.error;
+  }
+
+  const blockedUserIds = new Set(
+    blocksResponse.error
+      ? []
+      : ((blocksResponse.data ?? []) as Record<string, any>[]).map((row) =>
+          String(row.blocker_id) === userId
+            ? String(row.blocked_user_id)
+            : String(row.blocker_id)
+        )
+  );
 
   const matches = (mapSupabaseSelect(rows ?? []) as Record<string, any>[]).map(
     (r): MatchRow => ({
@@ -236,7 +266,7 @@ async function fetchMatches(userId: string): Promise<MatchWithProfile[]> {
   return matches
     .filter((m) => {
       const otherId = m.user1Id === userId ? m.user2Id : m.user1Id;
-      return profileMap.has(otherId);
+      return profileMap.has(otherId) && !blockedUserIds.has(otherId);
     })
     .map((m): MatchWithProfile => {
       const otherId = m.user1Id === userId ? m.user2Id : m.user1Id;
@@ -612,6 +642,7 @@ export const useUnmatchMutation = () => {
 
 export const useReportUserMutation = () => {
   const { data: session } = useAuthSession();
+  const queryClient = useQueryClient();
 
   return useMutation<
     void,
@@ -627,15 +658,30 @@ export const useReportUserMutation = () => {
       const reporterId = session?.user?.id;
       if (!reporterId) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("user_reports").insert({
-        reporter_id: reporterId,
-        reported_user_id: reportedUserId,
-        match_id: matchId || null,
-        reason,
-        details: details?.trim() || null,
-      });
+      const [reportResponse, blockResponse] = await Promise.all([
+        supabase.from("user_reports").insert({
+          reporter_id: reporterId,
+          reported_user_id: reportedUserId,
+          match_id: matchId || null,
+          reason,
+          details: details?.trim() || null,
+        }),
+        supabase.from("user_blocks").upsert(
+          {
+            blocker_id: reporterId,
+            blocked_user_id: reportedUserId,
+            reason,
+            details: details?.trim() || null,
+          },
+          { onConflict: "blocker_id,blocked_user_id" }
+        ),
+      ]);
 
-      if (error) throw error;
+      if (reportResponse.error) throw reportResponse.error;
+      if (blockResponse.error) throw blockResponse.error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: matchKeys.all });
     },
   });
 };
@@ -830,6 +876,7 @@ export const useSendDirectMessageMutation = () => {
     mutationFn: async ({ matchId, body }) => {
       const senderId = session?.user?.id;
       if (!senderId) throw new Error("Not authenticated");
+      assertAcceptableContent([body]);
 
       const { data, error } = await supabase
         .from("messages")

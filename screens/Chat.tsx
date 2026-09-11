@@ -231,7 +231,10 @@ const Chat = () => {
         onSuccess: () => {
           if (!matchId) {
             closeReportModal();
-            Alert.alert("Reporte enviado", "Gracias por contarnos qué pasó.");
+            Alert.alert(
+              "Reporte enviado",
+              "Gracias por contarnos qué pasó. Bloqueamos a esta persona."
+            );
             return;
           }
 
@@ -240,7 +243,7 @@ const Chat = () => {
               closeReportModal();
               Alert.alert(
                 "Reporte enviado",
-                "Gracias por contarnos qué pasó. También quitamos esta conexión.",
+                "Gracias por contarnos qué pasó. Bloqueamos a esta persona y quitamos esta conexión.",
                 [{ text: "OK", onPress: () => navigation.goBack() }]
               );
             },
@@ -397,7 +400,7 @@ const Chat = () => {
               onPress={openReportModal}
             >
               <Icon name="flag-outline" size={21} color={DARK_GRAY} />
-              <Text style={localStyles.actionText}>Reportar persona</Text>
+              <Text style={localStyles.actionText}>Reportar y bloquear</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -413,9 +416,12 @@ const Chat = () => {
         ]}
       >
         <Pressable onPress={() => undefined}>
-          <Text style={localStyles.modalTitle}>¿Por qué querés reportar?</Text>
+          <Text style={localStyles.modalTitle}>
+            ¿Por qué querés reportar y bloquear?
+          </Text>
           <Text style={localStyles.modalSubtitle}>
-            Tu reporte nos ayuda a cuidar la comunidad.
+            Tu reporte nos ayuda a cuidar la comunidad. También quitaremos esta
+            conexión.
           </Text>
 
           {REPORT_REASONS.map((reason) => {
@@ -473,7 +479,7 @@ const Chat = () => {
             <Text style={localStyles.reportButtonText}>
               {reportMutation.isPending || unmatchMutation.isPending
                 ? "Enviando..."
-                : "Enviar reporte"}
+                : "Enviar reporte y bloquear"}
             </Text>
           </TouchableOpacity>
         </Pressable>

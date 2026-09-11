@@ -54,6 +54,7 @@ import {
   useSendEventMessageMutation,
   useDeleteEventMessageMutation,
   useKickParticipantMutation,
+  useReportEventContentMutation,
   useChallengeParticipantQuery,
   type EventType,
   type EventMessage,
@@ -101,6 +102,8 @@ type TimelineMessage =
       senderAvatar: null;
       coachDate: string;
     };
+
+const REPORT_REASON = "Contenido inapropiado";
 
 const EventChat = () => {
   const { t, locale } = useI18n();
@@ -160,11 +163,15 @@ const EventChat = () => {
   const sendMutation = useSendEventMessageMutation();
   const deleteMutation = useDeleteEventMessageMutation();
   const kickMutation = useKickParticipantMutation();
+  const reportMutation = useReportEventContentMutation();
 
   const [message, setMessage] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [membersModalVisible, setMembersModalVisible] = useState(false);
   const [messagesLoadingTimedOut, setMessagesLoadingTimedOut] = useState(false);
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(
+    () => new Set()
+  );
   const [selectedParticipant, setSelectedParticipant] = useState<{
     userId: string;
     displayName: string | null;
@@ -435,16 +442,18 @@ const EventChat = () => {
       })
     );
 
-    const eventTimeline: TimelineMessage[] = messages.map((item) => ({
-      ...item,
-      kind: "event",
-    }));
+    const eventTimeline: TimelineMessage[] = messages
+      .filter((item) => !blockedUserIds.has(item.senderId))
+      .map((item) => ({
+        ...item,
+        kind: "event",
+      }));
 
     return [...eventTimeline, ...coachTimeline].sort(
       (left, right) =>
         new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
     );
-  }, [coachHistory, dailyCoachMessage, messages, t]);
+  }, [blockedUserIds, coachHistory, dailyCoachMessage, messages, t]);
 
   useEffect(() => {
     if (timelineMessages.length > 0) {
@@ -558,7 +567,49 @@ const EventChat = () => {
       if (!eventId) return;
       if (msg.deliveryStatus === "sending") return;
       const canDelete = msg.senderId === userId || isAdmin;
-      if (!canDelete) return;
+      if (!canDelete) {
+        Alert.alert(
+          "Reportar y bloquear",
+          "Ocultaremos el contenido de esta persona y enviaremos el reporte al equipo de moderación.",
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Reportar y bloquear",
+              style: "destructive",
+              onPress: () => {
+                reportMutation.mutate(
+                  {
+                    reportedUserId: msg.senderId,
+                    reason: REPORT_REASON,
+                    details: msg.body,
+                    contentType: "event_message",
+                    contentId: msg.id,
+                    eventId,
+                    eventType,
+                  },
+                  {
+                    onSuccess: () => {
+                      setBlockedUserIds((prev) =>
+                        new Set(prev).add(msg.senderId)
+                      );
+                      Alert.alert(
+                        "Reporte enviado",
+                        "Ocultamos el contenido de esta persona."
+                      );
+                    },
+                    onError: (error) =>
+                      Alert.alert(
+                        "Error",
+                        error.message || "No se pudo enviar el reporte."
+                      ),
+                  }
+                );
+              },
+            },
+          ]
+        );
+        return;
+      }
 
       const isOwn = msg.senderId === userId;
       const label = isOwn ? "Borrar mi mensaje" : "Borrar mensaje (admin)";
@@ -574,8 +625,61 @@ const EventChat = () => {
         },
       ]);
     },
-    [eventId, userId, isAdmin, deleteMutation]
+    [eventId, eventType, userId, isAdmin, deleteMutation, reportMutation]
   );
+
+  const handleReportParticipant = useCallback(() => {
+    if (!selectedParticipant || !eventId) return;
+    const reportedUserId = selectedParticipant.userId;
+
+    Alert.alert(
+      "Reportar y bloquear",
+      "Ocultaremos a esta persona y enviaremos el reporte al equipo de moderación.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Reportar y bloquear",
+          style: "destructive",
+          onPress: () => {
+            reportMutation.mutate(
+              {
+                reportedUserId,
+                reason: REPORT_REASON,
+                details: selectedParticipant.displayName ?? undefined,
+                contentType: eventType === "challenge" ? "challenge" : "event",
+                contentId: eventId,
+                eventId,
+                eventType,
+              },
+              {
+                onSuccess: () => {
+                  setBlockedUserIds((prev) =>
+                    new Set(prev).add(reportedUserId)
+                  );
+                  handleCloseParticipant();
+                  Alert.alert(
+                    "Reporte enviado",
+                    "Ocultamos a esta persona de este grupo."
+                  );
+                },
+                onError: (error) =>
+                  Alert.alert(
+                    "Error",
+                    error.message || "No se pudo enviar el reporte."
+                  ),
+              }
+            );
+          },
+        },
+      ]
+    );
+  }, [
+    eventId,
+    eventType,
+    handleCloseParticipant,
+    reportMutation,
+    selectedParticipant,
+  ]);
 
   const handleKick = useCallback(
     (participantUserId: string, name: string | null) => {
@@ -953,7 +1057,9 @@ const EventChat = () => {
             </View>
             <FlatList
               data={participants.filter(
-                (item) => !userId || item.userId !== userId
+                (item) =>
+                  (!userId || item.userId !== userId) &&
+                  !blockedUserIds.has(item.userId)
               )}
               keyExtractor={(item) => item.id}
               style={{ maxHeight: 400 }}
@@ -1039,10 +1145,27 @@ const EventChat = () => {
           >
             <View style={styles.discoverSheetHandle} />
             {selectedParticipantCard ? (
-              <UserProfileCard
-                profile={selectedParticipantCard}
-                onContactPress={handleConnectParticipant}
-              />
+              <>
+                <UserProfileCard
+                  profile={selectedParticipantCard}
+                  onContactPress={handleConnectParticipant}
+                />
+                {selectedParticipant?.userId !== userId ? (
+                  <TouchableOpacity
+                    style={localStyles.reportParticipantButton}
+                    onPress={handleReportParticipant}
+                    activeOpacity={0.86}
+                    disabled={reportMutation.isPending}
+                  >
+                    <Icon name="flag-outline" size={18} color="#D88C7A" />
+                    <Text style={localStyles.reportParticipantText}>
+                      {reportMutation.isPending
+                        ? "Enviando reporte..."
+                        : "Reportar y bloquear"}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </>
             ) : (
               <View style={localStyles.participantSheetLoading}>
                 <VibesLoader size={64} />
@@ -1330,6 +1453,25 @@ const localStyles = StyleSheet.create({
     minHeight: 360,
     alignItems: "center",
     justifyContent: "center",
+  },
+  reportParticipantButton: {
+    marginHorizontal: 18,
+    marginTop: 12,
+    marginBottom: 18,
+    minHeight: 48,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(216, 140, 122, 0.28)",
+    backgroundColor: "rgba(216, 140, 122, 0.08)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  reportParticipantText: {
+    color: "#D88C7A",
+    fontSize: 14,
+    fontFamily: vibesTheme.fonts.medium,
   },
   inputAvatar: {
     width: 32,

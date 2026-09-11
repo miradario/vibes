@@ -30,10 +30,7 @@ const TermsConditions = () => {
           titleStyle={styles.settingsTitle}
         />
 
-
-        <Text style={localStyles.subtitle}>
-          {t("terms.subtitle")}
-        </Text>
+        <Text style={localStyles.subtitle}>{t("terms.subtitle")}</Text>
 
         <ScrollView
           style={localStyles.card}
@@ -43,7 +40,9 @@ const TermsConditions = () => {
           <Text style={localStyles.titleText}>{t("terms.welcomeTitle")}</Text>
           <Text style={localStyles.bodyText}>{t("terms.welcomeBody")}</Text>
 
-          <Text style={localStyles.titleText}>{t("terms.acceptanceTitle")}</Text>
+          <Text style={localStyles.titleText}>
+            {t("terms.acceptanceTitle")}
+          </Text>
           <Text style={localStyles.bodyText}>{t("terms.acceptanceBody")}</Text>
 
           <Text style={localStyles.titleText}>{t("terms.ageTitle")}</Text>
@@ -54,6 +53,11 @@ const TermsConditions = () => {
 
           <Text style={localStyles.titleText}>{t("terms.contentTitle")}</Text>
           <Text style={localStyles.bodyText}>{t("terms.contentBody")}</Text>
+
+          <Text style={localStyles.titleText}>
+            {t("terms.moderationTitle")}
+          </Text>
+          <Text style={localStyles.bodyText}>{t("terms.moderationBody")}</Text>
         </ScrollView>
       </View>
     </View>

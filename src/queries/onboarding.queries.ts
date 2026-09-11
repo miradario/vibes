@@ -5,6 +5,7 @@ import type { SpiritualPathDetails } from "../lib/spiritualPaths";
 import { upsertUserPreferences } from "../lib/userPreferencesStore";
 import { profileKeys } from "./profile.queries";
 import { userPreferencesKeys } from "./userPreferences.queries";
+import { assertAcceptableContent } from "../lib/moderation";
 
 const PROFILE_PICTURES_BUCKET = "profile pictures";
 
@@ -30,7 +31,8 @@ const readUriAsArrayBuffer = async (uri: string): Promise<ArrayBuffer> => {
   try {
     const response = await fetch(uri);
     const fetched = await response.arrayBuffer();
-    if (isArrayBuffer(fetched) && fetched.byteLength > 0) return fetched.slice(0);
+    if (isArrayBuffer(fetched) && fetched.byteLength > 0)
+      return fetched.slice(0);
   } catch (_) {
     // fall through to base64 fallback
   }
@@ -48,7 +50,9 @@ const normalizeOnboardingPhotoUris = (draft: OnboardingDraft) => {
   const allUris = [
     draft.primaryPhotoUri,
     ...(Array.isArray(draft.photoUris) ? draft.photoUris : []),
-  ].filter((uri): uri is string => typeof uri === "string" && uri.trim().length > 0);
+  ].filter(
+    (uri): uri is string => typeof uri === "string" && uri.trim().length > 0
+  );
 
   return Array.from(new Set(allUris.map((uri) => uri.trim()))).slice(0, 6);
 };
@@ -137,7 +141,7 @@ const getSupabaseErrorMessage = (error: unknown) => {
 
 const runOnboardingStep = async <T>(
   label: string,
-  action: () => Promise<T>,
+  action: () => Promise<T>
 ): Promise<T> => {
   try {
     return await action();
@@ -279,7 +283,7 @@ const upsertProfileWithFallback = async (payload: Record<string, unknown>) => {
 
 const updateProfileWithFallback = async (
   userId: string,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>
 ) => {
   const workingPayload: Record<string, unknown> = { ...payload };
 
@@ -309,6 +313,13 @@ export const useCompleteOnboardingMutation = () => {
 
   return useMutation<void, unknown, CompleteOnboardingInput>({
     mutationFn: async ({ userId, draft }) => {
+      assertAcceptableContent([
+        draft.displayName,
+        draft.aboutMe,
+        draft.briefDescription,
+        ...(draft.otherTags ?? []),
+      ]);
+
       const payload: Record<string, unknown> = {
         id: userId,
         display_name: draft.displayName?.trim() ?? "",
@@ -323,12 +334,16 @@ export const useCompleteOnboardingMutation = () => {
       if (draft.neighborhood?.trim()) {
         payload.neighborhood = draft.neighborhood.trim();
       }
-      if (draft.locationLabel?.trim()) payload.location_label = draft.locationLabel.trim();
+      if (draft.locationLabel?.trim())
+        payload.location_label = draft.locationLabel.trim();
       if (typeof draft.latitude === "number") payload.latitude = draft.latitude;
-      if (typeof draft.longitude === "number") payload.longitude = draft.longitude;
+      if (typeof draft.longitude === "number")
+        payload.longitude = draft.longitude;
       if (draft.orientation?.length) payload.orientation = draft.orientation;
 
-      await runOnboardingStep("Perfil", () => upsertProfileWithFallback(payload));
+      await runOnboardingStep("Perfil", () =>
+        upsertProfileWithFallback(payload)
+      );
 
       await runOnboardingStep("Preferencias", () =>
         upsertUserPreferences(userId, {
@@ -338,28 +353,30 @@ export const useCompleteOnboardingMutation = () => {
           about_me: draft.aboutMe?.trim() ?? "",
           other_tags: draft.otherTags ?? [],
           open_to: draft.purpose ?? [],
-        }),
+        })
       );
 
       const photoUris = normalizeOnboardingPhotoUris(draft);
 
       if (photoUris.length) {
         const uploadedPhotoPaths = await runOnboardingStep("Fotos", () =>
-          uploadOnboardingPhotos(userId, photoUris),
+          uploadOnboardingPhotos(userId, photoUris)
         );
 
         if (uploadedPhotoPaths.length) {
           await runOnboardingStep("Fotos del perfil", () =>
             updateProfileWithFallback(userId, {
               photos: uploadedPhotoPaths,
-            }),
+            })
           );
         }
       }
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
-      queryClient.invalidateQueries({ queryKey: profileKeys.byUser(variables.userId) });
+      queryClient.invalidateQueries({
+        queryKey: profileKeys.byUser(variables.userId),
+      });
       queryClient.invalidateQueries({ queryKey: userPreferencesKeys.all });
       queryClient.invalidateQueries({ queryKey: onboardingKeys.pending });
     },
@@ -396,7 +413,11 @@ const resetOnboardingWithFallback = async (userId: string) => {
     if (error.code === "PGRST204") {
       const match = error.message.match(/'([^']+)' column/);
       const missingColumn = match?.[1];
-      if (missingColumn && missingColumn in workingPayload && missingColumn !== "id") {
+      if (
+        missingColumn &&
+        missingColumn in workingPayload &&
+        missingColumn !== "id"
+      ) {
         delete workingPayload[missingColumn];
         if (Object.keys(workingPayload).length <= 1) throw error;
         continue;

@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { uploadImageToSupabase } from "../lib/supabaseStorage";
+import { assertAcceptableContent } from "../lib/moderation";
 import {
   encodeChallengeDescriptionWithPreset,
   extractChallengePresetFromDescription,
@@ -950,6 +951,8 @@ export const useCreateEventMutation = () => {
 
   return useMutation<EventFeedItem, unknown, CreateEventInput>({
     mutationFn: async (input) => {
+      assertAcceptableContent([input.title, input.subtitle, input.description]);
+
       const imageUrl = input.imagePresetId
         ? null
         : await maybeUploadEventImage(
@@ -1023,6 +1026,8 @@ export const useUpdateEventMutation = () => {
 
   return useMutation<EventFeedItem, unknown, UpdateEventInput>({
     mutationFn: async (input) => {
+      assertAcceptableContent([input.title, input.subtitle, input.description]);
+
       const imageUrl = input.imagePresetId
         ? null
         : await maybeUploadEventImage(
@@ -1401,6 +1406,8 @@ export const useCreateChallengeMutation = () => {
 
   return useMutation<EventFeedItem, unknown, CreateChallengeInput>({
     mutationFn: async (input) => {
+      assertAcceptableContent([input.title, input.subtitle, input.description]);
+
       const imageUrl = input.imagePresetId
         ? null
         : await maybeUploadEventImage(
@@ -2113,6 +2120,8 @@ export const useSendEventMessageMutation = () => {
       return { tempId, eventId };
     },
     mutationFn: async ({ eventId, eventType, senderId, body }) => {
+      assertAcceptableContent([body]);
+
       if (eventType === "challenge") {
         const { data: existingParticipant, error: existingParticipantError } =
           await supabase
@@ -2540,6 +2549,73 @@ export const useMarkEventGroupReadMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
+    },
+  });
+};
+
+export const useReportEventContentMutation = () => {
+  const queryClient = useQueryClient();
+  const { data: session } = useAuthSession();
+
+  return useMutation<
+    void,
+    Error,
+    {
+      reportedUserId: string;
+      reason: string;
+      details?: string;
+      contentType: "event_message" | "event" | "challenge";
+      contentId: string;
+      eventId?: string | null;
+      eventType?: EventType;
+    }
+  >({
+    mutationFn: async ({
+      reportedUserId,
+      reason,
+      details,
+      contentType,
+      contentId,
+      eventId,
+      eventType,
+    }) => {
+      const reporterId = session?.user?.id;
+      if (!reporterId) throw new Error("Not authenticated");
+
+      const trimmedDetails = details?.trim() || null;
+      const [reportResponse, blockResponse] = await Promise.all([
+        supabase.from("content_reports").insert({
+          reporter_id: reporterId,
+          reported_user_id: reportedUserId,
+          content_type: contentType,
+          content_id: contentId,
+          event_id: eventId ?? null,
+          event_type: eventType ?? null,
+          reason,
+          details: trimmedDetails,
+        }),
+        supabase.from("user_blocks").upsert(
+          {
+            blocker_id: reporterId,
+            blocked_user_id: reportedUserId,
+            reason,
+            details: trimmedDetails,
+          },
+          { onConflict: "blocker_id,blocked_user_id" }
+        ),
+      ]);
+
+      if (reportResponse.error) throw reportResponse.error;
+      if (blockResponse.error) throw blockResponse.error;
+    },
+    onSuccess: (_data, variables) => {
+      if (variables.eventId) {
+        queryClient.invalidateQueries({
+          queryKey: eventMessageKeys.byEvent(variables.eventId),
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+      queryClient.invalidateQueries({ queryKey: challengesKeys.all });
     },
   });
 };

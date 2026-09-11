@@ -38,6 +38,7 @@ import {
   OnboardingSpiritualPath,
   VibesOnboardingFlow,
   Login,
+  AgeAssurance,
   ResetPassword,
   Signup,
   EventDetail,
@@ -419,6 +420,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="ResetPassword"
               component={ResetPassword}
+              options={{ headerShown: false, animationEnabled: true }}
+            />
+            <Stack.Screen
+              name="AgeAssurance"
+              component={AgeAssurance}
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen
