@@ -42,6 +42,7 @@ import {
   useUpdateEventMutation,
 } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
 
 const IMAGE_MEDIA_TYPE =
   (ImagePicker as any).MediaType?.Images
@@ -244,7 +245,8 @@ const CreateEvent = () => {
     };
   });
   const [mapPreviewFailed, setMapPreviewFailed] = useState(false);
-  const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const googleMapsConfig = getGoogleMapsClientConfig();
+  const googleMapsApiKey = googleMapsConfig.apiKey;
   const existingCoverImageUri = editingEvent?.imagePresetId
     ? null
     : editingEvent?.imageUrl || null;
@@ -382,7 +384,7 @@ const CreateEvent = () => {
       showAlertAfterKeyboard("Ubicación guardada", message);
     };
 
-    const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const { apiKey, headers } = googleMapsConfig;
     if (!apiKey) {
       setIsValidatingLocation(true);
       try {
@@ -425,6 +427,7 @@ const CreateEvent = () => {
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(trimmedLocation)}&key=${apiKey}`,
+        { headers },
       );
       const data = await response.json();
       console.log("googleMaps:geocode:request", {
@@ -870,6 +873,7 @@ const CreateEvent = () => {
                             validatedLocation.lng,
                             googleMapsApiKey,
                           ),
+                          headers: googleMapsConfig.headers,
                         }}
                         style={localStyles.mapPreviewImage}
                         onError={() => setMapPreviewFailed(true)}

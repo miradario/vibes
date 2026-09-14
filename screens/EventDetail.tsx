@@ -41,7 +41,6 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
-import { useDailyChallengeCoachMessageQuery } from "../src/queries/challengeCoach.queries";
 import {
   useChallengeParticipantQuery,
   useChallengeCheckinsQuery,
@@ -61,6 +60,7 @@ import {
   parseChallengeMediaPreset,
 } from "../src/constants/challengeMediaPresets";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
 const CHECKIN_SLIDER_HANDLE_SIZE = 72;
@@ -137,12 +137,6 @@ const getTotalCheckinsLabel = (totalCheckins: number) => {
   return "check-ins";
 };
 
-const getParticipantCountFallback = (attendees: unknown) => {
-  if (typeof attendees !== "string") return 0;
-  const match = attendees.match(/\d+/);
-  return match ? Number(match[0]) || 0 : 0;
-};
-
 const getCheckInModalMessage = (streak: number, totalCheckins: number) => {
   if (streak === 0 && totalCheckins > 0) {
     return "Tu práctica sigue viva. Cada vez que volvés, también cuenta.";
@@ -194,6 +188,9 @@ const isAfterDay = (left: Date, right: Date) => formatDayKey(left) > formatDayKe
 const getStaticMapPreviewUrl = (location: string, apiKey: string) =>
   `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(location)}&zoom=15&size=900x320&scale=2&maptype=roadmap&markers=color:red%7C${encodeURIComponent(location)}&key=${apiKey}`;
 
+const getOpenStreetMapPreviewUrl = (latitude: number, longitude: number) =>
+  `https://staticmap.openstreetmap.de/staticmap.php?center=${latitude},${longitude}&zoom=15&size=900x320&maptype=mapnik&markers=${latitude},${longitude},red-pushpin`;
+
 const isVideoMedia = (value: unknown) => {
   if (typeof value !== "string") return false;
   const normalized = value.split("?")[0].toLowerCase();
@@ -216,22 +213,6 @@ const EventDetail = () => {
 
   const { data: participant, isLoading: participantLoading } =
     useChallengeParticipantQuery(isChallenge ? event?.id : undefined, userId);
-  const { data: personalChallengeMessage, isLoading: personalChallengeMessageLoading } =
-    useDailyChallengeCoachMessageQuery(
-      isChallenge && event?.id
-        ? {
-            challengeId: event.id,
-            title: event?.title ?? "Desafío",
-            subtitle: event?.subtitle ?? event?.description ?? null,
-            durationDays:
-              typeof event?.durationDays === "number" ? event.durationDays : null,
-            startsAt: event?.startsAt ?? null,
-            participant: participant ?? null,
-            locale,
-          }
-        : null,
-      userId,
-    );
   const { data: challengeCheckins = [] } = useChallengeCheckinsQuery(
     isChallenge ? event?.id : undefined,
     userId,
@@ -251,10 +232,7 @@ const EventDetail = () => {
   const { data: challengeParticipants = [] } = useChallengeParticipantsQuery(
     isChallenge ? event?.id : undefined,
   );
-  const {
-    data: eventParticipants = [],
-    isLoading: eventParticipantsLoading,
-  } = useEventParticipantsQuery(event?.id);
+  const { data: eventParticipants = [] } = useEventParticipantsQuery(event?.id);
 
   const isAdmin = Boolean(
     userId && event?.createdBy && userId === event.createdBy,
@@ -349,19 +327,10 @@ const EventDetail = () => {
   );
   const checkinSet = new Set(challengeCheckins);
   const participantCount = challengeParticipantsMerged.length;
-  const eventParticipantCount = Math.max(
-    eventParticipantsWithAdmin.length,
-    eventParticipantsLoading ? getParticipantCountFallback(event?.attendees) : 0,
-  );
   const visibleParticipants = isChallenge
     ? challengeParticipantsMerged
     : eventParticipantsWithAdmin;
-  const connectableParticipants = visibleParticipants.filter(
-    (item) => !userId || item.userId !== userId,
-  );
-  const visibleParticipantCount = isChallenge
-    ? participantCount
-    : eventParticipantCount;
+  const visibleParticipantCount = visibleParticipants.length;
   const totalCheckins = Math.max(
     participant?.totalCheckins ?? 0,
     challengeCheckins.length,
@@ -927,7 +896,8 @@ const EventDetail = () => {
   const eventLeadText = eventDescription || eventSubtitle;
   const modalityLabel = modality === "online" ? "Online" : "Presencial";
   const pricingLabel = pricingType === "paid" ? "Pago" : "Gratis";
-  const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const googleMapsConfig = getGoogleMapsClientConfig();
+  const googleMapsApiKey = googleMapsConfig.apiKey;
 
   if (!event) return null;
 
@@ -1001,11 +971,9 @@ const EventDetail = () => {
       `&location=${encodeURIComponent(location)}`;
 
     try {
-      const supported = await Linking.canOpenURL(calendarUrl);
-      if (!supported) {
-        Alert.alert("Calendario", "No se pudo abrir el calendario.");
-        return;
-      }
+      // Android can report false for valid HTTPS URLs when the target app is not
+      // declared in manifest queries. Opening the universal URL directly lets the
+      // system choose Google Calendar or the browser.
       await Linking.openURL(calendarUrl);
     } catch {
       Alert.alert("Calendario", "No se pudo abrir el calendario.");
@@ -1221,10 +1189,28 @@ const EventDetail = () => {
         ) : undefined}
       />
 
+      {!isChallenge ? (
+        <View style={localStyles.eventHeroMedia}>
+          {eventHeroImageSource ? (
+            <Image
+              source={eventHeroImageSource}
+              style={localStyles.eventHeroImage}
+              resizeMode="cover"
+            />
+          ) : null}
+          <View style={localStyles.eventHeroScrim} />
+          <View style={localStyles.eventHeroContent}>
+            <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
+            <Text style={localStyles.eventHeroSubtitle}>{eventLeadText}</Text>
+          </View>
+        </View>
+      ) : null}
+
       <ScrollView
         style={[
           styles.eventDetailContent,
           !isChallenge && localStyles.eventDetailContentFullBleed,
+          !isChallenge && localStyles.eventDetailScrollablePanel,
         ]}
         contentContainerStyle={[
           localStyles.scrollContent,
@@ -1235,23 +1221,6 @@ const EventDetail = () => {
       >
         {!isChallenge ? (
           <>
-            <View style={localStyles.eventHeroMedia}>
-              {eventHeroImageSource ? (
-                <Image
-                  source={eventHeroImageSource}
-                  style={localStyles.eventHeroImage}
-                  resizeMode="cover"
-                />
-              ) : null}
-              <View style={localStyles.eventHeroScrim} />
-              <View style={localStyles.eventHeroContent}>
-                <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
-                <Text style={localStyles.eventHeroSubtitle}>
-                  {eventLeadText}
-                </Text>
-              </View>
-            </View>
-
             <View
               style={[
                 styles.eventDetailInfoCard,
@@ -1362,13 +1331,24 @@ const EventDetail = () => {
                       style={localStyles.eventMiniMapCard}
                       onPress={handleOpenMap}
                     >
-                      {googleMapsApiKey && !eventMapPreviewFailed ? (
+                      {!eventMapPreviewFailed &&
+                      (googleMapsApiKey ||
+                        (eventLocationLatitude !== null &&
+                          eventLocationLongitude !== null)) ? (
                         <Image
                           source={{
-                            uri: getStaticMapPreviewUrl(
-                              eventMapQuery ?? eventLocation,
-                              googleMapsApiKey,
-                            ),
+                            uri: googleMapsApiKey
+                              ? getStaticMapPreviewUrl(
+                                  eventMapQuery ?? eventLocation,
+                                  googleMapsApiKey,
+                                )
+                              : getOpenStreetMapPreviewUrl(
+                                  eventLocationLatitude as number,
+                                  eventLocationLongitude as number,
+                                ),
+                            ...(googleMapsApiKey
+                              ? { headers: googleMapsConfig.headers }
+                              : {}),
                           }}
                           style={localStyles.eventMiniMapImage}
                           onError={() => setEventMapPreviewFailed(true)}
@@ -1505,31 +1485,6 @@ const EventDetail = () => {
             <Text style={styles.eventDetailTitle}>{event.title}</Text>
             {eventDescription ? (
               <Text style={styles.eventDetailDescription}>{eventDescription}</Text>
-            ) : null}
-
-            {personalChallengeMessageLoading || personalChallengeMessage ? (
-              <View style={localStyles.personalCoachCard}>
-                <View style={localStyles.personalCoachHeader}>
-                  <View style={localStyles.personalCoachBadge}>
-                    <Icon name="sparkles-outline" size={15} color={WHITE} />
-                  </View>
-                  <View style={localStyles.personalCoachCopy}>
-                    <Text style={localStyles.personalCoachTitle}>
-                      {t("common.challengeGuideName")}
-                    </Text>
-                    <Text style={localStyles.personalCoachSubtitle}>
-                      {t("common.personalMessage")}
-                    </Text>
-                  </View>
-                </View>
-                {personalChallengeMessageLoading && !personalChallengeMessage ? (
-                  <VibesLoader size={42} style={{ marginTop: 6 }} />
-                ) : (
-                  <Text style={localStyles.personalCoachBody}>
-                    {personalChallengeMessage?.body}
-                  </Text>
-                )}
-              </View>
             ) : null}
 
             <View style={styles.eventDetailInfoSection}>
@@ -1951,7 +1906,7 @@ const EventDetail = () => {
               </TouchableOpacity>
             </View>
           <FlatList
-            data={connectableParticipants}
+            data={visibleParticipants}
             keyExtractor={(item) => item.id}
             style={{ maxHeight: 380 }}
             renderItem={({ item }) => (
@@ -1959,6 +1914,7 @@ const EventDetail = () => {
                 style={localStyles.memberRow}
                 activeOpacity={0.85}
                 onPress={() => {
+                  if (item.userId === userId) return;
                   setPendingParticipant({
                     userId: item.userId,
                     displayName: item.displayName,
@@ -1972,6 +1928,7 @@ const EventDetail = () => {
                   <Text style={localStyles.memberName}>
                     {item.displayName || "Participante"}
                     {item.userId === event.createdBy ? " 👑" : ""}
+                    {item.userId === userId ? " (vos)" : ""}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -2074,13 +2031,17 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: 0,
   },
+  eventDetailScrollablePanel: {
+    marginTop: -36,
+    zIndex: 3,
+  },
   eventScrollContent: {
     paddingTop: 0,
     paddingBottom: 124,
   },
   eventDetailInfoCardFloating: {
     marginHorizontal: 24,
-    marginTop: -36,
+    marginTop: 0,
     paddingTop: 26,
     backgroundColor: "rgba(255, 255, 255, 0.94)",
   },
@@ -2320,55 +2281,6 @@ const localStyles = StyleSheet.create({
     color: WHITE,
     fontSize: 10,
     fontWeight: "400",
-  },
-  personalCoachCard: {
-    marginTop: 14,
-    marginBottom: 8,
-    backgroundColor: "#FFF9EF",
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.22)",
-    shadowColor: PRIMARY_COLOR,
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  personalCoachHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  personalCoachBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: PRIMARY_COLOR,
-  },
-  personalCoachCopy: {
-    flex: 1,
-  },
-  personalCoachTitle: {
-    color: DARK_GRAY,
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.thin,
-  },
-  personalCoachSubtitle: {
-    marginTop: 1,
-    color: TEXT_SECONDARY,
-    fontSize: 12,
-    fontFamily: vibesTheme.fonts.subtitle,
-  },
-  personalCoachBody: {
-    marginTop: 12,
-    color: DARK_GRAY,
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
   },
   streakRow: {
     flexDirection: "row",

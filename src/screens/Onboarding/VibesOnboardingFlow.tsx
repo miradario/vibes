@@ -59,9 +59,6 @@ const MAX_AGE = 99;
 
 const getProgress = (stepIndex: number) =>
   (stepIndex + 1) / VIBES_ONBOARDING_STEPS.length;
-const getOpenAIModel = () =>
-  process.env.EXPO_PUBLIC_OPENAI_MODEL?.trim() || "gpt-4o-mini";
-const getOpenAIAPIKey = () => process.env.EXPO_PUBLIC_OPENAI_API_KEY?.trim();
 
 const buildAboutMe = (purposeIds: string[], energyIds: string[]) => {
   const purposeLabels = PURPOSE_OPTIONS
@@ -149,82 +146,6 @@ const buildCompletionSummary = ({
   return `${intro} ${parts.join(", ")}.`;
 };
 
-const generateCompletionSummaryWithAI = async ({
-  displayName,
-  purposeIds,
-  energyIds,
-  selectedPractices,
-  briefDescription,
-  ageRange,
-}: {
-  displayName: string;
-  purposeIds: string[];
-  energyIds: string[];
-  selectedPractices: string[];
-  briefDescription: string;
-  ageRange: string;
-}) => {
-  const apiKey = getOpenAIAPIKey();
-  if (!apiKey) {
-    throw new Error("Missing OpenAI API key");
-  }
-
-  const purposeLabels = getOptionLabels(purposeIds, PURPOSE_OPTIONS);
-  const energyLabels = getOptionLabels(energyIds, ENERGY_OPTIONS);
-  const practiceLabels = selectedPractices.filter((practice) => practice !== "Otras");
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: getOpenAIModel(),
-      temperature: 0.82,
-      messages: [
-        {
-          role: "system",
-          content:
-            "Escribí sólo el texto final para una app espiritual premium llamada Vibes. Sin comillas, sin markdown, sin emojis.",
-        },
-        {
-          role: "user",
-          content: [
-            "Creá un resumen breve, cálido y emocional de esta persona para cerrar su onboarding.",
-            "Debe sonar humano, minimalista, espiritual y premium.",
-            "Máximo 145 caracteres.",
-            "No digas que fue creado con IA.",
-            displayName.trim() ? `Nombre: ${displayName.trim()}.` : null,
-            ageRange ? `Edad: ${ageRange} años.` : null,
-            briefDescription.trim()
-              ? `Descripción propia: ${briefDescription.trim()}.`
-              : null,
-            purposeLabels.length ? `Viene a Vibes por: ${purposeLabels.join(", ")}.` : null,
-            energyLabels.length ? `Energía actual: ${energyLabels.join(", ")}.` : null,
-            practiceLabels.length ? `Prácticas: ${practiceLabels.join(", ")}.` : null,
-          ]
-            .filter(Boolean)
-            .join(" "),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`OpenAI summary failed: ${response.status}`);
-  }
-
-  const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string | null } }>;
-  };
-  const summary = data.choices?.[0]?.message?.content?.trim();
-  if (!summary) {
-    throw new Error("OpenAI summary was empty");
-  }
-
-  return summary.replace(/\s+/g, " ");
-};
-
 const VibesOnboardingFlow = () => {
   const navigation = useNavigation();
   const { locale, t } = useI18n();
@@ -253,7 +174,6 @@ const VibesOnboardingFlow = () => {
   const [activePractice, setActivePractice] = useState<string | null>(null);
   const [customPracticeModalVisible, setCustomPracticeModalVisible] = useState(false);
   const [customPracticeName, setCustomPracticeName] = useState("");
-  const [aiCompletionSummary, setAiCompletionSummary] = useState<string | null>(null);
 
   const age = birthDate ? String(calculateAge(birthDate)) : "";
   const birthDateLimits = useMemo(() => {
@@ -323,7 +243,7 @@ const VibesOnboardingFlow = () => {
     },
     [briefDescription, displayName, energyIds, locale, purposeIds, selectedPractices, t],
   );
-  const completionSummary = aiCompletionSummary ?? fallbackCompletionSummary;
+  const completionSummary = fallbackCompletionSummary;
 
   useEffect(() => {
     transition.setValue(0);
@@ -334,47 +254,6 @@ const VibesOnboardingFlow = () => {
       useNativeDriver: true,
     }).start();
   }, [stepIndex, transition]);
-
-  useEffect(() => {
-    if (step !== "completion") return undefined;
-
-    let cancelled = false;
-    setAiCompletionSummary(null);
-
-    if (locale === "en") {
-      setAiCompletionSummary(fallbackCompletionSummary);
-      return undefined;
-    }
-
-    generateCompletionSummaryWithAI({
-      displayName,
-      purposeIds,
-      energyIds,
-      selectedPractices,
-      briefDescription,
-      ageRange: age,
-    })
-      .then((summary) => {
-        if (!cancelled) setAiCompletionSummary(summary);
-      })
-      .catch(() => {
-        if (!cancelled) setAiCompletionSummary(fallbackCompletionSummary);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    age,
-    briefDescription,
-    displayName,
-    energyIds,
-    fallbackCompletionSummary,
-    locale,
-    purposeIds,
-    selectedPractices,
-    step,
-  ]);
 
   const animatedStyle = {
     opacity: transition,

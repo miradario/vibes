@@ -33,11 +33,6 @@ const challengeCoachKeys = {
 
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
 
-const getOpenAIModel = () =>
-  process.env.EXPO_PUBLIC_OPENAI_MODEL?.trim() || "gpt-4o-mini";
-
-const getOpenAIAPIKey = () => process.env.EXPO_PUBLIC_OPENAI_API_KEY?.trim();
-
 const getChallengeDay = (startsAt?: string | null) => {
   if (!startsAt) return null;
   const startDate = new Date(startsAt);
@@ -78,105 +73,6 @@ const buildFallbackMessage = (input: DailyChallengeCoachInput) => {
   return `Hoy ${input.title} puede empezar suave. Elegí un gesto pequeño, presente y amable con vos para volver al desafío.`;
 };
 
-const buildPrompt = (input: DailyChallengeCoachInput) => {
-  const streak = input.participant?.streak ?? 0;
-  const totalCheckins = input.participant?.totalCheckins ?? 0;
-  const challengeDay = getChallengeDay(input.startsAt);
-  const locale = input.locale ?? "es";
-
-  if (locale === "en") {
-    const checkedInToday = input.participant?.checkedInToday ? "yes" : "no";
-
-    return [
-      "You are a brief, warm guide for a wellbeing desafio inside an app called Vibes.",
-      "Write ONLY one short message in English, human, calm, spiritual and concrete.",
-      "Do not use lists, quotes, markdown or hashtags.",
-      "Maximum 220 characters.",
-      "It should feel encouraging, serene and intimate.",
-      `Desafío: ${input.title}.`,
-      input.subtitle ? `Context: ${input.subtitle}.` : null,
-      input.durationDays ? `Total duration: ${input.durationDays} days.` : null,
-      challengeDay ? `Current desafío day: ${challengeDay}.` : null,
-      `Current streak: ${streak}.`,
-      `Total check-ins: ${totalCheckins}.`,
-      `Checked in today: ${checkedInToday}.`,
-      "Invite the user to come back to themselves or sustain today's practice with a soft and beautiful tone.",
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  const checkedInToday = input.participant?.checkedInToday ? "sí" : "no";
-
-  return [
-    "Sos una guía breve y cálida para un desafío de bienestar dentro de una app llamada Vibes.",
-    "Escribí SOLO un mensaje corto en español rioplatense, humano, espiritual y concreto.",
-    "No uses listas, no uses comillas, no uses markdown, no uses hashtags.",
-    "Máximo 220 caracteres.",
-    "Tiene que sonar alentador, sereno y íntimo.",
-    `Desafío: ${input.title}.`,
-    input.subtitle ? `Contexto: ${input.subtitle}.` : null,
-    input.durationDays ? `Duración total: ${input.durationDays} días.` : null,
-    challengeDay ? `Día actual del desafío: ${challengeDay}.` : null,
-    `Racha actual del usuario: ${streak}.`,
-    `Check-ins totales: ${totalCheckins}.`,
-    `¿Ya hizo check-in hoy?: ${checkedInToday}.`,
-    "Invitalo a volver a sí mismo o sostener su práctica hoy, con un tono suave y lindo.",
-  ]
-    .filter(Boolean)
-    .join(" ");
-};
-
-const generateWithOpenAI = async (input: DailyChallengeCoachInput) => {
-  const apiKey = getOpenAIAPIKey();
-  const model = getOpenAIModel();
-
-  if (!apiKey) {
-    throw new Error("Falta EXPO_PUBLIC_OPENAI_API_KEY");
-  }
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.85,
-      messages: [
-        {
-          role: "system",
-          content:
-            "Respond only with the final user-facing message. No markdown, no quotes, no alternatives.",
-        },
-        {
-          role: "user",
-          content: buildPrompt(input),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenAI respondió ${response.status}: ${errorText}`);
-  }
-
-  const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string | null } }>;
-  };
-  const message = data.choices?.[0]?.message?.content?.trim() ?? "";
-  if (!message) {
-    throw new Error("OpenAI no devolvió contenido");
-  }
-
-  return {
-    body: message.replace(/\s+/g, " ").trim(),
-    model,
-  };
-};
-
 const mapRow = (row: any): ChallengeCoachMessage => ({
   id: String(row.id),
   challengeId: String(row.challenge_id),
@@ -204,16 +100,8 @@ async function fetchOrCreateDailyChallengeCoachMessage(
   if (existingError) throw existingError;
   if (existing) return mapRow(existing);
 
-  let generatedBody = buildFallbackMessage(input);
-  let model: string | null = null;
-
-  try {
-    const generated = await generateWithOpenAI(input);
-    generatedBody = generated.body;
-    model = generated.model;
-  } catch (error) {
-    console.warn("challenge_coach:openai_fallback", error);
-  }
+  const generatedBody = buildFallbackMessage(input);
+  const model: string | null = null;
 
   const { data: inserted, error: insertError } = await supabase
     .from("challenge_ai_messages")

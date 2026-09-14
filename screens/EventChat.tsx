@@ -54,16 +54,9 @@ import {
   useSendEventMessageMutation,
   useDeleteEventMessageMutation,
   useKickParticipantMutation,
-  useChallengeParticipantQuery,
   type EventType,
   type EventMessage,
 } from "../src/queries/events.queries";
-import {
-  useChallengeCoachMessagesQuery,
-  useDailyChallengeCoachMessageQuery,
-  type ChallengeCoachMessage,
-} from "../src/queries/challengeCoach.queries";
-import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const parseEventDate = (value?: string | null) => {
@@ -89,21 +82,9 @@ const formatEventChatTime = (value: Date | null) => {
   });
 };
 
-type TimelineMessage =
-  | ({ kind: "event" } & EventMessage)
-  | {
-      kind: "coach";
-      id: string;
-      body: string;
-      createdAt: string;
-      senderId: "challenge-coach";
-      senderName: string;
-      senderAvatar: null;
-      coachDate: string;
-    };
+type TimelineMessage = { kind: "event" } & EventMessage;
 
 const EventChat = () => {
-  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const route = useRoute();
   const isFocused = useIsFocused();
@@ -122,33 +103,6 @@ const EventChat = () => {
   const userId = session?.user?.id;
   const isAdmin = Boolean(userId && createdBy && userId === createdBy);
   const swipeMutation = useSwipeMutation();
-  const challengeParticipantQuery = useChallengeParticipantQuery(
-    eventType === "challenge" ? eventId : undefined,
-    userId
-  );
-  const { data: dailyCoachMessage, isLoading: coachMessageLoading } =
-    useDailyChallengeCoachMessageQuery(
-      eventType === "challenge" && eventId
-        ? {
-            challengeId: eventId,
-            title: event?.title ?? "Desafío",
-            subtitle: event?.subtitle ?? event?.description ?? null,
-            durationDays:
-              typeof event?.durationDays === "number"
-                ? event.durationDays
-                : null,
-            startsAt: event?.startsAt ?? null,
-            participant: challengeParticipantQuery.data ?? null,
-            locale,
-          }
-        : null,
-      userId
-    );
-  const { data: coachHistory = [], isLoading: coachHistoryLoading } =
-    useChallengeCoachMessagesQuery(
-      eventType === "challenge" ? eventId : undefined,
-      userId
-    );
 
   const { data: participants = [] } = useEventParticipantsQuery(eventId);
   const {
@@ -414,37 +368,11 @@ const EventChat = () => {
   }, [messages.length]);
 
   const timelineMessages = useMemo<TimelineMessage[]>(() => {
-    const coachMap = new Map<string, ChallengeCoachMessage>();
-    for (const item of coachHistory) {
-      coachMap.set(item.id, item);
-    }
-    if (dailyCoachMessage) {
-      coachMap.set(dailyCoachMessage.id, dailyCoachMessage);
-    }
-
-    const coachTimeline: TimelineMessage[] = Array.from(coachMap.values()).map(
-      (item) => ({
-        kind: "coach",
-        id: item.id,
-        body: item.body,
-        createdAt: item.createdAt,
-        senderId: "challenge-coach",
-        senderName: t("common.challengeGuideName"),
-        senderAvatar: null,
-        coachDate: item.messageDate,
-      })
-    );
-
-    const eventTimeline: TimelineMessage[] = messages.map((item) => ({
+    return messages.map((item) => ({
       ...item,
       kind: "event",
     }));
-
-    return [...eventTimeline, ...coachTimeline].sort(
-      (left, right) =>
-        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
-    );
-  }, [coachHistory, dailyCoachMessage, messages, t]);
+  }, [messages]);
 
   useEffect(() => {
     if (timelineMessages.length > 0) {
@@ -767,69 +695,49 @@ const EventChat = () => {
             </View>
           ) : (
             timelineMessages.map((msg) => {
-              const isCoach = msg.kind === "coach";
-              const isMe = !isCoach && msg.senderId === userId;
-              const sender = isCoach
-                ? { name: msg.senderName, avatar: null }
-                : getSenderInfo(msg.senderId);
+              const isMe = msg.senderId === userId;
+              const sender = getSenderInfo(msg.senderId);
               return (
                 <TouchableOpacity
                   key={msg.id}
                   activeOpacity={isMe ? 0.7 : 0.82}
                   onPress={() => {
-                    if (isMe || isCoach) return;
+                    if (isMe) return;
                     handleOpenParticipant({
                       userId: msg.senderId,
                       displayName: sender.name,
                       avatarUrl: sender.avatar,
                     });
                   }}
-                  onLongPress={() => {
-                    if (msg.kind === "event") handleLongPressMessage(msg);
-                  }}
+                  onLongPress={() => handleLongPressMessage(msg)}
                   style={[
                     localStyles.messageRow,
                     isMe && localStyles.messageRowMe,
                   ]}
                 >
                   {/* Avatar for other people's messages */}
-                  {!isMe &&
-                    (isCoach ? (
-                      <View style={localStyles.coachAvatar}>
-                        <Icon name="sparkles-outline" size={15} color={WHITE} />
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        activeOpacity={0.85}
-                        onPress={() => openParticipantCard(msg.senderId)}
-                      >
-                        <Avatar uri={sender.avatar} size={28} />
-                      </TouchableOpacity>
-                    ))}
+                  {!isMe ? (
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={() => openParticipantCard(msg.senderId)}
+                    >
+                      <Avatar uri={sender.avatar} size={28} />
+                    </TouchableOpacity>
+                  ) : null}
                   <View
                     style={[
                       localStyles.messageBubble,
                       isMe
                         ? localStyles.messageBubbleMe
-                        : isCoach
-                        ? localStyles.messageBubbleCoach
                         : localStyles.messageBubbleOther,
                     ]}
                   >
                     {!isMe && (
                       <TouchableOpacity
-                        activeOpacity={isCoach ? 1 : 0.85}
-                        onPress={() => {
-                          if (isCoach) return;
-                          openParticipantCard(msg.senderId);
-                        }}
+                        activeOpacity={0.85}
+                        onPress={() => openParticipantCard(msg.senderId)}
                       >
-                        <Text
-                          style={[
-                            localStyles.messageSender,
-                            isCoach && localStyles.messageSenderCoach,
-                          ]}
-                        >
+                        <Text style={localStyles.messageSender}>
                           {sender.name || "Participante"}
                         </Text>
                       </TouchableOpacity>
@@ -842,24 +750,22 @@ const EventChat = () => {
                     >
                       {msg.body}
                     </Text>
-                    {!isCoach ? (
-                      <View style={localStyles.messageMetaRow}>
-                        <Text style={localStyles.messageTime}>
-                          {formatTime(msg.createdAt)}
-                        </Text>
-                        {isMe ? (
-                          <Icon
-                            name={
-                              msg.deliveryStatus === "sending"
-                                ? "time-outline"
-                                : "checkmark"
-                            }
-                            size={12}
-                            color={TEXT_SECONDARY}
-                          />
-                        ) : null}
-                      </View>
-                    ) : null}
+                    <View style={localStyles.messageMetaRow}>
+                      <Text style={localStyles.messageTime}>
+                        {formatTime(msg.createdAt)}
+                      </Text>
+                      {isMe ? (
+                        <Icon
+                          name={
+                            msg.deliveryStatus === "sending"
+                              ? "time-outline"
+                              : "checkmark"
+                          }
+                          size={12}
+                          color={TEXT_SECONDARY}
+                        />
+                      ) : null}
+                    </View>
                   </View>
                 </TouchableOpacity>
               );
@@ -1164,21 +1070,6 @@ const localStyles = StyleSheet.create({
   messageRowMe: {
     justifyContent: "flex-end",
   },
-  messageAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginBottom: 2,
-  },
-  coachAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginBottom: 2,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F2C98E",
-  },
   messageBubble: {
     maxWidth: "72%",
     borderRadius: 18,
@@ -1207,21 +1098,11 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
-  messageBubbleCoach: {
-    alignSelf: "flex-start",
-    backgroundColor: "#FFF9F1",
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
-  },
   messageSender: {
     fontSize: 12,
     fontFamily: vibesTheme.fonts.bold,
     color: PRIMARY_COLOR,
     marginBottom: 2,
-  },
-  messageSenderCoach: {
-    color: "#2B2B2B",
   },
   messageText: {
     fontSize: 16,

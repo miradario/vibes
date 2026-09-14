@@ -5,16 +5,27 @@ npm-debug.*
 *.p8
 *.p12
 *.key
+credentials.json
+play-upload-certificate.pem
+*.jks
+*.keystore
 *.mobileprovision
 *.orig.*
 web-build/
+dist/
+builds/
 .expo/
 
 # Environment variable files
 .env
 .env.local
 
+# Local tooling and generated/store assets
+.vscode/
+assets/images/screens/
+deployment_cert.der
+play-store-assets/
+supabase/.temp/
+
 # macOS
 .DS_Store
-
-

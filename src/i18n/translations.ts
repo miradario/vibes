@@ -92,6 +92,9 @@ const baseTranslations = {
       noProfilesHint:
         "Tu perfil queda en el centro. Las demás personas aparecerán alrededor.",
       dismiss: "Descartar",
+      sharedExperiencesTitle: "Conectá a través de experiencias",
+      sharedExperiencesSubtitle:
+        "Conocé personas que comparten tus desafíos o eventos.",
     },
     welcome: {
       subtitle: "Un espacio para volver a vos",
@@ -113,7 +116,8 @@ const baseTranslations = {
       invalidCredentials:
         "El email o la contraseña no coinciden. Si creaste la cuenta con Google, ingresá con Google; si no, recuperá tu contraseña.",
       forgotPassword: "¿Olvidaste tu contraseña?",
-      resetPasswordMissingEmail: "Ingresá tu email para recuperar tu contraseña.",
+      resetPasswordMissingEmail:
+        "Ingresá tu email para recuperar tu contraseña.",
       resetPasswordSubmitting: "Enviando...",
       resetPasswordFailed: "No se pudo enviar el email de recuperación.",
       resetPasswordSentTitle: "Revisá tu email",
@@ -612,6 +616,9 @@ const baseTranslations = {
       noProfilesHint:
         "Your profile stays in the center. Other people will appear around it.",
       dismiss: "Dismiss",
+      sharedExperiencesTitle: "Connect through shared experiences",
+      sharedExperiencesSubtitle:
+        "Meet people who share your challenges or events.",
     },
     welcome: {
       subtitle: "A calm space to begin",
@@ -637,8 +644,7 @@ const baseTranslations = {
       resetPasswordSubmitting: "Sending...",
       resetPasswordFailed: "Could not send the recovery email.",
       resetPasswordSentTitle: "Check your email",
-      resetPasswordSentMessage:
-        "We sent you a link to recover your password.",
+      resetPasswordSentMessage: "We sent you a link to recover your password.",
       resetPasswordSentPrimary: "Got it",
       createAccountDialogTitle: "We could not find your account",
       createAccountDialogMessage:

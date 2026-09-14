@@ -256,7 +256,7 @@ export const MessagesContent = ({
           text: isArchived ? "Recuperar" : "Archivar",
           onPress: () => void toggleArchivedChat(item),
         },
-      ],
+      ]
     );
   };
 
@@ -435,7 +435,7 @@ export const MessagesContent = ({
             >
               <Avatar
                 uri={uri}
-                size={42}
+                size={32}
                 blurRadius={blurred ? 10 : 0}
                 style={localStyles.connectionPreviewImage}
               />
@@ -469,21 +469,26 @@ export const MessagesContent = ({
       activeOpacity={0.84}
       onPress={onPress}
     >
-      <View style={localStyles.connectionCardHeader}>
-        <View style={localStyles.connectionIconWrap}>
-          <Icon name={icon as any} color="#B98235" size={17} />
+      <View style={localStyles.connectionIconWrap}>
+        <Icon name={icon as any} color="#B98235" size={19} />
+      </View>
+      <View style={localStyles.connectionCardBody}>
+        <Text style={localStyles.connectionCardTitle} numberOfLines={1}>
+          {title}
+        </Text>
+        <View style={localStyles.connectionCardMeta}>
+          {renderConnectionPreview(items, blurred)}
+          <Text style={localStyles.connectionCardAction}>
+            {t("messages.viewAll")}
+          </Text>
         </View>
+      </View>
+      <View style={localStyles.connectionCardTrailing}>
         <View style={localStyles.connectionCountBadge}>
           <Text style={localStyles.connectionCountText}>{count}</Text>
         </View>
+        <Icon name="chevron-forward" color="#8A8178" size={18} />
       </View>
-      <Text style={localStyles.connectionCardTitle} numberOfLines={2}>
-        {title}
-      </Text>
-      {renderConnectionPreview(items, blurred)}
-      <Text style={localStyles.connectionCardAction}>
-        {t("messages.viewAll")}
-      </Text>
     </TouchableOpacity>
   );
 
@@ -702,7 +707,8 @@ export const MessagesContent = ({
               contentTopPadding ??
               (showHeader ? Math.max(insets.top + 18, 46) : 8),
             paddingBottom:
-              contentBottomPadding ?? getBottomTabContentPadding(insets.bottom, 118),
+              contentBottomPadding ??
+              getBottomTabContentPadding(insets.bottom, 118),
           },
         ]}
       >
@@ -937,14 +943,14 @@ const localStyles = StyleSheet.create({
     textAlign: "left",
   },
   connectionsGrid: {
-    flexDirection: "row",
+    flexDirection: "column",
     gap: 10,
     marginBottom: 18,
   },
   connectionSummaryCard: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 158,
+    minHeight: 88,
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.28)",
@@ -956,19 +962,29 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 1,
   },
-  connectionCardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
   connectionIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(228, 183, 110, 0.18)",
+  },
+  connectionCardBody: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 12,
+  },
+  connectionCardMeta: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  connectionCardTrailing: {
+    marginLeft: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
   },
   connectionCountBadge: {
     minWidth: 28,
@@ -985,29 +1001,28 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.bold,
   },
   connectionCardTitle: {
-    minHeight: 39,
     color: DARK_GRAY,
-    fontSize: 18,
-    lineHeight: 19,
+    fontSize: 17,
+    lineHeight: 21,
     fontFamily: vibesTheme.fonts.thin,
   },
   connectionPreviewRow: {
-    height: 46,
-    marginTop: 10,
+    height: 34,
+    marginTop: 4,
     flexDirection: "row",
     alignItems: "center",
   },
   connectionPreviewAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "rgba(255, 253, 248, 0.96)",
     backgroundColor: "rgba(228, 183, 110, 0.2)",
   },
   connectionPreviewAvatarStacked: {
-    marginLeft: -12,
+    marginLeft: -9,
   },
   connectionPreviewImage: {
     width: "100%",
@@ -1018,18 +1033,18 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(255, 248, 236, 0.34)",
   },
   connectionPreviewEmpty: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    marginTop: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginTop: 4,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(228, 183, 110, 0.14)",
   },
   connectionCardAction: {
-    marginTop: "auto",
+    marginLeft: 8,
     color: "#B98235",
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: vibesTheme.fonts.bold,
   },
   connectionsSheet: {

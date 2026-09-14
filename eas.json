@@ -22,6 +22,10 @@
         "simulator": false
       }
     },
-    "production": {}
+    "production": {
+      "android": {
+        "credentialsSource": "local"
+      }
+    }
   }
 }
