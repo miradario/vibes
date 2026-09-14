@@ -13,8 +13,8 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "icon": "./assets/icon-ios.png",
-      "supportsTablet": true,
-      "buildNumber": "19",
+      "supportsTablet": false,
+      "buildNumber": "20",
       "config": {
         "usesNonExemptEncryption": false
       },
