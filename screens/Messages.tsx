@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
+import CommunityGroups from "../components/CommunityGroups";
+import { useCommunityGroupsQuery } from "../src/queries/communityGroups.queries";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import ProfileMediaImage from "../components/ProfileMediaImage";
 import styles, { BG_MAIN, DARK_GRAY, TEXT_PRIMARY } from "../assets/styles";
@@ -150,6 +152,7 @@ export const MessagesContent = ({
   const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const communityGroups = useCommunityGroupsQuery();
   const { data: matches, isLoading } = useMatchesQuery();
   const { data: incomingLikes = [] } = useIncomingLikesQuery();
   const swipeMutation = useSwipeMutation();
@@ -679,7 +682,7 @@ export const MessagesContent = ({
     </TouchableOpacity>
   );
 
-  const loading = isLoading || groupsLoading;
+  const loading = isLoading || groupsLoading || communityGroups.isLoading;
   const hasConnectionRequests = incomingConnectionRequests.length > 0;
   const hasConnectedNoChat = topConnections.length > 0;
   const hasConnectionsSection = hasConnectionRequests || hasConnectedNoChat;
@@ -689,6 +692,7 @@ export const MessagesContent = ({
   const hasFinishedEvents = finishedEventGroups.length > 0;
   const hasArchivedChats = archivedChats.length > 0;
   const hasAnyContent =
+    Boolean(communityGroups.data?.length) ||
     hasConnectionsSection ||
     hasDirectMessages ||
     hasActiveGroups ||
@@ -719,6 +723,7 @@ export const MessagesContent = ({
             titleStyle={localStyles.appHeaderTitle}
           />
         ) : null}
+        <CommunityGroups matches={matches ?? []} groups={communityGroups} />
         {hasConnectionsSection ? (
           <>
             <View style={localStyles.connectionsHeader}>

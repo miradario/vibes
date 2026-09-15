@@ -1,3 +1,4 @@
+import CommunityGroupChat from "./screens/CommunityGroupChat";
 /** @format */
 
 import "react-native-url-polyfill/auto";
@@ -479,6 +480,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="ChallengeDetailScreen"
               component={ChallengeDetailScreen}
+              options={{ headerShown: false, animationEnabled: true }}
+            />
+            <Stack.Screen
+              name="CommunityGroupChat"
+              component={CommunityGroupChat}
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen
