@@ -61,6 +61,8 @@ const upsertPushToken = async (token: Notifications.DevicePushToken) => {
       token: tokenValue,
       platform: Platform.OS === "ios" ? "ios" : "android",
       provider: Platform.OS === "ios" ? "apns" : "fcm",
+      apnsEnvironment:
+        Platform.OS === "ios" ? (__DEV__ ? "sandbox" : "production") : null,
     },
   });
 

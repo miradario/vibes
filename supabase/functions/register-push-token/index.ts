@@ -6,6 +6,7 @@ type RegisterPushTokenBody = {
   token?: unknown;
   platform?: unknown;
   provider?: unknown;
+  apnsEnvironment?: unknown;
 };
 
 const jsonHeaders = { "Content-Type": "application/json" };
@@ -60,6 +61,13 @@ const normalizeProvider = (value: unknown): "apns" | "fcm" | null => {
   return null;
 };
 
+const normalizeApnsEnvironment = (
+  value: unknown
+): "sandbox" | "production" | null => {
+  if (value === "sandbox" || value === "production") return value;
+  return null;
+};
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return json({ error: "Method not allowed" }, 405);
@@ -85,6 +93,8 @@ Deno.serve(async (req) => {
     const token = normalizeToken(body.token);
     const platform = normalizePlatform(body.platform);
     const provider = normalizeProvider(body.provider);
+    const apnsEnvironment =
+      normalizeApnsEnvironment(body.apnsEnvironment) ?? "production";
 
     if (!token || !platform || !provider) {
       return json({ error: "Invalid payload" }, 400);
@@ -109,6 +119,7 @@ Deno.serve(async (req) => {
         token,
         platform,
         provider,
+        apns_environment: provider === "apns" ? apnsEnvironment : null,
         is_active: true,
         last_seen_at: nowIso,
       });
@@ -127,6 +138,7 @@ Deno.serve(async (req) => {
         user_id: user.id,
         platform,
         provider,
+        apns_environment: provider === "apns" ? apnsEnvironment : null,
         is_active: true,
         last_seen_at: nowIso,
       })

@@ -16,6 +16,7 @@ type PushTokenRow = {
   token: string;
   platform: string;
   provider: string;
+  apns_environment?: string | null;
 };
 
 type OutgoingNotification = {
@@ -38,7 +39,7 @@ type ApnsConfig = {
   keyId: string;
   teamId: string;
   bundleId: string;
-  baseUrl: string;
+  defaultEnvironment: "production" | "sandbox";
 };
 
 type SendFailure = {
@@ -133,12 +134,14 @@ const getApnsConfig = (): ApnsConfig => {
     keyId,
     teamId,
     bundleId,
-    baseUrl:
-      environment === "production"
-        ? "https://api.push.apple.com"
-        : "https://api.sandbox.push.apple.com",
+    defaultEnvironment: environment,
   };
 };
+
+const getApnsBaseUrl = (environment: string | null | undefined) =>
+  environment === "sandbox"
+    ? "https://api.sandbox.push.apple.com"
+    : "https://api.push.apple.com";
 
 const getAccessToken = async (account: FirebaseServiceAccount) => {
   const now = Math.floor(Date.now() / 1000);
@@ -259,7 +262,7 @@ const getPushTokens = async (supabase: SupabaseClient, userIds: string[]) => {
 
   const { data, error } = await supabase
     .from("push_tokens")
-    .select("id, user_id, token, platform, provider")
+    .select("id, user_id, token, platform, provider, apns_environment")
     .in("user_id", userIds)
     .eq("is_active", true);
 
@@ -273,6 +276,7 @@ const getPushTokens = async (supabase: SupabaseClient, userIds: string[]) => {
       token: row.token,
       platform: row.platform,
       provider: row.provider,
+      apns_environment: row.apns_environment,
     });
     tokensByUser.set(row.user_id, existing);
   }
@@ -363,46 +367,58 @@ const sendApnsMessage = async (
   data: Record<string, string>,
   badgeCount?: number
 ): Promise<SendResult> => {
-  const response = await fetch(
-    `${config.baseUrl}/3/device/${pushToken.token}`,
-    {
-      method: "POST",
-      headers: {
-        authorization: `bearer ${jwt}`,
-        "apns-topic": config.bundleId,
-        "apns-push-type": "alert",
-        "apns-priority": "10",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        aps: {
-          alert: {
-            title,
-            body,
-          },
-          sound: "default",
-          ...(typeof badgeCount === "number" ? { badge: badgeCount } : {}),
-        },
-        ...data,
-      }),
-    }
-  );
-
-  if (response.ok) {
-    return { ok: true };
-  }
-
-  const errorText = await response.text();
-  let reason: string | undefined;
-
   try {
-    const parsed = JSON.parse(errorText) as { reason?: string };
-    reason = parsed.reason;
-  } catch {
-    reason = undefined;
-  }
+    const environment =
+      pushToken.apns_environment ?? config.defaultEnvironment;
+    const response = await fetch(
+      `${getApnsBaseUrl(environment)}/3/device/${pushToken.token}`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `bearer ${jwt}`,
+          "apns-topic": config.bundleId,
+          "apns-push-type": "alert",
+          "apns-priority": "10",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          aps: {
+            alert: {
+              title,
+              body,
+            },
+            sound: "default",
+            ...(typeof badgeCount === "number" ? { badge: badgeCount } : {}),
+          },
+          ...data,
+        }),
+      }
+    );
 
-  return { ok: false, errorText, reason, status: response.status };
+    if (response.ok) {
+      return { ok: true };
+    }
+
+    const errorText = await response.text();
+    let reason: string | undefined;
+
+    try {
+      const parsed = JSON.parse(errorText) as { reason?: string };
+      reason = parsed.reason;
+    } catch {
+      reason = undefined;
+    }
+
+    return { ok: false, errorText, reason, status: response.status };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      errorText: message,
+      reason: "FetchFailed",
+      status: 0,
+    };
+  }
 };
 
 const shouldDeactivateToken = (result: SendFailure, provider: string) => {
@@ -902,6 +918,7 @@ serve(async (req: Request) => {
           status: result.status,
           errorText: result.errorText,
           reason: result.reason,
+          apnsEnvironment: token.apns_environment,
         });
 
         if (shouldDeactivateToken(result, token.provider)) {
