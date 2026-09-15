@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import {
+  useAppleLoginMutation,
   useGoogleLoginMutation,
   useLoginMutation,
   useResetPasswordMutation,
@@ -17,10 +18,13 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { ResizeMode } from "expo-av";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { CommonActions, useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import AppleAuthButton from "../components/AppleAuthButton";
 import VibesHeader from "../src/components/VibesHeader";
 import Icon from "../components/Icon";
 import LoopingVideo from "../components/LoopingVideo";
@@ -44,18 +48,39 @@ const isInvalidCredentialsError = (error: unknown) => {
 const Login = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const loginMutation = useLoginMutation();
   const googleLoginMutation = useGoogleLoginMutation();
+  const appleLoginMutation = useAppleLoginMutation();
   const resetPasswordMutation = useResetPasswordMutation();
   const loading = loginMutation.isPending;
   const googleLoading = googleLoginMutation.isPending;
+  const appleLoading = appleLoginMutation.isPending;
   const resetPasswordLoading = resetPasswordMutation.isPending;
   const passwordInputRef = useRef<TextInput | null>(null);
+
+  React.useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    let mounted = true;
+
+    void AppleAuthentication.isAvailableAsync()
+      .then((available) => {
+        if (mounted) setIsAppleAuthAvailable(available);
+      })
+      .catch(() => {
+        if (mounted) setIsAppleAuthAvailable(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -93,12 +118,32 @@ const Login = () => {
           CommonActions.reset({
             index: 0,
             routes: [{ name: routeName as never }],
-          }),
+          })
         );
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : t("login.googleFailed");
       setError(msg || t("login.googleFailed"));
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    setError(null);
+
+    try {
+      const session = await appleLoginMutation.mutateAsync();
+      if (session?.user?.id) {
+        const routeName = await getPostAuthRoute(session.user.id);
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: routeName as never }],
+          })
+        );
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t("login.appleFailed");
+      setError(msg || t("login.appleFailed"));
     }
   };
 
@@ -122,10 +167,20 @@ const Login = () => {
   };
 
   const isDisabled =
-    !email || !password || loading || googleLoading || resetPasswordLoading;
+    !email ||
+    !password ||
+    loading ||
+    googleLoading ||
+    appleLoading ||
+    resetPasswordLoading;
   return (
     <View style={styles.bg}>
-      <View style={localStyles.heroWrap}>
+      <View
+        style={[
+          localStyles.heroWrap,
+          { marginTop: Math.max(insets.top + 4, 36) },
+        ]}
+      >
         <LoopingVideo
           source={require("../assets/videos/challenges/login/login.mp4")}
           posterSource={require("../assets/images/challenges/login.png")}
@@ -143,7 +198,7 @@ const Login = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={localStyles.formScrollContent}
         >
-          <View style={styles.loginCard}>
+          <View style={[styles.loginCard, localStyles.loginCard]}>
             <VibesHeader
               title={t("login.header")}
               subtitle=""
@@ -157,10 +212,20 @@ const Login = () => {
                 googleLoading ? t("login.googleSubmitting") : t("login.google")
               }
               onPress={handleGoogleLogin}
-              disabled={loading}
+              disabled={loading || appleLoading}
               loading={googleLoading}
               style={localStyles.googleButton}
             />
+
+            {isAppleAuthAvailable ? (
+              <View style={localStyles.appleButton}>
+                <AppleAuthButton
+                  onPress={handleAppleLogin}
+                  disabled={loading || googleLoading}
+                  loading={appleLoading}
+                />
+              </View>
+            ) : null}
 
             <View style={localStyles.divider}>
               <View style={localStyles.dividerLine} />
@@ -230,7 +295,7 @@ const Login = () => {
               </View>
             ) : null}
 
-            <View style={localStyles.actions}>
+            <View style={[localStyles.actions]}>
               <VibesActionButton
                 label={loading ? t("login.submitting") : t("login.submit")}
                 variant="start"
@@ -241,6 +306,7 @@ const Login = () => {
               <VibesActionButton
                 label={t("common.back")}
                 variant="skip"
+                style={localStyles.backButton}
                 onPress={() => navigation.navigate("Welcome" as never)}
               />
             </View>
@@ -263,7 +329,11 @@ export default Login;
 
 const localStyles = StyleSheet.create({
   actions: {
-    marginTop: 28,
+    marginTop: "auto",
+    paddingTop: 22,
+  },
+  backButton: {
+    marginTop: 18,
   },
   divider: {
     marginTop: 18,
@@ -284,7 +354,10 @@ const localStyles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   googleButton: {
-    marginTop: 22,
+    marginTop: 18,
+  },
+  appleButton: {
+    marginTop: 12,
   },
   forgotPasswordButton: {
     marginTop: 10,
@@ -296,25 +369,28 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   header: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   heroWrap: {
     width: "100%",
-    height: 250,
-    marginTop: 28,
-    paddingHorizontal: 16,
+    height: 170,
+    paddingHorizontal: 42,
     alignItems: "center",
     justifyContent: "center",
   },
   loginContainer: {
-    marginTop: 12,
+    marginTop: -24,
+  },
+  loginCard: {
+    flexGrow: 1,
   },
   loginIllustration: {
     width: "100%",
     height: "100%",
   },
   formScrollContent: {
-    paddingBottom: 32,
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   passwordField: {
     position: "relative",

@@ -13,14 +13,22 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "icon": "./assets/icon-ios.png",
-      "supportsTablet": true,
-      "buildNumber": "17",
+      "supportsTablet": false,
+      "buildNumber": "20",
       "config": {
         "usesNonExemptEncryption": false
       },
+      "usesAppleSignIn": true,
       "bundleIdentifier": "com.gurudevelopers.vibes",
       "deploymentTarget": "15.4",
-      "appleTeamId": "KMM232BVHC"
+      "appleTeamId": "KMM232BVHC",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Vibes uses your camera so you can take profile photos and cover images for events or challenges, for example taking a new profile picture.",
+        "NSPhotoLibraryUsageDescription": "Vibes uses your photo library so you can choose profile photos and cover images for events or challenges, for example uploading a profile picture.",
+        "NSLocationWhenInUseUsageDescription": "Vibes uses your location while the app is open to suggest nearby people and events, for example filling in your city during onboarding.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
+        "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding."
+      }
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
@@ -59,10 +67,11 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Vibe to access your photos.",
-          "cameraPermission": "Allow Vibe to access your camera."
+          "photosPermission": "Vibes uses your photo library so you can choose profile photos and cover images for events or challenges, for example uploading a profile picture.",
+          "cameraPermission": "Vibes uses your camera so you can take profile photos and cover images for events or challenges, for example taking a new profile picture."
         }
       ],
+      "expo-apple-authentication",
       "expo-web-browser"
     ],
     "extra": {

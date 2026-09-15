@@ -49,7 +49,7 @@ const Welcome = () => {
             <VibesActionButton
               label={t("welcome.signup")}
               variant="skip"
-              onPress={() => navigation.navigate("Signup" as never)}
+              onPress={() => navigation.navigate("AgeAssurance" as never)}
             />
           </View>
         </View>

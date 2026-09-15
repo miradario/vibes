@@ -1,6 +1,8 @@
 import type { Session } from "@supabase/supabase-js";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import { Platform } from "react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { supabase } from "../lib/supabase";
 import { recoverInvalidRefreshToken } from "./session.recovery";
 
@@ -9,7 +11,10 @@ type SessionResponse = Awaited<ReturnType<typeof supabase.auth.getSession>>;
 const APP_SCHEME = "com.gurudevelopers.vibes";
 const AUTH_SESSION_TIMEOUT_MS = 5000;
 
-const resolveRedirectUrl = (configuredRedirect: string | undefined, path: string) => {
+const resolveRedirectUrl = (
+  configuredRedirect: string | undefined,
+  path: string
+) => {
   const trimmedRedirect = configuredRedirect?.trim();
   if (trimmedRedirect) {
     if (trimmedRedirect.startsWith(`${APP_SCHEME}://`)) {
@@ -27,12 +32,17 @@ const resolveRedirectUrl = (configuredRedirect: string | undefined, path: string
   });
 };
 
-const withTimeout = async <T>(promise: Promise<T>, label: string): Promise<T> => {
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  label: string
+): Promise<T> => {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => {
       setTimeout(() => {
-        reject(new Error(`${label} timed out after ${AUTH_SESSION_TIMEOUT_MS}ms`));
+        reject(
+          new Error(`${label} timed out after ${AUTH_SESSION_TIMEOUT_MS}ms`)
+        );
       }, AUTH_SESSION_TIMEOUT_MS);
     }),
   ]);
@@ -41,14 +51,14 @@ const withTimeout = async <T>(promise: Promise<T>, label: string): Promise<T> =>
 const OAUTH_REDIRECT_URL = (() => {
   return resolveRedirectUrl(
     process.env.EXPO_PUBLIC_OAUTH_REDIRECT_URL,
-    "auth-callback",
+    "auth-callback"
   );
 })();
 
 const PASSWORD_RESET_REDIRECT_URL = (() => {
   return resolveRedirectUrl(
     process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL,
-    "reset-password",
+    "reset-password"
   );
 })();
 
@@ -90,7 +100,9 @@ export const resetPasswordForEmail = async (email: string) => {
 export const exchangeCodeForSession = async (code: string) => {
   const auth = supabase.auth as any;
   if (typeof auth.exchangeCodeForSession !== "function") {
-    throw new Error("Password reset link is not supported by this auth client.");
+    throw new Error(
+      "Password reset link is not supported by this auth client."
+    );
   }
 
   return auth.exchangeCodeForSession(code);
@@ -123,7 +135,10 @@ export const signInWithGoogle = async (): Promise<Session | null> => {
     throw new Error("Google auth URL was not returned.");
   }
 
-  const result = await WebBrowser.openAuthSessionAsync(data.url, OAUTH_REDIRECT_URL);
+  const result = await WebBrowser.openAuthSessionAsync(
+    data.url,
+    OAUTH_REDIRECT_URL
+  );
   if (result.type !== "success") {
     return null;
   }
@@ -149,6 +164,35 @@ export const signInWithGoogle = async (): Promise<Session | null> => {
   return sessionResponse.data?.session ?? null;
 };
 
+export const signInWithApple = async (): Promise<Session | null> => {
+  if (Platform.OS !== "ios") {
+    throw new Error("Sign in with Apple is only available on iOS.");
+  }
+
+  const credential = await AppleAuthentication.signInAsync({
+    requestedScopes: [
+      AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+      AppleAuthentication.AppleAuthenticationScope.EMAIL,
+    ],
+  });
+
+  if (!credential.identityToken) {
+    throw new Error("Apple identity token was not returned.");
+  }
+
+  const auth = supabase.auth as any;
+  const { data, error } = await auth.signInWithIdToken({
+    provider: "apple",
+    token: credential.identityToken,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.session ?? null;
+};
+
 export const signOut = async () => supabase.auth.signOut();
 
 export const getSession = async (): Promise<Session | null> => {
@@ -160,7 +204,7 @@ export const getSession = async (): Promise<Session | null> => {
     try {
       const response = (await withTimeout(
         auth.getSession(),
-        "auth.getSession",
+        "auth.getSession"
       )) as SessionResponse;
       data = response.data;
       error = response.error;

@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import {
+  useAppleLoginMutation,
   useGoogleLoginMutation,
   useSignupMutation,
 } from "../src/auth/auth.queries";
@@ -21,18 +22,34 @@ import {
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles from "../assets/styles";
 import VibesHeader from "../src/components/VibesHeader";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import AppleAuthButton from "../components/AppleAuthButton";
 import Icon from "../components/Icon";
 import LoopingVideo from "../components/LoopingVideo";
 import { useI18n } from "../src/i18n";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import {
+  calculateAge,
+  formatBirthDate,
+  parseBirthDate,
+} from "../src/lib/birthDate";
 
 const Signup = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
+  const { draft, updateDraft } = useOnboardingDraft();
+  const confirmedBirthDateParam =
+    typeof (route.params as { birthDate?: unknown } | undefined)?.birthDate ===
+    "string"
+      ? (route.params as { birthDate?: string }).birthDate ?? ""
+      : "";
   const initialEmail =
     typeof (route.params as { email?: unknown } | undefined)?.email === "string"
       ? (route.params as { email?: string }).email ?? ""
@@ -40,14 +57,60 @@ const Signup = () => {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const signupMutation = useSignupMutation();
   const googleLoginMutation = useGoogleLoginMutation();
+  const appleLoginMutation = useAppleLoginMutation();
   const loading = signupMutation.isPending;
   const googleLoading = googleLoginMutation.isPending;
+  const appleLoading = appleLoginMutation.isPending;
   const passwordInputRef = useRef<TextInput | null>(null);
+  const confirmedBirthDate =
+    parseBirthDate(confirmedBirthDateParam) ?? parseBirthDate(draft.birthDate);
+  const hasConfirmedAdultAge = confirmedBirthDate
+    ? calculateAge(confirmedBirthDate) >= 18
+    : false;
+
+  React.useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    let mounted = true;
+
+    void AppleAuthentication.isAvailableAsync()
+      .then((available) => {
+        if (mounted) setIsAppleAuthAvailable(available);
+      })
+      .catch(() => {
+        if (mounted) setIsAppleAuthAvailable(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!hasConfirmedAdultAge) {
+      navigation.navigate("AgeAssurance" as never);
+    }
+  }, [hasConfirmedAdultAge, navigation]);
+
+  React.useEffect(() => {
+    if (
+      confirmedBirthDateParam &&
+      confirmedBirthDateParam !== draft.birthDate
+    ) {
+      updateDraft({ birthDate: confirmedBirthDateParam });
+    }
+  }, [confirmedBirthDateParam, draft.birthDate, updateDraft]);
 
   const handleSignup = async () => {
+    if (!acceptedTerms) {
+      setError(t("authTerms.required"));
+      return;
+    }
+
     if (!email || !password) {
       setError(t("signup.missingFields"));
       return;
@@ -65,7 +128,9 @@ const Signup = () => {
         email: email.trim().toLowerCase(),
         password,
       });
-      const signupUserId = authResult.session?.user?.id ?? authResult.user?.id;
+      if (confirmedBirthDate) {
+        updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
+      }
       if (!authResult.session?.user?.id) {
         setError(
           "La cuenta se creó, pero falta iniciar sesión. Revisá tu email o intentá ingresar."
@@ -92,11 +157,19 @@ const Signup = () => {
   };
 
   const handleGoogleSignup = async () => {
+    if (!acceptedTerms) {
+      setError(t("authTerms.required"));
+      return;
+    }
+
     setError(null);
 
     try {
       const session = await googleLoginMutation.mutateAsync();
       if (session?.user?.id) {
+        if (confirmedBirthDate) {
+          updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
+        }
         navigation.dispatch(
           CommonActions.reset({
             index: 0,
@@ -110,9 +183,41 @@ const Signup = () => {
     }
   };
 
+  const handleAppleSignup = async () => {
+    if (!acceptedTerms) {
+      setError(t("authTerms.required"));
+      return;
+    }
+
+    setError(null);
+
+    try {
+      const session = await appleLoginMutation.mutateAsync();
+      if (session?.user?.id) {
+        if (confirmedBirthDate) {
+          updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
+        }
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "VibesOnboardingFlow" as never }],
+          })
+        );
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t("signup.appleFailed");
+      setError(msg || t("signup.appleFailed"));
+    }
+  };
+
   return (
     <View style={styles.bg}>
-      <View style={localStyles.heroWrap}>
+      <View
+        style={[
+          localStyles.heroWrap,
+          { marginTop: Math.max(insets.top + 4, 36) },
+        ]}
+      >
         <LoopingVideo
           source={require("../assets/videos/signup.mp4")}
           posterSource={require("../assets/images/challenges/signup.png")}
@@ -130,10 +235,13 @@ const Signup = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={localStyles.formScrollContent}
         >
-          <View style={styles.loginCard}>
-            <VibesHeader title={t("signup.header")} subtitle="" style={localStyles.header} />
-            <Text style={styles.loginTitle}>{t("signup.title")}</Text>
-            <Text style={styles.loginSubtitle}>{t("signup.subtitle")}</Text>
+          <View style={[styles.loginCard, localStyles.loginCard]}>
+            <VibesHeader
+              title={t("signup.header")}
+              subtitle=""
+              style={localStyles.header}
+            />
+            <Text style={styles.loginTitle}>{t("signup.subtitle")}</Text>
 
             <GoogleAuthButton
               label={
@@ -142,10 +250,51 @@ const Signup = () => {
                   : t("signup.google")
               }
               onPress={handleGoogleSignup}
-              disabled={loading}
+              disabled={loading || appleLoading || !acceptedTerms}
               loading={googleLoading}
               style={localStyles.googleButton}
             />
+
+            {isAppleAuthAvailable ? (
+              <View style={localStyles.appleButton}>
+                <AppleAuthButton
+                  type={
+                    AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
+                  }
+                  onPress={handleAppleSignup}
+                  disabled={loading || googleLoading || !acceptedTerms}
+                  loading={appleLoading}
+                />
+              </View>
+            ) : null}
+
+            <TouchableOpacity
+              activeOpacity={0.78}
+              style={localStyles.termsRow}
+              onPress={() => setAcceptedTerms((value) => !value)}
+            >
+              <View
+                style={[
+                  localStyles.checkbox,
+                  acceptedTerms && localStyles.checkboxChecked,
+                ]}
+              >
+                {acceptedTerms ? (
+                  <Icon name="checkmark" size={14} color="#fff" />
+                ) : null}
+              </View>
+              <Text style={localStyles.termsText}>
+                {t("authTerms.prefix")}{" "}
+                <Text
+                  style={localStyles.termsLink}
+                  onPress={() =>
+                    navigation.navigate("TermsConditions" as never)
+                  }
+                >
+                  {t("authTerms.link")}
+                </Text>
+              </Text>
+            </TouchableOpacity>
 
             <View style={localStyles.divider}>
               <View style={localStyles.dividerLine} />
@@ -199,17 +348,30 @@ const Signup = () => {
 
             {error ? <Text style={styles.loginError}>{error}</Text> : null}
 
-            <View style={localStyles.actions}>
+            <View
+              style={[
+                localStyles.actions,
+                { paddingBottom: Math.max(insets.bottom + 2, 14) },
+              ]}
+            >
               <VibesActionButton
                 label={loading ? t("signup.submitting") : t("signup.submit")}
                 variant="start"
                 onPress={handleSignup}
-                disabled={!email || !password || loading || googleLoading}
+                disabled={
+                  !acceptedTerms ||
+                  !email ||
+                  !password ||
+                  loading ||
+                  googleLoading ||
+                  appleLoading
+                }
               />
 
               <VibesActionButton
                 label={t("common.back")}
                 variant="skip"
+                style={localStyles.backButton}
                 onPress={() => navigation.navigate("Welcome" as never)}
               />
             </View>
@@ -224,7 +386,11 @@ export default Signup;
 
 const localStyles = StyleSheet.create({
   actions: {
-    marginTop: 28,
+    marginTop: "auto",
+    paddingTop: 22,
+  },
+  backButton: {
+    marginTop: 18,
   },
   divider: {
     marginTop: 18,
@@ -245,27 +411,63 @@ const localStyles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   googleButton: {
-    marginTop: 22,
+    marginTop: 14,
+  },
+  appleButton: {
+    marginTop: 12,
+  },
+  termsRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginTop: 12,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(140, 123, 99, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  checkboxChecked: {
+    backgroundColor: "#8C7B63",
+    borderColor: "#8C7B63",
+  },
+  termsText: {
+    flex: 1,
+    color: "#6E6E6E",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  termsLink: {
+    color: "#8C7B63",
+    textDecorationLine: "underline",
   },
   header: {
-    marginBottom: 14,
+    marginBottom: 8,
   },
   heroWrap: {
     width: "100%",
-    height: 250,
-    marginTop: 28,
-    paddingHorizontal: 16,
+    height: 170,
+    paddingHorizontal: 42,
     alignItems: "center",
     justifyContent: "center",
   },
   loginContainer: {
-    marginTop: 12,
+    marginTop: -18,
+  },
+  loginCard: {
+    flexGrow: 1,
   },
   signupIllustration: {
     width: "100%",
     height: "100%",
   },
   formScrollContent: {
+    flexGrow: 1,
     paddingBottom: 32,
   },
   passwordField: {

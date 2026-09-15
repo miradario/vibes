@@ -13,6 +13,14 @@ type ProfileRow = Record<string, any>;
 type PhotoRow = Record<string, any>;
 type UserPreferenceRow = Record<string, any>;
 
+const isMissingRelationError = (error: unknown) => {
+  if (!error || typeof error !== "object") return false;
+  const record = error as Record<string, unknown>;
+  const code = typeof record.code === "string" ? record.code : "";
+  const message = typeof record.message === "string" ? record.message : "";
+  return code === "42P01" || message.toLowerCase().includes("user_blocks");
+};
+
 export const candidatesKeys = {
   all: ["candidates"] as const,
   list: (userId?: string, params?: GetCandidatesParams) =>
@@ -23,8 +31,8 @@ const toCoordinate = (value: unknown) =>
   typeof value === "number"
     ? value
     : typeof value === "string" && value.trim()
-      ? Number(value)
-      : null;
+    ? Number(value)
+    : null;
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
@@ -32,7 +40,7 @@ const calculateDistanceKm = (
   originLat: number,
   originLng: number,
   targetLat: number,
-  targetLng: number,
+  targetLng: number
 ) => {
   const earthRadiusKm = 6371;
   const deltaLat = toRadians(targetLat - originLat);
@@ -48,33 +56,56 @@ const calculateDistanceKm = (
 
 const fetchCandidates = async (
   currentUserId?: string,
-  params?: GetCandidatesParams,
+  params?: GetCandidatesParams
 ): Promise<GetCandidatesResponse> => {
   const limit = params?.limit ?? 200;
-  let currentUserCoordinates:
-    | { latitude: number; longitude: number }
-    | null = null;
+  let currentUserCoordinates: { latitude: number; longitude: number } | null =
+    null;
 
   // Fetch IDs the current user has already swiped on
   let swipedIds: string[] = [];
+  let blockedUserIds: string[] = [];
   if (currentUserId) {
-    const [{ data: swipeRows }, { data: currentUserProfile }] = await Promise.all([
-      supabase
-        .from("swipes")
-        .select("target_id")
-        .eq("swiper_id", currentUserId),
-      supabase
-        .from("profiles")
-        .select("latitude, longitude")
-        .eq("id", currentUserId)
-        .is("deleted_at", null)
-        .maybeSingle(),
-    ]);
+    const [swipesResponse, profileResponse, blocksResponse] = await Promise.all(
+      [
+        supabase
+          .from("swipes")
+          .select("target_id")
+          .eq("swiper_id", currentUserId),
+        supabase
+          .from("profiles")
+          .select("latitude, longitude")
+          .eq("id", currentUserId)
+          .is("deleted_at", null)
+          .maybeSingle(),
+        supabase
+          .from("user_blocks")
+          .select("blocker_id, blocked_user_id")
+          .or(
+            `blocker_id.eq.${currentUserId},blocked_user_id.eq.${currentUserId}`
+          ),
+      ]
+    );
+
+    const { data: swipeRows } = swipesResponse;
+    const { data: currentUserProfile } = profileResponse;
+    if (blocksResponse.error && !isMissingRelationError(blocksResponse.error)) {
+      throw blocksResponse.error;
+    }
 
     swipedIds = (swipeRows ?? []).map((r: any) => String(r.target_id));
+    blockedUserIds = blocksResponse.error
+      ? []
+      : ((blocksResponse.data ?? []) as Record<string, any>[]).map((row) =>
+          String(row.blocker_id) === currentUserId
+            ? String(row.blocked_user_id)
+            : String(row.blocker_id)
+        );
 
     const currentLatitude = toCoordinate((currentUserProfile as any)?.latitude);
-    const currentLongitude = toCoordinate((currentUserProfile as any)?.longitude);
+    const currentLongitude = toCoordinate(
+      (currentUserProfile as any)?.longitude
+    );
 
     if (
       currentLatitude !== null &&
@@ -106,6 +137,10 @@ const fetchCandidates = async (
     query = query.not("id", "in", `(${swipedIds.join(",")})`);
   }
 
+  if (blockedUserIds.length > 0) {
+    query = query.not("id", "in", `(${blockedUserIds.join(",")})`);
+  }
+
   const { data: profileRows, error: profilesError } = await query;
 
   if (profilesError) {
@@ -128,10 +163,7 @@ const fetchCandidates = async (
         .in("profile_id", profileIds)
         .order("is_primary", { ascending: false })
         .order("order", { ascending: true }),
-      supabase
-        .from("user_preferences")
-        .select("*")
-        .in("user_id", profileIds),
+      supabase.from("user_preferences").select("*").in("user_id", profileIds),
     ]);
 
     const { data: photoRows, error: photosError } = photosResponse;
@@ -150,107 +182,154 @@ const fetchCandidates = async (
       return acc;
     }, new Map<string, PhotoRow[]>());
 
-    const { data: preferenceRows, error: preferencesError } = preferencesResponse;
+    const { data: preferenceRows, error: preferencesError } =
+      preferencesResponse;
     if (preferencesError) {
       const message =
         typeof preferencesError.message === "string"
           ? preferencesError.message.toLowerCase()
           : "";
-      if (!message.includes("could not find the table 'public.user_preferences'")) {
+      if (
+        !message.includes("could not find the table 'public.user_preferences'")
+      ) {
         throw preferencesError;
       }
     } else {
       const mappedPreferences =
         (mapSupabaseSelect(preferenceRows ?? []) as UserPreferenceRow[]) ?? [];
-      preferencesByUserId = mappedPreferences.reduce<Map<string, UserPreferenceRow>>(
-        (acc, preferenceRow) => {
-          const userId = String(preferenceRow.userId ?? preferenceRow.user_id ?? "");
-          if (!userId) return acc;
-          acc.set(userId, preferenceRow);
-          return acc;
-        },
-        new Map<string, UserPreferenceRow>(),
-      );
+      preferencesByUserId = mappedPreferences.reduce<
+        Map<string, UserPreferenceRow>
+      >((acc, preferenceRow) => {
+        const userId = String(
+          preferenceRow.userId ?? preferenceRow.user_id ?? ""
+        );
+        if (!userId) return acc;
+        acc.set(userId, preferenceRow);
+        return acc;
+      }, new Map<string, UserPreferenceRow>());
     }
   }
 
-  const candidates = await Promise.all(profiles.map(async (profile) => {
-    const id = String(profile.id);
-    const tablePhotos = photosByProfileId.get(id) ?? [];
+  const candidates = await Promise.all(
+    profiles.map(async (profile) => {
+      const id = String(profile.id);
+      const tablePhotos = photosByProfileId.get(id) ?? [];
 
-    // Sign URLs from profile_photos table
-    const signedTablePhotos = (await Promise.all(
-      tablePhotos.map(async (photo, index) => {
-        const rawUrl = typeof photo.url === "string" ? photo.url : "";
-        const signedUrl = rawUrl ? await createSignedProfilePhotoUrl(rawUrl) : null;
-        if (!signedUrl) return null;
-        return {
-          id: String(photo.id ?? `${id}-photo-${index}`),
-          url: signedUrl,
-          order:
-            typeof photo.order === "number" ? photo.order : Number(photo.order ?? index),
-          isPrimary: Boolean(photo.isPrimary),
-        };
-      }),
-    )).filter(Boolean) as { id: string; url: string; order: number; isPrimary: boolean }[];
+      // Sign URLs from profile_photos table
+      const signedTablePhotos = (
+        await Promise.all(
+          tablePhotos.map(async (photo, index) => {
+            const rawUrl = typeof photo.url === "string" ? photo.url : "";
+            const signedUrl = rawUrl
+              ? await createSignedProfilePhotoUrl(rawUrl)
+              : null;
+            if (!signedUrl) return null;
+            return {
+              id: String(photo.id ?? `${id}-photo-${index}`),
+              url: signedUrl,
+              order:
+                typeof photo.order === "number"
+                  ? photo.order
+                  : Number(photo.order ?? index),
+              isPrimary: Boolean(photo.isPrimary),
+            };
+          })
+        )
+      ).filter(Boolean) as {
+        id: string;
+        url: string;
+        order: number;
+        isPrimary: boolean;
+      }[];
 
-    // Fallback: use photos array from profiles table if no profile_photos rows
-    let mergedPhotos = signedTablePhotos;
-    if (mergedPhotos.length === 0 && Array.isArray(profile.photos)) {
-      const fromProfile = profile.photos
-        .map((item: any, idx: number) => {
-          const url =
-            typeof item === "string" ? item.trim() :
-            (item && typeof item === "object" && typeof item.url === "string") ? item.url.trim() : "";
-          if (!url) return null;
-          return { id: `${id}-p-${idx}`, url, order: idx, isPrimary: idx === 0 };
-        })
-        .filter(Boolean) as { id: string; url: string; order: number; isPrimary: boolean }[];
+      // Fallback: use photos array from profiles table if no profile_photos rows
+      let mergedPhotos = signedTablePhotos;
+      if (mergedPhotos.length === 0 && Array.isArray(profile.photos)) {
+        const fromProfile = profile.photos
+          .map((item: any, idx: number) => {
+            const url =
+              typeof item === "string"
+                ? item.trim()
+                : item &&
+                  typeof item === "object" &&
+                  typeof item.url === "string"
+                ? item.url.trim()
+                : "";
+            if (!url) return null;
+            return {
+              id: `${id}-p-${idx}`,
+              url,
+              order: idx,
+              isPrimary: idx === 0,
+            };
+          })
+          .filter(Boolean) as {
+          id: string;
+          url: string;
+          order: number;
+          isPrimary: boolean;
+        }[];
 
-      mergedPhotos = (await Promise.all(
-        fromProfile.map(async (p) => {
-          const signed = await createSignedProfilePhotoUrl(p.url);
-          if (!signed) return null;
-          return { ...p, url: signed };
-        }),
-      )).filter(Boolean) as { id: string; url: string; order: number; isPrimary: boolean }[];
-    }
+        mergedPhotos = (
+          await Promise.all(
+            fromProfile.map(async (p) => {
+              const signed = await createSignedProfilePhotoUrl(p.url);
+              if (!signed) return null;
+              return { ...p, url: signed };
+            })
+          )
+        ).filter(Boolean) as {
+          id: string;
+          url: string;
+          order: number;
+          isPrimary: boolean;
+        }[];
+      }
 
-    return {
-      ...profile,
-      ...preferencesByUserId.get(id),
-      distanceKm:
-        currentUserCoordinates &&
-        Number.isFinite(toCoordinate(profile.latitude) ?? NaN) &&
-        Number.isFinite(toCoordinate(profile.longitude) ?? NaN)
-          ? calculateDistanceKm(
-              currentUserCoordinates.latitude,
-              currentUserCoordinates.longitude,
-              Number(toCoordinate(profile.latitude)),
-              Number(toCoordinate(profile.longitude)),
-            )
-          : undefined,
-      displayName:
-        typeof profile.displayName === "string" ? profile.displayName : undefined,
-      isActive: Boolean(profile.isActive),
-      photos: mergedPhotos,
-    } as unknown as Candidate;
-  }));
+      return {
+        ...profile,
+        ...preferencesByUserId.get(id),
+        distanceKm:
+          currentUserCoordinates &&
+          Number.isFinite(toCoordinate(profile.latitude) ?? NaN) &&
+          Number.isFinite(toCoordinate(profile.longitude) ?? NaN)
+            ? calculateDistanceKm(
+                currentUserCoordinates.latitude,
+                currentUserCoordinates.longitude,
+                Number(toCoordinate(profile.latitude)),
+                Number(toCoordinate(profile.longitude))
+              )
+            : undefined,
+        displayName:
+          typeof profile.displayName === "string"
+            ? profile.displayName
+            : undefined,
+        isActive: Boolean(profile.isActive),
+        photos: mergedPhotos,
+      } as unknown as Candidate;
+    })
+  );
 
   return candidates.sort((left, right) => {
-    const leftDistance = typeof (left as any).distanceKm === "number"
-      ? (left as any).distanceKm
-      : Number.POSITIVE_INFINITY;
-    const rightDistance = typeof (right as any).distanceKm === "number"
-      ? (right as any).distanceKm
-      : Number.POSITIVE_INFINITY;
+    const leftDistance =
+      typeof (left as any).distanceKm === "number"
+        ? (left as any).distanceKm
+        : Number.POSITIVE_INFINITY;
+    const rightDistance =
+      typeof (right as any).distanceKm === "number"
+        ? (right as any).distanceKm
+        : Number.POSITIVE_INFINITY;
 
     if (leftDistance !== rightDistance) {
       return leftDistance - rightDistance;
     }
 
-    const leftCreatedAt = new Date((left as any).createdAt ?? (left as any).created_at ?? 0).getTime();
-    const rightCreatedAt = new Date((right as any).createdAt ?? (right as any).created_at ?? 0).getTime();
+    const leftCreatedAt = new Date(
+      (left as any).createdAt ?? (left as any).created_at ?? 0
+    ).getTime();
+    const rightCreatedAt = new Date(
+      (right as any).createdAt ?? (right as any).created_at ?? 0
+    ).getTime();
     return rightCreatedAt - leftCreatedAt;
   });
 };

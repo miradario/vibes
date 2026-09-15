@@ -54,6 +54,7 @@ import {
   useSendEventMessageMutation,
   useDeleteEventMessageMutation,
   useKickParticipantMutation,
+  useReportEventContentMutation,
   type EventType,
   type EventMessage,
 } from "../src/queries/events.queries";
@@ -83,6 +84,8 @@ const formatEventChatTime = (value: Date | null) => {
 };
 
 type TimelineMessage = { kind: "event" } & EventMessage;
+
+const REPORT_REASON = "Contenido inapropiado";
 
 const EventChat = () => {
   const navigation = useNavigation();
@@ -114,11 +117,15 @@ const EventChat = () => {
   const sendMutation = useSendEventMessageMutation();
   const deleteMutation = useDeleteEventMessageMutation();
   const kickMutation = useKickParticipantMutation();
+  const reportMutation = useReportEventContentMutation();
 
   const [message, setMessage] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [membersModalVisible, setMembersModalVisible] = useState(false);
   const [messagesLoadingTimedOut, setMessagesLoadingTimedOut] = useState(false);
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(
+    () => new Set()
+  );
   const [selectedParticipant, setSelectedParticipant] = useState<{
     userId: string;
     displayName: string | null;
@@ -299,11 +306,13 @@ const EventChat = () => {
   }, [messages.length]);
 
   const timelineMessages = useMemo<TimelineMessage[]>(() => {
-    return messages.map((item) => ({
-      ...item,
-      kind: "event",
-    }));
-  }, [messages]);
+    return messages
+      .filter((item) => !blockedUserIds.has(item.senderId))
+      .map((item) => ({
+        ...item,
+        kind: "event",
+      }));
+  }, [blockedUserIds, messages]);
 
   useEffect(() => {
     if (timelineMessages.length > 0) {
@@ -417,7 +426,49 @@ const EventChat = () => {
       if (!eventId) return;
       if (msg.deliveryStatus === "sending") return;
       const canDelete = msg.senderId === userId || isAdmin;
-      if (!canDelete) return;
+      if (!canDelete) {
+        Alert.alert(
+          "Reportar y bloquear",
+          "Ocultaremos el contenido de esta persona y enviaremos el reporte al equipo de moderación.",
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Reportar y bloquear",
+              style: "destructive",
+              onPress: () => {
+                reportMutation.mutate(
+                  {
+                    reportedUserId: msg.senderId,
+                    reason: REPORT_REASON,
+                    details: msg.body,
+                    contentType: "event_message",
+                    contentId: msg.id,
+                    eventId,
+                    eventType,
+                  },
+                  {
+                    onSuccess: () => {
+                      setBlockedUserIds((prev) =>
+                        new Set(prev).add(msg.senderId)
+                      );
+                      Alert.alert(
+                        "Reporte enviado",
+                        "Ocultamos el contenido de esta persona."
+                      );
+                    },
+                    onError: (error) =>
+                      Alert.alert(
+                        "Error",
+                        error.message || "No se pudo enviar el reporte."
+                      ),
+                  }
+                );
+              },
+            },
+          ]
+        );
+        return;
+      }
 
       const isOwn = msg.senderId === userId;
       const label = isOwn ? "Borrar mi mensaje" : "Borrar mensaje (admin)";
@@ -433,8 +484,61 @@ const EventChat = () => {
         },
       ]);
     },
-    [eventId, userId, isAdmin, deleteMutation]
+    [eventId, eventType, userId, isAdmin, deleteMutation, reportMutation]
   );
+
+  const handleReportParticipant = useCallback(() => {
+    if (!selectedParticipant || !eventId) return;
+    const reportedUserId = selectedParticipant.userId;
+
+    Alert.alert(
+      "Reportar y bloquear",
+      "Ocultaremos a esta persona y enviaremos el reporte al equipo de moderación.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Reportar y bloquear",
+          style: "destructive",
+          onPress: () => {
+            reportMutation.mutate(
+              {
+                reportedUserId,
+                reason: REPORT_REASON,
+                details: selectedParticipant.displayName ?? undefined,
+                contentType: eventType === "challenge" ? "challenge" : "event",
+                contentId: eventId,
+                eventId,
+                eventType,
+              },
+              {
+                onSuccess: () => {
+                  setBlockedUserIds((prev) =>
+                    new Set(prev).add(reportedUserId)
+                  );
+                  handleCloseParticipant();
+                  Alert.alert(
+                    "Reporte enviado",
+                    "Ocultamos a esta persona de este grupo."
+                  );
+                },
+                onError: (error) =>
+                  Alert.alert(
+                    "Error",
+                    error.message || "No se pudo enviar el reporte."
+                  ),
+              }
+            );
+          },
+        },
+      ]
+    );
+  }, [
+    eventId,
+    eventType,
+    handleCloseParticipant,
+    reportMutation,
+    selectedParticipant,
+  ]);
 
   const handleKick = useCallback(
     (participantUserId: string, name: string | null) => {
@@ -790,7 +894,9 @@ const EventChat = () => {
             </View>
             <FlatList
               data={participants.filter(
-                (item) => !userId || item.userId !== userId
+                (item) =>
+                  (!userId || item.userId !== userId) &&
+                  !blockedUserIds.has(item.userId)
               )}
               keyExtractor={(item) => item.id}
               style={{ maxHeight: 400 }}
@@ -840,6 +946,14 @@ const EventChat = () => {
         profile={selectedParticipantCard}
         onClose={handleCloseParticipant}
         onContactPress={handleConnectParticipant}
+        secondaryActionLabel={
+          selectedParticipant?.userId !== userId ? "Reportar y bloquear" : undefined
+        }
+        onSecondaryActionPress={
+          selectedParticipant?.userId !== userId
+            ? handleReportParticipant
+            : undefined
+        }
       />
     </KeyboardAvoidingView>
   );

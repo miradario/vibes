@@ -111,6 +111,7 @@ const baseTranslations = {
       google: "Conectar con Google",
       googleSubmitting: "Conectando...",
       googleFailed: "No se pudo conectar con Google.",
+      appleFailed: "No se pudo conectar con Apple.",
       missingFields: "Completá tu email y contraseña.",
       failed: "No se pudo iniciar sesión.",
       invalidCredentials:
@@ -155,11 +156,29 @@ const baseTranslations = {
       google: "Conectar con Google",
       googleSubmitting: "Conectando...",
       googleFailed: "No se pudo conectar con Google.",
+      appleFailed: "No se pudo conectar con Apple.",
       missingFields: "Por favor completá todos los campos.",
       passwordLength: "La contraseña debe tener al menos 6 caracteres.",
       accountExists:
         "Ya existe una cuenta con ese email. Iniciá sesión o recuperá tu contraseña.",
       failed: "No se pudo crear la cuenta.",
+    },
+    ageAssurance: {
+      kicker: "Solo mayores de 18",
+      title: "Confirmá tu edad",
+      subtitle:
+        "Vibes es una comunidad exclusiva para personas mayores de 18 años. Necesitamos confirmar tu fecha de nacimiento antes de crear tu cuenta.",
+      birthDateLabel: "Fecha de nacimiento",
+      birthDatePlaceholder: "Seleccioná tu fecha de nacimiento",
+      underageError:
+        "Debés tener al menos 18 años para crear una cuenta en Vibes.",
+      continue: "Continuar",
+    },
+    authTerms: {
+      prefix:
+        "Acepto los términos de uso y las reglas de comunidad antes de continuar.",
+      link: "Ver términos",
+      required: "Aceptá los términos de uso para continuar.",
     },
     onboarding: {
       nameTitle: "¿Cómo te llamás?",
@@ -225,6 +244,7 @@ const baseTranslations = {
         namePlaceholder: "Tu nombre",
         descriptionPlaceholder: "Una breve descripción sobre ti",
         birthDatePlaceholder: "Fecha de nacimiento",
+        confirmedAge: "Edad confirmada",
         years: "años",
       },
       practices: {
@@ -397,7 +417,10 @@ const baseTranslations = {
         "Tus datos se procesan conforme a nuestra política de privacidad y se usan para mejorar tu experiencia.",
       contentTitle: "Contenido",
       contentBody:
-        "No está permitido publicar contenido ofensivo, ilegal o que afecte la seguridad de otras personas.",
+        "No toleramos contenido objetable, ofensivo, ilegal, abusivo, discriminatorio, sexualmente explícito, spam, acoso ni amenazas. Podemos filtrar, ocultar o eliminar contenido que infrinja estas reglas.",
+      moderationTitle: "Moderación y reportes",
+      moderationBody:
+        "Podés reportar contenido o usuarios abusivos desde la app. Revisamos reportes dentro de 24 horas y podemos eliminar contenido, bloquear interacciones o expulsar a usuarios que incumplan estas reglas.",
     },
     messages: {
       yesterday: "Ayer",
@@ -635,6 +658,7 @@ const baseTranslations = {
       google: "Connect with Google",
       googleSubmitting: "Connecting...",
       googleFailed: "Could not connect with Google.",
+      appleFailed: "Could not connect with Apple.",
       missingFields: "Please complete your email and password.",
       failed: "Could not log in.",
       invalidCredentials:
@@ -677,11 +701,29 @@ const baseTranslations = {
       google: "Connect with Google",
       googleSubmitting: "Connecting...",
       googleFailed: "Could not connect with Google.",
+      appleFailed: "Could not connect with Apple.",
       missingFields: "Please complete all fields.",
       passwordLength: "Your password must be at least 6 characters.",
       accountExists:
         "An account already exists with that email. Sign in or reset your password.",
       failed: "Could not create your account.",
+    },
+    ageAssurance: {
+      kicker: "18+ only",
+      title: "Confirm your age",
+      subtitle:
+        "Vibes is a community exclusively for people over 18. We need to confirm your birth date before creating your account.",
+      birthDateLabel: "Birth date",
+      birthDatePlaceholder: "Select your birth date",
+      underageError:
+        "You must be at least 18 years old to create a Vibes account.",
+      continue: "Continue",
+    },
+    authTerms: {
+      prefix:
+        "I accept the Terms of Use and community rules before continuing.",
+      link: "View terms",
+      required: "Accept the Terms of Use to continue.",
     },
     onboarding: {
       nameTitle: "What's your name?",
@@ -745,6 +787,7 @@ const baseTranslations = {
         namePlaceholder: "Your name",
         descriptionPlaceholder: "A brief description about you",
         birthDatePlaceholder: "Birth date",
+        confirmedAge: "Age confirmed",
         years: "years old",
       },
       practices: {
@@ -918,7 +961,10 @@ const baseTranslations = {
         "Your data is processed according to our privacy policy and used to improve your experience.",
       contentTitle: "Content",
       contentBody:
-        "Posting offensive, illegal, or unsafe content is not allowed.",
+        "We do not tolerate objectionable, offensive, illegal, abusive, discriminatory, sexually explicit content, spam, harassment, or threats. We may filter, hide, or remove content that violates these rules.",
+      moderationTitle: "Moderation and reports",
+      moderationBody:
+        "You can report content or abusive users from the app. We review reports within 24 hours and may remove content, block interactions, or eject users who violate these rules.",
     },
     messages: {
       yesterday: "Yesterday",

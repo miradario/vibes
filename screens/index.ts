@@ -14,6 +14,7 @@ export { default as Premium } from "./Premium";
 export { default as Chat } from "./Chat";
 export { default as Login } from "./Login";
 export { default as ResetPassword } from "./ResetPassword";
+export { default as AgeAssurance } from "./AgeAssurance";
 export { default as Signup } from "./Signup";
 export { default as Settings } from "./Settings";
 export { default as Configuration } from "./Configuration";
