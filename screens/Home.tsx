@@ -1084,7 +1084,7 @@ const Home = () => {
           onContactPress={() =>
             selectedProfile ? connectProfile(selectedProfile) : undefined
           }
-          secondaryActionLabel="Dismiss"
+          secondaryActionLabel="Descartar"
           onSecondaryActionPress={() =>
             selectedProfile ? dismissProfile(selectedProfile) : undefined
           }

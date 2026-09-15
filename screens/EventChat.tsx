@@ -40,7 +40,7 @@ import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import VibesLoader from "../components/VibesLoader";
-import UserProfileCard from "../components/UserProfileCard";
+import UserProfileSheet from "../components/UserProfileSheet";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
@@ -124,15 +124,11 @@ const EventChat = () => {
     displayName: string | null;
     avatarUrl: string | null;
   } | null>(null);
-  const [participantSheetVisible, setParticipantSheetVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const membersBackdropOpacity = useRef(new Animated.Value(0)).current;
   const membersCardOpacity = useRef(new Animated.Value(0)).current;
   const membersCardScale = useRef(new Animated.Value(0.92)).current;
   const membersCardTranslateY = useRef(new Animated.Value(22)).current;
-  const participantBackdropOpacity = useRef(new Animated.Value(0)).current;
-  const participantSheetTranslateY = useRef(new Animated.Value(48)).current;
-  const participantSheetScale = useRef(new Animated.Value(0.96)).current;
   const lastMarkedReadAtRef = useRef<string | null>(null);
   const { data: selectedParticipantProfile } = useProfileQuery(
     selectedParticipant?.userId
@@ -267,39 +263,6 @@ const EventChat = () => {
     membersCardTranslateY,
   ]);
 
-  const animateParticipantSheetIn = useCallback(() => {
-    participantBackdropOpacity.setValue(0);
-    participantSheetTranslateY.setValue(48);
-    participantSheetScale.setValue(0.96);
-
-    Animated.parallel([
-      Animated.timing(participantBackdropOpacity, {
-        toValue: 1,
-        duration: 180,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }),
-      Animated.spring(participantSheetTranslateY, {
-        toValue: 0,
-        damping: 18,
-        stiffness: 190,
-        mass: 0.9,
-        useNativeDriver: true,
-      }),
-      Animated.spring(participantSheetScale, {
-        toValue: 1,
-        damping: 16,
-        stiffness: 200,
-        mass: 0.85,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [
-    participantBackdropOpacity,
-    participantSheetScale,
-    participantSheetTranslateY,
-  ]);
-
   const handleOpenParticipant = useCallback(
     (nextParticipant: {
       userId: string;
@@ -308,45 +271,13 @@ const EventChat = () => {
     }) => {
       if (nextParticipant.userId === userId) return;
       setSelectedParticipant(nextParticipant);
-      setParticipantSheetVisible(true);
-      requestAnimationFrame(() => {
-        animateParticipantSheetIn();
-      });
     },
-    [animateParticipantSheetIn, userId]
+    [userId]
   );
 
   const handleCloseParticipant = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(participantBackdropOpacity, {
-        toValue: 0,
-        duration: 160,
-        easing: Easing.inOut(Easing.quad),
-        useNativeDriver: true,
-      }),
-      Animated.timing(participantSheetTranslateY, {
-        toValue: 28,
-        duration: 160,
-        easing: Easing.inOut(Easing.quad),
-        useNativeDriver: true,
-      }),
-      Animated.timing(participantSheetScale, {
-        toValue: 0.985,
-        duration: 160,
-        easing: Easing.inOut(Easing.quad),
-        useNativeDriver: true,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) {
-        setParticipantSheetVisible(false);
-        setSelectedParticipant(null);
-      }
-    });
-  }, [
-    participantBackdropOpacity,
-    participantSheetScale,
-    participantSheetTranslateY,
-  ]);
+    setSelectedParticipant(null);
+  }, []);
 
   // Build a lookup for sender info from participants
   const participantMap = useRef<
@@ -904,59 +835,12 @@ const EventChat = () => {
         </View>
       </Modal>
 
-      <Modal
-        visible={participantSheetVisible}
-        transparent
-        animationType="none"
-        onRequestClose={handleCloseParticipant}
-      >
-        <View style={styles.discoverSheetRoot}>
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.discoverSheetBackdrop,
-              { opacity: participantBackdropOpacity },
-            ]}
-          />
-          <TouchableOpacity
-            activeOpacity={1}
-            style={StyleSheet.absoluteFillObject}
-            onPress={handleCloseParticipant}
-          />
-          <TouchableOpacity
-            style={styles.discoverSheetCloseButton}
-            onPress={handleCloseParticipant}
-            activeOpacity={0.9}
-          >
-            <Icon name="close" size={20} color="#2B2B2B" />
-          </TouchableOpacity>
-          <Animated.View
-            style={[
-              styles.discoverSheetContainer,
-              localStyles.participantSheetAnimated,
-              {
-                opacity: participantBackdropOpacity,
-                transform: [
-                  { translateY: participantSheetTranslateY },
-                  { scale: participantSheetScale },
-                ],
-              },
-            ]}
-          >
-            <View style={styles.discoverSheetHandle} />
-            {selectedParticipantCard ? (
-              <UserProfileCard
-                profile={selectedParticipantCard}
-                onContactPress={handleConnectParticipant}
-              />
-            ) : (
-              <View style={localStyles.participantSheetLoading}>
-                <VibesLoader size={64} />
-              </View>
-            )}
-          </Animated.View>
-        </View>
-      </Modal>
+      <UserProfileSheet
+        visible={Boolean(selectedParticipant && selectedParticipantCard)}
+        profile={selectedParticipantCard}
+        onClose={handleCloseParticipant}
+        onContactPress={handleConnectParticipant}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -1203,14 +1087,6 @@ const localStyles = StyleSheet.create({
     fontSize: 12,
     fontFamily: vibesTheme.fonts.semibold,
     color: "#D32F2F",
-  },
-  participantSheetAnimated: {
-    overflow: "hidden",
-  },
-  participantSheetLoading: {
-    minHeight: 360,
-    alignItems: "center",
-    justifyContent: "center",
   },
   inputAvatar: {
     width: 32,

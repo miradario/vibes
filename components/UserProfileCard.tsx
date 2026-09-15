@@ -22,6 +22,7 @@ export type UserProfileCardData = {
   vegetarian?: string;
   smoking?: string;
   pets?: string;
+  hasPhotos?: boolean;
   images?: any[];
   match?: string;
 };

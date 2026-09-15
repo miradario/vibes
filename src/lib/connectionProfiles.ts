@@ -28,6 +28,7 @@ export type ConnectionProfile = {
   avatarUri?: string | null;
   age?: string;
   image: ImageSourcePropType;
+  hasPhotos: boolean;
   images: ImageSourcePropType[];
   location?: string;
   distanceLabel?: string;
@@ -328,7 +329,8 @@ export const mapCandidateToConnectionProfile = (
     avatarUri: photos[0] ?? null,
     age,
     image: photoSources[0] ?? FALLBACK_PROFILE_IMAGE,
-    images: photoSources.length > 0 ? photoSources : [FALLBACK_PROFILE_IMAGE],
+    hasPhotos: photoSources.length > 0,
+    images: photoSources,
     location,
     distanceLabel:
       typeof (candidate as ProfileLike).distanceLabel === "string"
@@ -391,7 +393,8 @@ export const mapOwnProfileToConnectionProfile = (
       name: isNonEmptyString(fallbackName) ? fallbackName.trim() : "Vibes",
       avatarUri: null,
       image: FALLBACK_PROFILE_IMAGE,
-      images: [FALLBACK_PROFILE_IMAGE],
+      hasPhotos: false,
+      images: [],
       isOnline: true,
     };
   }
