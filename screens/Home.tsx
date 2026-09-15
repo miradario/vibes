@@ -77,6 +77,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
 };
 
 let hasPlayedHomeEntryFade = false;
+const SHOW_DAILY_GURU_SECTION = false;
 
 const VibesBreathingMark = () => {
   const breathProgress = useSharedValue(0);
@@ -982,7 +983,7 @@ const Home = () => {
         </AnimatedSheetModal>
 
         <AnimatedSheetModal
-          visible={isDailyGuideVisible}
+          visible={SHOW_DAILY_GURU_SECTION && isDailyGuideVisible}
           onClose={() => setIsDailyGuideVisible(false)}
           offsetY={420}
           sheetStyle={localStyles.dailyGuideSheet}
@@ -1134,7 +1135,7 @@ const Home = () => {
             </View>
           </View>
 
-          {showGuruCard ? (
+          {SHOW_DAILY_GURU_SECTION && showGuruCard ? (
             <TouchableOpacity
               activeOpacity={0.9}
               style={localStyles.guruFeatureCard}
