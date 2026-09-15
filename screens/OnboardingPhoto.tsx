@@ -398,7 +398,7 @@ const localStyles = StyleSheet.create({
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
   },
   emptyPrimaryLabel: {
     marginTop: 10,

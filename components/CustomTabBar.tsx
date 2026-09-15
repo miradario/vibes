@@ -409,7 +409,7 @@ const CustomTabBar = ({
 };
 
 const localColors = {
-  bg: "#F6F6F4",
+  bg: "#FEFEFD",
   surface: "#FFFFFF",
   primaryText: "#2B2B2B" as ColorValue,
   inactiveIcon: "#6E6E6E" as ColorValue,

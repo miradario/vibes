@@ -195,7 +195,7 @@ const DiscoverOrbitCanvas = ({
     <View style={styles.discoverOrbitScreen} onLayout={handleLayout}>
       <LinearGradient
         pointerEvents="none"
-        colors={["#FFFDF8", "#F7F3EF", "#F6F6F4"]}
+        colors={["#FFFDF8", "#F7F3EF", "#FEFEFD"]}
         locations={[0, 0.55, 1]}
         style={StyleSheet.absoluteFill}
       />

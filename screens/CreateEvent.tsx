@@ -1081,7 +1081,7 @@ const localStyles = StyleSheet.create({
     marginTop: 12,
   },
   input: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "transparent",
@@ -1128,7 +1128,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(43,43,43,0.1)",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -1147,7 +1147,7 @@ const localStyles = StyleSheet.create({
   },
   dateTimeButton: {
     flex: 1,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -1170,7 +1170,7 @@ const localStyles = StyleSheet.create({
   },
   pickerWrap: {
     marginTop: 10,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 12,
     overflow: "hidden",
   },
@@ -1208,7 +1208,7 @@ const localStyles = StyleSheet.create({
     bottom: 0,
     paddingTop: 12,
     paddingHorizontal: 20,
-    backgroundColor: "rgba(246, 246, 244, 0.96)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
     borderTopWidth: 1,
     borderTopColor: "rgba(43, 43, 43, 0.06)",
     shadowColor: BLACK,
@@ -1219,7 +1219,7 @@ const localStyles = StyleSheet.create({
   },
   validateButton: {
     marginTop: 10,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "#E4B76E",
@@ -1416,7 +1416,7 @@ const localStyles = StyleSheet.create({
     fontWeight: "400",
   },
   modalSecondaryButton: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "#E4B76E",

@@ -26,7 +26,9 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 export default function CommunityGroups({
   matches,
   groups,
+  variant = "list",
 }: {
+  variant?: "create" | "list";
   matches: MatchWithProfile[];
   groups: ReturnType<typeof useCommunityGroupsQuery>;
 }) {
@@ -60,51 +62,53 @@ export default function CommunityGroups({
     }
   };
   return (
-    <View style={s.section}>
-      <TouchableOpacity
-        accessibilityRole="button"
-        style={s.create}
-        onPress={() => setVisible(true)}
-      >
-        <Icon name="people-outline" size={24} color="#B98235" />
-        <View style={{ flex: 1 }}>
-          <Text style={s.title}>Crear grupo</Text>
-          <Text style={s.hint}>
-            Un espacio para compartir con tus conexiones
-          </Text>
-        </View>
-        <Icon name="add" size={24} color="#B98235" />
-      </TouchableOpacity>
-      {groups.isLoading ? <ActivityIndicator color="#B98235" /> : null}
-      {groups.isError ? (
-        <TouchableOpacity onPress={() => void groups.refetch()}>
-          <Text style={s.hint}>
-            No pudimos cargar tus grupos. Tocá para reintentar.
-          </Text>
-        </TouchableOpacity>
-      ) : null}
-      {(groups.data ?? []).length > 0 ? (
-        <Text style={s.heading}>GRUPOS DE LA COMUNIDAD</Text>
-      ) : null}
-      {(groups.data ?? []).map((group) => (
+    <View style={variant === "create" ? undefined : s.section}>
+      {variant === "create" ? (
         <TouchableOpacity
           accessibilityRole="button"
-          key={group.id}
-          style={s.row}
-          onPress={() => open(group.id, group.name, group.description)}
+          style={s.create}
+          onPress={() => setVisible(true)}
         >
-          <Icon name="people" size={28} color="#B98235" />
-          <View style={{ flex: 1 }}>
-            <Text numberOfLines={1} style={s.title}>
-              {group.name}
-            </Text>
-            <Text numberOfLines={1} style={s.hint}>
-              {group.description || "Abrir conversación"}
-            </Text>
-          </View>
-          <Icon name="chevron-forward" size={18} color="#7B746C" />
+          <Icon name="add" size={21} color="#B57716" />
+          <Text style={s.createLabel}>Crear grupo</Text>
         </TouchableOpacity>
-      ))}
+      ) : null}
+      {variant === "list" ? (
+        <>
+          {groups.isLoading ? <ActivityIndicator color="#B98235" /> : null}
+          {groups.isError ? (
+            <TouchableOpacity onPress={() => void groups.refetch()}>
+              <Text style={s.hint}>
+                No pudimos cargar tus grupos. Tocá para reintentar.
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+          {(groups.data ?? []).length > 0 ? (
+            <Text style={s.heading}>COMUNIDAD</Text>
+          ) : null}
+          {(groups.data ?? []).map((group) => (
+            <TouchableOpacity
+              accessibilityRole="button"
+              key={group.id}
+              style={s.row}
+              onPress={() => open(group.id, group.name, group.description)}
+            >
+              <View style={s.avatar}>
+                <Icon name="people-outline" size={26} color="#B57716" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text numberOfLines={1} style={s.title}>
+                  {group.name}
+                </Text>
+                <Text numberOfLines={1} style={s.hint}>
+                  {group.description || "Abrir conversación"}
+                </Text>
+              </View>
+              <Icon name="chevron-forward" size={18} color="#7B746C" />
+            </TouchableOpacity>
+          ))}
+        </>
+      ) : null}
       <AnimatedSheetModal
         visible={visible}
         onClose={() => {
@@ -221,12 +225,25 @@ const s = StyleSheet.create({
   create: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: "#FFF9EE",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#EAD6B4",
+    borderColor: "#B57716",
+  },
+  createLabel: {
+    color: "#B57716",
+    fontSize: 14,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  avatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FBECD5",
   },
   title: {
     color: "#403B36",
@@ -242,7 +259,7 @@ const s = StyleSheet.create({
     paddingVertical: 14,
   },
   sheet: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     padding: 20,

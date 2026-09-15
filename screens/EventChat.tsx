@@ -850,7 +850,7 @@ export default EventChat;
 const localStyles = StyleSheet.create({
   keyboardAvoidingRoot: {
     flex: 1,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
   },
   headerTitle: {
     fontSize: 22,

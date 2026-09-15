@@ -746,7 +746,7 @@ const localStyles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
   },
   feedRowThumbWrap: {
     width: 64,

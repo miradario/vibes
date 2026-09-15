@@ -540,7 +540,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   input: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -555,7 +555,7 @@ const localStyles = StyleSheet.create({
     height: 190,
     borderRadius: 18,
     overflow: "hidden",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderWidth: 1,
     borderColor: "rgba(43,43,43,0.08)",
     justifyContent: "center",

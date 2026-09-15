@@ -1082,7 +1082,7 @@ const MeditationScreen = () => {
                         : "play"
                     }
                     size={24}
-                    color="#F6F6F4"
+                    color="#FEFEFD"
                   />
                 </Pressable>
               </View>
@@ -1227,7 +1227,7 @@ const MeditationScreen = () => {
                           : "play"
                       }
                       size={24}
-                      color="#F6F6F4"
+                      color="#FEFEFD"
                     />
                   </Pressable>
                 </View>

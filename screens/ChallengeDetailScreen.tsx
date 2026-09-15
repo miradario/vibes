@@ -88,7 +88,7 @@ const FALLBACK_CHALLENGE: ChallengeDetailData = {
 };
 
 const palette = {
-  bg: "#F6F6F4",
+  bg: "#FEFEFD",
   surface: "#FFFDF8",
   surfaceAlt: "#FDF6EA",
   text: "#2D2924",
@@ -2177,7 +2177,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(246, 246, 244, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
   },
   pathPillText: {
     color: "#C47A55",

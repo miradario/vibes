@@ -2189,7 +2189,7 @@ const localStyles = StyleSheet.create({
     elevation: 24,
   },
   fixedFooterContent: {
-    backgroundColor: "rgba(246, 246, 244, 0.96)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
     borderRadius: 24,
     paddingTop: 14,
     paddingHorizontal: 14,
@@ -2267,7 +2267,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 2,
     borderColor: WHITE,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
   },
   participantPreviewAvatarOverlap: {
     marginLeft: -8,
@@ -2506,7 +2506,7 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   noteInput: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 12,
     padding: 14,
     color: DARK_GRAY,

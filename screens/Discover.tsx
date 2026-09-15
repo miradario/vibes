@@ -700,7 +700,7 @@ export const DiscoverContent = forwardRef<
               style={styles.galleryClose}
               onPress={() => setShowGallery(false)}
             >
-              <Icon name="close" size={18} color="#F6F6F4" />
+              <Icon name="close" size={18} color="#FEFEFD" />
             </TouchableOpacity>
             <FlatList
               key={`gallery-${galleryInitialIndex}-${galleryImages.length}`}
@@ -1257,7 +1257,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.bold,
   },
   filtersSheet: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 20,
@@ -1362,7 +1362,7 @@ const localStyles = StyleSheet.create({
   rangeInput: {
     minHeight: 42,
     borderRadius: 12,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     color: "#2B2B2B",
     fontSize: 17,
     fontFamily: vibesTheme.fonts.bold,
@@ -1398,7 +1398,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   filterPillTextActive: {
-    color: "#F6F6F4",
+    color: "#FEFEFD",
   },
   filtersFooter: {
     flexDirection: "row",
@@ -1429,7 +1429,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#AEBFD1",
   },
   filtersPrimaryButtonText: {
-    color: "#F6F6F4",
+    color: "#FEFEFD",
     fontSize: 15,
     fontFamily: vibesTheme.fonts.semibold,
   },

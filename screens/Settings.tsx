@@ -587,7 +587,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     marginTop: 6,
   },
   headerCopy: {
@@ -648,7 +648,7 @@ const localStyles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     marginLeft: 10,
   },
   helperText: {
@@ -674,7 +674,7 @@ const localStyles = StyleSheet.create({
   chip: {
     minHeight: 42,
     borderRadius: 24,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderWidth: 1,
     borderColor: "#E4B76E",
     paddingHorizontal: 16,
@@ -797,7 +797,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderWidth: 1,
     borderColor: "#E4B76E",
   },
@@ -828,7 +828,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 24,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderWidth: 1,
     borderColor: "#E4B76E",
     shadowOpacity: 0.12,
@@ -850,7 +850,7 @@ const localStyles = StyleSheet.create({
     paddingBottom: 24,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "#F6F6F4",
+    borderTopColor: "#FEFEFD",
     zIndex: 10,
   },
   saveButton: {

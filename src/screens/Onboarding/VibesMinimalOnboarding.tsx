@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(246, 246, 244, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     zIndex: 10,
   },
   loaderOverlay: {
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     zIndex: 11,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(246, 246, 244, 0.42)",
+    backgroundColor: "rgba(254, 254, 253, 0.42)",
   },
 });
 

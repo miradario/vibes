@@ -167,7 +167,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     marginTop: 6,
   },
   headerCopy: {
@@ -214,7 +214,7 @@ const localStyles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     marginLeft: 10,
   },
   card: {

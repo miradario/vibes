@@ -1184,7 +1184,7 @@ const modalStyles = StyleSheet.create({
     fontWeight: "400",
   },
   secondaryButton: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
@@ -1226,7 +1226,7 @@ const localStyles = StyleSheet.create({
     fontWeight: "400",
   },
   nameInput: {
-    backgroundColor: "rgba(246, 246, 244, 0.6)",
+    backgroundColor: "rgba(254, 254, 253, 0.6)",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -1236,7 +1236,7 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(216, 140, 122, 0.25)",
   },
   readOnlyField: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -1254,7 +1254,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 10,
   },
   currentLocationCard: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(216, 140, 122, 0.2)",
@@ -1296,7 +1296,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(216, 140, 122, 0.35)",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",

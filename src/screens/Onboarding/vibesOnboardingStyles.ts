@@ -182,7 +182,7 @@ export const onboardingStyles = StyleSheet.create({
     borderColor: "rgba(228, 183, 110, 0.45)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(246, 246, 244, 0.75)",
+    backgroundColor: "rgba(254, 254, 253, 0.75)",
     overflow: "hidden",
   },
   photo: {

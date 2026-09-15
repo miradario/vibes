@@ -10,8 +10,8 @@ export const vibesTheme = {
     bold: "JosefinSans-Regular",
   },
   colors: {
-    background: "#F6F6F4",
-    surface: "#F6F6F4",
+    background: "#FEFEFD",
+    surface: "#FEFEFD",
     primaryText: "#2B2B2B",
     secondaryText: "#6E6E6E",
     muted: "#6E6E6E",

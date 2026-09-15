@@ -626,7 +626,7 @@ const localStyles = StyleSheet.create({
   },
   msgTimeLeft: {},
   inputContainer: {
-    backgroundColor: "rgba(246, 246, 244, 0.95)",
+    backgroundColor: "rgba(254, 254, 253, 0.95)",
     borderTopColor: "rgba(174, 191, 209, 0.3)",
     paddingTop: 10,
     alignItems: "flex-end",
@@ -662,7 +662,7 @@ const localStyles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 18,
     borderRadius: 22,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 12,
@@ -675,7 +675,7 @@ const localStyles = StyleSheet.create({
   reportSheet: {
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     paddingHorizontal: 20,
     paddingTop: 22,
     shadowColor: "#2B2B2B",

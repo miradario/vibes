@@ -135,7 +135,7 @@ export default function CommunityGroupChat() {
   );
 }
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F6F6F4" },
+  screen: { flex: 1, backgroundColor: "#FEFEFD" },
   header: { flexDirection: "row", alignItems: "center", padding: 16, gap: 10 },
   back: { padding: 8 },
   title: { fontSize: 21, color: "#403B36", fontWeight: "600" },

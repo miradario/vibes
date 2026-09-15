@@ -188,7 +188,7 @@ const Match = () => {
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
   },
   content: {
     paddingHorizontal: 24,

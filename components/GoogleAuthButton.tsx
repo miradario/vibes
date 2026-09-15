@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(246, 246, 244, 0.82)",
+    backgroundColor: "rgba(254, 254, 253, 0.82)",
   },
   label: {
     color: vibesTheme.colors.primaryText,

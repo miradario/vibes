@@ -13,7 +13,6 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
-import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import CommunityGroups from "../components/CommunityGroups";
 import { useCommunityGroupsQuery } from "../src/queries/communityGroups.queries";
@@ -164,7 +163,7 @@ export const MessagesContent = ({
     useState<IncomingLike | null>(null);
   const [connectionsSheet, setConnectionsSheet] =
     useState<ConnectionsSheet>(null);
-  const [groupsCollapsed, setGroupsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<"messages" | "groups">("messages");
   const [archivedKeys, setArchivedKeys] = useState<string[]>([]);
   const { data: selectedIncomingProfile } = useProfileQuery(
     selectedIncomingLike?.likerUserId
@@ -476,22 +475,20 @@ export const MessagesContent = ({
         <Icon name={icon as any} color="#B98235" size={19} />
       </View>
       <View style={localStyles.connectionCardBody}>
-        <Text style={localStyles.connectionCardTitle} numberOfLines={1}>
-          {title}
-        </Text>
-        <View style={localStyles.connectionCardMeta}>
-          {renderConnectionPreview(items, blurred)}
-          <Text style={localStyles.connectionCardAction}>
-            {t("messages.viewAll")}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <Text style={localStyles.connectionCardTitle} numberOfLines={1}>
+            {title}
           </Text>
+          <View style={localStyles.connectionCountBadge}>
+            <Text style={localStyles.connectionCountText}>{count}</Text>
+          </View>
         </View>
+        <Text style={localStyles.connectionSheetHint}>
+          {blurred ? "Quiere conectar con vos" : "Se ha conectado contigo"}
+        </Text>
       </View>
-      <View style={localStyles.connectionCardTrailing}>
-        <View style={localStyles.connectionCountBadge}>
-          <Text style={localStyles.connectionCountText}>{count}</Text>
-        </View>
-        <Icon name="chevron-forward" color="#8A8178" size={18} />
-      </View>
+      {renderConnectionPreview(items, blurred)}
+      <Icon name="chevron-forward" color="#B57716" size={20} />
     </TouchableOpacity>
   );
 
@@ -578,6 +575,7 @@ export const MessagesContent = ({
         ]}
         activeOpacity={0.78}
         onPress={() => openGroupChat(item)}
+        onLongPress={() => confirmArchiveChat({ kind: "group", item })}
       >
         <ProfileMediaImage source={imgSource} style={localStyles.groupAvatar} />
         <View style={localStyles.rowBody}>
@@ -613,24 +611,8 @@ export const MessagesContent = ({
           <Text style={localStyles.rowTime}>
             {formatTime(item.lastMessageAt)}
           </Text>
-          <TouchableOpacity
-            activeOpacity={0.75}
-            style={localStyles.archiveButton}
-            onPress={(event) => {
-              event.stopPropagation();
-              confirmArchiveChat({ kind: "group", item });
-            }}
-          >
-            <Icon
-              name={
-                options?.archived
-                  ? "arrow-up-circle-outline"
-                  : "archive-outline"
-              }
-              color="#7B746C"
-              size={16}
-            />
-          </TouchableOpacity>
+
+          <Icon name="chevron-forward" color="#7B746C" size={18} />
           {item.hasUnread ? <View style={localStyles.unreadDot} /> : null}
         </View>
       </TouchableOpacity>
@@ -647,6 +629,7 @@ export const MessagesContent = ({
       style={[localStyles.cardRow, index > 0 && localStyles.cardRowWithDivider]}
       activeOpacity={0.78}
       onPress={() => openMatchChat(item)}
+      onLongPress={() => confirmArchiveChat({ kind: "direct", item })}
     >
       <Avatar uri={item.otherUserPhoto} size={48} />
       <View style={localStyles.rowBody}>
@@ -661,22 +644,7 @@ export const MessagesContent = ({
         <Text style={localStyles.rowTime}>
           {formatTime(item.lastMessageAt)}
         </Text>
-        <TouchableOpacity
-          activeOpacity={0.75}
-          style={localStyles.archiveButton}
-          onPress={(event) => {
-            event.stopPropagation();
-            confirmArchiveChat({ kind: "direct", item });
-          }}
-        >
-          <Icon
-            name={
-              options?.archived ? "arrow-up-circle-outline" : "archive-outline"
-            }
-            color="#7B746C"
-            size={16}
-          />
-        </TouchableOpacity>
+
         {item.hasUnread ? <View style={localStyles.unreadDot} /> : null}
       </View>
     </TouchableOpacity>
@@ -686,19 +654,23 @@ export const MessagesContent = ({
   const hasConnectionRequests = incomingConnectionRequests.length > 0;
   const hasConnectedNoChat = topConnections.length > 0;
   const hasConnectionsSection = hasConnectionRequests || hasConnectedNoChat;
-  const hasDirectMessages = activeDirectMessages.length > 0;
-  const hasActiveGroups = activeGroups.length > 0;
-  const hasFinishedChallenges = finishedChallengeGroups.length > 0;
-  const hasFinishedEvents = finishedEventGroups.length > 0;
-  const hasArchivedChats = archivedChats.length > 0;
-  const hasAnyContent =
-    Boolean(communityGroups.data?.length) ||
-    hasConnectionsSection ||
-    hasDirectMessages ||
-    hasActiveGroups ||
-    hasFinishedChallenges ||
-    hasFinishedEvents ||
-    hasArchivedChats;
+  const visibleArchivedChats = archivedChats.filter((entry) =>
+    activeTab === "groups" ? entry.kind === "group" : entry.kind === "direct"
+  );
+  const groupCount =
+    (communityGroups.data?.length ?? 0) +
+    activeGroups.length +
+    finishedEventGroups.length +
+    finishedChallengeGroups.length;
+  const renderGroupSection = (title: string, items: EventGroupSummary[]) =>
+    items.length ? (
+      <View>
+        <Text style={localStyles.groupSectionLabel}>{title}</Text>
+        <View style={localStyles.rowsCard}>
+          {items.map((item, index) => renderGroupRow(item, index))}
+        </View>
+      </View>
+    ) : null;
 
   return (
     <View style={[styles.bg, localStyles.screenBackground]}>
@@ -716,21 +688,18 @@ export const MessagesContent = ({
           },
         ]}
       >
-        {showHeader ? (
-          <AppHeader
-            title={t("messages.connections")}
-            style={localStyles.appHeader}
-            titleStyle={localStyles.appHeaderTitle}
+        <View style={localStyles.communityHeader}>
+          <Text style={localStyles.communityTitle}>
+            {t("messages.connections")}
+          </Text>
+          <CommunityGroups
+            variant="create"
+            matches={matches ?? []}
+            groups={communityGroups}
           />
-        ) : null}
-        <CommunityGroups matches={matches ?? []} groups={communityGroups} />
+        </View>
         {hasConnectionsSection ? (
           <>
-            <View style={localStyles.connectionsHeader}>
-              <Text style={localStyles.connectionsTitle}>
-                {t("messages.connections")}
-              </Text>
-            </View>
             <View style={localStyles.connectionsGrid}>
               {hasConnectionRequests
                 ? renderConnectionSummaryCard({
@@ -744,9 +713,9 @@ export const MessagesContent = ({
                 : null}
               {hasConnectedNoChat
                 ? renderConnectionSummaryCard({
-                    title: t("messages.connectedNoChat"),
+                    title: "Conexiones nuevas",
                     count: topConnections.length,
-                    icon: "chatbubble-ellipses-outline",
+                    icon: "people-outline",
                     items: topConnections,
                     blurred: false,
                     onPress: () => setConnectionsSheet("new"),
@@ -756,85 +725,114 @@ export const MessagesContent = ({
           </>
         ) : null}
 
-        {hasDirectMessages ? (
+        <View style={localStyles.chatTabs}>
+          {(
+            [
+              {
+                key: "messages",
+                label: "Mensajes",
+                icon: "chatbubble-ellipses-outline",
+                count: activeDirectMessages.length,
+              },
+              {
+                key: "groups",
+                label: "Grupos",
+                icon: "people",
+                count: groupCount,
+              },
+            ] as const
+          ).map((tab) => {
+            const selected = activeTab === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+                onPress={() => setActiveTab(tab.key)}
+                style={[
+                  localStyles.chatTab,
+                  selected && localStyles.chatTabActive,
+                ]}
+              >
+                <Icon
+                  name={tab.icon}
+                  size={22}
+                  color={selected ? "#B57716" : "#858585"}
+                />
+                <Text
+                  style={[
+                    localStyles.chatTabText,
+                    selected && localStyles.chatTabTextActive,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+                <View style={localStyles.countBadge}>
+                  <Text style={localStyles.countText}>{tab.count}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {activeTab === "messages" ? (
           <>
-            {renderSectionHeader(
-              "chatbubble-ellipses-outline",
-              sectionTitle("messages.messages"),
-              activeDirectMessages.length,
-              "Ver todos"
-            )}
             <View style={localStyles.rowsCard}>
               {activeDirectMessages.map((item, index) =>
                 renderDirectRow(item, index)
               )}
             </View>
-          </>
-        ) : null}
-
-        {hasActiveGroups ? (
-          <>
-            {renderSectionHeader(
-              "people",
-              "GRUPOS",
-              activeGroups.length,
-              groupsCollapsed ? "Mostrar" : "Ocultar",
-              {
-                collapsible: true,
-                collapsed: groupsCollapsed,
-                onPress: () => setGroupsCollapsed((value) => !value),
-              }
-            )}
-            {!groupsCollapsed ? (
-              <View style={localStyles.rowsCard}>
-                {activeGroups.map((item, index) => renderGroupRow(item, index))}
+            {!isLoading ? (
+              <View style={localStyles.conversationHint}>
+                <View style={localStyles.conversationIcon}>
+                  <Icon
+                    name="chatbubble-ellipses-outline"
+                    size={30}
+                    color="#85858B"
+                  />
+                </View>
+                <Text style={localStyles.conversationHintText}>
+                  {activeDirectMessages.length
+                    ? "Tus conversaciones, en un solo lugar"
+                    : "Conectá con alguien para iniciar una conversación"}
+                </Text>
               </View>
             ) : null}
           </>
-        ) : null}
-
-        {hasFinishedChallenges ? (
+        ) : (
           <>
-            {renderSectionHeader(
-              "trophy-outline",
+            <CommunityGroups
+              variant="list"
+              matches={matches ?? []}
+              groups={communityGroups}
+            />
+            {renderGroupSection(
+              "EVENTOS",
+              activeGroups.filter((group) => group.eventType === "event")
+            )}
+            {renderGroupSection(
+              "CHALLENGES",
+              activeGroups.filter((group) => group.eventType === "challenge")
+            )}
+            {renderGroupSection("EVENTOS FINALIZADOS", finishedEventGroups)}
+            {renderGroupSection(
               "CHALLENGES FINALIZADOS",
-              finishedChallengeGroups.length,
-              "Ver todos"
+              finishedChallengeGroups
             )}
-            <View style={localStyles.rowsCard}>
-              {finishedChallengeGroups.map((item, index) =>
-                renderGroupRow(item, index)
-              )}
-            </View>
+            {!loading && !communityGroups.isError && groupCount === 0 ? (
+              <View style={localStyles.emptyState}>
+                <Text style={localStyles.emptyStateText}>
+                  Creá un grupo con tus conexiones o sumate a un evento o
+                  challenge.
+                </Text>
+              </View>
+            ) : null}
           </>
-        ) : null}
-
-        {hasFinishedEvents ? (
+        )}
+        {visibleArchivedChats.length ? (
           <>
-            {renderSectionHeader(
-              "calendar-outline",
-              sectionTitle("messages.finishedEvents"),
-              finishedEventGroups.length,
-              "Ver todos"
-            )}
+            <Text style={localStyles.groupSectionLabel}>ARCHIVADOS</Text>
             <View style={localStyles.rowsCard}>
-              {finishedEventGroups.map((item, index) =>
-                renderGroupRow(item, index)
-              )}
-            </View>
-          </>
-        ) : null}
-
-        {hasArchivedChats ? (
-          <>
-            {renderSectionHeader(
-              "archive-outline",
-              "ARCHIVADOS",
-              archivedChats.length,
-              "Ver todos"
-            )}
-            <View style={localStyles.rowsCard}>
-              {archivedChats.map((entry, index) =>
+              {visibleArchivedChats.map((entry, index) =>
                 entry.kind === "group"
                   ? renderGroupRow(entry.item, index, { archived: true })
                   : renderDirectRow(entry.item, index, { archived: true })
@@ -842,21 +840,9 @@ export const MessagesContent = ({
             </View>
           </>
         ) : null}
-
-        {loading &&
-        !hasConnectionsSection &&
-        !hasDirectMessages &&
-        !hasActiveGroups ? (
+        {(activeTab === "messages" ? isLoading : groupsLoading) ? (
           <View style={localStyles.loadingWrap}>
             <VibesLoader size={62} />
-          </View>
-        ) : null}
-
-        {!loading && !hasAnyContent ? (
-          <View style={localStyles.emptyState}>
-            <Text style={localStyles.emptyStateText}>
-              {t("messages.emptyCommunity")}
-            </Text>
           </View>
         ) : null}
       </ScrollView>
@@ -919,6 +905,65 @@ const Messages = () => <MessagesContent />;
 export default Messages;
 
 const localStyles = StyleSheet.create({
+  communityHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 18,
+  },
+  communityTitle: {
+    flexShrink: 1,
+    color: "#161820",
+    fontSize: 28,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  chatTabs: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9E7E4",
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  chatTab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    gap: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  chatTabActive: { borderBottomColor: "#B57716" },
+  chatTabText: {
+    color: "#858585",
+    fontSize: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  chatTabTextActive: { color: "#161820", fontFamily: vibesTheme.fonts.bold },
+  groupSectionLabel: {
+    color: "#73737E",
+    fontSize: 13,
+    marginTop: 20,
+    marginBottom: 4,
+  },
+  conversationHint: {
+    alignItems: "center",
+    marginTop: 70,
+    marginBottom: 24,
+    gap: 12,
+  },
+  conversationIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#F0F0EE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  conversationHintText: { color: "#838391", fontSize: 15, textAlign: "center" },
   screenBackground: {
     backgroundColor: vibesTheme.colors.background,
   },
@@ -1007,9 +1052,9 @@ const localStyles = StyleSheet.create({
   },
   connectionCardTitle: {
     color: DARK_GRAY,
-    fontSize: 17,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.medium,
   },
   connectionPreviewRow: {
     height: 34,
@@ -1056,7 +1101,7 @@ const localStyles = StyleSheet.create({
     maxHeight: "76%",
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     paddingHorizontal: 18,
     paddingTop: 12,
   },
@@ -1173,25 +1218,13 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },
-  rowsCard: {
-    marginBottom: 18,
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "rgba(255, 255, 255, 0.82)",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.04)",
-    shadowColor: "#2B2B2B",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
-  },
+  rowsCard: { marginBottom: 12 },
   cardRow: {
-    minHeight: 72,
+    minHeight: 92,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 0,
+    paddingVertical: 16,
   },
   cardRowWithDivider: {
     borderTopWidth: 1,

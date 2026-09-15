@@ -201,7 +201,7 @@ const PreferenceDetail = () => {
                     style={{
                       borderWidth: 1,
                       borderColor: active ? PRIMARY_COLOR : "#AEBFD1",
-                      backgroundColor: active ? "#F6F6F4" : WHITE,
+                      backgroundColor: active ? "#FEFEFD" : WHITE,
                       paddingVertical: 10,
                       paddingHorizontal: 12,
                       borderRadius: 12,

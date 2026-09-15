@@ -3,18 +3,18 @@ import { vibesTheme } from "../../src/theme/vibesTheme";
 
 export const PRIMARY_COLOR = "#E4B76E";
 export const SECONDARY_COLOR = vibesTheme.colors.accentBlue;
-export const WHITE = "#F6F6F4";
+export const WHITE = vibesTheme.colors.background;
 export const GRAY = "#6E6E6E";
 export const DARK_GRAY = "#2B2B2B";
 export const BLACK = "#2B2B2B";
-export const BG_MAIN = "#F6F6F4";
-export const BG_GRADIENT = "#F6F6F4";
+export const BG_MAIN = vibesTheme.colors.background;
+export const BG_GRADIENT = vibesTheme.colors.background;
 export const TEXT_PRIMARY = "#2B2B2B";
 export const TEXT_SECONDARY = "#6E6E6E";
-export const SURFACE_BUTTON = "#F6F6F4";
+export const SURFACE_BUTTON = vibesTheme.colors.background;
 export const CTA_PRIMARY = "#E4B76E";
 export const GLOW_HIGHLIGHT = "rgba(43, 43, 43, 0.06)";
-export const BUTTON_CREAM = "#F6F6F4";
+export const BUTTON_CREAM = vibesTheme.colors.background;
 export const BUTTON_BORDER = "rgba(43, 43, 43, 0.08)";
 export const WARM_SHADOW = "rgba(43, 43, 43, 0.10)";
 export const SERIF_FONT = vibesTheme.fonts.primary;
@@ -200,7 +200,7 @@ export default StyleSheet.create({
   discoverPhotoCard: {
     width: "100%",
     borderRadius: 28,
-    backgroundColor: "rgba(246, 246, 244, 0.82)",
+    backgroundColor: "rgba(254, 254, 253, 0.82)",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.06)",
     overflow: "hidden",
@@ -235,7 +235,7 @@ export default StyleSheet.create({
     right: 12,
   },
   discoverMatchesPill: {
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 16,
@@ -333,7 +333,7 @@ export default StyleSheet.create({
   discoverSharedItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: "rgba(246, 246, 244, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     borderRadius: 18,
     borderWidth: 1,
     borderColor: GLOW_HIGHLIGHT,
@@ -370,7 +370,7 @@ export default StyleSheet.create({
   },
   discoverPromptPill: {
     marginTop: 8,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 34,
@@ -387,7 +387,7 @@ export default StyleSheet.create({
   },
   discoverPromptPillFull: {
     marginTop: 2,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -431,7 +431,7 @@ export default StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
   },
   discoverGalleryThumbWrapActive: {
     borderColor: PRIMARY_COLOR,
@@ -633,7 +633,7 @@ export default StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.10)",
     shadowOpacity: 0.14,
@@ -650,7 +650,7 @@ export default StyleSheet.create({
     paddingBottom: 14,
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
   },
@@ -674,7 +674,7 @@ export default StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.9)",
-    backgroundColor: "rgba(246, 246, 244, 0.6)",
+    backgroundColor: "rgba(254, 254, 253, 0.6)",
   },
   cardThumb: {
     width: 78,
@@ -747,7 +747,7 @@ export default StyleSheet.create({
     color: TEXT_PRIMARY,
     marginBottom: 6,
     fontWeight: "400",
-    textShadowColor: "rgba(246, 246, 244, 0.9)",
+    textShadowColor: "rgba(254, 254, 253, 0.9)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
@@ -758,7 +758,7 @@ export default StyleSheet.create({
     maxWidth: 280,
   },
   welcomeCard: {
-    backgroundColor: "rgba(246, 246, 244, 0.0)",
+    backgroundColor: "rgba(254, 254, 253, 0.0)",
     borderRadius: 22,
     paddingVertical: 22,
     paddingHorizontal: 20,
@@ -1033,7 +1033,7 @@ export default StyleSheet.create({
     borderRadius: 6,
     borderWidth: 3,
     borderColor: "#AEBFD1",
-    backgroundColor: "rgba(246, 246, 244, 0.9)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
   },
   swipeBadgeTextLike: {
     fontSize: 28,
@@ -1051,7 +1051,7 @@ export default StyleSheet.create({
     borderRadius: 6,
     borderWidth: 3,
     borderColor: "#D88C7A",
-    backgroundColor: "rgba(246, 246, 244, 0.9)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
   },
   swipeBadgeTextNope: {
     fontSize: 28,
@@ -1428,7 +1428,7 @@ export default StyleSheet.create({
   },
   matchHeart: {
     position: "absolute",
-    backgroundColor: "rgba(246, 246, 244, 0.9)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
     padding: 8,
     borderRadius: 20,
     shadowOpacity: 0.12,
@@ -1784,7 +1784,7 @@ export default StyleSheet.create({
   },
   chatBubbleRight: {
     alignSelf: "flex-end",
-    backgroundColor: "rgba(246, 246, 244, 0.85)",
+    backgroundColor: "rgba(254, 254, 253, 0.85)",
     borderRadius: 20,
     borderTopRightRadius: 4,
     paddingVertical: 12,
@@ -1862,7 +1862,7 @@ export default StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(246, 246, 244, 0.7)",
+    backgroundColor: "rgba(254, 254, 253, 0.7)",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 10,
@@ -1898,7 +1898,7 @@ export default StyleSheet.create({
     height: 110,
     borderRadius: 55,
     borderWidth: 3,
-    borderColor: "rgba(246, 246, 244, 0.9)",
+    borderColor: "rgba(254, 254, 253, 0.9)",
     zIndex: 1,
   },
   chatAvatarRight: {
@@ -1906,7 +1906,7 @@ export default StyleSheet.create({
     height: 110,
     borderRadius: 55,
     borderWidth: 3,
-    borderColor: "rgba(246, 246, 244, 0.9)",
+    borderColor: "rgba(254, 254, 253, 0.9)",
     zIndex: 1,
   },
   chatHeaderTitle: {
@@ -1922,7 +1922,7 @@ export default StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(246, 246, 244, 0.7)",
+    backgroundColor: "rgba(254, 254, 253, 0.7)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1939,13 +1939,13 @@ export default StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "rgba(246, 246, 244, 0.85)",
+    backgroundColor: "rgba(254, 254, 253, 0.85)",
     borderTopWidth: 1,
     borderTopColor: "rgba(174, 191, 209, 0.4)",
   },
   chatInputNew: {
     flex: 1,
-    backgroundColor: "rgba(246, 246, 244, 0.8)",
+    backgroundColor: "rgba(254, 254, 253, 0.8)",
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -1979,7 +1979,7 @@ export default StyleSheet.create({
     width: 86,
     height: 86,
     borderRadius: 43,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -2242,7 +2242,7 @@ export default StyleSheet.create({
   },
   auraProfileCard: {
     marginHorizontal: 20,
-    backgroundColor: "rgba(246, 246, 244, 0.85)",
+    backgroundColor: "rgba(254, 254, 253, 0.85)",
     borderRadius: 24,
     padding: 20,
     flexDirection: "row",
@@ -2272,7 +2272,7 @@ export default StyleSheet.create({
     height: 70,
     borderRadius: 35,
     borderWidth: 2,
-    borderColor: "rgba(246, 246, 244, 0.9)",
+    borderColor: "rgba(254, 254, 253, 0.9)",
   },
   auraProfileInfo: {
     flex: 1,
@@ -2290,7 +2290,7 @@ export default StyleSheet.create({
     fontFamily: SERIF_FONT,
   },
   auraEditButton: {
-    backgroundColor: "rgba(246, 246, 244, 0.8)",
+    backgroundColor: "rgba(254, 254, 253, 0.8)",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -2307,7 +2307,7 @@ export default StyleSheet.create({
     marginBottom: 30,
   },
   auraMenuItem: {
-    backgroundColor: "rgba(246, 246, 244, 0.7)",
+    backgroundColor: "rgba(254, 254, 253, 0.7)",
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 16,
@@ -2774,7 +2774,7 @@ export default StyleSheet.create({
   meditationPlayerTrack: {
     height: 6,
     borderRadius: 999,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     overflow: "hidden",
   },
   meditationPlayerFill: {
@@ -2940,7 +2940,7 @@ export default StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     overflow: "hidden",
-    backgroundColor: "rgba(246, 246, 244, 0.6)",
+    backgroundColor: "rgba(254, 254, 253, 0.6)",
   },
   mediaImage: {
     width: "100%",
@@ -2954,7 +2954,7 @@ export default StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
-    backgroundColor: "rgba(246, 246, 244, 0.5)",
+    backgroundColor: "rgba(254, 254, 253, 0.5)",
   },
   mediaAdd: {
     width: 28,
@@ -3062,7 +3062,7 @@ export default StyleSheet.create({
   tabBarContainer: {
     width: "90%",
     height: 64,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
@@ -3089,7 +3089,7 @@ export default StyleSheet.create({
     height: 82,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
   },
   tabCircle: {
     top: -10,
@@ -3122,7 +3122,7 @@ export default StyleSheet.create({
   eventsSearchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(246, 246, 244, 0.7)",
+    backgroundColor: "rgba(254, 254, 253, 0.7)",
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -3140,7 +3140,7 @@ export default StyleSheet.create({
     paddingBottom: 100,
   },
   eventCard: {
-    backgroundColor: "rgba(246, 246, 244, 0.85)",
+    backgroundColor: "rgba(254, 254, 253, 0.85)",
     borderRadius: 20,
     marginBottom: 20,
     overflow: "hidden",
@@ -3461,7 +3461,7 @@ export default StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: "rgba(246, 246, 244, 0.95)",
+    backgroundColor: "rgba(254, 254, 253, 0.95)",
   },
   eventChatBackButton: {
     width: 40,
@@ -3545,7 +3545,7 @@ export default StyleSheet.create({
     paddingBottom: 16,
   },
   eventChatMessageBubble: {
-    backgroundColor: "rgba(246, 246, 244, 0.9)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
     borderRadius: 20,
     padding: 16,
     marginBottom: 12,
@@ -3571,7 +3571,7 @@ export default StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "rgba(246, 246, 244, 0.95)",
+    backgroundColor: "rgba(254, 254, 253, 0.95)",
     borderTopWidth: 1,
     borderTopColor: "rgba(174, 191, 209, 0.3)",
   },

@@ -363,7 +363,7 @@ const UserProfileSheet = ({
         visible={visible}
         onClose={detailsVisible ? closeDetails : onClose}
         closeOnBackdropPress={false}
-        backdropColor="#F6F6F4"
+        backdropColor="#FEFEFD"
         offsetY={0}
         sheetInDelay={0}
         sheetStyle={[localStyles.fullscreenSheet, { height }]}
@@ -386,7 +386,7 @@ const UserProfileSheet = ({
                 <ProfileMediaImage
                   source={item}
                   style={{ width, height }}
-                  fallbackBackgroundColor="#F6F6F4"
+                  fallbackBackgroundColor="#FEFEFD"
                   fallbackIconColor="#7F98B7"
                 />
               )}
@@ -498,7 +498,7 @@ const UserProfileSheet = ({
                 style={localStyles.galleryHint}
                 accessibilityLiveRegion="polite"
               >
-                <Icon name="swap-horizontal" size={25} color="#F6F6F4" />
+                <Icon name="swap-horizontal" size={25} color="#FEFEFD" />
                 <Text style={localStyles.galleryHintText}>
                   Deslizá para ver más fotos
                 </Text>
@@ -672,8 +672,8 @@ const UserProfileSheet = ({
 export default UserProfileSheet;
 
 const localStyles = StyleSheet.create({
-  fullscreenSheet: { width: "100%", backgroundColor: "#F6F6F4" },
-  screen: { flex: 1, overflow: "hidden", backgroundColor: "#F6F6F4" },
+  fullscreenSheet: { width: "100%", backgroundColor: "#FEFEFD" },
+  screen: { flex: 1, overflow: "hidden", backgroundColor: "#FEFEFD" },
   fallbackCanvas: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
@@ -715,7 +715,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(246, 246, 244, 0.9)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
     shadowColor: "#111",
     shadowOpacity: 0.14,
     shadowRadius: 12,
@@ -736,7 +736,7 @@ const localStyles = StyleSheet.create({
     height: 5,
     minWidth: 12,
     borderRadius: 3,
-    backgroundColor: "rgba(246, 246, 244, 0.62)",
+    backgroundColor: "rgba(254, 254, 253, 0.62)",
   },
   indicatorActive: { backgroundColor: "#D8A547" },
   counter: {
@@ -748,7 +748,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(246, 246, 244, 0.9)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
     zIndex: 5,
   },
   counterText: {
@@ -764,7 +764,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(246, 246, 244, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     shadowColor: "#111",
     shadowOpacity: 0.14,
     shadowRadius: 12,
@@ -786,7 +786,7 @@ const localStyles = StyleSheet.create({
   galleryHint: { alignSelf: "center", alignItems: "center", marginBottom: 14 },
   galleryHintText: {
     marginTop: 2,
-    color: "rgba(246, 246, 244, 0.9)",
+    color: "rgba(254, 254, 253, 0.9)",
     fontSize: 15,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,
@@ -794,14 +794,14 @@ const localStyles = StyleSheet.create({
   nameRow: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
   nameCopy: { flex: 1, minWidth: 0 },
   profileName: {
-    color: "#F6F6F4",
+    color: "#FEFEFD",
     fontSize: 42,
     lineHeight: 46,
     fontFamily: vibesTheme.fonts.thin,
   },
   profileAge: {
     marginTop: 1,
-    color: "rgba(246, 246, 244, 0.88)",
+    color: "rgba(254, 254, 253, 0.88)",
     fontSize: 21,
     lineHeight: 27,
     fontFamily: vibesTheme.fonts.medium,
@@ -815,7 +815,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
-    backgroundColor: "rgba(246, 246, 244, 0.94)",
+    backgroundColor: "rgba(254, 254, 253, 0.94)",
   },
   moreButtonText: {
     color: "#2B2B2B",
@@ -841,7 +841,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 28,
   },
   primaryActionText: {
-    color: "#F6F6F4",
+    color: "#FEFEFD",
     fontSize: 21,
     lineHeight: 26,
     fontFamily: vibesTheme.fonts.medium,
@@ -853,7 +853,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   secondaryActionText: {
-    color: "rgba(246, 246, 244, 0.9)",
+    color: "rgba(254, 254, 253, 0.9)",
     fontSize: 17,
     fontFamily: vibesTheme.fonts.medium,
   },
@@ -904,7 +904,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F6F6F4",
+    backgroundColor: "#FEFEFD",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
   },
