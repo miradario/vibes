@@ -1,3 +1,5 @@
+import DailyMoodCard from "../components/DailyMoodCard";
+import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -1134,6 +1136,9 @@ const Home = () => {
               </Text>
             </View>
           </View>
+
+          <DailyMoodCard userId={session?.user?.id} />
+          <CompleteProfilePrompt userId={session?.user?.id} />
 
           {SHOW_DAILY_GURU_SECTION && showGuruCard ? (
             <TouchableOpacity

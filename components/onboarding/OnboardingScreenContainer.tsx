@@ -25,8 +25,8 @@ const OnboardingScreenContainer = ({
     <SafeAreaView style={onboardingStyles.safeArea}>
       <KeyboardAvoidingView
         style={onboardingStyles.keyboard}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 18}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={0}
       >
         <View style={[onboardingStyles.content, contentStyle]}>
           <View style={onboardingStyles.card}>

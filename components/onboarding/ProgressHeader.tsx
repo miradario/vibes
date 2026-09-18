@@ -12,7 +12,11 @@ type ProgressHeaderProps = {
   showBack?: boolean;
 };
 
-const ProgressHeader = ({ progress, onBack, showBack = true }: ProgressHeaderProps) => (
+const ProgressHeader = ({
+  progress,
+  onBack,
+  showBack = true,
+}: ProgressHeaderProps) => (
   <View style={styles.wrap}>
     {showBack ? (
       <TouchableOpacity
@@ -27,8 +31,14 @@ const ProgressHeader = ({ progress, onBack, showBack = true }: ProgressHeaderPro
       <View style={styles.backSpacer} />
     )}
     <View style={styles.track}>
-      <View style={[styles.fill, { width: `${Math.max(0, Math.min(progress, 1)) * 100}%` }]} />
+      <View
+        style={[
+          styles.fill,
+          { width: `${Math.max(0, Math.min(progress, 1)) * 100}%` },
+        ]}
+      />
     </View>
+    <View style={styles.endSpacer} />
   </View>
 );
 
@@ -51,6 +61,7 @@ const styles = StyleSheet.create({
     height: 34,
     marginRight: isCompactOnboardingScreen ? 8 : 14,
   },
+  endSpacer: { width: 34, marginLeft: isCompactOnboardingScreen ? 8 : 14 },
   track: {
     flex: 1,
     height: 3,

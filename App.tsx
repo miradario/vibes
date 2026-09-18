@@ -1,3 +1,5 @@
+import VerifyEmail from "./screens/VerifyEmail";
+import ProfileQuestions from "./screens/ProfileQuestions";
 import CommunityGroupChat from "./screens/CommunityGroupChat";
 /** @format */
 
@@ -73,6 +75,7 @@ const linking = {
   config: {
     screens: {
       ResetPassword: "reset-password",
+      VerifyEmail: "verify-email",
     },
   },
 };
@@ -419,6 +422,11 @@ const AppNavigator = () => {
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen
+              name="VerifyEmail"
+              component={VerifyEmail}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="ResetPassword"
               component={ResetPassword}
               options={{ headerShown: false, animationEnabled: true }}
@@ -507,6 +515,11 @@ const AppNavigator = () => {
               name="CreateChallenge"
               component={CreateChallenge}
               options={{ headerShown: false, animationEnabled: true }}
+            />
+            <Stack.Screen
+              name="ProfileQuestions"
+              component={ProfileQuestions}
+              options={{ headerShown: false }}
             />
             <Stack.Screen
               name="EditProfile"

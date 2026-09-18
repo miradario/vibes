@@ -1,8 +1,10 @@
 export const VIBES_ONBOARDING_STEPS = [
   "purpose",
-  "energy",
   "profile",
   "practices",
+  "identity",
+  "interests",
+  "plans",
   "completion",
 ] as const;
 
@@ -57,19 +59,18 @@ export const PURPOSE_OPTIONS: OnboardingOption[] = [
 export const ENERGY_OPTIONS: OnboardingOption[] = [
   { id: "calm", label: "Calmado", icon: "water-outline", tone: "lavender" },
   { id: "open", label: "Abierto", icon: "heart-outline", tone: "sage" },
-  { id: "reflective", label: "Reflexivo", icon: "radio-button-on-outline", tone: "blue" },
+  {
+    id: "reflective",
+    label: "Reflexivo",
+    icon: "radio-button-on-outline",
+    tone: "blue",
+  },
   { id: "curious", label: "Curioso", icon: "search-outline", tone: "mustard" },
   { id: "social", label: "Social", icon: "people-outline", tone: "coral" },
   { id: "healing", label: "Sanando", icon: "leaf-outline", tone: "lavender" },
 ];
 
-export const AGE_RANGES = [
-  "18-24",
-  "25-34",
-  "35-44",
-  "45-54",
-  "55+",
-] as const;
+export const AGE_RANGES = ["18-24", "25-34", "35-44", "45-54", "55+"] as const;
 
 export const PRACTICE_OPTIONS = [
   "Meditación",
@@ -96,11 +97,6 @@ export const STEP_COPY: Record<
     subtitle: "Elegí lo que más resuene con vos",
     button: "Siguiente",
   },
-  energy: {
-    title: "¿Cómo te sentís hoy?",
-    subtitle: "Tu energía nos ayuda a crear mejores conexiones",
-    button: "Siguiente",
-  },
   profile: {
     title: "Contanos sobre vos",
     subtitle: "Así vas a poder mostrarte tal como sos",
@@ -109,6 +105,21 @@ export const STEP_COPY: Record<
   practices: {
     title: "Prácticas que te inspiran",
     subtitle: "Seleccioná las que forman parte de tu camino",
+    button: "Siguiente",
+  },
+  identity: {
+    title: "Un poco más sobre vos",
+    subtitle: "Todo es opcional",
+    button: "Siguiente",
+  },
+  interests: {
+    title: "Lo que disfrutás",
+    subtitle: "Todo es opcional",
+    button: "Siguiente",
+  },
+  plans: {
+    title: "Tus planes",
+    subtitle: "Todo es opcional",
     button: "Siguiente",
   },
   completion: {

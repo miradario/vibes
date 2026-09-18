@@ -97,7 +97,7 @@ const baseTranslations = {
         "Conocé personas que comparten tus desafíos o eventos.",
     },
     welcome: {
-      subtitle: "Un espacio para volver a vos",
+      subtitle: "",
       login: "Iniciar sesión",
       signup: "Crear cuenta",
     },
@@ -138,7 +138,7 @@ const baseTranslations = {
       confirmPassword: "Confirmar contraseña",
       submit: "Guardar contraseña",
       submitting: "Guardando...",
-      passwordLength: "La contraseña debe tener al menos 6 caracteres.",
+      passwordLength: "Usá al menos 8 caracteres y una mayúscula.",
       passwordMismatch: "Las contraseñas no coinciden.",
       invalidLink: "El link de recuperación no es válido o venció.",
       failed: "No se pudo actualizar la contraseña.",
@@ -147,6 +147,7 @@ const baseTranslations = {
       successPrimary: "Continuar",
     },
     signup: {
+      invalidEmail: "Ingresá un email válido.",
       header: "Signup",
       title: "Crear cuenta",
       subtitle: "Comenzá tu viaje consciente",
@@ -158,7 +159,7 @@ const baseTranslations = {
       googleFailed: "No se pudo conectar con Google.",
       appleFailed: "No se pudo conectar con Apple.",
       missingFields: "Por favor completá todos los campos.",
-      passwordLength: "La contraseña debe tener al menos 6 caracteres.",
+      passwordLength: "Usá al menos 8 caracteres y una mayúscula.",
       accountExists:
         "Ya existe una cuenta con ese email. Iniciá sesión o recuperá tu contraseña.",
       failed: "No se pudo crear la cuenta.",
@@ -644,7 +645,7 @@ const baseTranslations = {
         "Meet people who share your challenges or events.",
     },
     welcome: {
-      subtitle: "A calm space to begin",
+      subtitle: "",
       login: "Log in",
       signup: "Sign up",
     },
@@ -683,7 +684,7 @@ const baseTranslations = {
       confirmPassword: "Confirm password",
       submit: "Save password",
       submitting: "Saving...",
-      passwordLength: "Your password must be at least 6 characters.",
+      passwordLength: "Use at least 8 characters and one uppercase letter.",
       passwordMismatch: "Passwords do not match.",
       invalidLink: "The recovery link is invalid or expired.",
       failed: "Could not update your password.",
@@ -692,6 +693,7 @@ const baseTranslations = {
       successPrimary: "Continue",
     },
     signup: {
+      invalidEmail: "Enter a valid email address.",
       header: "Signup",
       title: "Create account",
       subtitle: "Begin your conscious journey",
@@ -703,7 +705,7 @@ const baseTranslations = {
       googleFailed: "Could not connect with Google.",
       appleFailed: "Could not connect with Apple.",
       missingFields: "Please complete all fields.",
-      passwordLength: "Your password must be at least 6 characters.",
+      passwordLength: "Use at least 8 characters and one uppercase letter.",
       accountExists:
         "An account already exists with that email. Sign in or reset your password.",
       failed: "Could not create your account.",

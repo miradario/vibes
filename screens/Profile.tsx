@@ -1,3 +1,4 @@
+import EmailVerificationCard from "../components/EmailVerificationCard";
 /** @format */
 
 import React from "react";
@@ -15,10 +16,7 @@ import { Icon } from "../components";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
-import {
-  useAuthSession,
-  useLogoutMutation,
-} from "../src/auth/auth.queries";
+import { useAuthSession, useLogoutMutation } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
@@ -42,15 +40,12 @@ const Profile = () => {
       ...(profile ?? {}),
       ...(userPreferences ?? {}),
     },
-    session?.user?.email?.split("@")[0],
+    session?.user?.email?.split("@")[0]
   );
 
-  const displayName =
-    ownProfile.name;
+  const displayName = ownProfile.name;
 
-  const location =
-    ownProfile.location ||
-    "Buenos Aires";
+  const location = ownProfile.location || "Buenos Aires";
   const ownAvatarUri = ownProfile.avatarUri ?? null;
 
   const [firstName, ...restNames] = displayName.split(" ").filter(Boolean);
@@ -59,6 +54,11 @@ const Profile = () => {
     : firstName;
 
   const menuItems = [
+    {
+      icon: "create-outline",
+      label: "Completar y editar respuestas",
+      screen: "ProfileQuestions",
+    },
     {
       icon: "heart-outline",
       label: t("profile.preferences"),
@@ -111,7 +111,7 @@ const Profile = () => {
             void Linking.openURL(ACCOUNT_DELETION_URL);
           },
         },
-      ],
+      ]
     );
   };
 
@@ -119,7 +119,9 @@ const Profile = () => {
     <View style={styles.bg}>
       <ScrollView
         style={styles.containerProfile}
-        contentContainerStyle={{ paddingBottom: getBottomTabContentPadding(insets.bottom, 48) }}
+        contentContainerStyle={{
+          paddingBottom: getBottomTabContentPadding(insets.bottom, 48),
+        }}
         showsVerticalScrollIndicator={false}
       >
         <AppHeader
@@ -145,6 +147,8 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
 
+        <EmailVerificationCard userId={session?.user?.id} />
+
         <View style={styles.auraMenuList}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
@@ -165,11 +169,16 @@ const Profile = () => {
             </TouchableOpacity>
           ))}
 
-          <TouchableOpacity style={styles.auraMenuItem} onPress={handleDeleteAccount}>
+          <TouchableOpacity
+            style={styles.auraMenuItem}
+            onPress={handleDeleteAccount}
+          >
             <View style={styles.auraMenuIconWrap}>
               <Icon name="trash-outline" size={22} color={TEXT_SECONDARY} />
             </View>
-            <Text style={styles.auraMenuLabel}>{t("profile.deleteAccount")}</Text>
+            <Text style={styles.auraMenuLabel}>
+              {t("profile.deleteAccount")}
+            </Text>
             <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
           </TouchableOpacity>
 

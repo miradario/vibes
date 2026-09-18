@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -71,15 +70,15 @@ const VibesMinimalOnboarding = ({
     });
     titleOpacity.value = withDelay(
       120,
-      withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) }),
+      withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) })
     );
     titleY.value = withDelay(
       120,
-      withTiming(0, { duration: 380, easing: Easing.out(Easing.cubic) }),
+      withTiming(0, { duration: 380, easing: Easing.out(Easing.cubic) })
     );
     ctaOpacity.value = withDelay(
       260,
-      withTiming(1, { duration: 360, easing: Easing.out(Easing.cubic) }),
+      withTiming(1, { duration: 360, easing: Easing.out(Easing.cubic) })
     );
   }, [ctaOpacity, illustrationOpacity, titleOpacity, titleY]);
 
@@ -172,7 +171,7 @@ const VibesMinimalOnboarding = ({
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     ctaScale.value = withSequence(
       withTiming(0.96, { duration: 90 }),
-      withTiming(1, { duration: 120 }),
+      withTiming(1, { duration: 120 })
     );
 
     if (!reverseVideoOnContinue) {
@@ -205,42 +204,6 @@ const VibesMinimalOnboarding = ({
 
   return (
     <SafeAreaView style={styles.container}>
-      <View pointerEvents="none" style={styles.topGlowOverlay}>
-        <Svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-        >
-          <Defs>
-            <LinearGradient
-              id="ScreenTopRightGlow"
-              x1="100"
-              y1="0"
-              x2="35"
-              y2="70"
-            >
-              <Stop
-                offset="0"
-                stopColor={vibesTheme.colors.accentMustard}
-                stopOpacity={0.11}
-              />
-              <Stop
-                offset="1"
-                stopColor={vibesTheme.colors.accentMustard}
-                stopOpacity={0}
-              />
-            </LinearGradient>
-          </Defs>
-          <Rect
-            x="0"
-            y="0"
-            width="100"
-            height="100"
-            fill="url(#ScreenTopRightGlow)"
-          />
-        </Svg>
-      </View>
       <Animated.View
         style={[
           styles.illustrationArea,
@@ -250,12 +213,12 @@ const VibesMinimalOnboarding = ({
       >
         <Video
           ref={videoRef}
-          source={require("../../../assets/videos/boarding.mp4")}
+          source={require("../../../assets/videos/boarding-integrated.mp4")}
           style={styles.video}
           resizeMode={ResizeMode.CONTAIN}
           shouldPlay={videoShouldPlay}
           isMuted
-          isLooping
+          isLooping={false}
           onPlaybackStatusUpdate={updatePlaybackStatus}
         />
       </Animated.View>
@@ -266,9 +229,11 @@ const VibesMinimalOnboarding = ({
             {title}
           </Text>
         ) : null}
-        <Text style={[styles.body, !hasTitle && styles.bodyWithoutTitle]}>
-          {body}
-        </Text>
+        {body.trim() ? (
+          <Text style={[styles.body, !hasTitle && styles.bodyWithoutTitle]}>
+            {body}
+          </Text>
+        ) : null}
       </Animated.View>
 
       <AnimatedPressable
@@ -286,7 +251,10 @@ const VibesMinimalOnboarding = ({
         )}
       </AnimatedPressable>
 
-      <Animated.View pointerEvents="none" style={[styles.blurOverlay, blurStyle]} />
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.blurOverlay, blurStyle]}
+      />
       {isContinuing ? (
         <View pointerEvents="none" style={styles.loaderOverlay}>
           <VibesLoader size={94} />
@@ -299,7 +267,7 @@ const VibesMinimalOnboarding = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
   },
   topGlowOverlay: {
@@ -327,7 +295,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: vibesTheme.spacing.xl,
   },
   title: {
-    fontSize: 42,
+    fontSize: 36,
+    lineHeight: 48,
     letterSpacing: 0.3,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
@@ -336,7 +305,7 @@ const styles = StyleSheet.create({
   body: {
     marginTop: vibesTheme.spacing.lg,
     fontSize: 24,
-    lineHeight: 22,
+    lineHeight: 34,
     textAlign: "center",
     color: vibesTheme.colors.secondaryText,
     fontFamily: vibesTheme.fonts.medium,

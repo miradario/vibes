@@ -1,8 +1,5 @@
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +7,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import styles, { DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
+import KeyboardSheetModal from "./KeyboardSheetModal";
+import styles, {
+  DARK_GRAY,
+  GRAY,
+  PRIMARY_COLOR,
+  WHITE,
+} from "../assets/styles";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import type { SpiritualPathDetail } from "../src/lib/spiritualPaths";
 import {
@@ -73,151 +76,139 @@ const SpiritualPathDetailsModal = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        activeOpacity={1}
-        style={localStyles.overlay}
-        onPress={onClose}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={localStyles.keyboardWrap}
+    <KeyboardSheetModal visible={visible} onClose={closeWithValidation}>
+      <View style={localStyles.card}>
+        <ScrollView
+          style={localStyles.content}
+          contentContainerStyle={localStyles.contentInner}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets={false}
         >
-          <View style={localStyles.card}>
-            <Text style={localStyles.title} maxFontSizeMultiplier={1}>
-              {pathLabel
-                ? translateSpiritualPathLabel(locale, pathLabel)
-                : t("spiritual.defaultTitle")}
-            </Text>
-            <Text style={localStyles.subtitle}>
-              {readOnly
-                ? t("spiritual.sharedData")
-                : t("spiritual.optionalData")}
-            </Text>
+          <Text style={localStyles.title} maxFontSizeMultiplier={1}>
+            {pathLabel
+              ? translateSpiritualPathLabel(locale, pathLabel)
+              : t("spiritual.defaultTitle")}
+          </Text>
+          <Text style={localStyles.subtitle}>
+            {readOnly ? t("spiritual.sharedData") : t("spiritual.optionalData")}
+          </Text>
 
-            <ScrollView
-              style={localStyles.content}
-              contentContainerStyle={localStyles.contentInner}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {readOnly ? (
-                filledEntries.length > 0 ? (
-                  filledEntries.map((entry) => (
-                    <View key={entry.key} style={localStyles.readOnlyItem}>
-                      <Text style={localStyles.readOnlyLabel}>
-                        {translateSpiritualFieldLabel(locale, entry.label)}
-                      </Text>
-                      <Text style={localStyles.readOnlyValue}>{entry.value}</Text>
-                    </View>
-                  ))
-                ) : (
-                  <View style={localStyles.emptyState}>
-                    <Text style={localStyles.emptyStateText}>
-                      {t("spiritual.noExtraData")}
-                    </Text>
-                  </View>
-                )
-              ) : (
-                SPIRITUAL_PATH_DETAIL_FIELDS.map((field) => (
-                  <View key={field.key} style={localStyles.fieldWrap}>
-                    <Text style={localStyles.fieldLabel}>
-                      {translateSpiritualFieldLabel(locale, field.label)}
-                    </Text>
-                    {field.options ? (
-                      <View style={localStyles.optionRow}>
-                        {field.options.map((option) => {
-                          const active = detail[field.key] === option;
-                          return (
-                            <TouchableOpacity
-                              key={`${field.key}-${option}`}
-                              style={[
-                                localStyles.optionChip,
-                                active && localStyles.optionChipActive,
-                              ]}
-                              onPress={() =>
-                                onChange?.({
-                                  ...detail,
-                                  [field.key]: option,
-                                })
-                              }
-                              activeOpacity={0.85}
-                            >
-                              <Text
-                                style={[
-                                  localStyles.optionChipText,
-                                  active && localStyles.optionChipTextActive,
-                                ]}
-                              >
-                                {translateSpiritualOption(locale, option)}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    ) : (
-                      <TextInput
-                        style={[
-                          styles.loginInput,
-                          localStyles.input,
-                          field.multiline && localStyles.notesInput,
-                        ]}
-                        placeholder={translateSpiritualPlaceholder(locale, field.placeholder)}
-                        placeholderTextColor={GRAY}
-                        keyboardType={field.keyboardType ?? "default"}
-                        multiline={Boolean(field.multiline)}
-                        numberOfLines={field.multiline ? 4 : 1}
-                        textAlignVertical={field.multiline ? "top" : "center"}
-                        value={detail[field.key] ?? ""}
-                        onChangeText={(text) => {
-                          if (field.key === "years") {
-                            setYearsError(null);
-                          }
-                          onChange?.({
-                            ...detail,
-                            [field.key]: getNextFieldValue(field.key, text),
-                          });
-                        }}
-                      />
-                    )}
-                    {field.key === "years" && yearsError ? (
-                      <Text style={localStyles.errorText}>{yearsError}</Text>
-                    ) : null}
-                  </View>
-                ))
-              )}
-            </ScrollView>
-
-            <View style={localStyles.footer}>
-              {!readOnly && onRemove ? (
-                <TouchableOpacity
-                  style={localStyles.removeButton}
-                  onPress={onRemove}
-                  activeOpacity={0.85}
-                >
-                  <Text style={localStyles.removeButtonText}>{t("spiritual.removePath")}</Text>
-                </TouchableOpacity>
-              ) : null}
-
-              <TouchableOpacity
-                style={localStyles.primaryButton}
-                onPress={closeWithValidation}
-                activeOpacity={0.9}
-              >
-                <Text style={localStyles.primaryButtonText}>
-                  {readOnly ? t("common.close") : t("common.done")}
+          {readOnly ? (
+            filledEntries.length > 0 ? (
+              filledEntries.map((entry) => (
+                <View key={entry.key} style={localStyles.readOnlyItem}>
+                  <Text style={localStyles.readOnlyLabel}>
+                    {translateSpiritualFieldLabel(locale, entry.label)}
+                  </Text>
+                  <Text style={localStyles.readOnlyValue}>{entry.value}</Text>
+                </View>
+              ))
+            ) : (
+              <View style={localStyles.emptyState}>
+                <Text style={localStyles.emptyStateText}>
+                  {t("spiritual.noExtraData")}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </TouchableOpacity>
-    </Modal>
+              </View>
+            )
+          ) : (
+            SPIRITUAL_PATH_DETAIL_FIELDS.map((field) => (
+              <View key={field.key} style={localStyles.fieldWrap}>
+                <Text style={localStyles.fieldLabel}>
+                  {translateSpiritualFieldLabel(locale, field.label)}
+                </Text>
+                {field.options ? (
+                  <View style={localStyles.optionRow}>
+                    {field.options.map((option) => {
+                      const active = detail[field.key] === option;
+                      return (
+                        <TouchableOpacity
+                          key={`${field.key}-${option}`}
+                          style={[
+                            localStyles.optionChip,
+                            active && localStyles.optionChipActive,
+                          ]}
+                          onPress={() =>
+                            onChange?.({
+                              ...detail,
+                              [field.key]: option,
+                            })
+                          }
+                          activeOpacity={0.85}
+                        >
+                          <Text
+                            style={[
+                              localStyles.optionChipText,
+                              active && localStyles.optionChipTextActive,
+                            ]}
+                          >
+                            {translateSpiritualOption(locale, option)}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <TextInput
+                    style={[
+                      styles.loginInput,
+                      localStyles.input,
+                      field.multiline && localStyles.notesInput,
+                    ]}
+                    placeholder={translateSpiritualPlaceholder(
+                      locale,
+                      field.placeholder
+                    )}
+                    placeholderTextColor={GRAY}
+                    keyboardType={field.keyboardType ?? "default"}
+                    multiline={Boolean(field.multiline)}
+                    numberOfLines={field.multiline ? 4 : 1}
+                    textAlignVertical={field.multiline ? "top" : "center"}
+                    value={detail[field.key] ?? ""}
+                    onChangeText={(text) => {
+                      if (field.key === "years") {
+                        setYearsError(null);
+                      }
+                      onChange?.({
+                        ...detail,
+                        [field.key]: getNextFieldValue(field.key, text),
+                      });
+                    }}
+                  />
+                )}
+                {field.key === "years" && yearsError ? (
+                  <Text style={localStyles.errorText}>{yearsError}</Text>
+                ) : null}
+              </View>
+            ))
+          )}
+        </ScrollView>
+        <View style={localStyles.footer}>
+          {!readOnly && onRemove ? (
+            <TouchableOpacity
+              style={localStyles.removeButton}
+              onPress={onRemove}
+              activeOpacity={0.85}
+            >
+              <Text style={localStyles.removeButtonText}>
+                {t("spiritual.removePath")}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          <TouchableOpacity
+            style={localStyles.primaryButton}
+            onPress={closeWithValidation}
+            activeOpacity={0.9}
+          >
+            <Text style={localStyles.primaryButtonText}>
+              {readOnly ? t("common.close") : t("common.done")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardSheetModal>
   );
 };
 
@@ -235,7 +226,7 @@ const localStyles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    maxHeight: "84%",
+    maxHeight: "100%",
     borderRadius: 28,
     backgroundColor: WHITE,
     paddingHorizontal: 26,

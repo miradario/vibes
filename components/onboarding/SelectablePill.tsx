@@ -20,6 +20,9 @@ const SelectablePill = ({
   isAddOption = false,
 }: SelectablePillProps) => (
   <TouchableOpacity
+    accessibilityRole="checkbox"
+    accessibilityState={{ checked: selected }}
+    accessibilityLabel={label}
     style={[
       onboardingStyles.pill,
       isAddOption && onboardingStyles.pillAdd,
@@ -30,9 +33,15 @@ const SelectablePill = ({
   >
     <Text style={onboardingStyles.pillText}>{label}</Text>
     <Icon
-      name={isAddOption ? "add" : selected ? "checkmark-circle" : "ellipse-outline"}
+      name={
+        isAddOption ? "add" : selected ? "checkmark-circle" : "ellipse-outline"
+      }
       size={isAddOption ? 20 : 16}
-      color={selected || isAddOption ? ONBOARDING_COLORS.mustard : "rgba(43, 43, 43, 0.22)"}
+      color={
+        selected || isAddOption
+          ? ONBOARDING_COLORS.mustard
+          : "rgba(43, 43, 43, 0.22)"
+      }
       style={onboardingStyles.pillIcon}
     />
   </TouchableOpacity>

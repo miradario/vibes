@@ -79,7 +79,7 @@ const OnboardingVideo = ({
         resizeMode={resizeMode}
         shouldPlay
         isMuted
-        isLooping
+        isLooping={false}
         onReadyForDisplay={() => {
           setHasError(false);
           setIsReady(true);

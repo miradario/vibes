@@ -16,7 +16,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { ResizeMode } from "expo-av";
+import { isValidEmail, isValidPassword } from "../src/auth/passwordPolicy";
 import {
   CommonActions,
   useNavigation,
@@ -29,7 +29,6 @@ import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
 import Icon from "../components/Icon";
-import LoopingVideo from "../components/LoopingVideo";
 import { useI18n } from "../src/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
@@ -116,7 +115,12 @@ const Signup = () => {
       return;
     }
 
-    if (password.length < 6) {
+    if (!isValidEmail(email)) {
+      setError(t("signup.invalidEmail"));
+      return;
+    }
+
+    if (!isValidPassword(password)) {
       setError(t("signup.passwordLength"));
       return;
     }
@@ -211,20 +215,7 @@ const Signup = () => {
   };
 
   return (
-    <View style={styles.bg}>
-      <View
-        style={[
-          localStyles.heroWrap,
-          { marginTop: Math.max(insets.top + 4, 36) },
-        ]}
-      >
-        <LoopingVideo
-          source={require("../assets/videos/signup.mp4")}
-          posterSource={require("../assets/images/challenges/signup.png")}
-          style={localStyles.signupIllustration}
-          resizeMode={ResizeMode.CONTAIN}
-        />
-      </View>
+    <View style={[styles.bg, { paddingTop: insets.top }]}>
       <KeyboardAvoidingView
         style={[styles.loginContainer, localStyles.loginContainer]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -267,34 +258,6 @@ const Signup = () => {
                 />
               </View>
             ) : null}
-
-            <TouchableOpacity
-              activeOpacity={0.78}
-              style={localStyles.termsRow}
-              onPress={() => setAcceptedTerms((value) => !value)}
-            >
-              <View
-                style={[
-                  localStyles.checkbox,
-                  acceptedTerms && localStyles.checkboxChecked,
-                ]}
-              >
-                {acceptedTerms ? (
-                  <Icon name="checkmark" size={14} color="#fff" />
-                ) : null}
-              </View>
-              <Text style={localStyles.termsText}>
-                {t("authTerms.prefix")}{" "}
-                <Text
-                  style={localStyles.termsLink}
-                  onPress={() =>
-                    navigation.navigate("TermsConditions" as never)
-                  }
-                >
-                  {t("authTerms.link")}
-                </Text>
-              </Text>
-            </TouchableOpacity>
 
             <View style={localStyles.divider}>
               <View style={localStyles.dividerLine} />
@@ -345,6 +308,38 @@ const Signup = () => {
                 </TouchableOpacity>
               </View>
             </View>
+
+            <Text style={[localStyles.termsText, { flex: 0, marginTop: 8 }]}>
+              {t("signup.passwordLength")}
+            </Text>
+
+            <TouchableOpacity
+              activeOpacity={0.78}
+              style={localStyles.termsRow}
+              onPress={() => setAcceptedTerms((value) => !value)}
+            >
+              <View
+                style={[
+                  localStyles.checkbox,
+                  acceptedTerms && localStyles.checkboxChecked,
+                ]}
+              >
+                {acceptedTerms ? (
+                  <Icon name="checkmark" size={14} color="#fff" />
+                ) : null}
+              </View>
+              <Text style={localStyles.termsText}>
+                {t("authTerms.prefix")}{" "}
+                <Text
+                  style={localStyles.termsLink}
+                  onPress={() =>
+                    navigation.navigate("TermsConditions" as never)
+                  }
+                >
+                  {t("authTerms.link")}
+                </Text>
+              </Text>
+            </TouchableOpacity>
 
             {error ? <Text style={styles.loginError}>{error}</Text> : null}
 
@@ -457,7 +452,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   loginContainer: {
-    marginTop: -18,
+    marginTop: 0,
   },
   loginCard: {
     flexGrow: 1,

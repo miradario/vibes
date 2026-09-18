@@ -221,7 +221,6 @@ const buildPreferences = (profile: ProfileLike): string[] => {
   }
 
   pushPreference("Camino espiritual", profile.spiritualPath ?? profile.spiritual_path);
-  pushPreference("Energía", profile.energy);
   pushPreference("Propósito", profile.purpose);
   pushPreference("Vegetarianismo", normalizeVegetarianValue(profile.vegetarian));
   pushPreference("Fuma", profile.smoking);
@@ -246,7 +245,12 @@ const buildPreferences = (profile: ProfileLike): string[] => {
   pushPreference("Estilo de amor", profile.loveStyle ?? profile.love_style);
   pushPreference("Mascotas", profile.pets);
 
-  return Array.from(new Set(preferences)).slice(0, 16);
+  const answers = profile.profileAnswers ?? profile.profile_answers;
+  if (answers && typeof answers === "object" && !Array.isArray(answers)) {
+    const fields = { hobbies: "Intereses", favoritePlans: "Planes", activity: "Actividad física", pets: "Mascotas", habits: "Hábitos", idealPlan: "Mi plan ideal", talkAbout: "Podría hablar de", trySomething: "Me gustaría probar" };
+    for (const [key, label] of Object.entries(fields)) pushPreference(label, (answers as Record<string, unknown>)[key]);
+  }
+  return Array.from(new Set(preferences));
 };
 
 const formatLocation = (profile: ProfileLike) => {

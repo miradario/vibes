@@ -3,7 +3,7 @@ import {
   Alert,
   Animated,
   Easing,
-  Modal,
+  ScrollView,
   Platform,
   Text,
   TextInput,
@@ -14,6 +14,9 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { CommonActions, useNavigation } from "@react-navigation/native";
+import KeyboardSheetModal from "../../../components/KeyboardSheetModal";
+import ProfileQuestionsForm from "../../../components/onboarding/ProfileQuestionsForm";
+import type { ProfileAnswers } from "../../lib/profileQuestions";
 import Icon from "../../../components/Icon";
 import SpiritualPathDetailsModal from "../../../components/SpiritualPathDetailsModal";
 import OnboardingScreenContainer from "../../../components/onboarding/OnboardingScreenContainer";
@@ -39,17 +42,12 @@ import {
   useOnboardingDraft,
 } from "../../queries/onboarding.queries";
 import {
-  ENERGY_OPTIONS,
   PRACTICE_OPTIONS,
   PURPOSE_OPTIONS,
   VIBES_ONBOARDING_STEPS,
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
-import {
-  ONBOARDING_COLORS,
-  onboardingStyles,
-  toneColor,
-} from "./vibesOnboardingStyles";
+import { ONBOARDING_COLORS, onboardingStyles } from "./vibesOnboardingStyles";
 import VibesMinimalOnboarding from "./VibesMinimalOnboarding";
 import { useI18n } from "../../i18n";
 
@@ -60,22 +58,6 @@ const MAX_AGE = 99;
 const getProgress = (stepIndex: number) =>
   (stepIndex + 1) / VIBES_ONBOARDING_STEPS.length;
 
-const buildAboutMe = (purposeIds: string[], energyIds: string[]) => {
-  const purposeLabels = PURPOSE_OPTIONS.filter((option) =>
-    purposeIds.includes(option.id)
-  ).map((option) => option.label);
-  const energyLabels = ENERGY_OPTIONS.filter((option) =>
-    energyIds.includes(option.id)
-  ).map((option) => option.label);
-
-  return [
-    purposeLabels.length ? `Me trae a Vibes: ${purposeLabels.join(", ")}.` : "",
-    energyLabels.length ? `Hoy me siento: ${energyLabels.join(", ")}.` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-};
-
 const getSelectedLabels = (
   selectedIds: string[],
   options: { id: string; label: string }[]
@@ -83,72 +65,6 @@ const getSelectedLabels = (
   options
     .filter((option) => selectedIds.includes(option.id))
     .map((option) => option.label);
-
-const buildProfileAboutMe = (
-  briefDescription: string,
-  purposeIds: string[],
-  energyIds: string[]
-) =>
-  [briefDescription.trim(), buildAboutMe(purposeIds, energyIds)]
-    .filter(Boolean)
-    .join(" ");
-
-const getOptionLabels = (
-  selectedIds: string[],
-  options: { id: string; label: string }[]
-) =>
-  options
-    .filter((option) => selectedIds.includes(option.id))
-    .map((option) => option.label.toLowerCase());
-
-const formatShortList = (items: string[], maxItems = 2) => {
-  const visibleItems = items.slice(0, maxItems);
-  if (!visibleItems.length) return "";
-  if (visibleItems.length === 1) return visibleItems[0];
-  return `${visibleItems.slice(0, -1).join(", ")} y ${
-    visibleItems[visibleItems.length - 1]
-  }`;
-};
-
-const buildCompletionSummary = ({
-  displayName,
-  purposeIds,
-  energyIds,
-  selectedPractices,
-  briefDescription,
-}: {
-  displayName: string;
-  purposeIds: string[];
-  energyIds: string[];
-  selectedPractices: string[];
-  briefDescription: string;
-}) => {
-  const name = displayName.trim();
-  const purposes = formatShortList(
-    getOptionLabels(purposeIds, PURPOSE_OPTIONS)
-  );
-  const energies = formatShortList(getOptionLabels(energyIds, ENERGY_OPTIONS));
-  const practices = formatShortList(
-    selectedPractices
-      .filter((practice) => practice !== "Otras")
-      .map((practice) => practice.toLowerCase())
-  );
-  const selfDescription = briefDescription.trim();
-  const intro = name ? `${name}, tu vibe combina` : "Tu vibe combina";
-  const parts = [
-    purposes || selfDescription
-      ? `${purposes || selfDescription.toLowerCase()}`
-      : "",
-    energies ? `energía ${energies}` : "",
-    practices ? `prácticas como ${practices}` : "",
-  ].filter(Boolean);
-
-  if (!parts.length) {
-    return `${intro} calma, presencia y apertura.`;
-  }
-
-  return `${intro} ${parts.join(", ")}.`;
-};
 
 const VibesOnboardingFlow = () => {
   const navigation = useNavigation();
@@ -158,8 +74,12 @@ const VibesOnboardingFlow = () => {
   const completeMutation = useCompleteOnboardingMutation();
   const transition = useRef(new Animated.Value(1)).current;
   const [stepIndex, setStepIndex] = useState(0);
-  const [purposeIds, setPurposeIds] = useState<string[]>(draft.purpose ?? []);
-  const [energyIds, setEnergyIds] = useState<string[]>(draft.energy ?? []);
+  const [purposeIds, setPurposeIds] = useState<string[]>(
+    draft.purposeIds ?? []
+  );
+  const [answers, setAnswers] = useState<ProfileAnswers>(
+    draft.profileAnswers ?? {}
+  );
   const [displayName, setDisplayName] = useState(draft.displayName ?? "");
   const [briefDescription, setBriefDescription] = useState(
     draft.briefDescription ?? ""
@@ -203,63 +123,6 @@ const VibesOnboardingFlow = () => {
     subtitle: t(`vibesOnboarding.${step}.subtitle`),
     button: t(`vibesOnboarding.${step}.button`),
   };
-  const fallbackCompletionSummary = useMemo(() => {
-    if (locale === "en") {
-      const name = displayName.trim();
-      const purposes = formatShortList(
-        PURPOSE_OPTIONS.filter((option) => purposeIds.includes(option.id)).map(
-          (option) =>
-            t(`vibesOnboarding.purposeOptions.${option.id}`).toLowerCase()
-        )
-      );
-      const energies = formatShortList(
-        ENERGY_OPTIONS.filter((option) => energyIds.includes(option.id)).map(
-          (option) =>
-            t(`vibesOnboarding.energyOptions.${option.id}`).toLowerCase()
-        )
-      );
-      const practices = formatShortList(
-        selectedPractices
-          .filter((practice) => practice !== "Otras")
-          .map((practice) =>
-            t(`vibesOnboarding.practicesOptions.${practice}`).toLowerCase()
-          )
-      );
-      const parts = [
-        purposes,
-        energies ? `${energies} energy` : "",
-        practices ? `practices like ${practices}` : "",
-      ].filter(Boolean);
-
-      if (!parts.length) {
-        return name
-          ? `${name}, your vibe reflects presence, calm and openness.`
-          : "Your vibe reflects presence, calm and openness.";
-      }
-
-      return `${
-        name ? `${name}, your vibe brings` : "Your vibe brings"
-      } ${parts.join(", ")}.`;
-    }
-
-    return buildCompletionSummary({
-      displayName,
-      purposeIds,
-      energyIds,
-      selectedPractices,
-      briefDescription,
-    });
-  }, [
-    briefDescription,
-    displayName,
-    energyIds,
-    locale,
-    purposeIds,
-    selectedPractices,
-    t,
-  ]);
-  const completionSummary = fallbackCompletionSummary;
-
   useEffect(() => {
     transition.setValue(0);
     Animated.timing(transition, {
@@ -286,7 +149,7 @@ const VibesOnboardingFlow = () => {
     () => ({
       ...draft,
       purposeIds,
-      energyIds,
+      profileAnswers: answers,
       displayName,
       briefDescription,
       age,
@@ -294,12 +157,12 @@ const VibesOnboardingFlow = () => {
       birthDate: birthDate ? formatBirthDate(birthDate) : "",
       spiritualPath: selectedPractices,
       spiritualPathDetails: practiceDetails,
-      aboutMe: buildProfileAboutMe(briefDescription, purposeIds, energyIds),
+      aboutMe: briefDescription.trim(),
       purpose: getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
-      energy: getSelectedLabels(energyIds, ENERGY_OPTIONS),
+      energy: [],
+      energyIds: [],
       otherTags: [
         ...getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
-        ...getSelectedLabels(energyIds, ENERGY_OPTIONS),
         ...selectedPractices,
         age ? `age:${age}` : "",
       ].filter(Boolean),
@@ -312,7 +175,7 @@ const VibesOnboardingFlow = () => {
       briefDescription,
       displayName,
       draft,
-      energyIds,
+      answers,
       photoUri,
       practiceDetails,
       purposeIds,
@@ -322,14 +185,13 @@ const VibesOnboardingFlow = () => {
 
   const canContinue =
     (step === "purpose" && purposeIds.length > 0) ||
-    (step === "energy" && energyIds.length > 0) ||
     (step === "profile" &&
       Boolean(displayName.trim()) &&
       Boolean(birthDate) &&
       Number(age) >= MIN_AGE &&
       Number(age) <= MAX_AGE) ||
     step === "practices" ||
-    step === "completion";
+    ["identity", "interests", "plans", "completion"].includes(step);
 
   const practiceOptions = useMemo(() => {
     const baseOptions = PRACTICE_OPTIONS.filter(
@@ -402,12 +264,6 @@ const VibesOnboardingFlow = () => {
     );
   };
 
-  const toggleEnergy = (id: string) => {
-    setEnergyIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
   const togglePractice = (practice: string) => {
     if (practice === "Otras") {
       setCustomPracticeName("");
@@ -424,7 +280,6 @@ const VibesOnboardingFlow = () => {
         });
         return prev.filter((item) => item !== practice);
       }
-      setActivePractice(practice);
       return [...prev, practice];
     });
   };
@@ -438,7 +293,6 @@ const VibesOnboardingFlow = () => {
     );
     setCustomPracticeModalVisible(false);
     setCustomPracticeName("");
-    setActivePractice(nextPractice);
   };
 
   const handlePhotoChange = (nextUri: string) => {
@@ -459,8 +313,11 @@ const VibesOnboardingFlow = () => {
     }));
   };
 
-  const getPracticeLabel = (practice: string) =>
-    t(`vibesOnboarding.practicesOptions.${practice}`);
+  const getPracticeLabel = (practice: string) => {
+    const key = `vibesOnboarding.practicesOptions.${practice}`;
+    const translated = t(key);
+    return translated === key ? practice : translated;
+  };
 
   const renderTitle = (targetStep: VibesOnboardingStep) => (
     <>
@@ -499,49 +356,6 @@ const VibesOnboardingFlow = () => {
             onPress={() => togglePurpose(option.id)}
           />
         ))}
-      </View>
-    </>
-  );
-
-  const renderEnergy = () => (
-    <>
-      {renderTitle("energy")}
-      <View style={onboardingStyles.energyGrid}>
-        {ENERGY_OPTIONS.map((option) => {
-          const selected = energyIds.includes(option.id);
-          return (
-            <TouchableOpacity
-              key={option.id}
-              style={onboardingStyles.energyItem}
-              onPress={() => toggleEnergy(option.id)}
-              activeOpacity={0.82}
-            >
-              <View
-                style={[
-                  onboardingStyles.energyCircle,
-                  { backgroundColor: `${toneColor(option.tone)}42` },
-                  selected && {
-                    borderWidth: 1,
-                    borderColor: ONBOARDING_COLORS.mustard,
-                  },
-                ]}
-              >
-                <Icon
-                  name={option.icon as never}
-                  size={26}
-                  color={
-                    selected
-                      ? ONBOARDING_COLORS.mustard
-                      : ONBOARDING_COLORS.text
-                  }
-                />
-              </View>
-              <Text style={onboardingStyles.energyLabel}>
-                {t(`vibesOnboarding.energyOptions.${option.id}`)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
       </View>
     </>
   );
@@ -589,28 +403,7 @@ const VibesOnboardingFlow = () => {
             />
           </View>
 
-          {hasAgeAssuranceBirthDate ? (
-            <View style={onboardingStyles.inputRow}>
-              <Icon
-                name="checkmark-circle-outline"
-                size={20}
-                color={ONBOARDING_COLORS.mustard}
-              />
-              <Text style={onboardingStyles.ageValue}>
-                {t("vibesOnboarding.profile.confirmedAge")}
-              </Text>
-              {age ? (
-                <Text
-                  style={[
-                    onboardingStyles.ageValue,
-                    { flex: 0, marginLeft: 8 },
-                  ]}
-                >
-                  {age} {t("vibesOnboarding.profile.years")}
-                </Text>
-              ) : null}
-            </View>
-          ) : (
+          {!hasAgeAssuranceBirthDate ? (
             <>
               <TouchableOpacity
                 style={onboardingStyles.inputRow}
@@ -656,7 +449,7 @@ const VibesOnboardingFlow = () => {
                 />
               ) : null}
             </>
-          )}
+          ) : null}
         </View>
       </View>
     </>
@@ -676,12 +469,31 @@ const VibesOnboardingFlow = () => {
           />
         ))}
       </View>
+      {selectedPractices.map((practice) => (
+        <TouchableOpacity
+          key={practice}
+          onPress={() => setActivePractice(practice)}
+          style={{ paddingVertical: 12 }}
+        >
+          <Text style={{ color: ONBOARDING_COLORS.text }}>
+            Agregar detalles · {getPracticeLabel(practice)}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </>
   );
 
   const renderStep = () => {
     if (step === "purpose") return renderPurpose();
-    if (step === "energy") return renderEnergy();
+    const questionGroup = ["identity", "interests", "plans"].indexOf(step);
+    if (questionGroup >= 0)
+      return (
+        <ProfileQuestionsForm
+          group={questionGroup}
+          value={answers}
+          onChange={setAnswers}
+        />
+      );
     if (step === "profile") return renderProfile();
     if (step === "practices") return renderPractices();
     return null;
@@ -695,21 +507,56 @@ const VibesOnboardingFlow = () => {
     <>
       {step === "completion" ? (
         <VibesMinimalOnboarding
-          title=""
-          body={completionSummary}
+          title={
+            locale === "en"
+              ? "Start your journey through Vibes"
+              : "Comenzá el viaje por Vibes"
+          }
+          body=""
           ctaLabel={copy.button}
-          reverseVideoOnContinue
           onContinue={goNext}
         />
       ) : (
         <OnboardingScreenContainer
           footer={
-            <PrimaryButton
-              label={copy.button}
-              onPress={() => void goNext()}
-              disabled={!canContinue}
-              loading={completeMutation.isPending}
-            />
+            <>
+              <PrimaryButton
+                label={
+                  ["identity", "interests", "plans"].includes(step)
+                    ? "Siguiente"
+                    : copy.button
+                }
+                onPress={() => void goNext()}
+                disabled={!canContinue}
+                loading={completeMutation.isPending}
+              />
+              {["identity", "interests", "plans"].includes(step) ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={() => void goNext()}
+                    style={{ padding: 12 }}
+                  >
+                    <Text>Omitir</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      updateDraft(currentDraft);
+                      setStepIndex(
+                        VIBES_ONBOARDING_STEPS.indexOf("completion")
+                      );
+                    }}
+                    style={{ padding: 12 }}
+                  >
+                    <Text>Omitir todas</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+            </>
           }
         >
           <ProgressHeader
@@ -745,22 +592,15 @@ const VibesOnboardingFlow = () => {
         }}
       />
 
-      <Modal
+      <KeyboardSheetModal
         visible={customPracticeModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCustomPracticeModalVisible(false)}
+        onClose={() => setCustomPracticeModalVisible(false)}
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          style={onboardingStyles.modalOverlay}
-          onPress={() => setCustomPracticeModalVisible(false)}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
         >
-          <TouchableOpacity
-            activeOpacity={1}
-            style={onboardingStyles.customPracticeCard}
-            onPress={() => undefined}
-          >
+          <View style={onboardingStyles.customPracticeCard}>
             <Text style={onboardingStyles.customPracticeTitle}>
               {t("vibesOnboarding.practices.customPracticeTitle")}
             </Text>
@@ -799,9 +639,9 @@ const VibesOnboardingFlow = () => {
                 </Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+          </View>
+        </ScrollView>
+      </KeyboardSheetModal>
     </>
   );
 };

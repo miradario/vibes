@@ -1,5 +1,6 @@
 /** @format */
 
+import { isValidPassword } from "../src/auth/passwordPolicy";
 import React, { useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -11,7 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
+import {
+  CommonActions,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import styles from "../assets/styles";
 import Icon from "../components/Icon";
 import VibesActionButton from "../components/VibesActionButton";
@@ -51,7 +56,8 @@ const ResetPassword = () => {
     }
 
     void exchangeCodeMutation.mutateAsync(code).catch((e) => {
-      const msg = e instanceof Error ? e.message : t("resetPassword.invalidLink");
+      const msg =
+        e instanceof Error ? e.message : t("resetPassword.invalidLink");
       setError(msg || t("resetPassword.invalidLink"));
     });
   }, [code]);
@@ -67,7 +73,7 @@ const ResetPassword = () => {
   };
 
   const handleSubmit = async () => {
-    if (password.length < 6) {
+    if (!isValidPassword(password)) {
       setError(t("resetPassword.passwordLength"));
       return;
     }
@@ -152,6 +158,9 @@ const ResetPassword = () => {
               />
             </View>
 
+            <Text style={styles.loginLabel}>
+              {t("resetPassword.passwordLength")}
+            </Text>
             {error ? (
               <View style={styles.loginErrorBox}>
                 <Text style={styles.loginError}>{error}</Text>

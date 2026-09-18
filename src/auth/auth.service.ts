@@ -1,3 +1,5 @@
+import { sendEmailVerification } from "./emailVerification";
+import { isValidEmail, isValidPassword } from "./passwordPolicy";
 import type {
   LoginInput,
   ResetPasswordInput,
@@ -20,6 +22,9 @@ export const login = async ({ email, password }: LoginInput) => {
 };
 
 export const signup = async ({ email, password }: LoginInput) => {
+  if (!isValidEmail(email)) throw new Error("Ingresá un email válido.");
+  if (!isValidPassword(password))
+    throw new Error("Usá al menos 8 caracteres y una mayúscula.");
   const { data, error } = await authClient.signUp(email, password);
   if (error) {
     throw error;
@@ -33,6 +38,14 @@ export const signup = async ({ email, password }: LoginInput) => {
     }
   }
 
+  if (session?.user?.email) {
+    void sendEmailVerification(session.user.email).catch(() => {
+      // Signup remains usable; the user can retry from Cuenta.
+      console.warn(
+        "No se pudo enviar la verificación de email; disponible para reintentar en Cuenta."
+      );
+    });
+  }
   return {
     session,
     user: data.user ?? data.session?.user ?? null,
@@ -44,6 +57,7 @@ export const loginWithGoogle = async () => authClient.signInWithGoogle();
 export const loginWithApple = async () => authClient.signInWithApple();
 
 export const resetPassword = async ({ email }: ResetPasswordInput) => {
+  if (!isValidEmail(email)) throw new Error("Ingresá un email válido.");
   const { error } = await authClient.resetPasswordForEmail(email);
   if (error) {
     throw error;
@@ -59,6 +73,8 @@ export const exchangePasswordResetCode = async (code: string) => {
 };
 
 export const updatePassword = async ({ password }: UpdatePasswordInput) => {
+  if (!isValidPassword(password))
+    throw new Error("Usá al menos 8 caracteres y una mayúscula.");
   const { error } = await authClient.updatePassword(password);
   if (error) {
     throw error;

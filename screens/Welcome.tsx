@@ -30,10 +30,11 @@ const Welcome = () => {
         <View style={localStyles.top}>
           <View style={localStyles.illustrationWrap}>
             <LoopingVideo
-              source={require("../assets/videos/bienvenidx.mp4")}
+              source={require("../assets/videos/bienvenidx-integrated.mp4")}
               posterSource={require("../assets/images/challenges/vibesLogo.png")}
               style={localStyles.video}
               resizeMode={ResizeMode.CONTAIN}
+              isLooping={false}
             />
           </View>
           <VibesHeader subtitle={t("welcome.subtitle")} />
@@ -63,7 +64,7 @@ export default Welcome;
 const localStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: "#FFFFFF",
   },
   content: {
     flex: 1,

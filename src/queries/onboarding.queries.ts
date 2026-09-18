@@ -1,3 +1,4 @@
+import { saveProfileAnswers, type ProfileAnswers } from "../lib/profileQuestions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../lib/supabase";
@@ -151,6 +152,7 @@ const runOnboardingStep = async <T>(
 };
 
 export type OnboardingDraft = {
+  profileAnswers?: ProfileAnswers;
   displayName?: string;
   age?: string;
   ageRange?: string;
@@ -355,6 +357,10 @@ export const useCompleteOnboardingMutation = () => {
           open_to: draft.purpose ?? [],
         })
       );
+
+      if (draft.profileAnswers && Object.values(draft.profileAnswers).some(value => value.length)) {
+        await runOnboardingStep("Preguntas opcionales", () => saveProfileAnswers(userId, draft.profileAnswers!));
+      }
 
       const photoUris = normalizeOnboardingPhotoUris(draft);
 
