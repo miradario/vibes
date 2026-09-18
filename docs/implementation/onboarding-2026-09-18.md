@@ -47,7 +47,7 @@ Acceso administrativo habilitado. Proyecto confirmado contra la configuración d
 - Prueba remota `scripts/onboarding-rls.test.sql` aprobada: persistencia de perfil, rechazo de datos privados en respuestas públicas, CRUD del propietario, aislamiento entre usuarios, bloqueo anónimo y ausencia de TRUNCATE. Fixtures descartados con ROLLBACK.
 - Función `verify-email-ownership` desplegada; rechaza cuerpo nulo, token malformado y token inválido con HTTP 400.
 - Configurados redirect de verificación, plantilla Magic Link y longitud mínima 8. Las demás opciones de Auth se conservaron.
-- Supabase aceptó el envío de verificación y recuperación al correo de prueba autorizado. Pendiente confirmar recepción y apertura en el dispositivo.
+- Supabase aceptó el envío de verificación y recuperación al correo de prueba autorizado. El usuario confirmó recepción. Pendiente comprobar apertura y resultado en el dispositivo.
 
 ## Pendiente para cerrar las 16 tarjetas
 
@@ -55,3 +55,7 @@ Acceso administrativo habilitado. Proyecto confirmado contra la configuración d
 2. Confirmar recuperación de contraseña y completar las pruebas de enlace utilizado/vencido y apertura en frío.
 
 Backend y configuración desplegados. Las tarjetas de Trello no se movieron a Done porque falta esa validación de extremo a extremo en el dispositivo.
+
+## Identidad de los correos
+
+Personalizadas las plantillas Magic Link y recuperación con el logo existente de la bienvenida, nombre Vibes, colores de la app y textos en español. Fuentes en `supabase/templates/`; logo público verificado con HTTP 200. Vista de 390 px y escritorio revisada. Dirección de envío/SMTP sin cambios.
