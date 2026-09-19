@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import {
   LayoutChangeEvent,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -88,7 +89,13 @@ const getMatchScore = (user: DataT, index: number) => {
   return `${88 + (index % 7)}%`;
 };
 
-const OrbitNode = ({ config, centerX, centerY, children, pointerEvents = "auto" }: OrbitNodeProps) => {
+const OrbitNode = ({
+  config,
+  centerX,
+  centerY,
+  children,
+  pointerEvents = "auto",
+}: OrbitNodeProps) => {
   const angle = useSharedValue(config.angle);
   const float = useSharedValue(0);
 
@@ -102,9 +109,7 @@ const OrbitNode = ({ config, centerX, centerY, children, pointerEvents = "auto" 
     transform: [
       {
         translateX:
-          centerX +
-          Math.cos(angle.value) * config.radiusX -
-          config.size / 2,
+          centerX + Math.cos(angle.value) * config.radiusX - config.size / 2,
       },
       {
         translateY:
@@ -118,7 +123,10 @@ const OrbitNode = ({ config, centerX, centerY, children, pointerEvents = "auto" 
   }));
 
   return (
-    <Animated.View pointerEvents={pointerEvents} style={[styles.discoverOrbitUserBubble, animatedStyle]}>
+    <Animated.View
+      pointerEvents={pointerEvents}
+      style={[styles.discoverOrbitUserBubble, animatedStyle]}
+    >
       {children}
     </Animated.View>
   );
@@ -143,21 +151,18 @@ const DiscoverOrbitCanvas = ({
   const baseRadiusX = Math.min(boundsWidth * 0.38, 165);
   const baseRadiusY = Math.min(boundsHeight * 0.28, 185);
 
-  const userConfigs = useMemo<OrbitNodeConfig[]>(() => {
-    return users.map((_, index) => {
-      const size = 70 + (index % 3) * 11;
-      const layer = index % 3;
-      return {
-        size,
-        radiusX: baseRadiusX * (0.72 + layer * 0.18),
-        radiusY: baseRadiusY * (0.68 + layer * 0.13),
-        angle: (index / Math.max(users.length, 1)) * Math.PI * 2 + layer * 0.4,
-        speed: (index % 2 === 0 ? 0.16 : -0.13) * (1 + layer * 0.08),
-        scale: 0.88 + layer * 0.07,
-      };
-    });
-  }, [baseRadiusX, baseRadiusY, users]);
-
+  const userConfigs = useMemo<OrbitNodeConfig[]>(
+    () =>
+      users.map((_, index) => ({
+        size: 86,
+        radiusX: 0,
+        radiusY: 0,
+        angle: index,
+        speed: 0,
+        scale: 1,
+      })),
+    [users]
+  );
   const dismissedConfigs = useMemo<OrbitNodeConfig[]>(() => {
     return dismissedUsers.map((_, index) => {
       const size = 24 + (index % 2) * 4;
@@ -199,27 +204,41 @@ const DiscoverOrbitCanvas = ({
         locations={[0, 0.55, 1]}
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.discoverOrbitCanvas}>
+      <ScrollView
+        contentContainerStyle={{
+          height: 220 + Math.ceil(users.length / 2) * 145,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         <View pointerEvents="none" style={localStyles.ambientGlowMustard} />
         <View pointerEvents="none" style={localStyles.ambientGlowBlue} />
         <View pointerEvents="none" style={localStyles.sparkleOne} />
         <View pointerEvents="none" style={localStyles.sparkleTwo} />
-        <View style={styles.discoverOrbitCenter} />
+
         {centerUser ? (
           <TouchableOpacity
             activeOpacity={0.9}
-            style={styles.discoverCenterProfileWrap}
+            style={[styles.discoverCenterProfileWrap, { top: 0 }]}
             onPress={onCenterPress}
             accessibilityLabel="Ir a Aura"
           >
-            <Animated.View style={[styles.discoverCenterProfileRing, centerRingStyle]} />
             <Animated.View
-              style={[styles.discoverCenterProfileRingInner, centerRingReverseStyle]}
+              style={[styles.discoverCenterProfileRing, centerRingStyle]}
+            />
+            <Animated.View
+              style={[
+                styles.discoverCenterProfileRingInner,
+                centerRingReverseStyle,
+              ]}
             />
             <View style={styles.discoverCenterProfileImageWrap}>
               <LinearGradient
                 pointerEvents="none"
-                colors={["rgba(255,255,255,0.92)", "rgba(228,183,110,0.18)", "rgba(174,191,209,0.2)"]}
+                colors={[
+                  "rgba(255,255,255,0.92)",
+                  "rgba(228,183,110,0.18)",
+                  "rgba(174,191,209,0.2)",
+                ]}
                 style={StyleSheet.absoluteFill}
               />
               <Avatar
@@ -271,8 +290,8 @@ const DiscoverOrbitCanvas = ({
             <OrbitNode
               key={`drift-user-${user.id}`}
               config={config}
-              centerX={centerX}
-              centerY={centerY}
+              centerX={boundsWidth * (index % 2 === 0 ? 0.25 : 0.75)}
+              centerY={245 + Math.floor(index / 2) * 145}
             >
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -295,7 +314,11 @@ const DiscoverOrbitCanvas = ({
                   <View style={styles.discoverOrbitUserRing}>
                     <LinearGradient
                       pointerEvents="none"
-                      colors={["rgba(255,255,255,0.96)", "rgba(228,183,110,0.2)", "rgba(174,191,209,0.24)"]}
+                      colors={[
+                        "rgba(255,255,255,0.96)",
+                        "rgba(228,183,110,0.2)",
+                        "rgba(174,191,209,0.24)",
+                      ]}
                       style={StyleSheet.absoluteFill}
                     />
                     <Avatar
@@ -307,7 +330,9 @@ const DiscoverOrbitCanvas = ({
                   </View>
                   {matchScore ? (
                     <View style={localStyles.matchBadge}>
-                      <Text style={localStyles.matchBadgeText}>{matchScore}</Text>
+                      <Text style={localStyles.matchBadgeText}>
+                        {matchScore}
+                      </Text>
                     </View>
                   ) : null}
                 </View>
@@ -326,7 +351,7 @@ const DiscoverOrbitCanvas = ({
             </OrbitNode>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 };

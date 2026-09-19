@@ -1,3 +1,4 @@
+import { isSwipeHidden } from "../lib/communityDiscovery";
 import { useQuery } from "@tanstack/react-query";
 import { mapSupabaseSelect } from "../api/mappers/case.mapper";
 import type {
@@ -58,7 +59,7 @@ const fetchCandidates = async (
   currentUserId?: string,
   params?: GetCandidatesParams
 ): Promise<GetCandidatesResponse> => {
-  const limit = params?.limit ?? 200;
+  const pageSize = Math.max(1, Math.min(params?.limit ?? 200, 500));
   let currentUserCoordinates: { latitude: number; longitude: number } | null =
     null;
 
@@ -70,7 +71,7 @@ const fetchCandidates = async (
       [
         supabase
           .from("swipes")
-          .select("target_id")
+          .select("target_id, direction, created_at")
           .eq("swiper_id", currentUserId),
         supabase
           .from("profiles")
@@ -93,7 +94,10 @@ const fetchCandidates = async (
       throw blocksResponse.error;
     }
 
-    swipedIds = (swipeRows ?? []).map((r: any) => String(r.target_id));
+    if (swipesResponse.error) throw swipesResponse.error;
+    swipedIds = (swipeRows ?? [])
+      .filter((row: any) => isSwipeHidden(row))
+      .map((r: any) => String(r.target_id));
     blockedUserIds = blocksResponse.error
       ? []
       : ((blocksResponse.data ?? []) as Record<string, any>[]).map((row) =>
@@ -125,8 +129,8 @@ const fetchCandidates = async (
     .select("*")
     .eq("is_active", true)
     .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("id", { ascending: true })
+    .limit(pageSize);
 
   if (currentUserId) {
     query = query.neq("id", currentUserId);
@@ -141,10 +145,15 @@ const fetchCandidates = async (
     query = query.not("id", "in", `(${blockedUserIds.join(",")})`);
   }
 
-  const { data: profileRows, error: profilesError } = await query;
-
-  if (profilesError) {
-    throw profilesError;
+  // Read the full eligible pool before ranking, rather than the 200 newest accounts.
+  const profileRows: ProfileRow[] = [];
+  let after: string | undefined;
+  while (true) {
+    const { data, error } = await (after ? query.gt("id", after) : query);
+    if (error) throw error;
+    profileRows.push(...(data ?? []));
+    if (!data?.length || data.length < pageSize) break;
+    after = String(data[data.length - 1].id);
   }
 
   const profiles = (mapSupabaseSelect(profileRows ?? []) as ProfileRow[]) ?? [];
@@ -156,15 +165,30 @@ const fetchCandidates = async (
   let preferencesByUserId = new Map<string, UserPreferenceRow>();
 
   if (profileIds.length > 0) {
-    const [photosResponse, preferencesResponse] = await Promise.all([
-      supabase
-        .from("profile_photos")
-        .select("*")
-        .in("profile_id", profileIds)
-        .order("is_primary", { ascending: false })
-        .order("order", { ascending: true }),
-      supabase.from("user_preferences").select("*").in("user_id", profileIds),
-    ]);
+    const photosResponse: { data: PhotoRow[]; error: any } = {
+      data: [],
+      error: null,
+    };
+    const preferencesResponse: { data: UserPreferenceRow[]; error: any } = {
+      data: [],
+      error: null,
+    };
+    for (let i = 0; i < profileIds.length; i += 50) {
+      const ids = profileIds.slice(i, i + 50);
+      const [photos, preferences] = await Promise.all([
+        supabase
+          .from("profile_photos")
+          .select("*")
+          .in("profile_id", ids)
+          .order("is_primary", { ascending: false })
+          .order("order", { ascending: true }),
+        supabase.from("user_preferences").select("*").in("user_id", ids),
+      ]);
+      photosResponse.data.push(...(photos.data ?? []));
+      photosResponse.error ||= photos.error;
+      preferencesResponse.data.push(...(preferences.data ?? []));
+      preferencesResponse.error ||= preferences.error;
+    }
 
     const { data: photoRows, error: photosError } = photosResponse;
 

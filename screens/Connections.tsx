@@ -1,3 +1,5 @@
+import UnreadBadge from "../components/UnreadBadge";
+import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 /** @format */
 
 import React, { useEffect, useRef, useState } from "react";
@@ -27,6 +29,11 @@ const Connections = () => {
   const discoverRef = useRef<DiscoverContentHandle>(null);
   const [activeSection, setActiveSection] = useState<ConnectionSection>(
     getInitialSection(route.params?.initialSection)
+  );
+  const { data: unread = [] } = useCommunityUnreadQuery();
+  const unreadTotal = unread.reduce(
+    (sum, row) => sum + Number(row.unread_count),
+    0
   );
   const [activeFilterCount, setActiveFilterCount] = useState(0);
 
@@ -63,6 +70,9 @@ const Connections = () => {
                 >
                   {item.label}
                 </Text>
+                {item.value === "chat" ? (
+                  <UnreadBadge count={unreadTotal} />
+                ) : null}
               </TouchableOpacity>
             );
           })}
@@ -70,57 +80,6 @@ const Connections = () => {
 
         {activeSection === "discover" ? (
           <>
-            <View style={localStyles.sharedExperiencesCard}>
-              <View style={localStyles.sharedExperiencesHeading}>
-                <View style={localStyles.sharedExperiencesIcon}>
-                  <Icon name="people-outline" size={20} color="#765B91" />
-                </View>
-                <View style={localStyles.sharedExperiencesCopy}>
-                  <Text style={localStyles.sharedExperiencesTitle}>
-                    {t("discover.sharedExperiencesTitle")}
-                  </Text>
-                  <Text style={localStyles.sharedExperiencesSubtitle}>
-                    {t("discover.sharedExperiencesSubtitle")}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={localStyles.sharedExperiencesActions}>
-                <TouchableOpacity
-                  style={[
-                    localStyles.experienceButton,
-                    localStyles.challengeButton,
-                  ]}
-                  activeOpacity={0.84}
-                  onPress={() =>
-                    navigation.navigate("Flow", { section: "challenge" })
-                  }
-                >
-                  <Icon name="trophy-outline" size={18} color="#7C5B28" />
-                  <Text style={localStyles.experienceButtonText}>
-                    {t("events.challenges")}
-                  </Text>
-                  <Icon name="arrow-forward" size={16} color="#7C5B28" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    localStyles.experienceButton,
-                    localStyles.eventButton,
-                  ]}
-                  activeOpacity={0.84}
-                  onPress={() =>
-                    navigation.navigate("EventsTab", { section: "event" })
-                  }
-                >
-                  <Icon name="calendar-outline" size={18} color="#536C87" />
-                  <Text style={localStyles.experienceButtonText}>
-                    {t("events.events")}
-                  </Text>
-                  <Icon name="arrow-forward" size={16} color="#536C87" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
             <View style={localStyles.filtersRow}>
               <TouchableOpacity
                 style={localStyles.filtersButton}

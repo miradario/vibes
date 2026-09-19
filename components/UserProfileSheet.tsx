@@ -1,3 +1,4 @@
+import LikeBubbles from "./LikeBubbles";
 import React, {
   useCallback,
   useEffect,
@@ -35,6 +36,8 @@ const VIBES_FALLBACK_ILLUSTRATION = require("../assets/images/challenges/vibesLo
 
 type Props = {
   visible: boolean;
+  enableSwipe?: boolean;
+  actionPending?: boolean;
   profile: UserProfileCardData | null;
   onClose: () => void;
   onContactPress?: () => void;
@@ -144,6 +147,8 @@ const PillList = ({
 
 const UserProfileSheet = ({
   visible,
+  enableSwipe = false,
+  actionPending = false,
   profile,
   onClose,
   onContactPress,
@@ -163,10 +168,43 @@ const UserProfileSheet = ({
     Math.max(320, height * 0.82),
     Math.max(240, height - insets.top - 38)
   );
+  const [detailsVisible, setDetailsVisible] = useState(false);
+  const [burst, setBurst] = useState(0);
+  const swipeX = useRef(new Animated.Value(0)).current;
+  const like = () => {
+    if (!actionPending) {
+      setBurst((value) => value + 1);
+      onContactPress?.();
+    }
+  };
+  const swipe = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, g) =>
+          enableSwipe &&
+          !actionPending &&
+          !detailsVisible &&
+          Math.abs(g.dx) > 15 &&
+          Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+        onPanResponderMove: (_, g) => swipeX.setValue(g.dx),
+        onPanResponderRelease: (_, g) => {
+          swipeX.setValue(0);
+          if (g.dx > 85) like();
+          else if (g.dx < -85) onSecondaryActionPress?.();
+        },
+        onPanResponderTerminate: () => swipeX.setValue(0),
+      }),
+    [
+      enableSwipe,
+      actionPending,
+      onContactPress,
+      onSecondaryActionPress,
+      detailsVisible,
+    ]
+  );
   const [activeIndex, setActiveIndex] = useState(0);
   const [hasInteractedWithGallery, setHasInteractedWithGallery] =
     useState(false);
-  const [detailsVisible, setDetailsVisible] = useState(false);
 
   const profileImages = useMemo(
     () => normalizeProfileImages(profile),
@@ -321,7 +359,8 @@ const UserProfileSheet = ({
               profile?.name ?? "este perfil"
             }`}
             activeOpacity={0.9}
-            onPress={onContactPress}
+            disabled={actionPending}
+            onPress={like}
             style={localStyles.primaryActionTouch}
           >
             <LinearGradient
@@ -330,7 +369,9 @@ const UserProfileSheet = ({
               end={{ x: 1, y: 0.5 }}
               style={localStyles.primaryAction}
             >
-              <Text style={localStyles.primaryActionText}>Conectar</Text>
+              <Text style={localStyles.primaryActionText}>
+                {actionPending ? "Guardando…" : "Conectar"}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
         ) : null}
@@ -339,6 +380,7 @@ const UserProfileSheet = ({
             accessibilityRole="button"
             accessibilityLabel={secondaryActionLabel}
             activeOpacity={0.75}
+            disabled={actionPending}
             onPress={onSecondaryActionPress}
             style={localStyles.secondaryAction}
           >
@@ -368,7 +410,10 @@ const UserProfileSheet = ({
         sheetInDelay={0}
         sheetStyle={[localStyles.fullscreenSheet, { height }]}
       >
-        <View style={localStyles.screen}>
+        <Animated.View
+          style={[localStyles.screen, { transform: [{ translateX: swipeX }] }]}
+          {...swipe.panHandlers}
+        >
           {profileImages.length > 0 ? (
             <FlatList
               ref={galleryRef}
@@ -376,6 +421,7 @@ const UserProfileSheet = ({
               key={`${profile.id ?? profile.name}-${width}`}
               keyExtractor={getImageKey}
               horizontal
+              scrollEnabled={!enableSwipe}
               pagingEnabled
               bounces={false}
               decelerationRate="fast"
@@ -408,6 +454,31 @@ const UserProfileSheet = ({
             </View>
           )}
 
+          <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+            <TouchableOpacity
+              accessibilityLabel="Foto anterior"
+              onPress={() => setGalleryIndex(safeActiveIndex - 1)}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: "12%",
+                width: "50%",
+                height: "53%",
+              }}
+            />
+            <TouchableOpacity
+              accessibilityLabel="Foto siguiente"
+              onPress={() => setGalleryIndex(safeActiveIndex + 1)}
+              style={{
+                position: "absolute",
+                right: 0,
+                top: "12%",
+                width: "50%",
+                height: "53%",
+              }}
+            />
+          </View>
+          <LikeBubbles trigger={burst} />
           <LinearGradient
             pointerEvents="none"
             colors={[
@@ -500,7 +571,7 @@ const UserProfileSheet = ({
               >
                 <Icon name="swap-horizontal" size={25} color="#FEFEFD" />
                 <Text style={localStyles.galleryHintText}>
-                  Deslizá para ver más fotos
+                  Tocá a los lados para cambiar la foto
                 </Text>
               </View>
             ) : null}
@@ -526,144 +597,154 @@ const UserProfileSheet = ({
             </View>
             {renderActions()}
           </View>
-        </View>
-      </AnimatedSheetModal>
-
-      <AnimatedSheetModal
-        visible={visible && detailsVisible}
-        onClose={closeDetails}
-        onClosed={() => panelDragY.setValue(0)}
-        closeOnBackdropPress={false}
-        offsetY={height * 0.72}
-        backdropColor="rgba(20, 24, 28, 0.18)"
-        sheetStyle={[localStyles.detailsSheet, { height: detailsPanelHeight }]}
-      >
-        <Animated.View
-          style={[
-            localStyles.detailsPanel,
-            { transform: [{ translateY: panelDragY }] },
+        </Animated.View>
+        <AnimatedSheetModal
+          inline
+          visible={visible && detailsVisible}
+          onClose={closeDetails}
+          closeOnBackdropPress={false}
+          offsetY={height * 0.72}
+          backdropColor="rgba(20, 24, 28, 0.18)"
+          sheetStyle={[
+            localStyles.detailsSheet,
+            { height: detailsPanelHeight },
           ]}
         >
-          <View
-            accessible
-            accessibilityLabel="Arrastrá hacia abajo para cerrar la información"
-            style={localStyles.dragArea}
-            {...detailsPanResponder.panHandlers}
-          >
-            <View style={localStyles.dragHandle} />
-          </View>
-          <View style={localStyles.detailsHeader}>
-            <Text style={localStyles.detailsName}>{nameWithAge}</Text>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Cerrar información"
-              activeOpacity={0.82}
-              onPress={closeDetails}
-              hitSlop={6}
-              style={localStyles.detailsCloseButton}
-            >
-              <Icon name="chevron-down" size={28} color="#222A32" />
-            </TouchableOpacity>
-          </View>
-          <View style={localStyles.detailsDivider} />
-          <ScrollView
-            style={localStyles.detailsScroll}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={[
-              localStyles.detailsContent,
-              { paddingBottom: Math.max(insets.bottom, 16) + 20 },
+          <Animated.View
+            style={[
+              localStyles.detailsPanel,
+              { transform: [{ translateY: panelDragY }] },
             ]}
           >
-            {profile.description ? (
-              <DetailSection label="Sobre mí">
-                <Text style={localStyles.detailBody}>
-                  {profile.description}
-                </Text>
-              </DetailSection>
-            ) : null}
-            {purpose ? (
-              <DetailSection label="Me trae a Vibes">
-                <Text style={localStyles.detailValue}>{purpose}</Text>
-              </DetailSection>
-            ) : null}
-            {energy ? (
-              <DetailSection label="Hoy me siento">
-                <PillList items={[energy]} blue />
-              </DetailSection>
-            ) : null}
-            {location ? (
-              <DetailSection label="Ubicación">
-                <View style={localStyles.inlineDetail}>
-                  <Icon name="location-outline" size={19} color="#7F98B7" />
-                  <Text style={localStyles.detailValueFlexible}>
-                    {location}
+            <View
+              accessible
+              accessibilityLabel="Arrastrá hacia abajo para cerrar la información"
+              style={localStyles.dragArea}
+              {...detailsPanResponder.panHandlers}
+            >
+              <View style={localStyles.dragHandle} />
+            </View>
+            <View style={localStyles.detailsHeader}>
+              <Text style={localStyles.detailsName}>{nameWithAge}</Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar información"
+                activeOpacity={0.82}
+                onPress={closeDetails}
+                hitSlop={6}
+                style={localStyles.detailsCloseButton}
+              >
+                <Icon name="chevron-down" size={28} color="#222A32" />
+              </TouchableOpacity>
+            </View>
+            <View style={localStyles.detailsDivider} />
+            <ScrollView
+              style={localStyles.detailsScroll}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={[
+                localStyles.detailsContent,
+                { paddingBottom: Math.max(insets.bottom, 16) + 20 },
+              ]}
+            >
+              {profile.description ? (
+                <DetailSection label="Sobre mí">
+                  <Text style={localStyles.detailBody}>
+                    {profile.description}
                   </Text>
-                </View>
-              </DetailSection>
-            ) : null}
-            {profile.prompt ? (
-              <DetailSection label="Ritual">
-                <Text style={localStyles.detailBody}>{profile.prompt}</Text>
-              </DetailSection>
-            ) : null}
-            {profile.spiritualPath?.length ? (
-              <DetailSection label="Camino espiritual">
-                <PillList items={profile.spiritualPath} />
-              </DetailSection>
-            ) : null}
-            {habits.length ? (
-              <DetailSection label="Hábitos">
-                <PillList items={habits} />
-              </DetailSection>
-            ) : null}
-            {profile.tags?.length ? (
-              <DetailSection label="Intereses">
-                <PillList items={profile.tags} />
-              </DetailSection>
-            ) : null}
-            {otherPreferences.length ? (
-              <DetailSection label="Más sobre mí">
-                <PillList items={otherPreferences} />
-              </DetailSection>
-            ) : null}
-            {profile.match ? (
-              <DetailSection label="Afinidad">
-                <Text style={localStyles.detailValue}>{profile.match}</Text>
-              </DetailSection>
-            ) : null}
-            {sharedActivities?.events.length ||
-            sharedActivities?.challenges.length ? (
-              <DetailSection label="En común">
-                <View style={localStyles.sharedList}>
-                  {sharedActivities.events.map((item, index) => (
-                    <View
-                      key={`event-${item}-${index}`}
-                      style={localStyles.inlineDetail}
-                    >
-                      <Icon name="calendar-outline" size={18} color="#D8A547" />
-                      <Text style={localStyles.detailValueFlexible}>
-                        {item}
-                      </Text>
-                    </View>
-                  ))}
-                  {sharedActivities.challenges.map((item, index) => (
-                    <View
-                      key={`challenge-${item}-${index}`}
-                      style={localStyles.inlineDetail}
-                    >
-                      <Icon name="sparkles-outline" size={18} color="#7F98B7" />
-                      <Text style={localStyles.detailValueFlexible}>
-                        {item}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </DetailSection>
-            ) : null}
-            {renderActions(true)}
-          </ScrollView>
-        </Animated.View>
+                </DetailSection>
+              ) : null}
+              {purpose ? (
+                <DetailSection label="Me trae a Vibes">
+                  <Text style={localStyles.detailValue}>{purpose}</Text>
+                </DetailSection>
+              ) : null}
+              {energy ? (
+                <DetailSection label="Hoy me siento">
+                  <PillList items={[energy]} blue />
+                </DetailSection>
+              ) : null}
+              {location ? (
+                <DetailSection label="Ubicación">
+                  <View style={localStyles.inlineDetail}>
+                    <Icon name="location-outline" size={19} color="#7F98B7" />
+                    <Text style={localStyles.detailValueFlexible}>
+                      {location}
+                    </Text>
+                  </View>
+                </DetailSection>
+              ) : null}
+              {profile.prompt ? (
+                <DetailSection label="Ritual">
+                  <Text style={localStyles.detailBody}>{profile.prompt}</Text>
+                </DetailSection>
+              ) : null}
+              {profile.spiritualPath?.length ? (
+                <DetailSection label="Camino espiritual">
+                  <PillList items={profile.spiritualPath} />
+                </DetailSection>
+              ) : null}
+              {habits.length ? (
+                <DetailSection label="Hábitos">
+                  <PillList items={habits} />
+                </DetailSection>
+              ) : null}
+              {profile.tags?.length ? (
+                <DetailSection label="Intereses">
+                  <PillList items={profile.tags} />
+                </DetailSection>
+              ) : null}
+              {otherPreferences.length ? (
+                <DetailSection label="Más sobre mí">
+                  <PillList items={otherPreferences} />
+                </DetailSection>
+              ) : null}
+              {profile.match ? (
+                <DetailSection label="Afinidad">
+                  <Text style={localStyles.detailValue}>{profile.match}</Text>
+                </DetailSection>
+              ) : null}
+              {sharedActivities?.events.length ||
+              sharedActivities?.challenges.length ? (
+                <DetailSection label="En común">
+                  <View style={localStyles.sharedList}>
+                    {sharedActivities.events.map((item, index) => (
+                      <View
+                        key={`event-${item}-${index}`}
+                        style={localStyles.inlineDetail}
+                      >
+                        <Icon
+                          name="calendar-outline"
+                          size={18}
+                          color="#D8A547"
+                        />
+                        <Text style={localStyles.detailValueFlexible}>
+                          {item}
+                        </Text>
+                      </View>
+                    ))}
+                    {sharedActivities.challenges.map((item, index) => (
+                      <View
+                        key={`challenge-${item}-${index}`}
+                        style={localStyles.inlineDetail}
+                      >
+                        <Icon
+                          name="sparkles-outline"
+                          size={18}
+                          color="#7F98B7"
+                        />
+                        <Text style={localStyles.detailValueFlexible}>
+                          {item}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </DetailSection>
+              ) : null}
+              {renderActions(true)}
+            </ScrollView>
+          </Animated.View>
+        </AnimatedSheetModal>
       </AnimatedSheetModal>
     </>
   );

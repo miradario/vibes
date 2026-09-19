@@ -1,3 +1,4 @@
+import { useCommunityUnreadQuery } from "../queries/communityReceipts.queries";
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { Platform } from "react-native";
 import * as Device from "expo-device";
@@ -186,13 +187,16 @@ export const PushNotificationsBootstrap = ({
   const { data: session } = useAuthSession();
   const queryClient = useQueryClient();
   const userId = session?.user?.id;
-  const { data: matches = [] } = useMatchesQuery();
+  const { data: unread = [] } = useCommunityUnreadQuery();
   const preferencesQuery = useUserPreferencesQuery(userId);
   const notificationsEnabled = preferencesQuery.data?.notificationsEnabled;
   const lastHandledResponseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const directUnreadCount = matches.filter((item) => item.hasUnread).length;
+    const directUnreadCount = unread.reduce(
+      (total, row) => total + Number(row.unread_count),
+      0
+    );
 
     if (!userId) {
       void Notifications.setBadgeCountAsync(0).catch((error) => {
@@ -204,7 +208,7 @@ export const PushNotificationsBootstrap = ({
     void Notifications.setBadgeCountAsync(directUnreadCount).catch((error) => {
       console.warn("[push] failed to sync app badge", error);
     });
-  }, [matches, userId]);
+  }, [unread, userId]);
 
   useEffect(() => {
     if (!userId) return;

@@ -1,3 +1,6 @@
+import UnreadBadge from "./UnreadBadge";
+import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
+import KeyboardSheetModal from "./KeyboardSheetModal";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -35,6 +38,7 @@ export default function CommunityGroups({
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const create = useCreateCommunityGroupMutation();
+  const { data: unread = [] } = useCommunityUnreadQuery();
   const [visible, setVisible] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -104,22 +108,25 @@ export default function CommunityGroups({
                   {group.description || "Abrir conversación"}
                 </Text>
               </View>
+              <UnreadBadge
+                count={Number(
+                  unread.find(
+                    (r) => r.kind === "group" && r.conversation_id === group.id
+                  )?.unread_count ?? 0
+                )}
+              />
               <Icon name="chevron-forward" size={18} color="#7B746C" />
             </TouchableOpacity>
           ))}
         </>
       ) : null}
-      <AnimatedSheetModal
+      <KeyboardSheetModal
         visible={visible}
         onClose={() => {
           if (!create.isPending) setVisible(false);
         }}
-        closeOnBackdropPress={!create.isPending}
-        sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, 20) }]}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
+        <View style={[s.sheet, { maxHeight: "100%" }]}>
           <ScrollView keyboardShouldPersistTaps="handled">
             <View style={s.row}>
               <Text style={[s.title, { flex: 1 }]}>Nuevo grupo</Text>
@@ -215,8 +222,8 @@ export default function CommunityGroups({
               </Text>
             </TouchableOpacity>
           </ScrollView>
-        </KeyboardAvoidingView>
-      </AnimatedSheetModal>
+        </View>
+      </KeyboardSheetModal>
     </View>
   );
 }

@@ -1,3 +1,4 @@
+import { compareDiscoveryProfiles } from "../src/lib/communityDiscovery";
 /** @format */
 
 import React, {
@@ -6,6 +7,7 @@ import React, {
   useImperativeHandle,
   useMemo,
   useState,
+  useRef,
 } from "react";
 import {
   Image,
@@ -18,7 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DiscoverOrbitCanvas from "../components/DiscoverOrbitCanvas";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
@@ -76,7 +78,7 @@ type DiscoverContentProps = {
   showHeader?: boolean;
   onFilterCountChange?: (count: number) => void;
 };
-const DISCOVER_PAGE_SIZE = 30;
+const DISCOVER_PAGE_SIZE = 10;
 const MIN_DISCOVER_AGE = 18;
 const MAX_DISCOVER_AGE = 80;
 
@@ -135,7 +137,7 @@ const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
 
 const normalizeGender = (
   value: unknown,
-  genderId?: unknown,
+  genderId?: unknown
 ): DiscoverGender | "unknown" => {
   if (typeof value === "string" && value.trim()) {
     const normalized = value
@@ -146,7 +148,11 @@ const normalizeGender = (
 
     if (["woman", "female", "mujer"].includes(normalized)) return "woman";
     if (["man", "male", "hombre"].includes(normalized)) return "man";
-    if (["nonbinary", "non-binary", "no binario", "no binaria"].includes(normalized)) {
+    if (
+      ["nonbinary", "non-binary", "no binario", "no binaria"].includes(
+        normalized
+      )
+    ) {
       return "other";
     }
     if (["other", "otro", "otra", "more", "mas"].includes(normalized)) {
@@ -171,10 +177,18 @@ const normalizeDiet = (value: unknown): DiscoverDiet | "unknown" => {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-  if (["si", "yes", "vegetarian", "vegetariano", "vegetariana"].includes(normalized)) {
+  if (
+    ["si", "yes", "vegetarian", "vegetariano", "vegetariana"].includes(
+      normalized
+    )
+  ) {
     return "vegetarian";
   }
-  if (["no", "non-vegetarian", "no vegetariano", "no vegetariana"].includes(normalized)) {
+  if (
+    ["no", "non-vegetarian", "no vegetariano", "no vegetariana"].includes(
+      normalized
+    )
+  ) {
     return "nonVegetarian";
   }
   return "other";
@@ -186,7 +200,7 @@ const getDistanceKm = (
   fromLatitude?: unknown,
   fromLongitude?: unknown,
   toLatitude?: unknown,
-  toLongitude?: unknown,
+  toLongitude?: unknown
 ) => {
   const lat1 = toFiniteNumber(fromLatitude);
   const lon1 = toFiniteNumber(fromLongitude);
@@ -212,7 +226,7 @@ const matchesNumberRange = (
   value: number | null,
   min: number | null,
   max: number | null,
-  options?: { includeNullValue?: boolean },
+  options?: { includeNullValue?: boolean }
 ) => {
   if (min === null && max === null) return true;
   if (value === null) return Boolean(options?.includeNullValue);
@@ -225,7 +239,7 @@ const formatRangeSummary = (
   min: number | null,
   max: number | null,
   suffix = "",
-  labels: { any: string; from: string; until: string },
+  labels: { any: string; from: string; until: string }
 ) => {
   if (min === null && max === null) return labels.any;
   if (min !== null && max !== null) return `${min}-${max}${suffix}`;
@@ -240,7 +254,7 @@ const formatDistanceLabel = (distanceKm: number | null) => {
 
 const areFiltersEqual = (
   left: DiscoverFiltersState,
-  right: DiscoverFiltersState,
+  right: DiscoverFiltersState
 ) =>
   left.ageMin === right.ageMin &&
   left.ageMax === right.ageMax &&
@@ -252,18 +266,20 @@ const areFiltersEqual = (
   left.diets.every((diet) => right.diets.includes(diet)) &&
   left.smoking === right.smoking;
 
-const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFiltersState => ({
+const readStoredFilters = (
+  preferences: Record<string, any> | null
+): DiscoverFiltersState => ({
   ageMin: toFiniteNumber(
-    preferences?.discoverAgeMin ?? preferences?.discover_age_min,
+    preferences?.discoverAgeMin ?? preferences?.discover_age_min
   ),
   ageMax: toFiniteNumber(
-    preferences?.discoverAgeMax ?? preferences?.discover_age_max,
+    preferences?.discoverAgeMax ?? preferences?.discover_age_max
   ),
   distanceMinKm: toFiniteNumber(
-    preferences?.discoverDistanceMinKm ?? preferences?.discover_distance_min_km,
+    preferences?.discoverDistanceMinKm ?? preferences?.discover_distance_min_km
   ),
   maxDistanceKm: toFiniteNumber(
-    preferences?.discoverDistanceMaxKm ?? preferences?.discover_distance_max_km,
+    preferences?.discoverDistanceMaxKm ?? preferences?.discover_distance_max_km
   ),
   genders: (() => {
     const storedGenders =
@@ -273,13 +289,13 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
         new Set(
           storedGenders
             .map((value) => normalizeGender(value))
-            .filter((value): value is DiscoverGender => value !== "unknown"),
-        ),
+            .filter((value): value is DiscoverGender => value !== "unknown")
+        )
       );
     }
     const storedGender = normalizeGender(
       preferences?.discoverGender ?? preferences?.discover_gender,
-      preferences?.discoverGenderId ?? preferences?.discover_gender_id,
+      preferences?.discoverGenderId ?? preferences?.discover_gender_id
     );
     return storedGender === "unknown" ? [] : [storedGender];
   })(),
@@ -288,11 +304,11 @@ const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFil
       preferences?.discoverDiets ?? preferences?.discover_diets;
     if (!Array.isArray(storedDiets)) return [];
     return storedDiets.filter((value): value is DiscoverDiet =>
-      ["vegetarian", "nonVegetarian", "other"].includes(String(value)),
+      ["vegetarian", "nonVegetarian", "other"].includes(String(value))
     );
   })(),
   smoking: normalizeSmoking(
-    preferences?.discoverSmoking ?? preferences?.discover_smoking,
+    preferences?.discoverSmoking ?? preferences?.discover_smoking
   ),
 });
 
@@ -304,27 +320,46 @@ export const DiscoverContent = forwardRef<
   const { t } = useI18n();
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
+  const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
+    useUserPreferencesQuery(session?.user?.id);
   const {
-    data: userPreferences,
-    isFetched: hasFetchedUserPreferences,
-  } = useUserPreferencesQuery(session?.user?.id);
-  const { data: candidates = [], isLoading, isError, error } = useCandidatesQuery({
+    data: candidates = [],
+    isLoading,
+    isError,
+    error,
+  } = useCandidatesQuery({
     limit: 200,
   });
   const swipeMutation = useSwipeMutation();
+  const swipeBusy = useRef(false);
+  const focused = useIsFocused();
+  const resumeAfterMatch = useRef<DataT | null>(null);
+  useEffect(() => {
+    if (focused && resumeAfterMatch.current) {
+      setSelectedProfile(resumeAfterMatch.current);
+      setShowProfileSheet(true);
+      resumeAfterMatch.current = null;
+    }
+  }, [focused]);
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
-  const [hasHydratedStoredFilters, setHasHydratedStoredFilters] = useState(false);
+  const [hasHydratedStoredFilters, setHasHydratedStoredFilters] =
+    useState(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
-  const [hiddenProfileIds, setHiddenProfileIds] = useState<Set<string>>(new Set());
-  const [dismissedProfiles, setDismissedProfiles] = useState<DataT[]>([]);
+  const [hiddenProfileIds, setHiddenProfileIds] = useState<Set<string>>(
+    new Set()
+  );
   const [showProfileSheet, setShowProfileSheet] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
-  const [visibleProfileCount, setVisibleProfileCount] = useState(DISCOVER_PAGE_SIZE);
-  const ownProfileRecord = (ownProfileData ?? null) as Record<string, any> | null;
+  const [visibleProfileCount, setVisibleProfileCount] =
+    useState(DISCOVER_PAGE_SIZE);
+  const ownProfileRecord = (ownProfileData ?? null) as Record<
+    string,
+    any
+  > | null;
   const hasLocation =
     toFiniteNumber(ownProfileRecord?.latitude) !== null &&
     toFiniteNumber(ownProfileRecord?.longitude) !== null;
@@ -337,23 +372,26 @@ export const DiscoverContent = forwardRef<
             ...(ownProfileData ?? {}),
             ...(userPreferences ?? {}),
           },
-          session?.user?.email?.split("@")[0],
+          session?.user?.email?.split("@")[0]
         ),
         match: "0",
       } as DataT),
-    [ownProfileData, session?.user?.email, userPreferences],
+    [ownProfileData, session?.user?.email, userPreferences]
   );
 
   const profiles = useMemo<DataT[]>(() => {
     return candidates
-      .filter((candidate) => !hiddenProfileIds.has(String((candidate as Record<string, any>).id)))
+      .filter(
+        (candidate) =>
+          !hiddenProfileIds.has(String((candidate as Record<string, any>).id))
+      )
       .map((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
         const distanceKm = getDistanceKm(
           ownProfileRecord?.latitude,
           ownProfileRecord?.longitude,
           candidateRecord.latitude,
-          candidateRecord.longitude,
+          candidateRecord.longitude
         );
 
         return {
@@ -364,7 +402,9 @@ export const DiscoverContent = forwardRef<
       .filter((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
         const candidateAge = parseAge(
-          candidateRecord.age ?? candidateRecord.birthDate ?? candidateRecord.birth_date,
+          candidateRecord.age ??
+            candidateRecord.birthDate ??
+            candidateRecord.birth_date
         );
         const candidateSmoking = normalizeSmoking(candidateRecord.smoking);
         const candidateDiet = normalizeDiet(candidateRecord.vegetarian);
@@ -372,15 +412,14 @@ export const DiscoverContent = forwardRef<
           candidateRecord.gender ??
             candidateRecord.genderLabel ??
             candidateRecord.gender_label,
-          candidateRecord.genderId ?? candidateRecord.gender_id,
+          candidateRecord.genderId ?? candidateRecord.gender_id
         );
 
         if (
-          hasLocation &&
           !matchesNumberRange(
             candidateAge,
             discoverFilters.ageMin,
-            discoverFilters.ageMax,
+            discoverFilters.ageMax
           )
         ) {
           return false;
@@ -392,7 +431,7 @@ export const DiscoverContent = forwardRef<
               ? candidateRecord.distanceKm
               : null,
             discoverFilters.distanceMinKm,
-            discoverFilters.maxDistanceKm,
+            discoverFilters.maxDistanceKm
           )
         ) {
           return false;
@@ -423,13 +462,9 @@ export const DiscoverContent = forwardRef<
 
         return true;
       })
-      .sort((left, right) => {
-        const leftDistance =
-          typeof left.distanceKm === "number" ? left.distanceKm : Number.POSITIVE_INFINITY;
-        const rightDistance =
-          typeof right.distanceKm === "number" ? right.distanceKm : Number.POSITIVE_INFINITY;
-        return leftDistance - rightDistance;
-      })
+      .sort((left, right) =>
+        compareDiscoveryProfiles(userPreferences ?? {}, left, right)
+      )
       .map((candidate) => {
         const profile = mapCandidateToConnectionProfile(candidate);
         const candidateRecord = candidate as Record<string, any>;
@@ -438,13 +473,14 @@ export const DiscoverContent = forwardRef<
           distanceLabel: formatDistanceLabel(
             typeof candidateRecord.distanceKm === "number"
               ? candidateRecord.distanceKm
-              : null,
+              : null
           ),
           match: profile.match ?? "0",
         } as DataT;
       });
   }, [
     candidates,
+    userPreferences,
     discoverFilters,
     hiddenProfileIds,
     hasLocation,
@@ -464,7 +500,7 @@ export const DiscoverContent = forwardRef<
       any: t("common.any"),
       from: t("common.from", { value: "" }).trim(),
       until: t("common.until", { value: "" }).trim(),
-    },
+    }
   );
   const distanceSummary = formatRangeSummary(
     discoverFilters.distanceMinKm,
@@ -474,7 +510,7 @@ export const DiscoverContent = forwardRef<
       any: t("common.any"),
       from: t("common.from", { value: "" }).trim(),
       until: t("common.until", { value: "" }).trim(),
-    },
+    }
   );
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
@@ -484,11 +520,11 @@ export const DiscoverContent = forwardRef<
             id: String(selectedProfile.id),
           }
         : null,
-    [selectedProfile],
+    [selectedProfile]
   );
   const visibleProfiles = useMemo(
     () => profiles.slice(0, visibleProfileCount),
-    [profiles, visibleProfileCount],
+    [profiles, visibleProfileCount]
   );
   const canShowMoreProfiles = visibleProfileCount < profiles.length;
   const activeFilterCount = useMemo(
@@ -502,7 +538,7 @@ export const DiscoverContent = forwardRef<
         discoverFilters.diets.length > 0,
         discoverFilters.smoking !== "all",
       ].filter(Boolean).length,
-    [discoverFilters, hasLocation],
+    [discoverFilters, hasLocation]
   );
 
   useEffect(() => {
@@ -530,7 +566,7 @@ export const DiscoverContent = forwardRef<
 
     const storedFilters = readStoredFilters(userPreferences);
     setDiscoverFilters((prev) =>
-      areFiltersEqual(prev, storedFilters) ? prev : storedFilters,
+      areFiltersEqual(prev, storedFilters) ? prev : storedFilters
     );
     setHasHydratedStoredFilters(true);
   }, [hasFetchedUserPreferences, session?.user?.id, userPreferences]);
@@ -565,78 +601,48 @@ export const DiscoverContent = forwardRef<
     if (!images || images.length === 0) return;
     setGalleryImages(images);
     setGalleryInitialIndex(
-      initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0,
+      initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0
     );
     setShowGallery(true);
   };
 
-  const connectProfile = (profile: DataT | null) => {
-    if (!profile) return;
-    const profileId = String(profile.id);
-
-    setHiddenProfileIds((prev) => new Set(prev).add(profileId));
-    setDismissedProfiles((prev) =>
-      prev.filter((item) => String(item.id) !== profileId),
-    );
-
-    swipeMutation.mutate(
-      { targetUserId: profileId, direction: "like" },
-      {
-        onSuccess: (response) => {
-          if (response?.match) {
-            navigation.navigate("Match" as never, { profile } as never);
-          } else {
-            showToast("Conexión solicitada", {
-              type: "success",
-              text1: "¡Conexión solicitada!",
-            });
-          }
-        },
-        onError: (connectError) => {
-          setHiddenProfileIds((prev) => {
-            const next = new Set(prev);
-            next.delete(profileId);
-            return next;
-          });
-          handleApiError(connectError, { toastTitle: "Error de conexión" });
-        },
-      },
-    );
-
-    setShowProfileSheet(false);
-    setSelectedProfile(null);
+  const actOnProfile = async (
+    profile: DataT | null,
+    direction: "like" | "pass"
+  ) => {
+    if (!profile || swipeMutation.isPending || swipeBusy.current) return;
+    swipeBusy.current = true;
+    const id = String(profile.id);
+    const index = profiles.findIndex((item) => String(item.id) === id);
+    const next =
+      profiles[index + 1] ??
+      profiles.find((item) => String(item.id) !== id) ??
+      null;
+    try {
+      const result = await swipeMutation.mutateAsync({
+        targetUserId: id,
+        direction,
+      });
+      setHiddenProfileIds((previous) => new Set(previous).add(id));
+      setSelectedProfile(next);
+      setShowProfileSheet(Boolean(next));
+      if (result.match) {
+        resumeAfterMatch.current = next;
+        setShowProfileSheet(false);
+        navigation.navigate("Match" as never, { profile } as never);
+      }
+    } catch (error) {
+      handleApiError(error, {
+        toastTitle: "No se pudo guardar. Intentá nuevamente.",
+      });
+    } finally {
+      swipeBusy.current = false;
+    }
   };
-
-  const dismissProfile = (profile: DataT | null) => {
-    if (!profile) return;
-    const profileId = String(profile.id);
-
-    setHiddenProfileIds((prev) => new Set(prev).add(profileId));
-    setDismissedProfiles((prev) => [
-      profile,
-      ...prev.filter((item) => String(item.id) !== profileId),
-    ]);
-
-    swipeMutation.mutate(
-      { targetUserId: profileId, direction: "pass" },
-      {
-        onError: (dismissError) => {
-          setHiddenProfileIds((prev) => {
-            const next = new Set(prev);
-            next.delete(profileId);
-            return next;
-          });
-          setDismissedProfiles((prev) =>
-            prev.filter((item) => String(item.id) !== profileId),
-          );
-          handleApiError(dismissError, { toastTitle: "Dismiss Error" });
-        },
-      },
-    );
-
-    setShowProfileSheet(false);
-    setSelectedProfile(null);
-  };
+  const connectProfile = (profile: DataT | null) =>
+    void actOnProfile(profile, "like");
+  const dismissProfile = (profile: DataT | null) =>
+    void actOnProfile(profile, "pass");
 
   const filterSectionTitle = (title: string) => (
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
@@ -657,16 +663,20 @@ export const DiscoverContent = forwardRef<
       return {
         ...prev,
         ageMin:
-          ageMin !== null && ageMax !== null ? Math.min(ageMin, ageMax) : ageMin,
+          ageMin !== null && ageMax !== null
+            ? Math.min(ageMin, ageMax)
+            : ageMin,
         ageMax:
-          ageMin !== null && ageMax !== null ? Math.max(ageMin, ageMax) : ageMax,
+          ageMin !== null && ageMax !== null
+            ? Math.max(ageMin, ageMax)
+            : ageMax,
       };
     });
   };
 
   const setDistanceInput = (
     key: "distanceMinKm" | "maxDistanceKm",
-    value: string,
+    value: string
   ) => {
     const digits = value.replace(/\D+/g, "");
     setDiscoverFilters((prev) => ({
@@ -680,7 +690,7 @@ export const DiscoverContent = forwardRef<
     () => ({
       openFilters: () => setIsFiltersVisible(true),
     }),
-    [],
+    []
   );
 
   return (
@@ -730,78 +740,88 @@ export const DiscoverContent = forwardRef<
           offsetY={320}
           sheetStyle={localStyles.filtersSheet}
         >
-            <>
-              <View style={localStyles.filtersHandle} />
-              <View style={localStyles.filtersHeader}>
-                <View style={localStyles.filtersHeaderText}>
-                  <Text style={localStyles.filtersTitle}>{t("discover.filters")}</Text>
-                  <Text style={localStyles.filtersSubtitle}>
-                    {t("discover.filtersSubtitle")}
-                  </Text>
+          <>
+            <View style={localStyles.filtersHandle} />
+            <View style={localStyles.filtersHeader}>
+              <View style={localStyles.filtersHeaderText}>
+                <Text style={localStyles.filtersTitle}>
+                  {t("discover.filters")}
+                </Text>
+                <Text style={localStyles.filtersSubtitle}>
+                  {t("discover.filtersSubtitle")}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsFiltersVisible(false)}
+                style={localStyles.filtersCloseButton}
+              >
+                <Icon name="close" size={18} color="#2B2B2B" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={localStyles.filtersContent}
+            >
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle(t("discover.age"))}
+                <View style={localStyles.rangeHeader}>
+                  <Text style={localStyles.rangeSummary}>{ageSummary}</Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setDiscoverFilters((prev) => ({
+                        ...prev,
+                        ageMin: null,
+                        ageMax: null,
+                      }))
+                    }
+                  >
+                    <Text style={localStyles.rangeReset}>
+                      {t("discover.clear")}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() => setIsFiltersVisible(false)}
-                  style={localStyles.filtersCloseButton}
-                >
-                  <Icon name="close" size={18} color="#2B2B2B" />
-                </TouchableOpacity>
+                <View style={localStyles.rangeRow}>
+                  <View style={localStyles.rangeCard}>
+                    <Text style={localStyles.rangeLabel}>
+                      {t("discover.min")}
+                    </Text>
+                    <TextInput
+                      style={localStyles.rangeInput}
+                      value={discoverFilters.ageMin?.toString() ?? ""}
+                      onChangeText={(value) => setAgeInput("ageMin", value)}
+                      placeholder={t("discover.noLimit")}
+                      placeholderTextColor="rgba(43, 43, 43, 0.34)"
+                      keyboardType="number-pad"
+                      maxLength={2}
+                      onEndEditing={normalizeAgeInputs}
+                    />
+                  </View>
+                  <View style={localStyles.rangeCard}>
+                    <Text style={localStyles.rangeLabel}>
+                      {t("discover.max")}
+                    </Text>
+                    <TextInput
+                      style={localStyles.rangeInput}
+                      value={discoverFilters.ageMax?.toString() ?? ""}
+                      onChangeText={(value) => setAgeInput("ageMax", value)}
+                      placeholder={t("discover.noLimit")}
+                      placeholderTextColor="rgba(43, 43, 43, 0.34)"
+                      keyboardType="number-pad"
+                      maxLength={2}
+                      onEndEditing={normalizeAgeInputs}
+                    />
+                  </View>
+                </View>
               </View>
 
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={localStyles.filtersContent}
-              >
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle(t("discover.age"))}
-                  <View style={localStyles.rangeHeader}>
-                    <Text style={localStyles.rangeSummary}>{ageSummary}</Text>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setDiscoverFilters((prev) => ({
-                          ...prev,
-                          ageMin: null,
-                          ageMax: null,
-                        }))
-                      }
-                    >
-                      <Text style={localStyles.rangeReset}>{t("discover.clear")}</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={localStyles.rangeRow}>
-                    <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>{t("discover.min")}</Text>
-                      <TextInput
-                        style={localStyles.rangeInput}
-                        value={discoverFilters.ageMin?.toString() ?? ""}
-                        onChangeText={(value) => setAgeInput("ageMin", value)}
-                        placeholder={t("discover.noLimit")}
-                        placeholderTextColor="rgba(43, 43, 43, 0.34)"
-                        keyboardType="number-pad"
-                        maxLength={2}
-                        onEndEditing={normalizeAgeInputs}
-                      />
-                    </View>
-                    <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>{t("discover.max")}</Text>
-                      <TextInput
-                        style={localStyles.rangeInput}
-                        value={discoverFilters.ageMax?.toString() ?? ""}
-                        onChangeText={(value) => setAgeInput("ageMax", value)}
-                        placeholder={t("discover.noLimit")}
-                        placeholderTextColor="rgba(43, 43, 43, 0.34)"
-                        keyboardType="number-pad"
-                        maxLength={2}
-                        onEndEditing={normalizeAgeInputs}
-                      />
-                    </View>
-                  </View>
-                </View>
-
-                {hasLocation ? (
+              {hasLocation ? (
                 <View style={localStyles.filtersSection}>
                   {filterSectionTitle(t("discover.distance"))}
                   <View style={localStyles.rangeHeader}>
-                    <Text style={localStyles.rangeSummary}>{distanceSummary}</Text>
+                    <Text style={localStyles.rangeSummary}>
+                      {distanceSummary}
+                    </Text>
                     <TouchableOpacity
                       onPress={() =>
                         setDiscoverFilters((prev) => ({
@@ -811,12 +831,16 @@ export const DiscoverContent = forwardRef<
                         }))
                       }
                     >
-                      <Text style={localStyles.rangeReset}>{t("discover.clear")}</Text>
+                      <Text style={localStyles.rangeReset}>
+                        {t("discover.clear")}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                   <View style={localStyles.rangeRow}>
                     <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>{t("discover.min")}</Text>
+                      <Text style={localStyles.rangeLabel}>
+                        {t("discover.min")}
+                      </Text>
                       <TextInput
                         style={localStyles.rangeInput}
                         value={discoverFilters.distanceMinKm?.toString() ?? ""}
@@ -830,7 +854,9 @@ export const DiscoverContent = forwardRef<
                       />
                     </View>
                     <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>{t("discover.max")}</Text>
+                      <Text style={localStyles.rangeLabel}>
+                        {t("discover.max")}
+                      </Text>
                       <TextInput
                         style={localStyles.rangeInput}
                         value={discoverFilters.maxDistanceKm?.toString() ?? ""}
@@ -845,172 +871,179 @@ export const DiscoverContent = forwardRef<
                     </View>
                   </View>
                 </View>
-                ) : null}
+              ) : null}
 
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle(t("discover.gender"))}
-                  <View style={localStyles.filtersPillRow}>
-                    {(
-                      [
-                        { value: "man", label: t("discover.genderMan") },
-                        { value: "woman", label: t("discover.genderWoman") },
-                        { value: "other", label: t("discover.genderOther") },
-                      ] as const
-                    ).map((option) => (
-                      <TouchableOpacity
-                        key={option.value}
-                        style={[
-                          localStyles.filterPill,
-                          discoverFilters.genders.includes(option.value) &&
-                            localStyles.filterPillActive,
-                        ]}
-                        onPress={() =>
-                          setDiscoverFilters((prev) => {
-                            const selected = prev.genders.includes(option.value);
-                            return {
-                              ...prev,
-                              genders: selected
-                                ? prev.genders.filter((value) => value !== option.value)
-                                : [...prev.genders, option.value],
-                            };
-                          })
-                        }
-                      >
-                        <Text
-                          style={[
-                            localStyles.filterPillText,
-                            discoverFilters.genders.includes(option.value) &&
-                              localStyles.filterPillTextActive,
-                          ]}
-                        >
-                          {option.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle(t("discover.diet"))}
-                  <View style={localStyles.filtersPillRow}>
-                    {(
-                      [
-                        {
-                          value: "vegetarian",
-                          label: t("discover.dietVegetarian"),
-                        },
-                        {
-                          value: "nonVegetarian",
-                          label: t("discover.dietNonVegetarian"),
-                        },
-                        { value: "other", label: t("discover.dietOther") },
-                      ] as const
-                    ).map((option) => (
-                      <TouchableOpacity
-                        key={option.value}
-                        style={[
-                          localStyles.filterPill,
-                          discoverFilters.diets.includes(option.value) &&
-                            localStyles.filterPillActive,
-                        ]}
-                        onPress={() =>
-                          setDiscoverFilters((prev) => {
-                            const selected = prev.diets.includes(option.value);
-                            return {
-                              ...prev,
-                              diets: selected
-                                ? prev.diets.filter(
-                                    (value) => value !== option.value,
-                                  )
-                                : [...prev.diets, option.value],
-                            };
-                          })
-                        }
-                      >
-                        <Text
-                          style={[
-                            localStyles.filterPillText,
-                            discoverFilters.diets.includes(option.value) &&
-                              localStyles.filterPillTextActive,
-                          ]}
-                        >
-                          {option.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle(t("discover.smoking"))}
-                  <View style={localStyles.filtersPillRow}>
-                    {(
-                      [
-                        { value: "all", label: t("discover.smokingAll") },
-                        { value: "no", label: t("discover.smokingNo") },
-                        { value: "occasionally", label: t("discover.smokingSometimes") },
-                        { value: "yes", label: t("discover.smokingYes") },
-                      ] as const
-                    ).map((option) => (
-                      <TouchableOpacity
-                        key={option.value}
-                        style={[
-                          localStyles.filterPill,
-                          discoverFilters.smoking === option.value &&
-                            localStyles.filterPillActive,
-                        ]}
-                        onPress={() =>
-                          setDiscoverFilters((prev) => ({
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle(t("discover.gender"))}
+                <View style={localStyles.filtersPillRow}>
+                  {(
+                    [
+                      { value: "man", label: t("discover.genderMan") },
+                      { value: "woman", label: t("discover.genderWoman") },
+                      { value: "other", label: t("discover.genderOther") },
+                    ] as const
+                  ).map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        localStyles.filterPill,
+                        discoverFilters.genders.includes(option.value) &&
+                          localStyles.filterPillActive,
+                      ]}
+                      onPress={() =>
+                        setDiscoverFilters((prev) => {
+                          const selected = prev.genders.includes(option.value);
+                          return {
                             ...prev,
-                            smoking: option.value,
-                          }))
-                        }
+                            genders: selected
+                              ? prev.genders.filter(
+                                  (value) => value !== option.value
+                                )
+                              : [...prev.genders, option.value],
+                          };
+                        })
+                      }
+                    >
+                      <Text
+                        style={[
+                          localStyles.filterPillText,
+                          discoverFilters.genders.includes(option.value) &&
+                            localStyles.filterPillTextActive,
+                        ]}
                       >
-                        <Text
-                          style={[
-                            localStyles.filterPillText,
-                            discoverFilters.smoking === option.value &&
-                              localStyles.filterPillTextActive,
-                          ]}
-                        >
-                          {option.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              </ScrollView>
-
-              <View style={localStyles.filtersFooter}>
-                <TouchableOpacity
-                  style={localStyles.filtersSecondaryButton}
-                  onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
-                >
-                  <Text style={localStyles.filtersSecondaryButtonText}>
-                    {t("discover.clear")}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={localStyles.filtersPrimaryButton}
-                  onPress={() => setIsFiltersVisible(false)}
-                >
-                  <Text style={localStyles.filtersPrimaryButtonText}>
-                    {t("discover.apply")}
-                  </Text>
-                </TouchableOpacity>
               </View>
-            </>
+
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle(t("discover.diet"))}
+                <View style={localStyles.filtersPillRow}>
+                  {(
+                    [
+                      {
+                        value: "vegetarian",
+                        label: t("discover.dietVegetarian"),
+                      },
+                      {
+                        value: "nonVegetarian",
+                        label: t("discover.dietNonVegetarian"),
+                      },
+                      { value: "other", label: t("discover.dietOther") },
+                    ] as const
+                  ).map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        localStyles.filterPill,
+                        discoverFilters.diets.includes(option.value) &&
+                          localStyles.filterPillActive,
+                      ]}
+                      onPress={() =>
+                        setDiscoverFilters((prev) => {
+                          const selected = prev.diets.includes(option.value);
+                          return {
+                            ...prev,
+                            diets: selected
+                              ? prev.diets.filter(
+                                  (value) => value !== option.value
+                                )
+                              : [...prev.diets, option.value],
+                          };
+                        })
+                      }
+                    >
+                      <Text
+                        style={[
+                          localStyles.filterPillText,
+                          discoverFilters.diets.includes(option.value) &&
+                            localStyles.filterPillTextActive,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle(t("discover.smoking"))}
+                <View style={localStyles.filtersPillRow}>
+                  {(
+                    [
+                      { value: "all", label: t("discover.smokingAll") },
+                      { value: "no", label: t("discover.smokingNo") },
+                      {
+                        value: "occasionally",
+                        label: t("discover.smokingSometimes"),
+                      },
+                      { value: "yes", label: t("discover.smokingYes") },
+                    ] as const
+                  ).map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        localStyles.filterPill,
+                        discoverFilters.smoking === option.value &&
+                          localStyles.filterPillActive,
+                      ]}
+                      onPress={() =>
+                        setDiscoverFilters((prev) => ({
+                          ...prev,
+                          smoking: option.value,
+                        }))
+                      }
+                    >
+                      <Text
+                        style={[
+                          localStyles.filterPillText,
+                          discoverFilters.smoking === option.value &&
+                            localStyles.filterPillTextActive,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={localStyles.filtersFooter}>
+              <TouchableOpacity
+                style={localStyles.filtersSecondaryButton}
+                onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
+              >
+                <Text style={localStyles.filtersSecondaryButtonText}>
+                  {t("discover.clear")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={localStyles.filtersPrimaryButton}
+                onPress={() => setIsFiltersVisible(false)}
+              >
+                <Text style={localStyles.filtersPrimaryButtonText}>
+                  {t("discover.apply")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
         </AnimatedSheetModal>
 
         <UserProfileSheet
           visible={showProfileSheet}
+          enableSwipe
+          actionPending={swipeMutation.isPending}
           profile={selectedProfileForSheet}
           onClose={() => setShowProfileSheet(false)}
           onImagePress={(_image, index) =>
             selectedProfile
               ? openGallery(
                   selectedProfile.images || [selectedProfile.image],
-                  index ?? 0,
+                  index ?? 0
                 )
               : undefined
           }
@@ -1031,10 +1064,14 @@ export const DiscoverContent = forwardRef<
                 onPress={() => setIsFiltersVisible(true)}
               >
                 <Icon name="options-outline" size={17} color="#2B2B2B" />
-                <Text style={localStyles.filtersButtonText}>{t("discover.filters")}</Text>
+                <Text style={localStyles.filtersButtonText}>
+                  {t("discover.filters")}
+                </Text>
                 {activeFilterCount > 0 ? (
                   <View style={localStyles.filtersCountBadge}>
-                    <Text style={localStyles.filtersCountText}>{activeFilterCount}</Text>
+                    <Text style={localStyles.filtersCountText}>
+                      {activeFilterCount}
+                    </Text>
                   </View>
                 ) : null}
               </TouchableOpacity>
@@ -1046,11 +1083,15 @@ export const DiscoverContent = forwardRef<
           {isLoading ? (
             <View style={localStyles.emptyState}>
               <VibesLoader size={86} />
-              <Text style={localStyles.emptyText}>{t("discover.loadingProfiles")}</Text>
+              <Text style={localStyles.emptyText}>
+                {t("discover.loadingProfiles")}
+              </Text>
             </View>
           ) : isError ? (
             <View style={localStyles.emptyState}>
-              <Text style={localStyles.emptyTitle}>{t("discover.loadFailed")}</Text>
+              <Text style={localStyles.emptyTitle}>
+                {t("discover.loadFailed")}
+              </Text>
               <Text style={localStyles.emptyText}>{errorMessage}</Text>
             </View>
           ) : visibleProfiles.length === 0 ? (
@@ -1058,7 +1099,9 @@ export const DiscoverContent = forwardRef<
               <View style={localStyles.emptyIconCircle}>
                 <Icon name="compass-outline" size={34} color="#765B91" />
               </View>
-              <Text style={localStyles.emptyTitle}>No hay perfiles para mostrar</Text>
+              <Text style={localStyles.emptyTitle}>
+                No hay perfiles para mostrar
+              </Text>
               <Text style={localStyles.emptyText}>
                 {activeFilterCount > 0
                   ? "Probá ampliando tus filtros para encontrar más personas."
@@ -1070,15 +1113,18 @@ export const DiscoverContent = forwardRef<
                   activeOpacity={0.84}
                   onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
                 >
-                  <Text style={localStyles.emptyActionText}>Limpiar filtros</Text>
+                  <Text style={localStyles.emptyActionText}>
+                    Limpiar filtros
+                  </Text>
                 </TouchableOpacity>
               ) : null}
             </View>
           ) : (
             <>
               <DiscoverOrbitCanvas
-                users={visibleProfiles.filter((item) => item.id !== centerProfile.id)}
-                dismissedUsers={dismissedProfiles}
+                users={visibleProfiles.filter(
+                  (item) => item.id !== centerProfile.id
+                )}
                 centerUser={centerProfile}
                 onCenterPress={() => navigation.navigate("Aura" as never)}
                 onUserPress={(profile) => {
@@ -1095,17 +1141,21 @@ export const DiscoverContent = forwardRef<
                   style={localStyles.showMoreButton}
                   activeOpacity={0.86}
                   onPress={() =>
-                    setVisibleProfileCount((count) => count + DISCOVER_PAGE_SIZE)
+                    setVisibleProfileCount(
+                      (count) => count + DISCOVER_PAGE_SIZE
+                    )
                   }
                 >
                   <Text style={localStyles.showMoreButtonText}>
-                    {t("discover.showMore")}
+                    Mostrar 10 más
                   </Text>
                 </TouchableOpacity>
               ) : null}
               {profiles.length === 0 ? (
                 <View style={localStyles.orbitHint}>
-                  <Text style={localStyles.emptyTitle}>{t("discover.noProfiles")}</Text>
+                  <Text style={localStyles.emptyTitle}>
+                    {t("discover.noProfiles")}
+                  </Text>
                   <Text style={localStyles.emptyText}>
                     {t("discover.noProfilesHint")}
                   </Text>

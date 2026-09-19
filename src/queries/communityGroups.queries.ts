@@ -17,6 +17,7 @@ export type CommunityMessage = {
   body: string;
   created_at: string;
   senderName: string;
+  message_kind: "message" | "system";
 };
 
 export function useCommunityGroupsQuery() {
@@ -146,13 +147,11 @@ export function useSendCommunityMessageMutation(groupId: string) {
     mutationFn: async (body: string) => {
       if (!session?.user.id)
         throw new Error("Iniciá sesión para enviar mensajes");
-      const { error } = await supabase
-        .from("community_group_messages")
-        .insert({
-          group_id: groupId,
-          sender_id: session.user.id,
-          body: body.trim(),
-        });
+      const { error } = await supabase.from("community_group_messages").insert({
+        group_id: groupId,
+        sender_id: session.user.id,
+        body: body.trim(),
+      });
       if (error) throw error;
     },
     onSuccess: () => {

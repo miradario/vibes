@@ -1,3 +1,4 @@
+import { useCommunityDeliverySync } from "./src/queries/communityReceipts.queries";
 import VerifyEmail from "./screens/VerifyEmail";
 import ProfileQuestions from "./screens/ProfileQuestions";
 import CommunityGroupChat from "./screens/CommunityGroupChat";
@@ -100,6 +101,10 @@ const queryClient = new QueryClient({
   },
 });
 
+const CommunityRuntime = () => {
+  useCommunityDeliverySync();
+  return null;
+};
 const AppNavigator = () => {
   const { t } = useI18n();
   const [fontsLoaded, fontError] = useFonts({
@@ -239,6 +244,7 @@ const AppNavigator = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
+        <CommunityRuntime />
         <StatusBar style="dark" />
         <NavigationContainer
           ref={navigationRef}

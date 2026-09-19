@@ -1,16 +1,15 @@
+import LikeBubbles from "../components/LikeBubbles";
 /** @format */
 
 import React, { useEffect, useMemo, useRef } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { ResizeMode } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import LoopingVideo from "../components/LoopingVideo";
 import Avatar from "../components/Avatar";
 import Icon from "../components/Icon";
@@ -30,9 +29,10 @@ const getPrimaryPhotoUri = (profile: any) => {
     return profile.avatarUri.trim();
   }
 
-  const image = Array.isArray(profile.images) && profile.images[0]
-    ? profile.images[0]
-    : profile.image;
+  const image =
+    Array.isArray(profile.images) && profile.images[0]
+      ? profile.images[0]
+      : profile.image;
 
   if (typeof image === "object" && image && "uri" in image) {
     return String((image as { uri?: string }).uri ?? "") || null;
@@ -52,9 +52,9 @@ const Match = () => {
     () =>
       mapOwnProfileToConnectionProfile(
         ownProfileData,
-        session?.user?.email?.split("@")[0],
+        session?.user?.email?.split("@")[0]
       ),
-    [ownProfileData, session?.user?.email],
+    [ownProfileData, session?.user?.email]
   );
   const profile = route?.params?.profile ?? null;
   const { data: matchData } = useFindMatchQuery(profile?.id);
@@ -81,7 +81,7 @@ const Match = () => {
         otherUserId: String(profile.id),
         otherUserName: profile.name,
         otherUserPhoto: getPrimaryPhotoUri(profile),
-      } as never,
+      } as never
     );
   };
 
@@ -99,7 +99,7 @@ const Match = () => {
             <Text style={localStyles.sparkleLarge}>✦</Text>
             <Text style={localStyles.sparkleSmall}>✧</Text>
           </View>
-          <Text style={localStyles.title}>Conexión lograda</Text>
+          <Text style={localStyles.title}>¡Hay conexión!</Text>
           <View style={localStyles.divider}>
             <View style={localStyles.dividerLine} />
             <View style={localStyles.dividerDot} />
@@ -153,24 +153,16 @@ const Match = () => {
 
         <View style={localStyles.actions}>
           <VibesActionButton
-            label="Primer mensaje"
+            label="Enviar mensaje"
             variant="start"
             onPress={openChat}
             disabled={!profile || !matchData}
           />
 
           <VibesActionButton
-            label="Más tarde"
+            label="Seguir descubriendo"
             variant="skip"
-            onPress={() =>
-              navigation.navigate(
-                "Tab" as never,
-                {
-                  screen: "Calendar",
-                  params: { initialSection: "discover" },
-                } as never
-              )
-            }
+            onPress={() => navigation.goBack()}
           />
         </View>
 
@@ -181,6 +173,7 @@ const Match = () => {
           </Text>
         </View>
       </ScrollView>
+      <LikeBubbles trigger={1} />
     </SafeAreaView>
   );
 };

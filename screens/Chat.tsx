@@ -1,3 +1,6 @@
+import ScreenContainer from "../components/ScreenContainer";
+import MessageReceipt from "../components/MessageReceipt";
+import { useMessageReceipts } from "../src/queries/communityReceipts.queries";
 /** @format */
 
 import React, { useRef, useEffect, useState } from "react";
@@ -84,7 +87,12 @@ const Chat = () => {
   });
 
   const { data: messages, isLoading } = useDirectMessagesQuery(matchId);
-  const markReadMutation = useMarkDirectMessagesReadMutation();
+  const receipts = useMessageReceipts(
+    "direct",
+    matchId,
+    messages ?? [],
+    isFocused
+  );
   const sendMutation = useSendDirectMessageMutation();
   const deleteMutation = useDeleteDirectMessageMutation();
   const unmatchMutation = useUnmatchMutation();
@@ -108,27 +116,6 @@ const Chat = () => {
       }, 100);
     }
   }, [messages?.length]);
-
-  useEffect(() => {
-    if (
-      !isFocused ||
-      !matchId ||
-      !messages?.length ||
-      markReadMutation.isPending
-    )
-      return;
-
-    const latestMessage = messages[messages.length - 1];
-    if (!latestMessage?.createdAt) return;
-    if (lastMarkedReadAtRef.current === latestMessage.createdAt) return;
-
-    lastMarkedReadAtRef.current = latestMessage.createdAt;
-
-    markReadMutation.mutate({
-      matchId,
-      readAt: latestMessage.createdAt,
-    });
-  }, [isFocused, markReadMutation, matchId, messages]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
@@ -298,12 +285,12 @@ const Chat = () => {
             {formatTime(item.createdAt)}
           </Text>
           {isOwn ? (
-            <Icon
-              name={
-                item.deliveryStatus === "sending" ? "time-outline" : "checkmark"
+            <MessageReceipt
+              status={
+                item.deliveryStatus === "sending"
+                  ? "sending"
+                  : receipts.statuses.get(item.id)
               }
-              size={12}
-              color={TEXT_SECONDARY}
             />
           ) : null}
         </View>
@@ -330,253 +317,254 @@ const Chat = () => {
   const matchDate = messages?.[0]?.createdAt;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.bg}
-      behavior={Platform.OS === "ios" ? "position" : undefined}
-      contentContainerStyle={localStyles.keyboardAvoidingContent}
-      keyboardVerticalOffset={0}
-    >
-      <AppHeader
-        showBack
-        onBack={() => navigation.goBack()}
-        style={styles.chatHeader}
-        right={
-          <TouchableOpacity onPress={() => setShowActionsModal(true)}>
-            <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
-          </TouchableOpacity>
-        }
+    <ScreenContainer edges={["top", "left", "right"]}>
+      <KeyboardAvoidingView
+        style={styles.bg}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        contentContainerStyle={localStyles.keyboardAvoidingContent}
+        keyboardVerticalOffset={0}
       >
-        <TouchableOpacity
-          style={styles.chatHeaderCenter}
-          onPress={() => setShowProfileModal(true)}
-        >
-          <Avatar uri={otherUserAvatar} size={32} />
-          <Text style={styles.chatName}>
-            {(() => {
-              const name =
-                profile?.display_name ||
-                profile?.name ||
-                otherUserName ||
-                "Chat";
-              const calculatedAge = calculateAgeFromBirthDate(
-                profile?.birth_date
-              );
-              const age = calculatedAge === null ? "" : String(calculatedAge);
-              return age ? `${name}, ${age}` : name;
-            })()}
-          </Text>
-        </TouchableOpacity>
-      </AppHeader>
-      <UserProfileSheet
-        visible={showProfileModal}
-        profile={profileCard}
-        onClose={() => setShowProfileModal(false)}
-      />
-
-      <Modal
-        transparent
-        animationType="fade"
-        visible={showActionsModal}
-        onRequestClose={() => setShowActionsModal(false)}
-      >
-        <Pressable
-          style={localStyles.modalBackdrop}
-          onPress={() => setShowActionsModal(false)}
-        >
-          <Pressable style={localStyles.actionsSheet} onPress={() => undefined}>
-            <Text style={localStyles.modalTitle}>Opciones de conexión</Text>
-            <TouchableOpacity
-              style={localStyles.actionRow}
-              onPress={handleAbandonConnection}
-              disabled={unmatchMutation.isPending}
-            >
-              <Icon name="close-circle-outline" size={21} color="#D88C7A" />
-              <Text style={[localStyles.actionText, localStyles.dangerText]}>
-                Abandonar conexión
-              </Text>
+        <AppHeader
+          showBack
+          onBack={() => navigation.goBack()}
+          style={styles.chatHeader}
+          right={
+            <TouchableOpacity onPress={() => setShowActionsModal(true)}>
+              <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={localStyles.actionRow}
-              onPress={openReportModal}
-            >
-              <Icon name="flag-outline" size={21} color={DARK_GRAY} />
-              <Text style={localStyles.actionText}>Reportar y bloquear</Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <AnimatedSheetModal
-        visible={showReportModal}
-        onClose={closeReportModal}
-        offsetY={320}
-        sheetStyle={[
-          localStyles.reportSheet,
-          { paddingBottom: Math.max(insets.bottom + 20, 30) },
-        ]}
-      >
-        <Pressable onPress={() => undefined}>
-          <Text style={localStyles.modalTitle}>
-            ¿Por qué querés reportar y bloquear?
-          </Text>
-          <Text style={localStyles.modalSubtitle}>
-            Tu reporte nos ayuda a cuidar la comunidad. También quitaremos esta
-            conexión.
-          </Text>
-
-          {REPORT_REASONS.map((reason) => {
-            const selected = selectedReportReason === reason;
-            return (
-              <TouchableOpacity
-                key={reason}
-                style={[
-                  localStyles.reasonRow,
-                  selected && localStyles.reasonRowSelected,
-                ]}
-                onPress={() => setSelectedReportReason(reason)}
-                activeOpacity={0.85}
-              >
-                <View
-                  style={[
-                    localStyles.radio,
-                    selected && localStyles.radioSelected,
-                  ]}
-                >
-                  {selected ? <View style={localStyles.radioDot} /> : null}
-                </View>
-                <Text style={localStyles.reasonText}>{reason}</Text>
-              </TouchableOpacity>
-            );
-          })}
-
-          <TextInput
-            style={localStyles.reportInput}
-            placeholder="Contanos qué pasó..."
-            placeholderTextColor="#999"
-            value={reportDetails}
-            onChangeText={setReportDetails}
-            multiline
-            textAlignVertical="top"
-            maxLength={800}
-          />
-
+          }
+        >
           <TouchableOpacity
-            style={[
-              localStyles.reportButton,
-              (!selectedReportReason ||
-                reportMutation.isPending ||
-                unmatchMutation.isPending) &&
-                localStyles.reportButtonDisabled,
-            ]}
-            disabled={
-              !selectedReportReason ||
-              reportMutation.isPending ||
-              unmatchMutation.isPending
-            }
-            onPress={submitReport}
-            activeOpacity={0.9}
+            style={styles.chatHeaderCenter}
+            onPress={() => setShowProfileModal(true)}
           >
-            <Text style={localStyles.reportButtonText}>
-              {reportMutation.isPending || unmatchMutation.isPending
-                ? "Enviando..."
-                : "Enviar reporte y bloquear"}
+            <Avatar uri={otherUserAvatar} size={32} />
+            <Text style={styles.chatName}>
+              {(() => {
+                const name =
+                  profile?.display_name ||
+                  profile?.name ||
+                  otherUserName ||
+                  "Chat";
+                const calculatedAge = calculateAgeFromBirthDate(
+                  profile?.birth_date
+                );
+                const age = calculatedAge === null ? "" : String(calculatedAge);
+                return age ? `${name}, ${age}` : name;
+              })()}
             </Text>
           </TouchableOpacity>
-        </Pressable>
-      </AnimatedSheetModal>
+        </AppHeader>
+        <UserProfileSheet
+          visible={showProfileModal}
+          profile={profileCard}
+          onClose={() => setShowProfileModal(false)}
+        />
 
-      <View style={localStyles.chatBody}>
-        {/* Messages */}
-        {isLoading ? (
-          <View style={localStyles.loadingWrap}>
-            <VibesLoader size={78} />
-          </View>
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={messages ?? []}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMessage}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode={
-              Platform.OS === "ios" ? "interactive" : "on-drag"
-            }
-            contentContainerStyle={[
-              localStyles.messageList,
-              {
-                paddingBottom:
-                  Platform.OS === "android" && keyboardHeight > 0
-                    ? keyboardHeight + 88
-                    : Math.max(insets.bottom + 28, 44),
-              },
-            ]}
-            ListHeaderComponent={
-              <Text style={styles.chatMatchedText}>
-                Conectaste con {otherUserName || "esta persona"}
-                {matchDate
-                  ? ` el ${new Date(matchDate).toLocaleDateString()}`
-                  : ""}
-                .
-              </Text>
-            }
-            ListEmptyComponent={
-              <View style={localStyles.emptyWrap}>
-                <Text style={localStyles.emptyText}>
-                  Saludá a {otherUserName || "tu conexión"}.
+        <Modal
+          transparent
+          animationType="fade"
+          visible={showActionsModal}
+          onRequestClose={() => setShowActionsModal(false)}
+        >
+          <Pressable
+            style={localStyles.modalBackdrop}
+            onPress={() => setShowActionsModal(false)}
+          >
+            <Pressable
+              style={localStyles.actionsSheet}
+              onPress={() => undefined}
+            >
+              <Text style={localStyles.modalTitle}>Opciones de conexión</Text>
+              <TouchableOpacity
+                style={localStyles.actionRow}
+                onPress={handleAbandonConnection}
+                disabled={unmatchMutation.isPending}
+              >
+                <Icon name="close-circle-outline" size={21} color="#D88C7A" />
+                <Text style={[localStyles.actionText, localStyles.dangerText]}>
+                  Abandonar conexión
                 </Text>
-              </View>
-            }
-            onContentSizeChange={() =>
-              flatListRef.current?.scrollToEnd({ animated: false })
-            }
-          />
-        )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={localStyles.actionRow}
+                onPress={openReportModal}
+              >
+                <Icon name="flag-outline" size={21} color={DARK_GRAY} />
+                <Text style={localStyles.actionText}>Reportar y bloquear</Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
-        {/* Input */}
-        <View
-          style={[
-            styles.eventChatInputContainer,
-            localStyles.inputContainer,
-            {
-              paddingBottom:
-                keyboardHeight > 0 ? 10 : Math.max(insets.bottom + 14, 24),
-              marginBottom:
-                Platform.OS === "android" && keyboardHeight > 0
-                  ? keyboardHeight
-                  : 0,
-            },
+        <AnimatedSheetModal
+          visible={showReportModal}
+          onClose={closeReportModal}
+          offsetY={320}
+          sheetStyle={[
+            localStyles.reportSheet,
+            { paddingBottom: Math.max(insets.bottom + 20, 30) },
           ]}
         >
-          <Avatar uri={ownAvatar} size={32} />
-          <TextInput
-            style={[styles.eventChatInput, localStyles.composerInput]}
-            placeholder="Escribí un mensaje..."
-            placeholderTextColor={TEXT_SECONDARY}
-            value={text}
-            onChangeText={setText}
-            multiline
-            textAlignVertical="top"
-            maxLength={2000}
-            returnKeyType="default"
-            onFocus={() =>
-              setTimeout(() => {
-                flatListRef.current?.scrollToEnd({ animated: true });
-              }, 120)
-            }
-          />
-          <TouchableOpacity
+          <Pressable onPress={() => undefined}>
+            <Text style={localStyles.modalTitle}>
+              ¿Por qué querés reportar y bloquear?
+            </Text>
+            <Text style={localStyles.modalSubtitle}>
+              Tu reporte nos ayuda a cuidar la comunidad. También quitaremos
+              esta conexión.
+            </Text>
+
+            {REPORT_REASONS.map((reason) => {
+              const selected = selectedReportReason === reason;
+              return (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    localStyles.reasonRow,
+                    selected && localStyles.reasonRowSelected,
+                  ]}
+                  onPress={() => setSelectedReportReason(reason)}
+                  activeOpacity={0.85}
+                >
+                  <View
+                    style={[
+                      localStyles.radio,
+                      selected && localStyles.radioSelected,
+                    ]}
+                  >
+                    {selected ? <View style={localStyles.radioDot} /> : null}
+                  </View>
+                  <Text style={localStyles.reasonText}>{reason}</Text>
+                </TouchableOpacity>
+              );
+            })}
+
+            <TextInput
+              style={localStyles.reportInput}
+              placeholder="Contanos qué pasó..."
+              placeholderTextColor="#999"
+              value={reportDetails}
+              onChangeText={setReportDetails}
+              multiline
+              textAlignVertical="top"
+              maxLength={800}
+            />
+
+            <TouchableOpacity
+              style={[
+                localStyles.reportButton,
+                (!selectedReportReason ||
+                  reportMutation.isPending ||
+                  unmatchMutation.isPending) &&
+                  localStyles.reportButtonDisabled,
+              ]}
+              disabled={
+                !selectedReportReason ||
+                reportMutation.isPending ||
+                unmatchMutation.isPending
+              }
+              onPress={submitReport}
+              activeOpacity={0.9}
+            >
+              <Text style={localStyles.reportButtonText}>
+                {reportMutation.isPending || unmatchMutation.isPending
+                  ? "Enviando..."
+                  : "Enviar reporte y bloquear"}
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </AnimatedSheetModal>
+
+        <View style={localStyles.chatBody}>
+          {/* Messages */}
+          {isLoading ? (
+            <View style={localStyles.loadingWrap}>
+              <VibesLoader size={78} />
+            </View>
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              onViewableItemsChanged={receipts.onViewableItemsChanged}
+              viewabilityConfig={receipts.viewabilityConfig}
+              data={messages ?? []}
+              keyExtractor={(item) => item.id}
+              renderItem={renderMessage}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={
+                Platform.OS === "ios" ? "interactive" : "on-drag"
+              }
+              contentContainerStyle={[
+                localStyles.messageList,
+                {
+                  paddingBottom: 16,
+                },
+              ]}
+              ListHeaderComponent={
+                <Text style={styles.chatMatchedText}>
+                  Conectaste con {otherUserName || "esta persona"}
+                  {matchDate
+                    ? ` el ${new Date(matchDate).toLocaleDateString()}`
+                    : ""}
+                  .
+                </Text>
+              }
+              ListEmptyComponent={
+                <View style={localStyles.emptyWrap}>
+                  <Text style={localStyles.emptyText}>
+                    Saludá a {otherUserName || "tu conexión"}.
+                  </Text>
+                </View>
+              }
+              onContentSizeChange={() =>
+                flatListRef.current?.scrollToEnd({ animated: false })
+              }
+            />
+          )}
+
+          {/* Input */}
+          <View
             style={[
-              styles.eventChatSendButton,
-              (!text.trim() || sendMutation.isPending) && { opacity: 0.4 },
+              styles.eventChatInputContainer,
+              localStyles.inputContainer,
+              {
+                paddingBottom:
+                  keyboardHeight > 0 ? 10 : Math.max(insets.bottom + 14, 24),
+                marginBottom: 0,
+              },
             ]}
-            onPress={handleSend}
-            disabled={!text.trim() || sendMutation.isPending}
           >
-            <Icon name="send" size={20} color={WHITE} />
-          </TouchableOpacity>
+            <Avatar uri={ownAvatar} size={32} />
+            <TextInput
+              style={[styles.eventChatInput, localStyles.composerInput]}
+              placeholder="Escribí un mensaje..."
+              placeholderTextColor={TEXT_SECONDARY}
+              value={text}
+              onChangeText={setText}
+              multiline
+              textAlignVertical="top"
+              maxLength={2000}
+              returnKeyType="default"
+              onFocus={() =>
+                setTimeout(() => {
+                  flatListRef.current?.scrollToEnd({ animated: true });
+                }, 120)
+              }
+            />
+            <TouchableOpacity
+              style={[
+                styles.eventChatSendButton,
+                (!text.trim() || sendMutation.isPending) && { opacity: 0.4 },
+              ]}
+              onPress={handleSend}
+              disabled={!text.trim() || sendMutation.isPending}
+            >
+              <Icon name="send" size={20} color={WHITE} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </ScreenContainer>
   );
 };
 

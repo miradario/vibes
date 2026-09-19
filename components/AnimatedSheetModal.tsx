@@ -12,6 +12,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 
 type AnimatedSheetModalProps = {
   visible: boolean;
+  inline?: boolean;
   onClose: () => void;
   onClosed?: () => void;
   children: React.ReactNode;
@@ -30,6 +31,7 @@ type AnimatedSheetModalProps = {
 
 const AnimatedSheetModal = ({
   visible,
+  inline = false,
   onClose,
   onClosed,
   children,
@@ -122,29 +124,46 @@ const AnimatedSheetModal = ({
 
   if (!isMounted) return null;
 
-  return (
-    <Modal transparent visible animationType="none" onRequestClose={onClose}>
-      <View style={styles.root}>
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.backdrop, { backgroundColor: backdropColor, opacity: backdropOpacity }]}
+  const content = (
+    <View
+      style={[
+        styles.root,
+        inline && { ...StyleSheet.absoluteFillObject, zIndex: 50 },
+      ]}
+    >
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.backdrop,
+          { backgroundColor: backdropColor, opacity: backdropOpacity },
+        ]}
+      />
+      {closeOnBackdropPress ? (
+        <TouchableOpacity
+          style={styles.backdropTouch}
+          activeOpacity={1}
+          onPress={onClose}
         />
-        {closeOnBackdropPress ? (
-          <TouchableOpacity style={styles.backdropTouch} activeOpacity={1} onPress={onClose} />
-        ) : null}
-        <Animated.View
-          style={[
-            styles.sheet,
-            sheetStyle,
-            {
-              opacity: sheetOpacity,
-              transform: [{ translateY: sheetTranslateY }],
-            },
-          ]}
-        >
-          {children}
-        </Animated.View>
-      </View>
+      ) : null}
+      <Animated.View
+        style={[
+          styles.sheet,
+          sheetStyle,
+          {
+            opacity: sheetOpacity,
+            transform: [{ translateY: sheetTranslateY }],
+          },
+        ]}
+      >
+        {children}
+      </Animated.View>
+    </View>
+  );
+  return inline ? (
+    content
+  ) : (
+    <Modal transparent visible animationType="none" onRequestClose={onClose}>
+      {content}
     </Modal>
   );
 };

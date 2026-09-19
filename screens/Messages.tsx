@@ -1,3 +1,5 @@
+import UnreadBadge from "../components/UnreadBadge";
+import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 /** @format */
 
 import React, { useState } from "react";
@@ -152,6 +154,7 @@ export const MessagesContent = ({
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const communityGroups = useCommunityGroupsQuery();
+  const { data: unread = [] } = useCommunityUnreadQuery();
   const { data: matches, isLoading } = useMatchesQuery();
   const { data: incomingLikes = [] } = useIncomingLikesQuery();
   const swipeMutation = useSwipeMutation();
@@ -613,7 +616,15 @@ export const MessagesContent = ({
           </Text>
 
           <Icon name="chevron-forward" color="#7B746C" size={18} />
-          {item.hasUnread ? <View style={localStyles.unreadDot} /> : null}
+          <UnreadBadge
+            count={Number(
+              unread.find(
+                (r) =>
+                  r.kind === item.eventType &&
+                  r.conversation_id === item.eventId
+              )?.unread_count ?? 0
+            )}
+          />
         </View>
       </TouchableOpacity>
     );
@@ -645,7 +656,13 @@ export const MessagesContent = ({
           {formatTime(item.lastMessageAt)}
         </Text>
 
-        {item.hasUnread ? <View style={localStyles.unreadDot} /> : null}
+        <UnreadBadge
+          count={Number(
+            unread.find(
+              (r) => r.kind === "direct" && r.conversation_id === item.id
+            )?.unread_count ?? 0
+          )}
+        />
       </View>
     </TouchableOpacity>
   );
@@ -732,13 +749,17 @@ export const MessagesContent = ({
                 key: "messages",
                 label: "Mensajes",
                 icon: "chatbubble-ellipses-outline",
-                count: activeDirectMessages.length,
+                count: unread
+                  .filter((r) => r.kind === "direct")
+                  .reduce((n, r) => n + Number(r.unread_count), 0),
               },
               {
                 key: "groups",
                 label: "Grupos",
                 icon: "people",
-                count: groupCount,
+                count: unread
+                  .filter((r) => r.kind !== "direct")
+                  .reduce((n, r) => n + Number(r.unread_count), 0),
               },
             ] as const
           ).map((tab) => {
@@ -781,7 +802,7 @@ export const MessagesContent = ({
                 renderDirectRow(item, index)
               )}
             </View>
-            {!isLoading ? (
+            {!isLoading && !activeDirectMessages.length ? (
               <View style={localStyles.conversationHint}>
                 <View style={localStyles.conversationIcon}>
                   <Icon

@@ -28,7 +28,7 @@ const DEFAULT_GENDER_ID = 3;
 const DEFAULT_INTENT_ID = 3;
 const SWIPE_TIMEOUT_MS = 12_000;
 
-const withTimeout = async <T,>(promise: PromiseLike<T>, message: string) => {
+const withTimeout = async <T>(promise: PromiseLike<T>, message: string) => {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -42,23 +42,24 @@ const withTimeout = async <T,>(promise: PromiseLike<T>, message: string) => {
   }
 };
 
-const ensureProfileExists = async (userId: string, fallbackName?: string | null) => {
+const ensureProfileExists = async (
+  userId: string,
+  fallbackName?: string | null
+) => {
   const displayName =
     typeof fallbackName === "string" && fallbackName.trim().length > 0
       ? fallbackName.trim()
       : "Vibes";
 
-  const { error } = await supabase
-    .from("profiles")
-    .upsert(
-      {
-        id: userId,
-        display_name: displayName,
-        gender_id: DEFAULT_GENDER_ID,
-        intent_id: DEFAULT_INTENT_ID,
-      },
-      { onConflict: "id" },
-    );
+  const { error } = await supabase.from("profiles").upsert(
+    {
+      id: userId,
+      display_name: displayName,
+      gender_id: DEFAULT_GENDER_ID,
+      intent_id: DEFAULT_INTENT_ID,
+    },
+    { onConflict: "id" }
+  );
 
   if (error) throw new Error(`Perfil: ${error.message}`);
 };
@@ -78,7 +79,15 @@ export const useSwipeMutation = () => {
       const persistedDirection =
         payload.direction === "pass" ? "nope" : payload.direction;
 
-      await ensureProfileExists(userId, session.user.email?.split("@")[0]);
+      // Existing profiles must never be overwritten when connecting.
+      const { data: existingProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+      if (profileError) throw profileError;
+      if (!existingProfile)
+        await ensureProfileExists(userId, session.user.email?.split("@")[0]);
 
       // 1. Persist swipe. Insert first, then update if the pair already exists.
       let { data: swipe, error: swipeErr } = await withTimeout(
@@ -91,19 +100,22 @@ export const useSwipeMutation = () => {
           })
           .select("id, direction")
           .single(),
-        "No se pudo conectar. Revisá tu conexión e intentá de nuevo.",
+        "No se pudo conectar. Revisá tu conexión e intentá de nuevo."
       );
 
       if (swipeErr?.code === "23505") {
         const updateResponse = await withTimeout(
           supabase
             .from("swipes")
-            .update({ direction: persistedDirection })
+            .update({
+              direction: persistedDirection,
+              created_at: new Date().toISOString(),
+            })
             .eq("swiper_id", userId)
             .eq("target_id", payload.targetUserId)
             .select("id, direction")
             .single(),
-          "No se pudo actualizar la conexión. Intentá de nuevo.",
+          "No se pudo actualizar la conexión. Intentá de nuevo."
         );
         swipe = updateResponse.data;
         swipeErr = updateResponse.error;
@@ -129,7 +141,7 @@ export const useSwipeMutation = () => {
             .eq("target_id", userId)
             .eq("direction", "like")
             .maybeSingle(),
-          "No se pudo confirmar la conexión. Intentá de nuevo.",
+          "No se pudo confirmar la conexión. Intentá de nuevo."
         );
 
         if (mutualErr) {
@@ -148,7 +160,7 @@ export const useSwipeMutation = () => {
 
           const { data: existingMatch, error: existErr } = await withTimeout(
             findExistingMatch(),
-            "No se pudo verificar el match. Intentá de nuevo.",
+            "No se pudo verificar el match. Intentá de nuevo."
           );
 
           if (existErr) {
@@ -168,14 +180,15 @@ export const useSwipeMutation = () => {
               })
               .select("id")
               .single(),
-            "No se pudo crear el match. Intentá de nuevo.",
+            "No se pudo crear el match. Intentá de nuevo."
           );
 
           if (createMatchErr) {
-            const { data: recoveredMatch, error: recoverErr } = await withTimeout(
-              findExistingMatch(),
-              "No se pudo verificar el match. Intentá de nuevo.",
-            );
+            const { data: recoveredMatch, error: recoverErr } =
+              await withTimeout(
+                findExistingMatch(),
+                "No se pudo verificar el match. Intentá de nuevo."
+              );
 
             if (recoverErr) {
               throw new Error(recoverErr.message);
@@ -205,7 +218,7 @@ export const useSwipeMutation = () => {
         if (!data) return;
         queryClient.setQueryData<GetCandidatesResponse>(
           key,
-          data.filter((candidate) => candidate.id !== payload.targetUserId),
+          data.filter((candidate) => candidate.id !== payload.targetUserId)
         );
       });
 

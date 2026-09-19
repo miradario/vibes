@@ -1,3 +1,4 @@
+import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 /** @format */
 
 import React, { memo, useEffect } from "react";
@@ -223,12 +224,13 @@ const CustomTabBar = ({
 }: BottomTabBarProps) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
-  const { data: matches = [] } = useMatchesQuery();
-  const { data: eventGroups = [] } = useMyEventGroupsQuery(userId);
+  const { data: unread = [] } = useCommunityUnreadQuery();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const selectedRoute = state.routes[state.index];
-  const visibleRoutes = state.routes.filter((route) => route.name !== "Discover");
+  const visibleRoutes = state.routes.filter(
+    (route) => route.name !== "Discover"
+  );
   const selectedVisualRouteName =
     selectedRoute?.name === "Discover" ? "Calendar" : selectedRoute?.name;
   const selectedVisualIndex = Math.max(
@@ -240,9 +242,10 @@ const CustomTabBar = ({
   const selectedVisualRoute =
     visibleRoutes[selectedVisualIndex] ?? selectedRoute ?? visibleRoutes[0];
   const SelectedIcon = getRouteIcon(selectedVisualRoute?.name ?? "Home");
-  const directUnreadCount = matches.filter((item) => item.hasUnread).length;
-  const groupUnreadCount = eventGroups.filter((item) => item.hasUnread).length;
-  const vibesUnreadCount = directUnreadCount + groupUnreadCount;
+  const vibesUnreadCount = unread.reduce(
+    (total, row) => total + Number(row.unread_count),
+    0
+  );
   const tabCount = Math.max(visibleRoutes.length, 1);
   const barWidth = Math.min(width - HORIZONTAL_MARGIN * 2, 620);
   const barLeft = (width - barWidth) / 2;
