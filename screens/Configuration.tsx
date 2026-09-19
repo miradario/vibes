@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  Linking,
   Switch,
   Platform,
 } from "react-native";
@@ -29,6 +30,9 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { showToast } from "../src/utils/toast";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+
+const ACCOUNT_DELETION_URL =
+  "https://vibes.gurudevelopers.dev/eliminacion-de-datos";
 
 const Configuration = () => {
   const navigation = useNavigation();
@@ -69,10 +73,33 @@ const Configuration = () => {
         });
       }, 180);
     } catch (error: any) {
-      Alert.alert(t("common.error"), error?.message || t("configuration.saveError"));
+      Alert.alert(
+        t("common.error"),
+        error?.message || t("configuration.saveError")
+      );
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t("profile.deleteAccountTitle"),
+      t("profile.deleteAccountMessage"),
+      [
+        {
+          text: t("profile.deleteAccountCancel"),
+          style: "cancel",
+        },
+        {
+          text: t("profile.deleteAccountConfirm"),
+          style: "destructive",
+          onPress: () => {
+            void Linking.openURL(ACCOUNT_DELETION_URL);
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -80,6 +107,7 @@ const Configuration = () => {
       <View style={localStyles.fixedHeader}>
         <AppHeader
           title={t("configuration.title")}
+          titleNumberOfLines={2}
           subtitle={t("configuration.subtitle")}
           showBack
           onBack={() => navigation.goBack()}
@@ -97,14 +125,22 @@ const Configuration = () => {
       >
         <View style={localStyles.section}>
           <View style={localStyles.sectionHeader}>
-            <Icon name="notifications-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("configuration.notifications")}</Text>
+            <Icon
+              name="notifications-outline"
+              size={18}
+              color={TEXT_SECONDARY}
+            />
+            <Text style={localStyles.sectionTitle}>
+              {t("configuration.notifications")}
+            </Text>
             <View style={localStyles.line} />
           </View>
 
           <View style={localStyles.card}>
             <View style={localStyles.cardCopy}>
-              <Text style={localStyles.cardText}>{t("configuration.notificationsHint")}</Text>
+              <Text style={localStyles.cardText}>
+                {t("configuration.notificationsHint")}
+              </Text>
               <Text
                 style={[
                   localStyles.cardStatus,
@@ -120,16 +156,36 @@ const Configuration = () => {
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
               trackColor={{ false: "#D8D3CC", true: "#E4B76E" }}
-              thumbColor={Platform.OS === "ios" ? WHITE : notificationsEnabled ? PRIMARY_COLOR : WHITE}
+              thumbColor={
+                Platform.OS === "ios"
+                  ? WHITE
+                  : notificationsEnabled
+                  ? PRIMARY_COLOR
+                  : WHITE
+              }
               ios_backgroundColor="#D8D3CC"
             />
           </View>
         </View>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={[localStyles.card, { marginTop: 28 }]}
+          onPress={handleDeleteAccount}
+        >
+          <Icon name="trash-outline" size={22} color={TEXT_SECONDARY} />
+          <Text style={[localStyles.cardText, { flex: 1, marginLeft: 12 }]}>
+            {t("profile.deleteAccount")}
+          </Text>
+          <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+        </TouchableOpacity>
       </ScrollView>
 
       <View style={localStyles.saveButtonFixedWrap}>
         <TouchableOpacity
-          style={[localStyles.saveButton, isSaving && localStyles.saveButtonDisabled]}
+          style={[
+            localStyles.saveButton,
+            isSaving && localStyles.saveButtonDisabled,
+          ]}
           onPress={() => {
             void handleSave();
           }}
@@ -177,8 +233,9 @@ const localStyles = StyleSheet.create({
     alignItems: "flex-start",
   },
   headerTitle: {
-    fontSize: 40,
-    lineHeight: 44,
+    fontSize: 30,
+    lineHeight: 38,
+    includeFontPadding: true,
   },
   headerSubtitle: {
     fontSize: 18,

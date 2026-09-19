@@ -12,8 +12,6 @@ import {
 import FALLBACK_PROFILE_IMAGE from "../../assets/icon.png";
 import { calculateAgeFromBirthDate } from "./birthDate";
 
-
-
 type PhotoLike = {
   url?: string | null;
   isPrimary?: boolean | null;
@@ -123,7 +121,8 @@ const getPhotoUrls = (photos: unknown): string[] => {
         if (isNonEmptyString(candidate.url)) {
           return {
             url: candidate.url.trim(),
-            order: typeof candidate.order === "number" ? candidate.order : index,
+            order:
+              typeof candidate.order === "number" ? candidate.order : index,
             isPrimary: Boolean(candidate.isPrimary),
           };
         }
@@ -131,7 +130,10 @@ const getPhotoUrls = (photos: unknown): string[] => {
 
       return null;
     })
-    .filter((item): item is { url: string; order: number; isPrimary: boolean } => Boolean(item))
+    .filter(
+      (item): item is { url: string; order: number; isPrimary: boolean } =>
+        Boolean(item)
+    )
     .sort((left, right) => {
       if (left.isPrimary && !right.isPrimary) return -1;
       if (!left.isPrimary && right.isPrimary) return 1;
@@ -145,13 +147,17 @@ const buildTags = (profile: ProfileLike): string[] => {
 
   if (Array.isArray(profile.orientation)) {
     tags.push(
-      ...profile.orientation.filter((item: unknown): item is string => isNonEmptyString(item)),
+      ...profile.orientation.filter((item: unknown): item is string =>
+        isNonEmptyString(item)
+      )
     );
   }
 
   if (Array.isArray(profile.path)) {
     tags.push(
-      ...profile.path.filter((item: unknown): item is string => isNonEmptyString(item)),
+      ...profile.path.filter((item: unknown): item is string =>
+        isNonEmptyString(item)
+      )
     );
   }
 
@@ -161,7 +167,7 @@ const buildTags = (profile: ProfileLike): string[] => {
 const getTaggedValue = (tags: string[], prefixes: string[]) => {
   const lowerPrefixes = prefixes.map((prefix) => prefix.toLowerCase());
   const match = tags.find((tag) =>
-    lowerPrefixes.some((prefix) => tag.toLowerCase().startsWith(prefix)),
+    lowerPrefixes.some((prefix) => tag.toLowerCase().startsWith(prefix))
   );
 
   if (!match) return undefined;
@@ -175,7 +181,10 @@ const getTaggedValue = (tags: string[], prefixes: string[]) => {
 };
 
 const onboardingLabelById = new Map(
-  [...PURPOSE_OPTIONS, ...ENERGY_OPTIONS].map((option) => [option.id, option.label]),
+  [...PURPOSE_OPTIONS, ...ENERGY_OPTIONS].map((option) => [
+    option.id,
+    option.label,
+  ])
 );
 
 const formatOtherTag = (value: string) => {
@@ -220,18 +229,31 @@ const buildPreferences = (profile: ProfileLike): string[] => {
     preferences.push("Es guía/teacher");
   }
 
-  pushPreference("Camino espiritual", profile.spiritualPath ?? profile.spiritual_path);
-  pushPreference("Propósito", profile.purpose);
-  pushPreference("Vegetarianismo", normalizeVegetarianValue(profile.vegetarian));
+  pushPreference(
+    "Camino espiritual",
+    profile.spiritualPath ?? profile.spiritual_path
+  );
+  pushPreference(
+    "Me trae a Vibes",
+    profile.openTo ?? profile.open_to ?? profile.purpose
+  );
+  pushPreference(
+    "Vegetarianismo",
+    normalizeVegetarianValue(profile.vegetarian)
+  );
   pushPreference("Fuma", profile.smoking);
   pushPreference("Género", profile.gender);
   pushPreference(
     "Estatura",
-    typeof profile.heightCm === "number" || typeof profile.height_cm === "number"
+    typeof profile.heightCm === "number" ||
+      typeof profile.height_cm === "number"
       ? `${profile.heightCm ?? profile.height_cm} cm`
-      : profile.heightCm ?? profile.height_cm,
+      : profile.heightCm ?? profile.height_cm
   );
-  pushPreference("Busca", profile.lookingFor ?? profile.looking_for);
+  pushPreference(
+    "Qué busco en Vibes",
+    profile.lookingFor ?? profile.looking_for
+  );
   pushPreference("Idiomas", profile.languages);
   pushPreference("Zodiaco", profile.zodiac);
   pushPreference("Educación", profile.education);
@@ -240,15 +262,25 @@ const buildPreferences = (profile: ProfileLike): string[] => {
   pushPreference("Personalidad", profile.personality);
   pushPreference(
     "Comunicación",
-    profile.communicationStyle ?? profile.communication_style,
+    profile.communicationStyle ?? profile.communication_style
   );
   pushPreference("Estilo de amor", profile.loveStyle ?? profile.love_style);
   pushPreference("Mascotas", profile.pets);
 
   const answers = profile.profileAnswers ?? profile.profile_answers;
   if (answers && typeof answers === "object" && !Array.isArray(answers)) {
-    const fields = { hobbies: "Intereses", favoritePlans: "Planes", activity: "Actividad física", pets: "Mascotas", habits: "Hábitos", idealPlan: "Mi plan ideal", talkAbout: "Podría hablar de", trySomething: "Me gustaría probar" };
-    for (const [key, label] of Object.entries(fields)) pushPreference(label, (answers as Record<string, unknown>)[key]);
+    const fields = {
+      hobbies: "Intereses",
+      favoritePlans: "Planes",
+      activity: "Actividad física",
+      pets: "Mascotas",
+      habits: "Hábitos",
+      idealPlan: "Mi plan ideal",
+      talkAbout: "Podría hablar de",
+      trySomething: "Me gustaría probar",
+    };
+    for (const [key, label] of Object.entries(fields))
+      pushPreference(label, (answers as Record<string, unknown>)[key]);
   }
   return Array.from(new Set(preferences));
 };
@@ -257,14 +289,15 @@ const formatLocation = (profile: ProfileLike) => {
   const baseLocation =
     (isNonEmptyString(profile.locationLabel) && profile.locationLabel.trim()) ||
     (isNonEmptyString(profile.location) && profile.location.trim()) ||
-    ([profile.neighborhood, profile.city, profile.country]
+    [profile.neighborhood, profile.city, profile.country]
       .filter((item: unknown): item is string => isNonEmptyString(item))
       .map((item) => item.trim())
-      .join(", ")) ||
+      .join(", ") ||
     undefined;
 
   const distanceKm =
-    typeof profile.distanceKm === "number" && Number.isFinite(profile.distanceKm)
+    typeof profile.distanceKm === "number" &&
+    Number.isFinite(profile.distanceKm)
       ? Math.max(1, Math.round(profile.distanceKm))
       : null;
 
@@ -280,7 +313,7 @@ const formatLocation = (profile: ProfileLike) => {
 };
 
 export const mapCandidateToConnectionProfile = (
-  candidate: Candidate | ProfileLike,
+  candidate: Candidate | ProfileLike
 ): ConnectionProfile => {
   const photos = getPhotoUrls((candidate as ProfileLike).photos);
   const photoSources = photos.map((url) => ({ uri: url }));
@@ -307,7 +340,9 @@ export const mapCandidateToConnectionProfile = (
     toAge((candidate as ProfileLike).birth_date);
   const vegetarian =
     normalizeVegetarianValue((candidate as ProfileLike).vegetarian) ||
-    normalizeVegetarianValue(getTaggedValue(tags, ["vegetarian", "vegetariano"]));
+    normalizeVegetarianValue(
+      getTaggedValue(tags, ["vegetarian", "vegetariano"])
+    );
   const smoking =
     (isNonEmptyString((candidate as ProfileLike).smoking) &&
       (candidate as ProfileLike).smoking.trim()) ||
@@ -320,11 +355,11 @@ export const mapCandidateToConnectionProfile = (
     (candidate as ProfileLike).spiritualPath ??
       (candidate as ProfileLike).spiritual_path,
     (candidate as ProfileLike).spiritualPathDetails ??
-      (candidate as ProfileLike).spiritual_path_details,
+      (candidate as ProfileLike).spiritual_path_details
   );
   const spiritualPathDetails = normalizeSpiritualPathDetails(
     (candidate as ProfileLike).spiritualPathDetails ??
-      (candidate as ProfileLike).spiritual_path_details,
+      (candidate as ProfileLike).spiritual_path_details
   );
 
   return {
@@ -381,15 +416,17 @@ export const mapCandidateToConnectionProfile = (
       typeof (candidate as ProfileLike).match === "number"
         ? String((candidate as ProfileLike).match)
         : isNonEmptyString((candidate as ProfileLike).match)
-          ? (candidate as ProfileLike).match.trim()
-          : undefined,
-    isOnline: Boolean((candidate as ProfileLike).isActive ?? (candidate as ProfileLike).isOnline),
+        ? (candidate as ProfileLike).match.trim()
+        : undefined,
+    isOnline: Boolean(
+      (candidate as ProfileLike).isActive ?? (candidate as ProfileLike).isOnline
+    ),
   };
 };
 
 export const mapOwnProfileToConnectionProfile = (
   profile: ProfileLike | null | undefined,
-  fallbackName?: string | null,
+  fallbackName?: string | null
 ): ConnectionProfile => {
   if (!profile) {
     return {

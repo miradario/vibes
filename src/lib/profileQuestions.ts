@@ -127,11 +127,11 @@ export const readProfileAnswers = async (
   if (privateResult.error) throw privateResult.error;
   const profile = publicResult.data;
   return {
+    ...(profile?.profile_answers ?? {}),
     gender: profile?.gender ?? "",
     lookingFor: profile?.looking_for ?? [],
     personality: profile?.personality ?? "",
     languages: profile?.languages ?? [],
-    ...(profile?.profile_answers ?? {}),
     availability: privateResult.data?.availability ?? "",
   };
 };

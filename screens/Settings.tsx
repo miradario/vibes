@@ -1,7 +1,9 @@
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
-import * as Location from "expo-location";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
+import { PURPOSE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
 import {
   View,
   Text,
@@ -10,6 +12,8 @@ import {
   TextInput,
   StyleSheet,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,7 +30,7 @@ import SpiritualPathDetailsModal from "../components/SpiritualPathDetailsModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   getSelectedSpiritualPaths,
-  hasSpiritualPathDetail,
+  getSpiritualPathDetailEntries,
   normalizeSpiritualPathDetail,
   normalizeSpiritualPathDetails,
   SPIRITUAL_PATH_OPTIONS,
@@ -41,79 +45,68 @@ import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
-const GENDER_OPTIONS = [
-  "Mujer",
-  "Hombre",
-  "No binario",
-  "Otro",
-  "Prefiero no decir",
-];
-const LOOKING_FOR_OPTIONS = [
-  "Amistad",
-  "Conversaciones profundas",
-  "Eventos",
-  "Relación consciente",
-  "Comunidad",
-];
-const LANGUAGE_OPTIONS = [
-  "Español",
-  "Inglés",
-  "Portugués",
-  "Italiano",
-  "Francés",
-];
+const GENDER_OPTIONS = QUESTION_GROUPS[0].fields[0].options;
+const LOOKING_FOR_OPTIONS = QUESTION_GROUPS[0].fields[1].options;
+const LANGUAGE_OPTIONS = QUESTION_GROUPS[1].fields[5].options;
 
 const normalizeTextArray = (value: unknown) =>
   Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    ? value.filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0
+      )
     : [];
 
 const normalizeHeightInput = (value: string) =>
   value.replace(/\D/g, "").slice(0, 3);
 
 const Settings = () => {
-  const { locale, setLocale, t } = useI18n();
+  const { locale, t } = useI18n();
   const navigation = useNavigation();
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const [purposes, setPurposes] = useState<string[]>([]);
   const { data: session } = useAuthSession();
-  const { data: prefs, refetch } = useUserPreferencesQuery(session?.user?.id);
+  const {
+    data: prefs,
+    refetch,
+    isPending,
+    isError,
+  } = useUserPreferencesQuery(session?.user?.id);
 
   const [spiritualPath, setSpiritualPath] = useState<string[]>([]);
   const [spiritualPathDetails, setSpiritualPathDetails] =
     useState<SpiritualPathDetails>({});
   const [activeSpiritualPath, setActiveSpiritualPath] = useState<string | null>(
-    null,
+    null
   );
-  const [vegetarian, setVegetarian] = useState<"Sí" | "No">("No");
-  const [location, setLocation] = useState("");
-  const [currentLocation, setCurrentLocation] = useState("");
-  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
+  const [vegetarian, setVegetarian] = useState<string>("");
   const [aboutMe, setAboutMe] = useState("");
   const [gender, setGender] = useState("");
   const [heightCm, setHeightCm] = useState("");
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
-  const [smoking, setSmoking] = useState<"Sí" | "No">("No");
+  const [smoking, setSmoking] = useState<string>("");
   const [otherOptions, setOtherOptions] = useState<string[]>(
-    OTHER_DEFAULT_OPTIONS,
+    OTHER_DEFAULT_OPTIONS
   );
-  const [selectedOtherTags, setSelectedOtherTags] = useState<string[]>(
-    OTHER_DEFAULT_OPTIONS,
-  );
+  const [selectedOtherTags, setSelectedOtherTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
 
   useEffect(() => {
     if (!prefs) return;
+    setPurposes(normalizeTextArray(prefs.openTo));
 
     setSpiritualPath(
       getSelectedSpiritualPaths(
         prefs.spiritualPath ?? prefs.spiritual_path,
-        prefs.spiritualPathDetails ?? prefs.spiritual_path_details,
-      ),
+        prefs.spiritualPathDetails ?? prefs.spiritual_path_details
+      )
     );
     setSpiritualPathDetails(
       normalizeSpiritualPathDetails(
-        prefs.spiritualPathDetails ?? prefs.spiritual_path_details,
-      ),
+        prefs.spiritualPathDetails ?? prefs.spiritual_path_details
+      )
     );
 
     if (prefs.vegetarian === "Sí" || prefs.vegetarian === "No") {
@@ -121,9 +114,6 @@ const Settings = () => {
     }
     if (prefs.smoking === "Sí" || prefs.smoking === "No") {
       setSmoking(prefs.smoking);
-    }
-    if (typeof (prefs.location ?? prefs.locationLabel) === "string") {
-      setLocation((prefs.location ?? prefs.locationLabel) as string);
     }
     if (typeof prefs.aboutMe === "string") {
       setAboutMe(prefs.aboutMe);
@@ -136,68 +126,22 @@ const Settings = () => {
       setHeightCm(normalizeHeightInput(String(nextHeight)));
     }
     const nextLookingFor = normalizeTextArray(
-      prefs.lookingFor ?? prefs.looking_for ?? prefs.openTo ?? prefs.open_to,
+      prefs.lookingFor ?? prefs.looking_for
     );
-    if (nextLookingFor.length) {
-      setLookingFor(nextLookingFor);
-    }
+    setLookingFor(nextLookingFor);
     const nextLanguages = normalizeTextArray(prefs.languages);
-    if (nextLanguages.length) {
-      setLanguages(nextLanguages);
-    }
+    setLanguages(nextLanguages);
     if (Array.isArray(prefs.otherTags) && prefs.otherTags.length) {
       setSelectedOtherTags(prefs.otherTags);
       setOtherOptions((prev) =>
-        Array.from(new Set([...prev, ...prefs.otherTags])),
+        Array.from(new Set([...prev, ...prefs.otherTags]))
       );
     }
   }, [prefs]);
 
-  useEffect(() => {
-    let active = true;
-
-    const loadCurrentLocation = async () => {
-      setIsResolvingLocation(true);
-      try {
-        const permission = await Location.requestForegroundPermissionsAsync();
-        if (!active || permission.status !== "granted") return;
-
-        const current = await Location.getCurrentPositionAsync({});
-        if (!active) return;
-
-        const [address] = await Location.reverseGeocodeAsync({
-          latitude: current.coords.latitude,
-          longitude: current.coords.longitude,
-        });
-        if (!active) return;
-
-        const city =
-          address?.city ?? address?.subregion ?? address?.region ?? "";
-        const country = address?.country ?? "";
-        const locationLabel = [city, country].filter(Boolean).join(", ");
-
-        if (locationLabel) {
-          setCurrentLocation(locationLabel);
-        }
-      } catch (_error) {
-        // Keep preferences editable even if location is unavailable.
-      } finally {
-        if (active) {
-          setIsResolvingLocation(false);
-        }
-      }
-    };
-
-    loadCurrentLocation();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
   const selectedOthers = useMemo(
     () => new Set(selectedOtherTags),
-    [selectedOtherTags],
+    [selectedOtherTags]
   );
   const selectedLookingFor = useMemo(() => new Set(lookingFor), [lookingFor]);
   const selectedLanguages = useMemo(() => new Set(languages), [languages]);
@@ -209,7 +153,7 @@ const Settings = () => {
 
   const updateSpiritualPathDetail = (
     item: string,
-    nextDetail: SpiritualPathDetail,
+    nextDetail: SpiritualPathDetail
   ) => {
     setSpiritualPathDetails((prev) => ({
       ...prev,
@@ -229,30 +173,36 @@ const Settings = () => {
 
   const toggleOther = (item: string) => {
     setSelectedOtherTags((prev) =>
-      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item],
+      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]
     );
   };
 
   const toggleLookingFor = (item: string) => {
     setLookingFor((prev) =>
-      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item],
+      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]
     );
   };
 
   const toggleLanguage = (item: string) => {
     setLanguages((prev) =>
-      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item],
+      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]
     );
   };
 
   const addCustomTag = () => {
     const next = customTag.trim();
     if (!next) {
-      Alert.alert(t("settings.missingInterestTitle"), t("settings.missingInterestMessage"));
+      Alert.alert(
+        t("settings.missingInterestTitle"),
+        t("settings.missingInterestMessage")
+      );
       return;
     }
     if (otherOptions.includes(next)) {
-      Alert.alert(t("settings.duplicateInterestTitle"), t("settings.duplicateInterestMessage"));
+      Alert.alert(
+        t("settings.duplicateInterestTitle"),
+        t("settings.duplicateInterestMessage")
+      );
       setCustomTag("");
       return;
     }
@@ -261,30 +211,35 @@ const Settings = () => {
     setCustomTag("");
   };
 
-  const handleSave = async () => {
+  const handleSave = async (nextScreen?: string) => {
     const userId = session?.user?.id;
+    if (saving || isPending || isError) return;
     if (!userId) {
       Alert.alert(t("common.error"), t("settings.missingSession"));
       return;
     }
 
+    setSaving(true);
     try {
       await upsertUserPreferences(userId, {
         spiritual_path: spiritualPath,
         spiritual_path_details: spiritualPathDetails,
-        vegetarian,
-        location: location.trim(),
+        vegetarian: vegetarian || null,
         about_me: aboutMe,
-        gender,
+        gender: gender || null,
         height_cm: heightCm ? Number.parseInt(heightCm, 10) : null,
         looking_for: lookingFor,
-        open_to: lookingFor,
+        open_to: purposes,
         languages,
-        smoking,
+        smoking: smoking || null,
         other_tags: selectedOtherTags,
       });
       await refetch();
-      navigation.goBack();
+      await queryClient.invalidateQueries({
+        queryKey: ["profileAnswers", userId],
+      });
+      if (nextScreen) navigation.navigate(nextScreen as never);
+      else navigation.goBack();
       setTimeout(() => {
         showToast(t("settings.saved"), {
           type: "success",
@@ -293,6 +248,8 @@ const Settings = () => {
       }, 180);
     } catch (error: any) {
       Alert.alert(t("common.error"), error?.message || t("settings.saveError"));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -312,240 +269,304 @@ const Settings = () => {
   );
 
   return (
-    <SafeAreaView style={styles.bg} edges={["top", "left", "right"]}>
-      <View style={localStyles.fixedHeader}>
-        <AppHeader
-          title={t("settings.title")}
-          subtitle={t("settings.subtitle")}
-          showBack
-          onBack={() => navigation.goBack()}
-          style={localStyles.appHeader}
-          contentStyle={localStyles.headerCopy}
-          titleStyle={localStyles.headerTitle}
-          subtitleStyle={localStyles.headerSubtitle}
-        />
-      </View>
-
-      <ScrollView
-        style={localStyles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={localStyles.scrollContent}
+    <SafeAreaView style={styles.bg} edges={["top", "bottom", "left", "right"]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={localStyles.section}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.spiritualPath")}</Text>
-            <View style={localStyles.line} />
-          </View>
-          <Text style={localStyles.helperText}>{t("settings.spiritualPathHint")}</Text>
-          <View style={localStyles.chipWrap}>
-            {SPIRITUAL_PATH_OPTIONS.map((item) =>
-              renderChip(translateSpiritualPathLabel(locale, item), spiritualPath.includes(item), () =>
-                openSpiritualPathEditor(item),
-              ),
-            )}
-          </View>
-          {spiritualPath.length > 0 ? (
-            <View style={localStyles.detailList}>
-              {spiritualPath.map((item) => (
-                <TouchableOpacity
-                  key={`${item}-detail`}
-                  style={localStyles.detailItem}
-                  onPress={() => setActiveSpiritualPath(item)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={localStyles.detailItemTitle}>
-                    {translateSpiritualPathLabel(locale, item)}
-                  </Text>
-                  <Text style={localStyles.detailItemSubtitle}>
-                    {hasSpiritualPathDetail(spiritualPathDetails[item])
-                      ? t("onboarding.spiritualEditOptional")
-                      : t("onboarding.spiritualAddOptional")}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+        <View style={localStyles.fixedHeader}>
+          <AppHeader
+            title={t("settings.title")}
+            subtitle={t("settings.subtitle")}
+            showBack
+            onBack={() => navigation.goBack()}
+            style={localStyles.appHeader}
+            contentStyle={localStyles.headerCopy}
+            titleStyle={localStyles.headerTitle}
+            subtitleStyle={localStyles.headerSubtitle}
+          />
+        </View>
+
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          style={localStyles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={localStyles.scrollContent}
+        >
+          {isError ? (
+            <TouchableOpacity
+              onPress={() => void refetch()}
+              style={localStyles.detailItem}
+            >
+              <Text>
+                No pudimos cargar tus preferencias. Tocá para reintentar.
+              </Text>
+            </TouchableOpacity>
           ) : null}
-        </View>
-
-        <View style={localStyles.section}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.vegetarian")}</Text>
-            <View style={localStyles.line} />
-          </View>
-          <View style={localStyles.chipWrap}>
-            {renderChip(t("common.yes"), vegetarian === "Sí", () => setVegetarian("Sí"))}
-            {renderChip(t("common.no"), vegetarian === "No", () => setVegetarian("No"))}
-          </View>
-        </View>
-
-        <View style={localStyles.section}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="location-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.location")}</Text>
-            <View style={localStyles.line} />
-          </View>
-          {currentLocation ? (
-            <View style={localStyles.currentLocationCard}>
-              <Text style={localStyles.currentLocationLabel}>
-                {t("settings.currentLocation")}
+          <View style={localStyles.section}>
+            <View style={localStyles.sectionHeader}>
+              <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
+              <Text style={localStyles.sectionTitle}>
+                {t("settings.spiritualPath")}
               </Text>
-              <Text style={localStyles.currentLocationValue}>
-                {currentLocation}
+              <View style={localStyles.line} />
+            </View>
+            <Text style={localStyles.helperText}>
+              {t("settings.spiritualPathHint")}
+            </Text>
+            <View style={localStyles.chipWrap}>
+              {SPIRITUAL_PATH_OPTIONS.map((item) =>
+                renderChip(
+                  translateSpiritualPathLabel(locale, item),
+                  spiritualPath.includes(item),
+                  () => openSpiritualPathEditor(item)
+                )
+              )}
+            </View>
+            {spiritualPath.length > 0 ? (
+              <View style={localStyles.detailList}>
+                {spiritualPath.map((item) => (
+                  <TouchableOpacity
+                    key={`${item}-detail`}
+                    style={localStyles.detailItem}
+                    onPress={() => setActiveSpiritualPath(item)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={localStyles.detailItemTitle}>
+                      {translateSpiritualPathLabel(locale, item)}
+                    </Text>
+                    <Text style={localStyles.detailItemSubtitle}>
+                      {getSpiritualPathDetailEntries(spiritualPathDetails[item])
+                        .map((entry) => `${entry.label}: ${entry.value}`)
+                        .join(" · ") || "Sin datos adicionales"}
+                    </Text>
+                    <Text style={{ color: PRIMARY_COLOR, marginTop: 8 }}>
+                      Editar
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : null}
+          </View>
+
+          <View style={localStyles.section}>
+            <View style={localStyles.sectionHeader}>
+              <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
+              <Text style={localStyles.sectionTitle}>
+                {t("settings.vegetarian")}
               </Text>
+              <View style={localStyles.line} />
+            </View>
+            <View style={localStyles.chipWrap}>
+              {renderChip(t("common.yes"), vegetarian === "Sí", () =>
+                setVegetarian("Sí")
+              )}
+              {renderChip(t("common.no"), vegetarian === "No", () =>
+                setVegetarian("No")
+              )}
+            </View>
+          </View>
+
+          <View style={localStyles.section}>
+            <View style={localStyles.sectionHeader}>
+              <Icon name="flower-outline" size={18} color={TEXT_SECONDARY} />
+              <Text style={localStyles.sectionTitle}>
+                {t("settings.aboutMe")}
+              </Text>
+              <View style={localStyles.line} />
+            </View>
+            <TextInput
+              style={localStyles.aboutInput}
+              multiline
+              numberOfLines={5}
+              value={aboutMe}
+              onChangeText={setAboutMe}
+              placeholder={t("settings.aboutMePlaceholder")}
+              placeholderTextColor={GRAY}
+              textAlignVertical="top"
+            />
+          </View>
+
+          <View style={localStyles.preferencePanel}>
+            <View style={localStyles.sectionHeader}>
+              <Icon
+                name="person-circle-outline"
+                size={18}
+                color={TEXT_SECONDARY}
+              />
+              <Text style={localStyles.sectionTitle}>
+                {t("settings.identity")}
+              </Text>
+              <View style={localStyles.line} />
+            </View>
+
+            <Text style={localStyles.fieldLabel}>{t("settings.gender")}</Text>
+            <View style={localStyles.chipWrap}>
+              {GENDER_OPTIONS.map((item) =>
+                renderChip(item, gender === item, () =>
+                  setGender(gender === item ? "" : item)
+                )
+              )}
+            </View>
+
+            <Text style={localStyles.fieldLabel}>{t("settings.height")}</Text>
+            <View style={localStyles.heightRow}>
+              <TextInput
+                style={localStyles.heightInput}
+                value={heightCm}
+                onChangeText={(value) =>
+                  setHeightCm(normalizeHeightInput(value))
+                }
+                placeholder={t("settings.heightPlaceholder")}
+                placeholderTextColor={GRAY}
+                keyboardType="number-pad"
+                maxLength={3}
+              />
+              <Text style={localStyles.heightUnit}>cm</Text>
+            </View>
+          </View>
+
+          <View style={localStyles.preferencePanel}>
+            <Text style={localStyles.sectionTitle}>Me trae a Vibes</Text>
+            <Text style={localStyles.helperText}>
+              Podés elegir varias motivaciones.
+            </Text>
+            <View style={localStyles.chipWrap}>
+              {PURPOSE_OPTIONS.map(({ label }) =>
+                renderChip(label, purposes.includes(label), () =>
+                  setPurposes((previous) =>
+                    previous.includes(label)
+                      ? previous.filter((value) => value !== label)
+                      : [...previous, label]
+                  )
+                )
+              )}
+            </View>
+          </View>
+
+          <View style={localStyles.preferencePanel}>
+            <View style={localStyles.sectionHeader}>
+              <Icon name="sparkles-outline" size={18} color={TEXT_SECONDARY} />
+              <Text style={localStyles.sectionTitle}>Qué busco en Vibes</Text>
+              <View style={localStyles.line} />
+            </View>
+            <View style={localStyles.chipWrap}>
+              {LOOKING_FOR_OPTIONS.map((item) =>
+                renderChip(item, selectedLookingFor.has(item), () =>
+                  toggleLookingFor(item)
+                )
+              )}
+            </View>
+          </View>
+
+          <View style={localStyles.preferencePanel}>
+            <View style={localStyles.sectionHeader}>
+              <Icon name="language-outline" size={18} color={TEXT_SECONDARY} />
+              <Text style={localStyles.sectionTitle}>
+                {t("settings.languages")}
+              </Text>
+              <View style={localStyles.line} />
+            </View>
+            <View style={localStyles.chipWrap}>
+              {LANGUAGE_OPTIONS.map((item) =>
+                renderChip(item, selectedLanguages.has(item), () =>
+                  toggleLanguage(item)
+                )
+              )}
+            </View>
+          </View>
+
+          <View style={localStyles.section}>
+            <View style={localStyles.sectionHeader}>
+              <Icon name="bonfire-outline" size={18} color={TEXT_SECONDARY} />
+              <Text style={localStyles.sectionTitle}>
+                {t("settings.smoking")}
+              </Text>
+              <View style={localStyles.line} />
+            </View>
+            <View style={localStyles.chipWrap}>
+              {renderChip(t("common.yes"), smoking === "Sí", () =>
+                setSmoking("Sí")
+              )}
+              {renderChip(t("common.no"), smoking === "No", () =>
+                setSmoking("No")
+              )}
+            </View>
+          </View>
+
+          <View style={localStyles.section}>
+            <View style={localStyles.sectionHeader}>
+              <Icon name="moon-outline" size={18} color={TEXT_SECONDARY} />
+              <Text style={localStyles.sectionTitle}>
+                Intereses adicionales
+              </Text>
+              <View style={localStyles.line} />
+            </View>
+            <View style={localStyles.chipWrap}>
+              {otherOptions.map((item) =>
+                renderChip(item, selectedOthers.has(item), () =>
+                  toggleOther(item)
+                )
+              )}
+            </View>
+            <View style={localStyles.addRow}>
+              <TextInput
+                style={localStyles.addInput}
+                value={customTag}
+                onChangeText={setCustomTag}
+                placeholder={t("settings.newInterestPlaceholder")}
+                placeholderTextColor={GRAY}
+                onSubmitEditing={addCustomTag}
+                returnKeyType="done"
+              />
               <TouchableOpacity
-                style={localStyles.currentLocationButton}
-                onPress={() => setLocation(currentLocation)}
+                style={localStyles.addButton}
+                onPress={addCustomTag}
               >
-                <Text style={localStyles.currentLocationButtonText}>
-                  {t("settings.useCurrentLocation")}
+                <Text style={localStyles.addButtonText}>
+                  {t("settings.addInterest")}
                 </Text>
               </TouchableOpacity>
             </View>
-          ) : isResolvingLocation ? (
-            <Text style={localStyles.helperText}>{t("settings.resolvingLocation")}</Text>
-          ) : null}
-          <TextInput
-            style={localStyles.textInput}
-            value={location}
-            onChangeText={setLocation}
-            placeholder={t("settings.locationPlaceholder")}
-            placeholderTextColor={GRAY}
-            autoCapitalize="words"
-            returnKeyType="done"
-          />
+          </View>
+
+          <TouchableOpacity
+            style={localStyles.detailItem}
+            disabled={saving || isPending || isError}
+            onPress={() => void handleSave("ProfileQuestions")}
+          >
+            <Text style={localStyles.detailItemTitle}>Más sobre vos</Text>
+            <Text style={localStyles.detailItemSubtitle}>
+              Personalidad, hobbies, planes, hábitos y todas tus respuestas del
+              onboarding.
+            </Text>
+            <Text style={{ color: PRIMARY_COLOR, marginTop: 8 }}>
+              Guardar y editar respuestas
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+        {/* Botón fijo abajo */}
+        <View style={{ padding: 16, backgroundColor: WHITE }}>
+          <TouchableOpacity
+            style={[localStyles.saveButton, saving && { opacity: 0.6 }]}
+            disabled={saving || isPending || isError}
+            onPress={() => void handleSave()}
+          >
+            <Text style={localStyles.saveButtonText}>
+              {saving ? "Guardando…" : t("common.save")}
+            </Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={localStyles.section}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="flower-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.aboutMe")}</Text>
-            <View style={localStyles.line} />
-          </View>
-          <TextInput
-            style={localStyles.aboutInput}
-            multiline
-            numberOfLines={5}
-            value={aboutMe}
-            onChangeText={setAboutMe}
-            placeholder={t("settings.aboutMePlaceholder")}
-            placeholderTextColor={GRAY}
-            textAlignVertical="top"
-          />
-        </View>
-
-        <View style={localStyles.preferencePanel}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="person-circle-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.identity")}</Text>
-            <View style={localStyles.line} />
-          </View>
-
-          <Text style={localStyles.fieldLabel}>{t("settings.gender")}</Text>
-          <View style={localStyles.chipWrap}>
-            {GENDER_OPTIONS.map((item) =>
-              renderChip(item, gender === item, () => setGender(gender === item ? "" : item)),
-            )}
-          </View>
-
-          <Text style={localStyles.fieldLabel}>{t("settings.height")}</Text>
-          <View style={localStyles.heightRow}>
-            <TextInput
-              style={localStyles.heightInput}
-              value={heightCm}
-              onChangeText={(value) => setHeightCm(normalizeHeightInput(value))}
-              placeholder={t("settings.heightPlaceholder")}
-              placeholderTextColor={GRAY}
-              keyboardType="number-pad"
-              maxLength={3}
-            />
-            <Text style={localStyles.heightUnit}>cm</Text>
-          </View>
-        </View>
-
-        <View style={localStyles.preferencePanel}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="sparkles-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.lookingFor")}</Text>
-            <View style={localStyles.line} />
-          </View>
-          <View style={localStyles.chipWrap}>
-            {LOOKING_FOR_OPTIONS.map((item) =>
-              renderChip(item, selectedLookingFor.has(item), () => toggleLookingFor(item)),
-            )}
-          </View>
-        </View>
-
-        <View style={localStyles.preferencePanel}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="language-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.languages")}</Text>
-            <View style={localStyles.line} />
-          </View>
-          <View style={localStyles.chipWrap}>
-            {LANGUAGE_OPTIONS.map((item) =>
-              renderChip(item, selectedLanguages.has(item), () => toggleLanguage(item)),
-            )}
-          </View>
-        </View>
-
-        <View style={localStyles.section}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="bonfire-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.smoking")}</Text>
-            <View style={localStyles.line} />
-          </View>
-          <View style={localStyles.chipWrap}>
-            {renderChip(t("common.yes"), smoking === "Sí", () => setSmoking("Sí"))}
-            {renderChip(t("common.no"), smoking === "No", () => setSmoking("No"))}
-          </View>
-        </View>
-
-        <View style={localStyles.section}>
-          <View style={localStyles.sectionHeader}>
-            <Icon name="moon-outline" size={18} color={TEXT_SECONDARY} />
-            <Text style={localStyles.sectionTitle}>{t("settings.other")}</Text>
-            <View style={localStyles.line} />
-          </View>
-          <View style={localStyles.chipWrap}>
-            {otherOptions.map((item) =>
-              renderChip(item, selectedOthers.has(item), () => toggleOther(item)),
-            )}
-          </View>
-          <View style={localStyles.addRow}>
-            <TextInput
-              style={localStyles.addInput}
-              value={customTag}
-              onChangeText={setCustomTag}
-              placeholder={t("settings.newInterestPlaceholder")}
-              placeholderTextColor={GRAY}
-              onSubmitEditing={addCustomTag}
-              returnKeyType="done"
-            />
-            <TouchableOpacity
-              style={localStyles.addButton}
-              onPress={addCustomTag}
-            >
-              <Text style={localStyles.addButtonText}>{t("settings.addInterest")}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-      </ScrollView>
-
-      {/* Botón fijo abajo */}
-      <View style={localStyles.saveButtonFixedWrap}>
-        <TouchableOpacity style={localStyles.saveButton} onPress={handleSave}>
-          <Text style={localStyles.saveButtonText}>{t("common.save")}</Text>
-        </TouchableOpacity>
-      </View>
-
+      </KeyboardAvoidingView>
       <SpiritualPathDetailsModal
         visible={Boolean(activeSpiritualPath)}
         pathLabel={activeSpiritualPath}
         detail={
-          activeSpiritualPath ? spiritualPathDetails[activeSpiritualPath] ?? {} : {}
+          activeSpiritualPath
+            ? spiritualPathDetails[activeSpiritualPath] ?? {}
+            : {}
         }
         onChange={(nextDetail) => {
           if (!activeSpiritualPath) return;

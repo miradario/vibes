@@ -32,6 +32,7 @@ export default function ProfileQuestions() {
     enabled: !!userId,
   });
   const [draft, setDraft] = useState<ProfileAnswers | null>(null);
+  const [group, setGroup] = useState(0);
   const [saving, setSaving] = useState(false);
   const value = draft ?? query.data ?? {};
   const save = async () => {
@@ -59,7 +60,7 @@ export default function ProfileQuestions() {
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScreenContainer
           scroll
@@ -90,14 +91,37 @@ export default function ProfileQuestions() {
             </View>
           ) : (
             <>
-              {[0, 1, 2].map((group) => (
-                <ProfileQuestionsForm
-                  key={group}
-                  group={group}
-                  value={value}
-                  onChange={setDraft}
-                />
-              ))}
+              <View
+                accessibilityRole="tablist"
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginBottom: 12,
+                }}
+              >
+                {["Identidad", "Intereses", "Planes"].map((label, index) => (
+                  <TouchableOpacity
+                    key={label}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: group === index }}
+                    onPress={() => setGroup(index)}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      borderRadius: 24,
+                      backgroundColor: group === index ? "#D7B56D" : "#F5F1E8",
+                    }}
+                  >
+                    <Text style={{ color: "#2B2B2B" }}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <ProfileQuestionsForm
+                group={group}
+                value={value}
+                onChange={setDraft}
+              />
               <PrimaryButton
                 label="Guardar respuestas"
                 loading={saving}

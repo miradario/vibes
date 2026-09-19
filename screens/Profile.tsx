@@ -2,14 +2,7 @@ import EmailVerificationCard from "../components/EmailVerificationCard";
 /** @format */
 
 import React from "react";
-import {
-  Alert,
-  Linking,
-  ScrollView,
-  View,
-  Text,
-  TouchableOpacity,
-} from "react-native";
+import { ScrollView, View, Text, TouchableOpacity } from "react-native";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
@@ -22,10 +15,8 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { useI18n } from "../src/i18n";
+import { getProfileCompletion } from "../src/lib/profileCompletion";
 import VibesLoader from "../components/VibesLoader";
-
-const ACCOUNT_DELETION_URL =
-  "https://vibes.gurudevelopers.dev/eliminacion-de-datos";
 
 const Profile = () => {
   const { t } = useI18n();
@@ -33,7 +24,11 @@ const Profile = () => {
   const insets = useSafeAreaInsets();
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
-  const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
+  const {
+    data: userPreferences,
+    isPending: loadingPreferences,
+    isError: preferencesError,
+  } = useUserPreferencesQuery(session?.user?.id);
   const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation();
   const ownProfile = mapOwnProfileToConnectionProfile(
     {
@@ -45,13 +40,10 @@ const Profile = () => {
 
   const displayName = ownProfile.name;
 
-  const location = ownProfile.location || "Buenos Aires";
+  const location = ownProfile.location || "Ubicación sin completar";
   const ownAvatarUri = ownProfile.avatarUri ?? null;
 
-  const [firstName, ...restNames] = displayName.split(" ").filter(Boolean);
-  const shortName = restNames.length
-    ? `${firstName} ${restNames[0].charAt(0)}.`
-    : firstName;
+  const completion = getProfileCompletion(profile, userPreferences);
 
   const menuItems = [
     {
@@ -95,26 +87,6 @@ const Profile = () => {
     });
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      t("profile.deleteAccountTitle"),
-      t("profile.deleteAccountMessage"),
-      [
-        {
-          text: t("profile.deleteAccountCancel"),
-          style: "cancel",
-        },
-        {
-          text: t("profile.deleteAccountConfirm"),
-          style: "destructive",
-          onPress: () => {
-            void Linking.openURL(ACCOUNT_DELETION_URL);
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <View style={styles.bg}>
       <ScrollView
@@ -136,7 +108,7 @@ const Profile = () => {
             <Avatar uri={ownAvatarUri} size={70} />
           </View>
           <View style={styles.auraProfileInfo}>
-            <Text style={styles.auraProfileName}>{shortName}</Text>
+            <Text style={styles.auraProfileName}>{displayName}</Text>
             <Text style={styles.auraProfileLocation}>{location}</Text>
           </View>
           <TouchableOpacity
@@ -146,6 +118,50 @@ const Profile = () => {
             <Text style={styles.auraEditButtonText}>{t("common.edit")}</Text>
           </TouchableOpacity>
         </View>
+
+        {profile && !loadingPreferences && !preferencesError ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`Perfil completado ${completion.percent} por ciento. Editar respuestas`}
+            onPress={() => navigation.navigate(completion.nextScreen as never)}
+            style={{
+              padding: 18,
+              marginBottom: 16,
+              borderRadius: 18,
+              backgroundColor: "#F8F3E8",
+            }}
+          >
+            <Text style={{ color: "#2B2B2B", fontSize: 17 }}>
+              Perfil completado · {completion.percent}%
+            </Text>
+            <View
+              style={{
+                height: 6,
+                backgroundColor: "#E8DFCC",
+                borderRadius: 3,
+                marginVertical: 10,
+              }}
+            >
+              <View
+                style={{
+                  height: 6,
+                  width: `${completion.percent}%`,
+                  backgroundColor: "#D7B56D",
+                  borderRadius: 3,
+                }}
+              />
+            </View>
+            <Text style={{ color: "#666", lineHeight: 20 }}>
+              {completion.completed} de {completion.total} datos públicos. Todo
+              es opcional.
+            </Text>
+            {completion.nextLabel ? (
+              <Text style={{ color: "#796036", marginTop: 8 }}>
+                Completar: {completion.nextLabel}
+              </Text>
+            ) : null}
+          </TouchableOpacity>
+        ) : null}
 
         <EmailVerificationCard userId={session?.user?.id} />
 
@@ -168,19 +184,6 @@ const Profile = () => {
               <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           ))}
-
-          <TouchableOpacity
-            style={styles.auraMenuItem}
-            onPress={handleDeleteAccount}
-          >
-            <View style={styles.auraMenuIconWrap}>
-              <Icon name="trash-outline" size={22} color={TEXT_SECONDARY} />
-            </View>
-            <Text style={styles.auraMenuLabel}>
-              {t("profile.deleteAccount")}
-            </Text>
-            <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
-          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.auraMenuItem, styles.auraMenuItemLast]}

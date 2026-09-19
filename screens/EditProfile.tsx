@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  Modal,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Linking,
   TextInput,
@@ -24,6 +25,7 @@ import styles, {
 } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import ScreenContainer from "../components/ScreenContainer";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
@@ -106,11 +108,11 @@ const buildProfilePhotosFromRow = (profileRow: Record<string, any> | null) => {
       })
       .filter(
         (
-          photo,
+          photo
         ): photo is {
           url: string;
           order: number;
-        } => Boolean(photo),
+        } => Boolean(photo)
       )
       .sort((left, right) => left.order - right.order)
       .reduce<string[]>((acc, photo) => {
@@ -146,13 +148,13 @@ const buildExistingPhotoRows = (profileRow: Record<string, any> | null) => {
     })
     .filter(
       (
-        photo,
+        photo
       ): photo is {
         id: string | null;
         url: string | null;
         order: number;
         isPrimary: boolean;
-      } => Boolean(photo),
+      } => Boolean(photo)
     );
 };
 
@@ -214,7 +216,7 @@ type ResolvedLocationMeta = {
 const ensureProfileExists = async (
   userId: string,
   displayName?: string | null,
-  intentId?: number | null,
+  intentId?: number | null
 ) => {
   const resolvedDisplayName =
     typeof displayName === "string" && displayName.trim().length > 0
@@ -228,7 +230,7 @@ const ensureProfileExists = async (
       gender_id: DEFAULT_GENDER_ID,
       intent_id: intentId ?? DEFAULT_INTENT_ID,
     },
-    { onConflict: "id" },
+    { onConflict: "id" }
   );
 
   if (error) {
@@ -278,13 +280,11 @@ const DraggablePhotoSlot = ({
       const candidateLayout = getSlotLayout(candidateIndex);
       if (!candidateLayout) continue;
 
-      const candidateCenterX =
-        candidateLayout.x + candidateLayout.width / 2;
-      const candidateCenterY =
-        candidateLayout.y + candidateLayout.height / 2;
+      const candidateCenterX = candidateLayout.x + candidateLayout.width / 2;
+      const candidateCenterY = candidateLayout.y + candidateLayout.height / 2;
       const distance = Math.hypot(
         draggedCenterX - candidateCenterX,
-        draggedCenterY - candidateCenterY,
+        draggedCenterY - candidateCenterY
       );
 
       if (distance < bestDistance) {
@@ -362,7 +362,9 @@ const DraggablePhotoSlot = ({
               />
               {index === 0 && (
                 <View style={localStyles.primaryBadge}>
-                  <Text style={localStyles.primaryBadgeText}>{t("editProfile.primary")}</Text>
+                  <Text style={localStyles.primaryBadgeText}>
+                    {t("editProfile.primary")}
+                  </Text>
                 </View>
               )}
               <TouchableOpacity
@@ -389,7 +391,7 @@ const DraggablePhotoSlot = ({
 };
 
 const EditProfile = () => {
-  const { locale, setLocale, t } = useI18n();
+  const { t } = useI18n();
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
@@ -398,16 +400,16 @@ const EditProfile = () => {
   const maxPhotos = 6;
   const supportsMultiPhotos = useMemo(
     () => Array.isArray((profileData as any)?.photos),
-    [profileData],
+    [profileData]
   );
   const profilePhotos = useMemo(
     () => buildProfilePhotosFromRow(profileData ?? null),
-    [profileData],
+    [profileData]
   );
   const buildSlots = (photos: (string | undefined | null)[]) =>
     Array.from({ length: maxPhotos }, (_, index) => photos[index] ?? null);
   const [mediaSlots, setMediaSlots] = useState<(string | null)[]>(
-    buildSlots(profilePhotos),
+    buildSlots(profilePhotos)
   );
 
   useEffect(() => {
@@ -427,7 +429,7 @@ const EditProfile = () => {
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const slotLayoutsRef = useRef<Record<number, PhotoSlotLayout>>({});
   const [displayName, setDisplayName] = useState(
-    (profileData as any)?.displayName ?? "",
+    (profileData as any)?.displayName ?? ""
   );
   const [savingName, setSavingName] = useState(false);
   const [location, setLocation] = useState("");
@@ -492,8 +494,7 @@ const EditProfile = () => {
           address?.subregion ??
           address?.name ??
           null;
-        const city =
-          address?.city ?? address?.region ?? null;
+        const city = address?.city ?? address?.region ?? null;
         const country = address?.country ?? null;
         const label = [neighborhood, city, country].filter(Boolean).join(", ");
 
@@ -627,12 +628,12 @@ const EditProfile = () => {
 
     try {
       const existingRows = buildExistingPhotoRows(
-        (profileData as Record<string, any>) ?? null,
+        (profileData as Record<string, any>) ?? null
       );
       const rowsByCurrentOrder = new Map(
         existingRows
           .filter((row) => row.id && typeof row.order === "number")
-          .map((row) => [row.order, row] as const),
+          .map((row) => [row.order, row] as const)
       );
 
       const finalRows = nextSlots
@@ -650,12 +651,12 @@ const EditProfile = () => {
         })
         .filter(
           (
-            row,
+            row
           ): row is {
             id: string;
             order: number;
             isPrimary: boolean;
-          } => Boolean(row),
+          } => Boolean(row)
         );
 
       for (let index = 0; index < finalRows.length; index += 1) {
@@ -691,8 +692,11 @@ const EditProfile = () => {
       t("editProfile.openSettingsBody"),
       [
         { text: t("common.cancel"), style: "cancel" },
-        { text: t("editProfile.openSettingsAction"), onPress: () => Linking.openSettings() },
-      ],
+        {
+          text: t("editProfile.openSettingsAction"),
+          onPress: () => Linking.openSettings(),
+        },
+      ]
     );
   };
 
@@ -705,7 +709,10 @@ const EditProfile = () => {
     if (!requested.canAskAgain) {
       promptOpenSettings();
     } else {
-      Alert.alert(t("editProfile.permissionsTitle"), t("editProfile.cameraPermissionBody"));
+      Alert.alert(
+        t("editProfile.permissionsTitle"),
+        t("editProfile.cameraPermissionBody")
+      );
     }
     return false;
   };
@@ -719,7 +726,10 @@ const EditProfile = () => {
     if (!requested.canAskAgain) {
       promptOpenSettings();
     } else {
-      Alert.alert(t("editProfile.permissionsTitle"), t("editProfile.galleryPermissionBody"));
+      Alert.alert(
+        t("editProfile.permissionsTitle"),
+        t("editProfile.galleryPermissionBody")
+      );
     }
     return false;
   };
@@ -733,7 +743,7 @@ const EditProfile = () => {
 
     const optimistic = Array.from(
       { length: maxPhotos },
-      (_, index) => mediaSlots[index] ?? null,
+      (_, index) => mediaSlots[index] ?? null
     );
     optimistic[slotIndex] = uri;
     setMediaSlots(optimistic);
@@ -741,13 +751,15 @@ const EditProfile = () => {
     await ensureProfileExists(
       userId,
       profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
-      profileData?.intentId ?? null,
+      profileData?.intentId ?? null
     );
 
     const uriWithoutQuery = uri.split("?")[0];
     const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
     const normalizedExt = rawExt.toLowerCase();
-    const ext = EXTENSION_TO_CONTENT_TYPE[normalizedExt] ? normalizedExt : "jpg";
+    const ext = EXTENSION_TO_CONTENT_TYPE[normalizedExt]
+      ? normalizedExt
+      : "jpg";
     const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";
     const arrayBuffer = await readUriAsArrayBuffer(uri);
     const uploadBody = new Uint8Array(arrayBuffer).buffer;
@@ -768,15 +780,15 @@ const EditProfile = () => {
 
     const nextPhotos = Array.from(
       { length: maxPhotos },
-      (_, index) => optimistic[index] ?? null,
+      (_, index) => optimistic[index] ?? null
     );
     nextPhotos[slotIndex] = signedUrl || uri;
 
     const existingRows = buildExistingPhotoRows(
-      (profileData as Record<string, any>) ?? null,
+      (profileData as Record<string, any>) ?? null
     );
     const existingForSlot = existingRows.find(
-      (photo) => photo.order === slotIndex,
+      (photo) => photo.order === slotIndex
     );
 
     if (existingForSlot?.id) {
@@ -788,7 +800,7 @@ const EditProfile = () => {
       if (deleteExistingError) {
         console.error(
           "uploadPhoto:profile_photos_delete_existing_error",
-          deleteExistingError,
+          deleteExistingError
         );
         throw deleteExistingError;
       }
@@ -837,7 +849,10 @@ const EditProfile = () => {
       } catch (error) {
         const message = getErrorMessage(error);
         console.error("Error uploading photo from gallery", { message, error });
-        Alert.alert(t("common.error"), t("editProfile.uploadError", { message }));
+        Alert.alert(
+          t("common.error"),
+          t("editProfile.uploadError", { message })
+        );
       } finally {
         setBusyIndex(null);
       }
@@ -870,7 +885,10 @@ const EditProfile = () => {
       } catch (error) {
         const message = getErrorMessage(error);
         console.error("Error uploading photo from camera", { message, error });
-        Alert.alert(t("common.error"), t("editProfile.uploadError", { message }));
+        Alert.alert(
+          t("common.error"),
+          t("editProfile.uploadError", { message })
+        );
       } finally {
         setBusyIndex(null);
       }
@@ -889,20 +907,20 @@ const EditProfile = () => {
     await ensureProfileExists(
       userId,
       profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
-      profileData?.intentId ?? null,
+      profileData?.intentId ?? null
     );
 
     const nextPhotos = Array.from(
       { length: maxPhotos },
-      (_, index) => mediaSlots[index] ?? null,
+      (_, index) => mediaSlots[index] ?? null
     );
     nextPhotos[slotIndex] = null;
 
     const existingRows = buildExistingPhotoRows(
-      (profileData as Record<string, any>) ?? null,
+      (profileData as Record<string, any>) ?? null
     );
     const existingForSlot = existingRows.find(
-      (photo) => photo.order === slotIndex,
+      (photo) => photo.order === slotIndex
     );
 
     if (!existingForSlot?.id) {
@@ -927,13 +945,18 @@ const EditProfile = () => {
   };
 
   return (
-    <>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <ScreenContainer
         scroll
         scrollViewProps={{
           style: styles.editContainer,
           showsVerticalScrollIndicator: false,
           scrollEnabled,
+          keyboardShouldPersistTaps: "handled",
+          keyboardDismissMode: "on-drag",
         }}
         contentContainerStyle={localStyles.scrollContent}
       >
@@ -998,46 +1021,6 @@ const EditProfile = () => {
         </View>
 
         <View style={styles.editSection}>
-          <Text style={styles.editSectionTitle}>{t("settings.language")}</Text>
-          <View style={localStyles.languageRow}>
-            <TouchableOpacity
-              style={[
-                localStyles.languageChip,
-                locale === "es" && localStyles.languageChipActive,
-              ]}
-              onPress={() => void setLocale("es")}
-              activeOpacity={0.85}
-            >
-              <Text
-                style={[
-                  localStyles.languageChipText,
-                  locale === "es" && localStyles.languageChipTextActive,
-                ]}
-              >
-                {t("settings.spanish")}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                localStyles.languageChip,
-                locale === "en" && localStyles.languageChipActive,
-              ]}
-              onPress={() => void setLocale("en")}
-              activeOpacity={0.85}
-            >
-              <Text
-                style={[
-                  localStyles.languageChipText,
-                  locale === "en" && localStyles.languageChipTextActive,
-                ]}
-              >
-                {t("settings.english")}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>{t("editProfile.email")}</Text>
           <View style={localStyles.readOnlyField}>
             <Text style={localStyles.readOnlyValue}>
@@ -1047,15 +1030,11 @@ const EditProfile = () => {
         </View>
 
         <View style={styles.editSection}>
-          <Text style={styles.editSectionTitle}>{t("editProfile.location")}</Text>
+          <Text style={styles.editSectionTitle}>
+            {t("editProfile.location")}
+          </Text>
           {currentLocation ? (
             <View style={localStyles.currentLocationCard}>
-              <Text style={localStyles.currentLocationLabel}>
-                {t("settings.currentLocation")}
-              </Text>
-              <Text style={localStyles.currentLocationValue}>
-                {currentLocation}
-              </Text>
               <TouchableOpacity
                 style={localStyles.currentLocationButton}
                 onPress={() => void applyCurrentLocation()}
@@ -1086,52 +1065,55 @@ const EditProfile = () => {
         </View>
       </ScreenContainer>
 
-      <Modal
+      <AnimatedSheetModal
         visible={photoModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPhotoModalVisible(false)}
+        onClose={() => setPhotoModalVisible(false)}
+        sheetStyle={modalStyles.card}
       >
-        <View style={modalStyles.overlay}>
-          <View style={modalStyles.card}>
-            <Text style={modalStyles.title}>{t("editProfile.addPhoto")}</Text>
-            <Text style={modalStyles.subtitle}>{t("editProfile.chooseOption")}</Text>
+        <View>
+          <Text style={modalStyles.title}>{t("editProfile.addPhoto")}</Text>
+          <Text style={modalStyles.subtitle}>
+            {t("editProfile.chooseOption")}
+          </Text>
 
-            <View style={modalStyles.actions}>
-              <TouchableOpacity
-                style={modalStyles.primaryButton}
-                onPress={async () => {
-                  if (selectedSlot === null) return;
-                  setPhotoModalVisible(false);
-                  await new Promise((resolve) => setTimeout(resolve, 250));
-                  await takePhoto(selectedSlot);
-                }}
-              >
-                <Text style={modalStyles.primaryText}>{t("editProfile.camera")}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={modalStyles.secondaryButton}
-                onPress={async () => {
-                  if (selectedSlot === null) return;
-                  setPhotoModalVisible(false);
-                  await new Promise((resolve) => setTimeout(resolve, 250));
-                  await pickFromLibrary(selectedSlot);
-                }}
-              >
-                <Text style={modalStyles.secondaryText}>{t("editProfile.gallery")}</Text>
-              </TouchableOpacity>
-            </View>
-
+          <View style={modalStyles.actions}>
             <TouchableOpacity
-              style={modalStyles.cancelButton}
-              onPress={() => setPhotoModalVisible(false)}
+              style={modalStyles.primaryButton}
+              onPress={async () => {
+                if (selectedSlot === null) return;
+                setPhotoModalVisible(false);
+                await new Promise((resolve) => setTimeout(resolve, 250));
+                await takePhoto(selectedSlot);
+              }}
             >
-              <Text style={modalStyles.cancelText}>{t("common.cancel")}</Text>
+              <Text style={modalStyles.primaryText}>
+                {t("editProfile.camera")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={modalStyles.secondaryButton}
+              onPress={async () => {
+                if (selectedSlot === null) return;
+                setPhotoModalVisible(false);
+                await new Promise((resolve) => setTimeout(resolve, 250));
+                await pickFromLibrary(selectedSlot);
+              }}
+            >
+              <Text style={modalStyles.secondaryText}>
+                {t("editProfile.gallery")}
+              </Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={modalStyles.cancelButton}
+            onPress={() => setPhotoModalVisible(false)}
+          >
+            <Text style={modalStyles.cancelText}>{t("common.cancel")}</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
-    </>
+      </AnimatedSheetModal>
+    </KeyboardAvoidingView>
   );
 };
 
