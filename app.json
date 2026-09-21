@@ -4,7 +4,7 @@
     "name": "Vibes",
     "slug": "vibe",
     "scheme": "com.gurudevelopers.vibes",
-    "version": "1.1",
+    "version": "1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "updates": {
@@ -14,7 +14,7 @@
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": false,
-      "buildNumber": "23",
+      "buildNumber": "24",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -36,7 +36,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 23,
+      "versionCode": 24,
       "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.miradario.vibe"
     },
