@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   View,
@@ -245,6 +245,13 @@ const CreateEvent = () => {
     };
   });
   const [mapPreviewFailed, setMapPreviewFailed] = useState(false);
+  const titleInputRef = useRef<TextInput>(null);
+  const subtitleInputRef = useRef<TextInput>(null);
+  const eventLinkInputRef = useRef<TextInput>(null);
+  const locationInputRef = useRef<TextInput>(null);
+  const onlineLinkInputRef = useRef<TextInput>(null);
+  const paymentLinkInputRef = useRef<TextInput>(null);
+  const capacityInputRef = useRef<TextInput>(null);
   const googleMapsConfig = getGoogleMapsClientConfig();
   const googleMapsApiKey = googleMapsConfig.apiKey;
   const existingCoverImageUri = editingEvent?.imagePresetId
@@ -374,14 +381,24 @@ const CreateEvent = () => {
       return;
     }
 
-    const useManualLocationFallback = (message: string) => {
-      setValidatedLocation({
-        address: trimmedLocation,
-        lat: null,
-        lng: null,
-      });
-      setMapPreviewFailed(false);
-      showAlertAfterKeyboard("Ubicación guardada", message);
+    const promptManualLocationFallback = (message: string) => {
+      Keyboard.dismiss();
+      setTimeout(() => {
+        Alert.alert("No pudimos validar la ubicación", message, [
+          { text: "Revisar", style: "cancel" },
+          {
+            text: "Usar sin mapa",
+            onPress: () => {
+              setValidatedLocation({
+                address: trimmedLocation,
+                lat: null,
+                lng: null,
+              });
+              setMapPreviewFailed(false);
+            },
+          },
+        ]);
+      }, Platform.OS === "android" ? 180 : 80);
     };
 
     const { apiKey, headers } = googleMapsConfig;
@@ -390,8 +407,8 @@ const CreateEvent = () => {
       try {
         const permission = await ExpoLocation.requestForegroundPermissionsAsync();
         if (permission.status !== "granted") {
-          useManualLocationFallback(
-            "Guardamos la dirección escrita. Podés habilitar ubicación para validarla en el mapa.",
+          promptManualLocationFallback(
+            "Podés revisar la dirección o usarla igual. Si la usás sin validar, el evento se crea sin mapa.",
           );
           return;
         }
@@ -399,8 +416,8 @@ const CreateEvent = () => {
         const matches = await ExpoLocation.geocodeAsync(trimmedLocation);
         const firstMatch = matches[0];
         if (!firstMatch) {
-          useManualLocationFallback(
-            "No pudimos ubicarla automáticamente; guardamos la dirección escrita.",
+          promptManualLocationFallback(
+            "No encontramos esa dirección automáticamente. Podés usarla igual, pero el evento se crea sin mapa.",
           );
           return;
         }
@@ -414,8 +431,8 @@ const CreateEvent = () => {
         showAlertAfterKeyboard("Ubicación validada", trimmedLocation);
       } catch (error) {
         console.error("Error validating location with the native geocoder", error);
-        useManualLocationFallback(
-          "No pudimos consultar el mapa; guardamos la dirección escrita.",
+        promptManualLocationFallback(
+          "No pudimos consultar el mapa. Podés usar la dirección igual, pero el evento se crea sin mapa.",
         );
       } finally {
         setIsValidatingLocation(false);
@@ -439,18 +456,17 @@ const CreateEvent = () => {
         data?.status === "REQUEST_DENIED" ||
         typeof data?.error_message === "string"
       ) {
-        useManualLocationFallback(
-          "La API de Google Maps no está habilitada para este proyecto. Vamos a usar la ubicación escrita manualmente.",
+        promptManualLocationFallback(
+          "Google Maps no devolvió una ubicación válida. Podés usar la dirección igual, pero el evento se crea sin mapa.",
         );
         return;
       }
 
       if (data?.status !== "OK" || !data?.results?.length) {
-        showAlertAfterKeyboard(
-          "Ubicación inválida",
-          "No encontramos esa ubicación en Google Maps.",
-        );
         setValidatedLocation(null);
+        promptManualLocationFallback(
+          "No encontramos esa ubicación en Google Maps. Podés revisar la dirección o usarla sin mapa.",
+        );
         return;
       }
 
@@ -465,14 +481,16 @@ const CreateEvent = () => {
       showAlertAfterKeyboard("Ubicación validada", firstResult.formatted_address);
     } catch (error) {
       console.error("Error validating location with Google Maps", error);
-      showAlertAfterKeyboard("Error", "No se pudo validar la ubicación.");
       setValidatedLocation(null);
+      promptManualLocationFallback(
+        "No se pudo validar la ubicación por un error de conexión. Podés usarla sin mapa.",
+      );
     } finally {
       setIsValidatingLocation(false);
     }
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (allowUnvalidatedLocation = false) => {
     if (!isFormComplete) {
       Alert.alert(
         "Faltan datos",
@@ -501,6 +519,24 @@ const CreateEvent = () => {
     }
 
     const parsedCapacity = capacity.trim() ? Number.parseInt(capacity, 10) : 0;
+    const hasUnvalidatedInPersonLocation =
+      modality === "in_person" && location.trim() && !validatedLocation;
+
+    if (hasUnvalidatedInPersonLocation && !allowUnvalidatedLocation) {
+      Alert.alert(
+        "Ubicación sin validar",
+        "No pudimos confirmar esta dirección en el mapa. Podés revisarla o crear el evento sin mapa.",
+        [
+          { text: "Revisar", style: "cancel" },
+          {
+            text: "Crear sin mapa",
+            onPress: () => void handleCreate(true),
+          },
+        ],
+      );
+      return;
+    }
+
     const resolvedLocation =
       modality === "in_person"
         ? validatedLocation?.address || location.trim()
@@ -537,9 +573,13 @@ const CreateEvent = () => {
           startsAt: resolvedStartsAt,
           location: resolvedLocation,
           locationLatitude:
-            modality === "in_person" ? validatedLocation?.lat ?? null : null,
+            modality === "in_person" && validatedLocation
+              ? validatedLocation.lat ?? null
+              : null,
           locationLongitude:
-            modality === "in_person" ? validatedLocation?.lng ?? null : null,
+            modality === "in_person" && validatedLocation
+              ? validatedLocation.lng ?? null
+              : null,
           eventLink: resolvedEventLink,
           pricingType,
           paymentLink: resolvedPaymentLink,
@@ -558,9 +598,13 @@ const CreateEvent = () => {
           startsAt: resolvedStartsAt,
           location: resolvedLocation,
           locationLatitude:
-            modality === "in_person" ? validatedLocation?.lat ?? null : null,
+            modality === "in_person" && validatedLocation
+              ? validatedLocation.lat ?? null
+              : null,
           locationLongitude:
-            modality === "in_person" ? validatedLocation?.lng ?? null : null,
+            modality === "in_person" && validatedLocation
+              ? validatedLocation.lng ?? null
+              : null,
           eventLink: resolvedEventLink,
           pricingType,
           paymentLink: resolvedPaymentLink,
@@ -629,17 +673,21 @@ const CreateEvent = () => {
             localStyles.header,
             { marginTop: Math.max(insets.top + 8, 24) },
           ]}
-          titleStyle={styles.title}
+          titleStyle={localStyles.screenTitle}
         />
 
         <View style={localStyles.formCard}>
           <Text style={localStyles.label}>Título</Text>
           <TextInput
+            ref={titleInputRef}
             style={localStyles.input}
             placeholder="Meditación de luna llena"
             placeholderTextColor={PLACEHOLDER_COLOR}
             value={title}
             onChangeText={setTitle}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => subtitleInputRef.current?.focus()}
           />
 
           <Text style={localStyles.label}>Foto de portada</Text>
@@ -675,15 +723,20 @@ const CreateEvent = () => {
 
           <Text style={localStyles.label}>Descripción corta</Text>
           <TextInput
+            ref={subtitleInputRef}
             style={localStyles.input}
             placeholder="Respiración, calma, conexión"
             placeholderTextColor={PLACEHOLDER_COLOR}
             value={subtitle}
             onChangeText={setSubtitle}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => eventLinkInputRef.current?.focus()}
           />
 
           <Text style={localStyles.label}>Link del evento (opcional)</Text>
           <TextInput
+            ref={eventLinkInputRef}
             style={[
               localStyles.input,
               eventLinkTouched && isEventLinkInvalid && localStyles.inputInvalid,
@@ -702,6 +755,15 @@ const CreateEvent = () => {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="url"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => {
+              if (modality === "in_person") {
+                locationInputRef.current?.focus();
+                return;
+              }
+              onlineLinkInputRef.current?.focus();
+            }}
           />
           {eventLinkTouched && hasEventLink ? (
             <View style={localStyles.linkValidationRow}>
@@ -829,6 +891,7 @@ const CreateEvent = () => {
             <>
               <Text style={localStyles.label}>Ubicación</Text>
               <TextInput
+                ref={locationInputRef}
                 style={localStyles.input}
                 placeholder="Palermo, Buenos Aires"
                 placeholderTextColor={PLACEHOLDER_COLOR}
@@ -837,6 +900,15 @@ const CreateEvent = () => {
                   setLocation(value);
                   setValidatedLocation(null);
                   setMapPreviewFailed(false);
+                }}
+                returnKeyType="next"
+                blurOnSubmit={false}
+                onSubmitEditing={() => {
+                  if (pricingType === "paid") {
+                    paymentLinkInputRef.current?.focus();
+                    return;
+                  }
+                  capacityInputRef.current?.focus();
                 }}
               />
               <TouchableOpacity
@@ -855,7 +927,11 @@ const CreateEvent = () => {
               {validatedLocation ? (
                 <View style={localStyles.validatedLocationBlock}>
                   <Text style={localStyles.validatedText}>
-                    Ubicación válida: {validatedLocation.address}
+                    {typeof validatedLocation.lat === "number" &&
+                    typeof validatedLocation.lng === "number"
+                      ? "Ubicación válida"
+                      : "Ubicación sin validar (sin mapa)"}
+                    : {validatedLocation.address}
                   </Text>
                   <TouchableOpacity
                     activeOpacity={0.9}
@@ -914,6 +990,7 @@ const CreateEvent = () => {
             <>
               <Text style={localStyles.label}>Link online</Text>
               <TextInput
+                ref={onlineLinkInputRef}
                 style={localStyles.input}
                 placeholder="https://meet.google.com/..."
                 placeholderTextColor={PLACEHOLDER_COLOR}
@@ -922,6 +999,15 @@ const CreateEvent = () => {
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="url"
+                returnKeyType="next"
+                blurOnSubmit={false}
+                onSubmitEditing={() => {
+                  if (pricingType === "paid") {
+                    paymentLinkInputRef.current?.focus();
+                    return;
+                  }
+                  capacityInputRef.current?.focus();
+                }}
               />
             </>
           )}
@@ -966,6 +1052,7 @@ const CreateEvent = () => {
             <>
               <Text style={localStyles.label}>Link de pago (opcional)</Text>
               <TextInput
+                ref={paymentLinkInputRef}
                 style={localStyles.input}
                 placeholder="https://mipagina.com/pago"
                 placeholderTextColor={PLACEHOLDER_COLOR}
@@ -974,18 +1061,24 @@ const CreateEvent = () => {
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="url"
+                returnKeyType="next"
+                blurOnSubmit={false}
+                onSubmitEditing={() => capacityInputRef.current?.focus()}
               />
             </>
           ) : null}
 
           <Text style={localStyles.label}>Cupos</Text>
           <TextInput
+            ref={capacityInputRef}
             style={localStyles.input}
             placeholder="20"
             placeholderTextColor={PLACEHOLDER_COLOR}
             value={capacity}
             onChangeText={(value) => setCapacity(normalizeCapacityInput(value))}
             keyboardType="number-pad"
+            returnKeyType="done"
+            onSubmitEditing={() => Keyboard.dismiss()}
           />
         </View>
 
@@ -1003,7 +1096,7 @@ const CreateEvent = () => {
             (!isFormComplete || invalidLinks.length > 0) &&
               localStyles.createButtonDisabled,
           ]}
-          onPress={handleCreate}
+          onPress={() => void handleCreate()}
           disabled={isSubmitting || isEventLinkInvalid}
         >
           {isSubmitting ? (
@@ -1058,6 +1151,12 @@ const localStyles = StyleSheet.create({
   header: {
     paddingHorizontal: 0,
     marginBottom: 4,
+  },
+  screenTitle: {
+    color: DARK_GRAY,
+    fontSize: 28,
+    lineHeight: 32,
+    fontFamily: vibesTheme.fonts.thin,
   },
   content: {
     paddingBottom: 128,

@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as ExpoLocation from "expo-location";
 import styles, {
   TEXT_SECONDARY,
   PRIMARY_COLOR,
@@ -191,6 +192,25 @@ const getStaticMapPreviewUrl = (location: string, apiKey: string) =>
 const getOpenStreetMapPreviewUrl = (latitude: number, longitude: number) =>
   `https://staticmap.openstreetmap.de/staticmap.php?center=${latitude},${longitude}&zoom=15&size=900x320&maptype=mapnik&markers=${latitude},${longitude},red-pushpin`;
 
+const getOpenStreetMapTiles = (latitude: number, longitude: number, zoom = 15) => {
+  const latRad = (latitude * Math.PI) / 180;
+  const scale = 2 ** zoom;
+  const centerX = Math.floor(((longitude + 180) / 360) * scale);
+  const centerY = Math.floor(
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) *
+      scale,
+  );
+
+  return [-1, 0, 1].flatMap((xOffset) =>
+    [-1, 0, 1].map((yOffset) => ({
+      id: `${zoom}-${centerX + xOffset}-${centerY + yOffset}`,
+      url: `https://tile.openstreetmap.org/${zoom}/${centerX + xOffset}/${centerY + yOffset}.png`,
+      left: `${(xOffset + 1) * 33.333}%`,
+      top: `${(yOffset + 1) * 33.333}%`,
+    })),
+  );
+};
+
 const isVideoMedia = (value: unknown) => {
   if (typeof value !== "string") return false;
   const normalized = value.split("?")[0].toLowerCase();
@@ -209,6 +229,7 @@ const EventDetail = () => {
 
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const { data: currentUserProfile } = useProfileQuery(userId);
   const swipeMutation = useSwipeMutation();
 
   const { data: participant, isLoading: participantLoading } =
@@ -263,12 +284,65 @@ const EventDetail = () => {
         ]
       : eventParticipants;
   const isEventJoined = Boolean(isEventParticipant || isAdmin);
+  const currentUserAvatarUrl = Array.isArray(currentUserProfile?.photos)
+    ? (currentUserProfile.photos.find((photo: any) => {
+        if (typeof photo === "string") return photo.trim().length > 0;
+        return typeof photo?.url === "string" && photo.url.trim().length > 0;
+      }) as any)
+    : null;
+  const currentUserAvatarUri =
+    typeof currentUserAvatarUrl === "string"
+      ? currentUserAvatarUrl
+      : typeof currentUserAvatarUrl?.url === "string"
+        ? currentUserAvatarUrl.url
+        : null;
+  const currentUserDisplayName =
+    typeof currentUserProfile?.displayName === "string"
+      ? currentUserProfile.displayName
+      : null;
+  const hasCurrentUserInEventParticipants = Boolean(
+    userId && eventParticipantsWithAdmin.some((item) => item.userId === userId),
+  );
+  const currentUserEventParticipant =
+    !isChallenge && isEventJoined && userId && !hasCurrentUserInEventParticipants
+      ? {
+          id: `current-${userId}`,
+          userId,
+          joinedAt: new Date().toISOString(),
+          displayName: currentUserDisplayName,
+          avatarUrl: currentUserAvatarUri,
+        }
+      : null;
+  const eventParticipantsWithCurrentUser = (
+    currentUserEventParticipant
+      ? [currentUserEventParticipant, ...eventParticipantsWithAdmin]
+      : eventParticipantsWithAdmin
+  )
+    .map((item) =>
+      userId && item.userId === userId
+        ? {
+            ...item,
+            displayName: item.displayName ?? currentUserDisplayName,
+            avatarUrl: item.avatarUrl ?? currentUserAvatarUri,
+          }
+        : item,
+    )
+    .sort((a, b) => {
+      if (!userId) return 0;
+      if (a.userId === userId) return -1;
+      if (b.userId === userId) return 1;
+      return 0;
+    });
 
   const [checkInModalVisible, setCheckInModalVisible] = useState(false);
   const [checkInNote, setCheckInNote] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
   const [eventMapPreviewFailed, setEventMapPreviewFailed] = useState(false);
+  const [geocodedMapPreview, setGeocodedMapPreview] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [selectedProgressDay, setSelectedProgressDay] = useState<string | null>(
     null,
   );
@@ -329,7 +403,7 @@ const EventDetail = () => {
   const participantCount = challengeParticipantsMerged.length;
   const visibleParticipants = isChallenge
     ? challengeParticipantsMerged
-    : eventParticipantsWithAdmin;
+    : eventParticipantsWithCurrentUser;
   const visibleParticipantCount = visibleParticipants.length;
   const totalCheckins = Math.max(
     participant?.totalCheckins ?? 0,
@@ -415,6 +489,7 @@ const EventDetail = () => {
     (_, index) => index + 1,
   );
   const sliderTranslateX = useRef(new Animated.Value(0)).current;
+  const eventScrollY = useRef(new Animated.Value(0)).current;
   const [sliderWidth, setSliderWidth] = useState(0);
   const sliderMaxTranslate = Math.max(
     sliderWidth - CHECKIN_SLIDER_HANDLE_SIZE - CHECKIN_SLIDER_HORIZONTAL_PADDING * 2,
@@ -865,6 +940,8 @@ const EventDetail = () => {
     typeof event?.locationLatitude === "number" ? event.locationLatitude : null;
   const eventLocationLongitude =
     typeof event?.locationLongitude === "number" ? event.locationLongitude : null;
+  const eventPreviewLatitude = eventLocationLatitude ?? geocodedMapPreview?.latitude ?? null;
+  const eventPreviewLongitude = eventLocationLongitude ?? geocodedMapPreview?.longitude ?? null;
   const eventMapQuery =
     eventLocationLatitude !== null && eventLocationLongitude !== null
       ? `${eventLocationLatitude},${eventLocationLongitude}`
@@ -898,6 +975,83 @@ const EventDetail = () => {
   const pricingLabel = pricingType === "paid" ? "Pago" : "Gratis";
   const googleMapsConfig = getGoogleMapsClientConfig();
   const googleMapsApiKey = googleMapsConfig.apiKey;
+  const hasEventPreviewCoordinates =
+    eventPreviewLatitude !== null && eventPreviewLongitude !== null;
+  const eventMapTiles = hasEventPreviewCoordinates
+    ? getOpenStreetMapTiles(eventPreviewLatitude, eventPreviewLongitude)
+    : [];
+  const eventMapPreviewUri = hasEventPreviewCoordinates
+    ? getOpenStreetMapPreviewUrl(eventPreviewLatitude, eventPreviewLongitude)
+    : googleMapsApiKey && eventMapQuery
+      ? getStaticMapPreviewUrl(eventMapQuery, googleMapsApiKey)
+      : null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (
+      isChallenge ||
+      !eventLocation ||
+      eventLocationLatitude !== null ||
+      eventLocationLongitude !== null
+    ) {
+      setGeocodedMapPreview(null);
+      return;
+    }
+
+    const geocodeWithExpo = () =>
+      ExpoLocation.geocodeAsync(eventLocation)
+        .then((matches) => {
+          const firstMatch = matches[0];
+          if (!isMounted || !firstMatch) return;
+          setGeocodedMapPreview({
+            latitude: firstMatch.latitude,
+            longitude: firstMatch.longitude,
+          });
+          setEventMapPreviewFailed(false);
+        })
+        .catch((error) => {
+          console.log("eventDetail:mapPreviewGeocode:error", error);
+        });
+
+    if (googleMapsApiKey) {
+      fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(eventLocation)}&key=${googleMapsApiKey}`,
+        { headers: googleMapsConfig.headers },
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const location = data?.results?.[0]?.geometry?.location;
+          if (
+            !isMounted ||
+            typeof location?.lat !== "number" ||
+            typeof location?.lng !== "number"
+          ) {
+            void geocodeWithExpo();
+            return;
+          }
+          setGeocodedMapPreview({
+            latitude: location.lat,
+            longitude: location.lng,
+          });
+          setEventMapPreviewFailed(false);
+        })
+        .catch(() => {
+          void geocodeWithExpo();
+        });
+    } else {
+      void geocodeWithExpo();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    eventLocation,
+    eventLocationLatitude,
+    eventLocationLongitude,
+    isChallenge,
+  ]);
 
   if (!event) return null;
 
@@ -963,20 +1117,28 @@ const EventDetail = () => {
     const title = event?.title ?? (isChallenge ? "Desafío" : "Evento");
     const details = eventDescription ?? eventSubtitle ?? "";
     const location = isChallenge ? "" : eventLocation ?? "";
-    const calendarUrl =
+    const calendarPath =
       `https://calendar.google.com/calendar/render?action=TEMPLATE` +
       `&text=${encodeURIComponent(title)}` +
       `&dates=${formatCalendarDate(start, isAllDayChallenge)}/${formatCalendarDate(end, isAllDayChallenge)}` +
       `&details=${encodeURIComponent(details)}` +
       `&location=${encodeURIComponent(location)}`;
+    const fallbackCalendarPath = calendarPath.replace(
+      "https://calendar.google.com/calendar/render",
+      "https://www.google.com/calendar/render",
+    );
 
     try {
       // Android can report false for valid HTTPS URLs when the target app is not
       // declared in manifest queries. Opening the universal URL directly lets the
       // system choose Google Calendar or the browser.
-      await Linking.openURL(calendarUrl);
+      await Linking.openURL(calendarPath);
     } catch {
-      Alert.alert("Calendario", "No se pudo abrir el calendario.");
+      try {
+        await Linking.openURL(fallbackCalendarPath);
+      } catch {
+        Alert.alert("Calendario", "No se pudo abrir el calendario.");
+      }
     }
   };
 
@@ -1139,6 +1301,22 @@ const EventDetail = () => {
     }
   };
 
+  const collapsedEventHeaderOpacity = eventScrollY.interpolate({
+    inputRange: [92, 168],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+  const collapsedEventHeaderTranslateY = eventScrollY.interpolate({
+    inputRange: [92, 168],
+    outputRange: [-8, 0],
+    extrapolate: "clamp",
+  });
+  const expandedEventHeaderOpacity = eventScrollY.interpolate({
+    inputRange: [72, 132],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
+
   return (
     <View
       style={[
@@ -1169,48 +1347,87 @@ const EventDetail = () => {
         </>
       ) : null}
 
-      <AppHeader
-        showBack
-        onBack={() => navigation.goBack()}
-        style={[
-          styles.eventDetailHeader,
-          localStyles.persistentHeader,
-          { top: Math.max(insets.top + 10, 24) },
-        ]}
-        right={isJoined || isAdmin ? (
-          <View style={localStyles.headerActions}>
+      {!isChallenge ? (
+        <Animated.View
+          style={[
+            localStyles.expandedEventHeader,
+            {
+              top: Math.max(insets.top + 10, 24),
+              opacity: expandedEventHeaderOpacity,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.eventDetailMenuButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="chevron-back" size={24} color={DARK_GRAY} />
+          </TouchableOpacity>
+          <Text style={localStyles.expandedEventHeaderTitle} numberOfLines={2}>
+            {event.title}
+          </Text>
+          {isAdmin ? (
             <TouchableOpacity
               style={styles.eventDetailMenuButton}
               onPress={() => setMenuVisible(true)}
             >
               <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
             </TouchableOpacity>
-          </View>
-        ) : undefined}
-      />
+          ) : (
+            <View style={localStyles.headerIconPlaceholder} />
+          )}
+        </Animated.View>
+      ) : (
+        <AppHeader
+          title={undefined}
+          showBack
+          onBack={() => navigation.goBack()}
+          style={[
+            styles.eventDetailHeader,
+            localStyles.persistentHeader,
+            { top: Math.max(insets.top + 10, 24) },
+          ]}
+          right={isJoined || isAdmin ? (
+            <View style={localStyles.headerActions}>
+              <TouchableOpacity
+                style={styles.eventDetailMenuButton}
+                onPress={() => setMenuVisible(true)}
+              >
+                <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
+              </TouchableOpacity>
+            </View>
+          ) : undefined}
+        />
+      )}
 
       {!isChallenge ? (
-        <View style={localStyles.eventHeroMedia}>
-          {eventHeroImageSource ? (
-            <Image
-              source={eventHeroImageSource}
-              style={localStyles.eventHeroImage}
-              resizeMode="cover"
-            />
-          ) : null}
-          <View style={localStyles.eventHeroScrim} />
-          <View style={localStyles.eventHeroContent}>
-            <Text style={localStyles.eventHeroTitle}>{event.title}</Text>
-            <Text style={localStyles.eventHeroSubtitle}>{eventLeadText}</Text>
-          </View>
-        </View>
+        <Animated.View
+          style={[
+            localStyles.collapsedEventHeader,
+            {
+              paddingTop: Math.max(insets.top + 10, 24),
+              opacity: collapsedEventHeaderOpacity,
+              transform: [{ translateY: collapsedEventHeaderTranslateY }],
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={localStyles.collapsedHeaderBackButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="chevron-back" size={24} color={DARK_GRAY} />
+          </TouchableOpacity>
+          <Text style={localStyles.collapsedEventHeaderTitle} numberOfLines={2}>
+            {event.title}
+          </Text>
+          <View style={localStyles.headerIconPlaceholder} />
+        </Animated.View>
       ) : null}
 
-      <ScrollView
+      <Animated.ScrollView
         style={[
           styles.eventDetailContent,
           !isChallenge && localStyles.eventDetailContentFullBleed,
-          !isChallenge && localStyles.eventDetailScrollablePanel,
         ]}
         contentContainerStyle={[
           localStyles.scrollContent,
@@ -1218,9 +1435,31 @@ const EventDetail = () => {
           isChallenge && localStyles.scrollContentChallenge,
         ]}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={
+          !isChallenge
+            ? Animated.event(
+                [{ nativeEvent: { contentOffset: { y: eventScrollY } } }],
+                { useNativeDriver: true },
+              )
+            : undefined
+        }
       >
         {!isChallenge ? (
           <>
+            <View style={localStyles.eventHeroMedia}>
+              {eventHeroImageSource ? (
+                <Image
+                  source={eventHeroImageSource}
+                  style={localStyles.eventHeroImage}
+                  resizeMode="cover"
+                />
+              ) : null}
+              <View style={localStyles.eventHeroScrim} />
+              <View style={localStyles.eventHeroContent}>
+                <Text style={localStyles.eventHeroSubtitle}>{eventLeadText}</Text>
+              </View>
+            </View>
             <View
               style={[
                 styles.eventDetailInfoCard,
@@ -1262,13 +1501,13 @@ const EventDetail = () => {
                     <Text style={styles.eventDetailInfoLabel}>
                       Ver usuarios del evento
                     </Text>
-                      {eventParticipantsWithAdmin.length > 0 ? (
+                      {visibleParticipants.length > 0 ? (
                        <View style={localStyles.participantsPreviewRow}>
                          <AvatarGroup
                            size={28}
                            max={4}
                            overlap={8}
-                           items={eventParticipantsWithAdmin.map((item) => ({
+                            items={visibleParticipants.map((item) => ({
                              id: item.id,
                              uri: item.avatarUrl,
                            }))}
@@ -1331,22 +1570,24 @@ const EventDetail = () => {
                       style={localStyles.eventMiniMapCard}
                       onPress={handleOpenMap}
                     >
-                      {!eventMapPreviewFailed &&
-                      (googleMapsApiKey ||
-                        (eventLocationLatitude !== null &&
-                          eventLocationLongitude !== null)) ? (
+                      {eventMapTiles.length > 0 ? (
+                        <View style={localStyles.eventMiniMapTiles}>
+                          {eventMapTiles.map((tile) => (
+                            <Image
+                              key={tile.id}
+                              source={{ uri: tile.url }}
+                              style={[
+                                localStyles.eventMiniMapTile,
+                                { left: tile.left, top: tile.top } as any,
+                              ]}
+                            />
+                          ))}
+                        </View>
+                      ) : !eventMapPreviewFailed && eventMapPreviewUri ? (
                         <Image
                           source={{
-                            uri: googleMapsApiKey
-                              ? getStaticMapPreviewUrl(
-                                  eventMapQuery ?? eventLocation,
-                                  googleMapsApiKey,
-                                )
-                              : getOpenStreetMapPreviewUrl(
-                                  eventLocationLatitude as number,
-                                  eventLocationLongitude as number,
-                                ),
-                            ...(googleMapsApiKey
+                            uri: eventMapPreviewUri,
+                            ...(!hasEventPreviewCoordinates && googleMapsApiKey
                               ? { headers: googleMapsConfig.headers }
                               : {}),
                           }}
@@ -1677,7 +1918,7 @@ const EventDetail = () => {
         ) : (
           <View style={localStyles.joinSpacer} />
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {renderBottomActions() ? (
         <View
@@ -2005,7 +2246,7 @@ const localStyles = StyleSheet.create({
   },
   eventHeroContent: {
     position: "absolute",
-    top: 105,
+    top: 132,
     left: 0,
     right: 0,
     zIndex: 2,
@@ -2041,7 +2282,7 @@ const localStyles = StyleSheet.create({
   },
   eventDetailInfoCardFloating: {
     marginHorizontal: 24,
-    marginTop: 0,
+    marginTop: -36,
     paddingTop: 26,
     backgroundColor: "rgba(255, 255, 255, 0.94)",
   },
@@ -2058,6 +2299,15 @@ const localStyles = StyleSheet.create({
   eventMiniMapImage: {
     width: "100%",
     height: "100%",
+  },
+  eventMiniMapTiles: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  eventMiniMapTile: {
+    position: "absolute",
+    width: "33.334%",
+    height: "33.334%",
   },
   eventMiniMapFallback: {
     flex: 1,
@@ -2183,6 +2433,69 @@ const localStyles = StyleSheet.create({
   persistentHeader: {
     zIndex: 60,
     elevation: 24,
+  },
+  expandedEventHeader: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    zIndex: 60,
+    elevation: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+  },
+  expandedEventHeaderTitle: {
+    flex: 1,
+    color: WHITE,
+    fontSize: 23,
+    lineHeight: 27,
+    fontFamily: vibesTheme.fonts.medium,
+    textAlign: "left",
+    textShadowColor: "rgba(0, 0, 0, 0.42)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  headerIconPlaceholder: {
+    width: 40,
+    height: 40,
+  },
+  collapsedEventHeader: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    minHeight: 84,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: WHITE,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(43, 43, 43, 0.08)",
+    shadowColor: DARK_GRAY,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    zIndex: 61,
+    elevation: 25,
+  },
+  collapsedHeaderBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(247, 244, 238, 0.82)",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.06)",
+  },
+  collapsedEventHeaderTitle: {
+    flex: 1,
+    color: DARK_GRAY,
+    fontSize: 21,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
+    textAlign: "center",
   },
   persistentFooter: {
     zIndex: 60,

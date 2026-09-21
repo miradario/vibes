@@ -1,9 +1,10 @@
 /** @format */
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Alert,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -93,6 +94,9 @@ const CreateChallenge = () => {
     null
   );
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const titleInputRef = useRef<TextInput>(null);
+  const subtitleInputRef = useRef<TextInput>(null);
+  const daysInputRef = useRef<TextInput>(null);
   const parsedDays = days.trim() ? Number.parseInt(days, 10) : 0;
   const isFormReady =
     title.trim().length > 0 &&
@@ -159,7 +163,7 @@ const CreateChallenge = () => {
   };
 
   const openDatePicker = () => {
-    setShowDatePicker(true);
+    requestAnimationFrame(() => setShowDatePicker(true));
   };
 
   const handleDateChange = (
@@ -268,6 +272,14 @@ const CreateChallenge = () => {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Math.max(insets.top - 8, 0)}
       >
+        <AppHeader
+          title="Crear desafío"
+          showBack
+          onBack={() => navigation.goBack()}
+          style={localStyles.fixedHeader}
+          titleStyle={localStyles.screenTitle}
+        />
+
         <ScrollView
           style={styles.editContainer}
           contentContainerStyle={[
@@ -280,23 +292,18 @@ const CreateChallenge = () => {
           }
           contentInsetAdjustmentBehavior="automatic"
         >
-          <AppHeader
-            title="Crear desafío"
-            showBack
-            onBack={() => navigation.goBack()}
-            style={styles.top}
-            titleStyle={localStyles.screenTitle}
-          />
-
           <View style={localStyles.formCard}>
             <Text style={localStyles.label}>Título</Text>
             <TextInput
+              ref={titleInputRef}
               style={localStyles.input}
               placeholder="Ej: 21 días de gratitud"
               placeholderTextColor={TEXT_SECONDARY}
               value={title}
               onChangeText={setTitle}
               returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => subtitleInputRef.current?.focus()}
             />
 
             <Text style={localStyles.label}>Foto de portada</Text>
@@ -355,7 +362,7 @@ const CreateChallenge = () => {
                 <DateTimePicker
                   value={challengeStartDate ?? new Date()}
                   mode="date"
-                  display={Platform.OS === "ios" ? "inline" : "default"}
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={handleDateChange}
                   minimumDate={new Date()}
                   accentColor={PRIMARY_COLOR}
@@ -367,6 +374,7 @@ const CreateChallenge = () => {
 
             <Text style={localStyles.label}>Descripción corta</Text>
             <TextInput
+              ref={subtitleInputRef}
               style={[localStyles.input, localStyles.descriptionInput]}
               placeholder="Ej: Un hábito diario para sostener en comunidad"
               placeholderTextColor={TEXT_SECONDARY}
@@ -375,17 +383,22 @@ const CreateChallenge = () => {
               multiline
               scrollEnabled={false}
               textAlignVertical="top"
-              returnKeyType="default"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => daysInputRef.current?.focus()}
             />
 
             <Text style={localStyles.label}>Duración en días</Text>
             <TextInput
+              ref={daysInputRef}
               style={localStyles.input}
               placeholder="Ej: 21"
               placeholderTextColor={TEXT_SECONDARY}
               value={days}
               onChangeText={(value) => setDays(normalizeDaysInput(value))}
               keyboardType="number-pad"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
 
             <Text style={localStyles.label}>Quién puede verlo</Text>
@@ -506,9 +519,14 @@ const localStyles = StyleSheet.create({
   },
   screenTitle: {
     color: DARK_GRAY,
-    fontSize: 30,
-    lineHeight: 34,
+    fontSize: 28,
+    lineHeight: 32,
     fontFamily: vibesTheme.fonts.thin,
+  },
+  fixedHeader: {
+    paddingHorizontal: 0,
+    marginHorizontal: 10,
+    marginBottom: 4,
   },
   content: {
     paddingBottom: 132,

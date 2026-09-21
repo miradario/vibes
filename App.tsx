@@ -77,6 +77,7 @@ const linking = {
     screens: {
       ResetPassword: "reset-password",
       VerifyEmail: "verify-email",
+      ChallengeDetailScreen: "challenge/:challengeId",
     },
   },
 };

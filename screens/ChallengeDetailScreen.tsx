@@ -1,9 +1,11 @@
 /** @format */
 
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   FlatList,
   Image,
+  Animated as NativeAnimated,
   PanResponder,
   ScrollView,
   StyleSheet,
@@ -14,8 +16,9 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, {
+import Reanimated, {
   Easing,
   interpolate,
   useAnimatedStyle,
@@ -28,6 +31,7 @@ import Icon from "../components/Icon";
 import Avatar from "../components/Avatar";
 import ScreenContainer from "../components/ScreenContainer";
 import VibesLoader from "../components/VibesLoader";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import {
   useChallengeCheckinsQuery,
   useChallengeParticipantQuery,
@@ -38,6 +42,8 @@ import {
   useRequestChallengeJoinMutation,
   useApproveChallengeJoinRequestMutation,
   useCheckInChallengeMutation,
+  useLeaveChallengeMutation,
+  fetchEventFeedItemById,
   type EventFeedItem,
 } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -97,6 +103,7 @@ const palette = {
   gold: "#E2A84F",
   goldDeep: "#B7772F",
   accentBlue: "#AEBFD1",
+  accentBlueDeep: "#536A82",
   accentBlueSoft: "rgba(174, 191, 209, 0.18)",
   red: "#C9695D",
   redSoft: "#FCE9E6",
@@ -197,28 +204,6 @@ const getStatusFromData = (
   return "pending";
 };
 
-const getVisibilityMeta = (visibility?: EventFeedItem["visibility"]) => {
-  if (visibility === "friends") {
-    return {
-      icon: "people-outline" as const,
-      label: "Solo amigos",
-      subtitle: "Una práctica reservada para tus conexiones",
-    };
-  }
-  if (visibility === "private") {
-    return {
-      icon: "lock-closed-outline" as const,
-      label: "Privado",
-      subtitle: "Un espacio íntimo para sostenerte",
-    };
-  }
-  return {
-    icon: "earth-outline" as const,
-    label: "Público",
-    subtitle: "La comunidad puede descubrirlo y sumarse",
-  };
-};
-
 const triggerHaptic = () => {
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 };
@@ -286,36 +271,12 @@ const CountUpText = memo(
 );
 
 type ChallengeHeroProps = {
-  challenge: ChallengeDetailData;
   imageSource: any;
-  onBack: () => void;
-  onShare?: () => void;
-  isSharing?: boolean;
-  statusLabel?: string;
-  statusTone?: "active" | "done" | "warm";
-  visibilityIcon: string;
-  visibilityLabel: string;
-  participantsLabel: string;
-  startLabel: string;
-  durationLabel: string;
-  topInset: number;
 };
 
 export const ChallengeHero = memo(
   ({
-    challenge,
     imageSource,
-    onBack,
-    onShare,
-    isSharing = false,
-    statusLabel,
-    statusTone = "active",
-    visibilityIcon,
-    visibilityLabel,
-    participantsLabel,
-    startLabel,
-    durationLabel,
-    topInset,
   }: ChallengeHeroProps) => (
     <View style={localStyles.heroMedia}>
       <Image
@@ -324,68 +285,6 @@ export const ChallengeHero = memo(
         resizeMode="cover"
       />
       <View style={localStyles.heroScrim} />
-      <View
-        style={[
-          localStyles.heroTopBar,
-          { paddingTop: Math.max(topInset + 8, 18) },
-        ]}
-      >
-        <TouchableOpacity style={localStyles.heroIconButton} onPress={onBack}>
-          <Icon name="chevron-back" size={22} color={WHITE} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={localStyles.heroIconButton}
-          onPress={onShare}
-          disabled={isSharing}
-        >
-          {isSharing ? (
-            <VibesLoader size={28} />
-          ) : (
-            <Icon name="share-social-outline" size={21} color={WHITE} />
-          )}
-        </TouchableOpacity>
-      </View>
-      <View style={localStyles.heroContent}>
-        <Text style={localStyles.heroEyebrow}>Desafío</Text>
-        <Text style={localStyles.heroTitle}>{challenge.title}</Text>
-        <Text style={localStyles.heroSubtitle} numberOfLines={3}>
-          {challenge.subtitle}
-        </Text>
-        {statusLabel ? (
-          <View
-            style={[
-              localStyles.heroStatusPill,
-              statusTone === "done"
-                ? localStyles.heroStatusPillDone
-                : statusTone === "warm"
-                ? localStyles.heroStatusPillWarm
-                : null,
-            ]}
-          >
-            <Text style={localStyles.heroStatusText}>{statusLabel}</Text>
-          </View>
-        ) : null}
-        <View style={localStyles.heroMetaPillsRow}>
-          <View style={localStyles.heroMetaPill}>
-            <Icon name="calendar-outline" size={14} color={WHITE} />
-            <Text style={localStyles.heroMetaPillText}>{startLabel}</Text>
-          </View>
-          <View style={localStyles.heroMetaPill}>
-            <Icon name="time-outline" size={14} color={WHITE} />
-            <Text style={localStyles.heroMetaPillText}>{durationLabel}</Text>
-          </View>
-          <View style={localStyles.heroMetaPill}>
-            <Icon name="people-outline" size={14} color={WHITE} />
-            <Text style={localStyles.heroMetaPillText}>
-              {participantsLabel}
-            </Text>
-          </View>
-          <View style={localStyles.heroMetaPill}>
-            <Icon name={visibilityIcon as any} size={14} color={WHITE} />
-            <Text style={localStyles.heroMetaPillText}>{visibilityLabel}</Text>
-          </View>
-        </View>
-      </View>
     </View>
   )
 );
@@ -521,7 +420,7 @@ const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
 
   return (
     <View style={localStyles.celebrationCard}>
-      <Animated.View style={[localStyles.celebrationGlow, animatedStyle]} />
+      <Reanimated.View style={[localStyles.celebrationGlow, animatedStyle]} />
       <View style={localStyles.celebrationBadge}>
         <Icon name="sparkles-outline" size={17} color={palette.goldDeep} />
       </View>
@@ -609,7 +508,7 @@ const DayCircle = memo(
     }));
 
     return (
-      <Animated.View
+      <Reanimated.View
         style={[
           localStyles.dayCircle,
           {
@@ -642,7 +541,7 @@ const DayCircle = memo(
             {showLabel ? day : ""}
           </Text>
         )}
-      </Animated.View>
+      </Reanimated.View>
     );
   }
 );
@@ -709,10 +608,9 @@ export const PathProgress = memo(
             <Text
               style={localStyles.sectionTitle}
               numberOfLines={2}
-              adjustsFontSizeToFit
               maxFontSizeMultiplier={1}
             >
-              Camino del desafío
+              Tu camino
             </Text>
             <Text style={localStyles.pathSubtitle}>
               {totalDays} días para conectar con vos
@@ -849,7 +747,7 @@ export const CompactProgress = memo(
       <View style={localStyles.progressCard}>
         <Text style={localStyles.sectionTitle}>Progreso compacto</Text>
         <View style={localStyles.compactTrack}>
-          <Animated.View style={[localStyles.compactFill, fillStyle]} />
+          <Reanimated.View style={[localStyles.compactFill, fillStyle]} />
         </View>
         <View style={localStyles.milestonesRow}>
           {milestones.map((day) => (
@@ -921,7 +819,7 @@ export const ProgressSummaryCard = memo(
           <Text style={localStyles.percentText}>{percent}%</Text>
         </View>
         <View style={localStyles.summaryTrack}>
-          <Animated.View style={[localStyles.summaryFill, fillStyle]} />
+          <Reanimated.View style={[localStyles.summaryFill, fillStyle]} />
         </View>
         <Text style={localStyles.summaryCopy}>
           {completedDays.length} de {totalDays} días completados.
@@ -989,7 +887,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
     activeOpacity={0.9}
   >
     <View style={localStyles.chatIconWrap}>
-      <Icon name="chatbubbles-outline" size={21} color={palette.text} />
+      <Icon name="chatbubbles-outline" size={21} color="#FFFFFF" />
     </View>
     <View style={localStyles.chatCopy}>
       <Text style={localStyles.chatTitle}>Entrar al chat del desafío</Text>
@@ -997,7 +895,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
         Compartí avances con la comunidad.
       </Text>
     </View>
-    <Icon name="chevron-forward" size={20} color={palette.muted} />
+    <Icon name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.82)" />
   </TouchableOpacity>
 ));
 
@@ -1048,11 +946,24 @@ const ChallengeDetailScreen = () => {
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const event = route.params?.event as EventFeedItem | undefined;
+  const routeEvent = route.params?.event as EventFeedItem | undefined;
+  const challengeId =
+    routeEvent?.id ??
+    (typeof route.params?.challengeId === "string"
+      ? route.params.challengeId
+      : undefined);
+  const { data: linkedEvent, isLoading: linkedEventLoading } = useQuery({
+    queryKey: ["challenge_deep_link", challengeId],
+    queryFn: () => fetchEventFeedItemById(challengeId as string, "challenge"),
+    enabled: Boolean(!routeEvent && challengeId),
+    staleTime: 60_000,
+  });
+  const event = routeEvent ?? linkedEvent ?? undefined;
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const { data: participant } = useChallengeParticipantQuery(event?.id, userId);
   const joinChallengeMutation = useJoinChallengeMutation();
+  const leaveChallengeMutation = useLeaveChallengeMutation();
   const requestChallengeJoinMutation = useRequestChallengeJoinMutation();
   const approveJoinRequestMutation = useApproveChallengeJoinRequestMutation();
   const { data: ownJoinRequest } = useChallengeJoinRequestQuery(
@@ -1079,6 +990,8 @@ const ChallengeDetailScreen = () => {
     "Gracias por elegirte hoy"
   );
   const [isSharing, setIsSharing] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const challengeScrollY = useRef(new NativeAnimated.Value(0)).current;
 
   const baseChallenge = useMemo(
     () => mapEventToChallengeData(event, remoteCheckins, participant),
@@ -1114,7 +1027,6 @@ const ChallengeDetailScreen = () => {
     userId && event?.createdBy && userId === event.createdBy
   );
   const isJoined = Boolean(participant);
-  const visibilityMeta = getVisibilityMeta(event?.visibility);
   const legacyPreset = getChallengeMediaPreset(
     event?.imagePresetId ?? parseChallengeMediaPreset(event?.imageUrl)
   );
@@ -1154,22 +1066,6 @@ const ChallengeDetailScreen = () => {
     challenge.checkInStatus === "completed" &&
     (challenge.currentDay >= challenge.totalDays ||
       challenge.completedDays.length >= challenge.totalDays);
-  const participantLabel =
-    challenge.participantsCount === 1
-      ? "1 persona"
-      : `${challenge.participantsCount} personas`;
-  const durationLabel =
-    challenge.totalDays === 1 ? "1 día" : `${challenge.totalDays} días`;
-  const headerStatus = isChallengeUpcoming
-    ? {
-        label: getChallengeStartsInLabel(challengeTimeline.startsInDays),
-        tone: "warm" as const,
-      }
-    : isChallengeCompleted
-    ? { label: "Desafío completado", tone: "done" as const }
-    : challenge.checkInStatus === "completed"
-    ? { label: "Hecho hoy", tone: "active" as const }
-    : { label: `Día ${challenge.currentDay} activo`, tone: "active" as const };
   const footerSliderMaxOffset = Math.max(
     footerSliderWidth -
       FOOTER_SLIDER_HANDLE_SIZE -
@@ -1239,6 +1135,37 @@ const ChallengeDetailScreen = () => {
     } finally {
       setIsSharing(false);
     }
+  };
+
+  const handleLeaveChallenge = () => {
+    if (!event?.id || !userId) return;
+
+    setMenuVisible(false);
+    Alert.alert(
+      "Abandonar desafío",
+      "¿Seguro que querés abandonar este desafío? Vas a dejar de participar y perder tu progreso asociado.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Abandonar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await leaveChallengeMutation.mutateAsync({
+                challengeId: event.id,
+                userId,
+              });
+              navigation.goBack();
+            } catch (error: any) {
+              Alert.alert(
+                "Error",
+                error?.message ?? "No se pudo abandonar el desafío.",
+              );
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleJoinOrRequest = async () => {
@@ -1346,6 +1273,21 @@ const ChallengeDetailScreen = () => {
       }),
     [challenge.checkInStatus, checkInMutation.isPending, footerSliderMaxOffset]
   );
+  const collapsedChallengeHeaderOpacity = challengeScrollY.interpolate({
+    inputRange: [92, 168],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+  const collapsedChallengeHeaderTranslateY = challengeScrollY.interpolate({
+    inputRange: [92, 168],
+    outputRange: [-8, 0],
+    extrapolate: "clamp",
+  });
+  const expandedChallengeHeaderOpacity = challengeScrollY.interpolate({
+    inputRange: [72, 132],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
 
   const renderFooterCheckIn = () => {
     if (isChallengeUpcoming) {
@@ -1406,8 +1348,8 @@ const ChallengeDetailScreen = () => {
             pointerEvents="none"
           />
           <View style={localStyles.footerSliderChevrons} pointerEvents="none">
-            <Icon name="chevron-forward" size={16} color="#E2A84F" />
-            <Icon name="chevron-forward" size={16} color="#E2A84F" />
+            <Icon name="chevron-forward" size={16} color="#8A501D" />
+            <Icon name="chevron-forward" size={16} color="#8A501D" />
           </View>
           <View style={localStyles.footerSliderCopy}>
             <Text style={localStyles.footerSliderTitle}>Check-in diario</Text>
@@ -1426,16 +1368,95 @@ const ChallengeDetailScreen = () => {
           {checkInMutation.isPending ? (
             <VibesLoader size={30} />
           ) : (
-            <Icon name="sunny-outline" size={22} color={palette.goldDeep} />
+            <Icon name="sunny-outline" size={22} color="#FFFFFF" />
           )}
         </View>
       </View>
     );
   };
 
+  if (!event && linkedEventLoading) {
+    return (
+      <ScreenContainer style={localStyles.loadingScreen}>
+        <VibesLoader size={36} />
+      </ScreenContainer>
+    );
+  }
+
+  if (!event && challengeId) {
+    return (
+      <ScreenContainer style={localStyles.loadingScreen}>
+        <Text style={localStyles.loadingTitle}>No encontramos este desafío</Text>
+        <TouchableOpacity
+          style={localStyles.loadingBackButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.85}
+        >
+          <Text style={localStyles.loadingBackText}>Volver</Text>
+        </TouchableOpacity>
+      </ScreenContainer>
+    );
+  }
+
   return (
     <ScreenContainer style={localStyles.screen} edges={["left", "right"]}>
-      <ScrollView
+      <NativeAnimated.View
+        style={[
+          localStyles.expandedChallengeHeader,
+          {
+            top: Math.max(insets.top + 8, 18),
+            opacity: expandedChallengeHeaderOpacity,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={localStyles.expandedChallengeHeaderIconButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.84}
+        >
+          <Icon name="chevron-back" size={22} color={WHITE} />
+        </TouchableOpacity>
+        <View style={localStyles.expandedChallengeHeaderCopy}>
+          <Text style={localStyles.expandedChallengeHeaderTitle} numberOfLines={2}>
+            {challenge.title}
+          </Text>
+          <Text style={localStyles.expandedChallengeHeaderSubtitle} numberOfLines={2}>
+            {challenge.subtitle}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={localStyles.expandedChallengeHeaderIconButton}
+          onPress={() => setMenuVisible(true)}
+          activeOpacity={0.84}
+        >
+          <Icon name="ellipsis-horizontal" size={22} color={WHITE} />
+        </TouchableOpacity>
+      </NativeAnimated.View>
+
+      <NativeAnimated.View
+        style={[
+          localStyles.collapsedChallengeHeader,
+          {
+            paddingTop: Math.max(insets.top + 8, 18),
+            opacity: collapsedChallengeHeaderOpacity,
+            transform: [{ translateY: collapsedChallengeHeaderTranslateY }],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={localStyles.collapsedChallengeHeaderBackButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.84}
+        >
+          <Icon name="chevron-back" size={22} color={palette.text} />
+        </TouchableOpacity>
+        <Text style={localStyles.collapsedChallengeHeaderTitle} numberOfLines={2}>
+          {challenge.title}
+        </Text>
+        <View style={localStyles.headerIconPlaceholder} />
+      </NativeAnimated.View>
+
+      <NativeAnimated.ScrollView
         contentContainerStyle={[
           localStyles.scrollContent,
           {
@@ -1443,24 +1464,15 @@ const ChallengeDetailScreen = () => {
           },
         ]}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={NativeAnimated.event(
+          [{ nativeEvent: { contentOffset: { y: challengeScrollY } } }],
+          { useNativeDriver: true },
+        )}
       >
         {coverImageSource ? (
           <ChallengeHero
-            challenge={challenge}
             imageSource={coverImageSource}
-            onBack={() => navigation.goBack()}
-            onShare={() => {
-              void handleShare();
-            }}
-            isSharing={isSharing}
-            statusLabel={headerStatus.label}
-            statusTone={headerStatus.tone}
-            visibilityIcon={visibilityMeta.icon}
-            visibilityLabel={visibilityMeta.label}
-            participantsLabel={participantLabel}
-            startLabel={challenge.date}
-            durationLabel={durationLabel}
-            topInset={insets.top}
           />
         ) : null}
         <View
@@ -1539,7 +1551,7 @@ const ChallengeDetailScreen = () => {
             />
           </View>
         </View>
-      </ScrollView>
+      </NativeAnimated.ScrollView>
 
       <View
         style={[
@@ -1648,7 +1660,7 @@ const ChallengeDetailScreen = () => {
       </View>
 
       {celebrationVisible ? (
-        <Animated.View
+        <Reanimated.View
           pointerEvents="none"
           style={[
             localStyles.completionCelebration,
@@ -1671,8 +1683,45 @@ const ChallengeDetailScreen = () => {
           <Text style={localStyles.completionCelebrationBody}>
             {celebrationBody}
           </Text>
-        </Animated.View>
+        </Reanimated.View>
       ) : null}
+
+      <AnimatedSheetModal
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        offsetY={260}
+        sheetStyle={localStyles.menuSheet}
+      >
+        <View style={localStyles.menuHandle} />
+        <Text style={localStyles.menuTitle}>Opciones del desafío</Text>
+        <TouchableOpacity
+          style={localStyles.menuItem}
+          onPress={() => {
+            setMenuVisible(false);
+            void handleShare();
+          }}
+          disabled={isSharing}
+        >
+          <Icon name="share-social-outline" size={20} color={palette.text} />
+          <Text style={localStyles.menuItemText}>
+            {isSharing ? "Compartiendo..." : "Compartir desafío"}
+          </Text>
+        </TouchableOpacity>
+        {isJoined ? (
+          <TouchableOpacity
+            style={[localStyles.menuItem, localStyles.menuItemDanger]}
+            onPress={handleLeaveChallenge}
+            disabled={leaveChallengeMutation.isPending}
+          >
+            <Icon name="exit-outline" size={20} color={palette.red} />
+            <Text style={[localStyles.menuItemText, localStyles.menuItemTextDanger]}>
+              {leaveChallengeMutation.isPending
+                ? "Abandonando..."
+                : "Abandonar desafío"}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+      </AnimatedSheetModal>
     </ScreenContainer>
   );
 };
@@ -1682,11 +1731,37 @@ const localStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: palette.bg,
   },
+  loadingScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 18,
+    backgroundColor: palette.bg,
+    paddingHorizontal: 24,
+  },
+  loadingTitle: {
+    color: palette.text,
+    fontSize: 22,
+    lineHeight: 27,
+    textAlign: "center",
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  loadingBackButton: {
+    borderRadius: 22,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: palette.gold,
+  },
+  loadingBackText: {
+    color: WHITE,
+    fontSize: 16,
+    fontFamily: vibesTheme.fonts.bold,
+  },
   scrollContent: {
     paddingBottom: 188,
   },
   contentShell: {
-    marginTop: -30,
+    marginTop: -34,
     paddingHorizontal: 20,
     zIndex: 2,
   },
@@ -1707,6 +1782,99 @@ const localStyles = StyleSheet.create({
   stickyFooterCard: {
     backgroundColor: "transparent",
     gap: 10,
+  },
+  expandedChallengeHeader: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 60,
+    elevation: 18,
+    paddingLeft: 20,
+    paddingRight: 20,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 18,
+  },
+  expandedChallengeHeaderIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(14, 13, 12, 0.28)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.16)",
+    shadowColor: palette.text,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+  },
+  expandedChallengeHeaderCopy: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  expandedChallengeHeaderTitle: {
+    color: WHITE,
+    fontSize: 23,
+    lineHeight: 27,
+    textAlign: "left",
+    fontFamily: vibesTheme.fonts.medium,
+    textShadowColor: "rgba(0, 0, 0, 0.42)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  expandedChallengeHeaderSubtitle: {
+    marginTop: 8,
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 17,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.medium,
+    textShadowColor: "rgba(0, 0, 0, 0.42)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  collapsedChallengeHeader: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    minHeight: 84,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: WHITE,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(43, 43, 43, 0.08)",
+    shadowColor: palette.text,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    zIndex: 61,
+    elevation: 19,
+  },
+  collapsedChallengeHeaderBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(247, 244, 238, 0.82)",
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.06)",
+  },
+  collapsedChallengeHeaderTitle: {
+    flex: 1,
+    color: palette.text,
+    fontSize: 21,
+    lineHeight: 24,
+    textAlign: "center",
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  headerIconPlaceholder: {
+    width: 40,
+    height: 40,
   },
   joinRequestButton: {
     borderRadius: 24,
@@ -1796,7 +1964,7 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   heroMedia: {
-    minHeight: 332,
+    minHeight: 245,
     backgroundColor: "#EFE4D2",
     justifyContent: "flex-end",
   },
@@ -1832,55 +2000,6 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(14, 13, 12, 0.28)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.16)",
-  },
-  heroContent: {
-    paddingHorizontal: 24,
-    paddingTop: 118,
-    paddingBottom: 64,
-  },
-  heroEyebrow: {
-    color: "rgba(255, 243, 226, 0.84)",
-    fontSize: 12,
-    fontFamily: vibesTheme.fonts.bold,
-    textTransform: "uppercase",
-    letterSpacing: 1.5,
-  },
-  heroTitle: {
-    marginTop: 4,
-    color: WHITE,
-    fontSize: 30,
-    lineHeight: 34,
-    fontFamily: vibesTheme.fonts.medium,
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
-  },
-  heroSubtitle: {
-    marginTop: 8,
-    color: "rgba(255, 255, 255, 0.9)",
-    fontSize: 17,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.subtitle,
-  },
-  heroStatusPill: {
-    alignSelf: "flex-start",
-    marginTop: 12,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: "rgba(174, 191, 209, 0.24)",
-  },
-  heroStatusPillDone: {
-    backgroundColor: "rgba(174, 209, 178, 0.22)",
-  },
-  heroStatusPillWarm: {
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
-  },
-  heroStatusText: {
-    color: WHITE,
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.bold,
   },
   heroMetaPillsRow: {
     flexDirection: "row",
@@ -2160,7 +2279,7 @@ const localStyles = StyleSheet.create({
   sectionTitle: {
     color: palette.text,
     fontSize: 27,
-    lineHeight: 25,
+    lineHeight: 32,
     fontFamily: vibesTheme.fonts.thin,
   },
   pathSubtitle: {
@@ -2427,9 +2546,9 @@ const localStyles = StyleSheet.create({
   footerSliderTrack: {
     minHeight: 68,
     borderRadius: 34,
-    backgroundColor: "rgba(245, 235, 221, 0.92)",
+    backgroundColor: "rgba(137, 80, 29, 0.9)",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.84)",
+    borderColor: "rgba(255, 255, 255, 0.22)",
     overflow: "hidden",
     justifyContent: "center",
     paddingLeft: 124,
@@ -2445,7 +2564,7 @@ const localStyles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: 34,
-    backgroundColor: "rgba(216, 175, 118, 0.42)",
+    backgroundColor: "rgba(183, 119, 47, 0.82)",
   },
   footerSliderHandle: {
     position: "absolute",
@@ -2456,11 +2575,11 @@ const localStyles = StyleSheet.create({
     borderRadius: FOOTER_SLIDER_HANDLE_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F2DFC1",
+    backgroundColor: palette.goldDeep,
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.82)",
     shadowColor: "#BE8A5C",
-    shadowOpacity: 0.22,
+    shadowOpacity: 0.28,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
   },
@@ -2474,13 +2593,13 @@ const localStyles = StyleSheet.create({
     zIndex: 1,
   },
   footerSliderTitle: {
-    color: palette.text,
+    color: "#FFFFFF",
     fontSize: 17,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.bold,
   },
   footerSliderSubtitle: {
-    color: palette.muted,
+    color: "rgba(255, 255, 255, 0.78)",
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -2493,7 +2612,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
-    opacity: 0.82,
+    opacity: 1,
   },
   checkInText: {
     color: "#FFFFFF",
@@ -2504,9 +2623,9 @@ const localStyles = StyleSheet.create({
   },
   chatRow: {
     borderRadius: 22,
-    backgroundColor: "rgba(247, 240, 230, 0.82)",
+    backgroundColor: "rgba(83, 106, 130, 0.9)",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.84)",
+    borderColor: "rgba(255, 255, 255, 0.18)",
     padding: 14,
     flexDirection: "row",
     alignItems: "center",
@@ -2518,21 +2637,66 @@ const localStyles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EDE0CC",
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
   },
   chatCopy: {
     flex: 1,
   },
   chatTitle: {
-    color: palette.text,
+    color: "#FFFFFF",
     fontSize: 19,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.bold,
   },
   chatSubtitle: {
     marginTop: 2,
-    color: palette.muted,
+    color: "rgba(255, 255, 255, 0.76)",
     fontSize: 14,
     fontFamily: vibesTheme.fonts.subtitle,
+  },
+  menuSheet: {
+    backgroundColor: palette.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    paddingBottom: 28,
+  },
+  menuHandle: {
+    alignSelf: "center",
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(45, 41, 36, 0.16)",
+    marginBottom: 16,
+  },
+  menuTitle: {
+    color: palette.text,
+    fontSize: 22,
+    lineHeight: 26,
+    fontFamily: vibesTheme.fonts.thin,
+    marginBottom: 10,
+  },
+  menuItem: {
+    minHeight: 54,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "rgba(247, 240, 230, 0.72)",
+    marginTop: 10,
+  },
+  menuItemDanger: {
+    backgroundColor: palette.redSoft,
+  },
+  menuItemText: {
+    color: palette.text,
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  menuItemTextDanger: {
+    color: palette.red,
   },
 });
 

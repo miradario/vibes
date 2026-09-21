@@ -19,6 +19,7 @@ import AvatarGroup from "../components/AvatarGroup";
 import VibesLoader from "../components/VibesLoader";
 import {
   challengesKeys,
+  eventsKeys,
   myEventGroupsKeys,
   useChallengesFeedQuery,
   useEventsFeedQuery,
@@ -349,7 +350,13 @@ const Events = () => {
 
   useFocusEffect(
     useCallback(() => {
-      if (section !== "challenge") return;
+      if (section === "event") {
+        void queryClient.refetchQueries({
+          queryKey: eventsKeys.all,
+          type: "active",
+        });
+        return;
+      }
 
       void queryClient.refetchQueries({
         queryKey: challengesKeys.all,
@@ -646,9 +653,12 @@ const Events = () => {
                           hostImage={item.hostImage}
                           avatarUrls={item.participantPreviewImages}
                         />
-                        <Text style={localStyles.feedParticipantsCount}>
-                          ({participantCount})
-                        </Text>
+                        <View style={localStyles.feedParticipantsCountWrap}>
+                          <Text style={localStyles.feedParticipantsCount}>
+                            {participantCount}
+                          </Text>
+                          <Icon name="people" size={15} color="#4E4944" />
+                        </View>
                       </View>
                       <View style={localStyles.feedRowArrow}>
                         <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
@@ -657,11 +667,19 @@ const Events = () => {
                   ) : null}
                   {item.type === "event" ? (
                     <View style={localStyles.feedRowBottom}>
-                      <ParticipantStack
-                        count={participantCount}
-                        hostImage={item.hostImage}
-                        avatarUrls={item.participantPreviewImages}
-                      />
+                      <View style={localStyles.feedParticipantsWrap}>
+                        <ParticipantStack
+                          count={participantCount}
+                          hostImage={item.hostImage}
+                          avatarUrls={item.participantPreviewImages}
+                        />
+                        <View style={localStyles.feedParticipantsCountWrap}>
+                          <Text style={localStyles.feedParticipantsCount}>
+                            {participantCount}
+                          </Text>
+                          <Icon name="people" size={15} color="#4E4944" />
+                        </View>
+                      </View>
                       <View style={localStyles.feedRowArrow}>
                         <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
                       </View>
@@ -851,6 +869,11 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.semibold,
+  },
+  feedParticipantsCountWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   feedRowRight: {
     flexDirection: "row",
