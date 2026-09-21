@@ -1725,7 +1725,7 @@ export default StyleSheet.create({
     borderBottomColor: "#AEBFD1",
   },
   chatHeader: {
-    paddingTop: 50,
+    paddingTop: 8,
     paddingHorizontal: 16,
     paddingBottom: 10,
     flexDirection: "row",
