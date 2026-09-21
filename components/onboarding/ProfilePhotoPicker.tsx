@@ -186,7 +186,9 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
             color={ONBOARDING_COLORS.text}
           />
           <Text style={styles.rowText}>
-            {english ? "Add photos" : "Agregar fotos"}
+            {uris.length > 0
+              ? english ? "Add more photos" : "Agregar más fotos"
+              : english ? "Add photos" : "Agregar fotos"}
           </Text>
         </TouchableOpacity>
       )}

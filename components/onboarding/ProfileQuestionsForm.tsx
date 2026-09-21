@@ -10,20 +10,30 @@ import { vibesTheme } from "../../src/theme/vibesTheme";
 
 type Props = {
   group: number;
+  showHeader?: boolean;
   value: ProfileAnswers;
   onChange: (value: ProfileAnswers) => void;
 };
-export default function ProfileQuestionsForm({
-  group,
-  value,
-  onChange,
-}: Props) {
+export function ProfileQuestionsHeader({ group }: { group: number }) {
   return (
-    <View>
+    <>
       <Text style={styles.title}>{QUESTION_GROUPS[group].title}</Text>
       <Text style={styles.hint}>
         Todo es opcional. Completá solo lo que quieras compartir.
       </Text>
+    </>
+  );
+}
+
+export default function ProfileQuestionsForm({
+  group,
+  value,
+  onChange,
+  showHeader = true,
+}: Props) {
+  return (
+    <View>
+      {showHeader && <ProfileQuestionsHeader group={group} />}
       {QUESTION_GROUPS[group].fields.map((field) => (
         <View key={field.key} style={styles.field}>
           <Text style={styles.label}>{field.label}</Text>

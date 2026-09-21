@@ -19,6 +19,45 @@ const { width } = Dimensions.get("window");
 export const isCompactOnboardingScreen = width < 360;
 
 export const onboardingStyles = StyleSheet.create({
+  emailVerificationSection: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: ONBOARDING_COLORS.line,
+    backgroundColor: ONBOARDING_COLORS.surface,
+  },
+  emailVerificationLabel: {
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 14,
+    color: ONBOARDING_COLORS.muted,
+  },
+  emailVerificationAddress: {
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 16,
+    lineHeight: 22,
+    color: ONBOARDING_COLORS.text,
+    marginTop: 6,
+  },
+  practiceDetailsButton: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: ONBOARDING_COLORS.cream,
+    borderColor: ONBOARDING_COLORS.mustard,
+    borderWidth: 1,
+    borderRadius: 16,
+  },
+  practiceDetailsButtonText: {
+    flexShrink: 1,
+    color: ONBOARDING_COLORS.text,
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 16,
+    lineHeight: 22,
+  },
   screen: {
     flex: 1,
     backgroundColor: ONBOARDING_COLORS.background,

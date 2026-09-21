@@ -22,6 +22,7 @@ import OnboardingScreenContainer from "../../../components/onboarding/Onboarding
 import OptionCard from "../../../components/onboarding/OptionCard";
 import PrimaryButton from "../../../components/onboarding/PrimaryButton";
 import ProfilePhotoPicker from "../../../components/onboarding/ProfilePhotoPicker";
+import EmailVerificationCard from "../../../components/EmailVerificationCard";
 import ProgressHeader from "../../../components/onboarding/ProgressHeader";
 import SelectablePill from "../../../components/onboarding/SelectablePill";
 import { useAuthSession } from "../../auth/auth.queries";
@@ -371,6 +372,15 @@ const VibesOnboardingFlow = () => {
       <View style={onboardingStyles.profileWrap}>
         <ProfilePhotoPicker uris={photoUris} onChange={handlePhotoChange} />
         <View style={onboardingStyles.fieldGroup}>
+          <View style={onboardingStyles.emailVerificationSection}>
+            <Text style={onboardingStyles.emailVerificationLabel}>
+              {t("common.email")}
+            </Text>
+            <Text style={onboardingStyles.emailVerificationAddress}>
+              {session?.user?.email}
+            </Text>
+            <EmailVerificationCard userId={session?.user?.id} />
+          </View>
           <View style={onboardingStyles.inputRow}>
             <Icon
               name="person-outline"
@@ -477,11 +487,14 @@ const VibesOnboardingFlow = () => {
       {selectedPractices.map((practice) => (
         <TouchableOpacity
           key={practice}
+          accessibilityRole="button"
+          activeOpacity={0.8}
           onPress={() => setActivePractice(practice)}
-          style={{ paddingVertical: 12 }}
+          style={onboardingStyles.practiceDetailsButton}
         >
-          <Text style={{ color: ONBOARDING_COLORS.text }}>
-            Agregar detalles · {getPracticeLabel(practice)}
+          <Icon name="create-outline" size={20} color={ONBOARDING_COLORS.text} />
+          <Text style={onboardingStyles.practiceDetailsButtonText}>
+            {locale === "en" ? "Add details" : "Agregar detalles"} · {getPracticeLabel(practice)}
           </Text>
         </TouchableOpacity>
       ))}
@@ -544,9 +557,10 @@ const VibesOnboardingFlow = () => {
                 >
                   <TouchableOpacity
                     onPress={() => void goNext()}
-                    style={{ padding: 12 }}
+                    accessibilityRole="button"
+                    style={{ padding: 12, minHeight: 48, justifyContent: "center" }}
                   >
-                    <Text>Omitir</Text>
+                    <Text>{locale === "en" ? "Skip" : "Omitir"}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
@@ -555,9 +569,10 @@ const VibesOnboardingFlow = () => {
                         VIBES_ONBOARDING_STEPS.indexOf("completion")
                       );
                     }}
-                    style={{ padding: 12 }}
+                    accessibilityRole="button"
+                    style={{ padding: 12, minHeight: 48, justifyContent: "center" }}
                   >
-                    <Text>Omitir todas</Text>
+                    <Text>{locale === "en" ? "Complete later" : "Completar después"}</Text>
                   </TouchableOpacity>
                 </View>
               ) : null}

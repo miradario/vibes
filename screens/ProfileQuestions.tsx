@@ -11,7 +11,9 @@ import { Text } from "../components/Typography";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
-import ProfileQuestionsForm from "../components/onboarding/ProfileQuestionsForm";
+import ProfileQuestionsForm, {
+  ProfileQuestionsHeader,
+} from "../components/onboarding/ProfileQuestionsForm";
 import PrimaryButton from "../components/onboarding/PrimaryButton";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -64,34 +66,23 @@ export default function ProfileQuestions() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScreenContainer
-          scroll
-          edges={[]}
-          scrollViewProps={{
-            keyboardShouldPersistTaps: "handled",
-            keyboardDismissMode: "on-drag",
+        <View
+          style={{
+            paddingHorizontal: 24,
+            paddingTop: 8,
+            backgroundColor: "#FEFEFD",
           }}
-          contentContainerStyle={{ padding: 24 }}
         >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={{ paddingVertical: 12 }}
-          >
-            <Text>{firstHomeVisit ? "Omitir" : "Volver"}</Text>
-          </TouchableOpacity>
-          {query.isLoading ? (
-            <ActivityIndicator />
-          ) : query.isError ? (
-            <View>
-              <Text>No pudimos cargar tus respuestas.</Text>
-              <TouchableOpacity
-                onPress={() => void query.refetch()}
-                style={{ padding: 16 }}
-              >
-                <Text>Reintentar</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+          {!firstHomeVisit && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => navigation.goBack()}
+              style={{ minHeight: 48, justifyContent: "center" }}
+            >
+              <Text>Volver</Text>
+            </TouchableOpacity>
+          )}
+          {query.isSuccess && (
             <>
               <View
                 accessibilityRole="tablist"
@@ -119,20 +110,78 @@ export default function ProfileQuestions() {
                   </TouchableOpacity>
                 ))}
               </View>
+              <ProfileQuestionsHeader group={group} />
+            </>
+          )}
+        </View>
+        <ScreenContainer
+          scroll
+          edges={[]}
+          scrollViewProps={{
+            keyboardShouldPersistTaps: "handled",
+            keyboardDismissMode: "on-drag",
+          }}
+          contentContainerStyle={{
+            paddingHorizontal: 24,
+            paddingBottom: 24,
+            paddingTop: 8,
+          }}
+        >
+          {query.isLoading ? (
+            <ActivityIndicator />
+          ) : query.isError ? (
+            <View>
+              <Text>No pudimos cargar tus respuestas.</Text>
+              <TouchableOpacity
+                onPress={() => void query.refetch()}
+                style={{ padding: 16 }}
+              >
+                <Text>Reintentar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
               <ProfileQuestionsForm
+                showHeader={false}
                 group={group}
                 value={value}
                 onChange={setDraft}
               />
-              <PrimaryButton
-                label="Guardar respuestas"
-                loading={saving}
-                disabled={!userId || saving}
-                onPress={() => void save()}
-              />
             </>
           )}
         </ScreenContainer>
+        <View
+          style={{
+            paddingHorizontal: 24,
+            paddingTop: 12,
+            paddingBottom: 8,
+            backgroundColor: "#FEFEFD",
+          }}
+        >
+          <PrimaryButton
+            label="Guardar respuestas"
+            loading={saving}
+            disabled={!userId || saving || !query.isSuccess}
+            onPress={() => void save()}
+          />
+          {firstHomeVisit && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={saving}
+              onPress={() => navigation.goBack()}
+              style={{
+                marginTop: 16,
+                borderTopWidth: 1,
+                borderTopColor: "#E7DFD2",
+                minHeight: 48,
+                paddingVertical: 16,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#6E6E6E" }}>Omitir</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </KeyboardAvoidingView>
     </ScreenContainer>
   );

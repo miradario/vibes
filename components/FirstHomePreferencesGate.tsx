@@ -29,13 +29,16 @@ export default function FirstHomePreferencesGate({
         "claim_home_preferences_visit"
       );
       if (error) throw error;
-      return data === true;
+      if (data !== true) return false;
+      // Recheck persisted answers: onboarding may have completed after the
+      // cached profile query was populated.
+      const currentAnswers = await readProfileAnswers(userId);
+      return hasMissingProfileAnswers(currentAnswers);
     },
     onSuccess: (claimed) => {
       if (
         claimed &&
-        focusedRef.current &&
-        hasMissingProfileAnswers(answers.data)
+        focusedRef.current
       ) {
         navigation.navigate(
           "ProfileQuestions" as never,
@@ -45,8 +48,8 @@ export default function FirstHomePreferencesGate({
     },
   });
   useEffect(() => {
-    if (focused && answers.isSuccess && claim.isIdle) claim.mutate();
-  }, [focused, answers.isSuccess, claim.isIdle, claim.mutate]);
+    if (focused && answers.isSuccess && !answers.isFetching && claim.isIdle) claim.mutate();
+  }, [focused, answers.isSuccess, answers.isFetching, claim.isIdle, claim.mutate]);
   useEffect(() => {
     if (answers.isError || claim.isSuccess || claim.isError) onReady?.();
   }, [answers.isError, claim.isSuccess, claim.isError, onReady]);

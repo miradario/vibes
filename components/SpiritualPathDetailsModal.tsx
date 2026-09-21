@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, TextInput } from "./Typography";
 import KeyboardSheetModal from "./KeyboardSheetModal";
+import Icon from "./Icon";
 import styles, {
   DARK_GRAY,
   GRAY,
@@ -53,6 +54,11 @@ const SpiritualPathDetailsModal = ({
     return text;
   };
 
+  const closeKeepingDetails = () => {
+    setYearsError(null);
+    onClose();
+  };
+
   const closeWithValidation = () => {
     if (!readOnly) {
       const rawYears = detail.years?.trim();
@@ -70,8 +76,24 @@ const SpiritualPathDetailsModal = ({
   };
 
   return (
-    <KeyboardSheetModal visible={visible} onClose={closeWithValidation}>
+    <KeyboardSheetModal visible={visible} onClose={closeKeepingDetails}>
       <View style={localStyles.card}>
+        <View style={localStyles.header}>
+          <Text style={localStyles.title} maxFontSizeMultiplier={1}>
+            {pathLabel
+              ? translateSpiritualPathLabel(locale, pathLabel)
+              : t("spiritual.defaultTitle")}
+          </Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t("common.close")}
+            onPress={closeKeepingDetails}
+            activeOpacity={0.8}
+            style={localStyles.closeButton}
+          >
+            <Icon name="close-outline" size={24} color={DARK_GRAY} />
+          </TouchableOpacity>
+        </View>
         <ScrollView
           style={localStyles.content}
           contentContainerStyle={localStyles.contentInner}
@@ -80,11 +102,6 @@ const SpiritualPathDetailsModal = ({
           keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets={false}
         >
-          <Text style={localStyles.title} maxFontSizeMultiplier={1}>
-            {pathLabel
-              ? translateSpiritualPathLabel(locale, pathLabel)
-              : t("spiritual.defaultTitle")}
-          </Text>
           <Text style={localStyles.subtitle}>
             {readOnly ? t("spiritual.sharedData") : t("spiritual.optionalData")}
           </Text>
@@ -182,6 +199,7 @@ const SpiritualPathDetailsModal = ({
           {!readOnly && onRemove ? (
             <TouchableOpacity
               style={localStyles.removeButton}
+              accessibilityRole="button"
               onPress={onRemove}
               activeOpacity={0.85}
             >
@@ -193,6 +211,7 @@ const SpiritualPathDetailsModal = ({
 
           <TouchableOpacity
             style={localStyles.primaryButton}
+            accessibilityRole="button"
             onPress={closeWithValidation}
             activeOpacity={0.9}
           >
@@ -232,7 +251,21 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 14 },
     elevation: 4,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  closeButton: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 24,
+    backgroundColor: "#FBF8F4",
+  },
   title: {
+    flex: 1,
     color: DARK_GRAY,
     fontSize: 30,
     lineHeight: 36,
@@ -247,7 +280,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.subtitle,
   },
   content: {
-    marginTop: 24,
+    marginTop: 8,
     flexGrow: 0,
   },
   contentInner: {
@@ -348,7 +381,9 @@ const localStyles = StyleSheet.create({
   },
   removeButton: {
     flex: 1,
-    height: 56,
+    minHeight: 56,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "rgba(216, 140, 122, 0.28)",
@@ -357,13 +392,16 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.72)",
   },
   removeButtonText: {
+    textAlign: "center",
     color: PRIMARY_COLOR,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.medium,
   },
   primaryButton: {
     flex: 1,
-    height: 56,
+    minHeight: 56,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     borderRadius: 20,
     backgroundColor: PRIMARY_COLOR,
     alignItems: "center",
@@ -375,6 +413,7 @@ const localStyles = StyleSheet.create({
     elevation: 3,
   },
   primaryButtonText: {
+    textAlign: "center",
     color: WHITE,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.medium,

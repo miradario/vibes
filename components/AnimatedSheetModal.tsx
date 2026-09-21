@@ -48,18 +48,22 @@ const AnimatedSheetModal = ({
   sheetOutOpacityDuration = vibesTheme.motion.modal.sheetOutOpacityDuration,
 }: AnimatedSheetModalProps) => {
   const [isMounted, setIsMounted] = useState(visible);
+  const mountedRef = useRef(visible);
+  const onClosedRef = useRef(onClosed);
+  useEffect(() => { onClosedRef.current = onClosed; }, [onClosed]);
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(offsetY)).current;
   const sheetOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
+      mountedRef.current = true;
       setIsMounted(true);
       backdropOpacity.setValue(0);
       sheetTranslateY.setValue(offsetY);
       sheetOpacity.setValue(0);
 
-      Animated.parallel([
+      const animation = Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 1,
           duration: backdropInDuration,
@@ -77,13 +81,14 @@ const AnimatedSheetModal = ({
           delay: sheetInDelay,
           useNativeDriver: true,
         }),
-      ]).start();
-      return;
+      ]);
+      animation.start();
+      return () => animation.stop();
     }
 
-    if (!isMounted) return;
+    if (!mountedRef.current) return;
 
-    Animated.parallel([
+    const animation = Animated.parallel([
       Animated.timing(backdropOpacity, {
         toValue: 0,
         duration: backdropOutDuration,
@@ -99,19 +104,20 @@ const AnimatedSheetModal = ({
         duration: sheetOutOpacityDuration,
         useNativeDriver: true,
       }),
-    ]).start(({ finished }) => {
+    ]);
+    animation.start(({ finished }) => {
       if (finished) {
+        mountedRef.current = false;
         setIsMounted(false);
-        onClosed?.();
+        onClosedRef.current?.();
       }
     });
+    return () => animation.stop();
   }, [
     backdropInDuration,
     backdropOpacity,
     backdropOutDuration,
-    isMounted,
     offsetY,
-    onClosed,
     sheetInDelay,
     sheetInDuration,
     sheetInOpacityDuration,
