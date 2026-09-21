@@ -2,7 +2,7 @@
 
 Plantillas activas en Mindora Vibes (`mhmpjezgdvnqyqsnabuq`):
 
-- `magic_link.html`: verificación no bloqueante. Conserva `RedirectTo` y `TokenHash` para `verify-email-ownership`.
+- `magic_link.html`: verificación no bloqueante. Usa HTTPS hacia `open-email-verification` conservando `TokenHash`; el puente abre Vibes y `verify-email-ownership` valida el token.
 - `recovery.html`: recuperación. Conserva `ConfirmationURL` para el flujo de Supabase Auth.
 
 Logo existente de la bienvenida: `assets/images/challenges/vibesLogo.png`, publicado en el bucket público `event-assets`, ruta `branding/vibes-email-logo-v1.png`. No borrar ese objeto mientras las plantillas lo utilicen. El texto Vibes permanece visible aunque el cliente de correo bloquee imágenes.

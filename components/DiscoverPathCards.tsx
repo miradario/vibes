@@ -68,27 +68,25 @@ export default function DiscoverPathCards({
               onPress={() => (value ? onToggle(value) : onClear())}
               style={[s.card, active && s.selected]}
             >
-              <View style={s.cardHeader}>
-                <Icon
-                  name={
-                    value === "El Arte de Vivir"
-                      ? "sunny-outline"
-                      : value === "Tantra"
-                      ? "flower-outline"
-                      : value
-                      ? "leaf-outline"
-                      : "grid-outline"
-                  }
-                  size={22}
-                  color={active ? "#805D24" : "#827566"}
-                />
-                <Icon
-                  name={active ? "checkmark-circle" : "ellipse-outline"}
-                  size={18}
-                  color={active ? "#805D24" : "#BEB5A8"}
-                />
-              </View>
+              <Icon
+                name={
+                  value === "El Arte de Vivir"
+                    ? "sunny-outline"
+                    : value === "Tantra"
+                    ? "flower-outline"
+                    : value
+                    ? "leaf-outline"
+                    : "grid-outline"
+                }
+                size={18}
+                color={active ? "#805D24" : "#827566"}
+              />
               <Text style={[s.label, active && s.selectedLabel]}>{label}</Text>
+              <Icon
+                name={active ? "checkmark-circle" : "ellipse-outline"}
+                size={18}
+                color={active ? "#805D24" : "#BEB5A8"}
+              />
             </TouchableOpacity>
           );
         })}
@@ -113,33 +111,32 @@ const s = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
-  scroll: { flexGrow: 0, marginTop: 12 },
+  scroll: { flexGrow: 0, marginTop: 8 },
   cards: {
     paddingHorizontal: 20,
     paddingBottom: 4,
-    gap: 10,
+    gap: 8,
     alignItems: "stretch",
   },
   card: {
-    width: 128,
-    minHeight: 94,
-    padding: 12,
-    borderRadius: 18,
-    borderWidth: 1.5,
+    maxWidth: 280,
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 15,
+    borderWidth: 1,
     borderColor: "#E7DFD2",
     backgroundColor: "#FFFDFA",
   },
   selected: { backgroundColor: "#F5E5BD", borderColor: "#BF9147" },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 9,
-  },
   label: {
+    flexShrink: 1,
     color: "#61594F",
     fontFamily: vibesTheme.fonts.medium,
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
   },
   selectedLabel: { color: "#67481C" },

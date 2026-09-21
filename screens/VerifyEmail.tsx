@@ -22,6 +22,7 @@ export default function VerifyEmail() {
     "loading"
   );
   const [message, setMessage] = useState("");
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
     setState("loading");
@@ -44,7 +45,7 @@ export default function VerifyEmail() {
     return () => {
       active = false;
     };
-  }, [token, client]);
+  }, [token, client, attempt]);
   const finish = async () => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -88,6 +89,12 @@ export default function VerifyEmail() {
               ? "Tu correo ya está verificado. Podés seguir disfrutando de Vibes."
               : message}
           </Text>
+          {state === "error" && token ? (
+            <PrimaryButton
+              label="Reintentar verificación"
+              onPress={() => setAttempt((value) => value + 1)}
+            />
+          ) : null}
           <PrimaryButton label="Continuar" onPress={() => void finish()} />
         </>
       )}
