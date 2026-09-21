@@ -109,7 +109,7 @@ const Match = () => {
 
         <View style={localStyles.heroWrap}>
           <LoopingVideo
-            source={require("../assets/videos/connection.mp4")}
+            source={require("../assets/videos/surfaces/connection.mp4")}
             posterSource={require("../assets/images/conexion.png")}
             style={localStyles.heroVideo}
             resizeMode={ResizeMode.CONTAIN}

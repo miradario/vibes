@@ -182,7 +182,7 @@ const Login = () => {
         ]}
       >
         <LoopingVideo
-          source={require("../assets/videos/challenges/login/login.mp4")}
+          source={require("../assets/videos/surfaces/challenges/login/login.mp4")}
           posterSource={require("../assets/images/challenges/login.png")}
           style={localStyles.loginIllustration}
           resizeMode={ResizeMode.CONTAIN}

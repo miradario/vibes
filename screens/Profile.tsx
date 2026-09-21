@@ -7,7 +7,7 @@ import { CommonActions, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import AppHeader from "../components/AppHeader";
-import Avatar from "../components/Avatar";
+import ProfileCompletionAvatar from "../components/ProfileCompletionAvatar";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import { useAuthSession, useLogoutMutation } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -104,9 +104,15 @@ const Profile = () => {
         />
 
         <View style={styles.auraProfileCard}>
-          <View style={styles.auraProfileAvatarWrap}>
-            <Avatar uri={ownAvatarUri} size={70} />
-          </View>
+          <ProfileCompletionAvatar
+            uri={ownAvatarUri}
+            percent={
+              profile && !loadingPreferences && !preferencesError
+                ? completion.percent
+                : null
+            }
+            onPress={() => navigation.navigate(completion.nextScreen as never)}
+          />
           <View style={styles.auraProfileInfo}>
             <Text style={styles.auraProfileName}>{displayName}</Text>
             <Text style={styles.auraProfileLocation}>{location}</Text>
@@ -118,50 +124,6 @@ const Profile = () => {
             <Text style={styles.auraEditButtonText}>{t("common.edit")}</Text>
           </TouchableOpacity>
         </View>
-
-        {profile && !loadingPreferences && !preferencesError ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={`Perfil completado ${completion.percent} por ciento. Editar respuestas`}
-            onPress={() => navigation.navigate(completion.nextScreen as never)}
-            style={{
-              padding: 18,
-              marginBottom: 16,
-              borderRadius: 18,
-              backgroundColor: "#F8F3E8",
-            }}
-          >
-            <Text style={{ color: "#2B2B2B", fontSize: 17 }}>
-              Perfil completado · {completion.percent}%
-            </Text>
-            <View
-              style={{
-                height: 6,
-                backgroundColor: "#E8DFCC",
-                borderRadius: 3,
-                marginVertical: 10,
-              }}
-            >
-              <View
-                style={{
-                  height: 6,
-                  width: `${completion.percent}%`,
-                  backgroundColor: "#D7B56D",
-                  borderRadius: 3,
-                }}
-              />
-            </View>
-            <Text style={{ color: "#666", lineHeight: 20 }}>
-              {completion.completed} de {completion.total} datos públicos. Todo
-              es opcional.
-            </Text>
-            {completion.nextLabel ? (
-              <Text style={{ color: "#796036", marginTop: 8 }}>
-                Completar: {completion.nextLabel}
-              </Text>
-            ) : null}
-          </TouchableOpacity>
-        ) : null}
 
         <EmailVerificationCard userId={session?.user?.id} />
 

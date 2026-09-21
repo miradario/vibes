@@ -984,7 +984,7 @@ const MeditationScreen = () => {
                 <Video
                   key={`meditation-video-${selectedType}-${selectedDuration}-${videoResetKey}`}
                   ref={videoRef}
-                  source={require("../assets/videos/meditation/videoMeditation.mp4")}
+                  source={require("../assets/videos/surfaces/meditation/videoMeditation.mp4")}
                   style={localStyles.previewVideo}
                   resizeMode={ResizeMode.CONTAIN}
                   shouldPlay={isPlaying}
@@ -1000,7 +1000,6 @@ const MeditationScreen = () => {
                     }
                   }}
                 />
-                <View style={localStyles.previewOverlay} />
               </View>
             ) : null}
 
@@ -1154,7 +1153,7 @@ const MeditationScreen = () => {
                   <Video
                     key={`meditation-video-${selectedType}-${selectedDuration}-${videoResetKey}-immersive`}
                     ref={videoRef}
-                    source={require("../assets/videos/meditation/videoMeditation.mp4")}
+                    source={require("../assets/videos/surfaces/meditation/videoMeditation.mp4")}
                     style={localStyles.previewVideo}
                     resizeMode={ResizeMode.CONTAIN}
                     shouldPlay={isPlaying}
@@ -1170,7 +1169,6 @@ const MeditationScreen = () => {
                       }
                     }}
                   />
-                  <View style={localStyles.previewOverlay} />
                 </View>
               ) : null}
 
@@ -1602,10 +1600,6 @@ const localStyles = StyleSheet.create({
     width: "100%",
     height: "100%",
     backgroundColor: MEDITATION_VIDEO_BACKGROUND,
-  },
-  previewOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(43, 43, 43, 0.02)",
   },
   shareSessionCard: {
     marginTop: 18,

@@ -30,7 +30,7 @@ const Welcome = () => {
         <View style={localStyles.top}>
           <View style={localStyles.illustrationWrap}>
             <LoopingVideo
-              source={require("../assets/videos/bienvenidx-integrated.mp4")}
+              source={require("../assets/videos/surfaces/bienvenidx-integrated.mp4")}
               posterSource={require("../assets/images/challenges/vibesLogo.png")}
               style={localStyles.video}
               resizeMode={ResizeMode.CONTAIN}

@@ -213,7 +213,7 @@ const VibesMinimalOnboarding = ({
       >
         <Video
           ref={videoRef}
-          source={require("../../../assets/videos/boarding-integrated.mp4")}
+          source={require("../../../assets/videos/surfaces/boarding-integrated.mp4")}
           style={styles.video}
           resizeMode={ResizeMode.CONTAIN}
           shouldPlay={videoShouldPlay}

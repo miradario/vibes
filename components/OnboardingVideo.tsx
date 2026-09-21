@@ -16,31 +16,31 @@ const ONBOARDING_VIDEO_SOURCES: Array<{
   poster: ImageSourcePropType;
 }> = [
   {
-    source: require("../assets/videos/bienvenidx.mp4"),
+    source: require("../assets/videos/surfaces/bienvenidx.mp4"),
     poster: require("../assets/images/challenges/vibesLogo.png"),
   },
   {
-    source: require("../assets/videos/boarding.mp4"),
+    source: require("../assets/videos/surfaces/boarding.mp4"),
     poster: require("../assets/images/challenges/signup.png"),
   },
   {
-    source: require("../assets/videos/connection.mp4"),
+    source: require("../assets/videos/surfaces/connection.mp4"),
     poster: require("../assets/images/challenges/events.png"),
   },
   {
-    source: require("../assets/videos/challenges/name/name.mp4"),
+    source: require("../assets/videos/surfaces/challenges/name/name.mp4"),
     poster: require("../assets/images/challenges/login.png"),
   },
   {
-    source: require("../assets/videos/onboardingVibes.mp4"),
+    source: require("../assets/videos/surfaces/onboardingVibes.mp4"),
     poster: require("../assets/images/challenges/vibesLogo.png"),
   },
   {
-    source: require("../assets/videos/signup.mp4"),
+    source: require("../assets/videos/surfaces/signup.mp4"),
     poster: require("../assets/images/challenges/signup.png"),
   },
   {
-    source: require("../assets/videos/welcome.mp4"),
+    source: require("../assets/videos/surfaces/welcome.mp4"),
     poster: require("../assets/images/challenges/vibesLogo.png"),
   },
 ];

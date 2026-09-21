@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   Platform,
   ScrollView,
@@ -12,8 +12,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   cancelAnimation,
   Easing,
-  runOnJS,
-  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -21,6 +19,8 @@ import Animated, {
 } from "react-native-reanimated";
 import ScreenContainer from "./ScreenContainer";
 import CalmIllustration from "./CalmIllustration";
+import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
+import { vibesTheme } from "../src/theme/vibesTheme";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
 import {
   BREATH_CYCLE_MS,
@@ -46,11 +46,9 @@ export default function CalmPause({
   );
   const clock = useSharedValue(0);
   const opacity = useSharedValue(1);
-  const [exhaling, setExhaling] = useState(false);
   useEffect(() => {
     cancelAnimation(clock);
     clock.value = 0;
-    setExhaling(false);
     if (moving)
       clock.value = withRepeat(
         withTiming(BREATH_CYCLE_MS, {
@@ -73,12 +71,6 @@ export default function CalmPause({
     } else opacity.value = 1;
     return () => cancelAnimation(opacity);
   }, [visible, reduceMotion, opacity]);
-  useAnimatedReaction(
-    () => getBreathFrame(clock.value).exhaling,
-    (next, previous) => {
-      if (next !== previous) runOnJS(setExhaling)(next);
-    }
-  );
   const breathing = useAnimatedStyle(() => {
     const eased = getBreathFrame(clock.value).expansion;
     return { transform: [{ scale: reduceMotion ? 1 : 0.84 + eased * 0.16 }] };
@@ -116,15 +108,6 @@ export default function CalmPause({
             </Animated.View>
             <CalmIllustration moving={moving} />
           </View>
-          <View style={s.cue}>
-            <Text style={s.phase}>
-              {reduceMotion
-                ? "Respirá a tu ritmo"
-                : exhaling
-                ? "Exhalá…"
-                : "Inhalá…"}
-            </Text>
-          </View>
           <Text style={s.help}>
             {reduceMotion
               ? "Este momento es para vos"
@@ -142,9 +125,11 @@ export default function CalmPause({
             accessibilityState={{ busy: pending }}
             onPress={onContinue}
             activeOpacity={0.85}
-            style={s.primary}
+            style={[onboardingStyles.primaryButton, s.primary]}
           >
-            <Text style={s.primaryLabel}>Continuar</Text>
+            <Text style={[onboardingStyles.primaryButtonText, s.primaryLabel]}>
+              Continuar
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
@@ -213,22 +198,6 @@ const s = StyleSheet.create({
     padding: "7%",
   },
   innerCircle: { flex: 1, borderRadius: 1000, backgroundColor: "#F5E6CC" },
-  cue: {
-    backgroundColor: "#F5E9D3",
-    borderRadius: 32,
-    paddingHorizontal: 26,
-    paddingVertical: 8,
-    minWidth: 170,
-    maxWidth: "100%",
-    alignItems: "center",
-  },
-  phase: {
-    fontFamily: serif,
-    fontSize: 26,
-    lineHeight: 34,
-    color: "#3D3529",
-    textAlign: "center",
-  },
   help: {
     fontSize: 15,
     lineHeight: 22,
@@ -245,22 +214,8 @@ const s = StyleSheet.create({
     paddingBottom: 4,
     gap: 4,
   },
-  primary: {
-    minHeight: 54,
-    borderRadius: 30,
-    backgroundColor: "#DFB36B",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  primaryLabel: {
-    fontSize: 20,
-    lineHeight: 28,
-    color: "#30291E",
-    fontWeight: "600",
-    textAlign: "center",
-  },
+  primary: { paddingVertical: 14 },
+  primaryLabel: { lineHeight: 24, textAlign: "center" },
   secondary: {
     minHeight: 48,
     paddingHorizontal: 16,
@@ -273,7 +228,7 @@ const s = StyleSheet.create({
     fontSize: 16,
     lineHeight: 23,
     textAlign: "center",
-    fontWeight: "500",
+    fontFamily: vibesTheme.fonts.medium,
   },
   loading: {
     color: "#59616A",

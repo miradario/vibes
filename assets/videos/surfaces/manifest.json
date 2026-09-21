@@ -1,0 +1,206 @@
+[
+  {
+    "file": "bienvenidx.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 6.7
+  },
+  {
+    "file": "boarding.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 8.4
+  },
+  {
+    "file": "challenge.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 9.4
+  },
+  {
+    "file": "challenges/VibesHome/VibesHome.mp4",
+    "key": "0xffffff",
+    "surface": "0xFEFEFD",
+    "duration": 11.4
+  },
+  {
+    "file": "challenges/VibesHome/VibesHome_part_01.mp4",
+    "key": "0xffffff",
+    "surface": "0xFEFEFD",
+    "duration": 2.283333
+  },
+  {
+    "file": "challenges/VibesHome/VibesHome_part_02.mp4",
+    "key": "0xffffff",
+    "surface": "0xFEFEFD",
+    "duration": 2.283333
+  },
+  {
+    "file": "challenges/VibesHome/VibesHome_part_03.mp4",
+    "key": "0xffffff",
+    "surface": "0xFEFEFD",
+    "duration": 2.283333
+  },
+  {
+    "file": "challenges/VibesHome/VibesHome_part_04.mp4",
+    "key": "0xffffff",
+    "surface": "0xFEFEFD",
+    "duration": 2.266667
+  },
+  {
+    "file": "challenges/VibesHome/VibesHome_part_05.mp4",
+    "key": "0xffffff",
+    "surface": "0xFEFEFD",
+    "duration": 2.266667
+  },
+  {
+    "file": "challenges/events/events.mp4",
+    "key": "0xf8f4ee",
+    "surface": "0xFEFEFD",
+    "duration": 9.4
+  },
+  {
+    "file": "challenges/events/events_part_01.mp4",
+    "key": "0xf8f4ee",
+    "surface": "0xFEFEFD",
+    "duration": 1.883333
+  },
+  {
+    "file": "challenges/events/events_part_02.mp4",
+    "key": "0xf8f4ee",
+    "surface": "0xFEFEFD",
+    "duration": 1.883333
+  },
+  {
+    "file": "challenges/events/events_part_03.mp4",
+    "key": "0xf8f4ee",
+    "surface": "0xFEFEFD",
+    "duration": 1.883333
+  },
+  {
+    "file": "challenges/events/events_part_04.mp4",
+    "key": "0xf8f4ee",
+    "surface": "0xFEFEFD",
+    "duration": 1.866667
+  },
+  {
+    "file": "challenges/events/events_part_05.mp4",
+    "key": "0xf8f4ee",
+    "surface": "0xFEFEFD",
+    "duration": 1.866667
+  },
+  {
+    "file": "challenges/login/login.mp4",
+    "key": "0xfcf4eb",
+    "surface": "0xFEFEFD",
+    "duration": 9.25
+  },
+  {
+    "file": "challenges/login/login_part_01.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 1.85
+  },
+  {
+    "file": "challenges/login/login_part_02.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 1.85
+  },
+  {
+    "file": "challenges/login/login_part_03.mp4",
+    "key": "0xfcf4eb",
+    "surface": "0xFEFEFD",
+    "duration": 1.85
+  },
+  {
+    "file": "challenges/login/login_part_04.mp4",
+    "key": "0xfcf4eb",
+    "surface": "0xFEFEFD",
+    "duration": 1.85
+  },
+  {
+    "file": "challenges/login/login_part_05.mp4",
+    "key": "0xfcf4eb",
+    "surface": "0xFEFEFD",
+    "duration": 1.85
+  },
+  {
+    "file": "challenges/name/name.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 8.4
+  },
+  {
+    "file": "challenges/name/name_part_01.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 1.683333
+  },
+  {
+    "file": "challenges/name/name_part_02.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 1.683333
+  },
+  {
+    "file": "challenges/name/name_part_03.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 1.683333
+  },
+  {
+    "file": "challenges/name/name_part_04.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 1.666667
+  },
+  {
+    "file": "challenges/name/name_part_05.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 1.666667
+  },
+  {
+    "file": "connection.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 8.7
+  },
+  {
+    "file": "meditation/videoMeditation.mp4",
+    "key": "0xffffff",
+    "surface": "0xFFFFFF",
+    "duration": 92.4
+  },
+  {
+    "file": "onboardingVibes.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFEFEFD",
+    "duration": 12.0
+  },
+  {
+    "file": "signup.mp4",
+    "key": "0xfdf5ec",
+    "surface": "0xFEFEFD",
+    "duration": 8.25
+  },
+  {
+    "file": "welcome.mp4",
+    "key": "0xffffff",
+    "surface": "0xFEFEFD",
+    "duration": 12.4
+  },
+  {
+    "file": "boarding-integrated.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFFFFFF",
+    "duration": 8.4
+  },
+  {
+    "file": "bienvenidx-integrated.mp4",
+    "key": "0xf6f6f3",
+    "surface": "0xFFFFFF",
+    "duration": 6.7
+  }
+]
