@@ -39,7 +39,11 @@ const Connections = () => {
 
   useEffect(() => {
     setActiveSection(getInitialSection(route.params?.initialSection));
-  }, [route.params?.discoverEntryKey, route.params?.initialSection]);
+  }, [
+    route.params?.discoverEntryKey,
+    route.params?.homeEntryKey,
+    route.params?.initialSection,
+  ]);
 
   return (
     <SafeAreaView style={localStyles.screen} edges={["top", "left", "right"]}>
@@ -114,6 +118,9 @@ const Connections = () => {
           ]}
         >
           <MessagesContent
+            homeEntryKey={route.params?.homeEntryKey}
+            homeTarget={route.params?.homeTarget}
+            initialMessagesTab={route.params?.initialMessagesTab}
             showHeader={false}
             contentTopPadding={10}
             contentBottomPadding={getBottomTabContentPadding(

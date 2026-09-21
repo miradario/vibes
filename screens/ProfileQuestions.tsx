@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
 import ProfileQuestionsForm from "../components/onboarding/ProfileQuestionsForm";
 import PrimaryButton from "../components/onboarding/PrimaryButton";
@@ -23,6 +23,8 @@ import { userPreferencesKeys } from "../src/queries/userPreferences.queries";
 
 export default function ProfileQuestions() {
   const navigation = useNavigation();
+  const route = useRoute<any>();
+  const firstHomeVisit = route.params?.firstHomeVisit === true;
   const { data: session } = useAuthSession();
   const userId = session?.user.id;
   const client = useQueryClient();
@@ -75,7 +77,7 @@ export default function ProfileQuestions() {
             onPress={() => navigation.goBack()}
             style={{ paddingVertical: 12 }}
           >
-            <Text>Volver</Text>
+            <Text>{firstHomeVisit ? "Omitir" : "Volver"}</Text>
           </TouchableOpacity>
           {query.isLoading ? (
             <ActivityIndicator />

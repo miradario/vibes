@@ -1,3 +1,4 @@
+import { useConnectionOpened } from "../src/queries/homeActivity.queries";
 import ScreenContainer from "../components/ScreenContainer";
 import MessageReceipt from "../components/MessageReceipt";
 import { useMessageReceipts } from "../src/queries/communityReceipts.queries";
@@ -86,6 +87,7 @@ const Chat = () => {
     ...(preferences ?? {}),
   });
 
+  useConnectionOpened(matchId, isFocused);
   const { data: messages, isLoading } = useDirectMessagesQuery(matchId);
   const receipts = useMessageReceipts(
     "direct",

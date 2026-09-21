@@ -1,9 +1,10 @@
+import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
+import HomeActivityCard from "../components/HomeActivityCard";
 import DailyMoodCard from "../components/DailyMoodCard";
 import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
   Text,
@@ -11,22 +12,21 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  ImageBackground,
   StyleSheet,
   ScrollView,
   Platform,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import Animated, {
-  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
   withTiming,
 } from "react-native-reanimated";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
@@ -46,11 +46,6 @@ import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { useMyEventGroupsQuery } from "../src/queries/events.queries";
-import {
-  getDailyGuruFallback,
-  useDailyGuruMessageQuery,
-} from "../src/queries/dailyGuru.queries";
-import VibesActionButton from "../components/VibesActionButton";
 import { useI18n } from "../src/i18n";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
@@ -79,52 +74,6 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
 };
 
 let hasPlayedHomeEntryFade = false;
-const SHOW_DAILY_GURU_SECTION = false;
-
-const VibesBreathingMark = () => {
-  const breathProgress = useSharedValue(0);
-
-  useEffect(() => {
-    breathProgress.value = withRepeat(
-      withSequence(
-        withTiming(1, {
-          duration: 2600,
-          easing: Easing.inOut(Easing.sin),
-        }),
-        withTiming(0, {
-          duration: 2600,
-          easing: Easing.inOut(Easing.sin),
-        }),
-      ),
-      -1,
-      false,
-    );
-
-    return () => cancelAnimation(breathProgress);
-  }, [breathProgress]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: 0.72 + breathProgress.value * 0.28,
-    transform: [{ scale: 0.9 + breathProgress.value * 0.12 }],
-  }));
-
-  const outerRingStyle = useAnimatedStyle(() => ({
-    opacity: 0.16 + breathProgress.value * 0.16,
-    transform: [{ scale: 0.82 + breathProgress.value * 0.34 }],
-  }));
-
-  return (
-    <View style={localStyles.vibesBreathingWrap} pointerEvents="none">
-      <Animated.View
-        style={[localStyles.vibesBreathingOuterRing, outerRingStyle]}
-      />
-      <Animated.View style={[localStyles.vibesBreathingOrb, animatedStyle]}>
-        <Text style={localStyles.vibesBreathingText}>Vibes</Text>
-      </Animated.View>
-    </View>
-  );
-};
-
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim()) {
@@ -173,7 +122,7 @@ const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
 
 const normalizeGender = (
   value: unknown,
-  genderId?: unknown,
+  genderId?: unknown
 ): DiscoverFiltersState["gender"] | "unknown" => {
   if (typeof value === "string" && value.trim()) {
     const normalized = value
@@ -184,7 +133,11 @@ const normalizeGender = (
 
     if (["woman", "female", "mujer"].includes(normalized)) return "woman";
     if (["man", "male", "hombre"].includes(normalized)) return "man";
-    if (["nonbinary", "non-binary", "no binario", "no binaria"].includes(normalized)) {
+    if (
+      ["nonbinary", "non-binary", "no binario", "no binaria"].includes(
+        normalized
+      )
+    ) {
       return "nonbinary";
     }
     if (["other", "otro", "otra", "more", "mas"].includes(normalized)) {
@@ -318,7 +271,7 @@ const readStoredFilters = (
   gender: (() => {
     const storedGender = normalizeGender(
       preferences?.discoverGender ?? preferences?.discover_gender,
-      preferences?.discoverGenderId ?? preferences?.discover_gender_id,
+      preferences?.discoverGenderId ?? preferences?.discover_gender_id
     );
     return storedGender === "unknown" ? "all" : storedGender;
   })(),
@@ -328,7 +281,7 @@ const readStoredFilters = (
 });
 
 const Home = () => {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -338,10 +291,8 @@ const Home = () => {
     shouldRunHomeEntryFade ? 1 : 0
   );
   const { data: session } = useAuthSession();
-  const { data: ownProfileData, isFetched: hasFetchedOwnProfile } =
-    useProfileQuery(session?.user?.id);
-  const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
-    useUserPreferencesQuery(session?.user?.id);
+  const { data: ownProfileData } = useProfileQuery(session?.user?.id);
+  const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
   const { data: candidates = [] } = useCandidatesQuery();
   const { data: myEventGroups = [] } = useMyEventGroupsQuery(session?.user?.id);
   const [discoverFilters, setDiscoverFilters] =
@@ -381,7 +332,7 @@ const Home = () => {
           candidateRecord.gender ??
             candidateRecord.genderLabel ??
             candidateRecord.gender_label,
-          candidateRecord.genderId ?? candidateRecord.gender_id,
+          candidateRecord.genderId ?? candidateRecord.gender_id
         );
 
         if (
@@ -458,44 +409,11 @@ const Home = () => {
   const [galleryInitialIndex, setGalleryInitialIndex] = useState<number>(0);
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
-  const [showGuruCard, setShowGuruCard] = useState(true);
-  const [isDailyGuideVisible, setIsDailyGuideVisible] = useState(false);
   const swipeMutation = useSwipeMutation();
   const firstName =
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
       .split(" ")[0]
       .trim() || "miradario";
-  const guruContext = useMemo(
-    () => ({
-      userId: session?.user?.id,
-      ready: hasFetchedOwnProfile && hasFetchedUserPreferences,
-      locale,
-      firstName,
-      age: centerProfile.age,
-      location: centerProfile.location,
-      preferences: Array.from(
-        new Set([
-          ...(centerProfile.spiritualPath ?? []),
-          ...(centerProfile.tags ?? []),
-          ...(centerProfile.preferences ?? []),
-        ]),
-      ).slice(0, 8),
-    }),
-    [
-      centerProfile.age,
-      centerProfile.location,
-      centerProfile.preferences,
-      centerProfile.spiritualPath,
-      centerProfile.tags,
-      firstName,
-      hasFetchedOwnProfile,
-      hasFetchedUserPreferences,
-      locale,
-      session?.user?.id,
-    ],
-  );
-  const { data: dailyGuruMessage } = useDailyGuruMessageQuery(guruContext);
-  const guruMessage = dailyGuruMessage ?? getDailyGuruFallback(locale);
   const upcomingJoinedEvents = useMemo(() => {
     const now = Date.now();
     return myEventGroups
@@ -515,33 +433,31 @@ const Home = () => {
   const nextEvent = upcomingJoinedEvents[0] ?? null;
   const nextEventDate = formatEventDayBox(nextEvent?.startsAt);
   const nextEventParticipantCount = nextEvent
-    ? nextEvent.participantCount ?? parseEventParticipantCount(nextEvent.attendees)
+    ? nextEvent.participantCount ??
+      parseEventParticipantCount(nextEvent.attendees)
     : 0;
-  const nextEventParticipantImages = (nextEvent?.participantPreviewImages ?? []).slice(
-    0,
-    Math.min(nextEventParticipantCount, 4),
-  );
+  const nextEventParticipantImages = (
+    nextEvent?.participantPreviewImages ?? []
+  ).slice(0, Math.min(nextEventParticipantCount, 4));
   const nextChallenge = useMemo(() => {
     const challenges = myEventGroups
       .filter((group) => group.eventType === "challenge")
       .map((group) => group.event)
       .filter(
         (challenge) =>
-          getChallengeTimeline(challenge.startsAt, challenge.durationDays).status !==
-          "finished",
+          getChallengeTimeline(challenge.startsAt, challenge.durationDays)
+            .status !== "finished"
       );
     return (
       challenges.find(
         (challenge) =>
-          getChallengeTimeline(challenge.startsAt, challenge.durationDays).status ===
-          "active",
-      ) ?? challenges[0] ?? null
+          getChallengeTimeline(challenge.startsAt, challenge.durationDays)
+            .status === "active"
+      ) ??
+      challenges[0] ??
+      null
     );
   }, [myEventGroups]);
-  const guruDismissStorageKey = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
-    return `vibes:home-guru-dismissed:${today}`;
-  }, []);
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
       selectedProfile
@@ -562,29 +478,6 @@ const Home = () => {
     discoverFilters.maxDistanceKm,
     " km"
   );
-
-  useEffect(() => {
-    let active = true;
-
-    const loadGuruDismissState = async () => {
-      try {
-        const stored = await AsyncStorage.getItem(guruDismissStorageKey);
-        if (active) {
-          setShowGuruCard(stored !== "1");
-        }
-      } catch {
-        if (active) {
-          setShowGuruCard(true);
-        }
-      }
-    };
-
-    void loadGuruDismissState();
-
-    return () => {
-      active = false;
-    };
-  }, [guruDismissStorageKey]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -984,59 +877,6 @@ const Home = () => {
           </>
         </AnimatedSheetModal>
 
-        <AnimatedSheetModal
-          visible={SHOW_DAILY_GURU_SECTION && isDailyGuideVisible}
-          onClose={() => setIsDailyGuideVisible(false)}
-          offsetY={420}
-          sheetStyle={localStyles.dailyGuideSheet}
-        >
-          <View style={localStyles.dailyGuideHandle} />
-          <View style={localStyles.dailyGuideHeader}>
-            <View style={localStyles.dailyGuideIcon}>
-              <Ionicons name="sunny-outline" size={24} color="#9A6B20" />
-            </View>
-            <View style={localStyles.dailyGuideHeaderCopy}>
-              <Text style={localStyles.dailyGuideEyebrow}>
-                {t("home.guruGuideEyebrow")}
-              </Text>
-              <Text style={localStyles.dailyGuideTitle}>{guruMessage.title}</Text>
-            </View>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t("home.guruGuideClose")}
-              activeOpacity={0.76}
-              style={localStyles.dailyGuideClose}
-              onPress={() => setIsDailyGuideVisible(false)}
-            >
-              <Icon name="close" size={19} color="#3E3934" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={localStyles.dailyGuideContent}
-          >
-            <Text style={localStyles.dailyGuideIntro}>{guruMessage.detail}</Text>
-            <Text style={localStyles.dailyGuideActionsTitle}>
-              {t("home.guruGuideActionsTitle")}
-            </Text>
-            {guruMessage.actions.map((action, index) => (
-              <View key={`${index}-${action}`} style={localStyles.dailyGuideActionRow}>
-                <View style={localStyles.dailyGuideActionNumber}>
-                  <Text style={localStyles.dailyGuideActionNumberText}>{index + 1}</Text>
-                </View>
-                <Text style={localStyles.dailyGuideActionText}>{action}</Text>
-              </View>
-            ))}
-            <VibesActionButton
-              label={t("home.guruGuideStart")}
-              variant="start"
-              style={localStyles.dailyGuideDoneButton}
-              onPress={() => setIsDailyGuideVisible(false)}
-            />
-          </ScrollView>
-        </AnimatedSheetModal>
-
         <Modal
           visible={showGallery}
           transparent
@@ -1100,7 +940,7 @@ const Home = () => {
             {
               paddingBottom: getBottomTabContentPadding(
                 insets.bottom,
-                Platform.OS === "ios" ? 154 : 126,
+                Platform.OS === "ios" ? 154 : 126
               ),
             },
           ]}
@@ -1132,82 +972,24 @@ const Home = () => {
                 Hola, {firstName} 👋
               </Text>
               <Text style={localStyles.heroSubtitle}>
-                <Text style={localStyles.heroSubtitleStrong}>Conectá con vos</Text> para poder conectar con otros.
+                <Text style={localStyles.heroSubtitleStrong}>
+                  Conectá con vos
+                </Text>{" "}
+                para poder conectar con otros.
               </Text>
             </View>
           </View>
 
+          {session?.user?.id ? (
+            <FirstHomePreferencesGate
+              key={session.user.id}
+              userId={session.user.id}
+            />
+          ) : null}
           <DailyMoodCard userId={session?.user?.id} />
           <CompleteProfilePrompt userId={session?.user?.id} />
 
-          {SHOW_DAILY_GURU_SECTION && showGuruCard ? (
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={localStyles.guruFeatureCard}
-              onPress={() => setIsDailyGuideVisible(true)}
-            >
-              <ImageBackground
-                source={require("../assets/images/guruVibes.png")}
-                imageStyle={localStyles.featureImage}
-                resizeMode="cover"
-                style={localStyles.guruFeatureBackground}
-              >
-                <View style={localStyles.featureScrim} />
-                <VibesBreathingMark />
-                <View style={localStyles.guruBadgeRow}>
-                  <View style={localStyles.guruFeatureBadge}>
-                    <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
-                  </View>
-                  <Text style={localStyles.featureEyebrow}>
-                    {t("home.guruCardEyebrow")}
-                  </Text>
-                </View>
-                <Text style={localStyles.featureTitle}>{guruMessage.title}</Text>
-                <Text style={localStyles.featureBody} numberOfLines={3}>
-                  {guruMessage.body}
-                </Text>
-                <View style={localStyles.featureOpenRow}>
-                  <Text style={localStyles.featureOpenText}>
-                    {t("home.guruGuideOpen")}
-                  </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#5B4323" />
-                </View>
-              </ImageBackground>
-            </TouchableOpacity>
-          ) : null}
-
-          <TouchableOpacity
-            activeOpacity={0.86}
-            style={localStyles.connectionsCard}
-            onPress={() =>
-              navigation.navigate(
-                "Tab" as never,
-                {
-                  screen: "Calendar",
-                  params: {
-                    initialSection: "discover",
-                    discoverEntryKey: Date.now(),
-                  },
-                } as never
-              )
-            }
-          >
-            <View style={localStyles.connectionsRow}>
-              <View style={localStyles.connectionIconCircle}>
-                <Ionicons name="compass-outline" size={24} color="#765B91" />
-              </View>
-              <View style={localStyles.connectionsCopy}>
-                <Text style={localStyles.connectionsEyebrow}>COMUNIDAD</Text>
-                <Text style={localStyles.connectionsTitle}>
-                  Descubrir personas
-                </Text>
-                <Text style={localStyles.connectionsText} numberOfLines={1}>
-                  Explorá perfiles y nuevas conexiones
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={22} color="#8A8178" />
-            </View>
-          </TouchableOpacity>
+          <HomeActivityCard />
 
           <TouchableOpacity
             activeOpacity={0.86}
@@ -1216,11 +998,14 @@ const Home = () => {
               nextChallenge
                 ? navigation.navigate(
                     "ChallengeDetailScreen" as never,
-                    { event: nextChallenge } as never,
+                    { event: nextChallenge } as never
                   )
                 : navigation.navigate(
                     "Tab" as never,
-                    { screen: "Flow", params: { section: "challenge" } } as never,
+                    {
+                      screen: "Flow",
+                      params: { section: "challenge" },
+                    } as never
                   )
             }
           >
@@ -1230,10 +1015,16 @@ const Home = () => {
               </View>
               <View style={localStyles.challengePreviewCopy}>
                 <Text style={localStyles.challengePreviewEyebrow}>DESAFÍO</Text>
-                <Text style={localStyles.challengePreviewTitle} numberOfLines={1}>
+                <Text
+                  style={localStyles.challengePreviewTitle}
+                  numberOfLines={1}
+                >
                   {nextChallenge?.title ?? "Encontrá tu próximo desafío"}
                 </Text>
-                <Text style={localStyles.challengePreviewMeta} numberOfLines={1}>
+                <Text
+                  style={localStyles.challengePreviewMeta}
+                  numberOfLines={1}
+                >
                   {nextChallenge?.subtitle ??
                     "Sumate a una práctica y compartí el camino con la comunidad."}
                 </Text>
@@ -1274,12 +1065,15 @@ const Home = () => {
                   </Text>
                 </View>
                 <View style={localStyles.eventPreviewCopy}>
-                  <Text style={localStyles.eventPreviewTitle} numberOfLines={1}>
+                  <Text style={localStyles.eventPreviewTitle}>
                     {nextEvent.title}
                   </Text>
                   <View style={localStyles.eventPreviewMetaRow}>
                     <Ionicons name="time-outline" size={14} color="#625D57" />
-                    <Text style={localStyles.eventPreviewMeta} numberOfLines={1}>
+                    <Text
+                      style={localStyles.eventPreviewMeta}
+                      numberOfLines={1}
+                    >
                       {nextEvent.date}
                     </Text>
                   </View>
@@ -1294,7 +1088,10 @@ const Home = () => {
                         size={14}
                         color="#625D57"
                       />
-                      <Text style={localStyles.eventPreviewMeta} numberOfLines={1}>
+                      <Text
+                        style={localStyles.eventPreviewMeta}
+                        numberOfLines={1}
+                      >
                         {nextEvent.modality === "online"
                           ? "Online"
                           : nextEvent.location}
@@ -1317,10 +1114,10 @@ const Home = () => {
                       {nextEventParticipantCount === 0
                         ? t("home.eventNoParticipants")
                         : nextEventParticipantCount === 1
-                          ? t("home.eventOneParticipant")
-                          : t("home.eventParticipantCount", {
-                              count: nextEventParticipantCount,
-                            })}
+                        ? t("home.eventOneParticipant")
+                        : t("home.eventParticipantCount", {
+                            count: nextEventParticipantCount,
+                          })}
                     </Text>
                   </View>
                 </View>

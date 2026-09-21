@@ -1,8 +1,10 @@
+import { useConnectionViewsQuery } from "../src/queries/homeActivity.queries";
+import { getNewConnections } from "../src/lib/homeActivity";
 import UnreadBadge from "../components/UnreadBadge";
 import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 /** @format */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   ScrollView,
@@ -54,6 +56,9 @@ type ArchivedChatItem =
 type ConnectionsSheet = "incoming" | "new" | null;
 
 type MessagesContentProps = {
+  homeEntryKey?: number;
+  homeTarget?: "messages" | "connections";
+  initialMessagesTab?: "messages" | "groups";
   showHeader?: boolean;
   contentTopPadding?: number;
   contentBottomPadding?: number;
@@ -144,6 +149,9 @@ const isFinishedEventGroup = (group: EventGroupSummary) => {
 };
 
 export const MessagesContent = ({
+  homeEntryKey,
+  homeTarget,
+  initialMessagesTab,
   showHeader = true,
   contentTopPadding,
   contentBottomPadding,
@@ -156,6 +164,7 @@ export const MessagesContent = ({
   const communityGroups = useCommunityGroupsQuery();
   const { data: unread = [] } = useCommunityUnreadQuery();
   const { data: matches, isLoading } = useMatchesQuery();
+  const views = useConnectionViewsQuery();
   const { data: incomingLikes = [] } = useIncomingLikesQuery();
   const swipeMutation = useSwipeMutation();
   const { data: eventGroups = [], isLoading: groupsLoading } =
@@ -175,8 +184,21 @@ export const MessagesContent = ({
     selectedIncomingLike?.likerUserId
   );
 
-  const withMessages = (matches ?? []).filter((m) => m.lastMessage);
-  const newConnections = (matches ?? []).filter((m) => !m.lastMessage);
+  const withMessages = (matches ?? []).filter(
+    (m) => m.lastMessage || views.data?.includes(m.id)
+  );
+  const newConnections = views.isSuccess
+    ? getNewConnections(matches ?? [], views.data)
+    : [];
+  useEffect(() => {
+    if (!homeEntryKey) return;
+    setActiveTab(
+      homeTarget === "connections"
+        ? "messages"
+        : initialMessagesTab ?? "messages"
+    );
+    setConnectionsSheet(homeTarget === "connections" ? "new" : null);
+  }, [homeEntryKey, homeTarget, initialMessagesTab]);
   const topConnections: NewConnectionItem[] = newConnections.map((item) => ({
     type: "match" as const,
     item,
@@ -882,7 +904,7 @@ export const MessagesContent = ({
         <Text style={localStyles.connectionsSheetTitle}>
           {connectionsSheet === "incoming"
             ? t("messages.wantsToConnectWithYou")
-            : t("messages.connectedNoChat")}
+            : "Conexiones nuevas"}
         </Text>
         <ScrollView
           style={localStyles.connectionsSheetList}
