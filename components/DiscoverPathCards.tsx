@@ -19,10 +19,12 @@ const paths = [
 ];
 
 export default function DiscoverPathCards({
+  leading,
   selected,
   onToggle,
   onClear,
 }: {
+  leading?: React.ReactNode;
   selected: string[];
   onToggle: (path: string) => void;
   onClear: () => void;
@@ -38,16 +40,7 @@ export default function DiscoverPathCards({
   ];
   return (
     <View style={s.section}>
-      <Text style={s.title}>
-        {english
-          ? "Choose the paths that interest you"
-          : "Elegí los caminos que te interesan"}
-      </Text>
-      <Text style={s.hint}>
-        {english
-          ? "Choose several · Swipe to see more"
-          : "Podés elegir varios · Deslizá para ver más"}
-      </Text>
+      {leading}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -63,6 +56,7 @@ export default function DiscoverPathCards({
               key={value || "all"}
               accessibilityRole="checkbox"
               accessibilityLabel={label}
+              accessibilityHint={english ? "Choose several · Swipe to see more" : "Podés elegir varios · Deslizá para ver más"}
               accessibilityState={{ checked: active }}
               activeOpacity={0.8}
               onPress={() => (value ? onToggle(value) : onClear())}
@@ -96,25 +90,17 @@ export default function DiscoverPathCards({
 }
 
 const s = StyleSheet.create({
-  section: { paddingTop: 4, paddingBottom: 8 },
-  title: {
-    marginHorizontal: 20,
-    color: "#2B2B2B",
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 20,
-    lineHeight: 26,
+  section: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingLeft: 16,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
-  hint: {
-    marginHorizontal: 20,
-    marginTop: 5,
-    color: "#746B60",
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  scroll: { flexGrow: 0, marginTop: 8 },
+  scroll: { flex: 1, minWidth: 0 },
   cards: {
-    paddingHorizontal: 20,
-    paddingBottom: 4,
+    paddingRight: 16,
     gap: 8,
     alignItems: "stretch",
   },

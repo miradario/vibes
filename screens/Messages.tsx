@@ -437,7 +437,7 @@ export const MessagesContent = ({
     items: NewConnectionItem[],
     blurred: boolean
   ) => {
-    const previewItems = items.slice(0, 3);
+    const previewItems = items.slice(0, 1);
 
     if (previewItems.length === 0) {
       return (
@@ -492,28 +492,24 @@ export const MessagesContent = ({
     onPress: () => void;
   }) => (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={`${title}: ${count}`}
       style={localStyles.connectionSummaryCard}
-      activeOpacity={0.84}
+      activeOpacity={0.72}
       onPress={onPress}
     >
-      <View style={localStyles.connectionIconWrap}>
-        <Icon name={icon as any} color="#B98235" size={19} />
-      </View>
-      <View style={localStyles.connectionCardBody}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Text style={localStyles.connectionCardTitle} numberOfLines={1}>
-            {title}
-          </Text>
-          <View style={localStyles.connectionCountBadge}>
-            <Text style={localStyles.connectionCountText}>{count}</Text>
-          </View>
+      <View style={localStyles.connectionCardMeta}>
+        <View style={localStyles.connectionIconWrap}>
+          <Icon name={icon as any} color="#B98235" size={18} />
         </View>
-        <Text style={localStyles.connectionSheetHint}>
-          {blurred ? "Quiere conectar con vos" : "Se ha conectado contigo"}
-        </Text>
+        <View style={localStyles.connectionCountBadge}>
+          <Text style={localStyles.connectionCountText}>{count}</Text>
+        </View>
+        <View style={{ marginLeft: "auto" }}>
+          {renderConnectionPreview(items, blurred)}
+        </View>
       </View>
-      {renderConnectionPreview(items, blurred)}
-      <Icon name="chevron-forward" color="#B57716" size={20} />
+      <Text style={localStyles.connectionCardTitle}>{title}</Text>
     </TouchableOpacity>
   );
 
@@ -596,7 +592,6 @@ export const MessagesContent = ({
         key={item.eventId}
         style={[
           localStyles.cardRow,
-          index > 0 && localStyles.cardRowWithDivider,
         ]}
         activeOpacity={0.78}
         onPress={() => openGroupChat(item)}
@@ -637,7 +632,6 @@ export const MessagesContent = ({
             {formatTime(item.lastMessageAt)}
           </Text>
 
-          <Icon name="chevron-forward" color="#7B746C" size={18} />
           <UnreadBadge
             count={Number(
               unread.find(
@@ -659,7 +653,8 @@ export const MessagesContent = ({
   ) => (
     <TouchableOpacity
       key={item.id}
-      style={[localStyles.cardRow, index > 0 && localStyles.cardRowWithDivider]}
+      accessibilityRole="button"
+      style={localStyles.cardRow}
       activeOpacity={0.78}
       onPress={() => openMatchChat(item)}
       onLongPress={() => confirmArchiveChat({ kind: "direct", item })}
@@ -740,26 +735,22 @@ export const MessagesContent = ({
         {hasConnectionsSection ? (
           <>
             <View style={localStyles.connectionsGrid}>
-              {hasConnectionRequests
-                ? renderConnectionSummaryCard({
-                    title: t("messages.wantsToConnectWithYou"),
-                    count: incomingConnectionRequests.length,
-                    icon: "heart-circle-outline",
-                    items: incomingConnectionRequests,
-                    blurred: true,
-                    onPress: () => setConnectionsSheet("incoming"),
-                  })
-                : null}
-              {hasConnectedNoChat
-                ? renderConnectionSummaryCard({
-                    title: "Conexiones nuevas",
-                    count: topConnections.length,
-                    icon: "people-outline",
-                    items: topConnections,
-                    blurred: false,
-                    onPress: () => setConnectionsSheet("new"),
-                  })
-                : null}
+              {renderConnectionSummaryCard({
+                title: "Solicitudes",
+                count: incomingConnectionRequests.length,
+                icon: "heart-outline",
+                items: incomingConnectionRequests,
+                blurred: true,
+                onPress: () => setConnectionsSheet("incoming"),
+              })}
+              {renderConnectionSummaryCard({
+                title: "Nuevas conexiones",
+                count: topConnections.length,
+                icon: "people-outline",
+                items: topConnections,
+                blurred: false,
+                onPress: () => setConnectionsSheet("new"),
+              })}
             </View>
           </>
         ) : null}
@@ -953,13 +944,14 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-    marginTop: 8,
-    marginBottom: 18,
+    marginTop: 0,
+    marginBottom: 12,
   },
   communityTitle: {
     flexShrink: 1,
     color: "#161820",
-    fontSize: 28,
+    fontSize: 24,
+    lineHeight: 29,
     fontFamily: vibesTheme.fonts.bold,
   },
   chatTabs: {
@@ -974,13 +966,15 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
-    gap: 8,
+    minHeight: 48,
+    paddingVertical: 10,
+    gap: 6,
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
   chatTabActive: { borderBottomColor: "#B57716" },
   chatTabText: {
+    flexShrink: 1,
     color: "#858585",
     fontSize: 16,
     fontFamily: vibesTheme.fonts.medium,
@@ -989,7 +983,7 @@ const localStyles = StyleSheet.create({
   groupSectionLabel: {
     color: "#73737E",
     fontSize: 13,
-    marginTop: 20,
+    marginTop: 12,
     marginBottom: 4,
   },
   conversationHint: {
@@ -1011,7 +1005,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   content: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
   },
   appHeader: {
     paddingHorizontal: 0,
@@ -1036,72 +1030,60 @@ const localStyles = StyleSheet.create({
     textAlign: "left",
   },
   connectionsGrid: {
-    flexDirection: "column",
-    gap: 10,
-    marginBottom: 18,
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: 12,
+    marginBottom: 12,
   },
   connectionSummaryCard: {
-    minHeight: 88,
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.28)",
-    backgroundColor: "rgba(255, 253, 248, 0.9)",
-    padding: 12,
-    shadowColor: "#8C7B63",
-    shadowOpacity: 0.07,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 1,
-  },
-  connectionIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
-  },
-  connectionCardBody: {
     flex: 1,
     minWidth: 0,
-    marginLeft: 12,
+    minHeight: 104,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#EFE1CC",
+    backgroundColor: "#FCF8F0",
+    padding: 12,
   },
-  connectionCardMeta: {
-    minHeight: 34,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  connectionCardTrailing: {
-    marginLeft: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  connectionCountBadge: {
-    minWidth: 28,
+  connectionIconWrap: {
+    width: 28,
     height: 28,
     borderRadius: 14,
-    paddingHorizontal: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(174, 191, 209, 0.24)",
+    backgroundColor: "#F4E7D1",
+  },
+  connectionCardMeta: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
+  },
+  connectionCountBadge: {
+    minWidth: 24,
+    minHeight: 24,
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EAEDF0",
   },
   connectionCountText: {
     color: DARK_GRAY,
-    fontSize: 15,
+    fontSize: 13,
+    lineHeight: 18,
     fontFamily: vibesTheme.fonts.bold,
   },
   connectionCardTitle: {
     color: DARK_GRAY,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
   },
   connectionPreviewRow: {
-    height: 34,
-    marginTop: 4,
+    height: 32,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -1236,11 +1218,12 @@ const localStyles = StyleSheet.create({
     minWidth: 0,
   },
   countBadge: {
-    minWidth: 28,
-    height: 28,
+    minWidth: 24,
+    minHeight: 24,
+    paddingVertical: 2,
     borderRadius: 14,
     paddingHorizontal: 8,
-    marginLeft: 8,
+    marginLeft: 0,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(228, 183, 110, 0.22)",
@@ -1261,21 +1244,19 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },
-  rowsCard: { marginBottom: 12 },
+  rowsCard: { marginBottom: 4 },
   cardRow: {
-    minHeight: 92,
+    minHeight: 76,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 0,
-    paddingVertical: 16,
-  },
-  cardRowWithDivider: {
-    borderTopWidth: 1,
-    borderTopColor: "rgba(43, 43, 43, 0.07)",
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E7E5DF",
   },
   groupAvatar: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     backgroundColor: BG_MAIN,
     borderWidth: 1,
@@ -1294,6 +1275,8 @@ const localStyles = StyleSheet.create({
   },
   rowTitleLine: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    rowGap: 4,
     alignItems: "center",
   },
   rowTitle: {
@@ -1334,8 +1317,10 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   rowMeta: {
-    width: 58,
-    minHeight: 50,
+    minWidth: 42,
+    maxWidth: "26%",
+    minHeight: 44,
+    gap: 6,
     alignItems: "flex-end",
     justifyContent: "space-between",
     marginLeft: 8,

@@ -88,7 +88,15 @@ const VibesOnboardingFlow = () => {
     parseBirthDate(draft.birthDate)
   );
   const [showBirthDatePicker, setShowBirthDatePicker] = useState(false);
-  const [photoUri, setPhotoUri] = useState(draft.primaryPhotoUri ?? "");
+  const [photoUris, setPhotoUris] = useState<string[]>(() =>
+    Array.from(
+      new Set(
+        [draft.primaryPhotoUri, ...(draft.photoUris ?? [])].filter(
+          (uri): uri is string => Boolean(uri)
+        )
+      )
+    ).slice(0, 6)
+  );
   const [selectedPractices, setSelectedPractices] = useState<string[]>(
     draft.spiritualPath ?? []
   );
@@ -166,8 +174,8 @@ const VibesOnboardingFlow = () => {
         ...selectedPractices,
         age ? `age:${age}` : "",
       ].filter(Boolean),
-      photoUris: photoUri ? [photoUri] : [],
-      primaryPhotoUri: photoUri,
+      photoUris,
+      primaryPhotoUri: photoUris[0] ?? "",
     }),
     [
       age,
@@ -176,7 +184,7 @@ const VibesOnboardingFlow = () => {
       displayName,
       draft,
       answers,
-      photoUri,
+      photoUris,
       practiceDetails,
       purposeIds,
       selectedPractices,
@@ -295,12 +303,10 @@ const VibesOnboardingFlow = () => {
     setCustomPracticeName("");
   };
 
-  const handlePhotoChange = (nextUri: string) => {
-    setPhotoUri(nextUri);
-    updateDraft({
-      primaryPhotoUri: nextUri,
-      photoUris: nextUri ? [nextUri] : [],
-    });
+  const handlePhotoChange = (nextUris: string[]) => {
+    const photos = Array.from(new Set(nextUris)).slice(0, 6);
+    setPhotoUris(photos);
+    updateDraft({ primaryPhotoUri: photos[0] ?? "", photoUris: photos });
   };
 
   const updatePracticeDetail = (
@@ -364,7 +370,7 @@ const VibesOnboardingFlow = () => {
     <>
       {renderTitle("profile")}
       <View style={onboardingStyles.profileWrap}>
-        <ProfilePhotoPicker uri={photoUri} onChange={handlePhotoChange} />
+        <ProfilePhotoPicker uris={photoUris} onChange={handlePhotoChange} />
         <View style={onboardingStyles.fieldGroup}>
           <View style={onboardingStyles.inputRow}>
             <Icon

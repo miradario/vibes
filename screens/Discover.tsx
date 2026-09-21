@@ -40,7 +40,6 @@ import type { DataT } from "../types";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   mapCandidateToConnectionProfile,
-  mapOwnProfileToConnectionProfile,
 } from "../src/lib/connectionProfiles";
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -378,25 +377,11 @@ export const DiscoverContent = forwardRef<
     toFiniteNumber(ownProfileRecord?.latitude) !== null &&
     toFiniteNumber(ownProfileRecord?.longitude) !== null;
 
-  const centerProfile = useMemo<DataT>(
-    () =>
-      ({
-        ...mapOwnProfileToConnectionProfile(
-          {
-            ...(ownProfileData ?? {}),
-            ...(userPreferences ?? {}),
-          },
-          session?.user?.email?.split("@")[0]
-        ),
-        match: "0",
-      } as DataT),
-    [ownProfileData, session?.user?.email, userPreferences]
-  );
-
   const profiles = useMemo<DataT[]>(() => {
     return candidates
       .filter(
         (candidate) =>
+          String(candidate.id) !== session?.user?.id &&
           !hiddenProfileIds.has(String((candidate as Record<string, any>).id))
       )
       .map((candidate) => {
@@ -497,6 +482,7 @@ export const DiscoverContent = forwardRef<
       });
   }, [
     candidates,
+    session?.user?.id,
     userPreferences,
     discoverFilters,
     hiddenProfileIds,
@@ -1123,29 +1109,30 @@ export const DiscoverContent = forwardRef<
             title={t("discover.title")}
             style={localStyles.header}
             titleStyle={localStyles.title}
-            right={
-              <TouchableOpacity
-                style={localStyles.filtersButton}
-                activeOpacity={0.84}
-                onPress={() => setIsFiltersVisible(true)}
-              >
-                <Icon name="options-outline" size={17} color="#2B2B2B" />
-                <Text style={localStyles.filtersButtonText}>
-                  {t("discover.filters")}
-                </Text>
-                {activeFilterCount > 0 ? (
-                  <View style={localStyles.filtersCountBadge}>
-                    <Text style={localStyles.filtersCountText}>
-                      {activeFilterCount}
-                    </Text>
-                  </View>
-                ) : null}
-              </TouchableOpacity>
-            }
           />
         ) : null}
 
         <DiscoverPathCards
+          leading={
+            <TouchableOpacity
+              accessibilityRole="button"
+              style={localStyles.filtersButton}
+              activeOpacity={0.84}
+              onPress={() => setIsFiltersVisible(true)}
+            >
+              <Icon name="options-outline" size={17} color="#2B2B2B" />
+              <Text style={localStyles.filtersButtonText}>
+                {t("discover.filters")}
+              </Text>
+              {activeFilterCount > 0 ? (
+                <View style={localStyles.filtersCountBadge}>
+                  <Text style={localStyles.filtersCountText}>
+                    {activeFilterCount}
+                  </Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
+          }
           selected={discoverFilters.spiritualPaths}
           onToggle={toggleSpiritualPath}
           onClear={() =>
@@ -1199,11 +1186,7 @@ export const DiscoverContent = forwardRef<
           ) : (
             <>
               <DiscoverOrbitCanvas
-                users={visibleProfiles.filter(
-                  (item) => item.id !== centerProfile.id
-                )}
-                centerUser={centerProfile}
-                onCenterPress={() => navigation.navigate("Aura" as never)}
+                users={visibleProfiles}
                 onUserPress={(profile) => {
                   setSelectedProfile(profile);
                   setShowProfileSheet(true);
@@ -1271,8 +1254,9 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   filtersButton: {
-    marginTop: 8,
-    minHeight: 42,
+    flexShrink: 0,
+    minHeight: 48,
+    paddingVertical: 8,
     borderRadius: 21,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.82)",

@@ -66,7 +66,11 @@ export default function CommunityGroups({
     }
   };
   return (
-    <View style={variant === "create" ? undefined : s.section}>
+    <View
+      style={
+        variant === "create" ? { maxWidth: "46%", flexShrink: 1 } : s.section
+      }
+    >
       {variant === "create" ? (
         <TouchableOpacity
           accessibilityRole="button"
@@ -94,13 +98,13 @@ export default function CommunityGroups({
             <TouchableOpacity
               accessibilityRole="button"
               key={group.id}
-              style={s.row}
+              style={[s.row, s.conversationRow]}
               onPress={() => open(group.id, group.name, group.description)}
             >
               <View style={s.avatar}>
                 <Icon name="people-outline" size={26} color="#B57716" />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} style={s.title}>
                   {group.name}
                 </Text>
@@ -115,7 +119,6 @@ export default function CommunityGroups({
                   )?.unread_count ?? 0
                 )}
               />
-              <Icon name="chevron-forward" size={18} color="#7B746C" />
             </TouchableOpacity>
           ))}
         </>
@@ -228,26 +231,33 @@ export default function CommunityGroups({
   );
 }
 const s = StyleSheet.create({
-  section: { marginVertical: 12 },
+  section: { marginTop: 4, marginBottom: 0 },
+  conversationRow: {
+    minHeight: 76,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E7E5DF",
+  },
   create: {
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "#B57716",
   },
   createLabel: {
+    flexShrink: 1,
     color: "#B57716",
     fontSize: 14,
     fontFamily: vibesTheme.fonts.medium,
   },
   avatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FBECD5",
@@ -258,12 +268,12 @@ const s = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   hint: { color: "#7B746C", fontSize: 14, marginTop: 4 },
-  heading: { color: "#7B746C", fontSize: 14, marginTop: 18, marginBottom: 8 },
+  heading: { color: "#7B746C", fontSize: 14, marginTop: 12, marginBottom: 4 },
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   sheet: {
     backgroundColor: "#FEFEFD",
