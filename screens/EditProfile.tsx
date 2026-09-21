@@ -25,6 +25,7 @@ import styles, {
 } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
+import EmailVerificationCard from "../components/EmailVerificationCard";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import ScreenContainer from "../components/ScreenContainer";
 import * as ImagePicker from "expo-image-picker";
@@ -1027,6 +1028,7 @@ const EditProfile = () => {
               {session?.user?.email ?? "-"}
             </Text>
           </View>
+          <EmailVerificationCard userId={session?.user?.id} />
         </View>
 
         <View style={styles.editSection}>

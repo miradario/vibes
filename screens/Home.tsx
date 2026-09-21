@@ -290,6 +290,7 @@ const Home = () => {
   const homeEntryOverlayOpacity = useSharedValue(
     shouldRunHomeEntryFade ? 1 : 0
   );
+  const [moodGateUser, setMoodGateUser] = useState<string | null>(null);
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
@@ -938,10 +939,11 @@ const Home = () => {
           contentContainerStyle={[
             localStyles.homeContent,
             {
-              paddingBottom: getBottomTabContentPadding(
-                insets.bottom,
-                Platform.OS === "ios" ? 154 : 126
-              ),
+              paddingBottom:
+                getBottomTabContentPadding(
+                  insets.bottom,
+                  Platform.OS === "ios" ? 154 : 126
+                ) + 32,
             },
           ]}
           showsVerticalScrollIndicator={false}
@@ -984,9 +986,10 @@ const Home = () => {
             <FirstHomePreferencesGate
               key={session.user.id}
               userId={session.user.id}
+              onReady={() => setMoodGateUser(session.user.id)}
             />
           ) : null}
-          <DailyMoodCard userId={session?.user?.id} />
+          <DailyMoodCard key={session?.user?.id} userId={session?.user?.id} enabled={moodGateUser === session?.user?.id} />
           <CompleteProfilePrompt userId={session?.user?.id} />
 
           <HomeActivityCard />

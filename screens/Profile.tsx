@@ -1,4 +1,3 @@
-import EmailVerificationCard from "../components/EmailVerificationCard";
 /** @format */
 
 import React from "react";
@@ -124,8 +123,6 @@ const Profile = () => {
             <Text style={styles.auraEditButtonText}>{t("common.edit")}</Text>
           </TouchableOpacity>
         </View>
-
-        <EmailVerificationCard userId={session?.user?.id} />
 
         <View style={styles.auraMenuList}>
           {menuItems.map((item, index) => (

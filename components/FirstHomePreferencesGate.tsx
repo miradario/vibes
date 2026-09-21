@@ -10,8 +10,10 @@ import {
 /** Mounted with a user key: the claim lives in the account, never in device storage. */
 export default function FirstHomePreferencesGate({
   userId,
+  onReady,
 }: {
   userId: string;
+  onReady?: () => void;
 }) {
   const navigation = useNavigation();
   const focused = useIsFocused();
@@ -45,5 +47,8 @@ export default function FirstHomePreferencesGate({
   useEffect(() => {
     if (focused && answers.isSuccess && claim.isIdle) claim.mutate();
   }, [focused, answers.isSuccess, claim.isIdle, claim.mutate]);
+  useEffect(() => {
+    if (answers.isError || claim.isSuccess || claim.isError) onReady?.();
+  }, [answers.isError, claim.isSuccess, claim.isError, onReady]);
   return null;
 }

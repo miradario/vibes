@@ -58,21 +58,23 @@ export default function EmailVerificationCard({ userId }: { userId?: string }) {
   return (
     <View
       style={{
-        padding: 20,
-        marginVertical: 16,
-        backgroundColor: "#FFF",
-        borderRadius: 20,
+        marginTop: 8,
       }}
     >
-      <Text style={{ fontSize: 20, marginBottom: 8 }}>Cuenta</Text>
       {query.isError ? (
-        <TouchableOpacity onPress={() => void query.refetch()}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={{ minHeight: 48, justifyContent: "center" }}
+          onPress={() => void query.refetch()}
+        >
           <Text>No pudimos consultar tu email. Reintentar</Text>
         </TouchableOpacity>
       ) : (
         <>
-          <Text>{query.data?.email}</Text>
-          <Text style={{ marginVertical: 8 }}>
+          <Text
+            accessibilityLiveRegion="polite"
+            style={{ marginVertical: 8, color: "#6E6E6E" }}
+          >
             {query.isLoading
               ? "Consultando email…"
               : verified
@@ -81,9 +83,15 @@ export default function EmailVerificationCard({ userId }: { userId?: string }) {
           </Text>
           {!verified && query.data?.email ? (
             <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ disabled: sending, busy: sending }}
               disabled={sending}
               onPress={() => void send()}
-              style={{ paddingVertical: 10 }}
+              style={{
+                minHeight: 48,
+                paddingVertical: 12,
+                justifyContent: "center",
+              }}
             >
               <Text style={{ color: "#8C6A2D" }}>
                 {sending ? "Enviando…" : "Reenviar correo de verificación"}
