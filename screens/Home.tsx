@@ -7,7 +7,6 @@ import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
-  Text,
   Modal,
   TouchableOpacity,
   FlatList,
@@ -16,6 +15,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
+import { Text } from "../components/Typography";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   SafeAreaView,

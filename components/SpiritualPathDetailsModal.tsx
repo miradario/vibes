@@ -1,12 +1,6 @@
 import React, { useState } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text, TextInput } from "./Typography";
 import KeyboardSheetModal from "./KeyboardSheetModal";
 import styles, {
   DARK_GRAY,

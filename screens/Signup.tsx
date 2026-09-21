@@ -8,14 +8,13 @@ import {
 } from "../src/auth/auth.queries";
 import {
   View,
-  Text,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import { isValidEmail, isValidPassword } from "../src/auth/passwordPolicy";
 import {
   CommonActions,

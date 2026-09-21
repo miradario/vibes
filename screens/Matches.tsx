@@ -1,12 +1,8 @@
 /** @format */
 
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-} from "react-native";
+import { View, TouchableOpacity, FlatList } from "react-native";
+import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";

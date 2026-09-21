@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text } from "./Typography";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "./Icon";
 import { useMatchesQuery } from "../src/queries/matches.queries";

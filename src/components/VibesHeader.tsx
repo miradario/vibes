@@ -3,13 +3,13 @@
 import React from "react";
 import {
   StyleSheet,
-  Text,
   View,
   type TextProps,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
 } from "react-native";
+import { Text } from "../../components/Typography";
 import { vibesTheme } from "../theme/vibesTheme";
 
 export type VibesHeaderProps = {

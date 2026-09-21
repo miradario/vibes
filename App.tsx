@@ -6,7 +6,7 @@ import CommunityGroupChat from "./screens/CommunityGroupChat";
 
 import "react-native-url-polyfill/auto";
 import React from "react";
-import { Text, TextInput, View } from "react-native";
+import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer, CommonActions } from "@react-navigation/native";
@@ -81,7 +81,6 @@ const linking = {
     },
   },
 };
-let hasAppliedGlobalFont = false;
 let isNavigationReady = false;
 let pendingNotificationData: Record<string, unknown> | null = null;
 let hasHiddenNativeSplash = false;
@@ -141,20 +140,6 @@ const AppNavigator = () => {
       clearTimeout(timeout);
     };
   }, [fontError, fontsLoaded]);
-
-  if (fontsLoaded && !hasAppliedGlobalFont) {
-    (Text as any).defaultProps = (Text as any).defaultProps || {};
-    (Text as any).defaultProps.style = [
-      { fontFamily: vibesTheme.fonts.regular },
-      (Text as any).defaultProps.style,
-    ];
-    (TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
-    (TextInput as any).defaultProps.style = [
-      { fontFamily: vibesTheme.fonts.regular },
-      (TextInput as any).defaultProps.style,
-    ];
-    hasAppliedGlobalFont = true;
-  }
 
   React.useEffect(() => {
     if (hasHiddenNativeSplash) return;

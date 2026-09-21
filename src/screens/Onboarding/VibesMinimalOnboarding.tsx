@@ -1,13 +1,8 @@
 /** @format */
 
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Text } from "../../../components/Typography";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
   Easing,

@@ -1,13 +1,12 @@
 import React, { useEffect } from "react";
 import {
-  Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
+import { Text } from "./Typography";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   cancelAnimation,
@@ -144,7 +143,7 @@ export default function CalmPause({
     </ScreenContainer>
   );
 }
-const serif = Platform.OS === "ios" ? "Georgia" : "serif";
+const serif = vibesTheme.fonts.regular;
 const s = StyleSheet.create({
   screen: { backgroundColor: "#FBF7EF" },
   layout: { flex: 1 },

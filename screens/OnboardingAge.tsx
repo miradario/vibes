@@ -1,13 +1,8 @@
 /** @format */
 
 import React, { useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Platform,
-  StyleSheet,
-} from "react-native";
+import { View, TouchableOpacity, Platform, StyleSheet } from "react-native";
+import { Text } from "../components/Typography";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";

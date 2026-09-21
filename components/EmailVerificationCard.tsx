@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { AppState, Text, TouchableOpacity, View } from "react-native";
+import { AppState, TouchableOpacity, View } from "react-native";
+import { Text } from "./Typography";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../src/lib/supabase";

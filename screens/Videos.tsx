@@ -1,10 +1,6 @@
 import React from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
+import { View, FlatList, TouchableOpacity } from "react-native";
+import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY } from "../assets/styles";
 import Icon from "../components/Icon";

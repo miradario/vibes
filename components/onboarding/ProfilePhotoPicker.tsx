@@ -4,10 +4,10 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Text } from "../Typography";
 import * as ImagePicker from "expo-image-picker";
 import { CameraType } from "expo-image-picker";
 import Icon from "../Icon";

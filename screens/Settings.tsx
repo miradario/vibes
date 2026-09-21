@@ -6,15 +6,14 @@ import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
 import { PURPOSE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
 import {
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   StyleSheet,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import styles, {

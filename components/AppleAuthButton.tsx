@@ -1,7 +1,8 @@
 /** @format */
 
 import React, { useEffect, useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
+import { Text } from "./Typography";
 import * as AppleAuthentication from "expo-apple-authentication";
 import VibesLoader from "./VibesLoader";
 

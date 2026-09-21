@@ -1,14 +1,8 @@
 /** @format */
 
 import React from "react";
-import {
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native";
+import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
+import { Text } from "./Typography";
 import Svg, { Path } from "react-native-svg";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "./VibesLoader";

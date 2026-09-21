@@ -1,7 +1,8 @@
 /** @format */
 
 import React, { useCallback } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "./Typography";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import Animated, {
   useAnimatedStyle,

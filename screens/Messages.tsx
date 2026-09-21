@@ -6,14 +6,8 @@ import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.querie
 
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Alert,
-} from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
+import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";

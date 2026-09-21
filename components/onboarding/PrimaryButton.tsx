@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
+import { Text } from "../Typography";
 import { onboardingStyles } from "../../src/screens/Onboarding/vibesOnboardingStyles";
 import VibesLoader from "../VibesLoader";
 

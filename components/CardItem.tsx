@@ -1,14 +1,8 @@
 /** @format */
 
 import React, { useEffect, useState } from "react";
-import {
-  Text,
-  View,
-  Image,
-  Dimensions,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { View, Image, Dimensions, ScrollView, TouchableOpacity } from "react-native";
+import { Text } from "./Typography";
 import Icon from "./Icon";
 import ProfileMediaImage from "./ProfileMediaImage";
 import DiscoverCirclesOverlay from "./DiscoverCirclesOverlay";

@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
+import { Text } from "../components/Typography";
 import styles, { DARK_GRAY, PRIMARY_COLOR } from "../assets/styles";
 import Icon from "../components/Icon";
 

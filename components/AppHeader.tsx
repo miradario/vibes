@@ -4,12 +4,12 @@ import React from "react";
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
 } from "react-native";
+import { Text } from "./Typography";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "./Icon";
 import { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";

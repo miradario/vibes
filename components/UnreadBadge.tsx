@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "./Typography";
 export default function UnreadBadge({ count }: { count: number }) {
   if (!count) return null;
   return (

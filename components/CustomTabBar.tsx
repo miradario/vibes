@@ -1,11 +1,6 @@
 import React from "react";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { Text } from "./Typography";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {

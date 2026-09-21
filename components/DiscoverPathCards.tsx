@@ -1,11 +1,6 @@
 import React from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text } from "./Typography";
 import Icon from "./Icon";
 import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
 import { useI18n } from "../src/i18n";

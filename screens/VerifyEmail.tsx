@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Text } from "react-native";
+import { ActivityIndicator } from "react-native";
+import { Text } from "../components/Typography";
 import {
   CommonActions,
   useNavigation,

@@ -7,10 +7,8 @@ import { useMessageReceipts } from "../src/queries/communityReceipts.queries";
 import React, { useRef, useEffect, useState } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
   FlatList,
-  TextInput,
   KeyboardAvoidingView,
   Keyboard,
   Platform,
@@ -19,6 +17,7 @@ import {
   Pressable,
   StyleSheet,
 } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import {
   useIsFocused,
   useNavigation,
@@ -374,7 +373,10 @@ const Chat = () => {
             onPress={() => setShowActionsModal(false)}
           >
             <Pressable
-              style={localStyles.actionsSheet}
+              style={[
+                localStyles.actionsSheet,
+                { marginBottom: insets.bottom + 24 },
+              ]}
               onPress={() => undefined}
             >
               <Text style={localStyles.modalTitle}>Opciones de conexión</Text>
@@ -656,7 +658,6 @@ const localStyles = StyleSheet.create({
   },
   actionsSheet: {
     marginHorizontal: 16,
-    marginBottom: 18,
     borderRadius: 22,
     backgroundColor: "#FEFEFD",
     paddingHorizontal: 18,

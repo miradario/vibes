@@ -4,9 +4,7 @@ import React, { useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   View,
-  Text,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   Alert,
   StyleSheet,
@@ -15,6 +13,7 @@ import {
   Linking,
   Keyboard,
 } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";

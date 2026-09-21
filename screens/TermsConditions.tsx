@@ -1,14 +1,8 @@
 /** @format */
 
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  ScrollView,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet, Image, ScrollView } from "react-native";
+import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, WHITE } from "../assets/styles";
 import AppHeader from "../components/AppHeader";

@@ -3,13 +3,8 @@ import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.querie
 /** @format */
 
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { Text } from "../components/Typography";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   SafeAreaView,

@@ -9,9 +9,7 @@ import React, {
 } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   Keyboard,
   KeyboardAvoidingView,
@@ -24,6 +22,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import {
   useIsFocused,
   useNavigation,

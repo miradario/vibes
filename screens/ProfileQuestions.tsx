@@ -4,10 +4,10 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Text } from "../components/Typography";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";

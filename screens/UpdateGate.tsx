@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "../components/Typography";
 import Icon from "../components/Icon";
 import VibesActionButton from "../components/VibesActionButton";
 import { useAuthSession } from "../src/auth/auth.queries";

@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
   Image,
   Alert,
@@ -11,9 +10,9 @@ import {
   Platform,
   StyleSheet,
   Linking,
-  TextInput,
   type LayoutChangeEvent,
 } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import styles, {

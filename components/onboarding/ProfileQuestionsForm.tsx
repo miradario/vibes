@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text, TextInput } from "../Typography";
 import SelectablePill from "./SelectablePill";
 import {
   QUESTION_GROUPS,

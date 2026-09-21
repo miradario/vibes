@@ -1,7 +1,8 @@
 /** @format */
 
 import React from "react";
-import { ScrollView, View, Text, TouchableOpacity } from "react-native";
+import { ScrollView, View, TouchableOpacity } from "react-native";
+import { Text } from "../components/Typography";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";

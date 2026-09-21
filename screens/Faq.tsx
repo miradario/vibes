@@ -1,14 +1,8 @@
 /** @format */
 
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  Alert,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
+import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";

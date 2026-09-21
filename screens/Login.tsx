@@ -9,14 +9,13 @@ import {
 } from "../src/auth/auth.queries";
 import {
   View,
-  Text,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import { ResizeMode } from "expo-av";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { CommonActions, useNavigation } from "@react-navigation/native";

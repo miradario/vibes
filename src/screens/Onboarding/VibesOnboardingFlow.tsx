@@ -5,11 +5,10 @@ import {
   Easing,
   ScrollView,
   Platform,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Text, TextInput } from "../../../components/Typography";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";

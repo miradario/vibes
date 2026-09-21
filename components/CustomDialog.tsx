@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text } from "./Typography";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import { vibesTheme } from "../src/theme/vibesTheme";
 

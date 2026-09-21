@@ -2,7 +2,8 @@ import LikeBubbles from "../components/LikeBubbles";
 /** @format */
 
 import React, { useEffect, useMemo, useRef } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "../components/Typography";
 import { ResizeMode } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";

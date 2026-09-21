@@ -1,5 +1,5 @@
 import React from "react";
-import { Text } from "react-native";
+import { Text } from "./Typography";
 import type { ReceiptStatus } from "../src/queries/communityReceipts.queries";
 export default function MessageReceipt({
   status = "sent",

@@ -1,14 +1,8 @@
 /** @format */
 
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  StyleSheet,
-} from "react-native";
+import { View, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import styles from "../assets/styles";

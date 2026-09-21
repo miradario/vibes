@@ -1,13 +1,8 @@
 /** @format */
 
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Alert,
-  StyleSheet,
-} from "react-native";
+import { View, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import AppHeader from "../components/AppHeader";

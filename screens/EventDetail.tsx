@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
   Image,
   ScrollView,
@@ -11,13 +10,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Modal,
-  TextInput,
   FlatList,
   Linking,
   Platform,
   Animated,
   PanResponder,
 } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ExpoLocation from "expo-location";

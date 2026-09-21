@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "./Typography";
 import Icon from "./Icon";
 import { ProfileItemT } from "../types";
 import styles, { DARK_GRAY, WHITE } from "../assets/styles";

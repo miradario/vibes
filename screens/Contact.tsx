@@ -1,13 +1,8 @@
 /** @format */
 
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Linking,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet, Linking } from "react-native";
+import { Text } from "../components/Typography";
 import styles, { DARK_GRAY, GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";

@@ -1,15 +1,8 @@
 /** @format */
 
 import React, { useCallback, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  TextInput,
-  StyleSheet,
-} from "react-native";
+import { View, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { Text, TextInput } from "../components/Typography";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
