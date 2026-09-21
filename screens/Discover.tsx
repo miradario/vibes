@@ -1,3 +1,10 @@
+import DiscoverPathCards from "../components/DiscoverPathCards";
+import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
+import {
+  matchesDiscoverSpiritualPaths,
+  readDiscoverSpiritualPaths,
+} from "../src/lib/discoverSpiritualPaths";
+import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { compareDiscoveryProfiles } from "../src/lib/communityDiscovery";
 /** @format */
 
@@ -57,6 +64,7 @@ type DiscoverFiltersState = {
   maxDistanceKm: number | null;
   genders: DiscoverGender[];
   diets: DiscoverDiet[];
+  spiritualPaths: string[];
   smoking: "all" | "no" | "occasionally" | "yes";
 };
 
@@ -67,6 +75,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   maxDistanceKm: null,
   genders: [],
   diets: [],
+  spiritualPaths: [],
   smoking: "all",
 };
 
@@ -264,6 +273,8 @@ const areFiltersEqual = (
   left.genders.every((gender) => right.genders.includes(gender)) &&
   left.diets.length === right.diets.length &&
   left.diets.every((diet) => right.diets.includes(diet)) &&
+  left.spiritualPaths.length === right.spiritualPaths.length &&
+  left.spiritualPaths.every((path) => right.spiritualPaths.includes(path)) &&
   left.smoking === right.smoking;
 
 const readStoredFilters = (
@@ -307,6 +318,9 @@ const readStoredFilters = (
       ["vegetarian", "nonVegetarian", "other"].includes(String(value))
     );
   })(),
+  spiritualPaths: readDiscoverSpiritualPaths(
+    preferences?.discoverSpiritualPaths ?? preferences?.discover_spiritual_paths
+  ),
   smoking: normalizeSmoking(
     preferences?.discoverSmoking ?? preferences?.discover_smoking
   ),
@@ -317,7 +331,7 @@ export const DiscoverContent = forwardRef<
   DiscoverContentProps
 >(({ showHeader = true, onFilterCountChange }, ref) => {
   const navigation = useNavigation();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
@@ -460,7 +474,10 @@ export const DiscoverContent = forwardRef<
           return false;
         }
 
-        return true;
+        return matchesDiscoverSpiritualPaths(
+          candidate,
+          discoverFilters.spiritualPaths
+        );
       })
       .sort((left, right) =>
         compareDiscoveryProfiles(userPreferences ?? {}, left, right)
@@ -536,6 +553,7 @@ export const DiscoverContent = forwardRef<
             discoverFilters.maxDistanceKm !== null),
         discoverFilters.genders.length > 0,
         discoverFilters.diets.length > 0,
+        discoverFilters.spiritualPaths.length > 0,
         discoverFilters.smoking !== "all",
       ].filter(Boolean).length,
     [discoverFilters, hasLocation]
@@ -588,6 +606,7 @@ export const DiscoverContent = forwardRef<
             : "all",
         discover_gender_id: null,
         discover_diets: discoverFilters.diets,
+        discover_spiritual_paths: discoverFilters.spiritualPaths,
         discover_smoking: discoverFilters.smoking,
       }).catch((persistError) => {
         console.warn("discover_filters:persist_error", persistError);
@@ -682,6 +701,15 @@ export const DiscoverContent = forwardRef<
     setDiscoverFilters((prev) => ({
       ...prev,
       [key]: digits ? Math.min(999, Number(digits)) : null,
+    }));
+  };
+
+  const toggleSpiritualPath = (path: string) => {
+    setDiscoverFilters((previous) => ({
+      ...previous,
+      spiritualPaths: previous.spiritualPaths.includes(path)
+        ? previous.spiritualPaths.filter((value) => value !== path)
+        : [...previous.spiritualPaths, path],
     }));
   };
 
@@ -872,6 +900,44 @@ export const DiscoverContent = forwardRef<
                   </View>
                 </View>
               ) : null}
+
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle(
+                  locale === "en" ? "Spiritual path" : "Camino espiritual"
+                )}
+                <Text style={localStyles.filtersSubtitle}>
+                  {locale === "en"
+                    ? "Choose one or more. Profiles matching any selected path will appear. None selected: all paths."
+                    : "Elegí uno o varios. Vas a ver personas que compartan al menos uno. Sin selección: todos los caminos."}
+                </Text>
+                <View style={localStyles.filtersPillRow}>
+                  {SPIRITUAL_PATH_OPTIONS.map((path) => {
+                    const selected =
+                      discoverFilters.spiritualPaths.includes(path);
+                    return (
+                      <TouchableOpacity
+                        key={path}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: selected }}
+                        style={[
+                          localStyles.filterPill,
+                          selected && localStyles.filterPillActive,
+                        ]}
+                        onPress={() => toggleSpiritualPath(path)}
+                      >
+                        <Text
+                          style={[
+                            localStyles.filterPillText,
+                            selected && localStyles.filterPillTextActive,
+                          ]}
+                        >
+                          {translateSpiritualPathLabel(locale, path)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
 
               <View style={localStyles.filtersSection}>
                 {filterSectionTitle(t("discover.gender"))}
@@ -1078,6 +1144,17 @@ export const DiscoverContent = forwardRef<
             }
           />
         ) : null}
+
+        <DiscoverPathCards
+          selected={discoverFilters.spiritualPaths}
+          onToggle={toggleSpiritualPath}
+          onClear={() =>
+            setDiscoverFilters((previous) => ({
+              ...previous,
+              spiritualPaths: [],
+            }))
+          }
+        />
 
         <View style={localStyles.orbitWrap}>
           {isLoading ? (
