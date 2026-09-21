@@ -66,17 +66,19 @@ const Connections = () => {
                 activeOpacity={0.84}
                 onPress={() => setActiveSection(item.value)}
               >
-                <Text
-                  style={[
-                    localStyles.segmentText,
-                    isActive && localStyles.segmentTextActive,
-                  ]}
-                >
-                  {item.label}
-                </Text>
-                {item.value === "chat" ? (
-                  <UnreadBadge count={unreadTotal} />
-                ) : null}
+                <View style={localStyles.segmentButtonContent}>
+                  <Text
+                    style={[
+                      localStyles.segmentText,
+                      isActive && localStyles.segmentTextActive,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                  {item.value === "chat" ? (
+                    <UnreadBadge count={unreadTotal} />
+                  ) : null}
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -272,6 +274,12 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 999,
     paddingVertical: 12,
+  },
+  segmentButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   segmentButtonActive: {
     backgroundColor: "#FFFFFF",
