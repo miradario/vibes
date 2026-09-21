@@ -442,22 +442,196 @@ const CommunityPulseCard = memo(
   }) => (
     <View style={localStyles.communityCard}>
       <View style={localStyles.communityBadge}>
-        <Icon name="people-outline" size={17} color={palette.goldDeep} />
+        <Icon name="people-outline" size={24} color={vibesTheme.colors.accentMustard} />
       </View>
       <View style={localStyles.communityCopy}>
-        <Text style={localStyles.communityTitle}>
-          {checkedInTodayCount > 0
-            ? `${checkedInTodayCount} personas ya hicieron check-in hoy`
-            : "Todavía nadie hizo check-in hoy"}
-        </Text>
+        <Text style={localStyles.communityTitle}>Mejor en compañía</Text>
         <Text style={localStyles.communitySubtitle}>
           {participantsCount > 0
-            ? `${participantsCount} personas están transitando este desafío`
+            ? `${participantsCount} ${participantsCount === 1 ? "persona comparte" : "personas comparten"} este desafío`
             : "Tu presencia puede abrir el ritmo del día"}
+        </Text>
+        <Text style={localStyles.communityTodayCopy}>
+          {checkedInTodayCount > 0
+            ? `${checkedInTodayCount} ${checkedInTodayCount === 1 ? "check-in" : "check-ins"} hoy`
+            : "Todavía no hay check-ins hoy"}
         </Text>
       </View>
     </View>
   )
+);
+
+const ChallengeIntroMetaRow = memo(
+  ({ challenge }: { challenge: ChallengeDetailData }) => (
+    <View style={localStyles.challengeIntroMetaRow}>
+      <View style={localStyles.challengeIntroMetaItem}>
+        <Icon name="calendar-outline" size={24} color={palette.text} />
+        <Text
+          style={localStyles.challengeIntroMetaText}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.72}
+        >
+          Día {Math.max(challenge.currentDay, 0)} de {challenge.totalDays}
+        </Text>
+      </View>
+      <View style={localStyles.challengeIntroDivider} />
+      <View style={localStyles.challengeIntroMetaItem}>
+        <Icon name="people-outline" size={26} color={palette.text} />
+        <Text
+          style={localStyles.challengeIntroMetaText}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.72}
+        >
+          {challenge.participantsCount} participantes
+        </Text>
+      </View>
+    </View>
+  )
+);
+
+const ChallengeJourneyCard = memo(
+  ({ challenge, percent }: { challenge: ChallengeDetailData; percent: number }) => {
+    const scrollRef = useRef<ScrollView>(null);
+    const timelineScrollX = useRef(0);
+    const [timelineWidth, setTimelineWidth] = useState(0);
+    const [timelineContentWidth, setTimelineContentWidth] = useState(0);
+    const progress = useAnimatedProgress(percent);
+    const fillStyle = useAnimatedStyle(() => ({
+      width: `${progress.value * 100}%`,
+    }));
+    const days = useMemo(
+      () => Array.from({ length: challenge.totalDays }, (_, index) => index + 1),
+      [challenge.totalDays]
+    );
+
+    useEffect(() => {
+      if (!timelineWidth || !timelineContentWidth || challenge.currentDay <= 0) return;
+      const dayPitch = 66;
+      const activeCenter = (Math.max(challenge.currentDay, 1) - 1) * dayPitch + 20;
+      const maxScrollX = Math.max(timelineContentWidth - timelineWidth, 0);
+      const targetX = Math.min(Math.max(activeCenter - timelineWidth / 2, 0), maxScrollX);
+      const overshootX = Math.min(targetX + 28, maxScrollX);
+      let startTimer: ReturnType<typeof setTimeout> | undefined;
+      let reboundTimer: ReturnType<typeof setTimeout> | undefined;
+      let animationFrame: number | undefined;
+      const animateScrollTo = (
+        x: number,
+        duration: number,
+        onComplete?: () => void
+      ) => {
+        const startX = timelineScrollX.current;
+        const deltaX = x - startX;
+        const startTime = Date.now();
+        const easeInOutCubic = (value: number) =>
+          value < 0.5
+            ? 4 * value * value * value
+            : 1 - Math.pow(-2 * value + 2, 3) / 2;
+
+        const step = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const nextX = startX + deltaX * easeInOutCubic(progress);
+          timelineScrollX.current = nextX;
+          scrollRef.current?.scrollTo({ x: nextX, animated: false });
+
+          if (progress < 1) {
+            animationFrame = requestAnimationFrame(step);
+            return;
+          }
+
+          timelineScrollX.current = x;
+          onComplete?.();
+        };
+
+        animationFrame = requestAnimationFrame(step);
+      };
+
+      requestAnimationFrame(() => {
+        startTimer = setTimeout(() => {
+          animateScrollTo(overshootX, 720);
+          reboundTimer = setTimeout(() => {
+            animateScrollTo(targetX, 520);
+          }, 760);
+        }, 420);
+      });
+      return () => {
+        if (startTimer) clearTimeout(startTimer);
+        if (reboundTimer) clearTimeout(reboundTimer);
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+      };
+    }, [challenge.currentDay, timelineContentWidth, timelineWidth]);
+
+    return (
+      <View style={localStyles.journeyCard}>
+        <View style={localStyles.journeyHeader}>
+          <View style={localStyles.journeyHeaderCopy}>
+            <Text style={localStyles.journeyTitle}>Tu camino</Text>
+            <Text style={localStyles.journeySubtitle}>
+              {challenge.completedDays.length} de {challenge.totalDays} días completados
+            </Text>
+          </View>
+          <Text style={localStyles.journeyPercent}>{percent}%</Text>
+        </View>
+
+        <View style={localStyles.journeyTrack}>
+          <Reanimated.View style={[localStyles.journeyTrackFill, fillStyle]} />
+        </View>
+
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={localStyles.journeyDaysRow}
+          onLayout={(event) => setTimelineWidth(event.nativeEvent.layout.width)}
+          onContentSizeChange={(contentWidth) => setTimelineContentWidth(contentWidth)}
+          onScroll={(event) => {
+            timelineScrollX.current = event.nativeEvent.contentOffset.x;
+          }}
+          scrollEventThrottle={16}
+        >
+          {days.map((day, index) => {
+            const state = getDayState(day, challenge.currentDay, challenge.completedDays);
+            return (
+              <View key={day} style={localStyles.journeyDayWrap}>
+                <DayCircle day={day} state={state} size={40} />
+                {state === "active" ? (
+                  <Text style={localStyles.journeyTodayLabel}>Hoy</Text>
+                ) : null}
+                {index < days.length - 1 ? (
+                  <View
+                    style={[
+                      localStyles.journeyConnector,
+                      (isDayCompleted(day, challenge.completedDays) ||
+                        day < challenge.currentDay) &&
+                        localStyles.journeyConnectorDone,
+                    ]}
+                  />
+                ) : null}
+              </View>
+            );
+          })}
+        </ScrollView>
+
+        <View style={localStyles.journeyStatsRow}>
+          <View style={localStyles.journeyStatItem}>
+            <Icon name="flame-outline" size={24} color="#C47A55" />
+            <Text style={localStyles.journeyStatText}>
+              Racha actual: <Text style={localStyles.journeyStatValue}>{challenge.streak} días</Text>
+            </Text>
+          </View>
+          <View style={localStyles.journeyStatDivider} />
+          <View style={localStyles.journeyStatItem}>
+            <Icon name="stats-chart-outline" size={22} color="#625D57" />
+            <Text style={localStyles.journeyStatText}>
+              Mejor: <Text style={localStyles.journeyStatValue}>{challenge.bestStreak}</Text>
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
 );
 
 type DayState = "completed" | "active" | "future" | "missed";
@@ -945,7 +1119,7 @@ const ChallengeDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const routeEvent = route.params?.event as EventFeedItem | undefined;
   const challengeId =
     routeEvent?.id ??
@@ -1039,6 +1213,10 @@ const ChallengeDetailScreen = () => {
         legacyPreset?.image ??
         getChallengeMediaPreset("challenge")?.image ??
         null;
+  const collapsedCoverImageSource =
+    typeof coverImageSource === "string"
+      ? { uri: coverImageSource }
+      : coverImageSource;
   const pendingJoinRequests = challengeJoinRequests.filter(
     (request) => request.status === "pending"
   );
@@ -1348,8 +1526,8 @@ const ChallengeDetailScreen = () => {
             pointerEvents="none"
           />
           <View style={localStyles.footerSliderChevrons} pointerEvents="none">
-            <Icon name="chevron-forward" size={16} color="#8A501D" />
-            <Icon name="chevron-forward" size={16} color="#8A501D" />
+            <Icon name="chevron-forward" size={16} color="#FFFFFF" />
+            <Icon name="chevron-forward" size={16} color="#FFFFFF" />
           </View>
           <View style={localStyles.footerSliderCopy}>
             <Text style={localStyles.footerSliderTitle}>Check-in diario</Text>
@@ -1450,6 +1628,12 @@ const ChallengeDetailScreen = () => {
         >
           <Icon name="chevron-back" size={22} color={palette.text} />
         </TouchableOpacity>
+        {collapsedCoverImageSource ? (
+          <Image
+            source={collapsedCoverImageSource}
+            style={localStyles.collapsedChallengeHeaderThumbnail}
+          />
+        ) : null}
         <Text style={localStyles.collapsedChallengeHeaderTitle} numberOfLines={2}>
           {challenge.title}
         </Text>
@@ -1461,6 +1645,7 @@ const ChallengeDetailScreen = () => {
           localStyles.scrollContent,
           {
             paddingBottom: insets.bottom + 188,
+            minHeight: height + 190,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -1485,14 +1670,11 @@ const ChallengeDetailScreen = () => {
             },
           ]}
         >
-          <View style={localStyles.heroInfoStack}>
-            <InfoCardsRow challenge={challenge} percent={percent} />
+          <View style={localStyles.challengeIntroBlock}>
+            <ChallengeIntroMetaRow challenge={challenge} />
           </View>
           <View style={localStyles.content}>
-            <CommunityPulseCard
-              checkedInTodayCount={checkedInTodayCount}
-              participantsCount={challenge.participantsCount}
-            />
+            <ChallengeJourneyCard challenge={challenge} percent={percent} />
             {isAdmin && pendingJoinRequests.length > 0 ? (
               <View style={localStyles.requestCard}>
                 <View style={localStyles.requestCardHeader}>
@@ -1535,19 +1717,9 @@ const ChallengeDetailScreen = () => {
             {challenge.streak >= 3 ? (
               <StreakCelebrationCard streak={challenge.streak} />
             ) : null}
-            <StreakSummaryCard
-              streak={challenge.streak}
-              bestStreak={challenge.bestStreak}
-              daysLeft={daysLeft}
-            />
-            <AdaptiveProgress
-              totalDays={challenge.totalDays}
-              currentDay={challenge.currentDay}
-              completedDays={challenge.completedDays}
-            />
-            <ProgressSummaryCard
-              completedDays={challenge.completedDays}
-              totalDays={challenge.totalDays}
+            <CommunityPulseCard
+              checkedInTodayCount={checkedInTodayCount}
+              participantsCount={challenge.participantsCount}
             />
           </View>
         </View>
@@ -1765,6 +1937,53 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 20,
     zIndex: 2,
   },
+  challengeIntroBlock: {
+    paddingHorizontal: 4,
+    paddingTop: 22,
+    paddingBottom: 14,
+  },
+  challengeTypePill: {
+    alignSelf: "flex-start",
+  },
+  challengeTypePillText: {
+    color: "#6F8A63",
+    fontSize: 13,
+    lineHeight: 16,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  challengeIntroTitle: {
+    marginTop: 10,
+    color: palette.text,
+    fontSize: 34,
+    lineHeight: 39,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  challengeIntroMetaRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  challengeIntroMetaItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  challengeIntroMetaText: {
+    flex: 1,
+    color: palette.text,
+    fontSize: 19,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  challengeIntroDivider: {
+    width: 1,
+    height: 42,
+    backgroundColor: "rgba(45, 41, 36, 0.12)",
+  },
   heroInfoStack: {
     marginBottom: 16,
   },
@@ -1864,12 +2083,18 @@ const localStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.06)",
   },
+  collapsedChallengeHeaderThumbnail: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#EFE4D2",
+  },
   collapsedChallengeHeaderTitle: {
     flex: 1,
     color: palette.text,
     fontSize: 21,
     lineHeight: 24,
-    textAlign: "center",
+    textAlign: "left",
     fontFamily: vibesTheme.fonts.medium,
   },
   headerIconPlaceholder: {
@@ -1878,15 +2103,15 @@ const localStyles = StyleSheet.create({
   },
   joinRequestButton: {
     borderRadius: 24,
-    backgroundColor: "rgba(194, 138, 66, 0.88)",
+    backgroundColor: "rgba(83, 106, 130, 0.9)",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.88)",
+    borderColor: "rgba(255, 255, 255, 0.18)",
     paddingHorizontal: 18,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: palette.goldDeep,
-    shadowOpacity: 0.2,
+    shadowColor: palette.accentBlueDeep,
+    shadowOpacity: 0.18,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
   },
@@ -1894,7 +2119,7 @@ const localStyles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.bold,
   },
   joinRequestButtonSubtitle: {
     marginTop: 4,
@@ -1964,7 +2189,7 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   heroMedia: {
-    minHeight: 245,
+    minHeight: 195,
     backgroundColor: "#EFE4D2",
     justifyContent: "flex-end",
   },
@@ -1979,7 +2204,7 @@ const localStyles = StyleSheet.create({
   },
   heroScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(24, 22, 20, 0.54)",
+    backgroundColor: "rgba(24, 22, 20, 0.62)",
   },
   heroTopBar: {
     position: "absolute",
@@ -2061,38 +2286,45 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   communityCard: {
-    borderRadius: 22,
-    backgroundColor: "#FFF9EF",
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 249, 239, 0.72)",
     borderWidth: 1,
-    borderColor: "rgba(226, 168, 79, 0.18)",
-    padding: 16,
+    borderColor: "rgba(226, 168, 79, 0.1)",
+    padding: 18,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 16,
   },
   communityBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 223, 177, 0.42)",
+    backgroundColor: "rgba(226, 168, 79, 0.16)",
   },
   communityCopy: {
     flex: 1,
   },
   communityTitle: {
     color: palette.text,
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 23,
+    lineHeight: 27,
+    fontFamily: vibesTheme.fonts.bold,
   },
   communitySubtitle: {
-    marginTop: 4,
+    marginTop: 6,
     color: palette.muted,
+    fontSize: 16,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  communityTodayCopy: {
+    marginTop: 6,
+    color: "rgba(45, 41, 36, 0.58)",
     fontSize: 15,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.subtitle,
+    fontFamily: vibesTheme.fonts.regular,
   },
   requestCard: {
     borderRadius: 22,
@@ -2259,6 +2491,125 @@ const localStyles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
   },
+  journeyCard: {
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.96)",
+    borderWidth: 1,
+    borderColor: "rgba(45, 41, 36, 0.08)",
+    paddingHorizontal: 18,
+    paddingTop: 22,
+    paddingBottom: 18,
+    shadowColor: "#6F5536",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  journeyHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  journeyHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  journeyTitle: {
+    color: palette.text,
+    fontSize: 32,
+    lineHeight: 36,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  journeySubtitle: {
+    marginTop: 6,
+    color: palette.muted,
+    fontSize: 17,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  journeyPercent: {
+    color: "#C47A55",
+    fontSize: 46,
+    lineHeight: 50,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  journeyTrack: {
+    marginTop: 20,
+    height: 14,
+    borderRadius: 999,
+    overflow: "hidden",
+    backgroundColor: "rgba(233, 224, 211, 0.88)",
+  },
+  journeyTrackFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#C47A55",
+  },
+  journeyDaysRow: {
+    paddingTop: 26,
+    paddingBottom: 22,
+    paddingHorizontal: 2,
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  journeyDayWrap: {
+    minHeight: 66,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    position: "relative",
+  },
+  journeyTodayLabel: {
+    position: "absolute",
+    top: 44,
+    left: -2,
+    width: 44,
+    color: "#625D57",
+    fontSize: 15,
+    lineHeight: 18,
+    textAlign: "center",
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  journeyConnector: {
+    width: 26,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 18,
+    marginHorizontal: -1,
+    backgroundColor: "rgba(220, 211, 199, 0.9)",
+  },
+  journeyConnectorDone: {
+    backgroundColor: "rgba(196, 122, 85, 0.45)",
+  },
+  journeyStatsRow: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(45, 41, 36, 0.1)",
+    paddingTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  journeyStatItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  journeyStatText: {
+    flex: 1,
+    color: palette.muted,
+    fontSize: 16,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  journeyStatValue: {
+    color: palette.text,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  journeyStatDivider: {
+    width: 1,
+    height: 42,
+    backgroundColor: "rgba(45, 41, 36, 0.12)",
+  },
   pathHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -2335,9 +2686,9 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(216, 140, 122, 0.18)",
   },
   dayActive: {
-    backgroundColor: palette.accentBlue,
-    borderColor: "rgba(174, 191, 209, 0.42)",
-    shadowColor: palette.accentBlue,
+    backgroundColor: vibesTheme.colors.accentMustard,
+    borderColor: "rgba(228, 183, 110, 0.52)",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.3,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
@@ -2347,11 +2698,11 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(233, 224, 211, 0.85)",
   },
   dayMissed: {
-    backgroundColor: palette.redSoft,
-    borderColor: "rgba(201, 105, 93, 0.22)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
+    borderColor: "rgba(201, 105, 93, 0.72)",
   },
   dayText: {
-    color: palette.text,
+    color: "#625D57",
     fontSize: 14,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -2362,7 +2713,7 @@ const localStyles = StyleSheet.create({
     color: "#B6ADA2",
   },
   dayTextMissed: {
-    color: palette.red,
+    color: "#625D57",
   },
   pathMantraRow: {
     flexDirection: "row",
@@ -2546,7 +2897,7 @@ const localStyles = StyleSheet.create({
   footerSliderTrack: {
     minHeight: 68,
     borderRadius: 34,
-    backgroundColor: "rgba(137, 80, 29, 0.9)",
+    backgroundColor: vibesTheme.colors.accentMustard,
     borderWidth: 2,
     borderColor: "rgba(255, 255, 255, 0.22)",
     overflow: "hidden",
@@ -2564,7 +2915,7 @@ const localStyles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: 34,
-    backgroundColor: "rgba(183, 119, 47, 0.82)",
+    backgroundColor: "rgba(244, 202, 135, 0.92)",
   },
   footerSliderHandle: {
     position: "absolute",
@@ -2575,7 +2926,7 @@ const localStyles = StyleSheet.create({
     borderRadius: FOOTER_SLIDER_HANDLE_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: palette.goldDeep,
+    backgroundColor: vibesTheme.colors.accentMustard,
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.82)",
     shadowColor: "#BE8A5C",

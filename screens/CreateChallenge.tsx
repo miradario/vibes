@@ -543,7 +543,8 @@ const localStyles = StyleSheet.create({
   },
   label: {
     color: DARK_GRAY,
-    fontSize: 14,
+    fontSize: 16,
+    lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,
     marginBottom: 8,
     marginTop: 12,
@@ -562,10 +563,13 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: DARK_GRAY,
+    fontSize: 18,
+    lineHeight: 23,
+    fontFamily: vibesTheme.fonts.regular,
   },
   descriptionInput: {
     minHeight: 92,
-    lineHeight: 20,
+    lineHeight: 23,
   },
   coverPicker: {
     marginTop: 6,
@@ -686,8 +690,9 @@ const localStyles = StyleSheet.create({
   },
   visibilityTitle: {
     color: DARK_GRAY,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 17,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.bold,
   },
   visibilitySubtitle: {
     color: TEXT_SECONDARY,

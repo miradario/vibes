@@ -15,6 +15,7 @@ import {
   Platform,
   Animated,
   PanResponder,
+  useWindowDimensions,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -223,6 +224,7 @@ const EventDetail = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const event = (route.params as any)?.event;
   const isChallenge = event?.type === "challenge";
 
@@ -1416,6 +1418,12 @@ const EventDetail = () => {
           >
             <Icon name="chevron-back" size={24} color={DARK_GRAY} />
           </TouchableOpacity>
+          {eventHeroImageSource ? (
+            <Image
+              source={eventHeroImageSource}
+              style={localStyles.collapsedEventHeaderThumbnail}
+            />
+          ) : null}
           <Text style={localStyles.collapsedEventHeaderTitle} numberOfLines={2}>
             {event.title}
           </Text>
@@ -1432,6 +1440,7 @@ const EventDetail = () => {
           localStyles.scrollContent,
           !isChallenge && localStyles.eventScrollContent,
           isChallenge && localStyles.scrollContentChallenge,
+          !isChallenge && { minHeight: height + 190 },
         ]}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
@@ -2488,13 +2497,19 @@ const localStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.06)",
   },
+  collapsedEventHeaderThumbnail: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#EFE4D2",
+  },
   collapsedEventHeaderTitle: {
     flex: 1,
     color: DARK_GRAY,
     fontSize: 21,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,
-    textAlign: "center",
+    textAlign: "left",
   },
   persistentFooter: {
     zIndex: 60,

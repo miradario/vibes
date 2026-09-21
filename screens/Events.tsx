@@ -20,10 +20,7 @@ import {
 } from "../src/queries/events.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
-import {
-  getChallengeStartsInLabel,
-  getChallengeTimeline,
-} from "../src/lib/challengeTimeline";
+import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
@@ -61,7 +58,10 @@ const getChallengeProgress = (item: EventFeedItem) => {
   const timeline = getChallengeTimeline(item.startsAt, item.durationDays);
 
   if (timeline.status === "upcoming") {
-    return { label: getChallengeStartsInLabel(timeline.startsInDays), tone: "pending" as const };
+    return {
+      label: `En ${timeline.startsInDays} ${timeline.startsInDays === 1 ? "día" : "días"}`,
+      tone: "pending" as const,
+    };
   }
 
   if (timeline.status === "finished") {
@@ -573,16 +573,27 @@ const Events = () => {
                   }
                   style={localStyles.feedRowThumb}
                 />
-                {item.type === "challenge" && challengeProgress && challengeProgress.tone !== "pending" ? (
+                {item.type === "challenge" && challengeProgress ? (
                   <View
                     style={[
                       localStyles.feedThumbProgressPill,
+                      challengeProgress.tone === "pending"
+                        ? localStyles.feedThumbProgressPillPending
+                        : null,
                       challengeProgress.tone === "done"
                         ? localStyles.progressPillDone
                         : null,
                     ]}
                   >
-                    <Text style={localStyles.feedThumbProgressText}>
+                    <Text
+                      style={[
+                        localStyles.feedThumbProgressText,
+                        challengeProgress.tone === "pending"
+                          ? localStyles.feedThumbProgressTextPending
+                          : null,
+                      ]}
+                      numberOfLines={1}
+                    >
                       {challengeProgress.label}
                     </Text>
                   </View>
@@ -597,20 +608,6 @@ const Events = () => {
                 ]}
               >
                 <View style={localStyles.feedRowCopy}>
-                  {item.type === "challenge" && challengeProgress?.tone === "pending" ? (
-                    <View style={localStyles.feedRowTopMeta}>
-                      <View
-                        style={[
-                          localStyles.feedInlineProgressPill,
-                          localStyles.progressPillPending,
-                        ]}
-                      >
-                        <Text style={localStyles.feedInlineProgressText}>
-                          {challengeProgress.label}
-                        </Text>
-                      </View>
-                    </View>
-                  ) : null}
                   <View style={localStyles.feedRowTitleLine}>
                     {item.type === "challenge" ? (
                       <Icon
@@ -822,22 +819,32 @@ const localStyles = StyleSheet.create({
     top: -6,
     alignSelf: "center",
     borderRadius: 999,
+    minWidth: 84,
     paddingHorizontal: 8,
     paddingVertical: 3,
     backgroundColor: "rgba(174, 191, 209, 0.92)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.9)",
   },
+  feedThumbProgressPillPending: {
+    backgroundColor: "rgba(248, 241, 229, 0.94)",
+    borderColor: "rgba(228, 183, 110, 0.82)",
+  },
   feedThumbProgressText: {
     color: "#FFFFFF",
     fontSize: 12,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.semibold,
+    textAlign: "center",
+  },
+  feedThumbProgressTextPending: {
+    color: "#7C5620",
   },
   feedInlineProgressPill: {
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
+    flexShrink: 0,
   },
   feedInlineProgressText: {
     color: "#7C5620",
@@ -846,6 +853,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   feedRowBottom: {
+    width: "100%",
     marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
@@ -876,8 +884,7 @@ const localStyles = StyleSheet.create({
   avatarStack: {
     flexDirection: "row",
     alignItems: "center",
-    minWidth: 56,
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
   },
   stackAvatar: {
     width: 36,
