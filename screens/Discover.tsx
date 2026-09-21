@@ -37,9 +37,7 @@ import type { UserProfileCardData } from "../components/UserProfileCard";
 import styles, { DIMENSION_WIDTH, TEXT_PRIMARY } from "../assets/styles";
 import type { DataT } from "../types";
 import { useAuthSession } from "../src/auth/auth.queries";
-import {
-  mapCandidateToConnectionProfile,
-} from "../src/lib/connectionProfiles";
+import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
@@ -366,8 +364,7 @@ export const DiscoverContent = forwardRef<
   const [showGallery, setShowGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
-  const [visibleProfileCount, setVisibleProfileCount] =
-    useState(DISCOVER_PAGE_SIZE);
+  const [profilePage, setProfilePage] = useState(0);
   const ownProfileRecord = (ownProfileData ?? null) as Record<
     string,
     any
@@ -524,11 +521,20 @@ export const DiscoverContent = forwardRef<
         : null,
     [selectedProfile]
   );
-  const visibleProfiles = useMemo(
-    () => profiles.slice(0, visibleProfileCount),
-    [profiles, visibleProfileCount]
+  const pageCount = Math.max(
+    1,
+    Math.ceil(profiles.length / DISCOVER_PAGE_SIZE)
   );
-  const canShowMoreProfiles = visibleProfileCount < profiles.length;
+  const currentPage = profilePage % pageCount;
+  const visibleProfiles = useMemo(
+    () =>
+      profiles.slice(
+        currentPage * DISCOVER_PAGE_SIZE,
+        (currentPage + 1) * DISCOVER_PAGE_SIZE
+      ),
+    [profiles, currentPage]
+  );
+  const canShowMoreProfiles = pageCount > 1;
   const activeFilterCount = useMemo(
     () =>
       [
@@ -549,7 +555,7 @@ export const DiscoverContent = forwardRef<
   }, [activeFilterCount, onFilterCountChange]);
 
   useEffect(() => {
-    setVisibleProfileCount(DISCOVER_PAGE_SIZE);
+    setProfilePage(0);
   }, [discoverFilters, hiddenProfileIds]);
 
   useEffect(() => {
@@ -1200,9 +1206,7 @@ export const DiscoverContent = forwardRef<
                   style={localStyles.showMoreButton}
                   activeOpacity={0.86}
                   onPress={() =>
-                    setVisibleProfileCount(
-                      (count) => count + DISCOVER_PAGE_SIZE
-                    )
+                    setProfilePage((page) => (page + 1) % pageCount)
                   }
                 >
                   <Text style={localStyles.showMoreButtonText}>
@@ -1293,10 +1297,9 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   showMoreButton: {
-    position: "absolute",
     alignSelf: "center",
-    bottom: 24,
-    minHeight: 46,
+    marginVertical: 8,
+    minHeight: 48,
     borderRadius: 23,
     paddingHorizontal: 22,
     alignItems: "center",

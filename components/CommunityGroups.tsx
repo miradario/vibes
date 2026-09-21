@@ -41,6 +41,9 @@ export default function CommunityGroups({
   const [visible, setVisible] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [focusedField, setFocusedField] = useState<
+    "name" | "description" | null
+  >(null);
   const [selected, setSelected] = useState<string[]>([]);
   const open = (id: string, title: string, detail: string) =>
     navigation.navigate(
@@ -100,9 +103,13 @@ export default function CommunityGroups({
               style={[s.row, s.conversationRow]}
               onPress={() => open(group.id, group.name, group.description)}
             >
-              <View style={s.avatar}>
-                <Icon name="people-outline" size={26} color="#B57716" />
-              </View>
+              {group.photoUrl ? (
+                <Avatar uri={group.photoUrl} size={48} />
+              ) : (
+                <View style={s.avatar}>
+                  <Icon name="people-outline" size={26} color="#B57716" />
+                </View>
+              )}
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} style={s.title}>
                   {group.name}
@@ -146,7 +153,11 @@ export default function CommunityGroups({
             <Text style={s.heading}>Nombre del grupo</Text>
             <TextInput
               accessibilityLabel="Nombre del grupo"
-              style={s.input}
+              style={[s.input, focusedField === "name" && s.inputFocused]}
+              onFocus={() => setFocusedField("name")}
+              onBlur={() => setFocusedField(null)}
+              placeholderTextColor="#81776A"
+              selectionColor="#B98235"
               placeholder="Por ejemplo, Meditamos juntos"
               value={name}
               onChangeText={setName}
@@ -156,7 +167,16 @@ export default function CommunityGroups({
             <Text style={s.heading}>Descripción (opcional)</Text>
             <TextInput
               accessibilityLabel="Descripción del grupo"
-              style={s.input}
+              style={[
+                s.input,
+                s.descriptionInput,
+                focusedField === "description" && s.inputFocused,
+              ]}
+              onFocus={() => setFocusedField("description")}
+              onBlur={() => setFocusedField(null)}
+              placeholderTextColor="#81776A"
+              selectionColor="#B98235"
+              textAlignVertical="top"
               placeholder="¿De qué se trata este grupo?"
               value={description}
               onChangeText={setDescription}
@@ -282,11 +302,21 @@ const s = StyleSheet.create({
     maxHeight: "85%",
   },
   input: {
-    backgroundColor: "white",
+    minHeight: 52,
+    backgroundColor: "#FAF5EB",
+    borderWidth: 1,
+    borderColor: "#BCAF9B",
     borderRadius: 12,
     padding: 14,
     color: "#403B36",
     fontSize: 16,
+  },
+  inputFocused: {
+    borderColor: "#A77627",
+    backgroundColor: "#FFF8E9",
+  },
+  descriptionInput: {
+    minHeight: 104,
   },
   button: {
     alignItems: "center",

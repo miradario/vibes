@@ -1,3 +1,4 @@
+import { File } from "expo-file-system";
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
@@ -9,6 +10,8 @@ export type CommunityGroup = {
   description: string;
   created_by: string;
   created_at: string;
+  photo_path?: string | null;
+  photoUrl?: string | null;
 };
 export type CommunityMessage = {
   id: string;
@@ -31,7 +34,7 @@ export function useCommunityGroupsQuery() {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "community_groups",
         },
@@ -56,7 +59,15 @@ export function useCommunityGroupsQuery() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return Promise.all(
+        (data ?? []).map(async (group) => {
+          if (!group.photo_path) return group;
+          const signed = await supabase.storage
+            .from("community-group-photos")
+            .createSignedUrl(group.photo_path, 3600);
+          return { ...group, photoUrl: signed.data?.signedUrl ?? null };
+        })
+      );
     },
   });
 }
@@ -158,6 +169,58 @@ export function useSendCommunityMessageMutation(groupId: string) {
       void client.invalidateQueries({
         queryKey: ["communityMessages", session?.user.id, groupId],
       });
+    },
+  });
+}
+
+export function useUpdateCommunityGroupPhotoMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      groupId,
+      uri,
+      mimeType,
+      oldPath,
+    }: {
+      groupId: string;
+      uri: string;
+      mimeType?: string;
+      oldPath?: string | null;
+    }) => {
+      const type = mimeType ?? "image/jpeg";
+      const ext = (
+        {
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "image/webp": "webp",
+        } as Record<string, string>
+      )[type];
+      if (!ext) throw new Error("Elegí una imagen JPG, PNG o WebP.");
+      const file = new File(uri);
+      if (file.size > 10485760)
+        throw new Error("La imagen debe pesar menos de 10 MB.");
+      const path = `${groupId}/${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}.${ext}`;
+      const bucket = supabase.storage.from("community-group-photos");
+      const { error: uploadError } = await bucket.upload(
+        path,
+        await file.arrayBuffer(),
+        { contentType: type }
+      );
+      if (uploadError) throw uploadError;
+      const { error } = await supabase.rpc("set_community_group_photo", {
+        target_group: groupId,
+        new_path: path,
+      });
+      if (error) {
+        await bucket.remove([path]);
+        throw error;
+      }
+      if (oldPath && oldPath !== path) await bucket.remove([oldPath]);
+    },
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: ["communityGroups"] });
     },
   });
 }

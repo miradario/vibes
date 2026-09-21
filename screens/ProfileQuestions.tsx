@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { Text } from "../components/Typography";
+import Icon from "../components/Icon";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
@@ -76,10 +77,11 @@ export default function ProfileQuestions() {
           {!firstHomeVisit && (
             <TouchableOpacity
               accessibilityRole="button"
+              accessibilityLabel="Volver"
               onPress={() => navigation.goBack()}
-              style={{ minHeight: 48, justifyContent: "center" }}
+              style={{ width: 48, minHeight: 48, justifyContent: "center" }}
             >
-              <Text>Volver</Text>
+              <Icon name="chevron-back" size={24} color="#2B2B2B" />
             </TouchableOpacity>
           )}
           {query.isSuccess && (

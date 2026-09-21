@@ -3,7 +3,9 @@ import { useMessageReceipts } from "../src/queries/communityReceipts.queries";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../src/lib/supabase";
-import React, { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import Avatar from "../components/Avatar";
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -25,6 +27,8 @@ import { Icon } from "../components";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   useCommunityMessagesQuery,
+  useCommunityGroupsQuery,
+  useUpdateCommunityGroupPhotoMutation,
   useSendCommunityMessageMutation,
 } from "../src/queries/communityGroups.queries";
 import { handleApiError } from "../src/utils/handleApiError";
@@ -39,6 +43,47 @@ export default function CommunityGroupChat() {
   const { data: session } = useAuthSession();
   const messages = useCommunityMessagesQuery(groupId);
   const send = useSendCommunityMessageMutation(groupId);
+  const groups = useCommunityGroupsQuery();
+  const group = groups.data?.find((item) => item.id === groupId);
+  const updatePhoto = useUpdateCommunityGroupPhotoMutation();
+  const canEditPhoto = Boolean(
+    session?.user.id && group?.created_by === session.user.id
+  );
+  const pendingPhoto = useRef(false);
+  const [pickingPhoto, setPickingPhoto] = useState(false);
+  const editPhoto = async () => {
+    if (!canEditPhoto || pickingPhoto || updatePhoto.isPending) return;
+    setPickingPhoto(true);
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Acceso a fotos",
+          "Permití acceso a tus fotos para elegir la imagen del grupo."
+        );
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      const asset = result.canceled ? null : result.assets?.[0];
+      if (asset)
+        await updatePhoto.mutateAsync({
+          groupId,
+          uri: asset.uri,
+          mimeType: asset.mimeType,
+          oldPath: group?.photo_path,
+        });
+    } catch (error) {
+      handleApiError(error, { toastTitle: "No se pudo actualizar la foto" });
+    } finally {
+      setPickingPhoto(false);
+    }
+  };
   const focused = useIsFocused();
   const receipts = useMessageReceipts(
     "group",
@@ -105,6 +150,27 @@ export default function CommunityGroupChat() {
         >
           <Icon name="chevron-back" size={26} color="#403B36" />
         </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Editar foto del grupo"
+          disabled={!canEditPhoto || pickingPhoto || updatePhoto.isPending}
+          onPress={() => void editPhoto()}
+          style={{
+            minWidth: 48,
+            minHeight: 48,
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 8,
+          }}
+        >
+          {updatePhoto.isPending ? (
+            <ActivityIndicator />
+          ) : group?.photoUrl ? (
+            <Avatar uri={group.photoUrl} size={44} />
+          ) : (
+            <Icon name="people-outline" size={30} color="#B57716" />
+          )}
+        </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={s.title} numberOfLines={1}>
             {name}
@@ -125,6 +191,12 @@ export default function CommunityGroupChat() {
       <AnimatedSheetModal
         visible={actions}
         onClose={() => setActions(false)}
+        onClosed={() => {
+          if (pendingPhoto.current) {
+            pendingPhoto.current = false;
+            void editPhoto();
+          }
+        }}
         sheetStyle={{
           backgroundColor: "#FEFEFD",
           padding: 28,
@@ -132,6 +204,21 @@ export default function CommunityGroupChat() {
           borderTopRightRadius: 24,
         }}
       >
+        {canEditPhoto && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            disabled={pickingPhoto || updatePhoto.isPending}
+            onPress={() => {
+              pendingPhoto.current = true;
+              setActions(false);
+            }}
+            style={{ minHeight: 48, paddingVertical: 16 }}
+          >
+            <Text style={{ fontSize: 18, color: "#403B36" }}>
+              Editar foto del grupo
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           onPress={leave}
           disabled={leaving}

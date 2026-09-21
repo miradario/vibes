@@ -3,7 +3,6 @@
 import React, { useMemo, useState } from "react";
 import {
   LayoutChangeEvent,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -151,17 +150,22 @@ const DiscoverOrbitCanvas = ({
   const baseRadiusX = Math.min(boundsWidth * 0.38, 165);
   const baseRadiusY = Math.min(boundsHeight * 0.28, 185);
 
+  // Staggered cells keep every target visible while allowing gentle drift.
+  const columns = boundsHeight < 380 && users.length > 6 ? 4 : 3;
+  const rows = Math.max(1, Math.ceil(users.length / columns));
+  const cellWidth = boundsWidth / columns;
+  const cellHeight = boundsHeight / rows;
   const userConfigs = useMemo<OrbitNodeConfig[]>(
     () =>
       users.map((_, index) => ({
-        size: 86,
-        radiusX: 0,
-        radiusY: 0,
-        angle: index,
-        speed: 0,
+        size: Math.max(48, Math.min(82, cellWidth - 30, cellHeight - 48)),
+        radiusX: 5 + (index % 3),
+        radiusY: 3,
+        angle: index * 2.4,
+        speed: index % 2 ? -0.16 : 0.18,
         scale: 1,
       })),
-    [users]
+    [users, cellWidth, cellHeight]
   );
   const dismissedConfigs = useMemo<OrbitNodeConfig[]>(() => {
     return dismissedUsers.map((_, index) => {
@@ -204,12 +208,7 @@ const DiscoverOrbitCanvas = ({
         locations={[0, 0.55, 1]}
         style={StyleSheet.absoluteFill}
       />
-      <ScrollView
-        contentContainerStyle={{
-          height: 220 + Math.ceil(users.length / 2) * 145,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={{ flex: 1, overflow: "hidden" }}>
         <View pointerEvents="none" style={localStyles.ambientGlowMustard} />
         <View pointerEvents="none" style={localStyles.ambientGlowBlue} />
         <View pointerEvents="none" style={localStyles.sparkleOne} />
@@ -290,13 +289,16 @@ const DiscoverOrbitCanvas = ({
             <OrbitNode
               key={`drift-user-${user.id}`}
               config={config}
-              centerX={boundsWidth * (index % 2 === 0 ? 0.25 : 0.75)}
-              centerY={245 + Math.floor(index / 2) * 145}
+              centerX={
+                cellWidth * ((index % columns) + 0.5) +
+                (Math.floor(index / columns) % 2 ? -3 : 3)
+              }
+              centerY={cellHeight * (Math.floor(index / columns) + 0.5) - 14}
             >
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => onUserPress(user)}
-                style={localStyles.userBubbleTouch}
+                style={[localStyles.userBubbleTouch, { width: config.size }]}
                 accessibilityLabel={`Abrir perfil de ${user.name}`}
               >
                 <View
@@ -337,7 +339,12 @@ const DiscoverOrbitCanvas = ({
                   ) : null}
                 </View>
                 {userPresenceLabel ? (
-                  <View style={localStyles.distancePill}>
+                  <View
+                    style={[
+                      localStyles.distancePill,
+                      { width: cellWidth - 12 },
+                    ]}
+                  >
                     <Text
                       style={localStyles.distancePillText}
                       numberOfLines={1}
@@ -351,7 +358,7 @@ const DiscoverOrbitCanvas = ({
             </OrbitNode>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 };

@@ -1,3 +1,4 @@
+import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
 import HomeActivityCard from "../components/HomeActivityCard";
 import DailyMoodCard from "../components/DailyMoodCard";
@@ -31,7 +32,6 @@ import Animated, {
 } from "react-native-reanimated";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Avatar from "../components/Avatar";
-import AvatarGroup from "../components/AvatarGroup";
 import UserProfileSheet from "../components/UserProfileSheet";
 import type { UserProfileCardData } from "../components/UserProfileCard";
 import styles, { DIMENSION_WIDTH } from "../assets/styles";
@@ -45,7 +45,6 @@ import {
 import { useCandidatesQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
-import { useMyEventGroupsQuery } from "../src/queries/events.queries";
 import { useI18n } from "../src/i18n";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
@@ -53,7 +52,6 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -220,28 +218,6 @@ const formatDistanceLabel = (distanceKm: number | null) => {
   return `${Math.max(1, Math.round(distanceKm))} km`;
 };
 
-const formatEventDayBox = (startsAt?: string | null) => {
-  const fallback = { weekday: "SÁB", day: "25" };
-  if (!startsAt) return fallback;
-
-  const parsed = new Date(startsAt);
-  if (Number.isNaN(parsed.getTime())) return fallback;
-
-  return {
-    weekday: parsed
-      .toLocaleDateString("es-AR", { weekday: "short" })
-      .slice(0, 3)
-      .toUpperCase(),
-    day: parsed.toLocaleDateString("es-AR", { day: "2-digit" }),
-  };
-};
-
-const parseEventParticipantCount = (value?: string | null) => {
-  if (!value) return 0;
-  const match = value.match(/^\s*(\d+)/);
-  return match ? Number(match[1]) : 0;
-};
-
 const areFiltersEqual = (
   left: DiscoverFiltersState,
   right: DiscoverFiltersState
@@ -295,7 +271,6 @@ const Home = () => {
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
   const { data: candidates = [] } = useCandidatesQuery();
-  const { data: myEventGroups = [] } = useMyEventGroupsQuery(session?.user?.id);
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
@@ -415,50 +390,6 @@ const Home = () => {
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
       .split(" ")[0]
       .trim() || "miradario";
-  const upcomingJoinedEvents = useMemo(() => {
-    const now = Date.now();
-    return myEventGroups
-      .filter((group) => group.eventType === "event")
-      .map((group) => group.event)
-      .filter((event) => {
-        if (!event.startsAt) return false;
-        const timestamp = new Date(event.startsAt).getTime();
-        return Number.isFinite(timestamp) && timestamp > now;
-      })
-      .sort((left, right) => {
-        const leftTime = new Date(left.startsAt as string).getTime();
-        const rightTime = new Date(right.startsAt as string).getTime();
-        return leftTime - rightTime;
-      });
-  }, [myEventGroups]);
-  const nextEvent = upcomingJoinedEvents[0] ?? null;
-  const nextEventDate = formatEventDayBox(nextEvent?.startsAt);
-  const nextEventParticipantCount = nextEvent
-    ? nextEvent.participantCount ??
-      parseEventParticipantCount(nextEvent.attendees)
-    : 0;
-  const nextEventParticipantImages = (
-    nextEvent?.participantPreviewImages ?? []
-  ).slice(0, Math.min(nextEventParticipantCount, 4));
-  const nextChallenge = useMemo(() => {
-    const challenges = myEventGroups
-      .filter((group) => group.eventType === "challenge")
-      .map((group) => group.event)
-      .filter(
-        (challenge) =>
-          getChallengeTimeline(challenge.startsAt, challenge.durationDays)
-            .status !== "finished"
-      );
-    return (
-      challenges.find(
-        (challenge) =>
-          getChallengeTimeline(challenge.startsAt, challenge.durationDays)
-            .status === "active"
-      ) ??
-      challenges[0] ??
-      null
-    );
-  }, [myEventGroups]);
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
       selectedProfile
@@ -984,163 +915,21 @@ const Home = () => {
 
           {session?.user?.id ? (
             <FirstHomePreferencesGate
-              key={session.user.id}
+              key={`preferences-${session.user.id}`}
               userId={session.user.id}
               onReady={() => setMoodGateUser(session.user.id)}
             />
           ) : null}
-          <DailyMoodCard key={session?.user?.id} userId={session?.user?.id} enabled={moodGateUser === session?.user?.id} />
+          <DailyMoodCard
+            key={`daily-mood-${session?.user?.id ?? "anonymous"}`}
+            userId={session?.user?.id}
+            enabled={moodGateUser === session?.user?.id}
+          />
           <CompleteProfilePrompt userId={session?.user?.id} />
 
           <HomeActivityCard />
 
-          <TouchableOpacity
-            activeOpacity={0.86}
-            style={localStyles.challengePreviewCard}
-            onPress={() =>
-              nextChallenge
-                ? navigation.navigate(
-                    "ChallengeDetailScreen" as never,
-                    { event: nextChallenge } as never
-                  )
-                : navigation.navigate(
-                    "Tab" as never,
-                    {
-                      screen: "Flow",
-                      params: { section: "challenge" },
-                    } as never
-                  )
-            }
-          >
-            <View style={localStyles.challengePreviewHeader}>
-              <View style={localStyles.challengeIconCircle}>
-                <Ionicons name="trophy-outline" size={21} color="#8B6327" />
-              </View>
-              <View style={localStyles.challengePreviewCopy}>
-                <Text style={localStyles.challengePreviewEyebrow}>DESAFÍO</Text>
-                <Text
-                  style={localStyles.challengePreviewTitle}
-                  numberOfLines={1}
-                >
-                  {nextChallenge?.title ?? "Encontrá tu próximo desafío"}
-                </Text>
-                <Text
-                  style={localStyles.challengePreviewMeta}
-                  numberOfLines={1}
-                >
-                  {nextChallenge?.subtitle ??
-                    "Sumate a una práctica y compartí el camino con la comunidad."}
-                </Text>
-              </View>
-              <Ionicons name="arrow-forward-circle" size={28} color="#8B6327" />
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.86}
-            style={localStyles.eventPreviewCard}
-            onPress={() =>
-              nextEvent
-                ? navigation.navigate(
-                    "EventDetail" as never,
-                    { event: nextEvent } as never
-                  )
-                : navigation.navigate(
-                    "Tab" as never,
-                    {
-                      screen: "EventsTab",
-                      params: { section: "event" },
-                    } as never
-                  )
-            }
-          >
-            <Text style={localStyles.eventPreviewEyebrow}>
-              {nextEvent ? "TU PRÓXIMO EVENTO" : "EVENTOS"}
-            </Text>
-            {nextEvent ? (
-              <View style={localStyles.eventPreviewRow}>
-                <View style={localStyles.eventDateBox}>
-                  <Text style={localStyles.eventDateWeekday}>
-                    {nextEventDate.weekday}
-                  </Text>
-                  <Text style={localStyles.eventDateDay}>
-                    {nextEventDate.day}
-                  </Text>
-                </View>
-                <View style={localStyles.eventPreviewCopy}>
-                  <Text style={localStyles.eventPreviewTitle}>
-                    {nextEvent.title}
-                  </Text>
-                  <View style={localStyles.eventPreviewMetaRow}>
-                    <Ionicons name="time-outline" size={14} color="#625D57" />
-                    <Text
-                      style={localStyles.eventPreviewMeta}
-                      numberOfLines={1}
-                    >
-                      {nextEvent.date}
-                    </Text>
-                  </View>
-                  {nextEvent.location || nextEvent.modality === "online" ? (
-                    <View style={localStyles.eventPreviewMetaRow}>
-                      <Ionicons
-                        name={
-                          nextEvent.modality === "online"
-                            ? "videocam-outline"
-                            : "location-outline"
-                        }
-                        size={14}
-                        color="#625D57"
-                      />
-                      <Text
-                        style={localStyles.eventPreviewMeta}
-                        numberOfLines={1}
-                      >
-                        {nextEvent.modality === "online"
-                          ? "Online"
-                          : nextEvent.location}
-                      </Text>
-                    </View>
-                  ) : null}
-                  <View style={localStyles.eventParticipantsRow}>
-                    {nextEventParticipantImages.length > 0 ? (
-                      <AvatarGroup
-                        size={24}
-                        overlap={7}
-                        max={4}
-                        items={nextEventParticipantImages.map((uri, index) => ({
-                          id: `event-preview-${index}`,
-                          uri,
-                        }))}
-                      />
-                    ) : null}
-                    <Text style={localStyles.eventParticipantsText}>
-                      {nextEventParticipantCount === 0
-                        ? t("home.eventNoParticipants")
-                        : nextEventParticipantCount === 1
-                        ? t("home.eventOneParticipant")
-                        : t("home.eventParticipantCount", {
-                            count: nextEventParticipantCount,
-                          })}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={32} color="#6D6D6D" />
-              </View>
-            ) : (
-              <View style={localStyles.eventPreviewRow}>
-                <View style={localStyles.eventDateBox}>
-                  <Ionicons name="calendar-outline" size={30} color="#D69A27" />
-                </View>
-                <View style={localStyles.eventPreviewCopy}>
-                  <Text style={localStyles.eventPreviewTitle}>Ver eventos</Text>
-                  <Text style={localStyles.eventPreviewMeta}>
-                    Descubrí próximos encuentros y sumate.
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={32} color="#6D6D6D" />
-              </View>
-            )}
-          </TouchableOpacity>
+          <HomeOverview userId={session?.user?.id} />
         </ScrollView>
       </SafeAreaView>
       <Animated.View

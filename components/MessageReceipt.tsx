@@ -1,5 +1,6 @@
 import React from "react";
-import { Text } from "./Typography";
+import { View } from "react-native";
+import Icon from "./Icon";
 import type { ReceiptStatus } from "../src/queries/communityReceipts.queries";
 export default function MessageReceipt({
   status = "sent",
@@ -7,7 +8,8 @@ export default function MessageReceipt({
   status?: ReceiptStatus;
 }) {
   return (
-    <Text
+    <View
+      accessible
       accessibilityLabel={
         {
           sending: "Enviando",
@@ -16,9 +18,13 @@ export default function MessageReceipt({
           read: "Leído",
         }[status]
       }
-      style={{ fontSize: 13, color: status === "read" ? "#426F9C" : "#6E6E6E" }}
+      style={{ alignItems: "center", justifyContent: "center" }}
     >
-      {status === "sending" ? "◷" : status === "sent" ? "✓" : "✓✓"}
-    </Text>
+      <Icon
+        name={status === "sending" ? "time-outline" : status === "sent" ? "checkmark" : "checkmark-done"}
+        size={16}
+        color={status === "read" ? "#426F9C" : "#6E6E6E"}
+      />
+    </View>
   );
 }
