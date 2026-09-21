@@ -19,10 +19,12 @@ const paths = [
 ];
 
 export default function DiscoverPathCards({
+  leading,
   selected,
   onToggle,
   onClear,
 }: {
+  leading?: React.ReactNode;
   selected: string[];
   onToggle: (path: string) => void;
   onClear: () => void;
@@ -38,16 +40,7 @@ export default function DiscoverPathCards({
   ];
   return (
     <View style={s.section}>
-      <Text style={s.title}>
-        {english
-          ? "Choose the paths that interest you"
-          : "Elegí los caminos que te interesan"}
-      </Text>
-      <Text style={s.hint}>
-        {english
-          ? "Choose several · Swipe to see more"
-          : "Podés elegir varios · Deslizá para ver más"}
-      </Text>
+      {leading}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -63,32 +56,31 @@ export default function DiscoverPathCards({
               key={value || "all"}
               accessibilityRole="checkbox"
               accessibilityLabel={label}
+              accessibilityHint={english ? "Choose several · Swipe to see more" : "Podés elegir varios · Deslizá para ver más"}
               accessibilityState={{ checked: active }}
               activeOpacity={0.8}
               onPress={() => (value ? onToggle(value) : onClear())}
               style={[s.card, active && s.selected]}
             >
-              <View style={s.cardHeader}>
-                <Icon
-                  name={
-                    value === "El Arte de Vivir"
-                      ? "sunny-outline"
-                      : value === "Tantra"
-                      ? "flower-outline"
-                      : value
-                      ? "leaf-outline"
-                      : "grid-outline"
-                  }
-                  size={22}
-                  color={active ? "#805D24" : "#827566"}
-                />
-                <Icon
-                  name={active ? "checkmark-circle" : "ellipse-outline"}
-                  size={18}
-                  color={active ? "#805D24" : "#BEB5A8"}
-                />
-              </View>
+              <Icon
+                name={
+                  value === "El Arte de Vivir"
+                    ? "sunny-outline"
+                    : value === "Tantra"
+                    ? "flower-outline"
+                    : value
+                    ? "leaf-outline"
+                    : "grid-outline"
+                }
+                size={18}
+                color={active ? "#805D24" : "#827566"}
+              />
               <Text style={[s.label, active && s.selectedLabel]}>{label}</Text>
+              <Icon
+                name={active ? "checkmark-circle" : "ellipse-outline"}
+                size={18}
+                color={active ? "#805D24" : "#BEB5A8"}
+              />
             </TouchableOpacity>
           );
         })}
@@ -98,48 +90,39 @@ export default function DiscoverPathCards({
 }
 
 const s = StyleSheet.create({
-  section: { paddingTop: 4, paddingBottom: 8 },
-  title: {
-    marginHorizontal: 20,
-    color: "#2B2B2B",
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 20,
-    lineHeight: 26,
+  section: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingLeft: 16,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
-  hint: {
-    marginHorizontal: 20,
-    marginTop: 5,
-    color: "#746B60",
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  scroll: { flexGrow: 0, marginTop: 12 },
+  scroll: { flex: 1, minWidth: 0 },
   cards: {
-    paddingHorizontal: 20,
-    paddingBottom: 4,
-    gap: 10,
+    paddingRight: 16,
+    gap: 8,
     alignItems: "stretch",
   },
   card: {
-    width: 128,
-    minHeight: 94,
-    padding: 12,
-    borderRadius: 18,
-    borderWidth: 1.5,
+    maxWidth: 280,
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 15,
+    borderWidth: 1,
     borderColor: "#E7DFD2",
     backgroundColor: "#FFFDFA",
   },
   selected: { backgroundColor: "#F5E5BD", borderColor: "#BF9147" },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 9,
-  },
   label: {
+    flexShrink: 1,
     color: "#61594F",
     fontFamily: vibesTheme.fonts.medium,
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
   },
   selectedLabel: { color: "#67481C" },

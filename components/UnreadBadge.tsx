@@ -7,7 +7,8 @@ export default function UnreadBadge({ count }: { count: number }) {
       accessibilityLabel={`${count} mensajes sin leer`}
       style={{
         minWidth: 22,
-        height: 22,
+        minHeight: 22,
+        paddingVertical: 2,
         borderRadius: 11,
         paddingHorizontal: 5,
         backgroundColor: "#E4B76E",

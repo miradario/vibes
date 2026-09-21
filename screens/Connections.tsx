@@ -2,16 +2,21 @@ import UnreadBadge from "../components/UnreadBadge";
 import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 /** @format */
 
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import Icon from "../components/Icon";
 import { MessagesContent } from "./Messages";
-import { DiscoverContent, type DiscoverContentHandle } from "./Discover";
+import { DiscoverContent } from "./Discover";
 import { useI18n } from "../src/i18n";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -25,8 +30,8 @@ const Connections = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
+  useWindowDimensions(); // Recompute bottom spacing when system text size changes.
   const { t } = useI18n();
-  const discoverRef = useRef<DiscoverContentHandle>(null);
   const [activeSection, setActiveSection] = useState<ConnectionSection>(
     getInitialSection(route.params?.initialSection)
   );
@@ -35,7 +40,6 @@ const Connections = () => {
     (sum, row) => sum + Number(row.unread_count),
     0
   );
-  const [activeFilterCount, setActiveFilterCount] = useState(0);
 
   useEffect(() => {
     setActiveSection(getInitialSection(route.params?.initialSection));
@@ -59,6 +63,8 @@ const Connections = () => {
             return (
               <TouchableOpacity
                 key={item.value}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
                 style={[
                   localStyles.segmentButton,
                   isActive && localStyles.segmentButtonActive,
@@ -83,30 +89,6 @@ const Connections = () => {
             );
           })}
         </View>
-
-        {activeSection === "discover" ? (
-          <>
-            <View style={localStyles.filtersRow}>
-              <TouchableOpacity
-                style={localStyles.filtersButton}
-                activeOpacity={0.84}
-                onPress={() => discoverRef.current?.openFilters()}
-              >
-                <Icon name="options-outline" size={17} color="#2B2B2B" />
-                <Text style={localStyles.filtersButtonText}>
-                  {t("discover.filters")}
-                </Text>
-                {activeFilterCount > 0 ? (
-                  <View style={localStyles.filtersCountBadge}>
-                    <Text style={localStyles.filtersCountText}>
-                      {activeFilterCount}
-                    </Text>
-                  </View>
-                ) : null}
-              </TouchableOpacity>
-            </View>
-          </>
-        ) : null}
       </View>
 
       <View style={localStyles.content}>
@@ -124,7 +106,7 @@ const Connections = () => {
             homeTarget={route.params?.homeTarget}
             initialMessagesTab={route.params?.initialMessagesTab}
             showHeader={false}
-            contentTopPadding={10}
+            contentTopPadding={4}
             contentBottomPadding={getBottomTabContentPadding(
               insets.bottom,
               118
@@ -143,9 +125,7 @@ const Connections = () => {
           ]}
         >
           <DiscoverContent
-            ref={discoverRef}
             showHeader={false}
-            onFilterCountChange={setActiveFilterCount}
           />
         </View>
       </View>
@@ -161,43 +141,9 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   headerBlock: {
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    paddingBottom: 10,
-  },
-  filtersButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderWidth: 1,
-    borderColor: "rgba(43,43,43,0.08)",
-  },
-  filtersButtonText: {
-    color: "#2B2B2B",
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  filtersCountBadge: {
-    minWidth: 22,
-    height: 22,
-    borderRadius: 11,
-    paddingHorizontal: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-  },
-  filtersCountText: {
-    color: "#2B2B2B",
-    fontSize: 12,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  filtersRow: {
-    marginTop: 12,
-    alignItems: "flex-start",
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
   sharedExperiencesCard: {
     marginTop: 12,
@@ -270,10 +216,14 @@ const localStyles = StyleSheet.create({
   },
   segmentButton: {
     flex: 1,
+    flexDirection: "row",
+    gap: 8,
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
   },
   segmentButtonContent: {
     flexDirection: "row",
@@ -290,6 +240,7 @@ const localStyles = StyleSheet.create({
     elevation: 2,
   },
   segmentText: {
+    flexShrink: 1,
     color: "#6E6E6E",
     fontSize: 15,
     fontFamily: vibesTheme.fonts.medium,

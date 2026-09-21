@@ -43,5 +43,10 @@ export const verifyEmailOwnership = (token: string): Promise<void> => {
     if (sessionError) throw sessionError;
   })();
   currentVerification = { token, promise };
+  // A transport failure must not poison this token for the rest of the session.
+  void promise.catch(() => {
+    if (currentVerification?.promise === promise)
+      currentVerification = undefined;
+  });
   return promise;
 };

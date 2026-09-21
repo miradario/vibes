@@ -19,6 +19,7 @@ export default function EmailVerificationCard({ userId }: { userId?: string }) {
     },
   });
   const [sending, setSending] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState("");
   const [lastSent, setLastSent] = useState(0);
   useFocusEffect(
@@ -33,6 +34,22 @@ export default function EmailVerificationCard({ userId }: { userId?: string }) {
     return () => sub.remove();
   }, [userId, query.refetch]);
   const verified = isEmailOwnershipVerified(query.data);
+  const check = async () => {
+    if (checking) return;
+    setChecking(true);
+    try {
+      const result = await query.refetch();
+      setMessage(
+        result.isError
+          ? "No pudimos consultar la verificación. Intentá nuevamente."
+          : isEmailOwnershipVerified(result.data)
+          ? ""
+          : "Todavía figura pendiente. Abrí el último correo de Vibes y tocá ‘Verificar mi email’ en el enlace recibido."
+      );
+    } finally {
+      setChecking(false);
+    }
+  };
   const send = async () => {
     if (sending || !query.data?.email) return;
     if (Date.now() - lastSent < 60000) {
@@ -82,25 +99,53 @@ export default function EmailVerificationCard({ userId }: { userId?: string }) {
               : "Email pendiente de verificar"}
           </Text>
           {!verified && query.data?.email ? (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityState={{ disabled: sending, busy: sending }}
-              disabled={sending}
-              onPress={() => void send()}
-              style={{
-                minHeight: 48,
-                paddingVertical: 12,
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ color: "#8C6A2D" }}>
-                {sending ? "Enviando…" : "Reenviar correo de verificación"}
+            <View>
+              <Text
+                style={{ color: "#6E6E6E", lineHeight: 21, marginBottom: 4 }}
+              >
+                Para verificarlo, abrí el enlace que te enviamos por correo.
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityState={{ disabled: sending, busy: sending }}
+                disabled={sending}
+                onPress={() => void send()}
+                style={{
+                  minHeight: 48,
+                  paddingVertical: 12,
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ color: "#8C6A2D" }}>
+                  {sending
+                    ? "Enviando…"
+                    : lastSent
+                    ? "Reenviar enlace"
+                    : "Enviar enlace de verificación"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityState={{ disabled: checking, busy: checking }}
+                disabled={checking}
+                onPress={() => void check()}
+                style={{
+                  minHeight: 48,
+                  paddingVertical: 12,
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ color: "#8C6A2D" }}>
+                  {checking ? "Comprobando…" : "Ya abrí el enlace · Comprobar"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           ) : null}
         </>
       )}
-      {message ? <Text accessibilityLiveRegion="polite">{message}</Text> : null}
+      {message && !verified ? (
+        <Text accessibilityLiveRegion="polite">{message}</Text>
+      ) : null}
     </View>
   );
 }

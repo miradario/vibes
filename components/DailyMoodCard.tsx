@@ -38,7 +38,6 @@ export default function DailyMoodCard({
   enabled?: boolean;
 }) {
   const [day, setDay] = useState(localDayKey);
-  const [moods, setMoods] = useState<string[]>([]);
   const [draft, setDraft] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,6 +75,7 @@ export default function DailyMoodCard({
       setLoading(false);
       return;
     }
+    let dismissedToday = false;
     try {
       const [{ data, error: loadError }, dismissed] = await Promise.all([
         supabase
@@ -86,14 +86,15 @@ export default function DailyMoodCard({
         AsyncStorage.getItem(storageKey).catch(() => null),
       ]);
       if (generation !== epoch.current) return;
+      dismissedToday = dismissed === day;
       if (loadError) throw loadError;
       const today = data?.mood_day === day;
       const selected = today && Array.isArray(data.moods) ? data.moods : [];
-      setMoods(selected);
       setDraft(selected);
       setDue(!today && dismissed !== day);
     } catch {
       if (generation === epoch.current) {
+        setDue(!dismissedToday);
         setLoadFailed(true);
         setError("No pudimos cargar tu estado. Intentá de nuevo.");
       }
@@ -138,7 +139,6 @@ export default function DailyMoodCard({
         );
       if (saveError) throw saveError;
       if (generation !== epoch.current) return;
-      setMoods(draft);
       setOpen(false);
       setDue(false);
       void AsyncStorage.setItem(storageKey, day).catch(() => {});
@@ -154,174 +154,127 @@ export default function DailyMoodCard({
   };
   if (!userId) return null;
   return (
-    <>
-      <TouchableOpacity
-        style={s.summary}
-        accessibilityRole="button"
-        accessibilityLabel="Registrar cómo te sentís hoy"
-        onPress={() => {
-          setDraft(moods);
-          setOpen(true);
-          if (error) void load();
-        }}
+    <AnimatedSheetModal
+      visible={open && visible && enabled}
+      onClose={dismiss}
+      closeOnBackdropPress={!saving}
+      offsetY={reduceMotion ? 0 : 80}
+      sheetInDuration={reduceMotion ? 0 : 260}
+      sheetOutDuration={reduceMotion ? 0 : 180}
+      sheetInDelay={0}
+      sheetStyle={[
+        s.sheet,
+        {
+          maxHeight: height - insets.top - 16,
+          paddingBottom: Math.max(insets.bottom, 16),
+        },
+      ]}
+    >
+      <View style={s.handle} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={s.content}
       >
-        <View style={s.summaryIcon}>
-          <Ionicons name="heart-outline" size={21} color="#987139" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.summaryTitle}>Tu momento de hoy</Text>
-          <Text style={s.summaryText}>
-            {moods.length ? moods.join(" · ") : "¿Cómo te sentís?"}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color="#987139" />
-      </TouchableOpacity>
-      <AnimatedSheetModal
-        visible={open && visible && enabled}
-        onClose={dismiss}
-        closeOnBackdropPress={!saving}
-        offsetY={reduceMotion ? 0 : 80}
-        sheetInDuration={reduceMotion ? 0 : 260}
-        sheetOutDuration={reduceMotion ? 0 : 180}
-        sheetInDelay={0}
-        sheetStyle={[
-          s.sheet,
-          {
-            maxHeight: height - insets.top - 16,
-            paddingBottom: Math.max(insets.bottom, 16),
-          },
-        ]}
-      >
-        <View style={s.handle} />
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={s.content}
-        >
-          <View style={s.header}>
-            <View style={s.heroIcon}>
-              <Ionicons name="sunny-outline" size={28} color="#A47C42" />
-            </View>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Cerrar sin guardar"
-              disabled={saving}
-              onPress={dismiss}
-              style={s.close}
-            >
-              <Ionicons name="close" size={23} color="#777166" />
-            </TouchableOpacity>
+        <View style={s.header}>
+          <View style={s.heroIcon}>
+            <Ionicons name="sunny-outline" size={28} color="#A47C42" />
           </View>
-          <Text style={s.eyebrow}>UN MOMENTO PARA VOS</Text>
-          <Text accessibilityRole="header" style={s.title}>
-            ¿Cómo te sentís hoy?
-          </Text>
-          <Text style={s.subtitle}>
-            No hay una respuesta correcta. Elegí lo que te acompañe hoy.
-          </Text>
-          <View style={s.options}>
-            {MOODS.map((mood, index) => {
-              const selected = draft.includes(mood);
-              return (
-                <TouchableOpacity
-                  key={mood}
-                  accessibilityRole="checkbox"
-                  accessibilityLabel={mood}
-                  accessibilityState={{
-                    checked: selected,
-                    disabled: loading || saving,
-                  }}
-                  disabled={loading || saving}
-                  onPress={() =>
-                    setDraft((current) =>
-                      current.includes(mood)
-                        ? current.filter((v) => v !== mood)
-                        : [...current, mood]
-                    )
-                  }
-                  style={[s.option, selected && s.selected]}
-                  activeOpacity={0.75}
-                >
-                  <Ionicons
-                    name={selected ? "checkmark" : ICONS[index]}
-                    size={19}
-                    color={selected ? "#805F2B" : "#84949E"}
-                  />
-                  <Text style={[s.optionText, selected && s.selectedText]}>
-                    {mood}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          <View style={s.privacy}>
-            <Ionicons name="lock-closed-outline" size={14} color="#777166" />
-            <Text style={s.privacyText}>
-              Solo vos podés verlo. Podés elegir varias.
-            </Text>
-          </View>
-          {loading ? (
-            <Text style={s.privacyText}>Cargando tu estado…</Text>
-          ) : null}
-          {error ? (
-            <Text accessibilityRole="alert" style={s.error}>
-              {error}
-            </Text>
-          ) : null}
-        </ScrollView>
-        <View style={s.footer}>
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityState={{ disabled: loading || saving, busy: saving }}
-            disabled={loading || saving}
-            onPress={() => void (loadFailed ? load() : save())}
-            style={[s.save, (loading || saving) && { opacity: 0.5 }]}
-          >
-            <Text style={s.saveText}>
-              {saving
-                ? "Guardando…"
-                : loadFailed
-                ? "Reintentar"
-                : "Guardar mi momento"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            accessibilityRole="button"
+            accessibilityLabel="Cerrar sin guardar"
             disabled={saving}
             onPress={dismiss}
-            style={s.skip}
+            style={s.close}
           >
-            <Text style={s.skipText}>Ahora no</Text>
+            <Ionicons name="close" size={23} color="#777166" />
           </TouchableOpacity>
         </View>
-      </AnimatedSheetModal>
-    </>
+        <Text style={s.eyebrow}>UN MOMENTO PARA VOS</Text>
+        <Text accessibilityRole="header" style={s.title}>
+          ¿Cómo te sentís hoy?
+        </Text>
+        <Text style={s.subtitle}>
+          No hay una respuesta correcta. Elegí lo que te acompañe hoy.
+        </Text>
+        <View style={s.options}>
+          {MOODS.map((mood, index) => {
+            const selected = draft.includes(mood);
+            return (
+              <TouchableOpacity
+                key={mood}
+                accessibilityRole="checkbox"
+                accessibilityLabel={mood}
+                accessibilityState={{
+                  checked: selected,
+                  disabled: loading || saving,
+                }}
+                disabled={loading || saving}
+                onPress={() =>
+                  setDraft((current) =>
+                    current.includes(mood)
+                      ? current.filter((v) => v !== mood)
+                      : [...current, mood]
+                  )
+                }
+                style={[s.option, selected && s.selected]}
+                activeOpacity={0.75}
+              >
+                <Ionicons
+                  name={selected ? "checkmark" : ICONS[index]}
+                  size={19}
+                  color={selected ? "#805F2B" : "#84949E"}
+                />
+                <Text style={[s.optionText, selected && s.selectedText]}>
+                  {mood}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <View style={s.privacy}>
+          <Ionicons name="lock-closed-outline" size={14} color="#777166" />
+          <Text style={s.privacyText}>
+            Solo vos podés verlo. Podés elegir varias.
+          </Text>
+        </View>
+        {loading ? (
+          <Text style={s.privacyText}>Cargando tu estado…</Text>
+        ) : null}
+        {error ? (
+          <Text accessibilityRole="alert" style={s.error}>
+            {error}
+          </Text>
+        ) : null}
+      </ScrollView>
+      <View style={s.footer}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityState={{ disabled: loading || saving, busy: saving }}
+          disabled={loading || saving}
+          onPress={() => void (loadFailed ? load() : save())}
+          style={[s.save, (loading || saving) && { opacity: 0.5 }]}
+        >
+          <Text style={s.saveText}>
+            {saving
+              ? "Guardando…"
+              : loadFailed
+              ? "Reintentar"
+              : "Guardar mi momento"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          disabled={saving}
+          onPress={dismiss}
+          style={s.skip}
+        >
+          <Text style={s.skipText}>Ahora no</Text>
+        </TouchableOpacity>
+      </View>
+    </AnimatedSheetModal>
   );
 }
 const s = StyleSheet.create({
-  summary: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 14,
-    borderRadius: 20,
-    backgroundColor: "#F8F3E9",
-    marginVertical: 12,
-    minHeight: 64,
-  },
-  summaryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#EFE3CD",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  summaryTitle: {
-    fontSize: 15,
-    color: "#3F3B34",
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  summaryText: { fontSize: 13, lineHeight: 19, color: "#777166", marginTop: 3 },
   sheet: {
     backgroundColor: "#FCF9F3",
     borderTopLeftRadius: 32,
