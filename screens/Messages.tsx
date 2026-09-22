@@ -943,10 +943,11 @@ const localStyles = StyleSheet.create({
   },
   communityTitle: {
     flexShrink: 1,
-    color: "#161820",
-    fontSize: 24,
-    lineHeight: 29,
-    fontFamily: vibesTheme.fonts.bold,
+    color: TEXT_PRIMARY,
+    fontSize: 32,
+    lineHeight: 38,
+    fontFamily: vibesTheme.fonts.thin,
+    textAlign: "left",
   },
   chatTabs: {
     flexDirection: "row",
@@ -999,7 +1000,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   content: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   appHeader: {
     paddingHorizontal: 0,

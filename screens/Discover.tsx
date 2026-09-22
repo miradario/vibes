@@ -33,7 +33,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DiscoverOrbitCanvas from "../components/DiscoverOrbitCanvas";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Icon from "../components/Icon";
-import AppHeader from "../components/AppHeader";
 import UserProfileSheet from "../components/UserProfileSheet";
 import type { UserProfileCardData } from "../components/UserProfileCard";
 import styles, { DIMENSION_WIDTH, TEXT_PRIMARY } from "../assets/styles";
@@ -1124,11 +1123,9 @@ export const DiscoverContent = forwardRef<
         />
 
         {showHeader ? (
-          <AppHeader
-            title={t("discover.title")}
-            style={localStyles.header}
-            titleStyle={localStyles.title}
-          />
+          <View style={localStyles.header}>
+            <Text style={localStyles.title}>{t("discover.title")}</Text>
+          </View>
         ) : null}
 
         <DiscoverPathCards
@@ -1264,16 +1261,16 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    alignItems: "center",
+    paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 10,
+    paddingBottom: 20,
   },
   title: {
     color: TEXT_PRIMARY,
     fontSize: 32,
     lineHeight: 38,
     fontFamily: vibesTheme.fonts.thin,
-    textAlign: "center",
+    textAlign: "left",
   },
   filtersButton: {
     flexShrink: 0,

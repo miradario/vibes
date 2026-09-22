@@ -6,7 +6,7 @@ import { Text, TextInput } from "../components/Typography";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import styles, { TEXT_SECONDARY } from "../assets/styles";
+import styles, { TEXT_PRIMARY, TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 import AvatarGroup from "../components/AvatarGroup";
 import VibesLoader from "../components/VibesLoader";
@@ -367,7 +367,7 @@ const Events = () => {
 
   return (
     <View style={styles.bg}>
-      <View style={styles.eventsContainer}>
+      <View style={[styles.eventsContainer, localStyles.eventsContainer]}>
         <View
           style={{
             flexDirection: "row",
@@ -689,11 +689,14 @@ const Events = () => {
 export default Events;
 
 const localStyles = StyleSheet.create({
+  eventsContainer: {
+    paddingTop: 68,
+  },
   screenTitle: {
-    color: "#252321",
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 34,
-    lineHeight: 40,
+    color: TEXT_PRIMARY,
+    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 32,
+    lineHeight: 38,
     textAlign: "left",
   },
   listFooter: {
