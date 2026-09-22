@@ -1,3 +1,4 @@
+import { reorderProfilePhotos } from "../src/lib/reorderProfilePhotos";
 /** @format */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -249,8 +250,10 @@ const DraggablePhotoSlot = ({
   onDragStart,
   onDragEnd,
   onReorder,
+  disabled,
 }: {
   index: number;
+  disabled: boolean;
   item: string | null;
   onPress: (i: number) => void;
   onRemove: (i: number) => void;
@@ -304,7 +307,7 @@ const DraggablePhotoSlot = ({
 
   const pan = Gesture.Pan()
     .activateAfterLongPress(150)
-    .enabled(!!item)
+    .enabled(!!item && !disabled)
     .onStart(() => {
       "worklet";
       scale.value = withSpring(1.1);
@@ -332,6 +335,7 @@ const DraggablePhotoSlot = ({
       ty.value = withSpring(0);
       scale.value = withSpring(1);
       zIdx.value = 1;
+      runOnJS(onDragEnd)();
     });
 
   const animStyle = useAnimatedStyle(() => ({
@@ -351,6 +355,7 @@ const DraggablePhotoSlot = ({
       >
         <TouchableOpacity
           style={{ flex: 1 }}
+          disabled={disabled}
           onPress={() => onPress(index)}
           activeOpacity={0.8}
         >
@@ -369,6 +374,7 @@ const DraggablePhotoSlot = ({
               )}
               <TouchableOpacity
                 style={styles.mediaRemove}
+                disabled={disabled}
                 onPress={(e) => {
                   e.stopPropagation();
                   onRemove(index);
@@ -423,6 +429,8 @@ const EditProfile = () => {
     });
   }, [profilePhotos, supportsMultiPhotos]);
 
+  const reorderBusyRef = useRef(false);
+  const [reordering, setReordering] = useState(false);
   const [busyIndex, setBusyIndex] = useState<number | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
@@ -615,74 +623,44 @@ const EditProfile = () => {
   };
 
   const handleReorder = async (fromIndex: number, toIndex: number) => {
-    if (fromIndex === toIndex) return;
+    if (fromIndex === toIndex || reorderBusyRef.current || busyIndex !== null)
+      return;
     const userId = session?.user?.id;
-    if (!userId) return;
-
+    if (!userId || !mediaSlots[fromIndex]) return;
+    reorderBusyRef.current = true;
+    setReordering(true);
     const previousSlots = [...mediaSlots];
     const nextSlots = [...previousSlots];
-    const temp = nextSlots[fromIndex];
-    nextSlots[fromIndex] = nextSlots[toIndex];
-    nextSlots[toIndex] = temp;
+    [nextSlots[fromIndex], nextSlots[toIndex]] = [
+      nextSlots[toIndex],
+      nextSlots[fromIndex],
+    ];
     setMediaSlots(nextSlots);
-
     try {
-      const existingRows = buildExistingPhotoRows(
-        (profileData as Record<string, any>) ?? null
-      );
-      const rowsByCurrentOrder = new Map(
-        existingRows
-          .filter((row) => row.id && typeof row.order === "number")
-          .map((row) => [row.order, row] as const)
-      );
-
-      const finalRows = nextSlots
-        .map((url, order) => {
-          if (!url) return null;
-          const sourceOrder = previousSlots.findIndex((slot) => slot === url);
-          if (sourceOrder === -1) return null;
-          const row = rowsByCurrentOrder.get(sourceOrder);
-          if (!row?.id) return null;
-          return {
-            id: row.id,
-            order,
-            isPrimary: order === 0,
-          };
-        })
-        .filter(
-          (
-            row
-          ): row is {
-            id: string;
-            order: number;
-            isPrimary: boolean;
-          } => Boolean(row)
-        );
-
-      for (let index = 0; index < finalRows.length; index += 1) {
-        const row = finalRows[index];
-        const { error } = await supabase
-          .from("profile_photos")
-          .update({ order: -(index + 1), is_primary: false })
-          .eq("id", row.id);
-
-        if (error) throw error;
-      }
-
-      for (const row of finalRows) {
-        const { error } = await supabase
-          .from("profile_photos")
-          .update({ order: row.order, is_primary: row.isPrimary })
-          .eq("id", row.id);
-
-        if (error) throw error;
-      }
-
+      // Read storage paths directly: cached profile URLs are temporary signed URLs.
+      const { data: rows, error: readError } = await supabase
+        .from("profile_photos")
+        .select("id, profile_id, url, order, is_primary")
+        .eq("profile_id", userId);
+      if (readError) throw readError;
+      const reordered = reorderProfilePhotos(rows ?? [], fromIndex, toIndex);
+      // One database statement: either every position is saved or none is changed.
+      const { error } = await supabase
+        .from("profile_photos")
+        .upsert(reordered, { onConflict: "id" });
+      if (error) throw error;
       await refreshProfileCache();
     } catch (error) {
       console.error("handleReorder:error", error);
       setMediaSlots(previousSlots);
-      await refreshProfileCache();
+      Alert.alert(
+        t("common.error"),
+        "No pudimos cambiar el orden de las fotos. Intentá nuevamente."
+      );
+    } finally {
+      reorderBusyRef.current = false;
+      setReordering(false);
+      setScrollEnabled(true);
     }
   };
 
@@ -791,33 +769,22 @@ const EditProfile = () => {
       (photo) => photo.order === slotIndex
     );
 
-    if (existingForSlot?.id) {
-      const { error: deleteExistingError } = await supabase
-        .from("profile_photos")
-        .delete()
-        .eq("id", existingForSlot.id);
-
-      if (deleteExistingError) {
-        console.error(
-          "uploadPhoto:profile_photos_delete_existing_error",
-          deleteExistingError
-        );
-        throw deleteExistingError;
-      }
-    }
-
-    const { error: insertError } = await supabase
-      .from("profile_photos")
-      .insert({
-        profile_id: userId,
-        url: filePath,
-        order: slotIndex,
-        is_primary: slotIndex === 0,
-      });
-
-    if (insertError) {
-      console.error("uploadPhoto:profile_photos_insert_error", insertError);
-      throw insertError;
+    const photoValues = {
+      profile_id: userId,
+      url: filePath,
+      order: slotIndex,
+      is_primary: existingForSlot?.isPrimary ?? slotIndex === 0,
+    };
+    const { error: saveError } = existingForSlot?.id
+      ? await supabase
+          .from("profile_photos")
+          .update(photoValues)
+          .eq("id", existingForSlot.id)
+          .eq("profile_id", userId)
+      : await supabase.from("profile_photos").insert(photoValues);
+    if (saveError) {
+      await supabase.storage.from(PROFILE_PICTURES_BUCKET).remove([filePath]);
+      throw saveError;
     }
 
     setMediaSlots(nextPhotos);
@@ -847,6 +814,7 @@ const EditProfile = () => {
       try {
         await uploadPhoto(result.assets[0].uri, slotIndex);
       } catch (error) {
+        setMediaSlots(buildSlots(profilePhotos));
         const message = getErrorMessage(error);
         console.error("Error uploading photo from gallery", { message, error });
         Alert.alert(
@@ -883,6 +851,7 @@ const EditProfile = () => {
       try {
         await uploadPhoto(result.assets[0].uri, slotIndex);
       } catch (error) {
+        setMediaSlots(buildSlots(profilePhotos));
         const message = getErrorMessage(error);
         console.error("Error uploading photo from camera", { message, error });
         Alert.alert(
@@ -987,6 +956,7 @@ const EditProfile = () => {
                 key={`media-${index}`}
                 index={index}
                 item={item}
+                disabled={reordering || busyIndex !== null}
                 onPress={handleAddMedia}
                 onRemove={handleRemove}
                 getSlotLayout={(slotIndex) =>
