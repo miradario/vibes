@@ -1,3 +1,4 @@
+import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -108,10 +109,10 @@ const Settings = () => {
       )
     );
 
-    if (prefs.vegetarian === "Sí" || prefs.vegetarian === "No") {
+    if (typeof prefs.vegetarian === "string") {
       setVegetarian(prefs.vegetarian);
     }
-    if (prefs.smoking === "Sí" || prefs.smoking === "No") {
+    if (typeof prefs.smoking === "string") {
       setSmoking(prefs.smoking);
     }
     if (typeof prefs.aboutMe === "string") {
@@ -364,6 +365,11 @@ const Settings = () => {
               {renderChip(t("common.no"), vegetarian === "No", () =>
                 setVegetarian("No")
               )}
+              {["Pescetariano", "Vegano"].map((option) =>
+                renderChip(option, vegetarian === option, () =>
+                  setVegetarian(option)
+                )
+              )}
             </View>
           </View>
 
@@ -424,6 +430,45 @@ const Settings = () => {
               />
               <Text style={localStyles.heightUnit}>cm</Text>
             </View>
+          </View>
+
+          <View style={localStyles.preferencePanel}>
+            <Text style={localStyles.sectionTitle}>Más sobre vos</Text>
+            {(
+              [
+                "zodiac",
+                "education",
+                "family_plan",
+                "communication_style",
+                "love_style",
+              ] as const
+            ).map((key) => (
+              <TouchableOpacity
+                key={key}
+                accessibilityRole="button"
+                style={{
+                  minHeight: 52,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingVertical: 12,
+                }}
+                onPress={() =>
+                  navigation.navigate(
+                    "PreferenceDetail" as never,
+                    {
+                      key,
+                      label: PROFILE_PREFERENCE_OPTIONS[key].label,
+                    } as never
+                  )
+                }
+              >
+                <Text style={localStyles.fieldLabel}>
+                  {PROFILE_PREFERENCE_OPTIONS[key].label}
+                </Text>
+                <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+              </TouchableOpacity>
+            ))}
           </View>
 
           <View style={localStyles.preferencePanel}>
@@ -490,6 +535,9 @@ const Settings = () => {
               )}
               {renderChip(t("common.no"), smoking === "No", () =>
                 setSmoking("No")
+              )}
+              {renderChip("A veces", smoking === "A veces", () =>
+                setSmoking("A veces")
               )}
             </View>
           </View>

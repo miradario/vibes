@@ -1,3 +1,12 @@
+import { supabase } from "../src/lib/supabase";
+import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
+import { PURPOSE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
+import {
+  matchesDiscoverAnswers,
+  type DiscoverAnswerFilters,
+} from "../src/lib/discoverAnswerFilters";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import DiscoverPathCards from "../components/DiscoverPathCards";
@@ -63,6 +72,39 @@ type DiscoverFiltersState = {
   smoking: "all" | "no" | "occasionally" | "yes";
 };
 
+const ANSWER_FILTER_FIELDS: {
+  key: string;
+  label: string;
+  options: readonly string[];
+}[] = (() => {
+  const fields = QUESTION_GROUPS.flatMap((group) =>
+    group.fields.filter((field) => "options" in field && field.key !== "gender")
+  ) as readonly { key: string; label: string; options: readonly string[] }[];
+  const result = fields.map((field) => ({
+    ...field,
+    options: [...field.options],
+  }));
+  for (const [key, config] of Object.entries(PROFILE_PREFERENCE_OPTIONS)) {
+    if (["open_to", "vegetarian", "smoking", "vaccine"].includes(key)) continue;
+    const camelKey = key.replace(/_([a-z])/g, (_, letter: string) =>
+      letter.toUpperCase()
+    );
+    const existing = result.find((field) => field.key === camelKey);
+    if (!existing)
+      result.push({
+        key: camelKey,
+        label: config.label,
+        options: [...config.options],
+      });
+  }
+  result.unshift({
+    key: "openTo",
+    label: "Me trae a Vibes",
+    options: PURPOSE_OPTIONS.map((option) => option.label),
+  });
+  return result;
+})();
+
 const DEFAULT_FILTERS: DiscoverFiltersState = {
   ageMin: null,
   ageMax: null,
@@ -111,7 +153,11 @@ const clampAge = (value: number) =>
 const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
   if (typeof value !== "string") return "all";
 
-  const normalized = value.trim().toLowerCase();
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
   if (!normalized) return "all";
   if (
     normalized.includes("no") ||
@@ -123,7 +169,8 @@ const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
   if (
     normalized.includes("occasion") ||
     normalized.includes("social") ||
-    normalized.includes("sometimes")
+    normalized.includes("sometimes") ||
+    normalized.includes("a veces")
   ) {
     return "occasionally";
   }
@@ -327,8 +374,79 @@ export const DiscoverContent = forwardRef<
 >(({ showHeader = true, onFilterCountChange }, ref) => {
   const navigation = useNavigation();
   const filterInsets = useSafeAreaInsets();
+  const [answerFilters, setAnswerFilters] = useState<DiscoverAnswerFilters>({});
+  const [answerFiltersOwner, setAnswerFiltersOwner] = useState<string | null>(
+    null
+  );
   const { t, locale } = useI18n();
   const { data: session } = useAuthSession();
+  useEffect(() => {
+    let active = true;
+    const userId = session?.user?.id;
+    setAnswerFilters({});
+    setAnswerFiltersOwner(null);
+    if (!userId) return;
+    Promise.all([
+      supabase
+        .from("user_preferences")
+        .select("discover_answer_filters")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      AsyncStorage.getItem(`discover_answer_filters:${userId}`),
+    ])
+      .then(([remote, raw]) => {
+        if (remote.error) throw remote.error;
+        if (!active) return;
+        const parsed =
+          remote.data?.discover_answer_filters ?? (raw ? JSON.parse(raw) : {});
+        const valid: DiscoverAnswerFilters = {};
+        for (const field of ANSWER_FILTER_FIELDS) {
+          if (Array.isArray(parsed?.[field.key])) {
+            valid[field.key] = parsed[field.key].filter(
+              (value: unknown) =>
+                typeof value === "string" && field.options.includes(value)
+            );
+          }
+        }
+        for (const key of ["heightMin", "heightMax"]) {
+          const value = parsed?.[key]?.[0];
+          if (typeof value === "string" && /^\d{1,3}$/.test(value))
+            valid[key] = [value];
+        }
+        setAnswerFilters(valid);
+        setAnswerFiltersOwner(userId);
+      })
+      .catch((error) => {
+        if (active) showToast("No se pudieron cargar los filtros");
+        console.warn("discover_answer_filters:load_error", error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id]);
+  useEffect(() => {
+    if (!answerFiltersOwner || answerFiltersOwner !== session?.user?.id) return;
+    const timeout = setTimeout(() => {
+      void (async () => {
+        const { error } = await supabase.from("user_preferences").upsert(
+          {
+            user_id: answerFiltersOwner,
+            discover_answer_filters: answerFilters,
+          },
+          { onConflict: "user_id" }
+        );
+        if (error) throw error;
+        await AsyncStorage.setItem(
+          `discover_answer_filters:${answerFiltersOwner}`,
+          JSON.stringify(answerFilters)
+        );
+      })().catch((error) => {
+        console.warn("discover_answer_filters:persist_error", error);
+        showToast("No se pudieron guardar los filtros");
+      });
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [answerFilters, answerFiltersOwner, session?.user?.id]);
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
     useUserPreferencesQuery(session?.user?.id);
@@ -455,6 +573,9 @@ export const DiscoverContent = forwardRef<
           return false;
         }
 
+        if (!matchesDiscoverAnswers(candidateRecord, answerFilters))
+          return false;
+
         return matchesDiscoverSpiritualPaths(
           candidate,
           discoverFilters.spiritualPaths
@@ -481,6 +602,7 @@ export const DiscoverContent = forwardRef<
     session?.user?.id,
     userPreferences,
     discoverFilters,
+    answerFilters,
     hiddenProfileIds,
     hasLocation,
     ownProfileRecord?.latitude,
@@ -547,8 +669,9 @@ export const DiscoverContent = forwardRef<
         discoverFilters.diets.length > 0,
         discoverFilters.spiritualPaths.length > 0,
         discoverFilters.smoking !== "all",
-      ].filter(Boolean).length,
-    [discoverFilters, hasLocation]
+      ].filter(Boolean).length +
+      Object.values(answerFilters).filter((values) => values.length > 0).length,
+    [discoverFilters, hasLocation, answerFilters]
   );
 
   useEffect(() => {
@@ -557,7 +680,7 @@ export const DiscoverContent = forwardRef<
 
   useEffect(() => {
     setProfilePage(0);
-  }, [discoverFilters, hiddenProfileIds]);
+  }, [discoverFilters, answerFilters, hiddenProfileIds]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -933,6 +1056,105 @@ export const DiscoverContent = forwardRef<
               </View>
 
               <View style={localStyles.filtersSection}>
+                {filterSectionTitle("Estatura (cm)")}
+                <View style={localStyles.rangeRow}>
+                  {(["heightMin", "heightMax"] as const).map((key, index) => (
+                    <View key={key} style={localStyles.rangeCard}>
+                      <Text style={localStyles.rangeLabel}>
+                        {index === 0 ? "Desde" : "Hasta"}
+                      </Text>
+                      <TextInput
+                        accessibilityLabel={
+                          index === 0
+                            ? "Estatura mínima en centímetros"
+                            : "Estatura máxima en centímetros"
+                        }
+                        style={localStyles.rangeInput}
+                        value={answerFilters[key]?.[0] ?? ""}
+                        placeholder="Sin límite"
+                        placeholderTextColor="#343841"
+                        keyboardType="number-pad"
+                        maxLength={3}
+                        onChangeText={(text) => {
+                          const value = text.replace(/\D/g, "");
+                          setAnswerFilters((previous) => ({
+                            ...previous,
+                            [key]: value ? [value] : [],
+                          }));
+                        }}
+                        onEndEditing={() =>
+                          setAnswerFilters((previous) => {
+                            const min = Number(previous.heightMin?.[0]);
+                            const max = Number(previous.heightMax?.[0]);
+                            return min && max && min > max
+                              ? {
+                                  ...previous,
+                                  heightMin: [String(max)],
+                                  heightMax: [String(min)],
+                                }
+                              : previous;
+                          })
+                        }
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {ANSWER_FILTER_FIELDS.map((field) => (
+                <View key={field.key} style={localStyles.filtersSection}>
+                  {filterSectionTitle(field.label)}
+                  <Text style={localStyles.filtersSubtitle}>
+                    Podés elegir varias. Sin selección, se muestran todos.
+                  </Text>
+                  <View style={localStyles.filtersPillRow}>
+                    {field.options.map((option) => {
+                      const selected =
+                        answerFilters[field.key]?.includes(option) ?? false;
+                      return (
+                        <TouchableOpacity
+                          key={option}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: selected }}
+                          activeOpacity={0.8}
+                          style={[
+                            localStyles.filterPill,
+                            selected && localStyles.filterPillActive,
+                          ]}
+                          onPress={() =>
+                            setAnswerFilters((previous) => ({
+                              ...previous,
+                              [field.key]: selected
+                                ? (previous[field.key] ?? []).filter(
+                                    (value) => value !== option
+                                  )
+                                : [...(previous[field.key] ?? []), option],
+                            }))
+                          }
+                        >
+                          <Text
+                            style={[
+                              localStyles.filterPillText,
+                              selected && localStyles.filterPillTextActive,
+                            ]}
+                          >
+                            {option}
+                          </Text>
+                          {selected && (
+                            <Icon
+                              name="checkmark-circle"
+                              size={20}
+                              color="#8B6327"
+                            />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+
+              <View style={localStyles.filtersSection}>
                 {filterSectionTitle(t("discover.diet"))}
                 <View style={localStyles.filtersPillRow}>
                   {(
@@ -1029,7 +1251,10 @@ export const DiscoverContent = forwardRef<
             <View style={localStyles.filtersFooter}>
               <TouchableOpacity
                 style={localStyles.filtersSecondaryButton}
-                onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
+                onPress={() => {
+                  setDiscoverFilters(DEFAULT_FILTERS);
+                  setAnswerFilters({});
+                }}
               >
                 <Text style={localStyles.filtersSecondaryButtonText}>
                   {locale === "en" ? "Reset" : "Restablecer"}
@@ -1140,7 +1365,10 @@ export const DiscoverContent = forwardRef<
                 <TouchableOpacity
                   style={localStyles.emptyActionButton}
                   activeOpacity={0.84}
-                  onPress={() => setDiscoverFilters(DEFAULT_FILTERS)}
+                  onPress={() => {
+                    setDiscoverFilters(DEFAULT_FILTERS);
+                    setAnswerFilters({});
+                  }}
                 >
                   <Text style={localStyles.emptyActionText}>
                     Limpiar filtros

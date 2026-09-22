@@ -1,8 +1,14 @@
+import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
 import React, { useEffect, useMemo, useState } from "react";
 import { View, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { Text } from "../components/Typography";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import styles, { DARK_GRAY, GRAY, PRIMARY_COLOR, WHITE } from "../assets/styles";
+import styles, {
+  DARK_GRAY,
+  GRAY,
+  PRIMARY_COLOR,
+  WHITE,
+} from "../assets/styles";
 import AppHeader from "../components/AppHeader";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
@@ -10,7 +16,9 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { showToast } from "../src/utils/toast";
 
 const toCamelKey = (key: string) =>
-  key.replace(/_([a-z])/g, (_match: string, letter: string) => letter.toUpperCase());
+  key.replace(/_([a-z])/g, (_match: string, letter: string) =>
+    letter.toUpperCase()
+  );
 
 const PreferenceDetail = () => {
   const navigation = useNavigation();
@@ -21,87 +29,7 @@ const PreferenceDetail = () => {
   const { data: prefs, refetch } = useUserPreferencesQuery(session?.user?.id);
 
   const config = useMemo(() => {
-    const options = {
-      open_to: {
-        label: "Abierto a",
-        multiple: true,
-        options: ["Mujeres", "Hombres", "Todos"],
-      },
-      languages: {
-        label: "Idiomas",
-        multiple: true,
-        options: ["Español", "Inglés", "Portugués", "Francés", "Italiano"],
-      },
-      zodiac: {
-        label: "Zodiaco",
-        multiple: false,
-        options: [
-          "Aries",
-          "Tauro",
-          "Géminis",
-          "Cáncer",
-          "Leo",
-          "Virgo",
-          "Libra",
-          "Escorpio",
-          "Sagitario",
-          "Capricornio",
-          "Acuario",
-          "Piscis",
-        ],
-      },
-      education: {
-        label: "Educación",
-        multiple: false,
-        options: ["Secundaria", "Técnico", "Universidad", "Posgrado"],
-      },
-      family_plan: {
-        label: "Plan familiar",
-        multiple: false,
-        options: ["Quiero hijos", "No quiero", "Tal vez", "Ya tengo"],
-      },
-      vaccine: {
-        label: "Vacuna",
-        multiple: false,
-        options: ["Sí", "No", "Prefiero no decir"],
-      },
-      personality: {
-        label: "Personalidad",
-        multiple: false,
-        options: ["Introvertido", "Extrovertido", "Ambivertido"],
-      },
-      communication_style: {
-        label: "Estilo de comunicación",
-        multiple: false,
-        options: ["Directo", "Calmado", "Humor", "Profundo"],
-      },
-      love_style: {
-        label: "Estilo de amor",
-        multiple: false,
-        options: [
-          "Palabras de afirmación",
-          "Tiempo de calidad",
-          "Regalos",
-          "Actos de servicio",
-          "Contacto físico",
-        ],
-      },
-      pets: {
-        label: "Mascotas",
-        multiple: false,
-        options: ["Tengo", "No tengo", "Me encantan", "No me gustan"],
-      },
-      vegetarian: {
-        label: "Vegetariano",
-        multiple: false,
-        options: ["Sí", "No", "Pescetariano", "Vegano"],
-      },
-      smoking: {
-        label: "Fuma",
-        multiple: false,
-        options: ["Sí", "No", "A veces"],
-      },
-    };
+    const options = PROFILE_PREFERENCE_OPTIONS;
 
     if (!prefKey || !(prefKey in options)) {
       return {
