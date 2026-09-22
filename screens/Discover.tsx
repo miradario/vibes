@@ -1,3 +1,5 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
 import {
@@ -511,6 +513,17 @@ export const DiscoverContent = forwardRef<
       until: t("common.until", { value: "" }).trim(),
     }
   );
+  const nextSelectedProfile = useMemo(() => {
+    if (!selectedProfile) return null;
+    const index = profiles.findIndex(
+      (item) => String(item.id) === String(selectedProfile.id)
+    );
+    return (
+      profiles[index + 1] ??
+      profiles.find((item) => String(item.id) !== String(selectedProfile.id)) ??
+      null
+    );
+  }, [profiles, selectedProfile]);
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
       selectedProfile
@@ -623,11 +636,7 @@ export const DiscoverContent = forwardRef<
     if (!profile || swipeMutation.isPending || swipeBusy.current) return;
     swipeBusy.current = true;
     const id = String(profile.id);
-    const index = profiles.findIndex((item) => String(item.id) === id);
-    const next =
-      profiles[index + 1] ??
-      profiles.find((item) => String(item.id) !== id) ??
-      null;
+    const next = nextSelectedProfile;
     try {
       const result = await swipeMutation.mutateAsync({
         targetUserId: id,
@@ -650,9 +659,9 @@ export const DiscoverContent = forwardRef<
     }
   };
   const connectProfile = (profile: DataT | null) =>
-    void actOnProfile(profile, "like");
+    actOnProfile(profile, "like");
   const dismissProfile = (profile: DataT | null) =>
-    void actOnProfile(profile, "pass");
+    actOnProfile(profile, "pass");
 
   const filterSectionTitle = (title: string) => (
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
@@ -1095,6 +1104,11 @@ export const DiscoverContent = forwardRef<
           enableSwipe
           actionPending={swipeMutation.isPending}
           profile={selectedProfileForSheet}
+          nextProfile={
+            nextSelectedProfile
+              ? { ...nextSelectedProfile, id: String(nextSelectedProfile.id) }
+              : null
+          }
           onClose={() => setShowProfileSheet(false)}
           onImagePress={(_image, index) =>
             selectedProfile
@@ -1234,7 +1248,12 @@ export const DiscoverContent = forwardRef<
 
 DiscoverContent.displayName = "DiscoverContent";
 
-const Discover = () => <DiscoverContent />;
+const Discover = () => {
+  const insets = useSafeAreaInsets();
+  return <View style={{ flex: 1, paddingBottom: getBottomTabContentPadding(insets.bottom, 118) }}>
+    <DiscoverContent />
+  </View>;
+};
 
 const localStyles = StyleSheet.create({
   screen: {

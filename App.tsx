@@ -364,6 +364,16 @@ const AppNavigator = () => {
                     }}
                   />
                   <Tab.Screen
+                    name="Discover"
+                    component={Discover}
+                    options={{
+                      tabBarLabel: t("tabs.discover"),
+                      tabBarIcon: ({ focused }) => (
+                        <TabBarIcon focused={focused} iconName="compass" />
+                      ),
+                    }}
+                  />
+                  <Tab.Screen
                     name="Calendar"
                     component={Connections}
                     options={{
@@ -377,20 +387,10 @@ const AppNavigator = () => {
                     }}
                   />
                   <Tab.Screen
-                    name="Discover"
-                    component={Discover}
-                    options={{
-                      tabBarLabel: t("tabs.discover"),
-                      tabBarButton: () => null,
-                      tabBarIcon: ({ focused }) => (
-                        <TabBarIcon focused={focused} iconName="compass" />
-                      ),
-                    }}
-                  />
-                  <Tab.Screen
                     name="Aura"
                     component={Profile}
                     options={{
+                      tabBarButton: () => null,
                       tabBarLabel: t("tabs.aura"),
                       tabBarIcon: ({ focused }) => (
                         <TabBarIcon

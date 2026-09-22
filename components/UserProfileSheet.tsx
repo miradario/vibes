@@ -2,12 +2,14 @@ import LikeBubbles from "./LikeBubbles";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import {
   Animated,
+  AccessibilityInfo,
   FlatList,
   Image,
   PanResponder,
@@ -39,10 +41,11 @@ type Props = {
   enableSwipe?: boolean;
   actionPending?: boolean;
   profile: UserProfileCardData | null;
+  nextProfile?: UserProfileCardData | null;
   onClose: () => void;
-  onContactPress?: () => void;
+  onContactPress?: () => void | Promise<unknown>;
   secondaryActionLabel?: string;
-  onSecondaryActionPress?: () => void;
+  onSecondaryActionPress?: () => void | Promise<unknown>;
   onImagePress?: (image?: any, index?: number) => void;
 };
 
@@ -150,6 +153,7 @@ const UserProfileSheet = ({
   enableSwipe = false,
   actionPending = false,
   profile,
+  nextProfile,
   onClose,
   onContactPress,
   secondaryActionLabel,
@@ -171,10 +175,87 @@ const UserProfileSheet = ({
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [burst, setBurst] = useState(0);
   const swipeX = useRef(new Animated.Value(0)).current;
+  const swipingRef = useRef(false);
+  const [swipeAnimating, setSwipeAnimating] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
+      if (active) setReduceMotion(value);
+    });
+    const sub = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduceMotion
+    );
+    return () => {
+      active = false;
+      sub.remove();
+      swipeX.stopAnimation();
+    };
+  }, [swipeX]);
+  useLayoutEffect(() => {
+    swipeX.stopAnimation();
+    swipeX.setValue(0);
+  }, [profile?.id, visible, swipeX]);
+  const resetSwipe = useCallback(() => {
+    Animated.timing(swipeX, {
+      toValue: 0,
+      duration: reduceMotion ? 0 : 180,
+      useNativeDriver: true,
+    }).start();
+  }, [swipeX, reduceMotion]);
+  const commitSwipe = useCallback(
+    (direction: "like" | "pass") => {
+      if (actionPending || swipingRef.current) return;
+      const action =
+        direction === "like" ? onContactPress : onSecondaryActionPress;
+      if (!action) {
+        resetSwipe();
+        return;
+      }
+      if (!enableSwipe) {
+        void action();
+        return;
+      }
+      swipingRef.current = true;
+      setSwipeAnimating(true);
+      setDetailsVisible(false);
+      Animated.timing(swipeX, {
+        toValue: (direction === "like" ? 1 : -1) * width * 1.3,
+        duration: reduceMotion ? 0 : 240,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (!finished) {
+          swipingRef.current = false;
+          setSwipeAnimating(false);
+          return;
+        }
+        void (async () => {
+          try {
+            await action();
+          } finally {
+            swipingRef.current = false;
+            setSwipeAnimating(false);
+            resetSwipe();
+          }
+        })();
+      });
+    },
+    [
+      actionPending,
+      onContactPress,
+      onSecondaryActionPress,
+      enableSwipe,
+      swipeX,
+      width,
+      reduceMotion,
+      resetSwipe,
+    ]
+  );
   const like = () => {
-    if (!actionPending) {
-      setBurst((value) => value + 1);
-      onContactPress?.();
+    if (!actionPending && !swipingRef.current) {
+      if (!reduceMotion) setBurst((value) => value + 1);
+      commitSwipe("like");
     }
   };
   const swipe = useMemo(
@@ -183,23 +264,27 @@ const UserProfileSheet = ({
         onMoveShouldSetPanResponder: (_, g) =>
           enableSwipe &&
           !actionPending &&
+          !swipingRef.current &&
           !detailsVisible &&
           Math.abs(g.dx) > 15 &&
           Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
         onPanResponderMove: (_, g) => swipeX.setValue(g.dx),
         onPanResponderRelease: (_, g) => {
-          swipeX.setValue(0);
-          if (g.dx > 85) like();
-          else if (g.dx < -85) onSecondaryActionPress?.();
+          const threshold = Math.min(110, width * 0.25);
+          if (g.dx > threshold) commitSwipe("like");
+          else if (g.dx < -threshold) commitSwipe("pass");
+          else resetSwipe();
         },
-        onPanResponderTerminate: () => swipeX.setValue(0),
+        onPanResponderTerminate: resetSwipe,
       }),
     [
       enableSwipe,
       actionPending,
-      onContactPress,
-      onSecondaryActionPress,
       detailsVisible,
+      swipeX,
+      width,
+      commitSwipe,
+      resetSwipe,
     ]
   );
   const [activeIndex, setActiveIndex] = useState(0);
@@ -359,7 +444,7 @@ const UserProfileSheet = ({
               profile?.name ?? "este perfil"
             }`}
             activeOpacity={0.9}
-            disabled={actionPending}
+            disabled={actionPending || swipeAnimating}
             onPress={like}
             style={localStyles.primaryActionTouch}
           >
@@ -380,8 +465,8 @@ const UserProfileSheet = ({
             accessibilityRole="button"
             accessibilityLabel={secondaryActionLabel}
             activeOpacity={0.75}
-            disabled={actionPending}
-            onPress={onSecondaryActionPress}
+            disabled={actionPending || swipeAnimating}
+            onPress={() => commitSwipe("pass")}
             style={localStyles.secondaryAction}
           >
             <Text
@@ -410,8 +495,69 @@ const UserProfileSheet = ({
         sheetInDelay={0}
         sheetStyle={[localStyles.fullscreenSheet, { height }]}
       >
+        {enableSwipe && nextProfile ? (
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: "#FEFEFD",
+                transform: [
+                  {
+                    scale: swipeX.interpolate({
+                      inputRange: [-width, 0, width],
+                      outputRange: [1, 0.95, 1],
+                      extrapolate: "clamp",
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <ProfileMediaImage
+              source={
+                normalizeProfileImages(nextProfile)[0] ??
+                VIBES_FALLBACK_ILLUSTRATION
+              }
+              style={{ width, height }}
+              transition={0}
+            />
+            <LinearGradient
+              colors={["transparent", "rgba(255,253,248,0.97)"]}
+              style={[
+                localStyles.nextProfileCopy,
+                { paddingBottom: insets.bottom + 40 },
+              ]}
+            >
+              <Text style={localStyles.profileName}>{nextProfile.name}</Text>
+              {nextProfile.age ? (
+                <Text style={localStyles.profileAge}>
+                  {nextProfile.age} años
+                </Text>
+              ) : null}
+            </LinearGradient>
+          </Animated.View>
+        ) : null}
         <Animated.View
-          style={[localStyles.screen, { transform: [{ translateX: swipeX }] }]}
+          style={[
+            localStyles.screen,
+            {
+              transform: [
+                { translateX: swipeX },
+                {
+                  rotate: reduceMotion
+                    ? "0deg"
+                    : swipeX.interpolate({
+                        inputRange: [-width, 0, width],
+                        outputRange: ["-8deg", "0deg", "8deg"],
+                        extrapolate: "clamp",
+                      }),
+                },
+              ],
+            },
+          ]}
           {...swipe.panHandlers}
         >
           {profileImages.length > 0 ? (
@@ -597,6 +743,51 @@ const UserProfileSheet = ({
             </View>
             {renderActions()}
           </View>
+          {enableSwipe && (
+            <View
+              pointerEvents="none"
+              style={[localStyles.swipeIndicators, { top: insets.top + 76 }]}
+            >
+              <Animated.View
+                style={[
+                  localStyles.swipeStamp,
+                  {
+                    borderColor: "#4E806C",
+                    opacity: swipeX.interpolate({
+                      inputRange: [0, 85],
+                      outputRange: [0, 1],
+                      extrapolate: "clamp",
+                    }),
+                  },
+                ]}
+              >
+                <Text
+                  style={[localStyles.swipeStampText, { color: "#35614F" }]}
+                >
+                  LIKE
+                </Text>
+              </Animated.View>
+              <Animated.View
+                style={[
+                  localStyles.swipeStamp,
+                  {
+                    borderColor: "#B66D60",
+                    opacity: swipeX.interpolate({
+                      inputRange: [-85, 0],
+                      outputRange: [1, 0],
+                      extrapolate: "clamp",
+                    }),
+                  },
+                ]}
+              >
+                <Text
+                  style={[localStyles.swipeStampText, { color: "#914D42" }]}
+                >
+                  NO LIKE
+                </Text>
+              </Animated.View>
+            </View>
+          )}
         </Animated.View>
         <AnimatedSheetModal
           inline
@@ -753,6 +944,29 @@ const UserProfileSheet = ({
 export default UserProfileSheet;
 
 const localStyles = StyleSheet.create({
+  nextProfileCopy: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 28,
+    paddingTop: 100,
+  },
+  swipeIndicators: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  swipeStamp: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 3,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,253,248,0.94)",
+  },
+  swipeStampText: { fontFamily: vibesTheme.fonts.subtitle, fontSize: 22 },
   fullscreenSheet: { width: "100%", backgroundColor: "#FEFEFD" },
   screen: { flex: 1, overflow: "hidden", backgroundColor: "#FEFEFD" },
   fallbackCanvas: {

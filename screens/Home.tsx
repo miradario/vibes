@@ -885,8 +885,9 @@ const Home = () => {
               accessibilityLabel="Ir a tu perfil"
               activeOpacity={0.84}
               onPress={() => navigation.navigate("Aura" as never)}
-              style={localStyles.heroAvatarButton}
+              style={{ alignItems: "center", gap: 6, minWidth: 58 }}
             >
+              <View style={localStyles.heroAvatarButton}>
               <Avatar
                 uri={centerProfile.avatarUri ?? null}
                 size={58}
@@ -894,6 +895,8 @@ const Home = () => {
                 fallbackBackgroundColor="#FFFFFF"
                 fallbackIconColor="#2B2B2B"
               />
+              </View>
+              <Text style={{ fontSize: 11, lineHeight: 15, color: "#6E6E6E" }}>Ver perfil</Text>
             </TouchableOpacity>
             <View style={localStyles.heroCopy}>
               <Text

@@ -241,8 +241,7 @@ const BottomTabPreview = () => {
       navigation.navigate(
         "Tab" as never,
         {
-          screen: "Calendar",
-          params: { initialSection: "discover" },
+          screen: "Discover",
         } as never,
       );
       return;
