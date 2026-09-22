@@ -74,6 +74,25 @@ const getStaticMapPreviewUrl = (
 ) =>
   `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=800x360&scale=2&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=${apiKey}`;
 
+const getOpenStreetMapTiles = (lat: number, lng: number, zoom = 15) => {
+  const latRad = (lat * Math.PI) / 180;
+  const scale = 2 ** zoom;
+  const centerX = Math.floor(((lng + 180) / 360) * scale);
+  const centerY = Math.floor(
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) *
+      scale,
+  );
+
+  return [-1, 0, 1].flatMap((xOffset) =>
+    [-1, 0, 1].map((yOffset) => ({
+      id: `${zoom}-${centerX + xOffset}-${centerY + yOffset}`,
+      url: `https://tile.openstreetmap.org/${zoom}/${centerX + xOffset}/${centerY + yOffset}.png`,
+      left: `${(xOffset + 1) * 33.333}%`,
+      top: `${(yOffset + 1) * 33.333}%`,
+    })),
+  );
+};
+
 const normalizeExternalUrl = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return "";
@@ -427,7 +446,6 @@ const CreateEvent = () => {
           lng: firstMatch.longitude,
         });
         setMapPreviewFailed(false);
-        showAlertAfterKeyboard("Ubicación validada", trimmedLocation);
       } catch (error) {
         console.error("Error validating location with the native geocoder", error);
         promptManualLocationFallback(
@@ -477,7 +495,6 @@ const CreateEvent = () => {
       });
       setMapPreviewFailed(false);
       setLocation(firstResult.formatted_address);
-      showAlertAfterKeyboard("Ubicación validada", firstResult.formatted_address);
     } catch (error) {
       console.error("Error validating location with Google Maps", error);
       setValidatedLocation(null);
@@ -650,6 +667,12 @@ const CreateEvent = () => {
       Alert.alert("Mapa", "No se pudo abrir el mapa.");
     }
   };
+
+  const validatedMapTiles =
+    typeof validatedLocation?.lat === "number" &&
+    typeof validatedLocation.lng === "number"
+      ? getOpenStreetMapTiles(validatedLocation.lat, validatedLocation.lng)
+      : [];
 
   return (
     <KeyboardAvoidingView
@@ -925,19 +948,31 @@ const CreateEvent = () => {
               </TouchableOpacity>
               {validatedLocation ? (
                 <View style={localStyles.validatedLocationBlock}>
-                  <Text style={localStyles.validatedText}>
-                    {typeof validatedLocation.lat === "number" &&
-                    typeof validatedLocation.lng === "number"
-                      ? "Ubicación válida"
-                      : "Ubicación sin validar (sin mapa)"}
-                    : {validatedLocation.address}
-                  </Text>
+                  {typeof validatedLocation.lat !== "number" ||
+                  typeof validatedLocation.lng !== "number" ? (
+                    <Text style={localStyles.validatedText}>
+                      Ubicación sin validar (sin mapa)
+                    </Text>
+                  ) : null}
                   <TouchableOpacity
                     activeOpacity={0.9}
                     style={localStyles.mapPreviewCard}
                     onPress={handleOpenValidatedLocation}
                   >
-                    {typeof validatedLocation.lat === "number" &&
+                    {validatedMapTiles.length > 0 ? (
+                      <View style={localStyles.mapPreviewTiles}>
+                        {validatedMapTiles.map((tile) => (
+                          <Image
+                            key={tile.id}
+                            source={{ uri: tile.url }}
+                            style={[
+                              localStyles.mapPreviewTile,
+                              { left: tile.left, top: tile.top } as any,
+                            ]}
+                          />
+                        ))}
+                      </View>
+                    ) : typeof validatedLocation.lat === "number" &&
                     typeof validatedLocation.lng === "number" &&
                     googleMapsApiKey &&
                     !mapPreviewFailed ? (
@@ -973,6 +1008,11 @@ const CreateEvent = () => {
                         ) : null}
                       </View>
                     )}
+                    {validatedMapTiles.length > 0 ? (
+                      <View style={localStyles.mapPreviewCenterPin}>
+                        <Icon name="location" size={28} color={PRIMARY_COLOR} />
+                      </View>
+                    ) : null}
                     <View style={localStyles.mapPreviewOverlay}>
                       <View style={localStyles.mapPreviewBadge}>
                         <Icon name="navigate" size={14} color={WHITE} />
@@ -1353,6 +1393,33 @@ const localStyles = StyleSheet.create({
   mapPreviewImage: {
     width: "100%",
     height: "100%",
+  },
+  mapPreviewTiles: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  mapPreviewTile: {
+    position: "absolute",
+    width: "33.334%",
+    height: "33.334%",
+  },
+  mapPreviewCenterPin: {
+    position: "absolute",
+    left: "50%",
+    top: "50%",
+    width: 44,
+    height: 44,
+    marginLeft: -22,
+    marginTop: -34,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
+    shadowColor: BLACK,
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
   mapPreviewFallback: {
     flex: 1,
