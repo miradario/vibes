@@ -799,9 +799,11 @@ export const MessagesContent = ({
                 >
                   {tab.label}
                 </Text>
-                <View style={localStyles.countBadge}>
-                  <Text style={localStyles.countText}>{tab.count}</Text>
-                </View>
+                {tab.count > 0 ? (
+                  <View style={localStyles.countBadge}>
+                    <Text style={localStyles.countText}>{tab.count}</Text>
+                  </View>
+                ) : null}
               </TouchableOpacity>
             );
           })}

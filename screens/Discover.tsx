@@ -1428,6 +1428,7 @@ const Discover = () => {
     <View
       style={{
         flex: 1,
+        backgroundColor: vibesTheme.colors.background,
         paddingBottom: getBottomTabContentPadding(insets.bottom, 118),
       }}
     >

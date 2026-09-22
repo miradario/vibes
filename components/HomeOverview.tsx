@@ -219,9 +219,11 @@ export default function HomeOverview({ userId }: { userId?: string }) {
             <View style={s.emptyIcon}>
               <Icon name="trophy-outline" size={26} color={ACCENT} />
             </View>
-            <Text style={s.meta}>
-              Elegí un desafío y empezá a construir tu práctica.
-            </Text>
+            <View style={s.emptyCopy}>
+              <Text style={s.meta}>
+                Elegí un desafío y empezá a construir tu práctica.
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
         {challenges.length ? (
@@ -326,7 +328,6 @@ export default function HomeOverview({ userId }: { userId?: string }) {
                 style={s.ctaButton}
                 activeOpacity={0.84}
               >
-                <Icon name="calendar-outline" size={18} color="#FFFFFF" />
                 <Text style={s.ctaText}>Crear evento</Text>
               </TouchableOpacity>
             </View>
@@ -496,6 +497,7 @@ const s = StyleSheet.create({
   },
   eventAvatars: { marginTop: 4 },
   emptyCard: {
+    width: "100%",
     minHeight: 92,
     flexDirection: "row",
     alignItems: "center",
@@ -541,7 +543,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 18,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
     backgroundColor: ACCENT,
   },
   ctaText: {
