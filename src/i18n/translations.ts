@@ -464,7 +464,7 @@ const baseTranslations = {
       couldNotLoad: "No se pudieron cargar",
       noChallengesYet: "Todavía no hay desafíos reales",
       noEventsYet: "Todavía no hay eventos reales",
-      queryingSupabase: "Consultando Supabase...",
+      queryingSupabase: "Cargando información...",
       challengesEmpty:
         "Creá un desafío o conectá una fuente real para poblar esta lista.",
       eventsEmpty:
@@ -1007,7 +1007,7 @@ const baseTranslations = {
       couldNotLoad: "Could not load",
       noChallengesYet: "No real challenges yet",
       noEventsYet: "No real events yet",
-      queryingSupabase: "Querying Supabase...",
+      queryingSupabase: "Loading information...",
       challengesEmpty:
         "Create a challenge or connect a real source to populate this list.",
       eventsEmpty:

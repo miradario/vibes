@@ -1,3 +1,4 @@
+import { userFacingMessage } from "./userFacingMessage";
 import type { ToastShowParams } from "react-native-toast-message";
 
 import { normalizeAxiosError } from "../api/http/errors";
@@ -40,9 +41,9 @@ export const handleApiError = (
   const resolvedOptions = resolveOptions(options);
   const normalized = normalizeAxiosError(error);
   const fallbackMessage = resolvedOptions.fallbackMessage ?? "Unknown error";
-  const message = normalized.message?.trim()
-    ? normalized.message
-    : fallbackMessage;
+  const message = userFacingMessage(
+    normalized.message?.trim() ? normalized.message : fallbackMessage
+  );
   const payload: ApiErrorPayload = {
     status: normalized.status,
     message,

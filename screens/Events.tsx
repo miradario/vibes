@@ -440,7 +440,7 @@ const Events = () => {
               </Text>
               <Text style={localStyles.emptyText}>
                 {listIsLoading
-                  ? "Consultando Supabase..."
+                  ? "Cargando eventos..."
                     : error
                     ? errorMessage
                     : normalizedSearch
