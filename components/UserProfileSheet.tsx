@@ -1,3 +1,4 @@
+import { getProfileSwipeAction } from "../src/lib/profileSwipe";
 import LikeBubbles from "./LikeBubbles";
 import React, {
   useCallback,
@@ -175,6 +176,7 @@ const UserProfileSheet = ({
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [burst, setBurst] = useState(0);
   const swipeX = useRef(new Animated.Value(0)).current;
+  const swipeUp = useRef(new Animated.Value(0)).current;
   const swipingRef = useRef(false);
   const [swipeAnimating, setSwipeAnimating] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -196,14 +198,16 @@ const UserProfileSheet = ({
   useLayoutEffect(() => {
     swipeX.stopAnimation();
     swipeX.setValue(0);
-  }, [profile?.id, visible, swipeX]);
+    swipeUp.setValue(0);
+  }, [profile?.id, visible, swipeX, swipeUp]);
   const resetSwipe = useCallback(() => {
+    swipeUp.setValue(0);
     Animated.timing(swipeX, {
       toValue: 0,
       duration: reduceMotion ? 0 : 180,
       useNativeDriver: true,
     }).start();
-  }, [swipeX, reduceMotion]);
+  }, [swipeX, swipeUp, reduceMotion]);
   const commitSwipe = useCallback(
     (direction: "like" | "pass") => {
       if (actionPending || swipingRef.current) return;
@@ -262,17 +266,28 @@ const UserProfileSheet = ({
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, g) =>
-          enableSwipe &&
           !actionPending &&
           !swipingRef.current &&
           !detailsVisible &&
-          Math.abs(g.dx) > 15 &&
-          Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
-        onPanResponderMove: (_, g) => swipeX.setValue(g.dx),
+          ((enableSwipe &&
+            Math.abs(g.dx) > 15 &&
+            Math.abs(g.dx) > Math.abs(g.dy) * 1.5) ||
+            (g.dy < -15 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5)),
+        onPanResponderMove: (_, g) => {
+          swipeUp.setValue(
+            g.dy < 0 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5 ? -g.dy : 0
+          );
+          if (enableSwipe && Math.abs(g.dx) > Math.abs(g.dy) * 1.5)
+            swipeX.setValue(g.dx);
+        },
         onPanResponderRelease: (_, g) => {
-          const threshold = Math.min(110, width * 0.25);
-          if (g.dx > threshold) commitSwipe("like");
-          else if (g.dx < -threshold) commitSwipe("pass");
+          swipeUp.setValue(0);
+          const action = getProfileSwipeAction(g.dx, g.dy, width, enableSwipe);
+          if (action === "details") {
+            resetSwipe();
+            panelDragY.setValue(0);
+            setDetailsVisible(true);
+          } else if (action) commitSwipe(action);
           else resetSwipe();
         },
         onPanResponderTerminate: resetSwipe,
@@ -281,10 +296,12 @@ const UserProfileSheet = ({
       enableSwipe,
       actionPending,
       detailsVisible,
+      swipeUp,
       swipeX,
       width,
       commitSwipe,
       resetSwipe,
+      panelDragY,
     ]
   );
   const [activeIndex, setActiveIndex] = useState(0);
@@ -435,7 +452,61 @@ const UserProfileSheet = ({
   };
 
   const renderActions = (onPanel = false) =>
-    onContactPress || (onSecondaryActionPress && secondaryActionLabel) ? (
+    enableSwipe && !onPanel ? (
+      <View style={localStyles.vibeActions}>
+        {onContactPress && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`Conectar con ${
+              profile?.name ?? "este perfil"
+            }`}
+            disabled={actionPending || swipeAnimating}
+            activeOpacity={0.85}
+            onPress={like}
+            style={localStyles.vibeAction}
+          >
+            <LinearGradient
+              colors={["#EBC57F", "#E4B76E"]}
+              style={localStyles.vibeActionCircle}
+            >
+              <Icon name="chatbubbles-outline" size={30} color="#2B2B2B" />
+            </LinearGradient>
+            <Text style={localStyles.vibeActionLabel}>
+              {actionPending ? "Guardando…" : "Conectar"}
+            </Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Ver más información del perfil"
+          activeOpacity={0.84}
+          onPress={showDetails}
+          style={localStyles.moreButton}
+        >
+          <Text style={localStyles.moreButtonText}>Ver más</Text>
+        </TouchableOpacity>
+        {onSecondaryActionPress && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Pasar al siguiente perfil"
+            disabled={actionPending || swipeAnimating}
+            activeOpacity={0.85}
+            onPress={() => commitSwipe("pass")}
+            style={localStyles.vibeAction}
+          >
+            <View
+              style={[
+                localStyles.vibeActionCircle,
+                { backgroundColor: "#E6EAF0" },
+              ]}
+            >
+              <Icon name="close" size={32} color="#536F91" />
+            </View>
+            <Text style={localStyles.vibeActionLabel}>Pasar</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    ) : onContactPress || (onSecondaryActionPress && secondaryActionLabel) ? (
       <View style={[localStyles.actions, onPanel && localStyles.panelActions]}>
         {onContactPress ? (
           <TouchableOpacity
@@ -638,13 +709,13 @@ const UserProfileSheet = ({
 
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Volver"
+            accessibilityLabel="Cerrar perfil"
             activeOpacity={0.82}
             onPress={onClose}
             hitSlop={8}
-            style={[localStyles.backButton, { top: insets.top + 10 }]}
+            style={[localStyles.backButton, { top: insets.top + 54 }]}
           >
-            <Icon name="chevron-back" size={28} color="#2B2B2B" />
+            <Icon name="close" size={28} color="#2B2B2B" />
           </TouchableOpacity>
 
           {hasMultipleImages ? (
@@ -730,65 +801,91 @@ const UserProfileSheet = ({
                   <Text style={localStyles.profileAge}>{profile.age} años</Text>
                 ) : null}
               </View>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel={`Ver más información de ${profile.name}`}
-                activeOpacity={0.84}
-                onPress={showDetails}
-                style={localStyles.moreButton}
-              >
-                <Icon name="chevron-up" size={22} color="#D8A547" />
-                <Text style={localStyles.moreButtonText}>Ver más</Text>
-              </TouchableOpacity>
             </View>
+            {!enableSwipe && (
+              <View style={{ alignItems: "center", marginTop: 12 }}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver más información del perfil"
+                  activeOpacity={0.84}
+                  onPress={showDetails}
+                  style={localStyles.moreButton}
+                >
+                  <Text style={localStyles.moreButtonText}>Ver más</Text>
+                </TouchableOpacity>
+              </View>
+            )}
             {renderActions()}
           </View>
-          {enableSwipe && (
-            <View
-              pointerEvents="none"
-              style={[localStyles.swipeIndicators, { top: insets.top + 76 }]}
-            >
-              <Animated.View
-                style={[
-                  localStyles.swipeStamp,
-                  {
-                    borderColor: "#4E806C",
-                    opacity: swipeX.interpolate({
-                      inputRange: [0, 85],
-                      outputRange: [0, 1],
-                      extrapolate: "clamp",
-                    }),
-                  },
-                ]}
-              >
-                <Text
-                  style={[localStyles.swipeStampText, { color: "#35614F" }]}
-                >
-                  LIKE
-                </Text>
-              </Animated.View>
-              <Animated.View
-                style={[
-                  localStyles.swipeStamp,
-                  {
-                    borderColor: "#B66D60",
-                    opacity: swipeX.interpolate({
-                      inputRange: [-85, 0],
-                      outputRange: [1, 0],
-                      extrapolate: "clamp",
-                    }),
-                  },
-                ]}
-              >
-                <Text
-                  style={[localStyles.swipeStampText, { color: "#914D42" }]}
-                >
-                  NO LIKE
-                </Text>
-              </Animated.View>
-            </View>
-          )}
         </Animated.View>
+        <View pointerEvents="none" style={localStyles.swipeUpIndicator}>
+          <Animated.View
+            style={[
+              localStyles.swipeUpHint,
+              {
+                opacity: swipeUp.interpolate({
+                  inputRange: [0, 45],
+                  outputRange: [0, 1],
+                  extrapolate: "clamp",
+                }),
+              },
+            ]}
+          >
+            <Text style={localStyles.swipeUpText}>Ver más</Text>
+          </Animated.View>
+        </View>
+        {enableSwipe && (
+          <View pointerEvents="none" style={localStyles.swipeIndicators}>
+            <Animated.View
+              style={[
+                localStyles.swipeStamp,
+                {
+                  borderColor: "#E4B76E",
+                  transform: [
+                    {
+                      scale: swipeX.interpolate({
+                        inputRange: [0, 120],
+                        outputRange: [0.65, 1.5],
+                        extrapolate: "clamp",
+                      }),
+                    },
+                  ],
+                  opacity: swipeX.interpolate({
+                    inputRange: [0, 85],
+                    outputRange: [0, 1],
+                    extrapolate: "clamp",
+                  }),
+                },
+              ]}
+            >
+              <Icon name="checkmark" size={42} color="#8B6327" />
+            </Animated.View>
+            <Animated.View
+              style={[
+                localStyles.swipeStamp,
+                {
+                  borderColor: "#AEBFD1",
+                  transform: [
+                    {
+                      scale: swipeX.interpolate({
+                        inputRange: [-120, 0],
+                        outputRange: [1.5, 0.65],
+                        extrapolate: "clamp",
+                      }),
+                    },
+                  ],
+                  opacity: swipeX.interpolate({
+                    inputRange: [-85, 0],
+                    outputRange: [1, 0],
+                    extrapolate: "clamp",
+                  }),
+                },
+              ]}
+            >
+              <Icon name="close" size={42} color="#536F91" />
+            </Animated.View>
+          </View>
+        )}
         <AnimatedSheetModal
           inline
           visible={visible && detailsVisible}
@@ -890,11 +987,7 @@ const UserProfileSheet = ({
                   <PillList items={otherPreferences} />
                 </DetailSection>
               ) : null}
-              {profile.match ? (
-                <DetailSection label="Afinidad">
-                  <Text style={localStyles.detailValue}>{profile.match}</Text>
-                </DetailSection>
-              ) : null}
+
               {sharedActivities?.events.length ||
               sharedActivities?.challenges.length ? (
                 <DetailSection label="En común">
@@ -952,19 +1045,42 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingTop: 100,
   },
+  swipeUpIndicator: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  swipeUpHint: {
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,253,248,0.97)",
+    borderWidth: 1,
+    borderColor: "#E4B76E",
+    gap: 6,
+  },
+  swipeUpText: {
+    fontFamily: vibesTheme.fonts.subtitle,
+    fontSize: 20,
+    color: "#8B6327",
+  },
   swipeIndicators: {
-    position: "absolute",
+    ...StyleSheet.absoluteFillObject,
     left: 24,
     right: 24,
-    flexDirection: "row",
+    flexDirection: "row-reverse",
+    alignItems: "center",
     justifyContent: "space-between",
   },
   swipeStamp: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 3,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,253,248,0.94)",
+    width: 72,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderRadius: 36,
+    backgroundColor: "rgba(255,253,248,0.97)",
   },
   swipeStampText: { fontFamily: vibesTheme.fonts.subtitle, fontSize: 22 },
   fullscreenSheet: { width: "100%", backgroundColor: "#FEFEFD" },
@@ -1010,7 +1126,9 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.9)",
+    backgroundColor: "#FEFEFD",
+    borderWidth: 1,
+    borderColor: "#D8D0C3",
     shadowColor: "#111",
     shadowOpacity: 0.14,
     shadowRadius: 12,
@@ -1102,9 +1220,9 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   moreButton: {
-    minWidth: 124,
+    minWidth: 48,
     minHeight: 48,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
@@ -1116,6 +1234,29 @@ const localStyles = StyleSheet.create({
     color: "#2B2B2B",
     fontSize: 17,
     fontFamily: vibesTheme.fonts.medium,
+  },
+  vibeActions: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 16,
+    marginTop: 18,
+  },
+  vibeAction: { minWidth: 64, alignItems: "center", gap: 6 },
+  vibeActionCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.6)",
+  },
+  vibeActionLabel: {
+    color: "#FEFEFD",
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.regular,
   },
   actions: { marginTop: 18, gap: 6 },
   primaryActionTouch: {

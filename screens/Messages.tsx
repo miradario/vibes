@@ -178,9 +178,13 @@ export const MessagesContent = ({
     selectedIncomingLike?.likerUserId
   );
 
-  const withMessages = (matches ?? []).filter(
-    (m) => m.lastMessage || views.data?.includes(m.id)
-  );
+  const withMessages = (matches ?? [])
+    .filter((m) => m.lastMessage || views.data?.includes(m.id))
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.lastMessageAt ?? left.createdAt) || 0;
+      const rightTime = Date.parse(right.lastMessageAt ?? right.createdAt) || 0;
+      return rightTime - leftTime || left.id.localeCompare(right.id);
+    });
   const newConnections = views.isSuccess
     ? getNewConnections(matches ?? [], views.data)
     : [];

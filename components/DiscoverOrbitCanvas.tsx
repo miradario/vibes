@@ -1,6 +1,7 @@
+import { stepBubbles, type BubbleBody } from "../src/lib/bubblePhysics";
 /** @format */
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   LayoutChangeEvent,
   StyleSheet,
@@ -10,7 +11,10 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { LinearGradient } from "expo-linear-gradient";
+import { useIsFocused } from "@react-navigation/native";
 import Animated, {
+  useReducedMotion,
+  type SharedValue,
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
@@ -44,6 +48,7 @@ type OrbitNodeConfig = {
   angle: number;
   speed: number;
   scale: number;
+  roaming?: boolean;
 };
 
 type OrbitNodeProps = {
@@ -52,6 +57,7 @@ type OrbitNodeProps = {
   centerY: number;
   children: React.ReactNode;
   pointerEvents?: "auto" | "none";
+  motionActive?: boolean;
 };
 
 type DiscoverOrbitCanvasProps = {
@@ -81,28 +87,26 @@ const buildOrbitUserLabel = (user: DataT) => {
   return [nameAndAge, distance].filter(Boolean).join(" · ");
 };
 
-const getMatchScore = (user: DataT, index: number) => {
-  const parsed = String(user.match ?? "").match(/\d+/)?.[0];
-  if (parsed && Number(parsed) > 0) return `${Math.min(Number(parsed), 99)}%`;
-  if (parsed) return null;
-  return `${88 + (index % 7)}%`;
-};
-
 const OrbitNode = ({
   config,
   centerX,
   centerY,
   children,
   pointerEvents = "auto",
+  motionActive = true,
 }: OrbitNodeProps) => {
   const angle = useSharedValue(config.angle);
   const float = useSharedValue(0);
 
-  useFrameCallback((frame) => {
+  const frameCallback = useFrameCallback((frame) => {
     const dt = Math.min((frame.timeSincePreviousFrame ?? 16) / 1000, 0.05);
     angle.value += dt * config.speed;
     float.value += dt;
-  }, true);
+  }, false);
+  useEffect(() => {
+    frameCallback.setActive(motionActive);
+    return () => frameCallback.setActive(false);
+  }, [frameCallback, motionActive]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -113,9 +117,9 @@ const OrbitNode = ({
       {
         translateY:
           centerY +
-          Math.sin(angle.value) * config.radiusY -
+          Math.sin(angle.value * (config.roaming ? 1.31 : 1)) * config.radiusY -
           config.size / 2 +
-          Math.sin(float.value * 1.4 + config.angle) * 5,
+          (motionActive ? Math.sin(float.value * 0.7 + config.angle) * 3 : 0),
       },
       { scale: config.scale },
     ],
@@ -131,6 +135,34 @@ const OrbitNode = ({
   );
 };
 
+function CollidingBubble({
+  bodies,
+  index,
+  size,
+  children,
+}: {
+  bodies: SharedValue<BubbleBody[]>;
+  index: number;
+  size: number;
+  children: React.ReactNode;
+}) {
+  const style = useAnimatedStyle(() => {
+    const body = bodies.value[index];
+    return {
+      opacity: body ? 1 : 0,
+      transform: [
+        { translateX: body ? body.x + (body.width - size) / 2 : 0 },
+        { translateY: body?.y ?? 0 },
+      ],
+    };
+  });
+  return (
+    <Animated.View style={[styles.discoverOrbitUserBubble, style]}>
+      {children}
+    </Animated.View>
+  );
+}
+
 const DiscoverOrbitCanvas = ({
   users,
   dismissedUsers = [],
@@ -140,6 +172,9 @@ const DiscoverOrbitCanvas = ({
   onDismissedUserPress,
 }: DiscoverOrbitCanvasProps) => {
   const window = useWindowDimensions();
+  const focused = useIsFocused();
+  const reducedMotion = useReducedMotion();
+  const motionActive = focused && !reducedMotion;
   const [layout, setLayout] = useState({ width: 0, height: 0 });
   const centerSpin = useSharedValue(0);
 
@@ -150,23 +185,75 @@ const DiscoverOrbitCanvas = ({
   const baseRadiusX = Math.min(boundsWidth * 0.38, 165);
   const baseRadiusY = Math.min(boundsHeight * 0.28, 185);
 
-  // Staggered cells keep every target visible while allowing gentle drift.
+  // Use the whole visible canvas for slow paths; retain a static layout for reduced motion.
   const columns = boundsHeight < 380 && users.length > 6 ? 4 : 3;
   const rows = Math.max(1, Math.ceil(users.length / columns));
   const cellWidth = boundsWidth / columns;
   const cellHeight = boundsHeight / rows;
   const userConfigs = useMemo<OrbitNodeConfig[]>(
     () =>
-      users.map((_, index) => ({
-        size: Math.max(48, Math.min(82, cellWidth - 30, cellHeight - 48)),
-        radiusX: 5 + (index % 3),
-        radiusY: 3,
-        angle: index * 2.4,
-        speed: index % 2 ? -0.16 : 0.18,
-        scale: 1,
-      })),
-    [users, cellWidth, cellHeight]
+      users.map((_, index) => {
+        const size = Math.max(
+          48,
+          Math.min(82, cellWidth - 30, cellHeight - 48)
+        );
+        return {
+          size,
+          radiusX: reducedMotion
+            ? 0
+            : Math.max(
+                0,
+                (boundsWidth - Math.max(cellWidth - 12, size)) / 2 - 12
+              ),
+          radiusY: reducedMotion
+            ? 0
+            : Math.max(0, (boundsHeight - size - 40) / 2 - 12),
+          angle: index * 2.4,
+          speed: (index % 2 ? -1 : 1) * (0.055 + (index % 3) * 0.008),
+          scale: 1,
+          roaming: true,
+        };
+      }),
+    [users, cellWidth, cellHeight, boundsWidth, boundsHeight, reducedMotion]
   );
+  const bodies = useSharedValue<BubbleBody[]>([]);
+  const userKey = users.map((user) => user.id).join("|");
+  useEffect(() => {
+    bodies.value = users.map((_, index) => {
+      const size = Math.max(48, Math.min(82, cellWidth - 30, cellHeight - 48));
+      const boxHeight = size + 34;
+      return {
+        x: (index % columns) * cellWidth + (cellWidth - size) / 2,
+        y:
+          Math.floor(index / columns) * cellHeight +
+          (cellHeight - boxHeight) / 2,
+        width: size,
+        height: size,
+        vx: (index % 2 ? -1 : 1) * (6 + (index % 4)),
+        vy: (index % 3 ? 1 : -1) * (5 + (index % 3) * 1.5),
+      };
+    });
+  }, [
+    userKey,
+    boundsWidth,
+    boundsHeight,
+    columns,
+    cellWidth,
+    cellHeight,
+    bodies,
+  ]);
+  const physicsFrame = useFrameCallback((frame) => {
+    bodies.value = stepBubbles(
+      bodies.value,
+      boundsWidth,
+      Math.max(0, boundsHeight - 34),
+      (frame.timeSincePreviousFrame ?? 16) / 1000
+    );
+  }, false);
+  useEffect(() => {
+    physicsFrame.setActive(motionActive);
+    return () => physicsFrame.setActive(false);
+  }, [physicsFrame, motionActive]);
   const dismissedConfigs = useMemo<OrbitNodeConfig[]>(() => {
     return dismissedUsers.map((_, index) => {
       const size = 24 + (index % 2) * 4;
@@ -184,7 +271,7 @@ const DiscoverOrbitCanvas = ({
 
   useFrameCallback((frame) => {
     const dt = Math.min((frame.timeSincePreviousFrame ?? 16) / 1000, 0.05);
-    centerSpin.value += dt * 40;
+    if (motionActive && centerUser) centerSpin.value += dt * 40;
   }, true);
 
   const centerRingStyle = useAnimatedStyle(() => ({
@@ -254,6 +341,7 @@ const DiscoverOrbitCanvas = ({
           return (
             <OrbitNode
               key={`dismissed-user-${user.id}`}
+              motionActive={motionActive}
               config={config}
               centerX={centerX}
               centerY={centerY}
@@ -284,16 +372,12 @@ const DiscoverOrbitCanvas = ({
         {users.map((user, index) => {
           const config = userConfigs[index];
           const userPresenceLabel = buildOrbitUserLabel(user);
-          const matchScore = getMatchScore(user, index);
           return (
-            <OrbitNode
+            <CollidingBubble
               key={`drift-user-${user.id}`}
-              config={config}
-              centerX={
-                cellWidth * ((index % columns) + 0.5) +
-                (Math.floor(index / columns) % 2 ? -3 : 3)
-              }
-              centerY={cellHeight * (Math.floor(index / columns) + 0.5) - 14}
+              bodies={bodies}
+              index={index}
+              size={config.size}
             >
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -312,7 +396,6 @@ const DiscoverOrbitCanvas = ({
                   ]}
                 >
                   <View style={localStyles.userBubbleGlow} />
-                  <View style={localStyles.userBubbleShadow} />
                   <View style={styles.discoverOrbitUserRing}>
                     <LinearGradient
                       pointerEvents="none"
@@ -330,13 +413,6 @@ const DiscoverOrbitCanvas = ({
                     />
                     <View style={localStyles.userBubbleHighlight} />
                   </View>
-                  {matchScore ? (
-                    <View style={localStyles.matchBadge}>
-                      <Text style={localStyles.matchBadgeText}>
-                        {matchScore}
-                      </Text>
-                    </View>
-                  ) : null}
                 </View>
                 {userPresenceLabel ? (
                   <View
@@ -355,7 +431,7 @@ const DiscoverOrbitCanvas = ({
                   </View>
                 ) : null}
               </TouchableOpacity>
-            </OrbitNode>
+            </CollidingBubble>
           );
         })}
       </View>
@@ -436,15 +512,6 @@ const localStyles = {
     borderRadius: 999,
     backgroundColor: "rgba(228, 183, 110, 0.12)",
   },
-  userBubbleShadow: {
-    position: "absolute" as const,
-    bottom: -8,
-    width: "72%" as const,
-    height: 14,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.13)",
-    transform: [{ scaleX: 1.18 }],
-  },
   userBubbleHighlight: {
     position: "absolute" as const,
     left: 6,
@@ -454,30 +521,6 @@ const localStyles = {
     borderRadius: 999,
     backgroundColor: "rgba(255, 255, 255, 0.5)",
     transform: [{ rotate: "-18deg" }],
-  },
-  matchBadge: {
-    position: "absolute" as const,
-    right: -5,
-    bottom: 6,
-    minWidth: 42,
-    height: 24,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    backgroundColor: "#D88C7A",
-    borderWidth: 2,
-    borderColor: "rgba(255, 253, 248, 0.96)",
-    shadowColor: "#D88C7A",
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  matchBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontFamily: vibesTheme.fonts.bold,
   },
   distancePill: {
     marginTop: 6,
