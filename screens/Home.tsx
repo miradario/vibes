@@ -1,6 +1,5 @@
 import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
-import HomeActivityCard from "../components/HomeActivityCard";
 import DailyMoodCard from "../components/DailyMoodCard";
 import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
 /** @format */
@@ -217,6 +216,75 @@ const formatDistanceLabel = (distanceKm: number | null) => {
   if (distanceKm === null || !Number.isFinite(distanceKm)) return undefined;
   return `${Math.max(1, Math.round(distanceKm))} km`;
 };
+
+const getSuggestionHint = (profile: DataT) => {
+  const firstPreference = profile.preferences?.[0]?.split(":").pop()?.trim();
+  if (firstPreference) return firstPreference;
+  if (profile.spiritualPath?.[0]) return profile.spiritualPath[0];
+  if (profile.location) return profile.location;
+  return "Afinidad con vos";
+};
+
+function HomePeopleSuggestions({
+  profiles,
+  onOpenProfile,
+  onSeeAll,
+}: {
+  profiles: DataT[];
+  onOpenProfile: (profile: DataT) => void;
+  onSeeAll: () => void;
+}) {
+  const suggestions = profiles.slice(0, 6);
+  if (!suggestions.length) return null;
+  return (
+    <View style={localStyles.peopleSection}>
+      <View style={localStyles.peopleHeading}>
+        <Text style={localStyles.peopleTitle}>GENTE PARA CONOCER</Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={onSeeAll}
+          activeOpacity={0.72}
+          style={localStyles.peopleLink}
+        >
+          <Text style={localStyles.peopleLinkText}>Ver todos</Text>
+          <Icon name="chevron-forward" size={18} color="#5F574C" />
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={localStyles.peopleCarousel}
+      >
+        {suggestions.map((profile) => (
+          <TouchableOpacity
+            key={String(profile.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Ver perfil de ${profile.name}`}
+            activeOpacity={0.82}
+            style={localStyles.personCard}
+            onPress={() => onOpenProfile(profile)}
+          >
+            <View style={localStyles.personAddIcon}>
+              <Icon name="person-add-outline" size={19} color="#5F574C" />
+            </View>
+            <Avatar
+              source={profile.image}
+              uri={profile.avatarUri ?? null}
+              size={78}
+              iconSize={32}
+            />
+            <Text style={localStyles.personName} numberOfLines={1}>
+              {profile.name.split(" ")[0]}
+            </Text>
+            <Text style={localStyles.personHint} numberOfLines={1}>
+              {getSuggestionHint(profile)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
 
 const areFiltersEqual = (
   left: DiscoverFiltersState,
@@ -905,7 +973,7 @@ const Home = () => {
                 adjustsFontSizeToFit
                 minimumFontScale={0.68}
               >
-                Hola, {firstName} 👋
+                Hola, {firstName}
               </Text>
               <Text style={localStyles.heroSubtitle}>
                 <Text style={localStyles.heroSubtitleStrong}>
@@ -930,9 +998,18 @@ const Home = () => {
           />
           <CompleteProfilePrompt userId={session?.user?.id} />
 
-          <HomeActivityCard />
-
           <HomeOverview userId={session?.user?.id} />
+
+          <HomePeopleSuggestions
+            profiles={profiles}
+            onOpenProfile={openProfileSheet}
+            onSeeAll={() =>
+              navigation.navigate(
+                "Tab" as never,
+                { screen: "Discover" } as never
+              )
+            }
+          />
         </ScrollView>
       </SafeAreaView>
       <Animated.View
@@ -1002,6 +1079,74 @@ const localStyles = StyleSheet.create({
   heroSubtitleStrong: {
     color: "#142033",
     fontFamily: vibesTheme.fonts.subtitle,
+  },
+  peopleSection: {
+    marginBottom: 10,
+  },
+  peopleHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  peopleTitle: {
+    flex: 1,
+    color: "#5F574C",
+    fontSize: 15,
+    lineHeight: 21,
+    letterSpacing: 1,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+  peopleLink: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingLeft: 10,
+  },
+  peopleLinkText: {
+    color: vibesTheme.colors.accentMustard,
+    fontSize: 16,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  peopleCarousel: {
+    gap: 10,
+    paddingRight: 24,
+  },
+  personCard: {
+    width: 128,
+    minHeight: 166,
+    borderWidth: 1,
+    borderColor: "#EDE2CF",
+    borderRadius: 14,
+    backgroundColor: "#FEFEFD",
+    paddingHorizontal: 12,
+    paddingTop: 18,
+    paddingBottom: 12,
+    alignItems: "center",
+  },
+  personAddIcon: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 1,
+  },
+  personName: {
+    alignSelf: "stretch",
+    marginTop: 12,
+    color: "#2B2B2B",
+    fontSize: 17,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  personHint: {
+    alignSelf: "stretch",
+    marginTop: 2,
+    color: "#6E6E6E",
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.regular,
   },
   featureImage: {
     ...StyleSheet.absoluteFillObject,
