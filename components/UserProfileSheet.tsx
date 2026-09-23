@@ -47,7 +47,11 @@ type Props = {
   onContactPress?: () => void | Promise<unknown>;
   secondaryActionLabel?: string;
   onSecondaryActionPress?: () => void | Promise<unknown>;
+  secondaryActionPanelOnly?: boolean;
+  secondaryActionDestructive?: boolean;
   onImagePress?: (image?: any, index?: number) => void;
+  closeIconName?: string;
+  showPhotoCounter?: boolean;
 };
 
 const DetailSection = ({
@@ -159,6 +163,10 @@ const UserProfileSheet = ({
   onContactPress,
   secondaryActionLabel,
   onSecondaryActionPress,
+  secondaryActionPanelOnly = false,
+  secondaryActionDestructive = false,
+  closeIconName = "close",
+  showPhotoCounter = true,
 }: Props) => {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -287,8 +295,14 @@ const UserProfileSheet = ({
             resetSwipe();
             panelDragY.setValue(0);
             setDetailsVisible(true);
-          } else if (action) commitSwipe(action);
-          else resetSwipe();
+          } else if (action) {
+            if (action === "like" && !reduceMotion) {
+              setBurst((value) => value + 1);
+            }
+            commitSwipe(action);
+          } else {
+            resetSwipe();
+          }
         },
         onPanResponderTerminate: resetSwipe,
       }),
@@ -302,6 +316,7 @@ const UserProfileSheet = ({
       commitSwipe,
       resetSwipe,
       panelDragY,
+      reduceMotion,
     ]
   );
   const [activeIndex, setActiveIndex] = useState(0);
@@ -451,8 +466,12 @@ const UserProfileSheet = ({
     setActiveIndex(nextIndex);
   };
 
-  const renderActions = (onPanel = false) =>
-    enableSwipe && !onPanel ? (
+  const renderActions = (onPanel = false) => {
+    const shouldShowSecondaryAction =
+      Boolean(onSecondaryActionPress && secondaryActionLabel) &&
+      (!secondaryActionPanelOnly || onPanel);
+
+    return enableSwipe && !onPanel ? (
       <View style={localStyles.vibeActions}>
         {onContactPress && (
           <TouchableOpacity
@@ -485,11 +504,11 @@ const UserProfileSheet = ({
         >
           <Text style={localStyles.moreButtonText}>Ver más</Text>
         </TouchableOpacity>
-        {onSecondaryActionPress && (
+        {shouldShowSecondaryAction && (
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Pasar al siguiente perfil"
             disabled={actionPending || swipeAnimating}
+            accessibilityLabel="Pasar al siguiente perfil"
             activeOpacity={0.85}
             onPress={() => commitSwipe("pass")}
             style={localStyles.vibeAction}
@@ -506,7 +525,7 @@ const UserProfileSheet = ({
           </TouchableOpacity>
         )}
       </View>
-    ) : onContactPress || (onSecondaryActionPress && secondaryActionLabel) ? (
+    ) : onContactPress || shouldShowSecondaryAction ? (
       <View style={[localStyles.actions, onPanel && localStyles.panelActions]}>
         {onContactPress ? (
           <TouchableOpacity
@@ -531,7 +550,7 @@ const UserProfileSheet = ({
             </LinearGradient>
           </TouchableOpacity>
         ) : null}
-        {onSecondaryActionPress && secondaryActionLabel ? (
+        {shouldShowSecondaryAction ? (
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={secondaryActionLabel}
@@ -544,6 +563,8 @@ const UserProfileSheet = ({
               style={[
                 localStyles.secondaryActionText,
                 onPanel && localStyles.panelSecondaryActionText,
+                secondaryActionDestructive &&
+                  localStyles.destructiveSecondaryActionText,
               ]}
             >
               {secondaryActionLabel}
@@ -552,6 +573,7 @@ const UserProfileSheet = ({
         ) : null}
       </View>
     ) : null;
+  };
 
   if (!profile) return null;
 
@@ -695,7 +717,6 @@ const UserProfileSheet = ({
               }}
             />
           </View>
-          <LikeBubbles trigger={burst} />
           <LinearGradient
             pointerEvents="none"
             colors={[
@@ -715,7 +736,7 @@ const UserProfileSheet = ({
             hitSlop={8}
             style={[localStyles.backButton, { top: insets.top + 54 }]}
           >
-            <Icon name="close" size={28} color="#2B2B2B" />
+            <Icon name={closeIconName} size={28} color="#2B2B2B" />
           </TouchableOpacity>
 
           {hasMultipleImages ? (
@@ -734,11 +755,13 @@ const UserProfileSheet = ({
                   />
                 ))}
               </View>
-              <View style={[localStyles.counter, { top: insets.top + 10 }]}>
-                <Text style={localStyles.counterText}>
-                  {safeActiveIndex + 1} / {profileImages.length}
-                </Text>
-              </View>
+              {showPhotoCounter ? (
+                <View style={[localStyles.counter, { top: insets.top + 10 }]}>
+                  <Text style={localStyles.counterText}>
+                    {safeActiveIndex + 1} / {profileImages.length}
+                  </Text>
+                </View>
+              ) : null}
               <TouchableOpacity
                 accessibilityRole="button"
                 accessibilityLabel="Foto anterior"
@@ -818,6 +841,7 @@ const UserProfileSheet = ({
             {renderActions()}
           </View>
         </Animated.View>
+        <LikeBubbles trigger={burst} />
         <View pointerEvents="none" style={localStyles.swipeUpIndicator}>
           <Animated.View
             style={[
@@ -1220,7 +1244,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   moreButton: {
-    minWidth: 48,
+    minWidth: 112,
     minHeight: 48,
     paddingHorizontal: 10,
     borderRadius: 24,
@@ -1294,6 +1318,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   panelSecondaryActionText: { color: "#555A61" },
+  destructiveSecondaryActionText: { color: "#B8453B" },
   detailsSheet: {
     width: "100%",
     backgroundColor: "transparent",

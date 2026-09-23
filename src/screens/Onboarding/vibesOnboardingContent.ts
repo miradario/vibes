@@ -1,6 +1,7 @@
 export const VIBES_ONBOARDING_STEPS = [
   "purpose",
   "profile",
+  "location",
   "practices",
   "identity",
   "interests",
@@ -100,6 +101,11 @@ export const STEP_COPY: Record<
   profile: {
     title: "Contanos sobre vos",
     subtitle: "Así vas a poder mostrarte tal como sos",
+    button: "Siguiente",
+  },
+  location: {
+    title: "¿De dónde sos?",
+    subtitle: "Ingresá tu ciudad o usá tu ubicación una sola vez",
     button: "Siguiente",
   },
   practices: {

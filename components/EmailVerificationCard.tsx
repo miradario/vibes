@@ -112,17 +112,18 @@ export default function EmailVerificationCard({ userId }: { userId?: string }) {
                 disabled={sending}
                 onPress={() => void send()}
                 style={{
-                  minHeight: 48,
-                  paddingVertical: 12,
+                  minHeight: 34,
+                  paddingVertical: 6,
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ color: "#8C6A2D" }}>
-                  {sending
-                    ? "Enviando…"
-                    : lastSent
-                    ? "Reenviar enlace"
-                    : "Enviar enlace de verificación"}
+                <Text
+                  style={{
+                    color: "#8C6A2D",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  {sending ? "Enviando…" : "Reenviar enlace de verificación"}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -131,12 +132,17 @@ export default function EmailVerificationCard({ userId }: { userId?: string }) {
                 disabled={checking}
                 onPress={() => void check()}
                 style={{
-                  minHeight: 48,
-                  paddingVertical: 12,
+                  minHeight: 34,
+                  paddingVertical: 6,
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ color: "#8C6A2D" }}>
+                <Text
+                  style={{
+                    color: "#8C6A2D",
+                    textDecorationLine: "underline",
+                  }}
+                >
                   {checking ? "Comprobando…" : "Ya abrí el enlace · Comprobar"}
                 </Text>
               </TouchableOpacity>

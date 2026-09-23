@@ -260,7 +260,7 @@ const Events = () => {
         nextItems.push({
           kind: "section",
           id: "expired-events",
-          title: "Eventos caducados",
+          title: "Eventos pasados",
           subtitle: "Eventos que ya pasaron",
         });
         nextItems.push(
@@ -412,9 +412,15 @@ const Events = () => {
           keyExtractor={(item) => (item.kind === "section" ? item.id : item.item.id)}
           contentContainerStyle={[
             styles.eventsListContent,
+            localStyles.eventsListContent,
             { paddingBottom: getBottomTabContentPadding(insets.bottom, 140) },
           ]}
-          ListFooterComponentStyle={localStyles.listFooter}
+          ListFooterComponentStyle={[
+            localStyles.listFooter,
+            section === "event" && expiredEventItems.length > 0
+              ? localStyles.bottomAlignedListFooter
+              : null,
+          ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
@@ -446,7 +452,7 @@ const Events = () => {
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
                     : section === "event" && expiredEventItems.length > 0
-                      ? "Los eventos caducados están guardados abajo."
+                      ? "Los eventos pasados están guardados abajo."
                     : section === "challenge" && upcomingGeneralChallengeItems.length > 0
                       ? "Los próximos están guardados abajo para que te sumes cuando quieras."
                     : section === "challenge" && finishedChallengeItems.length > 0
@@ -466,11 +472,11 @@ const Events = () => {
               >
                 <View>
                   <Text style={localStyles.finishedSectionTitle}>
-                    Eventos caducados
+                    Eventos pasados
                   </Text>
                   <Text style={localStyles.finishedSectionSubtitle}>
                     {showExpiredEvents
-                      ? "Ocultar caducados"
+                      ? "Ocultar"
                       : `${expiredEventItems.length} guardados`}
                   </Text>
                 </View>
@@ -702,6 +708,12 @@ const localStyles = StyleSheet.create({
   listFooter: {
     marginTop: 8,
     marginBottom: 20,
+  },
+  bottomAlignedListFooter: {
+    marginTop: "auto",
+  },
+  eventsListContent: {
+    flexGrow: 1,
   },
   createButton: {
     paddingHorizontal: 16,

@@ -3,15 +3,18 @@ import {
   Alert,
   Animated,
   Easing,
+  findNodeHandle,
   ScrollView,
   Platform,
   TouchableOpacity,
   View,
+  type TextInput as NativeTextInput,
 } from "react-native";
 import { Text, TextInput } from "../../../components/Typography";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import * as Location from "expo-location";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import KeyboardSheetModal from "../../../components/KeyboardSheetModal";
 import ProfileQuestionsForm from "../../../components/onboarding/ProfileQuestionsForm";
@@ -55,6 +58,19 @@ const ANIMATION_DURATION = 240;
 const MIN_AGE = 18;
 const MAX_AGE = 99;
 
+const getUniqueLocationParts = (...parts: Array<string | null | undefined>) => {
+  const seen = new Set<string>();
+  return parts
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part))
+    .filter((part) => {
+      const key = part.toLocaleLowerCase("es-AR");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
 const getProgress = (stepIndex: number) =>
   (stepIndex + 1) / VIBES_ONBOARDING_STEPS.length;
 
@@ -73,6 +89,9 @@ const VibesOnboardingFlow = () => {
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
   const completeMutation = useCompleteOnboardingMutation();
   const transition = useRef(new Animated.Value(1)).current;
+  const onboardingScrollRef = useRef<ScrollView | null>(null);
+  const displayNameInputRef = useRef<NativeTextInput | null>(null);
+  const descriptionInputRef = useRef<NativeTextInput | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [purposeIds, setPurposeIds] = useState<string[]>(
     draft.purposeIds ?? []
@@ -97,6 +116,16 @@ const VibesOnboardingFlow = () => {
       )
     ).slice(0, 6)
   );
+  const [city, setCity] = useState(draft.city ?? "");
+  const [country, setCountry] = useState(draft.country ?? "");
+  const [locationLabel, setLocationLabel] = useState(
+    draft.locationLabel ?? ""
+  );
+  const [latitude, setLatitude] = useState<number | undefined>(draft.latitude);
+  const [longitude, setLongitude] = useState<number | undefined>(
+    draft.longitude
+  );
+  const [locationLoading, setLocationLoading] = useState(false);
   const [selectedPractices, setSelectedPractices] = useState<string[]>(
     draft.spiritualPath ?? []
   );
@@ -166,6 +195,13 @@ const VibesOnboardingFlow = () => {
       spiritualPath: selectedPractices,
       spiritualPathDetails: practiceDetails,
       aboutMe: briefDescription.trim(),
+      city: city.trim(),
+      country: country.trim(),
+      locationLabel:
+        locationLabel.trim() ||
+        getUniqueLocationParts(city.trim(), country.trim()).join(", "),
+      latitude,
+      longitude,
       purpose: getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
       energy: [],
       energyIds: [],
@@ -181,9 +217,14 @@ const VibesOnboardingFlow = () => {
       age,
       birthDate,
       briefDescription,
+      city,
+      country,
       displayName,
       draft,
       answers,
+      latitude,
+      locationLabel,
+      longitude,
       photoUris,
       practiceDetails,
       purposeIds,
@@ -198,6 +239,7 @@ const VibesOnboardingFlow = () => {
       Boolean(birthDate) &&
       Number(age) >= MIN_AGE &&
       Number(age) <= MAX_AGE) ||
+    (step === "location" && Boolean(city.trim() || country.trim())) ||
     step === "practices" ||
     ["identity", "interests", "plans", "completion"].includes(step);
 
@@ -309,6 +351,67 @@ const VibesOnboardingFlow = () => {
     updateDraft({ primaryPhotoUri: photos[0] ?? "", photoUris: photos });
   };
 
+  const scrollInputIntoView = (input: NativeTextInput | null) => {
+    if (Platform.OS !== "ios" || !input) return;
+    const node = findNodeHandle(input);
+    const scrollResponder = onboardingScrollRef.current?.getScrollResponder?.();
+    if (!node || !scrollResponder) return;
+
+    setTimeout(() => {
+      scrollResponder.scrollResponderScrollNativeHandleToKeyboard(
+        node,
+        130,
+        true
+      );
+    }, 80);
+  };
+
+  const requestLocation = async () => {
+    if (locationLoading) return;
+    setLocationLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          t("onboarding.locationPermissionDeniedTitle"),
+          t("onboarding.locationPermissionDeniedMessage")
+        );
+        return;
+      }
+
+      const current = await Location.getCurrentPositionAsync({});
+      const [address] = await Location.reverseGeocodeAsync({
+        latitude: current.coords.latitude,
+        longitude: current.coords.longitude,
+      });
+
+      const nextCity =
+        address?.city ?? address?.subregion ?? address?.region ?? "";
+      const nextCountry = address?.country ?? "";
+      const nextLocationLabel = getUniqueLocationParts(
+        nextCity,
+        nextCountry
+      ).join(", ");
+
+      setCity(nextCity);
+      setCountry(nextCountry);
+      setLocationLabel(nextLocationLabel);
+      setLatitude(current.coords.latitude);
+      setLongitude(current.coords.longitude);
+      updateDraft({
+        city: nextCity,
+        country: nextCountry,
+        locationLabel: nextLocationLabel,
+        latitude: current.coords.latitude,
+        longitude: current.coords.longitude,
+      });
+    } catch (_error) {
+      Alert.alert(t("common.error"), t("onboarding.locationError"));
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
   const updatePracticeDetail = (
     practice: string,
     nextDetail: SpiritualPathDetail
@@ -388,11 +491,13 @@ const VibesOnboardingFlow = () => {
               color={ONBOARDING_COLORS.mustard}
             />
             <TextInput
+              ref={displayNameInputRef}
               style={onboardingStyles.input}
               placeholder={t("vibesOnboarding.profile.namePlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={displayName}
               onChangeText={setDisplayName}
+              onFocus={() => scrollInputIntoView(displayNameInputRef.current)}
               autoCapitalize="words"
               maxLength={50}
             />
@@ -407,11 +512,13 @@ const VibesOnboardingFlow = () => {
               color={ONBOARDING_COLORS.mustard}
             />
             <TextInput
+              ref={descriptionInputRef}
               style={[onboardingStyles.input, onboardingStyles.textAreaInput]}
               placeholder={t("vibesOnboarding.profile.descriptionPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={briefDescription}
               onChangeText={setBriefDescription}
+              onFocus={() => scrollInputIntoView(descriptionInputRef.current)}
               multiline
               maxLength={160}
               textAlignVertical="top"
@@ -470,6 +577,75 @@ const VibesOnboardingFlow = () => {
     </>
   );
 
+  const renderLocation = () => (
+    <>
+      {renderTitle("location")}
+      <View style={onboardingStyles.locationWrap}>
+        <View style={onboardingStyles.fieldGroup}>
+          <View style={onboardingStyles.inputRow}>
+            <Icon
+              name="business-outline"
+              size={20}
+              color={ONBOARDING_COLORS.mustard}
+            />
+            <TextInput
+              style={onboardingStyles.input}
+              placeholder={t("onboarding.cityPlaceholder")}
+              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              value={city}
+              onChangeText={(value) => {
+                setCity(value);
+                setLocationLabel("");
+              }}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
+          </View>
+          <View style={onboardingStyles.inputRow}>
+            <Icon
+              name="earth-outline"
+              size={20}
+              color={ONBOARDING_COLORS.mustard}
+            />
+            <TextInput
+              style={onboardingStyles.input}
+              placeholder={t("onboarding.countryPlaceholder")}
+              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              value={country}
+              onChangeText={(value) => {
+                setCountry(value);
+                setLocationLabel("");
+              }}
+              autoCapitalize="words"
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                if (city.trim() || country.trim()) void goNext();
+              }}
+            />
+          </View>
+        </View>
+        <TouchableOpacity
+          accessibilityRole="button"
+          activeOpacity={0.84}
+          disabled={locationLoading}
+          onPress={() => void requestLocation()}
+          style={onboardingStyles.locationButton}
+        >
+          <Icon
+            name="location"
+            size={18}
+            color={ONBOARDING_COLORS.blue}
+          />
+          <Text style={onboardingStyles.locationButtonText}>
+            {locationLoading
+              ? t("onboarding.gettingLocation")
+              : t("onboarding.useMyLocation")}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+
   const renderPractices = () => (
     <>
       {renderTitle("practices")}
@@ -513,6 +689,7 @@ const VibesOnboardingFlow = () => {
         />
       );
     if (step === "profile") return renderProfile();
+    if (step === "location") return renderLocation();
     if (step === "practices") return renderPractices();
     return null;
   };
@@ -536,6 +713,7 @@ const VibesOnboardingFlow = () => {
         />
       ) : (
         <OnboardingScreenContainer
+          scrollViewRef={onboardingScrollRef}
           footer={
             <>
               <PrimaryButton

@@ -1,9 +1,8 @@
 import React, { useMemo } from "react";
 import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { Text } from "../components/Typography";
-import Icon from "../components/Icon";
 import VibesActionButton from "../components/VibesActionButton";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -59,10 +58,7 @@ const UpdateGate = () => {
             ? [
                 {
                   name: "Tab",
-                  params: {
-                    screen: "Home",
-                    params: { startupFadeIn: true },
-                  },
+                  params: { screen: "Home" },
                 },
               ]
             : [{ name: routeName }],
@@ -85,10 +81,10 @@ const UpdateGate = () => {
     <SafeAreaView style={styles.screen} edges={["top", "bottom", "left", "right"]}>
       <View style={styles.content}>
         <View style={styles.iconWrap}>
-          <Icon
-            name={isForce ? "warning-outline" : "sparkles-outline"}
-            size={34}
-            color={isForce ? vibesTheme.colors.accentCoral : vibesTheme.colors.accentMustard}
+          <Image
+            source={require("../assets/images/challenges/vibesLogo.png")}
+            style={styles.logo}
+            resizeMode="contain"
           />
         </View>
 
@@ -99,18 +95,6 @@ const UpdateGate = () => {
           {isForce ? t("update.forceTitle") : t("update.suggestedTitle")}
         </Text>
         <Text style={styles.body}>{body}</Text>
-
-        <View style={styles.versionCard}>
-          <View style={styles.versionRow}>
-            <Text style={styles.versionLabel}>{t("update.currentVersion")}</Text>
-            <Text style={styles.versionValue}>{currentVersion || "-"}</Text>
-          </View>
-          <View style={styles.versionDivider} />
-          <View style={styles.versionRow}>
-            <Text style={styles.versionLabel}>{t("update.targetVersion")}</Text>
-            <Text style={styles.versionValue}>{targetVersion || "-"}</Text>
-          </View>
-        </View>
       </View>
 
       <View style={styles.actions}>
@@ -124,6 +108,8 @@ const UpdateGate = () => {
           <VibesActionButton
             label={t("update.later")}
             variant="skip"
+            style={styles.laterButton}
+            showDivider={false}
             onPress={() => {
               void handleLater();
             }}
@@ -155,6 +141,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(228, 183, 110, 0.14)",
     marginBottom: 24,
   },
+  logo: {
+    width: 58,
+    height: 58,
+  },
   eyebrow: {
     color: vibesTheme.colors.secondaryText,
     fontSize: 13,
@@ -181,40 +171,11 @@ const styles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
     maxWidth: 310,
   },
-  versionCard: {
-    marginTop: 28,
-    width: "100%",
-    borderRadius: 24,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.borderSoft,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-  },
-  versionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  versionLabel: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  versionValue: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  versionDivider: {
-    height: 1,
-    backgroundColor: vibesTheme.colors.borderSoft,
-    marginVertical: 12,
-  },
   actions: {
     paddingBottom: 18,
+  },
+  laterButton: {
+    marginTop: 18,
   },
 });
 

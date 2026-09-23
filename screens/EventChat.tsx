@@ -45,6 +45,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
+import { useFindMatchQuery } from "../src/queries/matches.queries";
 import { handleApiError } from "../src/utils/handleApiError";
 import {
   useEventParticipantsQuery,
@@ -142,6 +143,9 @@ const EventChat = () => {
   const { data: selectedParticipantPreferences } = useUserPreferencesQuery(
     selectedParticipant?.userId
   );
+  const selectedParticipantMatchQuery = useFindMatchQuery(
+    selectedParticipant?.userId
+  );
   const selectedParticipantCard = selectedParticipant
     ? mapCandidateToConnectionProfile({
         id: selectedParticipant.userId,
@@ -158,6 +162,12 @@ const EventChat = () => {
             : []),
       })
     : null;
+  const canConnectSelectedParticipant = Boolean(
+    selectedParticipant &&
+      selectedParticipant.userId !== userId &&
+      selectedParticipantMatchQuery.isFetched &&
+      !selectedParticipantMatchQuery.data
+  );
   const handleConnectParticipant = () => {
     if (!selectedParticipant || !selectedParticipantCard) return;
     if (selectedParticipant.userId === userId) {
@@ -884,28 +894,26 @@ const EventChat = () => {
             ]}
           >
             <View style={localStyles.modalHeader}>
-              <Text style={localStyles.modalTitle}>
-                Participantes ({participants.length})
-              </Text>
+              <Text style={localStyles.modalTitle}>Participantes</Text>
               <TouchableOpacity onPress={closeMembersModal}>
                 <Icon name="close" size={24} color={DARK_GRAY} />
               </TouchableOpacity>
             </View>
             <FlatList
               data={participants.filter(
-                (item) =>
-                  (!userId || item.userId !== userId) &&
-                  !blockedUserIds.has(item.userId)
+                (item) => !blockedUserIds.has(item.userId)
               )}
               keyExtractor={(item) => item.id}
               style={{ maxHeight: 400 }}
               renderItem={({ item }) => {
                 const isCreator = item.userId === createdBy;
+                const isCurrentUser = item.userId === userId;
                 const canKick = isAdmin && item.userId !== userId;
                 return (
                   <TouchableOpacity
                     style={localStyles.memberRow}
-                    activeOpacity={0.85}
+                    activeOpacity={isCurrentUser ? 1 : 0.85}
+                    disabled={isCurrentUser}
                     onPress={() =>
                       handleOpenParticipant({
                         userId: item.userId,
@@ -919,6 +927,7 @@ const EventChat = () => {
                       <Text style={localStyles.memberName}>
                         {item.displayName || "Participante"}
                         {isCreator ? " 👑" : ""}
+                        {isCurrentUser ? " (vos)" : ""}
                       </Text>
                     </View>
                     {canKick && (
@@ -944,15 +953,22 @@ const EventChat = () => {
         visible={Boolean(selectedParticipant && selectedParticipantCard)}
         profile={selectedParticipantCard}
         onClose={handleCloseParticipant}
-        onContactPress={handleConnectParticipant}
+        onContactPress={
+          canConnectSelectedParticipant ? handleConnectParticipant : undefined
+        }
         secondaryActionLabel={
-          selectedParticipant?.userId !== userId ? "Reportar y bloquear" : undefined
+          selectedParticipant?.userId !== userId
+            ? "Reportar y bloquear"
+            : undefined
         }
         onSecondaryActionPress={
           selectedParticipant?.userId !== userId
             ? handleReportParticipant
             : undefined
         }
+        secondaryActionPanelOnly
+        secondaryActionDestructive
+        showPhotoCounter={false}
       />
     </KeyboardAvoidingView>
   );

@@ -17,6 +17,10 @@ import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { useI18n } from "../src/i18n";
 import { getProfileCompletion } from "../src/lib/profileCompletion";
 import VibesLoader from "../components/VibesLoader";
+import {
+  getInstalledAppBuildNumber,
+  getInstalledAppVersion,
+} from "../src/lib/appUpdateGate";
 
 const Profile = () => {
   const { t } = useI18n();
@@ -44,6 +48,11 @@ const Profile = () => {
   const ownAvatarUri = ownProfile.avatarUri ?? null;
 
   const completion = getProfileCompletion(profile, userPreferences);
+  const appVersion = getInstalledAppVersion();
+  const buildNumber = getInstalledAppBuildNumber();
+  const formattedAppVersion = buildNumber
+    ? `${appVersion} (${buildNumber})`
+    : appVersion;
 
   const menuItems = [
     {
@@ -165,8 +174,9 @@ const Profile = () => {
         </View>
 
         <View style={styles.auraFooter}>
-          <Text style={styles.auraFooterTitle}>{t("profile.aboutVibes")}</Text>
-          <Text style={styles.auraFooterVersion}>version 1.1.4</Text>
+          <Text style={styles.auraFooterVersion}>
+            Vibes - v {formattedAppVersion}
+          </Text>
         </View>
       </ScrollView>
     </View>

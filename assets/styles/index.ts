@@ -2345,6 +2345,13 @@ export default StyleSheet.create({
     color: TEXT_SECONDARY,
     fontFamily: SERIF_FONT,
   },
+  auraFooterBuild: {
+    marginTop: 2,
+    fontSize: 11,
+    color: TEXT_SECONDARY,
+    fontFamily: SERIF_FONT,
+    opacity: 0.74,
+  },
   auraCard: {
     marginHorizontal: 16,
     backgroundColor: WHITE,

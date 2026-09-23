@@ -1283,6 +1283,7 @@ export const DiscoverContent = forwardRef<
               : null
           }
           onClose={() => setShowProfileSheet(false)}
+          closeIconName="chevron-back"
           onImagePress={(_image, index) =>
             selectedProfile
               ? openGallery(

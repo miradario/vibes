@@ -21,7 +21,7 @@ export function getStartupDestination(
   if (needsOnboarding) return { name: "VibesOnboardingFlow" };
   return {
     name: "Tab",
-    params: { screen: "Home", params: { startupFadeIn: true } },
+    params: { screen: "Home" },
   };
 }
 

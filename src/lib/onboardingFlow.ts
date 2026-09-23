@@ -4,17 +4,18 @@ export const ACTIVE_ONBOARDING_FLOW = [
   "OnboardingName",
   "OnboardingAge",
   "OnboardingPhoto",
+  "OnboardingCountry",
   "OnboardingSpiritualPath",
 ] as const;
 
 const FLOW_STEP_INDEX: Record<string, number> = {
   OnboardingName: 0,
   OnboardingAge: 1,
-  OnboardingCountry: 2,
   OnboardingPhoto: 2,
-  OnboardingSpiritualPath: 3,
-  OnboardingOrientation: 3,
-  OnboardingInterested: 3,
+  OnboardingCountry: 3,
+  OnboardingSpiritualPath: 4,
+  OnboardingOrientation: 4,
+  OnboardingInterested: 4,
 };
 
 export const getOnboardingStepIndex = (screenName: string) =>

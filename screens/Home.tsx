@@ -16,19 +16,13 @@ import {
   Platform,
 } from "react-native";
 import { Text } from "../components/Typography";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Avatar from "../components/Avatar";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -70,7 +64,6 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   smoking: "all",
 };
 
-let hasPlayedHomeEntryFade = false;
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim()) {
@@ -328,12 +321,6 @@ const Home = () => {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const route = useRoute<any>();
-  const shouldRunHomeEntryFade =
-    Boolean(route.params?.startupFadeIn) && !hasPlayedHomeEntryFade;
-  const homeEntryOverlayOpacity = useSharedValue(
-    shouldRunHomeEntryFade ? 1 : 0
-  );
   const [moodGateUser, setMoodGateUser] = useState<string | null>(null);
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
@@ -646,24 +633,6 @@ const Home = () => {
   const filterSectionTitle = (title: string) => (
     <Text style={localStyles.filtersSectionTitle}>{title}</Text>
   );
-
-  useEffect(() => {
-    if (!shouldRunHomeEntryFade) return;
-
-    hasPlayedHomeEntryFade = true;
-    homeEntryOverlayOpacity.value = withTiming(0, {
-      duration: 680,
-      easing: Easing.out(Easing.cubic),
-    });
-
-    if (typeof (navigation as any).setParams === "function") {
-      (navigation as any).setParams({ startupFadeIn: false });
-    }
-  }, [homeEntryOverlayOpacity, navigation, shouldRunHomeEntryFade]);
-
-  const homeEntryOverlayStyle = useAnimatedStyle(() => ({
-    opacity: homeEntryOverlayOpacity.value,
-  }));
 
   return (
     <View style={localStyles.screen}>
@@ -1012,10 +981,6 @@ const Home = () => {
           />
         </ScrollView>
       </SafeAreaView>
-      <Animated.View
-        pointerEvents="none"
-        style={[localStyles.homeEntryOverlay, homeEntryOverlayStyle]}
-      />
     </View>
   );
 };
@@ -1024,11 +989,6 @@ const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: vibesTheme.colors.background,
-  },
-  homeEntryOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: vibesTheme.colors.background,
-    zIndex: 999,
   },
   safeArea: {
     flex: 1,
@@ -1070,15 +1030,15 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.thin,
   },
   heroSubtitle: {
-    marginTop: 10,
-    color: "#727070",
-    fontSize: 20,
-    lineHeight: 27,
-    fontFamily: vibesTheme.fonts.subtitle,
+    marginTop: 6,
+    color: "rgba(43, 43, 43, 0.54)",
+    fontSize: 15,
+    lineHeight: 21,
+    fontFamily: vibesTheme.fonts.regular,
   },
   heroSubtitleStrong: {
-    color: "#142033",
-    fontFamily: vibesTheme.fonts.subtitle,
+    color: "rgba(43, 43, 43, 0.68)",
+    fontFamily: vibesTheme.fonts.medium,
   },
   peopleSection: {
     marginBottom: 10,

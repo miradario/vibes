@@ -844,19 +844,19 @@ export const MessagesContent = ({
               activeGroups.filter((group) => group.eventType === "event")
             )}
             {renderGroupSection(
-              "CHALLENGES",
+              "DESAFÍOS",
               activeGroups.filter((group) => group.eventType === "challenge")
             )}
             {renderGroupSection("EVENTOS FINALIZADOS", finishedEventGroups)}
             {renderGroupSection(
-              "CHALLENGES FINALIZADOS",
+              "DESAFÍOS FINALIZADOS",
               finishedChallengeGroups
             )}
             {!loading && !communityGroups.isError && groupCount === 0 ? (
               <View style={localStyles.emptyState}>
                 <Text style={localStyles.emptyStateText}>
                   Creá un grupo con tus conexiones o sumate a un evento o
-                  challenge.
+                  desafío.
                 </Text>
               </View>
             ) : null}

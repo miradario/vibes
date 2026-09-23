@@ -1004,23 +1004,6 @@ const EditProfile = () => {
           <Text style={styles.editSectionTitle}>
             {t("editProfile.location")}
           </Text>
-          {currentLocation ? (
-            <View style={localStyles.currentLocationCard}>
-              <TouchableOpacity
-                style={localStyles.currentLocationButton}
-                onPress={() => void applyCurrentLocation()}
-                disabled={savingLocation}
-              >
-                <Text style={localStyles.currentLocationButtonText}>
-                  {t("settings.useCurrentLocation")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : isResolvingLocation ? (
-            <Text style={localStyles.helperText}>
-              {t("settings.resolvingLocation")}
-            </Text>
-          ) : null}
           <TextInput
             style={localStyles.nameInput}
             value={location}
@@ -1033,6 +1016,21 @@ const EditProfile = () => {
             returnKeyType="done"
             editable={!savingLocation}
           />
+          {currentLocation ? (
+            <TouchableOpacity
+              style={localStyles.currentLocationButton}
+              onPress={() => void applyCurrentLocation()}
+              disabled={savingLocation}
+            >
+              <Text style={localStyles.currentLocationButtonText}>
+                {t("settings.useCurrentLocation")}
+              </Text>
+            </TouchableOpacity>
+          ) : isResolvingLocation ? (
+            <Text style={localStyles.helperText}>
+              {t("settings.resolvingLocation")}
+            </Text>
+          ) : null}
         </View>
       </ScreenContainer>
 
@@ -1204,32 +1202,11 @@ const localStyles = StyleSheet.create({
   helperText: {
     color: GRAY,
     fontSize: 14,
-    marginBottom: 10,
-  },
-  currentLocationCard: {
-    backgroundColor: "#FEFEFD",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(216, 140, 122, 0.2)",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 12,
-  },
-  currentLocationLabel: {
-    color: PRIMARY_COLOR,
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 6,
-  },
-  currentLocationValue: {
-    color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    marginTop: 10,
   },
   currentLocationButton: {
     alignSelf: "flex-start",
-    marginTop: 12,
+    marginTop: 10,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 999,

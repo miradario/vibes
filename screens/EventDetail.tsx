@@ -41,6 +41,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
+import { useFindMatchQuery } from "../src/queries/matches.queries";
 import { handleApiError } from "../src/utils/handleApiError";
 import {
   useChallengeParticipantQuery,
@@ -363,6 +364,9 @@ const EventDetail = () => {
   const { data: selectedParticipantPreferences } = useUserPreferencesQuery(
     selectedParticipant?.userId,
   );
+  const selectedParticipantMatchQuery = useFindMatchQuery(
+    selectedParticipant?.userId,
+  );
 
   const isJoined = Boolean(participant);
   const durationDays =
@@ -450,6 +454,12 @@ const EventDetail = () => {
           (selectedParticipant.avatarUrl ? [selectedParticipant.avatarUrl] : []),
       })
     : null;
+  const canConnectSelectedParticipant = Boolean(
+    selectedParticipant &&
+      selectedParticipant.userId !== userId &&
+      selectedParticipantMatchQuery.isFetched &&
+      !selectedParticipantMatchQuery.data
+  );
   const handleConnectParticipant = () => {
     if (!selectedParticipant || !selectedParticipantCard) return;
     if (selectedParticipant.userId === userId) {
@@ -2146,14 +2156,12 @@ const EventDetail = () => {
         offsetY={320}
         sheetStyle={localStyles.participantsModalCard}
       >
-            <View style={localStyles.participantsModalHeader}>
-            <Text style={localStyles.participantsModalTitle}>
-                Participantes ({visibleParticipantCount})
-              </Text>
-              <TouchableOpacity onPress={() => setParticipantsVisible(false)}>
-                <Icon name="close" size={24} color={DARK_GRAY} />
-              </TouchableOpacity>
-            </View>
+        <View style={localStyles.participantsModalHeader}>
+          <Text style={localStyles.participantsModalTitle}>Participantes</Text>
+          <TouchableOpacity onPress={() => setParticipantsVisible(false)}>
+            <Icon name="close" size={24} color={DARK_GRAY} />
+          </TouchableOpacity>
+        </View>
           <FlatList
             data={visibleParticipants}
             keyExtractor={(item) => item.id}
@@ -2197,7 +2205,10 @@ const EventDetail = () => {
           setSelectedParticipant(null);
           setPendingParticipant(null);
         }}
-        onContactPress={handleConnectParticipant}
+        onContactPress={
+          canConnectSelectedParticipant ? handleConnectParticipant : undefined
+        }
+        showPhotoCounter={false}
       />
     </View>
   );

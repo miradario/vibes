@@ -14,12 +14,14 @@ type OnboardingScreenContainerProps = {
   children: React.ReactNode;
   footer?: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
+  scrollViewRef?: React.RefObject<ScrollView | null>;
 };
 
 const OnboardingScreenContainer = ({
   children,
   footer,
   contentStyle,
+  scrollViewRef,
 }: OnboardingScreenContainerProps) => (
   <View style={onboardingStyles.screen}>
     <SafeAreaView style={onboardingStyles.safeArea}>
@@ -31,8 +33,10 @@ const OnboardingScreenContainer = ({
         <View style={[onboardingStyles.content, contentStyle]}>
           <View style={onboardingStyles.card}>
             <ScrollView
+              ref={scrollViewRef}
               style={onboardingStyles.bodyScroll}
               contentContainerStyle={onboardingStyles.body}
+              automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
               keyboardDismissMode="interactive"
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}

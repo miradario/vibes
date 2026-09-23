@@ -11,16 +11,41 @@ import AppHeader from "../components/AppHeader";
 import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useI18n } from "../src/i18n";
+import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+
+const getUniqueLocationParts = (...parts: Array<string | null | undefined>) => {
+  const seen = new Set<string>();
+  return parts
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part))
+    .filter((part) => {
+      const key = part.toLocaleLowerCase("es-AR");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
 
 const OnboardingCountry = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
-  const [country, setCountry] = useState("");
+  const { draft, updateDraft } = useOnboardingDraft();
+  const [city, setCity] = useState(draft.city ?? "");
+  const [country, setCountry] = useState(draft.country ?? "");
   const [loading, setLoading] = useState(false);
 
   const goToNextStep = () => {
-    if (!country.trim()) return;
-    navigation.navigate("OnboardingPhoto" as never);
+    const trimmedCity = city.trim();
+    const trimmedCountry = country.trim();
+    if (!trimmedCity && !trimmedCountry) return;
+
+    const locationLabel = getUniqueLocationParts(trimmedCity, trimmedCountry).join(", ");
+    updateDraft({
+      city: trimmedCity,
+      country: trimmedCountry,
+      locationLabel,
+    });
+    navigation.navigate("OnboardingSpiritualPath" as never);
   };
 
   const requestLocation = async () => {
@@ -42,9 +67,19 @@ const OnboardingCountry = () => {
         longitude: location.coords.longitude,
       });
 
-      if (address?.country) {
-        setCountry(address.country);
-      }
+      const nextCity = address?.city ?? address?.subregion ?? address?.region ?? "";
+      const nextCountry = address?.country ?? "";
+      const locationLabel = getUniqueLocationParts(nextCity, nextCountry).join(", ");
+
+      setCity(nextCity);
+      setCountry(nextCountry);
+      updateDraft({
+        city: nextCity,
+        country: nextCountry,
+        locationLabel,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
     } catch (error) {
       Alert.alert(t("common.error"), t("onboarding.locationError"));
     } finally {
@@ -61,6 +96,18 @@ const OnboardingCountry = () => {
 
         <Text style={styles.onboardTitle}>{t("onboarding.countryTitle")}</Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.countrySubtitle")}</Text>
+
+        <View style={styles.loginField}>
+          <TextInput
+            style={styles.loginInput}
+            placeholder={t("onboarding.cityPlaceholder")}
+            placeholderTextColor="#6E6E6E"
+            autoCapitalize="words"
+            returnKeyType="next"
+            value={city}
+            onChangeText={setCity}
+          />
+        </View>
 
         <View style={styles.loginField}>
           <TextInput
@@ -97,9 +144,9 @@ const OnboardingCountry = () => {
           <TouchableOpacity
             style={[
               styles.onboardNext,
-              !country.trim() && styles.onboardNextDisabled,
+              !city.trim() && !country.trim() && styles.onboardNextDisabled,
             ]}
-            disabled={!country.trim()}
+            disabled={!city.trim() && !country.trim()}
             onPress={goToNextStep}
           >
             <Text style={styles.onboardNextText}>{t("common.next")}</Text>

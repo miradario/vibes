@@ -55,6 +55,19 @@ export const getInstalledAppVersion = () =>
       "1.0.0",
   ) || "1.0.0";
 
+export const getInstalledAppBuildNumber = () => {
+  const nativeBuild = Application.nativeBuildVersion ?? Constants.nativeBuildVersion;
+  if (nativeBuild) return String(nativeBuild);
+
+  if (Platform.OS === "ios") {
+    const iosBuild = Constants.expoConfig?.ios?.buildNumber;
+    return iosBuild ? String(iosBuild) : null;
+  }
+
+  const androidBuild = Constants.expoConfig?.android?.versionCode;
+  return typeof androidBuild === "number" ? String(androidBuild) : null;
+};
+
 const getDismissKey = (targetVersion: string) =>
   `${UPDATE_DISMISS_PREFIX}${normalizeVersion(targetVersion)}`;
 

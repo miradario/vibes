@@ -13,7 +13,6 @@ import {
 import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
-import * as Location from "expo-location";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
@@ -114,63 +113,6 @@ const OnboardingPhoto = () => {
     setPhotoUris(initialPhotos);
   }, [initialPhotos]);
 
-  useEffect(() => {
-    let active = true;
-
-    const activateLocation = async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted" || !active) return;
-
-        const current = await Location.getCurrentPositionAsync({});
-        if (!active) return;
-
-        const [address] = await Location.reverseGeocodeAsync({
-          latitude: current.coords.latitude,
-          longitude: current.coords.longitude,
-        });
-        if (!active) return;
-
-        const extendedAddress = address as
-          | (Location.LocationGeocodedAddress & { subdistrict?: string | null })
-          | null
-          | undefined;
-
-        const city =
-          address?.city ??
-          address?.subregion ??
-          address?.region ??
-          "";
-        const neighborhood =
-          extendedAddress?.district ??
-          extendedAddress?.subdistrict ??
-          extendedAddress?.street ??
-          "";
-        const country = address?.country ?? "";
-        const locationLabel = [neighborhood, city, country]
-          .filter(Boolean)
-          .join(", ");
-
-        updateDraft({
-          country,
-          city,
-          neighborhood,
-          locationLabel,
-          latitude: current.coords.latitude,
-          longitude: current.coords.longitude,
-        });
-      } catch (_error) {
-        // Keep flow non-blocking if location is not available.
-      }
-    };
-
-    activateLocation();
-
-    return () => {
-      active = false;
-    };
-  }, [updateDraft]);
-
   const persistPhotos = (nextPhotos: string[]) => {
     const trimmed = nextPhotos.slice(0, MAX_PHOTOS);
     setPhotoUris(trimmed);
@@ -206,11 +148,11 @@ const OnboardingPhoto = () => {
   };
 
   const onContinue = () => {
-    navigation.navigate("OnboardingSpiritualPath" as never);
+    navigation.navigate("OnboardingCountry" as never);
   };
 
   const onSkip = () => {
-    navigation.navigate("OnboardingSpiritualPath" as never);
+    navigation.navigate("OnboardingCountry" as never);
   };
 
   const primaryUri = photoUris[0] ?? null;

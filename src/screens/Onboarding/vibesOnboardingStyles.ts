@@ -278,6 +278,27 @@ export const onboardingStyles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 12,
   },
+  locationWrap: {
+    marginTop: 28,
+  },
+  locationButton: {
+    minHeight: 52,
+    marginTop: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(174, 191, 209, 0.42)",
+    backgroundColor: "rgba(174, 191, 209, 0.12)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  locationButtonText: {
+    color: ONBOARDING_COLORS.text,
+    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 15,
+  },
   pillGrid: {
     marginTop: 28,
     flexDirection: "row",

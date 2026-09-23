@@ -11,6 +11,7 @@ type VibesActionButtonProps = {
   variant?: "start" | "skip";
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  showDivider?: boolean;
 };
 
 const VibesActionButton = ({
@@ -19,13 +20,14 @@ const VibesActionButton = ({
   variant = "start",
   style,
   disabled = false,
+  showDivider = true,
 }: VibesActionButtonProps) => {
   const isStart = variant === "start";
 
   if (!isStart) {
     return (
       <View style={[styles.skipWrap, style]}>
-        <View style={styles.skipDivider} />
+        {showDivider ? <View style={styles.skipDivider} /> : null}
         <TouchableOpacity
           style={[styles.skipButton, disabled && styles.skipButtonDisabled]}
           onPress={onPress}

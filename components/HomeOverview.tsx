@@ -77,6 +77,11 @@ function ChallengeCard({
         timeline.totalDays
       )
     : null;
+  const todayKey = new Date().toISOString().split("T")[0];
+  const checkedInToday =
+    Boolean(participant.data?.checkedInToday) ||
+    Boolean(event.viewerCheckedInToday) ||
+    (checkins.isSuccess && checkins.data.includes(todayKey));
   const status =
     timeline.status === "upcoming"
       ? `Empieza en ${timeline.startsInDays} día${
@@ -126,10 +131,9 @@ function ChallengeCard({
       ) : null}
       <View style={s.cardFooter}>
         {timeline.status === "active" &&
-        participant.isSuccess &&
-        participant.data ? (
-          <Text style={[s.status, participant.data.checkedInToday && s.done]}>
-            {participant.data.checkedInToday ? "Al día" : "Pendiente hoy"}
+        (participant.isSuccess || checkins.isSuccess) ? (
+          <Text style={[s.status, checkedInToday && s.done]}>
+            {checkedInToday ? "Al día" : "Pendiente hoy"}
           </Text>
         ) : (
           <Text style={s.status}>{event.attendees}</Text>
