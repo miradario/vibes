@@ -36,7 +36,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 26,
+      "versionCode": 29,
       "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.miradario.vibe"
     },
