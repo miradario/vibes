@@ -367,16 +367,12 @@ const Events = () => {
   return (
     <View style={styles.bg}>
       <View style={[styles.eventsContainer, localStyles.eventsContainer]}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        <View style={localStyles.headerRow}>
           <Text style={[styles.eventsTitle, localStyles.screenTitle]}>{title}</Text>
           <TouchableOpacity
-            style={[styles.eventCardButton, localStyles.createButton]}
+            accessibilityRole="button"
+            activeOpacity={0.78}
+            style={localStyles.createButton}
             onPress={() => {
               if (section === "challenge") {
                 navigation.navigate("CreateChallenge" as never);
@@ -385,10 +381,10 @@ const Events = () => {
               navigation.navigate("CreateEvent" as never);
             }}
           >
-            <Text style={[styles.eventCardButtonText, localStyles.createButtonText]}>
-              Crear
+            <Icon name="add" size={21} color="#B57716" />
+            <Text style={localStyles.createButtonText}>
+              {section === "challenge" ? "Crear desafío" : "Crear evento"}
             </Text>
-            <Icon name="add" size={16} color={TEXT_SECONDARY} />
           </TouchableOpacity>
         </View>
         <View style={styles.eventsSearchBar}>
@@ -700,11 +696,21 @@ const localStyles = StyleSheet.create({
   eventsContainer: {
     paddingTop: 68,
   },
+  headerRow: {
+    minHeight: 48,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+  },
   screenTitle: {
+    flex: 1,
     color: TEXT_PRIMARY,
     fontFamily: vibesTheme.fonts.thin,
     fontSize: 32,
     lineHeight: 38,
+    marginBottom: 0,
     textAlign: "left",
   },
   listFooter: {
@@ -718,12 +724,22 @@ const localStyles = StyleSheet.create({
     flexGrow: 1,
   },
   createButton: {
-    paddingHorizontal: 16,
+    minHeight: 48,
+    maxWidth: "48%",
+    flexShrink: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
     paddingVertical: 8,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#B57716",
   },
   createButtonText: {
-    fontSize: 18,
-    color: "#6C6965",
+    flexShrink: 1,
+    fontSize: 14,
+    color: "#B57716",
     fontFamily: vibesTheme.fonts.medium,
   },
   searchInput: {
