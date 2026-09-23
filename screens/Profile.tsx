@@ -3,7 +3,7 @@ import { isEmailOwnershipVerified } from "../src/auth/emailVerification";
 /** @format */
 
 import React, { useCallback } from "react";
-import { ScrollView, View, TouchableOpacity } from "react-native";
+import { Platform, ScrollView, View, TouchableOpacity } from "react-native";
 import { Text } from "../components/Typography";
 import { CommonActions, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,10 +19,8 @@ import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { useI18n } from "../src/i18n";
 import { getProfileCompletion } from "../src/lib/profileCompletion";
 import VibesLoader from "../components/VibesLoader";
-import {
-  getInstalledAppBuildNumber,
-  getInstalledAppVersion,
-} from "../src/lib/appUpdateGate";
+import { getInstalledAppVersion, getInstalledAppBuildNumber } from "../src/lib/appUpdateGate";
+import appConfig from "../app.json";
 
 const Profile = () => {
   const { t } = useI18n();
@@ -57,8 +55,12 @@ const Profile = () => {
 
   const { data: emailOwner } = useEmailOwnershipQuery(session?.user?.id);
   const completion = getProfileCompletion(profile, userPreferences, isEmailOwnershipVerified(emailOwner));
-  const appVersion = getInstalledAppVersion();
-  const buildNumber = getInstalledAppBuildNumber();
+  const appVersion = Platform.OS === "android"
+    ? getInstalledAppVersion()
+    : appConfig.expo.version;
+  const buildNumber = Platform.OS === "android"
+    ? getInstalledAppBuildNumber()
+    : Platform.OS === "ios" ? appConfig.expo.ios.buildNumber : null;
   const formattedAppVersion = buildNumber
     ? `${appVersion} (${buildNumber})`
     : appVersion;

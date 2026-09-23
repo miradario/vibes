@@ -1,6 +1,6 @@
 import { Alert, Linking, Platform } from "react-native";
 import * as Application from "expo-application";
-import Constants from "expo-constants";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
 
@@ -50,13 +50,16 @@ const compareVersions = (left?: string | null, right?: string | null) => {
 
 export const getInstalledAppVersion = () =>
   normalizeVersion(
-    Application.nativeApplicationVersion ??
+    (Constants.executionEnvironment === ExecutionEnvironment.StoreClient
+      ? null : Application.nativeApplicationVersion) ??
       Constants.expoConfig?.version ??
       "1.0.0",
   ) || "1.0.0";
 
 export const getInstalledAppBuildNumber = () => {
-  const nativeBuild = Application.nativeBuildVersion ?? Constants.nativeBuildVersion;
+  const nativeBuild = Constants.executionEnvironment === ExecutionEnvironment.StoreClient
+    ? null
+    : Application.nativeBuildVersion ?? Constants.nativeBuildVersion;
   if (nativeBuild) return String(nativeBuild);
 
   if (Platform.OS === "ios") {
