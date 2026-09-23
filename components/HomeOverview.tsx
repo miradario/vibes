@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   AppState,
   ScrollView,
   StyleSheet,
@@ -13,6 +12,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Text } from "./Typography";
 import Icon from "./Icon";
 import AvatarGroup from "./AvatarGroup";
+import VibesLoader from "./VibesLoader";
 import {
   useMyEventGroupsQuery,
   useChallengeCheckinsQuery,
@@ -115,7 +115,7 @@ function ChallengeCard({
           No pudimos actualizar tu progreso.
         </Text>
       ) : checkins.isLoading ? (
-        <ActivityIndicator color={ACCENT} style={s.loader} />
+        <VibesLoader size={30} style={s.loader} />
       ) : progress ? (
         <View style={s.progressLine}>
           <Icon name="trophy-outline" size={22} color={ACCENT} />
@@ -198,7 +198,11 @@ export default function HomeOverview({ userId }: { userId?: string }) {
     };
   };
   if (groups.isLoading)
-    return <ActivityIndicator accessibilityLabel="Cargando tu agenda" />;
+    return (
+      <View accessibilityLabel="Cargando tu agenda" style={s.homeLoader}>
+        <VibesLoader size={72} />
+      </View>
+    );
   if (groups.isError)
     return (
       <TouchableOpacity
@@ -344,6 +348,11 @@ export default function HomeOverview({ userId }: { userId?: string }) {
 const s = StyleSheet.create({
   sectionBlock: {
     marginBottom: 24,
+  },
+  homeLoader: {
+    minHeight: 180,
+    alignItems: "center",
+    justifyContent: "center",
   },
   card: {
     backgroundColor: "#FCF8F0",
