@@ -49,7 +49,7 @@ export const mapProfileWithPhotos = (
 
           return null;
         })
-        .filter(Boolean)
+        .filter((photo): photo is NonNullable<typeof photo> => photo !== null)
     : [];
 
   const mergedPhotos =
@@ -57,6 +57,11 @@ export const mapProfileWithPhotos = (
 
   return {
     ...profile,
-    photos: mergedPhotos,
+    // The editor identifies the first occupied slot as the main photo.
+    // Legacy is_primary flags must not override the saved slot order.
+    photos: [...mergedPhotos]
+      .filter((photo) => Number.isInteger(photo.order) && photo.order >= 0)
+      .sort((left, right) => left.order - right.order)
+      .map((photo, index) => ({ ...photo, isPrimary: index === 0 })),
   };
 };

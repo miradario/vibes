@@ -62,7 +62,6 @@ const AgeAssurance = () => {
 
         <View style={localStyles.content}>
           <View style={localStyles.copyBlock}>
-            <Text style={localStyles.kicker}>{t("ageAssurance.kicker")}</Text>
             <Text style={localStyles.title}>{t("ageAssurance.title")}</Text>
             <Text style={localStyles.subtitle}>
               {t("ageAssurance.subtitle")}

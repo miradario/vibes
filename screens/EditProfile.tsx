@@ -1,4 +1,3 @@
-import { reorderProfilePhotos } from "../src/lib/reorderProfilePhotos";
 /** @format */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -450,6 +449,7 @@ const EditProfile = () => {
   const refreshProfileCache = async () => {
     const userId = session?.user?.id;
     const refreshed = await refetch();
+    if (refreshed.error) throw refreshed.error;
 
     if (!userId || refreshed.data === undefined) return;
 
@@ -637,17 +637,15 @@ const EditProfile = () => {
     ];
     setMediaSlots(nextSlots);
     try {
-      // Read storage paths directly: cached profile URLs are temporary signed URLs.
-      const { data: rows, error: readError } = await supabase
-        .from("profile_photos")
-        .select("id, profile_id, url, order, is_primary")
-        .eq("profile_id", userId);
-      if (readError) throw readError;
-      const reordered = reorderProfilePhotos(rows ?? [], fromIndex, toIndex);
-      // One database statement: either every position is saved or none is changed.
-      const { error } = await supabase
-        .from("profile_photos")
-        .upsert(reordered, { onConflict: "id" });
+      const source = buildExistingPhotoRows(profileData ?? null).find(
+        (row) => row.order === fromIndex
+      );
+      if (!source?.id) throw new Error("No se encontró la foto para mover.");
+      const { error } = await supabase.rpc("reorder_profile_photo", {
+        photo_id: source.id,
+        expected_order: fromIndex,
+        target_order: toIndex,
+      });
       if (error) throw error;
       await refreshProfileCache();
     } catch (error) {
@@ -762,18 +760,22 @@ const EditProfile = () => {
     );
     nextPhotos[slotIndex] = signedUrl || uri;
 
-    const existingRows = buildExistingPhotoRows(
-      (profileData as Record<string, any>) ?? null
-    );
-    const existingForSlot = existingRows.find(
-      (photo) => photo.order === slotIndex
-    );
+    // Resolve the real row at save time; cached/legacy photo IDs may be stale.
+    const { data: savedPhotoRows, error: lookupError } = await supabase
+      .from("profile_photos")
+      .select("id, order, is_primary")
+      .eq("profile_id", userId);
+    if (lookupError) {
+      await supabase.storage.from(PROFILE_PICTURES_BUCKET).remove([filePath]);
+      throw lookupError;
+    }
 
+    const existingForSlot = savedPhotoRows?.find((photo) => photo.order === slotIndex);
     const photoValues = {
       profile_id: userId,
       url: filePath,
       order: slotIndex,
-      is_primary: existingForSlot?.isPrimary ?? slotIndex === 0,
+      is_primary: existingForSlot?.is_primary ?? slotIndex === 0,
     };
     const { error: saveError } = existingForSlot?.id
       ? await supabase
@@ -781,7 +783,11 @@ const EditProfile = () => {
           .update(photoValues)
           .eq("id", existingForSlot.id)
           .eq("profile_id", userId)
-      : await supabase.from("profile_photos").insert(photoValues);
+          .select("id, url")
+          .single()
+      : await supabase.from("profile_photos").insert(photoValues)
+          .select("id, url")
+          .single();
     if (saveError) {
       await supabase.storage.from(PROFILE_PICTURES_BUCKET).remove([filePath]);
       throw saveError;
@@ -992,12 +998,7 @@ const EditProfile = () => {
 
         <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>{t("editProfile.email")}</Text>
-          <View style={localStyles.readOnlyField}>
-            <Text style={localStyles.readOnlyValue}>
-              {session?.user?.email ?? "-"}
-            </Text>
-          </View>
-          <EmailVerificationCard userId={session?.user?.id} />
+          <EmailVerificationCard userId={session?.user?.id} email={session?.user?.email} />
         </View>
 
         <View style={styles.editSection}>

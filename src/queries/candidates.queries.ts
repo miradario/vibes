@@ -1,3 +1,4 @@
+import { zodiacFromBirthDate } from "../lib/zodiac";
 import { isSwipeHidden } from "../lib/communityDiscovery";
 import { useQuery } from "@tanstack/react-query";
 import { mapSupabaseSelect } from "../api/mappers/case.mapper";
@@ -313,6 +314,7 @@ const fetchCandidates = async (
       return {
         ...profile,
         ...preferencesByUserId.get(id),
+        zodiac: zodiacFromBirthDate(profile.birthDate ?? profile.birth_date),
         distanceKm:
           currentUserCoordinates &&
           Number.isFinite(toCoordinate(profile.latitude) ?? NaN) &&

@@ -1,3 +1,4 @@
+import { zodiacFromBirthDate } from "./zodiac";
 import type { ImageSourcePropType } from "react-native";
 import type { Candidate } from "../api/modules/candidates/candidates.types";
 import {
@@ -25,6 +26,7 @@ export type ConnectionProfile = {
   name: string;
   avatarUri?: string | null;
   age?: string;
+  zodiac?: string;
   image: ImageSourcePropType;
   hasPhotos: boolean;
   images: ImageSourcePropType[];
@@ -255,7 +257,7 @@ const buildPreferences = (profile: ProfileLike): string[] => {
     profile.lookingFor ?? profile.looking_for
   );
   pushPreference("Idiomas", profile.languages);
-  pushPreference("Zodiaco", profile.zodiac);
+  pushPreference("Signo zodiacal", zodiacFromBirthDate(profile.birthDate ?? profile.birth_date));
   pushPreference("Educación", profile.education);
   pushPreference("Plan familiar", profile.familyPlan ?? profile.family_plan);
   pushPreference("Vacuna", profile.vaccine);
@@ -366,6 +368,7 @@ export const mapCandidateToConnectionProfile = (
     id: String((candidate as ProfileLike).id ?? displayName),
     name: displayName,
     avatarUri: photos[0] ?? null,
+    zodiac: zodiacFromBirthDate((candidate as ProfileLike).birthDate ?? (candidate as ProfileLike).birth_date),
     age,
     image: photoSources[0] ?? FALLBACK_PROFILE_IMAGE,
     hasPhotos: photoSources.length > 0,

@@ -321,9 +321,9 @@ const Chat = () => {
     <ScreenContainer edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         style={styles.bg}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         contentContainerStyle={localStyles.keyboardAvoidingContent}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={insets.top}
       >
         <AppHeader
           showBack

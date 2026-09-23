@@ -1,9 +1,11 @@
+import { useEmailOwnershipQuery } from "../src/queries/emailOwnership.queries";
+import { isEmailOwnershipVerified } from "../src/auth/emailVerification";
 /** @format */
 
-import React from "react";
+import React, { useCallback } from "react";
 import { ScrollView, View, TouchableOpacity } from "react-native";
 import { Text } from "../components/Typography";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import { CommonActions, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import AppHeader from "../components/AppHeader";
@@ -27,7 +29,12 @@ const Profile = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { data: session } = useAuthSession();
-  const { data: profile } = useProfileQuery(session?.user?.id);
+  const { data: profile, refetch: refetchProfile } = useProfileQuery(session?.user?.id);
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.user?.id) void refetchProfile();
+    }, [session?.user?.id, refetchProfile])
+  );
   const {
     data: userPreferences,
     isPending: loadingPreferences,
@@ -38,6 +45,7 @@ const Profile = () => {
     {
       ...(profile ?? {}),
       ...(userPreferences ?? {}),
+      photos: profile?.photos,
     },
     session?.user?.email?.split("@")[0]
   );
@@ -47,7 +55,8 @@ const Profile = () => {
   const location = ownProfile.location || "Ubicación sin completar";
   const ownAvatarUri = ownProfile.avatarUri ?? null;
 
-  const completion = getProfileCompletion(profile, userPreferences);
+  const { data: emailOwner } = useEmailOwnershipQuery(session?.user?.id);
+  const completion = getProfileCompletion(profile, userPreferences, isEmailOwnershipVerified(emailOwner));
   const appVersion = getInstalledAppVersion();
   const buildNumber = getInstalledAppBuildNumber();
   const formattedAppVersion = buildNumber
@@ -57,7 +66,7 @@ const Profile = () => {
   const menuItems = [
     {
       icon: "create-outline",
-      label: "Completar y editar respuestas",
+      label: "Sobre mí",
       screen: "ProfileQuestions",
     },
     {
@@ -125,6 +134,9 @@ const Profile = () => {
           <View style={styles.auraProfileInfo}>
             <Text style={styles.auraProfileName}>{displayName}</Text>
             <Text style={styles.auraProfileLocation}>{location}</Text>
+            {ownProfile.zodiac ? (
+              <Text style={styles.auraProfileLocation}>{ownProfile.zodiac}</Text>
+            ) : null}
           </View>
           <TouchableOpacity
             style={styles.auraEditButton}

@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useRef, useState } from "react";
@@ -109,7 +110,7 @@ const Signup = () => {
       return;
     }
 
-    if (!email || !password) {
+    if (!email || !password.trim()) {
       setError(t("signup.missingFields"));
       return;
     }
@@ -355,18 +356,29 @@ const Signup = () => {
                 disabled={
                   !acceptedTerms ||
                   !email ||
-                  !password ||
+                  !password.trim() ||
                   loading ||
                   googleLoading ||
                   appleLoading
                 }
               />
 
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: vibesTheme.colors.secondaryText,
+                  fontFamily: vibesTheme.fonts.regular,
+                  fontSize: 13,
+                  lineHeight: 18,
+                  marginTop: 8,
+                }}
+              >
+                {t("signup.switchPrompt")}
+              </Text>
               <VibesActionButton
-                label={t("common.back")}
-                variant="skip"
-                style={localStyles.backButton}
-                onPress={() => navigation.navigate("Welcome" as never)}
+                label={t("signup.switchAction")}
+                variant="start"
+                onPress={() => navigation.navigate("Login" as never)}
               />
             </View>
           </View>

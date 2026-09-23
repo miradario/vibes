@@ -1,3 +1,5 @@
+import { useEmailOwnershipQuery } from "../src/queries/emailOwnership.queries";
+import { isEmailOwnershipVerified } from "../src/auth/emailVerification";
 import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "./Typography";
@@ -22,8 +24,9 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
     queryFn: () => readProfileAnswers(userId!),
     enabled: !!userId,
   });
+  const { data: emailOwner } = useEmailOwnershipQuery(userId);
   if (dismissed || !isSuccess || !hasMissingProfileAnswers(data)) return null;
-  const completion = getProfileCompletion(profile, preferences);
+  const completion = getProfileCompletion(profile, preferences, isEmailOwnershipVerified(emailOwner));
   return (
     <TouchableOpacity
       accessibilityRole="button"

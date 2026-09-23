@@ -14,6 +14,7 @@ void bootstrapAuthSession().catch((error) => {
 });
 
 export const login = async ({ email, password }: LoginInput) => {
+  password = password.trim();
   const { data, error } = await authClient.signInWithPassword(email, password);
   if (error) {
     throw error;
@@ -22,6 +23,7 @@ export const login = async ({ email, password }: LoginInput) => {
 };
 
 export const signup = async ({ email, password }: LoginInput) => {
+  password = password.trim();
   if (!isValidEmail(email)) throw new Error("Ingresá un email válido.");
   if (!isValidPassword(password))
     throw new Error("Usá al menos 8 caracteres y una mayúscula.");
@@ -73,6 +75,7 @@ export const exchangePasswordResetCode = async (code: string) => {
 };
 
 export const updatePassword = async ({ password }: UpdatePasswordInput) => {
+  password = password.trim();
   if (!isValidPassword(password))
     throw new Error("Usá al menos 8 caracteres y una mayúscula.");
   const { error } = await authClient.updatePassword(password);

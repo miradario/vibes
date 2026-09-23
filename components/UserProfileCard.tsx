@@ -9,6 +9,7 @@ export type UserProfileCardData = {
   image: any;
   name: string;
   age?: string;
+  zodiac?: string;
   location?: string;
   distanceLabel?: string;
   description?: string;

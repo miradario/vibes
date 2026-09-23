@@ -82,7 +82,7 @@ const Login = () => {
   }, []);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email || !password.trim()) {
       setError(t("login.missingFields"));
       return;
     }
@@ -167,7 +167,7 @@ const Login = () => {
 
   const isDisabled =
     !email ||
-    !password ||
+    !password.trim() ||
     loading ||
     googleLoading ||
     appleLoading ||
@@ -302,12 +302,38 @@ const Login = () => {
                 disabled={isDisabled}
               />
 
-              <VibesActionButton
-                label={t("common.back")}
-                variant="skip"
-                style={localStyles.backButton}
-                onPress={() => navigation.navigate("Welcome" as never)}
+              <View
+                style={{
+                  width: "100%",
+                  height: 1,
+                  backgroundColor: "rgba(43, 43, 43, 0.12)",
+                  marginTop: 12,
+                }}
               />
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: vibesTheme.colors.secondaryText,
+                  fontFamily: vibesTheme.fonts.regular,
+                  fontSize: 13,
+                  lineHeight: 18,
+                  marginTop: 8,
+                  marginBottom: 16,
+                }}
+              >
+                {t("login.switchPrompt")}{" "}
+                <Text
+                  accessibilityRole="link"
+                  onPress={() => navigation.navigate("AgeAssurance" as never)}
+                  style={{
+                    color: "#8B6327",
+                    textDecorationLine: "underline",
+                    fontFamily: vibesTheme.fonts.medium,
+                  }}
+                >
+                  {t("login.switchAction")}
+                </Text>
+              </Text>
             </View>
           </View>
         </ScrollView>

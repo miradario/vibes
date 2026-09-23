@@ -436,7 +436,6 @@ const Settings = () => {
             <Text style={localStyles.sectionTitle}>Más sobre vos</Text>
             {(
               [
-                "zodiac",
                 "education",
                 "family_plan",
                 "communication_style",
@@ -463,9 +462,20 @@ const Settings = () => {
                   )
                 }
               >
-                <Text style={localStyles.fieldLabel}>
-                  {PROFILE_PREFERENCE_OPTIONS[key].label}
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={localStyles.fieldLabel}>
+                    {PROFILE_PREFERENCE_OPTIONS[key].label}
+                  </Text>
+                  <Text style={localStyles.helperText}>
+                    {prefs?.[key] ??
+                      prefs?.[
+                        key.replace(/_([a-z])/g, (_, letter: string) =>
+                          letter.toUpperCase()
+                        )
+                      ] ??
+                      "Sin completar"}
+                  </Text>
+                </View>
                 <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
               </TouchableOpacity>
             ))}

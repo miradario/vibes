@@ -89,6 +89,8 @@ const Avatar = ({
       />
       {(hasSource || hasUri) && !hasError ? (
         <ExpoImage
+          key={resolvedUri || sourceKey}
+          recyclingKey={resolvedUri || sourceKey}
           source={hasUri ? { uri: resolvedUri } : source}
           style={[StyleSheet.absoluteFillObject, { borderRadius: resolvedRadius }]}
           contentFit="cover"

@@ -273,7 +273,7 @@ export const MessagesContent = ({
     Alert.alert(
       isArchived ? "Recuperar conversación" : "Archivar conversación",
       isArchived
-        ? "La conversación volverá a aparecer en Comunidad."
+        ? "La conversación volverá a aparecer en Chats."
         : "Podés recuperarla luego desde la sección Archivados.",
       [
         { text: "Cancelar", style: "cancel" },

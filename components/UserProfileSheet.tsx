@@ -823,6 +823,9 @@ const UserProfileSheet = ({
                 {profile.age ? (
                   <Text style={localStyles.profileAge}>{profile.age} años</Text>
                 ) : null}
+                {profile.zodiac ? (
+                  <Text style={localStyles.profileAge}>{profile.zodiac}</Text>
+                ) : null}
               </View>
             </View>
             {!enableSwipe && (

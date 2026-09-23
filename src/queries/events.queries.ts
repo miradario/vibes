@@ -1350,7 +1350,7 @@ export const useChallengeParticipantsQuery = (
       if (!rows || rows.length === 0) return [];
 
       const userIds = rows.map((row: any) => String(row.user_id));
-      const [{ data: profiles }, { data: photoRows }] = await Promise.all([
+      const [{ data: profiles, error: profilesError }, { data: photoRows, error: photosError }] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, display_name")
@@ -1362,6 +1362,9 @@ export const useChallengeParticipantsQuery = (
           .in("profile_id", userIds)
           .order("order", { ascending: true }),
       ]);
+
+      if (profilesError) throw profilesError;
+      if (photosError) throw photosError;
 
       const profileMap: Record<string, any> = {};
       for (const profile of profiles ?? []) {

@@ -944,12 +944,6 @@ const Home = () => {
               >
                 Hola, {firstName}
               </Text>
-              <Text style={localStyles.heroSubtitle}>
-                <Text style={localStyles.heroSubtitleStrong}>
-                  Conectá con vos
-                </Text>{" "}
-                para poder conectar con otros.
-              </Text>
             </View>
           </View>
 

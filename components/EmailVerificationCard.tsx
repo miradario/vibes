@@ -1,39 +1,20 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { AppState, TouchableOpacity, View } from "react-native";
+import Icon from "./Icon";
+import React, { useState } from "react";
+import { TouchableOpacity, View } from "react-native";
 import { Text } from "./Typography";
-import { useFocusEffect } from "@react-navigation/native";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../src/lib/supabase";
+import { useEmailOwnershipQuery } from "../src/queries/emailOwnership.queries";
 import {
   isEmailOwnershipVerified,
   sendEmailVerification,
 } from "../src/auth/emailVerification";
 
-export default function EmailVerificationCard({ userId }: { userId?: string }) {
-  const query = useQuery({
-    queryKey: ["emailOwnership", userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw error;
-      return data.user;
-    },
-  });
+export default function EmailVerificationCard({ userId, email }: { userId?: string; email?: string }) {
+  const query = useEmailOwnershipQuery(userId);
+  const [expanded, setExpanded] = useState(false);
   const [sending, setSending] = useState(false);
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState("");
   const [lastSent, setLastSent] = useState(0);
-  useFocusEffect(
-    useCallback(() => {
-      if (userId) void query.refetch();
-    }, [userId, query.refetch])
-  );
-  useEffect(() => {
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active" && userId) void query.refetch();
-    });
-    return () => sub.remove();
-  }, [userId, query.refetch]);
   const verified = isEmailOwnershipVerified(query.data);
   const check = async () => {
     if (checking) return;
@@ -73,86 +54,47 @@ export default function EmailVerificationCard({ userId }: { userId?: string }) {
       setSending(false);
     }
   };
+  const startVerification = () => {
+    if (verified || sending || query.isLoading) return;
+    setExpanded(true);
+    void (query.isError ? query.refetch() : send());
+  };
   return (
-    <View
-      style={{
-        marginTop: 8,
-      }}
-    >
-      {query.isError ? (
+    <View>
+      <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1,
+        borderColor: "#C3D2E1", borderRadius: 14, paddingHorizontal: 14, minHeight: 52 }}>
+        <Text style={{ flex: 1, paddingVertical: 14, fontSize: 17, color: "#2B2B2B" }}>
+          {query.data?.email ?? email ?? "—"}
+        </Text>
         <TouchableOpacity
-          accessibilityRole="button"
-          style={{ minHeight: 48, justifyContent: "center" }}
-          onPress={() => void query.refetch()}
-        >
-          <Text>No pudimos consultar tu email. Reintentar</Text>
+          accessibilityRole={verified ? "image" : "button"}
+          accessibilityLabel={verified ? "Email verificado" : "Validar email"}
+          disabled={verified || sending || query.isLoading}
+          onPress={startVerification}
+          style={{ marginLeft: 12, minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" }}>
+          <Icon name="checkmark-circle" size={26} color={verified ? "#43A047" : "#B8BEC4"} />
         </TouchableOpacity>
-      ) : (
-        <>
-          <Text
-            accessibilityLiveRegion="polite"
-            style={{ marginVertical: 8, color: "#6E6E6E" }}
-          >
-            {query.isLoading
-              ? "Consultando email…"
-              : verified
-              ? "Email verificado ✓"
-              : "Email pendiente de verificar"}
+      </View>
+      {!verified && (
+        <TouchableOpacity accessibilityRole="button" disabled={sending || query.isLoading}
+          onPress={startVerification}
+          style={{ minHeight: 48, alignSelf: "flex-end", justifyContent: "center" }}>
+          <Text style={{ fontSize: 13, color: "#8C6A2D", textDecorationLine: "underline" }}>
+            {query.isLoading ? "Consultando…" : sending ? "Enviando…" : "Validar email"}
           </Text>
-          {!verified && query.data?.email ? (
-            <View>
-              <Text
-                style={{ color: "#6E6E6E", lineHeight: 21, marginBottom: 4 }}
-              >
-                Para verificarlo, abrí el enlace que te enviamos por correo.
-              </Text>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityState={{ disabled: sending, busy: sending }}
-                disabled={sending}
-                onPress={() => void send()}
-                style={{
-                  minHeight: 34,
-                  paddingVertical: 6,
-                  justifyContent: "center",
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#8C6A2D",
-                    textDecorationLine: "underline",
-                  }}
-                >
-                  {sending ? "Enviando…" : "Reenviar enlace de verificación"}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityState={{ disabled: checking, busy: checking }}
-                disabled={checking}
-                onPress={() => void check()}
-                style={{
-                  minHeight: 34,
-                  paddingVertical: 6,
-                  justifyContent: "center",
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#8C6A2D",
-                    textDecorationLine: "underline",
-                  }}
-                >
-                  {checking ? "Comprobando…" : "Ya abrí el enlace · Comprobar"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-        </>
+        </TouchableOpacity>
       )}
-      {message && !verified ? (
-        <Text accessibilityLiveRegion="polite">{message}</Text>
-      ) : null}
+      {!verified && expanded && (
+        <View>
+          {!!message && <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, color: "#6E6E6E" }}>{message}</Text>}
+          <TouchableOpacity accessibilityRole="button" disabled={checking}
+            onPress={() => void check()} style={{ minHeight: 48, justifyContent: "center" }}>
+            <Text style={{ fontSize: 13, color: "#8C6A2D", textDecorationLine: "underline" }}>
+              {checking ? "Comprobando…" : "Ya abrí el enlace · Comprobar"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }

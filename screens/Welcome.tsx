@@ -1,3 +1,4 @@
+import { Text } from "../components/Typography";
 /** @format */
 
 import React, { useEffect } from "react";
@@ -42,14 +43,20 @@ const Welcome = () => {
 
         <View style={localStyles.card}>
           <View style={localStyles.buttons}>
+            <Text style={localStyles.accountPrompt}>
+              {t("welcome.existingAccount")}
+            </Text>
             <VibesActionButton
               label={t("welcome.login")}
               variant="start"
               onPress={() => navigation.navigate("Login" as never)}
             />
+            <Text style={localStyles.accountPrompt}>
+              {t("welcome.newAccount")}
+            </Text>
             <VibesActionButton
               label={t("welcome.signup")}
-              variant="skip"
+              variant="start"
               onPress={() => navigation.navigate("AgeAssurance" as never)}
             />
           </View>
@@ -89,6 +96,14 @@ const localStyles = StyleSheet.create({
   },
   card: {
     marginBottom: 20,
+  },
+  accountPrompt: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.regular,
+    color: vibesTheme.colors.secondaryText,
+    textAlign: "center",
+    marginTop: 4,
   },
   buttons: {
     width: "100%",

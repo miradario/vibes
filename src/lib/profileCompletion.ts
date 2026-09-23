@@ -7,10 +7,11 @@ const filled = (value: unknown): boolean =>
     : typeof value === "string" && value.trim().length > 0;
 
 /** Count optional public onboarding fields once; never require private answers. */
-export const getProfileCompletion = (profile: Data, preferences: Data) => {
+export const getProfileCompletion = (profile: Data, preferences: Data, emailVerified = false) => {
   const answers =
     preferences?.profileAnswers ?? preferences?.profile_answers ?? {};
   const fields = [
+    { label: "Validar email", value: emailVerified ? "verified" : "", screen: "EditProfile" },
     {
       label: "Nombre",
       value: profile?.displayName ?? profile?.display_name,

@@ -1,3 +1,4 @@
+import ParticipantsSheet from "../components/ParticipantsSheet";
 /** @format */
 
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
@@ -35,6 +36,7 @@ import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import {
   useChallengeCheckinsQuery,
   useChallengeParticipantQuery,
+  useChallengeParticipantsQuery,
   useChallengeJoinRequestQuery,
   useChallengeJoinRequestsQuery,
   useChallengeTodayCheckinsCountQuery,
@@ -274,20 +276,16 @@ type ChallengeHeroProps = {
   imageSource: any;
 };
 
-export const ChallengeHero = memo(
-  ({
-    imageSource,
-  }: ChallengeHeroProps) => (
-    <View style={localStyles.heroMedia}>
-      <Image
-        source={imageSource}
-        style={localStyles.heroImage}
-        resizeMode="cover"
-      />
-      <View style={localStyles.heroScrim} />
-    </View>
-  )
-);
+export const ChallengeHero = memo(({ imageSource }: ChallengeHeroProps) => (
+  <View style={localStyles.heroMedia}>
+    <Image
+      source={imageSource}
+      style={localStyles.heroImage}
+      resizeMode="cover"
+    />
+    <View style={localStyles.heroScrim} />
+  </View>
+));
 
 type InfoCardsRowProps = {
   challenge: ChallengeDetailData;
@@ -442,18 +440,28 @@ const CommunityPulseCard = memo(
   }) => (
     <View style={localStyles.communityCard}>
       <View style={localStyles.communityBadge}>
-        <Icon name="people-outline" size={24} color={vibesTheme.colors.accentMustard} />
+        <Icon
+          name="people-outline"
+          size={24}
+          color={vibesTheme.colors.accentMustard}
+        />
       </View>
       <View style={localStyles.communityCopy}>
         <Text style={localStyles.communityTitle}>Mejor en compañía</Text>
         <Text style={localStyles.communitySubtitle}>
           {participantsCount > 0
-            ? `${participantsCount} ${participantsCount === 1 ? "persona comparte" : "personas comparten"} este desafío`
+            ? `${participantsCount} ${
+                participantsCount === 1
+                  ? "persona comparte"
+                  : "personas comparten"
+              } este desafío`
             : "Tu presencia puede abrir el ritmo del día"}
         </Text>
         <Text style={localStyles.communityTodayCopy}>
           {checkedInTodayCount > 0
-            ? `${checkedInTodayCount} ${checkedInTodayCount === 1 ? "check-in" : "check-ins"} hoy`
+            ? `${checkedInTodayCount} ${
+                checkedInTodayCount === 1 ? "check-in" : "check-ins"
+              } hoy`
             : "Todavía no hay check-ins hoy"}
         </Text>
       </View>
@@ -492,7 +500,13 @@ const ChallengeIntroMetaRow = memo(
 );
 
 const ChallengeJourneyCard = memo(
-  ({ challenge, percent }: { challenge: ChallengeDetailData; percent: number }) => {
+  ({
+    challenge,
+    percent,
+  }: {
+    challenge: ChallengeDetailData;
+    percent: number;
+  }) => {
     const scrollRef = useRef<ScrollView>(null);
     const timelineScrollX = useRef(0);
     const [timelineWidth, setTimelineWidth] = useState(0);
@@ -502,16 +516,22 @@ const ChallengeJourneyCard = memo(
       width: `${progress.value * 100}%`,
     }));
     const days = useMemo(
-      () => Array.from({ length: challenge.totalDays }, (_, index) => index + 1),
+      () =>
+        Array.from({ length: challenge.totalDays }, (_, index) => index + 1),
       [challenge.totalDays]
     );
 
     useEffect(() => {
-      if (!timelineWidth || !timelineContentWidth || challenge.currentDay <= 0) return;
+      if (!timelineWidth || !timelineContentWidth || challenge.currentDay <= 0)
+        return;
       const dayPitch = 66;
-      const activeCenter = (Math.max(challenge.currentDay, 1) - 1) * dayPitch + 20;
+      const activeCenter =
+        (Math.max(challenge.currentDay, 1) - 1) * dayPitch + 20;
       const maxScrollX = Math.max(timelineContentWidth - timelineWidth, 0);
-      const targetX = Math.min(Math.max(activeCenter - timelineWidth / 2, 0), maxScrollX);
+      const targetX = Math.min(
+        Math.max(activeCenter - timelineWidth / 2, 0),
+        maxScrollX
+      );
       const overshootX = Math.min(targetX + 28, maxScrollX);
       let startTimer: ReturnType<typeof setTimeout> | undefined;
       let reboundTimer: ReturnType<typeof setTimeout> | undefined;
@@ -569,7 +589,8 @@ const ChallengeJourneyCard = memo(
           <View style={localStyles.journeyHeaderCopy}>
             <Text style={localStyles.journeyTitle}>Tu camino</Text>
             <Text style={localStyles.journeySubtitle}>
-              {challenge.completedDays.length} de {challenge.totalDays} días completados
+              {challenge.completedDays.length} de {challenge.totalDays} días
+              completados
             </Text>
           </View>
           <Text style={localStyles.journeyPercent}>{percent}%</Text>
@@ -585,14 +606,20 @@ const ChallengeJourneyCard = memo(
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={localStyles.journeyDaysRow}
           onLayout={(event) => setTimelineWidth(event.nativeEvent.layout.width)}
-          onContentSizeChange={(contentWidth) => setTimelineContentWidth(contentWidth)}
+          onContentSizeChange={(contentWidth) =>
+            setTimelineContentWidth(contentWidth)
+          }
           onScroll={(event) => {
             timelineScrollX.current = event.nativeEvent.contentOffset.x;
           }}
           scrollEventThrottle={16}
         >
           {days.map((day, index) => {
-            const state = getDayState(day, challenge.currentDay, challenge.completedDays);
+            const state = getDayState(
+              day,
+              challenge.currentDay,
+              challenge.completedDays
+            );
             return (
               <View key={day} style={localStyles.journeyDayWrap}>
                 <DayCircle day={day} state={state} size={40} />
@@ -618,14 +645,20 @@ const ChallengeJourneyCard = memo(
           <View style={localStyles.journeyStatItem}>
             <Icon name="flame-outline" size={24} color="#C47A55" />
             <Text style={localStyles.journeyStatText}>
-              Racha actual: <Text style={localStyles.journeyStatValue}>{challenge.streak} días</Text>
+              Racha actual:{" "}
+              <Text style={localStyles.journeyStatValue}>
+                {challenge.streak} días
+              </Text>
             </Text>
           </View>
           <View style={localStyles.journeyStatDivider} />
           <View style={localStyles.journeyStatItem}>
             <Icon name="stats-chart-outline" size={22} color="#625D57" />
             <Text style={localStyles.journeyStatText}>
-              Mejor: <Text style={localStyles.journeyStatValue}>{challenge.bestStreak}</Text>
+              Mejor:{" "}
+              <Text style={localStyles.journeyStatValue}>
+                {challenge.bestStreak}
+              </Text>
             </Text>
           </View>
         </View>
@@ -1165,6 +1198,10 @@ const ChallengeDetailScreen = () => {
   );
   const [isSharing, setIsSharing] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [participantsVisible, setParticipantsVisible] = useState(false);
+  const pendingParticipants = useRef(false);
+  const participantsQuery = useChallengeParticipantsQuery(event?.id);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const challengeScrollY = useRef(new NativeAnimated.Value(0)).current;
 
   const baseChallenge = useMemo(
@@ -1189,6 +1226,7 @@ const ChallengeDetailScreen = () => {
     );
   const challenge: ChallengeDetailData = {
     ...baseChallenge,
+    participantsCount: participantsQuery.data?.length ?? 0,
     completedDays,
     checkInStatus: status,
     streak:
@@ -1337,12 +1375,12 @@ const ChallengeDetailScreen = () => {
             } catch (error: any) {
               Alert.alert(
                 "Error",
-                error?.message ?? "No se pudo abandonar el desafío.",
+                error?.message ?? "No se pudo abandonar el desafío."
               );
             }
           },
         },
-      ],
+      ]
     );
   };
 
@@ -1564,7 +1602,9 @@ const ChallengeDetailScreen = () => {
   if (!event && challengeId) {
     return (
       <ScreenContainer style={localStyles.loadingScreen}>
-        <Text style={localStyles.loadingTitle}>No encontramos este desafío</Text>
+        <Text style={localStyles.loadingTitle}>
+          No encontramos este desafío
+        </Text>
         <TouchableOpacity
           style={localStyles.loadingBackButton}
           onPress={() => navigation.goBack()}
@@ -1579,6 +1619,7 @@ const ChallengeDetailScreen = () => {
   return (
     <ScreenContainer style={localStyles.screen} edges={["left", "right"]}>
       <NativeAnimated.View
+        pointerEvents={headerCollapsed ? "none" : "box-none"}
         style={[
           localStyles.expandedChallengeHeader,
           {
@@ -1595,10 +1636,16 @@ const ChallengeDetailScreen = () => {
           <Icon name="chevron-back" size={22} color={WHITE} />
         </TouchableOpacity>
         <View style={localStyles.expandedChallengeHeaderCopy}>
-          <Text style={localStyles.expandedChallengeHeaderTitle} numberOfLines={2}>
+          <Text
+            style={localStyles.expandedChallengeHeaderTitle}
+            numberOfLines={2}
+          >
             {challenge.title}
           </Text>
-          <Text style={localStyles.expandedChallengeHeaderSubtitle} numberOfLines={2}>
+          <Text
+            style={localStyles.expandedChallengeHeaderSubtitle}
+            numberOfLines={2}
+          >
             {challenge.subtitle}
           </Text>
         </View>
@@ -1612,6 +1659,7 @@ const ChallengeDetailScreen = () => {
       </NativeAnimated.View>
 
       <NativeAnimated.View
+        pointerEvents={headerCollapsed ? "auto" : "none"}
         style={[
           localStyles.collapsedChallengeHeader,
           {
@@ -1634,10 +1682,19 @@ const ChallengeDetailScreen = () => {
             style={localStyles.collapsedChallengeHeaderThumbnail}
           />
         ) : null}
-        <Text style={localStyles.collapsedChallengeHeaderTitle} numberOfLines={2}>
+        <Text
+          style={localStyles.collapsedChallengeHeaderTitle}
+          numberOfLines={2}
+        >
           {challenge.title}
         </Text>
-        <View style={localStyles.headerIconPlaceholder} />
+        <TouchableOpacity
+          accessibilityLabel="Opciones del desafío"
+          onPress={() => setMenuVisible(true)}
+          style={localStyles.collapsedChallengeHeaderBackButton}
+        >
+          <Icon name="ellipsis-horizontal" size={22} color={palette.text} />
+        </TouchableOpacity>
       </NativeAnimated.View>
 
       <NativeAnimated.ScrollView
@@ -1652,13 +1709,15 @@ const ChallengeDetailScreen = () => {
         scrollEventThrottle={16}
         onScroll={NativeAnimated.event(
           [{ nativeEvent: { contentOffset: { y: challengeScrollY } } }],
-          { useNativeDriver: true },
+          {
+            useNativeDriver: true,
+            listener: (event: any) =>
+              setHeaderCollapsed(event.nativeEvent.contentOffset.y >= 132),
+          }
         )}
       >
         {coverImageSource ? (
-          <ChallengeHero
-            imageSource={coverImageSource}
-          />
+          <ChallengeHero imageSource={coverImageSource} />
         ) : null}
         <View
           style={[
@@ -1717,10 +1776,28 @@ const ChallengeDetailScreen = () => {
             {challenge.streak >= 3 ? (
               <StreakCelebrationCard streak={challenge.streak} />
             ) : null}
-            <CommunityPulseCard
-              checkedInTodayCount={checkedInTodayCount}
-              participantsCount={challenge.participantsCount}
-            />
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Ver participantes del desafío"
+              onPress={() => setParticipantsVisible(true)}
+            >
+              <CommunityPulseCard
+                checkedInTodayCount={checkedInTodayCount}
+                participantsCount={
+                  challenge.participantsCount
+                }
+              />
+              <Text
+                style={{
+                  textAlign: "center",
+                  paddingVertical: 14,
+                  color: palette.text,
+                }}
+              >
+                Ver participantes (
+                {challenge.participantsCount})
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </NativeAnimated.ScrollView>
@@ -1861,11 +1938,30 @@ const ChallengeDetailScreen = () => {
       <AnimatedSheetModal
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
+        onClosed={() => {
+          if (pendingParticipants.current) {
+            pendingParticipants.current = false;
+            setParticipantsVisible(true);
+          }
+        }}
         offsetY={260}
         sheetStyle={localStyles.menuSheet}
       >
         <View style={localStyles.menuHandle} />
         <Text style={localStyles.menuTitle}>Opciones del desafío</Text>
+        <TouchableOpacity
+          style={localStyles.menuItem}
+          onPress={() => {
+            pendingParticipants.current = true;
+            setMenuVisible(false);
+          }}
+        >
+          <Icon name="people-outline" size={20} color={palette.text} />
+          <Text style={localStyles.menuItemText}>
+            Participantes (
+            {challenge.participantsCount})
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={localStyles.menuItem}
           onPress={() => {
@@ -1886,7 +1982,9 @@ const ChallengeDetailScreen = () => {
             disabled={leaveChallengeMutation.isPending}
           >
             <Icon name="exit-outline" size={20} color={palette.red} />
-            <Text style={[localStyles.menuItemText, localStyles.menuItemTextDanger]}>
+            <Text
+              style={[localStyles.menuItemText, localStyles.menuItemTextDanger]}
+            >
               {leaveChallengeMutation.isPending
                 ? "Abandonando..."
                 : "Abandonar desafío"}
@@ -1894,6 +1992,15 @@ const ChallengeDetailScreen = () => {
           </TouchableOpacity>
         ) : null}
       </AnimatedSheetModal>
+      <ParticipantsSheet
+        visible={participantsVisible}
+        onClose={() => setParticipantsVisible(false)}
+        participants={participantsQuery.data ?? []}
+        userId={userId}
+        loading={participantsQuery.isLoading}
+        error={participantsQuery.isError}
+        retry={() => void participantsQuery.refetch()}
+      />
     </ScreenContainer>
   );
 };
@@ -2015,8 +2122,8 @@ const localStyles = StyleSheet.create({
     gap: 18,
   },
   expandedChallengeHeaderIconButton: {
-    width: 42,
-    height: 42,
+    width: 48,
+    height: 48,
     borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
@@ -2074,8 +2181,8 @@ const localStyles = StyleSheet.create({
     elevation: 19,
   },
   collapsedChallengeHeaderBackButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",

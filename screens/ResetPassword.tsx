@@ -76,7 +76,7 @@ const ResetPassword = () => {
       setError(t("resetPassword.passwordLength"));
       return;
     }
-    if (password !== confirmPassword) {
+    if (password.trim() !== confirmPassword.trim()) {
       setError(t("resetPassword.passwordMismatch"));
       return;
     }
@@ -175,7 +175,7 @@ const ResetPassword = () => {
                 }
                 variant="start"
                 onPress={handleSubmit}
-                disabled={!password || !confirmPassword || loading || !code}
+                disabled={!password.trim() || !confirmPassword.trim() || loading || !code}
               />
             </View>
           </View>

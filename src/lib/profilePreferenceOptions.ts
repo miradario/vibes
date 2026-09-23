@@ -10,7 +10,7 @@ export const PROFILE_PREFERENCE_OPTIONS = {
     options: ["Español", "Inglés", "Portugués", "Francés", "Italiano"],
   },
   zodiac: {
-    label: "Zodiaco",
+    label: "Signo zodiacal",
     multiple: false,
     options: [
       "Aries",

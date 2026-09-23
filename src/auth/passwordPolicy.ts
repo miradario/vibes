@@ -1,4 +1,4 @@
 export const isValidPassword = (password: string) =>
-  password.length >= 8 && /[A-ZÁÉÍÓÚÜÑ]/.test(password);
+  password.trim().length >= 8 && /[A-ZÁÉÍÓÚÜÑ]/.test(password.trim());
 export const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());

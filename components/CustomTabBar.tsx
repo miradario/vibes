@@ -105,7 +105,7 @@ const labelByRoute: Record<string, string> = {
   Flow: "Desafíos",
   EventsTab: "Eventos",
   Home: "Inicio",
-  Calendar: "Comunidad",
+  Calendar: "Chats",
   Aura: "Perfil",
 };
 

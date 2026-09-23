@@ -278,7 +278,6 @@ const Events = () => {
         kind: "section",
         id: "joined-challenges",
         title: "Tus desafíos",
-        subtitle: "Los caminos que ya estás transitando",
       });
       nextItems.push(
         ...joinedChallengeItems.map((item) => ({ kind: "feed" as const, item })),
@@ -293,7 +292,7 @@ const Events = () => {
         kind: "section",
         id: "general-challenges",
         title: "Desafíos vigentes",
-        subtitle: "Explorá nuevas prácticas para sumarte",
+        subtitle: "",
       });
       nextItems.push(
         ...generalChallengeItems.map((item) => ({ kind: "feed" as const, item })),
@@ -541,7 +540,10 @@ const Events = () => {
             if (listItem.kind === "section") {
               return (
                 <View style={localStyles.feedSectionHeader}>
-                  <Text style={localStyles.feedSectionTitle}>{listItem.title}</Text>
+                  <Text style={[
+                    localStyles.feedSectionTitle,
+                    listItem.id === "joined-challenges" && localStyles.joinedChallengesTitle,
+                  ]}>{listItem.title}</Text>
                   {listItem.subtitle ? (
                     <Text style={localStyles.feedSectionSubtitle}>
                       {listItem.subtitle}
@@ -739,6 +741,10 @@ const localStyles = StyleSheet.create({
     fontSize: 25,
     lineHeight: 29,
     fontFamily: vibesTheme.fonts.thin,
+  },
+  joinedChallengesTitle: {
+    color: "#242424",
+    fontFamily: vibesTheme.fonts.regular,
   },
   feedSectionSubtitle: {
     marginTop: 2,

@@ -130,14 +130,6 @@ export default function CalmPause({
               Continuar
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={onContinue}
-            activeOpacity={0.7}
-            style={s.secondary}
-          >
-            <Text style={s.secondaryLabel}>Omitir por ahora</Text>
-          </TouchableOpacity>
         </View>
       </Animated.View>
     </ScreenContainer>
@@ -215,20 +207,6 @@ const s = StyleSheet.create({
   },
   primary: { paddingVertical: 14 },
   primaryLabel: { lineHeight: 24, textAlign: "center" },
-  secondary: {
-    minHeight: 48,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryLabel: {
-    color: "#555A61",
-    fontSize: 16,
-    lineHeight: 23,
-    textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
-  },
   loading: {
     color: "#59616A",
     textAlign: "center",

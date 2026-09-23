@@ -115,7 +115,7 @@ export default function CommunityGroups({
                   {group.name}
                 </Text>
                 <Text numberOfLines={1} style={s.hint}>
-                  {group.description || "Abrir conversación"}
+                  {group.lastMessage?.body || "Todavía no hay mensajes"}
                 </Text>
               </View>
               <UnreadBadge
