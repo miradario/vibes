@@ -85,6 +85,8 @@ let isNavigationReady = false;
 let pendingNotificationData: Record<string, unknown> | null = null;
 let hasHiddenNativeSplash = false;
 const FONT_LOAD_TIMEOUT_MS = 3000;
+const MIN_NATIVE_SPLASH_MS = 500;
+const nativeSplashShownAt = Date.now();
 
 void SplashScreen.preventAutoHideAsync().catch(() => {
   console.warn("[boot] failed to prevent native splash auto hide");
@@ -146,14 +148,28 @@ const AppNavigator = () => {
     if (!fontsLoaded && !fontError && !fontLoadTimedOut) return;
 
     hasHiddenNativeSplash = true;
-    console.log("[boot] hiding native splash", {
-      fontsLoaded,
-      hasFontError: Boolean(fontError),
-      fontLoadTimedOut,
-    });
-    void SplashScreen.hideAsync().catch((error) => {
-      console.warn("[boot] failed to hide native splash", error);
-    });
+    const elapsedMs = Date.now() - nativeSplashShownAt;
+    const remainingMs = Math.max(0, MIN_NATIVE_SPLASH_MS - elapsedMs);
+    const hideSplash = () => {
+      const totalElapsedMs = Date.now() - nativeSplashShownAt;
+      console.log("[boot] hiding native splash", {
+        fontsLoaded,
+        hasFontError: Boolean(fontError),
+        fontLoadTimedOut,
+        minSplashMs: MIN_NATIVE_SPLASH_MS,
+        totalElapsedMs,
+      });
+      void SplashScreen.hideAsync().catch((error) => {
+        console.warn("[boot] failed to hide native splash", error);
+      });
+    };
+
+    if (remainingMs > 0) {
+      const timeout = setTimeout(hideSplash, remainingMs);
+      return () => clearTimeout(timeout);
+    }
+
+    hideSplash();
   }, [fontError, fontLoadTimedOut, fontsLoaded]);
 
   if (!fontsLoaded && !fontError && !fontLoadTimedOut) {

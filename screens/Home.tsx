@@ -13,7 +13,6 @@ import {
   Image,
   StyleSheet,
   ScrollView,
-  Platform,
 } from "react-native";
 import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
@@ -63,6 +62,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   gender: "all",
   smoking: "all",
 };
+const HOME_BOTTOM_PADDING_REDUCTION = 72;
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -907,11 +907,11 @@ const Home = () => {
           contentContainerStyle={[
             localStyles.homeContent,
             {
-              paddingBottom:
-                getBottomTabContentPadding(
-                  insets.bottom,
-                  Platform.OS === "ios" ? 154 : 126
-                ) + 32,
+              paddingBottom: Math.max(
+                getBottomTabContentPadding(insets.bottom, 118) -
+                  HOME_BOTTOM_PADDING_REDUCTION,
+                112
+              ),
             },
           ]}
           showsVerticalScrollIndicator={false}
