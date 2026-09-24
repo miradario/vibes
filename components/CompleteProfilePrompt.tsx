@@ -26,7 +26,7 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
   });
   const { data: emailOwner } = useEmailOwnershipQuery(userId);
   if (dismissed || !isSuccess || !hasMissingProfileAnswers(data)) return null;
-  const completion = getProfileCompletion(profile, preferences, isEmailOwnershipVerified(emailOwner));
+  const completion = getProfileCompletion(profile, preferences, isEmailOwnershipVerified(emailOwner), data);
   return (
     <TouchableOpacity
       accessibilityRole="button"

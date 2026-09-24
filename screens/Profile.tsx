@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
+import { readProfileAnswers } from "../src/lib/profileQuestions";
 import { useEmailOwnershipQuery } from "../src/queries/emailOwnership.queries";
 import { isEmailOwnershipVerified } from "../src/auth/emailVerification";
 /** @format */
@@ -61,7 +63,12 @@ const Profile = () => {
   const ownAvatarUri = ownProfile.avatarUri ?? null;
 
   const { data: emailOwner } = useEmailOwnershipQuery(session?.user?.id);
-  const completion = getProfileCompletion(profile, userPreferences, isEmailOwnershipVerified(emailOwner));
+  const { data: answers, isPending: loadingAnswers, isError: answersError } = useQuery({
+    queryKey: ["profileAnswers", session?.user?.id],
+    queryFn: () => readProfileAnswers(session!.user.id),
+    enabled: !!session?.user?.id,
+  });
+  const completion = getProfileCompletion(profile, userPreferences, isEmailOwnershipVerified(emailOwner), answers);
   const appVersion = Platform.OS === "android"
     ? getInstalledAppVersion()
     : appConfig.expo.version;
@@ -134,7 +141,7 @@ const Profile = () => {
           <ProfileCompletionAvatar
             uri={ownAvatarUri}
             percent={
-              profile && !loadingPreferences && !preferencesError
+              profile && !loadingPreferences && !preferencesError && !loadingAnswers && !answersError
                 ? completion.percent
                 : null
             }

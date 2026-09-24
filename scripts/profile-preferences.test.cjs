@@ -14,18 +14,18 @@ function questions(supabase) {
 }
 const q = questions({});
 const { getProfileCompletion } = load('src/lib/profileCompletion.ts', { './profileQuestions': q });
-test('completion ignores whitespace, empty photos and private fields', () => {
+test('completion ignores whitespace, empty photos and stale private JSON', () => {
   const result = getProfileCompletion({ displayName: ' ', photos: [{ url: '' }] }, { profileAnswers: { availability: 'martes', moods: ['Calmado'] } });
   assert.equal(result.percent, 0);
   assert.equal(result.nextScreen, 'EditProfile');
 });
-test('all public onboarding fields reach 100% without availability, extra photos or practice details', () => {
-  const answers = Object.fromEntries(q.QUESTION_GROUPS.flatMap(g => g.fields).filter(f => f.key !== 'availability').map(f => [f.key, 'respuesta']));
-  const profile = { displayName: 'Nombre Completo', photos: [{ url: 'photo.jpg' }], locationLabel: 'Rosario' };
+test('all onboarding fields reach 100% with one photo and no conditional practice details', () => {
+  const answers = Object.fromEntries(q.QUESTION_GROUPS.flatMap(g => g.fields).map(f => [f.key, 'respuesta']));
+  const profile = { displayName: 'Nombre Completo', photos: [{ url: 'photo.jpg' }], locationLabel: 'Rosario', birthDate: '1990-01-01' };
   const prefs = { ...answers, profileAnswers: answers, aboutMe: 'Hola', openTo: ['Amistad'], spiritualPath: ['Yoga'] };
-  assert.equal(getProfileCompletion(profile, prefs, true).percent, 100);
+  assert.equal(getProfileCompletion(profile, prefs, true, answers).percent, 100);
   prefs.gender = '';
-  const next = getProfileCompletion(profile, prefs, true);
+  const next = getProfileCompletion(profile, prefs, true, answers);
   assert.equal(next.completed, next.total - 1);
   assert.equal(next.nextScreen, 'ProfileQuestions');
 });
@@ -51,4 +51,15 @@ test('saving optional answers preserves independent onboarding motivations', asy
   assert.equal('open_to' in publicWrite, false);
   assert.equal('availability' in publicWrite.profile_answers, false);
   assert.equal(publicWrite.looking_for[0], 'Citas');
+});
+
+test('every onboarding answer contributes once, including private availability', () => {
+  const empty = getProfileCompletion({}, {}, false, {});
+  assert.equal(empty.total, 8 + q.QUESTION_GROUPS.flatMap(g => g.fields).length);
+  for (const field of q.QUESTION_GROUPS.flatMap(g => g.fields)) {
+    const result = getProfileCompletion({}, {}, false, { [field.key]: 'respuesta' });
+    assert.equal(result.completed, 1, field.key);
+    assert.equal(result.total, empty.total);
+    assert.equal(getProfileCompletion({}, {}, false, { [field.key]: '  ' }).completed, 0);
+  }
 });
