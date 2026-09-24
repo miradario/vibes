@@ -6,8 +6,15 @@ const filled = (value: unknown): boolean =>
     ? value.some(filled)
     : typeof value === "string" && value.trim().length > 0;
 
-/** Each onboarding field counts once; extra photos and conditional practice details do not. */
+const PHOTO_SLOTS = 6;
+const PHOTO_WEIGHT = 40;
+
+/** Photos contribute 40%; all other onboarding fields share the remaining 60%. */
 export const getProfileCompletion = (profile: Data, preferences: Data, emailVerified = false, answers?: ProfileAnswers) => {
+  const photos = [...new Set<string>((profile?.photos ?? [])
+    .map((photo: any) => typeof photo === "string" ? photo : photo?.url)
+    .filter((url: unknown): url is string => typeof url === "string" && !!url.trim())
+    .map((url: string) => url.trim()))].slice(0, PHOTO_SLOTS);
   const fields = [
     { label: "Validar email", value: emailVerified ? "verified" : "", screen: "EditProfile" },
     {
@@ -15,13 +22,11 @@ export const getProfileCompletion = (profile: Data, preferences: Data, emailVeri
       value: profile?.displayName ?? profile?.display_name,
       screen: "EditProfile",
     },
-    {
-      label: "Foto",
-      value: (profile?.photos ?? []).map((photo: any) =>
-        typeof photo === "string" ? photo : photo?.url
-      ),
+    ...Array.from({ length: PHOTO_SLOTS }, (_, index) => ({
+      label: `Agregar foto ${index + 1} de ${PHOTO_SLOTS}`,
+      value: photos[index],
       screen: "EditProfile",
-    },
+    })),
     {
       label: "Ubicación",
       value: profile?.locationLabel ?? profile?.location_label ?? profile?.city,
@@ -60,10 +65,15 @@ export const getProfileCompletion = (profile: Data, preferences: Data, emailVeri
   ];
   const missing = fields.filter((field) => !filled(field.value));
   const completed = fields.length - missing.length;
+  const otherTotal = fields.length - PHOTO_SLOTS;
+  const otherCompleted = completed - photos.length;
   return {
     completed,
     total: fields.length,
-    percent: Math.round((completed / fields.length) * 100),
+    percent: Math.round(
+      (photos.length / PHOTO_SLOTS) * PHOTO_WEIGHT +
+      (otherCompleted / otherTotal) * (100 - PHOTO_WEIGHT)
+    ),
     nextLabel: missing[0]?.label,
     nextScreen: missing[0]?.screen ?? "ProfileQuestions",
   };
