@@ -15,6 +15,7 @@ import AvatarGroup from "./AvatarGroup";
 import VibesLoader from "./VibesLoader";
 import {
   useMyEventGroupsQuery,
+  useEventsFeedQuery,
   useChallengeCheckinsQuery,
   useChallengeParticipantQuery,
   type EventFeedItem,
@@ -27,6 +28,21 @@ import {
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const ACCENT = vibesTheme.colors.accentMustard;
+
+const getEventDateLabel = (date: string) => {
+  const value = new Date(date);
+  return {
+    weekday: value
+      .toLocaleDateString("es-AR", { weekday: "short" })
+      .replace(".", "")
+      .toUpperCase(),
+    day: value.getDate(),
+    time: value.toLocaleTimeString("es-AR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+};
 
 function SectionHeader({
   title,
@@ -144,29 +160,117 @@ function ChallengeCard({
   );
 }
 
+function HomeEventCard({
+  event,
+  suggested = false,
+}: {
+  event: EventFeedItem;
+  suggested?: boolean;
+}) {
+  const navigation = useNavigation<any>();
+  const label = getEventDateLabel(event.startsAt!);
+  const participantImages = (event.participantPreviewImages ?? []).map(
+    (uri, index) => ({ id: `${event.id}-${index}`, uri })
+  );
+
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      key={event.id}
+      style={s.eventCard}
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate("EventDetail", { event })}
+    >
+      <View>
+        <ExpoImage
+          source={event.image as ImageSourcePropType}
+          style={s.eventImage}
+          contentFit="cover"
+          transition={180}
+          cachePolicy="memory-disk"
+        />
+        <View style={s.dateBadge}>
+          <Text style={s.dateWeekday}>{label.weekday}</Text>
+          <Text style={s.dateDay}>{label.day}</Text>
+        </View>
+        {suggested ? (
+          <View style={s.joinTag}>
+            <Text style={s.joinTagText}>Sumate</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={s.eventBody}>
+        <View style={s.eventCopy}>
+          <Text style={s.cardTitle} numberOfLines={1}>
+            {event.title}
+          </Text>
+          <View style={s.eventMetaRow}>
+            <Icon
+              name={
+                event.modality === "online" ? "videocam-outline" : "location"
+              }
+              size={16}
+              color="#6E6E6E"
+            />
+            <Text style={s.meta} numberOfLines={1}>
+              {event.modality === "online"
+                ? `Online · ${label.time}`
+                : `${event.location || "Ver detalles"} · ${
+                    event.participantCount ?? 0
+                  } personas`}
+            </Text>
+          </View>
+          {participantImages.length ? (
+            <AvatarGroup
+              items={participantImages}
+              size={24}
+              overlap={8}
+              style={s.eventAvatars}
+            />
+          ) : null}
+        </View>
+        <View style={s.eventChevron}>
+          <Icon name="chevron-forward" size={20} color="#5F574C" />
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export default function HomeOverview({ userId }: { userId?: string }) {
   const navigation = useNavigation<any>();
   const groups = useMyEventGroupsQuery(userId);
+  const eventsFeed = useEventsFeedQuery();
   const [now, setNow] = useState(Date.now());
   useFocusEffect(
     useCallback(() => {
       setNow(Date.now());
       void groups.refetch();
+      void eventsFeed.refetch();
       const timer = setInterval(() => setNow(Date.now()), 60000);
       return () => clearInterval(timer);
-    }, [groups.refetch])
+    }, [eventsFeed.refetch, groups.refetch])
   );
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active") {
         setNow(Date.now());
         void groups.refetch();
+        void eventsFeed.refetch();
       }
     });
     return () => sub.remove();
-  }, [groups.refetch]);
+  }, [eventsFeed.refetch, groups.refetch]);
   const events = (groups.data ?? []).map((group) => group.event);
   const upcoming = getUpcomingHomeEvents(events, now);
+  const joinedEventIds = new Set(events.map((event) => event.id));
+  const suggestedEvents = upcoming.length
+    ? []
+    : getUpcomingHomeEvents(eventsFeed.data ?? [], now)
+        .filter((event) => !joinedEventIds.has(event.id))
+        .slice(0, 2);
+  const visibleEvents = upcoming.length ? upcoming : suggestedEvents;
+  const showingSuggestedEvents = upcoming.length === 0 && suggestedEvents.length > 0;
   const rank = { active: 0, upcoming: 1, finished: 2 };
   const challenges = events
     .filter((event) => event.type === "challenge")
@@ -183,20 +287,6 @@ export default function HomeOverview({ userId }: { userId?: string }) {
       params: { section: challenge ? "challenge" : "event" },
     });
   const createEvent = () => navigation.navigate("CreateEvent" as never);
-  const dateLabel = (date: string) => {
-    const value = new Date(date);
-    return {
-      weekday: value
-        .toLocaleDateString("es-AR", { weekday: "short" })
-        .replace(".", "")
-        .toUpperCase(),
-      day: value.getDate(),
-      time: value.toLocaleTimeString("es-AR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-  };
   if (groups.isLoading)
     return (
       <View accessibilityLabel="Cargando tu agenda" style={s.homeLoader}>
@@ -250,76 +340,26 @@ export default function HomeOverview({ userId }: { userId?: string }) {
       <View style={s.sectionBlock}>
         <SectionHeader
           title="PRÓXIMOS EVENTOS"
-          onPress={upcoming.length ? () => openList() : undefined}
+          onPress={visibleEvents.length ? () => openList() : undefined}
         />
-        {upcoming.length ? (
+        {visibleEvents.length ? (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={s.carousel}
           >
-            {upcoming.map((event) => {
-              const label = dateLabel(event.startsAt!);
-              const participantImages = (
-                event.participantPreviewImages ?? []
-              ).map((uri, index) => ({ id: `${event.id}-${index}`, uri }));
-              return (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  key={event.id}
-                  style={s.eventCard}
-                  activeOpacity={0.8}
-                  onPress={() => navigation.navigate("EventDetail", { event })}
-                >
-                  <View>
-                    <ExpoImage
-                      source={event.image as ImageSourcePropType}
-                      style={s.eventImage}
-                      contentFit="cover"
-                      transition={180}
-                      cachePolicy="memory-disk"
-                    />
-                    <View style={s.dateBadge}>
-                      <Text style={s.dateWeekday}>{label.weekday}</Text>
-                      <Text style={s.dateDay}>{label.day}</Text>
-                    </View>
-                  </View>
-                  <View style={s.eventCopy}>
-                    <Text style={s.cardTitle} numberOfLines={1}>
-                      {event.title}
-                    </Text>
-                    <View style={s.eventMetaRow}>
-                      <Icon
-                        name={
-                          event.modality === "online"
-                            ? "videocam-outline"
-                            : "location"
-                        }
-                        size={16}
-                        color="#6E6E6E"
-                      />
-                      <Text style={s.meta} numberOfLines={1}>
-                        {event.modality === "online"
-                          ? `Online · ${label.time}`
-                          : `${event.location || "Ver detalles"} · ${
-                              event.participantCount ?? 0
-                            } personas`}
-                      </Text>
-                    </View>
-                    {participantImages.length ? (
-                      <AvatarGroup
-                        items={participantImages}
-                        size={24}
-                        overlap={8}
-                        style={s.eventAvatars}
-                      />
-                    ) : null}
-                  </View>
-                  <Icon name="chevron-forward" size={20} color="#5F574C" />
-                </TouchableOpacity>
-              );
-            })}
+            {visibleEvents.map((event) => (
+              <HomeEventCard
+                key={event.id}
+                event={event}
+                suggested={showingSuggestedEvents}
+              />
+            ))}
           </ScrollView>
+        ) : eventsFeed.isLoading ? (
+          <View style={s.eventSuggestionsLoader}>
+            <VibesLoader size={48} />
+          </View>
         ) : (
           <View style={s.emptyEventCard}>
             <View style={s.emptyIcon}>
@@ -473,6 +513,23 @@ const s = StyleSheet.create({
     height: 92,
     backgroundColor: "#F3EADF",
   },
+  joinTag: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    minHeight: 28,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: ACCENT,
+  },
+  joinTagText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
   dateBadge: {
     position: "absolute",
     top: 10,
@@ -498,9 +555,24 @@ const s = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   eventCopy: {
+    flex: 1,
+    minWidth: 0,
     paddingHorizontal: 12,
-    paddingTop: 12,
     gap: 4,
+  },
+  eventBody: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingTop: 12,
+    paddingRight: 10,
+  },
+  eventChevron: {
+    width: 24,
+    minHeight: 24,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingBottom: 1,
   },
   eventMetaRow: {
     minHeight: 22,
@@ -509,6 +581,11 @@ const s = StyleSheet.create({
     gap: 5,
   },
   eventAvatars: { marginTop: 4 },
+  eventSuggestionsLoader: {
+    minHeight: 112,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   emptyCard: {
     width: "100%",
     minHeight: 92,

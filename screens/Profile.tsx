@@ -3,7 +3,13 @@ import { isEmailOwnershipVerified } from "../src/auth/emailVerification";
 /** @format */
 
 import React, { useCallback } from "react";
-import { Platform, ScrollView, View, TouchableOpacity } from "react-native";
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+} from "react-native";
 import { Text } from "../components/Typography";
 import { CommonActions, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,6 +27,7 @@ import { getProfileCompletion } from "../src/lib/profileCompletion";
 import VibesLoader from "../components/VibesLoader";
 import { getInstalledAppVersion, getInstalledAppBuildNumber } from "../src/lib/appUpdateGate";
 import appConfig from "../app.json";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 const Profile = () => {
   const { t } = useI18n();
@@ -137,7 +144,9 @@ const Profile = () => {
             <Text style={styles.auraProfileName}>{displayName}</Text>
             <Text style={styles.auraProfileLocation}>{location}</Text>
             {ownProfile.zodiac ? (
-              <Text style={styles.auraProfileLocation}>{ownProfile.zodiac}</Text>
+              <Text style={[styles.auraProfileLocation, localStyles.zodiac]}>
+                {ownProfile.zodiac}
+              </Text>
             ) : null}
           </View>
           <TouchableOpacity
@@ -196,5 +205,11 @@ const Profile = () => {
     </View>
   );
 };
+
+const localStyles = StyleSheet.create({
+  zodiac: {
+    color: vibesTheme.colors.accentBlue,
+  },
+});
 
 export default Profile;

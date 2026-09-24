@@ -192,8 +192,8 @@ export default function CommunityGroupChat() {
             </Text>
             <Text numberOfLines={2} style={s.description}>
               {members.data
-                ? `${members.data.length} participantes · Ver integrantes`
-                : description || "Ver participantes"}
+                ? `${members.data.length} participantes`
+                : description || "Participantes"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity

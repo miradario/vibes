@@ -713,7 +713,7 @@ const buildMatchNotifications = async (
       title: "Tenes un nuevo match",
       body: `Conectaste con ${
         names.get(user2Id) ?? "alguien"
-      }. Abri Flow para verlo.`,
+      }.`,
       data: {
         type: "new_match",
         matchId,
@@ -725,7 +725,7 @@ const buildMatchNotifications = async (
       title: "Tenes un nuevo match",
       body: `Conectaste con ${
         names.get(user1Id) ?? "alguien"
-      }. Abri Flow para verlo.`,
+      }.`,
       data: {
         type: "new_match",
         matchId,
