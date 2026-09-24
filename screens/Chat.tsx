@@ -38,6 +38,7 @@ import {
   useSendDirectMessageMutation,
   useDeleteDirectMessageMutation,
   useReportUserMutation,
+  useBlockUserMutation,
   useUnmatchMutation,
   type ReportReason,
   type DirectMessage,
@@ -98,6 +99,7 @@ const Chat = () => {
   const deleteMutation = useDeleteDirectMessageMutation();
   const unmatchMutation = useUnmatchMutation();
   const reportMutation = useReportUserMutation();
+  const blockMutation = useBlockUserMutation();
 
   const [text, setText] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -197,6 +199,25 @@ const Chat = () => {
   const openReportModal = () => {
     setShowActionsModal(false);
     setShowReportModal(true);
+  };
+
+  const handleBlockUser = () => {
+    setShowActionsModal(false);
+    if (!otherUserId) return;
+    Alert.alert("Bloquear persona", "Ya no podrán verse ni enviarse mensajes.", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Bloquear",
+        style: "destructive",
+        onPress: () => blockMutation.mutate(
+          { blockedUserId: String(otherUserId), matchId },
+          {
+            onSuccess: () => navigation.goBack(),
+            onError: (error) => Alert.alert("Error", error.message || "No se pudo bloquear."),
+          }
+        ),
+      },
+    ]);
   };
 
   const closeReportModal = () => {
@@ -321,7 +342,8 @@ const Chat = () => {
     <ScreenContainer edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         style={styles.bg}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        enabled={Platform.OS === "ios"}
         contentContainerStyle={localStyles.keyboardAvoidingContent}
         keyboardVerticalOffset={insets.top}
       >
@@ -395,7 +417,15 @@ const Chat = () => {
                 onPress={openReportModal}
               >
                 <Icon name="flag-outline" size={21} color={DARK_GRAY} />
-                <Text style={localStyles.actionText}>Reportar y bloquear</Text>
+                <Text style={localStyles.actionText}>Reportar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={localStyles.actionRow}
+                onPress={handleBlockUser}
+                disabled={blockMutation.isPending}
+              >
+                <Icon name="ban-outline" size={21} color="#D88C7A" />
+                <Text style={[localStyles.actionText, localStyles.dangerText]}>Bloquear</Text>
               </TouchableOpacity>
             </Pressable>
           </Pressable>
@@ -412,11 +442,11 @@ const Chat = () => {
         >
           <Pressable onPress={() => undefined}>
             <Text style={localStyles.modalTitle}>
-              ¿Por qué querés reportar y bloquear?
+              ¿Por qué querés reportar?
             </Text>
             <Text style={localStyles.modalSubtitle}>
-              Tu reporte nos ayuda a cuidar la comunidad. También quitaremos
-              esta conexión.
+              Tu reporte nos ayuda a cuidar la comunidad. La persona también
+              quedará bloqueada para protegerte.
             </Text>
 
             {REPORT_REASONS.map((reason) => {

@@ -171,8 +171,9 @@ const localStyles = StyleSheet.create({
   },
   footer: {
     paddingTop: 18,
+    paddingBottom: 36,
   },
   backButton: {
-    marginTop: 18,
+    marginTop: 10,
   },
 });

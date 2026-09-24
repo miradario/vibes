@@ -232,7 +232,6 @@ const Signup = () => {
               subtitle=""
               style={localStyles.header}
             />
-            <Text style={styles.loginTitle}>{t("signup.subtitle")}</Text>
 
             <GoogleAuthButton
               label={
@@ -363,23 +362,23 @@ const Signup = () => {
                 }
               />
 
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: vibesTheme.colors.secondaryText,
-                  fontFamily: vibesTheme.fonts.regular,
-                  fontSize: 13,
-                  lineHeight: 18,
-                  marginTop: 8,
-                }}
-              >
-                {t("signup.switchPrompt")}
-              </Text>
-              <VibesActionButton
-                label={t("signup.switchAction")}
-                variant="start"
+              <View style={localStyles.accountDivider} />
+              <TouchableOpacity
+                accessibilityRole="link"
+                accessibilityLabel={`${t("signup.switchPrompt")} ${t(
+                  "signup.switchAction"
+                )}`}
+                activeOpacity={0.72}
                 onPress={() => navigation.navigate("Login" as never)}
-              />
+                style={localStyles.accountSwitch}
+              >
+                <Text style={localStyles.accountSwitchText}>
+                  {t("signup.switchPrompt")} {" "}
+                  <Text style={localStyles.accountSwitchLink}>
+                    {t("signup.switchAction")}
+                  </Text>
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -394,6 +393,30 @@ const localStyles = StyleSheet.create({
   actions: {
     marginTop: "auto",
     paddingTop: 22,
+  },
+  accountDivider: {
+    width: "100%",
+    height: 1,
+    marginTop: 12,
+    backgroundColor: "rgba(43, 43, 43, 0.12)",
+  },
+  accountSwitch: {
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  accountSwitchText: {
+    color: vibesTheme.colors.secondaryText,
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+  },
+  accountSwitchLink: {
+    color: "#8B6327",
+    fontFamily: vibesTheme.fonts.medium,
+    textDecorationLine: "underline",
   },
   backButton: {
     marginTop: 18,

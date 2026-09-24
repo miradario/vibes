@@ -58,7 +58,9 @@ const calculateDistanceKm = (
 
 const fetchCandidates = async (
   currentUserId?: string,
-  params?: GetCandidatesParams
+  params?: GetCandidatesParams,
+  includePreviouslySwiped = false,
+  targetProfileIds?: string[]
 ): Promise<GetCandidatesResponse> => {
   const pageSize = Math.max(1, Math.min(params?.limit ?? 200, 500));
   let currentUserCoordinates: { latitude: number; longitude: number } | null =
@@ -128,17 +130,22 @@ const fetchCandidates = async (
   let query = supabase
     .from("profiles")
     .select("*")
-    .eq("is_active", true)
     .is("deleted_at", null)
     .order("id", { ascending: true })
     .limit(pageSize);
+
+  if (targetProfileIds?.length) {
+    query = query.in("id", targetProfileIds);
+  } else {
+    query = query.eq("is_active", true);
+  }
 
   if (currentUserId) {
     query = query.neq("id", currentUserId);
   }
 
   // Exclude already-swiped profiles
-  if (swipedIds.length > 0) {
+  if (!includePreviouslySwiped && swipedIds.length > 0) {
     query = query.not("id", "in", `(${swipedIds.join(",")})`);
   }
 
@@ -314,6 +321,7 @@ const fetchCandidates = async (
       return {
         ...profile,
         ...preferencesByUserId.get(id),
+        id,
         zodiac: zodiacFromBirthDate(profile.birthDate ?? profile.birth_date),
         distanceKm:
           currentUserCoordinates &&
@@ -357,6 +365,108 @@ const fetchCandidates = async (
       (right as any).createdAt ?? (right as any).created_at ?? 0
     ).getTime();
     return rightCreatedAt - leftCreatedAt;
+  });
+};
+
+export type SwipeHistoryCandidate = Candidate & {
+  swipeDirection: "like" | "pass";
+  swipedAt: string;
+};
+
+export const useSwipeHistoryCandidatesQuery = () => {
+  const { data: session } = useAuthSession();
+  const userId = session?.user?.id;
+  return useQuery<SwipeHistoryCandidate[]>({
+    queryKey: ["candidates", "swipe-history", "all-v3", userId ?? "anonymous"],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const { data: swipes, error } = await supabase
+        .from("swipes")
+        .select("target_id,direction,created_at")
+        .eq("swiper_id", userId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const latest = new Map<
+        string,
+        { direction: "like" | "pass"; created_at: string }
+      >();
+      for (const row of swipes ?? []) {
+        const id = String(row.target_id);
+        const direction = row.direction === "nope" ? "pass" : row.direction;
+        if (
+          !latest.has(id) &&
+          (direction === "like" || direction === "pass")
+        ) {
+          latest.set(id, { direction, created_at: row.created_at });
+        }
+      }
+      if (latest.size === 0) return [];
+      const candidates = await fetchCandidates(
+        userId,
+        { limit: 500 },
+        true,
+        [...latest.keys()]
+      );
+      return candidates
+        .filter((candidate) => latest.has(String(candidate.id)))
+        .map((candidate) => {
+          const swipe = latest.get(String(candidate.id))!;
+          return {
+            ...candidate,
+            swipeDirection: swipe.direction,
+            swipedAt: swipe.created_at,
+          };
+        })
+        .sort(
+          (a, b) =>
+            new Date(b.swipedAt).getTime() - new Date(a.swipedAt).getTime()
+        );
+    },
+    staleTime: 30_000,
+  });
+};
+
+export const useIncomingLikeCandidatesQuery = () => {
+  const { data: session } = useAuthSession();
+  const userId = session?.user?.id;
+  return useQuery<Candidate[]>({
+    queryKey: ["candidates", "incoming-likes", "all-v1", userId ?? "anonymous"],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const [{ data: swipes, error: swipeError }, { data: matches, error: matchError }] =
+        await Promise.all([
+          supabase
+            .from("swipes")
+            .select("swiper_id,created_at")
+            .eq("target_id", userId!)
+            .eq("direction", "like")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("matches")
+            .select("user1_id,user2_id")
+            .or(`user1_id.eq.${userId},user2_id.eq.${userId}`),
+        ]);
+      if (swipeError) throw swipeError;
+      if (matchError) throw matchError;
+
+      const matchedIds = new Set(
+        (matches ?? []).map((match) =>
+          String(match.user1_id) === userId
+            ? String(match.user2_id)
+            : String(match.user1_id)
+        )
+      );
+      const likerIds = Array.from(
+        new Set(
+          (swipes ?? [])
+            .map((swipe) => String(swipe.swiper_id ?? ""))
+            .filter((id) => id && !matchedIds.has(id))
+        )
+      );
+      if (likerIds.length === 0) return [];
+      return fetchCandidates(userId, { limit: 500 }, true, likerIds);
+    },
+    staleTime: 30_000,
   });
 };
 

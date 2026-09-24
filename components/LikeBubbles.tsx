@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { AccessibilityInfo, Animated, StyleSheet, View } from "react-native";
+import { Text } from "./Typography";
 
 export default function LikeBubbles({ trigger }: { trigger: number }) {
   const progress = useRef(new Animated.Value(1)).current;
@@ -35,12 +36,12 @@ export default function LikeBubbles({ trigger }: { trigger: number }) {
             key={i}
             style={{
               position: "absolute",
-              width: 18 + (i % 3) * 10,
-              height: 18 + (i % 3) * 10,
+              width: 24 + (i % 3) * 8,
+              height: 24 + (i % 3) * 8,
               borderRadius: 30,
-              borderWidth: 2,
-              borderColor: i % 2 ? "#E4B76E" : "#7F98B7",
-              backgroundColor: i % 2 ? "#E4B76E44" : "#7F98B744",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: i % 2 ? "#E4B76E" : "#DCE6F0",
               opacity: progress.interpolate({
                 inputRange: [0, 0.65, 1],
                 outputRange: [0, 1, 0],
@@ -66,7 +67,16 @@ export default function LikeBubbles({ trigger }: { trigger: number }) {
                 },
               ],
             }}
-          />
+          >
+            <Text
+              style={{
+                color: i % 2 ? "#3B3328" : "#56708D",
+                fontSize: 14,
+              }}
+            >
+              {i % 3 === 0 ? "✓" : i % 3 === 1 ? "✦" : "♡"}
+            </Text>
+          </Animated.View>
         );
       })}
     </View>

@@ -17,19 +17,6 @@ import { useCalmMotion } from "../src/hooks/useCalmMotion";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 
-const ICONS = [
-  "leaf-outline",
-  "sunny-outline",
-  "moon-outline",
-  "compass-outline",
-  "people-outline",
-  "heart-outline",
-  "rainy-outline",
-  "pulse-outline",
-  "cloud-outline",
-  "thunderstorm-outline",
-] as const;
-
 export default function DailyMoodCard({
   userId,
   enabled = true,
@@ -176,9 +163,7 @@ export default function DailyMoodCard({
         contentContainerStyle={s.content}
       >
         <View style={s.header}>
-          <View style={s.heroIcon}>
-            <Ionicons name="sunny-outline" size={28} color="#A47C42" />
-          </View>
+          <View />
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Cerrar sin guardar"
@@ -189,15 +174,11 @@ export default function DailyMoodCard({
             <Ionicons name="close" size={23} color="#777166" />
           </TouchableOpacity>
         </View>
-        <Text style={s.eyebrow}>UN MOMENTO PARA VOS</Text>
         <Text accessibilityRole="header" style={s.title}>
           ¿Cómo te sentís hoy?
         </Text>
-        <Text style={s.subtitle}>
-          No hay una respuesta correcta. Elegí lo que te acompañe hoy.
-        </Text>
         <View style={s.options}>
-          {MOODS.map((mood, index) => {
+          {MOODS.map((mood) => {
             const selected = draft.includes(mood);
             return (
               <TouchableOpacity
@@ -219,23 +200,17 @@ export default function DailyMoodCard({
                 style={[s.option, selected && s.selected]}
                 activeOpacity={0.75}
               >
-                <Ionicons
-                  name={selected ? "checkmark" : ICONS[index]}
-                  size={19}
-                  color={selected ? "#805F2B" : "#84949E"}
-                />
                 <Text style={[s.optionText, selected && s.selectedText]}>
                   {mood}
                 </Text>
+                <Ionicons
+                  name={selected ? "checkmark-circle" : "ellipse-outline"}
+                  size={18}
+                  color={selected ? "#805F2B" : "#B8BEC4"}
+                />
               </TouchableOpacity>
             );
           })}
-        </View>
-        <View style={s.privacy}>
-          <Ionicons name="lock-closed-outline" size={14} color="#777166" />
-          <Text style={s.privacyText}>
-            Solo vos podés verlo. Podés elegir varias.
-          </Text>
         </View>
         {loading ? (
           <Text style={s.privacyText}>Cargando tu estado…</Text>
@@ -259,7 +234,7 @@ export default function DailyMoodCard({
               ? "Guardando…"
               : loadFailed
               ? "Reintentar"
-              : "Guardar mi momento"}
+              : "Guardar"}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -335,6 +310,7 @@ const s = StyleSheet.create({
   option: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 7,
     minHeight: 48,
     paddingVertical: 10,

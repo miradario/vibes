@@ -23,9 +23,9 @@ test('all public onboarding fields reach 100% without availability, extra photos
   const answers = Object.fromEntries(q.QUESTION_GROUPS.flatMap(g => g.fields).filter(f => f.key !== 'availability').map(f => [f.key, 'respuesta']));
   const profile = { displayName: 'Nombre Completo', photos: [{ url: 'photo.jpg' }], locationLabel: 'Rosario' };
   const prefs = { ...answers, profileAnswers: answers, aboutMe: 'Hola', openTo: ['Amistad'], spiritualPath: ['Yoga'] };
-  assert.equal(getProfileCompletion(profile, prefs).percent, 100);
+  assert.equal(getProfileCompletion(profile, prefs, true).percent, 100);
   prefs.gender = '';
-  const next = getProfileCompletion(profile, prefs);
+  const next = getProfileCompletion(profile, prefs, true);
   assert.equal(next.completed, next.total - 1);
   assert.equal(next.nextScreen, 'ProfileQuestions');
 });

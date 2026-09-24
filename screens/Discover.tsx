@@ -46,7 +46,11 @@ import styles, { DIMENSION_WIDTH, TEXT_PRIMARY } from "../assets/styles";
 import type { DataT } from "../types";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
-import { useCandidatesQuery } from "../src/queries/candidates.queries";
+import {
+  useCandidatesQuery,
+  useIncomingLikeCandidatesQuery,
+  useSwipeHistoryCandidatesQuery,
+} from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
@@ -458,6 +462,8 @@ export const DiscoverContent = forwardRef<
   } = useCandidatesQuery({
     limit: 200,
   });
+  const swipeHistory = useSwipeHistoryCandidatesQuery();
+  const incomingLikes = useIncomingLikeCandidatesQuery();
   const swipeMutation = useSwipeMutation();
   const swipeBusy = useRef(false);
   const focused = useIsFocused();
@@ -479,6 +485,11 @@ export const DiscoverContent = forwardRef<
     new Set()
   );
   const [showProfileSheet, setShowProfileSheet] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyMode, setHistoryMode] = useState<
+    "dismissed" | "liked" | "incoming"
+  >("dismissed");
+  const [viewingHistory, setViewingHistory] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
@@ -623,17 +634,48 @@ export const DiscoverContent = forwardRef<
       until: t("common.until", { value: "" }).trim(),
     }
   );
+  const historyProfiles = useMemo<DataT[]>(
+    () => {
+      if (historyMode === "incoming") {
+        return (incomingLikes.data ?? []).map((candidate) => ({
+          ...mapCandidateToConnectionProfile(candidate),
+          swipeStatus: "Quiere conectar con vos",
+        })) as DataT[];
+      }
+      return (swipeHistory.data ?? [])
+        .filter((candidate) =>
+          historyMode === "dismissed"
+            ? candidate.swipeDirection === "pass"
+            : candidate.swipeDirection === "like"
+        )
+        .map((candidate) => {
+          const profile = mapCandidateToConnectionProfile(candidate);
+          return {
+            ...profile,
+            swipeDirection: candidate.swipeDirection,
+            swipeStatus:
+              candidate.swipeDirection === "like"
+                ? "Conexión pendiente"
+                : "Perfil descartado",
+          } as DataT;
+        });
+    },
+    [historyMode, incomingLikes.data, swipeHistory.data]
+  );
+  const canvasProfiles = showHistory ? historyProfiles : profiles;
   const nextSelectedProfile = useMemo(() => {
     if (!selectedProfile) return null;
-    const index = profiles.findIndex(
+    const index = canvasProfiles.findIndex(
       (item) => String(item.id) === String(selectedProfile.id)
     );
     return (
-      profiles[index + 1] ??
-      profiles.find((item) => String(item.id) !== String(selectedProfile.id)) ??
+      canvasProfiles[index + 1] ??
+      canvasProfiles.find(
+        (item) => String(item.id) !== String(selectedProfile.id)
+      ) ??
       null
     );
-  }, [profiles, selectedProfile]);
+  }, [canvasProfiles, selectedProfile]);
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
       selectedProfile
@@ -644,20 +686,26 @@ export const DiscoverContent = forwardRef<
         : null,
     [selectedProfile]
   );
+  const selectedHistoryProfileCanConnect =
+    viewingHistory &&
+    (historyMode === "dismissed" || historyMode === "incoming");
   const pageCount = Math.max(
     1,
-    Math.ceil(profiles.length / DISCOVER_PAGE_SIZE)
+    Math.ceil(canvasProfiles.length / DISCOVER_PAGE_SIZE)
   );
   const currentPage = profilePage % pageCount;
   const visibleProfiles = useMemo(
     () =>
-      profiles.slice(
-        currentPage * DISCOVER_PAGE_SIZE,
-        (currentPage + 1) * DISCOVER_PAGE_SIZE
-      ),
-    [profiles, currentPage]
+      showHistory && historyMode !== "dismissed"
+        ? canvasProfiles
+        : canvasProfiles.slice(
+            currentPage * DISCOVER_PAGE_SIZE,
+            (currentPage + 1) * DISCOVER_PAGE_SIZE
+          ),
+    [canvasProfiles, currentPage, historyMode, showHistory]
   );
-  const canShowMoreProfiles = pageCount > 1;
+  const canShowMoreProfiles =
+    pageCount > 1 && !(showHistory && historyMode !== "dismissed");
   const activeFilterCount = useMemo(
     () =>
       [
@@ -680,7 +728,7 @@ export const DiscoverContent = forwardRef<
 
   useEffect(() => {
     setProfilePage(0);
-  }, [discoverFilters, answerFilters, hiddenProfileIds]);
+  }, [discoverFilters, answerFilters, hiddenProfileIds, showHistory]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -744,7 +792,7 @@ export const DiscoverContent = forwardRef<
     profile: DataT | null,
     direction: "like" | "pass"
   ) => {
-    if (!profile || swipeMutation.isPending || swipeBusy.current) return;
+    if (!profile || swipeMutation.isPending || swipeBusy.current) return false;
     swipeBusy.current = true;
     const id = String(profile.id);
     const next = nextSelectedProfile;
@@ -761,10 +809,12 @@ export const DiscoverContent = forwardRef<
         setShowProfileSheet(false);
         navigation.navigate("Match" as never, { profile } as never);
       }
+      return true;
     } catch (error) {
       handleApiError(error, {
         toastTitle: "No se pudo guardar. Intentá nuevamente.",
       });
+      return false;
     } finally {
       swipeBusy.current = false;
     }
@@ -1274,7 +1324,7 @@ export const DiscoverContent = forwardRef<
 
         <UserProfileSheet
           visible={showProfileSheet}
-          enableSwipe
+          enableSwipe={!viewingHistory}
           actionPending={swipeMutation.isPending}
           profile={selectedProfileForSheet}
           nextProfile={
@@ -1282,7 +1332,10 @@ export const DiscoverContent = forwardRef<
               ? { ...nextSelectedProfile, id: String(nextSelectedProfile.id) }
               : null
           }
-          onClose={() => setShowProfileSheet(false)}
+          onClose={() => {
+            setShowProfileSheet(false);
+            setViewingHistory(false);
+          }}
           closeIconName="chevron-back"
           onImagePress={(_image, index) =>
             selectedProfile
@@ -1292,9 +1345,28 @@ export const DiscoverContent = forwardRef<
                 )
               : undefined
           }
-          onContactPress={() => connectProfile(selectedProfile)}
-          secondaryActionLabel="Pasar"
-          onSecondaryActionPress={() => dismissProfile(selectedProfile)}
+          onContactPress={
+            !viewingHistory || selectedHistoryProfileCanConnect
+              ? () => connectProfile(selectedProfile)
+              : undefined
+          }
+          nextActionLabel={
+            viewingHistory && nextSelectedProfile ? "Siguiente" : undefined
+          }
+          onNextActionPress={
+            viewingHistory && nextSelectedProfile
+              ? () => setSelectedProfile(nextSelectedProfile)
+              : undefined
+          }
+          secondaryActionLabel={viewingHistory ? "Cerrar perfil" : "Pasar"}
+          onSecondaryActionPress={
+            viewingHistory
+              ? () => {
+                  setShowProfileSheet(false);
+                  setViewingHistory(false);
+                }
+              : () => dismissProfile(selectedProfile)
+          }
         />
 
         {showHeader ? (
@@ -1305,24 +1377,30 @@ export const DiscoverContent = forwardRef<
 
         <DiscoverPathCards
           leading={
-            <TouchableOpacity
-              accessibilityRole="button"
-              style={localStyles.filtersButton}
-              activeOpacity={0.84}
-              onPress={() => setIsFiltersVisible(true)}
-            >
-              <Icon name="options-outline" size={17} color="#2B2B2B" />
-              <Text style={localStyles.filtersButtonText}>
-                {t("discover.filters")}
-              </Text>
-              {activeFilterCount > 0 ? (
-                <View style={localStyles.filtersCountBadge}>
-                  <Text style={localStyles.filtersCountText}>
-                    {activeFilterCount}
-                  </Text>
-                </View>
-              ) : null}
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TouchableOpacity accessibilityRole="button" style={localStyles.filtersButton} activeOpacity={0.84} onPress={() => setIsFiltersVisible(true)}>
+                <Icon name="options-outline" size={17} color="#2B2B2B" />
+                <Text style={localStyles.filtersButtonText}>{t("discover.filters")}</Text>
+                {activeFilterCount > 0 ? <View style={localStyles.filtersCountBadge}><Text style={localStyles.filtersCountText}>{activeFilterCount}</Text></View> : null}
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityState={{ selected: showHistory }}
+                style={[
+                  localStyles.filtersButton,
+                  showHistory && localStyles.historyButtonActive,
+                ]}
+                onPress={() => {
+                  setShowHistory((current) => !current);
+                  setViewingHistory(false);
+                }}
+              >
+                <Icon name="time-outline" size={17} color="#2B2B2B" />
+                <Text style={localStyles.filtersButtonText}>
+                  {showHistory ? "Ver nuevos" : "Ya vistos"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           }
           selected={discoverFilters.spiritualPaths}
           onToggle={toggleSpiritualPath}
@@ -1334,15 +1412,62 @@ export const DiscoverContent = forwardRef<
           }
         />
 
+        {showHistory ? (
+          <View style={localStyles.historyModeRow}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ selected: historyMode === "dismissed" }}
+              style={[
+                localStyles.historyModeButton,
+                historyMode === "dismissed" &&
+                  localStyles.historyModeButtonActive,
+              ]}
+              onPress={() => setHistoryMode("dismissed")}
+            >
+              <Icon name="close" size={16} color="#2B2B2B" />
+              <Text style={localStyles.historyModeText}>Descartados</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ selected: historyMode === "liked" }}
+              style={[
+                localStyles.historyModeButton,
+                historyMode === "liked" && localStyles.historyModeButtonActive,
+              ]}
+              onPress={() => setHistoryMode("liked")}
+            >
+              <Icon name="checkmark" size={16} color="#2B2B2B" />
+              <Text style={localStyles.historyModeText}>Quiero conectar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ selected: historyMode === "incoming" }}
+              style={[
+                localStyles.historyModeButton,
+                historyMode === "incoming" &&
+                  localStyles.historyModeButtonActive,
+              ]}
+              onPress={() => setHistoryMode("incoming")}
+            >
+              <Icon name="people-outline" size={16} color="#2B2B2B" />
+              <Text style={localStyles.historyModeText}>Quieren conectar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         <View style={localStyles.orbitWrap}>
-          {isLoading ? (
+          {(showHistory
+            ? historyMode === "incoming"
+              ? incomingLikes.isLoading
+              : swipeHistory.isLoading
+            : isLoading) ? (
             <View style={localStyles.emptyState}>
               <VibesLoader size={86} />
               <Text style={localStyles.emptyText}>
                 {t("discover.loadingProfiles")}
               </Text>
             </View>
-          ) : isError ? (
+          ) : !showHistory && isError ? (
             <View style={localStyles.emptyState}>
               <Text style={localStyles.emptyTitle}>
                 {t("discover.loadFailed")}
@@ -1358,11 +1483,17 @@ export const DiscoverContent = forwardRef<
                 No hay perfiles para mostrar
               </Text>
               <Text style={localStyles.emptyText}>
-                {activeFilterCount > 0
+                {showHistory
+                  ? historyMode === "dismissed"
+                    ? "Todavía no descartaste ningún perfil."
+                    : historyMode === "liked"
+                      ? "Todavía no elegiste ningún perfil para conectar."
+                      : "Todavía nadie indicó que quiere conectar con vos."
+                  : activeFilterCount > 0
                   ? "Probá ampliando tus filtros para encontrar más personas."
                   : "Ya viste los perfiles disponibles. Volvé pronto para descubrir personas nuevas."}
               </Text>
-              {activeFilterCount > 0 ? (
+              {!showHistory && activeFilterCount > 0 ? (
                 <TouchableOpacity
                   style={localStyles.emptyActionButton}
                   activeOpacity={0.84}
@@ -1383,10 +1514,12 @@ export const DiscoverContent = forwardRef<
                 users={visibleProfiles}
                 onUserPress={(profile) => {
                   setSelectedProfile(profile);
+                  setViewingHistory(showHistory);
                   setShowProfileSheet(true);
                 }}
                 onDismissedUserPress={(profile) => {
                   setSelectedProfile(profile);
+                  setViewingHistory(showHistory);
                   setShowProfileSheet(true);
                 }}
               />
@@ -1403,7 +1536,7 @@ export const DiscoverContent = forwardRef<
                   </Text>
                 </TouchableOpacity>
               ) : null}
-              {profiles.length === 0 ? (
+              {canvasProfiles.length === 0 ? (
                 <View style={localStyles.orbitHint}>
                   <Text style={localStyles.emptyTitle}>
                     {t("discover.noProfiles")}
@@ -1756,6 +1889,39 @@ const localStyles = StyleSheet.create({
   filtersPrimaryButtonText: {
     color: "#171A22",
     fontSize: 15,
+    fontFamily: vibesTheme.fonts.semibold,
+  },
+  historyButtonActive: {
+    backgroundColor: "#F7E8C8",
+    borderColor: "#C89536",
+  },
+  historyModeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  historyModeButton: {
+    flex: 1,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E7DFD2",
+    backgroundColor: "#FFFDFA",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  historyModeButtonActive: {
+    backgroundColor: "#F5E5BD",
+    borderColor: "#BF9147",
+  },
+  historyModeText: {
+    color: "#2B2B2B",
+    fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },
 });

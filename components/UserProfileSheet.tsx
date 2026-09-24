@@ -47,6 +47,8 @@ type Props = {
   onContactPress?: () => void | Promise<unknown>;
   secondaryActionLabel?: string;
   onSecondaryActionPress?: () => void | Promise<unknown>;
+  nextActionLabel?: string;
+  onNextActionPress?: () => void;
   secondaryActionPanelOnly?: boolean;
   secondaryActionDestructive?: boolean;
   onImagePress?: (image?: any, index?: number) => void;
@@ -163,6 +165,8 @@ const UserProfileSheet = ({
   onContactPress,
   secondaryActionLabel,
   onSecondaryActionPress,
+  nextActionLabel,
+  onNextActionPress,
   secondaryActionPanelOnly = false,
   secondaryActionDestructive = false,
   closeIconName = "close",
@@ -186,6 +190,7 @@ const UserProfileSheet = ({
   const swipeX = useRef(new Animated.Value(0)).current;
   const swipeUp = useRef(new Animated.Value(0)).current;
   const swipingRef = useRef(false);
+  const [swipeNextProfile, setSwipeNextProfile] = useState<UserProfileCardData | null>(null);
   const [swipeAnimating, setSwipeAnimating] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => {
@@ -204,9 +209,12 @@ const UserProfileSheet = ({
     };
   }, [swipeX]);
   useLayoutEffect(() => {
+    swipingRef.current = false;
+    setSwipeAnimating(false);
     swipeX.stopAnimation();
     swipeX.setValue(0);
     swipeUp.setValue(0);
+    setSwipeNextProfile(null);
   }, [profile?.id, visible, swipeX, swipeUp]);
   const resetSwipe = useCallback(() => {
     swipeUp.setValue(0);
@@ -230,6 +238,7 @@ const UserProfileSheet = ({
         return;
       }
       swipingRef.current = true;
+      setSwipeNextProfile(nextProfile ?? null);
       setSwipeAnimating(true);
       setDetailsVisible(false);
       Animated.timing(swipeX, {
@@ -244,8 +253,15 @@ const UserProfileSheet = ({
         }
         void (async () => {
           try {
-            await action();
-          } finally {
+            const result = await action();
+            // Successful actions stay offscreen until the parent commits the
+            // next profile or closes the sheet. Never return the old card.
+            if (result === false) {
+              swipingRef.current = false;
+              setSwipeAnimating(false);
+              resetSwipe();
+            }
+          } catch {
             swipingRef.current = false;
             setSwipeAnimating(false);
             resetSwipe();
@@ -262,6 +278,8 @@ const UserProfileSheet = ({
       width,
       reduceMotion,
       resetSwipe,
+      nextProfile,
+      profile?.id,
     ]
   );
   const like = () => {
@@ -292,7 +310,8 @@ const UserProfileSheet = ({
           swipeUp.setValue(0);
           const action = getProfileSwipeAction(g.dx, g.dy, width, enableSwipe);
           if (action === "details") {
-            resetSwipe();
+            swipeX.stopAnimation();
+            swipeX.setValue(0);
             panelDragY.setValue(0);
             setDetailsVisible(true);
           } else if (action) {
@@ -434,6 +453,10 @@ const UserProfileSheet = ({
   );
 
   const showDetails = () => {
+    if (swipingRef.current || actionPending) return;
+    swipeX.stopAnimation();
+    swipeX.setValue(0);
+    swipeUp.setValue(0);
     panelDragY.setValue(0);
     setDetailsVisible(true);
   };
@@ -525,7 +548,7 @@ const UserProfileSheet = ({
           </TouchableOpacity>
         )}
       </View>
-    ) : onContactPress || shouldShowSecondaryAction ? (
+    ) : onContactPress || shouldShowSecondaryAction || onNextActionPress ? (
       <View style={[localStyles.actions, onPanel && localStyles.panelActions]}>
         {onContactPress ? (
           <TouchableOpacity
@@ -548,6 +571,19 @@ const UserProfileSheet = ({
                 {actionPending ? "Guardando…" : "Conectar"}
               </Text>
             </LinearGradient>
+          </TouchableOpacity>
+        ) : null}
+        {onNextActionPress && nextActionLabel ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={nextActionLabel}
+            activeOpacity={0.8}
+            disabled={actionPending || swipeAnimating}
+            onPress={onNextActionPress}
+            style={localStyles.nextAction}
+          >
+            <Text style={localStyles.nextActionText}>{nextActionLabel}</Text>
+            <Icon name="chevron-forward" size={18} color="#536F91" />
           </TouchableOpacity>
         ) : null}
         {shouldShowSecondaryAction ? (
@@ -588,7 +624,7 @@ const UserProfileSheet = ({
         sheetInDelay={0}
         sheetStyle={[localStyles.fullscreenSheet, { height }]}
       >
-        {enableSwipe && nextProfile ? (
+        {enableSwipe && !detailsVisible && (swipeNextProfile ?? nextProfile) ? (
           <Animated.View
             pointerEvents="none"
             accessibilityElementsHidden
@@ -597,6 +633,11 @@ const UserProfileSheet = ({
               StyleSheet.absoluteFillObject,
               {
                 backgroundColor: "#FEFEFD",
+                opacity: swipeX.interpolate({
+                  inputRange: [-width * 0.4, 0, 0, width * 0.4],
+                  outputRange: [1, 0, 0, 1],
+                  extrapolate: "clamp",
+                }),
                 transform: [
                   {
                     scale: swipeX.interpolate({
@@ -611,7 +652,7 @@ const UserProfileSheet = ({
           >
             <ProfileMediaImage
               source={
-                normalizeProfileImages(nextProfile)[0] ??
+                normalizeProfileImages(swipeNextProfile ?? nextProfile ?? null)[0] ??
                 VIBES_FALLBACK_ILLUSTRATION
               }
               style={{ width, height }}
@@ -624,16 +665,17 @@ const UserProfileSheet = ({
                 { paddingBottom: insets.bottom + 40 },
               ]}
             >
-              <Text style={localStyles.profileName}>{nextProfile.name}</Text>
-              {nextProfile.age ? (
+              <Text style={localStyles.profileName}>{(swipeNextProfile ?? nextProfile)?.name}</Text>
+              {(swipeNextProfile ?? nextProfile)?.age ? (
                 <Text style={localStyles.profileAge}>
-                  {nextProfile.age} años
+                  {(swipeNextProfile ?? nextProfile)?.age} años
                 </Text>
               ) : null}
             </LinearGradient>
           </Animated.View>
         ) : null}
         <Animated.View
+          renderToHardwareTextureAndroid={visible && enableSwipe}
           style={[
             localStyles.screen,
             {
@@ -654,6 +696,15 @@ const UserProfileSheet = ({
           {...swipe.panHandlers}
         >
           {profileImages.length > 0 ? (
+            enableSwipe ? (
+              <ProfileMediaImage
+                source={profileImages[safeActiveIndex]}
+                style={[StyleSheet.absoluteFillObject, { width, height }]}
+                fallbackBackgroundColor="#FEFEFD"
+                fallbackIconColor="#7F98B7"
+                transition={0}
+              />
+            ) : (
             <FlatList
               ref={galleryRef}
               data={profileImages}
@@ -673,13 +724,15 @@ const UserProfileSheet = ({
                   style={{ width, height }}
                   fallbackBackgroundColor="#FEFEFD"
                   fallbackIconColor="#7F98B7"
+                  transition={0}
                 />
               )}
               style={StyleSheet.absoluteFillObject}
               initialNumToRender={2}
               windowSize={3}
-              removeClippedSubviews={Platform.OS === "android"}
+              removeClippedSubviews={false}
             />
+            )
           ) : (
             <View style={localStyles.fallbackCanvas}>
               <View style={localStyles.fallbackCircleBlue} />
@@ -1314,6 +1367,23 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 18,
+  },
+  nextAction: {
+    minHeight: 48,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(83, 111, 145, 0.28)",
+    backgroundColor: "#F4F6F8",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 18,
+  },
+  nextActionText: {
+    color: "#536F91",
+    fontSize: 15,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   secondaryActionText: {
     color: "rgba(254, 254, 253, 0.9)",

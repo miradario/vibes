@@ -686,6 +686,28 @@ export const useReportUserMutation = () => {
   });
 };
 
+export const useBlockUserMutation = () => {
+  const { data: session } = useAuthSession();
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, { blockedUserId: string; matchId?: string | null }>({
+    mutationFn: async ({ blockedUserId, matchId }) => {
+      const blockerId = session?.user?.id;
+      if (!blockerId) throw new Error("Not authenticated");
+      const { error } = await supabase.from("user_blocks").upsert(
+        { blocker_id: blockerId, blocked_user_id: blockedUserId, reason: "Bloqueado por el usuario" },
+        { onConflict: "blocker_id,blocked_user_id" }
+      );
+      if (error) throw error;
+      if (matchId) {
+        const { error: matchError } = await supabase.from("matches").delete().eq("id", matchId);
+        if (matchError) throw matchError;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: matchKeys.all }),
+  });
+};
+
 // ---------------------------------------------------------------------------
 // useDirectMessagesQuery – messages for a match, with Realtime
 // ---------------------------------------------------------------------------

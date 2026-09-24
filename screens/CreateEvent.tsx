@@ -74,25 +74,6 @@ const getStaticMapPreviewUrl = (
 ) =>
   `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=800x360&scale=2&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=${apiKey}`;
 
-const getOpenStreetMapTiles = (lat: number, lng: number, zoom = 15) => {
-  const latRad = (lat * Math.PI) / 180;
-  const scale = 2 ** zoom;
-  const centerX = Math.floor(((lng + 180) / 360) * scale);
-  const centerY = Math.floor(
-    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) *
-      scale,
-  );
-
-  return [-1, 0, 1].flatMap((xOffset) =>
-    [-1, 0, 1].map((yOffset) => ({
-      id: `${zoom}-${centerX + xOffset}-${centerY + yOffset}`,
-      url: `https://tile.openstreetmap.org/${zoom}/${centerX + xOffset}/${centerY + yOffset}.png`,
-      left: `${(xOffset + 1) * 33.333}%`,
-      top: `${(yOffset + 1) * 33.333}%`,
-    })),
-  );
-};
-
 const normalizeExternalUrl = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return "";
@@ -668,16 +649,11 @@ const CreateEvent = () => {
     }
   };
 
-  const validatedMapTiles =
-    typeof validatedLocation?.lat === "number" &&
-    typeof validatedLocation.lng === "number"
-      ? getOpenStreetMapTiles(validatedLocation.lat, validatedLocation.lng)
-      : [];
-
   return (
     <KeyboardAvoidingView
       style={styles.bg}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      enabled={Platform.OS === "ios"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
     >
       <View style={styles.bg}>
@@ -959,20 +935,7 @@ const CreateEvent = () => {
                     style={localStyles.mapPreviewCard}
                     onPress={handleOpenValidatedLocation}
                   >
-                    {validatedMapTiles.length > 0 ? (
-                      <View style={localStyles.mapPreviewTiles}>
-                        {validatedMapTiles.map((tile) => (
-                          <Image
-                            key={tile.id}
-                            source={{ uri: tile.url }}
-                            style={[
-                              localStyles.mapPreviewTile,
-                              { left: tile.left, top: tile.top } as any,
-                            ]}
-                          />
-                        ))}
-                      </View>
-                    ) : typeof validatedLocation.lat === "number" &&
+                    {typeof validatedLocation.lat === "number" &&
                     typeof validatedLocation.lng === "number" &&
                     googleMapsApiKey &&
                     !mapPreviewFailed ? (
@@ -1008,11 +971,6 @@ const CreateEvent = () => {
                         ) : null}
                       </View>
                     )}
-                    {validatedMapTiles.length > 0 ? (
-                      <View style={localStyles.mapPreviewCenterPin}>
-                        <Icon name="location" size={28} color={PRIMARY_COLOR} />
-                      </View>
-                    ) : null}
                     <View style={localStyles.mapPreviewOverlay}>
                       <View style={localStyles.mapPreviewBadge}>
                         <Icon name="navigate" size={14} color={WHITE} />

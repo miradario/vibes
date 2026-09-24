@@ -4,14 +4,12 @@ import LikeBubbles from "../components/LikeBubbles";
 import React, { useEffect, useMemo, useRef } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "../components/Typography";
-import { ResizeMode } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import LoopingVideo from "../components/LoopingVideo";
 import Avatar from "../components/Avatar";
 import Icon from "../components/Icon";
 import VibesActionButton from "../components/VibesActionButton";
@@ -108,17 +106,6 @@ const Match = () => {
           </View>
         </View>
 
-        <View style={localStyles.heroWrap}>
-          <LoopingVideo
-            source={require("../assets/videos/surfaces/connection.mp4")}
-            posterSource={require("../assets/images/conexion.png")}
-            style={localStyles.heroVideo}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay
-            isMuted
-          />
-        </View>
-
         <View style={localStyles.peopleRow}>
           <View style={localStyles.personBlock}>
             <View style={[localStyles.avatar, localStyles.avatarBlue]}>
@@ -143,15 +130,6 @@ const Match = () => {
           </View>
         </View>
 
-        <View style={localStyles.messageCard}>
-          <View style={localStyles.messageIcon}>
-            <Icon name="leaf-outline" size={27} color="#7B766E" />
-          </View>
-          <Text style={localStyles.messageText}>
-            Este es un espacio para compartir desde la presencia.
-          </Text>
-        </View>
-
         <View style={localStyles.actions}>
           <VibesActionButton
             label="Enviar mensaje"
@@ -167,12 +145,6 @@ const Match = () => {
           />
         </View>
 
-        <View style={localStyles.footer}>
-          <Text style={localStyles.footerSparkle}>✦</Text>
-          <Text style={localStyles.footerText}>
-            Cada encuentro puede transformar algo en vos.
-          </Text>
-        </View>
       </ScrollView>
       <LikeBubbles trigger={1} />
     </SafeAreaView>

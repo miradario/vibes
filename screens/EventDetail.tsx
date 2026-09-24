@@ -190,28 +190,6 @@ const isAfterDay = (left: Date, right: Date) => formatDayKey(left) > formatDayKe
 const getStaticMapPreviewUrl = (location: string, apiKey: string) =>
   `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(location)}&zoom=15&size=900x320&scale=2&maptype=roadmap&markers=color:red%7C${encodeURIComponent(location)}&key=${apiKey}`;
 
-const getOpenStreetMapPreviewUrl = (latitude: number, longitude: number) =>
-  `https://staticmap.openstreetmap.de/staticmap.php?center=${latitude},${longitude}&zoom=15&size=900x320&maptype=mapnik&markers=${latitude},${longitude},red-pushpin`;
-
-const getOpenStreetMapTiles = (latitude: number, longitude: number, zoom = 15) => {
-  const latRad = (latitude * Math.PI) / 180;
-  const scale = 2 ** zoom;
-  const centerX = Math.floor(((longitude + 180) / 360) * scale);
-  const centerY = Math.floor(
-    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) *
-      scale,
-  );
-
-  return [-1, 0, 1].flatMap((xOffset) =>
-    [-1, 0, 1].map((yOffset) => ({
-      id: `${zoom}-${centerX + xOffset}-${centerY + yOffset}`,
-      url: `https://tile.openstreetmap.org/${zoom}/${centerX + xOffset}/${centerY + yOffset}.png`,
-      left: `${(xOffset + 1) * 33.333}%`,
-      top: `${(yOffset + 1) * 33.333}%`,
-    })),
-  );
-};
-
 const isVideoMedia = (value: unknown) => {
   if (typeof value !== "string") return false;
   const normalized = value.split("?")[0].toLowerCase();
@@ -988,14 +966,14 @@ const EventDetail = () => {
   const googleMapsApiKey = googleMapsConfig.apiKey;
   const hasEventPreviewCoordinates =
     eventPreviewLatitude !== null && eventPreviewLongitude !== null;
-  const eventMapTiles = hasEventPreviewCoordinates
-    ? getOpenStreetMapTiles(eventPreviewLatitude, eventPreviewLongitude)
-    : [];
-  const eventMapPreviewUri = hasEventPreviewCoordinates
-    ? getOpenStreetMapPreviewUrl(eventPreviewLatitude, eventPreviewLongitude)
-    : googleMapsApiKey && eventMapQuery
-      ? getStaticMapPreviewUrl(eventMapQuery, googleMapsApiKey)
-      : null;
+  const eventMapPreviewUri = googleMapsApiKey
+    ? getStaticMapPreviewUrl(
+        hasEventPreviewCoordinates
+          ? `${eventPreviewLatitude},${eventPreviewLongitude}`
+          : eventMapQuery,
+        googleMapsApiKey,
+      )
+    : null;
 
   useEffect(() => {
     let isMounted = true;
@@ -1588,26 +1566,11 @@ const EventDetail = () => {
                       style={localStyles.eventMiniMapCard}
                       onPress={handleOpenMap}
                     >
-                      {eventMapTiles.length > 0 ? (
-                        <View style={localStyles.eventMiniMapTiles}>
-                          {eventMapTiles.map((tile) => (
-                            <Image
-                              key={tile.id}
-                              source={{ uri: tile.url }}
-                              style={[
-                                localStyles.eventMiniMapTile,
-                                { left: tile.left, top: tile.top } as any,
-                              ]}
-                            />
-                          ))}
-                        </View>
-                      ) : !eventMapPreviewFailed && eventMapPreviewUri ? (
+                      {!eventMapPreviewFailed && eventMapPreviewUri ? (
                         <Image
                           source={{
                             uri: eventMapPreviewUri,
-                            ...(!hasEventPreviewCoordinates && googleMapsApiKey
-                              ? { headers: googleMapsConfig.headers }
-                              : {}),
+                            headers: googleMapsConfig.headers,
                           }}
                           style={localStyles.eventMiniMapImage}
                           onError={() => setEventMapPreviewFailed(true)}
