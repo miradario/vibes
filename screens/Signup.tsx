@@ -28,6 +28,7 @@ import VibesHeader from "../src/components/VibesHeader";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
+import CustomDialog from "../components/CustomDialog";
 import Icon from "../components/Icon";
 import { useI18n } from "../src/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
@@ -37,6 +38,8 @@ import {
   formatBirthDate,
   parseBirthDate,
 } from "../src/lib/birthDate";
+
+type SocialProvider = "google" | "apple";
 
 const Signup = () => {
   const { t } = useI18n();
@@ -57,6 +60,8 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [pendingSocialProvider, setPendingSocialProvider] =
+    useState<SocialProvider | null>(null);
   const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const signupMutation = useSignupMutation();
@@ -160,16 +165,14 @@ const Signup = () => {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    if (!acceptedTerms) {
-      setError(t("authTerms.required"));
-      return;
-    }
-
+  const continueWithSocialSignup = async (provider: SocialProvider) => {
     setError(null);
 
     try {
-      const session = await googleLoginMutation.mutateAsync();
+      const session =
+        provider === "google"
+          ? await googleLoginMutation.mutateAsync()
+          : await appleLoginMutation.mutateAsync();
       if (session?.user?.id) {
         if (confirmedBirthDate) {
           updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
@@ -182,36 +185,44 @@ const Signup = () => {
         );
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t("signup.googleFailed");
-      setError(msg || t("signup.googleFailed"));
+      const fallback =
+        provider === "google" ? t("signup.googleFailed") : t("signup.appleFailed");
+      const msg = e instanceof Error ? e.message : fallback;
+      setError(msg || fallback);
     }
   };
 
-  const handleAppleSignup = async () => {
+  const handleSocialSignup = (provider: SocialProvider) => {
     if (!acceptedTerms) {
-      setError(t("authTerms.required"));
+      setPendingSocialProvider(provider);
       return;
     }
 
-    setError(null);
+    void continueWithSocialSignup(provider);
+  };
 
-    try {
-      const session = await appleLoginMutation.mutateAsync();
-      if (session?.user?.id) {
-        if (confirmedBirthDate) {
-          updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
-        }
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: "VibesOnboardingFlow" as never }],
-          })
-        );
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : t("signup.appleFailed");
-      setError(msg || t("signup.appleFailed"));
+  const acceptTermsAndContinue = () => {
+    if (!pendingSocialProvider) return;
+    const provider = pendingSocialProvider;
+    setAcceptedTerms(true);
+    setPendingSocialProvider(null);
+    void continueWithSocialSignup(provider);
+  };
+
+  const closeTermsDialog = () => {
+    setPendingSocialProvider(null);
+  };
+
+  const viewTermsFromDialog = () => {
+    setPendingSocialProvider(null);
+    navigation.navigate("TermsConditions" as never);
+  };
+
+  const getTermsDialogActionLabel = () => {
+    if (pendingSocialProvider === "apple") {
+      return t("authTerms.acceptAndContinueApple");
     }
+    return t("authTerms.acceptAndContinueGoogle");
   };
 
   return (
@@ -239,8 +250,8 @@ const Signup = () => {
                   ? t("signup.googleSubmitting")
                   : t("signup.google")
               }
-              onPress={handleGoogleSignup}
-              disabled={loading || appleLoading || !acceptedTerms}
+              onPress={() => handleSocialSignup("google")}
+              disabled={loading || appleLoading}
               loading={googleLoading}
               style={localStyles.googleButton}
             />
@@ -251,8 +262,8 @@ const Signup = () => {
                   type={
                     AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
                   }
-                  onPress={handleAppleSignup}
-                  disabled={loading || googleLoading || !acceptedTerms}
+                  onPress={() => handleSocialSignup("apple")}
+                  disabled={loading || googleLoading}
                   loading={appleLoading}
                 />
               </View>
@@ -383,6 +394,16 @@ const Signup = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CustomDialog
+        visible={Boolean(pendingSocialProvider)}
+        title={t("authTerms.modalTitle")}
+        message={t("authTerms.modalBody")}
+        primaryLabel={getTermsDialogActionLabel()}
+        onPrimaryPress={acceptTermsAndContinue}
+        secondaryLabel={t("authTerms.link")}
+        onSecondaryPress={viewTermsFromDialog}
+        onClose={closeTermsDialog}
+      />
     </View>
   );
 };

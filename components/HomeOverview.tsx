@@ -62,7 +62,7 @@ function SectionHeader({
           activeOpacity={0.72}
         >
           <Text style={s.action}>Ver todos</Text>
-          <Icon name="chevron-forward" size={18} color="#5F574C" />
+          <Icon name="chevron-forward" size={18} color={ACCENT} />
         </TouchableOpacity>
       ) : null}
     </View>
@@ -149,12 +149,12 @@ function ChallengeCard({
         {timeline.status === "active" &&
         (participant.isSuccess || checkins.isSuccess) ? (
           <Text style={[s.status, checkedInToday && s.done]}>
-            {checkedInToday ? "Al día" : "Pendiente hoy"}
+            {checkedInToday ? "Completado Hoy" : "Pendiente hoy"}
           </Text>
         ) : (
           <Text style={s.status}>{event.attendees}</Text>
         )}
-        <Icon name="chevron-forward" size={20} color="#5F574C" />
+        <Icon name="chevron-forward" size={20} color={ACCENT} />
       </View>
     </TouchableOpacity>
   );
@@ -230,7 +230,7 @@ function HomeEventCard({
           ) : null}
         </View>
         <View style={s.eventChevron}>
-          <Icon name="chevron-forward" size={20} color="#5F574C" />
+          <Icon name="chevron-forward" size={20} color={ACCENT} />
         </View>
       </View>
     </TouchableOpacity>

@@ -186,6 +186,11 @@ const baseTranslations = {
         "Acepto los términos de uso y las reglas de comunidad antes de continuar.",
       link: "Ver términos",
       required: "Aceptá los términos de uso para continuar.",
+      modalTitle: "Antes de continuar",
+      modalBody:
+        "Para crear tu cuenta con Google o Apple necesitás aceptar los términos de uso y las reglas de comunidad.",
+      acceptAndContinueGoogle: "Aceptar y continuar con Google",
+      acceptAndContinueApple: "Aceptar y continuar con Apple",
     },
     onboarding: {
       nameTitle: "¿Cómo te llamás?",
@@ -744,6 +749,11 @@ const baseTranslations = {
         "I accept the Terms of Use and community rules before continuing.",
       link: "View terms",
       required: "Accept the Terms of Use to continue.",
+      modalTitle: "Before continuing",
+      modalBody:
+        "To create your account with Google or Apple, you need to accept the Terms of Use and community rules.",
+      acceptAndContinueGoogle: "Accept and continue with Google",
+      acceptAndContinueApple: "Accept and continue with Apple",
     },
     onboarding: {
       nameTitle: "What's your name?",

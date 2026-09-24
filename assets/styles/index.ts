@@ -316,6 +316,23 @@ export default StyleSheet.create({
     fontSize: 15,
     fontFamily: SERIF_FONT,
   },
+  discoverDetailGroup: {
+    marginTop: 10,
+    width: "100%",
+  },
+  discoverDetailLabel: {
+    color: "#5F574C",
+    fontSize: 12,
+    lineHeight: 15,
+    fontFamily: vibesTheme.fonts.semibold,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  discoverDetailChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+  },
   discoverPreferencesSectionTitle: {
     color: "#5D7FA3",
   },

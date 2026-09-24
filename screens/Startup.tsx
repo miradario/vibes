@@ -25,6 +25,7 @@ import { isOnboardingComplete } from "../src/lib/onboardingFlow";
 const SESSION_BOOT_TIMEOUT_MS = 5000;
 const STARTUP_PREFETCH_TIMEOUT_MS = 8000;
 const UPDATE_GATE_TIMEOUT_MS = 3000;
+const STARTUP_INTRO_MIN_MS = 900;
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
@@ -51,7 +52,7 @@ const Startup = () => {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const { data: session, isLoading: isSessionLoading } = useAuthSession();
-  const [exitRequested, setExitRequested] = useState(false);
+  const [introElapsed, setIntroElapsed] = useState(false);
   const didNavigateRef = useRef(false);
   const [isReadyToExit, setIsReadyToExit] = useState(false);
   const [sessionLoadTimedOut, setSessionLoadTimedOut] = useState(false);
@@ -61,6 +62,16 @@ const Startup = () => {
     useState<AppUpdateGateState | null>(null);
 
   const userId = session?.user?.id;
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIntroElapsed(true);
+    }, STARTUP_INTRO_MIN_MS);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSessionLoading) return;
@@ -221,7 +232,7 @@ const Startup = () => {
   ]);
 
   useEffect(() => {
-    if (!exitRequested || !isReadyToExit || didNavigateRef.current) return;
+    if (!introElapsed || !isReadyToExit || didNavigateRef.current) return;
     didNavigateRef.current = true;
     navigation.dispatch(
       CommonActions.reset({
@@ -236,7 +247,7 @@ const Startup = () => {
       })
     );
   }, [
-    exitRequested,
+    introElapsed,
     isReadyToExit,
     userId,
     forceWelcome,
@@ -247,8 +258,8 @@ const Startup = () => {
 
   return (
     <CalmPause
-      onContinue={() => setExitRequested(true)}
-      pending={exitRequested && !isReadyToExit}
+      pending={!isReadyToExit}
+      showAction={false}
     />
   );
 };

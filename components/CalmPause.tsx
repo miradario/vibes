@@ -29,10 +29,12 @@ import {
 
 export default function CalmPause({
   onContinue,
-  pending,
+  pending = false,
+  showAction = true,
 }: {
-  onContinue: () => void;
-  pending: boolean;
+  onContinue?: () => void;
+  pending?: boolean;
+  showAction?: boolean;
 }) {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -44,7 +46,7 @@ export default function CalmPause({
     fontScale
   );
   const clock = useSharedValue(0);
-  const opacity = useSharedValue(1);
+  const opacity = useSharedValue(0);
   useEffect(() => {
     cancelAnimation(clock);
     clock.value = 0;
@@ -113,32 +115,34 @@ export default function CalmPause({
               : "Seguí el ritmo del círculo"}
           </Text>
         </ScrollView>
-        <View style={s.footer}>
-          {pending ? (
-            <Text accessibilityLiveRegion="polite" style={s.loading}>
-              Preparando tu próximo paso…
-            </Text>
-          ) : null}
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityState={{ busy: pending }}
-            onPress={onContinue}
-            activeOpacity={0.85}
-            style={[onboardingStyles.primaryButton, s.primary]}
-          >
-            <Text style={[onboardingStyles.primaryButtonText, s.primaryLabel]}>
-              Continuar
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {showAction ? (
+          <View style={s.footer}>
+            {pending ? (
+              <Text accessibilityLiveRegion="polite" style={s.loading}>
+                Preparando tu próximo paso…
+              </Text>
+            ) : null}
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ busy: pending }}
+              onPress={onContinue}
+              activeOpacity={0.85}
+              style={[onboardingStyles.primaryButton, s.primary]}
+            >
+              <Text style={[onboardingStyles.primaryButtonText, s.primaryLabel]}>
+                Continuar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </Animated.View>
     </ScreenContainer>
   );
 }
 const serif = vibesTheme.fonts.regular;
 const s = StyleSheet.create({
-  screen: { backgroundColor: "#FBF7EF" },
-  layout: { flex: 1 },
+  screen: { backgroundColor: "#FFFFFF" },
+  layout: { flex: 1, backgroundColor: "#FBF7EF" },
   body: { flex: 1 },
   bodyContent: {
     flexGrow: 1,

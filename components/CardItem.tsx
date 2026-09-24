@@ -44,6 +44,60 @@ const shouldShowDiscoverPreference = (preference: string) => {
   );
 };
 
+type DiscoverChipGroup = {
+  title: string;
+  values: string[];
+};
+
+const splitChipValues = (value: string) =>
+  value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const createChipGroup = (
+  title: string,
+  value: unknown,
+): DiscoverChipGroup | null => {
+  const values = Array.isArray(value)
+    ? value.map((item) => String(item).trim()).filter(Boolean)
+    : typeof value === "string"
+    ? splitChipValues(value)
+    : value
+    ? [String(value).trim()].filter(Boolean)
+    : [];
+
+  if (!title.trim() || values.length === 0) return null;
+
+  return { title: title.trim(), values: Array.from(new Set(values)) };
+};
+
+const parsePreferenceGroup = (preference: string): DiscoverChipGroup | null => {
+  const [rawTitle, ...rawValues] = preference.split(":");
+  if (rawValues.length === 0) {
+    return createChipGroup("Detalles", preference);
+  }
+
+  return createChipGroup(rawTitle, rawValues.join(":"));
+};
+
+const mergeChipGroups = (groups: DiscoverChipGroup[]) => {
+  const merged = new Map<string, DiscoverChipGroup>();
+
+  groups.forEach((group) => {
+    const key = group.title.toLowerCase();
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, { title: group.title, values: [...group.values] });
+      return;
+    }
+
+    existing.values = Array.from(new Set([...existing.values, ...group.values]));
+  });
+
+  return Array.from(merged.values());
+};
+
 const CardItem = ({
   description,
   hasActions,
@@ -122,17 +176,19 @@ const CardItem = ({
     spiritualPathDetails,
   );
   // Construir lista de preferencias extendida
-  const extraPrefs: string[] = [];
+  const extraPreferenceGroups: DiscoverChipGroup[] = [];
   if (preferences && Array.isArray(preferences)) {
-    extraPrefs.push(...preferences.filter(shouldShowDiscoverPreference));
+    preferences
+      .filter(shouldShowDiscoverPreference)
+      .forEach((preference) => {
+        const group = parsePreferenceGroup(preference);
+        if (group) extraPreferenceGroups.push(group);
+      });
   }
   // Agregar campos individuales si existen
   const addIf = (label: string, value: any) => {
-    if (Array.isArray(value) && value.length) {
-      extraPrefs.push(`${label}: ${value.filter(Boolean).join(", ")}`);
-      return;
-    }
-    if (value && typeof value === 'string' && value.trim()) extraPrefs.push(`${label}: ${value}`);
+    const group = createChipGroup(label, value);
+    if (group) extraPreferenceGroups.push(group);
   };
   addIf('Género', spiritualPathDetails?.gender);
   addIf('Estatura', spiritualPathDetails?.height_cm ? `${spiritualPathDetails.height_cm} cm` : "");
@@ -146,14 +202,16 @@ const CardItem = ({
   addIf('Comunicación', spiritualPathDetails?.communication_style);
   addIf('Estilo de amor', spiritualPathDetails?.love_style);
   addIf('Mascotas', spiritualPathDetails?.pets);
-  const discoverPreferences = Array.from(new Set(extraPrefs));
+  const discoverPreferences = mergeChipGroups(extraPreferenceGroups);
   const sharedEventsList = (sharedEvents ?? []).filter(Boolean);
   const sharedChallengesList = (sharedChallenges ?? []).filter(Boolean);
-  const discoverHabits = [
-    vegetarian ? `Vegetarianismo: ${vegetarian}` : null,
-    smoking ? `Fuma: ${smoking}` : null,
-    pets ? `Mascotas: ${pets}` : null,
-  ].filter(Boolean) as string[];
+  const discoverHabits = mergeChipGroups(
+    [
+      createChipGroup("Vegetarianismo", vegetarian),
+      createChipGroup("Fuma", smoking),
+      createChipGroup("Mascotas", pets),
+    ].filter(Boolean) as DiscoverChipGroup[],
+  );
   const discoverDebugPayload = {
     name,
     age,
@@ -184,6 +242,30 @@ const CardItem = ({
   }, [activeDiscoverPath, discoverSpiritualPaths]);
 
   if (isDiscover) {
+    const renderChipGroup = (
+      group: DiscoverChipGroup,
+      index: number,
+      prefix: string,
+    ) => (
+      <View key={`${prefix}-${group.title}-${index}`} style={styles.discoverDetailGroup}>
+        <Text style={styles.discoverDetailLabel}>{group.title}</Text>
+        <View style={styles.discoverDetailChips}>
+          {group.values.map((value, valueIndex) => (
+            <View
+              key={`${prefix}-${group.title}-${value}-${valueIndex}`}
+              style={[styles.discoverTagPill, styles.discoverPreferencePill]}
+            >
+              <Text
+                style={[styles.discoverTagText, styles.discoverPreferenceTagText]}
+              >
+                {value}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+
     return (
       <View style={[styles.containerCardItem, styles.containerCardItemDiscover]}>
         <View style={styles.discoverCardBackground} />
@@ -269,18 +351,14 @@ const CardItem = ({
           {(vibe || intention) ? (
             <View style={styles.discoverInfoSection}>
               <Text style={styles.discoverSectionTitle}>Datos</Text>
-              <View style={styles.discoverTagRowLeft}>
-                {vibe ? (
-                  <View style={styles.discoverTagPill}>
-                    <Text style={styles.discoverTagText}>Vibe: {vibe}</Text>
-                  </View>
-                ) : null}
-                {intention ? (
-                  <View style={styles.discoverTagPill}>
-                    <Text style={styles.discoverTagText}>Intención: {intention}</Text>
-                  </View>
-                ) : null}
-              </View>
+              {[
+                createChipGroup("Vibe", vibe),
+                createChipGroup("Intención", intention),
+              ]
+                .filter(Boolean)
+                .map((group, index) =>
+                  renderChipGroup(group as DiscoverChipGroup, index, "data"),
+                )}
             </View>
           ) : null}
 
@@ -296,13 +374,9 @@ const CardItem = ({
           {discoverHabits.length > 0 ? (
             <View style={styles.discoverInfoSection}>
               <Text style={styles.discoverSectionTitle}>Hábitos</Text>
-              <View style={styles.discoverTagRowLeft}>
-                {discoverHabits.map((habit, index) => (
-                  <View key={`${habit}-${index}`} style={styles.discoverTagPill}>
-                    <Text style={styles.discoverTagText}>{habit}</Text>
-                  </View>
-                ))}
-              </View>
+              {discoverHabits.map((group, index) =>
+                renderChipGroup(group, index, "habit"),
+              )}
             </View>
           ) : null}
 
@@ -334,20 +408,9 @@ const CardItem = ({
               >
                 Detalles
               </Text>
-              <View style={styles.discoverTagRowLeft}>
-                {discoverPreferences.map((preference, index) => (
-                  <View
-                    key={`${preference}-${index}`}
-                    style={[styles.discoverTagPill, styles.discoverPreferencePill]}
-                  >
-                    <Text
-                      style={[styles.discoverTagText, styles.discoverPreferenceTagText]}
-                    >
-                      {preference}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+              {discoverPreferences.map((group, index) =>
+                renderChipGroup(group, index, "preference"),
+              )}
             </View>
           ) : null}
 

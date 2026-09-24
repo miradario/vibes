@@ -59,12 +59,21 @@ type Props = {
 const DetailSection = ({
   label,
   children,
+  emphasized = false,
 }: {
   label: string;
   children: React.ReactNode;
+  emphasized?: boolean;
 }) => (
   <View style={localStyles.detailSection}>
-    <Text style={localStyles.detailLabel}>{label}</Text>
+    <Text
+      style={[
+        localStyles.detailLabel,
+        emphasized && localStyles.emphasizedDetailLabel,
+      ]}
+    >
+      {label}
+    </Text>
     {children}
   </View>
 );
@@ -120,6 +129,60 @@ const getPrefixedValue = (items: string[], prefixes: string[]) => {
   return undefined;
 };
 
+type DetailChipGroup = {
+  title: string;
+  values: string[];
+};
+
+const splitChipValues = (value: string) =>
+  value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const createDetailChipGroup = (
+  title: string,
+  value: unknown
+): DetailChipGroup | null => {
+  const values = Array.isArray(value)
+    ? value.map((item) => String(item).trim()).filter(Boolean)
+    : typeof value === "string"
+    ? splitChipValues(value)
+    : value
+    ? [String(value).trim()].filter(Boolean)
+    : [];
+
+  if (!title.trim() || values.length === 0) return null;
+
+  return { title: title.trim(), values: Array.from(new Set(values)) };
+};
+
+const parseDetailPreferenceGroup = (item: string): DetailChipGroup | null => {
+  const [rawTitle, ...rawValues] = item.split(":");
+  if (rawValues.length === 0) {
+    return createDetailChipGroup("Detalles", item);
+  }
+
+  return createDetailChipGroup(rawTitle, rawValues.join(":"));
+};
+
+const mergeDetailChipGroups = (groups: DetailChipGroup[]) => {
+  const merged = new Map<string, DetailChipGroup>();
+
+  groups.forEach((group) => {
+    const key = group.title.toLowerCase();
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, { title: group.title, values: [...group.values] });
+      return;
+    }
+
+    existing.values = Array.from(new Set([...existing.values, ...group.values]));
+  });
+
+  return Array.from(merged.values());
+};
+
 const isCategorizedPreference = (item: string) => {
   const label = item.split(":")[0]?.trim().toLowerCase();
   return [
@@ -150,6 +213,23 @@ const PillList = ({
         style={[localStyles.pill, blue && localStyles.pillBlue]}
       >
         <Text style={localStyles.pillText}>{item}</Text>
+      </View>
+    ))}
+  </View>
+);
+
+const GroupedPillList = ({
+  groups,
+  blue = false,
+}: {
+  groups: DetailChipGroup[];
+  blue?: boolean;
+}) => (
+  <View style={localStyles.groupedPillList}>
+    {groups.map((group, index) => (
+      <View key={`${group.title}-${index}`} style={localStyles.pillGroup}>
+        <Text style={localStyles.pillGroupLabel}>{group.title}</Text>
+        <PillList items={group.values} blue={blue} />
       </View>
     ))}
   </View>
@@ -372,14 +452,29 @@ const UserProfileSheet = ({
   const energy =
     getPrefixedValue(preferences, ["Energía", "Energia", "Hoy me siento"]) ??
     profile?.vibe;
-  const otherPreferences = preferences.filter(
-    (item) => !isCategorizedPreference(item)
+  const otherPreferenceGroups = mergeDetailChipGroups(
+    preferences
+      .filter((item) => !isCategorizedPreference(item))
+      .map(parseDetailPreferenceGroup)
+      .filter((group): group is DetailChipGroup => Boolean(group))
   );
-  const habits = [
-    profile?.vegetarian ? `Vegetarianismo: ${profile.vegetarian}` : null,
-    profile?.smoking ? `Fuma: ${profile.smoking}` : null,
-    profile?.pets ? `Mascotas: ${profile.pets}` : null,
-  ].filter((item): item is string => Boolean(item));
+  const habitGroups = mergeDetailChipGroups(
+    [
+      createDetailChipGroup(
+        "Vegetarianismo",
+        getPrefixedValue(preferences, ["Vegetarianismo"]) ??
+          profile?.vegetarian
+      ),
+      createDetailChipGroup(
+        "Fuma",
+        getPrefixedValue(preferences, ["Fuma"]) ?? profile?.smoking
+      ),
+      createDetailChipGroup(
+        "Mascotas",
+        getPrefixedValue(preferences, ["Mascotas"]) ?? profile?.pets
+      ),
+    ].filter((group): group is DetailChipGroup => Boolean(group))
+  );
   const location = [profile?.location, profile?.distanceLabel]
     .filter(
       (item, index, values) => Boolean(item) && values.indexOf(item) === index
@@ -1052,19 +1147,19 @@ const UserProfileSheet = ({
                   <PillList items={profile.spiritualPath} />
                 </DetailSection>
               ) : null}
-              {habits.length ? (
-                <DetailSection label="Hábitos">
-                  <PillList items={habits} />
+              {habitGroups.length ? (
+                <DetailSection label="Hábitos" emphasized>
+                  <GroupedPillList groups={habitGroups} />
                 </DetailSection>
               ) : null}
               {profile.tags?.length ? (
-                <DetailSection label="Intereses">
+                <DetailSection label="Intereses" emphasized>
                   <PillList items={profile.tags} />
                 </DetailSection>
               ) : null}
-              {otherPreferences.length ? (
-                <DetailSection label="Más sobre mí">
-                  <PillList items={otherPreferences} />
+              {otherPreferenceGroups.length ? (
+                <DetailSection label="Más sobre mí" emphasized>
+                  <GroupedPillList groups={otherPreferenceGroups} />
                 </DetailSection>
               ) : null}
 
@@ -1456,6 +1551,12 @@ const localStyles = StyleSheet.create({
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
   },
+  emphasizedDetailLabel: {
+    color: "#20252C",
+    fontSize: 18,
+    lineHeight: 23,
+    fontFamily: vibesTheme.fonts.semibold,
+  },
   detailBody: {
     color: "#2B2B2B",
     fontSize: 18,
@@ -1482,6 +1583,19 @@ const localStyles = StyleSheet.create({
     gap: 9,
   },
   pillRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  groupedPillList: {
+    gap: 12,
+  },
+  pillGroup: {
+    gap: 7,
+  },
+  pillGroupLabel: {
+    color: "#5F574C",
+    fontSize: 12,
+    lineHeight: 15,
+    fontFamily: vibesTheme.fonts.semibold,
+    textTransform: "uppercase",
+  },
   pill: {
     minHeight: 40,
     paddingHorizontal: 16,

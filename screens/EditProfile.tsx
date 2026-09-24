@@ -1041,46 +1041,56 @@ const EditProfile = () => {
         sheetStyle={modalStyles.card}
       >
         <View>
-          <Text style={modalStyles.title}>{t("editProfile.addPhoto")}</Text>
-          <Text style={modalStyles.subtitle}>
-            {t("editProfile.chooseOption")}
-          </Text>
+          <View style={modalStyles.header}>
+            <View>
+              <Text style={modalStyles.title}>{t("editProfile.addPhoto")}</Text>
+              <Text style={modalStyles.subtitle}>
+                {t("editProfile.chooseOption")}
+              </Text>
+            </View>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t("common.cancel")}
+              style={modalStyles.closeButton}
+              onPress={() => setPhotoModalVisible(false)}
+              activeOpacity={0.72}
+            >
+              <Icon name="close" size={22} color={DARK_GRAY} />
+            </TouchableOpacity>
+          </View>
 
           <View style={modalStyles.actions}>
             <TouchableOpacity
-              style={modalStyles.primaryButton}
+              style={modalStyles.optionButton}
               onPress={async () => {
                 if (selectedSlot === null) return;
                 setPhotoModalVisible(false);
                 await new Promise((resolve) => setTimeout(resolve, 250));
                 await takePhoto(selectedSlot);
               }}
+              activeOpacity={0.84}
             >
-              <Text style={modalStyles.primaryText}>
-                {t("editProfile.camera")}
-              </Text>
+              <View style={modalStyles.optionIcon}>
+                <Icon name="camera-outline" size={22} color={PRIMARY_COLOR} />
+              </View>
+              <Text style={modalStyles.optionText}>{t("editProfile.camera")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={modalStyles.secondaryButton}
+              style={modalStyles.optionButton}
               onPress={async () => {
                 if (selectedSlot === null) return;
                 setPhotoModalVisible(false);
                 await new Promise((resolve) => setTimeout(resolve, 250));
                 await pickFromLibrary(selectedSlot);
               }}
+              activeOpacity={0.84}
             >
-              <Text style={modalStyles.secondaryText}>
-                {t("editProfile.gallery")}
-              </Text>
+              <View style={modalStyles.optionIcon}>
+                <Icon name="image-outline" size={22} color={PRIMARY_COLOR} />
+              </View>
+              <Text style={modalStyles.optionText}>{t("editProfile.gallery")}</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={modalStyles.cancelButton}
-            onPress={() => setPhotoModalVisible(false)}
-          >
-            <Text style={modalStyles.cancelText}>{t("common.cancel")}</Text>
-          </TouchableOpacity>
         </View>
       </AnimatedSheetModal>
     </KeyboardAvoidingView>
@@ -1099,21 +1109,37 @@ const modalStyles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    maxWidth: 360,
     backgroundColor: WHITE,
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 20,
     shadowColor: BLACK,
     shadowOpacity: 0.2,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
     elevation: 6,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  closeButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(43, 43, 43, 0.05)",
+  },
   title: {
-    fontSize: 18,
+    fontSize: 20,
+    lineHeight: 26,
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.medium,
   },
   subtitle: {
     marginTop: 6,
@@ -1122,36 +1148,39 @@ const modalStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.subtitle,
   },
   actions: {
-    marginTop: 18,
-    gap: 10,
+    marginTop: 22,
+    gap: 12,
   },
-  primaryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 12,
+  optionButton: {
+    minHeight: 58,
+    borderRadius: 16,
     paddingVertical: 12,
+    paddingHorizontal: 14,
     alignItems: "center",
-  },
-  primaryText: {
-    color: WHITE,
-    fontWeight: "400",
-  },
-  secondaryButton: {
+    flexDirection: "row",
     backgroundColor: "#FEFEFD",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(228, 183, 110, 0.36)",
+    shadowColor: BLACK,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  secondaryText: {
+  optionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    marginRight: 12,
+  },
+  optionText: {
     color: DARK_GRAY,
-    fontWeight: "400",
-  },
-  cancelButton: {
-    marginTop: 14,
-    alignItems: "center",
-  },
-  cancelText: {
-    color: GRAY,
-    fontWeight: "400",
+    fontSize: 17,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.medium,
   },
 });
 
