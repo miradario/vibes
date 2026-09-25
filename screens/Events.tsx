@@ -387,7 +387,7 @@ const Events = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.eventsSearchBar}>
+        <View style={[styles.eventsSearchBar, localStyles.searchBar]}>
           <Icon name="search" size={20} color={TEXT_SECONDARY} />
           <TextInput
             style={[styles.eventsSearchInput, localStyles.searchInput]}
@@ -546,6 +546,7 @@ const Events = () => {
                 <View style={localStyles.feedSectionHeader}>
                   <Text style={[
                     localStyles.feedSectionTitle,
+                    listItem.id === "general-challenges" && localStyles.activeChallengesTitle,
                     listItem.id === "joined-challenges" && localStyles.joinedChallengesTitle,
                   ]}>{listItem.title}</Text>
                   {listItem.subtitle ? (
@@ -749,8 +750,13 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.semibold,
   },
+  searchBar: {
+    height: 40,
+    paddingVertical: 0,
+  },
   searchInput: {
-    fontSize: 18,
+    paddingVertical: 0,
+    fontSize: 14,
     fontFamily: vibesTheme.fonts.medium,
     color: vibesTheme.colors.primaryText,
   },
@@ -765,7 +771,14 @@ const localStyles = StyleSheet.create({
     lineHeight: 29,
     fontFamily: vibesTheme.fonts.semibold,
   },
+  activeChallengesTitle: {
+    fontSize: 20,
+    lineHeight: 25,
+  },
   joinedChallengesTitle: {
+    marginTop: 12,
+    fontSize: 20,
+    lineHeight: 25,
     color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.regular,
   },
