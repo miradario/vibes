@@ -93,7 +93,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   title: {
     color: ONBOARDING_COLORS.text,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: isCompactOnboardingScreen ? 25 : 28,
     lineHeight: isCompactOnboardingScreen ? 31 : 35,
     textAlign: "left",
@@ -388,7 +388,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   customPracticeTitle: {
     color: ONBOARDING_COLORS.text,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 27,
     lineHeight: 32,
   },

@@ -176,6 +176,7 @@ const DiscoverOrbitCanvas = ({
   const reducedMotion = useReducedMotion();
   const motionActive = focused && !reducedMotion;
   const [layout, setLayout] = useState({ width: 0, height: 0 });
+
   const centerSpin = useSharedValue(0);
 
   const boundsWidth = layout.width || window.width;

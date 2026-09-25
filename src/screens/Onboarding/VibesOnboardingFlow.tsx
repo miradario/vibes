@@ -25,7 +25,6 @@ import OnboardingScreenContainer from "../../../components/onboarding/Onboarding
 import OptionCard from "../../../components/onboarding/OptionCard";
 import PrimaryButton from "../../../components/onboarding/PrimaryButton";
 import ProfilePhotoPicker from "../../../components/onboarding/ProfilePhotoPicker";
-import EmailVerificationCard from "../../../components/EmailVerificationCard";
 import ProgressHeader from "../../../components/onboarding/ProgressHeader";
 import SelectablePill from "../../../components/onboarding/SelectablePill";
 import { useAuthSession } from "../../auth/auth.queries";
@@ -126,6 +125,41 @@ const VibesOnboardingFlow = () => {
     draft.longitude
   );
   const [locationLoading, setLocationLoading] = useState(false);
+  const [citySuggestions, setCitySuggestions] = useState<Array<{
+    city: string; country: string; latitude: number; longitude: number;
+  }>>([]);
+  const locationSearchVersion = useRef(0);
+  const searchCity = async () => {
+    if (!city.trim() || locationLoading) return;
+    const version = ++locationSearchVersion.current;
+    setLocationLoading(true);
+    setCitySuggestions([]);
+    try {
+      if (Platform.OS === "android") {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert("Ubicación", "Para buscar ciudades, habilitá el permiso de ubicación. También podés escribir ciudad y país.");
+          return;
+        }
+      }
+      const results = await Location.geocodeAsync([city.trim(), country.trim()].filter(Boolean).join(", "));
+      const suggestions = await Promise.all(results.slice(0, 5).map(async (point) => {
+        const [address] = await Location.reverseGeocodeAsync(point);
+        return {
+          city: address?.city || address?.subregion || address?.region || city.trim(),
+          country: address?.country || country.trim(),
+          latitude: point.latitude, longitude: point.longitude,
+        };
+      }));
+      if (version !== locationSearchVersion.current) return;
+      setCitySuggestions(suggestions);
+      if (!suggestions.length) Alert.alert("Sin resultados", "Probá con el nombre completo de la ciudad y el país.");
+    } catch {
+      if (version === locationSearchVersion.current) Alert.alert("No se pudo buscar", "Intentá de nuevo o completá ciudad y país manualmente.");
+    } finally {
+      setLocationLoading(false);
+    }
+  };
   const [selectedPractices, setSelectedPractices] = useState<string[]>(
     draft.spiritualPath ?? []
   );
@@ -352,7 +386,7 @@ const VibesOnboardingFlow = () => {
   };
 
   const scrollInputIntoView = (input: NativeTextInput | null) => {
-    if (Platform.OS !== "ios" || !input) return;
+    if (!input) return;
     const node = findNodeHandle(input);
     const scrollResponder = onboardingScrollRef.current?.getScrollResponder?.();
     if (!node || !scrollResponder) return;
@@ -363,7 +397,7 @@ const VibesOnboardingFlow = () => {
         130,
         true
       );
-    }, 80);
+    }, 300);
   };
 
   const requestLocation = async () => {
@@ -475,15 +509,6 @@ const VibesOnboardingFlow = () => {
       <View style={onboardingStyles.profileWrap}>
         <ProfilePhotoPicker uris={photoUris} onChange={handlePhotoChange} />
         <View style={onboardingStyles.fieldGroup}>
-          <View style={onboardingStyles.emailVerificationSection}>
-            <Text style={onboardingStyles.emailVerificationLabel}>
-              {t("common.email")}
-            </Text>
-            <Text style={onboardingStyles.emailVerificationAddress}>
-              {session?.user?.email}
-            </Text>
-            <EmailVerificationCard userId={session?.user?.id} />
-          </View>
           <View style={onboardingStyles.inputRow}>
             <Icon
               name="person-outline"
@@ -596,6 +621,10 @@ const VibesOnboardingFlow = () => {
               onChangeText={(value) => {
                 setCity(value);
                 setLocationLabel("");
+                setLatitude(undefined);
+                setLongitude(undefined);
+                setCitySuggestions([]);
+                locationSearchVersion.current += 1;
               }}
               autoCapitalize="words"
               returnKeyType="next"
@@ -615,6 +644,10 @@ const VibesOnboardingFlow = () => {
               onChangeText={(value) => {
                 setCountry(value);
                 setLocationLabel("");
+                setLatitude(undefined);
+                setLongitude(undefined);
+                setCitySuggestions([]);
+                locationSearchVersion.current += 1;
               }}
               autoCapitalize="words"
               returnKeyType="done"
@@ -624,6 +657,30 @@ const VibesOnboardingFlow = () => {
             />
           </View>
         </View>
+        <TouchableOpacity
+          accessibilityRole="button"
+          disabled={locationLoading || !city.trim()}
+          onPress={() => void searchCity()}
+          style={onboardingStyles.locationButton}
+        >
+          <Icon name="search" size={20} color={ONBOARDING_COLORS.text} />
+          <Text style={onboardingStyles.locationButtonText}>
+            {locationLoading ? "Buscando…" : "Buscar ciudad y país"}
+          </Text>
+        </TouchableOpacity>
+        {citySuggestions.map((suggestion, index) => (
+          <TouchableOpacity key={`${suggestion.latitude}-${suggestion.longitude}-${index}`}
+            accessibilityRole="button" style={onboardingStyles.inputRow}
+            onPress={() => {
+              setCity(suggestion.city); setCountry(suggestion.country);
+              setLocationLabel(`${suggestion.city}, ${suggestion.country}`);
+              setLatitude(suggestion.latitude); setLongitude(suggestion.longitude);
+              setCitySuggestions([]);
+            }}>
+            <Icon name="location-outline" size={20} color={ONBOARDING_COLORS.mustard} />
+            <Text style={onboardingStyles.input}>{suggestion.city}, {suggestion.country}</Text>
+          </TouchableOpacity>
+        ))}
         <TouchableOpacity
           accessibilityRole="button"
           activeOpacity={0.84}
@@ -683,6 +740,7 @@ const VibesOnboardingFlow = () => {
     if (questionGroup >= 0)
       return (
         <ProfileQuestionsForm
+          onInputFocus={scrollInputIntoView}
           group={questionGroup}
           value={answers}
           onChange={setAnswers}

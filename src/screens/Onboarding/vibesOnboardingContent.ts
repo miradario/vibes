@@ -68,7 +68,7 @@ export const ENERGY_OPTIONS: OnboardingOption[] = [
   },
   { id: "curious", label: "Curioso", icon: "search-outline", tone: "mustard" },
   { id: "social", label: "Social", icon: "people-outline", tone: "coral" },
-  { id: "healing", label: "Sanando", icon: "leaf-outline", tone: "lavender" },
+  { id: "healing", label: "Óptimo", icon: "leaf-outline", tone: "lavender" },
 ];
 
 export const AGE_RANGES = ["18-24", "25-34", "35-44", "45-54", "55+"] as const;

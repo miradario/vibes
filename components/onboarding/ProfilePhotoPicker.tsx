@@ -60,9 +60,8 @@ const pickFromCamera = async (t: (key: string) => string) => {
 
   const result = await ImagePicker.launchCameraAsync({
     mediaTypes: IMAGE_MEDIA_TYPE,
-    cameraType: CameraType.front,
-    allowsEditing: true,
-    aspect: [1, 1],
+    cameraType: CameraType.back,
+    allowsEditing: false,
     quality: 0.82,
   });
 
@@ -89,8 +88,20 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
           ? await pickFromCamera(t)
           : await pickFromGallery(t, remaining);
       const added = typeof selected === "string" ? [selected] : selected ?? [];
-      if (added.length)
-        onChange(Array.from(new Set([...uris, ...added])).slice(0, 6));
+      if (added.length) {
+        const nextPhotos = Array.from(new Set([...uris, ...added])).slice(0, 6);
+        onChange(nextPhotos);
+        if (nextPhotos.length < 6) {
+          Alert.alert(
+            english ? "Photo added" : "Foto agregada",
+            english ? "Would you like to add another photo?" : "¿Querés agregar otra foto?",
+            [
+              { text: english ? "Continue" : "Continuar", style: "cancel" },
+              { text: english ? "Add another photo" : "Agregar otra foto", onPress: () => setModalVisible(true) },
+            ]
+          );
+        }
+      }
     } catch {
       Alert.alert(
         t("common.error"),

@@ -1404,6 +1404,43 @@ export const useChallengeParticipantsQuery = (
   });
 };
 
+export const useUpdateChallengeMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation<EventFeedItem, unknown, CreateChallengeInput & { id: string }>({
+    mutationFn: async (input) => {
+      const { data: auth, error: authError } = await supabase.auth.getUser();
+      if (authError || !auth.user || auth.user.id !== input.createdBy) {
+        throw new Error("Solo el creador puede editar este desafío.");
+      }
+      const { data: existing, error: readError } = await supabase.from("challenges")
+        .select("*").eq("id", input.id).eq("created_by", auth.user.id).single();
+      if (readError || !existing) throw new Error("No tenés permiso para editar este desafío.");
+      assertAcceptableContent([input.title, input.subtitle, input.description]);
+      const original = mapChallengeRow(existing);
+      const imageUrl = input.imageUri
+        ? await maybeUploadEventImage(input.imageUri, `${auth.user.id}/challenges`)
+        : existing.image_url;
+      const { data, error } = await supabase.from("challenges").update({
+        title: input.title.trim(), subtitle: input.subtitle.trim(),
+        description: encodeChallengeDescriptionWithPreset(
+          input.description ?? null,
+          input.imageUri ? null : original.imagePresetId,
+          original.startsAt ?? null
+        ),
+        visibility: input.visibility ?? original.visibility,
+        image_url: imageUrl,
+      }).eq("id", input.id).eq("created_by", auth.user.id).select("*").single();
+      if (error) throw error;
+      return mapChallengeRow(data);
+    },
+    onSuccess: (data, input) => {
+      queryClient.setQueryData(["challenge_deep_link", input.id], data);
+      queryClient.invalidateQueries({ queryKey: challengesKeys.all });
+      queryClient.invalidateQueries({ queryKey: myEventGroupsKeys.all(input.createdBy) });
+    },
+  });
+};
+
 export const useCreateChallengeMutation = () => {
   const queryClient = useQueryClient();
 

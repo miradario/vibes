@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import * as ImagePicker from "expo-image-picker";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -34,7 +34,7 @@ import AppHeader from "../components/AppHeader";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
-import { useCreateChallengeMutation } from "../src/queries/events.queries";
+import { useCreateChallengeMutation, useUpdateChallengeMutation, type EventFeedItem } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import type { ChallengeVisibility } from "../src/queries/events.queries";
 
@@ -77,20 +77,23 @@ const formatChallengeDate = (value: Date) =>
 
 const CreateChallenge = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
+  const editing = route.params?.event as EventFeedItem | undefined;
   const insets = useSafeAreaInsets();
   const { data: session } = useAuthSession();
   const { data: profile } = useProfileQuery(session?.user?.id);
   const createChallengeMutation = useCreateChallengeMutation();
-  const [title, setTitle] = useState("");
-  const [subtitle, setSubtitle] = useState("");
-  const [days, setDays] = useState("");
-  const [visibility, setVisibility] = useState<ChallengeVisibility>("public");
+  const updateChallengeMutation = useUpdateChallengeMutation();
+  const [title, setTitle] = useState(editing?.title ?? "");
+  const [subtitle, setSubtitle] = useState(editing?.description ?? editing?.subtitle ?? "");
+  const [days, setDays] = useState(editing?.durationDays ? String(editing.durationDays) : "");
+  const [visibility, setVisibility] = useState<ChallengeVisibility>(editing?.visibility ?? "public");
   const [challengeStartDate, setChallengeStartDate] = useState<Date | null>(
-    null
+    editing?.startsAt ? new Date(editing.startsAt) : null
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [challengeImageUri, setChallengeImageUri] = useState<string | null>(
-    null
+    editing?.imageUrl && /^https?:\/\//i.test(editing.imageUrl) ? editing.imageUrl : null
   );
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const titleInputRef = useRef<TextInput>(null);
@@ -100,8 +103,8 @@ const CreateChallenge = () => {
   const isFormReady =
     title.trim().length > 0 &&
     subtitle.trim().length > 0 &&
-    Boolean(challengeImageUri) &&
-    Boolean(challengeStartDate) &&
+    Boolean(challengeImageUri || editing?.image) &&
+    Boolean(challengeStartDate || editing) &&
     Number.isFinite(parsedDays) &&
     parsedDays > 0;
 
@@ -147,6 +150,7 @@ const CreateChallenge = () => {
 
     try {
       const result = await ImagePicker.launchCameraAsync({
+        cameraType: ImagePicker.CameraType.back,
         mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
         aspect: [16, 9],
@@ -195,8 +199,8 @@ const CreateChallenge = () => {
 
     if (!title.trim()) missing.push("título");
     if (!subtitle.trim()) missing.push("descripción corta");
-    if (!challengeImageUri) missing.push("foto de portada");
-    if (!challengeStartDate) missing.push("fecha de comienzo");
+    if (!challengeImageUri && !editing?.image) missing.push("foto de portada");
+    if (!challengeStartDate && !editing) missing.push("fecha de comienzo");
 
     if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
       missing.push("duración en días");
@@ -222,7 +226,7 @@ const CreateChallenge = () => {
       session.user.email?.split("@")[0] ||
       null;
     try {
-      await createChallengeMutation.mutateAsync({
+      const input = {
         createdBy: session.user.id,
         title: title.trim(),
         subtitle: subtitle.trim() || "Desafío creado por la comunidad",
@@ -234,7 +238,13 @@ const CreateChallenge = () => {
         hostName,
         hostImage: null,
         visibility,
-      });
+      };
+      if (editing) {
+        await updateChallengeMutation.mutateAsync({ ...input, id: editing.id });
+        navigation.goBack();
+        return;
+      }
+      await createChallengeMutation.mutateAsync(input);
 
       navigation.navigate(
         "Tab" as never,
@@ -272,7 +282,7 @@ const CreateChallenge = () => {
         keyboardVerticalOffset={Math.max(insets.top - 8, 0)}
       >
         <AppHeader
-          title="Crear desafío"
+          title={editing ? "Editar desafío" : "Crear desafío"}
           showBack
           onBack={() => navigation.goBack()}
           style={localStyles.fixedHeader}
@@ -311,10 +321,10 @@ const CreateChallenge = () => {
               activeOpacity={0.88}
               onPress={() => setPhotoModalVisible(true)}
             >
-              {challengeImageUri ? (
+              {challengeImageUri || editing?.image ? (
                 <>
                   <Image
-                    source={{ uri: challengeImageUri }}
+                    source={challengeImageUri ? { uri: challengeImageUri } : typeof editing?.image === "string" ? { uri: editing.image } : editing?.image}
                     style={localStyles.coverImage}
                   />
                   <View style={localStyles.coverScrim} />
@@ -344,10 +354,12 @@ const CreateChallenge = () => {
               )}
             </TouchableOpacity>
 
+            {editing ? <Text style={localStyles.uploadImageHint}>La fecha y la duración se conservan para mantener el progreso de los participantes.</Text> : null}
             <Text style={localStyles.label}>Fecha de comienzo</Text>
             <TouchableOpacity
               style={localStyles.dateButton}
               onPress={openDatePicker}
+              disabled={Boolean(editing)}
             >
               <Icon name="calendar" size={18} color={DARK_GRAY} />
               <Text style={localStyles.dateButtonText}>
@@ -390,6 +402,7 @@ const CreateChallenge = () => {
             <Text style={localStyles.label}>Duración en días</Text>
             <TextInput
               ref={daysInputRef}
+                editable={!editing}
               style={localStyles.input}
               placeholder="Ej: 21"
               placeholderTextColor={TEXT_SECONDARY}
@@ -456,16 +469,16 @@ const CreateChallenge = () => {
           <TouchableOpacity
             style={[
               localStyles.createButton,
-              (!isFormReady || createChallengeMutation.isPending) &&
+              (!isFormReady || (createChallengeMutation.isPending || updateChallengeMutation.isPending)) &&
                 localStyles.createButtonDisabled,
             ]}
             onPress={handleCreate}
-            disabled={!isFormReady || createChallengeMutation.isPending}
+            disabled={!isFormReady || (createChallengeMutation.isPending || updateChallengeMutation.isPending)}
           >
             <Text style={localStyles.createButtonText}>
-              {createChallengeMutation.isPending
-                ? "Creando..."
-                : "Crear desafío"}
+              {(createChallengeMutation.isPending || updateChallengeMutation.isPending)
+                ? "Guardando..."
+                : editing ? "Guardar cambios" : "Crear desafío"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -520,7 +533,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 28,
     lineHeight: 32,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   fixedHeader: {
     paddingHorizontal: 0,
@@ -545,7 +558,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 16,
     lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
     marginBottom: 8,
     marginTop: 12,
   },
@@ -717,7 +730,7 @@ const localStyles = StyleSheet.create({
   createButtonText: {
     color: vibesTheme.colors.primaryText,
     fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   fixedFooter: {
     position: "absolute",

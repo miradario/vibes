@@ -43,7 +43,7 @@ export const QUESTION_GROUPS = [
       {
         key: "favoritePlans",
         label: "Planes favoritos",
-        options: ["Café", "Salir a comer", "Caminar", "Fiestas", "Aire libre"],
+        options: ["Café", "Salir a comer", "Salir a tomar algo", "Caminar", "Fiestas", "Aire libre"],
       },
       {
         key: "activity",
@@ -175,7 +175,7 @@ export const MOODS = [
   "Reflexivo",
   "Curioso",
   "Social",
-  "Sanando",
+  "Óptimo",
   "Triste",
   "Ansioso",
   "Cansado",

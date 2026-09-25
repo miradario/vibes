@@ -452,7 +452,7 @@ const s = StyleSheet.create({
     lineHeight: 21,
     color: vibesTheme.colors.secondaryText,
     letterSpacing: 1,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   link: {
     minHeight: 34,

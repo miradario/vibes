@@ -481,6 +481,7 @@ export const DiscoverContent = forwardRef<
   const [hasHydratedStoredFilters, setHasHydratedStoredFilters] =
     useState(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
+  const [profileOpenKey, setProfileOpenKey] = useState(0);
   const [hiddenProfileIds, setHiddenProfileIds] = useState<Set<string>>(
     new Set()
   );
@@ -1324,6 +1325,7 @@ export const DiscoverContent = forwardRef<
         </AnimatedSheetModal>
 
         <UserProfileSheet
+          key={profileOpenKey}
           visible={showProfileSheet}
           enableSwipe={!viewingHistory}
           actionPending={swipeMutation.isPending}
@@ -1433,11 +1435,11 @@ export const DiscoverContent = forwardRef<
                 key={mode}
                 accessibilityRole="button"
                 accessibilityState={{ selected: historyMode === mode }}
-                style={[localStyles.historyModeButton, historyMode === mode && localStyles.historyModeButtonActive]}
+                style={[localStyles.historyModeButton, { flexGrow: label.length }, historyMode === mode && localStyles.historyModeButtonActive]}
                 onPress={() => setHistoryMode(mode)}
               >
                 <Icon name={icon} size={16} color={vibesTheme.colors.primaryText} />
-                <Text style={localStyles.historyModeText}>{label}</Text>
+                <Text style={localStyles.historyModeText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1501,11 +1503,13 @@ export const DiscoverContent = forwardRef<
               <DiscoverOrbitCanvas
                 users={visibleProfiles}
                 onUserPress={(profile) => {
+                  setProfileOpenKey((key) => key + 1);
                   setSelectedProfile(profile);
                   setViewingHistory(showHistory);
                   setShowProfileSheet(true);
                 }}
                 onDismissedUserPress={(profile) => {
+                  setProfileOpenKey((key) => key + 1);
                   setSelectedProfile(profile);
                   setViewingHistory(showHistory);
                   setShowProfileSheet(true);
@@ -1904,7 +1908,7 @@ const localStyles = StyleSheet.create({
   historyModeButton: {
     flex: 1,
     minHeight: 48,
-    paddingHorizontal: 12,
+    paddingHorizontal: 6,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(110, 110, 110, 0.30)",
@@ -1912,13 +1916,14 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: 4,
   },
   historyModeButtonActive: {
     backgroundColor: "rgba(228, 183, 110, 0.43)",
     borderColor: vibesTheme.colors.accentMustard,
   },
   historyModeText: {
+    flexShrink: 1,
     color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,

@@ -29,14 +29,14 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
     () => (userId ? getDismissStorageKey(userId) : null),
     [userId]
   );
-  const { data: profile } = useProfileQuery(userId);
-  const { data: preferences } = useUserPreferencesQuery(userId);
+  const { data: profile, isSuccess: profileReady } = useProfileQuery(userId);
+  const { data: preferences, isSuccess: preferencesReady } = useUserPreferencesQuery(userId);
   const { data, isSuccess } = useQuery({
     queryKey: ["profileAnswers", userId],
     queryFn: () => readProfileAnswers(userId!),
     enabled: !!userId,
   });
-  const { data: emailOwner } = useEmailOwnershipQuery(userId);
+  const { data: emailOwner, isSuccess: emailReady } = useEmailOwnershipQuery(userId);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +85,7 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
   if (
     !dismissPreferenceLoaded ||
     dismissed ||
-    !isSuccess ||
+    !isSuccess || !profileReady || !preferencesReady || !emailReady ||
     !hasMissingProfileAnswers(data)
   )
     return null;
@@ -95,6 +95,7 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
     isEmailOwnershipVerified(emailOwner),
     data
   );
+  if (completion.percent === 100) return null;
   return (
     <TouchableOpacity
       accessibilityRole="button"

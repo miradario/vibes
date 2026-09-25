@@ -6,7 +6,7 @@ const filled = (value: unknown): boolean =>
     ? value.some(filled)
     : typeof value === "string" && value.trim().length > 0;
 
-const PHOTO_SLOTS = 4;
+const PHOTO_SLOTS = 1;
 const PHOTO_WEIGHT = 40;
 
 /** Photos contribute 40%; all other onboarding fields share the remaining 60%. */

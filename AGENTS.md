@@ -11,3 +11,5 @@
 - Al crear o modificar estilos, reemplazar los colores fuera de la paleta en los elementos afectados.
 - Ejecutar `npm run colors:check` después de modificar colores, estilos o ilustraciones para verificar la paleta.
 - Priorizar la legibilidad sobre la cercanía numérica entre colores: usar texto oscuro sobre fondos mostaza, azul o coral; reservar el texto claro para fondos oscuros. No convertir bordes, iconos o estados seleccionados en el mismo color que su fondo. Para superficies suaves, usar los acentos de la paleta con opacidad.
+
+- Excepción solicitada para el visor de perfiles (`components/UserProfileSheet.tsx`): fondo negro `#000000` y degradé negro con opacidad sobre la foto full-screen. No extender esta excepción a otras pantallas.

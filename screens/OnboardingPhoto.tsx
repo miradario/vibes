@@ -84,6 +84,7 @@ const pickFromCamera = async () => {
 
   try {
     const result = await ImagePicker.launchCameraAsync({
+        cameraType: ImagePicker.CameraType.back,
       mediaTypes: IMAGE_MEDIA_TYPE,
       allowsEditing: true,
       aspect: [1, 1],

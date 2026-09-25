@@ -359,6 +359,7 @@ const CreateEvent = () => {
 
     try {
       const result = await ImagePicker.launchCameraAsync({
+        cameraType: ImagePicker.CameraType.back,
         mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
         aspect: [16, 9],
@@ -1153,7 +1154,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 28,
     lineHeight: 32,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   content: {
     paddingBottom: 128,
@@ -1293,8 +1294,8 @@ const localStyles = StyleSheet.create({
     opacity: 0.72,
   },
   createButtonText: {
+    fontFamily: vibesTheme.fonts.semibold,
     color: vibesTheme.colors.primaryText,
-    fontWeight: "400",
     fontSize: 15,
   },
   fixedFooter: {

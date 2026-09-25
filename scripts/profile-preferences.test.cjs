@@ -19,9 +19,9 @@ test('completion ignores whitespace, empty photos and stale private JSON', () =>
   assert.equal(result.percent, 0);
   assert.equal(result.nextScreen, 'EditProfile');
 });
-test('all onboarding fields reach 100% with four photos and no conditional practice details', () => {
+test('all onboarding fields reach 100% with one photo and no conditional practice details', () => {
   const answers = Object.fromEntries(q.QUESTION_GROUPS.flatMap(g => g.fields).map(f => [f.key, 'respuesta']));
-  const profile = { displayName: 'Nombre Completo', photos: Array.from({ length: 4 }, (_, i) => ({ url: `photo-${i}.jpg` })), locationLabel: 'Rosario', birthDate: '1990-01-01' };
+  const profile = { displayName: 'Nombre Completo', photos: [{ url: "photo-1.jpg" }], locationLabel: 'Rosario', birthDate: '1990-01-01' };
   const prefs = { ...answers, profileAnswers: answers, aboutMe: 'Hola', openTo: ['Amistad'], spiritualPath: ['Yoga'] };
   assert.equal(getProfileCompletion(profile, prefs, true, answers).percent, 100);
   prefs.gender = '';
@@ -55,7 +55,7 @@ test('saving optional answers preserves independent onboarding motivations', asy
 
 test('every onboarding answer contributes once, including private availability', () => {
   const empty = getProfileCompletion({}, {}, false, {});
-  assert.equal(empty.total, 11 + q.QUESTION_GROUPS.flatMap(g => g.fields).length);
+  assert.equal(empty.total, 8 + q.QUESTION_GROUPS.flatMap(g => g.fields).length);
   for (const field of q.QUESTION_GROUPS.flatMap(g => g.fields)) {
     const result = getProfileCompletion({}, {}, false, { [field.key]: 'respuesta' });
     assert.equal(result.completed, 1, field.key);
@@ -64,16 +64,16 @@ test('every onboarding answer contributes once, including private availability',
   }
 });
 
-test('photos carry 40 percent and each unique occupied slot increases completion', () => {
+test('one photo satisfies onboarding; additional photos do not block completion', () => {
   const answers = Object.fromEntries(q.QUESTION_GROUPS.flatMap(g => g.fields).map(f => [f.key, 'respuesta']));
   const profile = { displayName: 'Nombre', locationLabel: 'Rosario', birthDate: '1990-01-01' };
   const prefs = { ...answers, aboutMe: 'Hola', openTo: ['Amistad'], spiritualPath: ['Yoga'] };
-  const percentages = [60, 70, 80, 90, 100];
+  const percentages = [60, 100, 100, 100, 100];
   for (let count = 0; count <= 4; count++) {
     const photos = Array.from({ length: count }, (_, i) => ({ url: `photo-${i}.jpg` }));
     assert.equal(getProfileCompletion({ ...profile, photos }, prefs, true, answers).percent, percentages[count]);
   }
-  assert.equal(getProfileCompletion({ photos: ['a.jpg', 'a.jpg', '  ', { url: '' }] }, {}, false).percent, 10);
+  assert.equal(getProfileCompletion({ photos: ['a.jpg', 'a.jpg', '  ', { url: '' }] }, {}, false).percent, 40);
   assert.equal(getProfileCompletion({ photos: Array.from({ length: 9 }, (_, i) => `${i}.jpg`) }, {}, false).percent, 40);
-  assert.equal(getProfileCompletion({ ...profile, photos: ['a.jpg'] }, prefs, true, answers).nextScreen, 'EditProfile');
+  assert.equal(getProfileCompletion({ ...profile, photos: ['a.jpg'] }, prefs, true, answers).nextLabel, undefined);
 });

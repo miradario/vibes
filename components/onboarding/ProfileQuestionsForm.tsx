@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, TextInput as NativeTextInput } from "react-native";
 import { Text, TextInput } from "../Typography";
 import SelectablePill from "./SelectablePill";
 import {
@@ -9,6 +9,7 @@ import {
 import { vibesTheme } from "../../src/theme/vibesTheme";
 
 type Props = {
+  onInputFocus?: (input: NativeTextInput | null) => void;
   group: number;
   showHeader?: boolean;
   value: ProfileAnswers;
@@ -27,10 +28,12 @@ export function ProfileQuestionsHeader({ group }: { group: number }) {
 
 export default function ProfileQuestionsForm({
   group,
+  onInputFocus,
   value,
   onChange,
   showHeader = true,
 }: Props) {
+  const inputs = React.useRef<Record<string, NativeTextInput | null>>({});
   return (
     <View>
       {showHeader && <ProfileQuestionsHeader group={group} />}
@@ -69,6 +72,8 @@ export default function ProfileQuestionsForm({
             </View>
           ) : (
             <TextInput
+              ref={(input) => { inputs.current[field.key] = input; }}
+              onFocus={() => onInputFocus?.(inputs.current[field.key])}
               style={styles.input}
               value={String(value[field.key] ?? "")}
               onChangeText={(text) => onChange({ ...value, [field.key]: text })}
@@ -86,15 +91,15 @@ export default function ProfileQuestionsForm({
 }
 const styles = StyleSheet.create({
   title: {
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 32,
     lineHeight: 40,
     color: vibesTheme.colors.primaryText,
     marginVertical: 16,
   },
   hint: { fontSize: 16, lineHeight: 23, color: vibesTheme.colors.secondaryText, marginBottom: 16 },
-  field: { marginBottom: 22 },
-  label: { fontSize: 17, color: vibesTheme.colors.primaryText, marginBottom: 12 },
+  field: { marginBottom: 30 },
+  label: { fontFamily: vibesTheme.fonts.semibold, fontSize: 21, lineHeight: 28, color: vibesTheme.colors.primaryText, marginBottom: 12 },
   options: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   input: {
     borderWidth: 1,

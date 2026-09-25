@@ -583,7 +583,6 @@ export const MessagesContent = ({
   ) => {
     const imgSource =
       typeof item.image === "string" ? { uri: item.image } : item.image;
-    const isChallenge = item.eventType === "challenge";
 
     return (
       <TouchableOpacity
@@ -601,25 +600,6 @@ export const MessagesContent = ({
             <Text style={localStyles.rowTitle} numberOfLines={1}>
               {item.title}
             </Text>
-            <View
-              style={[
-                localStyles.typeBadge,
-                isChallenge
-                  ? localStyles.challengeBadge
-                  : localStyles.eventBadge,
-              ]}
-            >
-              <Text
-                style={[
-                  localStyles.typeBadgeText,
-                  isChallenge
-                    ? localStyles.challengeBadgeText
-                    : localStyles.eventBadgeText,
-                ]}
-              >
-                {isChallenge ? "Desafío" : "Evento"}
-              </Text>
-            </View>
           </View>
           <Text style={localStyles.lastMessage} numberOfLines={2}>
             {item.lastMessage ?? "No hay mensajes aún"}
@@ -1214,7 +1194,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 16,
     letterSpacing: 0,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.semibold,
     flexShrink: 1,
     minWidth: 0,
   },
@@ -1286,29 +1266,6 @@ const localStyles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
-  },
-  typeBadge: {
-    borderRadius: 9,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    marginLeft: 7,
-  },
-  challengeBadge: {
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
-  },
-  eventBadge: {
-    backgroundColor: "rgba(127, 152, 183, 0.13)",
-  },
-  typeBadgeText: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  challengeBadgeText: {
-    color: vibesTheme.colors.accentMustard,
-  },
-  eventBadgeText: {
-    color: vibesTheme.colors.primaryText,
   },
   lastMessage: {
     marginTop: 3,

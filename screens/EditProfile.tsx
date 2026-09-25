@@ -844,7 +844,7 @@ const EditProfile = () => {
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
-        cameraType: (ImagePicker as any).CameraType?.front ?? "front",
+        cameraType: (ImagePicker as any).CameraType?.back ?? "back",
         quality: 0.8,
       });
     } catch (error) {

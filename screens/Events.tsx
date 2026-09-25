@@ -381,8 +381,8 @@ const Events = () => {
               navigation.navigate("CreateEvent" as never);
             }}
           >
-            <Icon name="add" size={21} color={vibesTheme.colors.accentMustard} />
-            <Text style={localStyles.createButtonText}>
+            <Icon name="add" size={20} color={vibesTheme.colors.accentMustard} style={localStyles.createIcon} />
+            <Text style={localStyles.createButtonText} numberOfLines={1}>
               {section === "challenge" ? "Crear desafío" : "Crear evento"}
             </Text>
           </TouchableOpacity>
@@ -417,6 +417,14 @@ const Events = () => {
               : null,
           ]}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={section === "event" && !listIsLoading && !error ? (
+            <View style={localStyles.upcomingHeader}>
+              <Text style={localStyles.upcomingTitle}>Próximos eventos</Text>
+              <Text style={localStyles.eventCount}>
+                {visibleItems.length} {visibleItems.length === 1 ? "evento" : "eventos"}
+              </Text>
+            </View>
+          ) : null}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
               {listIsLoading ? <VibesLoader size={72} /> : null}
@@ -551,6 +559,45 @@ const Events = () => {
 
             const item = listItem.item;
             const participantCount = parseParticipantCount(item.attendees);
+            if (item.type === "event") {
+              const startsAt = item.startsAt ? new Date(item.startsAt) : null;
+              const dateLabel = startsAt && !Number.isNaN(startsAt.getTime())
+                ? `${startsAt.toLocaleDateString("es-AR", { day: "numeric", month: "short" }).replace(/\./g, "")} · ${startsAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })}`
+                : item.date;
+              const count = item.participantCount ?? participantCount;
+              const participantsLabel = item.capacity && item.capacity > 0
+                ? `${count} de ${item.capacity} participantes`
+                : `${count} ${count === 1 ? "participante" : "participantes"}`;
+              return (
+                <TouchableOpacity
+                  style={localStyles.eventListRow}
+                  activeOpacity={0.78}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver ${item.title}, ${dateLabel}, ${participantsLabel}`}
+                  onPress={() => navigation.navigate("EventDetail" as never, { event: item } as never)}
+                >
+                  <Image
+                    source={typeof item.image === "string" ? { uri: item.image } : item.image}
+                    style={localStyles.eventThumbnail}
+                  />
+                  <View style={localStyles.eventCopy}>
+                    <Text style={localStyles.eventTitle} numberOfLines={2}>{item.title}</Text>
+                    <View style={localStyles.eventMetadataRow}>
+                      <Icon name="calendar-outline" size={17} color={vibesTheme.colors.secondaryText} />
+                      <Text style={localStyles.eventMetadataText}>{dateLabel}</Text>
+                    </View>
+                    <View style={localStyles.eventMetadataRow}>
+                      <Icon name="people" size={17} color={vibesTheme.colors.secondaryText} />
+                      <Text style={localStyles.eventMetadataText}>{participantsLabel}</Text>
+                    </View>
+                  </View>
+                  <View style={localStyles.eventViewButton}>
+                    <Text style={localStyles.eventViewText}>Ver</Text>
+                    <Icon name="chevron-forward" size={17} color={vibesTheme.colors.primaryText} />
+                  </View>
+                </TouchableOpacity>
+              );
+            }
             const challengeProgress = getChallengeProgress(item);
             const checkedInTodayCount = Math.max(
               0,
@@ -606,7 +653,7 @@ const Events = () => {
               <View
                 style={[
                   localStyles.feedRowContent,
-                  item.type === "challenge" || item.type === "event"
+                  item.type === "challenge"
                     ? localStyles.feedRowContentChallenge
                     : null,
                 ]}
@@ -624,11 +671,6 @@ const Events = () => {
                       {item.title}
                     </Text>
                   </View>
-                  {item.type !== "challenge" ? (
-                    <Text style={localStyles.feedRowMeta} numberOfLines={1}>
-                      {item.date} {"  •  "} {item.attendees}
-                    </Text>
-                  ) : null}
                   {item.type === "challenge" && checkedInTodayCount > 0 ? (
                     <View style={localStyles.communityTodayRow}>
                       <Icon name="sparkles-outline" size={14} color={vibesTheme.colors.accentMustard} />
@@ -640,26 +682,6 @@ const Events = () => {
                     </View>
                   ) : null}
                   {item.type === "challenge" ? (
-                    <View style={localStyles.feedRowBottom}>
-                      <View style={localStyles.feedParticipantsWrap}>
-                        <ParticipantStack
-                          count={participantCount}
-                          hostImage={item.hostImage}
-                          avatarUrls={item.participantPreviewImages}
-                        />
-                        <View style={localStyles.feedParticipantsCountWrap}>
-                          <Text style={localStyles.feedParticipantsCount}>
-                            {participantCount}
-                          </Text>
-                          <Icon name="people" size={15} color={vibesTheme.colors.primaryText} />
-                        </View>
-                      </View>
-                      <View style={localStyles.feedRowArrow}>
-                        <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
-                      </View>
-                    </View>
-                  ) : null}
-                  {item.type === "event" ? (
                     <View style={localStyles.feedRowBottom}>
                       <View style={localStyles.feedParticipantsWrap}>
                         <ParticipantStack
@@ -693,6 +715,41 @@ const Events = () => {
 export default Events;
 
 const localStyles = StyleSheet.create({
+  upcomingHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    gap: 12, paddingVertical: 12,
+  },
+  upcomingTitle: {
+    flex: 1, fontSize: 21, lineHeight: 27,
+    fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.primaryText,
+  },
+  eventCount: { fontSize: 13, color: vibesTheme.colors.secondaryText },
+  eventListRow: {
+    width: "100%", flexDirection: "row", alignItems: "center", gap: 12,
+    paddingVertical: 18, borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+  },
+  eventThumbnail: {
+    width: 76, height: 88, borderRadius: 12,
+    backgroundColor: "rgba(127, 152, 183, 0.13)",
+  },
+  eventCopy: { flex: 1, minWidth: 0, gap: 6 },
+  eventTitle: {
+    fontSize: 18, lineHeight: 23, fontFamily: vibesTheme.fonts.semibold,
+    color: vibesTheme.colors.primaryText,
+  },
+  eventMetadataRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  eventMetadataText: {
+    flex: 1, fontSize: 13, lineHeight: 18, color: vibesTheme.colors.secondaryText,
+  },
+  eventViewButton: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2,
+    minHeight: 44, paddingHorizontal: 10, borderRadius: 22,
+    backgroundColor: "rgba(228, 183, 110, 0.20)",
+  },
+  eventViewText: {
+    fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.primaryText,
+  },
   eventsContainer: {
     paddingTop: 68,
   },
@@ -707,9 +764,9 @@ const localStyles = StyleSheet.create({
   screenTitle: {
     flex: 1,
     color: TEXT_PRIMARY,
-    fontFamily: vibesTheme.fonts.thin,
-    fontSize: 32,
-    lineHeight: 38,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 26,
+    lineHeight: 32,
     marginBottom: 0,
     textAlign: "left",
   },
@@ -736,11 +793,15 @@ const localStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentMustard,
   },
+  createIcon: { lineHeight: 20, includeFontPadding: false },
   createButtonText: {
     flexShrink: 1,
+    lineHeight: 20,
+    includeFontPadding: false,
+    textAlignVertical: "center",
     fontSize: 14,
-    color: vibesTheme.colors.accentMustard,
-    fontFamily: vibesTheme.fonts.medium,
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   searchInput: {
     fontSize: 18,
@@ -756,7 +817,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 25,
     lineHeight: 29,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   joinedChallengesTitle: {
     color: vibesTheme.colors.primaryText,
@@ -977,7 +1038,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   finishedSectionSubtitle: {
     marginTop: 3,

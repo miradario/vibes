@@ -30,7 +30,8 @@ def check_text(path):
             value = "".join(c * 2 for c in value)
         if len(value) == 8:
             value = value[2:] if path.suffix == ".xml" else value[:6]
-        if value not in PALETTE:
+        photo_viewer_black = location == "components/UserProfileSheet.tsx" and value == "000000"
+        if value not in PALETTE and not photo_viewer_black:
             errors.append(f"{location}:{text.count(chr(10), 0, match.start()) + 1}: {match[0]}")
     for match in re.finditer(r"\b(rgba?|hsla?)\(([^()]*)\)", text):
         if match[1].startswith("hsl"):

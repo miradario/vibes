@@ -76,7 +76,7 @@ export default function DailyMoodCard({
       dismissedToday = dismissed === day;
       if (loadError) throw loadError;
       const today = data?.mood_day === day;
-      const selected = today && Array.isArray(data.moods) ? data.moods : [];
+      const selected = today && Array.isArray(data.moods) ? data.moods.map((mood: string) => mood === "Sanando" ? "Óptimo" : mood) : [];
       setDraft(selected);
       setDue(!today && dismissed !== day);
     } catch {

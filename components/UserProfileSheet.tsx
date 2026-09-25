@@ -17,6 +17,7 @@ import {
   PanResponder,
   Platform,
   ScrollView,
+  RefreshControl,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -27,11 +28,13 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowRightToLine, Link, X } from "lucide-react-native";
+import { Image as ExpoImage } from "expo-image";
+import { ArrowLeftToLine, ArrowRightToLine, Link, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
 import ProfileMediaImage from "./ProfileMediaImage";
+import VibesLoader from "./VibesLoader";
 import type { UserProfileCardData } from "./UserProfileCard";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useSharedActivitiesQuery } from "../src/queries/sharedActivities.queries";
@@ -57,6 +60,10 @@ type Props = {
   closeIconName?: string;
   showPhotoCounter?: boolean;
 };
+
+// Explicit full-screen photo treatment: black is scoped to this viewer.
+const PROFILE_PHOTO_BACKGROUND = "#000000";
+const PROFILE_PHOTO_GRADIENT = ["#00000000", "#00000080", "#000000FF"] as const;
 
 const DetailSection = ({
   label,
@@ -261,16 +268,21 @@ const UserProfileSheet = ({
     profile?.id
   );
   const galleryRef = useRef<FlatList<ImageSourcePropType>>(null);
+  const detailsGalleryRef = useRef<FlatList<ImageSourcePropType>>(null);
   const panelDragY = useRef(new Animated.Value(0)).current;
   const compactPhotoHeight = Math.max(insets.top + 140, height * 0.38);
   const photoHeight = useRef(new Animated.Value(height)).current;
   const [detailsVisible, setDetailsVisible] = useState(false);
+  const [detailsActionsHeight, setDetailsActionsHeight] = useState(140);
   const [burst, setBurst] = useState(0);
-  const swipeX = useRef(new Animated.Value(0)).current;
+  // Each card owns its native transform. Never recenter the outgoing card
+  // while React is replacing its photo with the next profile.
+  const swipeX = useMemo(() => new Animated.Value(0), [profile?.id]);
   const swipeUp = useRef(new Animated.Value(0)).current;
   const swipingRef = useRef(false);
   const [swipeNextProfile, setSwipeNextProfile] = useState<UserProfileCardData | null>(null);
   const [swipeAnimating, setSwipeAnimating] = useState(false);
+  const [photoReadyId, setPhotoReadyId] = useState<string | undefined>(undefined);
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => {
     const animation = Animated.timing(photoHeight, {
@@ -294,18 +306,21 @@ const UserProfileSheet = ({
     return () => {
       active = false;
       sub.remove();
-      swipeX.stopAnimation();
     };
-  }, [swipeX]);
+  }, []);
+  useLayoutEffect(() => () => swipeX.stopAnimation(), [swipeX]);
   useLayoutEffect(() => {
+    // Keep the outgoing card offscreen while the modal closes.
+    if (!visible) return;
     swipingRef.current = false;
     setSwipeAnimating(false);
     swipeX.stopAnimation();
     swipeX.setValue(0);
     swipeUp.setValue(0);
-    setSwipeNextProfile(null);
+    setSwipeNextProfile((previous) => visible && previous?.id === profile?.id ? previous : null);
   }, [profile?.id, visible, swipeX, swipeUp]);
   const resetSwipe = useCallback(() => {
+    if (swipingRef.current) return;
     swipeUp.setValue(0);
     Animated.timing(swipeX, {
       toValue: 0,
@@ -329,7 +344,6 @@ const UserProfileSheet = ({
       swipingRef.current = true;
       setSwipeNextProfile(nextProfile ?? null);
       setSwipeAnimating(true);
-      setDetailsVisible(false);
       Animated.timing(swipeX, {
         toValue: (direction === "like" ? 1 : -1) * width * 1.3,
         duration: reduceMotion ? 0 : 240,
@@ -377,7 +391,9 @@ const UserProfileSheet = ({
       commitSwipe("like");
     }
   };
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [gallerySelection, setGallerySelection] = useState({ profileId: profile?.id, index: 0 });
+  const activeIndex = gallerySelection.profileId === profile?.id ? gallerySelection.index : 0;
+  const setActiveIndex = (index: number) => setGallerySelection({ profileId: profile?.id, index });
   const swipe = useMemo(
     () =>
       PanResponder.create({
@@ -400,6 +416,7 @@ const UserProfileSheet = ({
             Math.abs(g.dx) > Math.abs(g.dy) * 1.5) ||
             (g.dy < -15 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5)),
         onPanResponderMove: (_, g) => {
+          if (swipingRef.current) return;
           swipeUp.setValue(
             g.dy < 0 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5 ? -g.dy : 0
           );
@@ -407,6 +424,7 @@ const UserProfileSheet = ({
             swipeX.setValue(g.dx);
         },
         onPanResponderRelease: (_, g) => {
+          if (swipingRef.current) return;
           swipeUp.setValue(0);
           const action = getProfileSwipeAction(g.dx, g.dy, width, enableSwipe, Boolean(onNextActionPress));
           if (action === "details") {
@@ -456,6 +474,15 @@ const UserProfileSheet = ({
     activeIndex,
     Math.max(profileImages.length - 1, 0)
   );
+  const upcomingPhotoUrls = JSON.stringify(Array.from(new Set([
+    ...profileImages.slice(Math.max(0, safeActiveIndex - 1), safeActiveIndex + 3),
+    ...normalizeProfileImages(nextProfile ?? null).slice(0, 1),
+  ].flatMap((source) => typeof source === "object" && source && "uri" in source && source.uri ? [source.uri] : []))));
+  useEffect(() => {
+    if (!visible) return;
+    const urls: string[] = JSON.parse(upcomingPhotoUrls);
+    if (urls.length) void ExpoImage.prefetch(urls, { cachePolicy: "memory-disk" }).catch(() => {});
+  }, [visible, upcomingPhotoUrls]);
   const preferences = useMemo(
     () =>
       Array.from(
@@ -483,6 +510,15 @@ const UserProfileSheet = ({
       .map(parseDetailPreferenceGroup)
       .filter((group): group is DetailChipGroup => Boolean(group))
   );
+  const interestGroups = otherPreferenceGroups.filter((group) =>
+    ["intereses", "planes", "mi plan ideal", "podría hablar de", "me gustaría probar"].includes(group.title.toLowerCase())
+  );
+  const lifestyleGroups = otherPreferenceGroups.filter((group) =>
+    ["actividad física", "hábitos", "alcohol", "plan familiar", "estilo de amor"].includes(group.title.toLowerCase())
+  );
+  const specificationGroups = otherPreferenceGroups.filter((group) =>
+    !interestGroups.includes(group) && !lifestyleGroups.includes(group)
+  );
   const habitGroups = mergeDetailChipGroups(
     [
       createDetailChipGroup(
@@ -509,7 +545,7 @@ const UserProfileSheet = ({
     ? `${profile.name}, ${profile.age}`
     : profile?.name ?? "Perfil";
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setActiveIndex(0);
     setDetailsVisible(false);
     panelDragY.setValue(0);
@@ -523,7 +559,7 @@ const UserProfileSheet = ({
   }, [visible]);
 
   useEffect(() => {
-    if (!profileImages.length || safeActiveIndex === 0) return;
+    if (!profileImages.length) return;
     requestAnimationFrame(() =>
       galleryRef.current?.scrollToOffset({
         offset: safeActiveIndex * width,
@@ -533,44 +569,6 @@ const UserProfileSheet = ({
   }, [profileImages.length, safeActiveIndex, width]);
 
   const closeDetails = useCallback(() => setDetailsVisible(false), []);
-
-  const detailsPanResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_event, gesture) =>
-          gesture.dy > 6 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
-        onPanResponderMove: (_event, gesture) => {
-          panelDragY.setValue(Math.max(0, gesture.dy));
-        },
-        onPanResponderRelease: (_event, gesture) => {
-          if (gesture.dy > 90 || gesture.vy > 0.8) {
-            Animated.timing(panelDragY, {
-              toValue: height,
-              duration: 170,
-              useNativeDriver: true,
-            }).start(({ finished }) => {
-              if (finished) closeDetails();
-            });
-            return;
-          }
-          Animated.spring(panelDragY, {
-            toValue: 0,
-            damping: 18,
-            stiffness: 210,
-            mass: 0.8,
-            useNativeDriver: true,
-          }).start();
-        },
-        onPanResponderTerminate: () => {
-          Animated.spring(panelDragY, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        },
-      }),
-    [closeDetails, height, panelDragY]
-  );
-
   const showDetails = () => {
     if (swipingRef.current || actionPending) return;
     swipeX.stopAnimation();
@@ -587,6 +585,7 @@ const UserProfileSheet = ({
       Math.min(nextIndex, profileImages.length - 1)
     );
     setActiveIndex(boundedIndex);
+    detailsGalleryRef.current?.scrollToOffset({ offset: boundedIndex * width, animated: !reduceMotion });
     galleryRef.current?.scrollToOffset({
       offset: boundedIndex * width,
       animated: true,
@@ -612,8 +611,8 @@ const UserProfileSheet = ({
       Boolean(onSecondaryActionPress && secondaryActionLabel) &&
       (!secondaryActionPanelOnly || onPanel);
 
-    return !onPanel && (onContactPress || shouldShowSecondaryAction || onNextActionPress) ? (
-      <View style={localStyles.vibeActions}>
+    return (onContactPress || shouldShowSecondaryAction || onNextActionPress) ? (
+      <View style={[localStyles.vibeActions, onPanel && { marginTop: 0 }]}>
         {onNextActionPress && nextActionLabel ? (
           <TouchableOpacity
             accessibilityRole="button"
@@ -621,12 +620,12 @@ const UserProfileSheet = ({
             disabled={actionPending || swipeAnimating}
             activeOpacity={0.85}
             onPress={onNextActionPress}
-            style={localStyles.vibeAction}
+            style={[localStyles.vibeAction, onPanel && localStyles.floatingProfileAction]}
           >
             <View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon]}>
               <ArrowRightToLine size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
             </View>
-            <Text style={localStyles.vibeActionLabel}>{nextActionLabel}</Text>
+            {!onPanel && <Text style={localStyles.vibeActionLabel}>{nextActionLabel}</Text>}
           </TouchableOpacity>
         ) : null}
         {onContactPress && (
@@ -638,14 +637,14 @@ const UserProfileSheet = ({
             disabled={actionPending || swipeAnimating}
             activeOpacity={0.85}
             onPress={like}
-            style={localStyles.vibeAction}
+            style={[localStyles.vibeAction, onPanel && localStyles.floatingProfileAction]}
           >
             <View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon]}>
               <Link size={48} color={vibesTheme.colors.accentMustard} strokeWidth={2.5} />
             </View>
-            <Text style={localStyles.vibeActionLabel}>
+            {!onPanel && <Text style={localStyles.vibeActionLabel}>
               {actionPending ? "Guardando…" : "Conectar"}
-            </Text>
+            </Text>}
           </TouchableOpacity>
         )}
         {shouldShowSecondaryAction && (
@@ -655,7 +654,7 @@ const UserProfileSheet = ({
             accessibilityLabel={secondaryActionLabel}
             activeOpacity={0.85}
             onPress={() => commitSwipe("pass")}
-            style={localStyles.vibeAction}
+            style={[localStyles.vibeAction, onPanel && localStyles.floatingProfileAction]}
           >
             <View
               style={[
@@ -663,72 +662,12 @@ const UserProfileSheet = ({
                 localStyles.bareActionIcon,
               ]}
             >
-              <ArrowRightToLine size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
+              <ArrowLeftToLine size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
             </View>
-            <Text style={localStyles.vibeActionLabel}>{secondaryActionLabel}</Text>
+            {!onPanel && <Text style={localStyles.vibeActionLabel}>{secondaryActionLabel}</Text>}
           </TouchableOpacity>
         )}
 
-      </View>
-    ) : onContactPress || shouldShowSecondaryAction || onNextActionPress ? (
-      <View style={[localStyles.actions, onPanel && localStyles.panelActions]}>
-        {onContactPress ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={`Conectar con ${
-              profile?.name ?? "este perfil"
-            }`}
-            activeOpacity={0.9}
-            disabled={actionPending || swipeAnimating}
-            onPress={like}
-            style={localStyles.primaryActionTouch}
-          >
-            <LinearGradient
-              colors={[vibesTheme.colors.accentMustard, vibesTheme.colors.accentMustard, vibesTheme.colors.accentMustard]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={localStyles.primaryAction}
-            >
-              <Text style={localStyles.primaryActionText}>
-                {actionPending ? "Guardando…" : "Conectar"}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        ) : null}
-        {onNextActionPress && nextActionLabel ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={nextActionLabel}
-            activeOpacity={0.8}
-            disabled={actionPending || swipeAnimating}
-            onPress={onNextActionPress}
-            style={localStyles.nextAction}
-          >
-            <Text style={localStyles.nextActionText}>{nextActionLabel}</Text>
-            <Icon name="chevron-forward" size={18} color={vibesTheme.colors.primaryText} />
-          </TouchableOpacity>
-        ) : null}
-        {shouldShowSecondaryAction ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={secondaryActionLabel}
-            activeOpacity={0.75}
-            disabled={actionPending || swipeAnimating}
-            onPress={() => commitSwipe("pass")}
-            style={localStyles.secondaryAction}
-          >
-            <Text
-              style={[
-                localStyles.secondaryActionText,
-                onPanel && localStyles.panelSecondaryActionText,
-                secondaryActionDestructive &&
-                  localStyles.destructiveSecondaryActionText,
-              ]}
-            >
-              {secondaryActionLabel}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
       </View>
     ) : null;
   };
@@ -742,17 +681,23 @@ const UserProfileSheet = ({
         visible={visible}
         onClose={detailsVisible ? closeDetails : onClose}
         closeOnBackdropPress={false}
-        backdropColor={vibesTheme.colors.background}
+        backdropColor={PROFILE_PHOTO_BACKGROUND}
         offsetY={0}
         sheetInDelay={0}
-        sheetStyle={[localStyles.fullscreenSheet, { flex: 1 }]}
+        sheetInOpacityDuration={0}
+        sheetStyle={[localStyles.fullscreenSheet, { flex: 1 }, detailsVisible && { backgroundColor: vibesTheme.colors.background }]}
       >
+        {enableSwipe && profileImages.length > 0 && photoReadyId !== profile.id && !swipeNextProfile ? (
+          <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { alignItems: "center", justifyContent: "center" }]} accessibilityLabel="Cargando perfil">
+            <VibesLoader size={64} />
+          </View>
+        ) : null}
         <View
           pointerEvents="none"
           style={StyleSheet.absoluteFillObject}
           onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
         />
-        {enableSwipe && !detailsVisible && (swipeNextProfile ?? nextProfile) ? (
+        {enableSwipe && (!detailsVisible || swipeAnimating) && (swipeNextProfile ?? nextProfile) ? (
           <Animated.View
             pointerEvents="none"
             accessibilityElementsHidden
@@ -760,40 +705,48 @@ const UserProfileSheet = ({
             style={[
               StyleSheet.absoluteFillObject,
               {
-                backgroundColor: vibesTheme.colors.background,
+                backgroundColor: PROFILE_PHOTO_BACKGROUND,
+                // Reveal the next card as soon as the current photo is ready,
+                // so dragging exposes it without waiting for the release.
+                opacity: photoReadyId === profile.id || !profileImages.length || swipeNextProfile ? 1 : 0,
               },
             ]}
           >
             <ProfileMediaImage
+                contentFit="cover"
+                blurBackground
+                showLoading
               source={
                 normalizeProfileImages(swipeNextProfile ?? nextProfile ?? null)[0] ??
                 VIBES_FALLBACK_ILLUSTRATION
               }
               style={{ width, height }}
+              fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND}
+              fallbackIconColor={vibesTheme.colors.accentBlue}
               transition={0}
             />
             <LinearGradient
-              colors={["transparent", "rgba(43, 43, 43, 0.18)", "rgba(43, 43, 43, 0.92)"]}
-              locations={[0, 0.34, 1]}
+              colors={PROFILE_PHOTO_GRADIENT}
+              locations={[0, 0.55, 1]}
               style={[
                 localStyles.nextProfileCopy,
                 { paddingBottom: insets.bottom + 40 },
               ]}
             >
-              <Text style={localStyles.profileName}>{(swipeNextProfile ?? nextProfile)?.name}</Text>
-              {(swipeNextProfile ?? nextProfile)?.age ? (
-                <Text style={localStyles.profileAge}>
-                  {(swipeNextProfile ?? nextProfile)?.age} años
-                </Text>
-              ) : null}
+              <Text style={localStyles.profileName} numberOfLines={2}>
+                {(swipeNextProfile ?? nextProfile)?.name}
+                {(swipeNextProfile ?? nextProfile)?.age ? `, ${(swipeNextProfile ?? nextProfile)?.age}` : ""}
+              </Text>
             </LinearGradient>
           </Animated.View>
         ) : null}
         <Animated.View style={{ height: photoHeight }}>
         <Animated.View
+          key={`profile-card-${profile.id}`}
           style={[
             localStyles.screen,
             {
+              opacity: !detailsVisible && (!enableSwipe || !profileImages.length || photoReadyId === profile.id) ? 1 : 0,
               transform: [
                 { translateX: swipeX },
                 {
@@ -812,13 +765,33 @@ const UserProfileSheet = ({
         >
           {profileImages.length > 0 ? (
             enableSwipe ? (
-              <ProfileMediaImage
-                source={profileImages[safeActiveIndex]}
-                style={[StyleSheet.absoluteFillObject, { width }]}
-                fallbackBackgroundColor={vibesTheme.colors.background}
-                fallbackIconColor={vibesTheme.colors.accentBlue}
-                transition={0}
-              />
+              <View style={StyleSheet.absoluteFillObject}>
+                {profileImages.map((source, index) => (
+                  <View
+                    key={`${profile.id ?? profile.name}-${getImageKey(source, index)}`}
+                    pointerEvents="none"
+                    accessibilityElementsHidden={index !== safeActiveIndex}
+                    importantForAccessibility={index !== safeActiveIndex ? "no-hide-descendants" : "auto"}
+                    style={[StyleSheet.absoluteFillObject, { opacity: index === safeActiveIndex ? 1 : 0 }]}
+                  >
+                    <ProfileMediaImage
+                      contentFit="cover" blurBackground showLoading
+                      priority={index === safeActiveIndex ? "high" : "low"}
+                      onDisplay={() => {
+                        if (index === safeActiveIndex) {
+                          setPhotoReadyId(profile.id);
+                          if (!swipingRef.current) setSwipeNextProfile(null);
+                        }
+                      }}
+                      source={source}
+                      style={[StyleSheet.absoluteFillObject, { width }]}
+                      fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND}
+                      fallbackIconColor={vibesTheme.colors.accentBlue}
+                      transition={0}
+                    />
+                  </View>
+                ))}
+              </View>
             ) : (
             <FlatList
               ref={galleryRef}
@@ -835,9 +808,12 @@ const UserProfileSheet = ({
               renderItem={({ item }) => (
                 <Animated.View style={{ width, height: photoHeight }}>
                   <ProfileMediaImage
+                contentFit="cover"
+                blurBackground
+                showLoading
                     source={item}
                     style={StyleSheet.absoluteFillObject}
-                    fallbackBackgroundColor={vibesTheme.colors.background}
+                    fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND}
                     fallbackIconColor={vibesTheme.colors.accentBlue}
                     transition={0}
                   />
@@ -876,18 +852,14 @@ const UserProfileSheet = ({
           />
           <LinearGradient
             pointerEvents="none"
-            colors={[
-              "transparent",
-              "rgba(43, 43, 43, 0.18)",
-              "rgba(43, 43, 43, 0.92)",
-            ]}
-            locations={[0, 0.34, 1]}
+            colors={PROFILE_PHOTO_GRADIENT}
+            locations={[0, 0.55, 1]}
             style={[localStyles.bottomGradient, detailsVisible && { opacity: 0 }]}
           />
 
           <LinearGradient
             pointerEvents="none"
-            colors={["rgba(43, 43, 43, 0.5)", "rgba(43, 43, 43, 0)"]}
+            colors={["#00000080", "#00000000"]}
             style={[localStyles.topGradient, { height: insets.top + 120 }]}
           />
 
@@ -932,11 +904,8 @@ const UserProfileSheet = ({
             <View style={localStyles.nameRow}>
               <View style={localStyles.nameCopy}>
                 <Text style={localStyles.profileName} numberOfLines={2}>
-                  {profile.name}
+                  {nameWithAge}
                 </Text>
-                {profile.age ? (
-                  <Text style={localStyles.profileAge}>{profile.age} años</Text>
-                ) : null}
                 {profile.zodiac ? (
                   <Text style={localStyles.profileAge}>{profile.zodiac}</Text>
                 ) : null}
@@ -956,22 +925,6 @@ const UserProfileSheet = ({
         </Animated.View>
         </Animated.View>
         <LikeBubbles trigger={burst} />
-        <View pointerEvents="none" style={localStyles.swipeUpIndicator}>
-          <Animated.View
-            style={[
-              localStyles.swipeUpHint,
-              {
-                opacity: swipeUp.interpolate({
-                  inputRange: [0, 45],
-                  outputRange: [0, 1],
-                  extrapolate: "clamp",
-                }),
-              },
-            ]}
-          >
-            <Text style={localStyles.swipeUpText}>Ver más</Text>
-          </Animated.View>
-        </View>
         {enableSwipe && (
           <View pointerEvents="none" style={localStyles.swipeIndicators}>
             <Animated.View
@@ -1026,18 +979,19 @@ const UserProfileSheet = ({
         )}
         <Animated.View
           pointerEvents={detailsVisible ? "box-none" : "none"}
-          style={{ position: "absolute", top: photoHeight, left: 0, right: 0, bottom: 0 }}
+          key={`profile-details-${profile.id}`}
+          style={[StyleSheet.absoluteFillObject, { transform: [{ translateX: swipeX }] }]}
         >
         <AnimatedSheetModal
           inline
           visible={visible && detailsVisible}
           onClose={closeDetails}
           closeOnBackdropPress={false}
-          offsetY={0}
+          offsetY={reduceMotion ? 0 : 28}
           sheetInDelay={0}
-          sheetInDuration={reduceMotion ? 0 : 420}
-          sheetOutDuration={reduceMotion ? 0 : 420}
-          sheetInOpacityDuration={reduceMotion ? 0 : 420}
+          sheetInDuration={reduceMotion ? 0 : 300}
+          sheetOutDuration={reduceMotion ? 0 : 240}
+          sheetInOpacityDuration={reduceMotion ? 0 : 220}
           sheetOutOpacityDuration={reduceMotion ? 0 : 180}
           backdropColor="transparent"
           sheetStyle={[
@@ -1045,93 +999,114 @@ const UserProfileSheet = ({
             { flex: 1 },
           ]}
         >
-          <Animated.View
-            style={[
-              localStyles.detailsPanel,
-              { transform: [{ translateY: panelDragY }] },
-            ]}
-          >
-            <View
-              accessible
-              accessibilityLabel="Arrastrá hacia abajo para cerrar la información"
-              style={localStyles.dragArea}
-              {...detailsPanResponder.panHandlers}
-            >
-              <View style={localStyles.dragHandle} />
-            </View>
-            <View style={localStyles.detailsHeader}>
-              <Text style={localStyles.detailsName}>{nameWithAge}</Text>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Cerrar información"
-                activeOpacity={0.82}
-                onPress={closeDetails}
-                hitSlop={6}
-                style={localStyles.detailsCloseButton}
-              >
-                <Icon name="chevron-down" size={28} color={vibesTheme.colors.primaryText} />
-              </TouchableOpacity>
-            </View>
-            <View style={localStyles.detailsDivider} />
+          <View style={localStyles.detailsPanel}>
             <ScrollView
               style={localStyles.detailsScroll}
+              alwaysBounceVertical
+              refreshControl={
+                <RefreshControl
+                  refreshing={false}
+                  onRefresh={closeDetails}
+                  tintColor="transparent"
+                  colors={["transparent"]}
+                  progressBackgroundColor="transparent"
+                />
+              }
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={[
-                localStyles.detailsContent,
-                { paddingBottom: Math.max(insets.bottom, 16) + 20 },
-              ]}
+              contentContainerStyle={{ paddingTop: insets.top, paddingBottom: detailsActionsHeight + 24 }}
             >
-              {profile.description ? (
-                <DetailSection label="Sobre mí">
-                  <Text style={localStyles.detailBody}>
-                    {profile.description}
-                  </Text>
-                </DetailSection>
-              ) : null}
-              {purpose ? (
-                <DetailSection label="Me trae a Vibes">
-                  <Text style={localStyles.detailValue}>{purpose}</Text>
-                </DetailSection>
-              ) : null}
-              {energy ? (
-                <DetailSection label="Hoy me siento">
-                  <PillList items={[energy]} blue />
-                </DetailSection>
-              ) : null}
-              {location ? (
-                <DetailSection label="Ubicación">
-                  <View style={localStyles.inlineDetail}>
-                    <Icon name="location-outline" size={19} color={vibesTheme.colors.accentBlue} />
-                    <Text style={localStyles.detailValueFlexible}>
-                      {location}
-                    </Text>
+              <View style={localStyles.detailsHeader}>
+                <Text style={localStyles.detailsName}>{nameWithAge}</Text>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Bajar y volver a la foto completa"
+                  activeOpacity={0.82}
+                  onPress={closeDetails}
+                  style={localStyles.lowerDetailsButton}
+                >
+                  <Icon name="chevron-down" size={22} color={vibesTheme.colors.primaryText} />
+                </TouchableOpacity>
+              </View>
+              <View style={{ width, height: compactPhotoHeight }}>
+                {profileImages.length ? (
+                  <FlatList
+                    ref={detailsGalleryRef}
+                    key={`details-${profile.id ?? profile.name}-${width}`}
+                    data={profileImages}
+                    keyExtractor={getImageKey}
+                    horizontal
+                    pagingEnabled
+                    directionalLockEnabled
+                    nestedScrollEnabled
+                    bounces={false}
+                    showsHorizontalScrollIndicator={false}
+                    initialScrollIndex={safeActiveIndex}
+                    getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+                    onMomentumScrollEnd={handleGalleryMomentumEnd}
+                    renderItem={({ item, index }) => (
+                      <View style={{ width, height: compactPhotoHeight }}>
+                        <ProfileMediaImage source={item} style={StyleSheet.absoluteFillObject}
+                          contentFit="contain" blurBackground showLoading transition={0}
+                          fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND} />
+                        {hasMultipleImages ? (
+                          <View style={[StyleSheet.absoluteFillObject, { flexDirection: "row" }]}>
+                            <TouchableOpacity style={{ flex: 1 }} activeOpacity={1}
+                              accessibilityRole="button" accessibilityLabel="Foto anterior"
+                              disabled={index === 0}
+                              onPress={() => setGalleryIndex(index - 1)} />
+                            <TouchableOpacity style={{ flex: 1 }} activeOpacity={1}
+                              accessibilityRole="button" accessibilityLabel="Foto siguiente"
+                              disabled={index === profileImages.length - 1}
+                              onPress={() => setGalleryIndex(index + 1)} />
+                          </View>
+                        ) : null}
+                      </View>
+                    )}
+                  />
+                ) : (
+                  <ProfileMediaImage source={VIBES_FALLBACK_ILLUSTRATION}
+                    style={StyleSheet.absoluteFillObject} contentFit="contain" />
+                )}
+                {hasMultipleImages ? (
+                  <View style={localStyles.detailsPhotoIndicators}>
+                    {profileImages.map((_, index) => (
+                      <TouchableOpacity key={index} accessibilityRole="button"
+                        accessibilityLabel={`Ver foto ${index + 1}`}
+                        accessibilityState={{ selected: index === safeActiveIndex }}
+                        onPress={() => setGalleryIndex(index)}
+                        style={localStyles.detailsPhotoIndicatorTouch}>
+                        <View style={[localStyles.indicator, { flex: 0 }, index === safeActiveIndex && localStyles.indicatorActive]} />
+                      </TouchableOpacity>
+                    ))}
                   </View>
+                ) : null}
+              </View>
+              <View style={localStyles.detailsContent}>
+              {profile.description || purpose || energy || profile.prompt ? (
+                <DetailSection label="Sobre mí" emphasized>
+                  {profile.description ? <PillList items={[profile.description]} /> : null}
+                  {purpose ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Me trae a Vibes</Text><PillList items={[purpose]} /></View> : null}
+                  {energy ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Hoy me siento</Text><PillList items={[energy === "Sanando" ? "Óptimo" : energy]} blue /></View> : null}
+                  {profile.prompt ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Ritual</Text><PillList items={[profile.prompt]} /></View> : null}
                 </DetailSection>
               ) : null}
-              {profile.prompt ? (
-                <DetailSection label="Ritual">
-                  <Text style={localStyles.detailBody}>{profile.prompt}</Text>
+              {location || specificationGroups.length ? (
+                <DetailSection label="Especificaciones" emphasized>
+                  {location ? <PillList items={[location]} /> : null}
+                  {specificationGroups.length ? <GroupedPillList groups={specificationGroups} /> : null}
                 </DetailSection>
               ) : null}
-              {profile.spiritualPath?.length ? (
-                <DetailSection label="Camino espiritual">
-                  <PillList items={profile.spiritualPath} />
+              {profile.spiritualPath?.length || habitGroups.length || lifestyleGroups.length ? (
+                <DetailSection label="Estilos de vida" emphasized>
+                  {profile.spiritualPath?.length ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Camino espiritual</Text><PillList items={profile.spiritualPath} /></View> : null}
+                  {habitGroups.length || lifestyleGroups.length ? <GroupedPillList groups={mergeDetailChipGroups([...habitGroups, ...lifestyleGroups])} /> : null}
                 </DetailSection>
               ) : null}
-              {habitGroups.length ? (
-                <DetailSection label="Hábitos" emphasized>
-                  <GroupedPillList groups={habitGroups} />
-                </DetailSection>
-              ) : null}
-              {profile.tags?.length ? (
+              {profile.tags?.length || interestGroups.length ? (
                 <DetailSection label="Intereses" emphasized>
-                  <PillList items={profile.tags} />
-                </DetailSection>
-              ) : null}
-              {otherPreferenceGroups.length ? (
-                <DetailSection label="Más sobre mí" emphasized>
-                  <GroupedPillList groups={otherPreferenceGroups} />
+                  {profile.tags?.length ? <PillList items={profile.tags} /> : null}
+                  {interestGroups.length ? <GroupedPillList groups={interestGroups.map((group) => ({ ...group, values: group.values.filter((value) => !profile.tags?.includes(value)) })).filter((group) => group.values.length)} /> : null}
                 </DetailSection>
               ) : null}
 
@@ -1172,9 +1147,18 @@ const UserProfileSheet = ({
                   </View>
                 </DetailSection>
               ) : null}
-              {renderActions(true)}
+              </View>
             </ScrollView>
-          </Animated.View>
+            {(onContactPress || onSecondaryActionPress || onNextActionPress) ? (
+              <View
+                pointerEvents="box-none"
+                onLayout={({ nativeEvent }) => setDetailsActionsHeight(nativeEvent.layout.height)}
+                style={[localStyles.floatingDetailsActions, { paddingBottom: Math.max(insets.bottom, 12) }]}
+              >
+                {renderActions(true)}
+              </View>
+            ) : null}
+          </View>
         </AnimatedSheetModal>
         </Animated.View>
       </AnimatedSheetModal>
@@ -1191,27 +1175,8 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 28,
-    paddingTop: 100,
-  },
-  swipeUpIndicator: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  swipeUpHint: {
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    backgroundColor: "rgba(254, 254, 253, 0.97)",
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    gap: 6,
-  },
-  swipeUpText: {
-    fontFamily: vibesTheme.fonts.subtitle,
-    fontSize: 20,
-    color: vibesTheme.colors.primaryText,
+    height: "45%",
+    justifyContent: "flex-end",
   },
   swipeIndicators: {
     ...StyleSheet.absoluteFillObject,
@@ -1231,14 +1196,14 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(254, 254, 253, 0.97)",
   },
   swipeStampText: { fontFamily: vibesTheme.fonts.subtitle, fontSize: 22 },
-  fullscreenSheet: { width: "100%", backgroundColor: vibesTheme.colors.background },
-  screen: { flex: 1, overflow: "hidden", backgroundColor: vibesTheme.colors.background },
+  fullscreenSheet: { width: "100%", backgroundColor: PROFILE_PHOTO_BACKGROUND },
+  screen: { flex: 1, overflow: "hidden", backgroundColor: PROFILE_PHOTO_BACKGROUND },
   fallbackCanvas: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: PROFILE_PHOTO_BACKGROUND,
   },
   fallbackCircleBlue: {
     position: "absolute",
@@ -1264,7 +1229,7 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: "54%",
+    height: "45%",
   },
   topGradient: {
     position: "absolute",
@@ -1314,6 +1279,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   nameRow: {
+    transform: [{ translateY: 6 }],
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 12,
@@ -1322,9 +1288,9 @@ const localStyles = StyleSheet.create({
   nameCopy: { flex: 1, minWidth: 0 },
   profileName: {
     color: vibesTheme.colors.background,
-    fontSize: 42,
-    lineHeight: 46,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 30,
+    lineHeight: 36,
+    fontFamily: vibesTheme.fonts.bold,
   },
   profileAge: {
     marginTop: 1,
@@ -1438,17 +1404,17 @@ const localStyles = StyleSheet.create({
   },
   detailsPanel: {
     flex: 1,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
     overflow: "hidden",
     backgroundColor: vibesTheme.colors.background,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.16,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: -6 },
-    elevation: 16,
   },
   detailsScroll: { flex: 1 },
+  detailsPhotoIndicators: { position: "absolute", top: 4, left: 16, right: 16, flexDirection: "row", gap: 5 },
+  detailsPhotoIndicatorTouch: { flex: 1, minHeight: 44, justifyContent: "center" },
+  lowerDetailsButton: {
+    alignSelf: "flex-start",
+    transform: [{ translateY: -10 }],
+    minHeight: 48, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12,
+  },
   dragArea: { minHeight: 44, alignItems: "center", justifyContent: "center" },
   dragHandle: {
     width: 82,
@@ -1468,9 +1434,9 @@ const localStyles = StyleSheet.create({
   detailsName: {
     flex: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 34,
-    lineHeight: 40,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 26,
+    lineHeight: 32,
+    fontFamily: vibesTheme.fonts.bold,
   },
   detailsCloseButton: {
     width: 48,
@@ -1488,9 +1454,13 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(43, 43, 43, 0.16)",
   },
   detailsContent: { paddingHorizontal: 24, paddingTop: 18 },
-  detailSection: { marginBottom: 20 },
+  detailSection: {
+    marginBottom: 20, paddingVertical: 18, borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(110, 110, 110, 0.25)",
+  },
+  detailItem: { marginTop: 20, gap: 10 },
   detailLabel: {
-    marginBottom: 7,
+    marginBottom: 12,
     color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     lineHeight: 21,
@@ -1529,19 +1499,22 @@ const localStyles = StyleSheet.create({
   },
   pillRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   groupedPillList: {
-    gap: 12,
+    marginTop: 18,
+    gap: 22,
   },
   pillGroup: {
-    gap: 7,
+    gap: 10,
   },
   pillGroupLabel: {
     color: vibesTheme.colors.secondaryText,
     fontSize: 12,
-    lineHeight: 15,
+    lineHeight: 18,
     fontFamily: vibesTheme.fonts.semibold,
     textTransform: "uppercase",
   },
   pill: {
+    maxWidth: "100%",
+    flexShrink: 1,
     minHeight: 40,
     paddingHorizontal: 16,
     paddingVertical: 9,
@@ -1562,5 +1535,24 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   sharedList: { gap: 10 },
-  panelActions: { marginTop: 4 },
+  panelActions: { marginTop: 0, flexDirection: "row", alignItems: "center", gap: 12 },
+  floatingActionItem: { flex: 1, minHeight: 52, alignItems: "center", justifyContent: "center" },
+  floatingProfileAction: {
+    backgroundColor: vibesTheme.colors.background,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    justifyContent: "center",
+    gap: 0,
+    shadowColor: vibesTheme.colors.primaryText,
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  floatingDetailsActions: {
+    position: "absolute", left: 0, right: 0, bottom: 0,
+    paddingTop: 12, paddingHorizontal: 24,
+    backgroundColor: "transparent",
+  },
 });

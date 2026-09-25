@@ -292,7 +292,7 @@ const baseTranslations = {
         reflective: "Reflexivo",
         curious: "Curioso",
         social: "Social",
-        healing: "Sanando",
+        healing: "Óptimo",
       },
       practicesOptions: {
         Meditación: "Meditación",
@@ -853,7 +853,7 @@ const baseTranslations = {
         reflective: "Reflective",
         curious: "Curious",
         social: "Social",
-        healing: "Healing",
+        healing: "Optimal",
       },
       practicesOptions: {
         Meditación: "Meditation",

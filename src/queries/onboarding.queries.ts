@@ -379,6 +379,7 @@ export const useCompleteOnboardingMutation = () => {
       }
     },
     onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["profileAnswers", variables.userId] });
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
       queryClient.invalidateQueries({
         queryKey: profileKeys.byUser(variables.userId),

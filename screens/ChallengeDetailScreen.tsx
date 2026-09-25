@@ -1160,10 +1160,10 @@ const ChallengeDetailScreen = () => {
   const { data: linkedEvent, isLoading: linkedEventLoading } = useQuery({
     queryKey: ["challenge_deep_link", challengeId],
     queryFn: () => fetchEventFeedItemById(challengeId as string, "challenge"),
-    enabled: Boolean(!routeEvent && challengeId),
+    enabled: Boolean(challengeId),
     staleTime: 60_000,
   });
-  const event = routeEvent ?? linkedEvent ?? undefined;
+  const event = linkedEvent ?? routeEvent ?? undefined;
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const { data: participant } = useChallengeParticipantQuery(event?.id, userId);
@@ -1973,6 +1973,15 @@ const ChallengeDetailScreen = () => {
       >
         <View style={localStyles.menuHandle} />
         <Text style={localStyles.menuTitle}>Opciones del desafío</Text>
+        {isAdmin && event ? (
+          <TouchableOpacity style={localStyles.menuItem} onPress={() => {
+            setMenuVisible(false);
+            navigation.navigate("CreateChallenge" as never, { event } as never);
+          }}>
+            <Icon name="create-outline" size={20} color={palette.text} />
+            <Text style={localStyles.menuItemText}>Editar desafío</Text>
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           style={localStyles.menuItem}
           onPress={() => {
