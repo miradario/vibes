@@ -486,9 +486,10 @@ export const DiscoverContent = forwardRef<
   );
   const [showProfileSheet, setShowProfileSheet] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSpiritualPaths, setShowSpiritualPaths] = useState(false);
   const [historyMode, setHistoryMode] = useState<
     "dismissed" | "liked" | "incoming"
-  >("dismissed");
+  >("liked");
   const [viewingHistory, setViewingHistory] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
@@ -1369,86 +1370,76 @@ export const DiscoverContent = forwardRef<
         {showHeader ? (
           <View style={localStyles.header}>
             <Text style={localStyles.title}>{t("discover.title")}</Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={`${t("discover.filters")}${activeFilterCount ? `, ${activeFilterCount} activos` : ""}`}
+              style={localStyles.headerFiltersButton}
+              activeOpacity={0.84}
+              onPress={() => setIsFiltersVisible(true)}
+            >
+              <Icon name="options-outline" size={28} color={vibesTheme.colors.accentMustard} />
+            </TouchableOpacity>
           </View>
         ) : null}
 
-        <DiscoverPathCards
-          leading={
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <TouchableOpacity accessibilityRole="button" style={localStyles.filtersButton} activeOpacity={0.84} onPress={() => setIsFiltersVisible(true)}>
-                <Icon name="options-outline" size={17} color="#2B2B2B" />
-                <Text style={localStyles.filtersButtonText}>{t("discover.filters")}</Text>
-                {activeFilterCount > 0 ? <View style={localStyles.filtersCountBadge}><Text style={localStyles.filtersCountText}>{activeFilterCount}</Text></View> : null}
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityState={{ selected: showHistory }}
-                style={[
-                  localStyles.filtersButton,
-                  showHistory && localStyles.historyButtonActive,
-                ]}
-                onPress={() => {
-                  setShowHistory((current) => !current);
-                  setViewingHistory(false);
-                }}
-              >
-                <Icon name="time-outline" size={17} color="#2B2B2B" />
-                <Text style={localStyles.filtersButtonText}>
-                  {showHistory ? "Ver nuevos" : "Ya vistos"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          }
-          selected={discoverFilters.spiritualPaths}
-          onToggle={toggleSpiritualPath}
-          onClear={() =>
-            setDiscoverFilters((previous) => ({
-              ...previous,
-              spiritualPaths: [],
-            }))
-          }
-        />
+        <View style={localStyles.discoverySections}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: showHistory, expanded: showHistory }}
+            style={[localStyles.filtersButton, showHistory && localStyles.historyButtonActive]}
+            onPress={() => {
+              setShowHistory((current) => !current);
+              setShowSpiritualPaths(false);
+              setViewingHistory(false);
+            }}
+          >
+            <Icon name="mail-outline" size={18} color="#805D24" />
+            <Text style={localStyles.filtersButtonText}>Solicitudes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: showSpiritualPaths, expanded: showSpiritualPaths }}
+            style={[localStyles.filtersButton, showSpiritualPaths && localStyles.historyButtonActive]}
+            onPress={() => {
+              if (!showSpiritualPaths) {
+                setDiscoverFilters((previous) => ({ ...previous, spiritualPaths: [] }));
+              }
+              setShowSpiritualPaths((current) => !current);
+              setShowHistory(false);
+              setViewingHistory(false);
+            }}
+          >
+            <Icon name="leaf-outline" size={18} color="#805D24" />
+            <Text style={localStyles.filtersButtonText}>Camino espiritual</Text>
+          </TouchableOpacity>
+        </View>
+
+        {showSpiritualPaths ? (
+          <DiscoverPathCards
+            selected={discoverFilters.spiritualPaths}
+            onToggle={toggleSpiritualPath}
+            onClear={() => setDiscoverFilters((previous) => ({ ...previous, spiritualPaths: [] }))}
+          />
+        ) : null}
 
         {showHistory ? (
           <View style={localStyles.historyModeRow}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityState={{ selected: historyMode === "dismissed" }}
-              style={[
-                localStyles.historyModeButton,
-                historyMode === "dismissed" &&
-                  localStyles.historyModeButtonActive,
-              ]}
-              onPress={() => setHistoryMode("dismissed")}
-            >
-              <Icon name="close" size={16} color="#2B2B2B" />
-              <Text style={localStyles.historyModeText}>Descartados</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityState={{ selected: historyMode === "liked" }}
-              style={[
-                localStyles.historyModeButton,
-                historyMode === "liked" && localStyles.historyModeButtonActive,
-              ]}
-              onPress={() => setHistoryMode("liked")}
-            >
-              <Icon name="checkmark" size={16} color="#2B2B2B" />
-              <Text style={localStyles.historyModeText}>Quiero conectar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityState={{ selected: historyMode === "incoming" }}
-              style={[
-                localStyles.historyModeButton,
-                historyMode === "incoming" &&
-                  localStyles.historyModeButtonActive,
-              ]}
-              onPress={() => setHistoryMode("incoming")}
-            >
-              <Icon name="people-outline" size={16} color="#2B2B2B" />
-              <Text style={localStyles.historyModeText}>Quieren conectar</Text>
-            </TouchableOpacity>
+            {([
+              { mode: "liked", label: "Enviadas", icon: "paper-plane-outline" },
+              { mode: "incoming", label: "Recibidos", icon: "mail-open-outline" },
+              { mode: "dismissed", label: "Descartados", icon: "close" },
+            ] as const).map(({ mode, label, icon }) => (
+              <TouchableOpacity
+                key={mode}
+                accessibilityRole="button"
+                accessibilityState={{ selected: historyMode === mode }}
+                style={[localStyles.historyModeButton, historyMode === mode && localStyles.historyModeButtonActive]}
+                onPress={() => setHistoryMode(mode)}
+              >
+                <Icon name={icon} size={16} color="#2B2B2B" />
+                <Text style={localStyles.historyModeText}>{label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         ) : null}
 
@@ -1577,9 +1568,25 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 20,
+    paddingBottom: 10,
+  },
+  discoverySections: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  headerFiltersButton: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     color: TEXT_PRIMARY,

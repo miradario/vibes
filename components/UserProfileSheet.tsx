@@ -27,6 +27,7 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { LinearGradient } from "expo-linear-gradient";
+import { ArrowRightToLine, Link, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
@@ -376,14 +377,23 @@ const UserProfileSheet = ({
       commitSwipe("like");
     }
   };
+  const [activeIndex, setActiveIndex] = useState(0);
   const swipe = useMemo(
     () =>
       PanResponder.create({
+        onMoveShouldSetPanResponderCapture: (_, g) =>
+          !actionPending &&
+          !swipingRef.current &&
+          !detailsVisible &&
+          (((enableSwipe || Boolean(onNextActionPress)) &&
+            Math.abs(g.dx) > 15 &&
+            Math.abs(g.dx) > Math.abs(g.dy) * 1.5) ||
+            (g.dy < -15 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5)),
         onMoveShouldSetPanResponder: (_, g) =>
           !actionPending &&
           !swipingRef.current &&
           !detailsVisible &&
-          ((enableSwipe &&
+          (((enableSwipe || Boolean(onNextActionPress)) &&
             Math.abs(g.dx) > 15 &&
             Math.abs(g.dx) > Math.abs(g.dy) * 1.5) ||
             (g.dy < -15 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5)),
@@ -396,12 +406,14 @@ const UserProfileSheet = ({
         },
         onPanResponderRelease: (_, g) => {
           swipeUp.setValue(0);
-          const action = getProfileSwipeAction(g.dx, g.dy, width, enableSwipe);
+          const action = getProfileSwipeAction(g.dx, g.dy, width, enableSwipe, Boolean(onNextActionPress));
           if (action === "details") {
             swipeX.stopAnimation();
             swipeX.setValue(0);
             panelDragY.setValue(0);
             setDetailsVisible(true);
+          } else if (action === "next") {
+            onNextActionPress?.();
           } else if (action) {
             if (action === "like" && !reduceMotion) {
               setBurst((value) => value + 1);
@@ -409,12 +421,19 @@ const UserProfileSheet = ({
             commitSwipe(action);
           } else {
             resetSwipe();
+            if (Math.abs(g.dx) < 8 && Math.abs(g.dy) < 8) {
+              setGalleryIndex(activeIndex + (g.x0 < width / 2 ? -1 : 1));
+            }
           }
         },
+        onPanResponderTerminationRequest: () => false,
         onPanResponderTerminate: resetSwipe,
       }),
     [
       enableSwipe,
+      onNextActionPress,
+      activeIndex,
+      profile,
       actionPending,
       detailsVisible,
       swipeUp,
@@ -426,8 +445,6 @@ const UserProfileSheet = ({
       reduceMotion,
     ]
   );
-  const [activeIndex, setActiveIndex] = useState(0);
-
   const profileImages = useMemo(
     () => normalizeProfileImages(profile),
     [profile]
@@ -605,7 +622,7 @@ const UserProfileSheet = ({
             style={localStyles.vibeAction}
           >
             <View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon]}>
-              <Icon name="arrow-forward" size={38} color="#FFFFFF" style={localStyles.actionIconShadow} />
+              <ArrowRightToLine size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
             </View>
             <Text style={localStyles.vibeActionLabel}>{nextActionLabel}</Text>
           </TouchableOpacity>
@@ -621,12 +638,9 @@ const UserProfileSheet = ({
             onPress={like}
             style={localStyles.vibeAction}
           >
-            <LinearGradient
-              colors={["#EBC57F", "#E4B76E"]}
-              style={localStyles.vibeActionCircle}
-            >
-              <Icon name="chatbubbles-outline" size={30} color="#2B2B2B" />
-            </LinearGradient>
+            <View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon]}>
+              <Link size={48} color={vibesTheme.colors.accentMustard} strokeWidth={2.5} />
+            </View>
             <Text style={localStyles.vibeActionLabel}>
               {actionPending ? "Guardando…" : "Conectar"}
             </Text>
@@ -647,7 +661,7 @@ const UserProfileSheet = ({
                 localStyles.bareActionIcon,
               ]}
             >
-              <Icon name="close" size={36} color="#FFFFFF" style={localStyles.actionIconShadow} />
+              <ArrowRightToLine size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
             </View>
             <Text style={localStyles.vibeActionLabel}>{secondaryActionLabel}</Text>
           </TouchableOpacity>
@@ -786,13 +800,12 @@ const UserProfileSheet = ({
             </LinearGradient>
           </Animated.View>
         ) : null}
+        <Animated.View style={{ height: photoHeight }}>
         <Animated.View
           renderToHardwareTextureAndroid={visible && enableSwipe}
           style={[
             localStyles.screen,
             {
-              flex: 0,
-              height: photoHeight,
               transform: [
                 { translateX: swipeX },
                 {
@@ -861,30 +874,20 @@ const UserProfileSheet = ({
             </View>
           )}
 
-          <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
-            <TouchableOpacity
-              accessibilityLabel="Foto anterior"
-              onPress={() => setGalleryIndex(safeActiveIndex - 1)}
-              style={{
-                position: "absolute",
-                left: 0,
-                top: "12%",
-                width: "50%",
-                height: "53%",
-              }}
-            />
-            <TouchableOpacity
-              accessibilityLabel="Foto siguiente"
-              onPress={() => setGalleryIndex(safeActiveIndex + 1)}
-              style={{
-                position: "absolute",
-                right: 0,
-                top: "12%",
-                width: "50%",
-                height: "53%",
-              }}
-            />
-          </View>
+          <View
+            style={{ position: "absolute", left: 0, right: 0, top: "12%", height: "53%" }}
+            accessible={hasMultipleImages}
+            accessibilityLabel={`Foto ${safeActiveIndex + 1} de ${profileImages.length}`}
+            accessibilityActions={[
+              { name: "increment", label: "Foto siguiente" },
+              { name: "decrement", label: "Foto anterior" },
+            ]}
+            onAccessibilityAction={({ nativeEvent }) =>
+              setGalleryIndex(safeActiveIndex + (nativeEvent.actionName === "increment" ? 1 : -1))
+            }
+            {...swipe.panHandlers}
+            onStartShouldSetResponder={() => !detailsVisible && !actionPending && !swipingRef.current}
+          />
           <LinearGradient
             pointerEvents="none"
             colors={[
@@ -910,7 +913,7 @@ const UserProfileSheet = ({
             hitSlop={8}
             style={[localStyles.closeButton, { top: insets.top + 4 }]}
           >
-            <Icon name="close" size={40} color="#FFFFFF" style={localStyles.actionIconShadow} />
+            <X size={44} color={vibesTheme.colors.accentCoral} strokeWidth={2.5} />
           </TouchableOpacity>
 
           {profileImages.length > 0 ? (
@@ -937,7 +940,7 @@ const UserProfileSheet = ({
           {!detailsVisible && <View
             style={[
               localStyles.profileOverlay,
-              { paddingBottom: Math.max(insets.bottom, 14) + 12 },
+              { paddingBottom: Math.max(insets.bottom, 4) },
             ]}
           >
             <View style={localStyles.nameRow}>
@@ -964,6 +967,7 @@ const UserProfileSheet = ({
               <Icon name="chevron-up" size={32} color="#FEFEFD" />
             </TouchableOpacity>
           </View>}
+        </Animated.View>
         </Animated.View>
         <LikeBubbles trigger={burst} />
         <View pointerEvents="none" style={localStyles.swipeUpIndicator}>
@@ -1315,7 +1319,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 24,
     zIndex: 3,
   },
-  galleryHint: { alignSelf: "center", alignItems: "center", marginTop: 12, marginBottom: 8, minHeight: 48 },
+  galleryHint: { alignSelf: "center", alignItems: "center", marginTop: 0, marginBottom: 0, minHeight: 48 },
   galleryHintText: {
     marginTop: 2,
     color: "rgba(254, 254, 253, 0.9)",
@@ -1327,7 +1331,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 12,
-    transform: [{ translateY: 66 }],
+    marginBottom: 4,
   },
   nameCopy: { flex: 1, minWidth: 0 },
   profileName: {

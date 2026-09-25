@@ -30,6 +30,10 @@
         "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding."
       }
     },
+    "androidNavigationBar": {
+      "backgroundColor": "#00000000",
+      "enforceContrast": false
+    },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
