@@ -1,7 +1,9 @@
+import { launchAppCamera } from "../AppCamera";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import React, { useRef, useState } from "react";
 import {
   Alert,
+  Platform,
   Image,
   ScrollView,
   StyleSheet,
@@ -58,9 +60,9 @@ const pickFromCamera = async (t: (key: string) => string) => {
     return null;
   }
 
-  const result = await ImagePicker.launchCameraAsync({
+  const result = await launchAppCamera({
     mediaTypes: IMAGE_MEDIA_TYPE,
-    cameraType: CameraType.back,
+    cameraType: Platform.OS === "android" ? CameraType.front : CameraType.back,
     allowsEditing: false,
     quality: 0.82,
   });

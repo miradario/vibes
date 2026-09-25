@@ -1,3 +1,4 @@
+import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
 import React, { useRef, useState } from "react";
@@ -149,8 +150,8 @@ const CreateChallenge = () => {
     }
 
     try {
-      const result = await ImagePicker.launchCameraAsync({
-        cameraType: ImagePicker.CameraType.back,
+      const result = await launchAppCamera({
+        cameraType: Platform.OS === "android" ? ImagePicker.CameraType.front : ImagePicker.CameraType.back,
         mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
         aspect: [16, 9],

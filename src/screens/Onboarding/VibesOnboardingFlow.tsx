@@ -657,17 +657,6 @@ const VibesOnboardingFlow = () => {
             />
           </View>
         </View>
-        <TouchableOpacity
-          accessibilityRole="button"
-          disabled={locationLoading || !city.trim()}
-          onPress={() => void searchCity()}
-          style={onboardingStyles.locationButton}
-        >
-          <Icon name="search" size={20} color={ONBOARDING_COLORS.text} />
-          <Text style={onboardingStyles.locationButtonText}>
-            {locationLoading ? "Buscando…" : "Buscar ciudad y país"}
-          </Text>
-        </TouchableOpacity>
         {citySuggestions.map((suggestion, index) => (
           <TouchableOpacity key={`${suggestion.latitude}-${suggestion.longitude}-${index}`}
             accessibilityRole="button" style={onboardingStyles.inputRow}

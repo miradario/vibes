@@ -1,3 +1,4 @@
+import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -869,10 +870,10 @@ const EditProfile = () => {
 
     let result;
     try {
-      result = await ImagePicker.launchCameraAsync({
+      result = await launchAppCamera({
         mediaTypes: IMAGE_MEDIA_TYPE,
         allowsEditing: true,
-        cameraType: (ImagePicker as any).CameraType?.back ?? "back",
+        cameraType: Platform.OS === "android" ? ImagePicker.CameraType.front : ImagePicker.CameraType.back,
         quality: 0.8,
       });
     } catch (error) {

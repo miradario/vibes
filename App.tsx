@@ -1,3 +1,4 @@
+import AppCamera from "./components/AppCamera";
 import { useCommunityDeliverySync } from "./src/queries/communityReceipts.queries";
 import VerifyEmail from "./screens/VerifyEmail";
 import ProfileQuestions from "./screens/ProfileQuestions";
@@ -618,6 +619,7 @@ const AppNavigator = () => {
             />
           </Stack.Navigator>
         </NavigationContainer>
+        <AppCamera />
         <Toast />
       </QueryClientProvider>
     </GestureHandlerRootView>

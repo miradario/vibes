@@ -1,8 +1,10 @@
+import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Platform,
   Image,
   Modal,
   ScrollView,
@@ -83,8 +85,8 @@ const pickFromCamera = async () => {
   }
 
   try {
-    const result = await ImagePicker.launchCameraAsync({
-        cameraType: ImagePicker.CameraType.back,
+    const result = await launchAppCamera({
+        cameraType: Platform.OS === "android" ? ImagePicker.CameraType.front : ImagePicker.CameraType.back,
       mediaTypes: IMAGE_MEDIA_TYPE,
       allowsEditing: true,
       aspect: [1, 1],
