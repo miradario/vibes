@@ -138,7 +138,7 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
         }}
         style={styles.closeButton}
       >
-        <Icon name="close" size={17} color="#6E6E6E" />
+        <Icon name="close" size={17} color={vibesTheme.colors.secondaryText} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     paddingRight: 34,
     paddingVertical: 10,
-    backgroundColor: "#FCF8F0",
-    borderColor: "#EDE2CF",
+    backgroundColor: vibesTheme.colors.background,
+    borderColor: "rgba(110, 110, 110, 0.30)",
     borderWidth: 1,
     borderRadius: 18,
     marginBottom: 16,
@@ -162,13 +162,13 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#F3EADF",
+    backgroundColor: "rgba(216, 140, 122, 0.21)",
     alignItems: "center",
     justifyContent: "center",
   },
   copy: { flex: 1, minWidth: 0 },
   title: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#E8DFCC",
+    backgroundColor: "rgba(216, 140, 122, 0.34)",
     overflow: "hidden",
   },
   fill: {
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   percent: {
-    color: "#5F574C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.medium,

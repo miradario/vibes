@@ -73,7 +73,7 @@ export default function ProfileQuestionsForm({
               value={String(value[field.key] ?? "")}
               onChangeText={(text) => onChange({ ...value, [field.key]: text })}
               placeholder={field.placeholder}
-              placeholderTextColor="#777"
+              placeholderTextColor={vibesTheme.colors.secondaryText}
               multiline
               maxLength={300}
               textAlignVertical="top"
@@ -89,20 +89,20 @@ const styles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.thin,
     fontSize: 32,
     lineHeight: 40,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     marginVertical: 16,
   },
-  hint: { fontSize: 16, lineHeight: 23, color: "#6E6E6E", marginBottom: 16 },
+  hint: { fontSize: 16, lineHeight: 23, color: vibesTheme.colors.secondaryText, marginBottom: 16 },
   field: { marginBottom: 22 },
-  label: { fontSize: 17, color: "#2B2B2B", marginBottom: 12 },
+  label: { fontSize: 17, color: vibesTheme.colors.primaryText, marginBottom: 12 },
   options: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   input: {
     borderWidth: 1,
-    borderColor: "#E5DCCB",
+    borderColor: "rgba(110, 110, 110, 0.30)",
     borderRadius: 18,
     padding: 16,
     minHeight: 90,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
   },
 });

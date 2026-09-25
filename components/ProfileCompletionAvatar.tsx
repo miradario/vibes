@@ -44,7 +44,7 @@ export default function ProfileCompletionAvatar({
               cx={42}
               cy={42}
               r={RADIUS}
-              stroke="#E8DFCC"
+              stroke={vibesTheme.colors.secondaryText}
               strokeWidth={4}
               fill="none"
             />
@@ -86,7 +86,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   percent: {
-    color: "#796036",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "600",

@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Image as ExpoImage } from "expo-image";
@@ -17,8 +18,8 @@ type AvatarProps = {
   borderRadius?: number;
 };
 
-const DEFAULT_BG = "#F3E7D3";
-const DEFAULT_ICON = "#B08A57";
+const DEFAULT_BG = "rgba(228, 183, 110, 0.30)";
+const DEFAULT_ICON = vibesTheme.colors.accentMustard;
 
 const Avatar = ({
   source,

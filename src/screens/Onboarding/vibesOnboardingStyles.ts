@@ -3,16 +3,16 @@ import { vibesTheme } from "../../theme/vibesTheme";
 
 export const ONBOARDING_COLORS = {
   background: vibesTheme.colors.background,
-  surface: "#FFFFFF",
-  text: "#2B2B2B",
-  muted: "#6E6E6E",
+  surface: vibesTheme.colors.background,
+  text: vibesTheme.colors.primaryText,
+  muted: vibesTheme.colors.secondaryText,
   line: "rgba(43, 43, 43, 0.1)",
-  mustard: "#E4B76E",
-  coral: "#D88C7A",
-  blue: "#AEBFD1",
-  sage: "#BFD4B5",
-  lavender: "#D9CBE8",
-  cream: "#F4E8D6",
+  mustard: vibesTheme.colors.accentMustard,
+  coral: vibesTheme.colors.accentCoral,
+  blue: vibesTheme.colors.accentBlue,
+  sage: "rgba(127, 152, 183, 0.55)",
+  lavender: "rgba(127, 152, 183, 0.36)",
+  cream: "rgba(228, 183, 110, 0.28)",
 };
 
 const { width } = Dimensions.get("window");
@@ -76,7 +76,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 28,
     overflow: "hidden",
     position: "relative",
@@ -121,7 +121,7 @@ export const onboardingStyles = StyleSheet.create({
     bottom: 12,
     paddingTop: 10,
     paddingBottom: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   primaryButton: {
     minHeight: 56,
@@ -140,7 +140,7 @@ export const onboardingStyles = StyleSheet.create({
     opacity: 0.42,
   },
   primaryButtonText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 16,
   },
@@ -153,7 +153,7 @@ export const onboardingStyles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.22)",
-    backgroundColor: "rgba(255, 255, 255, 0.86)",
+    backgroundColor: "rgba(254, 254, 253, 0.86)",
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
@@ -249,7 +249,7 @@ export const onboardingStyles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.24)",
-    backgroundColor: "rgba(255, 255, 255, 0.86)",
+    backgroundColor: "rgba(254, 254, 253, 0.86)",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
@@ -286,8 +286,8 @@ export const onboardingStyles = StyleSheet.create({
     marginTop: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(174, 191, 209, 0.42)",
-    backgroundColor: "rgba(174, 191, 209, 0.12)",
+    borderColor: "rgba(127, 152, 183, 0.42)",
+    backgroundColor: "rgba(127, 152, 183, 0.12)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -310,7 +310,7 @@ export const onboardingStyles = StyleSheet.create({
     borderRadius: 17,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.09)",
-    backgroundColor: "rgba(255, 255, 255, 0.78)",
+    backgroundColor: "rgba(254, 254, 253, 0.78)",
     paddingHorizontal: 17,
     flexDirection: "row",
     alignItems: "center",
@@ -323,7 +323,7 @@ export const onboardingStyles = StyleSheet.create({
   pillAdd: {
     borderWidth: 1.4,
     borderColor: "rgba(43, 43, 43, 0.32)",
-    backgroundColor: "rgba(255, 253, 248, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
   },
   pillText: {
     color: ONBOARDING_COLORS.text,
@@ -357,12 +357,12 @@ export const onboardingStyles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
-    backgroundColor: "rgba(17, 17, 17, 0.28)",
+    backgroundColor: "rgba(43, 43, 43, 0.28)",
     paddingHorizontal: 28,
   },
   modalCard: {
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     overflow: "hidden",
   },
   modalOption: {
@@ -381,7 +381,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   customPracticeCard: {
     borderRadius: 26,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 18,
@@ -397,7 +397,7 @@ export const onboardingStyles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.34)",
-    backgroundColor: "rgba(255, 253, 248, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     paddingHorizontal: 16,
     color: ONBOARDING_COLORS.text,
     fontFamily: vibesTheme.fonts.primary,
@@ -435,7 +435,7 @@ export const onboardingStyles = StyleSheet.create({
     opacity: 0.45,
   },
   customPracticePrimaryText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 15,
   },

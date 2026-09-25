@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import Icon from "./Icon";
 import React, { useState } from "react";
 import { TouchableOpacity, View } from "react-native";
@@ -62,8 +63,8 @@ export default function EmailVerificationCard({ userId, email }: { userId?: stri
   return (
     <View>
       <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1,
-        borderColor: "#C3D2E1", borderRadius: 14, paddingHorizontal: 14, minHeight: 52 }}>
-        <Text style={{ flex: 1, paddingVertical: 14, fontSize: 17, color: "#2B2B2B" }}>
+        borderColor: "rgba(110, 110, 110, 0.30)", borderRadius: 14, paddingHorizontal: 14, minHeight: 52 }}>
+        <Text style={{ flex: 1, paddingVertical: 14, fontSize: 17, color: vibesTheme.colors.primaryText }}>
           {query.data?.email ?? email ?? "—"}
         </Text>
         <TouchableOpacity
@@ -72,24 +73,24 @@ export default function EmailVerificationCard({ userId, email }: { userId?: stri
           disabled={verified || sending || query.isLoading}
           onPress={startVerification}
           style={{ marginLeft: 12, minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" }}>
-          <Icon name="checkmark-circle" size={26} color={verified ? "#43A047" : "#B8BEC4"} />
+          <Icon name="checkmark-circle" size={26} color={verified ? vibesTheme.colors.primaryText : vibesTheme.colors.accentBlue} />
         </TouchableOpacity>
       </View>
       {!verified && (
         <TouchableOpacity accessibilityRole="button" disabled={sending || query.isLoading}
           onPress={startVerification}
           style={{ minHeight: 48, alignSelf: "flex-end", justifyContent: "center" }}>
-          <Text style={{ fontSize: 13, color: "#8C6A2D", textDecorationLine: "underline" }}>
+          <Text style={{ fontSize: 13, color: vibesTheme.colors.primaryText, textDecorationLine: "underline" }}>
             {query.isLoading ? "Consultando…" : sending ? "Enviando…" : "Validar email"}
           </Text>
         </TouchableOpacity>
       )}
       {!verified && expanded && (
         <View>
-          {!!message && <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, color: "#6E6E6E" }}>{message}</Text>}
+          {!!message && <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, color: vibesTheme.colors.secondaryText }}>{message}</Text>}
           <TouchableOpacity accessibilityRole="button" disabled={checking}
             onPress={() => void check()} style={{ minHeight: 48, justifyContent: "center" }}>
-            <Text style={{ fontSize: 13, color: "#8C6A2D", textDecorationLine: "underline" }}>
+            <Text style={{ fontSize: 13, color: vibesTheme.colors.primaryText, textDecorationLine: "underline" }}>
               {checking ? "Comprobando…" : "Ya abrí el enlace · Comprobar"}
             </Text>
           </TouchableOpacity>

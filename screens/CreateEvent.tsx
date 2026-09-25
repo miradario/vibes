@@ -768,7 +768,7 @@ const CreateEvent = () => {
               <Icon
                 name={isEventLinkValid ? "checkmark-circle" : "alert-circle"}
                 size={16}
-                color={isEventLinkValid ? "#4E8B63" : "#B45145"}
+                color={isEventLinkValid ? vibesTheme.colors.secondaryText : vibesTheme.colors.accentCoral}
               />
               <Text
                 style={[
@@ -1177,7 +1177,7 @@ const localStyles = StyleSheet.create({
     marginTop: 12,
   },
   input: {
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "transparent",
@@ -1186,11 +1186,11 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
   },
   inputInvalid: {
-    borderColor: "rgba(180, 81, 69, 0.72)",
-    backgroundColor: "rgba(180, 81, 69, 0.05)",
+    borderColor: "rgba(216, 140, 122, 0.72)",
+    backgroundColor: "rgba(216, 140, 122, 0.05)",
   },
   inputValid: {
-    borderColor: "rgba(78, 139, 99, 0.58)",
+    borderColor: "rgba(110, 110, 110, 0.58)",
   },
   linkValidationRow: {
     marginTop: 7,
@@ -1205,10 +1205,10 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   linkValidationTextValid: {
-    color: "#4E8B63",
+    color: vibesTheme.colors.secondaryText,
   },
   linkValidationTextInvalid: {
-    color: "#B45145",
+    color: vibesTheme.colors.accentCoral,
   },
   dateTimeRow: {
     flexDirection: "row",
@@ -1223,8 +1223,8 @@ const localStyles = StyleSheet.create({
     flex: 1,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(43,43,43,0.1)",
-    backgroundColor: "#FEFEFD",
+    borderColor: "rgba(43, 43, 43, 0.1)",
+    backgroundColor: vibesTheme.colors.background,
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -1239,11 +1239,11 @@ const localStyles = StyleSheet.create({
     fontWeight: "400",
   },
   choiceChipTextActive: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
   },
   dateTimeButton: {
     flex: 1,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -1266,7 +1266,7 @@ const localStyles = StyleSheet.create({
   },
   pickerWrap: {
     marginTop: 10,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 12,
     overflow: "hidden",
   },
@@ -1293,7 +1293,7 @@ const localStyles = StyleSheet.create({
     opacity: 0.72,
   },
   createButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontWeight: "400",
     fontSize: 15,
   },
@@ -1315,10 +1315,10 @@ const localStyles = StyleSheet.create({
   },
   validateButton: {
     marginTop: 10,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
     paddingVertical: 10,
     alignItems: "center",
     shadowOpacity: 0.12,
@@ -1344,7 +1344,7 @@ const localStyles = StyleSheet.create({
     height: 168,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "#EFE7D9",
+    backgroundColor: "rgba(216, 140, 122, 0.25)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.32)",
   },
@@ -1385,7 +1385,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
     paddingHorizontal: 22,
-    backgroundColor: "#FBF5EA",
+    backgroundColor: "rgba(228, 183, 110, 0.13)",
   },
   mapPreviewFallbackPin: {
     width: 48,
@@ -1438,7 +1438,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.42)",
-    backgroundColor: "#FBF7EF",
+    backgroundColor: "rgba(228, 183, 110, 0.10)",
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
@@ -1451,7 +1451,7 @@ const localStyles = StyleSheet.create({
   },
   coverScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(25, 22, 18, 0.22)",
+    backgroundColor: "rgba(43, 43, 43, 0.22)",
   },
   coverChangeBadge: {
     position: "absolute",
@@ -1463,7 +1463,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     gap: 7,
     paddingHorizontal: 14,
-    backgroundColor: "rgba(34, 30, 26, 0.78)",
+    backgroundColor: "rgba(43, 43, 43, 0.78)",
   },
   coverChangeText: {
     color: WHITE,
@@ -1535,14 +1535,14 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
   },
   modalPrimaryText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontWeight: "400",
   },
   modalSecondaryButton: {
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
     paddingVertical: 12,
     alignItems: "center",
     marginTop: 10,

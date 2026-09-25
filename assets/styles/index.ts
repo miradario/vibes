@@ -1,18 +1,18 @@
 import { StyleSheet, Dimensions, Platform } from "react-native";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 
-export const PRIMARY_COLOR = "#E4B76E";
+export const PRIMARY_COLOR = vibesTheme.colors.accentMustard;
 export const SECONDARY_COLOR = vibesTheme.colors.accentBlue;
 export const WHITE = vibesTheme.colors.background;
-export const GRAY = "#6E6E6E";
-export const DARK_GRAY = "#2B2B2B";
-export const BLACK = "#2B2B2B";
+export const GRAY = vibesTheme.colors.secondaryText;
+export const DARK_GRAY = vibesTheme.colors.primaryText;
+export const BLACK = vibesTheme.colors.primaryText;
 export const BG_MAIN = vibesTheme.colors.background;
 export const BG_GRADIENT = vibesTheme.colors.background;
-export const TEXT_PRIMARY = "#2B2B2B";
-export const TEXT_SECONDARY = "#6E6E6E";
+export const TEXT_PRIMARY = vibesTheme.colors.primaryText;
+export const TEXT_SECONDARY = vibesTheme.colors.secondaryText;
 export const SURFACE_BUTTON = vibesTheme.colors.background;
-export const CTA_PRIMARY = "#E4B76E";
+export const CTA_PRIMARY = vibesTheme.colors.accentMustard;
 export const GLOW_HIGHLIGHT = "rgba(43, 43, 43, 0.06)";
 export const BUTTON_CREAM = vibesTheme.colors.background;
 export const BUTTON_BORDER = "rgba(43, 43, 43, 0.08)";
@@ -20,11 +20,11 @@ export const WARM_SHADOW = "rgba(43, 43, 43, 0.10)";
 export const SERIF_FONT = vibesTheme.fonts.primary;
 
 export const ONLINE_STATUS = vibesTheme.colors.accentBlue;
-export const OFFLINE_STATUS = "#D88C7A";
+export const OFFLINE_STATUS = vibesTheme.colors.accentCoral;
 
-export const STAR_ACTIONS = "#E4B76E";
-export const LIKE_ACTIONS = "#E4B76E";
-export const DISLIKE_ACTIONS = "#D88C7A";
+export const STAR_ACTIONS = vibesTheme.colors.accentMustard;
+export const LIKE_ACTIONS = vibesTheme.colors.accentMustard;
+export const DISLIKE_ACTIONS = vibesTheme.colors.accentCoral;
 export const FLASH_ACTIONS = vibesTheme.colors.accentBlue;
 
 export const DIMENSION_WIDTH = Dimensions.get("window").width;
@@ -50,7 +50,7 @@ export default StyleSheet.create({
     width: DIMENSION_WIDTH - 20,
     alignSelf: "center",
     minHeight: DIMENSION_HEIGHT * 0.82,
-    backgroundColor: "#FBF7F4",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.06)",
     shadowOpacity: 0.1,
@@ -63,7 +63,7 @@ export default StyleSheet.create({
   },
   discoverCardBackground: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#FBF7F4",
+    backgroundColor: vibesTheme.colors.background,
     zIndex: 0,
   },
   discoverCardBackgroundImage: {
@@ -235,12 +235,12 @@ export default StyleSheet.create({
     right: 12,
   },
   discoverMatchesPill: {
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#AEBFD1",
+    borderColor: vibesTheme.colors.accentBlue,
   },
   discoverContent: {
     alignItems: "center",
@@ -266,7 +266,7 @@ export default StyleSheet.create({
     textAlign: "left",
     paddingHorizontal: 0,
     marginTop: 4,
-    color: "#1F1B16",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     lineHeight: 24,
     fontFamily: SERIF_FONT,
@@ -277,7 +277,7 @@ export default StyleSheet.create({
     zIndex: 2,
   },
   discoverSectionTitle: {
-    color: "#17130F",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.semibold,
@@ -312,7 +312,7 @@ export default StyleSheet.create({
     borderColor: GLOW_HIGHLIGHT,
   },
   discoverTagText: {
-    color: "#1F1B16",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     fontFamily: SERIF_FONT,
   },
@@ -321,7 +321,7 @@ export default StyleSheet.create({
     width: "100%",
   },
   discoverDetailLabel: {
-    color: "#5F574C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 12,
     lineHeight: 15,
     fontFamily: vibesTheme.fonts.semibold,
@@ -334,14 +334,14 @@ export default StyleSheet.create({
     justifyContent: "flex-start",
   },
   discoverPreferencesSectionTitle: {
-    color: "#5D7FA3",
+    color: vibesTheme.colors.primaryText,
   },
   discoverPreferencePill: {
-    backgroundColor: "rgba(174, 191, 209, 0.16)",
-    borderColor: "rgba(174, 191, 209, 0.55)",
+    backgroundColor: "rgba(127, 152, 183, 0.16)",
+    borderColor: "rgba(127, 152, 183, 0.55)",
   },
   discoverPreferenceTagText: {
-    color: "#4F6F92",
+    color: vibesTheme.colors.primaryText,
   },
   discoverSharedSection: {
     marginTop: 2,
@@ -380,14 +380,14 @@ export default StyleSheet.create({
   },
   discoverSharedValue: {
     marginTop: 2,
-    color: "#17130F",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
   },
   discoverPromptPill: {
     marginTop: 8,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 34,
@@ -404,7 +404,7 @@ export default StyleSheet.create({
   },
   discoverPromptPillFull: {
     marginTop: 2,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -413,7 +413,7 @@ export default StyleSheet.create({
     width: "100%",
   },
   discoverPromptTextLeft: {
-    color: "#1F1B16",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     lineHeight: 24,
     textAlign: "left",
@@ -422,7 +422,7 @@ export default StyleSheet.create({
   discoverDebugBox: {
     width: "100%",
     borderRadius: 16,
-    backgroundColor: "#F1ECE6",
+    backgroundColor: "rgba(110, 110, 110, 0.13)",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     paddingVertical: 12,
@@ -448,7 +448,7 @@ export default StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
   },
   discoverGalleryThumbWrapActive: {
     borderColor: PRIMARY_COLOR,
@@ -465,11 +465,11 @@ export default StyleSheet.create({
     borderRadius: 37,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5BC95",
+    backgroundColor: vibesTheme.colors.accentMustard,
     zIndex: 2,
   },
   discoverPrimaryButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 22,
     lineHeight: 28,
     fontFamily: vibesTheme.fonts.semibold,
@@ -511,7 +511,7 @@ export default StyleSheet.create({
     zIndex: 3,
   },
   discoverConnectButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 22,
     lineHeight: 28,
     fontFamily: vibesTheme.fonts.semibold,
@@ -530,9 +530,9 @@ export default StyleSheet.create({
     borderRadius: 105,
     alignSelf: "center",
     top: "31%",
-    backgroundColor: "rgba(255, 253, 248, 0.72)",
+    backgroundColor: "rgba(254, 254, 253, 0.72)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.82)",
+    borderColor: "rgba(254, 254, 253, 0.82)",
     shadowColor: CTA_PRIMARY,
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 16 },
@@ -565,7 +565,7 @@ export default StyleSheet.create({
     height: 152,
     borderRadius: 76,
     borderWidth: 1,
-    borderColor: "rgba(174, 191, 209, 0.56)",
+    borderColor: "rgba(127, 152, 183, 0.56)",
     borderStyle: "dashed",
   },
   discoverCenterProfileImageWrap: {
@@ -573,9 +573,9 @@ export default StyleSheet.create({
     height: 126,
     borderRadius: 63,
     padding: 6,
-    backgroundColor: "rgba(255, 253, 248, 0.96)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderColor: "rgba(254, 254, 253, 0.96)",
     shadowColor: BLACK,
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 12 },
@@ -603,8 +603,8 @@ export default StyleSheet.create({
     borderRadius: 999,
     padding: 5,
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.92)",
-    backgroundColor: "rgba(255, 253, 248, 0.84)",
+    borderColor: "rgba(254, 254, 253, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.84)",
     shadowColor: BLACK,
     shadowOpacity: 0.18,
     shadowOffset: { width: 0, height: 10 },
@@ -618,7 +618,7 @@ export default StyleSheet.create({
     borderRadius: 999,
   },
   discoverOrbitDecorativeDotBlue: {
-    backgroundColor: "rgba(174, 191, 209, 0.72)",
+    backgroundColor: "rgba(127, 152, 183, 0.72)",
     shadowColor: SECONDARY_COLOR,
     shadowOpacity: 0.42,
     shadowOffset: { width: 0, height: 8 },
@@ -650,7 +650,7 @@ export default StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.10)",
     shadowOpacity: 0.14,
@@ -667,7 +667,7 @@ export default StyleSheet.create({
     paddingBottom: 14,
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
   },
@@ -821,7 +821,7 @@ export default StyleSheet.create({
     elevation: 3,
   },
   welcomePrimaryText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 20,
     fontWeight: "400",
     fontFamily: SERIF_FONT,
@@ -886,14 +886,14 @@ export default StyleSheet.create({
   },
   loginLabel: {
     fontSize: 14,
-    color: "#A9782B",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
     textTransform: "uppercase",
     letterSpacing: 1.2,
     marginBottom: 8,
   },
   loginInput: {
-    backgroundColor: "#FFFCF7",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.45)",
@@ -908,7 +908,7 @@ export default StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   loginError: {
-    color: "#8A3F35",
+    color: vibesTheme.colors.primaryText,
     textAlign: "center",
     fontSize: 14,
     lineHeight: 20,
@@ -939,7 +939,7 @@ export default StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontWeight: "400",
     fontFamily: SERIF_FONT,
@@ -1029,7 +1029,7 @@ export default StyleSheet.create({
   contactRow: {
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "#E4B76E",
+    borderBottomColor: vibesTheme.colors.accentMustard,
   },
   contactRowTitle: {
     color: DARK_GRAY,
@@ -1049,13 +1049,13 @@ export default StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 6,
     borderWidth: 3,
-    borderColor: "#AEBFD1",
+    borderColor: vibesTheme.colors.accentBlue,
     backgroundColor: "rgba(254, 254, 253, 0.9)",
   },
   swipeBadgeTextLike: {
     fontSize: 28,
     fontWeight: "400",
-    color: "#AEBFD1",
+    color: vibesTheme.colors.accentBlue,
     letterSpacing: 2,
   },
   swipeBadgeNope: {
@@ -1067,13 +1067,13 @@ export default StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 6,
     borderWidth: 3,
-    borderColor: "#D88C7A",
+    borderColor: vibesTheme.colors.accentCoral,
     backgroundColor: "rgba(254, 254, 253, 0.9)",
   },
   swipeBadgeTextNope: {
     fontSize: 28,
     fontWeight: "400",
-    color: "#D88C7A",
+    color: vibesTheme.colors.accentCoral,
     letterSpacing: 2,
   },
   swipeOverlay: {
@@ -1220,7 +1220,7 @@ export default StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 12,
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 8,
@@ -1327,7 +1327,7 @@ export default StyleSheet.create({
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: "#E4B76E",
+    borderTopColor: vibesTheme.colors.accentMustard,
   },
   profileSectionTitle: {
     color: PRIMARY_COLOR,
@@ -1352,7 +1352,7 @@ export default StyleSheet.create({
     marginTop: 2,
   },
   profileBadge: {
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -1508,7 +1508,7 @@ export default StyleSheet.create({
   },
   matchAvatarRingRight: {
     marginLeft: -18,
-    backgroundColor: "rgba(174, 191, 209, 0.35)",
+    backgroundColor: "rgba(127, 152, 183, 0.35)",
   },
   matchAvatar: {
     width: 80,
@@ -1546,7 +1546,7 @@ export default StyleSheet.create({
     elevation: 3,
   },
   matchPrimaryButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontWeight: "400",
     fontFamily: SERIF_FONT,
@@ -1582,7 +1582,7 @@ export default StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "#AEBFD1",
+    borderBottomColor: vibesTheme.colors.accentBlue,
   },
   flowTopIcon: {
     width: 36,
@@ -1609,7 +1609,7 @@ export default StyleSheet.create({
     textTransform: "uppercase",
   },
   flowSectionCount: {
-    backgroundColor: "#FBF5EA",
+    backgroundColor: "rgba(228, 183, 110, 0.13)",
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -1739,7 +1739,7 @@ export default StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#AEBFD1",
+    borderBottomColor: vibesTheme.colors.accentBlue,
   },
   chatHeader: {
     paddingTop: 8,
@@ -1749,7 +1749,7 @@ export default StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "#E4B76E",
+    borderBottomColor: vibesTheme.colors.accentMustard,
   },
   chatHeaderCenter: {
     flexDirection: "row",
@@ -1762,7 +1762,7 @@ export default StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 8,
@@ -1785,7 +1785,7 @@ export default StyleSheet.create({
   },
   chatBubbleLeft: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(174, 191, 209, 0.4)",
+    backgroundColor: "rgba(127, 152, 183, 0.4)",
     borderRadius: 20,
     borderTopLeftRadius: 4,
     paddingVertical: 12,
@@ -1823,7 +1823,7 @@ export default StyleSheet.create({
   },
   chatInputBar: {
     borderTopWidth: 1,
-    borderTopColor: "#E4B76E",
+    borderTopColor: vibesTheme.colors.accentMustard,
     paddingHorizontal: 16,
     paddingVertical: 10,
     flexDirection: "row",
@@ -1958,7 +1958,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "rgba(254, 254, 253, 0.85)",
     borderTopWidth: 1,
-    borderTopColor: "rgba(174, 191, 209, 0.4)",
+    borderTopColor: "rgba(127, 152, 183, 0.4)",
   },
   chatInputNew: {
     flex: 1,
@@ -1996,7 +1996,7 @@ export default StyleSheet.create({
     width: 86,
     height: 86,
     borderRadius: 43,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -2019,13 +2019,13 @@ export default StyleSheet.create({
     marginTop: 10,
     fontSize: 15,
     lineHeight: 22,
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
   },
   profileEssenceMuted: {
     marginTop: 6,
     fontSize: 14,
     lineHeight: 21,
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
   },
   profileValueRow: {
     flexDirection: "row",
@@ -2050,7 +2050,7 @@ export default StyleSheet.create({
     marginBottom: 26,
   },
   profileSectionLabel: {
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -2086,7 +2086,7 @@ export default StyleSheet.create({
     shadowOffset: { height: 5, width: 0 },
   },
   profilePrimaryCtaText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontWeight: "400",
     letterSpacing: 0.2,
@@ -2128,7 +2128,7 @@ export default StyleSheet.create({
   },
   textButton: {
     fontSize: 15,
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     paddingLeft: 5,
   },
   circledButton: {
@@ -2166,7 +2166,7 @@ export default StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: WHITE,
@@ -2399,7 +2399,7 @@ export default StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#AEBFD1",
+    backgroundColor: vibesTheme.colors.accentBlue,
     marginHorizontal: 4,
   },
   auraDotActive: {
@@ -2417,7 +2417,7 @@ export default StyleSheet.create({
     elevation: 3,
   },
   auraCtaText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontFamily: SERIF_FONT,
   },
@@ -2439,7 +2439,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#E4B76E",
+    borderBottomColor: vibesTheme.colors.accentMustard,
   },
   auraSettingRowLast: {
     borderBottomWidth: 0,
@@ -2506,7 +2506,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#E4B76E",
+    borderBottomColor: vibesTheme.colors.accentMustard,
   },
   settingsRowLeft: {
     flexDirection: "row",
@@ -2594,7 +2594,7 @@ export default StyleSheet.create({
   },
   onboardOption: {
     borderWidth: 1,
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
     borderRadius: 20,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -2603,7 +2603,7 @@ export default StyleSheet.create({
   },
   onboardOptionActive: {
     borderColor: PRIMARY_COLOR,
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   onboardOptionText: {
     color: DARK_GRAY,
@@ -2622,7 +2622,7 @@ export default StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E4B76E",
+    borderBottomColor: vibesTheme.colors.accentMustard,
   },
   onboardListText: {
     color: DARK_GRAY,
@@ -2633,7 +2633,7 @@ export default StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 1,
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   onboardCheckActive: {
     backgroundColor: CTA_PRIMARY,
@@ -2658,7 +2658,7 @@ export default StyleSheet.create({
     backgroundColor: "rgba(228, 183, 110, 0.72)",
   },
   onboardNextText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontFamily: SERIF_FONT,
   },
@@ -2741,7 +2741,7 @@ export default StyleSheet.create({
     borderRadius: 18,
   },
   meditationBarPrimaryText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     marginLeft: 6,
   },
@@ -2788,7 +2788,7 @@ export default StyleSheet.create({
     borderRadius: 16,
   },
   meditationPlayerOpenText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 12,
     marginLeft: 6,
   },
@@ -2798,7 +2798,7 @@ export default StyleSheet.create({
   meditationPlayerTrack: {
     height: 6,
     borderRadius: 999,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     overflow: "hidden",
   },
   meditationPlayerFill: {
@@ -2817,7 +2817,7 @@ export default StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "#AEBFD1",
+    borderColor: vibesTheme.colors.accentBlue,
     alignItems: "center",
     justifyContent: "center",
     marginHorizontal: 12,
@@ -2871,7 +2871,7 @@ export default StyleSheet.create({
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   premiumPlanActive: {
     borderColor: PRIMARY_COLOR,
@@ -2892,7 +2892,7 @@ export default StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -2906,7 +2906,7 @@ export default StyleSheet.create({
     paddingVertical: 2,
   },
   premiumPlanBadgeText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 10,
   },
   premiumList: {
@@ -2933,7 +2933,7 @@ export default StyleSheet.create({
     elevation: 3,
   },
   premiumCtaText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontFamily: SERIF_FONT,
   },
@@ -3012,7 +3012,7 @@ export default StyleSheet.create({
     elevation: 3,
   },
   editPrimaryText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontFamily: SERIF_FONT,
   },
@@ -3086,7 +3086,7 @@ export default StyleSheet.create({
   tabBarContainer: {
     width: "90%",
     height: 64,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
@@ -3096,7 +3096,7 @@ export default StyleSheet.create({
     shadowColor: PRIMARY_COLOR,
     shadowOffset: { height: 8, width: 0 },
     borderWidth: 1,
-    borderColor: "#AEBFD1",
+    borderColor: vibesTheme.colors.accentBlue,
     paddingHorizontal: 8,
   },
   tabItem: {
@@ -3113,7 +3113,7 @@ export default StyleSheet.create({
     height: 82,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
   },
   tabCircle: {
     top: -10,
@@ -3152,7 +3152,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "rgba(174, 191, 209, 0.5)",
+    borderColor: "rgba(127, 152, 183, 0.5)",
   },
   eventsSearchInput: {
     flex: 1,
@@ -3169,7 +3169,7 @@ export default StyleSheet.create({
     marginBottom: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(174, 191, 209, 0.3)",
+    borderColor: "rgba(127, 152, 183, 0.3)",
   },
   eventCardImage: {
     width: "100%",
@@ -3233,7 +3233,7 @@ export default StyleSheet.create({
   // EVENT DETAIL SCREEN
   eventDetailContainer: {
     flex: 1,
-    backgroundColor: "#F7F4EE",
+    backgroundColor: "rgba(110, 110, 110, 0.10)",
   },
   eventDetailHeader: {
     position: "absolute",
@@ -3249,7 +3249,7 @@ export default StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(247, 244, 238, 0.82)",
+    backgroundColor: "rgba(254, 254, 253, 0.82)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -3259,7 +3259,7 @@ export default StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(247, 244, 238, 0.82)",
+    backgroundColor: "rgba(254, 254, 253, 0.82)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -3350,14 +3350,14 @@ export default StyleSheet.create({
     color: TEXT_SECONDARY,
   },
   eventDetailInfoCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.82)",
+    backgroundColor: "rgba(254, 254, 253, 0.82)",
     borderRadius: 30,
     padding: 20,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.06)",
     shadowOpacity: 0.12,
     shadowRadius: 22,
-    shadowColor: "#A88A55",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOffset: { height: 10, width: 0 },
     elevation: 5,
     marginBottom: 34,
@@ -3459,13 +3459,13 @@ export default StyleSheet.create({
     marginBottom: 12,
     shadowOpacity: 0.22,
     shadowRadius: 14,
-    shadowColor: "#B28A49",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOffset: { height: 8, width: 0 },
   },
   eventDetailJoinButtonText: {
     fontSize: 18,
     letterSpacing: 0.3,
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.bold,
   },
   eventDetailJoinNote: {
@@ -3597,7 +3597,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "rgba(254, 254, 253, 0.95)",
     borderTopWidth: 1,
-    borderTopColor: "rgba(174, 191, 209, 0.3)",
+    borderTopColor: "rgba(127, 152, 183, 0.3)",
   },
   eventChatAttachButton: {
     width: 44,
@@ -3619,7 +3619,7 @@ export default StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#AEBFD1",
+    backgroundColor: vibesTheme.colors.accentBlue,
     alignItems: "center",
     justifyContent: "center",
   },

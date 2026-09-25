@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useEffect, useRef } from "react";
 import { AccessibilityInfo, Animated, StyleSheet, View } from "react-native";
 import { Text } from "./Typography";
@@ -41,7 +42,7 @@ export default function LikeBubbles({ trigger }: { trigger: number }) {
               borderRadius: 30,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: i % 2 ? "#E4B76E" : "#DCE6F0",
+              backgroundColor: i % 2 ? vibesTheme.colors.accentMustard : "rgba(127, 152, 183, 0.24)",
               opacity: progress.interpolate({
                 inputRange: [0, 0.65, 1],
                 outputRange: [0, 1, 0],
@@ -70,7 +71,7 @@ export default function LikeBubbles({ trigger }: { trigger: number }) {
           >
             <Text
               style={{
-                color: i % 2 ? "#3B3328" : "#56708D",
+                color: i % 2 ? vibesTheme.colors.primaryText : vibesTheme.colors.primaryText,
                 fontSize: 14,
               }}
             >

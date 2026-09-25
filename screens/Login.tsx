@@ -237,7 +237,7 @@ const Login = () => {
               <TextInput
                 style={styles.loginInput}
                 placeholder={t("login.emailPlaceholder")}
-                placeholderTextColor="rgba(110,110,110,0.45)"
+                placeholderTextColor="rgba(110, 110, 110, 0.45)"
                 autoCapitalize="none"
                 keyboardType="email-address"
                 returnKeyType="next"
@@ -255,7 +255,7 @@ const Login = () => {
                   ref={passwordInputRef}
                   style={[styles.loginInput, localStyles.passwordInput]}
                   placeholder=""
-                  placeholderTextColor="#6E6E6E"
+                  placeholderTextColor={vibesTheme.colors.secondaryText}
                   secureTextEntry={!showPassword}
                   returnKeyType="done"
                   value={password}
@@ -270,7 +270,7 @@ const Login = () => {
                   <Icon
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
                     size={20}
-                    color="#8C7B63"
+                    color={vibesTheme.colors.secondaryText}
                   />
                 </TouchableOpacity>
               </View>
@@ -326,7 +326,7 @@ const Login = () => {
                   accessibilityRole="link"
                   onPress={() => navigation.navigate("AgeAssurance" as never)}
                   style={{
-                    color: "#8B6327",
+                    color: vibesTheme.colors.primaryText,
                     textDecorationLine: "underline",
                     fontFamily: vibesTheme.fonts.medium,
                   }}
@@ -373,7 +373,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(43, 43, 43, 0.1)",
   },
   dividerText: {
-    color: "#8C7B63",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 0.8,
@@ -389,7 +389,7 @@ const localStyles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   forgotPasswordText: {
-    color: "#8C7B63",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     fontFamily: vibesTheme.fonts.semibold,
   },

@@ -381,7 +381,7 @@ const Events = () => {
               navigation.navigate("CreateEvent" as never);
             }}
           >
-            <Icon name="add" size={21} color="#B57716" />
+            <Icon name="add" size={21} color={vibesTheme.colors.accentMustard} />
             <Text style={localStyles.createButtonText}>
               {section === "challenge" ? "Crear desafío" : "Crear evento"}
             </Text>
@@ -478,7 +478,7 @@ const Events = () => {
                 <Icon
                   name={showExpiredEvents ? "chevron-up" : "chevron-down"}
                   size={22}
-                  color="#7A746D"
+                  color={vibesTheme.colors.secondaryText}
                 />
               </TouchableOpacity>
             ) : section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0) ? (
@@ -502,7 +502,7 @@ const Events = () => {
                     <Icon
                       name={showUpcomingChallenges ? "chevron-up" : "chevron-down"}
                       size={22}
-                      color="#7A746D"
+                      color={vibesTheme.colors.secondaryText}
                     />
                   </TouchableOpacity>
                 ) : null}
@@ -525,7 +525,7 @@ const Events = () => {
                     <Icon
                       name={showFinishedChallenges ? "chevron-up" : "chevron-down"}
                       size={22}
-                      color="#7A746D"
+                      color={vibesTheme.colors.secondaryText}
                     />
                   </TouchableOpacity>
                 ) : null}
@@ -617,7 +617,7 @@ const Events = () => {
                       <Icon
                         name={visibilityMeta.icon}
                         size={13}
-                        color="#7A746D"
+                        color={vibesTheme.colors.secondaryText}
                       />
                     ) : null}
                     <Text style={localStyles.feedRowTitle} numberOfLines={1}>
@@ -631,7 +631,7 @@ const Events = () => {
                   ) : null}
                   {item.type === "challenge" && checkedInTodayCount > 0 ? (
                     <View style={localStyles.communityTodayRow}>
-                      <Icon name="sparkles-outline" size={14} color="#D19443" />
+                      <Icon name="sparkles-outline" size={14} color={vibesTheme.colors.accentMustard} />
                       <Text style={localStyles.communityTodayText} numberOfLines={1}>
                         {t("home.challengeCheckedInToday", {
                           count: checkedInTodayCount,
@@ -651,7 +651,7 @@ const Events = () => {
                           <Text style={localStyles.feedParticipantsCount}>
                             {participantCount}
                           </Text>
-                          <Icon name="people" size={15} color="#4E4944" />
+                          <Icon name="people" size={15} color={vibesTheme.colors.primaryText} />
                         </View>
                       </View>
                       <View style={localStyles.feedRowArrow}>
@@ -671,7 +671,7 @@ const Events = () => {
                           <Text style={localStyles.feedParticipantsCount}>
                             {participantCount}
                           </Text>
-                          <Icon name="people" size={15} color="#4E4944" />
+                          <Icon name="people" size={15} color={vibesTheme.colors.primaryText} />
                         </View>
                       </View>
                       <View style={localStyles.feedRowArrow}>
@@ -734,18 +734,18 @@ const localStyles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#B57716",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   createButtonText: {
     flexShrink: 1,
     fontSize: 14,
-    color: "#B57716",
+    color: vibesTheme.colors.accentMustard,
     fontFamily: vibesTheme.fonts.medium,
   },
   searchInput: {
     fontSize: 18,
     fontFamily: vibesTheme.fonts.medium,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
   },
   feedSectionHeader: {
     marginTop: 4,
@@ -753,13 +753,13 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   feedSectionTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 25,
     lineHeight: 29,
     fontFamily: vibesTheme.fonts.thin,
   },
   joinedChallengesTitle: {
-    color: "#242424",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.regular,
   },
   feedSectionSubtitle: {
@@ -772,7 +772,7 @@ const localStyles = StyleSheet.create({
   feedRowCard: {
     minHeight: 98,
     borderRadius: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     paddingHorizontal: 14,
@@ -781,7 +781,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     gap: 14,
     marginBottom: 12,
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
@@ -791,7 +791,7 @@ const localStyles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
   },
   feedRowThumbWrap: {
     width: 64,
@@ -826,14 +826,14 @@ const localStyles = StyleSheet.create({
   },
   feedRowTitle: {
     flex: 1,
-    color: "#252323",
+    color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,
   },
   feedRowMeta: {
     marginTop: 4,
-    color: "#4E4944",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     lineHeight: 19,
     fontFamily: vibesTheme.fonts.semibold,
@@ -846,7 +846,7 @@ const localStyles = StyleSheet.create({
   },
   communityTodayText: {
     flex: 1,
-    color: "#7C5620",
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.semibold,
@@ -859,23 +859,23 @@ const localStyles = StyleSheet.create({
     minWidth: 84,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: "rgba(174, 191, 209, 0.92)",
+    backgroundColor: "rgba(127, 152, 183, 0.92)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.9)",
+    borderColor: "rgba(254, 254, 253, 0.9)",
   },
   feedThumbProgressPillPending: {
-    backgroundColor: "rgba(248, 241, 229, 0.94)",
+    backgroundColor: "rgba(254, 254, 253, 0.94)",
     borderColor: "rgba(228, 183, 110, 0.82)",
   },
   feedThumbProgressText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.background,
     fontSize: 12,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.semibold,
     textAlign: "center",
   },
   feedThumbProgressTextPending: {
-    color: "#7C5620",
+    color: vibesTheme.colors.primaryText,
   },
   feedInlineProgressPill: {
     borderRadius: 999,
@@ -884,7 +884,7 @@ const localStyles = StyleSheet.create({
     flexShrink: 0,
   },
   feedInlineProgressText: {
-    color: "#7C5620",
+    color: vibesTheme.colors.primaryText,
     fontSize: 12,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.semibold,
@@ -903,7 +903,7 @@ const localStyles = StyleSheet.create({
     gap: 8,
   },
   feedParticipantsCount: {
-    color: "#4E4944",
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.semibold,
@@ -928,8 +928,8 @@ const localStyles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
-    backgroundColor: "#F1EAE2",
+    borderColor: vibesTheme.colors.background,
+    backgroundColor: "rgba(216, 140, 122, 0.20)",
   },
   feedRowArrow: {
     width: 34,
@@ -944,7 +944,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: "rgba(174, 191, 209, 0.18)",
+    backgroundColor: "rgba(127, 152, 183, 0.18)",
   },
   progressPillPending: {
     backgroundColor: "rgba(228, 183, 110, 0.18)",
@@ -953,7 +953,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(216, 140, 122, 0.18)",
   },
   progressPillText: {
-    color: "#5F6E7D",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.semibold,
@@ -961,7 +961,7 @@ const localStyles = StyleSheet.create({
   finishedSectionToggle: {
     minHeight: 72,
     borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    backgroundColor: "rgba(254, 254, 253, 0.72)",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     paddingHorizontal: 18,
@@ -974,14 +974,14 @@ const localStyles = StyleSheet.create({
     gap: 12,
   },
   finishedSectionTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.thin,
   },
   finishedSectionSubtitle: {
     marginTop: 3,
-    color: "#7A746D",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -992,14 +992,14 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
   },
   emptyTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 24,
     fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
   },
   emptyText: {
     marginTop: 10,
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,

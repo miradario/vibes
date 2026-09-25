@@ -1,3 +1,4 @@
+import { vibesTheme } from "../theme/vibesTheme";
 import { useCommunityUnreadQuery } from "../queries/communityReceipts.queries";
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { Platform } from "react-native";
@@ -93,7 +94,7 @@ const registerPushToken = async (userId: string) => {
       name: "default",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FFC3A0",
+      lightColor: vibesTheme.colors.accentMustard,
     });
   }
 

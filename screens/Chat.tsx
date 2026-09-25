@@ -413,7 +413,7 @@ const Chat = () => {
                 onPress={handleAbandonConnection}
                 disabled={unmatchMutation.isPending}
               >
-                <Icon name="close-circle-outline" size={21} color="#D88C7A" />
+                <Icon name="close-circle-outline" size={21} color={vibesTheme.colors.accentCoral} />
                 <Text style={[localStyles.actionText, localStyles.dangerText]}>
                   Abandonar conexión
                 </Text>
@@ -430,7 +430,7 @@ const Chat = () => {
                 onPress={handleBlockUser}
                 disabled={blockMutation.isPending}
               >
-                <Icon name="ban-outline" size={21} color="#D88C7A" />
+                <Icon name="ban-outline" size={21} color={vibesTheme.colors.accentCoral} />
                 <Text style={[localStyles.actionText, localStyles.dangerText]}>Bloquear</Text>
               </TouchableOpacity>
             </Pressable>
@@ -483,7 +483,7 @@ const Chat = () => {
             <TextInput
               style={localStyles.reportInput}
               placeholder="Contanos qué pasó..."
-              placeholderTextColor="#999"
+              placeholderTextColor={vibesTheme.colors.secondaryText}
               value={reportDetails}
               onChangeText={setReportDetails}
               multiline
@@ -655,7 +655,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 15,
     paddingVertical: 11,
-    shadowColor: "#000",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -678,7 +678,7 @@ const localStyles = StyleSheet.create({
   msgTimeLeft: {},
   inputContainer: {
     backgroundColor: "rgba(254, 254, 253, 0.95)",
-    borderTopColor: "rgba(174, 191, 209, 0.3)",
+    borderTopColor: "rgba(127, 152, 183, 0.3)",
     paddingTop: 10,
     alignItems: "flex-end",
   },
@@ -712,11 +712,11 @@ const localStyles = StyleSheet.create({
   actionsSheet: {
     marginHorizontal: 16,
     borderRadius: 22,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 12,
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.14,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
@@ -725,10 +725,10 @@ const localStyles = StyleSheet.create({
   reportSheet: {
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 20,
     paddingTop: 22,
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.16,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: -8 },
@@ -743,7 +743,7 @@ const localStyles = StyleSheet.create({
   modalSubtitle: {
     marginTop: 4,
     marginBottom: 14,
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -762,7 +762,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   dangerText: {
-    color: "#D88C7A",
+    color: vibesTheme.colors.accentCoral,
   },
   reasonRow: {
     minHeight: 48,
@@ -771,7 +771,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.52)",
+    backgroundColor: "rgba(254, 254, 253, 0.52)",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.07)",
   },
@@ -790,13 +790,13 @@ const localStyles = StyleSheet.create({
     marginRight: 10,
   },
   radioSelected: {
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   reasonText: {
     flex: 1,
@@ -815,7 +815,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 15,
     lineHeight: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.58)",
+    backgroundColor: "rgba(254, 254, 253, 0.58)",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     fontFamily: vibesTheme.fonts.medium,
@@ -826,13 +826,13 @@ const localStyles = StyleSheet.create({
     marginTop: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   reportButtonDisabled: {
     opacity: 0.48,
   },
   reportButtonText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -843,11 +843,11 @@ const localStyles = StyleSheet.create({
   },
   messageBubbleRight: {
     alignSelf: "flex-end",
-    backgroundColor: "#FFF3E2",
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
     borderBottomRightRadius: 6,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.30)",
-    shadowColor: "#D9B07B",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.14,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },

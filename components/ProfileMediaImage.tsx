@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, type ImageStyle, type StyleProp } from "react-native";
 import { Image as ExpoImage } from "expo-image";
@@ -24,8 +25,8 @@ const hasValidUri = (value: unknown): value is { uri: string } => {
 const ProfileMediaImage = ({
   source,
   style,
-  fallbackBackgroundColor = "#E9E4DD",
-  fallbackIconColor = "#7F776F",
+  fallbackBackgroundColor = "rgba(216, 140, 122, 0.25)",
+  fallbackIconColor = vibesTheme.colors.secondaryText,
   transition = 250,
 }: ProfileMediaImageProps) => {
   const [hasError, setHasError] = useState(false);

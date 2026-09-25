@@ -153,9 +153,9 @@ function ChallengeCard({
         <LinearGradient
           pointerEvents="none"
           colors={[
-            "rgba(255,255,255,0)",
-            "rgba(255,255,255,0.92)",
-            "rgba(255,255,255,0.99)",
+            "rgba(254,254,253,0)",
+            "rgba(254,254,253,0.92)",
+            "rgba(254,254,253,0.99)",
           ]}
           locations={[0.18, 0.62, 1]}
           style={StyleSheet.absoluteFillObject}
@@ -178,7 +178,7 @@ function ChallengeCard({
             <Icon
               name={checkedInToday ? "checkmark" : "time-outline"}
               size={16}
-              color="#FFFFFF"
+              color={vibesTheme.colors.primaryText}
             />
           </View>
         ) : null}
@@ -243,9 +243,9 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
       <LinearGradient
         pointerEvents="none"
         colors={[
-          "rgba(255,255,255,0)",
-          "rgba(255,255,255,0.92)",
-          "rgba(255,255,255,0.99)",
+          "rgba(254,254,253,0)",
+          "rgba(254,254,253,0.92)",
+          "rgba(254,254,253,0.99)",
         ]}
         locations={[0.18, 0.62, 1]}
         style={StyleSheet.absoluteFillObject}
@@ -270,7 +270,7 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
           </Text>
           {event.modality === "online" ? (
             <View style={s.eventMetaRow}>
-              <Icon name="videocam-outline" size={16} color="#4B4B4B" />
+              <Icon name="videocam-outline" size={16} color={vibesTheme.colors.primaryText} />
               <Text
                 style={[s.meta, s.imageMeta, { flex: 1 }]}
                 numberOfLines={2}
@@ -433,9 +433,9 @@ const s = StyleSheet.create({
     marginBottom: 24,
   },
   card: {
-    backgroundColor: "#FCF8F0",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "#EDE2CF",
+    borderColor: "rgba(110, 110, 110, 0.30)",
     borderRadius: 18,
     padding: 16,
     marginBottom: 16,
@@ -450,7 +450,7 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     lineHeight: 21,
-    color: "#5F574C",
+    color: vibesTheme.colors.secondaryText,
     letterSpacing: 1,
     fontFamily: vibesTheme.fonts.regular,
   },
@@ -474,20 +474,20 @@ const s = StyleSheet.create({
     width: 174,
     minHeight: 154,
     borderRadius: 14,
-    backgroundColor: "#F7F1E8",
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
   },
   eventSkeletonCard: {
     width: 174,
     minHeight: 154,
     borderRadius: 14,
-    backgroundColor: "#F7F1E8",
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
   },
   challengeCard: {
     width: 174,
   },
   challengeFrame: {
     minHeight: 154,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 14,
     overflow: "hidden",
     justifyContent: "flex-end",
@@ -501,7 +501,7 @@ const s = StyleSheet.create({
     left: 10,
     zIndex: 2,
     alignSelf: "flex-start",
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -520,22 +520,22 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   challengeTodayBadgePending: {
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   challengeTodayBadgeDone: {
-    backgroundColor: "#8C8C8C",
+    backgroundColor: vibesTheme.colors.accentBlue,
   },
-  imageMeta: { color: "#4B4B4B" },
+  imageMeta: { color: vibesTheme.colors.primaryText },
   cardTitle: {
     fontSize: 18,
     lineHeight: 24,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
   },
   meta: {
     fontSize: 14,
     lineHeight: 20,
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontFamily: vibesTheme.fonts.regular,
   },
   action: {
@@ -556,13 +556,13 @@ const s = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "rgba(43,43,43,0.16)",
+    backgroundColor: "rgba(43, 43, 43, 0.16)",
     overflow: "hidden",
   },
   fill: { height: "100%", backgroundColor: ACCENT, borderRadius: 3 },
   percent: {
     minWidth: 33,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 18,
     textAlign: "right",
@@ -579,7 +579,7 @@ const s = StyleSheet.create({
   eventCard: {
     width: 174,
     minHeight: 154,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 14,
     overflow: "hidden",
     paddingTop: 58,
@@ -594,19 +594,19 @@ const s = StyleSheet.create({
     width: 42,
     minHeight: 44,
     borderRadius: 10,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 5,
   },
   dateWeekday: {
-    color: "#5F574C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 10,
     lineHeight: 13,
     fontFamily: vibesTheme.fonts.medium,
   },
   dateDay: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 21,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,
@@ -640,8 +640,8 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    backgroundColor: "#FEFEFD",
-    borderColor: "#EDE2CF",
+    backgroundColor: vibesTheme.colors.background,
+    borderColor: "rgba(110, 110, 110, 0.30)",
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,
@@ -651,8 +651,8 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
-    backgroundColor: "#FEFEFD",
-    borderColor: "#EDE2CF",
+    backgroundColor: vibesTheme.colors.background,
+    borderColor: "rgba(110, 110, 110, 0.30)",
     borderWidth: 1,
     borderRadius: 16,
     padding: 18,
@@ -661,13 +661,13 @@ const s = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 31,
-    backgroundColor: "#F3EADF",
+    backgroundColor: "rgba(216, 140, 122, 0.21)",
     alignItems: "center",
     justifyContent: "center",
   },
   emptyCopy: { flex: 1, minWidth: 0 },
   emptyTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,
@@ -684,7 +684,7 @@ const s = StyleSheet.create({
     backgroundColor: ACCENT,
   },
   ctaText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,

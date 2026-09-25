@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import React from "react";
 import { View } from "react-native";
 import Icon from "./Icon";
@@ -23,7 +24,7 @@ export default function MessageReceipt({
       <Icon
         name={status === "sending" ? "time-outline" : status === "sent" ? "checkmark" : "checkmark-done"}
         size={16}
-        color={status === "read" ? "#426F9C" : "#6E6E6E"}
+        color={status === "read" ? vibesTheme.colors.primaryText : vibesTheme.colors.secondaryText}
       />
     </View>
   );

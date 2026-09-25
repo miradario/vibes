@@ -77,7 +77,7 @@ const AgeAssurance = () => {
               onPress={() => setShowPicker(true)}
               activeOpacity={0.78}
             >
-              <Text style={{ color: birthDate ? DARK_GRAY : "#6E6E6E" }}>
+              <Text style={{ color: birthDate ? DARK_GRAY : vibesTheme.colors.secondaryText }}>
                 {birthDate
                   ? formatBirthDate(birthDate)
                   : t("ageAssurance.birthDatePlaceholder")}
@@ -138,7 +138,7 @@ const localStyles = StyleSheet.create({
     gap: 10,
   },
   kicker: {
-    color: "#8C7B63",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 12,
     letterSpacing: 1.8,
     textTransform: "uppercase",
@@ -151,13 +151,13 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     lineHeight: 22,
     textAlign: "center",
   },
   card: {
-    backgroundColor: "rgba(255, 253, 248, 0.78)",
+    backgroundColor: "rgba(254, 254, 253, 0.78)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.24)",
     borderRadius: 24,
@@ -165,7 +165,7 @@ const localStyles = StyleSheet.create({
   },
   error: {
     marginTop: 10,
-    color: "#C65353",
+    color: vibesTheme.colors.accentCoral,
     fontSize: 14,
     lineHeight: 19,
   },

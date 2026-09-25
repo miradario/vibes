@@ -262,7 +262,7 @@ const VibesMinimalOnboarding = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     alignItems: "center",
   },
   topGlowOverlay: {
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   ctaPillText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 16,
   },

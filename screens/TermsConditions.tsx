@@ -83,7 +83,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: WHITE,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#AEBFD1",
+    borderColor: vibesTheme.colors.accentBlue,
   },
   cardContent: {
     padding: 16,

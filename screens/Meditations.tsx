@@ -58,7 +58,7 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     title: "Silencio",
     subtitle: "Solo vos y tu respiración",
     iconName: "body-outline",
-    iconTint: "rgba(174, 191, 209, 0.26)",
+    iconTint: "rgba(127, 152, 183, 0.26)",
   },
   {
     value: "guided",
@@ -92,7 +92,7 @@ const BACKGROUND_MUSIC_BY_DURATION: Record<DurationOption, number> = {
 };
 
 const FINISH_SOUND = require("../assets/audio/meditation/finish.mp3");
-const MEDITATION_VIDEO_BACKGROUND = "#FFFFFF";
+const MEDITATION_VIDEO_BACKGROUND = vibesTheme.colors.background;
 const MEDITATION_AUDIO_VOLUME = 1;
 const BACKGROUND_MUSIC_VOLUME = 0.08;
 
@@ -912,7 +912,7 @@ const MeditationScreen = () => {
                     size={22}
                     color={
                       isBackgroundMusicEnabled
-                        ? "#FFFFFF"
+                        ? vibesTheme.colors.background
                         : vibesTheme.colors.primaryText
                     }
                   />
@@ -1080,7 +1080,7 @@ const MeditationScreen = () => {
                         : "play"
                     }
                     size={24}
-                    color="#FEFEFD"
+                    color={vibesTheme.colors.background}
                   />
                 </Pressable>
               </View>
@@ -1224,7 +1224,7 @@ const MeditationScreen = () => {
                           : "play"
                       }
                       size={24}
-                      color="#FEFEFD"
+                      color={vibesTheme.colors.background}
                     />
                   </Pressable>
                 </View>
@@ -1240,11 +1240,11 @@ const MeditationScreen = () => {
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   scrollContent: {
     paddingHorizontal: 18,
@@ -1262,8 +1262,8 @@ const localStyles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.74)",
-    shadowColor: "#2B2B2B",
+    backgroundColor: "rgba(254, 254, 253, 0.74)",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 20,
@@ -1278,7 +1278,7 @@ const localStyles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 2,
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -1287,7 +1287,7 @@ const localStyles = StyleSheet.create({
     marginTop: 14,
   },
   sectionLabel: {
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     lineHeight: 19,
     letterSpacing: 1,
@@ -1304,12 +1304,12 @@ const localStyles = StyleSheet.create({
   practiceCard: {
     minHeight: 108,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 10,
     paddingVertical: 8,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: 28,
@@ -1319,7 +1319,7 @@ const localStyles = StyleSheet.create({
   },
   practiceCardSelected: {
     borderColor: "rgba(43, 43, 43, 0.03)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   checkWrap: {
     position: "absolute",
@@ -1343,7 +1343,7 @@ const localStyles = StyleSheet.create({
   },
   practiceSubtitle: {
     marginTop: 3,
-    color: "#7B756F",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     lineHeight: 18,
     textAlign: "center",
@@ -1360,10 +1360,10 @@ const localStyles = StyleSheet.create({
   durationCard: {
     height: 82,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 26,
@@ -1373,7 +1373,7 @@ const localStyles = StyleSheet.create({
   },
   durationCardSelected: {
     borderColor: "rgba(43, 43, 43, 0.03)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   durationCheckWrap: {
     position: "absolute",
@@ -1388,7 +1388,7 @@ const localStyles = StyleSheet.create({
   },
   durationLabel: {
     marginTop: 1,
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 19,
     fontFamily: vibesTheme.fonts.medium,
@@ -1396,7 +1396,7 @@ const localStyles = StyleSheet.create({
   musicSelector: {
     marginTop: 16,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: vibesTheme.colors.borderSoft,
     paddingVertical: 14,
@@ -1404,7 +1404,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 24,
@@ -1412,7 +1412,7 @@ const localStyles = StyleSheet.create({
   },
   musicSelectorActive: {
     borderColor: "rgba(228, 183, 110, 0.62)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   musicSelectorLeft: {
     flexDirection: "row",
@@ -1443,7 +1443,7 @@ const localStyles = StyleSheet.create({
   },
   musicSubtitle: {
     marginTop: 4,
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -1451,7 +1451,7 @@ const localStyles = StyleSheet.create({
   musicOptionsPanel: {
     marginTop: 12,
     borderRadius: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: vibesTheme.colors.borderSoft,
     overflow: "hidden",
@@ -1479,7 +1479,7 @@ const localStyles = StyleSheet.create({
   },
   musicOptionSubtitle: {
     marginTop: 2,
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -1487,10 +1487,10 @@ const localStyles = StyleSheet.create({
   previewCard: {
     marginTop: 22,
     borderRadius: 28,
-    backgroundColor: "#fafafa",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.04)",
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 14 },
     shadowRadius: 30,
@@ -1509,7 +1509,7 @@ const localStyles = StyleSheet.create({
   },
   previewCardImmersive: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 22,
     paddingTop: 14,
     paddingBottom: 28,
@@ -1549,7 +1549,7 @@ const localStyles = StyleSheet.create({
   },
   previewPlayerSubtitle: {
     marginTop: 2,
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     lineHeight: 20,
     textAlign: "center",
@@ -1562,7 +1562,7 @@ const localStyles = StyleSheet.create({
   },
   previewPlayerSubtitleImmersive: {
     marginTop: 4,
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 18,
     lineHeight: 22,
     textAlign: "center",
@@ -1603,7 +1603,7 @@ const localStyles = StyleSheet.create({
   shareSessionCard: {
     marginTop: 18,
     borderRadius: 24,
-    backgroundColor: "#FFF9EF",
+    backgroundColor: "rgba(228, 183, 110, 0.10)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.20)",
     paddingHorizontal: 18,
@@ -1638,7 +1638,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 24,
   },
   previewMantra: {
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 18,
     lineHeight: 22,
     textAlign: "center",
@@ -1651,7 +1651,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 10,
   },
   previewMantraImmersive: {
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 22,
     lineHeight: 28,
     textAlign: "center",
@@ -1693,7 +1693,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentCoral,
     marginLeft: -9,
     borderWidth: 3,
-    borderColor: "#FFFFFF",
+    borderColor: vibesTheme.colors.background,
   },
   controlRow: {
     marginTop: 18,
@@ -1728,12 +1728,12 @@ const localStyles = StyleSheet.create({
   },
   immersivePlayerOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     zIndex: 60,
   },
   immersivePlayerSafeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   bottomBarOuter: {
     position: "absolute",
@@ -1745,7 +1745,7 @@ const localStyles = StyleSheet.create({
   },
   bottomBar: {
     borderRadius: 34,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
     borderWidth: 1,
     borderColor: vibesTheme.colors.borderSoft,
     paddingTop: 14,
@@ -1754,7 +1754,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: 28,
@@ -1777,7 +1777,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 35,
     backgroundColor: vibesTheme.colors.accentMustard,
     borderWidth: 4,
-    borderColor: "#FFFFFF",
+    borderColor: vibesTheme.colors.background,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: vibesTheme.colors.accentMustard,
@@ -1792,14 +1792,14 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(174, 191, 209, 0.1)",
+    backgroundColor: "rgba(127, 152, 183, 0.1)",
     marginBottom: 6,
   },
   iconBubbleActive: {
-    backgroundColor: "rgba(174, 191, 209, 0.22)",
+    backgroundColor: "rgba(127, 152, 183, 0.22)",
   },
   tabLabel: {
-    color: "#6F6A65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 19,
     fontFamily: vibesTheme.fonts.medium,

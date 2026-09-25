@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useRef, useState } from "react";
@@ -80,7 +81,7 @@ const OnboardingName = () => {
                 ref={nameInputRef}
                 style={styles.loginInput}
                 placeholder={t("onboarding.namePlaceholder")}
-                placeholderTextColor="#6E6E6E"
+                placeholderTextColor={vibesTheme.colors.secondaryText}
                 autoCapitalize="words"
                 returnKeyType="done"
                 value={name}

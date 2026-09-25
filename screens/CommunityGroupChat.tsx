@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import chatStyles, { DARK_GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import ParticipantsSheet from "../components/ParticipantsSheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -181,7 +182,7 @@ export default function CommunityGroupChat() {
             onPress={() => navigation.goBack()}
             style={s.back}
           >
-            <Icon name="chevron-back" size={26} color="#403B36" />
+            <Icon name="chevron-back" size={26} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
@@ -201,7 +202,7 @@ export default function CommunityGroupChat() {
             ) : group?.photoUrl ? (
               <Avatar uri={group.photoUrl} size={44} />
             ) : (
-              <Icon name="people-outline" size={30} color="#B57716" />
+              <Icon name="people-outline" size={30} color={vibesTheme.colors.accentMustard} />
             )}
           </TouchableOpacity>
           <TouchableOpacity
@@ -225,7 +226,7 @@ export default function CommunityGroupChat() {
             disabled={leaving}
             style={{ padding: 12 }}
           >
-            <Icon name="ellipsis-horizontal" size={22} color="#403B36" />
+            <Icon name="ellipsis-horizontal" size={22} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>
         </View>
         <AnimatedSheetModal
@@ -238,7 +239,7 @@ export default function CommunityGroupChat() {
             }
           }}
           sheetStyle={{
-            backgroundColor: "#FEFEFD",
+            backgroundColor: vibesTheme.colors.background,
             padding: 28,
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
@@ -265,7 +266,7 @@ export default function CommunityGroupChat() {
             accessibilityLabel="Abandonar grupo"
           >
             <Text
-              style={{ fontSize: 18, color: "#A14D3D", paddingVertical: 20 }}
+              style={{ fontSize: 18, color: vibesTheme.colors.primaryText, paddingVertical: 20 }}
             >
               Abandonar grupo
             </Text>
@@ -280,7 +281,7 @@ export default function CommunityGroupChat() {
           error={members.isError}
           retry={() => void members.refetch()}
         />
-        {messages.isLoading ? <ActivityIndicator color="#B98235" /> : null}
+        {messages.isLoading ? <ActivityIndicator color={vibesTheme.colors.accentMustard} /> : null}
         {messages.isError ? (
           <TouchableOpacity onPress={() => void messages.refetch()}>
             <Text style={s.empty}>
@@ -308,7 +309,7 @@ export default function CommunityGroupChat() {
                 style={{
                   textAlign: "center",
                   padding: 12,
-                  color: "#6E6E6E",
+                  color: vibesTheme.colors.secondaryText,
                   fontSize: 13,
                 }}
               >
@@ -415,7 +416,7 @@ export default function CommunityGroupChat() {
   );
 }
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FEFEFD" },
+  screen: { flex: 1, backgroundColor: vibesTheme.colors.background },
   header: { flexDirection: "row", alignItems: "center", padding: 16, gap: 10, flexShrink: 0 },
   messages: { flex: 1, minHeight: 0 },
   back: { padding: 8 },
@@ -441,7 +442,7 @@ const s = StyleSheet.create({
     backgroundColor: WHITE,
     padding: 12,
     borderRadius: 16,
-    shadowColor: "#000",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -449,14 +450,14 @@ const s = StyleSheet.create({
   },
   own: {
     alignSelf: "flex-end",
-    backgroundColor: "#FFF3E2",
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.30)",
   },
   sender: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#85612A",
+    color: vibesTheme.colors.primaryText,
     marginBottom: 4,
   },
   body: { color: DARK_GRAY, fontSize: 16 },

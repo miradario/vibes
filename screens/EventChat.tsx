@@ -1000,12 +1000,12 @@ export default EventChat;
 const localStyles = StyleSheet.create({
   keyboardAvoidingRoot: {
     flex: 1,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
   },
   headerTitle: {
     fontSize: 22,
     fontFamily: vibesTheme.fonts.thin,
-    color: "#222",
+    color: vibesTheme.colors.primaryText,
     letterSpacing: 0.2,
   },
   eventMetaSection: {
@@ -1014,7 +1014,7 @@ const localStyles = StyleSheet.create({
     paddingBottom: 6,
   },
   eventMetaCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.88)",
+    backgroundColor: "rgba(254, 254, 253, 0.88)",
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -1042,7 +1042,7 @@ const localStyles = StyleSheet.create({
     fontWeight: "400",
   },
   eventMetaTimeText: {
-    color: "#444",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     fontWeight: "400",
   },
@@ -1057,13 +1057,13 @@ const localStyles = StyleSheet.create({
     paddingVertical: 9,
   },
   eventMapButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     fontWeight: "400",
   },
   eventLocationText: {
     marginTop: 10,
-    color: "#444",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -1112,11 +1112,11 @@ const localStyles = StyleSheet.create({
   },
   messageBubbleMe: {
     alignSelf: "flex-end",
-    backgroundColor: "#FFF3E2",
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
     borderBottomRightRadius: 6,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.30)",
-    shadowColor: "#D9B07B",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.14,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
@@ -1126,7 +1126,7 @@ const localStyles = StyleSheet.create({
     alignSelf: "flex-start",
     backgroundColor: WHITE,
     borderBottomLeftRadius: 4,
-    shadowColor: "#000",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -1156,7 +1156,7 @@ const localStyles = StyleSheet.create({
     marginTop: 4,
   },
   messageTimeCoach: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     opacity: 0.68,
   },
   composerInput: {
@@ -1166,7 +1166,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: COMPOSER_VERTICAL_PADDING,
   },
   moreAvatar: {
-    backgroundColor: "#F0EDE8",
+    backgroundColor: "rgba(110, 110, 110, 0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1194,7 +1194,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 28,
     padding: 20,
     paddingBottom: 24,
-    shadowColor: "#000",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.14,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 18 },
@@ -1228,7 +1228,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
   },
   kickButton: {
-    backgroundColor: "#FFE8E8",
+    backgroundColor: "rgba(216, 140, 122, 0.17)",
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1236,7 +1236,7 @@ const localStyles = StyleSheet.create({
   kickButtonText: {
     fontSize: 12,
     fontFamily: vibesTheme.fonts.semibold,
-    color: "#D32F2F",
+    color: vibesTheme.colors.accentCoral,
   },
   inputAvatar: {
     width: 32,

@@ -291,7 +291,7 @@ const DiscoverOrbitCanvas = ({
     <View style={styles.discoverOrbitScreen} onLayout={handleLayout}>
       <LinearGradient
         pointerEvents="none"
-        colors={["#FFFDF8", "#F7F3EF", "#FEFEFD"]}
+        colors={[vibesTheme.colors.background, "rgba(110, 110, 110, 0.10)", vibesTheme.colors.background]}
         locations={[0, 0.55, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -321,9 +321,9 @@ const DiscoverOrbitCanvas = ({
               <LinearGradient
                 pointerEvents="none"
                 colors={[
-                  "rgba(255,255,255,0.92)",
-                  "rgba(228,183,110,0.18)",
-                  "rgba(174,191,209,0.2)",
+                  "rgba(254, 254, 253, 0.92)",
+                  "rgba(228, 183, 110, 0.18)",
+                  "rgba(127, 152, 183, 0.2)",
                 ]}
                 style={StyleSheet.absoluteFill}
               />
@@ -400,9 +400,9 @@ const DiscoverOrbitCanvas = ({
                     <LinearGradient
                       pointerEvents="none"
                       colors={[
-                        "rgba(255,255,255,0.96)",
-                        "rgba(228,183,110,0.2)",
-                        "rgba(174,191,209,0.24)",
+                        "rgba(254, 254, 253, 0.96)",
+                        "rgba(228, 183, 110, 0.2)",
+                        "rgba(127, 152, 183, 0.24)",
                       ]}
                       style={StyleSheet.absoluteFill}
                     />
@@ -461,7 +461,7 @@ const localStyles = {
     width: 230,
     height: 230,
     borderRadius: 115,
-    backgroundColor: "rgba(174, 191, 209, 0.2)",
+    backgroundColor: "rgba(127, 152, 183, 0.2)",
   },
   sparkleOne: {
     position: "absolute" as const,
@@ -470,8 +470,8 @@ const localStyles = {
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.background,
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.8,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
@@ -483,8 +483,8 @@ const localStyles = {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#AEBFD1",
+    backgroundColor: vibesTheme.colors.background,
+    shadowColor: vibesTheme.colors.accentBlue,
     shadowOpacity: 0.9,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
@@ -493,10 +493,10 @@ const localStyles = {
     overflow: "hidden" as const,
     alignItems: "center" as const,
     justifyContent: "center" as const,
-    backgroundColor: "rgba(255, 253, 248, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.55)",
-    shadowColor: "#D88C7A",
+    shadowColor: vibesTheme.colors.accentCoral,
     shadowOpacity: 0.18,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
@@ -519,7 +519,7 @@ const localStyles = {
     width: "52%" as const,
     height: "22%" as const,
     borderRadius: 999,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: "rgba(254, 254, 253, 0.5)",
     transform: [{ rotate: "-18deg" }],
   },
   distancePill: {
@@ -528,16 +528,16 @@ const localStyles = {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: "rgba(255, 253, 248, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.24)",
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
   },
   distancePillText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 11,
     fontFamily: vibesTheme.fonts.bold,
     letterSpacing: 0,

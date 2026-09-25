@@ -1,6 +1,7 @@
 {
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
+    "colors:check": "python3 scripts/check_vibes_palette.py",
     "postinstall": "node scripts/android-modal-transparency.cjs",
     "start": "expo start",
     "android": "expo run:android",

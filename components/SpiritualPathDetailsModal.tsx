@@ -228,7 +228,7 @@ const SpiritualPathDetailsModal = ({
 const localStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(17, 17, 17, 0.34)",
+    backgroundColor: "rgba(43, 43, 43, 0.34)",
     justifyContent: "center",
     paddingVertical: 20,
     paddingHorizontal: 16,
@@ -245,7 +245,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 26,
     paddingTop: 24,
     paddingBottom: 22,
-    shadowColor: "#8C7B63",
+    shadowColor: vibesTheme.colors.secondaryText,
     shadowOpacity: 0.12,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 14 },
@@ -262,7 +262,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 24,
-    backgroundColor: "#FBF8F4",
+    backgroundColor: vibesTheme.colors.background,
   },
   title: {
     flex: 1,
@@ -306,7 +306,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 23,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.44)",
-    backgroundColor: "rgba(255, 253, 248, 0.86)",
+    backgroundColor: "rgba(254, 254, 253, 0.86)",
     paddingHorizontal: 20,
     paddingVertical: 11,
     alignItems: "center",
@@ -314,7 +314,7 @@ const localStyles = StyleSheet.create({
   },
   optionChipActive: {
     backgroundColor: "rgba(228, 183, 110, 0.16)",
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   optionChipText: {
     color: DARK_GRAY,
@@ -329,7 +329,7 @@ const localStyles = StyleSheet.create({
     minHeight: 54,
     borderRadius: 18,
     borderColor: "rgba(228, 183, 110, 0.36)",
-    backgroundColor: "rgba(255, 253, 248, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     fontSize: 17,
     fontFamily: vibesTheme.fonts.primary,
   },
@@ -338,7 +338,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 16,
   },
   errorText: {
-    color: "#B45A4D",
+    color: vibesTheme.colors.accentCoral,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 7,
@@ -346,12 +346,12 @@ const localStyles = StyleSheet.create({
   },
   readOnlyItem: {
     borderWidth: 1,
-    borderColor: "rgba(168, 131, 102, 0.18)",
+    borderColor: "rgba(216, 140, 122, 0.18)",
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 10,
-    backgroundColor: "#FBF8F4",
+    backgroundColor: vibesTheme.colors.background,
   },
   readOnlyLabel: {
     color: PRIMARY_COLOR,
@@ -367,7 +367,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 22,
     paddingHorizontal: 16,
-    backgroundColor: "#FBF8F4",
+    backgroundColor: vibesTheme.colors.background,
   },
   emptyStateText: {
     color: GRAY,
@@ -389,7 +389,7 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(216, 140, 122, 0.28)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    backgroundColor: "rgba(254, 254, 253, 0.72)",
   },
   removeButtonText: {
     textAlign: "center",

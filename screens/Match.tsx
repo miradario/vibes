@@ -117,7 +117,7 @@ const Match = () => {
           <View style={localStyles.centerMark}>
             <View style={localStyles.dottedLine} />
             <View style={localStyles.centerSeal}>
-              <Icon name="leaf-outline" size={24} color="#DCA453" />
+              <Icon name="leaf-outline" size={24} color={vibesTheme.colors.accentMustard} />
             </View>
             <View style={localStyles.dottedLine} />
           </View>
@@ -154,7 +154,7 @@ const Match = () => {
 const localStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
   },
   content: {
     paddingHorizontal: 24,
@@ -176,18 +176,18 @@ const localStyles = StyleSheet.create({
     position: "absolute",
     left: 0,
     top: 4,
-    color: "#E7B75E",
+    color: vibesTheme.colors.accentMustard,
     fontSize: 24,
   },
   sparkleSmall: {
     position: "absolute",
     right: 0,
     top: 0,
-    color: "#E7B75E",
+    color: vibesTheme.colors.accentMustard,
     fontSize: 16,
   },
   title: {
-    color: "#47423C",
+    color: vibesTheme.colors.primaryText,
     fontSize: 36,
     lineHeight: 39,
     textAlign: "center",
@@ -203,13 +203,13 @@ const localStyles = StyleSheet.create({
     width: 40,
     height: 2,
     borderRadius: 1,
-    backgroundColor: "#E7B75E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   dividerDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#E7B75E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   heroWrap: {
     width: "100%",
@@ -241,18 +241,18 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#B99B68",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.14,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
   },
   avatarBlue: {
-    backgroundColor: "#E2ECF1",
-    borderColor: "#BFD2DC",
+    backgroundColor: "rgba(127, 152, 183, 0.20)",
+    borderColor: "rgba(110, 110, 110, 0.30)",
   },
   avatarGold: {
-    backgroundColor: "#F2E5C7",
-    borderColor: "#E8CE9D",
+    backgroundColor: "rgba(228, 183, 110, 0.37)",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   avatarImage: {
     width: "100%",
@@ -261,7 +261,7 @@ const localStyles = StyleSheet.create({
   },
   personName: {
     marginTop: 8,
-    color: "#47423C",
+    color: vibesTheme.colors.primaryText,
     fontSize: 20,
     textAlign: "center",
     fontFamily: vibesTheme.fonts.bold,
@@ -278,7 +278,7 @@ const localStyles = StyleSheet.create({
     maxWidth: 78,
     borderTopWidth: 4,
     borderStyle: "dotted",
-    borderColor: "#EAC978",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   centerSeal: {
     width: 58,
@@ -286,10 +286,10 @@ const localStyles = StyleSheet.create({
     borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F8F4EA",
+    backgroundColor: "rgba(228, 183, 110, 0.14)",
     borderWidth: 1,
-    borderColor: "rgba(231, 183, 94, 0.32)",
-    shadowColor: "#B99B68",
+    borderColor: "rgba(228, 183, 110, 0.32)",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.16,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
@@ -298,7 +298,7 @@ const localStyles = StyleSheet.create({
     width: "100%",
     minHeight: 112,
     borderRadius: 18,
-    backgroundColor: "rgba(247, 244, 238, 0.78)",
+    backgroundColor: "rgba(254, 254, 253, 0.78)",
     paddingHorizontal: 18,
     paddingVertical: 16,
     flexDirection: "row",
@@ -311,11 +311,11 @@ const localStyles = StyleSheet.create({
     borderRadius: 31,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(236, 233, 226, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
   },
   messageText: {
     flex: 1,
-    color: "#47423C",
+    color: vibesTheme.colors.primaryText,
     fontSize: 19,
     lineHeight: 25,
     fontFamily: vibesTheme.fonts.semibold,
@@ -330,11 +330,11 @@ const localStyles = StyleSheet.create({
     gap: 14,
   },
   footerSparkle: {
-    color: "#E7B75E",
+    color: vibesTheme.colors.accentMustard,
     fontSize: 22,
   },
   footerText: {
-    color: "#786F66",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 19,
     lineHeight: 24,
     textAlign: "center",

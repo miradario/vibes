@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useEffect, useState } from "react";
@@ -77,14 +78,14 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 54,
     borderRadius: 22,
-    backgroundColor: "#000",
+    backgroundColor: vibesTheme.colors.primaryText,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
   },
   fallbackText: {
-    color: "#fff",
+    color: vibesTheme.colors.background,
     fontSize: 16,
   },
 });

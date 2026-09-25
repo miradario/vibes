@@ -338,7 +338,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 12,
   },
   selectedPathHint: {
-    color: "#8C7B63",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     marginTop: 2,
   },
@@ -363,22 +363,22 @@ const localStyles = StyleSheet.create({
   },
   choiceChip: {
     borderWidth: 1,
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
     backgroundColor: WHITE,
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
   choiceChipActive: {
-    backgroundColor: "#E4B76E",
-    borderColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
+    borderColor: vibesTheme.colors.accentMustard,
   },
   choiceChipText: {
     color: DARK_GRAY,
     fontSize: 14,
   },
   choiceChipTextActive: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
   },
   otherInputRow: {
     flexDirection: "row",
@@ -391,12 +391,12 @@ const localStyles = StyleSheet.create({
   },
   addButton: {
     borderRadius: 18,
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   addButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     fontFamily: vibesTheme.fonts.semibold,
   },

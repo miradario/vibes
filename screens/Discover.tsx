@@ -900,7 +900,7 @@ export const DiscoverContent = forwardRef<
               style={styles.galleryClose}
               onPress={() => setShowGallery(false)}
             >
-              <Icon name="close" size={18} color="#FEFEFD" />
+              <Icon name="close" size={18} color={vibesTheme.colors.background} />
             </TouchableOpacity>
             <FlatList
               key={`gallery-${galleryInitialIndex}-${galleryImages.length}`}
@@ -954,7 +954,7 @@ export const DiscoverContent = forwardRef<
                 }
                 style={localStyles.filtersCloseButton}
               >
-                <Icon name="close" size={24} color="#171A22" />
+                <Icon name="close" size={24} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
             </View>
 
@@ -974,7 +974,7 @@ export const DiscoverContent = forwardRef<
                       value={discoverFilters.ageMin?.toString() ?? ""}
                       onChangeText={(value) => setAgeInput("ageMin", value)}
                       placeholder={t("discover.noLimit")}
-                      placeholderTextColor="#343841"
+                      placeholderTextColor={vibesTheme.colors.primaryText}
                       keyboardType="number-pad"
                       maxLength={2}
                       onEndEditing={normalizeAgeInputs}
@@ -989,7 +989,7 @@ export const DiscoverContent = forwardRef<
                       value={discoverFilters.ageMax?.toString() ?? ""}
                       onChangeText={(value) => setAgeInput("ageMax", value)}
                       placeholder={t("discover.noLimit")}
-                      placeholderTextColor="#343841"
+                      placeholderTextColor={vibesTheme.colors.primaryText}
                       keyboardType="number-pad"
                       maxLength={2}
                       onEndEditing={normalizeAgeInputs}
@@ -1031,7 +1031,7 @@ export const DiscoverContent = forwardRef<
                           setDistanceInput("distanceMinKm", value)
                         }
                         placeholder={t("discover.noLimit")}
-                        placeholderTextColor="#343841"
+                        placeholderTextColor={vibesTheme.colors.primaryText}
                         keyboardType="number-pad"
                         maxLength={3}
                       />
@@ -1047,7 +1047,7 @@ export const DiscoverContent = forwardRef<
                           setDistanceInput("maxDistanceKm", value)
                         }
                         placeholder={t("discover.noLimit")}
-                        placeholderTextColor="#343841"
+                        placeholderTextColor={vibesTheme.colors.primaryText}
                         keyboardType="number-pad"
                         maxLength={3}
                       />
@@ -1123,7 +1123,7 @@ export const DiscoverContent = forwardRef<
                         style={localStyles.rangeInput}
                         value={answerFilters[key]?.[0] ?? ""}
                         placeholder="Sin límite"
-                        placeholderTextColor="#343841"
+                        placeholderTextColor={vibesTheme.colors.primaryText}
                         keyboardType="number-pad"
                         maxLength={3}
                         onChangeText={(text) => {
@@ -1195,7 +1195,7 @@ export const DiscoverContent = forwardRef<
                             <Icon
                               name="checkmark-circle"
                               size={20}
-                              color="#8B6327"
+                              color={vibesTheme.colors.primaryText}
                             />
                           )}
                         </TouchableOpacity>
@@ -1393,7 +1393,7 @@ export const DiscoverContent = forwardRef<
               setViewingHistory(false);
             }}
           >
-            <Icon name="mail-outline" size={18} color="#805D24" />
+            <Icon name="mail-outline" size={18} color={vibesTheme.colors.primaryText} />
             <Text style={localStyles.filtersButtonText}>Solicitudes</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -1409,7 +1409,7 @@ export const DiscoverContent = forwardRef<
               setViewingHistory(false);
             }}
           >
-            <Icon name="leaf-outline" size={18} color="#805D24" />
+            <Icon name="leaf-outline" size={18} color={vibesTheme.colors.primaryText} />
             <Text style={localStyles.filtersButtonText}>Camino espiritual</Text>
           </TouchableOpacity>
         </View>
@@ -1436,7 +1436,7 @@ export const DiscoverContent = forwardRef<
                 style={[localStyles.historyModeButton, historyMode === mode && localStyles.historyModeButtonActive]}
                 onPress={() => setHistoryMode(mode)}
               >
-                <Icon name={icon} size={16} color="#2B2B2B" />
+                <Icon name={icon} size={16} color={vibesTheme.colors.primaryText} />
                 <Text style={localStyles.historyModeText}>{label}</Text>
               </TouchableOpacity>
             ))}
@@ -1465,7 +1465,7 @@ export const DiscoverContent = forwardRef<
           ) : visibleProfiles.length === 0 ? (
             <View style={localStyles.emptyState}>
               <View style={localStyles.emptyIconCircle}>
-                <Icon name="compass-outline" size={34} color="#765B91" />
+                <Icon name="compass-outline" size={34} color={vibesTheme.colors.primaryText} />
               </View>
               <Text style={localStyles.emptyTitle}>
                 No hay perfiles para mostrar
@@ -1601,20 +1601,15 @@ const localStyles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 21,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.82)",
-    backgroundColor: "rgba(255, 253, 248, 0.88)",
+    borderColor: "rgba(110, 110, 110, 0.30)",
+    backgroundColor: "transparent",
     paddingHorizontal: 17,
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
-    shadowColor: "#2B2B2B",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 14,
-    elevation: 3,
   },
   filtersButtonText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -1628,7 +1623,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   filtersCountText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 12,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -1643,17 +1638,17 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 253, 248, 0.94)",
+    backgroundColor: "rgba(254, 254, 253, 0.94)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.38)",
-    shadowColor: "#8C7B63",
+    shadowColor: vibesTheme.colors.secondaryText,
     shadowOpacity: 0.12,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
   },
   showMoreButtonText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -1677,10 +1672,10 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 18,
-    backgroundColor: "#F0EAF2",
+    backgroundColor: "rgba(110, 110, 110, 0.10)",
   },
   emptyTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 24,
     fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
@@ -1700,16 +1695,16 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 22,
-    backgroundColor: "#765B91",
+    backgroundColor: vibesTheme.colors.accentBlue,
   },
   emptyActionText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     lineHeight: 19,
     fontFamily: vibesTheme.fonts.bold,
   },
   filtersSheet: {
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 20,
@@ -1736,13 +1731,13 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   filtersTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 30,
     fontFamily: vibesTheme.fonts.semibold,
   },
   filtersSubtitle: {
     marginTop: 4,
-    color: "#575A62",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -1753,7 +1748,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E6EAF0",
+    backgroundColor: "rgba(110, 110, 110, 0.13)",
   },
   filtersContent: {
     paddingVertical: 8,
@@ -1763,7 +1758,7 @@ const localStyles = StyleSheet.create({
     gap: 10,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#E3E7EB",
+    borderBottomColor: "rgba(110, 110, 110, 0.30)",
   },
   rangeHeader: {
     flexDirection: "row",
@@ -1777,7 +1772,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   rangeReset: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -1788,15 +1783,15 @@ const localStyles = StyleSheet.create({
   rangeCard: {
     flex: 1,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "#CDD5DD",
+    borderColor: "rgba(110, 110, 110, 0.30)",
     paddingHorizontal: 12,
     paddingVertical: 14,
     gap: 2,
   },
   rangeLabel: {
-    color: "#575A62",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -1809,15 +1804,15 @@ const localStyles = StyleSheet.create({
   rangeValue: {
     flex: 1,
     textAlign: "center",
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.bold,
   },
   rangeInput: {
     minHeight: 48,
     borderRadius: 12,
-    backgroundColor: "#FEFEFD",
-    color: "#2B2B2B",
+    backgroundColor: vibesTheme.colors.background,
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     fontFamily: vibesTheme.fonts.bold,
     textAlign: "left",
@@ -1825,7 +1820,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 8,
   },
   filtersSectionTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 22,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -1842,29 +1837,29 @@ const localStyles = StyleSheet.create({
     gap: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#CDD5DD",
+    borderColor: "rgba(110, 110, 110, 0.30)",
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   filterPillActive: {
-    backgroundColor: "#F7E8C6",
-    borderColor: "#C69443",
+    backgroundColor: "rgba(228, 183, 110, 0.37)",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   filterPillText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },
   filterPillTextActive: {
-    color: "#272318",
+    color: vibesTheme.colors.primaryText,
   },
   filtersFooter: {
     flexDirection: "row",
     gap: 12,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: "#E3E7EB",
+    borderTopColor: "rgba(110, 110, 110, 0.30)",
   },
   filtersSecondaryButton: {
     flex: 1,
@@ -1873,10 +1868,10 @@ const localStyles = StyleSheet.create({
     borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   filtersSecondaryButtonText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -1888,16 +1883,16 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   filtersPrimaryButtonText: {
-    color: "#171A22",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.semibold,
   },
   historyButtonActive: {
-    backgroundColor: "#F7E8C8",
-    borderColor: "#C89536",
+    backgroundColor: "rgba(228, 183, 110, 0.36)",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   historyModeRow: {
     flexDirection: "row",
@@ -1912,19 +1907,19 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E7DFD2",
-    backgroundColor: "#FFFDFA",
+    borderColor: "rgba(110, 110, 110, 0.30)",
+    backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
   },
   historyModeButtonActive: {
-    backgroundColor: "#F5E5BD",
-    borderColor: "#BF9147",
+    backgroundColor: "rgba(228, 183, 110, 0.43)",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   historyModeText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },

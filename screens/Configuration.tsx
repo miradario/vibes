@@ -155,7 +155,7 @@ const Configuration = () => {
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
-              trackColor={{ false: "#D8D3CC", true: "#E4B76E" }}
+              trackColor={{ false: "rgba(216, 140, 122, 0.40)", true: vibesTheme.colors.accentMustard }}
               thumbColor={
                 Platform.OS === "ios"
                   ? WHITE
@@ -163,7 +163,7 @@ const Configuration = () => {
                   ? PRIMARY_COLOR
                   : WHITE
               }
-              ios_backgroundColor="#D8D3CC"
+              ios_backgroundColor={"rgba(216, 140, 122, 0.40)"}
             />
           </View>
         </View>
@@ -200,7 +200,7 @@ const Configuration = () => {
 
 const localStyles = StyleSheet.create({
   fixedHeader: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 24,
     paddingTop: 6,
     paddingBottom: 14,
@@ -223,7 +223,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     marginTop: 6,
   },
   headerCopy: {
@@ -271,14 +271,14 @@ const localStyles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     marginLeft: 10,
   },
   card: {
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.06)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     padding: 18,
     flexDirection: "row",
     alignItems: "center",
@@ -309,7 +309,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 24,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
     borderTopWidth: 1,
     borderTopColor: "rgba(43, 43, 43, 0.06)",
   },
@@ -324,7 +324,7 @@ const localStyles = StyleSheet.create({
     opacity: 0.6,
   },
   saveButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontWeight: "400",
   },

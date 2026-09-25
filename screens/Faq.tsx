@@ -77,7 +77,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: WHITE,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#AEBFD1",
+    borderColor: vibesTheme.colors.accentBlue,
     overflow: "hidden",
   },
   row: {
@@ -85,7 +85,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#AEBFD1",
+    borderBottomColor: vibesTheme.colors.accentBlue,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

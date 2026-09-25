@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import React from "react";
 import { View } from "react-native";
 import { Text } from "./Typography";
@@ -12,12 +13,12 @@ export default function UnreadBadge({ count }: { count: number }) {
         paddingVertical: 2,
         borderRadius: 11,
         paddingHorizontal: 5,
-        backgroundColor: "#E4B76E",
+        backgroundColor: vibesTheme.colors.accentMustard,
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      <Text style={{ color: "#2B2B2B", fontSize: 12, fontWeight: "600" }}>
+      <Text style={{ color: vibesTheme.colors.primaryText, fontSize: 12, fontWeight: "600" }}>
         {count > 99 ? "99+" : count}
       </Text>
     </View>

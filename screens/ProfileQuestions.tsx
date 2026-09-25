@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -71,7 +72,7 @@ export default function ProfileQuestions() {
           style={{
             paddingHorizontal: 24,
             paddingTop: 8,
-            backgroundColor: "#FEFEFD",
+            backgroundColor: vibesTheme.colors.background,
           }}
         >
           {!firstHomeVisit && (
@@ -81,7 +82,7 @@ export default function ProfileQuestions() {
               onPress={() => navigation.goBack()}
               style={{ width: 48, minHeight: 48, justifyContent: "center" }}
             >
-              <Icon name="chevron-back" size={24} color="#2B2B2B" />
+              <Icon name="chevron-back" size={24} color={vibesTheme.colors.primaryText} />
             </TouchableOpacity>
           )}
           {query.isSuccess && (
@@ -105,10 +106,10 @@ export default function ProfileQuestions() {
                       paddingHorizontal: 16,
                       paddingVertical: 12,
                       borderRadius: 24,
-                      backgroundColor: group === index ? "#D7B56D" : "#F5F1E8",
+                      backgroundColor: group === index ? vibesTheme.colors.accentMustard : "rgba(216, 140, 122, 0.14)",
                     }}
                   >
-                    <Text style={{ color: "#2B2B2B" }}>{label}</Text>
+                    <Text style={{ color: vibesTheme.colors.primaryText }}>{label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -157,7 +158,7 @@ export default function ProfileQuestions() {
             paddingHorizontal: 24,
             paddingTop: 12,
             paddingBottom: 8,
-            backgroundColor: "#FEFEFD",
+            backgroundColor: vibesTheme.colors.background,
           }}
         >
           <PrimaryButton
@@ -174,13 +175,13 @@ export default function ProfileQuestions() {
               style={{
                 marginTop: 16,
                 borderTopWidth: 1,
-                borderTopColor: "#E7DFD2",
+                borderTopColor: "rgba(110, 110, 110, 0.30)",
                 minHeight: 48,
                 paddingVertical: 16,
                 alignItems: "center",
               }}
             >
-              <Text style={{ color: "#6E6E6E" }}>Omitir</Text>
+              <Text style={{ color: vibesTheme.colors.secondaryText }}>Omitir</Text>
             </TouchableOpacity>
           )}
         </View>

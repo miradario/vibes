@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useMemo, useState } from "react";
@@ -65,7 +66,7 @@ const OnboardingAge = () => {
             onPress={() => setShowPicker(true)}
             activeOpacity={0.7}
           >
-            <Text style={{ color: birthDate ? DARK_GRAY : "#6E6E6E" }}>
+            <Text style={{ color: birthDate ? DARK_GRAY : vibesTheme.colors.secondaryText }}>
               {birthDate ? formatBirthDate(birthDate) : t("onboarding.agePlaceholder")}
             </Text>
           </TouchableOpacity>
@@ -121,7 +122,7 @@ const localStyles = StyleSheet.create({
   },
   ageError: {
     marginTop: 10,
-    color: "#C65353",
+    color: vibesTheme.colors.accentCoral,
     fontSize: 14,
   },
 });

@@ -68,13 +68,13 @@ export default function DiscoverPathCards({
                     : "grid-outline"
                 }
                 size={18}
-                color={active ? "#805D24" : "#827566"}
+                color={active ? vibesTheme.colors.primaryText : vibesTheme.colors.secondaryText}
               />
               <Text style={[s.label, active && s.selectedLabel]}>{label}</Text>
               <Icon
                 name={active ? "checkmark-circle" : "ellipse-outline"}
                 size={18}
-                color={active ? "#805D24" : "#BEB5A8"}
+                color={active ? vibesTheme.colors.primaryText : vibesTheme.colors.secondaryText}
               />
             </TouchableOpacity>
           );
@@ -109,16 +109,16 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#E7DFD2",
-    backgroundColor: "#FFFDFA",
+    borderColor: "rgba(110, 110, 110, 0.30)",
+    backgroundColor: "transparent",
   },
-  selected: { backgroundColor: "#F5E5BD", borderColor: "#BF9147" },
+  selected: { backgroundColor: "rgba(228, 183, 110, 0.43)", borderColor: vibesTheme.colors.accentMustard },
   label: {
     flexShrink: 1,
-    color: "#61594F",
+    color: vibesTheme.colors.secondaryText,
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 14,
     lineHeight: 20,
   },
-  selectedLabel: { color: "#67481C" },
+  selectedLabel: { color: vibesTheme.colors.primaryText },
 });
