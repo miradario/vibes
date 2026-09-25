@@ -1351,20 +1351,17 @@ export const DiscoverContent = forwardRef<
               : undefined
           }
           nextActionLabel={
-            viewingHistory && nextSelectedProfile ? "Siguiente" : undefined
+            viewingHistory && nextSelectedProfile ? "Siguiente perfil" : undefined
           }
           onNextActionPress={
             viewingHistory && nextSelectedProfile
               ? () => setSelectedProfile(nextSelectedProfile)
               : undefined
           }
-          secondaryActionLabel={viewingHistory ? "Cerrar perfil" : "Pasar"}
+          secondaryActionLabel={viewingHistory ? undefined : "Pasar"}
           onSecondaryActionPress={
             viewingHistory
-              ? () => {
-                  setShowProfileSheet(false);
-                  setViewingHistory(false);
-                }
+              ? undefined
               : () => dismissProfile(selectedProfile)
           }
         />

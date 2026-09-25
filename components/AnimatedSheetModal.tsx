@@ -13,6 +13,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 type AnimatedSheetModalProps = {
   visible: boolean;
   inline?: boolean;
+  fullScreen?: boolean;
   onClose: () => void;
   onClosed?: () => void;
   children: React.ReactNode;
@@ -32,6 +33,7 @@ type AnimatedSheetModalProps = {
 const AnimatedSheetModal = ({
   visible,
   inline = false,
+  fullScreen = false,
   onClose,
   onClosed,
   children,
@@ -168,7 +170,14 @@ const AnimatedSheetModal = ({
   return inline ? (
     content
   ) : (
-    <Modal transparent visible animationType="none" onRequestClose={onClose}>
+    <Modal
+      transparent
+      visible
+      animationType="none"
+      statusBarTranslucent={fullScreen}
+      navigationBarTranslucent={fullScreen}
+      onRequestClose={onClose}
+    >
       {content}
     </Modal>
   );
