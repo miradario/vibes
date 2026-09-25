@@ -70,6 +70,28 @@ function SectionHeader({
   );
 }
 
+function OverviewLoadingPlaceholder() {
+  return (
+    <>
+      <View style={s.sectionBlock}>
+        <SectionHeader title="DESAFÍOS ACTIVOS" />
+        <View style={s.placeholderCarousel}>
+          <View style={s.challengeSkeletonCard} />
+          <View style={s.challengeSkeletonCard} />
+        </View>
+      </View>
+
+      <View style={s.sectionBlock}>
+        <SectionHeader title="PRÓXIMOS EVENTOS" />
+        <View style={s.placeholderCarousel}>
+          <View style={s.eventSkeletonCard} />
+          <View style={s.eventSkeletonCard} />
+        </View>
+      </View>
+    </>
+  );
+}
+
 function ChallengeCard({
   event,
   userId,
@@ -94,6 +116,15 @@ function ChallengeCard({
         timeline.totalDays
       )
     : null;
+  const todayKey = new Date().toISOString().split("T")[0];
+  const checkedInToday =
+    Boolean(participant.data?.checkedInToday) ||
+    Boolean(event.viewerCheckedInToday) ||
+    (checkins.isSuccess && checkins.data.includes(todayKey));
+  const showTodayBadge =
+    timeline.status === "active" &&
+    !checkins.isLoading &&
+    !participant.isLoading;
   const status =
     timeline.status === "upcoming"
       ? `Empieza en ${timeline.startsInDays} día${
@@ -111,51 +142,83 @@ function ChallengeCard({
       style={s.challengeCard}
       activeOpacity={0.8}
     >
-      <ExpoImage
-        source={event.image as ImageSourcePropType}
-        style={s.challengeImage}
-        contentFit="cover"
-        transition={180}
-        cachePolicy="memory-disk"
-      />
-      <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.82)", "rgba(255,255,255,0.96)"]} locations={[0.25, 0.7, 1]} style={StyleSheet.absoluteFillObject} />
-      <View style={s.challengeBody}>
-      <Text style={[s.meta, s.imageMeta]}>{status}</Text>
-      {checkins.isError || participant.isError ? (
-        <Text style={[s.meta, s.imageMeta]} numberOfLines={2}>
-          No pudimos actualizar tu progreso.
-        </Text>
-      ) : checkins.isLoading ? (
-        <VibesLoader size={30} style={s.loader} />
-      ) : progress ? (
-        <View style={s.progressLine}>
-          <Icon name="trophy-outline" size={22} color={ACCENT} />
-          <View
-            accessibilityRole="progressbar"
-            accessibilityValue={{ min: 0, max: 100, now: progress.percent }}
-            style={s.track}
-          >
-            <View style={[s.fill, { width: `${progress.percent}%` }]} />
-          </View>
-          <Text style={s.percent}>{progress.percent}%</Text>
+      <View style={s.challengeFrame}>
+        <ExpoImage
+          source={event.image as ImageSourcePropType}
+          style={s.challengeImage}
+          contentFit="cover"
+          transition={180}
+          cachePolicy="memory-disk"
+        />
+        <LinearGradient
+          pointerEvents="none"
+          colors={[
+            "rgba(255,255,255,0)",
+            "rgba(255,255,255,0.92)",
+            "rgba(255,255,255,0.99)",
+          ]}
+          locations={[0.18, 0.62, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={s.challengeStatusPill}>
+          <Text style={[s.meta, s.imageMeta]}>{status}</Text>
         </View>
-      ) : null}
-      <View style={s.cardFooter}>
-        <Text style={[s.cardTitle, s.challengeTitle]} numberOfLines={2}>
-          {event.title}
-        </Text>
-        <Icon name="chevron-forward" size={20} color={ACCENT} />
-      </View>
+        {showTodayBadge ? (
+          <View
+            accessibilityLabel={
+              checkedInToday ? "Completado hoy" : "Pendiente hoy"
+            }
+            style={[
+              s.challengeTodayBadge,
+              checkedInToday
+                ? s.challengeTodayBadgeDone
+                : s.challengeTodayBadgePending,
+            ]}
+          >
+            <Icon
+              name={checkedInToday ? "checkmark" : "time-outline"}
+              size={16}
+              color="#FFFFFF"
+            />
+          </View>
+        ) : null}
+        <View style={s.challengeBody}>
+          <View style={s.cardFooter}>
+            <Text style={[s.cardTitle, s.challengeTitle]} numberOfLines={2}>
+              {event.title}
+            </Text>
+            <Icon name="chevron-forward" size={20} color={ACCENT} />
+          </View>
+          {checkins.isError || participant.isError ? (
+            <Text style={[s.meta, s.imageMeta]} numberOfLines={2}>
+              No pudimos actualizar tu progreso.
+            </Text>
+          ) : checkins.isLoading ? (
+            <VibesLoader size={30} style={s.loader} />
+          ) : progress ? (
+            <View style={s.progressLine}>
+              <Icon name="trophy-outline" size={22} color={ACCENT} />
+              <View
+                accessibilityRole="progressbar"
+                accessibilityValue={{
+                  min: 0,
+                  max: 100,
+                  now: progress.percent,
+                }}
+                style={s.track}
+              >
+                <View style={[s.fill, { width: `${progress.percent}%` }]} />
+              </View>
+              <Text style={s.percent}>{progress.percent}%</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
     </TouchableOpacity>
   );
 }
 
-function HomeEventCard({
-  event,
-}: {
-  event: EventFeedItem;
-}) {
+function HomeEventCard({ event }: { event: EventFeedItem }) {
   const navigation = useNavigation<any>();
   const label = getEventDateLabel(event.startsAt!);
   const participantImages = (event.participantPreviewImages ?? []).map(
@@ -170,27 +233,36 @@ function HomeEventCard({
       activeOpacity={0.8}
       onPress={() => navigation.navigate("EventDetail", { event })}
     >
-        <ExpoImage
-          source={event.image as ImageSourcePropType}
-          style={s.eventImage}
-          contentFit="cover"
-          transition={180}
-          cachePolicy="memory-disk"
+      <ExpoImage
+        source={event.image as ImageSourcePropType}
+        style={s.eventImage}
+        contentFit="cover"
+        transition={180}
+        cachePolicy="memory-disk"
+      />
+      <LinearGradient
+        pointerEvents="none"
+        colors={[
+          "rgba(255,255,255,0)",
+          "rgba(255,255,255,0.92)",
+          "rgba(255,255,255,0.99)",
+        ]}
+        locations={[0.18, 0.62, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <View style={s.dateBadge}>
+        <Text style={s.dateWeekday}>{label.weekday}</Text>
+        <Text style={s.dateDay}>{label.day}</Text>
+      </View>
+      {participantImages.length ? (
+        <AvatarGroup
+          items={participantImages}
+          size={26}
+          max={3}
+          overlap={8}
+          style={s.eventAvatars}
         />
-        <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.82)", "rgba(255,255,255,0.96)"]} locations={[0.25, 0.7, 1]} style={StyleSheet.absoluteFillObject} />
-        <View style={s.dateBadge}>
-          <Text style={s.dateWeekday}>{label.weekday}</Text>
-          <Text style={s.dateDay}>{label.day}</Text>
-        </View>
-        {participantImages.length ? (
-          <AvatarGroup
-            items={participantImages}
-            size={26}
-            max={3}
-            overlap={8}
-            style={s.eventAvatars}
-          />
-        ) : null}
+      ) : null}
       <View style={s.eventBody}>
         <View style={s.eventCopy}>
           <Text style={s.cardTitle} numberOfLines={2}>
@@ -199,14 +271,15 @@ function HomeEventCard({
           {event.modality === "online" ? (
             <View style={s.eventMetaRow}>
               <Icon name="videocam-outline" size={16} color="#4B4B4B" />
-              <Text style={[s.meta, s.imageMeta, { flex: 1 }]} numberOfLines={2}>
+              <Text
+                style={[s.meta, s.imageMeta, { flex: 1 }]}
+                numberOfLines={2}
+              >
                 {`Online · ${label.time}`}
               </Text>
             </View>
           ) : null}
-
         </View>
-
       </View>
     </TouchableOpacity>
   );
@@ -251,7 +324,9 @@ export default function HomeOverview({ userId }: { userId?: string }) {
     .sort((a, b) => {
       const left = getChallengeTimeline(a.startsAt, a.durationDays).status;
       const right = getChallengeTimeline(b.startsAt, b.durationDays).status;
-      const delta = new Date(a.startsAt ?? 0).getTime() - new Date(b.startsAt ?? 0).getTime();
+      const delta =
+        new Date(a.startsAt ?? 0).getTime() -
+        new Date(b.startsAt ?? 0).getTime();
       return rank[left] - rank[right] || (left === "finished" ? -delta : delta);
     })
     .slice(0, 3);
@@ -261,12 +336,7 @@ export default function HomeOverview({ userId }: { userId?: string }) {
       params: { section: challenge ? "challenge" : "event" },
     });
   const createEvent = () => navigation.navigate("CreateEvent" as never);
-  if (groups.isLoading)
-    return (
-      <View accessibilityLabel="Cargando tu agenda" style={s.homeLoader}>
-        <VibesLoader size={72} />
-      </View>
-    );
+  if (groups.isLoading) return <OverviewLoadingPlaceholder />;
   if (groups.isError)
     return (
       <TouchableOpacity
@@ -280,7 +350,10 @@ export default function HomeOverview({ userId }: { userId?: string }) {
   return (
     <>
       <View style={s.sectionBlock}>
-        <SectionHeader title="DESAFÍOS ACTIVOS" onPress={() => openList(true)} />
+        <SectionHeader
+          title="DESAFÍOS ACTIVOS"
+          onPress={() => openList(true)}
+        />
         {!challenges.length && (
           <TouchableOpacity
             style={s.emptyCard}
@@ -323,10 +396,7 @@ export default function HomeOverview({ userId }: { userId?: string }) {
             contentContainerStyle={s.carousel}
           >
             {visibleEvents.map((event) => (
-              <HomeEventCard
-                key={event.id}
-                event={event}
-              />
+              <HomeEventCard key={event.id} event={event} />
             ))}
           </ScrollView>
         ) : eventsFeed.isLoading ? (
@@ -362,11 +432,6 @@ const s = StyleSheet.create({
   sectionBlock: {
     marginBottom: 24,
   },
-  homeLoader: {
-    minHeight: 180,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   card: {
     backgroundColor: "#FCF8F0",
     borderWidth: 1,
@@ -400,8 +465,27 @@ const s = StyleSheet.create({
     gap: 10,
     paddingRight: 24,
   },
+  placeholderCarousel: {
+    flexDirection: "row",
+    gap: 10,
+    overflow: "hidden",
+  },
+  challengeSkeletonCard: {
+    width: 174,
+    minHeight: 154,
+    borderRadius: 14,
+    backgroundColor: "#F7F1E8",
+  },
+  eventSkeletonCard: {
+    width: 174,
+    minHeight: 154,
+    borderRadius: 14,
+    backgroundColor: "#F7F1E8",
+  },
   challengeCard: {
     width: 174,
+  },
+  challengeFrame: {
     minHeight: 154,
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
@@ -411,6 +495,36 @@ const s = StyleSheet.create({
   },
   challengeBody: { padding: 10, gap: 2 },
   challengeImage: { ...StyleSheet.absoluteFillObject },
+  challengeStatusPill: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    zIndex: 2,
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+  },
+  challengeTodayBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 2,
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  challengeTodayBadgePending: {
+    backgroundColor: "#E4B76E",
+  },
+  challengeTodayBadgeDone: {
+    backgroundColor: "#8C8C8C",
+  },
   imageMeta: { color: "#4B4B4B" },
   cardTitle: {
     fontSize: 18,

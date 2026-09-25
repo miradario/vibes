@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import {
+  CommonActions,
+  StackActions,
+  useNavigation,
+} from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import CalmPause from "../components/CalmPause";
 import { getStartupDestination } from "../src/lib/calmPause";
@@ -234,16 +238,22 @@ const Startup = () => {
   useEffect(() => {
     if (!introElapsed || !isReadyToExit || didNavigateRef.current) return;
     didNavigateRef.current = true;
+    const destination = getStartupDestination(
+      Boolean(userId) && !forceWelcome,
+      needsOnboarding,
+      updateGateState
+    );
+    if (destination.name === "Tab") {
+      navigation.dispatch(
+        StackActions.replace(destination.name, destination.params)
+      );
+      return;
+    }
+
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [
-          getStartupDestination(
-            Boolean(userId) && !forceWelcome,
-            needsOnboarding,
-            updateGateState
-          ),
-        ],
+        routes: [destination],
       })
     );
   }, [
@@ -256,12 +266,7 @@ const Startup = () => {
     navigation,
   ]);
 
-  return (
-    <CalmPause
-      pending={!isReadyToExit}
-      showAction={false}
-    />
-  );
+  return <CalmPause pending={!isReadyToExit} showAction={false} />;
 };
 
 export default Startup;

@@ -1,6 +1,7 @@
 import { useEmailOwnershipQuery } from "../src/queries/emailOwnership.queries";
 import { isEmailOwnershipVerified } from "../src/auth/emailVerification";
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "./Typography";
 import { useNavigation } from "@react-navigation/native";
@@ -14,9 +15,20 @@ import { getProfileCompletion } from "../src/lib/profileCompletion";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+
+const DISMISS_DAYS = 30;
+const DISMISS_MS = DISMISS_DAYS * 24 * 60 * 60 * 1000;
+const getDismissStorageKey = (userId: string) =>
+  `complete_profile_prompt_dismissed_until:${userId}`;
+
 export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
   const navigation = useNavigation();
   const [dismissed, setDismissed] = useState(false);
+  const [dismissPreferenceLoaded, setDismissPreferenceLoaded] = useState(false);
+  const dismissStorageKey = useMemo(
+    () => (userId ? getDismissStorageKey(userId) : null),
+    [userId]
+  );
   const { data: profile } = useProfileQuery(userId);
   const { data: preferences } = useUserPreferencesQuery(userId);
   const { data, isSuccess } = useQuery({
@@ -25,8 +37,64 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
     enabled: !!userId,
   });
   const { data: emailOwner } = useEmailOwnershipQuery(userId);
-  if (dismissed || !isSuccess || !hasMissingProfileAnswers(data)) return null;
-  const completion = getProfileCompletion(profile, preferences, isEmailOwnershipVerified(emailOwner), data);
+
+  useEffect(() => {
+    let cancelled = false;
+    setDismissed(false);
+
+    const loadDismissPreference = async () => {
+      if (!dismissStorageKey) {
+        if (!cancelled) setDismissPreferenceLoaded(true);
+        return;
+      }
+
+      if (!cancelled) setDismissPreferenceLoaded(false);
+      try {
+        const raw = await AsyncStorage.getItem(dismissStorageKey);
+        const dismissedUntil = raw ? Number(raw) : 0;
+        const isDismissed = Number.isFinite(dismissedUntil)
+          ? dismissedUntil > Date.now()
+          : false;
+        if (!cancelled) setDismissed(isDismissed);
+        if (raw && !isDismissed) {
+          void AsyncStorage.removeItem(dismissStorageKey);
+        }
+      } catch {
+        if (!cancelled) setDismissed(false);
+      } finally {
+        if (!cancelled) setDismissPreferenceLoaded(true);
+      }
+    };
+
+    void loadDismissPreference();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dismissStorageKey]);
+
+  const dismissForThirtyDays = () => {
+    setDismissed(true);
+    if (!dismissStorageKey) return;
+    const dismissedUntil = Date.now() + DISMISS_MS;
+    void AsyncStorage.setItem(dismissStorageKey, String(dismissedUntil)).catch(
+      () => {}
+    );
+  };
+
+  if (
+    !dismissPreferenceLoaded ||
+    dismissed ||
+    !isSuccess ||
+    !hasMissingProfileAnswers(data)
+  )
+    return null;
+  const completion = getProfileCompletion(
+    profile,
+    preferences,
+    isEmailOwnershipVerified(emailOwner),
+    data
+  );
   return (
     <TouchableOpacity
       accessibilityRole="button"
@@ -53,10 +121,7 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
               style={[
                 styles.fill,
                 {
-                  width: `${Math.max(
-                    0,
-                    Math.min(completion.percent, 100)
-                  )}%`,
+                  width: `${Math.max(0, Math.min(completion.percent, 100))}%`,
                 },
               ]}
             />
@@ -69,7 +134,7 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
         accessibilityLabel="Cerrar sugerencia"
         onPress={(event) => {
           event.stopPropagation();
-          setDismissed(true);
+          dismissForThirtyDays();
         }}
         style={styles.closeButton}
       >

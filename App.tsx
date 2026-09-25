@@ -334,7 +334,29 @@ const AppNavigator = () => {
             />
             <Stack.Screen
               name="Tab"
-              options={{ headerShown: false, animationEnabled: false }}
+              options={{
+                headerShown: false,
+                animationEnabled: true,
+                gestureEnabled: false,
+                transitionSpec: {
+                  open: {
+                    animation: "timing",
+                    config: { duration: 420 },
+                  },
+                  close: {
+                    animation: "timing",
+                    config: { duration: 260 },
+                  },
+                },
+                cardStyleInterpolator: ({ current }) => ({
+                  cardStyle: {
+                    opacity: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 1],
+                    }),
+                  },
+                }),
+              }}
             >
               {() => (
                 <Tab.Navigator

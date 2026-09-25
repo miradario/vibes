@@ -89,7 +89,6 @@ export default function CalmPause({
           showsVerticalScrollIndicator={false}
         >
           <View style={s.copy}>
-            <Text style={s.eyebrow}>TU MOMENTO DE CALMA</Text>
             <Text
               accessibilityRole="header"
               style={[s.title, width < 360 && s.smallTitle]}
@@ -142,7 +141,7 @@ export default function CalmPause({
 const serif = vibesTheme.fonts.regular;
 const s = StyleSheet.create({
   screen: { backgroundColor: "#FFFFFF" },
-  layout: { flex: 1, backgroundColor: "#FBF7EF" },
+  layout: { flex: 1, backgroundColor: "#FFFFFF" },
   body: { flex: 1 },
   bodyContent: {
     flexGrow: 1,
