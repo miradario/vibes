@@ -26,6 +26,7 @@ import React, {
   useRef,
 } from "react";
 import {
+  AppState,
   Image,
   FlatList,
   Modal,
@@ -459,6 +460,7 @@ export const DiscoverContent = forwardRef<
     isLoading,
     isError,
     error,
+    refetch: refetchCandidates,
   } = useCandidatesQuery({
     limit: 200,
   });
@@ -467,6 +469,23 @@ export const DiscoverContent = forwardRef<
   const swipeMutation = useSwipeMutation();
   const swipeBusy = useRef(false);
   const focused = useIsFocused();
+  const refetchHistory = swipeHistory.refetch;
+  const refetchIncoming = incomingLikes.refetch;
+  useEffect(() => {
+    if (!focused || !session?.user?.id) return;
+    const refresh = () => {
+      void refetchCandidates({ cancelRefetch: false });
+      void refetchHistory({ cancelRefetch: false });
+      void refetchIncoming({ cancelRefetch: false });
+    };
+    refresh();
+    let previousState = AppState.currentState;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active" && previousState !== "active") refresh();
+      previousState = state;
+    });
+    return () => subscription.remove();
+  }, [focused, session?.user?.id, refetchCandidates, refetchHistory, refetchIncoming]);
   const resumeAfterMatch = useRef<DataT | null>(null);
   useEffect(() => {
     if (focused && resumeAfterMatch.current) {

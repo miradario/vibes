@@ -587,7 +587,7 @@ const Events = () => {
                     </View>
                     <View style={localStyles.eventMetadataRow}>
                       <Icon name="people" size={17} color={vibesTheme.colors.secondaryText} />
-                      <Text style={localStyles.eventMetadataText}>{participantsLabel}</Text>
+                      <Text style={localStyles.eventMetadataText}>{count}</Text>
                     </View>
                   </View>
                   <View style={localStyles.eventViewButton}>
@@ -624,7 +624,7 @@ const Events = () => {
                   </View>
                   <View style={localStyles.eventMetadataRow}>
                     <Icon name="people" size={17} color={vibesTheme.colors.secondaryText} />
-                    <Text style={localStyles.eventMetadataText}>{participantsLabel}</Text>
+                    <Text style={localStyles.eventMetadataText}>{count}</Text>
                   </View>
                   {challengeProgress ? (
                     <View style={localStyles.eventMetadataRow}>
