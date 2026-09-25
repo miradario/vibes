@@ -14,7 +14,7 @@
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": false,
-      "buildNumber": "29",
+      "buildNumber": "30",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -40,7 +40,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 29,
+      "versionCode": 30,
       "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.miradario.vibe"
     },

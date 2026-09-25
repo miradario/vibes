@@ -1987,13 +1987,13 @@ const localStyles = StyleSheet.create({
     paddingBottom: 188,
   },
   contentShell: {
-    marginTop: 12,
+    marginTop: 2,
     paddingHorizontal: 20,
     zIndex: 2,
   },
   challengeIntroBlock: {
     paddingHorizontal: 4,
-    paddingTop: 22,
+    paddingTop: 10,
     paddingBottom: 14,
   },
   challengeTypePill: {

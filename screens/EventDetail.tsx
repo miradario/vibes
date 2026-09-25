@@ -836,27 +836,17 @@ const EventDetail = () => {
 
     if (isEventJoined) {
       return (
-        <View
-          style={[
-            localStyles.fixedFooterContent,
-            localStyles.eventFixedFooterContent,
-          ]}
-        >
+        <View style={localStyles.eventChatFooterContent}>
           <TouchableOpacity
-            style={[styles.eventDetailJoinButton, localStyles.footerActionButton]}
+            style={localStyles.eventFloatingChatButton}
+            accessibilityRole="button"
+            accessibilityLabel="Entrar al chat del evento"
             onPress={() =>
               navigation.navigate("EventChat" as never, { event } as never)
             }
+            activeOpacity={0.9}
           >
-            <Text
-              style={[styles.eventDetailJoinButtonText, localStyles.footerActionText]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.85}
-            >
-              Ir al chat del evento
-            </Text>
-            <Icon name="arrow-forward" size={24} color={WHITE} />
+            <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>
         </View>
       );
@@ -1315,32 +1305,10 @@ const EventDetail = () => {
     <View
       style={[
         styles.eventDetailContainer,
+        !isChallenge && localStyles.eventDetailWarmBackground,
         isChallenge && localStyles.challengeWhiteBackground,
       ]}
     >
-      {!isChallenge ? (
-        <>
-          <View style={styles.eventDetailAmbientGlow} pointerEvents="none" />
-          <View style={styles.eventDetailAmbientSparkleCluster} pointerEvents="none">
-            <View style={styles.eventDetailSparkleDotLarge} />
-            <View style={styles.eventDetailSparkleDotMedium} />
-            <View style={styles.eventDetailSparkleDotSmall} />
-            <Icon
-              name="sparkles"
-              size={16}
-              color="rgba(228, 183, 110, 0.72)"
-              style={styles.eventDetailSparkleIcon}
-            />
-            <Icon
-              name="sparkles-outline"
-              size={12}
-              color="rgba(228, 183, 110, 0.52)"
-              style={styles.eventDetailSparkleIconSmall}
-            />
-          </View>
-        </>
-      ) : null}
-
       {!isChallenge ? (
         <Animated.View
           style={[
@@ -1352,20 +1320,18 @@ const EventDetail = () => {
           ]}
         >
           <TouchableOpacity
-            style={styles.eventDetailMenuButton}
+            style={localStyles.eventHeaderIconButton}
             onPress={() => navigation.goBack()}
           >
-            <Icon name="chevron-back" size={24} color={DARK_GRAY} />
+            <Icon name="chevron-back" size={24} color={WHITE} />
           </TouchableOpacity>
-          <Text style={localStyles.expandedEventHeaderTitle} numberOfLines={2}>
-            {event.title}
-          </Text>
+          <View style={localStyles.expandedEventHeaderSpacer} />
           {isAdmin ? (
             <TouchableOpacity
-              style={styles.eventDetailMenuButton}
+              style={localStyles.eventHeaderIconButton}
               onPress={() => setMenuVisible(true)}
             >
-              <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
+              <Icon name="ellipsis-horizontal" size={24} color={WHITE} />
             </TouchableOpacity>
           ) : (
             <View style={localStyles.headerIconPlaceholder} />
@@ -1412,7 +1378,11 @@ const EventDetail = () => {
             <Icon name="chevron-back" size={24} color={DARK_GRAY} />
           </TouchableOpacity>
           {eventHeroImageSource ? (
-            <View style={localStyles.collapsedEventHeaderThumbnail} />
+            <Image
+              source={eventHeroImageSource}
+              style={localStyles.collapsedEventHeaderThumbnail}
+              resizeMode="cover"
+            />
           ) : null}
           <Text style={localStyles.collapsedEventHeaderTitle} numberOfLines={2}>
             {event.title}
@@ -1439,7 +1409,14 @@ const EventDetail = () => {
           <Image source={eventHeroImageSource} style={localStyles.eventHeroImage} resizeMode="cover" />
           <Animated.View style={[localStyles.eventHeroScrim, { opacity: expandedEventHeaderOpacity }]} />
           <Animated.View style={[localStyles.eventHeroContent, { opacity: expandedEventHeaderOpacity, width }]}>
-            <Text style={localStyles.eventHeroSubtitle}>{eventLeadText}</Text>
+            <Text style={localStyles.eventHeroTitle} numberOfLines={2}>
+              {event.title}
+            </Text>
+            {eventLeadText ? (
+              <Text style={localStyles.eventHeroSubtitle} numberOfLines={2}>
+                {eventLeadText}
+              </Text>
+            ) : null}
           </Animated.View>
         </Animated.View>
       ) : null}
@@ -1475,31 +1452,30 @@ const EventDetail = () => {
                 { height: heroCollapse(210, 168 + compactHeaderTop + 1 + 38) },
               ]}
             />
-            <View
-              style={[
-                styles.eventDetailInfoCard,
-                localStyles.eventDetailInfoCardFloating,
-              ]}
-            >
-                <View style={localStyles.eventMetaPillsRow}>
-                  <View style={localStyles.eventMetaPill}>
-                    <Icon
-                      name={modality === "online" ? "videocam-outline" : "location"}
-                      size={14}
-                      color={PRIMARY_COLOR}
-                    />
-                    <Text style={localStyles.eventMetaPillText}>{modalityLabel}</Text>
-                  </View>
-                  <View style={localStyles.eventMetaPill}>
-                    <Icon
-                      name={pricingType === "paid" ? "card-outline" : "sparkles-outline"}
-                      size={14}
-                      color={PRIMARY_COLOR}
-                    />
-                    <Text style={localStyles.eventMetaPillText}>{pricingLabel}</Text>
-                  </View>
-                </View>
-
+            <View style={localStyles.eventIntroMetaRow}>
+              <View style={localStyles.eventIntroMetaItem}>
+                <Icon
+                  name={modality === "online" ? "videocam-outline" : "location"}
+                  size={24}
+                  color={DARK_GRAY}
+                />
+                <Text style={localStyles.eventIntroMetaText}>
+                  {modalityLabel}
+                </Text>
+              </View>
+              <View style={localStyles.eventIntroDivider} />
+              <View style={localStyles.eventIntroMetaItem}>
+                <Icon
+                  name={pricingType === "paid" ? "card-outline" : "sparkles-outline"}
+                  size={24}
+                  color={DARK_GRAY}
+                />
+                <Text style={localStyles.eventIntroMetaText}>
+                  {pricingLabel}
+                </Text>
+              </View>
+            </View>
+            <View style={localStyles.eventDetailPanel}>
               <View style={styles.eventDetailInfoSection}>
                 <TouchableOpacity
                   activeOpacity={0.85}
@@ -1713,12 +1689,6 @@ const EventDetail = () => {
                   </TouchableOpacity>
                 ) : null}
               </View>
-            </View>
-
-            <View style={styles.eventDetailClosingNoteWrap}>
-              <Text style={styles.eventDetailClosingNote}>
-                ✧ Las mejores conexiones comienzan en espacios reales.
-              </Text>
             </View>
           </>
         ) : (
@@ -2242,11 +2212,11 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "rgba(43, 43, 43, 0.54)",
+    backgroundColor: "rgba(43, 43, 43, 0.34)",
   },
   eventHeroContent: {
     position: "absolute",
-    top: 132,
+    bottom: 24,
     left: 0,
     right: 0,
     zIndex: 2,
@@ -2262,11 +2232,39 @@ const localStyles = StyleSheet.create({
     textShadowRadius: 8,
   },
   eventHeroSubtitle: {
-    marginTop: 8,
+    marginTop: 10,
     color: "rgba(254, 254, 253, 0.9)",
     fontSize: 17,
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
+  },
+  eventIntroMetaRow: {
+    marginTop: 14,
+    marginHorizontal: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  eventIntroMetaItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  eventIntroMetaText: {
+    flex: 1,
+    color: DARK_GRAY,
+    fontSize: 19,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  eventIntroDivider: {
+    width: 1,
+    height: 42,
+    backgroundColor: "rgba(43, 43, 43, 0.12)",
+  },
+  eventDetailWarmBackground: {
+    backgroundColor: vibesTheme.colors.background,
   },
   eventDetailContentFullBleed: {
     paddingHorizontal: 0,
@@ -2278,13 +2276,39 @@ const localStyles = StyleSheet.create({
   },
   eventScrollContent: {
     paddingTop: 0,
-    paddingBottom: 124,
+    paddingBottom: 178,
   },
-  eventDetailInfoCardFloating: {
-    marginHorizontal: 24,
-    marginTop: 12,
+  eventDetailPanel: {
+    marginTop: 18,
+    marginHorizontal: 20,
+    minHeight: 520,
+    borderRadius: 34,
     paddingTop: 26,
-    backgroundColor: "rgba(254, 254, 253, 0.94)",
+    paddingHorizontal: 24,
+    paddingBottom: 34,
+    backgroundColor: vibesTheme.colors.background,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.06)",
+    shadowColor: vibesTheme.colors.accentMustard,
+    shadowOpacity: 0.11,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
+  },
+  eventPanelTitle: {
+    color: DARK_GRAY,
+    fontSize: 34,
+    lineHeight: 39,
+    fontFamily: vibesTheme.fonts.bold,
+    textAlign: "left",
+    marginBottom: 8,
+  },
+  eventPanelDescription: {
+    color: TEXT_SECONDARY,
+    fontSize: 16,
+    lineHeight: 23,
+    fontFamily: vibesTheme.fonts.medium,
+    marginBottom: 18,
   },
   eventMiniMapCard: {
     height: 190,
@@ -2444,6 +2468,16 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     gap: 18,
   },
+  eventHeaderIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(43, 43, 43, 0.24)",
+    borderWidth: 1,
+    borderColor: "rgba(254, 254, 253, 0.28)",
+  },
   expandedEventHeaderTitle: {
     flex: 1,
     color: WHITE,
@@ -2454,6 +2488,9 @@ const localStyles = StyleSheet.create({
     textShadowColor: "rgba(43, 43, 43, 0.42)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
+  },
+  expandedEventHeaderSpacer: {
+    flex: 1,
   },
   headerIconPlaceholder: {
     width: 40,
@@ -2520,40 +2557,38 @@ const localStyles = StyleSheet.create({
     elevation: 4,
   },
   eventFixedFooterContent: {
-    backgroundColor: "rgba(254, 254, 253, 0.94)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
     borderRadius: 30,
     paddingTop: 14,
     paddingHorizontal: 14,
     paddingBottom: 10,
+    shadowColor: vibesTheme.colors.accentMustard,
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  eventChatFooterContent: {
+    alignItems: "flex-end",
+  },
+  eventFloatingChatButton: {
+    alignSelf: "flex-end",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: vibesTheme.colors.accentBlue,
+    shadowColor: vibesTheme.colors.primaryText,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    elevation: 5,
   },
   challengeFooterButtonGroup: {
     flexDirection: "row",
     alignItems: "stretch",
     gap: 10,
-  },
-  eventMetaPillsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    gap: 12,
-    marginTop: 0,
-    marginBottom: 18,
-  },
-  eventMetaPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(228, 183, 110, 0.13)",
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
-  },
-  eventMetaPillText: {
-    color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.bold,
   },
   headerActions: {
     flexDirection: "row",

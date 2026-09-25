@@ -640,7 +640,12 @@ const Events = () => {
                     <View style={localStyles.eventMetadataRow}>
                       <Icon name="sparkles-outline" size={17} color={vibesTheme.colors.accentMustard} />
                       <Text style={localStyles.eventMetadataText}>
-                        {t("home.challengeCheckedInToday", { count: checkedInTodayCount })}
+                        {t(
+                          checkedInTodayCount === 1
+                            ? "home.challengeCheckedInTodayOne"
+                            : "home.challengeCheckedInToday",
+                          { count: checkedInTodayCount },
+                        )}
                       </Text>
                     </View>
                   ) : null}
