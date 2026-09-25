@@ -56,6 +56,11 @@ const REPORT_REASONS: ReportReason[] = [
   "Contenido inapropiado",
   "Perfil falso o engañoso",
 ];
+const COMPOSER_LINE_HEIGHT = 20;
+const COMPOSER_VERTICAL_PADDING = 8;
+const COMPOSER_MIN_HEIGHT = COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
+const COMPOSER_MAX_HEIGHT =
+  COMPOSER_LINE_HEIGHT * 4 + COMPOSER_VERTICAL_PADDING * 2;
 
 const Chat = () => {
   const navigation = useNavigation();
@@ -103,6 +108,7 @@ const Chat = () => {
 
   const [text, setText] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [composerHeight, setComposerHeight] = useState(COMPOSER_MIN_HEIGHT);
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReportReason, setSelectedReportReason] =
@@ -345,7 +351,7 @@ const Chat = () => {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         enabled={Platform.OS === "ios"}
         contentContainerStyle={localStyles.keyboardAvoidingContent}
-        keyboardVerticalOffset={insets.top}
+        keyboardVerticalOffset={0}
       >
         <AppHeader
           showBack
@@ -535,13 +541,15 @@ const Chat = () => {
                 },
               ]}
               ListHeaderComponent={
-                <Text style={styles.chatMatchedText}>
-                  Conectaste con {otherUserName || "esta persona"}
-                  {matchDate
-                    ? ` el ${new Date(matchDate).toLocaleDateString()}`
-                    : ""}
-                  .
-                </Text>
+                messages?.length ? (
+                  <Text style={styles.chatMatchedText}>
+                    Conectaste con {otherUserName || "esta persona"}
+                    {matchDate
+                      ? ` el ${new Date(matchDate).toLocaleDateString()}`
+                      : ""}
+                    .
+                  </Text>
+                ) : null
               }
               ListEmptyComponent={
                 <View style={localStyles.emptyWrap}>
@@ -563,19 +571,34 @@ const Chat = () => {
               localStyles.inputContainer,
               {
                 paddingBottom:
-                  keyboardHeight > 0 ? 10 : Math.max(insets.bottom + 14, 24),
+                  keyboardHeight > 0 ? 12 : Math.max(insets.bottom + 8, 18),
                 marginBottom: 0,
               },
             ]}
           >
             <Avatar uri={ownAvatar} size={32} />
             <TextInput
-              style={[styles.eventChatInput, localStyles.composerInput]}
+              style={[
+                styles.eventChatInput,
+                localStyles.composerInput,
+                { height: composerHeight },
+              ]}
               placeholder="Escribí un mensaje..."
               placeholderTextColor={TEXT_SECONDARY}
               value={text}
               onChangeText={setText}
               multiline
+              scrollEnabled={composerHeight >= COMPOSER_MAX_HEIGHT}
+              onContentSizeChange={(event) => {
+                const nextHeight = Math.min(
+                  COMPOSER_MAX_HEIGHT,
+                  Math.max(
+                    COMPOSER_MIN_HEIGHT,
+                    event.nativeEvent.contentSize.height
+                  )
+                );
+                setComposerHeight(nextHeight);
+              }}
               textAlignVertical="top"
               maxLength={2000}
               returnKeyType="default"
@@ -660,10 +683,10 @@ const localStyles = StyleSheet.create({
     alignItems: "flex-end",
   },
   composerInput: {
-    minHeight: 40,
-    maxHeight: 116,
-    lineHeight: 20,
-    paddingVertical: 8,
+    minHeight: COMPOSER_MIN_HEIGHT,
+    maxHeight: COMPOSER_MAX_HEIGHT,
+    lineHeight: COMPOSER_LINE_HEIGHT,
+    paddingVertical: COMPOSER_VERTICAL_PADDING,
   },
   loadingWrap: {
     flex: 1,

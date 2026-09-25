@@ -8,11 +8,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../src/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import Avatar from "../components/Avatar";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -37,6 +38,12 @@ import {
 } from "../src/queries/communityGroups.queries";
 import { handleApiError } from "../src/utils/handleApiError";
 
+const COMPOSER_LINE_HEIGHT = 20;
+const COMPOSER_VERTICAL_PADDING = 8;
+const COMPOSER_MIN_HEIGHT = COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
+const COMPOSER_MAX_HEIGHT =
+  COMPOSER_LINE_HEIGHT * 4 + COMPOSER_VERTICAL_PADDING * 2;
+
 export default function CommunityGroupChat() {
   const navigation = useNavigation();
   const { groupId, name, description } = useRoute().params as {
@@ -48,6 +55,8 @@ export default function CommunityGroupChat() {
   const messages = useCommunityMessagesQuery(groupId);
   const members = useCommunityGroupMembersQuery(groupId);
   const [membersVisible, setMembersVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [composerHeight, setComposerHeight] = useState(COMPOSER_MIN_HEIGHT);
   const insets = useSafeAreaInsets();
   const send = useSendCommunityMessageMutation(groupId);
   const groups = useCommunityGroupsQuery();
@@ -58,6 +67,20 @@ export default function CommunityGroupChat() {
   );
   const pendingPhoto = useRef(false);
   const [pickingPhoto, setPickingPhoto] = useState(false);
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", (event) => {
+      setKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   const editPhoto = async () => {
     if (!canEditPhoto || pickingPhoto || updatePhoto.isPending) return;
     setPickingPhoto(true);
@@ -150,7 +173,7 @@ export default function CommunityGroupChat() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         enabled={Platform.OS === "ios"}
-        keyboardVerticalOffset={insets.top}
+        keyboardVerticalOffset={0}
       >
         <View style={s.header}>
           <TouchableOpacity
@@ -334,16 +357,39 @@ export default function CommunityGroupChat() {
           }
         />
         <View
-          style={[chatStyles.eventChatInputContainer, s.composer, { paddingBottom: Math.max(insets.bottom, 12) }]}
+          style={[
+            chatStyles.eventChatInputContainer,
+            s.composer,
+            {
+              paddingBottom:
+                keyboardHeight > 0 ? 12 : Math.max(insets.bottom + 8, 18),
+            },
+          ]}
         >
           <TextInput
             accessibilityLabel="Mensaje"
             placeholder="Escribí un mensaje…"
-            style={[chatStyles.eventChatInput, s.input]}
+            style={[
+              chatStyles.eventChatInput,
+              s.input,
+              { height: composerHeight },
+            ]}
             placeholderTextColor={TEXT_SECONDARY}
             value={body}
             onChangeText={setBody}
             multiline
+            scrollEnabled={composerHeight >= COMPOSER_MAX_HEIGHT}
+            onContentSizeChange={(event) => {
+              const nextHeight = Math.min(
+                COMPOSER_MAX_HEIGHT,
+                Math.max(
+                  COMPOSER_MIN_HEIGHT,
+                  event.nativeEvent.contentSize.height
+                )
+              );
+              setComposerHeight(nextHeight);
+            }}
+            textAlignVertical="top"
             maxLength={4000}
             editable={!send.isPending}
           />
@@ -419,14 +465,17 @@ const s = StyleSheet.create({
     flexShrink: 0,
     flexDirection: "row",
     alignItems: "flex-end",
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingTop: 6,
     gap: 10,
   },
   input: {
     flex: 1,
-    maxHeight: 120,
-    minHeight: 48,
-    padding: 14,
+    maxHeight: COMPOSER_MAX_HEIGHT,
+    minHeight: COMPOSER_MIN_HEIGHT,
+    lineHeight: COMPOSER_LINE_HEIGHT,
+    paddingHorizontal: 14,
+    paddingVertical: COMPOSER_VERTICAL_PADDING,
     borderRadius: 20,
     fontSize: 16,
   },

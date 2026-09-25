@@ -86,6 +86,11 @@ const formatEventChatTime = (value: Date | null) => {
 type TimelineMessage = { kind: "event" } & EventMessage;
 
 const REPORT_REASON = "Contenido inapropiado";
+const COMPOSER_LINE_HEIGHT = 20;
+const COMPOSER_VERTICAL_PADDING = 8;
+const COMPOSER_MIN_HEIGHT = COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
+const COMPOSER_MAX_HEIGHT =
+  COMPOSER_LINE_HEIGHT * 4 + COMPOSER_VERTICAL_PADDING * 2;
 
 const EventChat = () => {
   const navigation = useNavigation();
@@ -121,6 +126,7 @@ const EventChat = () => {
 
   const [message, setMessage] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [composerHeight, setComposerHeight] = useState(COMPOSER_MIN_HEIGHT);
   const [membersModalVisible, setMembersModalVisible] = useState(false);
   const [messagesLoadingTimedOut, setMessagesLoadingTimedOut] = useState(false);
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(
@@ -823,7 +829,7 @@ const EventChat = () => {
             {
               paddingTop: 10,
               paddingBottom:
-                keyboardHeight > 0 ? 10 : Math.max(insets.bottom + 14, 24),
+                keyboardHeight > 0 ? 12 : Math.max(insets.bottom + 8, 18),
               alignItems: "flex-end",
             },
           ]}
@@ -833,12 +839,27 @@ const EventChat = () => {
             size={32}
           />
           <TextInput
-            style={[styles.eventChatInput, localStyles.composerInput]}
+            style={[
+              styles.eventChatInput,
+              localStyles.composerInput,
+              { height: composerHeight },
+            ]}
             placeholder="Escribir mensaje..."
             placeholderTextColor={TEXT_SECONDARY}
             value={message}
             onChangeText={setMessage}
             multiline
+            scrollEnabled={composerHeight >= COMPOSER_MAX_HEIGHT}
+            onContentSizeChange={(event) => {
+              const nextHeight = Math.min(
+                COMPOSER_MAX_HEIGHT,
+                Math.max(
+                  COMPOSER_MIN_HEIGHT,
+                  event.nativeEvent.contentSize.height
+                )
+              );
+              setComposerHeight(nextHeight);
+            }}
             textAlignVertical="top"
             onFocus={() => {
               setTimeout(() => {
@@ -1139,10 +1160,10 @@ const localStyles = StyleSheet.create({
     opacity: 0.68,
   },
   composerInput: {
-    minHeight: 40,
-    maxHeight: 116,
-    lineHeight: 20,
-    paddingVertical: 8,
+    minHeight: COMPOSER_MIN_HEIGHT,
+    maxHeight: COMPOSER_MAX_HEIGHT,
+    lineHeight: COMPOSER_LINE_HEIGHT,
+    paddingVertical: COMPOSER_VERTICAL_PADDING,
   },
   moreAvatar: {
     backgroundColor: "#F0EDE8",
