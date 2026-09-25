@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   AppState,
@@ -93,11 +94,6 @@ function ChallengeCard({
         timeline.totalDays
       )
     : null;
-  const todayKey = new Date().toISOString().split("T")[0];
-  const checkedInToday =
-    Boolean(participant.data?.checkedInToday) ||
-    Boolean(event.viewerCheckedInToday) ||
-    (checkins.isSuccess && checkins.data.includes(todayKey));
   const status =
     timeline.status === "upcoming"
       ? `Empieza en ${timeline.startsInDays} día${
@@ -122,12 +118,11 @@ function ChallengeCard({
         transition={180}
         cachePolicy="memory-disk"
       />
-      <Text style={s.cardTitle} numberOfLines={1}>
-        {event.title}
-      </Text>
-      <Text style={s.meta}>{status}</Text>
+      <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.82)", "rgba(255,255,255,0.96)"]} locations={[0.25, 0.7, 1]} style={StyleSheet.absoluteFillObject} />
+      <View style={s.challengeBody}>
+      <Text style={[s.meta, s.imageMeta]}>{status}</Text>
       {checkins.isError || participant.isError ? (
-        <Text style={s.meta} numberOfLines={2}>
+        <Text style={[s.meta, s.imageMeta]} numberOfLines={2}>
           No pudimos actualizar tu progreso.
         </Text>
       ) : checkins.isLoading ? (
@@ -146,15 +141,11 @@ function ChallengeCard({
         </View>
       ) : null}
       <View style={s.cardFooter}>
-        {timeline.status === "active" &&
-        (participant.isSuccess || checkins.isSuccess) ? (
-          <Text style={[s.status, checkedInToday && s.done]}>
-            {checkedInToday ? "Completado Hoy" : "Pendiente hoy"}
-          </Text>
-        ) : (
-          <Text style={s.status}>{event.attendees}</Text>
-        )}
+        <Text style={[s.cardTitle, s.challengeTitle]} numberOfLines={2}>
+          {event.title}
+        </Text>
         <Icon name="chevron-forward" size={20} color={ACCENT} />
+      </View>
       </View>
     </TouchableOpacity>
   );
@@ -162,10 +153,8 @@ function ChallengeCard({
 
 function HomeEventCard({
   event,
-  suggested = false,
 }: {
   event: EventFeedItem;
-  suggested?: boolean;
 }) {
   const navigation = useNavigation<any>();
   const label = getEventDateLabel(event.startsAt!);
@@ -181,7 +170,6 @@ function HomeEventCard({
       activeOpacity={0.8}
       onPress={() => navigation.navigate("EventDetail", { event })}
     >
-      <View>
         <ExpoImage
           source={event.image as ImageSourcePropType}
           style={s.eventImage}
@@ -189,49 +177,36 @@ function HomeEventCard({
           transition={180}
           cachePolicy="memory-disk"
         />
+        <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.82)", "rgba(255,255,255,0.96)"]} locations={[0.25, 0.7, 1]} style={StyleSheet.absoluteFillObject} />
         <View style={s.dateBadge}>
           <Text style={s.dateWeekday}>{label.weekday}</Text>
           <Text style={s.dateDay}>{label.day}</Text>
         </View>
-        {suggested ? (
-          <View style={s.joinTag}>
-            <Text style={s.joinTagText}>Sumate</Text>
-          </View>
+        {participantImages.length ? (
+          <AvatarGroup
+            items={participantImages}
+            size={26}
+            max={3}
+            overlap={8}
+            style={s.eventAvatars}
+          />
         ) : null}
-      </View>
       <View style={s.eventBody}>
         <View style={s.eventCopy}>
-          <Text style={s.cardTitle} numberOfLines={1}>
+          <Text style={s.cardTitle} numberOfLines={2}>
             {event.title}
           </Text>
-          <View style={s.eventMetaRow}>
-            <Icon
-              name={
-                event.modality === "online" ? "videocam-outline" : "location"
-              }
-              size={16}
-              color="#6E6E6E"
-            />
-            <Text style={s.meta} numberOfLines={1}>
-              {event.modality === "online"
-                ? `Online · ${label.time}`
-                : `${event.location || "Ver detalles"} · ${
-                    event.participantCount ?? 0
-                  } personas`}
-            </Text>
-          </View>
-          {participantImages.length ? (
-            <AvatarGroup
-              items={participantImages}
-              size={24}
-              overlap={8}
-              style={s.eventAvatars}
-            />
+          {event.modality === "online" ? (
+            <View style={s.eventMetaRow}>
+              <Icon name="videocam-outline" size={16} color="#4B4B4B" />
+              <Text style={[s.meta, s.imageMeta, { flex: 1 }]} numberOfLines={2}>
+                {`Online · ${label.time}`}
+              </Text>
+            </View>
           ) : null}
+
         </View>
-        <View style={s.eventChevron}>
-          <Icon name="chevron-forward" size={20} color={ACCENT} />
-        </View>
+
       </View>
     </TouchableOpacity>
   );
@@ -270,7 +245,6 @@ export default function HomeOverview({ userId }: { userId?: string }) {
         .filter((event) => !joinedEventIds.has(event.id))
         .slice(0, 2);
   const visibleEvents = upcoming.length ? upcoming : suggestedEvents;
-  const showingSuggestedEvents = upcoming.length === 0 && suggestedEvents.length > 0;
   const rank = { active: 0, upcoming: 1, finished: 2 };
   const challenges = events
     .filter((event) => event.type === "challenge")
@@ -352,7 +326,6 @@ export default function HomeOverview({ userId }: { userId?: string }) {
               <HomeEventCard
                 key={event.id}
                 event={event}
-                suggested={showingSuggestedEvents}
               />
             ))}
           </ScrollView>
@@ -428,20 +401,17 @@ const s = StyleSheet.create({
     paddingRight: 24,
   },
   challengeCard: {
-    width: 214,
-    minHeight: 198,
-    backgroundColor: "#FEFEFD",
-    borderColor: "#EDE2CF",
-    borderWidth: 1,
+    width: 174,
+    minHeight: 154,
+    backgroundColor: "#FFFFFF",
     borderRadius: 14,
-    padding: 10,
+    overflow: "hidden",
+    justifyContent: "flex-end",
+    paddingTop: 28,
   },
-  challengeImage: {
-    height: 64,
-    borderRadius: 10,
-    marginBottom: 9,
-    backgroundColor: "#F3EADF",
-  },
+  challengeBody: { padding: 10, gap: 2 },
+  challengeImage: { ...StyleSheet.absoluteFillObject },
+  imageMeta: { color: "#4B4B4B" },
   cardTitle: {
     fontSize: 18,
     lineHeight: 24,
@@ -460,7 +430,7 @@ const s = StyleSheet.create({
     color: ACCENT,
     fontFamily: vibesTheme.fonts.medium,
   },
-  done: { color: "#4D7264" },
+  challengeTitle: { flex: 1 },
   loader: { marginTop: 12, alignSelf: "flex-start" },
   progressLine: {
     flexDirection: "row",
@@ -472,13 +442,13 @@ const s = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#E6DED0",
+    backgroundColor: "rgba(43,43,43,0.16)",
     overflow: "hidden",
   },
   fill: { height: "100%", backgroundColor: ACCENT, borderRadius: 3 },
   percent: {
     minWidth: 33,
-    color: "#5F574C",
+    color: "#2B2B2B",
     fontSize: 13,
     lineHeight: 18,
     textAlign: "right",
@@ -492,50 +462,23 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8,
   },
-  status: {
-    flex: 1,
-    color: ACCENT,
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
-  },
   eventCard: {
-    width: 206,
-    minHeight: 210,
-    backgroundColor: "#FEFEFD",
-    borderColor: "#EDE2CF",
-    borderWidth: 1,
+    width: 174,
+    minHeight: 154,
+    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     overflow: "hidden",
-    paddingBottom: 12,
+    paddingTop: 58,
+    paddingBottom: 10,
+    justifyContent: "flex-end",
   },
-  eventImage: {
-    height: 92,
-    backgroundColor: "#F3EADF",
-  },
-  joinTag: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    minHeight: 28,
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ACCENT,
-  },
-  joinTagText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
-  },
+  eventImage: { ...StyleSheet.absoluteFillObject },
   dateBadge: {
     position: "absolute",
     top: 10,
     left: 10,
-    width: 50,
-    minHeight: 52,
+    width: 42,
+    minHeight: 44,
     borderRadius: 10,
     backgroundColor: "#FEFEFD",
     alignItems: "center",
@@ -550,29 +493,20 @@ const s = StyleSheet.create({
   },
   dateDay: {
     color: "#2B2B2B",
-    fontSize: 24,
-    lineHeight: 27,
+    fontSize: 21,
+    lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,
   },
   eventCopy: {
     flex: 1,
     minWidth: 0,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     gap: 4,
   },
   eventBody: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "flex-end",
     paddingTop: 12,
-    paddingRight: 10,
-  },
-  eventChevron: {
-    width: 24,
-    minHeight: 24,
-    alignItems: "flex-end",
-    justifyContent: "center",
-    paddingBottom: 1,
   },
   eventMetaRow: {
     minHeight: 22,
@@ -580,7 +514,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 5,
   },
-  eventAvatars: { marginTop: 4 },
+  eventAvatars: { position: "absolute", top: 12, right: 10 },
   eventSuggestionsLoader: {
     minHeight: 112,
     alignItems: "center",

@@ -1,3 +1,5 @@
+import { LinearGradient } from "expo-linear-gradient";
+import ProfileMediaImage from "../components/ProfileMediaImage";
 import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
 import DailyMoodCard from "../components/DailyMoodCard";
@@ -260,12 +262,11 @@ function HomePeopleSuggestions({
             <View style={localStyles.personAddIcon}>
               <Icon name="person-add-outline" size={19} color="#5F574C" />
             </View>
-            <Avatar
-              source={profile.image}
-              uri={profile.avatarUri ?? null}
-              size={78}
-              iconSize={32}
+            <ProfileMediaImage
+              source={profile.avatarUri ? { uri: profile.avatarUri } : profile.image}
+              style={StyleSheet.absoluteFillObject}
             />
+            <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.82)", "rgba(255,255,255,0.96)"]} locations={[0.5, 0.85, 1]} style={StyleSheet.absoluteFillObject} />
             <Text style={localStyles.personName} numberOfLines={1}>
               {profile.name.split(" ")[0]}
             </Text>
@@ -1069,18 +1070,23 @@ const localStyles = StyleSheet.create({
     paddingRight: 24,
   },
   personCard: {
-    width: 128,
-    minHeight: 166,
+    width: 142,
+    minHeight: 188,
+    overflow: "hidden",
+    justifyContent: "flex-end",
     borderWidth: 1,
     borderColor: "#EDE2CF",
     borderRadius: 14,
     backgroundColor: "#FEFEFD",
     paddingHorizontal: 12,
-    paddingTop: 18,
+    paddingTop: 108,
     paddingBottom: 12,
     alignItems: "center",
   },
   personAddIcon: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 6,
     position: "absolute",
     top: 12,
     right: 12,
@@ -1097,7 +1103,7 @@ const localStyles = StyleSheet.create({
   personHint: {
     alignSelf: "stretch",
     marginTop: 2,
-    color: "#6E6E6E",
+    color: "#4B4B4B",
     fontSize: 13,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,

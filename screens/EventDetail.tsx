@@ -203,7 +203,7 @@ const EventDetail = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const event = (route.params as any)?.event;
   const isChallenge = event?.type === "challenge";
 
@@ -1290,6 +1290,14 @@ const EventDetail = () => {
     }
   };
 
+  const heroCollapse = (expanded: number, collapsed: number) =>
+    eventScrollY.interpolate({
+      inputRange: [0, 168],
+      outputRange: [expanded, collapsed],
+      extrapolate: "clamp",
+    });
+  const compactHeaderTop = Math.max(insets.top + 10, 24);
+
   const collapsedEventHeaderOpacity = eventScrollY.interpolate({
     inputRange: [92, 168],
     outputRange: [0, 1],
@@ -1407,15 +1415,35 @@ const EventDetail = () => {
             <Icon name="chevron-back" size={24} color={DARK_GRAY} />
           </TouchableOpacity>
           {eventHeroImageSource ? (
-            <Image
-              source={eventHeroImageSource}
-              style={localStyles.collapsedEventHeaderThumbnail}
-            />
+            <View style={localStyles.collapsedEventHeaderThumbnail} />
           ) : null}
           <Text style={localStyles.collapsedEventHeaderTitle} numberOfLines={2}>
             {event.title}
           </Text>
           <View style={localStyles.headerIconPlaceholder} />
+        </Animated.View>
+      ) : null}
+
+      {!isChallenge && eventHeroImageSource ? (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            zIndex: 62,
+            elevation: 26,
+            overflow: "hidden",
+            top: heroCollapse(0, compactHeaderTop + 1),
+            left: heroCollapse(0, 72),
+            width: heroCollapse(width, 38),
+            height: heroCollapse(210, 38),
+            borderRadius: heroCollapse(0, 19),
+          }}
+        >
+          <Image source={eventHeroImageSource} style={localStyles.eventHeroImage} resizeMode="cover" />
+          <Animated.View style={[localStyles.eventHeroScrim, { opacity: expandedEventHeaderOpacity }]} />
+          <Animated.View style={[localStyles.eventHeroContent, { opacity: expandedEventHeaderOpacity, width }]}>
+            <Text style={localStyles.eventHeroSubtitle}>{eventLeadText}</Text>
+          </Animated.View>
         </Animated.View>
       ) : null}
 
@@ -1436,26 +1464,20 @@ const EventDetail = () => {
           !isChallenge
             ? Animated.event(
                 [{ nativeEvent: { contentOffset: { y: eventScrollY } } }],
-                { useNativeDriver: true },
+                { useNativeDriver: false },
               )
             : undefined
         }
       >
         {!isChallenge ? (
           <>
-            <View style={localStyles.eventHeroMedia}>
-              {eventHeroImageSource ? (
-                <Image
-                  source={eventHeroImageSource}
-                  style={localStyles.eventHeroImage}
-                  resizeMode="cover"
-                />
-              ) : null}
-              <View style={localStyles.eventHeroScrim} />
-              <View style={localStyles.eventHeroContent}>
-                <Text style={localStyles.eventHeroSubtitle}>{eventLeadText}</Text>
-              </View>
-            </View>
+            <Animated.View
+              style={[
+                localStyles.eventHeroMedia,
+                // Match the moving image's bottom edge in scroll coordinates.
+                { height: heroCollapse(210, 168 + compactHeaderTop + 1 + 38) },
+              ]}
+            />
             <View
               style={[
                 styles.eventDetailInfoCard,
@@ -2202,7 +2224,6 @@ const localStyles = StyleSheet.create({
     borderColor: "#F0E1C7",
   },
   eventHeroMedia: {
-    minHeight: 240,
     borderRadius: 0,
     overflow: "hidden",
     marginBottom: 0,
@@ -2264,7 +2285,7 @@ const localStyles = StyleSheet.create({
   },
   eventDetailInfoCardFloating: {
     marginHorizontal: 24,
-    marginTop: -36,
+    marginTop: 12,
     paddingTop: 26,
     backgroundColor: "rgba(255, 255, 255, 0.94)",
   },
@@ -2420,8 +2441,8 @@ const localStyles = StyleSheet.create({
     position: "absolute",
     left: 20,
     right: 20,
-    zIndex: 60,
-    elevation: 24,
+    zIndex: 63,
+    elevation: 27,
     flexDirection: "row",
     alignItems: "center",
     gap: 18,

@@ -1489,6 +1489,13 @@ const ChallengeDetailScreen = () => {
       }),
     [challenge.checkInStatus, checkInMutation.isPending, footerSliderMaxOffset]
   );
+  const compactHeaderTop = Math.max(insets.top + 8, 18);
+  const heroCollapse = (expanded: number, collapsed: number) =>
+    challengeScrollY.interpolate({
+      inputRange: [0, 168],
+      outputRange: [expanded, collapsed],
+      extrapolate: "clamp",
+    });
   const collapsedChallengeHeaderOpacity = challengeScrollY.interpolate({
     inputRange: [92, 168],
     outputRange: [0, 1],
@@ -1677,10 +1684,7 @@ const ChallengeDetailScreen = () => {
           <Icon name="chevron-back" size={22} color={palette.text} />
         </TouchableOpacity>
         {collapsedCoverImageSource ? (
-          <Image
-            source={collapsedCoverImageSource}
-            style={localStyles.collapsedChallengeHeaderThumbnail}
-          />
+          <View style={localStyles.collapsedChallengeHeaderThumbnail} />
         ) : null}
         <Text
           style={localStyles.collapsedChallengeHeaderTitle}
@@ -1697,6 +1701,26 @@ const ChallengeDetailScreen = () => {
         </TouchableOpacity>
       </NativeAnimated.View>
 
+      {collapsedCoverImageSource ? (
+        <NativeAnimated.View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            zIndex: 62,
+            elevation: 20,
+            overflow: "hidden",
+            top: heroCollapse(0, compactHeaderTop + 5),
+            left: heroCollapse(0, 80),
+            width: heroCollapse(width - insets.left - insets.right, 38),
+            height: heroCollapse(210, 38),
+            borderRadius: heroCollapse(0, 19),
+          }}
+        >
+          <Image source={collapsedCoverImageSource} style={localStyles.heroImage} resizeMode="cover" />
+          <NativeAnimated.View style={[localStyles.heroScrim, { opacity: expandedChallengeHeaderOpacity }]} />
+        </NativeAnimated.View>
+      ) : null}
+
       <NativeAnimated.ScrollView
         contentContainerStyle={[
           localStyles.scrollContent,
@@ -1710,14 +1734,16 @@ const ChallengeDetailScreen = () => {
         onScroll={NativeAnimated.event(
           [{ nativeEvent: { contentOffset: { y: challengeScrollY } } }],
           {
-            useNativeDriver: true,
+            useNativeDriver: false,
             listener: (event: any) =>
               setHeaderCollapsed(event.nativeEvent.contentOffset.y >= 132),
           }
         )}
       >
         {coverImageSource ? (
-          <ChallengeHero imageSource={coverImageSource} />
+          <NativeAnimated.View
+            style={{ height: heroCollapse(210, 168 + compactHeaderTop + 5 + 38) }}
+          />
         ) : null}
         <View
           style={[
@@ -2040,7 +2066,7 @@ const localStyles = StyleSheet.create({
     paddingBottom: 188,
   },
   contentShell: {
-    marginTop: -34,
+    marginTop: 12,
     paddingHorizontal: 20,
     zIndex: 2,
   },
@@ -2113,8 +2139,8 @@ const localStyles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    zIndex: 60,
-    elevation: 18,
+    zIndex: 63,
+    elevation: 21,
     paddingLeft: 20,
     paddingRight: 20,
     flexDirection: "row",
