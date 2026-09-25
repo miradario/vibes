@@ -397,6 +397,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 10,
   },
   heroWrap: {
+    flexShrink: 0,
     width: "100%",
     height: 170,
     paddingHorizontal: 42,
@@ -404,7 +405,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   loginContainer: {
-    marginTop: -24,
+    marginTop: 0,
   },
   loginCard: {
     flexGrow: 1,

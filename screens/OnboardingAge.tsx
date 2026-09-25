@@ -53,7 +53,7 @@ const OnboardingAge = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingAge" />
         </AppHeader>
 

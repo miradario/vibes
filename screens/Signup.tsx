@@ -30,6 +30,8 @@ import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
 import CustomDialog from "../components/CustomDialog";
 import Icon from "../components/Icon";
+import LoopingVideo from "../components/LoopingVideo";
+import { ResizeMode } from "expo-av";
 import { useI18n } from "../src/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
@@ -227,6 +229,14 @@ const Signup = () => {
 
   return (
     <View style={[styles.bg, { paddingTop: insets.top }]}>
+      <View style={localStyles.heroWrap}>
+        <LoopingVideo
+          source={require("../assets/videos/surfaces/signup.mp4")}
+          posterSource={require("../assets/images/challenges/signup.png")}
+          style={localStyles.signupIllustration}
+          resizeMode={ResizeMode.CONTAIN}
+        />
+      </View>
       <KeyboardAvoidingView
         style={[styles.loginContainer, localStyles.loginContainer]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -500,6 +510,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   heroWrap: {
+    flexShrink: 0,
     width: "100%",
     height: 170,
     paddingHorizontal: 42,

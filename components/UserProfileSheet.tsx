@@ -381,6 +381,8 @@ const UserProfileSheet = ({
   const swipe = useMemo(
     () =>
       PanResponder.create({
+        onStartShouldSetPanResponder: () =>
+          !actionPending && !swipingRef.current && !detailsVisible,
         onMoveShouldSetPanResponderCapture: (_, g) =>
           !actionPending &&
           !swipingRef.current &&
@@ -759,20 +761,6 @@ const UserProfileSheet = ({
               StyleSheet.absoluteFillObject,
               {
                 backgroundColor: vibesTheme.colors.background,
-                opacity: swipeX.interpolate({
-                  inputRange: [-width * 0.4, 0, 0, width * 0.4],
-                  outputRange: [1, 0, 0, 1],
-                  extrapolate: "clamp",
-                }),
-                transform: [
-                  {
-                    scale: swipeX.interpolate({
-                      inputRange: [-width, 0, width],
-                      outputRange: [1, 0.95, 1],
-                      extrapolate: "clamp",
-                    }),
-                  },
-                ],
               },
             ]}
           >
@@ -785,7 +773,8 @@ const UserProfileSheet = ({
               transition={0}
             />
             <LinearGradient
-              colors={["transparent", "rgba(254, 254, 253, 0.97)"]}
+              colors={["transparent", "rgba(43, 43, 43, 0.18)", "rgba(43, 43, 43, 0.92)"]}
+              locations={[0, 0.34, 1]}
               style={[
                 localStyles.nextProfileCopy,
                 { paddingBottom: insets.bottom + 40 },
@@ -802,7 +791,6 @@ const UserProfileSheet = ({
         ) : null}
         <Animated.View style={{ height: photoHeight }}>
         <Animated.View
-          renderToHardwareTextureAndroid={visible && enableSwipe}
           style={[
             localStyles.screen,
             {
@@ -885,8 +873,6 @@ const UserProfileSheet = ({
             onAccessibilityAction={({ nativeEvent }) =>
               setGalleryIndex(safeActiveIndex + (nativeEvent.actionName === "increment" ? 1 : -1))
             }
-            {...swipe.panHandlers}
-            onStartShouldSetResponder={() => !detailsVisible && !actionPending && !swipingRef.current}
           />
           <LinearGradient
             pointerEvents="none"
