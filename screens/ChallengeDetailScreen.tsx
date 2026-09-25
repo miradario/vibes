@@ -630,9 +630,8 @@ const ChallengeJourneyCard = memo(
                   <View
                     style={[
                       localStyles.journeyConnector,
-                      (isDayCompleted(day, challenge.completedDays) ||
-                        day < challenge.currentDay) &&
-                        localStyles.journeyConnectorDone,
+                      state === "completed" && localStyles.journeyConnectorDone,
+                      state === "missed" && localStyles.journeyConnectorMissed,
                     ]}
                   />
                 ) : null}
@@ -843,9 +842,8 @@ export const PathProgress = memo(
                   <View
                     style={[
                       localStyles.pathConnector,
-                      (isDayCompleted(day, completedDays) ||
-                        day < currentDay) &&
-                        localStyles.pathConnectorDone,
+                      isDayCompleted(day, completedDays) && localStyles.pathConnectorDone,
+                      !isDayCompleted(day, completedDays) && day < currentDay && localStyles.pathConnectorMissed,
                     ]}
                   />
                 ) : null}
@@ -2661,22 +2659,22 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   journeyPercent: {
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 46,
     lineHeight: 50,
     fontFamily: vibesTheme.fonts.bold,
   },
   journeyTrack: {
     marginTop: 20,
-    height: 14,
+    height: 8,
     borderRadius: 999,
     overflow: "hidden",
-    backgroundColor: "rgba(254, 254, 253, 0.88)",
+    backgroundColor: "rgba(110, 110, 110, 0.18)",
   },
   journeyTrackFill: {
     height: "100%",
     borderRadius: 999,
-    backgroundColor: vibesTheme.colors.accentCoral,
+    backgroundColor: vibesTheme.colors.accentBlue,
   },
   journeyDaysRow: {
     paddingTop: 26,
@@ -2708,10 +2706,13 @@ const localStyles = StyleSheet.create({
     borderRadius: 2,
     marginTop: 18,
     marginHorizontal: -1,
-    backgroundColor: "rgba(254, 254, 253, 0.9)",
+    backgroundColor: "rgba(228, 183, 110, 0.35)",
+  },
+  journeyConnectorMissed: {
+    backgroundColor: "rgba(216, 140, 122, 0.45)",
   },
   journeyConnectorDone: {
-    backgroundColor: "rgba(216, 140, 122, 0.45)",
+    backgroundColor: "rgba(127, 152, 183, 0.45)",
   },
   journeyStatsRow: {
     borderTopWidth: 1,
@@ -2803,9 +2804,12 @@ const localStyles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginHorizontal: -1,
-    backgroundColor: "rgba(254, 254, 253, 0.86)",
+    backgroundColor: "rgba(228, 183, 110, 0.35)",
   },
   pathConnectorDone: {
+    backgroundColor: "rgba(127, 152, 183, 0.34)",
+  },
+  pathConnectorMissed: {
     backgroundColor: "rgba(216, 140, 122, 0.34)",
   },
   dayCircle: {
@@ -2815,8 +2819,8 @@ const localStyles = StyleSheet.create({
     shadowColor: palette.gold,
   },
   dayCompleted: {
-    backgroundColor: "rgba(216, 140, 122, 0.32)",
-    borderColor: "rgba(216, 140, 122, 0.18)",
+    backgroundColor: "rgba(127, 152, 183, 0.32)",
+    borderColor: vibesTheme.colors.accentBlue,
   },
   dayActive: {
     backgroundColor: vibesTheme.colors.accentMustard,
@@ -2827,26 +2831,29 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   dayFuture: {
-    backgroundColor: "rgba(254, 254, 253, 0.9)",
-    borderColor: "rgba(254, 254, 253, 0.85)",
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   dayMissed: {
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
-    borderColor: "rgba(216, 140, 122, 0.72)",
+    backgroundColor: "rgba(216, 140, 122, 0.22)",
+    borderColor: vibesTheme.colors.accentCoral,
   },
   dayText: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
+    color: vibesTheme.colors.primaryText,
+    fontSize: 16,
+    lineHeight: 20,
+    includeFontPadding: false,
+    fontVariant: ["tabular-nums"],
     fontFamily: vibesTheme.fonts.bold,
   },
   dayTextActive: {
     color: vibesTheme.colors.primaryText,
   },
   dayTextFuture: {
-    color: vibesTheme.colors.secondaryText,
+    color: vibesTheme.colors.primaryText,
   },
   dayTextMissed: {
-    color: vibesTheme.colors.secondaryText,
+    color: vibesTheme.colors.primaryText,
   },
   pathMantraRow: {
     flexDirection: "row",
