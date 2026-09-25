@@ -1557,13 +1557,13 @@ const localStyles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 20,
     justifyContent: "center",
-    backgroundColor: "#E9AE62",
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "rgba(216, 165, 71, 0.2)",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   pillBlue: {
-    backgroundColor: "#E9AE62",
-    borderColor: "rgba(216, 165, 71, 0.2)",
+    backgroundColor: "transparent",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   pillText: {
     color: "#2B2B2B",
