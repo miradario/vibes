@@ -592,7 +592,6 @@ const Events = () => {
                     </View>
                   </View>
                   <View style={localStyles.eventViewButton}>
-                    <Text style={localStyles.eventViewText}>Ver</Text>
                     <Icon name="chevron-forward" size={17} color={vibesTheme.colors.primaryText} />
                   </View>
                 </TouchableOpacity>
@@ -605,105 +604,52 @@ const Events = () => {
             );
             const visibilityMeta = getVisibilityMeta(item.visibility);
 
+            const count = item.participantCount ?? participantCount;
+            const participantsLabel = `${count} ${count === 1 ? "participante" : "participantes"}`;
             return (
-            <TouchableOpacity
-              style={localStyles.feedRowCard}
-              onPress={() =>
-                navigation.navigate(
-                  (item.type === "challenge"
-                    ? "ChallengeDetailScreen"
-                    : "EventDetail") as never,
-                  { event: item } as never,
-                )
-              }
-            >
-              <View style={localStyles.feedRowThumbWrap}>
-                <Image
-                  source={
-                    typeof item.image === "string" ? { uri: item.image } : item.image
-                  }
-                  style={localStyles.feedRowThumb}
-                />
-                {item.type === "challenge" && challengeProgress ? (
-                  <View
-                    style={[
-                      localStyles.feedThumbProgressPill,
-                      challengeProgress.tone === "pending"
-                        ? localStyles.feedThumbProgressPillPending
-                        : null,
-                      challengeProgress.tone === "done"
-                        ? localStyles.progressPillDone
-                        : null,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        localStyles.feedThumbProgressText,
-                        challengeProgress.tone === "pending"
-                          ? localStyles.feedThumbProgressTextPending
-                          : null,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {challengeProgress.label}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-              <View
-                style={[
-                  localStyles.feedRowContent,
-                  item.type === "challenge"
-                    ? localStyles.feedRowContentChallenge
-                    : null,
-                ]}
+              <TouchableOpacity
+                style={localStyles.eventListRow}
+                activeOpacity={0.78}
+                accessibilityRole="button"
+                accessibilityLabel={`Ver ${item.title}, ${participantsLabel}`}
+                onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)}
               >
-                <View style={localStyles.feedRowCopy}>
+                <Image
+                  source={typeof item.image === "string" ? { uri: item.image } : item.image}
+                  style={localStyles.eventThumbnail}
+                />
+                <View style={localStyles.eventCopy}>
                   <View style={localStyles.feedRowTitleLine}>
-                    {item.type === "challenge" ? (
-                      <Icon
-                        name={visibilityMeta.icon}
-                        size={13}
-                        color={vibesTheme.colors.secondaryText}
-                      />
-                    ) : null}
-                    <Text style={localStyles.feedRowTitle} numberOfLines={1}>
-                      {item.title}
-                    </Text>
+                    <Icon name={visibilityMeta.icon} size={13} color={vibesTheme.colors.secondaryText} />
+                    <Text style={[localStyles.eventTitle, { flex: 1 }]} numberOfLines={2}>{item.title}</Text>
                   </View>
-                  {item.type === "challenge" && checkedInTodayCount > 0 ? (
-                    <View style={localStyles.communityTodayRow}>
-                      <Icon name="sparkles-outline" size={14} color={vibesTheme.colors.accentMustard} />
-                      <Text style={localStyles.communityTodayText} numberOfLines={1}>
-                        {t("home.challengeCheckedInToday", {
-                          count: checkedInTodayCount,
-                        })}
+                  <View style={localStyles.eventMetadataRow}>
+                    <Icon name="people" size={17} color={vibesTheme.colors.secondaryText} />
+                    <Text style={localStyles.eventMetadataText}>{participantsLabel}</Text>
+                  </View>
+                  {challengeProgress ? (
+                    <View style={localStyles.eventMetadataRow}>
+                      <Icon
+                        name={challengeProgress.tone === "done" ? "checkmark-circle" : "time-outline"}
+                        size={17}
+                        color={challengeProgress.tone === "done" ? vibesTheme.colors.accentBlue : vibesTheme.colors.accentMustard}
+                      />
+                      <Text style={localStyles.eventMetadataText}>{challengeProgress.label}</Text>
+                    </View>
+                  ) : null}
+                  {checkedInTodayCount > 0 ? (
+                    <View style={localStyles.eventMetadataRow}>
+                      <Icon name="sparkles-outline" size={17} color={vibesTheme.colors.accentMustard} />
+                      <Text style={localStyles.eventMetadataText}>
+                        {t("home.challengeCheckedInToday", { count: checkedInTodayCount })}
                       </Text>
                     </View>
                   ) : null}
-                  {item.type === "challenge" ? (
-                    <View style={localStyles.feedRowBottom}>
-                      <View style={localStyles.feedParticipantsWrap}>
-                        <ParticipantStack
-                          count={participantCount}
-                          hostImage={item.hostImage}
-                          avatarUrls={item.participantPreviewImages}
-                        />
-                        <View style={localStyles.feedParticipantsCountWrap}>
-                          <Text style={localStyles.feedParticipantsCount}>
-                            {participantCount}
-                          </Text>
-                          <Icon name="people" size={15} color={vibesTheme.colors.primaryText} />
-                        </View>
-                      </View>
-                      <View style={localStyles.feedRowArrow}>
-                        <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
-                      </View>
-                    </View>
-                  ) : null}
                 </View>
-              </View>
-            </TouchableOpacity>
+                <View style={localStyles.eventViewButton}>
+                  <Icon name="chevron-forward" size={17} color={vibesTheme.colors.primaryText} />
+                </View>
+              </TouchableOpacity>
           )}}
         />
       </View>
