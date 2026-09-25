@@ -430,47 +430,8 @@ const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
   );
 });
 
-const CommunityPulseCard = memo(
-  ({
-    checkedInTodayCount,
-    participantsCount,
-  }: {
-    checkedInTodayCount: number;
-    participantsCount: number;
-  }) => (
-    <View style={localStyles.communityCard}>
-      <View style={localStyles.communityBadge}>
-        <Icon
-          name="people-outline"
-          size={24}
-          color={vibesTheme.colors.accentMustard}
-        />
-      </View>
-      <View style={localStyles.communityCopy}>
-        <Text style={localStyles.communityTitle}>Mejor en compañía</Text>
-        <Text style={localStyles.communitySubtitle}>
-          {participantsCount > 0
-            ? `${participantsCount} ${
-                participantsCount === 1
-                  ? "persona comparte"
-                  : "personas comparten"
-              } este desafío`
-            : "Tu presencia puede abrir el ritmo del día"}
-        </Text>
-        <Text style={localStyles.communityTodayCopy}>
-          {checkedInTodayCount > 0
-            ? `${checkedInTodayCount} ${
-                checkedInTodayCount === 1 ? "check-in" : "check-ins"
-              } hoy`
-            : "Todavía no hay check-ins hoy"}
-        </Text>
-      </View>
-    </View>
-  )
-);
-
 const ChallengeIntroMetaRow = memo(
-  ({ challenge }: { challenge: ChallengeDetailData }) => (
+  ({ challenge, checkedInTodayCount }: { challenge: ChallengeDetailData; checkedInTodayCount: number }) => (
     <View style={localStyles.challengeIntroMetaRow}>
       <View style={localStyles.challengeIntroMetaItem}>
         <Icon name="calendar-outline" size={24} color={palette.text} />
@@ -486,14 +447,14 @@ const ChallengeIntroMetaRow = memo(
       <View style={localStyles.challengeIntroDivider} />
       <View style={localStyles.challengeIntroMetaItem}>
         <Icon name="people-outline" size={26} color={palette.text} />
-        <Text
-          style={localStyles.challengeIntroMetaText}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.72}
-        >
-          {challenge.participantsCount} participantes
-        </Text>
+        <View style={{ flex: 1 }}>
+          <Text style={localStyles.challengeParticipantText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
+            {challenge.participantsCount} participantes
+          </Text>
+          <Text style={localStyles.challengeTodayText} numberOfLines={1} adjustsFontSizeToFit>
+            {checkedInTodayCount} {checkedInTodayCount === 1 ? "completó" : "completaron"} hoy
+          </Text>
+        </View>
       </View>
     </View>
   )
@@ -643,23 +604,14 @@ const ChallengeJourneyCard = memo(
         <View style={localStyles.journeyStatsRow}>
           <View style={localStyles.journeyStatItem}>
             <Icon name="flame-outline" size={24} color={vibesTheme.colors.accentCoral} />
-            <Text style={localStyles.journeyStatText}>
+            <Text style={localStyles.journeyStatText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               Racha actual:{" "}
               <Text style={localStyles.journeyStatValue}>
-                {challenge.streak} días
+                {challenge.streak} {challenge.streak === 1 ? "día" : "días"}
               </Text>
             </Text>
           </View>
-          <View style={localStyles.journeyStatDivider} />
-          <View style={localStyles.journeyStatItem}>
-            <Icon name="stats-chart-outline" size={22} color={vibesTheme.colors.secondaryText} />
-            <Text style={localStyles.journeyStatText}>
-              Mejor:{" "}
-              <Text style={localStyles.journeyStatValue}>
-                {challenge.bestStreak}
-              </Text>
-            </Text>
-          </View>
+
         </View>
       </View>
     );
@@ -1087,20 +1039,13 @@ type ChatEntryRowProps = {
 
 export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
   <TouchableOpacity
-    style={localStyles.chatRow}
+    style={localStyles.floatingChatButton}
+    accessibilityRole="button"
+    accessibilityLabel="Entrar al chat del desafío"
     onPress={onPress}
     activeOpacity={0.9}
   >
-    <View style={localStyles.chatIconWrap}>
-      <Icon name="chatbubbles-outline" size={21} color={vibesTheme.colors.background} />
-    </View>
-    <View style={localStyles.chatCopy}>
-      <Text style={localStyles.chatTitle}>Entrar al chat del desafío</Text>
-      <Text style={localStyles.chatSubtitle}>
-        Compartí avances con la comunidad.
-      </Text>
-    </View>
-    <Icon name="chevron-forward" size={20} color="rgba(254, 254, 253, 0.82)" />
+    <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.primaryText} />
   </TouchableOpacity>
 ));
 
@@ -1754,7 +1699,7 @@ const ChallengeDetailScreen = () => {
           ]}
         >
           <View style={localStyles.challengeIntroBlock}>
-            <ChallengeIntroMetaRow challenge={challenge} />
+            <ChallengeIntroMetaRow challenge={challenge} checkedInTodayCount={checkedInTodayCount} />
           </View>
           <View style={localStyles.content}>
             <ChallengeJourneyCard challenge={challenge} percent={percent} />
@@ -1800,28 +1745,6 @@ const ChallengeDetailScreen = () => {
             {challenge.streak >= 3 ? (
               <StreakCelebrationCard streak={challenge.streak} />
             ) : null}
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Ver participantes del desafío"
-              onPress={() => setParticipantsVisible(true)}
-            >
-              <CommunityPulseCard
-                checkedInTodayCount={checkedInTodayCount}
-                participantsCount={
-                  challenge.participantsCount
-                }
-              />
-              <Text
-                style={{
-                  textAlign: "center",
-                  paddingVertical: 14,
-                  color: palette.text,
-                }}
-              >
-                Ver participantes (
-                {challenge.participantsCount})
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
       </NativeAnimated.ScrollView>
@@ -1839,7 +1762,6 @@ const ChallengeDetailScreen = () => {
         <View style={localStyles.stickyFooterCard}>
           {isJoined ? (
             <>
-              {renderFooterCheckIn()}
               <ChatEntryRow
                 onPress={() =>
                   event
@@ -1850,6 +1772,7 @@ const ChallengeDetailScreen = () => {
                     : undefined
                 }
               />
+              {renderFooterCheckIn()}
             </>
           ) : isAdmin ? (
             <>
@@ -2110,6 +2033,17 @@ const localStyles = StyleSheet.create({
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,
   },
+  challengeParticipantText: {
+    color: palette.text,
+    fontSize: 19,
+    lineHeight: 24,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  challengeTodayText: {
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   challengeIntroDivider: {
     width: 1,
     height: 42,
@@ -2233,12 +2167,13 @@ const localStyles = StyleSheet.create({
     height: 40,
   },
   joinRequestButton: {
-    borderRadius: 24,
-    backgroundColor: "rgba(110, 110, 110, 0.9)",
+    borderRadius: 20,
+    backgroundColor: vibesTheme.colors.accentBlue,
     borderWidth: 2,
     borderColor: "rgba(254, 254, 253, 0.18)",
     paddingHorizontal: 18,
-    paddingVertical: 16,
+    paddingVertical: 10,
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: palette.accentBlueDeep,
@@ -2248,13 +2183,13 @@ const localStyles = StyleSheet.create({
   },
   joinRequestButtonTitle: {
     color: vibesTheme.colors.background,
-    fontSize: 18,
+    fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.bold,
   },
   joinRequestButtonSubtitle: {
     marginTop: 4,
-    color: "rgba(254, 254, 253, 0.88)",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -2415,47 +2350,6 @@ const localStyles = StyleSheet.create({
     color: palette.muted,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
-  },
-  communityCard: {
-    borderRadius: 24,
-    backgroundColor: "rgba(254, 254, 253, 0.72)",
-    borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.1)",
-    padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  communityBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.16)",
-  },
-  communityCopy: {
-    flex: 1,
-  },
-  communityTitle: {
-    color: palette.text,
-    fontSize: 23,
-    lineHeight: 27,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  communitySubtitle: {
-    marginTop: 6,
-    color: palette.muted,
-    fontSize: 16,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  communityTodayCopy: {
-    marginTop: 6,
-    color: "rgba(43, 43, 43, 0.58)",
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.regular,
   },
   requestCard: {
     borderRadius: 22,
@@ -3111,6 +3005,20 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.bold,
     textAlign: "center",
+  },
+  floatingChatButton: {
+    alignSelf: "flex-end",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: vibesTheme.colors.accentBlue,
+    shadowColor: vibesTheme.colors.primaryText,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    elevation: 5,
   },
   chatRow: {
     borderRadius: 22,

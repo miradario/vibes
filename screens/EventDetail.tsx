@@ -897,7 +897,7 @@ const EventDetail = () => {
           ) : (
             <>
               <Text
-                style={[styles.eventDetailJoinButtonText, localStyles.footerActionText]}
+                style={[styles.eventDetailJoinButtonText, localStyles.footerActionText, localStyles.joinEventText]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.85}
@@ -908,9 +908,6 @@ const EventDetail = () => {
             </>
           )}
         </TouchableOpacity>
-        <Text style={[styles.eventDetailJoinNote, localStyles.fixedFooterNote]}>
-          Al sumarte, entrás al grupo del evento.
-        </Text>
       </View>
     );
   };
@@ -2572,6 +2569,11 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
     paddingHorizontal: 18,
+  },
+  joinEventText: {
+    color: vibesTheme.colors.background,
+    fontSize: 16,
+    lineHeight: 21,
   },
   footerActionText: {
     flexShrink: 1,
