@@ -28,6 +28,7 @@ type AppHeaderProps = {
   titleStyle?: StyleProp<TextStyle>;
   subtitleStyle?: StyleProp<TextStyle>;
   backButtonStyle?: StyleProp<ViewStyle>;
+  hideBackIcon?: boolean;
   titleNumberOfLines?: number;
 };
 
@@ -44,6 +45,7 @@ const AppHeader = ({
   titleStyle,
   subtitleStyle,
   backButtonStyle,
+  hideBackIcon = false,
   titleNumberOfLines = 1,
 }: AppHeaderProps) => {
   const navigation = useNavigation();
@@ -64,7 +66,9 @@ const AppHeader = ({
         onPress={handleBack}
         style={[styles.iconButton, backButtonStyle]}
       >
-        <Icon name="chevron-back" size={23} color={DARK_GRAY} />
+        {hideBackIcon ? null : (
+          <Icon name="chevron-back" size={23} color={DARK_GRAY} />
+        )}
       </TouchableOpacity>
     ) : (
       <View style={styles.iconPlaceholder} />

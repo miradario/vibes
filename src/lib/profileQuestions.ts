@@ -20,7 +20,7 @@ export const QUESTION_GROUPS = [
       {
         key: "personality",
         label: "Personalidad",
-        options: ["Introvertido", "Extrovertido", "Un poco de ambos"],
+        options: ["Introvertido", "Extrovertido"],
         single: true,
       },
     ],

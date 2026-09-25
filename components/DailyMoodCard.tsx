@@ -294,6 +294,7 @@ const s = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
+    marginBottom: 14,
     fontSize: 27,
     lineHeight: 33,
     color: vibesTheme.colors.primaryText,

@@ -591,7 +591,7 @@ const Events = () => {
                     </View>
                   </View>
                   <View style={localStyles.eventViewButton}>
-                    <Icon name="chevron-forward" size={17} color={vibesTheme.colors.primaryText} />
+                    <Icon name="chevron-forward" size={17} color={vibesTheme.colors.accentMustard} />
                   </View>
                 </TouchableOpacity>
               );
@@ -646,7 +646,7 @@ const Events = () => {
                   ) : null}
                 </View>
                 <View style={localStyles.eventViewButton}>
-                  <Icon name="chevron-forward" size={17} color={vibesTheme.colors.primaryText} />
+                  <Icon name="chevron-forward" size={17} color={vibesTheme.colors.accentMustard} />
                 </View>
               </TouchableOpacity>
           )}}
@@ -689,8 +689,7 @@ const localStyles = StyleSheet.create({
   },
   eventViewButton: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2,
-    minHeight: 44, paddingHorizontal: 10, borderRadius: 22,
-    backgroundColor: "rgba(228, 183, 110, 0.20)",
+    minWidth: 34, minHeight: 44,
   },
   eventViewText: {
     fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.primaryText,

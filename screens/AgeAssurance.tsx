@@ -58,7 +58,12 @@ const AgeAssurance = () => {
   return (
     <ScreenContainer>
       <View style={localStyles.container}>
-        <AppHeader showBack onBack={() => navigation.goBack()} />
+        <AppHeader
+          showBack
+          hideBackIcon
+          backButtonStyle={localStyles.headerBackButton}
+          onBack={() => navigation.goBack()}
+        />
 
         <View style={localStyles.content}>
           <View style={localStyles.copyBlock}>
@@ -175,5 +180,11 @@ const localStyles = StyleSheet.create({
   },
   backButton: {
     marginTop: 10,
+  },
+  headerBackButton: {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });

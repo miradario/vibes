@@ -30,6 +30,7 @@ type VibesMinimalOnboardingProps = {
   ctaLabel?: string;
   onContinue?: () => void | boolean | Promise<void | boolean>;
   reverseVideoOnContinue?: boolean;
+  autoContinue?: boolean;
 };
 
 const VibesMinimalOnboarding = ({
@@ -38,6 +39,7 @@ const VibesMinimalOnboarding = ({
   ctaLabel,
   onContinue: onContinueProp,
   reverseVideoOnContinue = false,
+  autoContinue = false,
 }: VibesMinimalOnboardingProps) => {
   const navigation = useNavigation();
   const { height } = useWindowDimensions();
@@ -47,6 +49,7 @@ const VibesMinimalOnboarding = ({
   const durationRef = useRef(0);
   const positionRef = useRef(0);
   const isContinuingRef = useRef(false);
+  const hasAutoContinuedRef = useRef(false);
   const [videoShouldPlay, setVideoShouldPlay] = useState(true);
   const [isContinuing, setIsContinuing] = useState(false);
 
@@ -197,6 +200,15 @@ const VibesMinimalOnboarding = ({
     }
   };
 
+  useEffect(() => {
+    if (!autoContinue || hasAutoContinuedRef.current) return;
+    hasAutoContinuedRef.current = true;
+    const timeoutId = setTimeout(() => {
+      void onContinue();
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [autoContinue]);
+
   return (
     <SafeAreaView style={styles.container}>
       <Animated.View
@@ -231,20 +243,22 @@ const VibesMinimalOnboarding = ({
         ) : null}
       </Animated.View>
 
-      <AnimatedPressable
-        style={[ctaLabel ? styles.ctaPillButton : styles.ctaButton, ctaStyle]}
-        onPress={onContinue}
-      >
-        {ctaLabel ? (
-          <Text style={styles.ctaPillText}>{ctaLabel}</Text>
-        ) : (
-          <Icon
-            name="chevron-forward"
-            size={26}
-            color={vibesTheme.colors.lineArt}
-          />
-        )}
-      </AnimatedPressable>
+      {autoContinue ? null : (
+        <AnimatedPressable
+          style={[ctaLabel ? styles.ctaPillButton : styles.ctaButton, ctaStyle]}
+          onPress={onContinue}
+        >
+          {ctaLabel ? (
+            <Text style={styles.ctaPillText}>{ctaLabel}</Text>
+          ) : (
+            <Icon
+              name="chevron-forward"
+              size={26}
+              color={vibesTheme.colors.lineArt}
+            />
+          )}
+        </AnimatedPressable>
+      )}
 
       <Animated.View
         pointerEvents="none"

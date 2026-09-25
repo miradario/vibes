@@ -1026,7 +1026,7 @@ const UserProfileSheet = ({
                   onPress={closeDetails}
                   style={localStyles.lowerDetailsButton}
                 >
-                  <Icon name="chevron-down" size={22} color={vibesTheme.colors.primaryText} />
+                  <Icon name="chevron-down" size={30} color={vibesTheme.colors.accentMustard} />
                 </TouchableOpacity>
               </View>
               <View style={{ width, height: compactPhotoHeight }}>
@@ -1413,9 +1413,7 @@ const localStyles = StyleSheet.create({
   detailsPhotoIndicators: { position: "absolute", top: 4, left: 16, right: 16, flexDirection: "row", gap: 5 },
   detailsPhotoIndicatorTouch: { flex: 1, minHeight: 44, justifyContent: "center" },
   lowerDetailsButton: {
-    alignSelf: "flex-start",
-    transform: [{ translateY: -10 }],
-    minHeight: 48, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12,
+    minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 12,
   },
   dragArea: { minHeight: 44, alignItems: "center", justifyContent: "center" },
   dragHandle: {

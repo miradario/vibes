@@ -16,7 +16,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
-import { ResizeMode } from "expo-av";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,7 +25,6 @@ import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
 import VibesHeader from "../src/components/VibesHeader";
 import Icon from "../components/Icon";
-import LoopingVideo from "../components/LoopingVideo";
 import CustomDialog from "../components/CustomDialog";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -174,21 +172,12 @@ const Login = () => {
     resetPasswordLoading;
   return (
     <View style={styles.bg}>
-      <View
-        style={[
-          localStyles.heroWrap,
-          { marginTop: Math.max(insets.top + 4, 36) },
-        ]}
-      >
-        <LoopingVideo
-          source={require("../assets/videos/surfaces/challenges/login/login.mp4")}
-          posterSource={require("../assets/images/challenges/login.png")}
-          style={localStyles.loginIllustration}
-          resizeMode={ResizeMode.CONTAIN}
-        />
-      </View>
       <KeyboardAvoidingView
-        style={[styles.loginContainer, localStyles.loginContainer]}
+        style={[
+          styles.loginContainer,
+          localStyles.loginContainer,
+          { paddingTop: Math.max(insets.top + 12, 36) },
+        ]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={24}
       >
@@ -396,23 +385,11 @@ const localStyles = StyleSheet.create({
   header: {
     marginBottom: 10,
   },
-  heroWrap: {
-    flexShrink: 0,
-    width: "100%",
-    height: 170,
-    paddingHorizontal: 42,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   loginContainer: {
     marginTop: 0,
   },
   loginCard: {
     flexGrow: 1,
-  },
-  loginIllustration: {
-    width: "100%",
-    height: "100%",
   },
   formScrollContent: {
     flexGrow: 1,

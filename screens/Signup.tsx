@@ -30,8 +30,6 @@ import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
 import CustomDialog from "../components/CustomDialog";
 import Icon from "../components/Icon";
-import LoopingVideo from "../components/LoopingVideo";
-import { ResizeMode } from "expo-av";
 import { useI18n } from "../src/i18n";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
@@ -229,14 +227,6 @@ const Signup = () => {
 
   return (
     <View style={[styles.bg, { paddingTop: insets.top }]}>
-      <View style={localStyles.heroWrap}>
-        <LoopingVideo
-          source={require("../assets/videos/surfaces/signup.mp4")}
-          posterSource={require("../assets/images/challenges/signup.png")}
-          style={localStyles.signupIllustration}
-          resizeMode={ResizeMode.CONTAIN}
-        />
-      </View>
       <KeyboardAvoidingView
         style={[styles.loginContainer, localStyles.loginContainer]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -333,42 +323,46 @@ const Signup = () => {
               {t("signup.passwordLength")}
             </Text>
 
-            <TouchableOpacity
-              activeOpacity={0.78}
-              style={localStyles.termsRow}
-              onPress={() => setAcceptedTerms((value) => !value)}
-            >
-              <View
-                style={[
-                  localStyles.checkbox,
-                  acceptedTerms && localStyles.checkboxChecked,
-                ]}
-              >
-                {acceptedTerms ? (
-                  <Icon name="checkmark" size={14} color={vibesTheme.colors.background} />
-                ) : null}
-              </View>
-              <Text style={localStyles.termsText}>
-                {t("authTerms.prefix")}{" "}
-                <Text
-                  style={localStyles.termsLink}
-                  onPress={() =>
-                    navigation.navigate("TermsConditions" as never)
-                  }
-                >
-                  {t("authTerms.link")}
-                </Text>
-              </Text>
-            </TouchableOpacity>
-
-            {error ? <Text style={styles.loginError}>{error}</Text> : null}
-
             <View
               style={[
-                localStyles.actions,
-                { paddingBottom: Math.max(insets.bottom + 2, 14) },
+                localStyles.bottomBlock,
+                { paddingBottom: Math.max(insets.bottom + 10, 22) },
               ]}
             >
+              <TouchableOpacity
+                activeOpacity={0.78}
+                style={localStyles.termsRow}
+                onPress={() => setAcceptedTerms((value) => !value)}
+              >
+                <View
+                  style={[
+                    localStyles.checkbox,
+                    acceptedTerms && localStyles.checkboxChecked,
+                  ]}
+                >
+                  {acceptedTerms ? (
+                    <Icon name="checkmark" size={14} color={vibesTheme.colors.background} />
+                  ) : null}
+                </View>
+                <Text style={localStyles.termsText}>
+                  {t("authTerms.prefix")}{" "}
+                  <Text
+                    style={localStyles.termsLink}
+                    onPress={() =>
+                      navigation.navigate("TermsConditions" as never)
+                    }
+                  >
+                    {t("authTerms.link")}
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+
+              {error ? (
+                <Text style={[styles.loginError, localStyles.signupError]}>
+                  {error}
+                </Text>
+              ) : null}
+
               <VibesActionButton
                 label={loading ? t("signup.submitting") : t("signup.submit")}
                 variant="start"
@@ -421,9 +415,9 @@ const Signup = () => {
 export default Signup;
 
 const localStyles = StyleSheet.create({
-  actions: {
+  bottomBlock: {
     marginTop: "auto",
-    paddingTop: 22,
+    paddingTop: 24,
   },
   accountDivider: {
     width: "100%",
@@ -480,7 +474,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
-    marginTop: 12,
+    marginBottom: 14,
   },
   checkbox: {
     width: 20,
@@ -506,26 +500,18 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.secondaryText,
     textDecorationLine: "underline",
   },
+  signupError: {
+    color: vibesTheme.colors.accentCoral,
+    marginBottom: 18,
+  },
   header: {
     marginBottom: 8,
-  },
-  heroWrap: {
-    flexShrink: 0,
-    width: "100%",
-    height: 170,
-    paddingHorizontal: 42,
-    alignItems: "center",
-    justifyContent: "center",
   },
   loginContainer: {
     marginTop: 0,
   },
   loginCard: {
     flexGrow: 1,
-  },
-  signupIllustration: {
-    width: "100%",
-    height: "100%",
   },
   formScrollContent: {
     flexGrow: 1,

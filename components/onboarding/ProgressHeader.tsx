@@ -10,12 +10,14 @@ type ProgressHeaderProps = {
   progress: number;
   onBack: () => void;
   showBack?: boolean;
+  hideBackIcon?: boolean;
 };
 
 const ProgressHeader = ({
   progress,
   onBack,
   showBack = true,
+  hideBackIcon = false,
 }: ProgressHeaderProps) => (
   <View style={styles.wrap}>
     {showBack ? (
@@ -25,7 +27,9 @@ const ProgressHeader = ({
         style={styles.backButton}
         accessibilityRole="button"
       >
-        <Icon name="chevron-back" size={22} color={ONBOARDING_COLORS.text} />
+        {hideBackIcon ? null : (
+          <Icon name="chevron-back" size={22} color={ONBOARDING_COLORS.text} />
+        )}
       </TouchableOpacity>
     ) : (
       <View style={styles.backSpacer} />

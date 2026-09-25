@@ -53,7 +53,11 @@ const OnboardingAge = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader
+          style={styles.onboardHeader}
+          contentStyle={styles.onboardHeaderProgress}
+          hideBackIcon
+        >
           <OnboardingProgressBar screenName="OnboardingAge" />
         </AppHeader>
 

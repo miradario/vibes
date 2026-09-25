@@ -17,6 +17,7 @@ import VibesLoader from "./VibesLoader";
 import {
   useMyEventGroupsQuery,
   useEventsFeedQuery,
+  useChallengesFeedQuery,
   useChallengeCheckinsQuery,
   useChallengeParticipantQuery,
   type EventFeedItem,
@@ -95,9 +96,11 @@ function OverviewLoadingPlaceholder() {
 function ChallengeCard({
   event,
   userId,
+  showTodayBadge = true,
 }: {
   event: EventFeedItem;
   userId?: string;
+  showTodayBadge?: boolean;
 }) {
   const navigation = useNavigation<any>();
   const checkins = useChallengeCheckinsQuery(event.id, userId);
@@ -121,7 +124,8 @@ function ChallengeCard({
     Boolean(participant.data?.checkedInToday) ||
     Boolean(event.viewerCheckedInToday) ||
     (checkins.isSuccess && checkins.data.includes(todayKey));
-  const showTodayBadge =
+  const shouldShowTodayBadge =
+    showTodayBadge &&
     timeline.status === "active" &&
     !checkins.isLoading &&
     !participant.isLoading;
@@ -163,7 +167,7 @@ function ChallengeCard({
         <View style={s.challengeStatusPill}>
           <Text style={[s.meta, s.imageMeta]}>{status}</Text>
         </View>
-        {showTodayBadge ? (
+        {shouldShowTodayBadge ? (
           <View
             accessibilityLabel={
               checkedInToday ? "Completado hoy" : "Pendiente hoy"
@@ -289,15 +293,17 @@ export default function HomeOverview({ userId }: { userId?: string }) {
   const navigation = useNavigation<any>();
   const groups = useMyEventGroupsQuery(userId);
   const eventsFeed = useEventsFeedQuery();
+  const challengesFeed = useChallengesFeedQuery();
   const [now, setNow] = useState(Date.now());
   useFocusEffect(
     useCallback(() => {
       setNow(Date.now());
       void groups.refetch();
       void eventsFeed.refetch();
+      void challengesFeed.refetch();
       const timer = setInterval(() => setNow(Date.now()), 60000);
       return () => clearInterval(timer);
-    }, [eventsFeed.refetch, groups.refetch])
+    }, [challengesFeed.refetch, eventsFeed.refetch, groups.refetch])
   );
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
@@ -305,10 +311,11 @@ export default function HomeOverview({ userId }: { userId?: string }) {
         setNow(Date.now());
         void groups.refetch();
         void eventsFeed.refetch();
+        void challengesFeed.refetch();
       }
     });
     return () => sub.remove();
-  }, [eventsFeed.refetch, groups.refetch]);
+  }, [challengesFeed.refetch, eventsFeed.refetch, groups.refetch]);
   const events = (groups.data ?? []).map((group) => group.event);
   const upcoming = getUpcomingHomeEvents(events, now);
   const joinedEventIds = new Set(events.map((event) => event.id));
@@ -318,18 +325,44 @@ export default function HomeOverview({ userId }: { userId?: string }) {
         .filter((event) => !joinedEventIds.has(event.id))
         .slice(0, 2);
   const visibleEvents = upcoming.length ? upcoming : suggestedEvents;
-  const rank = { active: 0, upcoming: 1, finished: 2 };
-  const challenges = events
-    .filter((event) => event.type === "challenge")
+  const joinedChallenges = events.filter((event) => event.type === "challenge");
+  const activeChallenges = joinedChallenges.filter(
+    (event) =>
+      getChallengeTimeline(event.startsAt, event.durationDays).status === "active"
+  );
+  const joinedChallengeIds = new Set(joinedChallenges.map((event) => event.id));
+  const activeHomeChallenges = activeChallenges
     .sort((a, b) => {
-      const left = getChallengeTimeline(a.startsAt, a.durationDays).status;
-      const right = getChallengeTimeline(b.startsAt, b.durationDays).status;
       const delta =
         new Date(a.startsAt ?? 0).getTime() -
         new Date(b.startsAt ?? 0).getTime();
-      return rank[left] - rank[right] || (left === "finished" ? -delta : delta);
+      return delta;
     })
     .slice(0, 3);
+  const recommendedChallenges = activeHomeChallenges.length
+    ? []
+    : (challengesFeed.data ?? [])
+        .filter((event) => (event.visibility ?? "public") === "public")
+        .filter((event) => !joinedChallengeIds.has(event.id))
+        .filter(
+          (event) =>
+            getChallengeTimeline(event.startsAt, event.durationDays).status !==
+            "finished"
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.startsAt ?? 0).getTime() -
+            new Date(b.startsAt ?? 0).getTime()
+        )
+        .slice(0, 3);
+  const challenges = activeHomeChallenges.length
+    ? activeHomeChallenges
+    : recommendedChallenges;
+  const challengeSectionTitle = activeHomeChallenges.length
+    ? "DESAFÍOS ACTIVOS"
+    : "DESAFÍOS RECOMENDADOS";
+  const isLoadingChallengeRecommendations =
+    !activeHomeChallenges.length && challengesFeed.isLoading;
   const openList = (challenge = false) =>
     navigation.navigate("Tab", {
       screen: challenge ? "Flow" : "EventsTab",
@@ -351,10 +384,16 @@ export default function HomeOverview({ userId }: { userId?: string }) {
     <>
       <View style={s.sectionBlock}>
         <SectionHeader
-          title="DESAFÍOS ACTIVOS"
+          title={challengeSectionTitle}
           onPress={() => openList(true)}
         />
-        {!challenges.length && (
+        {isLoadingChallengeRecommendations ? (
+          <View style={s.placeholderCarousel}>
+            <View style={s.challengeSkeletonCard} />
+            <View style={s.challengeSkeletonCard} />
+          </View>
+        ) : null}
+        {!isLoadingChallengeRecommendations && !challenges.length && (
           <TouchableOpacity
             style={s.emptyCard}
             accessibilityRole="button"
@@ -371,14 +410,19 @@ export default function HomeOverview({ userId }: { userId?: string }) {
             </View>
           </TouchableOpacity>
         )}
-        {challenges.length ? (
+        {!isLoadingChallengeRecommendations && challenges.length ? (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={s.carousel}
           >
             {challenges.map((event) => (
-              <ChallengeCard key={event.id} event={event} userId={userId} />
+              <ChallengeCard
+                key={event.id}
+                event={event}
+                userId={userId}
+                showTodayBadge={Boolean(activeHomeChallenges.length)}
+              />
             ))}
           </ScrollView>
         ) : null}

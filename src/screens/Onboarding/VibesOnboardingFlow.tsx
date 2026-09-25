@@ -6,6 +6,7 @@ import {
   findNodeHandle,
   ScrollView,
   Platform,
+  StyleSheet,
   TouchableOpacity,
   View,
   type TextInput as NativeTextInput,
@@ -50,12 +51,18 @@ import {
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
 import { ONBOARDING_COLORS, onboardingStyles } from "./vibesOnboardingStyles";
-import VibesMinimalOnboarding from "./VibesMinimalOnboarding";
 import { useI18n } from "../../i18n";
+import VibesLoader from "../../../components/VibesLoader";
 
 const ANIMATION_DURATION = 240;
 const MIN_AGE = 18;
 const MAX_AGE = 99;
+const COMPLETION_MIN_LOADING_MS = 400;
+
+const wait = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 const getUniqueLocationParts = (...parts: Array<string | null | undefined>) => {
   const seen = new Set<string>();
@@ -91,6 +98,7 @@ const VibesOnboardingFlow = () => {
   const onboardingScrollRef = useRef<ScrollView | null>(null);
   const displayNameInputRef = useRef<NativeTextInput | null>(null);
   const descriptionInputRef = useRef<NativeTextInput | null>(null);
+  const completionStartedRef = useRef(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [purposeIds, setPurposeIds] = useState<string[]>(
     draft.purposeIds ?? []
@@ -320,27 +328,51 @@ const VibesOnboardingFlow = () => {
       return false;
     }
 
-    try {
-      await completeMutation.mutateAsync({
-        userId,
-        draft: currentDraft,
-      });
-      resetDraft();
+    const navigateHome = () => {
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
           routes: [{ name: "Tab" as never }],
         })
       );
-      return true;
-    } catch (error) {
-      Alert.alert(
-        t("common.error"),
-        error instanceof Error ? error.message : t("onboarding.onboardingError")
-      );
-      return false;
-    }
+    };
+
+    const completion = completeMutation
+      .mutateAsync({
+        userId,
+        draft: currentDraft,
+      })
+      .then(() => {
+        resetDraft();
+        return true;
+      })
+      .catch((error) => {
+        Alert.alert(
+          t("common.error"),
+          error instanceof Error
+            ? error.message
+            : t("onboarding.onboardingError")
+        );
+        return false;
+      });
+
+    const [shouldNavigate] = await Promise.all([
+      completion,
+      wait(COMPLETION_MIN_LOADING_MS),
+    ]);
+    if (shouldNavigate) navigateHome();
+    return shouldNavigate;
   };
+
+  useEffect(() => {
+    if (step !== "completion") {
+      completionStartedRef.current = false;
+      return;
+    }
+    if (completionStartedRef.current) return;
+    completionStartedRef.current = true;
+    void goNext();
+  }, [step]);
 
   const togglePurpose = (id: string) => {
     setPurposeIds((prev) =>
@@ -748,16 +780,9 @@ const VibesOnboardingFlow = () => {
   return (
     <>
       {step === "completion" ? (
-        <VibesMinimalOnboarding
-          title={
-            locale === "en"
-              ? "Start your journey through Vibes"
-              : "Comenzá el viaje por Vibes"
-          }
-          body=""
-          ctaLabel={copy.button}
-          onContinue={goNext}
-        />
+        <View style={localStyles.completionLoadingScreen}>
+          <VibesLoader size={94} />
+        </View>
       ) : (
         <OnboardingScreenContainer
           scrollViewRef={onboardingScrollRef}
@@ -808,6 +833,7 @@ const VibesOnboardingFlow = () => {
             progress={getProgress(stepIndex)}
             onBack={goBack}
             showBack={stepIndex > 0}
+            hideBackIcon={step === "profile" && !hasAgeAssuranceBirthDate}
           />
           <Animated.View style={animatedStyle}>{renderStep()}</Animated.View>
         </OnboardingScreenContainer>
@@ -892,3 +918,12 @@ const VibesOnboardingFlow = () => {
 };
 
 export default VibesOnboardingFlow;
+
+const localStyles = StyleSheet.create({
+  completionLoadingScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: ONBOARDING_COLORS.background,
+  },
+});
