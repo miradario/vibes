@@ -1457,7 +1457,7 @@ const EventDetail = () => {
                 <Icon
                   name={modality === "online" ? "videocam-outline" : "location"}
                   size={24}
-                  color={DARK_GRAY}
+                  color={vibesTheme.colors.accentMustard}
                 />
                 <Text style={localStyles.eventIntroMetaText}>
                   {modalityLabel}
@@ -1468,7 +1468,7 @@ const EventDetail = () => {
                 <Icon
                   name={pricingType === "paid" ? "card-outline" : "sparkles-outline"}
                   size={24}
-                  color={DARK_GRAY}
+                  color={vibesTheme.colors.accentMustard}
                 />
                 <Text style={localStyles.eventIntroMetaText}>
                   {pricingLabel}
@@ -1476,21 +1476,19 @@ const EventDetail = () => {
               </View>
             </View>
             <View style={localStyles.eventDetailPanel}>
+              <View style={localStyles.eventMetaDivider} />
               <View style={styles.eventDetailInfoSection}>
                 <TouchableOpacity
                   activeOpacity={0.85}
                   style={styles.eventDetailInfoRow}
                   onPress={() => setParticipantsVisible(true)}
                 >
-                  <View style={styles.eventDetailInfoIconWrap}>
+                  <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                     <Icon name="people" size={18} color={PRIMARY_COLOR} />
                   </View>
                   <View style={styles.eventDetailInfoCopy}>
                     <Text style={styles.eventDetailInfoText}>
                       {visibleParticipantCount} participantes
-                    </Text>
-                    <Text style={styles.eventDetailInfoLabel}>
-                      Ver usuarios del evento
                     </Text>
                       {visibleParticipants.length > 0 ? (
                        <View style={localStyles.participantsPreviewRow}>
@@ -1527,7 +1525,7 @@ const EventDetail = () => {
                   style={styles.eventDetailInfoRow}
                   onPress={handleOpenCalendar}
                 >
-                  <View style={styles.eventDetailInfoIconWrap}>
+                  <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                     <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
                   </View>
                   <View style={styles.eventDetailInfoCopy}>
@@ -1541,60 +1539,46 @@ const EventDetail = () => {
 
                 {modality === "in_person" && eventLocation ? (
                   <>
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      style={styles.eventDetailInfoRow}
-                      onPress={handleOpenMap}
-                    >
-                      <View style={styles.eventDetailInfoIconWrap}>
-                        <Icon name="location" size={18} color={PRIMARY_COLOR} />
-                      </View>
-                      <View style={styles.eventDetailInfoCopy}>
-                        <Text style={styles.eventDetailInfoText}>{eventLocation}</Text>
-                        <Text style={styles.eventDetailInfoLabel}>Ver en el mapa</Text>
-                      </View>
-                      <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      activeOpacity={0.9}
-                      style={localStyles.eventMiniMapCard}
-                      onPress={handleOpenMap}
-                    >
-                      {!eventMapPreviewFailed && eventMapPreviewUri ? (
-                        <Image
-                          source={{
-                            uri: eventMapPreviewUri,
-                            headers: googleMapsConfig.headers,
-                          }}
-                          style={localStyles.eventMiniMapImage}
-                          onError={() => setEventMapPreviewFailed(true)}
-                        />
-                      ) : (
-                        <View style={localStyles.eventMiniMapFallback}>
-                          <View style={localStyles.eventMiniMapPin}>
-                            <Icon name="location" size={22} color={PRIMARY_COLOR} />
-                          </View>
-                          <View style={localStyles.eventMiniMapCopy}>
-                            <Text style={localStyles.eventMiniMapTitle}>
-                              Ver ubicación
-                            </Text>
-                            <Text
-                              style={localStyles.eventMiniMapText}
-                              numberOfLines={2}
-                            >
-                              {eventLocation}
-                            </Text>
-                          </View>
+                  <View style={[styles.eventDetailInfoRow, { borderBottomWidth: 0 }]}>
+                    <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
+                      <Icon name="location" size={18} color={PRIMARY_COLOR} />
+                    </View>
+                    <View style={styles.eventDetailInfoCopy}>
+                      <Text style={styles.eventDetailInfoText}>{eventLocation}</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="Abrir ubicación del evento en el mapa"
+                    activeOpacity={0.9}
+                    style={localStyles.eventMiniMapCard}
+                    onPress={handleOpenMap}
+                  >
+                    {!eventMapPreviewFailed && eventMapPreviewUri ? (
+                      <Image
+                        source={{ uri: eventMapPreviewUri, headers: googleMapsConfig.headers }}
+                        style={localStyles.eventMiniMapImage}
+                        onError={() => setEventMapPreviewFailed(true)}
+                      />
+                    ) : (
+                      <View style={localStyles.eventMiniMapFallback}>
+                        <View style={localStyles.eventMiniMapPin}>
+                          <Icon name="location" size={22} color={PRIMARY_COLOR} />
                         </View>
-                      )}
-                      <View style={localStyles.eventMiniMapBadge}>
-                        <Icon name="navigate" size={18} color={DARK_GRAY} />
-                        <Text style={localStyles.eventMiniMapBadgeText}>
-                          Abrir mapa
-                        </Text>
+                        <View style={localStyles.eventMiniMapCopy}>
+                          <Text style={localStyles.eventMiniMapTitle}>Ver ubicación</Text>
+                          <Text style={localStyles.eventMiniMapText} numberOfLines={2}>{eventLocation}</Text>
+                        </View>
                       </View>
-                    </TouchableOpacity>
+                    )}
+                    <View style={localStyles.eventMiniMapBadge}>
+                      <Icon name="navigate" size={18} color={DARK_GRAY} />
+                      <Text style={localStyles.eventMiniMapBadgeText}>Abrir mapa</Text>
+                    </View>
+                  </TouchableOpacity>
+                  {eventLink || (pricingType === "paid" && paymentLink) ? (
+                    <View style={localStyles.mapLinkDivider} />
+                  ) : null}
                   </>
                 ) : null}
 
@@ -1610,7 +1594,7 @@ const EventDetail = () => {
                       )
                     }
                   >
-                    <View style={styles.eventDetailInfoIconWrap}>
+                    <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                       <Icon
                         name="open-outline"
                         size={18}
@@ -1641,7 +1625,7 @@ const EventDetail = () => {
                       )
                     }
                   >
-                    <View style={styles.eventDetailInfoIconWrap}>
+                    <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                       <Icon
                         name="videocam-outline"
                         size={18}
@@ -1672,7 +1656,7 @@ const EventDetail = () => {
                       )
                     }
                   >
-                    <View style={styles.eventDetailInfoIconWrap}>
+                    <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                       <Icon
                         name="card-outline"
                         size={18}
@@ -1683,7 +1667,6 @@ const EventDetail = () => {
                       <Text style={styles.eventDetailInfoText}>
                         {getExternalUrlLabel(paymentLink, "Evento pago")}
                       </Text>
-                      <Text style={styles.eventDetailInfoLabel}>Pagar evento</Text>
                     </View>
                     <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
                   </TouchableOpacity>
@@ -1704,7 +1687,7 @@ const EventDetail = () => {
                 style={styles.eventDetailInfoRow}
                 onPress={handleOpenCalendar}
               >
-                <View style={styles.eventDetailInfoIconWrap}>
+                <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                   <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
                 </View>
                 <View style={styles.eventDetailInfoCopy}>
@@ -1721,7 +1704,7 @@ const EventDetail = () => {
                 style={styles.eventDetailInfoRow}
                 onPress={() => setParticipantsVisible(true)}
               >
-                <View style={styles.eventDetailInfoIconWrap}>
+                <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                   <Icon name="people" size={18} color={PRIMARY_COLOR} />
                 </View>
                 <View style={styles.eventDetailInfoCopy}>
@@ -2279,21 +2262,13 @@ const localStyles = StyleSheet.create({
     paddingBottom: 178,
   },
   eventDetailPanel: {
-    marginTop: 18,
-    marginHorizontal: 20,
+    marginTop: 0,
+    width: "100%",
     minHeight: 520,
-    borderRadius: 34,
-    paddingTop: 26,
+    paddingTop: 0,
     paddingHorizontal: 24,
     paddingBottom: 34,
     backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.06)",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.11,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 8,
   },
   eventPanelTitle: {
     color: DARK_GRAY,
@@ -2309,6 +2284,15 @@ const localStyles = StyleSheet.create({
     lineHeight: 23,
     fontFamily: vibesTheme.fonts.medium,
     marginBottom: 18,
+  },
+  eventMetaDivider: {
+    height: 1,
+    backgroundColor: "rgba(110, 110, 110, 0.30)",
+  },
+  mapLinkDivider: {
+    height: 1,
+    marginTop: 10,
+    backgroundColor: "rgba(110, 110, 110, 0.30)",
   },
   eventMiniMapCard: {
     height: 190,
