@@ -50,7 +50,7 @@ export default function HomeActivityCard() {
       style={s.row}
     >
       <View style={s.icon}>
-        <Icon name={icon} size={23} color="#765B91" />
+        <Icon name={icon} size={23} color={vibesTheme.colors.primaryText} />
       </View>
       <View style={s.copy}>
         <Text style={s.title}>
@@ -58,7 +58,7 @@ export default function HomeActivityCard() {
         </Text>
         <Text style={s.hint}>{hint}</Text>
       </View>
-      <Icon name="chevron-forward" size={20} color="#8A8178" />
+      <Icon name="chevron-forward" size={20} color={vibesTheme.colors.secondaryText} />
     </TouchableOpacity>
   );
   return (
@@ -87,13 +87,13 @@ export default function HomeActivityCard() {
 }
 const s = StyleSheet.create({
   card: {
-    backgroundColor: "#F3EDF8",
+    backgroundColor: "rgba(110, 110, 110, 0.10)",
     borderRadius: 24,
     padding: 18,
     marginBottom: 18,
   },
   eyebrow: {
-    color: "#765B91",
+    color: vibesTheme.colors.primaryText,
     fontSize: 11,
     letterSpacing: 1,
     fontFamily: vibesTheme.fonts.semibold,
@@ -108,7 +108,7 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -116,8 +116,8 @@ const s = StyleSheet.create({
   title: {
     fontSize: 20,
     lineHeight: 27,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
   },
-  hint: { fontSize: 14, lineHeight: 20, color: "#6E6575", marginTop: 4 },
+  hint: { fontSize: 14, lineHeight: 20, color: vibesTheme.colors.secondaryText, marginTop: 4 },
 });

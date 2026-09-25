@@ -682,7 +682,7 @@ const UserProfileSheet = ({
             style={localStyles.primaryActionTouch}
           >
             <LinearGradient
-              colors={["#D8A547", "#E9BE6A", "#D6A03D"]}
+              colors={[vibesTheme.colors.accentMustard, vibesTheme.colors.accentMustard, vibesTheme.colors.accentMustard]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={localStyles.primaryAction}
@@ -703,7 +703,7 @@ const UserProfileSheet = ({
             style={localStyles.nextAction}
           >
             <Text style={localStyles.nextActionText}>{nextActionLabel}</Text>
-            <Icon name="chevron-forward" size={18} color="#536F91" />
+            <Icon name="chevron-forward" size={18} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>
         ) : null}
         {shouldShowSecondaryAction ? (
@@ -740,7 +740,7 @@ const UserProfileSheet = ({
         visible={visible}
         onClose={detailsVisible ? closeDetails : onClose}
         closeOnBackdropPress={false}
-        backdropColor="#FEFEFD"
+        backdropColor={vibesTheme.colors.background}
         offsetY={0}
         sheetInDelay={0}
         sheetStyle={[localStyles.fullscreenSheet, { flex: 1 }]}
@@ -758,7 +758,7 @@ const UserProfileSheet = ({
             style={[
               StyleSheet.absoluteFillObject,
               {
-                backgroundColor: "#FEFEFD",
+                backgroundColor: vibesTheme.colors.background,
                 opacity: swipeX.interpolate({
                   inputRange: [-width * 0.4, 0, 0, width * 0.4],
                   outputRange: [1, 0, 0, 1],
@@ -785,7 +785,7 @@ const UserProfileSheet = ({
               transition={0}
             />
             <LinearGradient
-              colors={["transparent", "rgba(255,253,248,0.97)"]}
+              colors={["transparent", "rgba(254, 254, 253, 0.97)"]}
               style={[
                 localStyles.nextProfileCopy,
                 { paddingBottom: insets.bottom + 40 },
@@ -827,8 +827,8 @@ const UserProfileSheet = ({
               <ProfileMediaImage
                 source={profileImages[safeActiveIndex]}
                 style={[StyleSheet.absoluteFillObject, { width }]}
-                fallbackBackgroundColor="#FEFEFD"
-                fallbackIconColor="#7F98B7"
+                fallbackBackgroundColor={vibesTheme.colors.background}
+                fallbackIconColor={vibesTheme.colors.accentBlue}
                 transition={0}
               />
             ) : (
@@ -849,8 +849,8 @@ const UserProfileSheet = ({
                   <ProfileMediaImage
                     source={item}
                     style={StyleSheet.absoluteFillObject}
-                    fallbackBackgroundColor="#FEFEFD"
-                    fallbackIconColor="#7F98B7"
+                    fallbackBackgroundColor={vibesTheme.colors.background}
+                    fallbackIconColor={vibesTheme.colors.accentBlue}
                     transition={0}
                   />
                 </Animated.View>
@@ -892,8 +892,8 @@ const UserProfileSheet = ({
             pointerEvents="none"
             colors={[
               "transparent",
-              "rgba(22, 27, 33, 0.18)",
-              "rgba(19, 23, 28, 0.92)",
+              "rgba(43, 43, 43, 0.18)",
+              "rgba(43, 43, 43, 0.92)",
             ]}
             locations={[0, 0.34, 1]}
             style={[localStyles.bottomGradient, detailsVisible && { opacity: 0 }]}
@@ -901,7 +901,7 @@ const UserProfileSheet = ({
 
           <LinearGradient
             pointerEvents="none"
-            colors={["rgba(19, 23, 28, 0.5)", "rgba(19, 23, 28, 0)"]}
+            colors={["rgba(43, 43, 43, 0.5)", "rgba(43, 43, 43, 0)"]}
             style={[localStyles.topGradient, { height: insets.top + 120 }]}
           />
 
@@ -964,7 +964,7 @@ const UserProfileSheet = ({
               onPress={showDetails}
               style={localStyles.galleryHint}
             >
-              <Icon name="chevron-up" size={32} color="#FEFEFD" />
+              <Icon name="chevron-up" size={32} color={vibesTheme.colors.background} />
             </TouchableOpacity>
           </View>}
         </Animated.View>
@@ -992,7 +992,7 @@ const UserProfileSheet = ({
               style={[
                 localStyles.swipeStamp,
                 {
-                  borderColor: "#E4B76E",
+                  borderColor: vibesTheme.colors.accentMustard,
                   transform: [
                     {
                       scale: swipeX.interpolate({
@@ -1010,13 +1010,13 @@ const UserProfileSheet = ({
                 },
               ]}
             >
-              <Icon name="checkmark" size={42} color="#8B6327" />
+              <Icon name="checkmark" size={42} color={vibesTheme.colors.primaryText} />
             </Animated.View>
             <Animated.View
               style={[
                 localStyles.swipeStamp,
                 {
-                  borderColor: "#AEBFD1",
+                  borderColor: vibesTheme.colors.accentBlue,
                   transform: [
                     {
                       scale: swipeX.interpolate({
@@ -1034,7 +1034,7 @@ const UserProfileSheet = ({
                 },
               ]}
             >
-              <Icon name="close" size={42} color="#536F91" />
+              <Icon name="close" size={42} color={vibesTheme.colors.primaryText} />
             </Animated.View>
           </View>
         )}
@@ -1083,7 +1083,7 @@ const UserProfileSheet = ({
                 hitSlop={6}
                 style={localStyles.detailsCloseButton}
               >
-                <Icon name="chevron-down" size={28} color="#222A32" />
+                <Icon name="chevron-down" size={28} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
             </View>
             <View style={localStyles.detailsDivider} />
@@ -1116,7 +1116,7 @@ const UserProfileSheet = ({
               {location ? (
                 <DetailSection label="Ubicación">
                   <View style={localStyles.inlineDetail}>
-                    <Icon name="location-outline" size={19} color="#7F98B7" />
+                    <Icon name="location-outline" size={19} color={vibesTheme.colors.accentBlue} />
                     <Text style={localStyles.detailValueFlexible}>
                       {location}
                     </Text>
@@ -1161,7 +1161,7 @@ const UserProfileSheet = ({
                         <Icon
                           name="calendar-outline"
                           size={18}
-                          color="#D8A547"
+                          color={vibesTheme.colors.accentMustard}
                         />
                         <Text style={localStyles.detailValueFlexible}>
                           {item}
@@ -1176,7 +1176,7 @@ const UserProfileSheet = ({
                         <Icon
                           name="sparkles-outline"
                           size={18}
-                          color="#7F98B7"
+                          color={vibesTheme.colors.accentBlue}
                         />
                         <Text style={localStyles.detailValueFlexible}>
                           {item}
@@ -1217,15 +1217,15 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 28,
-    backgroundColor: "rgba(255,253,248,0.97)",
+    backgroundColor: "rgba(254, 254, 253, 0.97)",
     borderWidth: 1,
-    borderColor: "#E4B76E",
+    borderColor: vibesTheme.colors.accentMustard,
     gap: 6,
   },
   swipeUpText: {
     fontFamily: vibesTheme.fonts.subtitle,
     fontSize: 20,
-    color: "#8B6327",
+    color: vibesTheme.colors.primaryText,
   },
   swipeIndicators: {
     ...StyleSheet.absoluteFillObject,
@@ -1242,17 +1242,17 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 2,
     borderRadius: 36,
-    backgroundColor: "rgba(255,253,248,0.97)",
+    backgroundColor: "rgba(254, 254, 253, 0.97)",
   },
   swipeStampText: { fontFamily: vibesTheme.fonts.subtitle, fontSize: 22 },
-  fullscreenSheet: { width: "100%", backgroundColor: "#FEFEFD" },
-  screen: { flex: 1, overflow: "hidden", backgroundColor: "#FEFEFD" },
+  fullscreenSheet: { width: "100%", backgroundColor: vibesTheme.colors.background },
+  screen: { flex: 1, overflow: "hidden", backgroundColor: vibesTheme.colors.background },
   fallbackCanvas: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    backgroundColor: "#FCFAF6",
+    backgroundColor: vibesTheme.colors.background,
   },
   fallbackCircleBlue: {
     position: "absolute",
@@ -1261,7 +1261,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 140,
     left: -150,
     top: "18%",
-    backgroundColor: "rgba(173, 207, 236, 0.55)",
+    backgroundColor: "rgba(127, 152, 183, 0.55)",
   },
   fallbackCircleGold: {
     position: "absolute",
@@ -1335,7 +1335,7 @@ const localStyles = StyleSheet.create({
   },
   nameCopy: { flex: 1, minWidth: 0 },
   profileName: {
-    color: "#FEFEFD",
+    color: vibesTheme.colors.background,
     fontSize: 42,
     lineHeight: 46,
     fontFamily: vibesTheme.fonts.thin,
@@ -1359,7 +1359,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(254, 254, 253, 0.94)",
   },
   moreButtonText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     fontFamily: vibesTheme.fonts.medium,
   },
@@ -1373,7 +1373,7 @@ const localStyles = StyleSheet.create({
   vibeAction: { minWidth: 64, alignItems: "center", gap: 6 },
   bareActionIcon: { backgroundColor: "transparent", borderWidth: 0 },
   actionIconShadow: {
-    textShadowColor: "rgba(0, 0, 0, 0.65)",
+    textShadowColor: "rgba(43, 43, 43, 0.65)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
@@ -1384,10 +1384,10 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.6)",
+    borderColor: "rgba(254, 254, 253, 0.6)",
   },
   vibeActionLabel: {
-    color: "#FEFEFD",
+    color: vibesTheme.colors.background,
     fontSize: 13,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,
@@ -1397,7 +1397,7 @@ const localStyles = StyleSheet.create({
     minHeight: 56,
     borderRadius: 28,
     overflow: "hidden",
-    shadowColor: "#D6A03D",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.2,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -1411,7 +1411,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 28,
   },
   primaryActionText: {
-    color: "#FEFEFD",
+    color: vibesTheme.colors.primaryText,
     fontSize: 21,
     lineHeight: 26,
     fontFamily: vibesTheme.fonts.medium,
@@ -1426,8 +1426,8 @@ const localStyles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "rgba(83, 111, 145, 0.28)",
-    backgroundColor: "#F4F6F8",
+    borderColor: "rgba(127, 152, 183, 0.28)",
+    backgroundColor: vibesTheme.colors.background,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -1435,7 +1435,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   nextActionText: {
-    color: "#536F91",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -1444,8 +1444,8 @@ const localStyles = StyleSheet.create({
     fontSize: 17,
     fontFamily: vibesTheme.fonts.medium,
   },
-  panelSecondaryActionText: { color: "#555A61" },
-  destructiveSecondaryActionText: { color: "#B8453B" },
+  panelSecondaryActionText: { color: vibesTheme.colors.secondaryText },
+  destructiveSecondaryActionText: { color: vibesTheme.colors.accentCoral },
   detailsSheet: {
     width: "100%",
     backgroundColor: "transparent",
@@ -1455,8 +1455,8 @@ const localStyles = StyleSheet.create({
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     overflow: "hidden",
-    backgroundColor: "#FCFAF6",
-    shadowColor: "#111",
+    backgroundColor: vibesTheme.colors.background,
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.16,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: -6 },
@@ -1481,7 +1481,7 @@ const localStyles = StyleSheet.create({
   },
   detailsName: {
     flex: 1,
-    color: "#20252C",
+    color: vibesTheme.colors.primaryText,
     fontSize: 34,
     lineHeight: 40,
     fontFamily: vibesTheme.fonts.thin,
@@ -1492,7 +1492,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
   },
@@ -1505,32 +1505,32 @@ const localStyles = StyleSheet.create({
   detailSection: { marginBottom: 20 },
   detailLabel: {
     marginBottom: 7,
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
   },
   emphasizedDetailLabel: {
-    color: "#20252C",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 23,
     fontFamily: vibesTheme.fonts.semibold,
   },
   detailBody: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 27,
     fontFamily: vibesTheme.fonts.medium,
   },
   detailValue: {
-    color: "#20252C",
+    color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 27,
     fontFamily: vibesTheme.fonts.medium,
   },
   detailValueFlexible: {
     flex: 1,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     lineHeight: 23,
     fontFamily: vibesTheme.fonts.medium,
@@ -1549,7 +1549,7 @@ const localStyles = StyleSheet.create({
     gap: 7,
   },
   pillGroupLabel: {
-    color: "#5F574C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 12,
     lineHeight: 15,
     fontFamily: vibesTheme.fonts.semibold,
@@ -1570,7 +1570,7 @@ const localStyles = StyleSheet.create({
     borderColor: vibesTheme.colors.accentMustard,
   },
   pillText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,

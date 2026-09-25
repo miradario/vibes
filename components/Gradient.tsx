@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useEffect, useMemo, useRef } from "react";
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     width: width * 1.7,
     height: width * 1.7,
     borderRadius: width,
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   core: {
     position: "absolute",
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     width: width * 1.2,
     height: width * 1.2,
     borderRadius: width,
-    backgroundColor: "#D88C7A",
+    backgroundColor: vibesTheme.colors.accentCoral,
   },
   ember: {
     position: "absolute",
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     width: width * 0.76,
     height: width * 0.76,
     borderRadius: width,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
   },
 });
 

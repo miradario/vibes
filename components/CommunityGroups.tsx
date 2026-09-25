@@ -79,13 +79,13 @@ export default function CommunityGroups({
           style={s.create}
           onPress={() => setVisible(true)}
         >
-          <Icon name="add" size={21} color="#B57716" />
+          <Icon name="add" size={21} color={vibesTheme.colors.accentMustard} />
           <Text style={s.createLabel}>Crear grupo</Text>
         </TouchableOpacity>
       ) : null}
       {variant === "list" ? (
         <>
-          {groups.isLoading ? <ActivityIndicator color="#B98235" /> : null}
+          {groups.isLoading ? <ActivityIndicator color={vibesTheme.colors.accentMustard} /> : null}
           {groups.isError ? (
             <TouchableOpacity onPress={() => void groups.refetch()}>
               <Text style={s.hint}>
@@ -107,7 +107,7 @@ export default function CommunityGroups({
                 <Avatar uri={group.photoUrl} size={48} />
               ) : (
                 <View style={s.avatar}>
-                  <Icon name="people-outline" size={26} color="#B57716" />
+                  <Icon name="people-outline" size={26} color={vibesTheme.colors.accentMustard} />
                 </View>
               )}
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -144,7 +144,7 @@ export default function CommunityGroups({
                 disabled={create.isPending}
                 onPress={() => setVisible(false)}
               >
-                <Icon name="close" size={24} color="#7B746C" />
+                <Icon name="close" size={24} color={vibesTheme.colors.secondaryText} />
               </TouchableOpacity>
             </View>
             <Text style={s.hint}>
@@ -156,8 +156,8 @@ export default function CommunityGroups({
               style={[s.input, focusedField === "name" && s.inputFocused]}
               onFocus={() => setFocusedField("name")}
               onBlur={() => setFocusedField(null)}
-              placeholderTextColor="#81776A"
-              selectionColor="#B98235"
+              placeholderTextColor={vibesTheme.colors.secondaryText}
+              selectionColor={vibesTheme.colors.accentMustard}
               placeholder="Por ejemplo, Meditamos juntos"
               value={name}
               onChangeText={setName}
@@ -174,8 +174,8 @@ export default function CommunityGroups({
               ]}
               onFocus={() => setFocusedField("description")}
               onBlur={() => setFocusedField(null)}
-              placeholderTextColor="#81776A"
-              selectionColor="#B98235"
+              placeholderTextColor={vibesTheme.colors.secondaryText}
+              selectionColor={vibesTheme.colors.accentMustard}
               textAlignVertical="top"
               placeholder="¿De qué se trata este grupo?"
               value={description}
@@ -222,7 +222,7 @@ export default function CommunityGroups({
                       : "square-outline"
                   }
                   size={24}
-                  color="#B98235"
+                  color={vibesTheme.colors.accentMustard}
                 />
               </TouchableOpacity>
             ))}
@@ -254,7 +254,7 @@ const s = StyleSheet.create({
   conversationRow: {
     minHeight: 76,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#E7E5DF",
+    borderBottomColor: "rgba(110, 110, 110, 0.30)",
   },
   create: {
     minHeight: 48,
@@ -265,11 +265,11 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#B57716",
+    borderColor: vibesTheme.colors.accentMustard,
   },
   createLabel: {
     flexShrink: 1,
-    color: "#B57716",
+    color: vibesTheme.colors.accentMustard,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.medium,
   },
@@ -279,15 +279,15 @@ const s = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FBECD5",
+    backgroundColor: "rgba(228, 183, 110, 0.27)",
   },
   title: {
-    color: "#403B36",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     fontFamily: vibesTheme.fonts.medium,
   },
-  hint: { color: "#7B746C", fontSize: 14, marginTop: 4 },
-  heading: { color: "#7B746C", fontSize: 14, marginTop: 12, marginBottom: 4 },
+  hint: { color: vibesTheme.colors.secondaryText, fontSize: 14, marginTop: 4 },
+  heading: { color: vibesTheme.colors.secondaryText, fontSize: 14, marginTop: 12, marginBottom: 4 },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -295,7 +295,7 @@ const s = StyleSheet.create({
     paddingVertical: 12,
   },
   sheet: {
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     padding: 20,
@@ -303,24 +303,24 @@ const s = StyleSheet.create({
   },
   input: {
     minHeight: 52,
-    backgroundColor: "#FAF5EB",
+    backgroundColor: "rgba(228, 183, 110, 0.13)",
     borderWidth: 1,
-    borderColor: "#BCAF9B",
+    borderColor: vibesTheme.colors.accentCoral,
     borderRadius: 12,
     padding: 14,
-    color: "#403B36",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
   },
   inputFocused: {
-    borderColor: "#A77627",
-    backgroundColor: "#FFF8E9",
+    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: "rgba(228, 183, 110, 0.12)",
   },
   descriptionInput: {
     minHeight: 104,
   },
   button: {
     alignItems: "center",
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
     padding: 16,
     borderRadius: 14,
     marginTop: 20,

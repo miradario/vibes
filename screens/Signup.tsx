@@ -280,7 +280,7 @@ const Signup = () => {
               <TextInput
                 style={styles.loginInput}
                 placeholder={t("signup.emailPlaceholder")}
-                placeholderTextColor="rgba(110,110,110,0.45)"
+                placeholderTextColor="rgba(110, 110, 110, 0.45)"
                 autoCapitalize="none"
                 keyboardType="email-address"
                 returnKeyType="next"
@@ -298,7 +298,7 @@ const Signup = () => {
                   ref={passwordInputRef}
                   style={[styles.loginInput, localStyles.passwordInput]}
                   placeholder=""
-                  placeholderTextColor="#6E6E6E"
+                  placeholderTextColor={vibesTheme.colors.secondaryText}
                   secureTextEntry={!showPassword}
                   returnKeyType="done"
                   value={password}
@@ -313,7 +313,7 @@ const Signup = () => {
                   <Icon
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
                     size={20}
-                    color="#8C7B63"
+                    color={vibesTheme.colors.secondaryText}
                   />
                 </TouchableOpacity>
               </View>
@@ -335,7 +335,7 @@ const Signup = () => {
                 ]}
               >
                 {acceptedTerms ? (
-                  <Icon name="checkmark" size={14} color="#fff" />
+                  <Icon name="checkmark" size={14} color={vibesTheme.colors.background} />
                 ) : null}
               </View>
               <Text style={localStyles.termsText}>
@@ -435,7 +435,7 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   accountSwitchLink: {
-    color: "#8B6327",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
     textDecorationLine: "underline",
   },
@@ -455,7 +455,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(43, 43, 43, 0.1)",
   },
   dividerText: {
-    color: "#8C7B63",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 0.8,
@@ -477,23 +477,23 @@ const localStyles = StyleSheet.create({
     height: 20,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "rgba(140, 123, 99, 0.5)",
+    borderColor: "rgba(110, 110, 110, 0.5)",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 1,
   },
   checkboxChecked: {
-    backgroundColor: "#8C7B63",
-    borderColor: "#8C7B63",
+    backgroundColor: vibesTheme.colors.secondaryText,
+    borderColor: vibesTheme.colors.secondaryText,
   },
   termsText: {
     flex: 1,
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 18,
   },
   termsLink: {
-    color: "#8C7B63",
+    color: vibesTheme.colors.secondaryText,
     textDecorationLine: "underline",
   },
   header: {

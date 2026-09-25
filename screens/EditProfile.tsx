@@ -1158,7 +1158,7 @@ const modalStyles = StyleSheet.create({
     paddingHorizontal: 14,
     alignItems: "center",
     flexDirection: "row",
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.36)",
     shadowColor: BLACK,
@@ -1202,7 +1202,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 2,
   },
   primaryBadgeText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 10,
     fontWeight: "400",
   },
@@ -1217,12 +1217,12 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(216, 140, 122, 0.25)",
   },
   readOnlyField: {
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: "rgba(174, 191, 209, 0.8)",
+    borderColor: "rgba(127, 152, 183, 0.8)",
   },
   readOnlyValue: {
     color: DARK_GRAY,
@@ -1243,7 +1243,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: PRIMARY_COLOR,
   },
   currentLocationButtonText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -1256,7 +1256,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(216, 140, 122, 0.35)",
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
@@ -1271,6 +1271,6 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   languageChipTextActive: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
   },
 });

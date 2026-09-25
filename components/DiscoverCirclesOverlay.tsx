@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useEffect } from "react";
@@ -76,7 +77,7 @@ const DiscoverCirclesOverlay = () => {
         left="-3%"
         top="26%"
         size={164}
-        color="#9EB7D7"
+        color={vibesTheme.colors.accentBlue}
         opacity={0.38}
         durationMs={3200}
         phase={0.1}
@@ -87,7 +88,7 @@ const DiscoverCirclesOverlay = () => {
         left="66%"
         top="52%"
         size={128}
-        color="#E8C47E"
+        color={vibesTheme.colors.accentMustard}
         opacity={0.34}
         durationMs={3800}
         phase={0.35}
@@ -98,7 +99,7 @@ const DiscoverCirclesOverlay = () => {
         left="72%"
         top="11%"
         size={74}
-        color="#AEBFD1"
+        color={vibesTheme.colors.accentBlue}
         opacity={0.28}
         durationMs={4400}
         phase={0.6}
@@ -109,7 +110,7 @@ const DiscoverCirclesOverlay = () => {
         left="76%"
         top="34%"
         size={136}
-        color="#E1A17E"
+        color={vibesTheme.colors.accentCoral}
         opacity={0.46}
         durationMs={4000}
         phase={0.48}

@@ -96,19 +96,19 @@ const FALLBACK_CHALLENGE: ChallengeDetailData = {
 };
 
 const palette = {
-  bg: "#FEFEFD",
-  surface: "#FFFDF8",
-  surfaceAlt: "#FDF6EA",
-  text: "#2D2924",
-  muted: "#7C746B",
-  faint: "#E9E0D3",
-  gold: "#E2A84F",
-  goldDeep: "#B7772F",
-  accentBlue: "#AEBFD1",
-  accentBlueDeep: "#536A82",
-  accentBlueSoft: "rgba(174, 191, 209, 0.18)",
-  red: "#C9695D",
-  redSoft: "#FCE9E6",
+  bg: vibesTheme.colors.background,
+  surface: vibesTheme.colors.background,
+  surfaceAlt: "rgba(228, 183, 110, 0.13)",
+  text: vibesTheme.colors.primaryText,
+  muted: vibesTheme.colors.secondaryText,
+  faint: "rgba(216, 140, 122, 0.31)",
+  gold: vibesTheme.colors.accentMustard,
+  goldDeep: vibesTheme.colors.accentMustard,
+  accentBlue: vibesTheme.colors.accentBlue,
+  accentBlueDeep: vibesTheme.colors.secondaryText,
+  accentBlueSoft: "rgba(127, 152, 183, 0.18)",
+  red: vibesTheme.colors.accentCoral,
+  redSoft: "rgba(216, 140, 122, 0.17)",
 };
 
 const FOOTER_SLIDER_HANDLE_SIZE = 42;
@@ -643,7 +643,7 @@ const ChallengeJourneyCard = memo(
 
         <View style={localStyles.journeyStatsRow}>
           <View style={localStyles.journeyStatItem}>
-            <Icon name="flame-outline" size={24} color="#C47A55" />
+            <Icon name="flame-outline" size={24} color={vibesTheme.colors.accentCoral} />
             <Text style={localStyles.journeyStatText}>
               Racha actual:{" "}
               <Text style={localStyles.journeyStatValue}>
@@ -653,7 +653,7 @@ const ChallengeJourneyCard = memo(
           </View>
           <View style={localStyles.journeyStatDivider} />
           <View style={localStyles.journeyStatItem}>
-            <Icon name="stats-chart-outline" size={22} color="#625D57" />
+            <Icon name="stats-chart-outline" size={22} color={vibesTheme.colors.secondaryText} />
             <Text style={localStyles.journeyStatText}>
               Mejor:{" "}
               <Text style={localStyles.journeyStatValue}>
@@ -734,7 +734,7 @@ const DayCircle = memo(
           <Icon
             name="checkmark"
             size={Math.max(14, size * 0.42)}
-            color="#A85F42"
+            color={vibesTheme.colors.primaryText}
           />
         ) : (
           <Text
@@ -809,7 +809,7 @@ export const PathProgress = memo(
       <View style={localStyles.progressCard}>
         <View style={localStyles.pathHeader}>
           <View style={localStyles.pathIconWrap}>
-            <Icon name="flag-outline" size={26} color="#C47A55" />
+            <Icon name="flag-outline" size={26} color={vibesTheme.colors.accentCoral} />
           </View>
           <View style={localStyles.pathHeaderCopy}>
             <Text
@@ -824,7 +824,7 @@ export const PathProgress = memo(
             </Text>
           </View>
           <View style={localStyles.pathPill}>
-            <Icon name="trending-up-outline" size={15} color="#C47A55" />
+            <Icon name="trending-up-outline" size={15} color={vibesTheme.colors.accentCoral} />
             <Text style={localStyles.pathPillText}>Progreso</Text>
           </View>
         </View>
@@ -856,7 +856,7 @@ export const PathProgress = memo(
 
         <View style={localStyles.pathMantraRow}>
           <View style={localStyles.pathMantraIcon}>
-            <Icon name="leaf-outline" size={20} color="#7FA579" />
+            <Icon name="leaf-outline" size={20} color={vibesTheme.colors.secondaryText} />
           </View>
           <Text style={localStyles.pathMantraText}>
             Cada paso te acerca a tu mejor versión.
@@ -872,7 +872,7 @@ export const PathProgress = memo(
                   localStyles.pathStatDotCompleted,
                 ]}
               >
-                <Icon name="checkmark" size={16} color="#A85F42" />
+                <Icon name="checkmark" size={16} color={vibesTheme.colors.primaryText} />
               </View>
               <Text style={localStyles.pathStatValue}>{completedCount}</Text>
             </View>
@@ -1074,7 +1074,7 @@ export const CheckInButton = memo(
           <VibesLoader size={30} />
         ) : (
           <>
-            <Icon name={icon} size={21} color="#FFFFFF" />
+            <Icon name={icon} size={21} color={vibesTheme.colors.background} />
             <Text style={localStyles.checkInText}>{label}</Text>
           </>
         )}
@@ -1094,7 +1094,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
     activeOpacity={0.9}
   >
     <View style={localStyles.chatIconWrap}>
-      <Icon name="chatbubbles-outline" size={21} color="#FFFFFF" />
+      <Icon name="chatbubbles-outline" size={21} color={vibesTheme.colors.background} />
     </View>
     <View style={localStyles.chatCopy}>
       <Text style={localStyles.chatTitle}>Entrar al chat del desafío</Text>
@@ -1102,7 +1102,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
         Compartí avances con la comunidad.
       </Text>
     </View>
-    <Icon name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.82)" />
+    <Icon name="chevron-forward" size={20} color="rgba(254, 254, 253, 0.82)" />
   </TouchableOpacity>
 ));
 
@@ -1539,7 +1539,7 @@ const ChallengeDetailScreen = () => {
               localStyles.footerSliderHandleCompleted,
             ]}
           >
-            <Icon name="checkmark" size={22} color="#FFFFFF" />
+            <Icon name="checkmark" size={22} color={vibesTheme.colors.background} />
           </View>
           <View style={localStyles.footerSliderCopy}>
             <Text style={localStyles.footerSliderTitle}>
@@ -1571,8 +1571,8 @@ const ChallengeDetailScreen = () => {
             pointerEvents="none"
           />
           <View style={localStyles.footerSliderChevrons} pointerEvents="none">
-            <Icon name="chevron-forward" size={16} color="#FFFFFF" />
-            <Icon name="chevron-forward" size={16} color="#FFFFFF" />
+            <Icon name="chevron-forward" size={16} color={vibesTheme.colors.background} />
+            <Icon name="chevron-forward" size={16} color={vibesTheme.colors.background} />
           </View>
           <View style={localStyles.footerSliderCopy}>
             <Text style={localStyles.footerSliderTitle}>Check-in diario</Text>
@@ -1591,7 +1591,7 @@ const ChallengeDetailScreen = () => {
           {checkInMutation.isPending ? (
             <VibesLoader size={30} />
           ) : (
-            <Icon name="sunny-outline" size={22} color="#FFFFFF" />
+            <Icon name="sunny-outline" size={22} color={vibesTheme.colors.background} />
           )}
         </View>
       </View>
@@ -1774,7 +1774,7 @@ const ChallengeDetailScreen = () => {
                       <Avatar
                         uri={request.requesterAvatar}
                         size={38}
-                        fallbackBackgroundColor="#E9E4DD"
+                        fallbackBackgroundColor={"rgba(216, 140, 122, 0.25)"}
                         fallbackIconColor={palette.muted}
                       />
                       <Text style={localStyles.requestName} numberOfLines={1}>
@@ -1949,7 +1949,7 @@ const ChallengeDetailScreen = () => {
                 isChallengeCompleted ? "trophy-outline" : "sparkles-outline"
               }
               size={20}
-              color="#FFFFFF"
+              color={vibesTheme.colors.background}
             />
           </View>
           <Text style={localStyles.completionCelebrationTitle}>
@@ -2058,7 +2058,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: palette.gold,
   },
   loadingBackText: {
-    color: WHITE,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -2079,7 +2079,7 @@ const localStyles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   challengeTypePillText: {
-    color: "#6F8A63",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 16,
     letterSpacing: 2,
@@ -2115,7 +2115,7 @@ const localStyles = StyleSheet.create({
   challengeIntroDivider: {
     width: 1,
     height: 42,
-    backgroundColor: "rgba(45, 41, 36, 0.12)",
+    backgroundColor: "rgba(43, 43, 43, 0.12)",
   },
   heroInfoStack: {
     marginBottom: 16,
@@ -2153,9 +2153,9 @@ const localStyles = StyleSheet.create({
     borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(14, 13, 12, 0.28)",
+    backgroundColor: "rgba(43, 43, 43, 0.28)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.16)",
+    borderColor: "rgba(254, 254, 253, 0.16)",
     shadowColor: palette.text,
     shadowOpacity: 0.08,
     shadowRadius: 10,
@@ -2172,17 +2172,17 @@ const localStyles = StyleSheet.create({
     lineHeight: 27,
     textAlign: "left",
     fontFamily: vibesTheme.fonts.medium,
-    textShadowColor: "rgba(0, 0, 0, 0.42)",
+    textShadowColor: "rgba(43, 43, 43, 0.42)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
   expandedChallengeHeaderSubtitle: {
     marginTop: 8,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: "rgba(254, 254, 253, 0.9)",
     fontSize: 17,
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
-    textShadowColor: "rgba(0, 0, 0, 0.42)",
+    textShadowColor: "rgba(43, 43, 43, 0.42)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
@@ -2212,7 +2212,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(247, 244, 238, 0.82)",
+    backgroundColor: "rgba(254, 254, 253, 0.82)",
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.06)",
   },
@@ -2220,7 +2220,7 @@ const localStyles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#EFE4D2",
+    backgroundColor: "rgba(228, 183, 110, 0.32)",
   },
   collapsedChallengeHeaderTitle: {
     flex: 1,
@@ -2236,9 +2236,9 @@ const localStyles = StyleSheet.create({
   },
   joinRequestButton: {
     borderRadius: 24,
-    backgroundColor: "rgba(83, 106, 130, 0.9)",
+    backgroundColor: "rgba(110, 110, 110, 0.9)",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.18)",
+    borderColor: "rgba(254, 254, 253, 0.18)",
     paddingHorizontal: 18,
     paddingVertical: 16,
     alignItems: "center",
@@ -2249,23 +2249,23 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
   },
   joinRequestButtonTitle: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.background,
     fontSize: 18,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.bold,
   },
   joinRequestButtonSubtitle: {
     marginTop: 4,
-    color: "rgba(255,255,255,0.88)",
+    color: "rgba(254, 254, 253, 0.88)",
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.subtitle,
   },
   chatLockedRow: {
     borderRadius: 18,
-    backgroundColor: "rgba(247, 240, 230, 0.82)",
+    backgroundColor: "rgba(254, 254, 253, 0.82)",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.84)",
+    borderColor: "rgba(254, 254, 253, 0.84)",
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: "row",
@@ -2285,13 +2285,13 @@ const localStyles = StyleSheet.create({
     right: 24,
     zIndex: 55,
     borderRadius: 24,
-    backgroundColor: "rgba(255, 252, 247, 0.98)",
+    backgroundColor: "rgba(254, 254, 253, 0.98)",
     borderWidth: 1,
-    borderColor: "rgba(226, 168, 79, 0.22)",
+    borderColor: "rgba(228, 183, 110, 0.22)",
     paddingHorizontal: 20,
     paddingVertical: 18,
     alignItems: "center",
-    shadowColor: "#6F5536",
+    shadowColor: vibesTheme.colors.secondaryText,
     shadowOpacity: 0.18,
     shadowRadius: 26,
     shadowOffset: { width: 0, height: 10 },
@@ -2323,7 +2323,7 @@ const localStyles = StyleSheet.create({
   },
   heroMedia: {
     minHeight: 195,
-    backgroundColor: "#EFE4D2",
+    backgroundColor: "rgba(228, 183, 110, 0.32)",
     justifyContent: "flex-end",
   },
   heroImage: {
@@ -2337,7 +2337,7 @@ const localStyles = StyleSheet.create({
   },
   heroScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(24, 22, 20, 0.62)",
+    backgroundColor: "rgba(43, 43, 43, 0.62)",
   },
   heroTopBar: {
     position: "absolute",
@@ -2355,9 +2355,9 @@ const localStyles = StyleSheet.create({
     borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(14, 13, 12, 0.28)",
+    backgroundColor: "rgba(43, 43, 43, 0.28)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.16)",
+    borderColor: "rgba(254, 254, 253, 0.16)",
   },
   heroMetaPillsRow: {
     flexDirection: "row",
@@ -2372,9 +2372,9 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    backgroundColor: "rgba(254, 254, 253, 0.16)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
+    borderColor: "rgba(254, 254, 253, 0.12)",
   },
   heroMetaPillText: {
     color: WHITE,
@@ -2391,7 +2391,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: "rgba(45, 41, 36, 0.07)",
+    borderColor: "rgba(43, 43, 43, 0.07)",
     padding: 14,
     justifyContent: "center",
   },
@@ -2420,9 +2420,9 @@ const localStyles = StyleSheet.create({
   },
   communityCard: {
     borderRadius: 24,
-    backgroundColor: "rgba(255, 249, 239, 0.72)",
+    backgroundColor: "rgba(254, 254, 253, 0.72)",
     borderWidth: 1,
-    borderColor: "rgba(226, 168, 79, 0.1)",
+    borderColor: "rgba(228, 183, 110, 0.1)",
     padding: 18,
     flexDirection: "row",
     alignItems: "center",
@@ -2434,7 +2434,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(226, 168, 79, 0.16)",
+    backgroundColor: "rgba(228, 183, 110, 0.16)",
   },
   communityCopy: {
     flex: 1,
@@ -2454,16 +2454,16 @@ const localStyles = StyleSheet.create({
   },
   communityTodayCopy: {
     marginTop: 6,
-    color: "rgba(45, 41, 36, 0.58)",
+    color: "rgba(43, 43, 43, 0.58)",
     fontSize: 15,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.regular,
   },
   requestCard: {
     borderRadius: 22,
-    backgroundColor: "#FFF9EF",
+    backgroundColor: "rgba(228, 183, 110, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(226, 168, 79, 0.18)",
+    borderColor: "rgba(228, 183, 110, 0.18)",
     padding: 16,
     gap: 12,
   },
@@ -2500,7 +2500,7 @@ const localStyles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#F3ECE0",
+    backgroundColor: "rgba(228, 183, 110, 0.22)",
   },
   requestName: {
     flex: 1,
@@ -2511,7 +2511,7 @@ const localStyles = StyleSheet.create({
   },
   requestApproveButton: {
     borderRadius: 999,
-    backgroundColor: "rgba(174, 191, 209, 0.22)",
+    backgroundColor: "rgba(127, 152, 183, 0.22)",
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
@@ -2524,9 +2524,9 @@ const localStyles = StyleSheet.create({
   celebrationCard: {
     overflow: "hidden",
     borderRadius: 24,
-    backgroundColor: "#FFF9EF",
+    backgroundColor: "rgba(228, 183, 110, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(226, 168, 79, 0.18)",
+    borderColor: "rgba(228, 183, 110, 0.18)",
     padding: 18,
     flexDirection: "row",
     alignItems: "center",
@@ -2539,7 +2539,7 @@ const localStyles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: "rgba(255, 223, 177, 0.24)",
+    backgroundColor: "rgba(228, 183, 110, 0.24)",
   },
   celebrationBadge: {
     width: 48,
@@ -2547,9 +2547,9 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFF2D8",
+    backgroundColor: "rgba(228, 183, 110, 0.23)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.82)",
+    borderColor: "rgba(254, 254, 253, 0.82)",
   },
   celebrationCopy: {
     flex: 1,
@@ -2571,7 +2571,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: palette.surfaceAlt,
     borderWidth: 1,
-    borderColor: "rgba(226, 168, 79, 0.18)",
+    borderColor: "rgba(228, 183, 110, 0.18)",
     padding: 18,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -2610,29 +2610,29 @@ const localStyles = StyleSheet.create({
   metricDivider: {
     width: 1,
     height: 42,
-    backgroundColor: "rgba(45, 41, 36, 0.1)",
+    backgroundColor: "rgba(43, 43, 43, 0.1)",
   },
   progressCard: {
     borderRadius: 24,
     backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: "rgba(45, 41, 36, 0.07)",
+    borderColor: "rgba(43, 43, 43, 0.07)",
     paddingHorizontal: 18,
     paddingVertical: 20,
-    shadowColor: "#6F5536",
+    shadowColor: vibesTheme.colors.secondaryText,
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
   },
   journeyCard: {
     borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.96)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
     borderWidth: 1,
-    borderColor: "rgba(45, 41, 36, 0.08)",
+    borderColor: "rgba(43, 43, 43, 0.08)",
     paddingHorizontal: 18,
     paddingTop: 22,
     paddingBottom: 18,
-    shadowColor: "#6F5536",
+    shadowColor: vibesTheme.colors.secondaryText,
     shadowOpacity: 0.07,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -2661,7 +2661,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   journeyPercent: {
-    color: "#C47A55",
+    color: vibesTheme.colors.accentCoral,
     fontSize: 46,
     lineHeight: 50,
     fontFamily: vibesTheme.fonts.bold,
@@ -2671,12 +2671,12 @@ const localStyles = StyleSheet.create({
     height: 14,
     borderRadius: 999,
     overflow: "hidden",
-    backgroundColor: "rgba(233, 224, 211, 0.88)",
+    backgroundColor: "rgba(254, 254, 253, 0.88)",
   },
   journeyTrackFill: {
     height: "100%",
     borderRadius: 999,
-    backgroundColor: "#C47A55",
+    backgroundColor: vibesTheme.colors.accentCoral,
   },
   journeyDaysRow: {
     paddingTop: 26,
@@ -2696,7 +2696,7 @@ const localStyles = StyleSheet.create({
     top: 44,
     left: -2,
     width: 44,
-    color: "#625D57",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 18,
     textAlign: "center",
@@ -2708,14 +2708,14 @@ const localStyles = StyleSheet.create({
     borderRadius: 2,
     marginTop: 18,
     marginHorizontal: -1,
-    backgroundColor: "rgba(220, 211, 199, 0.9)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
   },
   journeyConnectorDone: {
-    backgroundColor: "rgba(196, 122, 85, 0.45)",
+    backgroundColor: "rgba(216, 140, 122, 0.45)",
   },
   journeyStatsRow: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(45, 41, 36, 0.1)",
+    borderTopColor: "rgba(43, 43, 43, 0.1)",
     paddingTop: 16,
     flexDirection: "row",
     alignItems: "center",
@@ -2741,7 +2741,7 @@ const localStyles = StyleSheet.create({
   journeyStatDivider: {
     width: 1,
     height: 42,
-    backgroundColor: "rgba(45, 41, 36, 0.12)",
+    backgroundColor: "rgba(43, 43, 43, 0.12)",
   },
   pathHeader: {
     flexDirection: "row",
@@ -2768,7 +2768,7 @@ const localStyles = StyleSheet.create({
   },
   pathSubtitle: {
     marginTop: 2,
-    color: "rgba(45, 41, 36, 0.58)",
+    color: "rgba(43, 43, 43, 0.58)",
     fontSize: 15,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -2783,7 +2783,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(254, 254, 253, 0.92)",
   },
   pathPillText: {
-    color: "#C47A55",
+    color: vibesTheme.colors.accentCoral,
     fontSize: 13,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -2803,7 +2803,7 @@ const localStyles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginHorizontal: -1,
-    backgroundColor: "rgba(233, 224, 211, 0.86)",
+    backgroundColor: "rgba(254, 254, 253, 0.86)",
   },
   pathConnectorDone: {
     backgroundColor: "rgba(216, 140, 122, 0.34)",
@@ -2827,26 +2827,26 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   dayFuture: {
-    backgroundColor: "rgba(240, 236, 228, 0.9)",
-    borderColor: "rgba(233, 224, 211, 0.85)",
+    backgroundColor: "rgba(254, 254, 253, 0.9)",
+    borderColor: "rgba(254, 254, 253, 0.85)",
   },
   dayMissed: {
     backgroundColor: "rgba(254, 254, 253, 0.92)",
-    borderColor: "rgba(201, 105, 93, 0.72)",
+    borderColor: "rgba(216, 140, 122, 0.72)",
   },
   dayText: {
-    color: "#625D57",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.bold,
   },
   dayTextActive: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
   },
   dayTextFuture: {
-    color: "#B6ADA2",
+    color: vibesTheme.colors.secondaryText,
   },
   dayTextMissed: {
-    color: "#625D57",
+    color: vibesTheme.colors.secondaryText,
   },
   pathMantraRow: {
     flexDirection: "row",
@@ -2860,11 +2860,11 @@ const localStyles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(127, 165, 121, 0.12)",
+    backgroundColor: "rgba(110, 110, 110, 0.12)",
   },
   pathMantraText: {
     flex: 1,
-    color: "rgba(45, 41, 36, 0.68)",
+    color: "rgba(43, 43, 43, 0.68)",
     fontSize: 17,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
@@ -2873,8 +2873,8 @@ const localStyles = StyleSheet.create({
     minHeight: 76,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(45, 41, 36, 0.08)",
-    backgroundColor: "rgba(255, 253, 248, 0.72)",
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    backgroundColor: "rgba(254, 254, 253, 0.72)",
     paddingHorizontal: 8,
     paddingVertical: 12,
     flexDirection: "row",
@@ -2908,7 +2908,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: palette.accentBlue,
   },
   pathStatDotFuture: {
-    backgroundColor: "rgba(240, 236, 228, 0.96)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
   },
   pathStatValue: {
     color: palette.text,
@@ -2918,7 +2918,7 @@ const localStyles = StyleSheet.create({
   },
   pathStatLabel: {
     marginTop: 6,
-    color: "rgba(45, 41, 36, 0.62)",
+    color: "rgba(43, 43, 43, 0.62)",
     fontSize: 11,
     lineHeight: 13,
     fontFamily: vibesTheme.fonts.medium,
@@ -2926,7 +2926,7 @@ const localStyles = StyleSheet.create({
   pathStatDivider: {
     width: 1,
     height: 42,
-    backgroundColor: "rgba(45, 41, 36, 0.08)",
+    backgroundColor: "rgba(43, 43, 43, 0.08)",
   },
   compactTrack: {
     height: 12,
@@ -2968,7 +2968,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: "rgba(45, 41, 36, 0.07)",
+    borderColor: "rgba(43, 43, 43, 0.07)",
     padding: 18,
   },
   summaryHeader: {
@@ -3032,15 +3032,15 @@ const localStyles = StyleSheet.create({
     borderRadius: 34,
     backgroundColor: vibesTheme.colors.accentMustard,
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.22)",
+    borderColor: "rgba(254, 254, 253, 0.22)",
     overflow: "hidden",
     justifyContent: "center",
     paddingLeft: 124,
     paddingRight: 20,
   },
   footerSliderTrackCompleted: {
-    backgroundColor: "rgba(210, 231, 213, 0.88)",
-    borderColor: "rgba(255, 255, 255, 0.88)",
+    backgroundColor: "rgba(254, 254, 253, 0.88)",
+    borderColor: "rgba(254, 254, 253, 0.88)",
   },
   footerSliderFill: {
     position: "absolute",
@@ -3048,7 +3048,7 @@ const localStyles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: 34,
-    backgroundColor: "rgba(244, 202, 135, 0.92)",
+    backgroundColor: "rgba(228, 183, 110, 0.92)",
   },
   footerSliderHandle: {
     position: "absolute",
@@ -3061,14 +3061,14 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.82)",
-    shadowColor: "#BE8A5C",
+    borderColor: "rgba(254, 254, 253, 0.82)",
+    shadowColor: vibesTheme.colors.accentCoral,
     shadowOpacity: 0.28,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
   },
   footerSliderHandleCompleted: {
-    backgroundColor: "#8CB389",
+    backgroundColor: vibesTheme.colors.secondaryText,
     shadowOpacity: 0,
   },
   footerSliderCopy: {
@@ -3077,13 +3077,13 @@ const localStyles = StyleSheet.create({
     zIndex: 1,
   },
   footerSliderTitle: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.bold,
   },
   footerSliderSubtitle: {
-    color: "rgba(255, 255, 255, 0.78)",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -3099,7 +3099,7 @@ const localStyles = StyleSheet.create({
     opacity: 1,
   },
   checkInText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.bold,
@@ -3107,9 +3107,9 @@ const localStyles = StyleSheet.create({
   },
   chatRow: {
     borderRadius: 22,
-    backgroundColor: "rgba(83, 106, 130, 0.9)",
+    backgroundColor: "rgba(110, 110, 110, 0.9)",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.18)",
+    borderColor: "rgba(254, 254, 253, 0.18)",
     padding: 14,
     flexDirection: "row",
     alignItems: "center",
@@ -3121,19 +3121,19 @@ const localStyles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    backgroundColor: "rgba(254, 254, 253, 0.16)",
   },
   chatCopy: {
     flex: 1,
   },
   chatTitle: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.background,
     fontSize: 19,
     fontFamily: vibesTheme.fonts.bold,
   },
   chatSubtitle: {
     marginTop: 2,
-    color: "rgba(255, 255, 255, 0.76)",
+    color: "rgba(254, 254, 253, 0.76)",
     fontSize: 14,
     fontFamily: vibesTheme.fonts.subtitle,
   },
@@ -3150,7 +3150,7 @@ const localStyles = StyleSheet.create({
     width: 44,
     height: 5,
     borderRadius: 999,
-    backgroundColor: "rgba(45, 41, 36, 0.16)",
+    backgroundColor: "rgba(43, 43, 43, 0.16)",
     marginBottom: 16,
   },
   menuTitle: {
@@ -3167,7 +3167,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "rgba(247, 240, 230, 0.72)",
+    backgroundColor: "rgba(254, 254, 253, 0.72)",
     marginTop: 10,
   },
   menuItemDanger: {

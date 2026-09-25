@@ -171,7 +171,7 @@ export default function DailyMoodCard({
             onPress={dismiss}
             style={s.close}
           >
-            <Ionicons name="close" size={23} color="#777166" />
+            <Ionicons name="close" size={23} color={vibesTheme.colors.secondaryText} />
           </TouchableOpacity>
         </View>
         <Text accessibilityRole="header" style={s.title}>
@@ -206,7 +206,7 @@ export default function DailyMoodCard({
                 <Ionicons
                   name={selected ? "checkmark-circle" : "ellipse-outline"}
                   size={18}
-                  color={selected ? "#805F2B" : "#B8BEC4"}
+                  color={selected ? vibesTheme.colors.primaryText : vibesTheme.colors.accentBlue}
                 />
               </TouchableOpacity>
             );
@@ -251,7 +251,7 @@ export default function DailyMoodCard({
 }
 const s = StyleSheet.create({
   sheet: {
-    backgroundColor: "#FCF9F3",
+    backgroundColor: vibesTheme.colors.background,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     maxWidth: 540,
@@ -261,7 +261,7 @@ const s = StyleSheet.create({
     width: 38,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#DFD7C9",
+    backgroundColor: "rgba(216, 140, 122, 0.39)",
     alignSelf: "center",
     marginTop: 12,
     marginBottom: 4,
@@ -277,7 +277,7 @@ const s = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "#F2E6D0",
+    backgroundColor: "rgba(228, 183, 110, 0.32)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -290,19 +290,19 @@ const s = StyleSheet.create({
   eyebrow: {
     fontSize: 10,
     letterSpacing: 2,
-    color: "#8A795F",
+    color: vibesTheme.colors.secondaryText,
     marginBottom: 10,
   },
   title: {
     fontSize: 27,
     lineHeight: 33,
-    color: "#35312B",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
   },
   subtitle: {
     fontSize: 15,
     lineHeight: 22,
-    color: "#777166",
+    color: vibesTheme.colors.secondaryText,
     marginTop: 8,
     marginBottom: 20,
   },
@@ -316,18 +316,18 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 13,
     borderRadius: 17,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "#E9E4DA",
+    borderColor: "rgba(110, 110, 110, 0.30)",
   },
-  selected: { backgroundColor: "#F3E3C5", borderColor: "#D5AF70" },
+  selected: { backgroundColor: "rgba(228, 183, 110, 0.39)", borderColor: vibesTheme.colors.accentMustard },
   optionText: {
     fontSize: 14,
-    color: "#55564F",
+    color: vibesTheme.colors.secondaryText,
     fontFamily: vibesTheme.fonts.medium,
     flexShrink: 1,
   },
-  selectedText: { color: "#735424" },
+  selectedText: { color: vibesTheme.colors.secondaryText },
   privacy: {
     flexDirection: "row",
     gap: 6,
@@ -337,21 +337,21 @@ const s = StyleSheet.create({
   privacyText: {
     fontSize: 12,
     lineHeight: 18,
-    color: "#777166",
+    color: vibesTheme.colors.secondaryText,
     flexShrink: 1,
   },
-  error: { color: "#9A4E40", fontSize: 14, lineHeight: 20, marginTop: 10 },
+  error: { color: vibesTheme.colors.primaryText, fontSize: 14, lineHeight: 20, marginTop: 10 },
   footer: { paddingHorizontal: 24, paddingTop: 10 },
   save: {
     minHeight: 52,
     padding: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#DDB36E",
+    backgroundColor: vibesTheme.colors.accentMustard,
     borderRadius: 20,
   },
   saveText: {
-    color: "#392F20",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     fontFamily: vibesTheme.fonts.medium,
   },
@@ -361,5 +361,5 @@ const s = StyleSheet.create({
     justifyContent: "center",
     padding: 12,
   },
-  skipText: { color: "#777166", fontSize: 15 },
+  skipText: { color: vibesTheme.colors.secondaryText, fontSize: 15 },
 });

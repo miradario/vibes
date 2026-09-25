@@ -141,8 +141,8 @@ export default function CalmPause({
 }
 const serif = vibesTheme.fonts.regular;
 const s = StyleSheet.create({
-  screen: { backgroundColor: "#FFFFFF" },
-  layout: { flex: 1, backgroundColor: "#FBF7EF" },
+  screen: { backgroundColor: vibesTheme.colors.background },
+  layout: { flex: 1, backgroundColor: "rgba(228, 183, 110, 0.10)" },
   body: { flex: 1 },
   bodyContent: {
     flexGrow: 1,
@@ -154,7 +154,7 @@ const s = StyleSheet.create({
   },
   copy: { width: "100%", maxWidth: 500, alignItems: "center" },
   eyebrow: {
-    color: "#59616A",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 11,
     lineHeight: 17,
     letterSpacing: 2,
@@ -165,14 +165,14 @@ const s = StyleSheet.create({
     fontFamily: serif,
     fontSize: 34,
     lineHeight: 41,
-    color: "#302C27",
+    color: vibesTheme.colors.primaryText,
     textAlign: "center",
   },
   smallTitle: { fontSize: 28, lineHeight: 35 },
   subtitle: {
     fontSize: 17,
     lineHeight: 25,
-    color: "#57534E",
+    color: vibesTheme.colors.secondaryText,
     textAlign: "center",
     marginTop: 10,
   },
@@ -181,22 +181,22 @@ const s = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: 1000,
     borderWidth: 2,
-    borderColor: "#D9B575",
-    backgroundColor: "#F8EEDD",
+    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: "rgba(228, 183, 110, 0.22)",
     padding: "6%",
   },
   middleCircle: {
     flex: 1,
     borderRadius: 1000,
     borderWidth: 1,
-    borderColor: "#EEDAB3",
+    borderColor: "rgba(110, 110, 110, 0.30)",
     padding: "7%",
   },
-  innerCircle: { flex: 1, borderRadius: 1000, backgroundColor: "#F5E6CC" },
+  innerCircle: { flex: 1, borderRadius: 1000, backgroundColor: "rgba(228, 183, 110, 0.34)" },
   help: {
     fontSize: 15,
     lineHeight: 22,
-    color: "#59616A",
+    color: vibesTheme.colors.secondaryText,
     textAlign: "center",
     marginTop: 8,
   },
@@ -212,7 +212,7 @@ const s = StyleSheet.create({
   primary: { paddingVertical: 14 },
   primaryLabel: { lineHeight: 24, textAlign: "center" },
   loading: {
-    color: "#59616A",
+    color: vibesTheme.colors.secondaryText,
     textAlign: "center",
     fontSize: 14,
     lineHeight: 20,

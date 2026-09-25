@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import { isValidPassword } from "../src/auth/passwordPolicy";
@@ -136,7 +137,7 @@ const ResetPassword = () => {
                   <Icon
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
                     size={20}
-                    color="#8C7B63"
+                    color={vibesTheme.colors.secondaryText}
                   />
                 </TouchableOpacity>
               </View>

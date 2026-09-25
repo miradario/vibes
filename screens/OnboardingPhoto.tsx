@@ -217,7 +217,7 @@ const OnboardingPhoto = () => {
               <Icon
                 name="images"
                 size={18}
-                color="#D88C7A"
+                color={vibesTheme.colors.accentCoral}
                 style={localStyles.buttonIcon}
               />
               <Text style={styles.welcomeSecondaryText}>{t("onboarding.uploadPhoto")}</Text>
@@ -231,7 +231,7 @@ const OnboardingPhoto = () => {
                 <Icon
                   name="add"
                   size={18}
-                  color="#D88C7A"
+                  color={vibesTheme.colors.accentCoral}
                   style={localStyles.buttonIcon}
                 />
                 <Text style={styles.welcomeSecondaryText}>{t("onboarding.uploadAnother")}</Text>
@@ -276,7 +276,7 @@ const OnboardingPhoto = () => {
                 onPress={handlePickCamera}
               >
                 <View style={localStyles.modalIconWrap}>
-                  <Icon name="camera" size={26} color="#D88C7A" />
+                  <Icon name="camera" size={26} color={vibesTheme.colors.accentCoral} />
                 </View>
                 <Text style={localStyles.modalOptionText}>{t("onboarding.camera")}</Text>
               </TouchableOpacity>
@@ -286,7 +286,7 @@ const OnboardingPhoto = () => {
                 onPress={handlePickGallery}
               >
                 <View style={localStyles.modalIconWrap}>
-                  <Icon name="images" size={26} color="#D88C7A" />
+                  <Icon name="images" size={26} color={vibesTheme.colors.accentCoral} />
                 </View>
                 <Text style={localStyles.modalOptionText}>{t("onboarding.gallery")}</Text>
               </TouchableOpacity>
@@ -329,18 +329,18 @@ const localStyles = StyleSheet.create({
     height: 190,
     borderRadius: 95,
     borderWidth: 2,
-    borderColor: "#D88C7A",
+    borderColor: vibesTheme.colors.accentCoral,
   },
   emptyPrimaryPhoto: {
     width: 190,
     height: 190,
     borderRadius: 95,
     borderWidth: 2,
-    borderColor: "#D88C7A",
+    borderColor: vibesTheme.colors.accentCoral,
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
   },
   emptyPrimaryLabel: {
     marginTop: 10,
@@ -350,7 +350,7 @@ const localStyles = StyleSheet.create({
   },
   primaryBadge: {
     marginTop: 10,
-    color: "#D88C7A",
+    color: vibesTheme.colors.accentCoral,
     fontFamily: vibesTheme.fonts.semibold,
     fontSize: 16,
   },
@@ -366,8 +366,8 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     padding: 2,
     borderWidth: 1,
-    borderColor: "#D88C7A",
-    backgroundColor: "#FDF8F5",
+    borderColor: vibesTheme.colors.accentCoral,
+    backgroundColor: vibesTheme.colors.background,
   },
   thumbPhoto: {
     width: 46,
@@ -395,11 +395,11 @@ const localStyles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(43, 43, 43, 0.45)",
     justifyContent: "flex-end",
   },
   modalCard: {
-    backgroundColor: "#FDF8F5",
+    backgroundColor: vibesTheme.colors.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 28,
@@ -410,13 +410,13 @@ const localStyles = StyleSheet.create({
   modalTitle: {
     fontFamily: vibesTheme.fonts.thin,
     fontSize: 22,
-    color: "#3B3B3B",
+    color: vibesTheme.colors.primaryText,
     marginBottom: 4,
   },
   modalSubtitle: {
     fontFamily: vibesTheme.fonts.subtitle,
     fontSize: 15,
-    color: "#9B9B9B",
+    color: vibesTheme.colors.secondaryText,
     marginBottom: 24,
     textAlign: "center",
   },
@@ -427,11 +427,11 @@ const localStyles = StyleSheet.create({
   },
   modalOption: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 16,
     paddingVertical: 20,
     paddingHorizontal: 28,
-    shadowColor: "#000",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.06,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
@@ -441,7 +441,7 @@ const localStyles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#FDF0EC",
+    backgroundColor: "rgba(216, 140, 122, 0.12)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
@@ -449,7 +449,7 @@ const localStyles = StyleSheet.create({
   modalOptionText: {
     fontFamily: vibesTheme.fonts.semibold,
     fontSize: 16,
-    color: "#3B3B3B",
+    color: vibesTheme.colors.primaryText,
   },
   modalCancel: {
     paddingVertical: 8,
@@ -458,7 +458,7 @@ const localStyles = StyleSheet.create({
   modalCancelText: {
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 16,
-    color: "#9B9B9B",
+    color: vibesTheme.colors.secondaryText,
   },
 });
 

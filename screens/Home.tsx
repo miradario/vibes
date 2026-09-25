@@ -242,7 +242,7 @@ function HomePeopleSuggestions({
           style={localStyles.peopleLink}
         >
           <Text style={localStyles.peopleLinkText}>Ver todos</Text>
-          <Icon name="chevron-forward" size={18} color="#5F574C" />
+          <Icon name="chevron-forward" size={18} color={vibesTheme.colors.secondaryText} />
         </TouchableOpacity>
       </View>
       <ScrollView
@@ -260,13 +260,13 @@ function HomePeopleSuggestions({
             onPress={() => onOpenProfile(profile)}
           >
             <View style={localStyles.personAddIcon}>
-              <Icon name="person-add-outline" size={19} color="#5F574C" />
+              <Icon name="person-add-outline" size={19} color={vibesTheme.colors.secondaryText} />
             </View>
             <ProfileMediaImage
               source={profile.avatarUri ? { uri: profile.avatarUri } : profile.image}
               style={StyleSheet.absoluteFillObject}
             />
-            <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.82)", "rgba(255,255,255,0.96)"]} locations={[0.5, 0.85, 1]} style={StyleSheet.absoluteFillObject} />
+            <LinearGradient pointerEvents="none" colors={["rgba(254, 254, 253, 0)", "rgba(254, 254, 253, 0.82)", "rgba(254, 254, 253, 0.96)"]} locations={[0.5, 0.85, 1]} style={StyleSheet.absoluteFillObject} />
             <Text style={localStyles.personName} numberOfLines={1}>
               {profile.name.split(" ")[0]}
             </Text>
@@ -660,7 +660,7 @@ const Home = () => {
                 onPress={() => setIsFiltersVisible(false)}
                 style={localStyles.filtersCloseButton}
               >
-                <Icon name="close" size={18} color="#2B2B2B" />
+                <Icon name="close" size={18} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
             </View>
 
@@ -858,7 +858,7 @@ const Home = () => {
               style={styles.galleryClose}
               onPress={() => setShowGallery(false)}
             >
-              <Icon name="close" size={18} color="#FEFEFD" />
+              <Icon name="close" size={18} color={vibesTheme.colors.background} />
             </TouchableOpacity>
             <FlatList
               key={`gallery-${galleryInitialIndex}-${galleryImages.length}`}
@@ -930,11 +930,11 @@ const Home = () => {
                 uri={centerProfile.avatarUri ?? null}
                 size={58}
                 iconSize={30}
-                fallbackBackgroundColor="#FFFFFF"
-                fallbackIconColor="#2B2B2B"
+                fallbackBackgroundColor={vibesTheme.colors.background}
+                fallbackIconColor={vibesTheme.colors.primaryText}
               />
               </View>
-              <Text style={{ fontSize: 11, lineHeight: 15, color: "#6E6E6E" }}>Ver perfil</Text>
+              <Text style={{ fontSize: 11, lineHeight: 15, color: vibesTheme.colors.secondaryText }}>Ver perfil</Text>
             </TouchableOpacity>
             <View style={localStyles.heroCopy}>
               <Text
@@ -1008,8 +1008,8 @@ const localStyles = StyleSheet.create({
     borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#2B2B2B",
+    backgroundColor: vibesTheme.colors.background,
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.1,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -1019,7 +1019,7 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   heroTitle: {
-    color: "#252323",
+    color: vibesTheme.colors.primaryText,
     fontSize: 40,
     lineHeight: 47,
     fontFamily: vibesTheme.fonts.thin,
@@ -1046,7 +1046,7 @@ const localStyles = StyleSheet.create({
   },
   peopleTitle: {
     flex: 1,
-    color: "#5F574C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 21,
     letterSpacing: 1,
@@ -1075,16 +1075,16 @@ const localStyles = StyleSheet.create({
     overflow: "hidden",
     justifyContent: "flex-end",
     borderWidth: 1,
-    borderColor: "#EDE2CF",
+    borderColor: "rgba(110, 110, 110, 0.30)",
     borderRadius: 14,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 12,
     paddingTop: 108,
     paddingBottom: 12,
     alignItems: "center",
   },
   personAddIcon: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderRadius: 16,
     padding: 6,
     position: "absolute",
@@ -1095,7 +1095,7 @@ const localStyles = StyleSheet.create({
   personName: {
     alignSelf: "stretch",
     marginTop: 12,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
@@ -1103,7 +1103,7 @@ const localStyles = StyleSheet.create({
   personHint: {
     alignSelf: "stretch",
     marginTop: 2,
-    color: "#4B4B4B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,
@@ -1120,8 +1120,8 @@ const localStyles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     marginBottom: 14,
-    backgroundColor: "#FFF1DE",
-    shadowColor: "#2B2B2B",
+    backgroundColor: "rgba(228, 183, 110, 0.20)",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.08,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
@@ -1135,7 +1135,7 @@ const localStyles = StyleSheet.create({
   },
   featureScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 244, 228, 0.28)",
+    backgroundColor: "rgba(254, 254, 253, 0.28)",
   },
   vibesBreathingWrap: {
     position: "absolute",
@@ -1151,7 +1151,7 @@ const localStyles = StyleSheet.create({
     width: 98,
     height: 98,
     borderRadius: 49,
-    backgroundColor: "#F0C879",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   vibesBreathingOrb: {
     width: 76,
@@ -1159,17 +1159,17 @@ const localStyles = StyleSheet.create({
     borderRadius: 38,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 249, 240, 0.92)",
+    backgroundColor: "rgba(254, 254, 253, 0.92)",
     borderWidth: 1,
-    borderColor: "rgba(154, 107, 32, 0.2)",
-    shadowColor: "#9A6B20",
+    borderColor: "rgba(228, 183, 110, 0.2)",
+    shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.16,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 5 },
     elevation: 3,
   },
   vibesBreathingText: {
-    color: "#8A5F1C",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
@@ -1187,17 +1187,17 @@ const localStyles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F0C879",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   featureEyebrow: {
-    color: "#D69A27",
+    color: vibesTheme.colors.accentMustard,
     fontSize: 12,
     lineHeight: 15,
     fontFamily: vibesTheme.fonts.bold,
   },
   featureTitle: {
     maxWidth: "62%",
-    color: "#18212B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 22,
     lineHeight: 27,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -1205,7 +1205,7 @@ const localStyles = StyleSheet.create({
   featureBody: {
     maxWidth: "58%",
     marginTop: 8,
-    color: "#3D3A37",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.regular,
@@ -1217,7 +1217,7 @@ const localStyles = StyleSheet.create({
     gap: 5,
   },
   featureOpenText: {
-    color: "#5B4323",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.bold,
@@ -1226,7 +1226,7 @@ const localStyles = StyleSheet.create({
     maxHeight: "88%",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: "#FFF9F0",
+    backgroundColor: vibesTheme.colors.background,
     paddingTop: 10,
     paddingHorizontal: 22,
     paddingBottom: 28,
@@ -1237,7 +1237,7 @@ const localStyles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginBottom: 18,
-    backgroundColor: "rgba(62, 57, 52, 0.18)",
+    backgroundColor: "rgba(43, 43, 43, 0.18)",
   },
   dailyGuideHeader: {
     flexDirection: "row",
@@ -1250,20 +1250,20 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F7E7C8",
+    backgroundColor: "rgba(228, 183, 110, 0.36)",
   },
   dailyGuideHeaderCopy: {
     flex: 1,
   },
   dailyGuideEyebrow: {
-    color: "#A8782A",
+    color: vibesTheme.colors.primaryText,
     fontSize: 11,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.bold,
   },
   dailyGuideTitle: {
     marginTop: 3,
-    color: "#26221E",
+    color: vibesTheme.colors.primaryText,
     fontSize: 24,
     lineHeight: 28,
     fontFamily: vibesTheme.fonts.medium,
@@ -1274,14 +1274,14 @@ const localStyles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(62, 57, 52, 0.07)",
+    backgroundColor: "rgba(43, 43, 43, 0.07)",
   },
   dailyGuideContent: {
     paddingTop: 24,
     paddingBottom: 8,
   },
   dailyGuideIntro: {
-    color: "#4B4540",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     lineHeight: 25,
     fontFamily: vibesTheme.fonts.regular,
@@ -1289,7 +1289,7 @@ const localStyles = StyleSheet.create({
   dailyGuideActionsTitle: {
     marginTop: 26,
     marginBottom: 12,
-    color: "#2F2924",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
@@ -1303,9 +1303,9 @@ const localStyles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(154, 107, 32, 0.12)",
+    borderColor: "rgba(228, 183, 110, 0.12)",
   },
   dailyGuideActionNumber: {
     width: 30,
@@ -1313,17 +1313,17 @@ const localStyles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F7E7C8",
+    backgroundColor: "rgba(228, 183, 110, 0.36)",
   },
   dailyGuideActionNumberText: {
-    color: "#8A5F1C",
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.bold,
   },
   dailyGuideActionText: {
     flex: 1,
-    color: "#47413B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     lineHeight: 21,
     fontFamily: vibesTheme.fonts.medium,
@@ -1333,20 +1333,20 @@ const localStyles = StyleSheet.create({
   },
   connectionsCard: {
     borderRadius: 18,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     paddingHorizontal: 16,
     paddingVertical: 15,
     marginBottom: 14,
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
   connectionsEyebrow: {
-    color: "#765B91",
+    color: vibesTheme.colors.primaryText,
     fontSize: 10,
     lineHeight: 13,
     fontFamily: vibesTheme.fonts.bold,
@@ -1363,7 +1363,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F0EAF2",
+    backgroundColor: "rgba(110, 110, 110, 0.10)",
     flexShrink: 0,
   },
   connectionsCopy: {
@@ -1372,26 +1372,26 @@ const localStyles = StyleSheet.create({
   },
   connectionsText: {
     marginTop: 2,
-    color: "#77716B",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.regular,
   },
   connectionsTitle: {
-    color: "#29242E",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
   },
   challengePreviewCard: {
     borderRadius: 18,
-    backgroundColor: "#F7E8CF",
+    backgroundColor: "rgba(228, 183, 110, 0.32)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.38)",
     paddingHorizontal: 15,
     paddingVertical: 14,
     marginBottom: 14,
-    shadowColor: "#8B6327",
+    shadowColor: vibesTheme.colors.accentCoral,
     shadowOpacity: 0.1,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
@@ -1408,46 +1408,46 @@ const localStyles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    backgroundColor: "rgba(254, 254, 253, 0.72)",
   },
   challengePreviewCopy: {
     flex: 1,
   },
   challengePreviewEyebrow: {
-    color: "#8B6327",
+    color: vibesTheme.colors.primaryText,
     fontSize: 10,
     lineHeight: 13,
     fontFamily: vibesTheme.fonts.bold,
   },
   challengePreviewTitle: {
     marginTop: 2,
-    color: "#2B241B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
   },
   challengePreviewMeta: {
     marginTop: 2,
-    color: "#665744",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 12,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.regular,
   },
   eventPreviewCard: {
     borderRadius: 20,
-    backgroundColor: "#FFF8EE",
+    backgroundColor: "rgba(228, 183, 110, 0.10)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.16)",
     paddingHorizontal: 18,
     paddingVertical: 16,
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.07,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 7 },
     elevation: 3,
   },
   eventPreviewEyebrow: {
-    color: "#D69A27",
+    color: vibesTheme.colors.accentMustard,
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.bold,
@@ -1464,16 +1464,16 @@ const localStyles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.68)",
+    backgroundColor: "rgba(254, 254, 253, 0.68)",
   },
   eventDateWeekday: {
-    color: "#625D57",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.semibold,
   },
   eventDateDay: {
-    color: "#14283E",
+    color: vibesTheme.colors.primaryText,
     fontSize: 29,
     lineHeight: 33,
     fontFamily: vibesTheme.fonts.medium,
@@ -1483,14 +1483,14 @@ const localStyles = StyleSheet.create({
     minWidth: 0,
   },
   eventPreviewTitle: {
-    color: "#181818",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.subtitle,
   },
   eventPreviewMeta: {
     flex: 1,
-    color: "#625D57",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,
@@ -1509,7 +1509,7 @@ const localStyles = StyleSheet.create({
   },
   eventParticipantsText: {
     flex: 1,
-    color: "#716B65",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,
@@ -1517,18 +1517,18 @@ const localStyles = StyleSheet.create({
   summaryCard: {
     minHeight: 116,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     shadowOpacity: 0.08,
     shadowRadius: 14,
-    shadowColor: "#3E352B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { height: 6, width: 0 },
     padding: 12,
     marginBottom: 16,
   },
   summaryTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 24,
     lineHeight: 28,
     fontFamily: vibesTheme.fonts.thin,
@@ -1564,7 +1564,7 @@ const localStyles = StyleSheet.create({
     gap: 8,
   },
   statValue: {
-    color: "#4B3728",
+    color: vibesTheme.colors.primaryText,
     fontSize: 24,
     lineHeight: 26,
     fontFamily: vibesTheme.fonts.regular,
@@ -1576,7 +1576,7 @@ const localStyles = StyleSheet.create({
     gap: 4,
   },
   statLabel: {
-    color: "#3F3A36",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.regular,
@@ -1586,14 +1586,14 @@ const localStyles = StyleSheet.create({
     minHeight: 102,
     borderRadius: 28,
     overflow: "hidden",
-    backgroundColor: "rgba(174, 191, 209, 0.20)",
+    backgroundColor: "rgba(127, 152, 183, 0.20)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.74)",
+    borderColor: "rgba(254, 254, 253, 0.74)",
     marginBottom: 18,
     position: "relative",
     shadowOpacity: 0.08,
     shadowRadius: 18,
-    shadowColor: "#CFD7E5",
+    shadowColor: "rgba(127, 152, 183, 0.37)",
     shadowOffset: { height: 8, width: 0 },
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -1622,22 +1622,22 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.64)",
+    backgroundColor: "rgba(254, 254, 253, 0.64)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.84)",
+    borderColor: "rgba(254, 254, 253, 0.84)",
   },
   meditationButtonCopy: {
     flex: 1,
   },
   meditationButtonTitle: {
-    color: "#24364A",
+    color: vibesTheme.colors.primaryText,
     fontSize: 24,
     lineHeight: 26,
     fontFamily: vibesTheme.fonts.thin,
   },
   meditationButtonSubtitle: {
     marginTop: 4,
-    color: "#314762",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -1648,16 +1648,16 @@ const localStyles = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.64)",
+    backgroundColor: "rgba(254, 254, 253, 0.64)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.84)",
+    borderColor: "rgba(254, 254, 253, 0.84)",
   },
   meditationButtonArrow: {
     marginLeft: 2,
   },
   guruCard: {
     borderRadius: 20,
-    backgroundColor: "#FFF9EF",
+    backgroundColor: "rgba(228, 183, 110, 0.10)",
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.22)",
     paddingHorizontal: 16,
@@ -1665,7 +1665,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 18,
     shadowOpacity: 0.07,
     shadowRadius: 16,
-    shadowColor: "#3E352B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { height: 7, width: 0 },
   },
   guruCardHeader: {
@@ -1686,7 +1686,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#DCA453",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   guruCopy: {
     flex: 1,
@@ -1697,53 +1697,53 @@ const localStyles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(122, 116, 109, 0.08)",
+    backgroundColor: "rgba(110, 110, 110, 0.08)",
   },
   guruTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 22,
     lineHeight: 26,
     fontFamily: vibesTheme.fonts.thin,
   },
   guruSubtitle: {
     marginTop: 2,
-    color: "#7A746D",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.subtitle,
   },
   guruChallengeName: {
     marginTop: 12,
-    color: "#4B3728",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.regular,
   },
   guruBreathPrompt: {
     marginTop: 10,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.regular,
   },
   guruBody: {
     marginTop: 6,
-    color: "#4D453F",
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     lineHeight: 25,
     fontFamily: vibesTheme.fonts.regular,
   },
   presenceCard: {
     borderRadius: 20,
-    backgroundColor: "#FDFBF7",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(174, 191, 209, 0.20)",
+    borderColor: "rgba(127, 152, 183, 0.20)",
     paddingHorizontal: 16,
     paddingVertical: 15,
     marginBottom: 18,
     shadowOpacity: 0.06,
     shadowRadius: 14,
-    shadowColor: "#3E352B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { height: 6, width: 0 },
   },
   presenceHeader: {
@@ -1753,14 +1753,14 @@ const localStyles = StyleSheet.create({
     gap: 12,
   },
   presenceTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 19,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.thin,
   },
   presenceSubtitle: {
     marginTop: 3,
-    color: "#7A746D",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.subtitle,
@@ -1788,38 +1788,38 @@ const localStyles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "rgba(174, 191, 209, 0.18)",
+    backgroundColor: "rgba(127, 152, 183, 0.18)",
   },
   presenceAvatar: {
     width: 54,
     height: 54,
     borderRadius: 27,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
-    backgroundColor: "#EEF2F6",
+    borderColor: vibesTheme.colors.background,
+    backgroundColor: "rgba(110, 110, 110, 0.10)",
   },
   presenceName: {
     marginTop: 8,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.regular,
   },
   presenceMeta: {
     marginTop: 2,
-    color: "#7A746D",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 11,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.regular,
   },
   sectionCard: {
     borderRadius: 18,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     shadowOpacity: 0.07,
     shadowRadius: 16,
-    shadowColor: "#3E352B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { height: 7, width: 0 },
     padding: 18,
     marginBottom: 18,
@@ -1833,7 +1833,7 @@ const localStyles = StyleSheet.create({
   },
   sectionTitle: {
     flex: 1,
-    color: "#252323",
+    color: vibesTheme.colors.primaryText,
     fontSize: 23,
     lineHeight: 27,
     fontFamily: vibesTheme.fonts.thin,
@@ -1844,7 +1844,7 @@ const localStyles = StyleSheet.create({
     gap: 2,
   },
   sectionLinkText: {
-    color: "#8A8178",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.regular,
   },
@@ -1862,7 +1862,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     gap: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.86)",
+    backgroundColor: "rgba(254, 254, 253, 0.86)",
   },
   eventRowSpacing: {
     marginTop: 12,
@@ -1876,59 +1876,59 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     gap: 14,
-    backgroundColor: "rgba(255, 246, 234, 0.96)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
   },
   eventThumb: {
     width: 76,
     height: 76,
     borderRadius: 14,
-    backgroundColor: "#E9E4DD",
+    backgroundColor: "rgba(216, 140, 122, 0.25)",
   },
   challengeThumb: {
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: "#F7E7CC",
+    backgroundColor: "rgba(228, 183, 110, 0.34)",
   },
   feedListRow: {
     minHeight: 96,
     borderRadius: 22,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
     elevation: 2,
   },
   feedListRowChallenge: {
-    backgroundColor: "rgba(255, 246, 234, 0.96)",
+    backgroundColor: "rgba(254, 254, 253, 0.96)",
     borderColor: "rgba(228, 183, 110, 0.30)",
   },
   feedListThumb: {
     width: 62,
     height: 62,
     borderRadius: 31,
-    backgroundColor: "#F0E8DE",
+    backgroundColor: "rgba(216, 140, 122, 0.22)",
   },
   feedListInfo: {
     flex: 1,
   },
   feedListTitle: {
-    color: "#252323",
+    color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.thin,
     marginBottom: 4,
   },
   feedListMeta: {
-    color: "#7A746D",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.regular,
@@ -1941,7 +1941,7 @@ const localStyles = StyleSheet.create({
   },
   feedCommunityText: {
     flex: 1,
-    color: "#916E39",
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.regular,
@@ -1963,7 +1963,7 @@ const localStyles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: vibesTheme.colors.background,
   },
   feedArrowWrap: {
     width: 34,
@@ -1978,7 +1978,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: "rgba(174, 191, 209, 0.18)",
+    backgroundColor: "rgba(127, 152, 183, 0.18)",
   },
   feedProgressPillPending: {
     backgroundColor: "rgba(228, 183, 110, 0.18)",
@@ -1987,7 +1987,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(216, 140, 122, 0.18)",
   },
   feedProgressText: {
-    color: "#5F6E7D",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 12,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.regular,
@@ -1996,7 +1996,7 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   eventTitle: {
-    color: "#252323",
+    color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.thin,
@@ -2010,7 +2010,7 @@ const localStyles = StyleSheet.create({
   },
   eventMeta: {
     flex: 1,
-    color: "#625D57",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,
@@ -2021,7 +2021,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.07)",
   },
@@ -2033,7 +2033,7 @@ const localStyles = StyleSheet.create({
   discoverTitle: {
     fontSize: 42,
     lineHeight: 46,
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.thin,
     letterSpacing: 0.3,
   },
@@ -2064,7 +2064,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyStateTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 24,
     fontFamily: vibesTheme.fonts.thin,
     textAlign: "center",
@@ -2078,7 +2078,7 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   filtersSheet: {
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 20,
@@ -2102,7 +2102,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   filtersTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 30,
     fontFamily: vibesTheme.fonts.thin,
   },
@@ -2140,7 +2140,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.regular,
   },
   rangeReset: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.regular,
   },
@@ -2151,7 +2151,7 @@ const localStyles = StyleSheet.create({
   rangeCard: {
     flex: 1,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(43, 43, 43, 0.08)",
     paddingHorizontal: 12,
@@ -2173,12 +2173,12 @@ const localStyles = StyleSheet.create({
   rangeValue: {
     flex: 1,
     textAlign: "center",
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.regular,
   },
   filtersSectionTitle: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 22,
     fontFamily: vibesTheme.fonts.thin,
   },
@@ -2193,19 +2193,19 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(43, 43, 43, 0.12)",
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   filterPillActive: {
-    backgroundColor: "#AEBFD1",
-    borderColor: "#AEBFD1",
+    backgroundColor: vibesTheme.colors.accentBlue,
+    borderColor: vibesTheme.colors.accentBlue,
   },
   filterPillText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.regular,
   },
   filterPillTextActive: {
-    color: "#FEFEFD",
+    color: vibesTheme.colors.primaryText,
   },
   filtersFooter: {
     flexDirection: "row",
@@ -2220,10 +2220,10 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(43, 43, 43, 0.12)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   filtersSecondaryButtonText: {
-    color: "#2B2B2B",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.regular,
   },
@@ -2233,10 +2233,10 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#AEBFD1",
+    backgroundColor: vibesTheme.colors.accentBlue,
   },
   filtersPrimaryButtonText: {
-    color: "#FEFEFD",
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.regular,
   },

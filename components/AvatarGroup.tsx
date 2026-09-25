@@ -66,14 +66,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   more: {
-    backgroundColor: "#EFE8DE",
+    backgroundColor: "rgba(216, 140, 122, 0.23)",
     borderWidth: 1,
-    borderColor: "rgba(95, 86, 76, 0.18)",
+    borderColor: "rgba(110, 110, 110, 0.18)",
     alignItems: "center",
     justifyContent: "center",
   },
   moreText: {
-    color: "#6A6259",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 11,
     fontFamily: vibesTheme.fonts.bold,
   },

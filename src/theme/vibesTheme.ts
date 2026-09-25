@@ -37,7 +37,7 @@ export const vibesTheme = {
   },
   motion: {
     modal: {
-      backdropColor: "rgba(17, 17, 17, 0.28)",
+      backdropColor: "rgba(43, 43, 43, 0.28)",
       offsetY: 320,
       backdropInDuration: 120,
       backdropOutDuration: 110,

@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 /**
@@ -24,8 +25,8 @@ import { conexionPaths } from "../src/illustrations/conexionSvgPaths";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const STROKE_COLOR = "#4A4A5A";
-const FILL_COLOR = "#2B2B2B";
+const STROKE_COLOR = vibesTheme.colors.secondaryText;
+const FILL_COLOR = vibesTheme.colors.primaryText;
 const STROKE_WIDTH = 3; // in original SVG units (~0.3 in screen units)
 
 // ── One animated path ─────────────────────────────────────────────────────────

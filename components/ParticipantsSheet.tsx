@@ -59,7 +59,7 @@ export default function ParticipantsSheet({
       visible={visible}
       onClose={onClose}
       sheetStyle={{
-        backgroundColor: "#FEFEFD",
+        backgroundColor: vibesTheme.colors.background,
         borderTopLeftRadius: 26,
         borderTopRightRadius: 26,
         padding: 20,
@@ -87,11 +87,11 @@ export default function ParticipantsSheet({
             justifyContent: "center",
           }}
         >
-          <Icon name="close" size={24} color="#403B36" />
+          <Icon name="close" size={24} color={vibesTheme.colors.primaryText} />
         </TouchableOpacity>
       </View>
       {loading ? (
-        <ActivityIndicator color="#B98235" />
+        <ActivityIndicator color={vibesTheme.colors.accentMustard} />
       ) : error ? (
         <TouchableOpacity onPress={retry} style={{ minHeight: 48 }}>
           <Text>No pudimos cargar los participantes. Reintentar</Text>
@@ -104,7 +104,7 @@ export default function ParticipantsSheet({
           ListHeaderComponent={
             <>
               {self ? row(self) : null}
-              <Text style={{ marginVertical: 12, color: "#6E6E6E" }}>
+              <Text style={{ marginVertical: 12, color: vibesTheme.colors.secondaryText }}>
                 Otros participantes ({others.length})
               </Text>
             </>

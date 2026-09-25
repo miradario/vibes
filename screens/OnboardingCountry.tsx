@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useState } from "react";
@@ -101,7 +102,7 @@ const OnboardingCountry = () => {
           <TextInput
             style={styles.loginInput}
             placeholder={t("onboarding.cityPlaceholder")}
-            placeholderTextColor="#6E6E6E"
+            placeholderTextColor={vibesTheme.colors.secondaryText}
             autoCapitalize="words"
             returnKeyType="next"
             value={city}
@@ -113,7 +114,7 @@ const OnboardingCountry = () => {
           <TextInput
             style={styles.loginInput}
             placeholder={t("onboarding.countryPlaceholder")}
-            placeholderTextColor="#6E6E6E"
+            placeholderTextColor={vibesTheme.colors.secondaryText}
             autoCapitalize="words"
             returnKeyType="done"
             value={country}
@@ -130,7 +131,7 @@ const OnboardingCountry = () => {
           <Icon
             name="location"
             size={18}
-            color="#D88C7A"
+            color={vibesTheme.colors.accentCoral}
             style={{ marginRight: 8 }}
           />
           <Text style={styles.welcomeSecondaryText}>

@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { memo, useEffect } from "react";
@@ -63,39 +64,39 @@ const routeAccent: Record<
   { text: ColorValue; gradient: [string, string]; shadow: string; glow: string }
 > = {
   Discover: {
-    text: "#7F98B7",
-    gradient: ["#AFC0D4", "#7F98B7"],
-    shadow: "#7F98B7",
+    text: vibesTheme.colors.accentBlue,
+    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
+    shadow: vibesTheme.colors.accentBlue,
     glow: "rgba(127, 152, 183, 0.20)",
   },
   Flow: {
-    text: "#7F98B7",
-    gradient: ["#AFC0D4", "#7F98B7"],
-    shadow: "#7F98B7",
+    text: vibesTheme.colors.accentBlue,
+    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
+    shadow: vibesTheme.colors.accentBlue,
     glow: "rgba(127, 152, 183, 0.20)",
   },
   EventsTab: {
-    text: "#7F98B7",
-    gradient: ["#AFC0D4", "#7F98B7"],
-    shadow: "#7F98B7",
+    text: vibesTheme.colors.accentBlue,
+    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
+    shadow: vibesTheme.colors.accentBlue,
     glow: "rgba(127, 152, 183, 0.20)",
   },
   Home: {
-    text: "#E4B76E",
-    gradient: ["#EBC57F", "#E4B76E"],
-    shadow: "#E4B76E",
+    text: vibesTheme.colors.accentMustard,
+    gradient: [vibesTheme.colors.accentMustard, vibesTheme.colors.accentMustard],
+    shadow: vibesTheme.colors.accentMustard,
     glow: "rgba(228, 183, 110, 0.18)",
   },
   Calendar: {
-    text: "#7F98B7",
-    gradient: ["#AFC0D4", "#7F98B7"],
-    shadow: "#7F98B7",
+    text: vibesTheme.colors.accentBlue,
+    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
+    shadow: vibesTheme.colors.accentBlue,
     glow: "rgba(127, 152, 183, 0.20)",
   },
   Aura: {
-    text: "#7F98B7",
-    gradient: ["#AFC0D4", "#7F98B7"],
-    shadow: "#7F98B7",
+    text: vibesTheme.colors.accentBlue,
+    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
+    shadow: vibesTheme.colors.accentBlue,
     glow: "rgba(127, 152, 183, 0.20)",
   },
 };
@@ -427,11 +428,11 @@ const CustomTabBar = ({
 };
 
 const localColors = {
-  bg: "#F6F6F4",
-  surface: "#FFFFFF",
-  primaryText: "#2B2B2B" as ColorValue,
-  inactiveIcon: "#6E6E6E" as ColorValue,
-  muted: "#6E6E6E" as ColorValue,
+  bg: vibesTheme.colors.background,
+  surface: vibesTheme.colors.background,
+  primaryText: vibesTheme.colors.primaryText as ColorValue,
+  inactiveIcon: vibesTheme.colors.secondaryText as ColorValue,
+  muted: vibesTheme.colors.secondaryText as ColorValue,
 };
 
 const localStyles = StyleSheet.create({
@@ -447,7 +448,7 @@ const localStyles = StyleSheet.create({
     maxWidth: 620,
     borderRadius: 38,
     backgroundColor: localColors.surface,
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
@@ -523,7 +524,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
-    shadowColor: "#2B2B2B",
+    shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.07,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
@@ -546,12 +547,12 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 5,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F99A2D",
+    backgroundColor: vibesTheme.colors.accentMustard,
     borderWidth: 1.5,
-    borderColor: "#FFFFFF",
+    borderColor: vibesTheme.colors.background,
   },
   unreadBadgeText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontSize: 10,
     fontWeight: "400",
     lineHeight: 12,

@@ -71,7 +71,7 @@ export default Welcome;
 const localStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
   },
   content: {
     flex: 1,

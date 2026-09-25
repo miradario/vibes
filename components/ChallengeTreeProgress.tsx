@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 /**
@@ -51,7 +52,7 @@ type StrokePathProps = {
 const StrokePath = ({
   d, dash, progress, start, end,
   strokeWidth = 1.8,
-  stroke = "#5A5A6E",
+  stroke = vibesTheme.colors.secondaryText,
 }: StrokePathProps) => {
   const animatedProps = useAnimatedProps(() => {
     "worklet";
@@ -136,7 +137,7 @@ const ChallengeTreeProgress = ({ progress, size = 220 }: Props) => {
         preserveAspectRatio="xMidYMid meet"
       >
         {/* ── Aura / figure glow (fade in early) ── */}
-        <FadeEllipse cx={100} cy={108} rx={22} ry={40} fill="#A8D8EA" progress={p} start={0.28} end={0.56} />
+        <FadeEllipse cx={100} cy={108} rx={22} ry={40} fill={vibesTheme.colors.secondaryText} progress={p} start={0.28} end={0.56} />
 
         {/* ── Roots ── */}
         {/* left root */}
@@ -193,15 +194,15 @@ const ChallengeTreeProgress = ({ progress, size = 220 }: Props) => {
         <StrokePath d="M 154 74 C 160 66 160 56 155 51 C 150 47 144 50 146 59 C 147 66 150 72 154 74 Z" dash={70} progress={p} start={0.78} end={0.94} strokeWidth={1.4} />
 
         {/* ── Bird ── */}
-        <StrokePath d="M 155 95 C 159 89 165 87 169 90 C 165 92 160 95 155 95" dash={50} progress={p} start={0.88} end={1.00} strokeWidth={1.6} stroke="#E4916E" />
+        <StrokePath d="M 155 95 C 159 89 165 87 169 90 C 165 92 160 95 155 95" dash={50} progress={p} start={0.88} end={1.00} strokeWidth={1.6} stroke={vibesTheme.colors.accentCoral} />
 
         {/* ── Decorative dots ── */}
         {/* orange top-left 1 */}
-        <FadeCircle cx={46} cy={35} r={6} fill="#E4916E" progress={p} start={0.88} end={1.00} />
+        <FadeCircle cx={46} cy={35} r={6} fill={vibesTheme.colors.accentCoral} progress={p} start={0.88} end={1.00} />
         {/* orange top-left 2 (smaller) */}
-        <FadeCircle cx={52} cy={52} r={4} fill="#E4916E" progress={p} start={0.90} end={1.00} maxOpacity={0.7} />
+        <FadeCircle cx={52} cy={52} r={4} fill={vibesTheme.colors.accentCoral} progress={p} start={0.90} end={1.00} maxOpacity={0.7} />
         {/* peach bottom-right */}
-        <FadeCircle cx={142} cy={262} r={9} fill="#F2C99A" progress={p} start={0.90} end={1.00} maxOpacity={0.65} />
+        <FadeCircle cx={142} cy={262} r={9} fill={vibesTheme.colors.accentMustard} progress={p} start={0.90} end={1.00} maxOpacity={0.65} />
       </Svg>
     </View>
   );

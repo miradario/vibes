@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   content: {
     borderRadius: 24,
-    backgroundColor: "#FFFCF7",
+    backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
     borderColor: "rgba(228, 183, 110, 0.32)",
     paddingHorizontal: 22,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   primaryButtonText: {
-    color: "#FFFFFF",
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.semibold,
     fontSize: 18,
   },

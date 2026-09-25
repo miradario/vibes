@@ -1,3 +1,4 @@
+import { vibesTheme } from "../src/theme/vibesTheme";
 import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
 import React, { useEffect, useMemo, useState } from "react";
 import { View, TouchableOpacity, ScrollView, Alert } from "react-native";
@@ -123,8 +124,8 @@ const PreferenceDetail = () => {
                     onPress={() => toggleOption(option)}
                     style={{
                       borderWidth: 1,
-                      borderColor: active ? PRIMARY_COLOR : "#AEBFD1",
-                      backgroundColor: active ? "#FEFEFD" : WHITE,
+                      borderColor: active ? PRIMARY_COLOR : vibesTheme.colors.accentBlue,
+                      backgroundColor: active ? vibesTheme.colors.background : WHITE,
                       paddingVertical: 10,
                       paddingHorizontal: 12,
                       borderRadius: 12,

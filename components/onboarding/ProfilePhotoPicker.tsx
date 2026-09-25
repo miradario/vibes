@@ -1,3 +1,4 @@
+import { vibesTheme } from "../../src/theme/vibesTheme";
 import React, { useRef, useState } from "react";
 import {
   Alert,
@@ -256,14 +257,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 16,
-    backgroundColor: "#F5E5BD",
+    backgroundColor: "rgba(228, 183, 110, 0.43)",
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
   sheet: {
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: vibesTheme.colors.background,
     overflow: "hidden",
   },
   row: {

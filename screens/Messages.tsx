@@ -419,7 +419,7 @@ export const MessagesContent = ({
                 : "chevron-up"
               : "chevron-forward"
           }
-          color="#7B746C"
+          color={vibesTheme.colors.secondaryText}
           size={17}
         />
       </TouchableOpacity>
@@ -440,7 +440,7 @@ export const MessagesContent = ({
     if (previewItems.length === 0) {
       return (
         <View style={localStyles.connectionPreviewEmpty}>
-          <Icon name="sparkles-outline" color="#D9A95C" size={22} />
+          <Icon name="sparkles-outline" color={vibesTheme.colors.accentMustard} size={22} />
         </View>
       );
     }
@@ -498,7 +498,7 @@ export const MessagesContent = ({
     >
       <View style={localStyles.connectionCardMeta}>
         <View style={localStyles.connectionIconWrap}>
-          <Icon name={icon as any} color="#B98235" size={18} />
+          <Icon name={icon as any} color={vibesTheme.colors.accentMustard} size={18} />
         </View>
         <View style={localStyles.connectionCountBadge}>
           <Text style={localStyles.connectionCountText}>{count}</Text>
@@ -546,7 +546,7 @@ export const MessagesContent = ({
           {t("messages.wantsToConnectHint")}
         </Text>
       </View>
-      <Icon name="chevron-forward" color="#7B746C" size={18} />
+      <Icon name="chevron-forward" color={vibesTheme.colors.secondaryText} size={18} />
     </TouchableOpacity>
   );
 
@@ -572,7 +572,7 @@ export const MessagesContent = ({
           {t("messages.newConnectionHint")}
         </Text>
       </View>
-      <Icon name="chatbubble-ellipses-outline" color="#7B746C" size={18} />
+      <Icon name="chatbubble-ellipses-outline" color={vibesTheme.colors.secondaryText} size={18} />
     </TouchableOpacity>
   );
 
@@ -789,7 +789,7 @@ export const MessagesContent = ({
                 <Icon
                   name={tab.icon}
                   size={22}
-                  color={selected ? "#B57716" : "#858585"}
+                  color={selected ? vibesTheme.colors.accentMustard : vibesTheme.colors.secondaryText}
                 />
                 <Text
                   style={[
@@ -821,7 +821,7 @@ export const MessagesContent = ({
                   <Icon
                     name="chatbubble-ellipses-outline"
                     size={30}
-                    color="#85858B"
+                    color={vibesTheme.colors.secondaryText}
                   />
                 </View>
                 <Text style={localStyles.conversationHintText}>
@@ -958,7 +958,7 @@ const localStyles = StyleSheet.create({
   chatTabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#E9E7E4",
+    borderBottomColor: "rgba(110, 110, 110, 0.30)",
     marginTop: 4,
     marginBottom: 10,
   },
@@ -973,16 +973,16 @@ const localStyles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
-  chatTabActive: { borderBottomColor: "#B57716" },
+  chatTabActive: { borderBottomColor: vibesTheme.colors.accentMustard },
   chatTabText: {
     flexShrink: 1,
-    color: "#858585",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.medium,
   },
-  chatTabTextActive: { color: "#161820", fontFamily: vibesTheme.fonts.bold },
+  chatTabTextActive: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold },
   groupSectionLabel: {
-    color: "#73737E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     marginTop: 12,
     marginBottom: 4,
@@ -997,11 +997,11 @@ const localStyles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#F0F0EE",
+    backgroundColor: "rgba(110, 110, 110, 0.10)",
     alignItems: "center",
     justifyContent: "center",
   },
-  conversationHintText: { color: "#838391", fontSize: 15, textAlign: "center" },
+  conversationHintText: { color: vibesTheme.colors.secondaryText, fontSize: 15, textAlign: "center" },
   screenBackground: {
     backgroundColor: vibesTheme.colors.background,
   },
@@ -1042,8 +1042,8 @@ const localStyles = StyleSheet.create({
     minHeight: 104,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#EFE1CC",
-    backgroundColor: "#FCF8F0",
+    borderColor: "rgba(110, 110, 110, 0.30)",
+    backgroundColor: vibesTheme.colors.background,
     padding: 12,
   },
   connectionIconWrap: {
@@ -1052,7 +1052,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F4E7D1",
+    backgroundColor: "rgba(228, 183, 110, 0.31)",
   },
   connectionCardMeta: {
     flexDirection: "row",
@@ -1069,7 +1069,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EAEDF0",
+    backgroundColor: "rgba(110, 110, 110, 0.12)",
   },
   connectionCountText: {
     color: DARK_GRAY,
@@ -1094,7 +1094,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 2,
-    borderColor: "rgba(255, 253, 248, 0.96)",
+    borderColor: "rgba(254, 254, 253, 0.96)",
     backgroundColor: "rgba(228, 183, 110, 0.2)",
   },
   connectionPreviewAvatarStacked: {
@@ -1106,7 +1106,7 @@ const localStyles = StyleSheet.create({
   },
   connectionPreviewOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 248, 236, 0.34)",
+    backgroundColor: "rgba(254, 254, 253, 0.34)",
   },
   connectionPreviewEmpty: {
     width: 32,
@@ -1119,7 +1119,7 @@ const localStyles = StyleSheet.create({
   },
   connectionCardAction: {
     marginLeft: 8,
-    color: "#B98235",
+    color: vibesTheme.colors.accentMustard,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -1127,7 +1127,7 @@ const localStyles = StyleSheet.create({
     maxHeight: "76%",
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
-    backgroundColor: "#FEFEFD",
+    backgroundColor: vibesTheme.colors.background,
     paddingHorizontal: 18,
     paddingTop: 12,
   },
@@ -1137,7 +1137,7 @@ const localStyles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginBottom: 16,
-    backgroundColor: "rgba(123, 116, 108, 0.24)",
+    backgroundColor: "rgba(110, 110, 110, 0.24)",
   },
   connectionsSheetTitle: {
     color: DARK_GRAY,
@@ -1156,7 +1156,7 @@ const localStyles = StyleSheet.create({
   },
   connectionSheetRowWithDivider: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(123, 116, 108, 0.12)",
+    borderTopColor: "rgba(110, 110, 110, 0.12)",
   },
   connectionSheetBody: {
     flex: 1,
@@ -1171,13 +1171,13 @@ const localStyles = StyleSheet.create({
   },
   connectionSheetHint: {
     marginTop: 2,
-    color: "#7B746C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.medium,
   },
   connectionSheetEmpty: {
     paddingVertical: 22,
-    color: "#7B746C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.medium,
   },
@@ -1188,7 +1188,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   emptyStateText: {
-    color: "#7B746C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 20,
     lineHeight: 27,
     textAlign: "center",
@@ -1241,7 +1241,7 @@ const localStyles = StyleSheet.create({
     flexShrink: 0,
   },
   seeAllText: {
-    color: "#7B746C",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -1253,7 +1253,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#E7E5DF",
+    borderBottomColor: "rgba(110, 110, 110, 0.30)",
   },
   groupAvatar: {
     width: 48,
@@ -1267,7 +1267,7 @@ const localStyles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#E4B76E",
+    backgroundColor: vibesTheme.colors.accentMustard,
   },
   rowBody: {
     flex: 1,
@@ -1297,7 +1297,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(228, 183, 110, 0.18)",
   },
   eventBadge: {
-    backgroundColor: "rgba(95, 130, 165, 0.13)",
+    backgroundColor: "rgba(127, 152, 183, 0.13)",
   },
   typeBadgeText: {
     fontSize: 11,
@@ -1305,14 +1305,14 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.bold,
   },
   challengeBadgeText: {
-    color: "#E19628",
+    color: vibesTheme.colors.accentMustard,
   },
   eventBadgeText: {
-    color: "#5F82A5",
+    color: vibesTheme.colors.primaryText,
   },
   lastMessage: {
     marginTop: 3,
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 15,
     lineHeight: 19,
     fontFamily: vibesTheme.fonts.medium,
@@ -1327,7 +1327,7 @@ const localStyles = StyleSheet.create({
     marginLeft: 8,
   },
   rowTime: {
-    color: "#6E6E6E",
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 18,
     includeFontPadding: true,
@@ -1339,14 +1339,14 @@ const localStyles = StyleSheet.create({
     borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(123, 116, 108, 0.08)",
+    backgroundColor: "rgba(110, 110, 110, 0.08)",
     marginTop: 4,
   },
   unreadDot: {
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: "#F99A2D",
+    backgroundColor: vibesTheme.colors.accentMustard,
     marginBottom: 6,
   },
   loadingWrap: {
