@@ -2287,6 +2287,7 @@ const localStyles = StyleSheet.create({
   },
   eventMetaDivider: {
     height: 1,
+    marginTop: 12,
     backgroundColor: "rgba(110, 110, 110, 0.30)",
   },
   mapLinkDivider: {
