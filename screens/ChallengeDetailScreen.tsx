@@ -1869,7 +1869,7 @@ const ChallengeDetailScreen = () => {
                 ) : (
                   <>
                     <Text style={localStyles.joinRequestButtonTitle}>
-                      Empezar mi desafío
+                      Sumarme al desafío
                     </Text>
                     <Text style={localStyles.joinRequestButtonSubtitle}>
                       Activá tu propio espacio y entrá al chat del desafío
@@ -1909,24 +1909,15 @@ const ChallengeDetailScreen = () => {
                         ? "Solicitud enviada"
                         : "Solicitar acceso"}
                     </Text>
-                    <Text style={localStyles.joinRequestButtonSubtitle}>
-                      {(event?.visibility ?? "public") === "public"
-                        ? "Entrás directo al espacio compartido"
-                        : "El creador lo puede aprobar cuando quiera"}
-                    </Text>
+                    {(event?.visibility ?? "public") !== "public" ? (
+                      <Text style={localStyles.joinRequestButtonSubtitle}>
+                        El creador lo puede aprobar cuando quiera
+                      </Text>
+                    ) : null}
                   </>
                 )}
               </TouchableOpacity>
-              <View style={localStyles.chatLockedRow}>
-                <Icon
-                  name="chatbubbles-outline"
-                  size={18}
-                  color={palette.muted}
-                />
-                <Text style={localStyles.chatLockedText}>
-                  Uníte o pedí acceso para entrar al chat
-                </Text>
-              </View>
+
             </>
           )}
         </View>

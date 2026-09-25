@@ -114,6 +114,7 @@ const AppNavigator = () => {
     "JosefinSans-Thin": require("./assets/font/JosefinSans-Thin.ttf"),
     "JosefinSans-Regular": require("./assets/font/JosefinSans-Regular.ttf"),
     "JosefinSans-Medium": require("./assets/font/JosefinSans-Medium.ttf"),
+    "JosefinSans-Bold": require("./assets/font/JosefinSans-Bold.ttf"),
   });
   const [fontLoadTimedOut, setFontLoadTimedOut] = React.useState(false);
 

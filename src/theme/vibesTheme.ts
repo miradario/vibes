@@ -7,7 +7,7 @@ export const vibesTheme = {
     regular: "JosefinSans-Regular",
     medium: "JosefinSans-Regular",
     semibold: "JosefinSans-Regular",
-    bold: "JosefinSans-Regular",
+    bold: "JosefinSans-Bold",
   },
   colors: {
     background: "#FEFEFD",

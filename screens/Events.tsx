@@ -566,9 +566,7 @@ const Events = () => {
                 ? `${startsAt.toLocaleDateString("es-AR", { day: "numeric", month: "short" }).replace(/\./g, "")} · ${startsAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })}`
                 : item.date;
               const count = item.participantCount ?? participantCount;
-              const participantsLabel = item.capacity && item.capacity > 0
-                ? `${count} de ${item.capacity} participantes`
-                : `${count} ${count === 1 ? "participante" : "participantes"}`;
+              const participantsLabel = `${count} ${count === 1 ? "participante" : "participantes"}`;
               return (
                 <TouchableOpacity
                   style={localStyles.eventListRow}
@@ -682,7 +680,7 @@ const localStyles = StyleSheet.create({
   },
   eventCopy: { flex: 1, minWidth: 0, gap: 4 },
   eventTitle: {
-    fontSize: 16, lineHeight: 21, fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 16, lineHeight: 21, fontFamily: vibesTheme.fonts.bold,
     color: vibesTheme.colors.primaryText,
   },
   eventMetadataRow: { flexDirection: "row", alignItems: "center", gap: 6 },

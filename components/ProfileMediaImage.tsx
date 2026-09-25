@@ -18,6 +18,9 @@ type ProfileMediaImageProps = {
   priority?: "low" | "normal" | "high";
 };
 
+// Share dimensions between the preview underneath a swipe and the active card.
+const knownImageSizes = new Map<string, { width: number; height: number }>();
+
 const hasValidUri = (value: unknown): value is { uri: string } => {
   return (
     typeof value === "object" &&
@@ -57,7 +60,10 @@ const ProfileMediaImage = ({
         ? `uri:${source.uri}`
         : "";
 
-  const isPortrait = imageSize?.key === sourceKey && imageSize.height > imageSize.width;
+  const resolvedSize = imageSize?.key === sourceKey ? imageSize : knownImageSizes.get(sourceKey);
+  const isPortrait = resolvedSize && resolvedSize.height > resolvedSize.width;
+  const layoutReady = !blurBackground || Boolean(resolvedSize);
+  const resolvedFit = blurBackground ? (isPortrait && contentFit === "cover" ? "cover" : "contain") : contentFit;
   const hasError = errorKey === sourceKey;
   const loading = showLoading && canRenderSource && !hasError && displayedKey !== sourceKey;
 
@@ -66,7 +72,7 @@ const ProfileMediaImage = ({
       {!loading && <Icon name="person-outline" size={44} color={fallbackIconColor} />}
       {canRenderSource && !hasError ? (
         <>
-        {blurBackground && imageSize?.key === sourceKey && !(isPortrait && contentFit === "cover") ? (
+        {blurBackground && resolvedSize && !(isPortrait && contentFit === "cover") ? (
           <ExpoImage
             recyclingKey={`background-${sourceKey}`}
             source={source}
@@ -80,16 +86,25 @@ const ProfileMediaImage = ({
           />
         ) : null}
         <ExpoImage
+          key={`${sourceKey}-${resolvedFit}`}
           recyclingKey={sourceKey}
           source={source}
-          style={StyleSheet.absoluteFillObject}
+          style={[StyleSheet.absoluteFillObject, { opacity: layoutReady ? 1 : 0 }]}
           cachePolicy="memory-disk"
           priority={priority}
-          contentFit={blurBackground ? (isPortrait && contentFit === "cover" ? "cover" : "contain") : contentFit}
+          contentFit={resolvedFit}
           onLoad={({ source: image }) => {
+            if (knownImageSizes.size >= 300) knownImageSizes.delete(knownImageSizes.keys().next().value!);
+            knownImageSizes.set(sourceKey, { width: image.width, height: image.height });
             setImageSize({ key: sourceKey, width: image.width, height: image.height });
           }}
-          onDisplay={() => { setDisplayedKey(sourceKey); onDisplay?.(); }}
+          onDisplay={() => {
+            const size = knownImageSizes.get(sourceKey);
+            const finalFit = blurBackground ? (size && size.height > size.width && contentFit === "cover" ? "cover" : "contain") : contentFit;
+            if (blurBackground && (!size || finalFit !== resolvedFit)) return;
+            setDisplayedKey(sourceKey);
+            onDisplay?.();
+          }}
           transition={transition}
           onError={() => { setErrorKey(sourceKey); onDisplay?.(); }}
         />

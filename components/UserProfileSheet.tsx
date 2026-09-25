@@ -1,3 +1,4 @@
+import { splitProfileLocation } from "../src/lib/profileLocation";
 import { getProfileSwipeAction } from "../src/lib/profileSwipe";
 import LikeBubbles from "./LikeBubbles";
 import React, {
@@ -271,8 +272,12 @@ const UserProfileSheet = ({
   const detailsGalleryRef = useRef<FlatList<ImageSourcePropType>>(null);
   const panelDragY = useRef(new Animated.Value(0)).current;
   const compactPhotoHeight = Math.max(insets.top + 140, height * 0.38);
-  const photoHeight = useRef(new Animated.Value(height)).current;
-  const [detailsVisible, setDetailsVisible] = useState(false);
+  const photoHeight = useMemo(() => new Animated.Value(height), [profile?.id, height]);
+  const [detailsProfileId, setDetailsProfileId] = useState<string | null>(null);
+  const detailsVisible = detailsProfileId !== null && detailsProfileId === profile?.id;
+  const setDetailsVisible = useCallback((open: boolean) => {
+    setDetailsProfileId(open ? profile?.id ?? null : null);
+  }, [profile?.id]);
   const [detailsActionsHeight, setDetailsActionsHeight] = useState(140);
   const [burst, setBurst] = useState(0);
   // Each card owns its native transform. Never recenter the outgoing card
@@ -312,6 +317,7 @@ const UserProfileSheet = ({
   useLayoutEffect(() => {
     // Keep the outgoing card offscreen while the modal closes.
     if (!visible) return;
+    setDetailsVisible(false);
     swipingRef.current = false;
     setSwipeAnimating(false);
     swipeX.stopAnimation();
@@ -536,11 +542,7 @@ const UserProfileSheet = ({
       ),
     ].filter((group): group is DetailChipGroup => Boolean(group))
   );
-  const location = [profile?.location, profile?.distanceLabel]
-    .filter(
-      (item, index, values) => Boolean(item) && values.indexOf(item) === index
-    )
-    .join(" · ");
+  const { location, distanceLabel: distance } = splitProfileLocation(profile?.location, profile?.distanceLabel);
   const nameWithAge = profile?.age
     ? `${profile.name}, ${profile.age}`
     : profile?.name ?? "Perfil";
@@ -555,10 +557,6 @@ const UserProfileSheet = ({
   }, [panelDragY, profile?.id]);
 
   useEffect(() => {
-    if (!visible) setDetailsVisible(false);
-  }, [visible]);
-
-  useEffect(() => {
     if (!profileImages.length) return;
     requestAnimationFrame(() =>
       galleryRef.current?.scrollToOffset({
@@ -568,7 +566,7 @@ const UserProfileSheet = ({
     );
   }, [profileImages.length, safeActiveIndex, width]);
 
-  const closeDetails = useCallback(() => setDetailsVisible(false), []);
+  const closeDetails = useCallback(() => setDetailsVisible(false), [setDetailsVisible]);
   const showDetails = () => {
     if (swipingRef.current || actionPending) return;
     swipeX.stopAnimation();
@@ -662,7 +660,7 @@ const UserProfileSheet = ({
                 localStyles.bareActionIcon,
               ]}
             >
-              <ArrowLeftToLine size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
+              <ArrowLeftToLine size={44} color={vibesTheme.colors.accentCoral} strokeWidth={2.5} />
             </View>
             {!onPanel && <Text style={localStyles.vibeActionLabel}>{secondaryActionLabel}</Text>}
           </TouchableOpacity>
@@ -687,7 +685,7 @@ const UserProfileSheet = ({
         sheetInOpacityDuration={0}
         sheetStyle={[localStyles.fullscreenSheet, { flex: 1 }, detailsVisible && { backgroundColor: vibesTheme.colors.background }]}
       >
-        {enableSwipe && profileImages.length > 0 && photoReadyId !== profile.id && !swipeNextProfile ? (
+        {profileImages.length > 0 && photoReadyId !== profile.id && !swipeNextProfile ? (
           <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { alignItems: "center", justifyContent: "center" }]} accessibilityLabel="Cargando perfil">
             <VibesLoader size={64} />
           </View>
@@ -746,7 +744,7 @@ const UserProfileSheet = ({
           style={[
             localStyles.screen,
             {
-              opacity: !detailsVisible && (!enableSwipe || !profileImages.length || photoReadyId === profile.id) ? 1 : 0,
+              opacity: !detailsVisible && (!profileImages.length || photoReadyId === profile.id) ? 1 : 0,
               transform: [
                 { translateX: swipeX },
                 {
@@ -805,12 +803,15 @@ const UserProfileSheet = ({
               decelerationRate="fast"
               showsHorizontalScrollIndicator={false}
               onMomentumScrollEnd={handleGalleryMomentumEnd}
-              renderItem={({ item }) => (
+              renderItem={({ item, index }) => (
                 <Animated.View style={{ width, height: photoHeight }}>
                   <ProfileMediaImage
                 contentFit="cover"
                 blurBackground
                 showLoading
+                    onDisplay={() => {
+                      if (index === safeActiveIndex) setPhotoReadyId(profile.id);
+                    }}
                     source={item}
                     style={StyleSheet.absoluteFillObject}
                     fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND}
@@ -871,7 +872,7 @@ const UserProfileSheet = ({
             hitSlop={8}
             style={[localStyles.closeButton, { top: insets.top + 4 }]}
           >
-            <X size={44} color={vibesTheme.colors.accentCoral} strokeWidth={2.5} />
+            <X size={44} color={vibesTheme.colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
 
           {profileImages.length > 0 ? (
@@ -1086,14 +1087,15 @@ const UserProfileSheet = ({
               {profile.description || purpose || energy || profile.prompt ? (
                 <DetailSection label="Sobre mí" emphasized>
                   {profile.description ? <PillList items={[profile.description]} /> : null}
-                  {purpose ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Me trae a Vibes</Text><PillList items={[purpose]} /></View> : null}
+                  {purpose ? <View style={localStyles.detailItem}><Text style={[localStyles.detailLabel, localStyles.emphasizedDetailLabel]}>Me trae a Vibes</Text><PillList items={[purpose]} /></View> : null}
                   {energy ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Hoy me siento</Text><PillList items={[energy === "Sanando" ? "Óptimo" : energy]} blue /></View> : null}
                   {profile.prompt ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Ritual</Text><PillList items={[profile.prompt]} /></View> : null}
                 </DetailSection>
               ) : null}
-              {location || specificationGroups.length ? (
-                <DetailSection label="Especificaciones" emphasized>
-                  {location ? <PillList items={[location]} /> : null}
+              {location || distance || specificationGroups.length ? (
+                <DetailSection label="Características" emphasized>
+                  {location ? <View style={localStyles.detailItem}><Text style={localStyles.pillGroupLabel}>Ubicación</Text><PillList items={[location]} /></View> : null}
+                  {distance ? <View style={localStyles.detailItem}><Text style={localStyles.pillGroupLabel}>Distancia de vos</Text><PillList items={[distance]} /></View> : null}
                   {specificationGroups.length ? <GroupedPillList groups={specificationGroups} /> : null}
                 </DetailSection>
               ) : null}

@@ -297,20 +297,6 @@ const formatLocation = (profile: ProfileLike) => {
       .join(", ") ||
     undefined;
 
-  const distanceKm =
-    typeof profile.distanceKm === "number" &&
-    Number.isFinite(profile.distanceKm)
-      ? Math.max(1, Math.round(profile.distanceKm))
-      : null;
-
-  if (baseLocation && distanceKm) {
-    return `${baseLocation} · ${distanceKm} km`;
-  }
-
-  if (distanceKm) {
-    return `${distanceKm} km`;
-  }
-
   return baseLocation;
 };
 
@@ -377,7 +363,9 @@ export const mapCandidateToConnectionProfile = (
     distanceLabel:
       typeof (candidate as ProfileLike).distanceLabel === "string"
         ? (candidate as ProfileLike).distanceLabel
-        : undefined,
+        : typeof (candidate as ProfileLike).distanceKm === "number" && Number.isFinite((candidate as ProfileLike).distanceKm)
+          ? `${Math.max(1, Math.round((candidate as ProfileLike).distanceKm))} km`
+          : undefined,
     description:
       (isNonEmptyString((candidate as ProfileLike).aboutMe) &&
         (candidate as ProfileLike).aboutMe.trim()) ||

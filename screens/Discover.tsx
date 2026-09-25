@@ -1337,7 +1337,6 @@ export const DiscoverContent = forwardRef<
           }
           onClose={() => {
             setShowProfileSheet(false);
-            setViewingHistory(false);
           }}
           closeIconName="chevron-back"
           onImagePress={(_image, index) =>
@@ -1594,9 +1593,9 @@ const localStyles = StyleSheet.create({
   },
   title: {
     color: TEXT_PRIMARY,
-    fontSize: 32,
-    lineHeight: 38,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 26,
+    lineHeight: 32,
+    fontFamily: vibesTheme.fonts.semibold,
     textAlign: "left",
   },
   filtersButton: {
