@@ -671,17 +671,17 @@ const localStyles = StyleSheet.create({
   },
   eventCount: { fontSize: 13, color: vibesTheme.colors.secondaryText },
   eventListRow: {
-    width: "100%", flexDirection: "row", alignItems: "center", gap: 12,
-    paddingVertical: 18, borderBottomWidth: StyleSheet.hairlineWidth,
+    width: "100%", flexDirection: "row", alignItems: "center", gap: 10,
+    paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "rgba(110, 110, 110, 0.30)",
   },
   eventThumbnail: {
-    width: 76, height: 88, borderRadius: 12,
+    width: 64, height: 72, borderRadius: 10,
     backgroundColor: "rgba(127, 152, 183, 0.13)",
   },
-  eventCopy: { flex: 1, minWidth: 0, gap: 6 },
+  eventCopy: { flex: 1, minWidth: 0, gap: 4 },
   eventTitle: {
-    fontSize: 18, lineHeight: 23, fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 16, lineHeight: 21, fontFamily: vibesTheme.fonts.semibold,
     color: vibesTheme.colors.primaryText,
   },
   eventMetadataRow: { flexDirection: "row", alignItems: "center", gap: 6 },

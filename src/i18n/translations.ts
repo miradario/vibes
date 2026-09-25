@@ -513,7 +513,7 @@ const baseTranslations = {
       eventOneParticipant: "1 participante",
       eventParticipantCount: "{{count}} participantes",
       guruDismiss: "Ocultar por hoy",
-      challengeCheckedInToday: "{{count}} conectaron con su día hoy",
+      challengeCheckedInToday: "{{count}} conectados hoy",
       meditatedTodayTitle: "Quién meditó hoy",
       meditatedTodaySubtitle: "Dejate inspirar por tu círculo",
       age: "Edad",
