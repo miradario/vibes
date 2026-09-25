@@ -213,6 +213,27 @@ type ResolvedLocationMeta = {
   longitude: number;
 };
 
+const formatCityCountryLabel = (city?: string | null, country?: string | null) =>
+  [city, country]
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean)
+    .join(", ");
+
+const parseCityCountryFromLabel = (label?: string | null) => {
+  const parts =
+    typeof label === "string"
+      ? label
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+  return {
+    city: parts.length > 1 ? parts[parts.length - 2] : parts[0] ?? "",
+    country: parts.length > 1 ? parts[parts.length - 1] : "",
+  };
+};
+
 const ensureProfileExists = async (
   userId: string,
   displayName?: string | null,
@@ -439,7 +460,8 @@ const EditProfile = () => {
     (profileData as any)?.displayName ?? ""
   );
   const [savingName, setSavingName] = useState(false);
-  const [location, setLocation] = useState("");
+  const [profileCity, setProfileCity] = useState("");
+  const [profileCountry, setProfileCountry] = useState("");
   const [currentLocation, setCurrentLocation] = useState("");
   const [currentLocationMeta, setCurrentLocationMeta] =
     useState<ResolvedLocationMeta | null>(null);
@@ -463,20 +485,24 @@ const EditProfile = () => {
   }, [(profileData as any)?.displayName]);
 
   useEffect(() => {
-    const nextLocation =
-      profileData?.locationLabel ??
-      [profileData?.neighborhood, profileData?.city, profileData?.country]
-        .filter((item) => typeof item === "string" && item.trim())
-        .join(", ");
+    const parsedFallback = parseCityCountryFromLabel(
+      profileData?.locationLabel
+    );
+    const nextCity =
+      typeof profileData?.city === "string" && profileData.city.trim()
+        ? profileData.city
+        : parsedFallback.city;
+    const nextCountry =
+      typeof profileData?.country === "string" && profileData.country.trim()
+        ? profileData.country
+        : parsedFallback.country;
 
-    if (typeof nextLocation === "string") {
-      setLocation(nextLocation);
-    }
+    setProfileCity(nextCity);
+    setProfileCountry(nextCountry);
   }, [
     profileData?.city,
     profileData?.country,
     profileData?.locationLabel,
-    profileData?.neighborhood,
   ]);
 
   useEffect(() => {
@@ -497,21 +523,16 @@ const EditProfile = () => {
         });
         if (!active) return;
 
-        const neighborhood =
-          (address as any)?.district ??
-          address?.subregion ??
-          address?.name ??
-          null;
         const city = address?.city ?? address?.region ?? null;
         const country = address?.country ?? null;
-        const label = [neighborhood, city, country].filter(Boolean).join(", ");
+        const label = formatCityCountryLabel(city, country);
 
         if (!label) return;
 
         setCurrentLocation(label);
         setCurrentLocationMeta({
           label,
-          neighborhood,
+          neighborhood: null,
           city,
           country,
           latitude: current.coords.latitude,
@@ -555,17 +576,25 @@ const EditProfile = () => {
     }
   };
 
-  const saveLocation = async (nextValue?: string) => {
+  const saveLocation = async (
+    nextCity = profileCity,
+    nextCountry = profileCountry
+  ) => {
     const userId = session?.user?.id;
     if (!userId) return;
 
-    const trimmedLocation = (nextValue ?? location).trim();
+    const trimmedCity = nextCity.trim();
+    const trimmedCountry = nextCountry.trim();
+    const locationLabel = formatCityCountryLabel(trimmedCity, trimmedCountry);
     setSavingLocation(true);
     try {
       const { error } = await supabase
         .from("profiles")
         .update({
-          location_label: trimmedLocation || null,
+          city: trimmedCity || null,
+          country: trimmedCountry || null,
+          neighborhood: null,
+          location_label: locationLabel || null,
         })
         .eq("id", userId);
 
@@ -587,14 +616,13 @@ const EditProfile = () => {
     if (!userId) return;
 
     if (!currentLocationMeta) {
-      if (currentLocation) {
-        setLocation(currentLocation);
-        await saveLocation(currentLocation);
-      }
       return;
     }
 
-    setLocation(currentLocationMeta.label);
+    const nextCity = currentLocationMeta.city?.trim() ?? "";
+    const nextCountry = currentLocationMeta.country?.trim() ?? "";
+    setProfileCity(nextCity);
+    setProfileCountry(nextCountry);
     setSavingLocation(true);
     try {
       const { error } = await supabase
@@ -1005,18 +1033,32 @@ const EditProfile = () => {
           <Text style={styles.editSectionTitle}>
             {t("editProfile.location")}
           </Text>
-          <TextInput
-            style={localStyles.nameInput}
-            value={location}
-            onChangeText={setLocation}
-            onBlur={() => void saveLocation()}
-            onSubmitEditing={() => void saveLocation()}
-            placeholder={t("settings.locationPlaceholder")}
-            placeholderTextColor={GRAY}
-            autoCapitalize="words"
-            returnKeyType="done"
-            editable={!savingLocation}
-          />
+          <View style={localStyles.locationFields}>
+            <TextInput
+              style={localStyles.nameInput}
+              value={profileCity}
+              onChangeText={setProfileCity}
+              onBlur={() => void saveLocation()}
+              onSubmitEditing={() => void saveLocation()}
+              placeholder={t("settings.cityPlaceholder")}
+              placeholderTextColor={GRAY}
+              autoCapitalize="words"
+              returnKeyType="next"
+              editable={!savingLocation}
+            />
+            <TextInput
+              style={localStyles.nameInput}
+              value={profileCountry}
+              onChangeText={setProfileCountry}
+              onBlur={() => void saveLocation()}
+              onSubmitEditing={() => void saveLocation()}
+              placeholder={t("settings.countryPlaceholder")}
+              placeholderTextColor={GRAY}
+              autoCapitalize="words"
+              returnKeyType="done"
+              editable={!savingLocation}
+            />
+          </View>
           {currentLocation ? (
             <TouchableOpacity
               style={localStyles.currentLocationButton}
@@ -1233,6 +1275,9 @@ const localStyles = StyleSheet.create({
     color: GRAY,
     fontSize: 14,
     marginTop: 10,
+  },
+  locationFields: {
+    gap: 10,
   },
   currentLocationButton: {
     alignSelf: "flex-start",

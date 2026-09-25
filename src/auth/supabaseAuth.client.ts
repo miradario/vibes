@@ -124,6 +124,10 @@ export const signInWithGoogle = async (): Promise<Session | null> => {
     options: {
       redirectTo: OAUTH_REDIRECT_URL,
       skipBrowserRedirect: true,
+      queryParams: {
+        prompt: "select_account consent",
+        access_type: "offline",
+      },
     },
   });
 

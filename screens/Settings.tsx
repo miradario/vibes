@@ -587,21 +587,6 @@ const Settings = () => {
               </TouchableOpacity>
             </View>
           </View>
-
-          <TouchableOpacity
-            style={localStyles.detailItem}
-            disabled={saving || isPending || isError}
-            onPress={() => void handleSave("ProfileQuestions")}
-          >
-            <Text style={localStyles.detailItemTitle}>Más sobre vos</Text>
-            <Text style={localStyles.detailItemSubtitle}>
-              Personalidad, hobbies, planes, hábitos y todas tus respuestas del
-              onboarding.
-            </Text>
-            <Text style={{ color: PRIMARY_COLOR, marginTop: 8 }}>
-              Guardar y editar respuestas
-            </Text>
-          </TouchableOpacity>
         </ScrollView>
 
         {/* Botón fijo abajo */}
