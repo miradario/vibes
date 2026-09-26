@@ -1527,7 +1527,7 @@ const ChallengeDetailScreen = () => {
               localStyles.footerSliderHandleCompleted,
             ]}
           >
-            <Icon name="checkmark" size={22} color={vibesTheme.colors.background} />
+            <Icon name="checkmark" size={22} color={vibesTheme.colors.primaryText} />
           </View>
           <View style={localStyles.footerSliderCopy}>
             <Text style={localStyles.footerSliderTitle}>
@@ -2336,7 +2336,7 @@ const localStyles = StyleSheet.create({
     position: "absolute",
     left: 24,
     right: 24,
-    zIndex: 55,
+    zIndex: 90,
     borderRadius: 24,
     backgroundColor: "rgba(254, 254, 253, 0.98)",
     borderWidth: 1,
@@ -2348,7 +2348,7 @@ const localStyles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 26,
     shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    elevation: 30,
   },
   completionCelebrationBadge: {
     width: 44,
@@ -2720,7 +2720,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 2,
     marginTop: 18,
     marginHorizontal: -1,
-    backgroundColor: "rgba(228, 183, 110, 0.35)",
+    backgroundColor: "rgba(110, 110, 110, 0.16)",
   },
   journeyConnectorMissed: {
     backgroundColor: "rgba(216, 140, 122, 0.45)",
@@ -2818,7 +2818,7 @@ const localStyles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginHorizontal: -1,
-    backgroundColor: "rgba(228, 183, 110, 0.35)",
+    backgroundColor: "rgba(110, 110, 110, 0.16)",
   },
   pathConnectorDone: {
     backgroundColor: "rgba(127, 152, 183, 0.34)",
@@ -2845,8 +2845,8 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   dayFuture: {
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
-    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: "rgba(110, 110, 110, 0.12)",
+    borderColor: "rgba(110, 110, 110, 0.20)",
   },
   dayMissed: {
     backgroundColor: "rgba(216, 140, 122, 0.22)",
@@ -2864,7 +2864,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
   },
   dayTextFuture: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.secondaryText,
   },
   dayTextMissed: {
     color: vibesTheme.colors.primaryText,
@@ -3089,7 +3089,7 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
   },
   footerSliderHandleCompleted: {
-    backgroundColor: vibesTheme.colors.secondaryText,
+    backgroundColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0,
   },
   footerSliderCopy: {

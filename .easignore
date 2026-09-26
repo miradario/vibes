@@ -1,8 +1,14 @@
+.git
 .git/
+.git/**
 node_modules/
+.expo
 .expo/
+.expo/**
 dist/
+preview
 preview/
+preview/**
 play-store-assets/
 deployment_cert.der
 builds/

@@ -99,11 +99,6 @@ const Match = () => {
             <Text style={localStyles.sparkleSmall}>✧</Text>
           </View>
           <Text style={localStyles.title}>¡Hay conexión!</Text>
-          <View style={localStyles.divider}>
-            <View style={localStyles.dividerLine} />
-            <View style={localStyles.dividerDot} />
-            <View style={localStyles.dividerLine} />
-          </View>
         </View>
 
         <View style={localStyles.peopleRow}>
@@ -157,6 +152,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 18,
     alignItems: "center",
@@ -193,24 +189,6 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
     fontFamily: vibesTheme.fonts.thin,
   },
-  divider: {
-    marginTop: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  dividerLine: {
-    width: 40,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: vibesTheme.colors.accentMustard,
-  },
-  dividerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: vibesTheme.colors.accentMustard,
-  },
   heroWrap: {
     width: "100%",
     height: 260,
@@ -226,7 +204,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 0,
+    marginTop: 34,
     marginBottom: 18,
   },
   personBlock: {
@@ -322,7 +300,8 @@ const localStyles = StyleSheet.create({
   },
   actions: {
     width: "100%",
-    marginTop: 24,
+    marginTop: "auto",
+    paddingTop: 32,
   },
   footer: {
     marginTop: 24,
