@@ -1,3 +1,4 @@
+import { messagePreview } from "../src/lib/chatPhotos";
 /** @format */
 
 import React from "react";
@@ -42,7 +43,7 @@ const Matches = () => {
           {item.otherUserName}
         </Text>
         <Text style={localStyles.subtitle} numberOfLines={1}>
-          {item.lastMessage ?? "Nueva conexión"}
+          {messagePreview(item.lastMessage) ?? "Nueva conexión"}
         </Text>
       </View>
     </TouchableOpacity>

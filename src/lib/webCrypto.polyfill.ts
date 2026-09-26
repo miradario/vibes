@@ -48,7 +48,8 @@ const installWebCryptoPolyfill = () => {
     subtle.digest = digestWithExpoCrypto;
   }
 
-  cryptoObject.subtle = subtle;
+  // Browsers expose subtle as a read-only getter. Preserve their native API.
+  if (!cryptoObject.subtle) cryptoObject.subtle = subtle;
 
   if (!globalScope.crypto) {
     Object.defineProperty(globalScope, "crypto", {

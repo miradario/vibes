@@ -10,7 +10,9 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": false,
@@ -27,7 +29,8 @@
         "NSPhotoLibraryUsageDescription": "Vibes uses your photo library so you can choose profile photos and cover images for events or challenges, for example uploading a profile picture.",
         "NSLocationWhenInUseUsageDescription": "Vibes uses your location while the app is open to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
-        "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding."
+        "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
+        "NSMicrophoneUsageDescription": "Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío."
       }
     },
     "androidNavigationBar": {
@@ -41,7 +44,9 @@
         "backgroundColor": "#FEFEFD"
       },
       "versionCode": 30,
-      "permissions": ["android.permission.RECORD_AUDIO"],
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "package": "com.miradario.vibe"
     },
     "web": {

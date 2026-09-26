@@ -1,3 +1,4 @@
+import { messagePreview } from "../src/lib/chatPhotos";
 import { useConnectionViewsQuery } from "../src/queries/homeActivity.queries";
 import { getNewConnections } from "../src/lib/homeActivity";
 import UnreadBadge from "../components/UnreadBadge";
@@ -602,7 +603,7 @@ export const MessagesContent = ({
             </Text>
           </View>
           <Text style={localStyles.lastMessage} numberOfLines={2}>
-            {item.lastMessage ?? "No hay mensajes aún"}
+            {messagePreview(item.lastMessage) ?? "No hay mensajes aún"}
           </Text>
         </View>
         <View style={localStyles.rowMeta}>
@@ -643,7 +644,7 @@ export const MessagesContent = ({
           {item.otherUserName}
         </Text>
         <Text style={localStyles.lastMessage} numberOfLines={1}>
-          {item.lastMessage ?? "Nueva conexión"}
+          {messagePreview(item.lastMessage) ?? "Nueva conexión"}
         </Text>
       </View>
       <View style={localStyles.rowMeta}>

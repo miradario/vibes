@@ -254,6 +254,8 @@ export const PushNotificationsBootstrap = ({
   }, [notificationsEnabled, preferencesQuery.isFetched, userId]);
 
   useEffect(() => {
+    if (Platform.OS === "web") return;
+
     const receivedSubscription = Notifications.addNotificationReceivedListener(
       (notification) => {
         const rawData = notification.request.content.data;

@@ -1,3 +1,5 @@
+import ChatPhotoButton from "../components/ChatPhotoButton";
+import ChatMessageContent from "../components/ChatMessageContent";
 /** @format */
 
 import React, {
@@ -792,14 +794,7 @@ const EventChat = () => {
                         </Text>
                       </TouchableOpacity>
                     )}
-                    <Text
-                      style={[
-                        localStyles.messageText,
-                        isMe && { color: DARK_GRAY },
-                      ]}
-                    >
-                      {msg.body}
-                    </Text>
+                    <ChatMessageContent onLongPress={() => handleLongPressMessage(msg)} body={msg.body} textStyle={[localStyles.messageText, isMe && { color: DARK_GRAY }]} />
                     <View style={localStyles.messageMetaRow}>
                       <Text style={localStyles.messageTime}>
                         {formatTime(msg.createdAt)}
@@ -834,10 +829,8 @@ const EventChat = () => {
             },
           ]}
         >
-          <Avatar
-            uri={userId ? participantMap.current[userId]?.avatar : null}
-            size={32}
-          />
+          <ChatPhotoButton kind={eventType} chatId={eventId} userId={userId} disabled={sendMutation.isPending}
+            onSend={(body) => sendMutation.mutateAsync({ eventId: eventId!, eventType, senderId: userId!, body })} />
           <TextInput
             style={[
               styles.eventChatInput,

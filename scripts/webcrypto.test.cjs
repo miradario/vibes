@@ -1,0 +1,5 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const ts=require('typescript');
+const source=ts.transpileModule(fs.readFileSync('src/lib/webCrypto.polyfill.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
+const expo={CryptoDigestAlgorithm:{SHA256:'SHA-256'},digest:async()=>new ArrayBuffer(0),getRandomValues:x=>x,randomUUID:()=> 'fixture'};
+test('preserves the native read-only browser subtle implementation',()=>{const subtle={digest:async()=>new ArrayBuffer(0)};const crypto={getRandomValues:x=>x,randomUUID:()=> 'native'};Object.defineProperty(crypto,'subtle',{get:()=>subtle});vm.runInNewContext(source,{exports:{},require:()=>expo,crypto});assert.equal(crypto.subtle,subtle);assert.equal(crypto.randomUUID(),'native');});
+test('installs crypto APIs on native runtimes without WebCrypto',()=>{const sandbox={exports:{},require:()=>expo};vm.runInNewContext(source,sandbox);assert.equal(typeof sandbox.crypto.subtle.digest,'function');assert.equal(sandbox.crypto.randomUUID(),'fixture');});

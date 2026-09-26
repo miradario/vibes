@@ -1,3 +1,6 @@
+import { messagePreview } from "../src/lib/chatPhotos";
+import ChatPhotoButton from "../components/ChatPhotoButton";
+import ChatMessageContent from "../components/ChatMessageContent";
 import { useConnectionOpened } from "../src/queries/homeActivity.queries";
 import ScreenContainer from "../components/ScreenContainer";
 import MessageReceipt from "../components/MessageReceipt";
@@ -75,10 +78,8 @@ const Chat = () => {
   const { data: session } = useAuthSession();
   const myId = session?.user?.id;
   const { data: profile } = useProfileQuery(otherUserId);
-  const { data: myProfile } = useProfileQuery(myId);
   const { data: preferences } = useUserPreferencesQuery(otherUserId);
   const otherUserAvatar = profile?.photos?.[0]?.url ?? otherUserPhoto ?? null;
-  const ownAvatar = myProfile?.photos?.[0]?.url ?? null;
   const profileCard = mapCandidateToConnectionProfile({
     id: otherUserId ?? matchId ?? "chat-user",
     displayName:
@@ -164,7 +165,7 @@ const Chat = () => {
   const handleLongPress = (msg: DirectMessage) => {
     if (msg.deliveryStatus === "sending") return;
     if (msg.senderId !== myId) return;
-    Alert.alert("¿Eliminar mensaje?", msg.text.slice(0, 60), [
+    Alert.alert("¿Eliminar mensaje?", (messagePreview(msg.text) ?? "").slice(0, 60), [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Eliminar",
@@ -296,13 +297,7 @@ const Chat = () => {
           localStyles.messageBubble,
         ]}
       >
-        <Text
-          style={
-            isOwn ? localStyles.messageTextRight : localStyles.messageTextLeft
-          }
-        >
-          {item.text}
-        </Text>
+        <ChatMessageContent onLongPress={() => handleLongPress(item)} body={item.text} textStyle={isOwn ? localStyles.messageTextRight : localStyles.messageTextLeft} />
         <View style={localStyles.messageMetaRow}>
           <Text
             style={[
@@ -576,7 +571,8 @@ const Chat = () => {
               },
             ]}
           >
-            <Avatar uri={ownAvatar} size={32} />
+            <ChatPhotoButton kind="direct" chatId={matchId} userId={myId} disabled={sendMutation.isPending}
+              onSend={(body) => sendMutation.mutateAsync({ matchId, body })} />
             <TextInput
               style={[
                 styles.eventChatInput,

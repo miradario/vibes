@@ -56,7 +56,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Vibes uses your location while the app is open to suggest nearby people and events, for example filling in your city during onboarding.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow $(PRODUCT_NAME) to access your microphone</string>
+	<string>Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Vibes uses your photo library so you can choose profile photos and cover images for events or challenges, for example uploading a profile picture.</string>
 	<key>RCTNewArchEnabled</key>

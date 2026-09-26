@@ -1,3 +1,4 @@
+import ChallengeDaysSection from "../components/challengeDays/ChallengeDaysSection";
 import ParticipantsSheet from "../components/ParticipantsSheet";
 /** @format */
 
@@ -45,6 +46,7 @@ import {
   useApproveChallengeJoinRequestMutation,
   useCheckInChallengeMutation,
   useLeaveChallengeMutation,
+  useDeleteChallengeMutation,
   fetchEventFeedItemById,
   type EventFeedItem,
 } from "../src/queries/events.queries";
@@ -1114,6 +1116,7 @@ const ChallengeDetailScreen = () => {
   const { data: participant } = useChallengeParticipantQuery(event?.id, userId);
   const joinChallengeMutation = useJoinChallengeMutation();
   const leaveChallengeMutation = useLeaveChallengeMutation();
+  const deleteChallengeMutation = useDeleteChallengeMutation();
   const requestChallengeJoinMutation = useRequestChallengeJoinMutation();
   const approveJoinRequestMutation = useApproveChallengeJoinRequestMutation();
   const { data: ownJoinRequest } = useChallengeJoinRequestQuery(
@@ -1142,6 +1145,7 @@ const ChallengeDetailScreen = () => {
   const [isSharing, setIsSharing] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
+  const [dayContentVisible, setDayContentVisible] = useState(false);
   const pendingParticipants = useRef(false);
   const participantsQuery = useChallengeParticipantsQuery(event?.id);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
@@ -1244,6 +1248,7 @@ const ChallengeDetailScreen = () => {
   const handleCheckIn = async () => {
     if (challenge.checkInStatus === "completed" || challenge.currentDay <= 0)
       return;
+    setDayContentVisible(false);
 
     if (event?.id && userId) {
       await checkInMutation.mutateAsync({
@@ -1319,6 +1324,36 @@ const ChallengeDetailScreen = () => {
               Alert.alert(
                 "Error",
                 error?.message ?? "No se pudo abandonar el desafío."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteChallenge = () => {
+    if (!event?.id || !isAdmin) return;
+
+    setMenuVisible(false);
+    Alert.alert(
+      "Eliminar desafío",
+      "¿Eliminar este desafío para todos? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteChallengeMutation.mutateAsync({
+                challengeId: event.id,
+              });
+              navigation.goBack();
+            } catch (error: any) {
+              Alert.alert(
+                "Error",
+                error?.message ?? "No se pudo eliminar el desafío."
               );
             }
           },
@@ -1421,7 +1456,11 @@ const ChallengeDetailScreen = () => {
 
           if (shouldComplete) {
             setFooterSliderOffset(footerSliderMaxOffset);
-            void handleCheckIn();
+            if (isJoined || isAdmin) {
+              setDayContentVisible(true);
+            } else {
+              void handleCheckIn();
+            }
           } else {
             resetFooterSlider();
           }
@@ -1430,7 +1469,13 @@ const ChallengeDetailScreen = () => {
           resetFooterSlider();
         },
       }),
-    [challenge.checkInStatus, checkInMutation.isPending, footerSliderMaxOffset]
+    [
+      challenge.checkInStatus,
+      checkInMutation.isPending,
+      footerSliderMaxOffset,
+      isJoined,
+      isAdmin,
+    ]
   );
   const compactHeaderTop = Math.max(insets.top + 8, 18);
   const heroCollapse = (expanded: number, collapsed: number) =>
@@ -1703,6 +1748,16 @@ const ChallengeDetailScreen = () => {
           </View>
           <View style={localStyles.content}>
             <ChallengeJourneyCard challenge={challenge} percent={percent} />
+            {event?.id && (isJoined || isAdmin) ? (
+              <ChallengeDaysSection
+                challengeId={event.id}
+                totalDays={challenge.totalDays}
+                currentDay={challenge.currentDay}
+                isCreator={false}
+                isJoined
+                mode="completion"
+              />
+            ) : null}
             {isAdmin && pendingJoinRequests.length > 0 ? (
               <View style={localStyles.requestCard}>
                 <View style={localStyles.requestCardHeader}>
@@ -1874,6 +1929,52 @@ const ChallengeDetailScreen = () => {
       ) : null}
 
       <AnimatedSheetModal
+        visible={dayContentVisible}
+        onClose={() => {
+          setDayContentVisible(false);
+          resetFooterSlider();
+        }}
+        offsetY={140}
+        sheetStyle={localStyles.dayContentSheet}
+      >
+        <ScrollView
+          contentContainerStyle={[
+            localStyles.dayContentSheetContent,
+            { paddingBottom: insets.bottom + 20 },
+          ]}
+        >
+          {event?.id ? (
+            <ChallengeDaysSection
+              challengeId={event.id}
+              totalDays={challenge.totalDays}
+              currentDay={challenge.currentDay}
+              isCreator={false}
+              isJoined={isJoined}
+              mode="completion"
+            />
+          ) : null}
+          <TouchableOpacity
+            accessibilityRole="button"
+            style={[
+              localStyles.joinRequestButton,
+              checkInMutation.isPending && localStyles.joinRequestButtonDisabled,
+            ]}
+            onPress={() => void handleCheckIn()}
+            disabled={checkInMutation.isPending}
+            activeOpacity={0.86}
+          >
+            {checkInMutation.isPending ? (
+              <VibesLoader size={30} />
+            ) : (
+              <Text style={localStyles.joinRequestButtonTitle}>
+                Completar día
+              </Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </AnimatedSheetModal>
+
+      <AnimatedSheetModal
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
         onClosed={() => {
@@ -1922,6 +2023,22 @@ const ChallengeDetailScreen = () => {
             {isSharing ? "Compartiendo..." : "Compartir desafío"}
           </Text>
         </TouchableOpacity>
+        {isAdmin ? (
+          <TouchableOpacity
+            style={[localStyles.menuItem, localStyles.menuItemDanger]}
+            onPress={handleDeleteChallenge}
+            disabled={deleteChallengeMutation.isPending}
+          >
+            <Icon name="trash-outline" size={20} color={palette.red} />
+            <Text
+              style={[localStyles.menuItemText, localStyles.menuItemTextDanger]}
+            >
+              {deleteChallengeMutation.isPending
+                ? "Eliminando..."
+                : "Eliminar desafío"}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
         {isJoined ? (
           <TouchableOpacity
             style={[localStyles.menuItem, localStyles.menuItemDanger]}
@@ -2180,6 +2297,9 @@ const localStyles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
+  },
+  joinRequestButtonDisabled: {
+    opacity: 0.6,
   },
   joinRequestButtonTitle: {
     color: vibesTheme.colors.background,
@@ -3059,6 +3179,17 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 12,
     paddingBottom: 28,
+  },
+  dayContentSheet: {
+    backgroundColor: palette.bg,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: "88%",
+  },
+  dayContentSheetContent: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    gap: 16,
   },
   menuHandle: {
     alignSelf: "center",

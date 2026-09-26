@@ -621,7 +621,7 @@ const buildDirectMessageNotifications = async (
     {
       recipientId,
       title: senderName,
-      body: text.slice(0, 120),
+      body: text.startsWith("vibes-photo:v1:") ? "📷 Foto" : text.slice(0, 120),
       data: {
         type: "direct_message",
         matchId,
@@ -682,7 +682,7 @@ const buildEventMessageNotifications = async (
     .map((recipientId: string) => ({
       recipientId,
       title: `${senderName} escribio en ${groupTitle}`,
-      body: body.slice(0, 120),
+      body: body.startsWith("vibes-photo:v1:") ? "📷 Foto" : body.slice(0, 120),
       data: {
         type: "event_message",
         eventId,

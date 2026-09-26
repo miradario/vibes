@@ -1,4 +1,5 @@
 import { launchAppCamera } from "../components/AppCamera";
+import ChallengeDaysSection from "../components/challengeDays/ChallengeDaysSection";
 /** @format */
 
 import React, { useRef, useState } from "react";
@@ -15,7 +16,7 @@ import {
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import * as ImagePicker from "expo-image-picker";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -245,14 +246,12 @@ const CreateChallenge = () => {
         navigation.goBack();
         return;
       }
-      await createChallengeMutation.mutateAsync(input);
-
-      navigation.navigate(
-        "Tab" as never,
-        {
-          screen: "Flow",
-          params: { section: "challenge" },
-        } as never
+      const createdChallenge = await createChallengeMutation.mutateAsync(input);
+      navigation.dispatch(
+        StackActions.replace("CreateChallenge", {
+          event: createdChallenge,
+          showDayContent: true,
+        })
       );
     } catch (error) {
       console.log("createChallenge:error", error);
@@ -403,7 +402,7 @@ const CreateChallenge = () => {
             <Text style={localStyles.label}>Duración en días</Text>
             <TextInput
               ref={daysInputRef}
-                editable={!editing}
+              editable={!editing}
               style={localStyles.input}
               placeholder="Ej: 21"
               placeholderTextColor={TEXT_SECONDARY}
@@ -413,6 +412,55 @@ const CreateChallenge = () => {
               returnKeyType="done"
               onSubmitEditing={() => Keyboard.dismiss()}
             />
+
+            <View style={localStyles.dayContentCard}>
+              <View style={localStyles.dayContentIcon}>
+                <Icon
+                  name="calendar-outline"
+                  size={22}
+                  color={PRIMARY_COLOR}
+                />
+              </View>
+              <View style={localStyles.dayContentCopy}>
+                <Text style={localStyles.dayContentTitle}>
+                  Contenido de los días
+                </Text>
+                <Text style={localStyles.dayContentText}>
+                  Agregá consignas, imágenes, audios y links de YouTube para
+                  que los participantes los vean al completar cada día.
+                </Text>
+              </View>
+              {!editing ? (
+                <TouchableOpacity
+                  style={[
+                    localStyles.dayContentButton,
+                    (!isFormReady || createChallengeMutation.isPending) &&
+                      localStyles.createButtonDisabled,
+                  ]}
+                  onPress={handleCreate}
+                  disabled={!isFormReady || createChallengeMutation.isPending}
+                  activeOpacity={0.86}
+                >
+                  <Text style={localStyles.dayContentButtonText}>
+                    {createChallengeMutation.isPending
+                      ? "Guardando..."
+                      : "Guardar y personalizar días"}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            {editing?.id ? (
+              <View style={localStyles.dayContentEditor}>
+                <ChallengeDaysSection
+                  challengeId={editing.id}
+                  totalDays={parsedDays}
+                  currentDay={1}
+                  isCreator
+                  isJoined
+                />
+              </View>
+            ) : null}
 
             <Text style={localStyles.label}>Quién puede verlo</Text>
             <Text style={localStyles.helperText}>
@@ -714,6 +762,57 @@ const localStyles = StyleSheet.create({
     lineHeight: 17,
     marginTop: 2,
     fontFamily: vibesTheme.fonts.subtitle,
+  },
+  dayContentCard: {
+    marginTop: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(127, 152, 183, 0.42)",
+    backgroundColor: "rgba(127, 152, 183, 0.12)",
+    padding: 14,
+    gap: 12,
+  },
+  dayContentIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayContentCopy: {
+    gap: 4,
+  },
+  dayContentTitle: {
+    color: DARK_GRAY,
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.bold,
+  },
+  dayContentText: {
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  dayContentButton: {
+    minHeight: 46,
+    borderRadius: 18,
+    backgroundColor: PRIMARY_COLOR,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  dayContentButtonText: {
+    color: vibesTheme.colors.primaryText,
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.semibold,
+    textAlign: "center",
+  },
+  dayContentEditor: {
+    marginTop: 14,
   },
   createButton: {
     backgroundColor: PRIMARY_COLOR,

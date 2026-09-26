@@ -1,3 +1,5 @@
+import ChatPhotoButton from "../components/ChatPhotoButton";
+import ChatMessageContent from "../components/ChatMessageContent";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import chatStyles, { DARK_GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import ParticipantsSheet from "../components/ParticipantsSheet";
@@ -338,7 +340,7 @@ export default function CommunityGroupChat() {
                       ? "Vos"
                       : item.senderName}
                   </Text>
-                  <Text style={s.body}>{item.body}</Text>
+                  <ChatMessageContent body={item.body} textStyle={s.body} />
                   <View style={s.meta}>
                     <Text style={s.time}>
                       {new Date(item.created_at).toLocaleString("es-AR", {
@@ -367,6 +369,8 @@ export default function CommunityGroupChat() {
             },
           ]}
         >
+          <ChatPhotoButton kind="group" chatId={groupId} userId={session?.user.id} disabled={send.isPending}
+            onSend={(body) => send.mutateAsync(body)} />
           <TextInput
             accessibilityLabel="Mensaje"
             placeholder="Escribí un mensaje…"

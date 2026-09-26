@@ -92,6 +92,7 @@ export default function AppCamera() {
                 close({ canceled: true, assets: null });
               }} />}
         </View>
+        {!photo ? <Text style={styles.cameraMessage}>Sos perfecto como sos</Text> : null}
         <View style={styles.controls}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar cámara" style={styles.button}
             onPress={() => close({ canceled: true, assets: null })}>
@@ -122,7 +123,8 @@ export default function AppCamera() {
 const styles = StyleSheet.create({
   sheet: { flex: 1, backgroundColor: vibesTheme.colors.primaryText },
   preview: { flex: 1, marginTop: 40 },
-  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", paddingTop: 16, paddingBottom: 40 },
+  cameraMessage: { color: vibesTheme.colors.background, fontSize: 20, textAlign: "center", paddingHorizontal: 24, paddingTop: 20 },
+  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", paddingTop: 16, paddingBottom: 56 },
   button: { minWidth: 60, minHeight: 60, alignItems: "center", justifyContent: "center" },
   capture: { width: 72, height: 72, borderRadius: 36, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
   label: { color: vibesTheme.colors.background, fontSize: 16 },
