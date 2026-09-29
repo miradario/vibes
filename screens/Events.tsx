@@ -1,7 +1,10 @@
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
+import EventClassificationPicker from "../components/EventClassificationPicker";
+import { EVENT_MODALITIES, EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, getEventCategoryLabel, getEventParticipationLabel, matchesEventClassification, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
 /** @format */
 
 import React, { useCallback, useMemo, useState } from "react";
-import { View, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, FlatList, TouchableOpacity, Image, StyleSheet, ScrollView, Keyboard } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,7 +21,7 @@ import {
   useEventsFeedQuery,
   useMyEventGroupsQuery,
 } from "../src/queries/events.queries";
-import type { EventFeedItem } from "../src/queries/events.queries";
+import type { EventFeedItem, EventModality } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
@@ -155,6 +158,22 @@ const Events = () => {
     isLoading,
     error,
   } = section === "challenge" ? challengesQuery : eventsQuery;
+  const [modality, setModality] = useState<EventModality | null>(null);
+  const [category, setCategory] = useState<EventCategory | null>(null);
+  const [participationType, setParticipationType] = useState<EventParticipationType | null>(null);
+  const [filtersVisible, setFiltersVisible] = useState(false);
+  const [draftFilters, setDraftFilters] = useState<{
+    category: EventCategory | null;
+    participationType: EventParticipationType | null;
+    modality: EventModality | null;
+  }>({ category: null, participationType: null, modality: null });
+  const activeFilterCount = [category, participationType, modality].filter(Boolean).length;
+  const openFilters = () => {
+    Keyboard.dismiss();
+    setDraftFilters({ category, participationType, modality });
+    setFiltersVisible(true);
+  };
+
   const [search, setSearch] = useState("");
   const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
   const [showUpcomingChallenges, setShowUpcomingChallenges] = useState(false);
@@ -168,11 +187,13 @@ const Events = () => {
         : "No se pudieron cargar los eventos.";
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
-    if (!normalizedSearch) return items;
-
     return items.filter((item) => {
+      if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
+      if (!normalizedSearch) return true;
       const haystack = normalizeSearchText(
         [
+          getEventCategoryLabel(item.category),
+          getEventParticipationLabel(item.participationType),
           item.title,
           item.subtitle,
           item.description,
@@ -188,7 +209,7 @@ const Events = () => {
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, normalizedSearch]);
+  }, [items, normalizedSearch, section, category, participationType, modality]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
@@ -386,6 +407,12 @@ const Events = () => {
               {section === "challenge" ? "Crear desafío" : "Crear evento"}
             </Text>
           </TouchableOpacity>
+          {section === "event" ? (
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Filtros de eventos${activeFilterCount ? `, ${activeFilterCount} activos` : ""}`} accessibilityState={{ expanded: filtersVisible }} onPress={openFilters} style={localStyles.filterButton}>
+              <Icon name="options-outline" size={28} color={vibesTheme.colors.accentMustard} />
+              {activeFilterCount > 0 ? <View style={localStyles.filterBadge}><Text style={localStyles.filterBadgeText}>{activeFilterCount}</Text></View> : null}
+            </TouchableOpacity>
+           ) : null}
         </View>
         <View style={[styles.eventsSearchBar, localStyles.searchBar]}>
           <Icon name="search" size={20} color={TEXT_SECONDARY} />
@@ -399,7 +426,7 @@ const Events = () => {
             autoCorrect={false}
             returnKeyType="search"
           />
-          <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+
         </View>
 
         <FlatList
@@ -657,7 +684,33 @@ const Events = () => {
           )}}
         />
       </View>
-
+      <AnimatedSheetModal visible={filtersVisible && section === "event"} onClose={() => setFiltersVisible(false)} sheetStyle={localStyles.filtersSheet}>
+        <View style={localStyles.filterHandle} />
+        <View style={localStyles.filterHeader}>
+          <Text style={localStyles.filterTitle}>Filtros de eventos</Text>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar filtros" onPress={() => setFiltersVisible(false)} style={localStyles.filterButton}>
+            <Icon name="close" size={22} color={vibesTheme.colors.primaryText} />
+          </TouchableOpacity>
+        </View>
+        <ScrollView contentContainerStyle={localStyles.filterContent} showsVerticalScrollIndicator={false}>
+          <EventClassificationPicker filter label="Categoría" options={EVENT_CATEGORIES} value={draftFilters.category} onChange={(value) => setDraftFilters((draft) => ({ ...draft, category: value }))} />
+          <EventClassificationPicker filter label="Tipo" options={EVENT_PARTICIPATION_TYPES} value={draftFilters.participationType} onChange={(value) => setDraftFilters((draft) => ({ ...draft, participationType: value }))} />
+          <EventClassificationPicker filter label="Modalidad" options={EVENT_MODALITIES} value={draftFilters.modality} onChange={(value) => setDraftFilters((draft) => ({ ...draft, modality: value }))} />
+        </ScrollView>
+        <View style={[localStyles.filterFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => setDraftFilters({ category: null, participationType: null, modality: null })}>
+            <Text style={localStyles.filterActionText}>Limpiar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" style={localStyles.filterApply} onPress={() => {
+            setCategory(draftFilters.category);
+            setParticipationType(draftFilters.participationType);
+            setModality(draftFilters.modality);
+            setFiltersVisible(false);
+          }}>
+            <Text style={[localStyles.filterActionText, { color: vibesTheme.colors.background }]}>Aplicar</Text>
+          </TouchableOpacity>
+        </View>
+      </AnimatedSheetModal>
     </View>
   );
 };
@@ -665,6 +718,18 @@ const Events = () => {
 export default Events;
 
 const localStyles = StyleSheet.create({
+  filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
+  filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
+  filterBadgeText: { color: vibesTheme.colors.primaryText, fontSize: 11, fontFamily: vibesTheme.fonts.bold },
+  filtersSheet: { maxHeight: "85%", backgroundColor: vibesTheme.colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+  filterHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginTop: 12, backgroundColor: "rgba(43,43,43,0.2)" },
+  filterHeader: { paddingHorizontal: 20, paddingTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  filterTitle: { fontSize: 24, fontFamily: vibesTheme.fonts.bold, color: vibesTheme.colors.primaryText },
+  filterContent: { paddingHorizontal: 20, paddingBottom: 16 },
+  filterFooter: { flexDirection: "row", gap: 12, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(43,43,43,0.08)" },
+  filterClear: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: "rgba(43,43,43,0.2)", borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  filterApply: { flex: 1, minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
+  filterActionText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.bold },
   upcomingHeader: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     gap: 12, paddingVertical: 12,

@@ -1,3 +1,5 @@
+import EventClassificationPicker from "../components/EventClassificationPicker";
+import { EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
 import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
@@ -198,6 +200,8 @@ const CreateEvent = () => {
     }
     return null;
   });
+  const [category, setCategory] = useState<EventCategory | null>(parseEventCategory(editingEvent?.category));
+  const [participationType, setParticipationType] = useState<EventParticipationType | null>(parseEventParticipationType(editingEvent?.participationType));
   const [capacity, setCapacity] = useState(
     typeof editingEvent?.capacity === "number" && editingEvent.capacity > 0
       ? String(editingEvent.capacity)
@@ -269,6 +273,8 @@ const CreateEvent = () => {
     capacity,
     hasSelectedImage,
   });
+  if (!category) missingFields.push("categoría");
+  if (!participationType) missingFields.push("tipo");
   const invalidLinks = getInvalidEventLinks({
     eventLink,
     pricingType,
@@ -580,6 +586,8 @@ const CreateEvent = () => {
               ? validatedLocation.lng ?? null
               : null,
           eventLink: resolvedEventLink,
+          category,
+          participationType,
           pricingType,
           paymentLink: resolvedPaymentLink,
           modality,
@@ -605,6 +613,8 @@ const CreateEvent = () => {
               ? validatedLocation.lng ?? null
               : null,
           eventLink: resolvedEventLink,
+          category,
+          participationType,
           pricingType,
           paymentLink: resolvedPaymentLink,
           modality,
@@ -626,7 +636,7 @@ const CreateEvent = () => {
         navigation.navigate(
           "Tab" as never,
           {
-            screen: "Events",
+            screen: "EventsTab",
             params: { section: "event" },
           } as never,
         );
@@ -847,7 +857,9 @@ const CreateEvent = () => {
             </View>
           ) : null}
 
-          <Text style={localStyles.label}>Tipo de evento</Text>
+          <EventClassificationPicker label="Categoría · qué actividad es" options={EVENT_CATEGORIES} value={category} onChange={setCategory} />
+          <EventClassificationPicker label="Tipo · cómo se participa" options={EVENT_PARTICIPATION_TYPES} value={participationType} onChange={setParticipationType} />
+          <Text style={localStyles.label}>Modalidad</Text>
           <View style={localStyles.choiceRow}>
             <TouchableOpacity
               style={[

@@ -1,3 +1,4 @@
+import { getEventCategoryLabel, getEventParticipationLabel } from "../src/constants/eventClassification";
 /** @format */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -1452,6 +1453,12 @@ const EventDetail = () => {
                 { height: heroCollapse(210, 168 + compactHeaderTop + 1 + 38) },
               ]}
             />
+            {event?.category || event?.participationType ? (
+              <View style={{ paddingHorizontal: 24, paddingVertical: 12, gap: 6 }}>
+                {getEventCategoryLabel(event.category) ? <Text style={{ color: vibesTheme.colors.primaryText }}>Categoría: {getEventCategoryLabel(event.category)}</Text> : null}
+                {getEventParticipationLabel(event.participationType) ? <Text style={{ color: vibesTheme.colors.primaryText }}>Tipo: {getEventParticipationLabel(event.participationType)}</Text> : null}
+              </View>
+            ) : null}
             <View style={localStyles.eventIntroMetaRow}>
               <View style={localStyles.eventIntroMetaItem}>
                 <Icon

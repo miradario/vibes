@@ -1,3 +1,4 @@
+import { parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../constants/eventClassification";
 import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -27,6 +28,8 @@ export type ChallengeVisibility = "public" | "friends" | "private";
 export type ChallengeJoinRequestStatus = "pending" | "approved" | "declined";
 
 export type EventFeedItem = {
+  category?: EventCategory | null;
+  participationType?: EventParticipationType | null;
   id: string;
   type: EventType;
   title: string;
@@ -64,6 +67,8 @@ export type EventFeedItem = {
 type EventRow = Record<string, any>;
 
 type CreateEventInput = {
+  category?: EventCategory | null;
+  participationType?: EventParticipationType | null;
   createdBy: string;
   title: string;
   subtitle: string;
@@ -85,6 +90,8 @@ type CreateEventInput = {
 };
 
 type UpdateEventInput = {
+  category?: EventCategory | null;
+  participationType?: EventParticipationType | null;
   eventId: string;
   updatedBy: string;
   title: string;
@@ -199,6 +206,8 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
   return {
     id: String(row.id),
     type,
+    category: parseEventCategory(row.category),
+    participationType: parseEventParticipationType(row.participation_type),
     title: typeof row.title === "string" ? row.title : "Untitled",
     subtitle:
       typeof row.subtitle === "string" && row.subtitle.trim()
@@ -977,6 +986,8 @@ export const useCreateEventMutation = () => {
           location_latitude: input.locationLatitude ?? null,
           location_longitude: input.locationLongitude ?? null,
           event_link: input.eventLink ?? null,
+          category: input.category ?? null,
+          participation_type: input.participationType ?? null,
           pricing_type: input.pricingType,
           payment_link: input.paymentLink ?? null,
           modality: input.modality,
@@ -1050,6 +1061,8 @@ export const useUpdateEventMutation = () => {
           location_latitude: input.locationLatitude ?? null,
           location_longitude: input.locationLongitude ?? null,
           event_link: input.eventLink ?? null,
+          category: input.category ?? null,
+          participation_type: input.participationType ?? null,
           pricing_type: input.pricingType,
           payment_link: input.paymentLink ?? null,
           modality: input.modality,
