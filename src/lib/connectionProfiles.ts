@@ -322,7 +322,8 @@ export const mapCandidateToConnectionProfile = (
       (candidate as ProfileLike).name.trim()) ||
     "Vibes";
   const location = formatLocation(candidate as ProfileLike);
-  const age =
+  const hideAge = (candidate as ProfileLike).hideAge === true || (candidate as ProfileLike).hide_age === true;
+  const age = hideAge ? undefined :
     toAge((candidate as ProfileLike).age) ??
     toAge((candidate as ProfileLike).birthDate) ??
     toAge((candidate as ProfileLike).birth_date);

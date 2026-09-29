@@ -51,7 +51,7 @@ export const upsertUserPreferences = async (
   userId: string,
   payload: Record<string, any>,
 ) => {
-  const working = { user_id: userId, ...payload };
+  const working: Record<string, any> = { user_id: userId, ...payload };
 
   while (true) {
     const { error } = await supabase
@@ -64,6 +64,7 @@ export const upsertUserPreferences = async (
     }
 
     if (isMissingUserPreferencesTableError(error)) {
+      if ("hide_age" in payload) throw error;
       await AsyncStorage.setItem(getStorageKey(userId), JSON.stringify(working));
       return;
     }
@@ -74,7 +75,7 @@ export const upsertUserPreferences = async (
 
     const match = error.message.match(/'([^']+)' column/);
     const missingColumn = match?.[1];
-    if (!missingColumn || missingColumn === "user_id") {
+    if (!missingColumn || missingColumn === "user_id" || missingColumn === "hide_age") {
       throw error;
     }
     if (!(missingColumn in working)) {

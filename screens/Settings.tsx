@@ -13,6 +13,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
@@ -65,6 +66,7 @@ const Settings = () => {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [hideAge, setHideAge] = useState(false);
   const [purposes, setPurposes] = useState<string[]>([]);
   const { data: session } = useAuthSession();
   const {
@@ -96,6 +98,7 @@ const Settings = () => {
   useEffect(() => {
     if (!prefs) return;
     setPurposes(normalizeTextArray(prefs.openTo));
+    setHideAge(prefs.hideAge === true);
 
     setSpiritualPath(
       getSelectedSpiritualPaths(
@@ -222,6 +225,7 @@ const Settings = () => {
     setSaving(true);
     try {
       await upsertUserPreferences(userId, {
+        hide_age: hideAge,
         spiritual_path: spiritualPath,
         spiritual_path_details: spiritualPathDetails,
         vegetarian: vegetarian || null,
@@ -235,6 +239,7 @@ const Settings = () => {
         other_tags: selectedOtherTags,
       });
       await refetch();
+      await queryClient.invalidateQueries({ queryKey: ["candidates"] });
       await queryClient.invalidateQueries({
         queryKey: ["profileAnswers", userId],
       });
@@ -304,6 +309,23 @@ const Settings = () => {
               </Text>
             </TouchableOpacity>
           ) : null}
+          <View style={localStyles.section}>
+            <View style={localStyles.sectionHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={localStyles.sectionTitle}>{t("settings.hideAge")}</Text>
+                <Text style={localStyles.helperText}>{t("settings.hideAgeHint")}</Text>
+              </View>
+              <Switch
+                accessibilityLabel={t("settings.hideAge")}
+                value={hideAge}
+                onValueChange={setHideAge}
+                disabled={saving || isPending || isError}
+                trackColor={{ false: vibesTheme.colors.secondaryText, true: vibesTheme.colors.accentBlue }}
+                thumbColor={vibesTheme.colors.surface}
+                ios_backgroundColor={vibesTheme.colors.secondaryText}
+              />
+            </View>
+          </View>
           <View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
               <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />

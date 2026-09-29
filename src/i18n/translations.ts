@@ -333,6 +333,8 @@ const baseTranslations = {
     },
     settings: {
       title: "Preferencias",
+      hideAge: "No mostrar mi edad",
+      hideAgeHint: "Ocultá tu edad en las tarjetas y en tu perfil público.",
       subtitle: "Comentá sobre vos y compartí tus elecciones conscientes.",
       spiritualPath: "Camino espiritual",
       spiritualPathHint:
@@ -899,6 +901,8 @@ const baseTranslations = {
     },
     settings: {
       title: "Preferences",
+      hideAge: "Hide my age",
+      hideAgeHint: "Hide your age on cards and your public profile.",
       subtitle: "Share about yourself and your conscious choices.",
       spiritualPath: "Spiritual path",
       spiritualPathHint: "Tap a path to select it and add optional details.",
