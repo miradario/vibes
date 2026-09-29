@@ -30,6 +30,16 @@ import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getPostAuthRoute } from "../src/lib/onboardingFlow";
 
+const isBannedUserError = (error: unknown) => {
+  if (!error || typeof error !== "object") return false;
+  const authError = error as { code?: unknown; message?: unknown };
+  return (
+    authError.code === "user_banned" ||
+    (typeof authError.message === "string" &&
+      authError.message.toLowerCase().includes("user is banned"))
+  );
+};
+
 const isInvalidCredentialsError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error ?? "");
   const normalized = message.toLowerCase();
@@ -94,6 +104,10 @@ const Login = () => {
       });
       navigation.navigate("Tab" as never);
     } catch (e) {
+      if (isBannedUserError(e)) {
+        setError(t("login.accountSuspended"));
+        return;
+      }
       if (isInvalidCredentialsError(e)) {
         setError(t("login.invalidCredentials"));
         return;
@@ -119,6 +133,10 @@ const Login = () => {
         );
       }
     } catch (e) {
+      if (isBannedUserError(e)) {
+        setError(t("login.accountSuspended"));
+        return;
+      }
       const msg = e instanceof Error ? e.message : t("login.googleFailed");
       setError(msg || t("login.googleFailed"));
     }
@@ -139,6 +157,10 @@ const Login = () => {
         );
       }
     } catch (e) {
+      if (isBannedUserError(e)) {
+        setError(t("login.accountSuspended"));
+        return;
+      }
       const msg = e instanceof Error ? e.message : t("login.appleFailed");
       setError(msg || t("login.appleFailed"));
     }
