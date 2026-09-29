@@ -14,6 +14,7 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		BF2C75CCBFF34393FA8620AC /* Pods_Vibes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9198D793636A59B62981C923 /* Pods_Vibes.framework */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		948ED9421DBA4EDD81BD9F12 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA1BAFC332DA419EB9972674 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Vibes/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Vibes-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Vibes-Bridging-Header.h"; path = "Vibes/Vibes-Bridging-Header.h"; sourceTree = "<group>"; };
 		F30E0F1ECC8FAF504A209DFB /* Pods-Vibes.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Vibes.debug.xcconfig"; path = "Target Support Files/Pods-Vibes/Pods-Vibes.debug.xcconfig"; sourceTree = "<group>"; };
+		EA1BAFC332DA419EB9972674 /* GoogleService-Info.plist */ = {isa = PBXFileReference; name = "GoogleService-Info.plist"; path = "Vibes/GoogleService-Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +65,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				19420D8734C462B7A18B910A /* PrivacyInfo.xcprivacy */,
+				EA1BAFC332DA419EB9972674 /* GoogleService-Info.plist */,
 			);
 			name = Vibes;
 			sourceTree = "<group>";
@@ -197,6 +200,7 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				20C18A4434006FFC50FF32DF /* PrivacyInfo.xcprivacy in Resources */,
+				948ED9421DBA4EDD81BD9F12 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

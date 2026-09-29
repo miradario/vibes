@@ -32,7 +32,7 @@
         "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSMicrophoneUsageDescription": "Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío."
       },
-      "googleServicesFile": "./ios/Vibes/GoogleService-Info.plist"
+      "googleServicesFile": "./config/firebase/GoogleService-Info.plist"
     },
     "androidNavigationBar": {
       "backgroundColor": "#2B2B2B00",
@@ -49,7 +49,7 @@
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.miradario.vibe",
-      "googleServicesFile": "./android/app/google-services.json"
+      "googleServicesFile": "./config/firebase/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -68,7 +68,11 @@
         {
           "ios": {
             "deploymentTarget": "15.4",
-            "useFrameworks": "static"
+            "useFrameworks": "static",
+            "forceStaticLinking": [
+              "livekit-react-native",
+              "livekit-react-native-webrtc"
+            ]
           }
         }
       ],
