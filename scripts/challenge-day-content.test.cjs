@@ -45,3 +45,25 @@ test('draft limits, required title and missing local files are enforced without 
   assert.throws(() => api.validateDayDraft({...draft,attachments:[{id:'1',type:'photo',mime:'image/jpeg',size:100}]}));
   assert.equal(draft.description,'Respirá');
 });
+
+test('shared content appears on every day alongside its specific content without copying attachments', () => {
+  const shared = { challenge_id: 'a', day: 0, title: 'Todos los días', description: 'Respirá', attachments: [{ id: 'audio', type: 'audio', path: 'a/0/owner/audio.mp3' }], revision: 1 };
+  const first = { ...shared, day: 1, title: 'Día 1', description: 'Observá', attachments: [] };
+  const second = { ...first, day: 2, title: 'Día 2', description: 'Escuchá' };
+  const contents = [second, shared, first];
+  assert.deepEqual(api.getChallengeContentForDay(contents, 1), [shared, first]);
+  assert.deepEqual(api.getChallengeContentForDay(contents, 2), [shared, second]);
+  assert.deepEqual(api.getChallengeContentForDay(contents, 3), [shared]);
+  assert.deepEqual(api.getChallengeContentForDay(contents, 0), [shared]);
+  assert.equal(api.getChallengeContentForDay(contents, 2)[0].attachments, shared.attachments);
+  assert.equal(contents.length, 3);
+});
+test('empty shared content can be cleared without hiding or replacing a daily assignment', () => {
+  const empty = { challenge_id: 'a', day: 0, title: 'Todos los días', description: '', attachments: [], revision: 2 };
+  const daily = { ...empty, day: 1, title: 'Mi consigna' };
+  assert.deepEqual(api.getChallengeContentForDay([empty, daily], 1), [daily]);
+  assert.deepEqual(api.getChallengeContentForDay([empty], 2), []);
+  assert.deepEqual(api.getChallengeContentForDay([], 1), []);
+  assert.equal(api.getChallengeContentLabel(0), 'Todos los días');
+  api.validateDayDraft(empty);
+});

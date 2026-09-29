@@ -11,3 +11,15 @@ export const getProfileSwipeAction = (
   if (!enableSwipe) return canAdvance && Math.abs(dx) > threshold ? "next" : null;
   return dx > threshold ? "like" : dx < -threshold ? "pass" : null;
 };
+
+export function getNextProfile<T extends { id: string | number }>(
+  profiles: T[],
+  selectedId: string | number,
+  pending?: { fromId: string; next: T | null } | null,
+): T | null {
+  if (pending?.fromId === String(selectedId)) return pending.next;
+  const index = profiles.findIndex((profile) => String(profile.id) === String(selectedId));
+  // An optimistic removal or refetch must not reveal an unrelated first card.
+  if (index < 0) return null;
+  return profiles[index + 1] ?? profiles.find((profile) => String(profile.id) !== String(selectedId)) ?? null;
+}

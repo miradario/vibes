@@ -19,3 +19,14 @@ test('a short upward swipe opens details without triggering a profile action',()
     assert.equal(api.getProfileSwipeAction(0,-30,360,enabled,true),null);
   }
 });
+
+test('discard keeps its captured successor during optimistic removal and refetch', () => {
+  const earlier = { id: 'a' }, selected = { id: 'b' }, next = { id: 'c' };
+  const pending = { fromId: 'b', next };
+  assert.equal(api.getNextProfile([earlier, selected, next], 'b'), next);
+  assert.equal(api.getNextProfile([earlier, next], 'b', pending), next);
+  assert.equal(api.getNextProfile([earlier], 'b', pending), next);
+  assert.equal(api.getNextProfile([earlier, next], 'b'), null);
+  assert.equal(api.getNextProfile([next], 'c', pending), null);
+  assert.equal(api.getNextProfile([earlier], 'b', { fromId: 'b', next: null }), null);
+});

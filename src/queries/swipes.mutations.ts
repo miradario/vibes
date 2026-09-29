@@ -116,11 +116,16 @@ export const useSwipeMutation = () => {
             .eq("swiper_id", userId)
             .eq("target_id", payload.targetUserId)
             .select("id, direction")
-            .single(),
+            .maybeSingle(),
           "No se pudo actualizar la conexión. Intentá de nuevo."
         );
         swipe = updateResponse.data;
         swipeErr = updateResponse.error;
+        if (!swipeErr && !swipe) {
+          throw new Error(
+            "No se pudo actualizar tu decisión anterior. No se guardó la conexión; contactá a soporte para revisar el acceso."
+          );
+        }
       }
 
       if (swipeErr) {

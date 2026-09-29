@@ -1,3 +1,4 @@
+import { getNextProfile } from "../src/lib/profileSwipe";
 import { supabase } from "../src/lib/supabase";
 import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
 import { PURPOSE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
@@ -468,6 +469,7 @@ export const DiscoverContent = forwardRef<
   const incomingLikes = useIncomingLikeCandidatesQuery();
   const swipeMutation = useSwipeMutation();
   const swipeBusy = useRef(false);
+  const pendingNextProfile = useRef<{ fromId: string; next: DataT | null } | null>(null);
   const focused = useIsFocused();
   const refetchHistory = swipeHistory.refetch;
   const refetchIncoming = incomingLikes.refetch;
@@ -686,16 +688,7 @@ export const DiscoverContent = forwardRef<
   const canvasProfiles = showHistory ? historyProfiles : profiles;
   const nextSelectedProfile = useMemo(() => {
     if (!selectedProfile) return null;
-    const index = canvasProfiles.findIndex(
-      (item) => String(item.id) === String(selectedProfile.id)
-    );
-    return (
-      canvasProfiles[index + 1] ??
-      canvasProfiles.find(
-        (item) => String(item.id) !== String(selectedProfile.id)
-      ) ??
-      null
-    );
+    return getNextProfile(canvasProfiles, selectedProfile.id, pendingNextProfile.current);
   }, [canvasProfiles, selectedProfile]);
   const selectedProfileForSheet = useMemo<UserProfileCardData | null>(
     () =>
@@ -817,6 +810,7 @@ export const DiscoverContent = forwardRef<
     swipeBusy.current = true;
     const id = String(profile.id);
     const next = nextSelectedProfile;
+    pendingNextProfile.current = { fromId: id, next };
     try {
       const result = await swipeMutation.mutateAsync({
         targetUserId: id,
@@ -837,6 +831,7 @@ export const DiscoverContent = forwardRef<
       });
       return false;
     } finally {
+      pendingNextProfile.current = null;
       swipeBusy.current = false;
     }
   };

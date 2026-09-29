@@ -1,3 +1,8 @@
+import {
+  ALL_CHALLENGE_DAYS,
+  getChallengeContentLabel,
+  getChallengeContentForDay,
+} from "../../src/lib/challengeDayContent";
 import React, { useEffect, useRef, useState } from "react";
 import {
   type StyleProp,
@@ -45,6 +50,11 @@ export default function ChallengeDaysSection({
   const canEdit = mode === "creator" && isCreator;
   const canChooseDay = mode === "creator";
   useEffect(() => {
+    if (mode === "completion")
+      setDay(Math.max(1, Math.min(currentDay, totalDays)));
+  }, [mode, currentDay, totalDays]);
+
+  useEffect(() => {
     if (
       canEdit &&
       editRequest > handledEditRequest.current &&
@@ -64,22 +74,29 @@ export default function ChallengeDaysSection({
   const selected = days.data?.find((item) => item.day === day) ?? {
     challenge_id: challengeId,
     day,
-    title: `Día ${day}`,
+    title: getChallengeContentLabel(day),
     description: "",
     attachments: [],
     revision: 0,
   };
   const hasAttachments = selected.attachments.length > 0;
-  const hasCustomTitle = selected.title !== `Día ${day}`;
+  const hasCustomTitle = selected.title !== getChallengeContentLabel(day);
   const hasDescription = selected.description.trim().length > 0;
-  const hasPublishedContent = hasCustomTitle || hasDescription || hasAttachments;
+  const visibleContent = getChallengeContentForDay(days.data ?? [], day);
+  const hasPublishedContent = visibleContent.length > 0;
   const containerStyle: StyleProp<ViewStyle> =
     mode === "completion" && !hasCustomTitle && !hasDescription
       ? s.plain
       : s.card;
   if (mode === "creator" && !isCreator) return null;
   if (mode === "completion" && !isJoined) return null;
-  if (mode === "completion" && !hasPublishedContent) return null;
+  if (
+    mode === "completion" &&
+    !days.isLoading &&
+    !days.isError &&
+    !hasPublishedContent
+  )
+    return null;
   return (
     <View style={containerStyle}>
       {mode === "creator" ? (
@@ -91,30 +108,33 @@ export default function ChallengeDaysSection({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 8 }}
         >
-          {Array.from({ length: totalDays }, (_, index) => index + 1).map(
-            (value) => (
-              <TouchableOpacity
-                key={value}
-                accessibilityRole="button"
-                accessibilityState={{ selected: value === day }}
-                accessibilityLabel={`Ver día ${value}`}
-                onPress={() => {
-                  setDay(value);
-                  setEditing(false);
-                }}
-                style={[s.button, value === day ? s.primary : s.secondary]}
+          {[
+            ALL_CHALLENGE_DAYS,
+            ...Array.from({ length: totalDays }, (_, index) => index + 1),
+          ].map((value) => (
+            <TouchableOpacity
+              key={value}
+              accessibilityRole="button"
+              accessibilityState={{ selected: value === day }}
+              accessibilityLabel={`Ver contenido: ${getChallengeContentLabel(
+                value
+              )}`}
+              onPress={() => {
+                setDay(value);
+                setEditing(false);
+              }}
+              style={[s.button, value === day ? s.primary : s.secondary]}
+            >
+              <Text
+                style={[
+                  s.buttonText,
+                  value === day ? null : s.secondaryButtonText,
+                ]}
               >
-                <Text
-                  style={[
-                    s.buttonText,
-                    value === day ? null : s.secondaryButtonText,
-                  ]}
-                >
-                  Día {value}
-                </Text>
-              </TouchableOpacity>
-            )
-          )}
+                {getChallengeContentLabel(value)}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
       ) : null}
       {days.isLoading ? (
@@ -127,28 +147,51 @@ export default function ChallengeDaysSection({
       ) : (
         <>
           {canChooseDay ? (
-            <Text style={s.hint}>Vista del contenido cargado para día {day}</Text>
-          ) : null}
-          {mode === "creator" || hasCustomTitle ? (
-            <Text style={s.title}>{selected.title}</Text>
-          ) : null}
-          {hasDescription || mode === "creator" ? (
-            <Text style={selected.description ? s.text : s.hint}>
-              {selected.description ||
-                "Este día todavía no tiene una consigna personalizada."}
+            <Text style={s.hint}>
+              {day === ALL_CHALLENGE_DAYS
+                ? "Este contenido se muestra todos los días, junto a la consigna de cada día."
+                : `Contenido específico del día ${day}. También se mostrará el contenido de Todos los días.`}
             </Text>
           ) : null}
-          {focused && active && !editing
-            ? selected.attachments.map((item) => (
-                <DayAttachmentView key={`${day}:${item.id}`} item={item} />
-              ))
-            : null}
+          {(mode === "creator" ? [selected] : visibleContent).map((content) => (
+            <View key={content.day} style={{ gap: 10 }}>
+              {content.day === ALL_CHALLENGE_DAYS &&
+              content.title !== getChallengeContentLabel(content.day) ? (
+                <Text style={s.hint}>Todos los días</Text>
+              ) : null}
+              {mode === "creator" ||
+              content.day === ALL_CHALLENGE_DAYS ||
+              content.title !== getChallengeContentLabel(content.day) ? (
+                <Text style={s.title}>{content.title}</Text>
+              ) : null}
+              {content.description.trim() || mode === "creator" ? (
+                <Text style={content.description ? s.text : s.hint}>
+                  {content.description ||
+                    (day === ALL_CHALLENGE_DAYS
+                      ? "Agregá una consigna para todo el desafío."
+                      : "Este día todavía no tiene una consigna personalizada.")}
+                </Text>
+              ) : null}
+              {focused && active && !editing
+                ? content.attachments.map((item) => (
+                    <DayAttachmentView
+                      key={`${content.day}:${item.id}`}
+                      item={item}
+                    />
+                  ))
+                : null}
+            </View>
+          ))}
           {canChooseDay && !hasAttachments ? (
-            <Text style={s.hint}>Este día todavía no tiene contenidos adjuntos.</Text>
+            <Text style={s.hint}>Todavía no hay contenidos adjuntos.</Text>
           ) : null}
           {canEdit && session ? (
             <DayButton
-              label="Personalizar día"
+              label={
+                day === ALL_CHALLENGE_DAYS
+                  ? "Personalizar todos los días"
+                  : "Personalizar día"
+              }
               style={s.primary}
               onPress={() => setEditing(true)}
             />

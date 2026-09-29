@@ -1,3 +1,8 @@
+// Day zero stores shared content once; it is not a check-in day.
+export const ALL_CHALLENGE_DAYS = 0;
+export const getChallengeContentLabel = (day: number) =>
+  day === ALL_CHALLENGE_DAYS ? "Todos los días" : `Día ${day}`;
+
 export const DAY_MEDIA_BUCKET = "challenge-day-media";
 export const MAX_DAY_ATTACHMENTS = 20;
 export const PHOTO_LIMIT = 10 * 1024 * 1024;
@@ -23,6 +28,22 @@ export type ChallengeDay = {
   attachments: DayAttachment[];
   revision: number;
 };
+export const hasChallengeDayContent = (content: ChallengeDay) =>
+  content.title.trim() !== getChallengeContentLabel(content.day) ||
+  Boolean(content.description.trim()) ||
+  content.attachments.length > 0;
+
+export function getChallengeContentForDay(
+  contents: ChallengeDay[],
+  day: number
+) {
+  return [ALL_CHALLENGE_DAYS, ...(day === ALL_CHALLENGE_DAYS ? [] : [day])]
+    .map((value) => contents.find((item) => item.day === value))
+    .filter((item): item is ChallengeDay =>
+      Boolean(item && hasChallengeDayContent(item))
+    );
+}
+
 export type DayDraft = Omit<ChallengeDay, "attachments"> & {
   attachments: DraftAttachment[];
 };

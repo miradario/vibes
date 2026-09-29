@@ -427,7 +427,7 @@ const CreateChallenge = () => {
                 </Text>
                 <Text style={localStyles.dayContentText}>
                   Agregá consignas, imágenes, audios y links de YouTube para
-                  que los participantes los vean al completar cada día.
+                  un día específico o para todos los días del desafío.
                 </Text>
               </View>
               {!editing ? (

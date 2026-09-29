@@ -943,10 +943,7 @@ const Home = () => {
               </Text>
               <Text style={localStyles.heroSubtitle}>Qué bueno tenerte por acá</Text>
             </View>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Preferencias de notificaciones" style={localStyles.headerAction} onPress={() => navigation.navigate("Configuration" as never)}>
-              <Icon name="notifications-outline" size={25} color={vibesTheme.colors.primaryText} />
-            </TouchableOpacity>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Configuración" style={localStyles.headerAction} onPress={() => navigation.navigate("Settings" as never)}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Configuración" style={localStyles.headerAction} onPress={() => navigation.navigate("Configuration" as never)}>
               <Icon name="settings-outline" size={25} color={vibesTheme.colors.primaryText} />
             </TouchableOpacity>
           </View>
@@ -963,7 +960,7 @@ const Home = () => {
             userId={session?.user?.id}
             enabled={moodGateUser === session?.user?.id}
           />
-          <CompleteProfilePrompt userId={session?.user?.id} compact />
+          <CompleteProfilePrompt userId={session?.user?.id} />
 
           <HomeOverview userId={session?.user?.id}>
 

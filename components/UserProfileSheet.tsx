@@ -285,6 +285,10 @@ const UserProfileSheet = ({
   const swipeX = useMemo(() => new Animated.Value(0), [profile?.id]);
   const swipeUp = useRef(new Animated.Value(0)).current;
   const swipingRef = useRef(false);
+  const currentProfileId = useRef(profile?.id);
+  useLayoutEffect(() => {
+    currentProfileId.current = profile?.id;
+  }, [profile?.id]);
   const [swipeNextProfile, setSwipeNextProfile] = useState<UserProfileCardData | null>(null);
   const [swipeAnimating, setSwipeAnimating] = useState(false);
   const [photoReadyId, setPhotoReadyId] = useState<string | undefined>(undefined);
@@ -711,6 +715,7 @@ const UserProfileSheet = ({
             ]}
           >
             <ProfileMediaImage
+                key={`next-profile-${(swipeNextProfile ?? nextProfile)?.id}`}
                 contentFit="cover"
                 blurBackground
                 showLoading
@@ -776,9 +781,12 @@ const UserProfileSheet = ({
                       contentFit="cover" blurBackground showLoading
                       priority={index === safeActiveIndex ? "high" : "low"}
                       onDisplay={() => {
+                        if (currentProfileId.current !== profile.id) return;
                         if (index === safeActiveIndex) {
                           setPhotoReadyId(profile.id);
-                          if (!swipingRef.current) setSwipeNextProfile(null);
+                          if (!swipingRef.current) {
+                            setSwipeNextProfile((previous) => previous?.id === profile.id ? null : previous);
+                          }
                         }
                       }}
                       source={source}

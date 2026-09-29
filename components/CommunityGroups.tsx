@@ -271,7 +271,7 @@ const s = StyleSheet.create({
     flexShrink: 1,
     color: vibesTheme.colors.accentMustard,
     fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.bold,
   },
   avatar: {
     width: 48,

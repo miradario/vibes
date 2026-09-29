@@ -931,9 +931,9 @@ const localStyles = StyleSheet.create({
   communityTitle: {
     flexShrink: 1,
     color: TEXT_PRIMARY,
-    fontSize: 32,
-    lineHeight: 38,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 26,
+    lineHeight: 32,
+    fontFamily: vibesTheme.fonts.semibold,
     textAlign: "left",
   },
   chatTabs: {

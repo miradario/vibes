@@ -1,3 +1,4 @@
+import { ALL_CHALLENGE_DAYS } from "../../src/lib/challengeDayContent";
 import { normalizeDayRecording } from "../../src/lib/normalizeDayRecording";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -506,7 +507,7 @@ export default function ChallengeDayEditor({
             ]}
           >
             <View style={s.between}>
-              <Text style={s.title}>Personalizar día {initial.day}</Text>
+              <Text style={s.title}>{initial.day === ALL_CHALLENGE_DAYS ? "Contenido para todos los días" : `Personalizar día ${initial.day}`}</Text>
               <DayButton
                 label="Cerrar"
                 disabled={busy || recording}
@@ -527,7 +528,7 @@ export default function ChallengeDayEditor({
               <>
                 <Text style={s.text}>Título</Text>
                 <TextInput
-                  accessibilityLabel="Título del día"
+                  accessibilityLabel={initial.day === ALL_CHALLENGE_DAYS ? "Título del contenido compartido" : "Título del día"}
                   value={draft.title}
                   maxLength={160}
                   editable={!busy && !recording}
@@ -606,7 +607,7 @@ export default function ChallengeDayEditor({
                 <View style={s.linkBox}>
                   <Text style={s.sectionTitle}>Link o YouTube</Text>
                   <TextInput
-                    accessibilityLabel="Enlace del día"
+                    accessibilityLabel={initial.day === ALL_CHALLENGE_DAYS ? "Enlace para todos los días" : "Enlace del día"}
                     placeholder="Pegá el enlace"
                     placeholderTextColor={vibesTheme.colors.secondaryText}
                     value={linkInput}
@@ -751,7 +752,7 @@ export default function ChallengeDayEditor({
                         ? "Guardando…"
                         : error
                         ? "Reintentar guardar"
-                        : "Guardar día"
+                        : initial.day === ALL_CHALLENGE_DAYS ? "Guardar para todos los días" : "Guardar día"
                     }
                     onPress={save}
                     disabled={busy || recording || Boolean(conflict)}
