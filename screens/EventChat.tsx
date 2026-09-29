@@ -1,5 +1,6 @@
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
+import MessageEntrance from "../components/MessageEntrance";
 /** @format */
 
 import React, {
@@ -750,69 +751,70 @@ const EventChat = () => {
               const isMe = msg.senderId === userId;
               const sender = getSenderInfo(msg.senderId);
               return (
-                <TouchableOpacity
-                  key={msg.id}
-                  activeOpacity={isMe ? 0.7 : 0.82}
-                  onPress={() => {
-                    if (isMe) return;
-                    handleOpenParticipant({
-                      userId: msg.senderId,
-                      displayName: sender.name,
-                      avatarUrl: sender.avatar,
-                    });
-                  }}
-                  onLongPress={() => handleLongPressMessage(msg)}
-                  style={[
-                    localStyles.messageRow,
-                    isMe && localStyles.messageRowMe,
-                  ]}
-                >
-                  {/* Avatar for other people's messages */}
-                  {!isMe ? (
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => openParticipantCard(msg.senderId)}
-                    >
-                      <Avatar uri={sender.avatar} size={28} />
-                    </TouchableOpacity>
-                  ) : null}
-                  <View
+                <MessageEntrance key={msg.id} sending={isMe && msg.deliveryStatus === "sending"}>
+                  <TouchableOpacity
+                    activeOpacity={isMe ? 0.7 : 0.82}
+                    onPress={() => {
+                      if (isMe) return;
+                      handleOpenParticipant({
+                        userId: msg.senderId,
+                        displayName: sender.name,
+                        avatarUrl: sender.avatar,
+                      });
+                    }}
+                    onLongPress={() => handleLongPressMessage(msg)}
                     style={[
-                      localStyles.messageBubble,
-                      isMe
-                        ? localStyles.messageBubbleMe
-                        : localStyles.messageBubbleOther,
+                      localStyles.messageRow,
+                      isMe && localStyles.messageRowMe,
                     ]}
                   >
-                    {!isMe && (
+                    {/* Avatar for other people's messages */}
+                    {!isMe ? (
                       <TouchableOpacity
                         activeOpacity={0.85}
                         onPress={() => openParticipantCard(msg.senderId)}
                       >
-                        <Text style={localStyles.messageSender}>
-                          {sender.name || "Participante"}
-                        </Text>
+                        <Avatar uri={sender.avatar} size={28} />
                       </TouchableOpacity>
-                    )}
-                    <ChatMessageContent onLongPress={() => handleLongPressMessage(msg)} body={msg.body} textStyle={[localStyles.messageText, isMe && { color: DARK_GRAY }]} />
-                    <View style={localStyles.messageMetaRow}>
-                      <Text style={localStyles.messageTime}>
-                        {formatTime(msg.createdAt)}
-                      </Text>
-                      {isMe ? (
-                        <Icon
-                          name={
-                            msg.deliveryStatus === "sending"
-                              ? "time-outline"
-                              : "checkmark"
-                          }
-                          size={12}
-                          color={TEXT_SECONDARY}
-                        />
-                      ) : null}
+                    ) : null}
+                    <View
+                      style={[
+                        localStyles.messageBubble,
+                        isMe
+                          ? localStyles.messageBubbleMe
+                          : localStyles.messageBubbleOther,
+                      ]}
+                    >
+                      {!isMe && (
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={() => openParticipantCard(msg.senderId)}
+                        >
+                          <Text style={localStyles.messageSender}>
+                            {sender.name || "Participante"}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      <ChatMessageContent onLongPress={() => handleLongPressMessage(msg)} body={msg.body} textStyle={[localStyles.messageText, isMe && { color: DARK_GRAY }]} />
+                      <View style={localStyles.messageMetaRow}>
+                        <Text style={localStyles.messageTime}>
+                          {formatTime(msg.createdAt)}
+                        </Text>
+                        {isMe ? (
+                          <Icon
+                            name={
+                              msg.deliveryStatus === "sending"
+                                ? "time-outline"
+                                : "checkmark"
+                            }
+                            size={12}
+                            color={TEXT_SECONDARY}
+                          />
+                        ) : null}
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                </MessageEntrance>
               );
             })
           )}

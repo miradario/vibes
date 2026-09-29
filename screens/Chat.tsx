@@ -1,6 +1,7 @@
 import { messagePreview } from "../src/lib/chatPhotos";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
+import MessageEntrance from "../components/MessageEntrance";
 import { useConnectionOpened } from "../src/queries/homeActivity.queries";
 import ScreenContainer from "../components/ScreenContainer";
 import MessageReceipt from "../components/MessageReceipt";
@@ -321,7 +322,11 @@ const Chat = () => {
     );
 
     if (isOwn) {
-      return <View style={localStyles.ownMessageRow}>{bubble}</View>;
+      return (
+        <MessageEntrance sending={item.deliveryStatus === "sending"} style={localStyles.ownMessageRow}>
+          {bubble}
+        </MessageEntrance>
+      );
     }
 
     return (
