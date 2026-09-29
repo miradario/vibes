@@ -82,3 +82,15 @@ Se eliminó una exclusión adicional por autoría que dejaba el catálogo vacío
 La solicitud se envía como último mensaje de texto, separada del catálogo y las preferencias. Se eliminó el ejemplo literal de bienvenida que coincidía con la respuesta incorrecta observada. Un pedido con una única categoría explícita valida también esa categoría en la salida; pedidos mixtos, negados e implícitos quedan a interpretación del modelo. Una salida inválida permite un único reintento de reparación (hasta 25 segundos por llamada) antes de devolver error, sin persistir la respuesta inválida.
 
 La regresión reproduce «Listame todos los eventos futuros» y la respuesta capturada con categoría nula. Los 21 tests pasan. Cuatro llamadas aisladas a DeepSeek real verificaron ese pedido, desafíos, un seguimiento de eventos y un saludo, sin modificar conversaciones de usuarios.
+
+## Feature flag de Firebase
+
+Proyecto: `vibes-d05e4`. Parámetro booleano: `vibi_enabled`, con valor inicial y predeterminado local `false`.
+
+En [Firebase Remote Config](https://console.firebase.google.com/project/vibes-d05e4/config), cambiar el parámetro y publicar los cambios. La app obtiene y activa valores al arrancar, al volver a primer plano (caché de cinco minutos en producción) y mediante actualizaciones en tiempo real. Sin conexión conserva el último valor activado; una instalación nueva permanece apagada hasta obtener un valor remoto verdadero.
+
+La flag oculta el acceso en Home y evita montar el chat; si se apaga con Vibi abierto, vuelve a la pantalla anterior sin borrar el historial. Es una flag de lanzamiento en el cliente: no revoca el endpoint de Supabase ni cancela solicitudes que ya llegaron al servidor. La versión web mantiene Vibi apagado.
+
+Requiere un nuevo build nativo con `@react-native-firebase/app`, `analytics` (dependencia del SDK de Remote Config, con recolección automática deshabilitada) y `remote-config`. No basta una actualización de JavaScript para agregar estos módulos. Los builds anteriores sin Firebase dejan Vibi apagado. iOS usa `com.gurudevelopers.vibes`; Android usa `com.miradario.vibe`. Los archivos de configuración Firebase son identificadores públicos de cliente y no contienen credenciales de administración.
+
+Después de instalar las dependencias, ejecutar `pod install` en `ios` y compilar de nuevo. La configuración Expo reproduce el enlace estático mediante CocoaPods y los archivos nativos versionados ya incluyen el arranque de Firebase y el recurso de iOS. `node --test scripts/vibi-flags.test.cjs` verifica valor inicial, cambios remotos, errores de red, limpieza de suscripciones y ausencia del módulo nativo.

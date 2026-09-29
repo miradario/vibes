@@ -1,3 +1,4 @@
+import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -564,7 +565,16 @@ function VibiConversation({ userId }: { userId: string }) {
   );
 }
 export default function Vibi() {
+  const enabled = useVibiEnabled();
+  const navigation = useNavigation();
   const { data: session } = useAuthSession();
+  useEffect(() => {
+    if (!enabled) {
+      if (navigation.canGoBack()) navigation.goBack();
+      else navigation.navigate("Home" as never);
+    }
+  }, [enabled, navigation]);
+  if (!enabled) return null;
   return session?.user?.id ? (
     <VibiConversation key={session.user.id} userId={session.user.id} />
   ) : (

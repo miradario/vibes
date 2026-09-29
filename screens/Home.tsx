@@ -1,3 +1,4 @@
+import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import { LinearGradient } from "expo-linear-gradient";
 import ProfileMediaImage from "../components/ProfileMediaImage";
 import HomeOverview from "../components/HomeOverview";
@@ -316,6 +317,7 @@ const readStoredFilters = (
 });
 
 const Home = () => {
+  const vibiEnabled = useVibiEnabled();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -943,15 +945,17 @@ const Home = () => {
               </Text>
               <Text style={localStyles.heroSubtitle}>Qué bueno tenerte por acá</Text>
             </View>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Hablar con Vibi"
-              onPress={() => navigation.navigate("Vibi" as never)}
-              style={localStyles.vibiButton}
-            >
-              <Ionicons name="sparkles-outline" size={24} color={vibesTheme.colors.primaryText} />
-              <Text style={localStyles.vibiLabel}>Vibi</Text>
-            </TouchableOpacity>
+            {vibiEnabled ? (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Hablar con Vibi"
+                onPress={() => navigation.navigate("Vibi" as never)}
+                style={localStyles.vibiButton}
+              >
+                <Ionicons name="sparkles-outline" size={24} color={vibesTheme.colors.primaryText} />
+                <Text style={localStyles.vibiLabel}>Vibi</Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Configuración" style={localStyles.headerAction} onPress={() => navigation.navigate("Configuration" as never)}>
               <Icon name="settings-outline" size={25} color={vibesTheme.colors.primaryText} />
             </TouchableOpacity>

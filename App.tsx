@@ -1,3 +1,4 @@
+import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
 import AppCamera from "./components/AppCamera";
 import { useCommunityDeliverySync } from "./src/queries/communityReceipts.queries";
 import VerifyEmail from "./screens/VerifyEmail";
@@ -110,6 +111,7 @@ const CommunityRuntime = () => {
   return null;
 };
 const AppNavigator = () => {
+  React.useEffect(() => startRemoteConfig(), []);
   const { t } = useI18n();
   const [fontsLoaded, fontError] = useFonts({
     "JosefinSans-Thin": require("./assets/font/JosefinSans-Thin.ttf"),
