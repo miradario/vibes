@@ -3,6 +3,7 @@ import { useCommunityDeliverySync } from "./src/queries/communityReceipts.querie
 import VerifyEmail from "./screens/VerifyEmail";
 import ProfileQuestions from "./screens/ProfileQuestions";
 import CommunityGroupChat from "./screens/CommunityGroupChat";
+import Vibi from "./screens/Vibi";
 /** @format */
 
 import "react-native-url-polyfill/auto";
@@ -521,6 +522,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="EventDetail"
               component={EventDetail}
+              options={{ headerShown: false, animationEnabled: true }}
+            />
+            <Stack.Screen
+              name="Vibi"
+              component={Vibi}
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen

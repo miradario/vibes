@@ -946,6 +946,15 @@ const Home = () => {
                 Hola, {firstName}
               </Text>
             </View>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Hablar con Vibi"
+              onPress={() => navigation.navigate("Vibi" as never)}
+              style={localStyles.vibiButton}
+            >
+              <Ionicons name="sparkles-outline" size={24} color={vibesTheme.colors.primaryText} />
+              <Text style={localStyles.vibiLabel}>Vibi</Text>
+            </TouchableOpacity>
           </View>
 
           {session?.user?.id ? (
@@ -1001,6 +1010,19 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     gap: 18,
     marginBottom: 16,
+  },
+  vibiButton: {
+    width: 58,
+    minHeight: 58,
+    borderRadius: 22,
+    backgroundColor: vibesTheme.colors.accentMustard,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
+  vibiLabel: {
+    fontSize: 12,
+    color: vibesTheme.colors.primaryText,
   },
   heroAvatarButton: {
     width: 58,

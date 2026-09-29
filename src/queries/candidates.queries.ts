@@ -373,6 +373,12 @@ export type SwipeHistoryCandidate = Candidate & {
   swipedAt: string;
 };
 
+/** Fetch a single visible profile after Vibi revalidates the recommendation. */
+export const fetchCandidateById = async (userId: string, profileId: string) => {
+  const candidates = await fetchCandidates(userId, { limit: 1 }, false, [profileId]);
+  return candidates.find((candidate) => candidate.id === profileId && candidate.isActive) ?? null;
+};
+
 export const useSwipeHistoryCandidatesQuery = () => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
