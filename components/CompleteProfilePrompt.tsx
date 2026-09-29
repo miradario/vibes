@@ -21,7 +21,13 @@ const DISMISS_MS = DISMISS_DAYS * 24 * 60 * 60 * 1000;
 const getDismissStorageKey = (userId: string) =>
   `complete_profile_prompt_dismissed_until:${userId}`;
 
-export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
+export default function CompleteProfilePrompt({
+  userId,
+  compact = false,
+}: {
+  userId?: string;
+  compact?: boolean;
+}) {
   const navigation = useNavigation();
   const [dismissed, setDismissed] = useState(false);
   const [dismissPreferenceLoaded, setDismissPreferenceLoaded] = useState(false);
@@ -30,13 +36,15 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
     [userId]
   );
   const { data: profile, isSuccess: profileReady } = useProfileQuery(userId);
-  const { data: preferences, isSuccess: preferencesReady } = useUserPreferencesQuery(userId);
+  const { data: preferences, isSuccess: preferencesReady } =
+    useUserPreferencesQuery(userId);
   const { data, isSuccess } = useQuery({
     queryKey: ["profileAnswers", userId],
     queryFn: () => readProfileAnswers(userId!),
     enabled: !!userId,
   });
-  const { data: emailOwner, isSuccess: emailReady } = useEmailOwnershipQuery(userId);
+  const { data: emailOwner, isSuccess: emailReady } =
+    useEmailOwnershipQuery(userId);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,9 +92,12 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
 
   if (
     !dismissPreferenceLoaded ||
-    dismissed ||
-    !isSuccess || !profileReady || !preferencesReady || !emailReady ||
-    !hasMissingProfileAnswers(data)
+    (!compact && dismissed) ||
+    !isSuccess ||
+    !profileReady ||
+    !preferencesReady ||
+    !emailReady ||
+    (!compact && !hasMissingProfileAnswers(data))
   )
     return null;
   const completion = getProfileCompletion(
@@ -100,18 +111,26 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
     <TouchableOpacity
       accessibilityRole="button"
       onPress={() => navigation.navigate(completion.nextScreen as never)}
-      style={styles.card}
+      style={[styles.card, compact && styles.compactCard]}
       activeOpacity={0.84}
     >
-      <View style={styles.iconWrap}>
+      <View style={[styles.iconWrap, compact && styles.compactIcon]}>
         <Icon
           name="person-outline"
           size={25}
-          color={vibesTheme.colors.accentMustard}
+          color={
+            compact
+              ? vibesTheme.colors.primaryText
+              : vibesTheme.colors.accentMustard
+          }
         />
       </View>
       <View style={styles.copy}>
-        <Text style={styles.title}>Completá tu perfil</Text>
+        <Text style={styles.title}>
+          {compact
+            ? `Tu perfil está al ${completion.percent}%`
+            : "Completá tu perfil"}
+        </Text>
         <View style={styles.progressRow}>
           <View
             accessibilityRole="progressbar"
@@ -127,25 +146,60 @@ export default function CompleteProfilePrompt({ userId }: { userId?: string }) {
               ]}
             />
           </View>
-          <Text style={styles.percent}>{completion.percent}%</Text>
+          {!compact ? (
+            <Text style={styles.percent}>{completion.percent}%</Text>
+          ) : null}
         </View>
       </View>
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel="Cerrar sugerencia"
-        onPress={(event) => {
-          event.stopPropagation();
-          dismissForThirtyDays();
-        }}
-        style={styles.closeButton}
-      >
-        <Icon name="close" size={17} color={vibesTheme.colors.secondaryText} />
-      </TouchableOpacity>
+      {compact ? (
+        <View style={styles.completeAction}>
+          <Text style={styles.completeText}>Completar</Text>
+          <Icon
+            name="arrow-forward"
+            size={18}
+            color={vibesTheme.colors.primaryText}
+          />
+        </View>
+      ) : (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar sugerencia"
+          onPress={(event) => {
+            event.stopPropagation();
+            dismissForThirtyDays();
+          }}
+          style={styles.closeButton}
+        >
+          <Icon
+            name="close"
+            size={17}
+            color={vibesTheme.colors.secondaryText}
+          />
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
+  compactCard: {
+    borderRadius: 40,
+    paddingRight: 14,
+    gap: 10,
+    borderColor: "rgba(43,43,43,0.1)",
+  },
+  compactIcon: {
+    backgroundColor: vibesTheme.colors.accentMustard,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  completeAction: { flexDirection: "row", alignItems: "center", gap: 4 },
+  completeText: {
+    color: vibesTheme.colors.primaryText,
+    fontSize: 13,
+    fontFamily: vibesTheme.fonts.bold,
+  },
   card: {
     flexDirection: "row",
     alignItems: "center",

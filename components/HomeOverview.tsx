@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   AppState,
+  useWindowDimensions,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -39,6 +40,10 @@ const getEventDateLabel = (date: string) => {
       .replace(".", "")
       .toUpperCase(),
     day: value.getDate(),
+    month: value
+      .toLocaleDateString("es-AR", { month: "short" })
+      .replace(".", "")
+      .toUpperCase(),
     time: value.toLocaleTimeString("es-AR", {
       hour: "2-digit",
       minute: "2-digit",
@@ -75,7 +80,7 @@ function OverviewLoadingPlaceholder() {
   return (
     <>
       <View style={s.sectionBlock}>
-        <SectionHeader title="DESAFÍOS ACTIVOS" />
+        <SectionHeader title="Tus desafíos" />
         <View style={s.placeholderCarousel}>
           <View style={s.challengeSkeletonCard} />
           <View style={s.challengeSkeletonCard} />
@@ -83,7 +88,7 @@ function OverviewLoadingPlaceholder() {
       </View>
 
       <View style={s.sectionBlock}>
-        <SectionHeader title="PRÓXIMOS EVENTOS" />
+        <SectionHeader title="Eventos para vos" />
         <View style={s.placeholderCarousel}>
           <View style={s.eventSkeletonCard} />
           <View style={s.eventSkeletonCard} />
@@ -103,6 +108,8 @@ function ChallengeCard({
   showTodayBadge?: boolean;
 }) {
   const navigation = useNavigation<any>();
+  const { width } = useWindowDimensions();
+  const cardWidth = Math.max(140, Math.min(260, (width - 50) / 2));
   const checkins = useChallengeCheckinsQuery(event.id, userId);
   const participant = useChallengeParticipantQuery(event.id, userId);
   useFocusEffect(
@@ -143,7 +150,7 @@ function ChallengeCard({
     <TouchableOpacity
       accessibilityRole="button"
       onPress={() => navigation.navigate("ChallengeDetailScreen", { event })}
-      style={s.challengeCard}
+      style={[s.challengeCard, { width: cardWidth }]}
       activeOpacity={0.8}
     >
       <View style={s.challengeFrame}>
@@ -157,9 +164,9 @@ function ChallengeCard({
         <LinearGradient
           pointerEvents="none"
           colors={[
-            "rgba(254,254,253,0)",
-            "rgba(254,254,253,0.92)",
-            "rgba(254,254,253,0.99)",
+            "rgba(43,43,43,0)",
+            "rgba(43,43,43,0.65)",
+            "rgba(43,43,43,0.94)",
           ]}
           locations={[0.18, 0.62, 1]}
           style={StyleSheet.absoluteFillObject}
@@ -194,14 +201,13 @@ function ChallengeCard({
             <Icon name="chevron-forward" size={20} color={ACCENT} />
           </View>
           {checkins.isError || participant.isError ? (
-            <Text style={[s.meta, s.imageMeta]} numberOfLines={2}>
+            <Text style={[s.meta, { color: vibesTheme.colors.background }]} numberOfLines={2}>
               No pudimos actualizar tu progreso.
             </Text>
           ) : checkins.isLoading ? (
             <VibesLoader size={30} style={s.loader} />
           ) : progress ? (
             <View style={s.progressLine}>
-              <Icon name="trophy-outline" size={22} color={ACCENT} />
               <View
                 accessibilityRole="progressbar"
                 accessibilityValue={{
@@ -224,6 +230,8 @@ function ChallengeCard({
 
 function HomeEventCard({ event }: { event: EventFeedItem }) {
   const navigation = useNavigation<any>();
+  const { width } = useWindowDimensions();
+  const cardWidth = Math.max(140, Math.min(260, (width - 50) / 2));
   const label = getEventDateLabel(event.startsAt!);
   const participantImages = (event.participantPreviewImages ?? []).map(
     (uri, index) => ({ id: `${event.id}-${index}`, uri })
@@ -233,7 +241,7 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
     <TouchableOpacity
       accessibilityRole="button"
       key={event.id}
-      style={s.eventCard}
+      style={[s.eventCard, { width: cardWidth }]}
       activeOpacity={0.8}
       onPress={() => navigation.navigate("EventDetail", { event })}
     >
@@ -247,9 +255,9 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
       <LinearGradient
         pointerEvents="none"
         colors={[
-          "rgba(254,254,253,0)",
-          "rgba(254,254,253,0.92)",
-          "rgba(254,254,253,0.99)",
+          "rgba(43,43,43,0)",
+          "rgba(43,43,43,0.65)",
+          "rgba(43,43,43,0.94)",
         ]}
         locations={[0.18, 0.62, 1]}
         style={StyleSheet.absoluteFillObject}
@@ -257,6 +265,7 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
       <View style={s.dateBadge}>
         <Text style={s.dateWeekday}>{label.weekday}</Text>
         <Text style={s.dateDay}>{label.day}</Text>
+        <Text style={s.dateWeekday}>{label.month}</Text>
       </View>
       {participantImages.length ? (
         <AvatarGroup
@@ -272,14 +281,27 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
           <Text style={s.cardTitle} numberOfLines={2}>
             {event.title}
           </Text>
-          {event.modality === "online" ? (
+          {event.modality === "online" || event.location ? (
             <View style={s.eventMetaRow}>
-              <Icon name="videocam-outline" size={16} color={vibesTheme.colors.primaryText} />
+              <Icon
+                name={
+                  event.modality === "online"
+                    ? "videocam-outline"
+                    : "location-outline"
+                }
+                size={16}
+                color={vibesTheme.colors.background}
+              />
               <Text
-                style={[s.meta, s.imageMeta, { flex: 1 }]}
+                style={[
+                  s.meta,
+                  { flex: 1, color: vibesTheme.colors.background },
+                ]}
                 numberOfLines={2}
               >
-                {`Online · ${label.time}`}
+                {event.modality === "online"
+                  ? `Online · ${label.time}`
+                  : event.location}
               </Text>
             </View>
           ) : null}
@@ -289,7 +311,13 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
   );
 }
 
-export default function HomeOverview({ userId }: { userId?: string }) {
+export default function HomeOverview({
+  userId,
+  children,
+}: {
+  userId?: string;
+  children?: React.ReactNode;
+}) {
   const navigation = useNavigation<any>();
   const groups = useMyEventGroupsQuery(userId);
   const eventsFeed = useEventsFeedQuery();
@@ -328,7 +356,8 @@ export default function HomeOverview({ userId }: { userId?: string }) {
   const joinedChallenges = events.filter((event) => event.type === "challenge");
   const activeChallenges = joinedChallenges.filter(
     (event) =>
-      getChallengeTimeline(event.startsAt, event.durationDays).status === "active"
+      getChallengeTimeline(event.startsAt, event.durationDays).status ===
+      "active"
   );
   const joinedChallengeIds = new Set(joinedChallenges.map((event) => event.id));
   const activeHomeChallenges = activeChallenges
@@ -359,8 +388,8 @@ export default function HomeOverview({ userId }: { userId?: string }) {
     ? activeHomeChallenges
     : recommendedChallenges;
   const challengeSectionTitle = activeHomeChallenges.length
-    ? "DESAFÍOS ACTIVOS"
-    : "DESAFÍOS RECOMENDADOS";
+    ? "Tus desafíos"
+    : "Desafíos para vos";
   const isLoadingChallengeRecommendations =
     !activeHomeChallenges.length && challengesFeed.isLoading;
   const openList = (challenge = false) =>
@@ -369,16 +398,25 @@ export default function HomeOverview({ userId }: { userId?: string }) {
       params: { section: challenge ? "challenge" : "event" },
     });
   const createEvent = () => navigation.navigate("CreateEvent" as never);
-  if (groups.isLoading) return <OverviewLoadingPlaceholder />;
+  if (groups.isLoading)
+    return (
+      <>
+        <OverviewLoadingPlaceholder />
+        {children}
+      </>
+    );
   if (groups.isError)
     return (
-      <TouchableOpacity
-        accessibilityRole="button"
-        style={s.card}
-        onPress={() => void groups.refetch()}
-      >
-        <Text>No pudimos cargar tu agenda. Tocá para reintentar.</Text>
-      </TouchableOpacity>
+      <>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={s.card}
+          onPress={() => void groups.refetch()}
+        >
+          <Text>No pudimos cargar tu agenda. Tocá para reintentar.</Text>
+        </TouchableOpacity>
+        {children}
+      </>
     );
   return (
     <>
@@ -428,9 +466,11 @@ export default function HomeOverview({ userId }: { userId?: string }) {
         ) : null}
       </View>
 
+      {children}
+
       <View style={s.sectionBlock}>
         <SectionHeader
-          title="PRÓXIMOS EVENTOS"
+          title="Eventos para vos"
           onPress={visibleEvents.length ? () => openList() : undefined}
         />
         {visibleEvents.length ? (
@@ -492,11 +532,10 @@ const s = StyleSheet.create({
   },
   section: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 21,
-    color: vibesTheme.colors.secondaryText,
-    letterSpacing: 1,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 22,
+    lineHeight: 28,
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.bold,
   },
   link: {
     minHeight: 34,
@@ -516,13 +555,13 @@ const s = StyleSheet.create({
   },
   challengeSkeletonCard: {
     width: 174,
-    minHeight: 154,
+    minHeight: 170,
     borderRadius: 14,
     backgroundColor: "rgba(228, 183, 110, 0.18)",
   },
   eventSkeletonCard: {
     width: 174,
-    minHeight: 154,
+    minHeight: 170,
     borderRadius: 14,
     backgroundColor: "rgba(228, 183, 110, 0.18)",
   },
@@ -530,7 +569,7 @@ const s = StyleSheet.create({
     width: 174,
   },
   challengeFrame: {
-    minHeight: 154,
+    minHeight: 170,
     backgroundColor: vibesTheme.colors.background,
     borderRadius: 14,
     overflow: "hidden",
@@ -573,7 +612,7 @@ const s = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     lineHeight: 24,
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.background,
     fontFamily: vibesTheme.fonts.medium,
   },
   meta: {
@@ -585,7 +624,7 @@ const s = StyleSheet.create({
   action: {
     fontSize: 16,
     lineHeight: 22,
-    color: ACCENT,
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
   },
   challengeTitle: { flex: 1 },
@@ -600,13 +639,13 @@ const s = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "rgba(43, 43, 43, 0.16)",
+    backgroundColor: "rgba(254, 254, 253, 0.3)",
     overflow: "hidden",
   },
   fill: { height: "100%", backgroundColor: ACCENT, borderRadius: 3 },
   percent: {
     minWidth: 33,
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.background,
     fontSize: 13,
     lineHeight: 18,
     textAlign: "right",
@@ -622,7 +661,7 @@ const s = StyleSheet.create({
   },
   eventCard: {
     width: 174,
-    minHeight: 154,
+    minHeight: 170,
     backgroundColor: vibesTheme.colors.background,
     borderRadius: 14,
     overflow: "hidden",
