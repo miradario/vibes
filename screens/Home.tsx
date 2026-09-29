@@ -234,7 +234,7 @@ function HomePeopleSuggestions({
   return (
     <View style={localStyles.peopleSection}>
       <View style={localStyles.peopleHeading}>
-        <Text style={localStyles.peopleTitle}>GENTE PARA CONOCER</Text>
+        <Text style={localStyles.peopleTitle}>Personas con tu vibe</Text>
         <TouchableOpacity
           accessibilityRole="button"
           onPress={onSeeAll}
@@ -259,16 +259,13 @@ function HomePeopleSuggestions({
             style={localStyles.personCard}
             onPress={() => onOpenProfile(profile)}
           >
-            <View style={localStyles.personAddIcon}>
-              <Icon name="person-add-outline" size={19} color={vibesTheme.colors.secondaryText} />
-            </View>
             <ProfileMediaImage
               source={profile.avatarUri ? { uri: profile.avatarUri } : profile.image}
               style={StyleSheet.absoluteFillObject}
             />
-            <LinearGradient pointerEvents="none" colors={["rgba(254, 254, 253, 0)", "rgba(254, 254, 253, 0.82)", "rgba(254, 254, 253, 0.96)"]} locations={[0.5, 0.85, 1]} style={StyleSheet.absoluteFillObject} />
+            <LinearGradient pointerEvents="none" colors={["rgba(43, 43, 43, 0)", "rgba(43, 43, 43, 0.65)", "rgba(43, 43, 43, 0.94)"]} locations={[0.5, 0.85, 1]} style={StyleSheet.absoluteFillObject} />
             <Text style={localStyles.personName} numberOfLines={1}>
-              {profile.name.split(" ")[0]}
+              {profile.name.split(" ")[0]}{profile.age ? `, ${profile.age}` : ""}
             </Text>
             <Text style={localStyles.personHint} numberOfLines={1}>
               {getSuggestionHint(profile)}
@@ -934,7 +931,6 @@ const Home = () => {
                 fallbackIconColor={vibesTheme.colors.primaryText}
               />
               </View>
-              <Text style={{ fontSize: 11, lineHeight: 15, color: vibesTheme.colors.secondaryText }}>Ver perfil</Text>
             </TouchableOpacity>
             <View style={localStyles.heroCopy}>
               <Text
@@ -945,6 +941,7 @@ const Home = () => {
               >
                 Hola, {firstName}
               </Text>
+              <Text style={localStyles.heroSubtitle}>Qué bueno tenerte por acá</Text>
             </View>
             <TouchableOpacity
               accessibilityRole="button"
@@ -954,6 +951,9 @@ const Home = () => {
             >
               <Ionicons name="sparkles-outline" size={24} color={vibesTheme.colors.primaryText} />
               <Text style={localStyles.vibiLabel}>Vibi</Text>
+            </TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Configuración" style={localStyles.headerAction} onPress={() => navigation.navigate("Configuration" as never)}>
+              <Icon name="settings-outline" size={25} color={vibesTheme.colors.primaryText} />
             </TouchableOpacity>
           </View>
 
@@ -969,9 +969,9 @@ const Home = () => {
             userId={session?.user?.id}
             enabled={moodGateUser === session?.user?.id}
           />
-          <CompleteProfilePrompt userId={session?.user?.id} />
+          <CompleteProfilePrompt userId={session?.user?.id} compact />
 
-          <HomeOverview userId={session?.user?.id} />
+          <HomeOverview userId={session?.user?.id}>
 
           <HomePeopleSuggestions
             profiles={profiles}
@@ -983,6 +983,7 @@ const Home = () => {
               )
             }
           />
+          </HomeOverview>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -1001,15 +1002,15 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   homeContent: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingHorizontal: 20,
+    paddingTop: 14,
     paddingBottom: 118,
   },
   heroHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 18,
-    marginBottom: 16,
+    gap: 10,
+    marginBottom: 18,
   },
   vibiButton: {
     width: 58,
@@ -1037,14 +1038,15 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
   },
+  headerAction: { width: 40, height: 44, alignItems: "center", justifyContent: "center" },
   heroCopy: {
     flex: 1,
   },
   heroTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 40,
-    lineHeight: 47,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 25,
+    lineHeight: 31,
+    fontFamily: vibesTheme.fonts.bold,
   },
   heroSubtitle: {
     marginTop: 6,
@@ -1058,7 +1060,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   peopleSection: {
-    marginBottom: 10,
+    marginBottom: 24,
   },
   peopleHeading: {
     flexDirection: "row",
@@ -1067,12 +1069,8 @@ const localStyles = StyleSheet.create({
     marginBottom: 12,
   },
   peopleTitle: {
-    flex: 1,
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 21,
-    letterSpacing: 1,
-    fontFamily: vibesTheme.fonts.regular,
+    flex: 1, color: vibesTheme.colors.primaryText, fontSize: 22,
+    lineHeight: 28, fontFamily: vibesTheme.fonts.bold,
   },
   peopleLink: {
     minHeight: 34,
@@ -1082,7 +1080,7 @@ const localStyles = StyleSheet.create({
     paddingLeft: 10,
   },
   peopleLinkText: {
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.primaryText,
     fontSize: 16,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
@@ -1092,8 +1090,8 @@ const localStyles = StyleSheet.create({
     paddingRight: 24,
   },
   personCard: {
-    width: 142,
-    minHeight: 188,
+    width: 136,
+    minHeight: 184,
     overflow: "hidden",
     justifyContent: "flex-end",
     borderWidth: 1,
@@ -1117,7 +1115,7 @@ const localStyles = StyleSheet.create({
   personName: {
     alignSelf: "stretch",
     marginTop: 12,
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.background,
     fontSize: 17,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.medium,
@@ -1125,7 +1123,7 @@ const localStyles = StyleSheet.create({
   personHint: {
     alignSelf: "stretch",
     marginTop: 2,
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.background,
     fontSize: 13,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,

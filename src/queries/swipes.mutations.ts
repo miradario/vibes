@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
 import { candidatesKeys } from "./candidates.queries";
 import { matchKeys } from "./matches.queries";
 import { supabase } from "../lib/supabase";
@@ -208,6 +210,16 @@ export const useSwipeMutation = () => {
       return { match: false, swipeId };
     },
     onMutate: async (payload) => {
+      if (
+        payload.direction === "like" &&
+        session?.user?.id &&
+        payload.targetUserId !== session.user.id &&
+        Platform.OS !== "web"
+      ) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
+          // Haptic availability must not interrupt the like.
+        });
+      }
       await queryClient.cancelQueries({ queryKey: candidatesKeys.all });
 
       const previous = queryClient.getQueriesData<GetCandidatesResponse>({

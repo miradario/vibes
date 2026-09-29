@@ -2,7 +2,7 @@ import LikeBubbles from "../components/LikeBubbles";
 /** @format */
 
 import React, { useEffect, useMemo, useRef } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "../components/Typography";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -61,10 +61,12 @@ const Match = () => {
   const otherName = getFirstName(profile?.name);
 
   useEffect(() => {
-    if (didPlayMatchHaptic.current) return;
+    if (didPlayMatchHaptic.current || Platform.OS === "web") return;
 
     didPlayMatchHaptic.current = true;
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {
+      // The celebration remains available on devices without haptic support.
+    });
   }, []);
 
   const openChat = () => {

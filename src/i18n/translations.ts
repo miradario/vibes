@@ -118,6 +118,8 @@ const baseTranslations = {
       appleFailed: "No se pudo conectar con Apple.",
       missingFields: "Completá tu email y contraseña.",
       failed: "No se pudo iniciar sesión.",
+      accountSuspended:
+        "Tu cuenta está suspendida. Contactá al soporte de Vibes para revisar el acceso.",
       invalidCredentials:
         "El email o la contraseña no coinciden. Si creaste la cuenta con Google, ingresá con Google; si no, recuperá tu contraseña. ¿No tenés cuenta? Tocá Crear cuenta.",
       forgotPassword: "¿Olvidaste tu contraseña?",
@@ -686,6 +688,8 @@ const baseTranslations = {
       appleFailed: "Could not connect with Apple.",
       missingFields: "Please complete your email and password.",
       failed: "Could not log in.",
+      accountSuspended:
+        "Your account is suspended. Contact Vibes support to review your access.",
       invalidCredentials:
         "The email or password does not match. If you created the account with Google, sign in with Google; otherwise, reset your password.",
       forgotPassword: "Forgot your password?",
