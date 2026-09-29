@@ -87,6 +87,7 @@ const Settings = () => {
   const [gender, setGender] = useState("");
   const [heightCm, setHeightCm] = useState("");
   const [lookingFor, setLookingFor] = useState<string[]>([]);
+  const [connectWith, setConnectWith] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [smoking, setSmoking] = useState<string>("");
   const [otherOptions, setOtherOptions] = useState<string[]>(
@@ -132,6 +133,11 @@ const Settings = () => {
       prefs.lookingFor ?? prefs.looking_for
     );
     setLookingFor(nextLookingFor);
+    const storedGenders = prefs.discoverGenders ?? prefs.discover_genders;
+    const legacyGenderId = prefs.discoverGenderId ?? prefs.discover_gender_id;
+    setConnectWith(Array.isArray(storedGenders)
+      ? normalizeTextArray(storedGenders).map((value) => value === "nonbinary" ? "other" : value)
+      : legacyGenderId === 1 ? ["woman"] : legacyGenderId === 2 ? ["man"] : [3, 4].includes(legacyGenderId) ? ["other"] : []);
     const nextLanguages = normalizeTextArray(prefs.languages);
     setLanguages(nextLanguages);
     if (Array.isArray(prefs.otherTags) && prefs.otherTags.length) {
@@ -233,6 +239,7 @@ const Settings = () => {
         gender: gender || null,
         height_cm: heightCm ? Number.parseInt(heightCm, 10) : null,
         looking_for: lookingFor,
+        discover_genders: connectWith,
         open_to: purposes,
         languages,
         smoking: smoking || null,
@@ -501,6 +508,22 @@ const Settings = () => {
                 <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
               </TouchableOpacity>
             ))}
+          </View>
+
+          <View style={localStyles.preferencePanel}>
+            <Text style={localStyles.sectionTitle}>{t("settings.connectWith")}</Text>
+            <Text style={localStyles.helperText}>{t("settings.connectWithHint")}</Text>
+            <View style={localStyles.chipWrap}>
+              {([
+                { value: "man", label: t("settings.connectMen") },
+                { value: "woman", label: t("settings.connectWomen") },
+                { value: "other", label: t("settings.connectOthers") },
+              ]).map(({ value, label }) => renderChip(label, connectWith.includes(value), () =>
+                setConnectWith((previous) => previous.includes(value)
+                  ? previous.filter((item) => item !== value)
+                  : [...previous, value])
+              ))}
+            </View>
           </View>
 
           <View style={localStyles.preferencePanel}>

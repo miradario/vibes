@@ -333,6 +333,11 @@ const baseTranslations = {
     },
     settings: {
       title: "Preferencias",
+      connectWith: "Me interesa conectar con",
+      connectWithHint: "Podés elegir varias opciones. Sin selección, se muestran todos en Descubrir.",
+      connectMen: "Hombres",
+      connectWomen: "Mujeres",
+      connectOthers: "Otros",
       hideAge: "No mostrar mi edad",
       hideAgeHint: "Ocultá tu edad en las tarjetas y en tu perfil público.",
       subtitle: "Comentá sobre vos y compartí tus elecciones conscientes.",
@@ -901,6 +906,11 @@ const baseTranslations = {
     },
     settings: {
       title: "Preferences",
+      connectWith: "I’m interested in connecting with",
+      connectWithHint: "Choose multiple options. No selection shows everyone in Discover.",
+      connectMen: "Men",
+      connectWomen: "Women",
+      connectOthers: "Others",
       hideAge: "Hide my age",
       hideAgeHint: "Hide your age on cards and your public profile.",
       subtitle: "Share about yourself and your conscious choices.",
