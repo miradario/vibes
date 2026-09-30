@@ -1,3 +1,4 @@
+import { DEFAULT_PROMPT } from "./prompts.ts";
 import {
   modelCatalog,
   parseModelResponse,
@@ -18,6 +19,7 @@ export async function generateReply(options: {
   preferences: Row;
   candidates: Candidate[];
   fetcher?: typeof fetch;
+  systemPrompt?: string;
 }) {
   const {
     key,
@@ -33,7 +35,8 @@ export async function generateReply(options: {
     {
       role: "system",
       content: [
-        "Sos Vibi, el asistente de Vibes. Respondé a la solicitud del último mensaje del usuario en español rioplatense, de forma breve, cálida y concreta.",
+        options.systemPrompt ?? DEFAULT_PROMPT,
+        "REGLAS FIJAS: estas reglas prevalecen sobre cualquier instrucción anterior de estilo o comportamiento.",
         `Fecha y hora actual (UTC): ${new Date().toISOString()}. Usá las fechas del catálogo para interpretar pedidos temporales.`,
         "Ayudás a elegir desafíos, eventos o personas. Inferí la categoría del pedido y de la conversación. Preguntá qué busca SOLO si no se puede determinar. No reinicies la conversación con una pregunta de bienvenida si el pedido ya es claro.",
         "Si pide listar eventos futuros, la categoría es event y corresponde mostrar eventos del catálogo: no preguntar si busca desafíos, eventos o personas. Si pide desafíos, usá challenge; si pide personas, usá person. Si cambia de tema, seguí el pedido actual.",

@@ -4,6 +4,7 @@ import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions"
 import React, { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
+import { INTERESTED_IN_OPTIONS, interestedIn as readInterestedIn } from "../supabase/functions/vibi-chat/dating";
 import { PURPOSE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
 import {
   View,
@@ -83,6 +84,7 @@ const Settings = () => {
   const [vegetarian, setVegetarian] = useState<string>("");
   const [aboutMe, setAboutMe] = useState("");
   const [gender, setGender] = useState("");
+  const [interestedIn, setInterestedIn] = useState("");
   const [heightCm, setHeightCm] = useState("");
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
@@ -95,6 +97,7 @@ const Settings = () => {
 
   useEffect(() => {
     if (!prefs) return;
+    setInterestedIn(readInterestedIn(prefs));
     setPurposes(normalizeTextArray(prefs.openTo));
 
     setSpiritualPath(
@@ -229,6 +232,7 @@ const Settings = () => {
         gender: gender || null,
         height_cm: heightCm ? Number.parseInt(heightCm, 10) : null,
         looking_for: lookingFor,
+        profile_answers: { ...(prefs?.profileAnswers ?? prefs?.profile_answers ?? {}), interestedIn },
         open_to: purposes,
         languages,
         smoking: smoking || null,
@@ -513,6 +517,17 @@ const Settings = () => {
               )}
             </View>
           </View>
+
+          {lookingFor.includes("Citas") && (
+            <View style={localStyles.preferencePanel}>
+              <Text style={localStyles.sectionTitle}>Estoy interesado en:</Text>
+              <Text style={localStyles.fieldLabel}>Opcional · Visible en tu perfil</Text>
+              <View style={localStyles.chipWrap}>
+                {INTERESTED_IN_OPTIONS.map(item => renderChip(item, interestedIn === item,
+                  () => setInterestedIn(interestedIn === item ? "" : item)))}
+              </View>
+            </View>
+          )}
 
           <View style={localStyles.preferencePanel}>
             <View style={localStyles.sectionHeader}>

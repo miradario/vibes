@@ -1,6 +1,16 @@
 # send-push
 
-Edge Function para enviar notificaciones push cuando Supabase recibe webhooks de `messages`, `event_messages` y `matches`.
+Edge Function para enviar notificaciones push cuando Supabase recibe webhooks de `messages`, `event_messages`, `matches` y `swipes`.
+
+## Autenticación del webhook
+
+La función se despliega con `--no-verify-jwt` porque utiliza una credencial dedicada, no un JWT de usuario. **Siempre** valida `Authorization: Bearer <PUSH_WEBHOOK_SECRET>` antes de procesar el payload. Una credencial ausente o incorrecta devuelve 401.
+
+El mismo secreto aleatorio (mínimo 32 caracteres) debe existir en los secretos de Edge como `PUSH_WEBHOOK_SECRET` y en Vault como `push_webhook_secret`. `private.notify_send_push()` lo lee de Vault; nunca se guarda en el código ni en el cliente. Al rotarlo, actualizar ambas ubicaciones. La migración `authenticated_push_and_connection_requests` conecta los cuatro disparadores.
+
+Para `swipes`, se envía “X quiere conectar con vos” al insertar un like o cambiar una decisión anterior a like. Repetir like no genera otra push. Se respetan bloqueos, perfiles activos y preferencias de notificaciones. El payload incluye `type: connection_request`; la app abre Descubrir → Recibidos. Las notificaciones de match siguen siendo un evento separado.
+
+Pruebas: `node --test scripts/push-webhook.test.cjs`.
 
 - Android: Firebase Cloud Messaging (`provider = 'fcm'`)
 - iOS: Apple Push Notification service directo (`provider = 'apns'`)
@@ -73,4 +83,4 @@ Tambien acepta `new` en lugar de `record`.
 - El provider se decide por fila en `push_tokens`.
 - Tokens FCM con respuesta `400` o `404` se desactivan.
 - Tokens APNs con `BadDeviceToken`, `Unregistered` o `DeviceTokenNotForTopic` se desactivan.
-- La navegacion cliente actual abre siempre `Messages` al tocar la notificacion.
+- Al tocar una push de mensaje directo se abre el chat; una solicitud de conexión abre Descubrir → Recibidos.

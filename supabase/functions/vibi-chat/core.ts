@@ -1,3 +1,4 @@
+import { matchesDatingPreferences, matchesInterestedInFilter } from "./dating.ts";
 export const CATEGORIES = ["challenge", "event", "person"] as const;
 export type Category = (typeof CATEGORIES)[number];
 export type Row = Record<string, any>;
@@ -143,6 +144,7 @@ export function matchesPerson(
 ): boolean {
   if (!profile.is_active || profile.deleted_at || profile.id === own.id)
     return false;
+  if (!matchesDatingPreferences(filters, preferences)) return false;
   if (
     !inRange(
       age(profile.birth_date, now),
@@ -196,6 +198,7 @@ export function matchesPerson(
   return Object.entries(answerFilters).every(([key, selected]) => {
     const choices = strings(selected);
     if (!choices.length) return true;
+    if (key === "interestedIn") return matchesInterestedInFilter(preferences, choices);
     if (key === "heightMin" || key === "heightMax") {
       const h = number(preferences.height_cm);
       return (

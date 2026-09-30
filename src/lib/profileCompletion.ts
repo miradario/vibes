@@ -52,7 +52,7 @@ export const getProfileCompletion = (profile: Data, preferences: Data, emailVeri
       value: profile?.birthDate ?? profile?.birth_date,
       screen: "EditProfile",
     },
-    ...QUESTION_GROUPS.flatMap((group) => group.fields.map((field) => {
+    ...QUESTION_GROUPS.flatMap((group) => group.fields.filter(field => field.key !== "interestedIn").map((field) => {
       const stored = preferences?.profileAnswers ?? preferences?.profile_answers;
       const snakeKey = field.key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
       // Canonical columns take precedence over legacy JSON, including cleared values.

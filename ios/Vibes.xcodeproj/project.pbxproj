@@ -11,10 +11,10 @@
 		20C18A4434006FFC50FF32DF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 19420D8734C462B7A18B910A /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		4B3BCEC1500A4EAAAA0099FC /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C647244389813DF3AC851E29 /* ExpoModulesProvider.swift */; };
+		948ED9421DBA4EDD81BD9F12 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA1BAFC332DA419EB9972674 /* GoogleService-Info.plist */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		BF2C75CCBFF34393FA8620AC /* Pods_Vibes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9198D793636A59B62981C923 /* Pods_Vibes.framework */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		948ED9421DBA4EDD81BD9F12 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA1BAFC332DA419EB9972674 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,11 +27,11 @@
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Vibes/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		C647244389813DF3AC851E29 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Vibes/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		EA1BAFC332DA419EB9972674 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Vibes/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Vibes/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Vibes-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Vibes-Bridging-Header.h"; path = "Vibes/Vibes-Bridging-Header.h"; sourceTree = "<group>"; };
 		F30E0F1ECC8FAF504A209DFB /* Pods-Vibes.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Vibes.debug.xcconfig"; path = "Target Support Files/Pods-Vibes/Pods-Vibes.debug.xcconfig"; sourceTree = "<group>"; };
-		EA1BAFC332DA419EB9972674 /* GoogleService-Info.plist */ = {isa = PBXFileReference; name = "GoogleService-Info.plist"; path = "Vibes/GoogleService-Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

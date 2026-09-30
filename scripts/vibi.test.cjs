@@ -27,10 +27,36 @@ const load = (file, exports, imports = {}) =>
       console,
     }
   );
-load("supabase/functions/vibi-chat/core.ts", core);
+const dating = {};
+load("supabase/functions/vibi-chat/dating.ts", dating);
+load("supabase/functions/vibi-chat/core.ts", core, { "./dating.ts": dating });
 const provider = {};
+const prompts = {};
+load("supabase/functions/vibi-chat/prompts.ts", prompts);
+test("runtime reads only the published revision and falls back on missing or invalid configuration", async () => {
+  const read=[];
+  const db=(configured,revision)=>({from(table){read.push(table);const q={select(){return q;},eq(key,value){if(table==='vibi_prompt_versions')assert.equal(value,'published');return q;},maybeSingle:async()=>configured,single:async()=>revision};return q;}});
+  assert.equal((await prompts.loadPublishedPrompt(db({data:{published_id:'published'}},{data:{id:'published',content:'Una instrucción publicada válida'}}))).version,'published');
+  assert.equal((await prompts.loadPublishedPrompt(db({data:null},{}))).version,'builtin-v1');
+  assert.equal((await prompts.loadPublishedPrompt(db({data:{published_id:'published'}},{data:{id:'published',content:''}}))).version,'builtin-v1');
+  assert.equal((await prompts.loadPublishedPrompt({from(){throw new Error('offline');}})).content,prompts.DEFAULT_PROMPT);
+  assert.throws(()=>prompts.validatePrompt('x'.repeat(12001)));
+});
 load("supabase/functions/vibi-chat/provider.ts", provider, {
   "./core.ts": core,
+  "./prompts.ts": prompts,
+});
+test("editable instructions retain fixed constraints and response validation", async () => {
+  let system='';
+  const reply=await provider.generateReply({key:'fixture',model:'fixture',systemPrompt:'Respondé con un tono formal.',message:'Hola',previousCategory:null,history:[],preferences:{},candidates:[],fetcher:async (_url,options)=>{
+    system=JSON.parse(options.body).messages[0].content;
+    return new Response(JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify({text:'¿Buscás eventos, desafíos o personas?',category:null,recommendations:[]})}}]}));
+  }});
+  assert.match(system,/Respondé con un tono formal/);
+  assert.match(system,/REGLAS FIJAS/);
+  assert.match(system,/Nunca inventes candidatos/);
+  assert.match(system,/Devolvé exclusivamente un objeto JSON/);
+  assert.equal(reply.category,null);
 });
 const id = "00000000-0000-4000-8000-000000000001";
 const person = {
@@ -43,6 +69,29 @@ const person = {
   longitude: -58,
 };
 const own = { id: "me", latitude: -34, longitude: -58 };
+test("dating compatibility is reciprocal only for exclusive Citas, with missing answers allowed", () => {
+  const prefs = (gender, interest, seeking = ["Citas"]) => ({gender, looking_for: seeking, profile_answers:{interestedIn:interest}});
+  const requester = prefs("Hombre", "Mujer");
+  for (const [candidate, expected] of [
+    [prefs("Mujer", "Hombre"), true],
+    [prefs("Mujer", "Mujer"), false],
+    [prefs("Hombre", "Todos"), false],
+    [prefs("Otro", "Todos"), false],
+    [prefs("Mujer", "Todos", ["Amistad"]), false],
+    [prefs("Mujer", "Todos", ["Amistad", "Citas"]), true],
+    [{}, true],
+    [prefs("Mujer", ""), true],
+  ]) {
+    assert.equal(dating.matchesDatingPreferences(requester, candidate), expected);
+    assert.equal(core.matchesPerson(person, candidate, own, requester), expected);
+    assert.equal(dating.matchesDatingPreferences({...requester, looking_for:["Citas","Amistad"]}, candidate), true);
+  }
+  assert.equal(dating.matchesDatingPreferences(prefs("Otro","Todos"), prefs("Otro","Todos")), true);
+  assert.equal(dating.matchesDatingPreferences(prefs("Otro","Todos"), prefs("Mujer","Hombre")), false);
+  assert.equal(dating.matchesDatingPreferences({lookingFor:["Citas"], profileAnswers:{interestedIn:"Mujer"}}, prefs("Mujer","Hombre")), true);
+  assert.equal(core.matchesPerson(person, prefs("Mujer","Todos"), own, {discover_answer_filters:{interestedIn:["Hombre"]}}), true);
+  assert.equal(core.matchesPerson(person, {}, own, {discover_answer_filters:{interestedIn:["Hombre"]}}), false);
+});
 const c = {
   id,
   type: "event",
@@ -307,6 +356,7 @@ load("supabase/functions/vibi-chat/handler.ts", handlerModule, {
   "https://esm.sh/@supabase/supabase-js@2.117.2": {},
   "./core.ts": core,
   "./provider.ts": provider,
+  "./prompts.ts": prompts,
   "./catalog.ts": {
     loadCatalog: async () => ({ candidates: [c], preferences: {} }),
     hydrateCards: async (_db, cards, catalog) =>

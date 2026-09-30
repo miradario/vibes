@@ -1,3 +1,4 @@
+import VibiFloatingButton from "./components/VibiFloatingButton";
 import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
 import AppCamera from "./components/AppCamera";
 import { useCommunityDeliverySync } from "./src/queries/communityReceipts.queries";
@@ -208,6 +209,13 @@ const AppNavigator = () => {
       return;
     }
 
+    if (data.type === "connection_request") {
+      navigationRef.current.dispatch(CommonActions.navigate({
+        name: "Tab", params: { screen: "Discover", params: { incomingRequestKey: Date.now() } },
+      }));
+      return;
+    }
+
     if (
       data.type === "direct_message" &&
       typeof data.matchId === "string" &&
@@ -364,6 +372,7 @@ const AppNavigator = () => {
               }}
             >
               {() => (
+                <View style={{ flex: 1 }}>
                 <Tab.Navigator
                   initialRouteName="Home"
                   tabBar={(props) => <CustomTabBar {...props} />}
@@ -444,6 +453,8 @@ const AppNavigator = () => {
                     }}
                   />
                 </Tab.Navigator>
+                <VibiFloatingButton />
+                </View>
               )}
             </Stack.Screen>
             <Stack.Screen

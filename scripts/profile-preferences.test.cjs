@@ -55,13 +55,24 @@ test('saving optional answers preserves independent onboarding motivations', asy
 
 test('every onboarding answer contributes once, including private availability', () => {
   const empty = getProfileCompletion({}, {}, false, {});
-  assert.equal(empty.total, 8 + q.QUESTION_GROUPS.flatMap(g => g.fields).length);
-  for (const field of q.QUESTION_GROUPS.flatMap(g => g.fields)) {
+  assert.equal(empty.total, 8 + q.QUESTION_GROUPS.flatMap(g => g.fields).filter(f => f.key !== 'interestedIn').length);
+  for (const field of q.QUESTION_GROUPS.flatMap(g => g.fields).filter(f => f.key !== 'interestedIn')) {
     const result = getProfileCompletion({}, {}, false, { [field.key]: 'respuesta' });
     assert.equal(result.completed, 1, field.key);
     assert.equal(result.total, empty.total);
     assert.equal(getProfileCompletion({}, {}, false, { [field.key]: '  ' }).completed, 0);
   }
+});
+
+test('dating interest is optional, persists, and does not change completion', async () => {
+  const answers = Object.fromEntries(q.QUESTION_GROUPS.flatMap(g => g.fields).filter(f => f.key !== 'interestedIn').map(f => [f.key, 'respuesta']));
+  assert.equal(q.hasMissingProfileAnswers(answers), false);
+  assert.equal(getProfileCompletion({}, {}, false, answers).percent,
+    getProfileCompletion({}, {}, false, {...answers, interestedIn:'Todos'}).percent);
+  const writes=[];
+  const api=questions({from:table=>({async upsert(payload){writes.push({table,payload});return {error:null};}})});
+  await api.saveProfileAnswers('test', {lookingFor:['Citas'], interestedIn:'Todos'});
+  assert.equal(writes.find(w=>w.table==='user_preferences').payload.profile_answers.interestedIn,'Todos');
 });
 
 test('one photo satisfies onboarding; additional photos do not block completion', () => {

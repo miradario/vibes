@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizedWebhook, isConnectionRequest } from "./webhook.ts";
 
-type SupabaseClient = ReturnType<typeof createClient>;
+type SupabaseClient = ReturnType<typeof createAdminClient>;
 
 type WebhookPayload = {
   type?: string;
@@ -9,6 +10,7 @@ type WebhookPayload = {
   schema?: string;
   record?: Record<string, unknown> | null;
   new?: Record<string, unknown> | null;
+  old_record?: Record<string, unknown> | null;
 };
 
 type PushTokenRow = {
@@ -735,6 +737,24 @@ const buildMatchNotifications = async (
   ] satisfies OutgoingNotification[];
 };
 
+const buildConnectionNotification = async (supabase: SupabaseClient, record: Record<string, unknown>) => {
+  const senderId = String(record.swiper_id);
+  const recipientId = String(record.target_id);
+  const { data: blocked, error } = await supabase.from("user_blocks")
+    .select("blocker_id").or(`and(blocker_id.eq.${senderId},blocked_user_id.eq.${recipientId}),and(blocker_id.eq.${recipientId},blocked_user_id.eq.${senderId})`).limit(1);
+  if (error) throw error;
+  if (blocked?.length) return [];
+  const { data: profiles, error: profileError } = await supabase.from("profiles")
+    .select("id").in("id", [senderId, recipientId]).eq("is_active", true).is("deleted_at", null);
+  if (profileError) throw profileError;
+  if (profiles?.length !== 2) return [];
+  const names = await fetchDisplayNames(supabase, [senderId]);
+  return [{ recipientId, title: "Nueva solicitud de conexión",
+    body: `${names.get(senderId) ?? "Alguien"} quiere conectar con vos`,
+    data: { type: "connection_request", senderId, swipeId: String(record.id ?? "") },
+  }] satisfies OutgoingNotification[];
+};
+
 const buildNotifications = async (
   supabase: SupabaseClient,
   payload: WebhookPayload
@@ -750,6 +770,10 @@ const buildNotifications = async (
     return buildDirectMessageNotifications(supabase, record);
   }
 
+  if (table === "swipes" && isConnectionRequest(record, payload.old_record)) {
+    return buildConnectionNotification(supabase, record);
+  }
+
   if (table === "event_messages") {
     return buildEventMessageNotifications(supabase, record);
   }
@@ -762,6 +786,9 @@ const buildNotifications = async (
 };
 
 serve(async (req: Request) => {
+  if (!authorizedWebhook(req.headers.get("Authorization"), Deno.env.get("PUSH_WEBHOOK_SECRET"))) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: jsonHeaders });
+  }
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
@@ -771,7 +798,7 @@ serve(async (req: Request) => {
 
   try {
     const payload = (await req.json()) as WebhookPayload;
-    if (payload.type && payload.type !== "INSERT") {
+    if (payload.type && payload.type !== "INSERT" && !(payload.type === "UPDATE" && payload.table === "swipes")) {
       return new Response(
         JSON.stringify({ ignored: true, reason: "unsupported event type" }),
         {

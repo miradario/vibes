@@ -23,6 +23,12 @@ export const QUESTION_GROUPS = [
         options: ["Introvertido", "Extrovertido"],
         single: true,
       },
+      {
+        key: "interestedIn",
+        label: "Estoy interesado en:",
+        options: ["Hombre", "Mujer", "Todos"],
+        single: true,
+      },
     ],
   },
   {
@@ -105,7 +111,7 @@ export const QUESTION_GROUPS = [
 
 export const hasMissingProfileAnswers = (answers?: ProfileAnswers | null) =>
   QUESTION_GROUPS.some((group) =>
-    group.fields.some((field) => !answers?.[field.key]?.length)
+    group.fields.some((field) => field.key !== "interestedIn" && !answers?.[field.key]?.length)
   );
 
 export const readProfileAnswers = async (

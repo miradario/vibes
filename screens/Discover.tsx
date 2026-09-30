@@ -4,6 +4,7 @@ import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions"
 import { PURPOSE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
+import { matchesDatingPreferences } from "../supabase/functions/vibi-chat/dating";
 import {
   matchesDiscoverAnswers,
   type DiscoverAnswerFilters,
@@ -37,7 +38,7 @@ import {
   View,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
-import { useNavigation, useIsFocused } from "@react-navigation/native";
+import { useNavigation, useIsFocused, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DiscoverOrbitCanvas from "../components/DiscoverOrbitCanvas";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
@@ -88,6 +89,7 @@ const ANSWER_FILTER_FIELDS: {
   ) as readonly { key: string; label: string; options: readonly string[] }[];
   const result = fields.map((field) => ({
     ...field,
+    label: field.key === "interestedIn" ? "Está interesado en" : field.label,
     options: [...field.options],
   }));
   for (const [key, config] of Object.entries(PROFILE_PREFERENCE_OPTIONS)) {
@@ -379,6 +381,8 @@ export const DiscoverContent = forwardRef<
   DiscoverContentProps
 >(({ showHeader = true, onFilterCountChange }, ref) => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const incomingRequestKey = (route.params as { incomingRequestKey?: number } | undefined)?.incomingRequestKey;
   const filterInsets = useSafeAreaInsets();
   const [answerFilters, setAnswerFilters] = useState<DiscoverAnswerFilters>({});
   const [answerFiltersOwner, setAnswerFiltersOwner] = useState<string | null>(
@@ -513,6 +517,12 @@ export const DiscoverContent = forwardRef<
     "dismissed" | "liked" | "incoming"
   >("liked");
   const [viewingHistory, setViewingHistory] = useState(false);
+  useEffect(() => {
+    if (!incomingRequestKey) return;
+    setHistoryMode("incoming");
+    setShowHistory(true);
+    void refetchIncoming();
+  }, [incomingRequestKey, refetchIncoming]);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
@@ -548,6 +558,7 @@ export const DiscoverContent = forwardRef<
       })
       .filter((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
+        if (!matchesDatingPreferences(userPreferences ?? {}, candidateRecord)) return false;
         const candidateAge = parseAge(
           candidateRecord.age ??
             candidateRecord.birthDate ??

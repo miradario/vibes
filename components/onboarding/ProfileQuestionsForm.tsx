@@ -37,7 +37,8 @@ export default function ProfileQuestionsForm({
   return (
     <View>
       {showHeader && <ProfileQuestionsHeader group={group} />}
-      {QUESTION_GROUPS[group].fields.map((field) => (
+      {QUESTION_GROUPS[group].fields.filter(field => field.key !== "interestedIn" ||
+        (Array.isArray(value.lookingFor) && value.lookingFor.includes("Citas"))).map((field) => (
         <View key={field.key} style={styles.field}>
           <Text style={styles.label}>{field.label}</Text>
           {"options" in field ? (

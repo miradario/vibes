@@ -12,6 +12,7 @@ import {
   type Row,
 } from "./core.ts";
 import { generateReply } from "./provider.ts";
+import { loadPublishedPrompt } from "./prompts.ts";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -253,7 +254,9 @@ export function createHandler({
         catalog.preferences,
         send.message
       );
+      const prompt = await loadPublishedPrompt(admin);
       const reply = await generate({
+        systemPrompt: prompt.content,
         key,
         model: env("DEEPSEEK_MODEL")?.trim() || "deepseek-flash",
         message: send.message,
@@ -281,6 +284,7 @@ export function createHandler({
         p_request_id: send.requestId,
         p_user_text: send.message,
         p_assistant_text: answer,
+        p_prompt_version: prompt.version,
         p_category: reply.category,
         p_recommendations: cards.map((c) => ({
           id: c.id,

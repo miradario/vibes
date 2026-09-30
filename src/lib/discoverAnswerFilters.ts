@@ -1,3 +1,4 @@
+import { matchesInterestedInFilter } from "../../supabase/functions/vibi-chat/dating";
 export type DiscoverAnswerFilters = Record<string, string[]>;
 
 export function matchesDiscoverAnswers(
@@ -7,6 +8,7 @@ export function matchesDiscoverAnswers(
   const answers = candidate.profileAnswers ?? candidate.profile_answers ?? {};
   return Object.entries(filters).every(([key, selected]) => {
     if (!selected.length) return true;
+    if (key === "interestedIn") return matchesInterestedInFilter(candidate, selected);
     if (key === "heightMin" || key === "heightMax") {
       const height = Number(candidate.heightCm ?? candidate.height_cm);
       if (!Number.isFinite(height) || height <= 0) return false;

@@ -272,6 +272,7 @@ const buildPreferences = (profile: ProfileLike): string[] => {
   const answers = profile.profileAnswers ?? profile.profile_answers;
   if (answers && typeof answers === "object" && !Array.isArray(answers)) {
     const fields = {
+      interestedIn: "Estoy interesado en",
       hobbies: "Intereses",
       favoritePlans: "Planes",
       activity: "Actividad física",

@@ -89,10 +89,19 @@ Proyecto: `vibes-d05e4`. Parámetro booleano: `vibi_enabled`, con valor inicial 
 
 En [Firebase Remote Config](https://console.firebase.google.com/project/vibes-d05e4/config), cambiar el parámetro y publicar los cambios. La app obtiene y activa valores al arrancar, al volver a primer plano (caché de cinco minutos en producción) y mediante actualizaciones en tiempo real. Sin conexión conserva el último valor activado; una instalación nueva permanece apagada hasta obtener un valor remoto verdadero.
 
-La flag oculta el acceso en Home y evita montar el chat; si se apaga con Vibi abierto, vuelve a la pantalla anterior sin borrar el historial. Es una flag de lanzamiento en el cliente: no revoca el endpoint de Supabase ni cancela solicitudes que ya llegaron al servidor. La versión web mantiene Vibi apagado.
+La flag oculta el botón flotante de las pantallas principales y evita montar el chat; si se apaga con Vibi abierto, vuelve a la pantalla anterior sin borrar el historial. Es una flag de lanzamiento en el cliente: no revoca el endpoint de Supabase ni cancela solicitudes que ya llegaron al servidor. La versión web mantiene Vibi apagado.
 
 Requiere un nuevo build nativo con `@react-native-firebase/app`, `analytics` (dependencia del SDK de Remote Config, con recolección automática deshabilitada) y `remote-config`. No basta una actualización de JavaScript para agregar estos módulos. Los builds anteriores sin Firebase dejan Vibi apagado. iOS usa `com.gurudevelopers.vibes`; Android usa `com.miradario.vibe`. Los archivos de configuración Firebase son identificadores públicos de cliente y no contienen credenciales de administración. Sus fuentes se conservan en `config/firebase/`, fuera de las carpetas nativas que Expo puede regenerar.
 
 Después de instalar las dependencias, ejecutar `pod install` en `ios` y compilar de nuevo. La configuración Expo reproduce el enlace estático mediante CocoaPods y los archivos nativos versionados ya incluyen el arranque de Firebase y el recurso de iOS. `node --test scripts/vibi-flags.test.cjs` verifica valor inicial, cambios remotos, errores de red, limpieza de suscripciones y ausencia del módulo nativo.
 
 Verificación de la flag (29/09/2026): 24 pruebas automáticas aprobadas; builds Android ARM64 e iOS Simulator ARM64 completos. En el simulador, el SDK descargó y activó `vibi_enabled=false` (verificado en el almacenamiento de Remote Config) y Home ocultó Vibi. La integración iOS mantiene los pods de LiveKit como bibliotecas estáticas para evitar encabezados no modulares con los frameworks estáticos de Firebase.
+
+El acceso a Vibi flota abajo a la derecha, por encima de la barra de navegación. Al entrar a las pantallas principales con sesión iniciada y la flag habilitada, muestra «Necesitas ayuda?» durante ocho segundos, una vez por apertura de la app. La viñeta se puede cerrar o tocar para abrir el chat; el botón permanece disponible y se oculta mientras está abierto el teclado.
+# Prompts administrables
+
+El backoffice ofrece `/vibi`: versiones inmutables, conversación de prueba con DeepSeek y catálogo ficticio, publicación y restauración. Solo administradores autenticados acceden mediante `admin-vibi-prompts`. Una publicación requiere una prueba exitosa de la misma versión y verifica que la versión publicada no haya cambiado concurrentemente.
+
+`vibi-chat` lee `vibi_prompt_config.published_id` por respuesta, con respaldo `builtin-v1`, y guarda la procedencia en `vibi_exchanges.prompt_version`. Los borradores no afectan a los usuarios. Las reglas de seguridad y validación permanecen en `provider.ts` y `core.ts`.
+
+Pruebas: `node --test scripts/vibi.test.cjs`; después de la migración, `scripts/vibi-prompts-rls.test.sql` verifica permisos, bloqueo de publicaciones sin probar, conflictos y restauración dentro de una transacción revertida.
