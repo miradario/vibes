@@ -31,7 +31,8 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSMicrophoneUsageDescription": "Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío."
-      }
+      },
+      "googleServicesFile": "./config/firebase/GoogleService-Info.plist"
     },
     "androidNavigationBar": {
       "backgroundColor": "#2B2B2B00",
@@ -47,7 +48,8 @@
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.miradario.vibe"
+      "package": "com.miradario.vibe",
+      "googleServicesFile": "./config/firebase/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -65,7 +67,12 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "15.4"
+            "deploymentTarget": "15.4",
+            "useFrameworks": "static",
+            "forceStaticLinking": [
+              "livekit-react-native",
+              "livekit-react-native-webrtc"
+            ]
           }
         }
       ],
@@ -78,7 +85,17 @@
         }
       ],
       "expo-apple-authentication",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-firebase/app",
+      [
+        "@react-native-firebase/analytics",
+        {
+          "ios": {
+            "withoutAdIdSupport": true
+          }
+        }
+      ],
+      "./plugins/withFirebasePods"
     ],
     "extra": {
       "eas": {
