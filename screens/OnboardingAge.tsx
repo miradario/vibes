@@ -126,7 +126,7 @@ const localStyles = StyleSheet.create({
   },
   ageError: {
     marginTop: 10,
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 14,
   },
 });

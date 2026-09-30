@@ -53,6 +53,8 @@ import {
 import { ONBOARDING_COLORS, onboardingStyles } from "./vibesOnboardingStyles";
 import { useI18n } from "../../i18n";
 import VibesLoader from "../../../components/VibesLoader";
+import { useProfileQuery } from "../../queries/profile.queries";
+import { vibesTheme } from "../../theme/vibesTheme";
 
 const ANIMATION_DURATION = 240;
 const MIN_AGE = 18;
@@ -93,6 +95,8 @@ const VibesOnboardingFlow = () => {
   const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
+  const savedProfile = useProfileQuery(session?.user?.id);
+  const [hadBirthDateOnEntry] = useState(() => Boolean(parseBirthDate(draft.birthDate)));
   const completeMutation = useCompleteOnboardingMutation();
   const transition = useRef(new Animated.Value(1)).current;
   const onboardingScrollRef = useRef<ScrollView | null>(null);
@@ -180,7 +184,12 @@ const VibesOnboardingFlow = () => {
   const [customPracticeName, setCustomPracticeName] = useState("");
 
   const age = birthDate ? String(calculateAge(birthDate)) : "";
-  const hasAgeAssuranceBirthDate = Boolean(parseBirthDate(draft.birthDate));
+  const savedBirthDate = savedProfile.data?.birthDate ?? savedProfile.data?.birth_date;
+  const hasAgeAssuranceBirthDate = hadBirthDateOnEntry || Boolean(parseBirthDate(savedBirthDate));
+  useEffect(() => {
+    const savedDate = parseBirthDate(savedBirthDate);
+    if (savedDate) setBirthDate(savedDate);
+  }, [savedBirthDate]);
   const birthDateLimits = useMemo(() => {
     const today = new Date();
     const maximumDate = new Date(
@@ -283,7 +292,7 @@ const VibesOnboardingFlow = () => {
       Number(age) <= MAX_AGE) ||
     (step === "location" && Boolean(city.trim() || country.trim())) ||
     step === "practices" ||
-    ["identity", "interests", "plans", "completion"].includes(step);
+    ["identity", "interests", "completion"].includes(step);
 
   const practiceOptions = useMemo(() => {
     const baseOptions = PRACTICE_OPTIONS.filter(
@@ -582,7 +591,7 @@ const VibesOnboardingFlow = () => {
             />
           </View>
 
-          {!hasAgeAssuranceBirthDate ? (
+          {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
             <>
               <TouchableOpacity
                 style={onboardingStyles.inputRow}
@@ -757,7 +766,7 @@ const VibesOnboardingFlow = () => {
 
   const renderStep = () => {
     if (step === "purpose") return renderPurpose();
-    const questionGroup = ["identity", "interests", "plans"].indexOf(step);
+    const questionGroup = ["identity", "interests"].indexOf(step);
     if (questionGroup >= 0)
       return (
         <ProfileQuestionsForm
@@ -790,7 +799,7 @@ const VibesOnboardingFlow = () => {
             <>
               <PrimaryButton
                 label={
-                  ["identity", "interests", "plans"].includes(step)
+                  ["identity", "interests"].includes(step)
                     ? "Siguiente"
                     : copy.button
                 }
@@ -798,33 +807,20 @@ const VibesOnboardingFlow = () => {
                 disabled={!canContinue}
                 loading={completeMutation.isPending}
               />
-              {["identity", "interests", "plans"].includes(step) ? (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
+              {["identity", "interests"].includes(step) ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    updateDraft(currentDraft);
+                    setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("completion"));
                   }}
+                  accessibilityRole="button"
+                  disabled={completeMutation.isPending}
+                  style={localStyles.completeLaterButton}
                 >
-                  <TouchableOpacity
-                    onPress={() => void goNext()}
-                    accessibilityRole="button"
-                    style={{ padding: 12, minHeight: 48, justifyContent: "center" }}
-                  >
-                    <Text>{locale === "en" ? "Skip" : "Omitir"}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      updateDraft(currentDraft);
-                      setStepIndex(
-                        VIBES_ONBOARDING_STEPS.indexOf("completion")
-                      );
-                    }}
-                    accessibilityRole="button"
-                    style={{ padding: 12, minHeight: 48, justifyContent: "center" }}
-                  >
-                    <Text>{locale === "en" ? "Complete later" : "Completar después"}</Text>
-                  </TouchableOpacity>
-                </View>
+                  <Text style={localStyles.completeLaterText}>
+                    {locale === "en" ? "Complete later" : "Completar después"}
+                  </Text>
+                </TouchableOpacity>
               ) : null}
             </>
           }
@@ -920,6 +916,22 @@ const VibesOnboardingFlow = () => {
 export default VibesOnboardingFlow;
 
 const localStyles = StyleSheet.create({
+  completeLaterButton: {
+    minHeight: 48,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: vibesTheme.colors.accentBlue,
+    borderRadius: vibesTheme.radii.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    backgroundColor: vibesTheme.colors.surface,
+  },
+  completeLaterText: {
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 16,
+  },
   completionLoadingScreen: {
     flex: 1,
     alignItems: "center",

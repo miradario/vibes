@@ -1,3 +1,6 @@
+import ProfilePhotoPrompt from "../components/ProfilePhotoPrompt";
+import { hasProfilePhotos, comparePhotoPriority } from "../src/lib/profilePhotos";
+import PhotoViewer from "../components/PhotoViewer";
 import { getNextProfile } from "../src/lib/profileSwipe";
 import { supabase } from "../src/lib/supabase";
 import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
@@ -29,9 +32,7 @@ import React, {
 } from "react";
 import {
   AppState,
-  Image,
   FlatList,
-  Modal,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -458,6 +459,7 @@ export const DiscoverContent = forwardRef<
     return () => clearTimeout(timeout);
   }, [answerFilters, answerFiltersOwner, session?.user?.id]);
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
+  const canViewProfilePhotos = hasProfilePhotos(ownProfileData);
   const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
     useUserPreferencesQuery(session?.user?.id);
   const {
@@ -553,6 +555,8 @@ export const DiscoverContent = forwardRef<
 
         return {
           ...candidateRecord,
+          photos: candidateRecord.photos,
+          hasProfilePhoto: candidateRecord.hasProfilePhoto as boolean | undefined,
           distanceKm: distanceKm ?? undefined,
         };
       })
@@ -627,10 +631,10 @@ export const DiscoverContent = forwardRef<
         );
       })
       .sort((left, right) =>
-        compareDiscoveryProfiles(userPreferences ?? {}, left, right)
+        comparePhotoPriority(left, right) || compareDiscoveryProfiles(userPreferences ?? {}, left, right)
       )
       .map((candidate) => {
-        const profile = mapCandidateToConnectionProfile(candidate);
+        const profile = mapCandidateToConnectionProfile(candidate, canViewProfilePhotos);
         const candidateRecord = candidate as Record<string, any>;
         return {
           ...profile,
@@ -650,6 +654,7 @@ export const DiscoverContent = forwardRef<
     answerFilters,
     hiddenProfileIds,
     hasLocation,
+    canViewProfilePhotos,
     ownProfileRecord?.latitude,
     ownProfileRecord?.longitude,
   ]);
@@ -672,7 +677,7 @@ export const DiscoverContent = forwardRef<
     () => {
       if (historyMode === "incoming") {
         return (incomingLikes.data ?? []).map((candidate) => ({
-          ...mapCandidateToConnectionProfile(candidate),
+          ...mapCandidateToConnectionProfile(candidate, canViewProfilePhotos),
           swipeStatus: "Quiere conectar con vos",
         })) as DataT[];
       }
@@ -683,7 +688,7 @@ export const DiscoverContent = forwardRef<
             : candidate.swipeDirection === "like"
         )
         .map((candidate) => {
-          const profile = mapCandidateToConnectionProfile(candidate);
+          const profile = mapCandidateToConnectionProfile(candidate, canViewProfilePhotos);
           return {
             ...profile,
             swipeDirection: candidate.swipeDirection,
@@ -694,7 +699,7 @@ export const DiscoverContent = forwardRef<
           } as DataT;
         });
     },
-    [historyMode, incomingLikes.data, swipeHistory.data]
+    [historyMode, incomingLikes.data, swipeHistory.data, canViewProfilePhotos]
   );
   const canvasProfiles = showHistory ? historyProfiles : profiles;
   const nextSelectedProfile = useMemo(() => {
@@ -915,40 +920,7 @@ export const DiscoverContent = forwardRef<
         style={localStyles.safeArea}
         edges={showHeader ? ["top", "left", "right"] : ["left", "right"]}
       >
-        <Modal
-          visible={showGallery}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowGallery(false)}
-        >
-          <View style={styles.galleryOverlay}>
-            <TouchableOpacity
-              style={styles.galleryClose}
-              onPress={() => setShowGallery(false)}
-            >
-              <Icon name="close" size={18} color={vibesTheme.colors.background} />
-            </TouchableOpacity>
-            <FlatList
-              key={`gallery-${galleryInitialIndex}-${galleryImages.length}`}
-              data={galleryImages}
-              keyExtractor={(_, index) => `gallery-${index}`}
-              getItemLayout={(_, index) => ({
-                length: DIMENSION_WIDTH,
-                offset: DIMENSION_WIDTH * index,
-                index,
-              })}
-              horizontal
-              initialScrollIndex={galleryInitialIndex}
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <View style={styles.gallerySlide}>
-                  <Image source={item} style={styles.galleryImage} />
-                </View>
-              )}
-            />
-          </View>
-        </Modal>
+        <PhotoViewer visible={showGallery} images={galleryImages} initialIndex={galleryInitialIndex} onClose={() => setShowGallery(false)} />
 
         <AnimatedSheetModal
           visible={isFiltersVisible}
@@ -1403,11 +1375,12 @@ export const DiscoverContent = forwardRef<
               activeOpacity={0.84}
               onPress={() => setIsFiltersVisible(true)}
             >
-              <Icon name="options-outline" size={28} color={vibesTheme.colors.accentMustard} />
+              <Icon name="options-outline" size={28} color={vibesTheme.colors.accentBlue} />
             </TouchableOpacity>
           </View>
         ) : null}
 
+        <ProfilePhotoPrompt />
         <View style={localStyles.discoverySections}>
           <TouchableOpacity
             accessibilityRole="button"

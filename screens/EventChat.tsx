@@ -1033,7 +1033,7 @@ const localStyles = StyleSheet.create({
     gap: 8,
   },
   eventMetaDateText: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 15,
     fontWeight: "400",
   },
@@ -1116,7 +1116,8 @@ const localStyles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    // Android shadows show through translucent backgrounds.
+    elevation: Platform.OS === "android" ? 0 : 2,
   },
   messageBubbleOther: {
     alignSelf: "flex-start",
@@ -1131,7 +1132,7 @@ const localStyles = StyleSheet.create({
   messageSender: {
     fontSize: 12,
     fontFamily: vibesTheme.fonts.bold,
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     marginBottom: 2,
   },
   messageText: {
@@ -1232,7 +1233,7 @@ const localStyles = StyleSheet.create({
   kickButtonText: {
     fontSize: 12,
     fontFamily: vibesTheme.fonts.semibold,
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
   },
   inputAvatar: {
     width: 32,

@@ -1,3 +1,4 @@
+import { hasProfilePhotos, comparePhotoPriority } from "../lib/profilePhotos";
 import { zodiacFromBirthDate } from "../lib/zodiac";
 import { isSwipeHidden } from "../lib/communityDiscovery";
 import { useQuery } from "@tanstack/react-query";
@@ -60,8 +61,10 @@ const fetchCandidates = async (
   currentUserId?: string,
   params?: GetCandidatesParams,
   includePreviouslySwiped = false,
-  targetProfileIds?: string[]
+  targetProfileIds?: string[],
+  homePreview = false
 ): Promise<GetCandidatesResponse> => {
+  let canViewPhotos = false;
   const pageSize = Math.max(1, Math.min(params?.limit ?? 200, 500));
   let currentUserCoordinates: { latitude: number; longitude: number } | null =
     null;
@@ -70,7 +73,7 @@ const fetchCandidates = async (
   let swipedIds: string[] = [];
   let blockedUserIds: string[] = [];
   if (currentUserId) {
-    const [swipesResponse, profileResponse, blocksResponse] = await Promise.all(
+    const [swipesResponse, profileResponse, blocksResponse, ownPhotosResponse] = await Promise.all(
       [
         supabase
           .from("swipes")
@@ -78,7 +81,7 @@ const fetchCandidates = async (
           .eq("swiper_id", currentUserId),
         supabase
           .from("profiles")
-          .select("latitude, longitude")
+          .select("*")
           .eq("id", currentUserId)
           .is("deleted_at", null)
           .maybeSingle(),
@@ -88,11 +91,15 @@ const fetchCandidates = async (
           .or(
             `blocker_id.eq.${currentUserId},blocked_user_id.eq.${currentUserId}`
           ),
+        supabase.from("profile_photos").select("url").eq("profile_id", currentUserId),
       ]
     );
 
     const { data: swipeRows } = swipesResponse;
     const { data: currentUserProfile } = profileResponse;
+    if (profileResponse.error) throw profileResponse.error;
+    if (ownPhotosResponse.error) throw ownPhotosResponse.error;
+    canViewPhotos = homePreview || hasProfilePhotos({ photos: ownPhotosResponse.data }) || hasProfilePhotos(currentUserProfile);
     if (blocksResponse.error && !isMissingRelationError(blocksResponse.error)) {
       throw blocksResponse.error;
     }
@@ -246,11 +253,12 @@ const fetchCandidates = async (
     profiles.map(async (profile) => {
       const id = String(profile.id);
       const tablePhotos = photosByProfileId.get(id) ?? [];
+      const hasPhoto = hasProfilePhotos({ photos: tablePhotos }) || hasProfilePhotos(profile);
 
       // Sign URLs from profile_photos table
       const signedTablePhotos = (
         await Promise.all(
-          tablePhotos.map(async (photo, index) => {
+          (canViewPhotos ? tablePhotos : []).map(async (photo, index) => {
             const rawUrl = typeof photo.url === "string" ? photo.url : "";
             const signedUrl = rawUrl
               ? await createSignedProfilePhotoUrl(rawUrl)
@@ -276,7 +284,7 @@ const fetchCandidates = async (
 
       // Fallback: use photos array from profiles table if no profile_photos rows
       let mergedPhotos = signedTablePhotos;
-      if (mergedPhotos.length === 0 && Array.isArray(profile.photos)) {
+      if (canViewPhotos && mergedPhotos.length === 0 && Array.isArray(profile.photos)) {
         const fromProfile = profile.photos
           .map((item: any, idx: number) => {
             const url =
@@ -340,11 +348,14 @@ const fetchCandidates = async (
             : undefined,
         isActive: Boolean(profile.isActive),
         photos: mergedPhotos,
+        hasProfilePhoto: hasPhoto,
       } as unknown as Candidate;
     })
   );
 
   return candidates.sort((left, right) => {
+    const photoOrder = comparePhotoPriority(left, right);
+    if (photoOrder) return photoOrder;
     const leftDistance =
       typeof (left as any).distanceKm === "number"
         ? (left as any).distanceKm
@@ -476,13 +487,13 @@ export const useIncomingLikeCandidatesQuery = () => {
   });
 };
 
-export const useCandidatesQuery = (params?: GetCandidatesParams) => {
+export const useCandidatesQuery = (params?: GetCandidatesParams, homePreview = false) => {
   const { data: session } = useAuthSession();
   const currentUserId = session?.user?.id;
 
   return useQuery<GetCandidatesResponse>({
-    queryKey: candidatesKeys.list(currentUserId, params),
-    queryFn: () => fetchCandidates(currentUserId, params),
+    queryKey: [...candidatesKeys.list(currentUserId, params), homePreview ? "home-preview" : "discovery"],
+    queryFn: () => fetchCandidates(currentUserId, params, false, undefined, homePreview),
     staleTime: 5 * 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

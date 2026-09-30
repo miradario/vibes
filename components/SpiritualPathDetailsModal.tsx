@@ -338,7 +338,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 16,
   },
   errorText: {
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 7,
@@ -354,7 +354,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   readOnlyLabel: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 13,
     fontWeight: "400",
   },
@@ -393,7 +393,7 @@ const localStyles = StyleSheet.create({
   },
   removeButtonText: {
     textAlign: "center",
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.medium,
   },

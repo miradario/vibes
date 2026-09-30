@@ -1,7 +1,15 @@
-import { AppState } from "react-native";
+import { AppState, TurboModuleRegistry } from "react-native";
 import { vibiFlagStore } from "./store";
 
 export function startRemoteConfig(): () => void {
+  // Check before importing: Metro reports SDK evaluation errors even if caught.
+  if (
+    !TurboModuleRegistry.get("NativeRNFBTurboApp") ||
+    !TurboModuleRegistry.get("NativeRNFBTurboConfig")
+  ) {
+    vibiFlagStore.update(false);
+    return () => {};
+  }
   let disposed = false;
   let removeRealtime: (() => void) | undefined;
   let removeAppState: (() => void) | undefined;

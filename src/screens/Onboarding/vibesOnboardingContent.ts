@@ -5,7 +5,6 @@ export const VIBES_ONBOARDING_STEPS = [
   "practices",
   "identity",
   "interests",
-  "plans",
   "completion",
 ] as const;
 
@@ -123,11 +122,7 @@ export const STEP_COPY: Record<
     subtitle: "Todo es opcional",
     button: "Siguiente",
   },
-  plans: {
-    title: "Tus planes",
-    subtitle: "Todo es opcional",
-    button: "Siguiente",
-  },
+
   completion: {
     title: "Tu vibe está listo.",
     subtitle: "Empecemos este viaje juntos.",

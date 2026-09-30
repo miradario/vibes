@@ -2,7 +2,8 @@ import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Text } from "./Typography";
 import Icon from "./Icon";
-import styles, { DARK_GRAY } from "../assets/styles";
+import styles from "../assets/styles";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 type FiltersProps = {
   label?: string;
@@ -18,7 +19,7 @@ const Filters = ({
   <TouchableOpacity style={styles.filters} onPress={onPress} activeOpacity={0.9}>
     <View style={styles.filtersRow}>
       <View style={styles.filtersIcon}>
-        <Icon name="options" size={14} color={DARK_GRAY} />
+        <Icon name="options" size={14} color={vibesTheme.colors.accentBlue} />
       </View>
       <View>
         <Text style={styles.filtersLabel}>{label}</Text>
@@ -26,7 +27,7 @@ const Filters = ({
       </View>
     </View>
     <View style={styles.filtersChevron}>
-      <Icon name="chevron-down" size={16} color={DARK_GRAY} />
+      <Icon name="chevron-down" size={16} color={vibesTheme.colors.accentBlue} />
     </View>
   </TouchableOpacity>
 );

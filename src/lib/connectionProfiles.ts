@@ -302,9 +302,10 @@ const formatLocation = (profile: ProfileLike) => {
 };
 
 export const mapCandidateToConnectionProfile = (
-  candidate: Candidate | ProfileLike
+  candidate: Candidate | ProfileLike,
+  canViewPhotos = true,
 ): ConnectionProfile => {
-  const photos = getPhotoUrls((candidate as ProfileLike).photos);
+  const photos = canViewPhotos ? getPhotoUrls((candidate as ProfileLike).photos) : [];
   const photoSources = photos.map((url) => ({ uri: url }));
   const tags = buildTags(candidate as ProfileLike);
   const otherTags = Array.isArray((candidate as ProfileLike).otherTags)

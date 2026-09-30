@@ -292,10 +292,10 @@ const Chat = () => {
         activeOpacity={0.8}
         onLongPress={() => handleLongPress(item)}
         style={[
+          localStyles.messageBubble,
           isOwn
             ? localStyles.messageBubbleRight
             : localStyles.messageBubbleLeft,
-          localStyles.messageBubble,
         ]}
       >
         <ChatMessageContent onLongPress={() => handleLongPress(item)} body={item.text} textStyle={isOwn ? localStyles.messageTextRight : localStyles.messageTextLeft} />
@@ -348,10 +348,14 @@ const Chat = () => {
     <ScreenContainer edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         style={styles.bg}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        enabled={Platform.OS === "ios"}
-        contentContainerStyle={localStyles.keyboardAvoidingContent}
-        keyboardVerticalOffset={0}
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : Platform.OS === "android"
+            ? "height"
+            : undefined
+        }
+        keyboardVerticalOffset={Platform.OS === "android" ? insets.top : 0}
       >
         <AppHeader
           showBack
@@ -522,6 +526,12 @@ const Chat = () => {
           ) : (
             <FlatList
               ref={flatListRef}
+              style={{ flex: 1 }}
+              onLayout={() => {
+                if (keyboardHeight > 0) {
+                  flatListRef.current?.scrollToEnd({ animated: false });
+                }
+              }}
               onViewableItemsChanged={receipts.onViewableItemsChanged}
               viewabilityConfig={receipts.viewabilityConfig}
               data={messages ?? []}
@@ -629,9 +639,6 @@ const localStyles = StyleSheet.create({
   chatBody: {
     flex: 1,
   },
-  keyboardAvoidingContent: {
-    flex: 1,
-  },
   messageList: {
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -675,6 +682,7 @@ const localStyles = StyleSheet.create({
   },
   msgTimeLeft: {},
   inputContainer: {
+    flexShrink: 0,
     backgroundColor: "rgba(254, 254, 253, 0.95)",
     borderTopColor: "rgba(127, 152, 183, 0.3)",
     paddingTop: 10,
@@ -760,7 +768,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   dangerText: {
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
   },
   reasonRow: {
     minHeight: 48,
@@ -849,7 +857,8 @@ const localStyles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    // Android shadows show through translucent backgrounds.
+    elevation: Platform.OS === "android" ? 0 : 2,
   },
   messageTextLeft: {
     color: DARK_GRAY,

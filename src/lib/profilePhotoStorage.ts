@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 const PROFILE_PICTURES_BUCKET = "profile pictures";
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 30;
 const SIGNED_URL_CACHE_REFRESH_BUFFER_MS = 60 * 60 * 1000;
+const MISSING_PHOTO_RETRY_MS = 60 * 1000;
 
 type SignedUrlCacheEntry = {
   expiresAt: number;
@@ -45,6 +46,7 @@ export const createSignedProfilePhotoUrl = async (value?: string | null) => {
 
   const now = Date.now();
   const cached = signedUrlCache.get(path);
+  if (cached?.url === null && cached.expiresAt > now) return null;
   if (
     cached?.url &&
     cached.expiresAt - SIGNED_URL_CACHE_REFRESH_BUFFER_MS > now
@@ -60,6 +62,14 @@ export const createSignedProfilePhotoUrl = async (value?: string | null) => {
     .createSignedUrl(path, SIGNED_URL_TTL_SECONDS)
     .then(({ data, error }) => {
       if (error) {
+        if (error.message === "Object not found") {
+          // Deleted photos can remain in screen/query caches briefly.
+          signedUrlCache.set(path, {
+            url: null,
+            expiresAt: Date.now() + MISSING_PHOTO_RETRY_MS,
+          });
+          return null;
+        }
         console.warn("createSignedProfilePhotoUrl:error", { path, error });
         signedUrlCache.delete(path);
         return null;

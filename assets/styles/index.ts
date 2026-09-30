@@ -869,7 +869,7 @@ export default StyleSheet.create({
   },
   loginTitle: {
     fontSize: 22,
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontFamily: vibesTheme.fonts.bold,
     textAlign: "center",
   },
@@ -1014,7 +1014,7 @@ export default StyleSheet.create({
     color: DARK_GRAY,
   },
   contactSectionTitle: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -1073,7 +1073,7 @@ export default StyleSheet.create({
   swipeBadgeTextNope: {
     fontSize: 28,
     fontWeight: "400",
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
     letterSpacing: 2,
   },
   swipeOverlay: {
@@ -1127,7 +1127,7 @@ export default StyleSheet.create({
     fontSize: 12,
   },
   promptLabel: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -1330,7 +1330,7 @@ export default StyleSheet.create({
     borderTopColor: vibesTheme.colors.accentMustard,
   },
   profileSectionTitle: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -2541,7 +2541,7 @@ export default StyleSheet.create({
     marginBottom: 12,
   },
   preferenceEmphasis: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontWeight: "400",
   },
 
@@ -2576,7 +2576,7 @@ export default StyleSheet.create({
     backgroundColor: PRIMARY_COLOR,
   },
   onboardSkip: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 12,
   },
   onboardTitle: {
@@ -2611,7 +2611,7 @@ export default StyleSheet.create({
     textAlign: "center",
   },
   onboardOptionTextActive: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
   },
   onboardList: {
     marginTop: 8,
@@ -2843,7 +2843,7 @@ export default StyleSheet.create({
     marginBottom: 14,
   },
   premiumBrand: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 18,
     marginLeft: 8,
     fontWeight: "400",
@@ -2947,7 +2947,7 @@ export default StyleSheet.create({
     marginTop: 18,
   },
   editSectionTitle: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,

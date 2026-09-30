@@ -41,7 +41,7 @@ test('editing or clearing canonical preferences overrides stale onboarding JSON 
   assert.equal(result.lookingFor.length, 0);
   assert.equal(result.languages.length, 0);
   assert.equal(result.hobbies[0], 'Arte');
-  assert.equal(result.availability, 'Solo yo');
+  assert.equal('availability' in result, false);
 });
 test('saving optional answers preserves independent onboarding motivations', async () => {
   const writes = [];
@@ -53,7 +53,7 @@ test('saving optional answers preserves independent onboarding motivations', asy
   assert.equal(publicWrite.looking_for[0], 'Citas');
 });
 
-test('every onboarding answer contributes once, including private availability', () => {
+test('every remaining profile answer contributes once', () => {
   const empty = getProfileCompletion({}, {}, false, {});
   assert.equal(empty.total, 8 + q.QUESTION_GROUPS.flatMap(g => g.fields).filter(f => f.key !== 'interestedIn').length);
   for (const field of q.QUESTION_GROUPS.flatMap(g => g.fields).filter(f => f.key !== 'interestedIn')) {

@@ -299,7 +299,7 @@ const localStyles = StyleSheet.create({
     marginTop: 10,
   },
   cardStatusEnabled: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
   },
   saveButtonFixedWrap: {
     position: "absolute",

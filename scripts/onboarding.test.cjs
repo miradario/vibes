@@ -19,17 +19,17 @@ test('email format validation rejects whitespace and missing domain', () => {
   assert.equal(policy.isValidEmail('  user+test@example.com  '), true);
 });
 function questions(supabase) { return load('src/lib/profileQuestions.ts', { './supabase': { supabase }, './moderation': { assertAcceptableContent() {} } }); }
-test('private availability never reaches public profile answers; mood columns are preserved', async () => {
+test('removed availability is not persisted and existing private data is left alone', async () => {
   const writes = [];
   const api = questions({ from: table => ({ upsert: async payload => { writes.push({ table, payload }); return { error: null }; } }) });
   await api.saveProfileAnswers('user-a', { availability: 'martes 19h', gender: 'Mujer', lookingFor: ['Amistad', 'Citas'], hobbies: ['Arte'] });
-  assert.equal(writes[0].table, 'private_user_state');
-  assert.equal(writes[0].payload.availability, 'martes 19h');
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].table, 'user_preferences');
   assert.equal('moods' in writes[0].payload, false);
-  assert.equal('availability' in writes[1].payload.profile_answers, false);
-  assert.deepEqual(writes[1].payload.looking_for, ['Amistad', 'Citas']);
+  assert.equal('availability' in writes[0].payload.profile_answers, false);
+  assert.deepEqual(writes[0].payload.looking_for, ['Amistad', 'Citas']);
 });
-test('failed private persistence is reported and does not continue with public write', async () => {
+test('failed answer persistence is reported', async () => {
   let calls = 0;
   const api = questions({ from: () => ({ upsert: async () => { calls++; return { error: new Error('denied') }; } }) });
   await assert.rejects(api.saveProfileAnswers('user-a', {}), /denied/);
@@ -39,7 +39,7 @@ test('omitted gender stays empty and never gets assigned Otro', async () => {
   const writes = [];
   const api = questions({ from: () => ({ upsert: async payload => { writes.push(payload); return { error: null }; } }) });
   await api.saveProfileAnswers('user-a', {});
-  assert.equal(writes[1].gender, null);
+  assert.equal(writes[0].gender, null);
 });
 test('local day key changes at local midnight, with stable zero padding', () => {
   const api = questions({});

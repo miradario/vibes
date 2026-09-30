@@ -59,7 +59,7 @@ export const getProfileCompletion = (profile: Data, preferences: Data, emailVeri
       const canonical = ["gender", "lookingFor", "personality", "languages"].includes(field.key);
       const value = canonical && preferences && (field.key in preferences || snakeKey in preferences)
         ? preferences[field.key] ?? preferences[snakeKey] ?? ""
-        : answers?.[field.key] ?? (field.key === "availability" ? "" : stored?.[field.key]);
+        : answers?.[field.key] ?? stored?.[field.key];
       return { label: field.label, value, screen: "ProfileQuestions" };
     })),
   ];

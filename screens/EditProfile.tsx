@@ -420,6 +420,13 @@ const DraggablePhotoSlot = ({
 const EditProfile = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
+  const leaveProfile = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate("Tab" as never, { screen: "Home" } as never);
+    }
+  };
   const queryClient = useQueryClient();
   const { data: session } = useAuthSession();
   const { data: profileData, refetch } = useProfileQuery(session?.user?.id);
@@ -478,6 +485,7 @@ const EditProfile = () => {
 
     queryClient.setQueryData(profileKeys.byUser(userId), refreshed.data);
     await queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    await queryClient.invalidateQueries({ queryKey: ["candidates"] });
   };
 
   useEffect(() => {
@@ -967,7 +975,7 @@ const EditProfile = () => {
         <AppHeader
           title={t("editProfile.title")}
           showBack
-          onBack={() => navigation.goBack()}
+          onBack={leaveProfile}
           style={localStyles.header}
           titleStyle={styles.title}
           right={
@@ -975,7 +983,7 @@ const EditProfile = () => {
               onPress={async () => {
                 await saveDisplayName();
                 await saveLocation();
-                navigation.goBack();
+                leaveProfile();
               }}
             >
               <Icon name="checkmark" color={DARK_GRAY} size={22} />

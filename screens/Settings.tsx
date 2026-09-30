@@ -374,7 +374,7 @@ const Settings = () => {
                         .map((entry) => `${entry.label}: ${entry.value}`)
                         .join(" · ") || "Sin datos adicionales"}
                     </Text>
-                    <Text style={{ color: PRIMARY_COLOR, marginTop: 8 }}>
+                    <Text style={{ color: vibesTheme.colors.accentBlue, marginTop: 8 }}>
                       Editar
                     </Text>
                   </TouchableOpacity>
@@ -925,7 +925,7 @@ const localStyles = StyleSheet.create({
     borderColor: vibesTheme.colors.accentMustard,
   },
   currentLocationButtonText: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },

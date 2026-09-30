@@ -86,11 +86,6 @@ export const QUESTION_GROUPS = [
     title: "Tus planes, a tu manera",
     fields: [
       {
-        key: "availability",
-        label: "Disponibilidad para planes · Solo vos",
-        placeholder: "Días y horarios habituales",
-      },
-      {
         key: "idealPlan",
         label: "Mi plan ideal es…",
         placeholder: "Contanos tu plan ideal",
@@ -117,28 +112,20 @@ export const hasMissingProfileAnswers = (answers?: ProfileAnswers | null) =>
 export const readProfileAnswers = async (
   userId: string
 ): Promise<ProfileAnswers> => {
-  const [publicResult, privateResult] = await Promise.all([
-    supabase
-      .from("user_preferences")
-      .select("profile_answers, gender, looking_for, personality, languages")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("private_user_state")
-      .select("availability")
-      .eq("user_id", userId)
-      .maybeSingle(),
-  ]);
+  const publicResult = await supabase
+    .from("user_preferences")
+    .select("profile_answers, gender, looking_for, personality, languages")
+    .eq("user_id", userId)
+    .maybeSingle();
   if (publicResult.error) throw publicResult.error;
-  if (privateResult.error) throw privateResult.error;
   const profile = publicResult.data;
+  const { availability: _legacyAvailability, ...publicAnswers } = profile?.profile_answers ?? {};
   return {
-    ...(profile?.profile_answers ?? {}),
+    ...publicAnswers,
     gender: profile?.gender ?? "",
     lookingFor: profile?.looking_for ?? [],
     personality: profile?.personality ?? "",
     languages: profile?.languages ?? [],
-    availability: privateResult.data?.availability ?? "",
   };
 };
 
@@ -148,14 +135,6 @@ export const saveProfileAnswers = async (
 ) => {
   const { availability = "", ...publicAnswers } = answers;
   assertAcceptableContent(Object.values(publicAnswers).flat());
-  const privateResult = await supabase.from("private_user_state").upsert(
-    {
-      user_id: userId,
-      availability: String(availability).slice(0, 300),
-    },
-    { onConflict: "user_id" }
-  );
-  if (privateResult.error) throw privateResult.error;
   const { error } = await supabase.from("user_preferences").upsert(
     {
       user_id: userId,

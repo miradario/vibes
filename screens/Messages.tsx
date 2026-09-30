@@ -1100,7 +1100,7 @@ const localStyles = StyleSheet.create({
   },
   connectionCardAction: {
     marginLeft: 8,
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.bold,
   },

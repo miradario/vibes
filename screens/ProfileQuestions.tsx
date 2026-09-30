@@ -181,7 +181,7 @@ export default function ProfileQuestions() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ color: vibesTheme.colors.secondaryText }}>Omitir</Text>
+              <Text style={{ color: vibesTheme.colors.secondaryText }}>Completar después</Text>
             </TouchableOpacity>
           )}
         </View>

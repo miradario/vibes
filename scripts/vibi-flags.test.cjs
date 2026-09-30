@@ -51,6 +51,7 @@ function fixture({ cached = false, fail = false } = {}) {
     "./store": { vibiFlagStore: store },
     "@react-native-firebase/remote-config": sdk,
     "react-native": {
+      TurboModuleRegistry: { get: () => ({}) },
       AppState: {
         addEventListener: (_, fn) => {
           foreground = fn;
@@ -108,13 +109,24 @@ test("offline retains activated value and foreground retries do not reset it", a
   assert.equal(f.store.getSnapshot(), true);
   stop();
 });
-test("older native build without Firebase leaves Vibi disabled without throwing", () => {
-  const store = load("src/featureFlags/store.ts").vibiFlagStore;
-  const module = load("src/featureFlags/remoteConfig.native.ts", {
-    "./store": { vibiFlagStore: store },
-    "react-native": {},
-  });
-  const stop = module.startRemoteConfig();
-  assert.equal(store.getSnapshot(), false);
-  stop();
+for (const missing of ["NativeRNFBTurboApp", "NativeRNFBTurboConfig"]) {
+  test(`older native build missing ${missing} never imports Firebase`, () => {
+    const store = load("src/featureFlags/store.ts").vibiFlagStore;
+    store.update(true);
+    let sdkImports = 0;
+    const module = load("src/featureFlags/remoteConfig.native.ts", {
+      "./store": { vibiFlagStore: store },
+      "react-native": {
+        TurboModuleRegistry: { get: (name) => name === missing ? null : {} },
+      },
+      get "@react-native-firebase/remote-config"() {
+        sdkImports++;
+        throw Error("must not evaluate SDK without native modules");
+      },
+    });
+    const stop = module.startRemoteConfig();
+    assert.equal(store.getSnapshot(), false);
+    assert.equal(sdkImports, 0);
+    stop();
 });
+}

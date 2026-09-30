@@ -79,7 +79,7 @@ export default function CommunityGroups({
           style={s.create}
           onPress={() => setVisible(true)}
         >
-          <Icon name="add" size={21} color={vibesTheme.colors.accentMustard} />
+          <Icon name="add" size={21} color={vibesTheme.colors.primaryText} />
           <Text style={s.createLabel}>Crear grupo</Text>
         </TouchableOpacity>
       ) : null}
@@ -265,11 +265,11 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
+    borderColor: vibesTheme.colors.primaryText,
   },
   createLabel: {
     flexShrink: 1,
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.bold,
   },

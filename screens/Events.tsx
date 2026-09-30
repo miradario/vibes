@@ -1,10 +1,13 @@
-import AnimatedSheetModal from "../components/AnimatedSheetModal";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import ScreenContainer from "../components/ScreenContainer";
+import { matchesEventDateAndLocation, getEventDatePreset } from "../src/lib/eventFilters";
+import KeyboardSheetModal from "../components/KeyboardSheetModal";
 import EventClassificationPicker from "../components/EventClassificationPicker";
 import { EVENT_MODALITIES, EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, getEventCategoryLabel, getEventParticipationLabel, matchesEventClassification, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
 /** @format */
 
 import React, { useCallback, useMemo, useState } from "react";
-import { View, FlatList, TouchableOpacity, Image, StyleSheet, ScrollView, Keyboard } from "react-native";
+import { View, FlatList, TouchableOpacity, Image, StyleSheet, ScrollView, Keyboard, Platform } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
@@ -137,7 +140,7 @@ const ParticipantStack = ({
   );
 };
 
-const Events = () => {
+const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const queryClient = useQueryClient();
@@ -146,7 +149,7 @@ const Events = () => {
   const { data: session } = useAuthSession();
   const section: "event" | "challenge" =
     route.params?.section === "challenge" ? "challenge" : "event";
-  const title = section === "challenge" ? "Desafíos" : "Eventos";
+  const title = pastOnly ? "Eventos pasados" : section === "challenge" ? "Desafíos" : "Eventos";
   const searchPlaceholder =
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
   const eventsQuery = useEventsFeedQuery();
@@ -162,22 +165,39 @@ const Events = () => {
   const [category, setCategory] = useState<EventCategory | null>(null);
   const [participationType, setParticipationType] = useState<EventParticipationType | null>(null);
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [locationFilter, setLocationFilter] = useState("");
+  const [draftDateFrom, setDraftDateFrom] = useState<Date | null>(null);
+  const [draftDateTo, setDraftDateTo] = useState<Date | null>(null);
+  const [draftLocation, setDraftLocation] = useState("");
+  const [dateField, setDateField] = useState<"from" | "to" | null>(null);
+  const today = getEventDatePreset("today").from;
+  const minimumDate = pastOnly ? undefined : today;
+  const endMinimumDate = draftDateFrom && (!minimumDate || draftDateFrom > minimumDate) ? draftDateFrom : minimumDate;
+  const invalidDateRange = Boolean(
+    (draftDateFrom && draftDateTo && draftDateFrom > draftDateTo) ||
+    (!pastOnly && ((draftDateFrom && draftDateFrom < today) || (draftDateTo && draftDateTo < today)))
+  );
   const [draftFilters, setDraftFilters] = useState<{
     category: EventCategory | null;
     participationType: EventParticipationType | null;
     modality: EventModality | null;
   }>({ category: null, participationType: null, modality: null });
-  const activeFilterCount = [category, participationType, modality].filter(Boolean).length;
+  const activeFilterCount = [category, participationType, modality, dateFrom, dateTo, locationFilter.trim()].filter(Boolean).length;
   const openFilters = () => {
     Keyboard.dismiss();
     setDraftFilters({ category, participationType, modality });
+    setDraftDateFrom(dateFrom);
+    setDraftDateTo(dateTo);
+    setDraftLocation(locationFilter);
+    setDateField(null);
     setFiltersVisible(true);
   };
 
   const [search, setSearch] = useState("");
   const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
   const [showUpcomingChallenges, setShowUpcomingChallenges] = useState(false);
-  const [showExpiredEvents, setShowExpiredEvents] = useState(false);
 
   const errorMessage =
     error instanceof Error && error.message.trim()
@@ -188,6 +208,7 @@ const Events = () => {
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
       if (!normalizedSearch) return true;
       const haystack = normalizeSearchText(
@@ -209,14 +230,14 @@ const Events = () => {
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, normalizedSearch, section, category, participationType, modality]);
+  }, [items, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
-      return filteredItems.filter((item) => !isExpiredEvent(item));
+      return filteredItems.filter((item) => pastOnly ? isExpiredEvent(item) : !isExpiredEvent(item));
     }
     return filteredItems;
-  }, [filteredItems, section]);
+  }, [filteredItems, section, pastOnly]);
 
   const expiredEventItems = useMemo(() => {
     if (section !== "event") return [];
@@ -276,18 +297,6 @@ const Events = () => {
         kind: "feed",
         item,
       }));
-
-      if (showExpiredEvents && expiredEventItems.length > 0) {
-        nextItems.push({
-          kind: "section",
-          id: "expired-events",
-          title: "Eventos pasados",
-          subtitle: "Eventos que ya pasaron",
-        });
-        nextItems.push(
-          ...expiredEventItems.map((item) => ({ kind: "feed" as const, item })),
-        );
-      }
 
       return nextItems;
     }
@@ -351,7 +360,6 @@ const Events = () => {
     joinedChallengeItems,
     joinedUpcomingChallengeItems,
     section,
-    showExpiredEvents,
     showFinishedChallenges,
     showUpcomingChallenges,
     upcomingGeneralChallengeItems,
@@ -386,11 +394,28 @@ const Events = () => {
   );
 
   return (
-    <View style={styles.bg}>
-      <View style={[styles.eventsContainer, localStyles.eventsContainer]}>
+    <ScreenContainer edges={pastOnly ? ["top", "left", "right"] : []} style={styles.bg}>
+      <View style={[styles.eventsContainer, localStyles.eventsContainer, pastOnly && { paddingTop: 12 }]}>
         <View style={localStyles.headerRow}>
-          <Text style={[styles.eventsTitle, localStyles.screenTitle]}>{title}</Text>
-          <TouchableOpacity
+          {pastOnly ? (
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton}>
+              <Icon name="chevron-back" size={26} color={vibesTheme.colors.primaryText} />
+            </TouchableOpacity>
+          ) : null}
+          <View style={localStyles.titleRow}>
+            <Text style={[styles.eventsTitle, localStyles.screenTitle]}>{title}</Text>
+            {!pastOnly && section === "event" ? (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Ver eventos pasados"
+                onPress={() => navigation.navigate("PastEvents" as never)}
+                style={localStyles.filterButton}
+              >
+                <Icon name="archive-outline" size={23} color={vibesTheme.colors.accentBlue} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          {!pastOnly ? <TouchableOpacity
             accessibilityRole="button"
             activeOpacity={0.78}
             style={localStyles.createButton}
@@ -402,14 +427,14 @@ const Events = () => {
               navigation.navigate("CreateEvent" as never);
             }}
           >
-            <Icon name="add" size={20} color={vibesTheme.colors.accentMustard} style={localStyles.createIcon} />
+            <Icon name="add" size={20} color={vibesTheme.colors.primaryText} style={localStyles.createIcon} />
             <Text style={localStyles.createButtonText} numberOfLines={1}>
               {section === "challenge" ? "Crear desafío" : "Crear evento"}
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> : null}
           {section === "event" ? (
             <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Filtros de eventos${activeFilterCount ? `, ${activeFilterCount} activos` : ""}`} accessibilityState={{ expanded: filtersVisible }} onPress={openFilters} style={localStyles.filterButton}>
-              <Icon name="options-outline" size={28} color={vibesTheme.colors.accentMustard} />
+              <Icon name="options-outline" size={28} color={vibesTheme.colors.accentBlue} />
               {activeFilterCount > 0 ? <View style={localStyles.filterBadge}><Text style={localStyles.filterBadgeText}>{activeFilterCount}</Text></View> : null}
             </TouchableOpacity>
            ) : null}
@@ -435,7 +460,7 @@ const Events = () => {
           contentContainerStyle={[
             styles.eventsListContent,
             localStyles.eventsListContent,
-            { paddingBottom: getBottomTabContentPadding(insets.bottom, 140) },
+            { paddingBottom: pastOnly ? insets.bottom + 24 : getBottomTabContentPadding(insets.bottom, 140) },
           ]}
           ListFooterComponentStyle={[
             localStyles.listFooter,
@@ -446,7 +471,7 @@ const Events = () => {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={section === "event" && !listIsLoading && !error ? (
             <View style={localStyles.upcomingHeader}>
-              <Text style={localStyles.upcomingTitle}>Próximos eventos</Text>
+              <Text style={localStyles.upcomingTitle}>{pastOnly ? "Eventos pasados" : "Próximos eventos"}</Text>
               <Text style={localStyles.eventCount}>
                 {visibleItems.length} {visibleItems.length === 1 ? "evento" : "eventos"}
               </Text>
@@ -462,6 +487,8 @@ const Events = () => {
                     : t("events.loadingEvents")
                   : error
                     ? "No se pudieron cargar"
+                    : pastOnly
+                      ? "No hay eventos pasados"
                     : normalizedSearch
                       ? section === "challenge"
                         ? "No encontramos desafíos"
@@ -482,7 +509,7 @@ const Events = () => {
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
                     : section === "event" && expiredEventItems.length > 0
-                      ? "Los eventos pasados están guardados abajo."
+                      ? pastOnly ? "Probá con otros filtros." : "Podés consultar el historial en Eventos pasados."
                     : section === "challenge" && upcomingGeneralChallengeItems.length > 0
                       ? "Los próximos están guardados abajo para que te sumes cuando quieras."
                     : section === "challenge" && finishedChallengeItems.length > 0
@@ -494,10 +521,10 @@ const Events = () => {
             </View>
           }
           ListFooterComponent={
-            section === "event" && expiredEventItems.length > 0 ? (
+            !pastOnly && section === "event" && expiredEventItems.length > 0 ? (
               <TouchableOpacity
                 style={localStyles.finishedSectionToggle}
-                onPress={() => setShowExpiredEvents((prev) => !prev)}
+                onPress={() => navigation.navigate("PastEvents" as never)}
                 activeOpacity={0.85}
               >
                 <View>
@@ -505,13 +532,11 @@ const Events = () => {
                     Eventos pasados
                   </Text>
                   <Text style={localStyles.finishedSectionSubtitle}>
-                    {showExpiredEvents
-                      ? "Ocultar"
-                      : `${expiredEventItems.length} guardados`}
+                    {`${expiredEventItems.length} guardados`}
                   </Text>
                 </View>
                 <Icon
-                  name={showExpiredEvents ? "chevron-up" : "chevron-down"}
+                  name="chevron-forward"
                   size={22}
                   color={vibesTheme.colors.secondaryText}
                 />
@@ -684,7 +709,8 @@ const Events = () => {
           )}}
         />
       </View>
-      <AnimatedSheetModal visible={filtersVisible && section === "event"} onClose={() => setFiltersVisible(false)} sheetStyle={localStyles.filtersSheet}>
+      <KeyboardSheetModal visible={filtersVisible && section === "event"} onClose={() => setFiltersVisible(false)}>
+        <View style={[localStyles.filtersSheet, { maxHeight: "100%" }]}>
         <View style={localStyles.filterHandle} />
         <View style={localStyles.filterHeader}>
           <Text style={localStyles.filterTitle}>Filtros de eventos</Text>
@@ -692,32 +718,109 @@ const Events = () => {
             <Icon name="close" size={22} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>
         </View>
-        <ScrollView contentContainerStyle={localStyles.filterContent} showsVerticalScrollIndicator={false}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={localStyles.filterContent} showsVerticalScrollIndicator={false}>
+          <Text style={localStyles.filterActionText}>Ubicación</Text>
+          <TextInput
+            accessibilityLabel="Filtrar por ciudad o lugar"
+            placeholder="Ciudad o lugar"
+            placeholderTextColor={vibesTheme.colors.secondaryText}
+            value={draftLocation}
+            onChangeText={setDraftLocation}
+            style={localStyles.locationFilterInput}
+          />
+          <Text style={localStyles.filterActionText}>Fecha</Text>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            {(["from", "to"] as const).map((field) => (
+              <TouchableOpacity key={field} accessibilityRole="button" style={[localStyles.filterClear, localStyles.dateFilterButton]} onPress={() => { Keyboard.dismiss(); setDateField(field); }}>
+                <Text style={localStyles.filterActionText}>
+                  {field === "from" ? "Desde" : "Hasta"}
+                  {(field === "from" ? draftDateFrom : draftDateTo)
+                    ? `: ${(field === "from" ? draftDateFrom : draftDateTo)!.toLocaleDateString()}`
+                    : ""}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {!pastOnly ? (
+            <View style={localStyles.datePresets}>
+              {([
+                ["today", "Hoy"], ["tomorrow", "Mañana"],
+                ["week", "Esta semana"], ["month", "Este mes"],
+              ] as const).map(([preset, label]) => {
+                const range = getEventDatePreset(preset);
+                const selected = draftDateFrom?.getTime() === range.from.getTime() && draftDateTo?.getTime() === range.to.getTime();
+                return (
+                  <TouchableOpacity key={preset} accessibilityRole="button" accessibilityState={{ selected }}
+                    style={[localStyles.datePreset, selected && localStyles.datePresetSelected]}
+                    onPress={() => { Keyboard.dismiss(); setDateField(null); setDraftDateFrom(range.from); setDraftDateTo(range.to); }}>
+                    <Text style={localStyles.datePresetText}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : null}
+          {dateField ? <DateTimePicker
+            value={new Date(Math.max(
+              ((dateField === "from" ? draftDateFrom : draftDateTo) ?? today).getTime(),
+              (dateField === "from" ? minimumDate : endMinimumDate)?.getTime() ?? -Infinity
+            ))}
+            minimumDate={dateField === "from" ? minimumDate : endMinimumDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(event, date) => {
+              if (Platform.OS !== "ios") setDateField(null);
+              if (event.type === "set" && date) {
+                const normalized = new Date(date);
+                normalized.setHours(0, 0, 0, 0);
+                if (minimumDate && normalized < minimumDate) return;
+                if (dateField === "from") {
+                  setDraftDateFrom(normalized);
+                  if (draftDateTo && draftDateTo < normalized) setDraftDateTo(normalized);
+                }
+                else setDraftDateTo(normalized);
+              }
+            }}
+          /> : null}
+          {invalidDateRange ? <Text style={{ color: vibesTheme.colors.primaryText }}>La fecha final debe ser igual o posterior a la inicial.</Text> : null}
           <EventClassificationPicker filter label="Categoría" options={EVENT_CATEGORIES} value={draftFilters.category} onChange={(value) => setDraftFilters((draft) => ({ ...draft, category: value }))} />
           <EventClassificationPicker filter label="Tipo" options={EVENT_PARTICIPATION_TYPES} value={draftFilters.participationType} onChange={(value) => setDraftFilters((draft) => ({ ...draft, participationType: value }))} />
           <EventClassificationPicker filter label="Modalidad" options={EVENT_MODALITIES} value={draftFilters.modality} onChange={(value) => setDraftFilters((draft) => ({ ...draft, modality: value }))} />
         </ScrollView>
         <View style={[localStyles.filterFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => setDraftFilters({ category: null, participationType: null, modality: null })}>
+          <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => { setDraftFilters({ category: null, participationType: null, modality: null }); setDraftDateFrom(null); setDraftDateTo(null); setDraftLocation(""); setDateField(null); }}>
             <Text style={localStyles.filterActionText}>Limpiar</Text>
           </TouchableOpacity>
-          <TouchableOpacity accessibilityRole="button" style={localStyles.filterApply} onPress={() => {
+          <TouchableOpacity accessibilityRole="button" disabled={invalidDateRange} style={[localStyles.filterApply, invalidDateRange && { opacity: 0.5 }]} onPress={() => {
+            setDateFrom(draftDateFrom);
+            setDateTo(draftDateTo);
+            setLocationFilter(draftLocation.trim());
             setCategory(draftFilters.category);
             setParticipationType(draftFilters.participationType);
             setModality(draftFilters.modality);
             setFiltersVisible(false);
           }}>
-            <Text style={[localStyles.filterActionText, { color: vibesTheme.colors.background }]}>Aplicar</Text>
+            <Text style={localStyles.filterActionText}>Aplicar</Text>
           </TouchableOpacity>
         </View>
-      </AnimatedSheetModal>
-    </View>
+        </View>
+      </KeyboardSheetModal>
+    </ScreenContainer>
   );
 };
 
 export default Events;
 
 const localStyles = StyleSheet.create({
+  locationFilterInput: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: vibesTheme.colors.accentBlue,
+    color: vibesTheme.colors.primaryText,
+    backgroundColor: vibesTheme.colors.surface,
+    padding: 12,
+    borderRadius: 12,
+    fontSize: 16,
+  },
   filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
   filterBadgeText: { color: vibesTheme.colors.primaryText, fontSize: 11, fontFamily: vibesTheme.fonts.bold },
@@ -728,6 +831,11 @@ const localStyles = StyleSheet.create({
   filterContent: { paddingHorizontal: 20, paddingBottom: 16 },
   filterFooter: { flexDirection: "row", gap: 12, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(43,43,43,0.08)" },
   filterClear: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: "rgba(43,43,43,0.2)", borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  datePresets: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
+  datePreset: { minHeight: 44, paddingHorizontal: 12, borderRadius: 22, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, backgroundColor: vibesTheme.colors.surface, justifyContent: "center" },
+  datePresetSelected: { backgroundColor: vibesTheme.colors.accentBlue, borderColor: vibesTheme.colors.primaryText },
+  datePresetText: { fontSize: 14, color: vibesTheme.colors.primaryText },
+  dateFilterButton: { backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.primaryText },
   filterApply: { flex: 1, minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
   filterActionText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.bold },
   upcomingHeader: {
@@ -776,13 +884,19 @@ const localStyles = StyleSheet.create({
     marginBottom: 20,
   },
   screenTitle: {
-    flex: 1,
+    flexShrink: 1,
     color: TEXT_PRIMARY,
     fontFamily: vibesTheme.fonts.semibold,
     fontSize: 26,
     lineHeight: 32,
     marginBottom: 0,
     textAlign: "left",
+  },
+  titleRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    minWidth: 0,
   },
   listFooter: {
     marginTop: 8,
@@ -805,7 +919,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
+    borderColor: vibesTheme.colors.primaryText,
   },
   createIcon: { lineHeight: 20, includeFontPadding: false },
   createButtonText: {

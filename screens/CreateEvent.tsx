@@ -1222,7 +1222,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.secondaryText,
   },
   linkValidationTextInvalid: {
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
   },
   dateTimeRow: {
     flexDirection: "row",
@@ -1274,7 +1274,7 @@ const localStyles = StyleSheet.create({
   },
   selectedDateTimeText: {
     marginTop: 8,
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 13,
     fontWeight: "400",
   },
@@ -1290,7 +1290,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 10,
   },
   pickerDoneText: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontWeight: "400",
   },
   createButton: {
@@ -1346,7 +1346,7 @@ const localStyles = StyleSheet.create({
   },
   validatedText: {
     marginTop: 8,
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 13,
     fontWeight: "400",
   },

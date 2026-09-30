@@ -1,3 +1,4 @@
+import PhotoViewer from "../components/PhotoViewer";
 import { LinearGradient } from "expo-linear-gradient";
 import ProfileMediaImage from "../components/ProfileMediaImage";
 import HomeOverview from "../components/HomeOverview";
@@ -9,10 +10,8 @@ import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
-  Modal,
   TouchableOpacity,
   FlatList,
-  Image,
   StyleSheet,
   ScrollView,
 } from "react-native";
@@ -323,7 +322,7 @@ const Home = () => {
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
-  const { data: candidates = [] } = useCandidatesQuery();
+  const { data: candidates = [] } = useCandidatesQuery(undefined, true);
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
@@ -844,40 +843,7 @@ const Home = () => {
           </>
         </AnimatedSheetModal>
 
-        <Modal
-          visible={showGallery}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowGallery(false)}
-        >
-          <View style={styles.galleryOverlay}>
-            <TouchableOpacity
-              style={styles.galleryClose}
-              onPress={() => setShowGallery(false)}
-            >
-              <Icon name="close" size={18} color={vibesTheme.colors.background} />
-            </TouchableOpacity>
-            <FlatList
-              key={`gallery-${galleryInitialIndex}-${galleryImages.length}`}
-              data={galleryImages}
-              keyExtractor={(_, index) => `gallery-${index}`}
-              getItemLayout={(_, index) => ({
-                length: DIMENSION_WIDTH,
-                offset: DIMENSION_WIDTH * index,
-                index,
-              })}
-              horizontal
-              initialScrollIndex={galleryInitialIndex}
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <View style={styles.gallerySlide}>
-                  <Image source={item} style={styles.galleryImage} />
-                </View>
-              )}
-            />
-          </View>
-        </Modal>
+        <PhotoViewer visible={showGallery} images={galleryImages} initialIndex={galleryInitialIndex} onClose={() => setShowGallery(false)} />
 
         <UserProfileSheet
           visible={showProfileSheet}
@@ -1188,7 +1154,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   featureEyebrow: {
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 12,
     lineHeight: 15,
     fontFamily: vibesTheme.fonts.bold,
@@ -1445,7 +1411,7 @@ const localStyles = StyleSheet.create({
     elevation: 3,
   },
   eventPreviewEyebrow: {
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 14,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.bold,

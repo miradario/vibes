@@ -170,7 +170,7 @@ const localStyles = StyleSheet.create({
   },
   error: {
     marginTop: 10,
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 14,
     lineHeight: 19,
   },

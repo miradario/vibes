@@ -2037,7 +2037,7 @@ const EventDetail = () => {
                 disabled={deleteEventMutation.isPending}
               >
                 <Icon name="trash" size={20} color={vibesTheme.colors.accentCoral} />
-                <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentCoral }]}>
+                <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentBlue }]}>
                   Eliminar evento
                 </Text>
               </TouchableOpacity>
@@ -2050,7 +2050,7 @@ const EventDetail = () => {
               onPress={handleLeave}
             >
               <Icon name="exit" size={20} color={vibesTheme.colors.accentCoral} />
-              <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentCoral }]}>
+              <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentBlue }]}>
                 Salir del desafío
               </Text>
             </TouchableOpacity>
@@ -2065,7 +2065,7 @@ const EventDetail = () => {
                 onPress={handleLeave}
               >
                 <Icon name="exit" size={20} color={vibesTheme.colors.accentCoral} />
-                <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentCoral }]}>
+                <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentBlue }]}>
                   Abandonar desafío
                 </Text>
               </TouchableOpacity>
@@ -2074,7 +2074,7 @@ const EventDetail = () => {
                 onPress={handleDelete}
               >
                 <Icon name="trash" size={20} color={vibesTheme.colors.accentCoral} />
-                <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentCoral }]}>
+                <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentBlue }]}>
                   Eliminar desafío
                 </Text>
               </TouchableOpacity>
@@ -2423,10 +2423,10 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
   },
   dayPillTextMissed: {
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.accentBlue,
   },
   dayPillTextCurrent: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
   },
   scrollContent: {
     paddingTop: 12,
@@ -2668,7 +2668,7 @@ const localStyles = StyleSheet.create({
   totalBadgeNumber: {
     fontSize: 18,
     fontFamily: vibesTheme.fonts.bold,
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
   },
   totalBadgeLabel: {
     fontSize: 10,
@@ -2971,7 +2971,7 @@ const localStyles = StyleSheet.create({
     marginTop: 4,
   },
   chatButtonText: {
-    color: PRIMARY_COLOR,
+    color: vibesTheme.colors.accentBlue,
     fontFamily: vibesTheme.fonts.bold,
     fontSize: 15,
   },

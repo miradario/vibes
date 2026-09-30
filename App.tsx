@@ -1,3 +1,4 @@
+import PastEvents from "./screens/PastEvents";
 import VibiFloatingButton from "./components/VibiFloatingButton";
 import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
 import AppCamera from "./components/AppCamera";
@@ -552,6 +553,7 @@ const AppNavigator = () => {
               component={CommunityGroupChat}
               options={{ headerShown: false, animationEnabled: true }}
             />
+            <Stack.Screen name="PastEvents" component={PastEvents} options={{ headerShown: false }} />
             <Stack.Screen
               name="EventChat"
               component={EventChat}

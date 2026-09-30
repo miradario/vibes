@@ -174,14 +174,14 @@ const localStyles = StyleSheet.create({
     position: "absolute",
     left: 0,
     top: 4,
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 24,
   },
   sparkleSmall: {
     position: "absolute",
     right: 0,
     top: 0,
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 16,
   },
   title: {
@@ -311,7 +311,7 @@ const localStyles = StyleSheet.create({
     gap: 14,
   },
   footerSparkle: {
-    color: vibesTheme.colors.accentMustard,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 22,
   },
   footerText: {

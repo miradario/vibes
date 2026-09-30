@@ -2798,7 +2798,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(254, 254, 253, 0.92)",
   },
   pathPillText: {
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 13,
     fontFamily: vibesTheme.fonts.bold,
   },

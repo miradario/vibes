@@ -1,3 +1,7 @@
+import { useNavigation } from "@react-navigation/native";
+import ProfilePhotoPrompt from "./ProfilePhotoPrompt";
+import { useProfileQuery } from "../src/queries/profile.queries";
+import { hasProfilePhotos } from "../src/lib/profilePhotos";
 import { splitProfileLocation } from "../src/lib/profileLocation";
 import { getProfileSwipeAction } from "../src/lib/profileSwipe";
 import LikeBubbles from "./LikeBubbles";
@@ -264,6 +268,9 @@ const UserProfileSheet = ({
   const { width, height: windowHeight } = useWindowDimensions();
   const [height, setViewportHeight] = useState(windowHeight);
   const { data: session } = useAuthSession();
+  const navigation = useNavigation();
+  const { data: ownProfile } = useProfileQuery(session?.user.id);
+  const canViewPhotos = profile?.id === session?.user.id || hasProfilePhotos(ownProfile);
   const { data: sharedActivities } = useSharedActivitiesQuery(
     session?.user?.id,
     profile?.id
@@ -476,8 +483,8 @@ const UserProfileSheet = ({
     ]
   );
   const profileImages = useMemo(
-    () => normalizeProfileImages(profile),
-    [profile]
+    () => canViewPhotos ? normalizeProfileImages(profile) : [],
+    [profile, canViewPhotos]
   );
   const hasMultipleImages = profileImages.length > 1;
   const safeActiveIndex = Math.min(
@@ -486,7 +493,7 @@ const UserProfileSheet = ({
   );
   const upcomingPhotoUrls = JSON.stringify(Array.from(new Set([
     ...profileImages.slice(Math.max(0, safeActiveIndex - 1), safeActiveIndex + 3),
-    ...normalizeProfileImages(nextProfile ?? null).slice(0, 1),
+    ...(canViewPhotos ? normalizeProfileImages(nextProfile ?? null).slice(0, 1) : []),
   ].flatMap((source) => typeof source === "object" && source && "uri" in source && source.uri ? [source.uri] : []))));
   useEffect(() => {
     if (!visible) return;
@@ -720,7 +727,7 @@ const UserProfileSheet = ({
                 blurBackground
                 showLoading
               source={
-                normalizeProfileImages(swipeNextProfile ?? nextProfile ?? null)[0] ??
+                (canViewPhotos ? normalizeProfileImages(swipeNextProfile ?? nextProfile ?? null)[0] : undefined) ??
                 VIBES_FALLBACK_ILLUSTRATION
               }
               style={{ width, height }}
@@ -846,6 +853,12 @@ const UserProfileSheet = ({
               />
             </View>
           )}
+
+          {!canViewPhotos ? (
+            <View style={{ position: "absolute", left: 20, right: 20, top: insets.top + 60, zIndex: 10 }}>
+              <ProfilePhotoPrompt onPress={() => { onClose(); navigation.navigate("EditProfile" as never); }} />
+            </View>
+          ) : null}
 
           <View
             style={{ position: "absolute", left: 0, right: 0, top: "12%", height: "53%" }}
@@ -1407,7 +1420,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   panelSecondaryActionText: { color: vibesTheme.colors.secondaryText },
-  destructiveSecondaryActionText: { color: vibesTheme.colors.accentCoral },
+  destructiveSecondaryActionText: { color: vibesTheme.colors.accentBlue },
   detailsSheet: {
     width: "100%",
     backgroundColor: "transparent",

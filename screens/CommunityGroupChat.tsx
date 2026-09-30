@@ -174,9 +174,14 @@ export default function CommunityGroupChat() {
     <ScreenContainer edges={["top", "left", "right"]} style={s.screen}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        enabled={Platform.OS === "ios"}
-        keyboardVerticalOffset={0}
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : Platform.OS === "android"
+            ? "height"
+            : undefined
+        }
+        keyboardVerticalOffset={Platform.OS === "android" ? insets.top : 0}
       >
         <View style={s.header}>
           <TouchableOpacity
@@ -453,6 +458,8 @@ const s = StyleSheet.create({
     elevation: 1,
   },
   own: {
+    // Android shadows show through translucent backgrounds.
+    elevation: Platform.OS === "android" ? 0 : 1,
     alignSelf: "flex-end",
     backgroundColor: "rgba(228, 183, 110, 0.18)",
     borderWidth: 1,

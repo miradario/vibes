@@ -501,7 +501,7 @@ const localStyles = StyleSheet.create({
     textDecorationLine: "underline",
   },
   signupError: {
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
     marginBottom: 18,
   },
   header: {

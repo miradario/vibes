@@ -353,7 +353,7 @@ const localStyles = StyleSheet.create({
   },
   primaryBadge: {
     marginTop: 10,
-    color: vibesTheme.colors.accentCoral,
+    color: vibesTheme.colors.accentBlue,
     fontFamily: vibesTheme.fonts.semibold,
     fontSize: 16,
   },

@@ -4,13 +4,12 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  View,
   type StyleProp,
   type TextStyle,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "./Typography";
-import AnimatedSheetModal from "./AnimatedSheetModal";
+import PhotoViewer from "./PhotoViewer";
 import { photoPath } from "../src/lib/chatPhotos";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -70,29 +69,7 @@ export default function ChatMessageContent({
           />
         ) : null}
       </TouchableOpacity>
-      <AnimatedSheetModal
-        visible={expanded}
-        fullScreen
-        onClose={() => setExpanded(false)}
-        sheetStyle={s.sheet}
-      >
-        <TouchableOpacity
-          accessibilityRole="button"
-          onPress={() => setExpanded(false)}
-          style={s.close}
-        >
-          <Text style={s.error}>Cerrar</Text>
-        </TouchableOpacity>
-        <View style={s.full}>
-          {photo.data && (
-            <Image
-              source={{ uri: photo.data }}
-              style={s.image}
-              resizeMode="contain"
-            />
-          )}
-        </View>
-      </AnimatedSheetModal>
+      <PhotoViewer visible={expanded} images={photo.data ? [{ uri: photo.data }] : []} onClose={() => setExpanded(false)} />
     </>
   );
 }
@@ -111,12 +88,4 @@ const s = StyleSheet.create({
     textAlign: "center",
     padding: 12,
   },
-  sheet: {
-    flex: 1,
-    backgroundColor: vibesTheme.colors.background,
-    paddingTop: 48,
-    paddingBottom: 32,
-  },
-  close: { alignSelf: "flex-end", minHeight: 44 },
-  full: { flex: 1 },
 });

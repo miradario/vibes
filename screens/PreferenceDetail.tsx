@@ -134,7 +134,7 @@ const PreferenceDetail = () => {
                   >
                     <Text
                       style={{
-                        color: active ? PRIMARY_COLOR : DARK_GRAY,
+                        color: active ? vibesTheme.colors.accentBlue : DARK_GRAY,
                         fontWeight: "400",
                       }}
                     >

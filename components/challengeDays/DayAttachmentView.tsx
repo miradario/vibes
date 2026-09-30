@@ -1,8 +1,6 @@
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Platform,
   Image,
   Linking,
   TouchableOpacity,
@@ -10,8 +8,7 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "../Typography";
-import AnimatedSheetModal from "../AnimatedSheetModal";
-import ScreenContainer from "../ScreenContainer";
+import PhotoViewer from "../PhotoViewer";
 import {
   DayAttachment,
   DAY_MEDIA_BUCKET,
@@ -143,7 +140,6 @@ function LinkCard({ item }: { item: DayAttachment }) {
 }
 export default function DayAttachmentView({ item }: { item: DayAttachment }) {
   const { data: session } = useAuthSession();
-  const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const signed = useQuery({
@@ -197,29 +193,7 @@ export default function DayAttachmentView({ item }: { item: DayAttachment }) {
           onError={() => setImageError(true)}
         />
       </TouchableOpacity>
-      <AnimatedSheetModal
-        fullScreen
-        visible={expanded}
-        onClose={() => setExpanded(false)}
-        sheetStyle={s.sheet}
-      >
-        <ScreenContainer
-          edges={["left", "right"]}
-          style={[
-            s.sheet,
-            {
-              paddingTop: Math.max(insets.top, Platform.OS === "ios" ? 60 : 28),
-            },
-          ]}
-        >
-          <DayButton label="Cerrar foto" onPress={() => setExpanded(false)} />
-          <Image
-            source={{ uri: signed.data }}
-            style={s.fullImage}
-            resizeMode="contain"
-          />
-        </ScreenContainer>
-      </AnimatedSheetModal>
+      <PhotoViewer visible={expanded} images={[{ uri: signed.data }]} onClose={() => setExpanded(false)} />
     </>
   );
 }

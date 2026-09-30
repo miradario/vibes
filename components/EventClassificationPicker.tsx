@@ -27,7 +27,7 @@ const s = StyleSheet.create({
   label: { fontSize: 16, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold },
   options: { gap: 8, paddingRight: 8 },
   chip: { minHeight: 44, justifyContent: "center", paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, borderColor: "rgba(43,43,43,0.18)", backgroundColor: vibesTheme.colors.surface },
-  selected: { backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.accentBlue },
+  selected: { backgroundColor: vibesTheme.colors.accentBlue, borderColor: vibesTheme.colors.primaryText },
   text: { color: vibesTheme.colors.primaryText, fontSize: 15 },
   hint: { color: vibesTheme.colors.secondaryText, fontSize: 14, lineHeight: 20 },
 });
