@@ -28,7 +28,6 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import { Icon } from "../components";
 import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
@@ -92,6 +91,7 @@ const Chat = () => {
     photos: profile?.photos ?? (otherUserPhoto ? [otherUserPhoto] : []),
     ...profile,
     ...(preferences ?? {}),
+    hideAge: preferences == null || preferences.hideAge === true,
   });
 
   useConnectionOpened(matchId, isFocused);
@@ -375,10 +375,7 @@ const Chat = () => {
                   profile?.name ||
                   otherUserName ||
                   "Chat";
-                const calculatedAge = calculateAgeFromBirthDate(
-                  profile?.birth_date
-                );
-                const age = calculatedAge === null ? "" : String(calculatedAge);
+                const age = profileCard.age;
                 return age ? `${name}, ${age}` : name;
               })()}
             </Text>

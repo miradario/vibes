@@ -164,6 +164,7 @@ const EventChat = () => {
           "Participante",
         ...(selectedParticipantProfile ?? {}),
         ...(selectedParticipantPreferences ?? {}),
+        hideAge: selectedParticipantPreferences == null || selectedParticipantPreferences.hideAge === true,
         photos:
           selectedParticipantProfile?.photos ??
           (selectedParticipant.avatarUrl

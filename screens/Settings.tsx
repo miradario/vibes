@@ -14,6 +14,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
@@ -66,6 +67,7 @@ const Settings = () => {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [hideAge, setHideAge] = useState(false);
   const [purposes, setPurposes] = useState<string[]>([]);
   const { data: session } = useAuthSession();
   const {
@@ -87,6 +89,7 @@ const Settings = () => {
   const [interestedIn, setInterestedIn] = useState("");
   const [heightCm, setHeightCm] = useState("");
   const [lookingFor, setLookingFor] = useState<string[]>([]);
+  const [connectWith, setConnectWith] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [smoking, setSmoking] = useState<string>("");
   const [otherOptions, setOtherOptions] = useState<string[]>(
@@ -99,6 +102,7 @@ const Settings = () => {
     if (!prefs) return;
     setInterestedIn(readInterestedIn(prefs));
     setPurposes(normalizeTextArray(prefs.openTo));
+    setHideAge(prefs.hideAge === true);
 
     setSpiritualPath(
       getSelectedSpiritualPaths(
@@ -132,6 +136,11 @@ const Settings = () => {
       prefs.lookingFor ?? prefs.looking_for
     );
     setLookingFor(nextLookingFor);
+    const storedGenders = prefs.discoverGenders ?? prefs.discover_genders;
+    const legacyGenderId = prefs.discoverGenderId ?? prefs.discover_gender_id;
+    setConnectWith(Array.isArray(storedGenders)
+      ? normalizeTextArray(storedGenders).map((value) => value === "nonbinary" ? "other" : value)
+      : legacyGenderId === 1 ? ["woman"] : legacyGenderId === 2 ? ["man"] : [3, 4].includes(legacyGenderId) ? ["other"] : []);
     const nextLanguages = normalizeTextArray(prefs.languages);
     setLanguages(nextLanguages);
     if (Array.isArray(prefs.otherTags) && prefs.otherTags.length) {
@@ -225,6 +234,7 @@ const Settings = () => {
     setSaving(true);
     try {
       await upsertUserPreferences(userId, {
+        hide_age: hideAge,
         spiritual_path: spiritualPath,
         spiritual_path_details: spiritualPathDetails,
         vegetarian: vegetarian || null,
@@ -233,12 +243,14 @@ const Settings = () => {
         height_cm: heightCm ? Number.parseInt(heightCm, 10) : null,
         looking_for: lookingFor,
         profile_answers: { ...(prefs?.profileAnswers ?? prefs?.profile_answers ?? {}), interestedIn },
+        discover_genders: connectWith,
         open_to: purposes,
         languages,
         smoking: smoking || null,
         other_tags: selectedOtherTags,
       });
       await refetch();
+      await queryClient.invalidateQueries({ queryKey: ["candidates"] });
       await queryClient.invalidateQueries({
         queryKey: ["profileAnswers", userId],
       });
@@ -308,6 +320,23 @@ const Settings = () => {
               </Text>
             </TouchableOpacity>
           ) : null}
+          <View style={localStyles.section}>
+            <View style={localStyles.sectionHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={localStyles.sectionTitle}>{t("settings.hideAge")}</Text>
+                <Text style={localStyles.helperText}>{t("settings.hideAgeHint")}</Text>
+              </View>
+              <Switch
+                accessibilityLabel={t("settings.hideAge")}
+                value={hideAge}
+                onValueChange={setHideAge}
+                disabled={saving || isPending || isError}
+                trackColor={{ false: vibesTheme.colors.secondaryText, true: vibesTheme.colors.accentBlue }}
+                thumbColor={vibesTheme.colors.surface}
+                ios_backgroundColor={vibesTheme.colors.secondaryText}
+              />
+            </View>
+          </View>
           <View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
               <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
@@ -483,6 +512,22 @@ const Settings = () => {
                 <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
               </TouchableOpacity>
             ))}
+          </View>
+
+          <View style={localStyles.preferencePanel}>
+            <Text style={localStyles.sectionTitle}>{t("settings.connectWith")}</Text>
+            <Text style={localStyles.helperText}>{t("settings.connectWithHint")}</Text>
+            <View style={localStyles.chipWrap}>
+              {([
+                { value: "man", label: t("settings.connectMen") },
+                { value: "woman", label: t("settings.connectWomen") },
+                { value: "other", label: t("settings.connectOthers") },
+              ]).map(({ value, label }) => renderChip(label, connectWith.includes(value), () =>
+                setConnectWith((previous) => previous.includes(value)
+                  ? previous.filter((item) => item !== value)
+                  : [...previous, value])
+              ))}
+            </View>
           </View>
 
           <View style={localStyles.preferencePanel}>
