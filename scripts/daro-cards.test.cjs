@@ -57,7 +57,7 @@ test("location filtering ignores case and accents and combines with dates", () =
     startsAt: new Date(2026, 9, 1, 12).toISOString(),
   };
   assert.equal(
-    matchesEventDateAndLocation(item, null, null, "  CORDOBA "),
+    matchesEventDateAndLocation(item, null, null, "  CORDOBA, ARGENTINA "),
     true
   );
   assert.equal(matchesEventDateAndLocation(item, null, null, "Rosario"), false);
@@ -251,4 +251,22 @@ test("date shortcuts use local calendar boundaries and never start before today"
   assert.deepEqual(parts(getEventDatePreset("week", new Date(2026, 9, 4)).to), [2026, 9, 4, 0]);
   assert.deepEqual(parts(getEventDatePreset("month", new Date(2028, 1, 10)).to), [2028, 1, 29, 0]);
   assert.equal(now.getHours(), 18);
+});
+
+test("filter dates always use dd/mm/yyyy with leading zeros", () => {
+  const { formatEventFilterDate } = load("src/lib/eventFilters.ts");
+  assert.equal(formatEventFilterDate(new Date(2026, 0, 5)), "05/01/2026");
+  assert.equal(formatEventFilterDate(new Date(2026, 8, 30)), "30/09/2026");
+});
+
+test("location options come from events, omit blanks and deduplicate accents and case", () => {
+  const { getEventLocationOptions } = load("src/lib/eventFilters.ts");
+  const options = getEventLocationOptions([
+    { location: " Rosario " }, { location: "Córdoba" }, { location: "CORDOBA" },
+    { location: " " }, {}, { location: null },
+  ]);
+  assert.equal(JSON.stringify(options), JSON.stringify([
+    { id: "cordoba", label: "Córdoba" }, { id: "rosario", label: "Rosario" },
+  ]));
+  assert.equal(matchesEventDateAndLocation({ location: "Córdoba, Argentina" }, null, null, "Córdoba"), false);
 });

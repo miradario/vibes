@@ -13,9 +13,7 @@ export function matchesEventDateAndLocation(
 ) {
   if (
     location.trim() &&
-    !normalizeEventSearch(item.location).includes(
-      normalizeEventSearch(location)
-    )
+    normalizeEventSearch(item.location) !== normalizeEventSearch(location)
   )
     return false;
   if (!from && !to) return true;
@@ -49,4 +47,22 @@ export function getEventDatePreset(preset: EventDatePreset, now = new Date()) {
     to.setMonth(to.getMonth() + 1, 0);
   }
   return { from, to };
+}
+
+export function formatEventFilterDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
+export function getEventLocationOptions(items: { location?: string | null }[]) {
+  const locations = new Map<string, string>();
+  for (const item of items) {
+    const label = item.location?.trim();
+    if (!label) continue;
+    const id = normalizeEventSearch(label);
+    if (!locations.has(id)) locations.set(id, label);
+  }
+  return Array.from(locations, ([id, label]) => ({ id, label }))
+    .sort((a, b) => a.label.localeCompare(b.label, "es"));
 }

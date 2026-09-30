@@ -1,6 +1,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ScreenContainer from "../components/ScreenContainer";
-import { matchesEventDateAndLocation, getEventDatePreset } from "../src/lib/eventFilters";
+import { matchesEventDateAndLocation, getEventLocationOptions, getEventDatePreset, formatEventFilterDate, type EventDatePreset } from "../src/lib/eventFilters";
 import KeyboardSheetModal from "../components/KeyboardSheetModal";
 import EventClassificationPicker from "../components/EventClassificationPicker";
 import { EVENT_MODALITIES, EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, getEventCategoryLabel, getEventParticipationLabel, matchesEventClassification, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
@@ -161,12 +161,15 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
     isLoading,
     error,
   } = section === "challenge" ? challengesQuery : eventsQuery;
+  const locationOptions = useMemo(() => getEventLocationOptions(items), [items]);
   const [modality, setModality] = useState<EventModality | null>(null);
   const [category, setCategory] = useState<EventCategory | null>(null);
   const [participationType, setParticipationType] = useState<EventParticipationType | null>(null);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [datePreset, setDatePreset] = useState<EventDatePreset | null>(null);
+  const [draftDatePreset, setDraftDatePreset] = useState<EventDatePreset | null>(null);
   const [locationFilter, setLocationFilter] = useState("");
   const [draftDateFrom, setDraftDateFrom] = useState<Date | null>(null);
   const [draftDateTo, setDraftDateTo] = useState<Date | null>(null);
@@ -188,6 +191,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   const openFilters = () => {
     Keyboard.dismiss();
     setDraftFilters({ category, participationType, modality });
+    setDraftDatePreset(datePreset);
     setDraftDateFrom(dateFrom);
     setDraftDateTo(dateTo);
     setDraftLocation(locationFilter);
@@ -719,27 +723,33 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
           </TouchableOpacity>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={localStyles.filterContent} showsVerticalScrollIndicator={false}>
-          <Text style={localStyles.filterActionText}>Ubicación</Text>
-          <TextInput
-            accessibilityLabel="Filtrar por ciudad o lugar"
-            placeholder="Ciudad o lugar"
-            placeholderTextColor={vibesTheme.colors.secondaryText}
-            value={draftLocation}
-            onChangeText={setDraftLocation}
-            style={localStyles.locationFilterInput}
+          <EventClassificationPicker
+            filter
+            searchable
+            label="Ubicación"
+            options={locationOptions}
+            value={draftLocation || null}
+            onChange={(value) => setDraftLocation(value ?? "")}
           />
           <Text style={localStyles.filterActionText}>Fecha</Text>
           <View style={{ flexDirection: "row", gap: 12 }}>
-            {(["from", "to"] as const).map((field) => (
-              <TouchableOpacity key={field} accessibilityRole="button" style={[localStyles.filterClear, localStyles.dateFilterButton]} onPress={() => { Keyboard.dismiss(); setDateField(field); }}>
-                <Text style={localStyles.filterActionText}>
-                  {field === "from" ? "Desde" : "Hasta"}
-                  {(field === "from" ? draftDateFrom : draftDateTo)
-                    ? `: ${(field === "from" ? draftDateFrom : draftDateTo)!.toLocaleDateString()}`
-                    : ""}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {(["from", "to"] as const).map((field) => {
+              const date = field === "from" ? draftDateFrom : draftDateTo;
+              const label = field === "from" ? "Desde" : "Hasta";
+              return (
+                <View key={field} style={localStyles.dateField}>
+                  {date ? <Text style={localStyles.dateFieldLabel}>{label}</Text> : null}
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={date ? `${label}: ${formatEventFilterDate(date)}` : label}
+                    style={[localStyles.filterClear, localStyles.dateFilterButton]}
+                    onPress={() => { Keyboard.dismiss(); setDateField(field); }}
+                  >
+                    <Text style={localStyles.dateFieldText}>{date ? formatEventFilterDate(date) : label}</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
           {!pastOnly ? (
             <View style={localStyles.datePresets}>
@@ -748,11 +758,11 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                 ["week", "Esta semana"], ["month", "Este mes"],
               ] as const).map(([preset, label]) => {
                 const range = getEventDatePreset(preset);
-                const selected = draftDateFrom?.getTime() === range.from.getTime() && draftDateTo?.getTime() === range.to.getTime();
+                const selected = draftDatePreset === preset;
                 return (
                   <TouchableOpacity key={preset} accessibilityRole="button" accessibilityState={{ selected }}
                     style={[localStyles.datePreset, selected && localStyles.datePresetSelected]}
-                    onPress={() => { Keyboard.dismiss(); setDateField(null); setDraftDateFrom(range.from); setDraftDateTo(range.to); }}>
+                    onPress={() => { Keyboard.dismiss(); setDateField(null); setDraftDatePreset(preset); setDraftDateFrom(range.from); setDraftDateTo(range.to); }}>
                     <Text style={localStyles.datePresetText}>{label}</Text>
                   </TouchableOpacity>
                 );
@@ -773,6 +783,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                 const normalized = new Date(date);
                 normalized.setHours(0, 0, 0, 0);
                 if (minimumDate && normalized < minimumDate) return;
+                setDraftDatePreset(null);
                 if (dateField === "from") {
                   setDraftDateFrom(normalized);
                   if (draftDateTo && draftDateTo < normalized) setDraftDateTo(normalized);
@@ -787,10 +798,11 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
           <EventClassificationPicker filter label="Modalidad" options={EVENT_MODALITIES} value={draftFilters.modality} onChange={(value) => setDraftFilters((draft) => ({ ...draft, modality: value }))} />
         </ScrollView>
         <View style={[localStyles.filterFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => { setDraftFilters({ category: null, participationType: null, modality: null }); setDraftDateFrom(null); setDraftDateTo(null); setDraftLocation(""); setDateField(null); }}>
+          <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => { setDraftFilters({ category: null, participationType: null, modality: null }); setDraftDatePreset(null); setDraftDateFrom(null); setDraftDateTo(null); setDraftLocation(""); setDateField(null); }}>
             <Text style={localStyles.filterActionText}>Limpiar</Text>
           </TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" disabled={invalidDateRange} style={[localStyles.filterApply, invalidDateRange && { opacity: 0.5 }]} onPress={() => {
+            setDatePreset(draftDatePreset);
             setDateFrom(draftDateFrom);
             setDateTo(draftDateTo);
             setLocationFilter(draftLocation.trim());
@@ -811,16 +823,6 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 export default Events;
 
 const localStyles = StyleSheet.create({
-  locationFilterInput: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
-    color: vibesTheme.colors.primaryText,
-    backgroundColor: vibesTheme.colors.surface,
-    padding: 12,
-    borderRadius: 12,
-    fontSize: 16,
-  },
   filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
   filterBadgeText: { color: vibesTheme.colors.primaryText, fontSize: 11, fontFamily: vibesTheme.fonts.bold },
@@ -835,7 +837,10 @@ const localStyles = StyleSheet.create({
   datePreset: { minHeight: 44, paddingHorizontal: 12, borderRadius: 22, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, backgroundColor: vibesTheme.colors.surface, justifyContent: "center" },
   datePresetSelected: { backgroundColor: vibesTheme.colors.accentBlue, borderColor: vibesTheme.colors.primaryText },
   datePresetText: { fontSize: 14, color: vibesTheme.colors.primaryText },
-  dateFilterButton: { backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.primaryText },
+  dateField: { flex: 1, justifyContent: "flex-end", gap: 6 },
+  dateFieldLabel: { color: vibesTheme.colors.primaryText, fontSize: 14, fontFamily: vibesTheme.fonts.regular, paddingLeft: 12 },
+  dateFieldText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.regular },
+  dateFilterButton: { flex: 0, backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.primaryText },
   filterApply: { flex: 1, minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
   filterActionText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.bold },
   upcomingHeader: {
