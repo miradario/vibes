@@ -382,23 +382,32 @@ export default function CommunityGroupChat() {
             style={[
               chatStyles.eventChatInput,
               s.input,
-              { height: composerHeight },
+              Platform.OS === "ios" ? null : { height: composerHeight },
             ]}
             placeholderTextColor={TEXT_SECONDARY}
             value={body}
             onChangeText={setBody}
             multiline
-            scrollEnabled={composerHeight >= COMPOSER_MAX_HEIGHT}
-            onContentSizeChange={(event) => {
-              const nextHeight = Math.min(
-                COMPOSER_MAX_HEIGHT,
-                Math.max(
-                  COMPOSER_MIN_HEIGHT,
-                  event.nativeEvent.contentSize.height
-                )
-              );
-              setComposerHeight(nextHeight);
-            }}
+            numberOfLines={Platform.OS === "ios" ? 4 : undefined}
+            scrollEnabled={
+              Platform.OS === "ios"
+                ? undefined
+                : composerHeight >= COMPOSER_MAX_HEIGHT
+            }
+            onContentSizeChange={
+              Platform.OS === "ios"
+                ? undefined
+                : (event) => {
+                    const nextHeight = Math.min(
+                      COMPOSER_MAX_HEIGHT,
+                      Math.max(
+                        COMPOSER_MIN_HEIGHT,
+                        event.nativeEvent.contentSize.height
+                      )
+                    );
+                    setComposerHeight(nextHeight);
+                  }
+            }
             textAlignVertical="top"
             maxLength={4000}
             editable={!send.isPending}
@@ -485,7 +494,7 @@ const s = StyleSheet.create({
     flex: 1,
     maxHeight: COMPOSER_MAX_HEIGHT,
     minHeight: COMPOSER_MIN_HEIGHT,
-    lineHeight: COMPOSER_LINE_HEIGHT,
+    lineHeight: Platform.OS === "ios" ? undefined : COMPOSER_LINE_HEIGHT,
     paddingHorizontal: 14,
     paddingVertical: COMPOSER_VERTICAL_PADDING,
     borderRadius: 20,

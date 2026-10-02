@@ -838,24 +838,33 @@ const EventChat = () => {
             style={[
               styles.eventChatInput,
               localStyles.composerInput,
-              { height: composerHeight },
+              Platform.OS === "ios" ? null : { height: composerHeight },
             ]}
             placeholder="Escribir mensaje..."
             placeholderTextColor={TEXT_SECONDARY}
             value={message}
             onChangeText={setMessage}
             multiline
-            scrollEnabled={composerHeight >= COMPOSER_MAX_HEIGHT}
-            onContentSizeChange={(event) => {
-              const nextHeight = Math.min(
-                COMPOSER_MAX_HEIGHT,
-                Math.max(
-                  COMPOSER_MIN_HEIGHT,
-                  event.nativeEvent.contentSize.height
-                )
-              );
-              setComposerHeight(nextHeight);
-            }}
+            numberOfLines={Platform.OS === "ios" ? 4 : undefined}
+            scrollEnabled={
+              Platform.OS === "ios"
+                ? undefined
+                : composerHeight >= COMPOSER_MAX_HEIGHT
+            }
+            onContentSizeChange={
+              Platform.OS === "ios"
+                ? undefined
+                : (event) => {
+                    const nextHeight = Math.min(
+                      COMPOSER_MAX_HEIGHT,
+                      Math.max(
+                        COMPOSER_MIN_HEIGHT,
+                        event.nativeEvent.contentSize.height
+                      )
+                    );
+                    setComposerHeight(nextHeight);
+                  }
+            }
             textAlignVertical="top"
             onFocus={() => {
               setTimeout(() => {
@@ -1159,7 +1168,7 @@ const localStyles = StyleSheet.create({
   composerInput: {
     minHeight: COMPOSER_MIN_HEIGHT,
     maxHeight: COMPOSER_MAX_HEIGHT,
-    lineHeight: COMPOSER_LINE_HEIGHT,
+    lineHeight: Platform.OS === "ios" ? undefined : COMPOSER_LINE_HEIGHT,
     paddingVertical: COMPOSER_VERTICAL_PADDING,
   },
   moreAvatar: {

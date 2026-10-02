@@ -589,24 +589,33 @@ const Chat = () => {
               style={[
                 styles.eventChatInput,
                 localStyles.composerInput,
-                { height: composerHeight },
+                Platform.OS === "ios" ? null : { height: composerHeight },
               ]}
               placeholder="Escribí un mensaje..."
               placeholderTextColor={TEXT_SECONDARY}
               value={text}
               onChangeText={setText}
               multiline
-              scrollEnabled={composerHeight >= COMPOSER_MAX_HEIGHT}
-              onContentSizeChange={(event) => {
-                const nextHeight = Math.min(
-                  COMPOSER_MAX_HEIGHT,
-                  Math.max(
-                    COMPOSER_MIN_HEIGHT,
-                    event.nativeEvent.contentSize.height
-                  )
-                );
-                setComposerHeight(nextHeight);
-              }}
+              numberOfLines={Platform.OS === "ios" ? 4 : undefined}
+              scrollEnabled={
+                Platform.OS === "ios"
+                  ? undefined
+                  : composerHeight >= COMPOSER_MAX_HEIGHT
+              }
+              onContentSizeChange={
+                Platform.OS === "ios"
+                  ? undefined
+                  : (event) => {
+                      const nextHeight = Math.min(
+                        COMPOSER_MAX_HEIGHT,
+                        Math.max(
+                          COMPOSER_MIN_HEIGHT,
+                          event.nativeEvent.contentSize.height
+                        )
+                      );
+                      setComposerHeight(nextHeight);
+                    }
+              }
               textAlignVertical="top"
               maxLength={2000}
               returnKeyType="default"
@@ -691,7 +700,7 @@ const localStyles = StyleSheet.create({
   composerInput: {
     minHeight: COMPOSER_MIN_HEIGHT,
     maxHeight: COMPOSER_MAX_HEIGHT,
-    lineHeight: COMPOSER_LINE_HEIGHT,
+    lineHeight: Platform.OS === "ios" ? undefined : COMPOSER_LINE_HEIGHT,
     paddingVertical: COMPOSER_VERTICAL_PADDING,
   },
   loadingWrap: {
