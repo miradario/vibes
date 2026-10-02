@@ -11,7 +11,7 @@ import Vibi from "./screens/Vibi";
 
 import "react-native-url-polyfill/auto";
 import React from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer, CommonActions } from "@react-navigation/native";
@@ -77,11 +77,15 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const navigationRef = React.createRef<any>();
 const linking = {
-  prefixes: ["com.gurudevelopers.vibes://"],
+  prefixes: [
+    "com.gurudevelopers.vibes://",
+    "https://vibes.gurudevelopers.dev",
+  ],
   config: {
     screens: {
       ResetPassword: "reset-password",
       VerifyEmail: "verify-email",
+      EventDetail: "event/:eventId",
       ChallengeDetailScreen: "challenge/:challengeId",
     },
   },
@@ -90,7 +94,7 @@ let isNavigationReady = false;
 let pendingNotificationData: Record<string, unknown> | null = null;
 let hasHiddenNativeSplash = false;
 const FONT_LOAD_TIMEOUT_MS = 3000;
-const MIN_NATIVE_SPLASH_MS = 500;
+const MIN_NATIVE_SPLASH_MS = Platform.OS === "ios" ? 750 : 500;
 const nativeSplashShownAt = Date.now();
 
 void SplashScreen.preventAutoHideAsync().catch(() => {
@@ -154,10 +158,11 @@ const AppNavigator = () => {
     if (hasHiddenNativeSplash) return;
     if (!fontsLoaded && !fontError && !fontLoadTimedOut) return;
 
-    hasHiddenNativeSplash = true;
     const elapsedMs = Date.now() - nativeSplashShownAt;
     const remainingMs = Math.max(0, MIN_NATIVE_SPLASH_MS - elapsedMs);
     const hideSplash = () => {
+      if (hasHiddenNativeSplash) return;
+      hasHiddenNativeSplash = true;
       const totalElapsedMs = Date.now() - nativeSplashShownAt;
       console.log("[boot] hiding native splash", {
         fontsLoaded,
@@ -231,6 +236,24 @@ const AppNavigator = () => {
           },
         })
       );
+      return;
+    }
+
+    if ((data.type === "event_reminder" || data.type === "challenge_reminder") && typeof data.eventId === "string") {
+      const eventType = data.type === "challenge_reminder" ? "challenge" : "event";
+      try {
+        const event = await fetchEventFeedItemById(data.eventId, eventType);
+        if (event) {
+          navigationRef.current.dispatch(CommonActions.navigate({
+            name: eventType === "challenge" ? "ChallengeDetailScreen" : "EventDetail",
+            params: { event },
+          }));
+          return;
+        }
+      } catch (error) {
+        console.warn("[push] failed to resolve reminder", error);
+      }
+      navigationRef.current.dispatch(CommonActions.navigate({ name: "Tab", params: { screen: "EventsTab" } }));
       return;
     }
 

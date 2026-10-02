@@ -337,6 +337,7 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
     startsAt,
     attendees:
       participantCount > 0 ? `${participantCount} participantes` : "Desafío",
+    participantCount,
     capacity: null,
     durationDays,
     location: null,
@@ -381,11 +382,26 @@ export const fetchEventFeedItemById = async (
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) return null;
+
+  let resolvedData = data as EventRow | null;
+  if (!resolvedData) {
+    const { data: publicData, error: publicError } = await supabase.rpc(
+      "get_public_shared_content",
+      {
+        p_content_type: eventType,
+        p_content_id: eventId,
+      },
+    );
+
+    if (publicError) throw publicError;
+    resolvedData = publicData as EventRow | null;
+  }
+
+  if (!resolvedData) return null;
 
   return eventType === "challenge"
-    ? mapChallengeRow(data as EventRow)
-    : mapEventRow(data as EventRow);
+    ? mapChallengeRow(resolvedData)
+    : mapEventRow(resolvedData);
 };
 
 type ParticipantPreviewRow = {

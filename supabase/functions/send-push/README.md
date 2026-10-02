@@ -84,3 +84,48 @@ Tambien acepta `new` en lugar de `record`.
 - Tokens FCM con respuesta `400` o `404` se desactivan.
 - Tokens APNs con `BadDeviceToken`, `Unregistered` o `DeviceTokenNotForTopic` se desactivan.
 - Al tocar una push de mensaje directo se abre el chat; una solicitud de conexión abre Descubrir → Recibidos.
+
+
+## Preferencias y recordatorios
+
+Configuración guarda cada interruptor inmediatamente en `user_preferences`. Las
+seis columnas `notification_*` son independientes del interruptor general
+`notifications_enabled`; desactivar el general conserva las categorías. El envío
+filtra ambas preferencias antes de buscar tokens. Los tokens se conservan al
+apagar las notificaciones: el servidor decide si enviar, evitando carreras entre
+la desactivación de todos los dispositivos y el registro del dispositivo actual.
+
+`event_reminder_timing` admite `24h`, `1h` o `both` (predeterminado). El cron
+`vibes-notification-reminders` revisa cada minuto los eventos con participación
+vigente y los desafíos pendientes. Cada usuario puede elegir la hora local de su
+recordatorio diario de desafíos; la zona horaria se sincroniza desde el teléfono.
+El aviso solo se genera durante los días activos del desafío y si todavía no hay
+un check-in registrado para ese día local. Los desafíos usan el inicio ISO
+guardado en `[[starts_at:…]]` y `duration_days`; fechas ausentes o inválidas no
+generan avisos.
+
+Los avisos tienen una ventana de 15 minutos, para no recuperar notificaciones
+viejas después de una interrupción. No se avisa por un horario anterior a la
+inscripción. Se vuelve a validar participación, preferencias, fecha, actividad
+del perfil y progreso justo antes de enviar. Eliminar un evento lo excluye.
+
+La cola es exclusiva del servidor y deduplica usuario/actividad/fecha/anticipación.
+Registra los dispositivos entregados para omitirlos en reintentos parciales;
+realiza hasta tres intentos separados por al menos dos minutos. Como cualquier
+entrega externa sin idempotencia del proveedor, una interrupción entre el envío
+y su registro podría producir un duplicado. Los registros caducados se limpian
+luego de 30 días. No hay garantía de recepción por el sistema operativo.
+
+### Orden de despliegue
+
+1. Aplicar `notification_preferences_and_reminders` (deja el cron desactivado).
+2. Desplegar `send-push` con `index.ts`, `webhook.ts`, `preferences.ts` y `deno.json`.
+   Mantener `--no-verify-jwt`: el handler valida el secreto dedicado del webhook.
+3. Aplicar `fix_notification_reminder_dispatch`, `activate_notification_reminders`
+   y `daily_challenge_reminders`; verificar `cron.job_run_details`.
+4. Distribuir la app actualizada.
+
+Validación local: `node --test scripts/notification-settings.test.cjs scripts/push-webhook.test.cjs`.
+Validación SQL: `scripts/notification-reminders.test.sql` usa fixtures dentro de
+una transacción que se revierte; prueba también el despachador. `pg_net` solo
+procesa solicitudes tras un commit, por lo que esta prueba no envía notificaciones.

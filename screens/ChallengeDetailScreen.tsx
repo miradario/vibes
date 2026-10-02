@@ -65,6 +65,7 @@ import {
 } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { WHITE } from "../assets/styles";
+import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
 
 type CheckInStatus = "pending" | "completed" | "broken";
 type ProgressMode = "path" | "compact" | "calendar";
@@ -1124,14 +1125,14 @@ const ChallengeDetailScreen = () => {
     userId
   );
   const { data: challengeJoinRequests = [] } = useChallengeJoinRequestsQuery(
-    event?.id
+    userId ? event?.id : undefined
   );
   const { data: remoteCheckins = [] } = useChallengeCheckinsQuery(
     event?.id,
     userId
   );
   const { data: remoteCheckedInTodayCount = 0 } =
-    useChallengeTodayCheckinsCountQuery(event?.id);
+    useChallengeTodayCheckinsCountQuery(userId ? event?.id : undefined);
   const checkInMutation = useCheckInChallengeMutation();
   const [localCompletedDays, setLocalCompletedDays] = useState<number[]>([]);
   const [localStatus, setLocalStatus] = useState<CheckInStatus | null>(null);
@@ -1143,11 +1144,15 @@ const ChallengeDetailScreen = () => {
     "Gracias por elegirte hoy"
   );
   const [isSharing, setIsSharing] = useState(false);
+  const [isPreparingShare, setIsPreparingShare] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
   const [dayContentVisible, setDayContentVisible] = useState(false);
   const pendingParticipants = useRef(false);
-  const participantsQuery = useChallengeParticipantsQuery(event?.id);
+  const pendingShare = useRef(false);
+  const participantsQuery = useChallengeParticipantsQuery(
+    userId ? event?.id : undefined,
+  );
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const challengeScrollY = useRef(new NativeAnimated.Value(0)).current;
 
@@ -1173,7 +1178,10 @@ const ChallengeDetailScreen = () => {
     );
   const challenge: ChallengeDetailData = {
     ...baseChallenge,
-    participantsCount: participantsQuery.data?.length ?? 0,
+    participantsCount:
+      participantsQuery.data?.length ??
+      event?.participantCount ??
+      (Number.parseInt(event?.attendees ?? "", 10) || 0),
     completedDays,
     checkInStatus: status,
     streak:
@@ -1296,9 +1304,20 @@ const ChallengeDetailScreen = () => {
       }
 
       await shareChallengeInvite(event);
+    } catch {
+      Alert.alert("Compartir", "No pudimos compartir este desafío.");
     } finally {
       setIsSharing(false);
     }
+  };
+
+  const handleDirectShare = () => {
+    if (pendingShare.current || isPreparingShare || isSharing) return;
+    setIsPreparingShare(true);
+    setTimeout(() => {
+      setIsPreparingShare(false);
+      void handleShare();
+    }, 100);
   };
 
   const handleLeaveChallenge = () => {
@@ -1363,7 +1382,11 @@ const ChallengeDetailScreen = () => {
   };
 
   const handleJoinOrRequest = async () => {
-    if (!event?.id || !userId) return;
+    if (!event?.id) return;
+    if (!userId) {
+      promptForPublicContentAuth(navigation as any, "desafío");
+      return;
+    }
 
     if ((event.visibility ?? "public") === "public") {
       await joinChallengeMutation.mutateAsync({
@@ -1623,13 +1646,39 @@ const ChallengeDetailScreen = () => {
           },
         ]}
       >
-        <TouchableOpacity
-          style={localStyles.expandedChallengeHeaderIconButton}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.84}
-        >
-          <Icon name="chevron-back" size={22} color={WHITE} />
-        </TouchableOpacity>
+        <View style={localStyles.expandedChallengeHeaderTopRow}>
+          <TouchableOpacity
+            style={localStyles.expandedChallengeHeaderIconButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.84}
+          >
+            <Icon name="chevron-back" size={22} color={WHITE} />
+          </TouchableOpacity>
+          <View style={localStyles.expandedChallengeHeaderSpacer} />
+          <View style={localStyles.expandedChallengeHeaderActions}>
+            <TouchableOpacity
+              accessibilityLabel="Compartir desafío"
+              style={localStyles.expandedChallengeHeaderIconButton}
+              onPress={handleDirectShare}
+              activeOpacity={0.84}
+              disabled={isPreparingShare || isSharing}
+            >
+              {isPreparingShare ? (
+                <VibesLoader size={24} />
+              ) : (
+                <Icon name="share-outline" size={21} color={WHITE} />
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityLabel="Opciones del desafío"
+              style={localStyles.expandedChallengeHeaderIconButton}
+              onPress={() => setMenuVisible(true)}
+              activeOpacity={0.84}
+            >
+              <Icon name="ellipsis-horizontal" size={22} color={WHITE} />
+            </TouchableOpacity>
+          </View>
+        </View>
         <View style={localStyles.expandedChallengeHeaderCopy}>
           <Text
             style={localStyles.expandedChallengeHeaderTitle}
@@ -1644,13 +1693,6 @@ const ChallengeDetailScreen = () => {
             {challenge.subtitle}
           </Text>
         </View>
-        <TouchableOpacity
-          style={localStyles.expandedChallengeHeaderIconButton}
-          onPress={() => setMenuVisible(true)}
-          activeOpacity={0.84}
-        >
-          <Icon name="ellipsis-horizontal" size={22} color={WHITE} />
-        </TouchableOpacity>
       </NativeAnimated.View>
 
       <NativeAnimated.View
@@ -1882,10 +1924,14 @@ const ChallengeDetailScreen = () => {
                   <>
                     <Text style={localStyles.joinRequestButtonTitle}>
                       {(event?.visibility ?? "public") === "public"
-                        ? "Sumarme al desafío"
+                        ? userId
+                          ? "Sumarme al desafío"
+                          : "Registrarme para sumarme"
                         : ownJoinRequest?.status === "pending"
                         ? "Solicitud enviada"
-                        : "Solicitar acceso"}
+                        : userId
+                          ? "Solicitar acceso"
+                          : "Registrarme para solicitar acceso"}
                     </Text>
                     {(event?.visibility ?? "public") !== "public" ? (
                       <Text style={localStyles.joinRequestButtonSubtitle}>
@@ -1982,6 +2028,13 @@ const ChallengeDetailScreen = () => {
             pendingParticipants.current = false;
             setParticipantsVisible(true);
           }
+          if (pendingShare.current) {
+            pendingShare.current = false;
+            setTimeout(() => {
+              setIsPreparingShare(false);
+              void handleShare();
+            }, 100);
+          }
         }}
         offsetY={260}
         sheetStyle={localStyles.menuSheet}
@@ -2013,14 +2066,24 @@ const ChallengeDetailScreen = () => {
         <TouchableOpacity
           style={localStyles.menuItem}
           onPress={() => {
+            if (pendingShare.current || isPreparingShare || isSharing) return;
+            pendingShare.current = true;
+            setIsPreparingShare(true);
             setMenuVisible(false);
-            void handleShare();
           }}
-          disabled={isSharing}
+          disabled={isPreparingShare || isSharing}
         >
-          <Icon name="share-social-outline" size={20} color={palette.text} />
+          {isPreparingShare ? (
+            <VibesLoader size={24} />
+          ) : (
+            <Icon name="share-social-outline" size={20} color={palette.text} />
+          )}
           <Text style={localStyles.menuItemText}>
-            {isSharing ? "Compartiendo..." : "Compartir desafío"}
+            {isPreparingShare
+              ? "Preparando..."
+              : isSharing
+                ? "Compartiendo..."
+                : "Compartir desafío"}
           </Text>
         </TouchableOpacity>
         {isAdmin ? (
@@ -2065,6 +2128,20 @@ const ChallengeDetailScreen = () => {
         error={participantsQuery.isError}
         retry={() => void participantsQuery.refetch()}
       />
+      {isPreparingShare ? (
+        <View
+          style={localStyles.sharePreparingOverlay}
+          accessibilityRole="progressbar"
+          accessibilityLabel="Preparando opciones para compartir"
+        >
+          <View style={localStyles.sharePreparingCard}>
+            <VibesLoader size={38} />
+            <Text style={localStyles.sharePreparingText}>
+              Preparando para compartir…
+            </Text>
+          </View>
+        </View>
+      ) : null}
     </ScreenContainer>
   );
 };
@@ -2192,41 +2269,48 @@ const localStyles = StyleSheet.create({
     elevation: 21,
     paddingLeft: 20,
     paddingRight: 20,
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 14,
+  },
+  expandedChallengeHeaderTopRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 18,
+    alignItems: "center",
+  },
+  expandedChallengeHeaderSpacer: {
+    flex: 1,
+  },
+  expandedChallengeHeaderActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   expandedChallengeHeaderIconButton: {
-    width: 48,
-    height: 48,
+    width: 42,
+    height: 42,
     borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(43, 43, 43, 0.28)",
+    backgroundColor: "rgba(43, 43, 43, 0.24)",
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.16)",
-    shadowColor: palette.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
+    borderColor: "rgba(254, 254, 253, 0.28)",
   },
   expandedChallengeHeaderCopy: {
-    flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
+    width: "100%",
+    paddingHorizontal: 10,
   },
   expandedChallengeHeaderTitle: {
     color: WHITE,
-    fontSize: 23,
-    lineHeight: 27,
+    fontSize: 28,
+    lineHeight: 33,
     textAlign: "left",
-    fontFamily: vibesTheme.fonts.medium,
-    textShadowColor: "rgba(43, 43, 43, 0.42)",
+    fontFamily: vibesTheme.fonts.bold,
+    textShadowColor: "rgba(43, 43, 43, 0.5)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
   expandedChallengeHeaderSubtitle: {
-    marginTop: 8,
+    marginTop: 10,
     color: "rgba(254, 254, 253, 0.9)",
     fontSize: 17,
     lineHeight: 21,
@@ -3227,6 +3311,37 @@ const localStyles = StyleSheet.create({
   },
   menuItemTextDanger: {
     color: palette.red,
+  },
+  sharePreparingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 100,
+    elevation: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(43, 43, 43, 0.08)",
+  },
+  sharePreparingCard: {
+    minWidth: 230,
+    minHeight: 78,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: vibesTheme.colors.background,
+    borderWidth: 1,
+    borderColor: "rgba(43, 43, 43, 0.08)",
+    shadowColor: vibesTheme.colors.primaryText,
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  sharePreparingText: {
+    color: vibesTheme.colors.primaryText,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.medium,
   },
 });
 

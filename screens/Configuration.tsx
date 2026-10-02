@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   View,
   TouchableOpacity,
@@ -8,26 +8,14 @@ import {
   StyleSheet,
   Alert,
   Linking,
-  Switch,
-  Platform,
 } from "react-native";
 import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import styles, {
-  DARK_GRAY,
-  GRAY,
-  PRIMARY_COLOR,
-  TEXT_SECONDARY,
-  WHITE,
-} from "../assets/styles";
+import styles, { GRAY, TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
+import NotificationPreferencesSection from "../components/NotificationPreferencesSection";
 import AppHeader from "../components/AppHeader";
-import { useAuthSession } from "../src/auth/auth.queries";
-import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
-import { deactivateUserPushTokens } from "../src/notifications/pushNotifications";
-import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
-import { showToast } from "../src/utils/toast";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
@@ -37,51 +25,6 @@ const ACCOUNT_DELETION_URL =
 const Configuration = () => {
   const navigation = useNavigation();
   const { t } = useI18n();
-  const { data: session } = useAuthSession();
-  const { data: prefs, refetch } = useUserPreferencesQuery(session?.user?.id);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    setNotificationsEnabled(prefs?.notificationsEnabled ?? true);
-  }, [prefs?.notificationsEnabled]);
-
-  const handleSave = async () => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      Alert.alert(t("common.error"), t("configuration.missingSession"));
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      await upsertUserPreferences(userId, {
-        notifications_enabled: notificationsEnabled,
-      });
-
-      if (!notificationsEnabled) {
-        await deactivateUserPushTokens(userId);
-      }
-
-      await refetch();
-      navigation.goBack();
-      setTimeout(() => {
-        showToast(t("configuration.saved"), {
-          type: "success",
-          text1: t("configuration.saved"),
-        });
-      }, 180);
-    } catch (error: any) {
-      Alert.alert(
-        t("common.error"),
-        error?.message || t("configuration.saveError")
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleDeleteAccount = () => {
     Alert.alert(
       t("profile.deleteAccountTitle"),
@@ -108,13 +51,11 @@ const Configuration = () => {
         <AppHeader
           title={t("configuration.title")}
           titleNumberOfLines={2}
-          subtitle={t("configuration.subtitle")}
           showBack
           onBack={() => navigation.goBack()}
           style={localStyles.appHeader}
           contentStyle={localStyles.headerCopy}
           titleStyle={localStyles.headerTitle}
-          subtitleStyle={localStyles.headerSubtitle}
         />
       </View>
 
@@ -123,50 +64,7 @@ const Configuration = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={localStyles.scrollContent}
       >
-        <View style={localStyles.section}>
-          <View style={localStyles.sectionHeader}>
-            <Icon
-              name="notifications-outline"
-              size={18}
-              color={TEXT_SECONDARY}
-            />
-            <Text style={localStyles.sectionTitle}>
-              {t("configuration.notifications")}
-            </Text>
-            <View style={localStyles.line} />
-          </View>
-
-          <View style={localStyles.card}>
-            <View style={localStyles.cardCopy}>
-              <Text style={localStyles.cardText}>
-                {t("configuration.notificationsHint")}
-              </Text>
-              <Text
-                style={[
-                  localStyles.cardStatus,
-                  notificationsEnabled && localStyles.cardStatusEnabled,
-                ]}
-              >
-                {notificationsEnabled
-                  ? t("configuration.enabled")
-                  : t("configuration.disabled")}
-              </Text>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: "rgba(216, 140, 122, 0.40)", true: vibesTheme.colors.accentMustard }}
-              thumbColor={
-                Platform.OS === "ios"
-                  ? WHITE
-                  : notificationsEnabled
-                  ? PRIMARY_COLOR
-                  : WHITE
-              }
-              ios_backgroundColor={"rgba(216, 140, 122, 0.40)"}
-            />
-          </View>
-        </View>
+        <NotificationPreferencesSection />
         <TouchableOpacity
           accessibilityRole="button"
           style={[localStyles.card, { marginTop: 28 }]}
@@ -179,21 +77,6 @@ const Configuration = () => {
           <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
         </TouchableOpacity>
       </ScrollView>
-
-      <View style={localStyles.saveButtonFixedWrap}>
-        <TouchableOpacity
-          style={[
-            localStyles.saveButton,
-            isSaving && localStyles.saveButtonDisabled,
-          ]}
-          onPress={() => {
-            void handleSave();
-          }}
-          disabled={isSaving}
-        >
-          <Text style={localStyles.saveButtonText}>{t("common.save")}</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -212,40 +95,17 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: 0,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.background,
-    marginTop: 6,
-  },
+
   headerCopy: {
     flex: 1,
   },
-  headerTextWrap: {
-    alignItems: "flex-start",
-  },
+
   headerTitle: {
     fontSize: 30,
     lineHeight: 38,
     includeFontPadding: true,
   },
-  headerSubtitle: {
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.subtitle,
-  },
-  headerSpacer: {
-    width: 20,
-    height: 40,
-  },
+
   scrollView: {
     flex: 1,
     paddingHorizontal: 24,
@@ -253,26 +113,6 @@ const localStyles = StyleSheet.create({
   scrollContent: {
     paddingTop: 12,
     paddingBottom: 118,
-  },
-  section: {
-    marginTop: 18,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: vibesTheme.colors.background,
-    marginLeft: 10,
   },
   card: {
     borderRadius: 24,
@@ -285,48 +125,10 @@ const localStyles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 16,
   },
-  cardCopy: {
-    flex: 1,
-  },
   cardText: {
     color: GRAY,
     fontSize: 14,
     lineHeight: 20,
-  },
-  cardStatus: {
-    color: TEXT_SECONDARY,
-    fontSize: 13,
-    marginTop: 10,
-  },
-  cardStatusEnabled: {
-    color: vibesTheme.colors.accentBlue,
-  },
-  saveButtonFixedWrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 24,
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(43, 43, 43, 0.06)",
-  },
-  saveButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 52,
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    fontWeight: "400",
   },
 });
 

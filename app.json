@@ -16,7 +16,7 @@
     "ios": {
       "icon": "./assets/icon-ios.png",
       "supportsTablet": false,
-      "buildNumber": "31",
+      "buildNumber": "33",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -24,6 +24,9 @@
       "bundleIdentifier": "com.gurudevelopers.vibes",
       "deploymentTarget": "15.4",
       "appleTeamId": "KMM232BVHC",
+      "associatedDomains": [
+        "applinks:vibes.gurudevelopers.dev"
+      ],
       "infoPlist": {
         "NSCameraUsageDescription": "Vibes uses your camera so you can take profile photos and cover images for events or challenges, for example taking a new profile picture.",
         "NSPhotoLibraryUsageDescription": "Vibes uses your photo library so you can choose profile photos and cover images for events or challenges, for example uploading a profile picture.",
@@ -49,6 +52,28 @@
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.miradario.vibe",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "vibes.gurudevelopers.dev",
+              "pathPrefix": "/event"
+            },
+            {
+              "scheme": "https",
+              "host": "vibes.gurudevelopers.dev",
+              "pathPrefix": "/challenge"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "googleServicesFile": "./config/firebase/google-services.json"
     },
     "web": {
@@ -58,7 +83,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FEFEFD"
+          "backgroundColor": "#FEFEFD",
+          "ios": {
+            "image": "./assets/adaptive-icon.png",
+            "imageWidth": 320,
+            "resizeMode": "contain",
+            "backgroundColor": "#FEFEFD"
+          }
         }
       ],
       "expo-font",

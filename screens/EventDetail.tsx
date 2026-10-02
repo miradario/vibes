@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ExpoLocation from "expo-location";
 import styles, {
@@ -36,6 +37,7 @@ import VibesLoader from "../components/VibesLoader";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import UserProfileSheet from "../components/UserProfileSheet";
 import ChallengeTreeProgress from "../components/ChallengeTreeProgress";
+import ScreenContainer from "../components/ScreenContainer";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useI18n } from "../src/i18n";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -56,6 +58,8 @@ import {
   useJoinEventMutation,
   useChallengeParticipantsQuery,
   useEventParticipantsQuery,
+  fetchEventFeedItemById,
+  type EventFeedItem,
 } from "../src/queries/events.queries";
 import {
   extractChallengePresetFromDescription,
@@ -64,6 +68,8 @@ import {
 } from "../src/constants/challengeMediaPresets";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
+import { shareEventInvite } from "../src/lib/socialShare";
+import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
 const CHECKIN_SLIDER_HANDLE_SIZE = 72;
@@ -202,10 +208,22 @@ const isVideoMedia = (value: unknown) => {
 const EventDetail = () => {
   const { t, locale } = useI18n();
   const navigation = useNavigation();
-  const route = useRoute();
+  const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
-  const event = (route.params as any)?.event;
+  const routeEvent = route.params?.event as EventFeedItem | undefined;
+  const eventId =
+    routeEvent?.id ??
+    (typeof route.params?.eventId === "string"
+      ? route.params.eventId
+      : undefined);
+  const { data: linkedEvent, isLoading: linkedEventLoading } = useQuery({
+    queryKey: ["event_deep_link", eventId],
+    queryFn: () => fetchEventFeedItemById(eventId as string, "event"),
+    enabled: Boolean(eventId),
+    staleTime: 60_000,
+  });
+  const event = linkedEvent ?? routeEvent ?? undefined;
   const isChallenge = event?.type === "challenge";
 
   const { data: session } = useAuthSession();
@@ -232,9 +250,11 @@ const EventDetail = () => {
   const joinEventMutation = useJoinEventMutation();
 
   const { data: challengeParticipants = [] } = useChallengeParticipantsQuery(
-    isChallenge ? event?.id : undefined,
+    userId && isChallenge ? event?.id : undefined,
   );
-  const { data: eventParticipants = [] } = useEventParticipantsQuery(event?.id);
+  const { data: eventParticipants = [] } = useEventParticipantsQuery(
+    userId ? event?.id : undefined,
+  );
 
   const isAdmin = Boolean(
     userId && event?.createdBy && userId === event.createdBy,
@@ -388,7 +408,11 @@ const EventDetail = () => {
   const visibleParticipants = isChallenge
     ? challengeParticipantsMerged
     : eventParticipantsWithCurrentUser;
-  const visibleParticipantCount = visibleParticipants.length;
+  const publicParticipantCount =
+    (event?.participantCount ?? Number.parseInt(event?.attendees ?? "", 10)) || 0;
+  const visibleParticipantCount = userId
+    ? visibleParticipants.length
+    : publicParticipantCount;
   const totalCheckins = Math.max(
     participant?.totalCheckins ?? 0,
     challengeCheckins.length,
@@ -821,7 +845,7 @@ const EventDetail = () => {
                 <VibesLoader size={30} />
               ) : (
                 <Text style={styles.eventDetailJoinButtonText}>
-                  Sumarme al desafío
+                  {userId ? "Sumarme al desafío" : "Registrarme para sumarme"}
                 </Text>
               )}
             </TouchableOpacity>
@@ -863,8 +887,9 @@ const EventDetail = () => {
         <TouchableOpacity
           style={[styles.eventDetailJoinButton, localStyles.footerActionButton]}
           onPress={async () => {
+            if (!event) return;
             if (!userId) {
-              Alert.alert("Sesión requerida", "Necesitás iniciar sesión.");
+              promptForPublicContentAuth(navigation as any, "evento");
               return;
             }
             try {
@@ -893,7 +918,7 @@ const EventDetail = () => {
                 adjustsFontSizeToFit
                 minimumFontScale={0.85}
               >
-                Unirse al evento
+                {userId ? "Unirse al evento" : "Registrarme para unirme"}
               </Text>
               <Icon name="arrow-forward" size={24} color={WHITE} />
             </>
@@ -954,7 +979,7 @@ const EventDetail = () => {
   const googleMapsApiKey = googleMapsConfig.apiKey;
   const hasEventPreviewCoordinates =
     eventPreviewLatitude !== null && eventPreviewLongitude !== null;
-  const eventMapPreviewUri = googleMapsApiKey
+  const eventMapPreviewUri = googleMapsApiKey && eventMapQuery
     ? getStaticMapPreviewUrl(
         hasEventPreviewCoordinates
           ? `${eventPreviewLatitude},${eventPreviewLongitude}`
@@ -1154,7 +1179,7 @@ const EventDetail = () => {
 
   const handleJoin = async () => {
     if (!userId) {
-      Alert.alert("Sesión requerida", "Necesitás iniciar sesión.");
+      promptForPublicContentAuth(navigation as any, "desafío");
       return;
     }
     try {
@@ -1302,6 +1327,39 @@ const EventDetail = () => {
     extrapolate: "clamp",
   });
 
+  const handleShareEvent = async () => {
+    if (!event || event.type !== "event") return;
+    try {
+      await shareEventInvite(event);
+    } catch {
+      Alert.alert("Compartir", "No pudimos compartir este evento.");
+    }
+  };
+
+  if (!event && linkedEventLoading) {
+    return (
+      <ScreenContainer style={localStyles.publicStateScreen}>
+        <VibesLoader size={36} />
+      </ScreenContainer>
+    );
+  }
+
+  if (!event) {
+    return (
+      <ScreenContainer style={localStyles.publicStateScreen}>
+        <Text style={localStyles.publicStateTitle}>
+          No encontramos este evento
+        </Text>
+        <TouchableOpacity
+          style={localStyles.publicStateButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={localStyles.publicStateButtonText}>Volver</Text>
+        </TouchableOpacity>
+      </ScreenContainer>
+    );
+  }
+
   return (
     <View
       style={[
@@ -1327,16 +1385,23 @@ const EventDetail = () => {
             <Icon name="chevron-back" size={24} color={WHITE} />
           </TouchableOpacity>
           <View style={localStyles.expandedEventHeaderSpacer} />
-          {isAdmin ? (
+          <View style={localStyles.headerActions}>
             <TouchableOpacity
               style={localStyles.eventHeaderIconButton}
-              onPress={() => setMenuVisible(true)}
+              accessibilityLabel="Compartir evento"
+              onPress={() => void handleShareEvent()}
             >
-              <Icon name="ellipsis-horizontal" size={24} color={WHITE} />
+              <Icon name="share-outline" size={22} color={WHITE} />
             </TouchableOpacity>
-          ) : (
-            <View style={localStyles.headerIconPlaceholder} />
-          )}
+            {isAdmin ? (
+              <TouchableOpacity
+                style={localStyles.eventHeaderIconButton}
+                onPress={() => setMenuVisible(true)}
+              >
+                <Icon name="ellipsis-horizontal" size={24} color={WHITE} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </Animated.View>
       ) : (
         <AppHeader
@@ -1388,7 +1453,13 @@ const EventDetail = () => {
           <Text style={localStyles.collapsedEventHeaderTitle} numberOfLines={2}>
             {event.title}
           </Text>
-          <View style={localStyles.headerIconPlaceholder} />
+          <TouchableOpacity
+            style={localStyles.collapsedHeaderBackButton}
+            accessibilityLabel="Compartir evento"
+            onPress={() => void handleShareEvent()}
+          >
+            <Icon name="share-outline" size={21} color={DARK_GRAY} />
+          </TouchableOpacity>
         </Animated.View>
       ) : null}
 
@@ -2157,6 +2228,31 @@ const EventDetail = () => {
 };
 
 const localStyles = StyleSheet.create({
+  publicStateScreen: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 20,
+    paddingHorizontal: 28,
+    backgroundColor: vibesTheme.colors.background,
+  },
+  publicStateTitle: {
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.bold,
+    fontSize: 22,
+    lineHeight: 28,
+    textAlign: "center",
+  },
+  publicStateButton: {
+    borderRadius: 24,
+    backgroundColor: vibesTheme.colors.accentMustard,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  publicStateButtonText: {
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.bold,
+    fontSize: 16,
+  },
   challengeWhiteBackground: {
     backgroundColor: WHITE,
   },

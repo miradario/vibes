@@ -1,7 +1,7 @@
 import { vibesTheme } from "../theme/vibesTheme";
 import { useCommunityUnreadQuery } from "../queries/communityReceipts.queries";
 import { useEffect, useRef, type MutableRefObject } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,7 +10,8 @@ import { supabase } from "../lib/supabase";
 import { showToast } from "../utils/toast";
 import { dmKeys, matchKeys, useMatchesQuery } from "../queries/matches.queries";
 import { eventMessageKeys, myEventGroupsKeys } from "../queries/events.queries";
-import { useUserPreferencesQuery } from "../queries/userPreferences.queries";
+import { useUserPreferencesQuery, userPreferencesKeys } from "../queries/userPreferences.queries";
+import { getDeviceTimeZone } from "./preferences";
 
 const isChatNotificationData = (
   data: Record<string, unknown> | null
@@ -194,12 +195,41 @@ export const PushNotificationsBootstrap = ({
   const lastHandledResponseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!userId || !preferencesQuery.isSuccess) return;
+    let active = true;
+    let saving = false;
+    const syncTimeZone = async () => {
+      const timeZone = getDeviceTimeZone();
+      const cached = queryClient.getQueryData<Record<string, unknown>>(userPreferencesKeys.byUser(userId));
+      if (saving || cached?.challengeReminderTimezone === timeZone) return;
+      saving = true;
+      try {
+        const { error } = await supabase.from("user_preferences").upsert({
+          user_id: userId, challenge_reminder_timezone: timeZone,
+        }, { onConflict: "user_id" });
+        if (error) throw error;
+        if (active) queryClient.setQueryData(userPreferencesKeys.byUser(userId), (previous: Record<string, unknown> | undefined) => ({
+          ...previous, challengeReminderTimezone: timeZone,
+        }));
+      } catch (error) {
+        console.warn("[push] failed to sync reminder time zone", error);
+      } finally { saving = false; }
+    };
+    void syncTimeZone();
+    const subscription = AppState.addEventListener("change", state => {
+      if (state === "active") void syncTimeZone();
+    });
+    return () => { active = false; subscription.remove(); };
+  }, [userId, preferencesQuery.isSuccess, queryClient]);
+
+
+  useEffect(() => {
     const directUnreadCount = unread.reduce(
       (total, row) => total + Number(row.unread_count),
       0
     );
 
-    if (!userId) {
+    if (!userId || notificationsEnabled === false) {
       void Notifications.setBadgeCountAsync(0).catch((error) => {
         console.warn("[push] failed to clear badge without session", error);
       });
@@ -209,11 +239,11 @@ export const PushNotificationsBootstrap = ({
     void Notifications.setBadgeCountAsync(directUnreadCount).catch((error) => {
       console.warn("[push] failed to sync app badge", error);
     });
-  }, [unread, userId]);
+  }, [unread, userId, notificationsEnabled]);
 
   useEffect(() => {
-    if (!userId) return;
-    if (!preferencesQuery.isFetched) return;
+    if (!userId || Platform.OS === "web") return;
+    if (!preferencesQuery.isSuccess) return;
 
     let isActive = true;
 
@@ -226,11 +256,6 @@ export const PushNotificationsBootstrap = ({
         );
       });
 
-      void deactivateUserPushTokens(userId).catch((error) => {
-        if (!isActive) return;
-        console.warn("[push] failed to deactivate user push tokens", error);
-      });
-
       return () => {
         isActive = false;
       };
@@ -241,6 +266,11 @@ export const PushNotificationsBootstrap = ({
       console.warn("[push] failed to register device push token", error);
     });
 
+    const appStateSubscription = AppState.addEventListener("change", state => {
+      if (state === "active") void registerPushToken(userId).catch(error => {
+        console.warn("[push] failed to register after returning to app", error);
+      });
+    });
     const tokenSubscription = Notifications.addPushTokenListener((token) => {
       void upsertPushToken(token).catch((error) => {
         console.warn("[push] failed to refresh device push token", error);
@@ -250,8 +280,9 @@ export const PushNotificationsBootstrap = ({
     return () => {
       isActive = false;
       tokenSubscription.remove();
+      appStateSubscription.remove();
     };
-  }, [notificationsEnabled, preferencesQuery.isFetched, userId]);
+  }, [notificationsEnabled, preferencesQuery.isSuccess, preferencesQuery.dataUpdatedAt, userId]);
 
   useEffect(() => {
     if (Platform.OS === "web") return;

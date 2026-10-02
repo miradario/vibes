@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { notificationAllowed } from "./preferences.ts";
 import { authorizedWebhook, isConnectionRequest } from "./webhook.ts";
 
 type SupabaseClient = ReturnType<typeof createAdminClient>;
@@ -481,22 +482,18 @@ const fetchNotificationPreferences = async (
   supabase: SupabaseClient,
   userIds: string[]
 ) => {
-  if (userIds.length === 0) return new Map<string, boolean>();
+  if (userIds.length === 0) return new Map<string, Record<string, unknown>>();
 
   const { data, error } = await supabase
     .from("user_preferences")
-    .select("user_id, notifications_enabled")
+    .select("user_id, notifications_enabled, notification_connections, notification_matches, notification_direct_messages, notification_group_messages, notification_challenges, notification_events")
     .in("user_id", userIds);
 
   if (error) throw error;
 
-  const preferences = new Map<string, boolean>();
+  const preferences = new Map<string, Record<string, unknown>>();
   for (const row of data ?? []) {
-    const typedRow = row as {
-      user_id: string;
-      notifications_enabled: boolean | null;
-    };
-    preferences.set(typedRow.user_id, typedRow.notifications_enabled !== false);
+    preferences.set(String(row.user_id), row);
   }
 
   return preferences;
@@ -755,6 +752,28 @@ const buildConnectionNotification = async (supabase: SupabaseClient, record: Rec
   }] satisfies OutgoingNotification[];
 };
 
+const buildReminderNotification = async (supabase: SupabaseClient, record: Record<string, unknown>) => {
+  const { data: job, error } = await supabase.from("notification_reminders")
+    .select("*").eq("id", String(record.id ?? "")).maybeSingle();
+  if (error) throw error;
+  if (!job || job.processed_at) return [];
+  const now = Date.now();
+  if (new Date(job.due_at).getTime() > now || new Date(job.expires_at).getTime() <= now) return [];
+  const { data: candidate, error: candidateError } = await supabase.from("notification_reminder_candidates")
+    .select("title").eq("user_id", job.user_id).eq("event_id", job.event_id)
+    .eq("kind", job.kind).eq("lead_hours", job.lead_hours).eq("target_at", job.target_at).eq("due_at", job.due_at).maybeSingle();
+  if (candidateError) throw candidateError;
+  if (!candidate) return [];
+  const challenge = job.kind === "challenge_reminder";
+  return [{
+    recipientId: job.user_id,
+    title: challenge ? "Tu desafío de hoy te espera" : "Tenés un evento próximo",
+    body: challenge ? `Todavía estás a tiempo de completar ${candidate.title} hoy.`
+      : `${candidate.title} empieza en ${job.lead_hours === 1 ? "1 hora" : "24 horas"}.`,
+    data: { type: job.kind, eventId: job.event_id, eventType: challenge ? "challenge" : "event", reminderId: job.id },
+  }] satisfies OutgoingNotification[];
+};
+
 const buildNotifications = async (
   supabase: SupabaseClient,
   payload: WebhookPayload
@@ -764,6 +783,10 @@ const buildNotifications = async (
 
   if (!table || !record) {
     throw new Error("Webhook payload missing table or record");
+  }
+
+  if (table === "notification_reminders") {
+    return buildReminderNotification(supabase, record);
   }
 
   if (table === "messages") {
@@ -826,7 +849,7 @@ serve(async (req: Request) => {
       recipientIds
     );
     const allowedNotifications = notifications.filter(
-      (item) => notificationPreferences.get(item.recipientId) !== false
+      (item) => notificationAllowed(notificationPreferences.get(item.recipientId), item.data.type)
     );
 
     if (allowedNotifications.length === 0) {
@@ -873,6 +896,15 @@ serve(async (req: Request) => {
           : undefined,
     }));
 
+    const reminderId = payload.table === "notification_reminders" ? String(getRecord(payload)?.id ?? "") : null;
+    const deliveredTokenIds = new Set<string>();
+    if (reminderId) {
+      const { data: deliveries, error } = await supabase.from("notification_reminder_deliveries")
+        .select("token_id").eq("reminder_id", reminderId);
+      if (error) throw error;
+      for (const delivery of deliveries ?? []) deliveredTokenIds.add(delivery.token_id);
+    }
+
     const tokensByUser = await getPushTokens(supabase, allowedRecipientIds);
     const allTokens = Array.from(tokensByUser.values()).flat();
     const hasFcmTokens = allTokens.some((token) => token.provider === "fcm");
@@ -887,10 +919,12 @@ serve(async (req: Request) => {
 
     let sentCount = 0;
     let inactiveCount = 0;
+    let retryableFailures = 0;
 
     for (const notification of notificationsWithBadges) {
       const tokens = tokensByUser.get(notification.recipientId) ?? [];
       for (const token of tokens) {
+        if (deliveredTokenIds.has(token.id)) continue;
         let result: SendResult;
 
         if (token.provider === "fcm") {
@@ -934,6 +968,11 @@ serve(async (req: Request) => {
         }
 
         if (result.ok) {
+          if (reminderId) {
+            const { error } = await supabase.from("notification_reminder_deliveries")
+              .upsert({ reminder_id: reminderId, token_id: token.id }, { onConflict: "reminder_id,token_id" });
+            if (error) throw error;
+          }
           sentCount += 1;
           continue;
         }
@@ -951,14 +990,16 @@ serve(async (req: Request) => {
         if (shouldDeactivateToken(result, token.provider)) {
           await markTokenInactive(supabase, token.id);
           inactiveCount += 1;
+        } else {
+          retryableFailures += 1;
         }
       }
     }
 
     return new Response(
-      JSON.stringify({ sent: sentCount, deactivatedTokens: inactiveCount }),
+      JSON.stringify({ sent: sentCount, deactivatedTokens: inactiveCount, retryableFailures }),
       {
-        status: 200,
+        status: payload.table === "notification_reminders" && retryableFailures > 0 ? 503 : 200,
         headers: jsonHeaders,
       }
     );

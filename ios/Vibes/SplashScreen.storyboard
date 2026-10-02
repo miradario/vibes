@@ -16,8 +16,21 @@
                     <view key="view" userInteractionEnabled="NO" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="EXPO-ContainerView" userLabel="ContainerView">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="SplashScreenLogo" translatesAutoresizingMaskIntoConstraints="NO" id="VIBES-SPLASH-LOGO">
+                                <rect key="frame" x="36.5" y="266" width="320" height="320"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="320" id="VIBES-LOGO-WIDTH"/>
+                                    <constraint firstAttribute="height" constant="320" id="VIBES-LOGO-HEIGHT"/>
+                                </constraints>
+                            </imageView>
+                        </subviews>
                         <viewLayoutGuide key="safeArea" id="Rmq-lb-GrQ"/>
                         <color key="backgroundColor" name="SplashScreenBackground"/>
+                        <constraints>
+                            <constraint firstItem="VIBES-SPLASH-LOGO" firstAttribute="centerX" secondItem="EXPO-ContainerView" secondAttribute="centerX" id="VIBES-LOGO-CENTER-X"/>
+                            <constraint firstItem="VIBES-SPLASH-LOGO" firstAttribute="centerY" secondItem="EXPO-ContainerView" secondAttribute="centerY" id="VIBES-LOGO-CENTER-Y"/>
+                        </constraints>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="EXPO-PLACEHOLDER-1" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -26,6 +39,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="SplashScreenLogo" width="1024" height="1024"/>
         <systemColor name="systemBackgroundColor">
             <color red="0.996078431372549" green="0.996078431372549" blue="0.992156862745098" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
