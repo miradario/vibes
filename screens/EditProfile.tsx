@@ -1273,7 +1273,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: "rgba(127, 152, 183, 0.8)",
+    borderColor: "rgba(57, 120, 184, 0.8)",
   },
   readOnlyValue: {
     color: DARK_GRAY,

@@ -227,7 +227,7 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
   },
   avatarBlue: {
-    backgroundColor: "rgba(127, 152, 183, 0.20)",
+    backgroundColor: "rgba(57, 120, 184, 0.20)",
     borderColor: "rgba(110, 110, 110, 0.30)",
   },
   avatarGold: {

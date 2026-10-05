@@ -1235,7 +1235,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 140,
     left: -150,
     top: "18%",
-    backgroundColor: "rgba(127, 152, 183, 0.55)",
+    backgroundColor: "rgba(57, 120, 184, 0.55)",
   },
   fallbackCircleGold: {
     position: "absolute",
@@ -1401,7 +1401,7 @@ const localStyles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "rgba(127, 152, 183, 0.28)",
+    borderColor: "rgba(57, 120, 184, 0.28)",
     backgroundColor: vibesTheme.colors.background,
     flexDirection: "row",
     alignItems: "center",

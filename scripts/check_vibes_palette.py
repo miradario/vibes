@@ -11,7 +11,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PALETTE = {"F4A340", "7F98B7", "D88C7A", "FEFEFD", "2B2B2B", "6E6E6E"}
+PALETTE = {"F4A340", "3978B8", "D88C7A", "FEFEFD", "2B2B2B", "6E6E6E"}
 errors = []
 
 

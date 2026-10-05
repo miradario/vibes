@@ -1,5 +1,7 @@
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
+import HeartMessageBubble from "../components/HeartMessageBubble";
+import { useMessageHearts } from "../src/queries/messageHearts.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import chatStyles, { DARK_GRAY, TEXT_SECONDARY, WHITE } from "../assets/styles";
 import ParticipantsSheet from "../components/ParticipantsSheet";
@@ -43,7 +45,8 @@ import { handleApiError } from "../src/utils/handleApiError";
 
 const COMPOSER_LINE_HEIGHT = 20;
 const COMPOSER_VERTICAL_PADDING = 8;
-const COMPOSER_MIN_HEIGHT = COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
+const COMPOSER_MIN_HEIGHT =
+  COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
 const COMPOSER_MAX_HEIGHT =
   COMPOSER_LINE_HEIGHT * 4 + COMPOSER_VERTICAL_PADDING * 2;
 
@@ -71,9 +74,12 @@ export default function CommunityGroupChat() {
   const pendingPhoto = useRef(false);
   const [pickingPhoto, setPickingPhoto] = useState(false);
   useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", (event) => {
-      setKeyboardHeight(event.endCoordinates.height);
-    });
+    const showSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+      }
+    );
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
       setKeyboardHeight(0);
     });
@@ -118,6 +124,12 @@ export default function CommunityGroupChat() {
     }
   };
   const focused = useIsFocused();
+  const hearts = useMessageHearts(
+    "group",
+    groupId,
+    (messages.data ?? []).map((m) => m.id),
+    focused
+  );
   const receipts = useMessageReceipts(
     "group",
     groupId,
@@ -189,7 +201,11 @@ export default function CommunityGroupChat() {
             onPress={() => navigation.goBack()}
             style={s.back}
           >
-            <Icon name="chevron-back" size={26} color={vibesTheme.colors.primaryText} />
+            <Icon
+              name="chevron-back"
+              size={26}
+              color={vibesTheme.colors.primaryText}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
@@ -209,7 +225,11 @@ export default function CommunityGroupChat() {
             ) : group?.photoUrl ? (
               <Avatar uri={group.photoUrl} size={44} />
             ) : (
-              <Icon name="people-outline" size={30} color={vibesTheme.colors.accentMustard} />
+              <Icon
+                name="people-outline"
+                size={30}
+                color={vibesTheme.colors.accentMustard}
+              />
             )}
           </TouchableOpacity>
           <TouchableOpacity
@@ -233,7 +253,11 @@ export default function CommunityGroupChat() {
             disabled={leaving}
             style={{ padding: 12 }}
           >
-            <Icon name="ellipsis-horizontal" size={22} color={vibesTheme.colors.primaryText} />
+            <Icon
+              name="ellipsis-horizontal"
+              size={22}
+              color={vibesTheme.colors.primaryText}
+            />
           </TouchableOpacity>
         </View>
         <AnimatedSheetModal
@@ -273,7 +297,11 @@ export default function CommunityGroupChat() {
             accessibilityLabel="Abandonar grupo"
           >
             <Text
-              style={{ fontSize: 18, color: vibesTheme.colors.primaryText, paddingVertical: 20 }}
+              style={{
+                fontSize: 18,
+                color: vibesTheme.colors.primaryText,
+                paddingVertical: 20,
+              }}
             >
               Abandonar grupo
             </Text>
@@ -288,7 +316,9 @@ export default function CommunityGroupChat() {
           error={members.isError}
           retry={() => void members.refetch()}
         />
-        {messages.isLoading ? <ActivityIndicator color={vibesTheme.colors.accentMustard} /> : null}
+        {messages.isLoading ? (
+          <ActivityIndicator color={vibesTheme.colors.accentMustard} />
+        ) : null}
         {messages.isError ? (
           <TouchableOpacity onPress={() => void messages.refetch()}>
             <Text style={s.empty}>
@@ -334,32 +364,45 @@ export default function CommunityGroupChat() {
                 {item.sender_id !== session?.user.id && (
                   <Avatar uri={item.senderAvatar} size={30} />
                 )}
-                <View
+                <HeartMessageBubble
+                  count={hearts.byMessage.get(item.id)?.count}
+                  liked={hearts.byMessage.get(item.id)?.liked}
+                  onHeart={(remove) => hearts.react(item.id, remove)}
                   style={[
                     s.bubble,
                     item.sender_id === session?.user.id && s.own,
                   ]}
                 >
-                  <Text style={s.sender}>
-                    {item.sender_id === session?.user.id
-                      ? "Vos"
-                      : item.senderName}
-                  </Text>
-                  <ChatMessageContent body={item.body} textStyle={s.body} />
-                  <View style={s.meta}>
-                    <Text style={s.time}>
-                      {new Date(item.created_at).toLocaleString("es-AR", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Text>
-                    {item.sender_id === session?.user.id ? (
-                      <MessageReceipt status={receipts.statuses.get(item.id)} />
-                    ) : null}
-                  </View>
-                </View>
+                  {(press) => (
+                    <>
+                      <Text style={s.sender}>
+                        {item.sender_id === session?.user.id
+                          ? "Vos"
+                          : item.senderName}
+                      </Text>
+                      <ChatMessageContent
+                        onPhotoPress={press}
+                        body={item.body}
+                        textStyle={s.body}
+                      />
+                      <View style={s.meta}>
+                        <Text style={s.time}>
+                          {new Date(item.created_at).toLocaleString("es-AR", {
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </Text>
+                        {item.sender_id === session?.user.id ? (
+                          <MessageReceipt
+                            status={receipts.statuses.get(item.id)}
+                          />
+                        ) : null}
+                      </View>
+                    </>
+                  )}
+                </HeartMessageBubble>
               </View>
             )
           }
@@ -374,8 +417,13 @@ export default function CommunityGroupChat() {
             },
           ]}
         >
-          <ChatPhotoButton kind="group" chatId={groupId} userId={session?.user.id} disabled={send.isPending}
-            onSend={(body) => send.mutateAsync(body)} />
+          <ChatPhotoButton
+            kind="group"
+            chatId={groupId}
+            userId={session?.user.id}
+            disabled={send.isPending}
+            onSend={(body) => send.mutateAsync(body)}
+          />
           <TextInput
             accessibilityLabel="Mensaje"
             placeholder="Escribí un mensaje…"
@@ -435,7 +483,13 @@ export default function CommunityGroupChat() {
 }
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: vibesTheme.colors.background },
-  header: { flexDirection: "row", alignItems: "center", padding: 16, gap: 10, flexShrink: 0 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    gap: 10,
+    flexShrink: 0,
+  },
   messages: { flex: 1, minHeight: 0 },
   back: { padding: 8 },
   title: { fontSize: 21, color: DARK_GRAY, fontWeight: "600" },

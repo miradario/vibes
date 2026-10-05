@@ -58,7 +58,7 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     title: "Silencio",
     subtitle: "Solo vos y tu respiración",
     iconName: "body-outline",
-    iconTint: "rgba(127, 152, 183, 0.26)",
+    iconTint: "rgba(57, 120, 184, 0.26)",
   },
   {
     value: "guided",
@@ -1792,11 +1792,11 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(127, 152, 183, 0.1)",
+    backgroundColor: "rgba(57, 120, 184, 0.1)",
     marginBottom: 6,
   },
   iconBubbleActive: {
-    backgroundColor: "rgba(127, 152, 183, 0.22)",
+    backgroundColor: "rgba(57, 120, 184, 0.22)",
   },
   tabLabel: {
     color: vibesTheme.colors.secondaryText,

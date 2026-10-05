@@ -42,7 +42,7 @@ export default function LikeBubbles({ trigger }: { trigger: number }) {
               borderRadius: 30,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: i % 2 ? vibesTheme.colors.accentMustard : "rgba(127, 152, 183, 0.24)",
+              backgroundColor: i % 2 ? vibesTheme.colors.accentMustard : "rgba(57, 120, 184, 0.24)",
               opacity: progress.interpolate({
                 inputRange: [0, 0.65, 1],
                 outputRange: [0, 1, 0],

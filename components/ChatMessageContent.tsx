@@ -19,10 +19,12 @@ export default function ChatMessageContent({
   body,
   textStyle,
   onLongPress,
+  onPhotoPress,
 }: {
   body: string;
   textStyle?: StyleProp<TextStyle>;
   onLongPress?: () => void;
+  onPhotoPress?: (open: () => void) => void;
 }) {
   const path = photoPath(body);
   const { data: session } = useAuthSession();
@@ -51,8 +53,12 @@ export default function ChatMessageContent({
         style={s.thumbnail}
         onLongPress={onLongPress}
         onPress={() => {
-          if (photo.isError || imageFailed) void photo.refetch();
-          else if (photo.data) setExpanded(true);
+          const open = () => {
+            if (photo.isError || imageFailed) void photo.refetch();
+            else if (photo.data) setExpanded(true);
+          };
+          if (onPhotoPress) onPhotoPress(open);
+          else open();
         }}
       >
         {photo.isLoading ? (
@@ -69,7 +75,11 @@ export default function ChatMessageContent({
           />
         ) : null}
       </TouchableOpacity>
-      <PhotoViewer visible={expanded} images={photo.data ? [{ uri: photo.data }] : []} onClose={() => setExpanded(false)} />
+      <PhotoViewer
+        visible={expanded}
+        images={photo.data ? [{ uri: photo.data }] : []}
+        onClose={() => setExpanded(false)}
+      />
     </>
   );
 }

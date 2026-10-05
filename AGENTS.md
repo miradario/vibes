@@ -5,7 +5,7 @@
 
 ## Paleta obligatoria de Vibes
 
-- Usar exclusivamente estos colores en la interfaz: `#F4A340`, `#7F98B7`, `#D88C7A`, `#FEFEFD`, `#2B2B2B` y `#6E6E6E`. No introducir otros colores ni variantes de estos tonos.
+- Usar exclusivamente estos colores en la interfaz: `#F4A340`, `#3978B8`, `#D88C7A`, `#FEFEFD`, `#2B2B2B` y `#6E6E6E`. No introducir otros colores ni variantes de estos tonos.
 - Referenciar los tokens de `src/theme/vibesTheme.ts`: `accentMustard`, `accentBlue`, `accentCoral`, `background`/`surface`, `primaryText` y `secondaryText`, respectivamente.
 - Aplicar esta regla a botones, iconos, textos, fondos, bordes, sombras y degradados. Para transparencias, usar únicamente estos mismos colores con opacidad; no agregar tonos nuevos.
 - Al crear o modificar estilos, reemplazar los colores fuera de la paleta en los elementos afectados.

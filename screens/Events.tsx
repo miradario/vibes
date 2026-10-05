@@ -859,7 +859,7 @@ const localStyles = StyleSheet.create({
   },
   eventThumbnail: {
     width: 64, height: 72, borderRadius: 10,
-    backgroundColor: "rgba(127, 152, 183, 0.13)",
+    backgroundColor: "rgba(57, 120, 184, 0.13)",
   },
   eventCopy: { flex: 1, minWidth: 0, gap: 4 },
   eventTitle: {
@@ -1065,7 +1065,7 @@ const localStyles = StyleSheet.create({
     minWidth: 84,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: "rgba(127, 152, 183, 0.92)",
+    backgroundColor: "rgba(57, 120, 184, 0.92)",
     borderWidth: 1,
     borderColor: "rgba(254, 254, 253, 0.9)",
   },
@@ -1150,7 +1150,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: "rgba(127, 152, 183, 0.18)",
+    backgroundColor: "rgba(57, 120, 184, 0.18)",
   },
   progressPillPending: {
     backgroundColor: "rgba(244, 163, 64, 0.18)",

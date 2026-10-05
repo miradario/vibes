@@ -10,8 +10,8 @@ export const ONBOARDING_COLORS = {
   mustard: vibesTheme.colors.accentMustard,
   coral: vibesTheme.colors.accentCoral,
   blue: vibesTheme.colors.accentBlue,
-  sage: "rgba(127, 152, 183, 0.55)",
-  lavender: "rgba(127, 152, 183, 0.36)",
+  sage: "rgba(57, 120, 184, 0.55)",
+  lavender: "rgba(57, 120, 184, 0.36)",
   cream: "rgba(244, 163, 64, 0.28)",
 };
 
@@ -286,8 +286,8 @@ export const onboardingStyles = StyleSheet.create({
     marginTop: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(127, 152, 183, 0.42)",
-    backgroundColor: "rgba(127, 152, 183, 0.12)",
+    borderColor: "rgba(57, 120, 184, 0.42)",
+    backgroundColor: "rgba(57, 120, 184, 0.12)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

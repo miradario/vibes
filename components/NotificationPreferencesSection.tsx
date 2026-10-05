@@ -540,7 +540,7 @@ const s = StyleSheet.create({
   timing: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(127, 152, 183, 0.12)",
+    backgroundColor: "rgba(57, 120, 184, 0.12)",
     borderRadius: 16,
     padding: 12,
     marginTop: 10,

@@ -324,7 +324,7 @@ const DiscoverOrbitCanvas = ({
                 colors={[
                   "rgba(254, 254, 253, 0.92)",
                   "rgba(244, 163, 64, 0.18)",
-                  "rgba(127, 152, 183, 0.2)",
+                  "rgba(57, 120, 184, 0.2)",
                 ]}
                 style={StyleSheet.absoluteFill}
               />
@@ -403,7 +403,7 @@ const DiscoverOrbitCanvas = ({
                       colors={[
                         "rgba(254, 254, 253, 0.96)",
                         "rgba(244, 163, 64, 0.2)",
-                        "rgba(127, 152, 183, 0.24)",
+                        "rgba(57, 120, 184, 0.24)",
                       ]}
                       style={StyleSheet.absoluteFill}
                     />
@@ -462,7 +462,7 @@ const localStyles = {
     width: 230,
     height: 230,
     borderRadius: 115,
-    backgroundColor: "rgba(127, 152, 183, 0.2)",
+    backgroundColor: "rgba(57, 120, 184, 0.2)",
   },
   sparkleOne: {
     position: "absolute" as const,

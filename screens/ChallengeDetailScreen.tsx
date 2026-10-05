@@ -109,7 +109,7 @@ const palette = {
   goldDeep: vibesTheme.colors.accentMustard,
   accentBlue: vibesTheme.colors.accentBlue,
   accentBlueDeep: vibesTheme.colors.secondaryText,
-  accentBlueSoft: "rgba(127, 152, 183, 0.18)",
+  accentBlueSoft: "rgba(57, 120, 184, 0.18)",
   red: vibesTheme.colors.accentCoral,
   redSoft: "rgba(216, 140, 122, 0.17)",
 };
@@ -2607,7 +2607,7 @@ const localStyles = StyleSheet.create({
   },
   requestApproveButton: {
     borderRadius: 999,
-    backgroundColor: "rgba(127, 152, 183, 0.22)",
+    backgroundColor: "rgba(57, 120, 184, 0.22)",
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
@@ -2810,7 +2810,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(216, 140, 122, 0.45)",
   },
   journeyConnectorDone: {
-    backgroundColor: "rgba(127, 152, 183, 0.45)",
+    backgroundColor: "rgba(57, 120, 184, 0.45)",
   },
   journeyStatsRow: {
     borderTopWidth: 1,
@@ -2905,7 +2905,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(110, 110, 110, 0.16)",
   },
   pathConnectorDone: {
-    backgroundColor: "rgba(127, 152, 183, 0.34)",
+    backgroundColor: "rgba(57, 120, 184, 0.34)",
   },
   pathConnectorMissed: {
     backgroundColor: "rgba(216, 140, 122, 0.34)",
@@ -2917,7 +2917,7 @@ const localStyles = StyleSheet.create({
     shadowColor: palette.gold,
   },
   dayCompleted: {
-    backgroundColor: "rgba(127, 152, 183, 0.32)",
+    backgroundColor: "rgba(57, 120, 184, 0.32)",
     borderColor: vibesTheme.colors.accentBlue,
   },
   dayActive: {

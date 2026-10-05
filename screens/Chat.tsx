@@ -1,6 +1,8 @@
 import { messagePreview } from "../src/lib/chatPhotos";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
+import HeartMessageBubble from "../components/HeartMessageBubble";
+import { useMessageHearts } from "../src/queries/messageHearts.queries";
 import MessageEntrance from "../components/MessageEntrance";
 import { useConnectionOpened } from "../src/queries/homeActivity.queries";
 import ScreenContainer from "../components/ScreenContainer";
@@ -61,7 +63,8 @@ const REPORT_REASONS: ReportReason[] = [
 ];
 const COMPOSER_LINE_HEIGHT = 20;
 const COMPOSER_VERTICAL_PADDING = 8;
-const COMPOSER_MIN_HEIGHT = COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
+const COMPOSER_MIN_HEIGHT =
+  COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
 const COMPOSER_MAX_HEIGHT =
   COMPOSER_LINE_HEIGHT * 4 + COMPOSER_VERTICAL_PADDING * 2;
 
@@ -96,6 +99,12 @@ const Chat = () => {
 
   useConnectionOpened(matchId, isFocused);
   const { data: messages, isLoading } = useDirectMessagesQuery(matchId);
+  const hearts = useMessageHearts(
+    "direct",
+    matchId,
+    (messages ?? []).map((m) => m.id),
+    isFocused
+  );
   const receipts = useMessageReceipts(
     "direct",
     matchId,
@@ -166,15 +175,19 @@ const Chat = () => {
   const handleLongPress = (msg: DirectMessage) => {
     if (msg.deliveryStatus === "sending") return;
     if (msg.senderId !== myId) return;
-    Alert.alert("¿Eliminar mensaje?", (messagePreview(msg.text) ?? "").slice(0, 60), [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: () =>
-          deleteMutation.mutate({ messageId: msg.id, matchId: msg.matchId }),
-      },
-    ]);
+    Alert.alert(
+      "¿Eliminar mensaje?",
+      (messagePreview(msg.text) ?? "").slice(0, 60),
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () =>
+            deleteMutation.mutate({ messageId: msg.id, matchId: msg.matchId }),
+        },
+      ]
+    );
   };
 
   const handleAbandonConnection = () => {
@@ -212,20 +225,26 @@ const Chat = () => {
   const handleBlockUser = () => {
     setShowActionsModal(false);
     if (!otherUserId) return;
-    Alert.alert("Bloquear persona", "Ya no podrán verse ni enviarse mensajes.", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Bloquear",
-        style: "destructive",
-        onPress: () => blockMutation.mutate(
-          { blockedUserId: String(otherUserId), matchId },
-          {
-            onSuccess: () => navigation.goBack(),
-            onError: (error) => Alert.alert("Error", error.message || "No se pudo bloquear."),
-          }
-        ),
-      },
-    ]);
+    Alert.alert(
+      "Bloquear persona",
+      "Ya no podrán verse ni enviarse mensajes.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Bloquear",
+          style: "destructive",
+          onPress: () =>
+            blockMutation.mutate(
+              { blockedUserId: String(otherUserId), matchId },
+              {
+                onSuccess: () => navigation.goBack(),
+                onError: (error) =>
+                  Alert.alert("Error", error.message || "No se pudo bloquear."),
+              }
+            ),
+        },
+      ]
+    );
   };
 
   const closeReportModal = () => {
@@ -288,8 +307,10 @@ const Chat = () => {
   const renderMessage = ({ item }: { item: DirectMessage }) => {
     const isOwn = item.senderId === myId;
     const bubble = (
-      <TouchableOpacity
-        activeOpacity={0.8}
+      <HeartMessageBubble
+        count={hearts.byMessage.get(item.id)?.count}
+        liked={hearts.byMessage.get(item.id)?.liked}
+        onHeart={(remove) => hearts.react(item.id, remove)}
         onLongPress={() => handleLongPress(item)}
         style={[
           localStyles.messageBubble,
@@ -298,32 +319,48 @@ const Chat = () => {
             : localStyles.messageBubbleLeft,
         ]}
       >
-        <ChatMessageContent onLongPress={() => handleLongPress(item)} body={item.text} textStyle={isOwn ? localStyles.messageTextRight : localStyles.messageTextLeft} />
-        <View style={localStyles.messageMetaRow}>
-          <Text
-            style={[
-              localStyles.msgTime,
-              isOwn ? localStyles.msgTimeRight : localStyles.msgTimeLeft,
-            ]}
-          >
-            {formatTime(item.createdAt)}
-          </Text>
-          {isOwn ? (
-            <MessageReceipt
-              status={
-                item.deliveryStatus === "sending"
-                  ? "sending"
-                  : receipts.statuses.get(item.id)
+        {(press, longPress) => (
+          <>
+            <ChatMessageContent
+              onPhotoPress={press}
+              onLongPress={longPress}
+              body={item.text}
+              textStyle={
+                isOwn
+                  ? localStyles.messageTextRight
+                  : localStyles.messageTextLeft
               }
             />
-          ) : null}
-        </View>
-      </TouchableOpacity>
+            <View style={localStyles.messageMetaRow}>
+              <Text
+                style={[
+                  localStyles.msgTime,
+                  isOwn ? localStyles.msgTimeRight : localStyles.msgTimeLeft,
+                ]}
+              >
+                {formatTime(item.createdAt)}
+              </Text>
+              {isOwn ? (
+                <MessageReceipt
+                  status={
+                    item.deliveryStatus === "sending"
+                      ? "sending"
+                      : receipts.statuses.get(item.id)
+                  }
+                />
+              ) : null}
+            </View>
+          </>
+        )}
+      </HeartMessageBubble>
     );
 
     if (isOwn) {
       return (
-        <MessageEntrance sending={item.deliveryStatus === "sending"} style={localStyles.ownMessageRow}>
+        <MessageEntrance
+          sending={item.deliveryStatus === "sending"}
+          style={localStyles.ownMessageRow}
+        >
           {bubble}
         </MessageEntrance>
       );
@@ -414,7 +451,11 @@ const Chat = () => {
                 onPress={handleAbandonConnection}
                 disabled={unmatchMutation.isPending}
               >
-                <Icon name="close-circle-outline" size={21} color={vibesTheme.colors.accentCoral} />
+                <Icon
+                  name="close-circle-outline"
+                  size={21}
+                  color={vibesTheme.colors.accentCoral}
+                />
                 <Text style={[localStyles.actionText, localStyles.dangerText]}>
                   Abandonar conexión
                 </Text>
@@ -431,8 +472,14 @@ const Chat = () => {
                 onPress={handleBlockUser}
                 disabled={blockMutation.isPending}
               >
-                <Icon name="ban-outline" size={21} color={vibesTheme.colors.accentCoral} />
-                <Text style={[localStyles.actionText, localStyles.dangerText]}>Bloquear</Text>
+                <Icon
+                  name="ban-outline"
+                  size={21}
+                  color={vibesTheme.colors.accentCoral}
+                />
+                <Text style={[localStyles.actionText, localStyles.dangerText]}>
+                  Bloquear
+                </Text>
               </TouchableOpacity>
             </Pressable>
           </Pressable>
@@ -583,8 +630,13 @@ const Chat = () => {
               },
             ]}
           >
-            <ChatPhotoButton kind="direct" chatId={matchId} userId={myId} disabled={sendMutation.isPending}
-              onSend={(body) => sendMutation.mutateAsync({ matchId, body })} />
+            <ChatPhotoButton
+              kind="direct"
+              chatId={matchId}
+              userId={myId}
+              disabled={sendMutation.isPending}
+              onSend={(body) => sendMutation.mutateAsync({ matchId, body })}
+            />
             <TextInput
               style={[
                 styles.eventChatInput,
@@ -693,7 +745,7 @@ const localStyles = StyleSheet.create({
   inputContainer: {
     flexShrink: 0,
     backgroundColor: "rgba(254, 254, 253, 0.95)",
-    borderTopColor: "rgba(127, 152, 183, 0.3)",
+    borderTopColor: "rgba(57, 120, 184, 0.3)",
     paddingTop: 10,
     alignItems: "flex-end",
   },

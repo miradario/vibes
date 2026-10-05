@@ -15,7 +15,7 @@ W,H=A4
 c=canvas.Canvas(OUT,pagesize=A4)
 c.setTitle('Agustín Sobral | Senior Mobile Developer')
 c.setAuthor('Agustín Sobral')
-ink='#2B2B2B';muted='#6E6E6E';accent='#7F98B7'
+ink='#2B2B2B';muted='#6E6E6E';accent='#3978B8'
 c.setFillColor(HexColor('#FEFEFD'));c.rect(0,0,W,H,fill=1,stroke=0)
 c.setFillColor(HexColor(accent));c.rect(0,H-10,W,10,fill=1,stroke=0)
 x=43; width=W-86;y=H-43

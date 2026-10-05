@@ -67,19 +67,19 @@ const routeAccent: Record<
     text: vibesTheme.colors.accentBlue,
     gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
     shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(127, 152, 183, 0.20)",
+    glow: "rgba(57, 120, 184, 0.20)",
   },
   Flow: {
     text: vibesTheme.colors.accentBlue,
     gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
     shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(127, 152, 183, 0.20)",
+    glow: "rgba(57, 120, 184, 0.20)",
   },
   EventsTab: {
     text: vibesTheme.colors.accentBlue,
     gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
     shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(127, 152, 183, 0.20)",
+    glow: "rgba(57, 120, 184, 0.20)",
   },
   Home: {
     text: vibesTheme.colors.accentMustard,
@@ -91,13 +91,13 @@ const routeAccent: Record<
     text: vibesTheme.colors.accentBlue,
     gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
     shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(127, 152, 183, 0.20)",
+    glow: "rgba(57, 120, 184, 0.20)",
   },
   Aura: {
     text: vibesTheme.colors.accentBlue,
     gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
     shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(127, 152, 183, 0.20)",
+    glow: "rgba(57, 120, 184, 0.20)",
   },
 };
 

@@ -15,7 +15,7 @@ export const vibesTheme = {
     primaryText: "#2B2B2B",
     secondaryText: "#6E6E6E",
     muted: "#6E6E6E",
-    accentBlue: "#7F98B7",
+    accentBlue: "#3978B8",
     accentMustard: "#F4A340",
     accentCoral: "#D88C7A",
     lineArt: "#2B2B2B",

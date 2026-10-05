@@ -1,5 +1,7 @@
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
+import HeartMessageBubble from "../components/HeartMessageBubble";
+import { useMessageHearts } from "../src/queries/messageHearts.queries";
 import MessageEntrance from "../components/MessageEntrance";
 /** @format */
 
@@ -91,7 +93,8 @@ type TimelineMessage = { kind: "event" } & EventMessage;
 const REPORT_REASON = "Contenido inapropiado";
 const COMPOSER_LINE_HEIGHT = 20;
 const COMPOSER_VERTICAL_PADDING = 8;
-const COMPOSER_MIN_HEIGHT = COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
+const COMPOSER_MIN_HEIGHT =
+  COMPOSER_LINE_HEIGHT + COMPOSER_VERTICAL_PADDING * 2;
 const COMPOSER_MAX_HEIGHT =
   COMPOSER_LINE_HEIGHT * 4 + COMPOSER_VERTICAL_PADDING * 2;
 
@@ -121,6 +124,12 @@ const EventChat = () => {
     isLoading: messagesLoading,
     error: messagesError,
   } = useEventMessagesQuery(eventId);
+  const hearts = useMessageHearts(
+    "event",
+    eventId,
+    messages.map((m) => m.id),
+    isFocused
+  );
   const markReadMutation = useMarkEventGroupReadMutation();
   const sendMutation = useSendEventMessageMutation();
   const deleteMutation = useDeleteEventMessageMutation();
@@ -164,7 +173,9 @@ const EventChat = () => {
           "Participante",
         ...(selectedParticipantProfile ?? {}),
         ...(selectedParticipantPreferences ?? {}),
-        hideAge: selectedParticipantPreferences == null || selectedParticipantPreferences.hideAge === true,
+        hideAge:
+          selectedParticipantPreferences == null ||
+          selectedParticipantPreferences.hideAge === true,
         photos:
           selectedParticipantProfile?.photos ??
           (selectedParticipant.avatarUrl
@@ -752,10 +763,15 @@ const EventChat = () => {
               const isMe = msg.senderId === userId;
               const sender = getSenderInfo(msg.senderId);
               return (
-                <MessageEntrance key={msg.id} sending={isMe && msg.deliveryStatus === "sending"}>
-                  <TouchableOpacity
-                    activeOpacity={isMe ? 0.7 : 0.82}
-                    onPress={() => {
+                <MessageEntrance
+                  key={msg.id}
+                  sending={isMe && msg.deliveryStatus === "sending"}
+                >
+                  <HeartMessageBubble
+                    count={hearts.byMessage.get(msg.id)?.count}
+                    liked={hearts.byMessage.get(msg.id)?.liked}
+                    onHeart={(remove) => hearts.react(msg.id, remove)}
+                    onSinglePress={() => {
                       if (isMe) return;
                       handleOpenParticipant({
                         userId: msg.senderId,
@@ -769,52 +785,64 @@ const EventChat = () => {
                       isMe && localStyles.messageRowMe,
                     ]}
                   >
-                    {/* Avatar for other people's messages */}
-                    {!isMe ? (
-                      <TouchableOpacity
-                        activeOpacity={0.85}
-                        onPress={() => openParticipantCard(msg.senderId)}
-                      >
-                        <Avatar uri={sender.avatar} size={28} />
-                      </TouchableOpacity>
-                    ) : null}
-                    <View
-                      style={[
-                        localStyles.messageBubble,
-                        isMe
-                          ? localStyles.messageBubbleMe
-                          : localStyles.messageBubbleOther,
-                      ]}
-                    >
-                      {!isMe && (
-                        <TouchableOpacity
-                          activeOpacity={0.85}
-                          onPress={() => openParticipantCard(msg.senderId)}
-                        >
-                          <Text style={localStyles.messageSender}>
-                            {sender.name || "Participante"}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                      <ChatMessageContent onLongPress={() => handleLongPressMessage(msg)} body={msg.body} textStyle={[localStyles.messageText, isMe && { color: DARK_GRAY }]} />
-                      <View style={localStyles.messageMetaRow}>
-                        <Text style={localStyles.messageTime}>
-                          {formatTime(msg.createdAt)}
-                        </Text>
-                        {isMe ? (
-                          <Icon
-                            name={
-                              msg.deliveryStatus === "sending"
-                                ? "time-outline"
-                                : "checkmark"
-                            }
-                            size={12}
-                            color={TEXT_SECONDARY}
-                          />
+                    {(press, longPress) => (
+                      <>
+                        {/* Avatar for other people's messages */}
+                        {!isMe ? (
+                          <TouchableOpacity
+                            activeOpacity={0.85}
+                            onPress={() => openParticipantCard(msg.senderId)}
+                          >
+                            <Avatar uri={sender.avatar} size={28} />
+                          </TouchableOpacity>
                         ) : null}
-                      </View>
-                    </View>
-                  </TouchableOpacity>
+                        <View
+                          style={[
+                            localStyles.messageBubble,
+                            isMe
+                              ? localStyles.messageBubbleMe
+                              : localStyles.messageBubbleOther,
+                          ]}
+                        >
+                          {!isMe && (
+                            <TouchableOpacity
+                              activeOpacity={0.85}
+                              onPress={() => openParticipantCard(msg.senderId)}
+                            >
+                              <Text style={localStyles.messageSender}>
+                                {sender.name || "Participante"}
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                          <ChatMessageContent
+                            onPhotoPress={press}
+                            onLongPress={longPress}
+                            body={msg.body}
+                            textStyle={[
+                              localStyles.messageText,
+                              isMe && { color: DARK_GRAY },
+                            ]}
+                          />
+                          <View style={localStyles.messageMetaRow}>
+                            <Text style={localStyles.messageTime}>
+                              {formatTime(msg.createdAt)}
+                            </Text>
+                            {isMe ? (
+                              <Icon
+                                name={
+                                  msg.deliveryStatus === "sending"
+                                    ? "time-outline"
+                                    : "checkmark"
+                                }
+                                size={12}
+                                color={TEXT_SECONDARY}
+                              />
+                            ) : null}
+                          </View>
+                        </View>
+                      </>
+                    )}
+                  </HeartMessageBubble>
                 </MessageEntrance>
               );
             })
@@ -832,8 +860,20 @@ const EventChat = () => {
             },
           ]}
         >
-          <ChatPhotoButton kind={eventType} chatId={eventId} userId={userId} disabled={sendMutation.isPending}
-            onSend={(body) => sendMutation.mutateAsync({ eventId: eventId!, eventType, senderId: userId!, body })} />
+          <ChatPhotoButton
+            kind={eventType}
+            chatId={eventId}
+            userId={userId}
+            disabled={sendMutation.isPending}
+            onSend={(body) =>
+              sendMutation.mutateAsync({
+                eventId: eventId!,
+                eventType,
+                senderId: userId!,
+                body,
+              })
+            }
+          />
           <TextInput
             style={[
               styles.eventChatInput,

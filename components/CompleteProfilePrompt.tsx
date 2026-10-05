@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "rgba(127, 152, 183, 0.21)",
+    backgroundColor: "rgba(57, 120, 184, 0.21)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "rgba(127, 152, 183, 0.34)",
+    backgroundColor: "rgba(57, 120, 184, 0.34)",
     overflow: "hidden",
   },
   fill: {

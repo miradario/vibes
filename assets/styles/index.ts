@@ -337,8 +337,8 @@ export default StyleSheet.create({
     color: vibesTheme.colors.primaryText,
   },
   discoverPreferencePill: {
-    backgroundColor: "rgba(127, 152, 183, 0.16)",
-    borderColor: "rgba(127, 152, 183, 0.55)",
+    backgroundColor: "rgba(57, 120, 184, 0.16)",
+    borderColor: "rgba(57, 120, 184, 0.55)",
   },
   discoverPreferenceTagText: {
     color: vibesTheme.colors.primaryText,
@@ -565,7 +565,7 @@ export default StyleSheet.create({
     height: 152,
     borderRadius: 76,
     borderWidth: 1,
-    borderColor: "rgba(127, 152, 183, 0.56)",
+    borderColor: "rgba(57, 120, 184, 0.56)",
     borderStyle: "dashed",
   },
   discoverCenterProfileImageWrap: {
@@ -618,7 +618,7 @@ export default StyleSheet.create({
     borderRadius: 999,
   },
   discoverOrbitDecorativeDotBlue: {
-    backgroundColor: "rgba(127, 152, 183, 0.72)",
+    backgroundColor: "rgba(57, 120, 184, 0.72)",
     shadowColor: SECONDARY_COLOR,
     shadowOpacity: 0.42,
     shadowOffset: { width: 0, height: 8 },
@@ -1508,7 +1508,7 @@ export default StyleSheet.create({
   },
   matchAvatarRingRight: {
     marginLeft: -18,
-    backgroundColor: "rgba(127, 152, 183, 0.35)",
+    backgroundColor: "rgba(57, 120, 184, 0.35)",
   },
   matchAvatar: {
     width: 80,
@@ -1785,7 +1785,7 @@ export default StyleSheet.create({
   },
   chatBubbleLeft: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(127, 152, 183, 0.4)",
+    backgroundColor: "rgba(57, 120, 184, 0.4)",
     borderRadius: 20,
     borderTopLeftRadius: 4,
     paddingVertical: 12,
@@ -1958,7 +1958,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "rgba(254, 254, 253, 0.85)",
     borderTopWidth: 1,
-    borderTopColor: "rgba(127, 152, 183, 0.4)",
+    borderTopColor: "rgba(57, 120, 184, 0.4)",
   },
   chatInputNew: {
     flex: 1,
@@ -3152,7 +3152,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "rgba(127, 152, 183, 0.5)",
+    borderColor: "rgba(57, 120, 184, 0.5)",
   },
   eventsSearchInput: {
     flex: 1,
@@ -3169,7 +3169,7 @@ export default StyleSheet.create({
     marginBottom: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(127, 152, 183, 0.3)",
+    borderColor: "rgba(57, 120, 184, 0.3)",
   },
   eventCardImage: {
     width: "100%",
@@ -3597,7 +3597,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "rgba(254, 254, 253, 0.95)",
     borderTopWidth: 1,
-    borderTopColor: "rgba(127, 152, 183, 0.3)",
+    borderTopColor: "rgba(57, 120, 184, 0.3)",
   },
   eventChatAttachButton: {
     width: 44,
