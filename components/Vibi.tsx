@@ -39,9 +39,11 @@ export function VibiStatic({ size = 120 }: { size?: number }) {
 export function VibiBreathing({
   size = 120,
   paused = false,
+  stableSize = false,
 }: {
   size?: number;
   paused?: boolean;
+  stableSize?: boolean;
 }) {
   const { active, reducedMotion } = useVibiRuntime();
   const breath = useRef(new Animated.Value(0)).current;
@@ -78,7 +80,7 @@ export function VibiBreathing({
           {
             scale: breath.interpolate({
               inputRange: [0, 1],
-              outputRange: [0.94, 1],
+              outputRange: stableSize ? [1, 1] : [0.94, 1],
             }),
           },
           {

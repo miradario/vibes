@@ -477,7 +477,7 @@ export default function NotificationPreferencesSection() {
               s.disabled,
           ]}
         >
-          <Text style={s.label}>{t("common.save")}</Text>
+          <Text style={[s.label, { color: colors.surface }]}>{t("common.save")}</Text>
         </Pressable>
       </AnimatedSheetModal>
     </View>

@@ -96,7 +96,7 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(244, 163, 64, 0.9)",
   },
   ctaText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 18,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,

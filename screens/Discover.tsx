@@ -1887,7 +1887,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   filtersPrimaryButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.semibold,
   },

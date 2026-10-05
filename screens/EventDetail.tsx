@@ -2250,7 +2250,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
   },
   publicStateButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontFamily: vibesTheme.fonts.bold,
     fontSize: 16,
   },
@@ -2923,7 +2923,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.secondaryText,
   },
   checkInButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontFamily: vibesTheme.fonts.bold,
     fontSize: 14,
     textAlign: "center",
@@ -3043,7 +3043,7 @@ const localStyles = StyleSheet.create({
     elevation: 4,
   },
   modalConfirmText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontFamily: vibesTheme.fonts.bold,
     fontSize: 16,
   },

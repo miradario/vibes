@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   ctaPillText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 16,
   },

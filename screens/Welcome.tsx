@@ -49,6 +49,7 @@ const Welcome = () => {
             </Text>
             <VibesActionButton
               label={t("welcome.login")}
+              textStyle={localStyles.buttonLabel}
               variant="start"
               onPress={() => navigation.navigate("Login" as never)}
             />
@@ -57,6 +58,7 @@ const Welcome = () => {
             </Text>
             <VibesActionButton
               label={t("welcome.signup")}
+              textStyle={localStyles.buttonLabel}
               variant="start"
               onPress={() => navigation.navigate("AgeAssurance" as never)}
             />
@@ -70,6 +72,7 @@ const Welcome = () => {
 export default Welcome;
 
 const localStyles = StyleSheet.create({
+  buttonLabel: { color: vibesTheme.colors.surface },
   container: {
     flex: 1,
     backgroundColor: vibesTheme.colors.background,

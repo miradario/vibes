@@ -77,7 +77,7 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.bold,
   },

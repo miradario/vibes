@@ -765,7 +765,7 @@ const s = StyleSheet.create({
     backgroundColor: ACCENT,
   },
   ctaText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 16,
     lineHeight: 20,
     fontFamily: vibesTheme.fonts.medium,

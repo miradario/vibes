@@ -109,7 +109,7 @@ export default function ProfileQuestions() {
                       backgroundColor: group === index ? vibesTheme.colors.accentMustard : "rgba(216, 140, 122, 0.14)",
                     }}
                   >
-                    <Text style={{ color: vibesTheme.colors.primaryText }}>{label}</Text>
+                    <Text style={{ color: group === index ? vibesTheme.colors.surface : vibesTheme.colors.primaryText }}>{label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>

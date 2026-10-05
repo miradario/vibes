@@ -899,7 +899,7 @@ const localStyles = StyleSheet.create({
     opacity: 0.48,
   },
   reportButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 18,
     fontFamily: vibesTheme.fonts.bold,
   },

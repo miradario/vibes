@@ -378,7 +378,7 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
   },
   choiceChipTextActive: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
   },
   otherInputRow: {
     flexDirection: "row",
@@ -396,7 +396,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
   },
   addButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 13,
     fontFamily: vibesTheme.fonts.semibold,
   },

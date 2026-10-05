@@ -239,7 +239,7 @@ export default function CommunityGroups({
                 },
               ]}
             >
-              <Text style={s.title}>
+              <Text style={[s.title, { color: vibesTheme.colors.surface }]}>
                 {create.isPending ? "Creando…" : "Crear grupo"}
               </Text>
             </TouchableOpacity>

@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   primaryButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontFamily: vibesTheme.fonts.semibold,
     fontSize: 18,
   },
