@@ -231,7 +231,7 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(110, 110, 110, 0.30)",
   },
   avatarGold: {
-    backgroundColor: "rgba(228, 183, 110, 0.37)",
+    backgroundColor: "rgba(244, 163, 64, 0.37)",
     borderColor: vibesTheme.colors.accentMustard,
   },
   avatarImage: {
@@ -266,9 +266,9 @@ const localStyles = StyleSheet.create({
     borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.14)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.32)",
+    borderColor: "rgba(244, 163, 64, 0.32)",
     shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.16,
     shadowRadius: 10,

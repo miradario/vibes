@@ -557,13 +557,13 @@ const s = StyleSheet.create({
     width: 174,
     minHeight: 170,
     borderRadius: 14,
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
   },
   eventSkeletonCard: {
     width: 174,
     minHeight: 170,
     borderRadius: 14,
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
   },
   challengeCard: {
     width: 174,

@@ -1641,7 +1641,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(254, 254, 253, 0.94)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.38)",
+    borderColor: "rgba(244, 163, 64, 0.38)",
     shadowColor: vibesTheme.colors.secondaryText,
     shadowOpacity: 0.12,
     shadowRadius: 14,
@@ -1844,7 +1844,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   filterPillActive: {
-    backgroundColor: "rgba(228, 183, 110, 0.37)",
+    backgroundColor: "rgba(244, 163, 64, 0.37)",
     borderColor: vibesTheme.colors.accentMustard,
   },
   filterPillText: {
@@ -1892,7 +1892,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   historyButtonActive: {
-    backgroundColor: "rgba(228, 183, 110, 0.36)",
+    backgroundColor: "rgba(244, 163, 64, 0.36)",
     borderColor: vibesTheme.colors.accentMustard,
   },
   historyModeRow: {
@@ -1916,7 +1916,7 @@ const localStyles = StyleSheet.create({
     gap: 4,
   },
   historyModeButtonActive: {
-    backgroundColor: "rgba(228, 183, 110, 0.43)",
+    backgroundColor: "rgba(244, 163, 64, 0.43)",
     borderColor: vibesTheme.colors.accentMustard,
   },
   historyModeText: {

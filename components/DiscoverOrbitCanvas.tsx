@@ -323,7 +323,7 @@ const DiscoverOrbitCanvas = ({
                 pointerEvents="none"
                 colors={[
                   "rgba(254, 254, 253, 0.92)",
-                  "rgba(228, 183, 110, 0.18)",
+                  "rgba(244, 163, 64, 0.18)",
                   "rgba(127, 152, 183, 0.2)",
                 ]}
                 style={StyleSheet.absoluteFill}
@@ -402,7 +402,7 @@ const DiscoverOrbitCanvas = ({
                       pointerEvents="none"
                       colors={[
                         "rgba(254, 254, 253, 0.96)",
-                        "rgba(228, 183, 110, 0.2)",
+                        "rgba(244, 163, 64, 0.2)",
                         "rgba(127, 152, 183, 0.24)",
                       ]}
                       style={StyleSheet.absoluteFill}
@@ -453,7 +453,7 @@ const localStyles = {
     width: 210,
     height: 210,
     borderRadius: 105,
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
   },
   ambientGlowBlue: {
     position: "absolute" as const,
@@ -496,7 +496,7 @@ const localStyles = {
     justifyContent: "center" as const,
     backgroundColor: "rgba(254, 254, 253, 0.92)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.55)",
+    borderColor: "rgba(244, 163, 64, 0.55)",
     shadowColor: vibesTheme.colors.accentCoral,
     shadowOpacity: 0.18,
     shadowRadius: 8,
@@ -511,7 +511,7 @@ const localStyles = {
     width: "118%" as const,
     height: "118%" as const,
     borderRadius: 999,
-    backgroundColor: "rgba(228, 183, 110, 0.12)",
+    backgroundColor: "rgba(244, 163, 64, 0.12)",
   },
   userBubbleHighlight: {
     position: "absolute" as const,
@@ -531,7 +531,7 @@ const localStyles = {
     borderRadius: 999,
     backgroundColor: "rgba(254, 254, 253, 0.92)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
+    borderColor: "rgba(244, 163, 64, 0.24)",
     shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.08,
     shadowRadius: 8,

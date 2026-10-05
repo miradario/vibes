@@ -65,7 +65,7 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     title: "Guiada",
     subtitle: "Una voz que te acompaña",
     iconName: "headset-outline",
-    iconTint: "rgba(228, 183, 110, 0.28)",
+    iconTint: "rgba(244, 163, 64, 0.28)",
   },
 ];
 
@@ -1411,7 +1411,7 @@ const localStyles = StyleSheet.create({
     elevation: 1,
   },
   musicSelectorActive: {
-    borderColor: "rgba(228, 183, 110, 0.62)",
+    borderColor: "rgba(244, 163, 64, 0.62)",
     backgroundColor: vibesTheme.colors.background,
   },
   musicSelectorLeft: {
@@ -1603,9 +1603,9 @@ const localStyles = StyleSheet.create({
   shareSessionCard: {
     marginTop: 18,
     borderRadius: 24,
-    backgroundColor: "rgba(228, 183, 110, 0.10)",
+    backgroundColor: "rgba(244, 163, 64, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.20)",
+    borderColor: "rgba(244, 163, 64, 0.20)",
     paddingHorizontal: 18,
     paddingVertical: 16,
     flexDirection: "row",

@@ -556,7 +556,7 @@ export default StyleSheet.create({
     height: 178,
     borderRadius: 89,
     borderWidth: 1.5,
-    borderColor: "rgba(228, 183, 110, 0.5)",
+    borderColor: "rgba(244, 163, 64, 0.5)",
     borderStyle: "dashed",
   },
   discoverCenterProfileRingInner: {
@@ -626,7 +626,7 @@ export default StyleSheet.create({
     elevation: 3,
   },
   discoverOrbitDecorativeDotOrange: {
-    backgroundColor: "rgba(228, 183, 110, 0.72)",
+    backgroundColor: "rgba(244, 163, 64, 0.72)",
     shadowColor: CTA_PRIMARY,
     shadowOpacity: 0.38,
     shadowOffset: { width: 0, height: 8 },
@@ -690,7 +690,7 @@ export default StyleSheet.create({
     borderRadius: 18,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.9)",
+    borderColor: "rgba(244, 163, 64, 0.9)",
     backgroundColor: "rgba(254, 254, 253, 0.6)",
   },
   cardThumb: {
@@ -813,7 +813,7 @@ export default StyleSheet.create({
     alignItems: "center",
     marginVertical: 22,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.7)",
+    borderColor: "rgba(244, 163, 64, 0.7)",
     shadowOpacity: 0.18,
     shadowRadius: 12,
     shadowColor: PRIMARY_COLOR,
@@ -896,7 +896,7 @@ export default StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.45)",
+    borderColor: "rgba(244, 163, 64, 0.45)",
     paddingVertical: 12,
     paddingHorizontal: 14,
     color: DARK_GRAY,
@@ -1609,13 +1609,13 @@ export default StyleSheet.create({
     textTransform: "uppercase",
   },
   flowSectionCount: {
-    backgroundColor: "rgba(228, 183, 110, 0.13)",
+    backgroundColor: "rgba(244, 163, 64, 0.13)",
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 3,
     marginLeft: 10,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
+    borderColor: "rgba(244, 163, 64, 0.24)",
   },
   flowSectionCountText: {
     color: TEXT_PRIMARY,
@@ -2566,7 +2566,7 @@ export default StyleSheet.create({
   onboardProgressTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: "rgba(228, 183, 110, 0.22)",
+    backgroundColor: "rgba(244, 163, 64, 0.22)",
     borderRadius: 2,
     marginHorizontal: 12,
     overflow: "hidden",
@@ -2655,7 +2655,7 @@ export default StyleSheet.create({
     elevation: 2,
   },
   onboardNextDisabled: {
-    backgroundColor: "rgba(228, 183, 110, 0.72)",
+    backgroundColor: "rgba(244, 163, 64, 0.72)",
   },
   onboardNextText: {
     color: vibesTheme.colors.primaryText,
@@ -3277,7 +3277,7 @@ export default StyleSheet.create({
     width: 360,
     height: 360,
     borderRadius: 180,
-    backgroundColor: "rgba(228, 183, 110, 0.10)",
+    backgroundColor: "rgba(244, 163, 64, 0.10)",
     opacity: 0.5,
   },
   eventDetailAmbientSparkleCluster: {
@@ -3294,7 +3294,7 @@ export default StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "rgba(228, 183, 110, 0.52)",
+    backgroundColor: "rgba(244, 163, 64, 0.52)",
   },
   eventDetailSparkleDotMedium: {
     position: "absolute",
@@ -3303,7 +3303,7 @@ export default StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: "rgba(228, 183, 110, 0.62)",
+    backgroundColor: "rgba(244, 163, 64, 0.62)",
   },
   eventDetailSparkleDotSmall: {
     position: "absolute",
@@ -3312,7 +3312,7 @@ export default StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "rgba(228, 183, 110, 0.48)",
+    backgroundColor: "rgba(244, 163, 64, 0.48)",
   },
   eventDetailSparkleIcon: {
     position: "absolute",
@@ -3420,7 +3420,7 @@ export default StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "rgba(228, 183, 110, 0.12)",
+    backgroundColor: "rgba(244, 163, 64, 0.12)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,

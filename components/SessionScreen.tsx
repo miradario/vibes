@@ -93,7 +93,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.9)",
+    borderColor: "rgba(244, 163, 64, 0.9)",
   },
   ctaText: {
     color: vibesTheme.colors.primaryText,

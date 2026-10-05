@@ -112,7 +112,7 @@ const s = StyleSheet.create({
     borderColor: "rgba(110, 110, 110, 0.30)",
     backgroundColor: "transparent",
   },
-  selected: { backgroundColor: "rgba(228, 183, 110, 0.43)", borderColor: vibesTheme.colors.accentMustard },
+  selected: { backgroundColor: "rgba(244, 163, 64, 0.43)", borderColor: vibesTheme.colors.accentMustard },
   label: {
     flexShrink: 1,
     color: vibesTheme.colors.secondaryText,

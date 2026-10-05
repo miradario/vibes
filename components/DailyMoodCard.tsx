@@ -277,7 +277,7 @@ const s = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "rgba(228, 183, 110, 0.32)",
+    backgroundColor: "rgba(244, 163, 64, 0.32)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -321,7 +321,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(110, 110, 110, 0.30)",
   },
-  selected: { backgroundColor: "rgba(228, 183, 110, 0.39)", borderColor: vibesTheme.colors.accentMustard },
+  selected: { backgroundColor: "rgba(244, 163, 64, 0.39)", borderColor: vibesTheme.colors.accentMustard },
   optionText: {
     fontSize: 14,
     color: vibesTheme.colors.secondaryText,

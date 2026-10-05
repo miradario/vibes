@@ -181,7 +181,7 @@ const s = StyleSheet.create({
     borderRadius: 1000,
     borderWidth: 2,
     borderColor: vibesTheme.colors.accentMustard,
-    backgroundColor: "rgba(228, 183, 110, 0.22)",
+    backgroundColor: "rgba(244, 163, 64, 0.22)",
     padding: "6%",
   },
   middleCircle: {
@@ -191,7 +191,7 @@ const s = StyleSheet.create({
     borderColor: "rgba(110, 110, 110, 0.30)",
     padding: "7%",
   },
-  innerCircle: { flex: 1, borderRadius: 1000, backgroundColor: "rgba(228, 183, 110, 0.34)" },
+  innerCircle: { flex: 1, borderRadius: 1000, backgroundColor: "rgba(244, 163, 64, 0.34)" },
   help: {
     fontSize: 15,
     lineHeight: 22,

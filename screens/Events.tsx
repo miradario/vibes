@@ -1071,7 +1071,7 @@ const localStyles = StyleSheet.create({
   },
   feedThumbProgressPillPending: {
     backgroundColor: "rgba(254, 254, 253, 0.94)",
-    borderColor: "rgba(228, 183, 110, 0.82)",
+    borderColor: "rgba(244, 163, 64, 0.82)",
   },
   feedThumbProgressText: {
     color: vibesTheme.colors.background,
@@ -1153,7 +1153,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(127, 152, 183, 0.18)",
   },
   progressPillPending: {
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
   },
   progressPillDone: {
     backgroundColor: "rgba(216, 140, 122, 0.18)",

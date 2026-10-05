@@ -1244,7 +1244,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 120,
     right: -125,
     bottom: "18%",
-    backgroundColor: "rgba(228, 183, 110, 0.25)",
+    backgroundColor: "rgba(244, 163, 64, 0.25)",
   },
   fallbackIllustration: { width: "84%", height: "66%" },
   bottomGradient: {

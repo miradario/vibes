@@ -1117,10 +1117,10 @@ const localStyles = StyleSheet.create({
   },
   messageBubbleMe: {
     alignSelf: "flex-end",
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
     borderBottomRightRadius: 6,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.30)",
+    borderColor: "rgba(244, 163, 64, 0.30)",
     shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.14,
     shadowRadius: 10,

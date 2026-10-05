@@ -1211,7 +1211,7 @@ const modalStyles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.36)",
+    borderColor: "rgba(244, 163, 64, 0.36)",
     shadowColor: BLACK,
     shadowOpacity: 0.06,
     shadowRadius: 10,
@@ -1224,7 +1224,7 @@ const modalStyles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.14)",
     marginRight: 12,
   },
   optionText: {

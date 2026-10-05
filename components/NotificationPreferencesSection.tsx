@@ -547,7 +547,7 @@ const s = StyleSheet.create({
   },
   status: { fontSize: 12, color: colors.secondaryText, minHeight: 16 },
   permission: {
-    backgroundColor: "rgba(228, 183, 110, 0.16)",
+    backgroundColor: "rgba(244, 163, 64, 0.16)",
     padding: 16,
     borderRadius: 16,
   },

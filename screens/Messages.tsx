@@ -1033,7 +1033,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.31)",
+    backgroundColor: "rgba(244, 163, 64, 0.31)",
   },
   connectionCardMeta: {
     flexDirection: "row",
@@ -1076,7 +1076,7 @@ const localStyles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "rgba(254, 254, 253, 0.96)",
-    backgroundColor: "rgba(228, 183, 110, 0.2)",
+    backgroundColor: "rgba(244, 163, 64, 0.2)",
   },
   connectionPreviewAvatarStacked: {
     marginLeft: -9,
@@ -1096,7 +1096,7 @@ const localStyles = StyleSheet.create({
     marginTop: 4,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.14)",
   },
   connectionCardAction: {
     marginLeft: 8,
@@ -1208,7 +1208,7 @@ const localStyles = StyleSheet.create({
     marginLeft: 0,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.22)",
+    backgroundColor: "rgba(244, 163, 64, 0.22)",
   },
   countText: {
     color: DARK_GRAY,
@@ -1242,7 +1242,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: BG_MAIN,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.38)",
+    borderColor: "rgba(244, 163, 64, 0.38)",
   },
   directAvatar: {
     width: 48,

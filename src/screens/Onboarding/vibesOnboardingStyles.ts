@@ -12,7 +12,7 @@ export const ONBOARDING_COLORS = {
   blue: vibesTheme.colors.accentBlue,
   sage: "rgba(127, 152, 183, 0.55)",
   lavender: "rgba(127, 152, 183, 0.36)",
-  cream: "rgba(228, 183, 110, 0.28)",
+  cream: "rgba(244, 163, 64, 0.28)",
 };
 
 const { width } = Dimensions.get("window");
@@ -152,7 +152,7 @@ export const onboardingStyles = StyleSheet.create({
     minHeight: 64,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.22)",
+    borderColor: "rgba(244, 163, 64, 0.22)",
     backgroundColor: "rgba(254, 254, 253, 0.86)",
     paddingHorizontal: 14,
     flexDirection: "row",
@@ -160,7 +160,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   optionCardActive: {
     borderColor: ONBOARDING_COLORS.mustard,
-    backgroundColor: "rgba(228, 183, 110, 0.08)",
+    backgroundColor: "rgba(244, 163, 64, 0.08)",
   },
   optionIcon: {
     width: 38,
@@ -218,7 +218,7 @@ export const onboardingStyles = StyleSheet.create({
     height: isCompactOnboardingScreen ? 128 : 148,
     borderRadius: 74,
     borderWidth: 2,
-    borderColor: "rgba(228, 183, 110, 0.45)",
+    borderColor: "rgba(244, 163, 64, 0.45)",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(254, 254, 253, 0.75)",
@@ -248,7 +248,7 @@ export const onboardingStyles = StyleSheet.create({
     minHeight: 58,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
+    borderColor: "rgba(244, 163, 64, 0.24)",
     backgroundColor: "rgba(254, 254, 253, 0.86)",
     flexDirection: "row",
     alignItems: "center",
@@ -318,7 +318,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   pillActive: {
     borderColor: ONBOARDING_COLORS.mustard,
-    backgroundColor: "rgba(228, 183, 110, 0.12)",
+    backgroundColor: "rgba(244, 163, 64, 0.12)",
   },
   pillAdd: {
     borderWidth: 1.4,
@@ -343,7 +343,7 @@ export const onboardingStyles = StyleSheet.create({
     width: "92%",
     aspectRatio: 1,
     borderRadius: 999,
-    backgroundColor: "rgba(228, 183, 110, 0.12)",
+    backgroundColor: "rgba(244, 163, 64, 0.12)",
     shadowColor: ONBOARDING_COLORS.mustard,
     shadowOpacity: 0.22,
     shadowRadius: 28,
@@ -396,7 +396,7 @@ export const onboardingStyles = StyleSheet.create({
     minHeight: 56,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.34)",
+    borderColor: "rgba(244, 163, 64, 0.34)",
     backgroundColor: "rgba(254, 254, 253, 0.92)",
     paddingHorizontal: 16,
     color: ONBOARDING_COLORS.text,

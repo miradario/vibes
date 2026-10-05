@@ -85,7 +85,7 @@ const routeAccent: Record<
     text: vibesTheme.colors.accentMustard,
     gradient: [vibesTheme.colors.accentMustard, vibesTheme.colors.accentMustard],
     shadow: vibesTheme.colors.accentMustard,
-    glow: "rgba(228, 183, 110, 0.18)",
+    glow: "rgba(244, 163, 64, 0.18)",
   },
   Calendar: {
     text: vibesTheme.colors.accentBlue,
@@ -196,7 +196,7 @@ const TabButton = memo(
           <View style={localStyles.iconWrap}>
             <Icon
               size={27}
-              color={localColors.inactiveIcon}
+              color={vibesTheme.colors.primaryText}
               strokeWidth={2.05}
             />
             {unreadCount > 0 ? (
@@ -406,7 +406,7 @@ const CustomTabBar = ({
                 <Animated.View style={floatingIconStyle}>
                   <SelectedIcon
                     size={25}
-                    color={localColors.primaryText}
+                    color={vibesTheme.colors.surface}
                     strokeWidth={2.25}
                   />
                 </Animated.View>
@@ -431,7 +431,6 @@ const localColors = {
   bg: vibesTheme.colors.background,
   surface: vibesTheme.colors.background,
   primaryText: vibesTheme.colors.primaryText as ColorValue,
-  inactiveIcon: vibesTheme.colors.secondaryText as ColorValue,
   muted: vibesTheme.colors.secondaryText as ColorValue,
 };
 

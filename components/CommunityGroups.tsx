@@ -279,7 +279,7 @@ const s = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.27)",
+    backgroundColor: "rgba(244, 163, 64, 0.27)",
   },
   title: {
     color: vibesTheme.colors.primaryText,
@@ -303,7 +303,7 @@ const s = StyleSheet.create({
   },
   input: {
     minHeight: 52,
-    backgroundColor: "rgba(228, 183, 110, 0.13)",
+    backgroundColor: "rgba(244, 163, 64, 0.13)",
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentCoral,
     borderRadius: 12,
@@ -313,7 +313,7 @@ const s = StyleSheet.create({
   },
   inputFocused: {
     borderColor: vibesTheme.colors.accentMustard,
-    backgroundColor: "rgba(228, 183, 110, 0.12)",
+    backgroundColor: "rgba(244, 163, 64, 0.12)",
   },
   descriptionInput: {
     minHeight: 104,

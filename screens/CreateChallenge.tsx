@@ -677,7 +677,7 @@ const localStyles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.14)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
@@ -718,7 +718,7 @@ const localStyles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.28)",
+    borderColor: "rgba(244, 163, 64, 0.28)",
   },
   visibilityStack: {
     gap: 10,
@@ -736,8 +736,8 @@ const localStyles = StyleSheet.create({
     gap: 12,
   },
   visibilityCardSelected: {
-    borderColor: "rgba(228, 183, 110, 0.42)",
-    backgroundColor: "rgba(228, 183, 110, 0.10)",
+    borderColor: "rgba(244, 163, 64, 0.42)",
+    backgroundColor: "rgba(244, 163, 64, 0.10)",
   },
   visibilityIconWrap: {
     width: 36,
@@ -745,7 +745,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.12)",
+    backgroundColor: "rgba(244, 163, 64, 0.12)",
   },
   visibilityCopy: {
     flex: 1,
@@ -776,7 +776,7 @@ const localStyles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -878,7 +878,7 @@ const localStyles = StyleSheet.create({
   },
   modalSecondaryButton: {
     marginTop: 10,
-    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.14)",
     borderRadius: 16,
     paddingVertical: 14,
     alignItems: "center",

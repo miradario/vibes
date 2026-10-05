@@ -101,7 +101,7 @@ const FALLBACK_CHALLENGE: ChallengeDetailData = {
 const palette = {
   bg: vibesTheme.colors.background,
   surface: vibesTheme.colors.background,
-  surfaceAlt: "rgba(228, 183, 110, 0.13)",
+  surfaceAlt: "rgba(244, 163, 64, 0.13)",
   text: vibesTheme.colors.primaryText,
   muted: vibesTheme.colors.secondaryText,
   faint: "rgba(216, 140, 122, 0.31)",
@@ -2353,7 +2353,7 @@ const localStyles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "rgba(228, 183, 110, 0.32)",
+    backgroundColor: "rgba(244, 163, 64, 0.32)",
   },
   collapsedChallengeHeaderTitle: {
     flex: 1,
@@ -2424,7 +2424,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: "rgba(254, 254, 253, 0.98)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.22)",
+    borderColor: "rgba(244, 163, 64, 0.22)",
     paddingHorizontal: 20,
     paddingVertical: 18,
     alignItems: "center",
@@ -2460,7 +2460,7 @@ const localStyles = StyleSheet.create({
   },
   heroMedia: {
     minHeight: 195,
-    backgroundColor: "rgba(228, 183, 110, 0.32)",
+    backgroundColor: "rgba(244, 163, 64, 0.32)",
     justifyContent: "flex-end",
   },
   heroImage: {
@@ -2557,9 +2557,9 @@ const localStyles = StyleSheet.create({
   },
   requestCard: {
     borderRadius: 22,
-    backgroundColor: "rgba(228, 183, 110, 0.10)",
+    backgroundColor: "rgba(244, 163, 64, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.18)",
+    borderColor: "rgba(244, 163, 64, 0.18)",
     padding: 16,
     gap: 12,
   },
@@ -2596,7 +2596,7 @@ const localStyles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "rgba(228, 183, 110, 0.22)",
+    backgroundColor: "rgba(244, 163, 64, 0.22)",
   },
   requestName: {
     flex: 1,
@@ -2620,9 +2620,9 @@ const localStyles = StyleSheet.create({
   celebrationCard: {
     overflow: "hidden",
     borderRadius: 24,
-    backgroundColor: "rgba(228, 183, 110, 0.10)",
+    backgroundColor: "rgba(244, 163, 64, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.18)",
+    borderColor: "rgba(244, 163, 64, 0.18)",
     padding: 18,
     flexDirection: "row",
     alignItems: "center",
@@ -2635,7 +2635,7 @@ const localStyles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: "rgba(228, 183, 110, 0.24)",
+    backgroundColor: "rgba(244, 163, 64, 0.24)",
   },
   celebrationBadge: {
     width: 48,
@@ -2643,7 +2643,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.23)",
+    backgroundColor: "rgba(244, 163, 64, 0.23)",
     borderWidth: 1,
     borderColor: "rgba(254, 254, 253, 0.82)",
   },
@@ -2667,7 +2667,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: palette.surfaceAlt,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.18)",
+    borderColor: "rgba(244, 163, 64, 0.18)",
     padding: 18,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -2922,7 +2922,7 @@ const localStyles = StyleSheet.create({
   },
   dayActive: {
     backgroundColor: vibesTheme.colors.accentMustard,
-    borderColor: "rgba(228, 183, 110, 0.52)",
+    borderColor: "rgba(244, 163, 64, 0.52)",
     shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -3153,7 +3153,7 @@ const localStyles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: 34,
-    backgroundColor: "rgba(228, 183, 110, 0.92)",
+    backgroundColor: "rgba(244, 163, 64, 0.92)",
   },
   footerSliderHandle: {
     position: "absolute",

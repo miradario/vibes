@@ -1084,7 +1084,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     marginBottom: 14,
-    backgroundColor: "rgba(228, 183, 110, 0.20)",
+    backgroundColor: "rgba(244, 163, 64, 0.20)",
     shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -1125,7 +1125,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(254, 254, 253, 0.92)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.2)",
+    borderColor: "rgba(244, 163, 64, 0.2)",
     shadowColor: vibesTheme.colors.accentMustard,
     shadowOpacity: 0.16,
     shadowRadius: 12,
@@ -1214,7 +1214,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.36)",
+    backgroundColor: "rgba(244, 163, 64, 0.36)",
   },
   dailyGuideHeaderCopy: {
     flex: 1,
@@ -1269,7 +1269,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 11,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.12)",
+    borderColor: "rgba(244, 163, 64, 0.12)",
   },
   dailyGuideActionNumber: {
     width: 30,
@@ -1277,7 +1277,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.36)",
+    backgroundColor: "rgba(244, 163, 64, 0.36)",
   },
   dailyGuideActionNumberText: {
     color: vibesTheme.colors.primaryText,
@@ -1349,9 +1349,9 @@ const localStyles = StyleSheet.create({
   },
   challengePreviewCard: {
     borderRadius: 18,
-    backgroundColor: "rgba(228, 183, 110, 0.32)",
+    backgroundColor: "rgba(244, 163, 64, 0.32)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.38)",
+    borderColor: "rgba(244, 163, 64, 0.38)",
     paddingHorizontal: 15,
     paddingVertical: 14,
     marginBottom: 14,
@@ -1399,9 +1399,9 @@ const localStyles = StyleSheet.create({
   },
   eventPreviewCard: {
     borderRadius: 20,
-    backgroundColor: "rgba(228, 183, 110, 0.10)",
+    backgroundColor: "rgba(244, 163, 64, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.16)",
+    borderColor: "rgba(244, 163, 64, 0.16)",
     paddingHorizontal: 18,
     paddingVertical: 16,
     shadowColor: vibesTheme.colors.primaryText,
@@ -1621,9 +1621,9 @@ const localStyles = StyleSheet.create({
   },
   guruCard: {
     borderRadius: 20,
-    backgroundColor: "rgba(228, 183, 110, 0.10)",
+    backgroundColor: "rgba(244, 163, 64, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.22)",
+    borderColor: "rgba(244, 163, 64, 0.22)",
     paddingHorizontal: 16,
     paddingVertical: 15,
     marginBottom: 18,
@@ -1735,7 +1735,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.14)",
   },
   presenceRow: {
     gap: 14,
@@ -1835,7 +1835,7 @@ const localStyles = StyleSheet.create({
     minHeight: 104,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.30)",
+    borderColor: "rgba(244, 163, 64, 0.30)",
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
@@ -1852,7 +1852,7 @@ const localStyles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: "rgba(228, 183, 110, 0.34)",
+    backgroundColor: "rgba(244, 163, 64, 0.34)",
   },
   feedListRow: {
     minHeight: 96,
@@ -1873,7 +1873,7 @@ const localStyles = StyleSheet.create({
   },
   feedListRowChallenge: {
     backgroundColor: "rgba(254, 254, 253, 0.96)",
-    borderColor: "rgba(228, 183, 110, 0.30)",
+    borderColor: "rgba(244, 163, 64, 0.30)",
   },
   feedListThumb: {
     width: 62,
@@ -1945,7 +1945,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(127, 152, 183, 0.18)",
   },
   feedProgressPillPending: {
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
   },
   feedProgressPillDone: {
     backgroundColor: "rgba(216, 140, 122, 0.18)",

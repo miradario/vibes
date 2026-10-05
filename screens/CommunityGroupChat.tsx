@@ -470,9 +470,9 @@ const s = StyleSheet.create({
     // Android shadows show through translucent backgrounds.
     elevation: Platform.OS === "android" ? 0 : 1,
     alignSelf: "flex-end",
-    backgroundColor: "rgba(228, 183, 110, 0.18)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.30)",
+    borderColor: "rgba(244, 163, 64, 0.30)",
   },
   sender: {
     fontSize: 12,

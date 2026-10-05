@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.32)",
+    borderColor: "rgba(244, 163, 64, 0.32)",
     paddingHorizontal: 22,
     paddingTop: 12,
     paddingBottom: 22,

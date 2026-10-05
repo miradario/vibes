@@ -747,7 +747,7 @@ const localStyles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
+    borderColor: "rgba(244, 163, 64, 0.24)",
     backgroundColor: "rgba(254, 254, 253, 0.72)",
     paddingHorizontal: 14,
     paddingVertical: 14,

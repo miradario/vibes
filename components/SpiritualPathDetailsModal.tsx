@@ -305,7 +305,7 @@ const localStyles = StyleSheet.create({
     minHeight: 46,
     borderRadius: 23,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.44)",
+    borderColor: "rgba(244, 163, 64, 0.44)",
     backgroundColor: "rgba(254, 254, 253, 0.86)",
     paddingHorizontal: 20,
     paddingVertical: 11,
@@ -313,7 +313,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   optionChipActive: {
-    backgroundColor: "rgba(228, 183, 110, 0.16)",
+    backgroundColor: "rgba(244, 163, 64, 0.16)",
     borderColor: vibesTheme.colors.accentMustard,
   },
   optionChipText: {
@@ -328,7 +328,7 @@ const localStyles = StyleSheet.create({
     marginTop: 10,
     minHeight: 54,
     borderRadius: 18,
-    borderColor: "rgba(228, 183, 110, 0.36)",
+    borderColor: "rgba(244, 163, 64, 0.36)",
     backgroundColor: "rgba(254, 254, 253, 0.92)",
     fontSize: 17,
     fontFamily: vibesTheme.fonts.primary,

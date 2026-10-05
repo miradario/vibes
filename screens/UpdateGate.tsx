@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     borderRadius: 42,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.14)",
     marginBottom: 24,
   },
   logo: {

@@ -1360,7 +1360,7 @@ const localStyles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "rgba(216, 140, 122, 0.25)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.32)",
+    borderColor: "rgba(244, 163, 64, 0.32)",
   },
   mapPreviewImage: {
     width: "100%",
@@ -1399,7 +1399,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
     paddingHorizontal: 22,
-    backgroundColor: "rgba(228, 183, 110, 0.13)",
+    backgroundColor: "rgba(244, 163, 64, 0.13)",
   },
   mapPreviewFallbackPin: {
     width: 48,
@@ -1407,7 +1407,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(228, 183, 110, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.14)",
   },
   mapPreviewFallbackTitle: {
     color: DARK_GRAY,
@@ -1451,8 +1451,8 @@ const localStyles = StyleSheet.create({
     aspectRatio: 16 / 9,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.42)",
-    backgroundColor: "rgba(228, 183, 110, 0.10)",
+    borderColor: "rgba(244, 163, 64, 0.42)",
+    backgroundColor: "rgba(244, 163, 64, 0.10)",
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
@@ -1497,7 +1497,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
-    backgroundColor: "rgba(228, 183, 110, 0.16)",
+    backgroundColor: "rgba(244, 163, 64, 0.16)",
   },
   uploadImageTitle: {
     color: DARK_GRAY,

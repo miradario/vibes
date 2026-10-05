@@ -18,7 +18,7 @@ type AvatarProps = {
   borderRadius?: number;
 };
 
-const DEFAULT_BG = "rgba(228, 183, 110, 0.30)";
+const DEFAULT_BG = "rgba(244, 163, 64, 0.30)";
 const DEFAULT_ICON = vibesTheme.colors.accentMustard;
 
 const Avatar = ({

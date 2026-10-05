@@ -164,7 +164,7 @@ const localStyles = StyleSheet.create({
   card: {
     backgroundColor: "rgba(254, 254, 253, 0.78)",
     borderWidth: 1,
-    borderColor: "rgba(228, 183, 110, 0.24)",
+    borderColor: "rgba(244, 163, 64, 0.24)",
     borderRadius: 24,
     padding: 18,
   },
