@@ -17,7 +17,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import ScreenContainer from "./ScreenContainer";
-import { VibiBreathing } from "./Vibi";
+import { VibiStatic } from "./Vibi";
 import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
@@ -68,6 +68,10 @@ export default function CalmPause({
     const eased = getBreathFrame(clock.value).expansion;
     return { transform: [{ scale: reduceMotion ? 1 : 0.84 + eased * 0.16 }] };
   });
+  const characterBreathing = useAnimatedStyle(() => {
+    const eased = getBreathFrame(clock.value).expansion;
+    return { transform: [{ scale: reduceMotion ? 1 : 0.9 + eased * 0.1 }] };
+  });
   return (
     <ScreenContainer
       style={s.screen}
@@ -97,9 +101,13 @@ export default function CalmPause({
                 <View style={s.innerCircle} />
               </View>
             </Animated.View>
-            <View accessible accessibilityLabel="Vibi respirando">
-              <VibiBreathing size={size * 0.72} paused={!visible} stableSize />
-            </View>
+            <Animated.View
+              accessible
+              accessibilityLabel="Vibi respirando"
+              style={characterBreathing}
+            >
+              <VibiStatic size={size * 0.72} />
+            </Animated.View>
           </View>
           <Text style={s.help}>
             {reduceMotion
