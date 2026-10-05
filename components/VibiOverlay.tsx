@@ -11,21 +11,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Vibi from "./Vibi";
-import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getBottomTabBarHeight } from "../src/lib/tabBarLayout";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import { useVibi } from "../src/vibi/useVibi";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
-import {
-  setMinimized,
-  setVisible,
-} from "../src/vibi/controller";
+import { setVisible } from "../src/vibi/controller";
 
-const SIZE = 120;
-const RESTORE_WIDTH = 112;
-const RESTORE_HEIGHT = 44;
+const SIZE = 88;
 const GAP = 12;
 const colors = vibesTheme.colors;
 const AUTH_ROUTES = new Set([
@@ -64,7 +58,9 @@ export default function VibiOverlay({
     routeName !== "Vibi" &&
     !AUTH_ROUTES.has(routeName) &&
     !routeName.startsWith("Onboarding");
-  const shown = eligible && state.visible;
+  // Visibility lives in the in-memory controller: dismissal survives navigation
+  // and remounts, and resets when the app starts a new runtime.
+  const shown = eligible && state.visible && !state.minimized;
   useEffect(() => {
     if (eligible) setEverEnabled(true);
   }, [eligible]);
@@ -84,10 +80,9 @@ export default function VibiOverlay({
       hide.remove();
     };
   }, []);
-  const collapsed = !state.visible || state.minimized;
-  const boxWidth = collapsed ? RESTORE_WIDTH : SIZE;
+  const boxWidth = SIZE;
   const expandedHeight = SIZE;
-  const boxHeight = collapsed ? RESTORE_HEIGHT : expandedHeight;
+  const boxHeight = SIZE;
   // Tab bar includes a raised selected icon, so leave space above its crest.
   const bottomSpace = hasBottomBar
     ? getBottomTabBarHeight(fontScale) + Math.max(insets.bottom + 8, 18) + 38
@@ -173,28 +168,17 @@ export default function VibiOverlay({
       }),
     [position]
   );
-  const changeVisibility = (visible: boolean) => {
-    position.stopAnimation();
-    current.current = {
-      x: current.current.x + (visible ? -1 : 1) * (SIZE - RESTORE_WIDTH),
-      y: current.current.y,
-    };
-    dragged.current = true;
-    position.setValue(current.current);
-    setMinimized(false);
-    setVisible(visible);
-  };
   if (!everEnabled) return null;
   return (
     <View
-      pointerEvents={eligible ? "box-none" : "none"}
+      pointerEvents={shown ? "box-none" : "none"}
       style={[
         StyleSheet.absoluteFill,
         styles.overlay,
-        !eligible && styles.hidden,
+        !shown && styles.hidden,
       ]}
-      accessibilityElementsHidden={!eligible}
-      importantForAccessibility={eligible ? "auto" : "no-hide-descendants"}
+      accessibilityElementsHidden={!shown}
+      importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
     >
       <Animated.View
         style={[
@@ -207,56 +191,29 @@ export default function VibiOverlay({
         ]}
       >
         {/* Keep the GL component mounted with its original dimensions while
-            minimized. Only its visibility and frame scheduler change. */}
+            hidden. Only its visibility and frame scheduler change. */}
         <View
-          pointerEvents={collapsed ? "none" : "auto"}
+          pointerEvents={shown ? "auto" : "none"}
           style={[
             styles.fullCharacter,
             { height: expandedHeight },
-            collapsed && styles.hidden,
           ]}
-          accessibilityElementsHidden={collapsed}
-          importantForAccessibility={collapsed ? "no-hide-descendants" : "auto"}
+          accessibilityElementsHidden={!shown}
+          importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
         >
           <View {...pan.panHandlers}>
-            <Vibi size={SIZE} onPress={onPress} paused={!shown || collapsed} />
+            <Vibi size={SIZE} onPress={onPress} paused={!shown} />
           </View>
           <Pressable
-            onPress={() => changeVisibility(false)}
+            onPress={() => setVisible(false)}
             accessibilityRole="button"
             accessibilityLabel="Ocultar Vibi"
-            accessibilityHint="Podés recuperarlo con el botón Mostrar Vibi."
+            accessibilityHint="Quedará oculta hasta que vuelvas a iniciar la app."
             style={styles.control}
           >
             <Ionicons name="close" size={20} color={colors.primaryText} />
           </Pressable>
         </View>
-        {collapsed && (
-          <View {...pan.panHandlers}>
-            <Pressable
-              onPress={() => {
-                changeVisibility(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Mostrar Vibi"
-              accessibilityHint="Restaura el personaje. Después podés tocarlo para abrir el chat."
-              accessibilityActions={[
-                { name: "expand", label: "Expandir Vibi" },
-              ]}
-              onAccessibilityAction={({ nativeEvent }) => {
-                if (nativeEvent.actionName === "expand") changeVisibility(true);
-              }}
-              style={styles.mini}
-            >
-              <Ionicons
-                name="chatbubble-ellipses-outline"
-                size={18}
-                color={colors.primaryText}
-              />
-              <Text style={styles.restoreLabel}>Mostrar Vibi</Text>
-            </Pressable>
-          </View>
-        )}
       </Animated.View>
     </View>
   );
@@ -280,18 +237,5 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-  },
-  restoreLabel: { fontSize: 12, color: colors.primaryText },
-  mini: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: RESTORE_WIDTH,
-    height: RESTORE_HEIGHT,
-    flexDirection: "row",
-    gap: 6,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.accentMustard,
   },
 });

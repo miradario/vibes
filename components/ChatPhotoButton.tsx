@@ -178,5 +178,5 @@ const s = StyleSheet.create({
     minWidth: 120,
     alignItems: "center",
   },
-  sendText: { color: vibesTheme.colors.primaryText },
+  sendText: { color: vibesTheme.colors.surface},
 });

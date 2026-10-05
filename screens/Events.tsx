@@ -811,7 +811,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             setModality(draftFilters.modality);
             setFiltersVisible(false);
           }}>
-            <Text style={localStyles.filterActionText}>Aplicar</Text>
+            <Text style={[localStyles.filterActionText, { color: vibesTheme.colors.surface }]}>Aplicar</Text>
           </TouchableOpacity>
         </View>
         </View>
@@ -839,7 +839,7 @@ const localStyles = StyleSheet.create({
   datePresetText: { fontSize: 14, color: vibesTheme.colors.primaryText },
   dateField: { flex: 1, justifyContent: "flex-end", gap: 6 },
   dateFieldLabel: { color: vibesTheme.colors.primaryText, fontSize: 14, fontFamily: vibesTheme.fonts.regular, paddingLeft: 12 },
-  dateFieldText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.regular },
+  dateFieldText: { color: vibesTheme.colors.surface, fontSize: 16, fontFamily: vibesTheme.fonts.regular },
   dateFilterButton: { flex: 0, backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.primaryText },
   filterApply: { flex: 1, minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
   filterActionText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.bold },

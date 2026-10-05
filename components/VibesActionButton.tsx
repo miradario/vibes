@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   startText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 21,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.light,

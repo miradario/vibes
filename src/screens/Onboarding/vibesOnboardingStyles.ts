@@ -140,7 +140,7 @@ export const onboardingStyles = StyleSheet.create({
     opacity: 0.42,
   },
   primaryButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 16,
   },

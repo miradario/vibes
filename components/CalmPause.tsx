@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -40,10 +40,14 @@ export default function CalmPause({
   const insets = useSafeAreaInsets();
   const { visible, reduceMotion } = useCalmMotion();
   const moving = visible && !reduceMotion;
-  const size = getCalmIllustrationSize(
-    width,
-    height - insets.top - insets.bottom,
-    fontScale
+  // Startup can update window metrics and safe-area insets after mounting.
+  // Keep the initial illustration dimensions throughout this short screen.
+  const [size] = useState(() =>
+    getCalmIllustrationSize(
+      width,
+      height - insets.top - insets.bottom,
+      fontScale
+    )
   );
   const clock = useSharedValue(0);
   useEffect(() => {
@@ -94,11 +98,7 @@ export default function CalmPause({
               </View>
             </Animated.View>
             <View accessible accessibilityLabel="Vibi respirando">
-              <VibiBreathing
-                size={size * 0.82}
-                paused={!visible}
-                stableSize
-              />
+              <VibiBreathing size={size * 0.72} paused={!visible} stableSize />
             </View>
           </View>
           <Text style={s.help}>

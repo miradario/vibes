@@ -820,7 +820,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
   },
   chipTextActive: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontFamily: vibesTheme.fonts.semibold,
   },
   detailList: {
@@ -989,7 +989,7 @@ const localStyles = StyleSheet.create({
     elevation: 2,
   },
   saveButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 20,
     fontFamily: vibesTheme.fonts.semibold,
   },

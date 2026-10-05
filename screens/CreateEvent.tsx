@@ -1253,7 +1253,7 @@ const localStyles = StyleSheet.create({
     fontWeight: "400",
   },
   choiceChipTextActive: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
   },
   dateTimeButton: {
     flex: 1,
@@ -1308,7 +1308,7 @@ const localStyles = StyleSheet.create({
   },
   createButtonText: {
     fontFamily: vibesTheme.fonts.semibold,
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 15,
   },
   fixedFooter: {
@@ -1549,7 +1549,7 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
   },
   modalPrimaryText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontWeight: "400",
   },
   modalSecondaryButton: {

@@ -2174,7 +2174,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: palette.gold,
   },
   loadingBackText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -3205,7 +3205,7 @@ const localStyles = StyleSheet.create({
     opacity: 1,
   },
   checkInText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 18,
     lineHeight: 22,
     fontFamily: vibesTheme.fonts.bold,

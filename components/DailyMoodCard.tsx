@@ -352,7 +352,7 @@ const s = StyleSheet.create({
     borderRadius: 20,
   },
   saveText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 17,
     fontFamily: vibesTheme.fonts.medium,
   },
