@@ -1,5 +1,6 @@
 import PastEvents from "./screens/PastEvents";
-import VibiFloatingButton from "./components/VibiFloatingButton";
+import VibiOverlay from "./components/VibiOverlay";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
 import AppCamera from "./components/AppCamera";
 import { useCommunityDeliverySync } from "./src/queries/communityReceipts.queries";
@@ -119,6 +120,14 @@ const CommunityRuntime = () => {
 const AppNavigator = () => {
   React.useEffect(() => startRemoteConfig(), []);
   const { t } = useI18n();
+  const [vibiRoute, setVibiRoute] = React.useState({ name: "Startup", hasBottomBar: false });
+  const syncVibiRoute = React.useCallback(() => {
+    const root = navigationRef.current?.getRootState();
+    const top = root?.routes[root.index ?? 0];
+    const name = navigationRef.current?.getCurrentRoute()?.name ?? "Startup";
+    const hasBottomBar = top?.name === "Tab";
+    setVibiRoute(current => current.name === name && current.hasBottomBar === hasBottomBar ? current : { name, hasBottomBar });
+  }, []);
   const [fontsLoaded, fontError] = useFonts({
     "JosefinSans-Thin": require("./assets/font/JosefinSans-Thin.ttf"),
     "JosefinSans-Regular": require("./assets/font/JosefinSans-Regular.ttf"),
@@ -288,8 +297,10 @@ const AppNavigator = () => {
         <NavigationContainer
           ref={navigationRef}
           linking={linking}
+          onStateChange={syncVibiRoute}
           onReady={() => {
             isNavigationReady = true;
+            syncVibiRoute();
             if (!pendingNotificationData) return;
             const nextData = pendingNotificationData;
             pendingNotificationData = null;
@@ -477,7 +488,6 @@ const AppNavigator = () => {
                     }}
                   />
                 </Tab.Navigator>
-                <VibiFloatingButton />
                 </View>
               )}
             </Stack.Screen>
@@ -564,7 +574,14 @@ const AppNavigator = () => {
             <Stack.Screen
               name="Vibi"
               component={Vibi}
-              options={{ headerShown: false, animationEnabled: true }}
+              options={{
+                headerShown: false,
+                animationEnabled: false,
+                gestureEnabled: false,
+                cardStyle: { backgroundColor: "transparent" },
+                cardOverlayEnabled: false,
+                detachPreviousScreen: false,
+              }}
             />
             <Stack.Screen
               name="ChallengeDetailScreen"
@@ -664,6 +681,8 @@ const AppNavigator = () => {
             />
           </Stack.Navigator>
         </NavigationContainer>
+        <VibiOverlay routeName={vibiRoute.name} hasBottomBar={vibiRoute.hasBottomBar}
+          onPress={() => { if (isNavigationReady) navigationRef.current?.navigate("Vibi"); }} />
         <AppCamera />
         <Toast />
       </QueryClientProvider>
@@ -672,9 +691,11 @@ const AppNavigator = () => {
 };
 
 const App = () => (
-  <I18nProvider>
-    <AppNavigator />
-  </I18nProvider>
+  <SafeAreaProvider>
+    <I18nProvider>
+      <AppNavigator />
+    </I18nProvider>
+  </SafeAreaProvider>
 );
 
 export default App;

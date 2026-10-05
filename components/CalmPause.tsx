@@ -17,7 +17,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import ScreenContainer from "./ScreenContainer";
-import CalmIllustration from "./CalmIllustration";
+import Vibi from "./Vibi";
 import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
@@ -106,12 +106,18 @@ export default function CalmPause({
                 <View style={s.innerCircle} />
               </View>
             </Animated.View>
-            <CalmIllustration moving={moving} />
+            <View accessible accessibilityLabel="Vibi respirando">
+              <Vibi
+                size={size * 0.82}
+                paused={!visible}
+                animation="meditating"
+              />
+            </View>
           </View>
           <Text style={s.help}>
             {reduceMotion
               ? "Este momento es para vos"
-              : "Seguí el ritmo del círculo"}
+              : "Respirá al ritmo de Vibi"}
           </Text>
         </ScrollView>
         {showAction ? (
@@ -128,7 +134,9 @@ export default function CalmPause({
               activeOpacity={0.85}
               style={[onboardingStyles.primaryButton, s.primary]}
             >
-              <Text style={[onboardingStyles.primaryButtonText, s.primaryLabel]}>
+              <Text
+                style={[onboardingStyles.primaryButtonText, s.primaryLabel]}
+              >
                 Continuar
               </Text>
             </TouchableOpacity>
@@ -191,7 +199,11 @@ const s = StyleSheet.create({
     borderColor: "rgba(110, 110, 110, 0.30)",
     padding: "7%",
   },
-  innerCircle: { flex: 1, borderRadius: 1000, backgroundColor: "rgba(244, 163, 64, 0.34)" },
+  innerCircle: {
+    flex: 1,
+    borderRadius: 1000,
+    backgroundColor: "rgba(244, 163, 64, 0.34)",
+  },
   help: {
     fontSize: 15,
     lineHeight: 22,

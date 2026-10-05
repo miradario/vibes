@@ -2,18 +2,19 @@ import { Text } from "../components/Typography";
 /** @format */
 
 import React, { useEffect } from "react";
-import { View, StyleSheet } from "react-native";
-import { ResizeMode } from "expo-av";
+import { View, StyleSheet, useWindowDimensions } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import VibesActionButton from "../components/VibesActionButton";
-import LoopingVideo from "../components/LoopingVideo";
+import Vibi from "../components/Vibi";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesHeader from "../src/components/VibesHeader";
 import { useI18n } from "../src/i18n";
 
 const Welcome = () => {
   const { t } = useI18n();
+  const { width } = useWindowDimensions();
+  const vibiSize = Math.min(348, width - 48);
   const navigation = useNavigation();
   const { data: session, isLoading } = useAuthSession();
   const isFocused = useIsFocused();
@@ -30,12 +31,12 @@ const Welcome = () => {
       <View style={localStyles.content}>
         <View style={localStyles.top}>
           <View style={localStyles.illustrationWrap}>
-            <LoopingVideo
-              source={require("../assets/videos/surfaces/bienvenidx-integrated.mp4")}
-              posterSource={require("../assets/images/challenges/vibesLogo.png")}
-              style={localStyles.video}
-              resizeMode={ResizeMode.CONTAIN}
-              isLooping={false}
+            <Vibi
+              size={vibiSize}
+              animation="happy"
+              loop
+              spin
+              paused={!isFocused}
             />
           </View>
           <VibesHeader subtitle={t("welcome.subtitle")} />
@@ -85,14 +86,12 @@ const localStyles = StyleSheet.create({
     marginTop: 30,
   },
   illustrationWrap: {
-    width: 348,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
     height: 368,
     marginTop: -18,
     marginBottom: 2,
-  },
-  video: {
-    width: "100%",
-    height: "100%",
   },
   card: {
     marginBottom: 20,

@@ -1,0 +1,14 @@
+{
+  "idle": 4.0,
+  "happy": 2.5,
+  "sad": 4.0,
+  "surprised": 2.0,
+  "idea": 2.5,
+  "thinking": 4.0,
+  "meditating": 6.0,
+  "challenge_invite": 3.0,
+  "challenge_active": 3.0,
+  "challenge_complete": 3.5,
+  "encouraging": 3.0,
+  "connecting": 3.0
+}

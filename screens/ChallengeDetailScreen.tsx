@@ -1,3 +1,4 @@
+import { playAnimation } from "../src/vibi/controller";
 import ChallengeDaysSection from "../components/challengeDays/ChallengeDaysSection";
 import ParticipantsSheet from "../components/ParticipantsSheet";
 /** @format */
@@ -1271,6 +1272,7 @@ const ChallengeDetailScreen = () => {
     const reachedFinalCheckIn =
       challenge.currentDay >= challenge.totalDays ||
       nextCompletedDays.length >= challenge.totalDays;
+    playAnimation(reachedFinalCheckIn ? "challenge_complete" : "encouraging");
     setLocalCompletedDays(nextCompletedDays);
     setLocalStatus("completed");
     setFooterSliderOffset(footerSliderMaxOffset);
@@ -1393,6 +1395,7 @@ const ChallengeDetailScreen = () => {
         challengeId: event.id,
         userId,
       });
+      playAnimation("challenge_active");
       return;
     }
 
@@ -1400,6 +1403,7 @@ const ChallengeDetailScreen = () => {
       challengeId: event.id,
       userId,
     });
+    playAnimation("challenge_invite");
   };
 
   const handleApproveJoinRequest = async (
@@ -1878,10 +1882,7 @@ const ChallengeDetailScreen = () => {
                 disabled={joinChallengeMutation.isPending}
                 onPress={() => {
                   if (!event?.id || !userId) return;
-                  void joinChallengeMutation.mutateAsync({
-                    challengeId: event.id,
-                    userId,
-                  });
+                  void handleJoinOrRequest();
                 }}
               >
                 {joinChallengeMutation.isPending ? (

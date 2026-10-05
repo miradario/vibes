@@ -1,7 +1,7 @@
+import { playAnimation, vibiController } from "../src/vibi/controller";
 import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -13,7 +13,9 @@ import {
 import { Image } from "expo-image";
 import * as Crypto from "expo-crypto";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import VibiCharacter, { VibiStatic, VibiBreathing } from "../components/Vibi";
 import ScreenContainer from "../components/ScreenContainer";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -115,7 +117,10 @@ const Exchange = memo(
         <Text style={s.message}>{item.user_text}</Text>
       </View>
       <View style={s.answer}>
-        <Text style={s.author}>VIBI</Text>
+        <View style={s.answerAuthor}>
+          <VibiStatic size={32} />
+          <Text style={s.author}>VIBI</Text>
+        </View>
         <Text style={s.message} selectable>
           {item.assistant_text}
         </Text>
@@ -132,7 +137,9 @@ const Exchange = memo(
   )
 );
 function VibiConversation({ userId }: { userId: string }) {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const [chatVisible, setChatVisible] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [exchanges, setExchanges] = useState<VibiExchange[]>([]);
   const [before, setBefore] = useState<string | null>(null);
@@ -155,6 +162,12 @@ function VibiConversation({ userId }: { userId: string }) {
   const list = useRef<FlatList<VibiExchange>>(null);
   const mounted = useRef(true);
   const busy = useRef(false);
+  const reactionRequest = useRef<number | null>(null);
+  const reactWithVibi = (name: "thinking" | "happy" | "sad") => {
+    if (name === "happy") playAnimation("idle");
+    playAnimation(name);
+    reactionRequest.current = vibiController.getSnapshot().requestId;
+  };
   const pendingRef = useRef(pending);
   useEffect(() => {
     pendingRef.current = pending;
@@ -166,6 +179,8 @@ function VibiConversation({ userId }: { userId: string }) {
     return () => {
       mounted.current = false;
       loadVersion.current++;
+      if (reactionRequest.current === vibiController.getSnapshot().requestId)
+        playAnimation("idle");
     };
   }, []);
   const reload = useCallback(async () => {
@@ -208,6 +223,7 @@ function VibiConversation({ userId }: { userId: string }) {
     if (!request.message) return;
     busy.current = true;
     setSending(true);
+    reactWithVibi("thinking");
     setPending(request);
     setError(null);
     setNotice(null);
@@ -220,12 +236,14 @@ function VibiConversation({ userId }: { userId: string }) {
         request.category
       );
       if (!mounted.current) return;
+      reactWithVibi("happy");
       setExchanges((current) => mergeVibiExchanges(current, [result.exchange]));
       setPending(null);
       setDraft("");
       autoScroll.current = true;
     } catch (e) {
       if (mounted.current) {
+        reactWithVibi("sad");
         setError(vibiErrorMessage(e));
         if (e instanceof Error && e.message === "conversation_changed") {
           setPending(null);
@@ -339,229 +357,251 @@ function VibiConversation({ userId }: { userId: string }) {
   };
   const disabled = loading || sending || opening || resetting || loadingOlder;
   return (
-    <ScreenContainer
-      style={s.screen}
-      edges={["top", "left", "right", "bottom"]}
+    <AnimatedSheetModal
+      inline
+      visible={chatVisible}
+      onClose={() => setChatVisible(false)}
+      onClosed={() => navigation.goBack()}
+      sheetStyle={s.chatSheet}
     >
       <KeyboardAvoidingView
         style={s.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={s.header}>
-          <Pressable
-            style={s.iconButton}
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Volver"
-          >
-            <Ionicons name="chevron-back" size={24} color={colors.primaryText} />
-          </Pressable>
-          <View style={s.avatar}>
-            <Ionicons
-              name="sparkles-outline"
-              size={24}
-              color={colors.primaryText}
-            />
-          </View>
-          <View style={s.headerCopy}>
-            <Text style={s.title}>Vibi</Text>
-            <Text style={s.subtitle}>Tu asistente en Vibes</Text>
-          </View>
-          <Pressable
-            style={s.iconButton}
-            disabled={disabled || !conversationId}
-            onPress={() => setConfirmReset(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Borrar conversación"
-          >
-            <Ionicons
-              name="trash-outline"
-              size={21}
-              color={colors.secondaryText}
-            />
-          </Pressable>
-        </View>
-        {loading && !exchanges.length ? (
-          <View style={s.loading}>
-            <ActivityIndicator color={colors.primaryText} />
-            <Text style={s.subtitle}>Abriendo tu conversación…</Text>
-          </View>
-        ) : (
-          <FlatList
-            ref={list}
-            data={exchanges}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={({ item }) => (
-              <Exchange item={item} onOpen={openCard} disabled={disabled} />
-            )}
-            contentContainerStyle={s.messages}
-            keyboardShouldPersistTaps="handled"
-            onContentSizeChange={() => {
-              if (autoScroll.current) {
-                list.current?.scrollToEnd({ animated: false });
-                autoScroll.current = false;
-              }
-            }}
-            ListHeaderComponent={
-              <>
-                {before ? (
-                  <Pressable
-                    style={s.older}
-                    onPress={loadOlder}
-                    disabled={disabled}
-                  >
-                    <Text style={s.link}>
-                      {loadingOlder ? "Cargando…" : "Ver mensajes anteriores"}
-                    </Text>
-                  </Pressable>
-                ) : (
-                  <View style={s.welcome}>
-                    <Text style={s.welcomeTitle}>
-                      ¿Qué te gustaría encontrar hoy?
-                    </Text>
-                    <Text style={s.welcomeText}>
-                      Te ayudo a descubrir desafíos, eventos y personas según
-                      tus intereses y lo que tengas ganas de hacer.
-                    </Text>
-                  </View>
-                )}
-              </>
-            }
-            ListFooterComponent={
-              pending ? (
-                <View style={s.exchange}>
-                  <View style={s.userBubble}>
-                    <Text style={s.message}>{pending.message}</Text>
-                  </View>
-                  <Text style={s.subtitle} accessibilityLiveRegion="polite">
-                    {sending
-                      ? "Vibi está buscando…"
-                      : "El mensaje todavía no se completó."}
-                  </Text>
-                  {sending ? (
-                    <ActivityIndicator
-                      style={s.pendingSpinner}
-                      color={colors.primaryText}
-                    />
-                  ) : null}
-                </View>
-              ) : null
-            }
-          />
-        )}
-        {opening ? (
-          <Text style={s.status} accessibilityLiveRegion="polite">
-            Abriendo recomendación…
-          </Text>
-        ) : null}
-        {notice ? (
-          <Text style={s.status} accessibilityLiveRegion="polite">
-            {notice}
-          </Text>
-        ) : null}
-        {error ? (
-          <View style={s.error} accessibilityLiveRegion="polite">
-            <Text style={s.errorText}>{error}</Text>
-            <Pressable
-              onPress={() => (pending ? void send() : void reload())}
-              disabled={disabled}
-            >
-              <Text style={s.link}>Reintentar</Text>
-            </Pressable>
-          </View>
-        ) : null}
-        <View style={s.composer}>
-          <View style={s.categories}>
-            {categories.map((choice) => (
+        <ScreenContainer
+          style={[s.screen, s.conversationSurface]}
+          edges={["left", "right"]}
+        >
+          <View style={s.flex}>
+            <View style={s.header}>
               <Pressable
-                key={choice.type}
+                style={s.iconButton}
+                onPress={() => setChatVisible(false)}
                 accessibilityRole="button"
-                accessibilityLabel={`Buscar ${choice.label.toLowerCase()}`}
-                style={s.category}
-                disabled={disabled || !!pending || !conversationId}
-                onPress={() => void send(choice)}
+                accessibilityLabel="Cerrar chat"
+              >
+                <Ionicons name="close" size={24} color={colors.primaryText} />
+              </Pressable>
+              <View style={s.avatar}>
+                {loading || sending || loadingOlder ? (
+                  <VibiBreathing size={44} paused={!chatVisible} />
+                ) : (
+                  <VibiStatic size={44} />
+                )}
+              </View>
+              <View style={s.headerCopy}>
+                <Text style={s.title}>Vibi</Text>
+                <Text style={s.subtitle}>Tu asistente en Vibes</Text>
+              </View>
+              <Pressable
+                style={s.iconButton}
+                disabled={disabled || !conversationId}
+                onPress={() => setConfirmReset(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Borrar conversación"
               >
                 <Ionicons
-                  name={choice.icon}
-                  size={16}
-                  color={colors.primaryText}
+                  name="trash-outline"
+                  size={21}
+                  color={colors.secondaryText}
                 />
-                <Text style={s.categoryText}>{choice.label}</Text>
               </Pressable>
-            ))}
+            </View>
+            {loading && !exchanges.length ? (
+              <View style={s.loading}>
+                <VibiBreathing size={112} paused={!chatVisible} />
+                <Text style={s.subtitle}>Abriendo tu conversación…</Text>
+              </View>
+            ) : (
+              <FlatList
+                ref={list}
+                data={exchanges}
+                keyExtractor={(item) => String(item.id)}
+                renderItem={({ item }) => (
+                  <Exchange item={item} onOpen={openCard} disabled={disabled} />
+                )}
+                contentContainerStyle={s.messages}
+                keyboardShouldPersistTaps="handled"
+                onContentSizeChange={() => {
+                  if (autoScroll.current) {
+                    list.current?.scrollToEnd({ animated: false });
+                    autoScroll.current = false;
+                  }
+                }}
+                ListHeaderComponent={
+                  <>
+                    {before ? (
+                      <Pressable
+                        style={s.older}
+                        onPress={loadOlder}
+                        disabled={disabled}
+                      >
+                        <Text style={s.link}>
+                          {loadingOlder
+                            ? "Cargando…"
+                            : "Ver mensajes anteriores"}
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <View style={s.welcome}>
+                        <Text style={s.welcomeTitle}>
+                          ¿Qué te gustaría encontrar hoy?
+                        </Text>
+                        <Text style={s.welcomeText}>
+                          Te ayudo a descubrir desafíos, eventos y personas
+                          según tus intereses y lo que tengas ganas de hacer.
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                }
+                ListFooterComponent={
+                  pending ? (
+                    <View style={s.exchange}>
+                      <View style={s.userBubble}>
+                        <Text style={s.message}>{pending.message}</Text>
+                      </View>
+                      <Text style={s.subtitle} accessibilityLiveRegion="polite">
+                        {sending
+                          ? "Vibi está buscando…"
+                          : "El mensaje todavía no se completó."}
+                      </Text>
+                      {sending ? (
+                        <VibiBreathing size={64} paused={!chatVisible} />
+                      ) : null}
+                    </View>
+                  ) : null
+                }
+              />
+            )}
+            {opening ? (
+              <Text style={s.status} accessibilityLiveRegion="polite">
+                Abriendo recomendación…
+              </Text>
+            ) : null}
+            {notice ? (
+              <Text style={s.status} accessibilityLiveRegion="polite">
+                {notice}
+              </Text>
+            ) : null}
+            {error ? (
+              <View style={s.error} accessibilityLiveRegion="polite">
+                <Text style={s.errorText}>{error}</Text>
+                <Pressable
+                  onPress={() => (pending ? void send() : void reload())}
+                  disabled={disabled}
+                >
+                  <Text style={s.link}>Reintentar</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <View style={s.composer}>
+              <View style={s.categories}>
+                {categories.map((choice) => (
+                  <Pressable
+                    key={choice.type}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Buscar ${choice.label.toLowerCase()}`}
+                    style={s.category}
+                    disabled={disabled || !!pending || !conversationId}
+                    onPress={() => void send(choice)}
+                  >
+                    <Ionicons
+                      name={choice.icon}
+                      size={16}
+                      color={colors.primaryText}
+                    />
+                    <Text style={s.categoryText}>{choice.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <View style={s.inputRow}>
+                <TextInput
+                  value={draft}
+                  onChangeText={setDraft}
+                  style={s.input}
+                  multiline
+                  maxLength={2000}
+                  editable={!disabled && !pending && !!conversationId}
+                  placeholder="Contame qué estás buscando…"
+                  placeholderTextColor={colors.secondaryText}
+                  accessibilityLabel="Mensaje para Vibi"
+                  textAlignVertical="top"
+                />
+                <Pressable
+                  style={[
+                    s.send,
+                    (!draft.trim() || disabled || !!pending) && s.dimmed,
+                  ]}
+                  disabled={
+                    !draft.trim() || disabled || !!pending || !conversationId
+                  }
+                  onPress={() => void send()}
+                  accessibilityRole="button"
+                  accessibilityLabel="Enviar mensaje"
+                >
+                  <Ionicons
+                    name="arrow-up"
+                    size={23}
+                    color={colors.primaryText}
+                  />
+                </Pressable>
+              </View>
+              {draft.length > 1800 ? (
+                <Text style={s.counter}>{draft.length}/2000</Text>
+              ) : null}
+            </View>
           </View>
-          <View style={s.inputRow}>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              style={s.input}
-              multiline
-              maxLength={2000}
-              editable={!disabled && !pending && !!conversationId}
-              placeholder="Contame qué estás buscando…"
-              placeholderTextColor={colors.secondaryText}
-              accessibilityLabel="Mensaje para Vibi"
-              textAlignVertical="top"
-            />
+          <AnimatedSheetModal
+            visible={confirmReset}
+            onClose={() => {
+              if (!resetting) setConfirmReset(false);
+            }}
+            closeOnBackdropPress={!resetting}
+            sheetStyle={s.resetSheet}
+          >
+            <Text style={s.resetTitle}>¿Empezar de cero?</Text>
+            <Text style={s.welcomeText}>
+              Se borrarán todos tus mensajes con Vibi. Tus preferencias y
+              conexiones se conservan.
+            </Text>
+            {error ? <Text style={s.errorText}>{error}</Text> : null}
             <Pressable
-              style={[
-                s.send,
-                (!draft.trim() || disabled || !!pending) && s.dimmed,
-              ]}
-              disabled={
-                !draft.trim() || disabled || !!pending || !conversationId
-              }
-              onPress={() => void send()}
-              accessibilityRole="button"
-              accessibilityLabel="Enviar mensaje"
+              style={s.deleteButton}
+              disabled={resetting}
+              onPress={() => void reset()}
             >
-              <Ionicons name="arrow-up" size={23} color={colors.primaryText} />
+              <Text style={s.buttonText}>
+                {resetting ? "Borrando…" : "Borrar conversación"}
+              </Text>
             </Pressable>
-          </View>
-          {draft.length > 1800 ? (
-            <Text style={s.counter}>{draft.length}/2000</Text>
-          ) : null}
+            <Pressable
+              style={s.cancelButton}
+              disabled={resetting}
+              onPress={() => setConfirmReset(false)}
+            >
+              <Text style={s.buttonText}>Conservar conversación</Text>
+            </Pressable>
+          </AnimatedSheetModal>
+          <UserProfileSheet
+            visible={!!profile}
+            profile={profile}
+            onClose={() => setProfile(null)}
+            onContactPress={connect}
+            actionPending={swipe.isPending}
+          />
+        </ScreenContainer>
+        <View pointerEvents="none" style={s.speechTail} />
+        <View
+          style={[
+            s.chatCharacter,
+            { paddingBottom: Math.max(insets.bottom, 12) },
+          ]}
+        >
+          <VibiCharacter size={120} paused={!chatVisible} />
         </View>
       </KeyboardAvoidingView>
-      <AnimatedSheetModal
-        visible={confirmReset}
-        onClose={() => {
-          if (!resetting) setConfirmReset(false);
-        }}
-        closeOnBackdropPress={!resetting}
-        sheetStyle={s.resetSheet}
-      >
-        <Text style={s.resetTitle}>¿Empezar de cero?</Text>
-        <Text style={s.welcomeText}>
-          Se borrarán todos tus mensajes con Vibi. Tus preferencias y conexiones
-          se conservan.
-        </Text>
-        {error ? <Text style={s.errorText}>{error}</Text> : null}
-        <Pressable
-          style={s.deleteButton}
-          disabled={resetting}
-          onPress={() => void reset()}
-        >
-          <Text style={s.buttonText}>
-            {resetting ? "Borrando…" : "Borrar conversación"}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={s.cancelButton}
-          disabled={resetting}
-          onPress={() => setConfirmReset(false)}
-        >
-          <Text style={s.buttonText}>Conservar conversación</Text>
-        </Pressable>
-      </AnimatedSheetModal>
-      <UserProfileSheet
-        visible={!!profile}
-        profile={profile}
-        onClose={() => setProfile(null)}
-        onContactPress={connect}
-        actionPending={swipe.isPending}
-      />
-    </ScreenContainer>
+    </AnimatedSheetModal>
   );
 }
 export default function Vibi() {
@@ -584,6 +624,30 @@ export default function Vibi() {
   );
 }
 const s = StyleSheet.create({
+  chatSheet: {
+    height: "82%",
+    width: "94%",
+    maxWidth: 600,
+    alignSelf: "center",
+  },
+  chatCharacter: { alignItems: "flex-end", paddingRight: 12 },
+  speechTail: {
+    alignSelf: "flex-end",
+    marginRight: 62,
+    marginTop: -8,
+    width: 16,
+    height: 16,
+    backgroundColor: colors.surface,
+    transform: [{ rotate: "45deg" }],
+  },
+  conversationSurface: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: "hidden",
+  },
+  answerAuthor: { flexDirection: "row", alignItems: "center", gap: 8 },
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.background },
   header: {
@@ -715,7 +779,6 @@ const s = StyleSheet.create({
   dimmed: { opacity: 0.45 },
   counter: { fontSize: 12, color: colors.secondaryText, textAlign: "right" },
   loading: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
-  pendingSpinner: { alignSelf: "flex-start" },
   status: {
     paddingHorizontal: 20,
     paddingVertical: 8,

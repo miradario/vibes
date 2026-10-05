@@ -1,3 +1,5 @@
+import { useIsFocused } from "@react-navigation/native";
+import { playAnimation, vibiController } from "../src/vibi/controller";
 /** @format */
 
 import React, {
@@ -355,6 +357,14 @@ const MeditationScreen = () => {
     useState<MeditationPresenceVisibility>("friends");
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const vibiFocused = useIsFocused();
+  useEffect(() => {
+    if (!isPlaying || !vibiFocused) return;
+    playAnimation("meditating");
+    return () => {
+      if (vibiController.getSnapshot().returnTo === "meditating") playAnimation("idle");
+    };
+  }, [isPlaying, vibiFocused]);
   const [isPreparingAudio, setIsPreparingAudio] = useState(false);
   const [showImmersivePlayer, setShowImmersivePlayer] = useState(false);
   const [positionMillis, setPositionMillis] = useState(0);
