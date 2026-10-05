@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import {
   ScrollView,
+  Image,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -17,7 +18,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import ScreenContainer from "./ScreenContainer";
-import Vibi from "./Vibi";
+import { VIBES_LOGO } from "../src/constants/brandAssets";
 import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
@@ -106,18 +107,15 @@ export default function CalmPause({
                 <View style={s.innerCircle} />
               </View>
             </Animated.View>
-            <View accessible accessibilityLabel="Vibi respirando">
-              <Vibi
-                size={size * 0.82}
-                paused={!visible}
-                animation="meditating"
-              />
-            </View>
+            <Animated.View style={breathing}>
+              <Image source={VIBES_LOGO} resizeMode="contain"
+                style={{ width: size, height: size }} accessibilityLabel="Logo de Vibes" />
+            </Animated.View>
           </View>
           <Text style={s.help}>
             {reduceMotion
               ? "Este momento es para vos"
-              : "Respirá al ritmo de Vibi"}
+              : "Respirá a tu ritmo"}
           </Text>
         </ScrollView>
         {showAction ? (
@@ -187,22 +185,23 @@ const s = StyleSheet.create({
   outerCircle: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 1000,
-    borderWidth: 2,
-    borderColor: vibesTheme.colors.accentMustard,
-    backgroundColor: "rgba(244, 163, 64, 0.22)",
+    borderWidth: 1,
+    borderColor: `${vibesTheme.colors.accentBlue}26`,
+    backgroundColor: `${vibesTheme.colors.accentBlue}0A`,
     padding: "6%",
   },
   middleCircle: {
     flex: 1,
     borderRadius: 1000,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: `${vibesTheme.colors.accentBlue}1F`,
+    backgroundColor: `${vibesTheme.colors.accentBlue}08`,
     padding: "7%",
   },
   innerCircle: {
     flex: 1,
     borderRadius: 1000,
-    backgroundColor: "rgba(244, 163, 64, 0.34)",
+    backgroundColor: vibesTheme.colors.background,
   },
   help: {
     fontSize: 15,

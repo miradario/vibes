@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import { playAnimation } from "../src/vibi/controller";
 import ChallengeDaysSection from "../components/challengeDays/ChallengeDaysSection";
 import ParticipantsSheet from "../components/ParticipantsSheet";
@@ -7,7 +8,6 @@ import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
-  Image,
   Animated as NativeAnimated,
   PanResponder,
   ScrollView,
@@ -282,7 +282,7 @@ type ChallengeHeroProps = {
 
 export const ChallengeHero = memo(({ imageSource }: ChallengeHeroProps) => (
   <View style={localStyles.heroMedia}>
-    <Image
+    <MediaImage
       source={imageSource}
       style={localStyles.heroImage}
       resizeMode="cover"
@@ -1750,7 +1750,7 @@ const ChallengeDetailScreen = () => {
             borderRadius: heroCollapse(0, 19),
           }}
         >
-          <Image source={collapsedCoverImageSource} style={localStyles.heroImage} resizeMode="cover" />
+          <MediaImage source={collapsedCoverImageSource} style={localStyles.heroImage} resizeMode="cover" />
           <NativeAnimated.View style={[localStyles.heroScrim, { opacity: expandedChallengeHeaderOpacity }]} />
         </NativeAnimated.View>
       ) : null}

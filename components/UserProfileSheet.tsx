@@ -45,7 +45,7 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import { useSharedActivitiesQuery } from "../src/queries/sharedActivities.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-const VIBES_FALLBACK_ILLUSTRATION = require("../assets/images/challenges/vibesLogo.png");
+import { VIBES_LOGO as VIBES_FALLBACK_ILLUSTRATION } from "../src/constants/brandAssets";
 
 type Props = {
   visible: boolean;
@@ -843,13 +843,11 @@ const UserProfileSheet = ({
             )
           ) : (
             <View style={localStyles.fallbackCanvas}>
-              <View style={localStyles.fallbackCircleBlue} />
-              <View style={localStyles.fallbackCircleGold} />
               <Image
                 source={VIBES_FALLBACK_ILLUSTRATION}
                 resizeMode="contain"
                 style={localStyles.fallbackIllustration}
-                accessibilityLabel="Ilustración de Vibes"
+                accessibilityLabel="Logo de Vibes"
               />
             </View>
           )}
@@ -1226,7 +1224,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    backgroundColor: PROFILE_PHOTO_BACKGROUND,
+    backgroundColor: vibesTheme.colors.background,
   },
   fallbackCircleBlue: {
     position: "absolute",

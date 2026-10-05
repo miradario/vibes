@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Image } from "expo-image";
+import ProfileMediaImage from "../components/ProfileMediaImage";
 import * as Crypto from "expo-crypto";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,6 +23,7 @@ import type { UserProfileCardData } from "../components/UserProfileCard";
 import { Text } from "../components/Typography";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { VIBES_LOGO } from "../src/constants/brandAssets";
 import {
   fetchVibiHistory,
   resetVibiHistory,
@@ -86,10 +87,10 @@ const RecommendationCard = memo(
       accessibilityRole="button"
       accessibilityLabel={`Ver ${card.title}`}
     >
-      <Image
-        source={card.thumbnail ? { uri: card.thumbnail } : fallbackImage}
+      <ProfileMediaImage
+        source={card.thumbnail ? { uri: card.thumbnail } : card.type === "person" ? VIBES_LOGO : fallbackImage}
         style={s.thumbnail}
-        contentFit="cover"
+        contentFit={!card.thumbnail && card.type === "person" ? "contain" : "cover"}
       />
       <View style={s.cardCopy}>
         <Text style={s.eyebrow}>{labels[card.type]}</Text>

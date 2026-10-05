@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import { getEventCategoryLabel, getEventParticipationLabel } from "../src/constants/eventClassification";
 /** @format */
 
@@ -1444,7 +1445,7 @@ const EventDetail = () => {
             <Icon name="chevron-back" size={24} color={DARK_GRAY} />
           </TouchableOpacity>
           {eventHeroImageSource ? (
-            <Image
+            <MediaImage
               source={eventHeroImageSource}
               style={localStyles.collapsedEventHeaderThumbnail}
               resizeMode="cover"
@@ -1478,7 +1479,7 @@ const EventDetail = () => {
             borderRadius: heroCollapse(0, 19),
           }}
         >
-          <Image source={eventHeroImageSource} style={localStyles.eventHeroImage} resizeMode="cover" />
+          <MediaImage source={eventHeroImageSource} style={localStyles.eventHeroImage} resizeMode="cover" />
           <Animated.View style={[localStyles.eventHeroScrim, { opacity: expandedEventHeaderOpacity }]} />
           <Animated.View style={[localStyles.eventHeroContent, { opacity: expandedEventHeaderOpacity, width }]}>
             <Text style={localStyles.eventHeroTitle} numberOfLines={2}>

@@ -45,6 +45,8 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import { useCalmMotion } from "../src/hooks/useCalmMotion";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -219,23 +221,50 @@ const getSuggestionHint = (profile: DataT) => {
   return "Afinidad con vos";
 };
 
+function PeopleSkeleton() {
+  const { visible, reduceMotion } = useCalmMotion();
+  const opacity = useSharedValue(1);
+  useEffect(() => {
+    opacity.value = visible && !reduceMotion
+      ? withRepeat(withTiming(0.45, { duration: 900 }), -1, true)
+      : 1;
+    return () => cancelAnimation(opacity);
+  }, [visible, reduceMotion, opacity]);
+  const pulse = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View style={[localStyles.peopleCarousel, localStyles.peopleSkeletonRow, pulse]}
+      accessible accessibilityRole="progressbar" accessibilityLabel="Cargando personas con tu vibe">
+      {[0, 1, 2].map((index) => (
+        <View key={index} style={[localStyles.personCard, localStyles.personSkeleton]}>
+          <Text style={[localStyles.personName, localStyles.skeletonText]} accessible={false}>Nombre</Text>
+          <Text style={[localStyles.personHint, localStyles.skeletonText]} accessible={false}>Afinidad</Text>
+        </View>
+      ))}
+    </Animated.View>
+  );
+}
+
 function HomePeopleSuggestions({
   profiles,
+  loading,
   onOpenProfile,
   onSeeAll,
 }: {
   profiles: DataT[];
+  loading: boolean;
   onOpenProfile: (profile: DataT) => void;
   onSeeAll: () => void;
 }) {
   const suggestions = profiles.slice(0, 6);
-  if (!suggestions.length) return null;
+  if (!suggestions.length && !loading) return null;
   return (
     <View style={localStyles.peopleSection}>
       <View style={localStyles.peopleHeading}>
         <Text style={localStyles.peopleTitle}>Personas con tu vibe</Text>
         <TouchableOpacity
           accessibilityRole="button"
+          disabled={loading}
+          accessibilityState={{ disabled: loading }}
           onPress={onSeeAll}
           activeOpacity={0.72}
           style={localStyles.peopleLink}
@@ -244,7 +273,7 @@ function HomePeopleSuggestions({
           <Icon name="chevron-forward" size={18} color={vibesTheme.colors.secondaryText} />
         </TouchableOpacity>
       </View>
-      <ScrollView
+      {loading ? <PeopleSkeleton /> : <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={localStyles.peopleCarousel}
@@ -271,7 +300,7 @@ function HomePeopleSuggestions({
             </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </ScrollView>}
     </View>
   );
 }
@@ -322,7 +351,7 @@ const Home = () => {
   const { data: session } = useAuthSession();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
-  const { data: candidates = [] } = useCandidatesQuery(undefined, true);
+  const { data: candidates = [], isLoading: candidatesLoading } = useCandidatesQuery(undefined, true);
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
@@ -932,6 +961,7 @@ const Home = () => {
 
           <HomePeopleSuggestions
             profiles={profiles}
+            loading={candidatesLoading && profiles.length === 0}
             onOpenProfile={openProfileSheet}
             onSeeAll={() =>
               navigation.navigate(
@@ -1033,6 +1063,12 @@ const localStyles = StyleSheet.create({
     gap: 10,
     paddingRight: 24,
   },
+  peopleSkeletonRow: { flexDirection: "row", overflow: "hidden" },
+  personSkeleton: {
+    backgroundColor: `${vibesTheme.colors.secondaryText}14`,
+    borderColor: `${vibesTheme.colors.secondaryText}0A`,
+  },
+  skeletonText: { opacity: 0 },
   personCard: {
     width: 136,
     minHeight: 184,

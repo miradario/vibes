@@ -1,7 +1,8 @@
+import MediaImage from "./MediaImage";
 /** @format */
 
 import React, { useEffect, useState } from "react";
-import { View, Image, Dimensions, ScrollView, TouchableOpacity } from "react-native";
+import { View, Dimensions, ScrollView, TouchableOpacity } from "react-native";
 import { Text } from "./Typography";
 import Icon from "./Icon";
 import ProfileMediaImage from "./ProfileMediaImage";
@@ -494,13 +495,13 @@ const CardItem = ({
         >
           {hasVariant ? (
             <View style={styles.soulmateAvatarWrap}>
-              <Image
+              <MediaImage
                 source={image}
                 style={[imageStyle, styles.soulmateAvatarImage]}
               />
             </View>
           ) : (
-            <Image source={image} style={imageStyle} blurRadius={imageBlurRadius} />
+            <MediaImage source={image} style={imageStyle} blurRadius={imageBlurRadius} />
           )}
         </TouchableOpacity>
         {matches && Number(String(matches).match(/\d+/)?.[0] ?? 0) > 0 && (
@@ -522,7 +523,7 @@ const CardItem = ({
               style={styles.cardThumbWrap}
               onPress={onImagePress}
             >
-              <Image source={thumb} style={styles.cardThumb} />
+              <MediaImage source={thumb} style={styles.cardThumb} />
             </TouchableOpacity>
           ))}
         </View>

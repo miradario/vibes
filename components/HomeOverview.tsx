@@ -9,7 +9,7 @@ import {
   View,
   type ImageSourcePropType,
 } from "react-native";
-import { Image as ExpoImage } from "expo-image";
+import ProfileMediaImage from "./ProfileMediaImage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Text } from "./Typography";
 import Icon from "./Icon";
@@ -154,12 +154,11 @@ function ChallengeCard({
       activeOpacity={0.8}
     >
       <View style={s.challengeFrame}>
-        <ExpoImage
+        <ProfileMediaImage
           source={event.image as ImageSourcePropType}
           style={s.challengeImage}
           contentFit="cover"
           transition={180}
-          cachePolicy="memory-disk"
         />
         <LinearGradient
           pointerEvents="none"
@@ -245,12 +244,11 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
       activeOpacity={0.8}
       onPress={() => navigation.navigate("EventDetail", { event })}
     >
-      <ExpoImage
+      <ProfileMediaImage
         source={event.image as ImageSourcePropType}
         style={s.eventImage}
         contentFit="cover"
         transition={180}
-        cachePolicy="memory-disk"
       />
       <LinearGradient
         pointerEvents="none"

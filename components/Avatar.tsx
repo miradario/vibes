@@ -1,8 +1,8 @@
-import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Image as ExpoImage } from "expo-image";
-import Icon from "./Icon";
+import BrandImagePlaceholder from "./BrandImagePlaceholder";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 type AvatarProps = {
   source?: any;
@@ -18,8 +18,7 @@ type AvatarProps = {
   borderRadius?: number;
 };
 
-const DEFAULT_BG = "rgba(244, 163, 64, 0.30)";
-const DEFAULT_ICON = vibesTheme.colors.accentMustard;
+const DEFAULT_BG = vibesTheme.colors.background;
 
 const Avatar = ({
   source,
@@ -29,9 +28,7 @@ const Avatar = ({
   blurRadius,
   shape = "circle",
   style,
-  iconSize,
   fallbackBackgroundColor = DEFAULT_BG,
-  fallbackIconColor = DEFAULT_ICON,
   borderRadius,
 }: AvatarProps) => {
   const [hasError, setHasError] = useState(false);
@@ -83,11 +80,7 @@ const Avatar = ({
         style,
       ]}
     >
-      <Icon
-        name="person-outline"
-        size={iconSize ?? Math.max(14, Math.round(size * 0.44))}
-        color={fallbackIconColor}
-      />
+      <BrandImagePlaceholder />
       {(hasSource || hasUri) && !hasError ? (
         <ExpoImage
           key={resolvedUri || sourceKey}

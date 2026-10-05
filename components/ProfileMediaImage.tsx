@@ -1,9 +1,8 @@
-import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useMemo, useState } from "react";
 import { StyleSheet, View, type ImageStyle, type StyleProp } from "react-native";
 import { Image as ExpoImage } from "expo-image";
-import Icon from "./Icon";
-import VibesLoader from "./VibesLoader";
+import BrandImagePlaceholder from "./BrandImagePlaceholder";
+import { vibesTheme } from "../src/theme/vibesTheme";
 
 type ProfileMediaImageProps = {
   source?: any;
@@ -32,17 +31,21 @@ const hasValidUri = (value: unknown): value is { uri: string } => {
 };
 
 const ProfileMediaImage = ({
-  source,
+  source: inputSource,
   style,
-  fallbackBackgroundColor = "rgba(216, 140, 122, 0.25)",
-  fallbackIconColor = vibesTheme.colors.secondaryText,
+  fallbackBackgroundColor = vibesTheme.colors.background,
   transition = 250,
   contentFit = "cover",
   onDisplay,
   blurBackground = false,
-  showLoading = false,
   priority = "high",
 }: ProfileMediaImageProps) => {
+  const source = useMemo(
+    () => typeof inputSource === "string"
+      ? (inputSource.trim() ? { uri: inputSource.trim() } : undefined)
+      : inputSource,
+    [inputSource],
+  );
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [displayedKey, setDisplayedKey] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState<{ key: string; width: number; height: number } | null>(null);
@@ -65,11 +68,10 @@ const ProfileMediaImage = ({
   const layoutReady = !blurBackground || Boolean(resolvedSize);
   const resolvedFit = blurBackground ? (isPortrait && contentFit === "cover" ? "cover" : "contain") : contentFit;
   const hasError = errorKey === sourceKey;
-  const loading = showLoading && canRenderSource && !hasError && displayedKey !== sourceKey;
+  const loading = !canRenderSource || hasError || displayedKey !== sourceKey;
 
   return (
     <View style={[styles.container, { backgroundColor: fallbackBackgroundColor }, style]}>
-      {!loading && <Icon name="person-outline" size={44} color={fallbackIconColor} />}
       {canRenderSource && !hasError ? (
         <>
         {blurBackground && resolvedSize && !(isPortrait && contentFit === "cover") ? (
@@ -112,7 +114,7 @@ const ProfileMediaImage = ({
       ) : null}
       {loading ? (
         <View pointerEvents="none" style={styles.loading} accessible accessibilityLabel="Cargando foto" accessibilityRole="progressbar">
-          <VibesLoader size={64} />
+          <BrandImagePlaceholder />
         </View>
       ) : null}
     </View>

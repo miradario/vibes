@@ -1,3 +1,4 @@
+import MediaImage from "../components/MediaImage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ScreenContainer from "../components/ScreenContainer";
 import { matchesEventDateAndLocation, getEventLocationOptions, getEventDatePreset, formatEventFilterDate, type EventDatePreset } from "../src/lib/eventFilters";
@@ -7,7 +8,7 @@ import { EVENT_MODALITIES, EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, getEvent
 /** @format */
 
 import React, { useCallback, useMemo, useState } from "react";
-import { View, FlatList, TouchableOpacity, Image, StyleSheet, ScrollView, Keyboard, Platform } from "react-native";
+import { View, FlatList, TouchableOpacity, StyleSheet, ScrollView, Keyboard, Platform } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
@@ -631,7 +632,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                   accessibilityLabel={`Ver ${item.title}, ${dateLabel}, ${participantsLabel}`}
                   onPress={() => navigation.navigate("EventDetail" as never, { event: item } as never)}
                 >
-                  <Image
+                  <MediaImage
                     source={typeof item.image === "string" ? { uri: item.image } : item.image}
                     style={localStyles.eventThumbnail}
                   />
@@ -669,7 +670,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                 accessibilityLabel={`Ver ${item.title}, ${participantsLabel}`}
                 onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)}
               >
-                <Image
+                <MediaImage
                   source={typeof item.image === "string" ? { uri: item.image } : item.image}
                   style={localStyles.eventThumbnail}
                 />
