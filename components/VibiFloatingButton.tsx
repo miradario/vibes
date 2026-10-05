@@ -7,9 +7,19 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "./Typography";
+import VibiIcon from "./VibiIcon";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import { getBottomTabBarHeight } from "../src/lib/tabBarLayout";
@@ -25,6 +35,32 @@ function FloatingButton() {
   const { fontScale } = useWindowDimensions();
   const [showGreeting, setShowGreeting] = useState(() => !greetingShown);
   const [keyboardVisible, setKeyboardVisible] = useState(Keyboard.isVisible());
+  const reducedMotion = useReducedMotion();
+  const pulse = useSharedValue(0);
+
+  useEffect(() => {
+    pulse.value = 0;
+    if (!reducedMotion && !keyboardVisible) {
+      pulse.value = withRepeat(
+        withTiming(1, { duration: 2400, easing: Easing.linear }),
+        -1,
+        false
+      );
+    }
+    return () => cancelAnimation(pulse);
+  }, [keyboardVisible, pulse, reducedMotion]);
+
+  const haloStyle = useAnimatedStyle(() => ({
+    opacity: (1 - pulse.value) * 0.5,
+    transform: [{ scale: 1 + pulse.value * 0.42 }],
+  }));
+  const secondHaloStyle = useAnimatedStyle(() => {
+    const phase = (pulse.value + 0.5) % 1;
+    return {
+      opacity: (1 - phase) * 0.5,
+      transform: [{ scale: 1 + phase * 0.42 }],
+    };
+  });
 
   useEffect(() => {
     greetingShown = true;
@@ -83,20 +119,24 @@ function FloatingButton() {
           <View style={styles.tail} />
         </View>
       ) : null}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Hablar con Vibi"
-        accessibilityHint="Abre tu asistente en Vibes"
-        onPress={openVibi}
-        style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-      >
-        <Ionicons
-          name="sparkles-outline"
-          size={26}
-          color={colors.primaryText}
-        />
-        <Text style={styles.label}>Vibi</Text>
-      </Pressable>
+      <View style={styles.buttonWrap}>
+        {!reducedMotion && (
+          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+            <Animated.View style={[styles.halo, haloStyle]} />
+            <Animated.View style={[styles.halo, secondHaloStyle]} />
+          </View>
+        )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Hablar con Vibi"
+          accessibilityHint="Abre tu asistente en Vibes"
+          onPress={openVibi}
+          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+        >
+          <VibiIcon size={36} />
+          <Text style={styles.label}>Vibi</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -108,6 +148,14 @@ export default function VibiFloatingButton() {
 }
 
 const styles = StyleSheet.create({
+  buttonWrap: { position: "relative" },
+  halo: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: colors.accentMustard,
+    backgroundColor: colors.accentMustard,
+  },
   container: {
     position: "absolute",
     alignItems: "flex-end",

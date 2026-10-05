@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 const ts = require("typescript");
-function load(file, imports = {}) {
+function load(file, imports = {}, dev = false) {
   const exports = {};
   vm.runInNewContext(
     ts.transpileModule(fs.readFileSync(file, "utf8"), {
@@ -18,7 +18,7 @@ function load(file, imports = {}) {
         if (!(key in imports)) throw Error("missing native SDK");
         return imports[key];
       },
-      __DEV__: false,
+      __DEV__: dev,
       console,
       Set,
     }
@@ -110,6 +110,24 @@ test("offline retains activated value and foreground retries do not reset it", a
   stop();
 });
 for (const missing of ["NativeRNFBTurboApp", "NativeRNFBTurboConfig"]) {
+  test(`Expo Go development enables Vibi without ${missing}`, () => {
+    const store = load("src/featureFlags/store.ts").vibiFlagStore;
+    let sdkImports = 0;
+    const module = load("src/featureFlags/remoteConfig.native.ts", {
+      "./store": { vibiFlagStore: store },
+      "react-native": {
+        TurboModuleRegistry: { get: (name) => name === missing ? null : {} },
+      },
+      get "@react-native-firebase/remote-config"() {
+        sdkImports++;
+        throw Error("must not evaluate SDK in Expo Go");
+      },
+    }, true);
+    const stop = module.startRemoteConfig();
+    assert.equal(store.getSnapshot(), true);
+    assert.equal(sdkImports, 0);
+    stop();
+  });
   test(`older native build missing ${missing} never imports Firebase`, () => {
     const store = load("src/featureFlags/store.ts").vibiFlagStore;
     store.update(true);

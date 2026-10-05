@@ -93,6 +93,8 @@ La flag oculta el botón flotante de las pantallas principales y evita montar el
 
 Requiere un nuevo build nativo con `@react-native-firebase/app`, `analytics` (dependencia del SDK de Remote Config, con recolección automática deshabilitada) y `remote-config`. No basta una actualización de JavaScript para agregar estos módulos. Los builds anteriores sin Firebase dejan Vibi apagado. iOS usa `com.gurudevelopers.vibes`; Android usa `com.miradario.vibe`. Los archivos de configuración Firebase son identificadores públicos de cliente y no contienen credenciales de administración. Sus fuentes se conservan en `config/firebase/`, fuera de las carpetas nativas que Expo puede regenerar.
 
+En desarrollo (`__DEV__`), Expo Go y los builds sin módulos nativos de Firebase habilitan Vibi localmente para probarlo. Los builds de producción sin Firebase siguen apagados; los builds con Firebase respetan `vibi_enabled`.
+
 Después de instalar las dependencias, ejecutar `pod install` en `ios` y compilar de nuevo. La configuración Expo reproduce el enlace estático mediante CocoaPods y los archivos nativos versionados ya incluyen el arranque de Firebase y el recurso de iOS. `node --test scripts/vibi-flags.test.cjs` verifica valor inicial, cambios remotos, errores de red, limpieza de suscripciones y ausencia del módulo nativo.
 
 Verificación de la flag (29/09/2026): 24 pruebas automáticas aprobadas; builds Android ARM64 e iOS Simulator ARM64 completos. En el simulador, el SDK descargó y activó `vibi_enabled=false` (verificado en el almacenamiento de Remote Config) y Home ocultó Vibi. La integración iOS mantiene los pods de LiveKit como bibliotecas estáticas para evitar encabezados no modulares con los frameworks estáticos de Firebase.

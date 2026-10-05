@@ -7,7 +7,8 @@ export function startRemoteConfig(): () => void {
     !TurboModuleRegistry.get("NativeRNFBTurboApp") ||
     !TurboModuleRegistry.get("NativeRNFBTurboConfig")
   ) {
-    vibiFlagStore.update(false);
+    // Expo Go has no native Firebase modules. Allow local development previews.
+    vibiFlagStore.update(__DEV__);
     return () => {};
   }
   let disposed = false;

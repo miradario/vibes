@@ -1176,7 +1176,7 @@ const UserProfileSheet = ({
               <View
                 pointerEvents="box-none"
                 onLayout={({ nativeEvent }) => setDetailsActionsHeight(nativeEvent.layout.height)}
-                style={[localStyles.floatingDetailsActions, { paddingBottom: Math.max(insets.bottom, 12) }]}
+                style={[localStyles.floatingDetailsActions, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}
               >
                 {renderActions(true)}
               </View>
