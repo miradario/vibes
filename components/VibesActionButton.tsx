@@ -1,7 +1,7 @@
 /** @format */
 
 import React from "react";
-import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle, TextStyle } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
@@ -10,6 +10,7 @@ type VibesActionButtonProps = {
   onPress: () => void;
   variant?: "start" | "skip";
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   disabled?: boolean;
   showDivider?: boolean;
 };
@@ -19,6 +20,7 @@ const VibesActionButton = ({
   onPress,
   variant = "start",
   style,
+  textStyle,
   disabled = false,
   showDivider = true,
 }: VibesActionButtonProps) => {
@@ -49,7 +51,7 @@ const VibesActionButton = ({
       activeOpacity={0.9}
       disabled={disabled}
     >
-      <Text style={styles.startText}>{label}</Text>
+      <Text style={[styles.startText, textStyle]}>{label}</Text>
     </TouchableOpacity>
   );
 };

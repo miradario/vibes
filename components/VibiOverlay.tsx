@@ -19,10 +19,8 @@ import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import { useVibi } from "../src/vibi/useVibi";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import {
-  playAnimation,
   setMinimized,
   setVisible,
-  vibiController,
 } from "../src/vibi/controller";
 
 const SIZE = 120;
@@ -67,14 +65,6 @@ export default function VibiOverlay({
     !AUTH_ROUTES.has(routeName) &&
     !routeName.startsWith("Onboarding");
   const shown = eligible && state.visible;
-  useEffect(() => {
-    if (!eligible || routeName !== "Home") return;
-    const timeout = setTimeout(() => {
-      const current = vibiController.getSnapshot();
-      if (current.visible && !current.minimized) playAnimation("happy");
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [eligible, routeName]);
   useEffect(() => {
     if (eligible) setEverEnabled(true);
   }, [eligible]);

@@ -127,7 +127,6 @@ function Character({
             play();
           }
         });
-    if (!paused) callbacks.current.onReady();
     return () => {
       // Reduced motion still completes one-shots on time, but renders only a
       // representative pose. Account for partial time when hiding/backgrounding.
@@ -166,10 +165,16 @@ function VibiRenderer(props: VibiRendererProps) {
           camera.updateProjectionMatrix();
         }
         // Frame-loop GL failures are outside React's error boundary.
+        let firstFrameRendered = false;
         const render = gl.render.bind(gl);
         gl.render = (...args) => {
           try {
             render(...args);
+            // Keep the bundled image until the first real GL frame exists.
+            if (!firstFrameRendered) {
+              firstFrameRendered = true;
+              props.onReady();
+            }
           } catch (error) {
             props.onError(error);
           }

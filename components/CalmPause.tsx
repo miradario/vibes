@@ -17,7 +17,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import ScreenContainer from "./ScreenContainer";
-import Vibi from "./Vibi";
+import { VibiBreathing } from "./Vibi";
 import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
@@ -46,7 +46,6 @@ export default function CalmPause({
     fontScale
   );
   const clock = useSharedValue(0);
-  const opacity = useSharedValue(0);
   useEffect(() => {
     cancelAnimation(clock);
     clock.value = 0;
@@ -61,28 +60,16 @@ export default function CalmPause({
       );
     return () => cancelAnimation(clock);
   }, [moving, clock]);
-  useEffect(() => {
-    cancelAnimation(opacity);
-    if (visible && !reduceMotion) {
-      opacity.value = 0;
-      opacity.value = withTiming(1, {
-        duration: 400,
-        easing: Easing.inOut(Easing.sin),
-      });
-    } else opacity.value = 1;
-    return () => cancelAnimation(opacity);
-  }, [visible, reduceMotion, opacity]);
   const breathing = useAnimatedStyle(() => {
     const eased = getBreathFrame(clock.value).expansion;
     return { transform: [{ scale: reduceMotion ? 1 : 0.84 + eased * 0.16 }] };
   });
-  const fade = useAnimatedStyle(() => ({ opacity: opacity.value }));
   return (
     <ScreenContainer
       style={s.screen}
       edges={["top", "bottom", "left", "right"]}
     >
-      <Animated.View style={[s.layout, fade]}>
+      <View style={s.layout}>
         <ScrollView
           style={s.body}
           contentContainerStyle={s.bodyContent}
@@ -107,10 +94,10 @@ export default function CalmPause({
               </View>
             </Animated.View>
             <View accessible accessibilityLabel="Vibi respirando">
-              <Vibi
+              <VibiBreathing
                 size={size * 0.82}
                 paused={!visible}
-                animation="meditating"
+                stableSize
               />
             </View>
           </View>
@@ -142,7 +129,7 @@ export default function CalmPause({
             </TouchableOpacity>
           </View>
         ) : null}
-      </Animated.View>
+      </View>
     </ScreenContainer>
   );
 }
