@@ -100,6 +100,10 @@
       [
         "expo-build-properties",
         {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          },
           "ios": {
             "deploymentTarget": "15.4",
             "useFrameworks": "static",
@@ -129,7 +133,8 @@
           }
         }
       ],
-      "./plugins/withFirebasePods"
+      "./plugins/withFirebasePods",
+      "./plugins/withAndroidReleaseOptimization"
     ],
     "extra": {
       "eas": {
