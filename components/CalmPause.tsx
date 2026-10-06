@@ -47,15 +47,6 @@ export default function CalmPause({
           contentContainerStyle={s.bodyContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={s.copy}>
-            <Text
-              accessibilityRole="header"
-              style={[s.title, width < 360 && s.smallTitle]}
-            >
-              Un momento para vos
-            </Text>
-            <Text style={s.subtitle}>Soltá el día. Volvé a tu ritmo.</Text>
-          </View>
           <View
             style={[s.scene, { width: size, height: size }]}
             accessible
@@ -102,7 +93,6 @@ export default function CalmPause({
     </ScreenContainer>
   );
 }
-const serif = vibesTheme.fonts.regular;
 const s = StyleSheet.create({
   screen: { backgroundColor: vibesTheme.colors.background },
   layout: { flex: 1 },
@@ -114,30 +104,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 12,
-  },
-  copy: { width: "100%", maxWidth: 500, alignItems: "center" },
-  eyebrow: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 11,
-    lineHeight: 17,
-    letterSpacing: 2,
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  title: {
-    fontFamily: serif,
-    fontSize: 34,
-    lineHeight: 41,
-    color: vibesTheme.colors.primaryText,
-    textAlign: "center",
-  },
-  smallTitle: { fontSize: 28, lineHeight: 35 },
-  subtitle: {
-    fontSize: 17,
-    lineHeight: 25,
-    color: vibesTheme.colors.secondaryText,
-    textAlign: "center",
-    marginTop: 10,
   },
   scene: { alignItems: "center", justifyContent: "center", marginVertical: 12 },
   help: {

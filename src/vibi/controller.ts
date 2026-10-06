@@ -13,7 +13,13 @@ export const VIBI_ANIMATIONS = [
   "encouraging",
   "connecting",
 ] as const;
-export type VibiAnimation = (typeof VIBI_ANIMATIONS)[number];
+// Custom clips (for example wave) are discovered when the GLB loads.
+export type VibiAnimation = (typeof VIBI_ANIMATIONS)[number] | (string & {});
+const availableAnimations = new Set<string>(VIBI_ANIMATIONS);
+export function registerVibiAnimations(names: string[]) {
+  availableAnimations.clear();
+  names.forEach((name) => availableAnimations.add(name));
+}
 export const VIBI_LOOPS = new Set<VibiAnimation>([
   "idle",
   "breathing",
@@ -51,7 +57,7 @@ export const vibiController = {
   getSnapshot: () => state,
 };
 export function playAnimation(name: VibiAnimation) {
-  if (!VIBI_ANIMATIONS.includes(name))
+  if (!availableAnimations.has(name))
     throw new Error(`Unknown Vibi animation: ${name}`);
   publish({
     ...state,

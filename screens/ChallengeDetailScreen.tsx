@@ -1148,7 +1148,6 @@ const ChallengeDetailScreen = () => {
   const [isPreparingShare, setIsPreparingShare] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
-  const [dayContentVisible, setDayContentVisible] = useState(false);
   const pendingParticipants = useRef(false);
   const pendingShare = useRef(false);
   const participantsQuery = useChallengeParticipantsQuery(
@@ -1257,7 +1256,6 @@ const ChallengeDetailScreen = () => {
   const handleCheckIn = async () => {
     if (challenge.checkInStatus === "completed" || challenge.currentDay <= 0)
       return;
-    setDayContentVisible(false);
 
     if (event?.id && userId) {
       await checkInMutation.mutateAsync({
@@ -1483,11 +1481,7 @@ const ChallengeDetailScreen = () => {
 
           if (shouldComplete) {
             setFooterSliderOffset(footerSliderMaxOffset);
-            if (isJoined || isAdmin) {
-              setDayContentVisible(true);
-            } else {
-              void handleCheckIn();
-            }
+            void handleCheckIn();
           } else {
             resetFooterSlider();
           }
@@ -1500,8 +1494,6 @@ const ChallengeDetailScreen = () => {
       challenge.checkInStatus,
       checkInMutation.isPending,
       footerSliderMaxOffset,
-      isJoined,
-      isAdmin,
     ]
   );
   const compactHeaderTop = Math.max(insets.top + 8, 18);
@@ -1974,52 +1966,6 @@ const ChallengeDetailScreen = () => {
           </Text>
         </Reanimated.View>
       ) : null}
-
-      <AnimatedSheetModal
-        visible={dayContentVisible}
-        onClose={() => {
-          setDayContentVisible(false);
-          resetFooterSlider();
-        }}
-        offsetY={140}
-        sheetStyle={localStyles.dayContentSheet}
-      >
-        <ScrollView
-          contentContainerStyle={[
-            localStyles.dayContentSheetContent,
-            { paddingBottom: insets.bottom + 20 },
-          ]}
-        >
-          {event?.id ? (
-            <ChallengeDaysSection
-              challengeId={event.id}
-              totalDays={challenge.totalDays}
-              currentDay={challenge.currentDay}
-              isCreator={false}
-              isJoined={isJoined}
-              mode="completion"
-            />
-          ) : null}
-          <TouchableOpacity
-            accessibilityRole="button"
-            style={[
-              localStyles.joinRequestButton,
-              checkInMutation.isPending && localStyles.joinRequestButtonDisabled,
-            ]}
-            onPress={() => void handleCheckIn()}
-            disabled={checkInMutation.isPending}
-            activeOpacity={0.86}
-          >
-            {checkInMutation.isPending ? (
-              <VibesLoader size={30} />
-            ) : (
-              <Text style={localStyles.joinRequestButtonTitle}>
-                Completar día
-              </Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-      </AnimatedSheetModal>
 
       <AnimatedSheetModal
         visible={menuVisible}
@@ -3264,17 +3210,6 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 12,
     paddingBottom: 28,
-  },
-  dayContentSheet: {
-    backgroundColor: palette.bg,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: "88%",
-  },
-  dayContentSheetContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    gap: 16,
   },
   menuHandle: {
     alignSelf: "center",

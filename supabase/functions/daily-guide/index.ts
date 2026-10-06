@@ -1,12 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type DailyGuideBody = {
-  firstName?: unknown;
-  age?: unknown;
-  location?: unknown;
-  preferences?: unknown;
-  locale?: unknown;
-};
+type DailyGuideBody = { locale?: unknown };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,27 +30,11 @@ const parseBody = async (req: Request): Promise<DailyGuideBody> => {
 };
 
 const buildPrompt = (body: DailyGuideBody) => {
-  const firstName = sanitize(body.firstName);
-  const age = sanitize(body.age);
-  const location = sanitize(body.location);
-  const preferences = Array.isArray(body.preferences)
-    ? body.preferences.map(sanitize).filter(Boolean).slice(0, 8)
-    : [];
   const isEnglish = body.locale === "en";
-  const context = [
-    firstName ? `Nombre: ${firstName}` : null,
-    age ? `Edad: ${age}` : null,
-    location ? `Lugar: ${location}` : null,
-    preferences.length ? `Intereses y preferencias: ${preferences.join(", ")}` : null,
-  ]
-    .filter(Boolean)
-    .join(". ");
-
   return [
     "Sos Guru Vibes, una guía cálida dentro de una app de bienestar llamada Vibes.",
-    "Creá una guía personal para responder: ¿cómo puede esta persona tener un gran día hoy?",
-    context ? `Contexto de la persona: ${context}.` : null,
-    "Usá el contexto con sutileza; no repitas datos personales ni hagas diagnósticos.",
+    "Creá un consejo general para responder: ¿cómo tener un gran día hoy?",
+    "No pidas datos personales ni hagas diagnósticos.",
     "Escribí en español rioplatense, humano, sereno, concreto y sin frases vacías.",
     "Devolvé JSON con body, detail y actions.",
     "body es el adelanto para una tarjeta, máximo 160 caracteres.",
@@ -94,14 +72,27 @@ Deno.serve(async (req) => {
     if (userError || !user?.id) return json({ error: "Unauthorized" }, 401);
 
     const body = await parseBody(req);
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const deepseekKey = Deno.env.get("DEEPSEEK_API_KEY")?.trim();
+    const openaiKey = Deno.env.get("OPENAI_API_KEY")?.trim();
+    const providerKey = deepseekKey || openaiKey;
+    if (!providerKey) return json({ error: "not_configured" }, 503);
+    const endpoint = deepseekKey
+      ? "https://api.deepseek.com/chat/completions"
+      : "https://api.openai.com/v1/chat/completions";
+    const model = deepseekKey
+      ? Deno.env.get("DEEPSEEK_MODEL")?.trim() || "deepseek-flash"
+      : Deno.env.get("OPENAI_MODEL")?.trim() || "gpt-4o-mini";
+    const response = await fetch(endpoint, {
       method: "POST",
+      signal: AbortSignal.timeout(25000),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${getEnv("OPENAI_API_KEY")}`,
+        Authorization: `Bearer ${providerKey}`,
       },
       body: JSON.stringify({
-        model: Deno.env.get("OPENAI_MODEL")?.trim() || "gpt-4o-mini",
+        model,
+        ...(deepseekKey ? { thinking: { type: "disabled" } } : {}),
+        max_tokens: 1000,
         temperature: 0.85,
         response_format: { type: "json_object" },
         messages: [
@@ -116,7 +107,7 @@ Deno.serve(async (req) => {
     });
 
     if (!response.ok) {
-      console.error("[daily-guide] OpenAI error", response.status, await response.text());
+      console.error("[daily-guide] provider error", response.status);
       return json({ error: "Could not generate guide" }, 502);
     }
 

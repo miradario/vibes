@@ -8,7 +8,7 @@ import {
   PropertyBinding,
   type AnimationAction,
 } from "three";
-import { VIBI_ANIMATIONS, VIBI_LOOPS, type VibiAnimation } from "./controller";
+import { registerVibiAnimations, VIBI_LOOPS, type VibiAnimation } from "./controller";
 
 export type VibiClipInfo = {
   name: VibiAnimation;
@@ -19,11 +19,13 @@ export type VibiClipInfo = {
 export function normalizeVibiClips(raw: AnimationClip[]) {
   const info: VibiClipInfo[] = [];
   const clips = new Map<VibiAnimation, AnimationClip>();
-  for (const name of VIBI_ANIMATIONS) {
-    const matches = raw.filter((clip) => clip.name === name);
-    if (matches.length !== 1)
-      throw new Error(`Vibi requires exactly one clip named ${name}`);
-    const clip = matches[0].clone();
+  if (!raw.some((clip) => clip.name === "idle"))
+    throw new Error("Vibi requires an idle clip");
+  for (const source of raw) {
+    const name = source.name;
+    if (!name || clips.has(name))
+      throw new Error(`Vibi requires a unique name for each clip: ${name}`);
+    const clip = source.clone();
     const start = Math.min(...clip.tracks.map((track) => track.times[0]));
     const end = Math.max(
       ...clip.tracks.map((track) => track.times[track.times.length - 1])
@@ -35,6 +37,7 @@ export function normalizeVibiClips(raw: AnimationClip[]) {
     clips.set(name, clip);
     info.push({ name, start, end, duration: clip.duration });
   }
+  registerVibiAnimations([...clips.keys()]);
   return { clips, info };
 }
 
