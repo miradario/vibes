@@ -34,3 +34,8 @@ export function claimVibiDailyGreeting(userId: string) {
   greetedUsers.add(userId);
   return true;
 }
+
+export function resetVibiDailyGreeting(userId?: string) {
+  if (userId) greetedUsers.delete(userId);
+  else greetedUsers.clear();
+}

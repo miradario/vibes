@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { resetVibiDailyGreeting } from "../lib/vibiDailyPrompts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as authService from "./auth.service";
 import type {
@@ -24,7 +25,8 @@ export const useAuthSession = () => {
   });
 
   useEffect(() => {
-    const { data } = authService.onAuthStateChange?.((_, session) => {
+    const { data } = authService.onAuthStateChange?.((event, session) => {
+      if (event === "SIGNED_OUT") resetVibiDailyGreeting();
       queryClient.setQueryData(authKeys.session, session ?? null);
     }) ?? { data: null };
 
@@ -49,6 +51,7 @@ export const useLoginMutation = () => {
   return useMutation<AuthSession, unknown, LoginInput>({
     mutationFn: authService.login,
     onSuccess: (session) => {
+      if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
       queryClient.setQueryData(authKeys.session, session ?? null);
       queryClient.invalidateQueries();
     },
@@ -61,6 +64,7 @@ export const useSignupMutation = () => {
   return useMutation<AuthSignupResult, unknown, SignupInput>({
     mutationFn: authService.signup,
     onSuccess: ({ session }) => {
+      if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
       queryClient.setQueryData(authKeys.session, session ?? null);
       if (session) {
         queryClient.invalidateQueries();
@@ -75,6 +79,7 @@ export const useGoogleLoginMutation = () => {
   return useMutation<AuthSession, unknown, void>({
     mutationFn: authService.loginWithGoogle,
     onSuccess: (session) => {
+      if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
       queryClient.setQueryData(authKeys.session, session ?? null);
       if (session) {
         queryClient.invalidateQueries();
@@ -89,6 +94,7 @@ export const useAppleLoginMutation = () => {
   return useMutation<AuthSession, unknown, void>({
     mutationFn: authService.loginWithApple,
     onSuccess: (session) => {
+      if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
       queryClient.setQueryData(authKeys.session, session ?? null);
       if (session) {
         queryClient.invalidateQueries();
@@ -109,6 +115,7 @@ export const useExchangePasswordResetCodeMutation = () => {
   return useMutation<AuthSession, unknown, string>({
     mutationFn: authService.exchangePasswordResetCode,
     onSuccess: (session) => {
+      if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
       queryClient.setQueryData(authKeys.session, session ?? null);
       if (session) {
         queryClient.invalidateQueries();
@@ -129,6 +136,7 @@ export const useLogoutMutation = () => {
   return useMutation<void, unknown, void>({
     mutationFn: authService.logout,
     onSuccess: () => {
+      resetVibiDailyGreeting();
       queryClient.setQueryData(authKeys.session, null);
       queryClient.invalidateQueries();
     },
