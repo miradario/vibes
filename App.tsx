@@ -29,9 +29,7 @@ import {
   Match,
   Connections,
   Profile,
-  Meditations,
   Welcome,
-  Videos,
   Events,
   EditProfile,
   Premium,
@@ -492,11 +490,6 @@ const AppNavigator = () => {
               )}
             </Stack.Screen>
             <Stack.Screen
-              name="Meditations"
-              component={Meditations}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
               name="Login"
               component={Login}
               options={{ headerShown: false, animationEnabled: true }}
@@ -554,11 +547,6 @@ const AppNavigator = () => {
             <Stack.Screen
               name="OnboardingSpiritualPath"
               component={OnboardingSpiritualPath}
-              options={{ headerShown: false, animationEnabled: true }}
-            />
-            <Stack.Screen
-              name="Videos"
-              component={Videos}
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen
