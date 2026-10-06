@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
-  ScrollView,
   Image,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -9,22 +9,11 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
 import ScreenContainer from "./ScreenContainer";
-import { VIBES_LOGO } from "../src/constants/brandAssets";
 import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
 import {
-  BREATH_CYCLE_MS,
-  getBreathFrame,
   getCalmIllustrationSize,
 } from "../src/lib/calmPause";
 
@@ -39,8 +28,7 @@ export default function CalmPause({
 }) {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { visible, reduceMotion } = useCalmMotion();
-  const moving = visible && !reduceMotion;
+  const { reduceMotion } = useCalmMotion();
   // Startup can update window metrics and safe-area insets after mounting.
   // Keep the initial illustration dimensions throughout this short screen.
   const [size] = useState(() =>
@@ -50,25 +38,6 @@ export default function CalmPause({
       fontScale
     )
   );
-  const clock = useSharedValue(0);
-  useEffect(() => {
-    cancelAnimation(clock);
-    clock.value = 0;
-    if (moving)
-      clock.value = withRepeat(
-        withTiming(BREATH_CYCLE_MS, {
-          duration: BREATH_CYCLE_MS,
-          easing: Easing.linear,
-        }),
-        -1,
-        false
-      );
-    return () => cancelAnimation(clock);
-  }, [moving, clock]);
-  const breathing = useAnimatedStyle(() => {
-    const eased = getBreathFrame(clock.value).expansion;
-    return { transform: [{ scale: reduceMotion ? 1 : 0.84 + eased * 0.16 }] };
-  });
   return (
     <ScreenContainer
       style={s.screen}
@@ -90,18 +59,12 @@ export default function CalmPause({
             <Text style={s.subtitle}>Soltá el día. Volvé a tu ritmo.</Text>
           </View>
           <View style={[s.scene, { width: size, height: size }]}>
-            <Animated.View
-              pointerEvents="none"
-              style={[s.outerCircle, breathing]}
-            >
-              <View style={s.middleCircle}>
-                <View style={s.innerCircle} />
-              </View>
-            </Animated.View>
-            <Animated.View style={breathing}>
-              <Image source={VIBES_LOGO} resizeMode="contain"
-                style={{ width: size, height: size }} accessibilityLabel="Logo de Vibes" />
-            </Animated.View>
+            <Image
+              source={require("../assets/icon-ios-transparent.png")}
+              style={{ width: size * 0.72, height: size * 0.72 }}
+              resizeMode="contain"
+              accessibilityLabel="Logo de Vibes"
+            />
           </View>
           <Text style={s.help}>
             {reduceMotion
@@ -173,27 +136,6 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
   scene: { alignItems: "center", justifyContent: "center", marginVertical: 12 },
-  outerCircle: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 1000,
-    borderWidth: 1,
-    borderColor: `${vibesTheme.colors.accentBlue}26`,
-    backgroundColor: `${vibesTheme.colors.accentBlue}0A`,
-    padding: "6%",
-  },
-  middleCircle: {
-    flex: 1,
-    borderRadius: 1000,
-    borderWidth: 1,
-    borderColor: `${vibesTheme.colors.accentBlue}1F`,
-    backgroundColor: `${vibesTheme.colors.accentBlue}08`,
-    padding: "7%",
-  },
-  innerCircle: {
-    flex: 1,
-    borderRadius: 1000,
-    backgroundColor: vibesTheme.colors.background,
-  },
   help: {
     fontSize: 15,
     lineHeight: 22,
