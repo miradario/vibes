@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  View,
   StyleSheet,
   TouchableOpacity,
   type StyleProp,
   type TextStyle,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { getInvitedEventId } from "../src/lib/eventInvites";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "./Typography";
 import PhotoViewer from "./PhotoViewer";
@@ -26,6 +29,8 @@ export default function ChatMessageContent({
   onLongPress?: () => void;
   onPhotoPress?: (open: () => void) => void;
 }) {
+  const navigation = useNavigation<any>();
+  const invitedEventId = getInvitedEventId(body);
   const path = photoPath(body);
   const { data: session } = useAuthSession();
   const [expanded, setExpanded] = useState(false);
@@ -44,7 +49,25 @@ export default function ChatMessageContent({
       return data.signedUrl;
     },
   });
-  if (!path) return <Text style={textStyle}>{body}</Text>;
+  if (!path)
+    return (
+      <View style={s.textContent}>
+        <Text style={textStyle}>{body}</Text>
+        {invitedEventId ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Ver evento invitado"
+            onLongPress={onLongPress}
+            onPress={() =>
+              navigation.navigate("EventDetail", { eventId: invitedEventId })
+            }
+            style={s.eventLink}
+          >
+            <Text style={s.eventLinkText}>Ver evento</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    );
   return (
     <>
       <TouchableOpacity
@@ -84,6 +107,20 @@ export default function ChatMessageContent({
   );
 }
 const s = StyleSheet.create({
+  textContent: { gap: 10 },
+  eventLink: {
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: vibesTheme.colors.accentMustard,
+  },
+  eventLinkText: {
+    color: vibesTheme.colors.primaryText,
+    fontSize: 15,
+    fontFamily: vibesTheme.fonts.medium,
+  },
   thumbnail: {
     width: 200,
     height: 220,
