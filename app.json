@@ -102,7 +102,8 @@
         {
           "android": {
             "enableMinifyInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "# JNA references desktop AWT APIs that are unavailable and unused on Android.\n-dontwarn java.awt.Component\n-dontwarn java.awt.GraphicsEnvironment\n-dontwarn java.awt.HeadlessException\n-dontwarn java.awt.Window"
           },
           "ios": {
             "deploymentTarget": "15.4",
