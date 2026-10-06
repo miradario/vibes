@@ -31,32 +31,6 @@ export function normalizeVibiClips(raw: AnimationClip[]) {
     if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start)
       throw new Error(`Vibi clip ${name} has an invalid timeline`);
     clip.tracks.forEach((track) => track.shift(-start));
-    if (name === "meditating") {
-      // One continuous cosine cycle: inhale 0–3s, exhale 3–6s.
-      // Amplify the same authored Respirar morph on body, hair and face:
-      // +17.6% width at peak inhale, with closed-eye channels left neutral.
-      clip.tracks.forEach((track) => {
-        const size = track.getValueSize();
-        const frames = 181;
-        const times = new Float32Array(frames);
-        const values = new Float32Array(frames * size);
-        for (let frame = 0; frame < frames; frame++) {
-          const time = frame / 30;
-          const inhale = (1 - Math.cos((time / 6) * Math.PI * 2)) / 2;
-          times[frame] = time;
-          if (track.name.includes("morphTargetInfluences")) {
-            values[frame * size] = inhale * 3.2;
-            // Other channels remain neutral, including the closed eyes.
-          } else if (track.name.endsWith(".position")) {
-            for (let axis = 0; axis < size; axis++)
-              values[frame * size + axis] = track.values[axis];
-            values[frame * size + 1] += inhale * 0.003;
-          }
-        }
-        track.times = times;
-        track.values = values;
-      });
-    }
     clip.resetDuration();
     clips.set(name, clip);
     info.push({ name, start, end, duration: clip.duration });
@@ -67,21 +41,17 @@ export function normalizeVibiClips(raw: AnimationClip[]) {
 export function representativeVibiTime(clip: AnimationClip) {
   let bestTime = clip.duration * 0.37;
   let bestExpression = 0;
-  // Facial tracks have six channels: breathe, bounce, wave, open, happy, sad.
-  // Choose a real authored expression, rather than the neutral rest at the
-  // midpoint of several one-shot clips. No new morphs or poses are invented.
+  // Sample the strongest authored morph expression. The logo uses two or
+  // three channels per mesh; do not assume the previous character's face rig.
   for (const track of clip.tracks) {
-    if (
-      !track.name.includes("morphTargetInfluences") ||
-      track.getValueSize() !== 6
-    )
-      continue;
+    if (!track.name.includes("morphTargetInfluences")) continue;
+    const size = track.getValueSize();
     for (let frame = 0; frame < track.times.length; frame++) {
-      const offset = frame * 6;
-      const expression =
-        Math.abs(track.values[offset + 3]) +
-        Math.abs(track.values[offset + 4]) +
-        Math.abs(track.values[offset + 5]);
+      let expression = 0;
+      for (let axis = 0; axis < size; axis++)
+        expression += Math.abs(
+          track.values[frame * size + axis] - track.values[axis]
+        );
       if (expression > bestExpression) {
         bestExpression = expression;
         bestTime = track.times[frame];
@@ -110,7 +80,8 @@ export class VibiAnimator {
   constructor(
     readonly root: Object3D,
     readonly clips: Map<VibiAnimation, AnimationClip>,
-    private onFinished: (requestId: number) => void
+    private onFinished: (requestId: number) => void,
+    private onCycleComplete?: () => void
   ) {
     this.mixer = new AnimationMixer(root);
     const unique = new Map<string, KeyframeTrack>();
@@ -189,7 +160,10 @@ export class VibiAnimator {
     return !this.looping && !this.completed;
   }
   update(delta: number) {
+    const previousCycle = Math.floor(this.elapsed / this.duration);
     this.elapsed += delta;
+    if (this.looping && Math.floor(this.elapsed / this.duration) > previousCycle)
+      this.onCycleComplete?.();
     if (!this.reduced) this.mixer.update(delta);
     if (this.transition && this.elapsed >= FADE_SECONDS) {
       this.transition.stop();

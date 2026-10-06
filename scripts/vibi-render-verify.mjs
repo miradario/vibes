@@ -14,7 +14,8 @@ const root = resolve(".");
 const html = `<!doctype html><html><head><style>html,body{margin:0;background:transparent}canvas{display:block}</style><script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script></head><body><script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
-const gltf=await new GLTFLoader().loadAsync('/assets/models/vibi-estados.glb');
+const gltf=await new GLTFLoader().loadAsync('/assets/models/vibi-logo-juguetona.glb');
+gltf.scene.traverse(o=>{if(!o.isMesh)return;o.frustumCulled=false;const materials=Array.isArray(o.material)?o.material:[o.material];if(materials.every(m=>m.name.startsWith('Rostro blanco'))){o.renderOrder=1;for(const m of materials){m.depthTest=false;m.depthWrite=false;}}});
 const scene=new THREE.Scene();scene.add(gltf.scene);
 scene.add(new THREE.AmbientLight('#FEFEFD',1.6));
 for(const [intensity,p] of [[2,[-3,4,6]],[.6,[3,1,2]]]){const light=new THREE.DirectionalLight('#FEFEFD',intensity);light.position.set(...p);scene.add(light);}
@@ -119,7 +120,7 @@ try {
   for (let i = 0; i < 100 && !(await evaluate("!!window.ready")); i++)
     await delay(100);
   const clips = await evaluate("window.clips");
-  if (clips?.length !== 12) throw Error("Expected 12 loaded clips");
+  if (clips?.length !== 13) throw Error("Expected 13 loaded clips");
   const report = [];
   for (const clip of clips) {
     const frames = [];
@@ -132,8 +133,10 @@ try {
     const mid = await evaluate(
       `window.preview(${JSON.stringify(clip.name)},.5)`
     );
-    if (mid.morphs.length !== 5 || mid.drawCalls < 5)
-      throw Error(`Missing visible mesh or morph targets: ${mid.morphs.length}, ${mid.drawCalls}`);
+    if (mid.morphs.length !== 14 || mid.drawCalls < 14)
+      throw Error(
+        `Missing visible mesh or morph targets: ${mid.morphs.length}, ${mid.drawCalls}`
+      );
     const screenshot = await send("Page.captureScreenshot", {
       format: "png",
       clip: { x: 0, y: 0, width: 256, height: 256, scale: 1 },
@@ -144,18 +147,9 @@ try {
     );
     report.push({ ...clip, frames });
   }
-  await evaluate("window.preview('idle',.13)");
-  const fallback = await send("Page.captureScreenshot", {
-    format: "png",
-    clip: { x: 0, y: 0, width: 256, height: 256, scale: 1 },
-  });
-  await writeFile(
-    `${output}/vibi-static.png`,
-    Buffer.from(fallback.data, "base64")
-  );
   await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2));
   console.log(
-    `Verified WebGL render of all 12 clips and 5 morph meshes. Screenshots: ${output}`
+    `Verified WebGL render of all 13 clips and 14 morph meshes. Screenshots: ${output}`
   );
 } finally {
   socket?.close();

@@ -1,5 +1,6 @@
 export const VIBI_ANIMATIONS = [
   "idle",
+  "breathing",
   "happy",
   "sad",
   "surprised",
@@ -15,6 +16,7 @@ export const VIBI_ANIMATIONS = [
 export type VibiAnimation = (typeof VIBI_ANIMATIONS)[number];
 export const VIBI_LOOPS = new Set<VibiAnimation>([
   "idle",
+  "breathing",
   "sad",
   "thinking",
   "meditating",
@@ -28,8 +30,8 @@ export type VibiSnapshot = {
   minimized: boolean;
 };
 let state: VibiSnapshot = {
-  animation: "meditating",
-  returnTo: "meditating",
+  animation: "idle",
+  returnTo: "idle",
   requestId: 0,
   visible: true,
   minimized: false,
@@ -55,7 +57,7 @@ export function playAnimation(name: VibiAnimation) {
     ...state,
     animation: name,
     requestId: state.requestId + 1,
-    returnTo: VIBI_LOOPS.has(name) ? name : state.returnTo,
+    returnTo: "idle",
   });
 }
 export function setVisible(visible: boolean) {

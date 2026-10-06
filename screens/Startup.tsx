@@ -29,7 +29,6 @@ import { isOnboardingComplete } from "../src/lib/onboardingFlow";
 const SESSION_BOOT_TIMEOUT_MS = 5000;
 const STARTUP_PREFETCH_TIMEOUT_MS = 8000;
 const UPDATE_GATE_TIMEOUT_MS = 3000;
-const STARTUP_INTRO_MIN_MS = 900;
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
@@ -66,16 +65,6 @@ const Startup = () => {
     useState<AppUpdateGateState | null>(null);
 
   const userId = session?.user?.id;
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setIntroElapsed(true);
-    }, STARTUP_INTRO_MIN_MS);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
 
   useEffect(() => {
     if (!isSessionLoading) return;
@@ -266,7 +255,15 @@ const Startup = () => {
     navigation,
   ]);
 
-  return <CalmPause pending={!isReadyToExit} showAction={false} />;
+  return (
+    <CalmPause
+      pending={!isReadyToExit}
+      showAction={false}
+      onBreathComplete={() => {
+        if (isReadyToExit) setIntroElapsed(true);
+      }}
+    />
+  );
 };
 
 export default Startup;

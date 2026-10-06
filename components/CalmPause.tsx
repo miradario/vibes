@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -10,6 +9,7 @@ import {
 import { Text } from "./Typography";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ScreenContainer from "./ScreenContainer";
+import Vibi from "./Vibi";
 import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
@@ -21,22 +21,20 @@ export default function CalmPause({
   onContinue,
   pending = false,
   showAction = true,
+  onBreathComplete,
 }: {
   onContinue?: () => void;
   pending?: boolean;
   showAction?: boolean;
+  onBreathComplete?: () => void;
 }) {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { reduceMotion } = useCalmMotion();
-  // Startup can update window metrics and safe-area insets after mounting.
-  // Keep the initial illustration dimensions throughout this short screen.
-  const [size] = useState(() =>
-    getCalmIllustrationSize(
-      width,
-      height - insets.top - insets.bottom,
-      fontScale
-    )
+  const { visible, reduceMotion } = useCalmMotion();
+  const size = getCalmIllustrationSize(
+    width,
+    height - insets.top - insets.bottom,
+    fontScale
   );
   return (
     <ScreenContainer
@@ -58,12 +56,18 @@ export default function CalmPause({
             </Text>
             <Text style={s.subtitle}>Soltá el día. Volvé a tu ritmo.</Text>
           </View>
-          <View style={[s.scene, { width: size, height: size }]}>
-            <Image
-              source={require("../assets/icon-ios-transparent.png")}
-              style={{ width: size * 0.72, height: size * 0.72 }}
-              resizeMode="contain"
-              accessibilityLabel="Logo de Vibes"
+          <View
+            style={[s.scene, { width: size, height: size }]}
+            accessible
+            accessibilityLabel="Logo de Vibes respirando"
+          >
+            <Vibi
+              state="breathing"
+              loop
+              viewportSize={4.6}
+              onCycleComplete={onBreathComplete}
+              size={size * 0.72}
+              paused={!visible}
             />
           </View>
           <Text style={s.help}>

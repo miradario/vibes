@@ -1,5 +1,6 @@
 {
   "idle": 4.0,
+  "breathing": 6.0,
   "happy": 2.5,
   "sad": 4.0,
   "surprised": 2.0,

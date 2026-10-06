@@ -32,14 +32,14 @@ const getModel = () =>
     const { GLTFLoader } = await import(
       "three/examples/jsm/loaders/GLTFLoader.js"
     );
-    const bytes = fs.readFileSync("assets/models/vibi-estados.glb");
+    const bytes = fs.readFileSync("assets/models/vibi-logo-juguetona.glb");
     const gltf = await new GLTFLoader().parseAsync(
       bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
       ""
     );
     return { gltf, ...normalizeVibiClips(gltf.animations) };
   })());
-const durations = [4, 2.5, 4, 2, 2.5, 4, 6, 3, 3, 3.5, 3, 3];
+const durations = [4, 6, 2.5, 4, 2, 2.5, 4, 6, 3, 3, 3.5, 3, 3];
 const meshes = (root) => {
   const found = [];
   root.traverse((o) => {
@@ -48,7 +48,7 @@ const meshes = (root) => {
   return found;
 };
 
-test("global controller returns one-shots to their previous loop and ignores stale completion", () => {
+test("global controller returns one-shots to idle and ignores stale completion", () => {
   api.playAnimation("thinking");
   api.playAnimation("happy");
   const old = api.vibiController.getSnapshot().requestId;
@@ -56,7 +56,7 @@ test("global controller returns one-shots to their previous loop and ignores sta
   api.finishAnimation(old);
   assert.equal(api.vibiController.getSnapshot().animation, "surprised");
   api.finishAnimation(api.vibiController.getSnapshot().requestId);
-  assert.equal(api.vibiController.getSnapshot().animation, "thinking");
+  assert.equal(api.vibiController.getSnapshot().animation, "idle");
   api.setVisible(false);
   api.setMinimized(true);
   assert.equal(api.vibiController.getSnapshot().visible, false);
@@ -66,9 +66,9 @@ test("global controller returns one-shots to their previous loop and ignores sta
   api.setVisible(true);
   api.setMinimized(false);
 });
-test("GLB has all 12 named clips, normalized durations, and five morph meshes including blue hair", async () => {
+test("logo GLB has all 13 clips, supplied durations and animated logo meshes", async () => {
   const { gltf, clips, info } = await getModel();
-  assert.equal(clips.size, 12);
+  assert.equal(clips.size, 13);
   const fallbackDurations = JSON.parse(
     fs.readFileSync("assets/models/vibi-clips.json", "utf8")
   );
@@ -80,22 +80,20 @@ test("GLB has all 12 named clips, normalized durations, and five morph meshes in
     assert.ok(Math.abs(clip.duration - fallbackDurations[clip.name]) < 0.00001);
   });
   const found = meshes(gltf.scene);
-  assert.deepEqual(
-    found.map((mesh) => mesh.morphTargetInfluences.length).sort(),
-    [3, 4, 6, 6, 6]
-  );
-  const hair = found.find((mesh) => mesh.name.includes("Mechon"));
-  assert.ok(hair);
-  assert.equal(hair.material.color.getHexString(), "3978b8");
+  assert.equal(found.length, 14);
+  const leaf = found.find((mesh) => mesh.name.startsWith("Hoja_azul") || mesh.name.startsWith("Hoja azul"));
+  assert.ok(leaf);
+  assert.ok(found.every((mesh) => mesh.morphTargetDictionary.Respirar === 0));
+  assert.ok(found.some((mesh) => mesh.morphTargetDictionary.Triste === 2));
   for (const clip of clips.values()) {
     const weights = clip.tracks.filter((track) =>
       track.name.includes("morphTargetInfluences")
     );
-    assert.equal(weights.length, 5, clip.name);
+    assert.equal(weights.length, 14, clip.name);
     assert.ok(clip.tracks.every((track) => Math.abs(track.times[0]) < 0.00001));
   }
 });
-test("every clip changes real morph weights; playback preserves materials and morph dictionaries", async () => {
+test("every clip animates the logo; playback preserves materials and morph dictionaries", async () => {
   const { gltf, clips } = await getModel();
   for (const [name, clip] of clips) {
     const root = gltf.scene.clone(true);
@@ -106,13 +104,25 @@ test("every clip changes real morph weights; playback preserves materials and mo
     const material = found.map((mesh) => mesh.material);
     const animator = new VibiAnimator(root, clips, () => {});
     animator.play(name, 1, false);
-    const before = found.flatMap((mesh) => [...mesh.morphTargetInfluences]);
+    const pose = () => {
+      const values = [];
+      root.traverse((o) =>
+        values.push(
+          ...o.position.toArray(),
+          ...o.quaternion.toArray(),
+          ...o.scale.toArray(),
+          ...(o.morphTargetInfluences ?? [])
+        )
+      );
+      return values;
+    };
+    const before = pose();
     animator.update(clip.duration * 0.37);
-    const after = found.flatMap((mesh) => [...mesh.morphTargetInfluences]);
+    const after = pose();
     assert.ok(after.every(Number.isFinite), name);
     assert.ok(
       after.some((v, i) => Math.abs(v - before[i]) > 0.00001),
-      `${name} must deform at least one mesh`
+      `${name} must change at least one transform or morph`
     );
     found.forEach((mesh, i) => {
       assert.equal(JSON.stringify(mesh.morphTargetDictionary), original[i]);
@@ -203,84 +213,24 @@ test("Expo GL adapter skips unsupported conversions and preserves other pixel-st
   ]);
 });
 
-test("meditating breathes in for three seconds and out for three with synchronized closed face", async () => {
-  const { gltf, clips } = await getModel();
-  const root = gltf.scene.clone(true);
-  const animator = new VibiAnimator(root, clips, () => {});
-  animator.play("meditating", 1, false);
-  const pose = () =>
-    meshes(root).map((mesh) => [...mesh.morphTargetInfluences]);
-  const dimensions = () => {
-    root.updateMatrixWorld(true);
-    return meshes(root).map((mesh) =>
-      new THREE.Box3().setFromObject(mesh, true).getSize(new THREE.Vector3())
-    );
-  };
-  const start = pose();
-  const restingSize = dimensions();
-  animator.update(1.5);
-  const halfway = pose();
-  animator.update(1.5);
-  const peak = pose();
-  const inhaledSize = dimensions();
-  animator.update(1.5);
-  const out = pose();
-  animator.update(1.5);
-  const end = pose();
-  peak.forEach((weights, i) => {
-    assert.ok(Math.abs(weights[0] - 3.2) < 0.00001);
-    assert.ok(Math.abs(halfway[i][0] - 1.6) < 0.00001);
-    assert.ok(Math.abs(out[i][0] - halfway[i][0]) < 0.00001);
-    assert.deepEqual(end[i], start[i]);
-    assert.ok(weights.slice(1).every((value) => value === 0));
-    assert.ok(
-      inhaledSize[i].x / restingSize[i].x > 1.17,
-      "body, hair and face expand together"
-    );
-    assert.ok(
-      inhaledSize[i].z / restingSize[i].z > 1.11,
-      "breathing expands depth too"
-    );
-  });
-  const meditating = clips.get("meditating");
-  assert.equal(meditating.duration, 6);
-  for (const track of meditating.tracks) {
-    const size = track.getValueSize();
-    for (let axis = 0; axis < size; axis++)
-      assert.equal(
-        track.values[axis],
-        track.values[track.values.length - size + axis],
-        "loop closes without a jump"
-      );
-    if (track.name.endsWith(".position")) {
-      const vertical = Array.from(track.values).filter(
-        (_, i) => i % size === 1
-      );
-      assert.ok(
-        Math.max(...vertical) - Math.min(...vertical) <= 0.003001,
-        "float stays subtle"
-      );
-    }
-    if (track.name.includes("morphTargetInfluences")) {
-      const breath = Array.from(track.values).filter((_, i) => i % size === 0);
-      for (let i = 1; i <= 90; i++)
-        assert.ok(breath[i] > breath[i - 1], "inhale never pauses");
-      for (let i = 91; i < breath.length; i++)
-        assert.ok(breath[i] < breath[i - 1], "exhale never pauses");
-      assert.ok(
-        breath[1] < 0.001 && breath[90] - breath[89] < 0.001,
-        "smooth at reversal and loop boundary"
-      );
-    }
-  }
-  // Every other normalized clip retains the source animation values.
-  for (const raw of gltf.animations) {
-    if (raw.name === "meditating") continue;
-    raw.tracks.forEach((track, i) =>
-      assert.deepEqual(clips.get(raw.name).tracks[i].values, track.values)
+test("all logo clips preserve authored values and match the supplied frame ranges at 30 fps", async () => {
+  const { gltf, clips, info } = await getModel();
+  const ranges = [
+    [1, 121], [121, 301], [301, 376], [376, 496],
+    [496, 556], [556, 631], [631, 751], [751, 931],
+    [931, 1021], [1021, 1111], [1111, 1216],
+    [1216, 1306], [1306, 1396],
+  ];
+  for (const [i, raw] of gltf.animations.entries()) {
+    const clip = clips.get(raw.name);
+    assert.ok(Math.abs(info[i].start * 30 - ranges[i][0]) < 0.0001);
+    assert.ok(Math.abs(info[i].end * 30 - ranges[i][1]) < 0.0001);
+    raw.tracks.forEach((track, j) =>
+      assert.deepEqual(clip.tracks[j].values, track.values)
     );
   }
-  animator.dispose();
+  assert.ok(api.VIBI_LOOPS.has("breathing"));
+  assert.ok(Math.abs(clips.get("breathing").duration - 6) < 0.00001);
 });
 
 test("welcome happy animation repeats without completing the global request", async () => {
@@ -301,4 +251,40 @@ test("welcome happy animation repeats without completing the global request", as
       .every(Number.isFinite)
   );
   animator.dispose();
+});
+
+test("instance celebration returns smoothly to idle and keeps looping", async () => {
+  const { gltf, clips } = await getModel();
+  let completed = 0;
+  const animator = new VibiAnimator(gltf.scene.clone(true), clips, (id) => {
+    completed++;
+    animator.play("idle", id, false);
+  });
+  animator.play("happy", 1, false);
+  animator.update(clips.get("happy").duration + 0.01);
+  assert.equal(completed, 1);
+  assert.equal(animator.needsCompletion, false);
+  animator.update(10);
+  assert.equal(completed, 1);
+  animator.dispose();
+});
+
+
+test("breathing reports completion only after a full inhale/exhale cycle", async () => {
+  const { gltf, clips } = await getModel();
+  for (const reducedMotion of [false, true]) {
+    let cycles = 0;
+    const animator = new VibiAnimator(
+      gltf.scene.clone(true), clips, () => {}, () => cycles++
+    );
+    animator.play("breathing", 0, reducedMotion, true);
+    const duration = clips.get("breathing").duration;
+    animator.update(duration - 0.01);
+    assert.equal(cycles, 0);
+    animator.update(0.02);
+    assert.equal(cycles, 1);
+    animator.update(duration);
+    assert.equal(cycles, 2);
+    animator.dispose();
+  }
 });

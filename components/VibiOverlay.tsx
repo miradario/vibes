@@ -202,7 +202,7 @@ export default function VibiOverlay({
           importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
         >
           <View {...pan.panHandlers}>
-            <Vibi size={SIZE} onPress={onPress} paused={!shown} />
+            <Vibi followController size={SIZE} onPress={onPress} paused={!shown} />
           </View>
           <Pressable
             onPress={() => setVisible(false)}

@@ -15,7 +15,7 @@ import * as Crypto from "expo-crypto";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import VibiCharacter, { VibiStatic, VibiBreathing } from "../components/Vibi";
+import VibiCharacter from "../components/Vibi";
 import ScreenContainer from "../components/ScreenContainer";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -119,7 +119,7 @@ const Exchange = memo(
       </View>
       <View style={s.answer}>
         <View style={s.answerAuthor}>
-          <VibiStatic size={32} />
+          <VibiCharacter state="idle" size={32} paused />
           <Text style={s.author}>VIBI</Text>
         </View>
         <Text style={s.message} selectable>
@@ -385,9 +385,9 @@ function VibiConversation({ userId }: { userId: string }) {
               </Pressable>
               <View style={s.avatar}>
                 {loading || sending || loadingOlder ? (
-                  <VibiBreathing size={44} paused={!chatVisible} />
+                  <VibiCharacter state="breathing" size={44} paused={!chatVisible} />
                 ) : (
-                  <VibiStatic size={44} />
+                  <VibiCharacter state="idle" size={44} paused={!chatVisible} />
                 )}
               </View>
               <View style={s.headerCopy}>
@@ -410,7 +410,7 @@ function VibiConversation({ userId }: { userId: string }) {
             </View>
             {loading && !exchanges.length ? (
               <View style={s.loading}>
-                <VibiBreathing size={112} paused={!chatVisible} />
+                <VibiCharacter state="breathing" size={112} paused={!chatVisible} />
                 <Text style={s.subtitle}>Abriendo tu conversación…</Text>
               </View>
             ) : (
@@ -468,7 +468,7 @@ function VibiConversation({ userId }: { userId: string }) {
                           : "El mensaje todavía no se completó."}
                       </Text>
                       {sending ? (
-                        <VibiBreathing size={64} paused={!chatVisible} />
+                        <VibiCharacter state="breathing" size={64} paused={!chatVisible} />
                       ) : null}
                     </View>
                   ) : null
@@ -599,7 +599,7 @@ function VibiConversation({ userId }: { userId: string }) {
             { paddingBottom: Math.max(insets.bottom, 12) },
           ]}
         >
-          <VibiCharacter size={120} paused={!chatVisible} />
+          <VibiCharacter followController size={120} paused={!chatVisible} />
         </View>
       </KeyboardAvoidingView>
     </AnimatedSheetModal>

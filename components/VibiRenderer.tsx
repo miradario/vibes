@@ -14,6 +14,8 @@ export type VibiRendererProps = {
   model: VibiModel;
   paused: boolean;
   reducedMotion: boolean;
+  onCycleComplete?: () => void;
+  viewportSize?: number;
   onReady: () => void;
   onError: (error: unknown) => void;
 };
@@ -26,29 +28,44 @@ function Character({
   reducedMotion,
   onReady,
   onError,
+  onCycleComplete,
+  viewportSize = 3.3,
 }: VibiRendererProps) {
   const turntable = useRef<Group>(null);
   const lastRequest = useRef("");
   const root = useMemo(() => model.scene.clone(true), [model]);
+  const playback = useRef({ animation, reducedMotion });
+  playback.current = { animation, reducedMotion };
+  const cycleCallback = useRef(onCycleComplete);
+  cycleCallback.current = onCycleComplete;
   const animator = useMemo(
-    () =>
-      new VibiAnimator(
+    () => {
+      const instance = new VibiAnimator(
         root,
         model.clips,
-        animation ? () => {} : finishAnimation
-      ),
-    [root, model, animation]
+        (requestId) => {
+          if (playback.current.animation) {
+            instance.play("idle", requestId, playback.current.reducedMotion);
+          } else {
+            finishAnimation(requestId);
+          }
+        },
+        () => cycleCallback.current?.()
+      );
+      return instance;
+    },
+    [root, model]
   );
   const invalidate = useThree((state) => state.invalidate);
   const camera = useThree((state) => state.camera);
   const height = useThree((state) => state.size.height);
   useEffect(() => {
     if ("zoom" in camera) {
-      camera.zoom = height / 3.3;
+      camera.zoom = height / viewportSize;
       camera.updateProjectionMatrix();
       invalidate();
     }
-  }, [camera, height, invalidate]);
+  }, [camera, height, invalidate, viewportSize]);
   const callbacks = useRef({ onReady, onError });
   callbacks.current = { onReady, onError };
   useEffect(() => () => animator.dispose(), [animator]);
@@ -61,13 +78,13 @@ function Character({
       scheduled = false;
     };
     const schedule = () => {
-      if (paused || scheduled || (reducedMotion && !animator.needsCompletion))
+      if (paused || scheduled || (reducedMotion && !animator.needsCompletion && !cycleCallback.current))
         return;
       scheduled = true;
       last = performance.now();
       timer = setTimeout(
         tick,
-        reducedMotion ? animator.remaining * 1000 : 1000 / 30
+        reducedMotion ? 100 : 1000 / 30
       );
     };
     const tick = () => {
@@ -161,7 +178,7 @@ function VibiRenderer(props: VibiRendererProps) {
         gl.toneMapping = NoToneMapping;
         gl.outputColorSpace = SRGBColorSpace;
         if ("zoom" in camera) {
-          camera.zoom = size.height / 3.3;
+          camera.zoom = size.height / (props.viewportSize ?? 3.3);
           camera.updateProjectionMatrix();
         }
         // Frame-loop GL failures are outside React's error boundary.

@@ -22,16 +22,29 @@ async function load() {
   const morphs: { name: string; count: number }[] = [];
   gltf.scene.traverse((object) => {
     const mesh = object as Mesh;
-    if (mesh.isMesh && mesh.morphTargetInfluences?.length) {
+    if (!mesh.isMesh) return;
+    mesh.frustumCulled = false;
+    // The authored white face sits inside the thicker blue leaf. Render it
+    // last so its eyes and smile remain visible, preserving its PBR colors.
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    if (materials.every((material) => material.name.startsWith("Rostro blanco"))) {
+      mesh.renderOrder = 1;
+      const faceMaterials = materials.map((material) => {
+        const face = material.clone();
+        face.depthTest = false;
+        face.depthWrite = false;
+        return face;
+      });
+      mesh.material = Array.isArray(mesh.material) ? faceMaterials : faceMaterials[0];
+    }
+    if (mesh.morphTargetInfluences?.length) {
       morphs.push({
         name: mesh.name,
         count: mesh.morphTargetInfluences.length,
       });
-      mesh.frustumCulled = false;
     }
   });
-  if (morphs.length !== 5)
-    throw new Error("Vibi body, hair, or facial morph targets are missing");
+  if (!morphs.length) throw new Error("Vibi logo morph targets are missing");
   if (__DEV__)
     console.info(
       "[Vibi] loaded clips and morph targets",

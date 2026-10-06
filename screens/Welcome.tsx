@@ -33,8 +33,7 @@ const Welcome = () => {
           <View style={localStyles.illustrationWrap}>
             <Vibi
               size={vibiSize}
-              animation="happy"
-              loop
+              state="happy"
               spin
               paused={!isFocused}
             />
