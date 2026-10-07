@@ -88,8 +88,8 @@ export default function VibiOverlay({
     const hide = Keyboard.addListener("keyboardDidHide", () =>
       setKeyboardTop(null)
     );
-    const metrics = Keyboard.metrics();
-    if (Keyboard.isVisible() && metrics) setKeyboardTop(metrics.screenY);
+    const metrics = Keyboard.metrics?.();
+    if (Keyboard.isVisible?.() && metrics) setKeyboardTop(metrics.screenY);
     return () => {
       show.remove();
       change.remove();

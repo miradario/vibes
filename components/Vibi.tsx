@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { vibesTheme } from "../src/theme/vibesTheme";
 import type { VibiAnimation } from "../src/vibi/controller";
 import type { VibiModel } from "../src/vibi/model";
 import type { VibiRendererProps } from "./VibiRenderer";
@@ -15,7 +16,14 @@ export type VibiProps = {
   /** Turntable speed multiplier; true uses the default speed. */
   spin?: boolean | number;
   size?: number;
+  width?: number;
+  height?: number;
+  welcomeIntro?: VibiRendererProps["welcomeIntro"];
+  onReady?: () => void;
+  onError?: () => void;
   paused?: boolean;
+  /** Use an already-resolved preference when the initial camera depends on it. */
+  reducedMotion?: boolean;
   onPress?: () => void;
   onLongPress?: () => void;
   onCycleComplete?: () => void;
@@ -50,6 +58,13 @@ function loadRenderer() {
     (module) => module.default
   ));
 }
+export async function preloadVibi() {
+  const [model, Renderer] = await Promise.all([
+    import("../src/vibi/model").then((module) => module.loadVibiModel()),
+    loadRenderer(),
+  ]);
+  return { model, Renderer };
+}
 function Vibi({
   state,
   followController = false,
@@ -58,7 +73,13 @@ function Vibi({
   loop,
   spin,
   size = 120,
+  width = size,
+  height = size,
+  welcomeIntro,
+  onReady,
+  onError,
   paused = false,
+  reducedMotion: motionPreference,
   onPress,
   onLongPress,
   onModelLoaded,
@@ -67,7 +88,8 @@ function Vibi({
 }: VibiProps) {
   animation = state ?? animation ?? (followController ? undefined : "idle");
   paused = paused || !visible;
-  const { active, reducedMotion } = useVibiRuntime();
+  const { active, reducedMotion: systemReducedMotion } = useVibiRuntime();
+  const reducedMotion = motionPreference ?? systemReducedMotion;
   const onModelLoadedRef = useRef(onModelLoaded);
   onModelLoadedRef.current = onModelLoaded;
   const [loaded, setLoaded] = useState<{
@@ -76,21 +98,24 @@ function Vibi({
   }>();
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
+  const externalCallbacks = useRef({ onReady, onError });
+  externalCallbacks.current = { onReady, onError };
   const reportError = useCallback((error: unknown) => {
     console.warn("[Vibi] Unable to render GLB", error);
     setFailed(true);
+    externalCallbacks.current.onError?.();
   }, []);
-  const reportReady = useCallback(() => setReady(true), []);
+  const reportReady = useCallback(() => {
+    setReady(true);
+    externalCallbacks.current.onReady?.();
+  }, []);
   useEffect(() => {
     if (failed) onCycleComplete?.();
   }, [failed, onCycleComplete]);
   useEffect(() => {
     let mounted = true;
-    void Promise.all([
-      import("../src/vibi/model").then((module) => module.loadVibiModel()),
-      loadRenderer(),
-    ])
-      .then(([model, Renderer]) => {
+    void preloadVibi()
+      .then(({ model, Renderer }) => {
         if (mounted) {
           setLoaded({ model, Renderer });
           onModelLoadedRef.current?.(model);
@@ -112,19 +137,17 @@ function Vibi({
     return () => clearTimeout(timeout);
   }, [loaded, ready, failed, paused, active, reportError]);
   const artwork = (
-    <View pointerEvents="none" style={{ width: size, height: size }}>
+    <View collapsable={false} pointerEvents="none" style={{ width, height }}>
       {loaded && !failed && (
         <View style={{ flex: 1 }}>
-          <RenderBoundary
-            fallback={null}
-            onError={reportError}
-          >
+          <RenderBoundary fallback={null} onError={reportError}>
             <loaded.Renderer
               animation={animation}
               loop={loop}
               spin={spin}
               model={loaded.model}
-              paused={paused || !active}
+              paused={paused || !active || (!!welcomeIntro && !ready)}
+              welcomeIntro={welcomeIntro}
               reducedMotion={reducedMotion}
               viewportSize={viewportSize}
               onCycleComplete={onCycleComplete}
@@ -132,6 +155,14 @@ function Vibi({
               onError={reportError}
             />
           </RenderBoundary>
+          {welcomeIntro && !ready && (
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: vibesTheme.colors.accentMustard },
+              ]}
+            />
+          )}
         </View>
       )}
     </View>

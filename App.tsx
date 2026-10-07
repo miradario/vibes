@@ -1,6 +1,9 @@
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
 import VibiOverlay from "./components/VibiOverlay";
+import { preloadVibi } from "./components/Vibi";
+import { welcomeModelBounds } from "./src/vibi/welcomeIntro";
+import { useAuthSession } from "./src/auth/auth.queries";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
 import AppCamera from "./components/AppCamera";
@@ -75,6 +78,26 @@ import {
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Navigator>) => {
+  const { data: session, isLoading } = useAuthSession();
+  const [sessionTimedOut, setSessionTimedOut] = React.useState(false);
+  React.useEffect(() => {
+    if (!isLoading) return;
+    const timer = setTimeout(() => setSessionTimedOut(true), 5000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+  React.useEffect(() => {
+    if (session?.user?.id) return;
+    void preloadVibi().then(({ model }) => {
+      const breathing = model.clips.get("breathing");
+      if (breathing) welcomeModelBounds(model.scene, breathing);
+    }).catch(error => console.warn("[Vibi] welcome preload failed", error));
+  }, [session?.user?.id]);
+  if (isLoading && !sessionTimedOut) {
+    return <View style={{ flex: 1, backgroundColor: vibesTheme.colors.accentMustard }} />;
+  }
+  return <Stack.Navigator {...props} initialRouteName={session?.user?.id ? "Startup" : "Welcome"}>{children}</Stack.Navigator>;
+};
 const navigationRef = React.createRef<any>();
 const linking = {
   prefixes: [
@@ -118,6 +141,14 @@ const CommunityRuntime = () => {
 };
 const AppNavigator = () => {
   React.useEffect(() => startRemoteConfig(), []);
+  // Begin before fonts finish and EntryStack mounts, hiding cold GLB/renderer
+  // loading behind work the app already has to do.
+  React.useEffect(() => {
+    void preloadVibi().then(({ model }) => {
+      const breathing = model.clips.get("breathing");
+      if (breathing) welcomeModelBounds(model.scene, breathing);
+    }).catch(error => console.warn("[Vibi] early preload failed", error));
+  }, []);
   const { t } = useI18n();
   const [vibiRoute, setVibiRoute] = React.useState({ name: "Startup", hasBottomBar: false });
   const syncVibiRoute = React.useCallback(() => {
@@ -310,8 +341,7 @@ const AppNavigator = () => {
               navigationRef.current?.getCurrentRoute() ?? null
             }
           />
-          <Stack.Navigator
-            initialRouteName="Startup"
+          <EntryStack
             screenOptions={{
               gestureDirection: "horizontal",
               cardStyleInterpolator: ({ current, layouts }) => ({
@@ -666,7 +696,7 @@ const AppNavigator = () => {
               component={OnboardingInterested}
               options={{ headerShown: false, animationEnabled: true }}
             />
-          </Stack.Navigator>
+          </EntryStack>
         </NavigationContainer>
         <VibiOverlay routeName={vibiRoute.name} hasBottomBar={vibiRoute.hasBottomBar}
           onPress={() => { if (isNavigationReady) navigationRef.current?.navigate("Vibi"); }} />

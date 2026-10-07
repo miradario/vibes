@@ -5,13 +5,19 @@ export function useVibiRuntime() {
   // Freeze until the asynchronous preference resolves; don't briefly animate
   // for someone who requested reduced motion.
   const [reducedMotion, setReducedMotion] = useState(true);
+  const [motionReady, setMotionReady] = useState(false);
   useEffect(() => {
     let mounted = true;
     void AccessibilityInfo.isReduceMotionEnabled()
       .then((value) => {
-        if (mounted) setReducedMotion(value);
+        if (mounted) {
+          setReducedMotion(value);
+          setMotionReady(true);
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (mounted) setMotionReady(true);
+      });
     const motion = AccessibilityInfo.addEventListener(
       "reduceMotionChanged",
       setReducedMotion
@@ -25,5 +31,5 @@ export function useVibiRuntime() {
       app.remove();
     };
   }, []);
-  return { active, reducedMotion };
+  return { active, reducedMotion, motionReady };
 }

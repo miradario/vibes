@@ -1,4 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import { View } from "react-native";
+import { preloadVibi } from "../components/Vibi";
+import { welcomeModelBounds } from "../src/vibi/welcomeIntro";
+import { vibesTheme } from "../src/theme/vibesTheme";
 import {
   CommonActions,
   StackActions,
@@ -65,6 +69,16 @@ const Startup = () => {
     useState<AppUpdateGateState | null>(null);
 
   const userId = session?.user?.id;
+
+  useEffect(() => {
+    if (userId) return;
+    void preloadVibi()
+      .then(({ model }) => {
+        const breathing = model.clips.get("breathing");
+        if (breathing) welcomeModelBounds(model.scene, breathing);
+      })
+      .catch((error) => console.warn("[Vibi] welcome preload failed", error));
+  }, [userId]);
 
   useEffect(() => {
     if (!isSessionLoading) return;
@@ -225,7 +239,14 @@ const Startup = () => {
   ]);
 
   useEffect(() => {
-    if (!introElapsed || !isReadyToExit || didNavigateRef.current) return;
+    // Guests get the welcome introduction; don't make them wait for a second
+    // breathing cycle in Startup before it can begin.
+    if (
+      (userId && !forceWelcome && !introElapsed) ||
+      !isReadyToExit ||
+      didNavigateRef.current
+    )
+      return;
     didNavigateRef.current = true;
     const destination = getStartupDestination(
       Boolean(userId) && !forceWelcome,
@@ -254,6 +275,14 @@ const Startup = () => {
     updateGateState,
     navigation,
   ]);
+
+  if (!userId || forceWelcome) {
+    return (
+      <View
+        style={{ flex: 1, backgroundColor: vibesTheme.colors.accentMustard }}
+      />
+    );
+  }
 
   return (
     <CalmPause

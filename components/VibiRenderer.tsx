@@ -1,4 +1,5 @@
-import React, { memo, useEffect, useMemo, useRef } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import VibiWelcomeScene, { type WelcomeIntro } from "./VibiWelcomeScene";
 import { Group, NoToneMapping, SRGBColorSpace } from "three";
 import { Platform } from "react-native";
 import { isDevice } from "expo-device";
@@ -11,6 +12,7 @@ import type { VibiModel } from "../src/vibi/model";
 import { createVibiScene } from "../src/vibi/renderScene";
 
 export type VibiRendererProps = {
+  welcomeIntro?: WelcomeIntro;
   animation?: VibiAnimation;
   loop?: boolean;
   /** Turntable speed multiplier; true uses the default speed. */
@@ -47,24 +49,21 @@ function Character({
   playback.current = { animation, reducedMotion };
   const cycleCallback = useRef(onCycleComplete);
   cycleCallback.current = onCycleComplete;
-  const animator = useMemo(
-    () => {
-      const instance = new VibiAnimator(
-        root,
-        model.clips,
-        (requestId) => {
-          if (playback.current.animation) {
-            instance.play("idle", requestId, playback.current.reducedMotion);
-          } else {
-            finishAnimation(requestId);
-          }
-        },
-        () => cycleCallback.current?.()
-      );
-      return instance;
-    },
-    [root, model]
-  );
+  const animator = useMemo(() => {
+    const instance = new VibiAnimator(
+      root,
+      model.clips,
+      (requestId) => {
+        if (playback.current.animation) {
+          instance.play("idle", requestId, playback.current.reducedMotion);
+        } else {
+          finishAnimation(requestId);
+        }
+      },
+      () => cycleCallback.current?.()
+    );
+    return instance;
+  }, [root, model]);
   useEffect(() => {
     if (!spin && turntable.current) turntable.current.rotation.y = 0;
   }, [spin]);
@@ -90,14 +89,15 @@ function Character({
       scheduled = false;
     };
     const schedule = () => {
-      if (paused || scheduled || (reducedMotion && !animator.needsCompletion && !cycleCallback.current))
+      if (
+        paused ||
+        scheduled ||
+        (reducedMotion && !animator.needsCompletion && !cycleCallback.current)
+      )
         return;
       scheduled = true;
       last = performance.now();
-      timer = setTimeout(
-        tick,
-        reducedMotion ? 100 : 1000 / 30
-      );
+      timer = setTimeout(tick, reducedMotion ? 100 : 1000 / 30);
     };
     const tick = () => {
       scheduled = false;
@@ -108,7 +108,8 @@ function Character({
         const step = reducedMotion ? delta : Math.min(delta, 0.1);
         animator.update(step);
         if (spin && !reducedMotion && turntable.current)
-          turntable.current.rotation.y += (step * Math.PI * (typeof spin === "number" ? spin : 1)) / 4;
+          turntable.current.rotation.y +=
+            (step * Math.PI * (typeof spin === "number" ? spin : 1)) / 4;
         if (!reducedMotion) invalidate();
         schedule();
       } catch (error) {
@@ -177,19 +178,33 @@ function Character({
 }
 const colors = vibesTheme.colors;
 function VibiRenderer(props: VibiRendererProps) {
+  const prepared = useRef(!props.welcomeIntro);
+  const onPrepared = useCallback(() => {
+    prepared.current = true;
+  }, []);
   return (
     <Canvas
       style={{ flex: 1 }}
       frameloop="demand"
-      orthographic
-      camera={{ position: [0, 0, 7], zoom: 37, near: 0.1, far: 30 }}
-      gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
+      orthographic={!props.welcomeIntro}
+      camera={{
+        position: [0, 0, 7],
+        zoom: props.welcomeIntro ? 1 : 37,
+        fov: 40,
+        near: 0.01,
+        far: 30,
+      }}
+      gl={{
+        alpha: !props.welcomeIntro,
+        antialias: !props.welcomeIntro,
+        powerPreference: "low-power",
+      }}
       onCreated={({ gl, camera, size }) => {
         prepareVibiContext(gl.getContext());
-        gl.setClearColor(colors.background, 0);
+        gl.setClearColor(colors.background, props.welcomeIntro ? 1 : 0);
         gl.toneMapping = NoToneMapping;
         gl.outputColorSpace = SRGBColorSpace;
-        if ("zoom" in camera) {
+        if (!props.welcomeIntro && "zoom" in camera) {
           camera.zoom = size.height / (props.viewportSize ?? 3.3);
           camera.updateProjectionMatrix();
         }
@@ -200,7 +215,7 @@ function VibiRenderer(props: VibiRendererProps) {
           try {
             render(...args);
             // Keep the bundled image until the first real GL frame exists.
-            if (!firstFrameRendered) {
+            if (!firstFrameRendered && prepared.current) {
               firstFrameRendered = true;
               props.onReady();
             }
@@ -221,7 +236,11 @@ function VibiRenderer(props: VibiRendererProps) {
         intensity={0.6}
         position={[3, 1, 2]}
       />
-      <Character {...props} />
+      {props.welcomeIntro ? (
+        <VibiWelcomeScene {...props} onPrepared={onPrepared} />
+      ) : (
+        <Character {...props} />
+      )}
     </Canvas>
   );
 }

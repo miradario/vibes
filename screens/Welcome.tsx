@@ -1,113 +1,182 @@
-import { Text } from "../components/Typography";
-/** @format */
-
-import React, { useEffect } from "react";
-import { View, StyleSheet, useWindowDimensions } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
-import VibesActionButton from "../components/VibesActionButton";
+import { Text } from "../components/Typography";
 import Vibi from "../components/Vibi";
+import VibesActionButton from "../components/VibesActionButton";
+import ScreenContainer from "../components/ScreenContainer";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import VibesHeader from "../src/components/VibesHeader";
-import { useI18n } from "../src/i18n";
+import { useVibiRuntime } from "../src/vibi/useMotionPreference";
+import {
+  welcomeIntroFrame,
+  welcomeLayout,
+  WELCOME_INTRO_DURATION,
+} from "../src/vibi/welcomeIntro";
 
+// Process lifetime: returning from authentication (even after unmount) skips it.
+let welcomeIntroShown = false;
 const Welcome = () => {
-  const { t } = useI18n();
-  const { width } = useWindowDimensions();
-  const vibiSize = Math.min(348, width - 48);
   const navigation = useNavigation();
   const { data: session, isLoading } = useAuthSession();
-  const isFocused = useIsFocused();
-
+  const focused = useIsFocused();
+  const { active, reducedMotion, motionReady } = useVibiRuntime();
+  const [modelReady, setModelReady] = useState(false);
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [intro] = useState({ replayKey: 0, skip: welcomeIntroShown });
+  const [buttonsEnabled, setButtonsEnabled] = useState(welcomeIntroShown);
+  const titleOpacity = useRef(
+    new Animated.Value(welcomeIntroShown ? 1 : 0)
+  ).current;
+  const buttonsOpacity = useRef(
+    new Animated.Value(welcomeIntroShown ? 1 : 0)
+  ).current;
+  const buttonsTranslateY = useRef(
+    new Animated.Value(welcomeIntroShown ? 0 : 12)
+  ).current;
+  const progress = useCallback(
+    (seconds: number) => {
+      const frame = welcomeIntroFrame(seconds);
+      titleOpacity.setValue(frame.titleOpacity);
+      buttonsOpacity.setValue(frame.buttonsOpacity);
+      buttonsTranslateY.setValue(frame.buttonsTranslateY);
+      if (frame.complete) setButtonsEnabled(true);
+    },
+    [titleOpacity, buttonsOpacity, buttonsTranslateY]
+  );
+  const ready = useCallback(() => {
+    welcomeIntroShown = true;
+    setModelReady(true);
+  }, []);
+  const failed = useCallback(() => {
+    welcomeIntroShown = true;
+    setModelReady(true);
+    progress(WELCOME_INTRO_DURATION);
+  }, [progress]);
   useEffect(() => {
-    if (isLoading) return;
-    if (isFocused && session?.user?.id) {
+    if (!isLoading && focused && session?.user?.id)
       navigation.navigate("Tab" as never);
-    }
-  }, [isFocused, isLoading, navigation, session?.user?.id]);
+  }, [focused, isLoading, navigation, session?.user?.id]);
 
   return (
-    <View style={localStyles.container}>
-      <View style={localStyles.content}>
-        <View style={localStyles.top}>
-          <View style={localStyles.illustrationWrap}>
+    <ScreenContainer
+      style={[styles.screen, !modelReady && styles.loading]}
+      edges={["top", "bottom", "left", "right"]}
+    >
+      <View
+        style={[styles.content, !modelReady && styles.loading]}
+        onLayout={({ nativeEvent: { layout } }) =>
+          setViewport({ width: layout.width, height: layout.height })
+        }
+      >
+        <View
+          collapsable={false}
+          pointerEvents="none"
+          style={StyleSheet.absoluteFill}
+        >
+          {motionReady && viewport.width > 0 && viewport.height > 0 && (
             <Vibi
-              size={vibiSize}
-              state="happy"
-              spin
-              paused={!isFocused}
+              width={viewport.width}
+              height={viewport.height}
+              reducedMotion={reducedMotion}
+              paused={!focused || !active}
+              onReady={ready}
+              onError={failed}
+              welcomeIntro={{ ...intro, onProgress: progress }}
             />
-          </View>
-          <VibesHeader subtitle={t("welcome.subtitle")} />
+          )}
         </View>
-
-        <View style={localStyles.card}>
-          <View style={localStyles.buttons}>
-            <Text style={localStyles.accountPrompt}>
-              {t("welcome.existingAccount")}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.titleWrap,
+            {
+              top: welcomeLayout(viewport.height).titleTop,
+              opacity: titleOpacity,
+            },
+          ]}
+        >
+          <Text style={styles.title}>Vibes</Text>
+        </Animated.View>
+        <Animated.View
+          pointerEvents={buttonsEnabled ? "auto" : "none"}
+          accessibilityElementsHidden={!buttonsEnabled}
+          importantForAccessibility={
+            buttonsEnabled ? "auto" : "no-hide-descendants"
+          }
+          style={[
+            styles.actions,
+            {
+              opacity: buttonsOpacity,
+              transform: [{ translateY: buttonsTranslateY }],
+            },
+          ]}
+        >
+          <VibesActionButton
+            label="Crear cuenta"
+            disabled={!buttonsEnabled}
+            onPress={() => navigation.navigate("AgeAssurance" as never)}
+            style={styles.primaryButton}
+          />
+          <Pressable
+            accessibilityRole="button"
+            disabled={!buttonsEnabled}
+            onPress={() => navigation.navigate("Login" as never)}
+            style={({ pressed }) => [
+              styles.button,
+              styles.secondary,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={[styles.buttonText, styles.secondaryText]}>
+              Iniciar sesión
             </Text>
-            <VibesActionButton
-              label={t("welcome.login")}
-              textStyle={localStyles.buttonLabel}
-              variant="start"
-              onPress={() => navigation.navigate("Login" as never)}
-            />
-            <Text style={localStyles.accountPrompt}>
-              {t("welcome.newAccount")}
-            </Text>
-            <VibesActionButton
-              label={t("welcome.signup")}
-              textStyle={localStyles.buttonLabel}
-              variant="start"
-              onPress={() => navigation.navigate("AgeAssurance" as never)}
-            />
-          </View>
-        </View>
+          </Pressable>
+        </Animated.View>
       </View>
-    </View>
+    </ScreenContainer>
   );
 };
-
 export default Welcome;
-
-const localStyles = StyleSheet.create({
-  buttonLabel: { color: vibesTheme.colors.surface },
-  container: {
-    flex: 1,
-    backgroundColor: vibesTheme.colors.background,
+const colors = vibesTheme.colors;
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
+  loading: { backgroundColor: colors.accentMustard },
+  content: { flex: 1, backgroundColor: colors.background },
+  titleWrap: { position: "absolute", width: "100%", alignItems: "center" },
+  title: {
+    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 44,
+    lineHeight: 54,
+    color: colors.primaryText,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: "space-between",
-    paddingTop: 72,
-    paddingBottom: 40,
-  },
-  top: {
+  actions: {
+    position: "absolute",
+    bottom: 36,
+    left: 24,
+    right: 24,
+    gap: 12,
     alignItems: "center",
-    marginTop: 30,
   },
-  illustrationWrap: {
+  button: {
     width: "100%",
+    maxWidth: 480,
+    height: 58,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    height: 368,
-    marginTop: -18,
-    marginBottom: 2,
+    borderWidth: 1,
   },
-  card: {
-    marginBottom: 20,
+  primaryButton: { maxWidth: 480, shadowOpacity: 0, elevation: 0 },
+  secondary: {
+    backgroundColor: colors.background,
+    borderColor: colors.accentBlue,
   },
-  accountPrompt: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.regular,
-    color: vibesTheme.colors.secondaryText,
-    textAlign: "center",
-    marginTop: 4,
+  buttonText: {
+    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 19,
+    color: colors.primaryText,
   },
-  buttons: {
-    width: "100%",
-    gap: 12,
-  },
+  secondaryText: { color: colors.accentBlue },
+  pressed: { opacity: 0.8 },
 });
