@@ -12,7 +12,11 @@ import {
 } from "react-native";
 import ProfileMediaImage from "../components/ProfileMediaImage";
 import * as Crypto from "expo-crypto";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import VibiCharacter from "../components/Vibi";
@@ -88,9 +92,17 @@ const RecommendationCard = memo(
       accessibilityLabel={`Ver ${card.title}`}
     >
       <ProfileMediaImage
-        source={card.thumbnail ? { uri: card.thumbnail } : card.type === "person" ? VIBES_LOGO : fallbackImage}
+        source={
+          card.thumbnail
+            ? { uri: card.thumbnail }
+            : card.type === "person"
+            ? VIBES_LOGO
+            : fallbackImage
+        }
         style={s.thumbnail}
-        contentFit={!card.thumbnail && card.type === "person" ? "contain" : "cover"}
+        contentFit={
+          !card.thumbnail && card.type === "person" ? "contain" : "cover"
+        }
       />
       <View style={s.cardCopy}>
         <Text style={s.eyebrow}>{labels[card.type]}</Text>
@@ -138,6 +150,9 @@ const Exchange = memo(
   )
 );
 function VibiConversation({ userId }: { userId: string }) {
+  const route = useRoute<any>();
+  const personRequest = route.params?.personRequest as string | undefined;
+  const handledPersonRequest = useRef<string | null>(null);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const [chatVisible, setChatVisible] = useState(true);
@@ -257,6 +272,21 @@ function VibiConversation({ userId }: { userId: string }) {
       if (mounted.current) setSending(false);
     }
   };
+  useEffect(() => {
+    if (
+      !personRequest ||
+      handledPersonRequest.current === personRequest ||
+      loading ||
+      !conversationId ||
+      busy.current ||
+      pending
+    )
+      return;
+    handledPersonRequest.current = personRequest;
+    setChatVisible(true);
+    const choice = categories.find((item) => item.type === "person");
+    if (choice) void send({ ...choice, prompt: "Recomendame una persona de la app para conectar." });
+  }, [personRequest, loading, conversationId, pending]);
   const loadOlder = async () => {
     if (!before || loadingOlder || busy.current) return;
     const version = loadVersion.current;
@@ -385,7 +415,11 @@ function VibiConversation({ userId }: { userId: string }) {
               </Pressable>
               <View style={s.avatar}>
                 {loading || sending || loadingOlder ? (
-                  <VibiCharacter state="breathing" size={44} paused={!chatVisible} />
+                  <VibiCharacter
+                    state="breathing"
+                    size={44}
+                    paused={!chatVisible}
+                  />
                 ) : (
                   <VibiCharacter state="idle" size={44} paused={!chatVisible} />
                 )}
@@ -410,7 +444,11 @@ function VibiConversation({ userId }: { userId: string }) {
             </View>
             {loading && !exchanges.length ? (
               <View style={s.loading}>
-                <VibiCharacter state="breathing" size={112} paused={!chatVisible} />
+                <VibiCharacter
+                  state="breathing"
+                  size={112}
+                  paused={!chatVisible}
+                />
                 <Text style={s.subtitle}>Abriendo tu conversación…</Text>
               </View>
             ) : (
@@ -468,7 +506,11 @@ function VibiConversation({ userId }: { userId: string }) {
                           : "El mensaje todavía no se completó."}
                       </Text>
                       {sending ? (
-                        <VibiCharacter state="breathing" size={64} paused={!chatVisible} />
+                        <VibiCharacter
+                          state="breathing"
+                          size={64}
+                          paused={!chatVisible}
+                        />
                       ) : null}
                     </View>
                   ) : null

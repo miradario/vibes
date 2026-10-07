@@ -288,3 +288,32 @@ test("breathing reports completion only after a full inhale/exhale cycle", async
     animator.dispose();
   }
 });
+
+
+test("discovers custom GLB clips and plays wave once before returning to idle", () => {
+  const root = new THREE.Object3D();
+  const makeClip = (name) => new THREE.AnimationClip(name, 1, [
+    new THREE.NumberKeyframeTrack(".position[x]", [0, 1], [0, 1]),
+  ]);
+  const { clips, info } = normalizeVibiClips([makeClip("idle"), makeClip("wave")]);
+  assert.deepEqual([...clips.keys()], ["idle", "wave"]);
+  assert.equal(info[1].name, "wave");
+  api.playAnimation("wave");
+  let completed = 0;
+  const animator = new VibiAnimator(root, clips, (requestId) => {
+    completed++;
+    api.finishAnimation(requestId);
+    animator.play("idle", requestId, false);
+  });
+  animator.play("wave", api.vibiController.getSnapshot().requestId, false);
+  animator.update(0.5);
+  assert.equal(completed, 0);
+  animator.update(0.5);
+  assert.equal(completed, 1);
+  assert.equal(api.vibiController.getSnapshot().animation, "idle");
+  animator.update(3);
+  assert.equal(completed, 1);
+  animator.dispose();
+  // Restore the bundled model registry for subsequent controller use.
+  api.registerVibiAnimations([...api.VIBI_ANIMATIONS]);
+});

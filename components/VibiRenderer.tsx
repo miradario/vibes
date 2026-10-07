@@ -10,7 +10,8 @@ import type { VibiModel } from "../src/vibi/model";
 export type VibiRendererProps = {
   animation?: VibiAnimation;
   loop?: boolean;
-  spin?: boolean;
+  /** Turntable speed multiplier; true uses the default speed. */
+  spin?: boolean | number;
   model: VibiModel;
   paused: boolean;
   reducedMotion: boolean;
@@ -56,6 +57,9 @@ function Character({
     },
     [root, model]
   );
+  useEffect(() => {
+    if (!spin && turntable.current) turntable.current.rotation.y = 0;
+  }, [spin]);
   const invalidate = useThree((state) => state.invalidate);
   const camera = useThree((state) => state.camera);
   const height = useThree((state) => state.size.height);
@@ -96,7 +100,7 @@ function Character({
         const step = reducedMotion ? delta : Math.min(delta, 0.1);
         animator.update(step);
         if (spin && !reducedMotion && turntable.current)
-          turntable.current.rotation.y += (step * Math.PI) / 4;
+          turntable.current.rotation.y += (step * Math.PI * (typeof spin === "number" ? spin : 1)) / 4;
         if (!reducedMotion) invalidate();
         schedule();
       } catch (error) {

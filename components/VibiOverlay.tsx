@@ -17,7 +17,8 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import { useVibi } from "../src/vibi/useVibi";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
-import { setVisible } from "../src/vibi/controller";
+import { playAnimation, setVisible, type VibiAnimation } from "../src/vibi/controller";
+import type { VibiModel } from "../src/vibi/model";
 
 const SIZE = 88;
 const GAP = 12;
@@ -61,6 +62,21 @@ export default function VibiOverlay({
   // Visibility lives in the in-memory controller: dismissal survives navigation
   // and remounts, and resets when the app starts a new runtime.
   const shown = eligible && state.visible && !state.minimized;
+  const [greeting, setGreeting] = useState<VibiAnimation | null>(null);
+  const greetedHome = useRef(false);
+  const onModelLoaded = React.useCallback((model: VibiModel) => {
+    setGreeting(model.clips.has("wave") ? "wave" : null);
+  }, []);
+  useEffect(() => {
+    if (routeName !== "Home") {
+      greetedHome.current = false;
+      return;
+    }
+    if (shown && greeting && !greetedHome.current) {
+      greetedHome.current = true;
+      playAnimation(greeting);
+    }
+  }, [routeName, shown, greeting]);
   useEffect(() => {
     if (eligible) setEverEnabled(true);
   }, [eligible]);
@@ -202,7 +218,13 @@ export default function VibiOverlay({
           importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
         >
           <View {...pan.panHandlers}>
-            <Vibi followController size={SIZE} onPress={onPress} paused={!shown} />
+            <Vibi
+              followController
+              size={SIZE}
+              onPress={onPress}
+              paused={!shown}
+              onModelLoaded={onModelLoaded}
+            />
           </View>
           <Pressable
             onPress={() => setVisible(false)}

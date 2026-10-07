@@ -60,17 +60,3 @@ export const shareEventInvite = async (event: EventFeedItem) => {
 
   return Share.share({ message, url: eventUrl ?? undefined });
 };
-
-export const shareMeditationMilestone = async (input: {
-  durationMinutes: number;
-  meditationType: "silent" | "guided";
-}) => {
-  const typeLabel =
-    input.meditationType === "silent" ? "meditación en silencio" : "meditación guiada";
-  const message = [
-    `Hoy elegí volver a mí con ${input.durationMinutes} minutos de ${typeLabel} en Vibes.`,
-    "Respirar también es avanzar.",
-  ].join("\n");
-
-  return Share.share({ message });
-};

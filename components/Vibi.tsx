@@ -12,7 +12,8 @@ export type VibiProps = {
   visible?: boolean;
   animation?: VibiAnimation;
   loop?: boolean;
-  spin?: boolean;
+  /** Turntable speed multiplier; true uses the default speed. */
+  spin?: boolean | number;
   size?: number;
   paused?: boolean;
   onPress?: () => void;

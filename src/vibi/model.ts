@@ -44,7 +44,6 @@ async function load() {
       });
     }
   });
-  if (!morphs.length) throw new Error("Vibi logo morph targets are missing");
   if (__DEV__)
     console.info(
       "[Vibi] loaded clips and morph targets",
