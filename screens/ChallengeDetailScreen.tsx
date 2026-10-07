@@ -1,3 +1,5 @@
+import { useLocalDay } from "../src/hooks/useLocalDay";
+import { getChallengeDay, completedChallengeDays, getChallengeStreaks } from "../src/lib/challengeProgress";
 import MediaImage from "../components/MediaImage";
 import { playAnimation } from "../src/vibi/controller";
 import ChallengeDaysSection from "../components/challengeDays/ChallengeDaysSection";
@@ -157,45 +159,6 @@ const formatDisplayDate = (value?: string | null) => {
     month: "long",
     year: "numeric",
   });
-};
-
-const getCurrentDayFromStart = (
-  startsAt: string | null | undefined,
-  totalDays: number
-) => {
-  if (!startsAt) return FALLBACK_CHALLENGE.currentDay;
-  const start = new Date(startsAt);
-  if (Number.isNaN(start.getTime())) return FALLBACK_CHALLENGE.currentDay;
-  start.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diff = Math.floor((today.getTime() - start.getTime()) / 86_400_000) + 1;
-  return clamp(diff, 0, Math.max(totalDays, 1));
-};
-
-const getCompletedDaysFromCheckins = (
-  checkins: string[],
-  startsAt: string | null | undefined,
-  totalDays: number
-) => {
-  if (!startsAt || checkins.length === 0) return [];
-  const start = new Date(startsAt);
-  if (Number.isNaN(start.getTime())) return [];
-  start.setHours(0, 0, 0, 0);
-
-  return Array.from(
-    new Set(
-      checkins
-        .map((checkin) => {
-          const date = new Date(`${checkin}T00:00:00`);
-          if (Number.isNaN(date.getTime())) return null;
-          const day =
-            Math.floor((date.getTime() - start.getTime()) / 86_400_000) + 1;
-          return day >= 1 && day <= totalDays ? day : null;
-        })
-        .filter((day): day is number => typeof day === "number")
-    )
-  ).sort((left, right) => left - right);
 };
 
 const getStatusFromData = (
@@ -615,7 +578,15 @@ const ChallengeJourneyCard = memo(
               </Text>
             </Text>
           </View>
-
+          <View style={localStyles.journeyStatItem}>
+            <Icon name="trophy-outline" size={24} color={vibesTheme.colors.accentMustard} />
+            <Text style={localStyles.journeyStatText}>
+              Mejor racha:{" "}
+              <Text style={localStyles.journeyStatValue}>
+                {challenge.bestStreak} {challenge.bestStreak === 1 ? "día" : "días"}
+              </Text>
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -1056,20 +1027,19 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
 const mapEventToChallengeData = (
   event: EventFeedItem | undefined,
   checkins: string[],
-  participant: any
+  participant: any,
+  now = new Date()
 ): ChallengeDetailData => {
   if (!event) return FALLBACK_CHALLENGE;
   const totalDays = Math.max(Number(event.durationDays ?? 0) || 0, 1);
-  const currentDay = getCurrentDayFromStart(event.startsAt, totalDays);
-  const completedDays = getCompletedDaysFromCheckins(
+  const rawDay = getChallengeDay(event.startsAt, now);
+  const currentDay = clamp(rawDay, 0, totalDays);
+  const completedDays = completedChallengeDays(
     checkins,
     event.startsAt,
     totalDays
   );
-  const streak = Math.max(
-    Number(participant?.streak ?? 0) || 0,
-    completedDays.filter((day) => day <= currentDay).length
-  );
+  const { streak, bestStreak } = getChallengeStreaks(completedDays, rawDay, totalDays);
 
   return {
     id: event.id,
@@ -1083,14 +1053,10 @@ const mapEventToChallengeData = (
     currentDay,
     completedDays,
     streak,
-    bestStreak: Math.max(
-      streak,
-      Number(participant?.totalCheckins ?? 0) || streak
-    ),
+    bestStreak,
     checkInStatus: getStatusFromData(
       currentDay,
-      completedDays,
-      participant?.checkedInToday
+      completedDays
     ),
   };
 };
@@ -1136,7 +1102,8 @@ const ChallengeDetailScreen = () => {
     useChallengeTodayCheckinsCountQuery(userId ? event?.id : undefined);
   const checkInMutation = useCheckInChallengeMutation();
   const [localCompletedDays, setLocalCompletedDays] = useState<number[]>([]);
-  const [localStatus, setLocalStatus] = useState<CheckInStatus | null>(null);
+  const localDay = useLocalDay();
+  useEffect(() => { setLocalCompletedDays([]); }, [challengeId, userId, localDay]);
   const [footerSliderWidth, setFooterSliderWidth] = useState(0);
   const [footerSliderOffset, setFooterSliderOffset] = useState(0);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
@@ -1159,7 +1126,7 @@ const ChallengeDetailScreen = () => {
 
   const baseChallenge = useMemo(
     () => mapEventToChallengeData(event, remoteCheckins, participant),
-    [event, participant, remoteCheckins]
+    [event, participant, remoteCheckins, localDay]
   );
   const completedDays = useMemo(
     () =>
@@ -1171,11 +1138,9 @@ const ChallengeDetailScreen = () => {
     [baseChallenge.completedDays, baseChallenge.totalDays, localCompletedDays]
   );
   const status =
-    localStatus ??
     getStatusFromData(
       baseChallenge.currentDay,
-      completedDays,
-      participant?.checkedInToday
+      completedDays
     );
   const challenge: ChallengeDetailData = {
     ...baseChallenge,
@@ -1185,11 +1150,7 @@ const ChallengeDetailScreen = () => {
       (Number.parseInt(event?.attendees ?? "", 10) || 0),
     completedDays,
     checkInStatus: status,
-    streak:
-      status === "completed"
-        ? Math.max(baseChallenge.streak, completedDays.length)
-        : baseChallenge.streak,
-    bestStreak: Math.max(baseChallenge.bestStreak, completedDays.length),
+    ...getChallengeStreaks(completedDays, getChallengeDay(event?.startsAt), baseChallenge.totalDays),
   };
   const isAdmin = Boolean(
     userId && event?.createdBy && userId === event.createdBy
@@ -1224,7 +1185,7 @@ const ChallengeDetailScreen = () => {
     challenge.totalDays
   );
   const isChallengeUpcoming = challengeTimeline.status === "upcoming";
-  const todayKey = new Date().toISOString().split("T")[0];
+  const todayKey = localDay;
   const hasRemoteTodayCheckin =
     participant?.checkedInToday || remoteCheckins.includes(todayKey);
   const checkedInTodayCount = isChallengeUpcoming
@@ -1274,7 +1235,6 @@ const ChallengeDetailScreen = () => {
       nextCompletedDays.length >= challenge.totalDays;
     playAnimation(reachedFinalCheckIn ? "challenge_complete" : "encouraging");
     setLocalCompletedDays(nextCompletedDays);
-    setLocalStatus("completed");
     setFooterSliderOffset(footerSliderMaxOffset);
     setCelebrationTitle(
       reachedFinalCheckIn ? "Desafío completado" : "Día completado"
@@ -2817,12 +2777,9 @@ const localStyles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "rgba(43, 43, 43, 0.1)",
     paddingTop: 16,
-    flexDirection: "row",
-    alignItems: "center",
     gap: 12,
   },
   journeyStatItem: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,

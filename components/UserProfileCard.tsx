@@ -11,6 +11,7 @@ export type UserProfileCardData = {
   age?: string;
   zodiac?: string;
   location?: string;
+  nationalityCode?: string;
   distanceLabel?: string;
   description?: string;
   vibe?: string;

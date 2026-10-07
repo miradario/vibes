@@ -507,7 +507,7 @@ const s = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.subtitle,
   },
   card: {
     borderRadius: 24,

@@ -1,3 +1,4 @@
+import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
 import VibiOverlay from "./components/VibiOverlay";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -248,21 +249,13 @@ const AppNavigator = () => {
       return;
     }
 
-    if ((data.type === "event_reminder" || data.type === "challenge_reminder") && typeof data.eventId === "string") {
-      const eventType = data.type === "challenge_reminder" ? "challenge" : "event";
-      try {
-        const event = await fetchEventFeedItemById(data.eventId, eventType);
-        if (event) {
-          navigationRef.current.dispatch(CommonActions.navigate({
-            name: eventType === "challenge" ? "ChallengeDetailScreen" : "EventDetail",
-            params: { event },
-          }));
-          return;
-        }
-      } catch (error) {
-        console.warn("[push] failed to resolve reminder", error);
+    const reminderDestination = getReminderDestination(data);
+    if (reminderDestination) {
+      if (shouldDeferReminder(navigationRef.current.getCurrentRoute()?.name)) {
+        pendingNotificationData = data;
+        return;
       }
-      navigationRef.current.dispatch(CommonActions.navigate({ name: "Tab", params: { screen: "EventsTab" } }));
+      navigationRef.current.dispatch(CommonActions.navigate(reminderDestination));
       return;
     }
 
@@ -297,7 +290,13 @@ const AppNavigator = () => {
         <NavigationContainer
           ref={navigationRef}
           linking={linking}
-          onStateChange={syncVibiRoute}
+          onStateChange={() => {
+            syncVibiRoute();
+            if (!pendingNotificationData || shouldDeferReminder(navigationRef.current?.getCurrentRoute()?.name)) return;
+            const nextData = pendingNotificationData;
+            pendingNotificationData = null;
+            void navigateFromNotification(nextData);
+          }}
           onReady={() => {
             isNavigationReady = true;
             syncVibiRoute();

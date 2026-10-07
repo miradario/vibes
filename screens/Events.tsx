@@ -526,27 +526,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             </View>
           }
           ListFooterComponent={
-            !pastOnly && section === "event" && expiredEventItems.length > 0 ? (
-              <TouchableOpacity
-                style={localStyles.finishedSectionToggle}
-                onPress={() => navigation.navigate("PastEvents" as never)}
-                activeOpacity={0.85}
-              >
-                <View>
-                  <Text style={localStyles.finishedSectionTitle}>
-                    Eventos pasados
-                  </Text>
-                  <Text style={localStyles.finishedSectionSubtitle}>
-                    {`${expiredEventItems.length} guardados`}
-                  </Text>
-                </View>
-                <Icon
-                  name="chevron-forward"
-                  size={22}
-                  color={vibesTheme.colors.secondaryText}
-                />
-              </TouchableOpacity>
-            ) : section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0) ? (
+            section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0) ? (
               <View style={localStyles.footerToggleGroup}>
                 {upcomingGeneralChallengeItems.length > 0 ? (
                   <TouchableOpacity

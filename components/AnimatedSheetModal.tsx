@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  KeyboardAvoidingView,
+  Platform,
   Modal,
   StyleSheet,
   TouchableOpacity,
-  View,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
@@ -12,6 +13,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 
 type AnimatedSheetModalProps = {
   visible: boolean;
+  placement?: "bottom" | "center";
   inline?: boolean;
   fullScreen?: boolean;
   onClose: () => void;
@@ -32,6 +34,7 @@ type AnimatedSheetModalProps = {
 
 const AnimatedSheetModal = ({
   visible,
+  placement = "bottom",
   inline = false,
   fullScreen = false,
   onClose,
@@ -133,9 +136,12 @@ const AnimatedSheetModal = ({
   if (!isMounted) return null;
 
   const content = (
-    <View
+    <KeyboardAvoidingView
+      enabled={placement === "center"}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={[
         styles.root,
+        placement === "center" && styles.centered,
         inline && { ...StyleSheet.absoluteFillObject, zIndex: 50 },
       ]}
     >
@@ -165,7 +171,7 @@ const AnimatedSheetModal = ({
       >
         {children}
       </Animated.View>
-    </View>
+    </KeyboardAvoidingView>
   );
   return inline ? (
     content
@@ -187,6 +193,11 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     justifyContent: "flex-end",
+  },
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

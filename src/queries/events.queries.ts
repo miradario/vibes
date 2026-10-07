@@ -1,3 +1,5 @@
+import { localDayKey, calendarDayNumber } from "../lib/challengeProgress";
+import { useLocalDay } from "../hooks/useLocalDay";
 import { parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../constants/eventClassification";
 import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -547,7 +549,7 @@ const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
 const fetchChallengeTodayCheckinCountMap = async (challengeIds: string[]) => {
   if (!challengeIds.length) return {} as Record<string, number>;
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = localDayKey();
   const { data, error } = await supabase
     .from("challenge_checkins")
     .select("challenge_id, user_id")
@@ -587,7 +589,7 @@ const fetchChallengeViewerProgressMap = async (
 
   const challengeIds = items.map((item) => item.id);
   const challengeById = new Map(items.map((item) => [item.id, item]));
-  const today = new Date().toISOString().split("T")[0];
+  const today = localDayKey();
   const { data, error } = await supabase
     .from("challenge_checkins")
     .select("challenge_id, checkin_date")
@@ -627,7 +629,7 @@ const fetchChallengeViewerProgressMap = async (
         1
       );
       const diffDays =
-        Math.floor((checkin.getTime() - start.getTime()) / 86_400_000) + 1;
+        calendarDayNumber(checkin) - calendarDayNumber(start) + 1;
       if (diffDays < 1 || diffDays > durationDays) {
         continue;
       }
@@ -1165,11 +1167,9 @@ export const useChallengeParticipantQuery = (
   challengeId: string | undefined,
   userId: string | undefined
 ) => {
+  const day = useLocalDay();
   return useQuery<ChallengeParticipant | null>({
-    queryKey: challengeParticipantKeys.participant(
-      challengeId ?? "",
-      userId ?? ""
-    ),
+    queryKey: [...challengeParticipantKeys.participant(challengeId ?? "", userId ?? ""), day],
     queryFn: async () => {
       if (!challengeId || !userId) return null;
 
@@ -1183,7 +1183,7 @@ export const useChallengeParticipantQuery = (
       if (error) throw error;
       if (!data) return null;
 
-      const today = new Date().toISOString().split("T")[0];
+      const today = localDayKey();
       return {
         id: String(data.id),
         challengeId: String(data.challenge_id),
@@ -1203,12 +1203,13 @@ export const useChallengeParticipantQuery = (
 export const useChallengeTodayCheckinsCountQuery = (
   challengeId: string | undefined
 ) => {
+  const day = useLocalDay();
   return useQuery<number>({
-    queryKey: ["challenge_checkins_today_count", challengeId ?? ""],
+    queryKey: ["challenge_checkins_today_count", challengeId ?? "", day],
     queryFn: async () => {
       if (!challengeId) return 0;
 
-      const today = new Date().toISOString().split("T")[0];
+      const today = localDayKey();
       const { data, error } = await supabase
         .from("challenge_checkins")
         .select("user_id")
@@ -1280,7 +1281,7 @@ export const useCheckInChallengeMutation = () => {
     { challengeId: string; userId: string; note?: string }
   >({
     mutationFn: async ({ challengeId, userId, note }) => {
-      const today = new Date().toISOString().split("T")[0];
+      const today = localDayKey();
       const { error } = await supabase.from("challenge_checkins").insert({
         challenge_id: challengeId,
         user_id: userId,

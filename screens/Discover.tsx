@@ -1,3 +1,5 @@
+import CountrySelector from "../components/CountrySelector";
+import { isCountryCode } from "../src/constants/countries";
 import ProfilePhotoPrompt from "../components/ProfilePhotoPrompt";
 import { hasProfilePhotos, comparePhotoPriority } from "../src/lib/profilePhotos";
 import PhotoViewer from "../components/PhotoViewer";
@@ -418,6 +420,9 @@ export const DiscoverContent = forwardRef<
                 typeof value === "string" && field.options.includes(value)
             );
           }
+        }
+        if (Array.isArray(parsed?.nationalityCode)) {
+          valid.nationalityCode = parsed.nationalityCode.filter(isCountryCode);
         }
         for (const key of ["heightMin", "heightMax"]) {
           const value = parsed?.[key]?.[0];
@@ -1148,6 +1153,15 @@ export const DiscoverContent = forwardRef<
                     </View>
                   ))}
                 </View>
+              </View>
+
+              <View style={localStyles.filtersSection}>
+                {filterSectionTitle(locale.startsWith("en") ? "Nationality" : "Nacionalidad")}
+                <Text style={localStyles.filtersSubtitle}>
+                  {locale.startsWith("en") ? "Choose one or more countries. No selection shows everyone." : "Podés elegir varios países. Sin selección, se muestran todos."}
+                </Text>
+                <CountrySelector multiple selected={answerFilters.nationalityCode ?? []}
+                  onChange={codes => setAnswerFilters(previous => ({ ...previous, nationalityCode: codes }))} />
               </View>
 
               {ANSWER_FILTER_FIELDS.map((field) => (

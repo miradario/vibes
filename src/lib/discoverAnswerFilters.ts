@@ -8,6 +8,9 @@ export function matchesDiscoverAnswers(
   const answers = candidate.profileAnswers ?? candidate.profile_answers ?? {};
   return Object.entries(filters).every(([key, selected]) => {
     if (!selected.length) return true;
+    if (key === "nationalityCode") {
+      return selected.includes(candidate.nationalityCode ?? candidate.nationality_code);
+    }
     if (key === "interestedIn") return matchesInterestedInFilter(candidate, selected);
     if (key === "heightMin" || key === "heightMax") {
       const height = Number(candidate.heightCm ?? candidate.height_cm);

@@ -1,3 +1,5 @@
+import { useLocalDay } from "../src/hooks/useLocalDay";
+import { getChallengeDay, completedChallengeDays, getChallengeStreaks } from "../src/lib/challengeProgress";
 import MediaImage from "../components/MediaImage";
 import { getEventCategoryLabel, getEventParticipationLabel } from "../src/constants/eventClassification";
 /** @format */
@@ -154,26 +156,6 @@ const getCheckInModalMessage = (streak: number, totalCheckins: number) => {
   return `Racha actual: ${streak} días · si hacés el check-in de hoy, pasás a ${streak + 1}.`;
 };
 
-const getCurrentStreakFromCheckins = (
-  checkins: string[],
-  referenceDate: Date,
-) => {
-  if (!checkins.length) return 0;
-
-  const checkinSet = new Set(checkins);
-  const cursor = new Date(referenceDate);
-  let streak = 0;
-
-  while (true) {
-    const key = formatDayKey(cursor);
-    if (!checkinSet.has(key)) break;
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-
-  return streak;
-};
-
 const formatStartDate = (iso?: string | null) => {
   if (!iso) return "Sin fecha de inicio";
   const date = new Date(iso);
@@ -210,6 +192,7 @@ const EventDetail = () => {
   const { t, locale } = useI18n();
   const navigation = useNavigation();
   const route = useRoute<any>();
+  useLocalDay();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const routeEvent = route.params?.event as EventFeedItem | undefined;
@@ -420,10 +403,10 @@ const EventDetail = () => {
   );
   const checkedInToday =
     Boolean(participant?.checkedInToday) || checkinSet.has(todayKey);
-  const streak =
-    challengeCheckins.length > 0
-      ? getCurrentStreakFromCheckins(challengeCheckins, todayDate)
-      : participant?.streak ?? 0;
+  const { streak } = getChallengeStreaks(
+    completedChallengeDays(challengeCheckins, event?.startsAt, durationDays),
+    getChallengeDay(event?.startsAt), durationDays,
+  );
   const milestone = nextMilestone(streak);
   const treeProgress = Math.min(streak / durationDays, 1);
   const showTreeProgress = streak > 0;

@@ -31,6 +31,7 @@ export type ConnectionProfile = {
   hasPhotos: boolean;
   images: ImageSourcePropType[];
   location?: string;
+  nationalityCode?: string;
   distanceLabel?: string;
   description?: string;
   message?: string;
@@ -363,6 +364,7 @@ export const mapCandidateToConnectionProfile = (
     hasPhotos: photoSources.length > 0,
     images: photoSources,
     location,
+    nationalityCode: (candidate as ProfileLike).nationalityCode ?? (candidate as ProfileLike).nationality_code ?? undefined,
     distanceLabel:
       typeof (candidate as ProfileLike).distanceLabel === "string"
         ? (candidate as ProfileLike).distanceLabel

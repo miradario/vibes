@@ -101,6 +101,8 @@ const localStyles = StyleSheet.create({
   },
 
   headerTitle: {
+    fontFamily: vibesTheme.fonts.semibold,
+    color: vibesTheme.colors.primaryText,
     fontSize: 30,
     lineHeight: 38,
     includeFontPadding: true,

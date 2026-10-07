@@ -1,9 +1,5 @@
+import { getChallengeDay } from "./challengeProgress";
 type ChallengeTimelineStatus = "upcoming" | "active" | "finished";
-
-const DAY_MS = 86_400_000;
-
-const startOfDay = (value: Date) =>
-  new Date(value.getFullYear(), value.getMonth(), value.getDate());
 
 export type ChallengeTimeline = {
   status: ChallengeTimelineStatus;
@@ -37,9 +33,7 @@ export const getChallengeTimeline = (
     };
   }
 
-  const start = startOfDay(parsedStart);
-  const today = startOfDay(new Date());
-  const diffDays = Math.floor((today.getTime() - start.getTime()) / DAY_MS);
+  const diffDays = getChallengeDay(startsAt) - 1;
 
   if (diffDays < 0) {
     return {

@@ -1,3 +1,5 @@
+import CountrySelector from "../components/CountrySelector";
+import { saveProfileNationality } from "../src/lib/profileNationality";
 import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
@@ -418,7 +420,7 @@ const DraggablePhotoSlot = ({
 };
 
 const EditProfile = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const leaveProfile = () => {
     if (navigation.canGoBack()) {
@@ -475,6 +477,26 @@ const EditProfile = () => {
     useState<ResolvedLocationMeta | null>(null);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [savingLocation, setSavingLocation] = useState(false);
+  const [savingNationality, setSavingNationality] = useState(false);
+  const nationalitySaving = useRef(false);
+  const updateNationality = async (codes: string[]) => {
+    const userId = session?.user?.id;
+    if (!userId || nationalitySaving.current) return;
+    nationalitySaving.current = true;
+    setSavingNationality(true);
+    try {
+      const nationalityCode = await saveProfileNationality(userId, codes[0] ?? null);
+      queryClient.setQueryData(profileKeys.byUser(userId), (previous: Record<string, unknown> | undefined) => ({ ...previous, nationalityCode }));
+      await queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+    } catch (error) {
+      console.warn("saveNationality:error", error);
+      Alert.alert(t("common.error"), locale.startsWith("en") ? "Could not save nationality. Please try again." : "No se pudo guardar la nacionalidad. Intentá de nuevo.");
+    } finally {
+      nationalitySaving.current = false;
+      setSavingNationality(false);
+    }
+  };
 
   const refreshProfileCache = async () => {
     const userId = session?.user?.id;
@@ -977,7 +999,7 @@ const EditProfile = () => {
           showBack
           onBack={leaveProfile}
           style={localStyles.header}
-          titleStyle={styles.title}
+          titleStyle={[styles.title, { fontFamily: vibesTheme.fonts.semibold }]}
           right={
             <TouchableOpacity
               onPress={async () => {
@@ -1083,6 +1105,14 @@ const EditProfile = () => {
               {t("settings.resolvingLocation")}
             </Text>
           ) : null}
+        </View>
+        <View style={styles.editSection}>
+          <Text style={styles.editSectionTitle}>{locale.startsWith("en") ? "Nationality" : "Nacionalidad"}</Text>
+          <CountrySelector
+            selected={profileData?.nationalityCode ? [profileData.nationalityCode] : []}
+            onChange={codes => { void updateNationality(codes); }}
+            disabled={savingNationality || !profileData}
+          />
         </View>
       </ScreenContainer>
 
