@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.miradario.vibe",
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C",
+        "9A:17:91:CA:FB:5E:48:F4:89:3A:5B:66:56:CA:9B:65:1A:4C:69:03:13:13:C8:29:AD:98:DC:13:87:6B:5E:ED"
+      ]
+    }
+  }
+]
