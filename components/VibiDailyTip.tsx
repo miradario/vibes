@@ -177,13 +177,14 @@ const s = StyleSheet.create({
   },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
+    fontSize: 20,
+    lineHeight: 26,
     fontFamily: vibesTheme.fonts.medium,
   },
   copy: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 27,
   },
   button: {
     minHeight: 48,
@@ -195,7 +196,8 @@ const s = StyleSheet.create({
   },
   buttonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
+    fontSize: 18,
+    lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,
   },
 });

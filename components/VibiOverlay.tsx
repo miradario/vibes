@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  Easing,
   Keyboard,
   PanResponder,
   Pressable,
@@ -46,7 +47,7 @@ export default function VibiOverlay({
   hasBottomBar = false,
 }: VibiOverlayProps) {
   const state = useVibi();
-  const { reducedMotion } = useVibiRuntime();
+  const { active, reducedMotion } = useVibiRuntime();
   const enabled = useVibiEnabled();
   const { data: session } = useAuthSession();
   const insets = useSafeAreaInsets();
@@ -62,6 +63,36 @@ export default function VibiOverlay({
   // Visibility lives in the in-memory controller: dismissal survives navigation
   // and remounts, and resets when the app starts a new runtime.
   const shown = eligible && state.visible && !state.minimized;
+  const floatOffset = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!shown || !active || reducedMotion) {
+      floatOffset.setValue(0);
+      return;
+    }
+    const floating = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatOffset, {
+          toValue: -4,
+          duration: 1800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+          isInteraction: false,
+        }),
+        Animated.timing(floatOffset, {
+          toValue: 0,
+          duration: 1800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+          isInteraction: false,
+        }),
+      ])
+    );
+    floating.start();
+    return () => {
+      floating.stop();
+      floatOffset.setValue(0);
+    };
+  }, [shown, active, reducedMotion, floatOffset]);
   const [greeting, setGreeting] = useState<VibiAnimation | null>(null);
   const greetedHome = useRef(false);
   const onModelLoaded = React.useCallback((model: VibiModel) => {
@@ -208,11 +239,11 @@ export default function VibiOverlay({
       >
         {/* Keep the GL component mounted with its original dimensions while
             hidden. Only its visibility and frame scheduler change. */}
-        <View
+        <Animated.View
           pointerEvents={shown ? "auto" : "none"}
           style={[
             styles.fullCharacter,
-            { height: expandedHeight },
+            { height: expandedHeight, transform: [{ translateY: floatOffset }] },
           ]}
           accessibilityElementsHidden={!shown}
           importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
@@ -235,7 +266,7 @@ export default function VibiOverlay({
           >
             <Ionicons name="close" size={20} color={colors.primaryText} />
           </Pressable>
-        </View>
+        </Animated.View>
       </Animated.View>
     </View>
   );
@@ -250,6 +281,8 @@ const styles = StyleSheet.create({
     left: 0,
     width: SIZE,
     alignItems: "center",
+    borderRadius: SIZE / 2,
+    backgroundColor: "rgba(254, 254, 253, 0.8)",
   },
   control: {
     position: "absolute",

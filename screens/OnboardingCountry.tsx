@@ -13,6 +13,7 @@ import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useI18n } from "../src/i18n";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
 
 const getUniqueLocationParts = (...parts: Array<string | null | undefined>) => {
   const seen = new Set<string>();
@@ -124,17 +125,21 @@ const OnboardingCountry = () => {
         </View>
 
         <TouchableOpacity
-          style={styles.welcomeSecondary}
+          style={[
+            onboardingStyles.locationButton,
+            loading && onboardingStyles.locationButtonDisabled,
+          ]}
+          accessibilityRole="button"
+          activeOpacity={0.84}
           onPress={requestLocation}
           disabled={loading}
         >
           <Icon
             name="location"
             size={18}
-            color={vibesTheme.colors.accentCoral}
-            style={{ marginRight: 8 }}
+            color={vibesTheme.colors.accentBlue}
           />
-          <Text style={styles.welcomeSecondaryText}>
+          <Text style={onboardingStyles.locationButtonText}>
             {loading ? t("onboarding.gettingLocation") : t("onboarding.useMyLocation")}
           </Text>
         </TouchableOpacity>

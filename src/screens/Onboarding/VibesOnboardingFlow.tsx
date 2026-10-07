@@ -716,7 +716,10 @@ const VibesOnboardingFlow = () => {
           activeOpacity={0.84}
           disabled={locationLoading}
           onPress={() => void requestLocation()}
-          style={onboardingStyles.locationButton}
+          style={[
+            onboardingStyles.locationButton,
+            locationLoading && onboardingStyles.locationButtonDisabled,
+          ]}
         >
           <Icon
             name="location"
