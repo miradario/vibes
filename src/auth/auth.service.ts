@@ -59,11 +59,15 @@ export const loginWithGoogle = async () => authClient.signInWithGoogle();
 export const loginWithApple = async () => authClient.signInWithApple();
 
 export const resetPassword = async ({ email }: ResetPasswordInput) => {
+  email = email.trim().toLowerCase();
   if (!isValidEmail(email)) throw new Error("Ingresá un email válido.");
+  const route = await authClient.getPasswordRecoveryRoute(email);
+  if (route === "google") return "google" as const;
   const { error } = await authClient.resetPasswordForEmail(email);
   if (error) {
     throw error;
   }
+  return "email" as const;
 };
 
 export const exchangePasswordResetCode = async (code: string) => {

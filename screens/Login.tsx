@@ -62,6 +62,7 @@ const Login = () => {
   const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
+  const [showGoogleLoginDialog, setShowGoogleLoginDialog] = useState(false);
   const loginMutation = useLoginMutation();
   const googleLoginMutation = useGoogleLoginMutation();
   const appleLoginMutation = useAppleLoginMutation();
@@ -176,8 +177,9 @@ const Login = () => {
     setError(null);
 
     try {
-      await resetPasswordMutation.mutateAsync({ email: trimmedEmail });
-      setShowResetPasswordDialog(true);
+      const route = await resetPasswordMutation.mutateAsync({ email: trimmedEmail });
+      if (route === "google") setShowGoogleLoginDialog(true);
+      else setShowResetPasswordDialog(true);
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : t("login.resetPasswordFailed");
@@ -349,6 +351,14 @@ const Login = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CustomDialog
+        visible={showGoogleLoginDialog}
+        title={t("login.googleRecoveryTitle")}
+        message={t("login.googleRecoveryMessage")}
+        primaryLabel={t("login.resetPasswordSentPrimary")}
+        onPrimaryPress={() => setShowGoogleLoginDialog(false)}
+        onClose={() => setShowGoogleLoginDialog(false)}
+      />
       <CustomDialog
         visible={showResetPasswordDialog}
         title={t("login.resetPasswordSentTitle")}

@@ -1,11 +1,14 @@
 import React, { memo, useEffect, useMemo, useRef } from "react";
 import { Group, NoToneMapping, SRGBColorSpace } from "three";
+import { Platform } from "react-native";
+import { isDevice } from "expo-device";
 import { Canvas, useThree, prepareVibiContext } from "./VibiCanvas";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { VibiAnimator } from "../src/vibi/animation";
 import { finishAnimation, vibiController } from "../src/vibi/controller";
 import type { VibiAnimation } from "../src/vibi/controller";
 import type { VibiModel } from "../src/vibi/model";
+import { createVibiScene } from "../src/vibi/renderScene";
 
 export type VibiRendererProps = {
   animation?: VibiAnimation;
@@ -34,7 +37,12 @@ function Character({
 }: VibiRendererProps) {
   const turntable = useRef<Group>(null);
   const lastRequest = useRef("");
-  const root = useMemo(() => model.scene.clone(true), [model]);
+  const renderedModel = useMemo(
+    () => createVibiScene(model.scene, Platform.OS === "ios" && !isDevice),
+    [model]
+  );
+  const root = renderedModel.scene;
+  useEffect(() => () => renderedModel.dispose(), [renderedModel]);
   const playback = useRef({ animation, reducedMotion });
   playback.current = { animation, reducedMotion };
   const cycleCallback = useRef(onCycleComplete);

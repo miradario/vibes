@@ -104,7 +104,7 @@ export const useAppleLoginMutation = () => {
 };
 
 export const useResetPasswordMutation = () => {
-  return useMutation<void, unknown, ResetPasswordInput>({
+  return useMutation<"google" | "email", unknown, ResetPasswordInput>({
     mutationFn: authService.resetPassword,
   });
 };

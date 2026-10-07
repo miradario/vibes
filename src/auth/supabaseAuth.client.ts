@@ -97,6 +97,15 @@ export const resetPasswordForEmail = async (email: string) => {
   throw new Error("Password reset is not supported by this auth client.");
 };
 
+export const getPasswordRecoveryRoute = async (email: string): Promise<"google" | "email"> => {
+  const { data, error } = await supabase.functions.invoke("password-recovery-route", {
+    body: { email: email.trim().toLowerCase() },
+  });
+  if (error || (data?.route !== "google" && data?.route !== "email"))
+    throw new Error("No pudimos consultar el método de acceso. Intentá nuevamente en un minuto.");
+  return data.route;
+};
+
 export const exchangeCodeForSession = async (code: string) => {
   const auth = supabase.auth as any;
   if (typeof auth.exchangeCodeForSession !== "function") {

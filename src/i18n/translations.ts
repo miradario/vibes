@@ -131,6 +131,8 @@ const baseTranslations = {
       resetPasswordSentMessage:
         "Te enviamos un link para recuperar tu contraseña.",
       resetPasswordSentPrimary: "Entendido",
+      googleRecoveryTitle: "Ingresá con Google",
+      googleRecoveryMessage: "Esta cuenta está vinculada a Google. Para iniciar sesión, usá tu cuenta de Google. No necesitás recuperar una contraseña de Vibes.",
       createAccountDialogTitle: "No encontramos tu cuenta",
       createAccountDialogMessage:
         "Ese email todavía no tiene una cuenta en Vibes. Creá una cuenta para comenzar.",
@@ -735,6 +737,8 @@ const baseTranslations = {
       resetPasswordSentTitle: "Check your email",
       resetPasswordSentMessage: "We sent you a link to recover your password.",
       resetPasswordSentPrimary: "Got it",
+      googleRecoveryTitle: "Sign in with Google",
+      googleRecoveryMessage: "This account is linked to Google. Sign in with your Google account. You don't need to reset a Vibes password.",
       createAccountDialogTitle: "We could not find your account",
       createAccountDialogMessage:
         "That email does not have a Vibes account yet. Create an account to begin.",
