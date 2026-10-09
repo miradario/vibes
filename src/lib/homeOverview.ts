@@ -1,3 +1,4 @@
+import { nextEventSession } from "./eventSchedule";
 import type { EventFeedItem } from "../queries/events.queries";
 
 export const getUpcomingHomeEvents = (events: EventFeedItem[], now: number) =>
@@ -5,12 +6,12 @@ export const getUpcomingHomeEvents = (events: EventFeedItem[], now: number) =>
     .filter(
       (event) =>
         event.type === "event" &&
-        event.startsAt &&
-        new Date(event.startsAt).getTime() > now
+        nextEventSession(event.schedule, event.startsAt, now) !== null
     )
     .sort(
       (a, b) =>
-        new Date(a.startsAt!).getTime() - new Date(b.startsAt!).getTime()
+        Date.parse(nextEventSession(a.schedule, a.startsAt, now)!.startsAt) -
+        Date.parse(nextEventSession(b.schedule, b.startsAt, now)!.startsAt)
     )
     .slice(0, 3);
 

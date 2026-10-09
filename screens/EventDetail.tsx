@@ -1,3 +1,4 @@
+import { normalizeSchedule, formatSession } from "../src/lib/eventSchedule";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { getChallengeDay, completedChallengeDays, getChallengeStreaks } from "../src/lib/challengeProgress";
 import MediaImage from "../components/MediaImage";
@@ -1077,8 +1078,8 @@ const EventDetail = () => {
     }
   };
 
-  const handleOpenCalendar = async () => {
-    const baseDate = validStartDate ?? todayDate;
+  const handleOpenCalendar = async (sessionStart?: string) => {
+    const baseDate = sessionStart ? new Date(sessionStart) : validStartDate ?? todayDate;
     const start = new Date(baseDate);
     const end = new Date(baseDate);
     const isAllDayChallenge = isChallenge;
@@ -1582,22 +1583,27 @@ const EventDetail = () => {
                   <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
                 </TouchableOpacity>
 
+                {normalizeSchedule(event.schedule, event.startsAt).map((entry) => (
                 <TouchableOpacity
+                  key={entry.startsAt}
                   activeOpacity={0.85}
                   style={styles.eventDetailInfoRow}
-                  onPress={handleOpenCalendar}
+                  onPress={() => handleOpenCalendar(entry.startsAt)}
                 >
                   <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                     <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
                   </View>
                   <View style={styles.eventDetailInfoCopy}>
-                    <Text style={styles.eventDetailInfoText}>{event.date}</Text>
+                    <Text style={styles.eventDetailInfoText}>{formatSession(entry.startsAt)}</Text>
                     <Text style={styles.eventDetailInfoLabel}>
                       Agregar a mi calendario
                     </Text>
                   </View>
                   <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
                 </TouchableOpacity>
+
+                ))}
+                <Text style={styles.eventDetailInfoText}>{event.capacity && event.capacity > 0 ? `Cupos: ${event.capacity}` : "Cupos ilimitados"}</Text>
 
                 {modality === "in_person" && eventLocation ? (
                   <>
@@ -1747,7 +1753,7 @@ const EventDetail = () => {
               <TouchableOpacity
                 activeOpacity={0.85}
                 style={styles.eventDetailInfoRow}
-                onPress={handleOpenCalendar}
+                onPress={() => handleOpenCalendar()}
               >
                 <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                   <Icon name="calendar" size={18} color={PRIMARY_COLOR} />

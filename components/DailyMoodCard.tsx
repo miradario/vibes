@@ -1,3 +1,4 @@
+import EnergySlider from "./EnergySlider";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   AppState,
@@ -292,32 +293,13 @@ export default function DailyMoodCard({
               Del 1 (muy bajo) al 10 (muy alto).
             </Text>
             {ENERGY_SOURCES.map((source) => (
-              <View key={source} style={s.energySource}>
-                <Text style={s.sourceTitle}>{source}</Text>
-                <View style={s.options}>
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((score) => (
-                    <TouchableOpacity
-                      key={score}
-                      accessibilityRole="radio"
-                      accessibilityLabel={`${source}: ${score} de 10`}
-                      accessibilityState={{
-                        selected: energy[source] === score,
-                        disabled: loading || saving,
-                      }}
-                      disabled={loading || saving}
-                      onPress={() =>
-                        setEnergy((current) => ({
-                          ...current,
-                          [source]: score,
-                        }))
-                      }
-                      style={[s.score, energy[source] === score && s.selected]}
-                    >
-                      <Text style={s.scoreText}>{score}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
+              <EnergySlider
+                key={source}
+                label={source}
+                value={energy[source]}
+                disabled={loading || saving}
+                onChange={(score) => setEnergy((current) => ({ ...current, [source]: score }))}
+              />
             ))}
           </View>
         ) : prompt.kind === "service" ? (
@@ -457,20 +439,6 @@ const s = StyleSheet.create({
   },
   energySources: { gap: 20 },
   energySource: { gap: 8 },
-  sourceTitle: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  score: {
-    minWidth: 48,
-    minHeight: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.secondaryText,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   scoreText: { color: vibesTheme.colors.primaryText, fontSize: 16 },
   heroIcon: {
     width: 54,

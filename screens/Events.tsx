@@ -1,3 +1,4 @@
+import { eventHasExpired, normalizeSchedule, nextEventSession } from "../src/lib/eventSchedule";
 import MediaImage from "../components/MediaImage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ScreenContainer from "../components/ScreenContainer";
@@ -94,14 +95,8 @@ const sortChallengesByStartsAt = (items: EventFeedItem[]) =>
     return leftTime - rightTime;
   });
 
-const isExpiredEvent = (item: EventFeedItem) => {
-  if (item.type !== "event" || !item.startsAt) return false;
-  const startsAt = new Date(item.startsAt);
-  if (Number.isNaN(startsAt.getTime())) return false;
-  const endOfEventDay = new Date(startsAt);
-  endOfEventDay.setHours(23, 59, 59, 999);
-  return endOfEventDay.getTime() < Date.now();
-};
+const isExpiredEvent = (item: EventFeedItem) =>
+  item.type === "event" && eventHasExpired(item.schedule, item.startsAt);
 
 const getVisibilityMeta = (visibility?: EventFeedItem["visibility"]) => {
   if (visibility === "friends") {
@@ -598,10 +593,13 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             const item = listItem.item;
             const participantCount = parseParticipantCount(item.attendees);
             if (item.type === "event") {
-              const startsAt = item.startsAt ? new Date(item.startsAt) : null;
+              const sessions = normalizeSchedule(item.schedule, item.startsAt);
+              const upcoming = nextEventSession(sessions);
+              const startsAt = upcoming ? new Date(upcoming.startsAt) : sessions.length ? new Date(sessions[sessions.length - 1].startsAt) : null;
               const dateLabel = startsAt && !Number.isNaN(startsAt.getTime())
                 ? `${startsAt.toLocaleDateString("es-AR", { day: "numeric", month: "short" }).replace(/\./g, "")} · ${startsAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })}`
                 : item.date;
+              const scheduleLabel = sessions.length > 1 ? `${dateLabel} · ${sessions.length} horarios` : dateLabel;
               const count = item.participantCount ?? participantCount;
               const participantsLabel = `${count} ${count === 1 ? "participante" : "participantes"}`;
               return (
@@ -609,7 +607,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                   style={localStyles.eventListRow}
                   activeOpacity={0.78}
                   accessibilityRole="button"
-                  accessibilityLabel={`Ver ${item.title}, ${dateLabel}, ${participantsLabel}`}
+                  accessibilityLabel={`Ver ${item.title}, ${scheduleLabel}, ${participantsLabel}`}
                   onPress={() => navigation.navigate("EventDetail" as never, { event: item } as never)}
                 >
                   <MediaImage
@@ -620,7 +618,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                     <Text style={localStyles.eventTitle} numberOfLines={2}>{item.title}</Text>
                     <View style={localStyles.eventMetadataRow}>
                       <Icon name="calendar-outline" size={17} color={vibesTheme.colors.secondaryText} />
-                      <Text style={localStyles.eventMetadataText}>{dateLabel}</Text>
+                      <Text style={localStyles.eventMetadataText}>{scheduleLabel}</Text>
                     </View>
                     <View style={localStyles.eventMetadataRow}>
                       <Icon name="people" size={17} color={vibesTheme.colors.secondaryText} />

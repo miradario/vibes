@@ -1,3 +1,4 @@
+import { normalizeSchedule, formatAttendees, type EventSession } from "../lib/eventSchedule";
 import { localDayKey, calendarDayNumber } from "../lib/challengeProgress";
 import { useLocalDay } from "../hooks/useLocalDay";
 import { parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../constants/eventClassification";
@@ -39,6 +40,7 @@ export type EventFeedItem = {
   description?: string | null;
   date: string;
   startsAt?: string | null;
+  schedule?: EventSession[];
   attendees: string;
   participantCount?: number;
   capacity?: number | null;
@@ -76,6 +78,7 @@ type CreateEventInput = {
   subtitle: string;
   description?: string | null;
   startsAt: string;
+  schedule?: EventSession[];
   location?: string | null;
   locationLatitude?: number | null;
   locationLongitude?: number | null;
@@ -100,6 +103,7 @@ type UpdateEventInput = {
   subtitle: string;
   description?: string | null;
   startsAt: string;
+  schedule?: EventSession[];
   location?: string | null;
   locationLatitude?: number | null;
   locationLongitude?: number | null;
@@ -230,8 +234,9 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
         ? formatEventDateTime(parsedStartsAt)
         : "Sin fecha definida",
     startsAt,
+    schedule: normalizeSchedule(row.schedule, startsAt),
     attendees:
-      type === "challenge" ? "Desafío" : `${participantCount}/${capacity || 0}`,
+      type === "challenge" ? "Desafío" : formatAttendees(participantCount, capacity),
     participantCount: type === "event" ? participantCount : undefined,
     capacity: type === "event" ? capacity : null,
     durationDays: type === "challenge" ? durationDays : null,
@@ -733,7 +738,7 @@ const enrichFeedItemsWithProfileImages = async (
         attendees:
           item.type === "event" &&
           typeof participantCountMap?.[item.id] === "number"
-            ? `${participantCountMap[item.id]}/${item.capacity || 0}`
+            ? formatAttendees(participantCountMap[item.id], item.capacity)
             : item.attendees,
         hostImage: signedHostImage,
         participantPreviewImages,
@@ -1000,6 +1005,7 @@ export const useCreateEventMutation = () => {
           subtitle: input.subtitle,
           description: encodedDescription,
           starts_at: input.startsAt,
+          schedule: normalizeSchedule(input.schedule, input.startsAt),
           location: input.location ?? null,
           location_latitude: input.locationLatitude ?? null,
           location_longitude: input.locationLongitude ?? null,
@@ -1075,6 +1081,7 @@ export const useUpdateEventMutation = () => {
           subtitle: input.subtitle,
           description: encodedDescription,
           starts_at: input.startsAt,
+          schedule: normalizeSchedule(input.schedule, input.startsAt),
           location: input.location ?? null,
           location_latitude: input.locationLatitude ?? null,
           location_longitude: input.locationLongitude ?? null,

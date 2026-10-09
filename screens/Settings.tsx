@@ -417,7 +417,7 @@ const Settings = () => {
             <TextInput
               style={localStyles.aboutInput}
               multiline
-              numberOfLines={5}
+              numberOfLines={8}
               value={aboutMe}
               onChangeText={setAboutMe}
               placeholder={t("settings.aboutMePlaceholder")}
@@ -854,7 +854,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: DARK_GRAY,
-    minHeight: 120,
+    minHeight: 180,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.primary,
   },

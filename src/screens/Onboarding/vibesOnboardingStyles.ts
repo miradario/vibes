@@ -255,7 +255,7 @@ export const onboardingStyles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   textAreaRow: {
-    minHeight: 92,
+    minHeight: 160,
     alignItems: "flex-start",
     paddingTop: 16,
     paddingBottom: 14,
@@ -267,7 +267,7 @@ export const onboardingStyles = StyleSheet.create({
     marginLeft: 12,
   },
   textAreaInput: {
-    minHeight: 62,
+    minHeight: 128,
     paddingTop: 0,
     paddingBottom: 0,
   },

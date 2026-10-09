@@ -1,3 +1,4 @@
+import { normalizeSchedule } from "./eventSchedule";
 export const normalizeEventSearch = (value: string | null | undefined) =>
   (value ?? "")
     .normalize("NFD")
@@ -6,7 +7,7 @@ export const normalizeEventSearch = (value: string | null | undefined) =>
     .trim();
 
 export function matchesEventDateAndLocation(
-  item: { startsAt?: string | null; location?: string | null },
+  item: { startsAt?: string | null; schedule?: unknown; location?: string | null },
   from: Date | null,
   to: Date | null,
   location: string
@@ -17,19 +18,14 @@ export function matchesEventDateAndLocation(
   )
     return false;
   if (!from && !to) return true;
-  const time = item.startsAt ? new Date(item.startsAt).getTime() : NaN;
-  if (!Number.isFinite(time)) return false;
-  if (from) {
-    const start = new Date(from);
-    start.setHours(0, 0, 0, 0);
-    if (time < start.getTime()) return false;
-  }
-  if (to) {
-    const end = new Date(to);
-    end.setHours(23, 59, 59, 999);
-    if (time > end.getTime()) return false;
-  }
-  return true;
+  const start = from ? new Date(from) : null;
+  start?.setHours(0, 0, 0, 0);
+  const end = to ? new Date(to) : null;
+  end?.setHours(23, 59, 59, 999);
+  return normalizeSchedule(item.schedule, item.startsAt).some(({ startsAt }) => {
+    const time = Date.parse(startsAt);
+    return (!start || time >= start.getTime()) && (!end || time <= end.getTime());
+  });
 }
 
 export type EventDatePreset = "today" | "tomorrow" | "week" | "month";

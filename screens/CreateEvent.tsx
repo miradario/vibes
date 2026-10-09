@@ -1,3 +1,5 @@
+import EventScheduleEditor from "../components/EventScheduleEditor";
+import { normalizeSchedule, serializeSchedule, sessionDraft } from "../src/lib/eventSchedule";
 import EventClassificationPicker from "../components/EventClassificationPicker";
 import { EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
 import { launchAppCamera } from "../components/AppCamera";
@@ -21,9 +23,6 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as ExpoLocation from "expo-location";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import styles, {
   DARK_GRAY,
   TEXT_SECONDARY,
@@ -51,22 +50,6 @@ const IMAGE_MEDIA_TYPE =
     ? [(ImagePicker as any).MediaType.Images]
     : ["images"];
 const PLACEHOLDER_COLOR = "rgba(43, 43, 43, 0.34)";
-
-const formatEventDate = (value: Date) =>
-  value.toLocaleDateString("es-AR", {
-    day: "numeric",
-    month: "long",
-  });
-
-const formatEventTime = (value: Date) =>
-  value.toLocaleTimeString("es-AR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-
-const formatEventDateTime = (value: Date) =>
-  `${formatEventDate(value)} · ${formatEventTime(value)}`;
 
 const normalizeCapacityInput = (value: string) => value.replace(/\D+/g, "");
 
@@ -128,7 +111,7 @@ const getMissingEventFields = (params: {
   if (params.modality === "online" && !params.onlineLink.trim()) {
     missing.push("link online");
   }
-  if (!params.capacity.trim()) missing.push("cupos");
+  if (!/^\d+$/.test(params.capacity) || !Number.isSafeInteger(Number(params.capacity)) || Number(params.capacity) <= 0 || Number(params.capacity) > 2147483647) missing.push("cupos");
   if (!params.hasSelectedImage) missing.push("foto de portada");
 
   return missing;
@@ -193,13 +176,13 @@ const CreateEvent = () => {
         ? editingEvent.subtitle
         : "",
   );
-  const [eventDateTime, setEventDateTime] = useState<Date | null>(() => {
-    if (typeof editingEvent?.startsAt === "string" && editingEvent.startsAt.trim()) {
-      const parsed = new Date(editingEvent.startsAt);
-      if (!Number.isNaN(parsed.getTime())) return parsed;
-    }
-    return null;
+  const [scheduleDrafts, setScheduleDrafts] = useState(() => {
+    const existing = normalizeSchedule(editingEvent?.schedule, editingEvent?.startsAt);
+    return existing.length ? existing.map((entry) => sessionDraft(entry.startsAt)) : [sessionDraft()];
   });
+  const schedule = serializeSchedule(scheduleDrafts);
+  const eventDateTime = schedule?.length ? new Date(schedule[0].startsAt) : null;
+  const [unlimitedCapacity, setUnlimitedCapacity] = useState(editingEvent?.capacity === 0);
   const [category, setCategory] = useState<EventCategory | null>(parseEventCategory(editingEvent?.category));
   const [participationType, setParticipationType] = useState<EventParticipationType | null>(parseEventParticipationType(editingEvent?.participationType));
   const [capacity, setCapacity] = useState(
@@ -229,7 +212,6 @@ const CreateEvent = () => {
   const [isValidatingLocation, setIsValidatingLocation] = useState(false);
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
-  const [pickerMode, setPickerMode] = useState<"date" | "time" | null>(null);
   const [validatedLocation, setValidatedLocation] = useState<{
     address: string;
     lat: number | null;
@@ -270,7 +252,7 @@ const CreateEvent = () => {
     location,
     modality,
     onlineLink,
-    capacity,
+    capacity: unlimitedCapacity ? "1" : capacity,
     hasSelectedImage,
   });
   if (!category) missingFields.push("categoría");
@@ -286,43 +268,6 @@ const CreateEvent = () => {
   const isEventLinkValid = hasEventLink && isValidExternalUrl(eventLink);
   const isEventLinkInvalid = hasEventLink && !isEventLinkValid;
   const isFormComplete = missingFields.length === 0;
-
-  const openDatePicker = () => {
-    setPickerMode("date");
-  };
-
-  const openTimePicker = () => {
-    setPickerMode("time");
-  };
-
-  const handleDateTimeChange = (
-    event: DateTimePickerEvent,
-    selectedValue?: Date,
-  ) => {
-    if (Platform.OS === "android") {
-      setPickerMode(null);
-    }
-
-    if (event.type === "dismissed" || !selectedValue) {
-      return;
-    }
-
-    const baseDate = eventDateTime ? new Date(eventDateTime) : new Date();
-
-    if (pickerMode === "date") {
-      baseDate.setFullYear(
-        selectedValue.getFullYear(),
-        selectedValue.getMonth(),
-        selectedValue.getDate(),
-      );
-    }
-
-    if (pickerMode === "time") {
-      baseDate.setHours(selectedValue.getHours(), selectedValue.getMinutes(), 0, 0);
-    }
-
-    setEventDateTime(baseDate);
-  };
 
   const pickFromGallery = async () => {
     const current = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -523,7 +468,7 @@ const CreateEvent = () => {
       return;
     }
 
-    const parsedCapacity = capacity.trim() ? Number.parseInt(capacity, 10) : 0;
+    const parsedCapacity = unlimitedCapacity ? 0 : Number.parseInt(capacity, 10);
     const hasUnvalidatedInPersonLocation =
       modality === "in_person" && location.trim() && !validatedLocation;
 
@@ -576,6 +521,7 @@ const CreateEvent = () => {
           subtitle: subtitle.trim() || "Evento creado por la comunidad",
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt,
+          schedule: schedule!,
           location: resolvedLocation,
           locationLatitude:
             modality === "in_person" && validatedLocation
@@ -603,6 +549,7 @@ const CreateEvent = () => {
           subtitle: subtitle.trim() || "Evento creado por la comunidad",
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt,
+          schedule: schedule!,
           location: resolvedLocation,
           locationLatitude:
             modality === "in_person" && validatedLocation
@@ -797,65 +744,8 @@ const CreateEvent = () => {
             </View>
           ) : null}
 
-          <Text style={localStyles.label}>Fecha y hora</Text>
-          <View style={localStyles.dateTimeRow}>
-            <TouchableOpacity
-              style={localStyles.dateTimeButton}
-              onPress={openDatePicker}
-            >
-              <Icon name="calendar" size={16} color={TEXT_SECONDARY} />
-              <Text
-                style={[
-                  localStyles.dateTimeButtonText,
-                  !eventDateTime && localStyles.dateTimePlaceholder,
-                ]}
-                numberOfLines={1}
-              >
-                {eventDateTime ? formatEventDate(eventDateTime) : "Fecha"}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={localStyles.dateTimeButton}
-              onPress={openTimePicker}
-            >
-              <Icon name="time" size={16} color={TEXT_SECONDARY} />
-              <Text
-                style={[
-                  localStyles.dateTimeButtonText,
-                  !eventDateTime && localStyles.dateTimePlaceholder,
-                ]}
-                numberOfLines={1}
-              >
-                {eventDateTime ? formatEventTime(eventDateTime) : "Hora"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {eventDateTime ? (
-            <Text style={localStyles.selectedDateTimeText}>
-              {formatEventDateTime(eventDateTime)}
-            </Text>
-          ) : null}
-          {pickerMode ? (
-            <View style={localStyles.pickerWrap}>
-              <DateTimePicker
-                value={eventDateTime ?? new Date()}
-                mode={pickerMode}
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                minimumDate={pickerMode === "date" ? new Date() : undefined}
-                onChange={handleDateTimeChange}
-                is24Hour
-              />
-              {Platform.OS === "ios" ? (
-                <TouchableOpacity
-                  style={localStyles.pickerDoneButton}
-                  onPress={() => setPickerMode(null)}
-                >
-                  <Text style={localStyles.pickerDoneText}>Listo</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          ) : null}
+          <Text style={localStyles.label}>Fechas y horarios</Text>
+          <EventScheduleEditor value={scheduleDrafts} onChange={setScheduleDrafts} />
 
           <EventClassificationPicker label="Categoría · qué actividad es" options={EVENT_CATEGORIES} value={category} onChange={setCategory} />
           <EventClassificationPicker label="Tipo · cómo se participa" options={EVENT_PARTICIPATION_TYPES} value={participationType} onChange={setParticipationType} />
@@ -1080,7 +970,15 @@ const CreateEvent = () => {
           ) : null}
 
           <Text style={localStyles.label}>Cupos</Text>
-          <TextInput
+          <View style={localStyles.choiceRow}>
+            {[false, true].map((unlimited) => <TouchableOpacity key={String(unlimited)}
+              accessibilityRole="button" accessibilityState={{ selected: unlimitedCapacity === unlimited }}
+              onPress={() => setUnlimitedCapacity(unlimited)}
+              style={[localStyles.choiceChip, unlimitedCapacity === unlimited && localStyles.choiceChipActive]}>
+              <Text style={localStyles.choiceChipText}>{unlimited ? "Ilimitados" : "Limitados"}</Text>
+            </TouchableOpacity>)}
+          </View>
+          {!unlimitedCapacity ? <TextInput
             ref={capacityInputRef}
             style={localStyles.input}
             placeholder="20"
@@ -1090,7 +988,7 @@ const CreateEvent = () => {
             keyboardType="number-pad"
             returnKeyType="done"
             onSubmitEditing={() => Keyboard.dismiss()}
-          />
+          /> : null}
         </View>
 
       </ScrollView>

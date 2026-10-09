@@ -33,7 +33,7 @@
         "NSLocationWhenInUseUsageDescription": "Vibes uses your location while the app is open to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
-        "NSMicrophoneUsageDescription": "Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío."
+        "NSMicrophoneUsageDescription": "Vibes usa el micr\u00f3fono cuando eleg\u00eds grabar un audio para un d\u00eda de tu desaf\u00edo."
       },
       "googleServicesFile": "./config/firebase/GoogleService-Info.plist"
     },
@@ -47,7 +47,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 35,
+      "versionCode": 36,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
@@ -103,7 +103,7 @@
           "android": {
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRules": "# JNA references desktop AWT APIs that are unavailable and unused on Android.\n-dontwarn java.awt.Component\n-dontwarn java.awt.GraphicsEnvironment\n-dontwarn java.awt.HeadlessException\n-dontwarn java.awt.Window"
+            "extraProguardRules": "# JNA references desktop AWT APIs that are unavailable and unused on Android.\n-dontwarn java.awt.Component\n-dontwarn java.awt.GraphicsEnvironment\n-dontwarn java.awt.HeadlessException\n-dontwarn java.awt.Window\n\n# Expo creates GLView through reflection; it does not extend ExpoView.\n-keep class expo.modules.gl.GLView {\n    public <init>(android.content.Context, expo.modules.kotlin.AppContext);\n}\n\n# Worklets reads this React Native field reflectively during teardown.\n-keepclassmembers class com.facebook.react.bridge.queue.MessageQueueThreadImpl {\n    boolean mIsFinished;\n}\n\n# expo-gl JNI resolves this method by its original name.\n-keepclassmembers class expo.modules.gl.GLContext {\n    public void flush();\n}\n"
           },
           "ios": {
             "deploymentTarget": "15.4",

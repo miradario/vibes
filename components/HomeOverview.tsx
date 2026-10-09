@@ -1,3 +1,4 @@
+import { nextEventSession } from "../src/lib/eventSchedule";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -231,7 +232,7 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
   const navigation = useNavigation<any>();
   const { width } = useWindowDimensions();
   const cardWidth = Math.max(140, Math.min(260, (width - 50) / 2));
-  const label = getEventDateLabel(event.startsAt!);
+  const label = getEventDateLabel(nextEventSession(event.schedule, event.startsAt)?.startsAt ?? event.startsAt!);
   const participantImages = (event.participantPreviewImages ?? []).map(
     (uri, index) => ({ id: `${event.id}-${index}`, uri })
   );

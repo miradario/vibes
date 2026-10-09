@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "882317782417",
+    "project_id": "vibes-d05e4",
+    "storage_bucket": "vibes-d05e4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882317782417:android:75bfeb4fec5c681b25fe30",
+        "android_client_info": {
+          "package_name": "com.miradario.vibe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "882317782417-0g7fu4cv1dn5sj06mqm53ucuqf56ak82.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbLZvzA_EiuawDkdJEjwwW_9WmPHIFKT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "882317782417-0g7fu4cv1dn5sj06mqm53ucuqf56ak82.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

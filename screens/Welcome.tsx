@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, View } from "react-native";
+import { Animated, Image, Pressable, StyleSheet, View } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { Text } from "../components/Typography";
@@ -22,6 +22,7 @@ const Welcome = () => {
   const focused = useIsFocused();
   const { active, reducedMotion, motionReady } = useVibiRuntime();
   const [modelReady, setModelReady] = useState(false);
+  const [renderUnavailable, setRenderUnavailable] = useState(false);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [intro] = useState({ replayKey: 0, skip: welcomeIntroShown });
   const [buttonsEnabled, setButtonsEnabled] = useState(welcomeIntroShown);
@@ -50,9 +51,20 @@ const Welcome = () => {
   }, []);
   const failed = useCallback(() => {
     welcomeIntroShown = true;
+    setRenderUnavailable(true);
     setModelReady(true);
     progress(WELCOME_INTRO_DURATION);
   }, [progress]);
+  // Authentication must remain reachable even if model loading, GL setup or
+  // the intro frame scheduler stalls without reporting an error.
+  useEffect(() => {
+    if (!focused || !active || buttonsEnabled) return;
+    const timeout = setTimeout(() => {
+      console.warn("[Welcome] intro timed out; showing static welcome");
+      failed();
+    }, 8000);
+    return () => clearTimeout(timeout);
+  }, [focused, active, buttonsEnabled, failed]);
   useEffect(() => {
     if (!isLoading && focused && session?.user?.id)
       navigation.navigate("Tab" as never);
@@ -74,7 +86,16 @@ const Welcome = () => {
           pointerEvents="none"
           style={StyleSheet.absoluteFill}
         >
-          {motionReady && viewport.width > 0 && viewport.height > 0 && (
+          {renderUnavailable ? (
+            <View style={styles.fallbackLogoWrap}>
+              <Image
+                source={require("../assets/adaptive-icon.png")}
+                style={styles.fallbackLogo}
+                resizeMode="contain"
+                accessibilityIgnoresInvertColors
+              />
+            </View>
+          ) : motionReady && viewport.width > 0 && viewport.height > 0 && (
             <Vibi
               width={viewport.width}
               height={viewport.height}
@@ -143,6 +164,12 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   loading: { backgroundColor: colors.accentMustard },
   content: { flex: 1, backgroundColor: colors.background },
+  fallbackLogoWrap: {
+    height: "50%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fallbackLogo: { width: "65%", height: "85%" },
   titleWrap: { position: "absolute", width: "100%", alignItems: "center" },
   title: {
     fontFamily: vibesTheme.fonts.thin,

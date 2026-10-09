@@ -6,13 +6,14 @@ function load(file) {
   const exports = {};
   new Function(
     "exports",
+    "require",
     ts.transpileModule(fs.readFileSync(file, "utf8"), {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ES2020,
       },
     }).outputText
-  )(exports);
+  )(exports, (name) => load(require('node:path').resolve(require('node:path').dirname(file), `${name}.ts`)));
   return exports;
 }
 const { matchesEventDateAndLocation } = load("src/lib/eventFilters.ts");

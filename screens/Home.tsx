@@ -1,3 +1,4 @@
+import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
 import PhotoViewer from "../components/PhotoViewer";
 import { LinearGradient } from "expo-linear-gradient";
 import ProfileMediaImage from "../components/ProfileMediaImage";
@@ -362,7 +363,7 @@ const Home = () => {
     any
   > | null;
   const profiles = useMemo<DataT[]>(() => {
-    return candidates
+    const eligible = candidates
       .map((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
         const distanceKm = getDistanceKm(
@@ -375,6 +376,7 @@ const Home = () => {
         return {
           ...candidateRecord,
           distanceKm: distanceKm ?? undefined,
+          suggestionAge: parseAge(candidateRecord.age ?? candidateRecord.birthDate ?? candidateRecord.birth_date),
         };
       })
       .filter((candidate) => {
@@ -427,7 +429,11 @@ const Home = () => {
         }
 
         return true;
-      })
+      });
+    return rankHomeSuggestions(eligible, {
+      ...ownProfileRecord, ...userPreferences,
+      suggestionAge: parseAge(ownProfileRecord?.age ?? ownProfileRecord?.birthDate ?? ownProfileRecord?.birth_date),
+    }, discoverFilters)
       .map((candidate) => {
         const profile = mapCandidateToConnectionProfile(candidate);
         const candidateRecord = candidate as Record<string, any>;
@@ -444,8 +450,8 @@ const Home = () => {
   }, [
     candidates,
     discoverFilters,
-    ownProfileRecord?.latitude,
-    ownProfileRecord?.longitude,
+    ownProfileRecord,
+    userPreferences,
   ]);
   const centerProfile = useMemo<DataT>(
     () =>

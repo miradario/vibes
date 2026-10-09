@@ -18,3 +18,18 @@
 -dontwarn java.awt.GraphicsEnvironment
 -dontwarn java.awt.HeadlessException
 -dontwarn java.awt.Window
+
+# Expo creates GLView through reflection; it does not extend ExpoView.
+-keep class expo.modules.gl.GLView {
+    public <init>(android.content.Context, expo.modules.kotlin.AppContext);
+}
+
+# Worklets reads this React Native field reflectively during teardown.
+-keepclassmembers class com.facebook.react.bridge.queue.MessageQueueThreadImpl {
+    boolean mIsFinished;
+}
+
+# expo-gl JNI resolves this method by its original name.
+-keepclassmembers class expo.modules.gl.GLContext {
+    public void flush();
+}

@@ -4,7 +4,9 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const api = {};
-vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/homeOverview.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: api });
+const schedule = {};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/eventSchedule.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, { exports: schedule });
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/homeOverview.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: api, require: () => schedule });
 test('agenda excludes past, invalid and challenge dates and orders next three', () => {
  const events = ['2026-09-24','2026-09-19','2026-09-22','invalid','2026-09-23','2026-09-25'].map((date,id)=>({id,type:'event',startsAt:date+'T12:00:00Z'}));
  events.push({id:99,type:'challenge',startsAt:'2026-09-21T12:00:00Z'});

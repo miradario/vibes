@@ -213,16 +213,19 @@ const VibesOnboardingFlow = () => {
   };
   useEffect(() => {
     transition.setValue(0);
-    Animated.timing(transition, {
+    const animation = Animated.timing(transition, {
       toValue: 1,
       duration: ANIMATION_DURATION,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
-    }).start();
+    });
+    animation.start();
+    return () => animation.stop();
   }, [stepIndex, transition]);
 
   const animatedStyle = {
-    opacity: transition,
+    // The questions must stay visible even if the native entrance animation
+    // is interrupted while navigating or resuming the app.
     transform: [
       {
         translateY: transition.interpolate({
@@ -586,7 +589,7 @@ const VibesOnboardingFlow = () => {
               onChangeText={setBriefDescription}
               onFocus={() => scrollInputIntoView(descriptionInputRef.current)}
               multiline
-              maxLength={160}
+              maxLength={1000}
               textAlignVertical="top"
             />
           </View>
