@@ -54,6 +54,7 @@ export const shareEventInvite = async (event: EventFeedItem) => {
     event.subtitle || event.description || "Un espacio para conectar con calma.",
     event.date || null,
     event.location || event.onlineLink || null,
+    eventUrl,
   ]
     .filter(Boolean)
     .join("\n");

@@ -39,8 +39,8 @@ export default function EventClassificationPicker<T extends string>({ label, opt
         />
       ) : null}
       <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.options}>
-        {filter ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: !value }} onPress={() => select(null)} style={[s.chip, !value && s.selected]}><Text style={s.text}>Todos</Text></TouchableOpacity> : null}
-        {visibleOptions.map((option) => <TouchableOpacity key={option.id} accessibilityRole="button" accessibilityLabel={`${label}: ${option.label}`} accessibilityState={{ selected: value === option.id }} onPress={() => select(option.id)} style={[s.chip, value === option.id && s.selected]}><Text style={s.text}>{option.label}</Text></TouchableOpacity>)}
+        {filter ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: !value }} onPress={() => select(null)} style={[s.chip, !value && s.selected]}><Text style={[s.text, !value && s.selectedText]}>Todos</Text></TouchableOpacity> : null}
+        {visibleOptions.map((option) => <TouchableOpacity key={option.id} accessibilityRole="button" accessibilityLabel={`${label}: ${option.label}`} accessibilityState={{ selected: value === option.id }} onPress={() => select(option.id)} style={[s.chip, value === option.id && s.selected]}><Text style={[s.text, value === option.id && s.selectedText]}>{option.label}</Text></TouchableOpacity>)}
       </ScrollView>
       {searchable && visibleOptions.length === 0 ? <Text style={s.hint}>No hay ubicaciones que coincidan con tu búsqueda.</Text> : null}
       {!filter && selected?.description ? <Text style={s.hint}>{selected.description}</Text> : null}
@@ -55,5 +55,6 @@ const s = StyleSheet.create({
   chip: { minHeight: 44, justifyContent: "center", paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, borderColor: "rgba(43,43,43,0.18)", backgroundColor: vibesTheme.colors.surface },
   selected: { backgroundColor: vibesTheme.colors.accentBlue, borderColor: vibesTheme.colors.primaryText },
   text: { color: vibesTheme.colors.primaryText, fontSize: 15 },
+  selectedText: { color: vibesTheme.colors.surface },
   hint: { color: vibesTheme.colors.secondaryText, fontSize: 14, lineHeight: 20 },
 });

@@ -26,7 +26,7 @@ test('activity and participation filters are independent and combine with AND', 
   assert.equal(api.matchesEventClassification({}, 'music', null), false);
 });
 test('all supported labels round-trip and are accepted by the database constraints', () => {
-  const sql = fs.readFileSync('supabase/migrations/20260929120000_event_classification.sql', 'utf8');
+  const sql = fs.readFileSync('supabase/migrations/20261010211315_add_service_event_category.sql', 'utf8') + fs.readFileSync('supabase/migrations/20260929120000_event_classification.sql', 'utf8');
   for (const option of api.EVENT_CATEGORIES) {
     assert.equal(api.parseEventCategory(option.id), option.id);
     assert.equal(api.getEventCategoryLabel(option.id), option.label);

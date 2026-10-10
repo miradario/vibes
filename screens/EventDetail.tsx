@@ -39,6 +39,7 @@ import Avatar from "../components/Avatar";
 import AvatarGroup from "../components/AvatarGroup";
 import VibesLoader from "../components/VibesLoader";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
+import EventInviteSheet from "../components/EventInviteSheet";
 import UserProfileSheet from "../components/UserProfileSheet";
 import ChallengeTreeProgress from "../components/ChallengeTreeProgress";
 import ScreenContainer from "../components/ScreenContainer";
@@ -324,6 +325,7 @@ const EventDetail = () => {
   const [checkInNote, setCheckInNote] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
+  const [inviteVisible, setInviteVisible] = useState(false);
   const [eventMapPreviewFailed, setEventMapPreviewFailed] = useState(false);
   const [geocodedMapPreview, setGeocodedMapPreview] = useState<{
     latitude: number;
@@ -1542,6 +1544,50 @@ const EventDetail = () => {
               <View style={localStyles.eventMetaDivider} />
               <View style={styles.eventDetailInfoSection}>
                 <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Invitar personas al evento"
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: 16,
+                    borderRadius: 18,
+                    minHeight: 56,
+                    marginBottom: 14,
+                    backgroundColor: "rgba(57, 120, 184, 0.12)",
+                    borderWidth: 1,
+                    borderColor: vibesTheme.colors.accentBlue,
+                  }}
+                  onPress={() => {
+                    if (!userId) {
+                      navigation.navigate("Login" as never);
+                      return;
+                    }
+                    setInviteVisible(true);
+                  }}
+                >
+                  <Icon
+                    name="person-add-outline"
+                    size={22}
+                    color={vibesTheme.colors.primaryText}
+                  />
+                  <Text
+                    style={{
+                      flex: 1,
+                      color: vibesTheme.colors.primaryText,
+                      fontSize: 16,
+                      fontFamily: vibesTheme.fonts.medium,
+                    }}
+                  >
+                    Invitar al evento
+                  </Text>
+                  <Icon
+                    name="chevron-forward"
+                    size={20}
+                    color={vibesTheme.colors.primaryText}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
                   activeOpacity={0.85}
                   style={styles.eventDetailInfoRow}
                   onPress={() => setParticipantsVisible(true)}
@@ -2042,6 +2088,17 @@ const EventDetail = () => {
       </Modal>
 
       {/* ── Menú hamburguesa ── */}
+      {!isChallenge && userId && event.id ? (
+        <EventInviteSheet
+          event={event}
+          visible={inviteVisible}
+          onClose={() => setInviteVisible(false)}
+          onDiscover={() =>
+            navigation.navigate("Tab" as never, { screen: "Discover" } as never)
+          }
+        />
+      ) : null}
+
       <AnimatedSheetModal
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}

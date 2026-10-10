@@ -13,6 +13,7 @@ export const EVENT_CATEGORIES = [
   { id: "learning", label: "Talleres y aprendizaje" },
   { id: "community", label: "Networking y comunidad" },
   { id: "volunteering", label: "Voluntariado" },
+  { id: "service", label: "Servicio" },
   { id: "spirituality", label: "Espiritualidad" },
 ] as const;
 
