@@ -975,7 +975,7 @@ const CreateEvent = () => {
               accessibilityRole="button" accessibilityState={{ selected: unlimitedCapacity === unlimited }}
               onPress={() => setUnlimitedCapacity(unlimited)}
               style={[localStyles.choiceChip, unlimitedCapacity === unlimited && localStyles.choiceChipActive]}>
-              <Text style={localStyles.choiceChipText}>{unlimited ? "Ilimitados" : "Limitados"}</Text>
+              <Text style={[localStyles.choiceChipText, unlimitedCapacity === unlimited && localStyles.choiceChipTextActive]}>{unlimited ? "Ilimitados" : "Limitados"}</Text>
             </TouchableOpacity>)}
           </View>
           {!unlimitedCapacity ? <TextInput
@@ -1142,8 +1142,8 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   choiceChipActive: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
+    backgroundColor: vibesTheme.colors.accentBlue,
+    borderColor: vibesTheme.colors.accentBlue,
   },
   choiceChipText: {
     color: DARK_GRAY,

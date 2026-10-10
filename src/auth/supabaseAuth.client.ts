@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { supabase } from "../lib/supabase";
 import { recoverInvalidRefreshToken } from "./session.recovery";
+import { vibesTheme } from "../theme/vibesTheme";
 
 type AuthChangeEvent = string;
 type SessionResponse = Awaited<ReturnType<typeof supabase.auth.getSession>>;
@@ -150,7 +151,14 @@ export const signInWithGoogle = async (): Promise<Session | null> => {
 
   const result = await WebBrowser.openAuthSessionAsync(
     data.url,
-    OAUTH_REDIRECT_URL
+    OAUTH_REDIRECT_URL,
+    Platform.OS === "android" ? {
+      // Expo processes these color fields before passing options to Kotlin.
+      // Supply valid values instead of undefined/null in the native record.
+      toolbarColor: vibesTheme.colors.background,
+      secondaryToolbarColor: vibesTheme.colors.background,
+      controlsColor: vibesTheme.colors.primaryText,
+    } : undefined
   );
   if (result.type !== "success") {
     return null;
