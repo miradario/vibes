@@ -463,6 +463,7 @@ const EditProfile = () => {
   const [reordering, setReordering] = useState(false);
   const [busyIndex, setBusyIndex] = useState<number | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const pendingPhotoAction = useRef<(() => Promise<void>) | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const slotLayoutsRef = useRef<Record<number, PhotoSlotLayout>>({});
@@ -752,23 +753,6 @@ const EditProfile = () => {
     return false;
   };
 
-  const ensureLibraryPermission = async () => {
-    const current = await ImagePicker.getMediaLibraryPermissionsAsync();
-    if (current.status === "granted") return true;
-
-    const requested = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (requested.status === "granted") return true;
-    if (!requested.canAskAgain) {
-      promptOpenSettings();
-    } else {
-      Alert.alert(
-        t("editProfile.permissionsTitle"),
-        t("editProfile.galleryPermissionBody")
-      );
-    }
-    return false;
-  };
-
   const uploadPhoto = async (uri: string, slotIndex: number) => {
     const userId = session?.user?.id;
     if (!userId) {
@@ -857,11 +841,6 @@ const EditProfile = () => {
   };
 
   const pickFromLibrary = async (slotIndex: number) => {
-    const hasPermission = await ensureLibraryPermission();
-    if (!hasPermission) {
-      return;
-    }
-
     let result;
     try {
       result = await ImagePicker.launchImageLibraryAsync({
@@ -1118,6 +1097,13 @@ const EditProfile = () => {
 
       <AnimatedSheetModal
         visible={photoModalVisible}
+        onClosed={() => {
+          const action = pendingPhotoAction.current;
+          pendingPhotoAction.current = null;
+          if (action) void action().catch((error) => {
+            Alert.alert(t("common.error"), getErrorMessage(error));
+          });
+        }}
         onClose={() => setPhotoModalVisible(false)}
         sheetStyle={modalStyles.card}
       >
@@ -1145,9 +1131,9 @@ const EditProfile = () => {
               style={modalStyles.optionButton}
               onPress={async () => {
                 if (selectedSlot === null) return;
+                const slot = selectedSlot;
+                pendingPhotoAction.current = () => takePhoto(slot);
                 setPhotoModalVisible(false);
-                await new Promise((resolve) => setTimeout(resolve, 250));
-                await takePhoto(selectedSlot);
               }}
               activeOpacity={0.84}
             >
@@ -1160,9 +1146,9 @@ const EditProfile = () => {
               style={modalStyles.optionButton}
               onPress={async () => {
                 if (selectedSlot === null) return;
+                const slot = selectedSlot;
+                pendingPhotoAction.current = () => pickFromLibrary(slot);
                 setPhotoModalVisible(false);
-                await new Promise((resolve) => setTimeout(resolve, 250));
-                await pickFromLibrary(selectedSlot);
               }}
               activeOpacity={0.84}
             >

@@ -55,6 +55,7 @@ const AnimatedSheetModal = ({
   const [isMounted, setIsMounted] = useState(visible);
   const mountedRef = useRef(visible);
   const onClosedRef = useRef(onClosed);
+  const closedPending = useRef(false);
   useEffect(() => { onClosedRef.current = onClosed; }, [onClosed]);
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(offsetY)).current;
@@ -114,7 +115,7 @@ const AnimatedSheetModal = ({
       if (finished) {
         mountedRef.current = false;
         setIsMounted(false);
-        onClosedRef.current?.();
+        closedPending.current = true;
       }
     });
     return () => animation.stop();
@@ -133,7 +134,16 @@ const AnimatedSheetModal = ({
     visible,
   ]);
 
-  if (!isMounted) return null;
+  const notifyClosed = () => {
+    if (!closedPending.current) return;
+    closedPending.current = false;
+    onClosedRef.current?.();
+  };
+  useEffect(() => {
+    if (!isMounted && (inline || Platform.OS !== "ios")) notifyClosed();
+  }, [isMounted, inline]);
+
+  if (!isMounted && (inline || Platform.OS !== "ios")) return null;
 
   const content = (
     <KeyboardAvoidingView
@@ -178,13 +188,14 @@ const AnimatedSheetModal = ({
   ) : (
     <Modal
       transparent
-      visible
+      visible={isMounted}
+      onDismiss={notifyClosed}
       animationType="none"
       statusBarTranslucent={fullScreen}
       navigationBarTranslucent={fullScreen}
       onRequestClose={onClose}
     >
-      {content}
+      {isMounted ? content : null}
     </Modal>
   );
 };
