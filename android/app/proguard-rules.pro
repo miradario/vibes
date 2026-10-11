@@ -13,6 +13,11 @@
 
 # Add any project specific keep options here:
 
+# Expo Record options are decoded through Kotlin reflection. Renaming @Field
+# can cause option conversion to fail in minified builds (OpenBrowserOptions NPE).
+# Backport of expo/expo#51206 without changing the Expo SDK.
+-keep @interface expo.modules.kotlin.records.Field { *; }
+
 # JNA references desktop AWT APIs that are unavailable and unused on Android.
 -dontwarn java.awt.Component
 -dontwarn java.awt.GraphicsEnvironment
