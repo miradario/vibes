@@ -1,3 +1,4 @@
+import {LearningExplore, LearningProfileDetail, LearningActivityDetail, LearningMine, LearningManage, LearningRoster, LearningProfileEditor, LearningActivityEditor} from "./screens/Learning";
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
 import VibiOverlay from "./components/VibiOverlay";
@@ -518,6 +519,14 @@ const AppNavigator = () => {
                 </View>
               )}
             </Stack.Screen>
+            <Stack.Screen name="LearningExplore" component={LearningExplore} options={{headerShown:false}} />
+            <Stack.Screen name="LearningProfile" component={LearningProfileDetail} options={{headerShown:false}} />
+            <Stack.Screen name="LearningActivity" component={LearningActivityDetail} options={{headerShown:false}} />
+            <Stack.Screen name="LearningMine" component={LearningMine} options={{headerShown:false}} />
+            <Stack.Screen name="LearningManage" component={LearningManage} options={{headerShown:false}} />
+            <Stack.Screen name="LearningRoster" component={LearningRoster} options={{headerShown:false}} />
+            <Stack.Screen name="LearningProfileEditor" component={LearningProfileEditor} options={{headerShown:false}} />
+            <Stack.Screen name="LearningActivityEditor" component={LearningActivityEditor} options={{headerShown:false}} />
             <Stack.Screen
               name="Login"
               component={Login}

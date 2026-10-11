@@ -1,3 +1,4 @@
+import {useLearningEnabled} from "../src/featureFlags/useLearningEnabled";
 import CountrySelector from "../components/CountrySelector";
 import { isCountryCode } from "../src/constants/countries";
 import ProfilePhotoPrompt from "../components/ProfilePhotoPrompt";
@@ -384,6 +385,7 @@ export const DiscoverContent = forwardRef<
   DiscoverContentProps
 >(({ showHeader = true, onFilterCountChange }, ref) => {
   const navigation = useNavigation();
+  const learningEnabled = useLearningEnabled();
   const route = useRoute();
   const incomingRequestKey = (route.params as { incomingRequestKey?: number } | undefined)?.incomingRequestKey;
   const filterInsets = useSafeAreaInsets();
@@ -1394,6 +1396,12 @@ export const DiscoverContent = forwardRef<
           </View>
         ) : null}
 
+        {learningEnabled ? (
+          <TouchableOpacity accessibilityRole="button" style={localStyles.filtersButton} onPress={() => navigation.navigate("LearningExplore" as never)}>
+            <Icon name="school-outline" size={20} color={vibesTheme.colors.accentBlue} />
+            <Text style={localStyles.filtersButtonText}>Clases y espacios →</Text>
+          </TouchableOpacity>
+        ) : null}
         <ProfilePhotoPrompt />
         <View style={localStyles.discoverySections}>
           <TouchableOpacity
