@@ -27,5 +27,16 @@
         "credentialsSource": "local"
       }
     }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "completed"
+      },
+      "ios": {
+        "ascAppId": "6775540891"
+      }
+    }
   }
 }
