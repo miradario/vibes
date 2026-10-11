@@ -219,7 +219,9 @@ const bundle = await esbuild.build({
     {
       name: "development-only-adapters",
       setup(build) {
-        build.onResolve({filter:/^lucide-react-native$/},()=>({path:path.resolve("scripts/learning-preview/icons.mjs")}));
+        build.onResolve({ filter: /^lucide-react-native$/ }, () => ({
+          path: path.resolve("scripts/learning-preview/icons.mjs"),
+        }));
         build.onResolve(
           {
             filter:
@@ -239,11 +241,31 @@ const allowedTables = new Set([
   "learning_teacher_places",
   "learning_enrollments",
 ]);
+const previewFonts = [
+  "JosefinSans-Regular",
+  "JosefinSans-Medium",
+  "JosefinSans-Bold",
+  "JosefinSans-Thin",
+];
+const fontCSS = previewFonts
+  .map(
+    (name) =>
+      `@font-face{font-family:'${name}';src:url('/fonts/${name}.ttf') format('truetype');font-display:swap}`
+  )
+  .join("");
 const html =
-  '<!doctype html><html><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vibes · Clases y espacios · Prototipo local</title><style>html,body,#root{margin:0;min-height:100%;background:#FEFEFD}button{cursor:pointer}*{box-sizing:border-box}</style><div id="root"></div><script src="/app.js"></script></html>';
+  '<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vibes · Clases y espacios · Prototipo local</title><style>' +
+  fontCSS +
+  'html,body,#root{margin:0;min-height:100%;background:#FEFEFD}button{cursor:pointer}*{box-sizing:border-box}</style><div id="root"></div><script src="/app.js"></script></html>';
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://127.0.0.1");
+    if (previewFonts.some((name) => url.pathname === `/fonts/${name}.ttf`)) {
+      res.setHeader("Content-Type", "font/ttf");
+      return res.end(
+        await fs.readFile(path.join("assets/font", path.basename(url.pathname)))
+      );
+    }
     if (url.pathname === "/app.js") {
       res.setHeader("Content-Type", "application/javascript");
       return res.end(js);

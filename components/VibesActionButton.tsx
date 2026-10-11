@@ -31,6 +31,8 @@ const VibesActionButton = ({
       <View style={[styles.skipWrap, style]}>
         {showDivider ? <View style={styles.skipDivider} /> : null}
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityState={{ disabled }}
           style={[styles.skipButton, disabled && styles.skipButtonDisabled]}
           onPress={onPress}
           activeOpacity={0.8}
@@ -46,6 +48,8 @@ const VibesActionButton = ({
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
       style={[styles.startButton, style, disabled && styles.startButtonDisabled]}
       onPress={onPress}
       activeOpacity={0.9}

@@ -28,6 +28,7 @@ export function formatSession(s: LearningSession, timezone: string) {
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
   }).format(new Date(s.starts_at));
 }
 export function priceLabel(a: Pick<LearningActivity, "price" | "currency">) {
