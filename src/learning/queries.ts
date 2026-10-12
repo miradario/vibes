@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthSession } from "../auth/auth.queries";
 import { LEARNING_ENABLED } from "../featureFlags/useLearningEnabled";
 import { supabase } from "../lib/supabase";
+import { withDevelopmentProfiles } from "./developmentProfiles";
 import type { LearningData, RosterStudent } from "./types";
 export async function learningRpc<T = unknown>(
   name: string,
@@ -46,7 +47,7 @@ export async function loadLearning(): Promise<LearningData> {
   for (const r of requests) if (r.error) throw r.error;
   return {
     access,
-    profiles: requests[0].data as any,
+    profiles: withDevelopmentProfiles(requests[0].data as any, __DEV__),
     activities: requests[1].data as any,
     sessions: requests[2].data as any,
     links: requests[3].data as any,

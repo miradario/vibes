@@ -27,7 +27,7 @@ También se pueden crear/editar perfiles y vincular profesores con lugares admin
 
 ## Configurar la app real en un entorno de desarrollo
 
-Migración: `supabase/migrations/20261011162146_profesores_lugares.sql`. Es aditiva y fue ejecutada en PostgreSQL aislado. **No se aplicó al proyecto remoto de producción**. No modifica `events`, `event_participants`, `profiles` ni los flujos actuales de autenticación.
+Migración: `supabase/migrations/20261011162146_profesores_lugares.sql`. Es aditiva y fue ejecutada en PostgreSQL aislado. **Aplicada al proyecto remoto Mindora Vibes (`mhmpjezgdvnqyqsnabuq`) el 12/10/2026 con autorización explícita. El interruptor del servidor está habilitado; el cliente sigue limitado a desarrollo.** No modifica `events`, `event_participants`, `profiles` ni los flujos actuales de autenticación.
 
 Aplicar el archivo completo en un Supabase de desarrollo/staging con las tablas actuales de Vibes. La CLI creó el archivo mediante `supabase migration new profesores_lugares`. Verificar el historial del entorno antes de usar `db push`: no enviar indiscriminadamente las otras migraciones locales pendientes a producción.
 
@@ -50,6 +50,8 @@ Arrancar Metro con:
 ```sh
 EXPO_PUBLIC_LEARNING_ENABLED=true npx expo start --clear
 ```
+
+En desarrollo, el catálogo incluye dos profesores de solo lectura rotulados **EJEMPLO**: Lucía Fernández y Tomás Ruiz. Se agregan únicamente en el cliente con `__DEV__`, no se guardan en Supabase ni permiten inscripciones reales. El preview aislado también incluye dos profesores ficticios.
 
 Se requieren **ambas** condiciones: flag local y flag del servidor. El flag local está limitado a `__DEV__`; los builds de release permanecen deshabilitados aunque la variable se configure en `true`. Con el flag apagado no se realizan consultas de esta sección y no aparece su entrada en Descubrir.
 
@@ -102,7 +104,7 @@ npx expo export --platform android --platform ios --output-dir /tmp/vibes-learni
 - Exportación de los bundles de Android e iOS correcta. Paleta correcta.
 - TypeScript global conserva errores anteriores en `ChallengeTreeProgress`, `DiscoverCirclesOverlay` y `OnboardingProgressBar`; no se agregaron errores en esta sección.
 
-## Pendiente antes de habilitar en producción
+## Pendiente antes de publicar la sección en las tiendas
 
 Prueba en Android e iOS físicos con el Supabase de staging, sesión real y selector/subida de imágenes; ejecutar asesores de Supabase después de aplicar la migración en ese entorno. El análisis remoto leído corresponde al esquema previo; no valida una migración que aún no está aplicada allí.
 

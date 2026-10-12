@@ -115,6 +115,20 @@ const teacher = await rpc("owner", "learning_save_profile", {
     published: true,
   },
 });
+await rpc("owner", "learning_save_profile", {
+  p_id: null,
+  p_data: {
+    kind: "teacher",
+    name: "FICTICIO · Tomás Ruiz",
+    description: "Profesor ficticio de respiración consciente y meditación para probar el prototipo.",
+    specialties: ["Respiración", "Meditación"],
+    image_url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600",
+    cover_url: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1000",
+    location: "Online",
+    modality: "online",
+    published: true,
+  },
+});
 const place = await rpc("owner", "learning_save_profile", {
   p_id: null,
   p_data: {
