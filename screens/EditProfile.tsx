@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  InteractionManager,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -16,7 +17,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import styles, {
   BLACK,
@@ -422,6 +423,10 @@ const DraggablePhotoSlot = ({
 const EditProfile = () => {
   const { t, locale } = useI18n();
   const navigation = useNavigation();
+  const route = useRoute();
+  const focused = useIsFocused();
+  const photoRequestId = (route.params as { photoRequestId?: number } | undefined)?.photoRequestId;
+  const consumedPhotoRequest = useRef<number | undefined>(undefined);
   const leaveProfile = () => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -912,6 +917,19 @@ const EditProfile = () => {
     setSelectedSlot(slotIndex);
     setPhotoModalVisible(true);
   };
+
+  useEffect(() => {
+    if (!focused || !photoRequestId || consumedPhotoRequest.current === photoRequestId || !profileData) return;
+    const slot = mediaSlots.findIndex(photo => !photo);
+    if (slot < 0) return;
+    // Wait for navigation and any profile sheet to close before presenting another native modal.
+    const task = InteractionManager.runAfterInteractions(() => {
+      consumedPhotoRequest.current = photoRequestId;
+      navigation.setParams({ photoRequestId: undefined } as never);
+      handleAddMedia(slot);
+    });
+    return () => task.cancel();
+  }, [focused, photoRequestId, profileData, mediaSlots, navigation]);
 
   const handleRemove = async (slotIndex: number) => {
     const userId = session?.user?.id;

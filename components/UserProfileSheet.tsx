@@ -854,7 +854,7 @@ const UserProfileSheet = ({
 
           {!canViewPhotos ? (
             <View style={{ position: "absolute", left: 20, right: 20, top: insets.top + 60, zIndex: 10 }}>
-              <ProfilePhotoPrompt onPress={() => { onClose(); navigation.navigate("EditProfile" as never); }} />
+              <ProfilePhotoPrompt onPress={() => { onClose(); navigation.navigate("EditProfile" as never, { photoRequestId: Date.now() } as never); }} />
             </View>
           ) : null}
 
