@@ -4,8 +4,9 @@ const path = require('node:path');
 const sharp = require(process.env.VIBES_ICON_SHARP_MODULE || 'sharp');
 const root = path.resolve(__dirname, '..');
 async function main() {
-  const svg = await fs.readFile(path.join(root, 'assets/branding/vibes-icon-flat.svg'), 'utf8');
-  const foregroundSvg = svg.replace(/  <rect[^>]+\/>\n/, '').replace('<g id="vibes-mark">', '<g id="vibes-mark" transform="translate(512 512) scale(0.74) translate(-512 -512)">');
+  const svg = await fs.readFile(path.join(root, 'assets/branding/vibes-logo-palette.svg'), 'utf8');
+  await sharp(Buffer.from(svg)).png().toFile(path.join(root, 'assets/branding/vibes-logo-palette.png'));
+  const foregroundSvg = svg.replace(/(<svg[^>]*>)/, '$1<g transform="translate(627 627) scale(0.64) translate(-627 -627)">').replace('</svg>', '</g></svg>');
   const icon = await sharp(Buffer.from(svg)).resize(1024, 1024).flatten({background:'#FEFEFD'}).removeAlpha().png().toBuffer();
   const foreground = await sharp(Buffer.from(foregroundSvg)).resize(1024, 1024).png().toBuffer();
   for (const name of ['icon-flat.png', 'icon-ios-flat.png']) await fs.writeFile(path.join(root, 'assets', name), icon);

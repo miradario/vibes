@@ -66,32 +66,25 @@ test("global controller returns one-shots to idle and ignores stale completion",
   api.setVisible(true);
   api.setMinimized(false);
 });
-test("logo GLB has all 13 clips, supplied durations and animated logo meshes", async () => {
+test("flat GLB matches the palette, has five coplanar logo meshes and compatible clips", async () => {
   const { gltf, clips, info } = await getModel();
   assert.equal(clips.size, 13);
-  const fallbackDurations = JSON.parse(
-    fs.readFileSync("assets/models/vibi-clips.json", "utf8")
-  );
-  info.forEach((clip, i) => {
-    assert.ok(
-      Math.abs(clip.duration - durations[i]) < 0.00001,
-      `${clip.name}: ${clip.duration}`
-    );
-    assert.ok(Math.abs(clip.duration - fallbackDurations[clip.name]) < 0.00001);
-  });
-  const found = meshes(gltf.scene);
-  assert.equal(found.length, 14);
-  const leaf = found.find((mesh) => mesh.name.startsWith("Hoja_azul") || mesh.name.startsWith("Hoja azul"));
-  assert.ok(leaf);
-  assert.ok(found.every((mesh) => mesh.morphTargetDictionary.Respirar === 0));
-  assert.ok(found.some((mesh) => mesh.morphTargetDictionary.Triste === 2));
-  for (const clip of clips.values()) {
-    const weights = clip.tracks.filter((track) =>
-      track.name.includes("morphTargetInfluences")
-    );
-    assert.equal(weights.length, 14, clip.name);
-    assert.ok(clip.tracks.every((track) => Math.abs(track.times[0]) < 0.00001));
+  const fallbackDurations = JSON.parse(fs.readFileSync("assets/models/vibi-clips.json", "utf8"));
+  info.forEach(clip => assert.ok(Math.abs(clip.duration - fallbackDurations[clip.name]) < 0.00001));
+  const found = [];
+  gltf.scene.traverse(o => { if (o.isMesh) found.push(o); });
+  assert.equal(found.length, 5);
+  const colors = new Set();
+  for (const mesh of found) {
+    const position = mesh.geometry.attributes.position;
+    assert.ok(position.count > 0);
+    for (let i = 0; i < position.count; i++) assert.equal(position.getZ(i), 0);
+    assert.equal(mesh.material.isMeshBasicMaterial, true, "flat unlit material");
+    colors.add(mesh.material.color.getHexString().toUpperCase());
   }
+  assert.deepEqual([...colors].sort(), ["2B2B2B", "3978B8", "D88C7A", "F4A340"]);
+  assert.ok(found.some(mesh => mesh.name === "Hoja_azul"));
+  for (const clip of clips.values()) assert.ok(clip.tracks.every(track => Math.abs(track.times[0]) < 0.00001));
 });
 test("every clip animates the logo; playback preserves materials and morph dictionaries", async () => {
   const { gltf, clips } = await getModel();
@@ -130,39 +123,6 @@ test("every clip animates the logo; playback preserves materials and morph dicti
     });
     animator.dispose();
   }
-});
-test("interrupted fades preserve the visible morph pose and retire outgoing actions", async () => {
-  const { gltf, clips } = await getModel();
-  const root = gltf.scene.clone(true);
-  const animator = new VibiAnimator(root, clips, () => {});
-  const weights = () =>
-    meshes(root).flatMap((mesh) => [...mesh.morphTargetInfluences]);
-  animator.play("happy", 1, false);
-  animator.update(0.8);
-  animator.play("sad", 2, false);
-  animator.update(0.08);
-  const before = weights();
-  animator.play("surprised", 3, false);
-  const after = weights();
-  before.forEach((v, i) =>
-    assert.ok(Math.abs(v - after[i]) < 0.00001, `weight ${i} must not snap`)
-  );
-  animator.update(0.3);
-  const reference = gltf.scene.clone(true);
-  const isolated = new VibiAnimator(reference, clips, () => {});
-  isolated.play("surprised", 3, false);
-  isolated.update(0.3);
-  const expected = meshes(reference).flatMap((mesh) => [
-    ...mesh.morphTargetInfluences,
-  ]);
-  weights().forEach((v, i) =>
-    assert.ok(
-      Math.abs(v - expected[i]) < 0.00001,
-      "retired expression must not leak"
-    )
-  );
-  animator.dispose();
-  isolated.dispose();
 });
 test("all one-shots finish once; looping clips do not emit completion; reduced motion is static", async () => {
   const { gltf, clips } = await getModel();

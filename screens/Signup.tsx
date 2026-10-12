@@ -22,9 +22,9 @@ import {
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles from "../assets/styles";
-import VibesHeader from "../src/components/VibesHeader";
+import QuietBrandHeader from "../components/QuietBrandHeader";
+import ScreenContainer from "../components/ScreenContainer";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
@@ -45,7 +45,6 @@ const Signup = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
   const route = useRoute();
-  const insets = useSafeAreaInsets();
   const { draft, updateDraft } = useOnboardingDraft();
   const confirmedBirthDateParam =
     typeof (route.params as { birthDate?: unknown } | undefined)?.birthDate ===
@@ -226,7 +225,7 @@ const Signup = () => {
   };
 
   return (
-    <View style={[styles.bg, { paddingTop: insets.top }]}>
+    <ScreenContainer style={styles.bg} edges={["top", "bottom", "left", "right"]}>
       <KeyboardAvoidingView
         style={[styles.loginContainer, localStyles.loginContainer]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -238,11 +237,7 @@ const Signup = () => {
           contentContainerStyle={localStyles.formScrollContent}
         >
           <View style={[styles.loginCard, localStyles.loginCard]}>
-            <VibesHeader
-              title={t("signup.header")}
-              subtitle=""
-              style={localStyles.header}
-            />
+            <QuietBrandHeader title={t("signup.title")} subtitle={t("signup.subtitle")} />
 
             <GoogleAuthButton
               label={
@@ -326,7 +321,7 @@ const Signup = () => {
             <View
               style={[
                 localStyles.bottomBlock,
-                { paddingBottom: Math.max(insets.bottom + 10, 22) },
+                { paddingBottom: 22 },
               ]}
             >
               <TouchableOpacity
@@ -408,7 +403,7 @@ const Signup = () => {
         onSecondaryPress={viewTermsFromDialog}
         onClose={closeTermsDialog}
       />
-    </View>
+    </ScreenContainer>
   );
 };
 
@@ -511,6 +506,12 @@ const localStyles = StyleSheet.create({
     marginTop: 0,
   },
   loginCard: {
+    shadowOpacity: 0,
+    elevation: 0,
+    backgroundColor: vibesTheme.colors.background,
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
     flexGrow: 1,
   },
   formScrollContent: {

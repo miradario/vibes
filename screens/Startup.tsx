@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
-import { preloadVibi } from "../components/Vibi";
-import { welcomeModelBounds } from "../src/vibi/welcomeIntro";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import {
   CommonActions,
@@ -70,15 +68,6 @@ const Startup = () => {
 
   const userId = session?.user?.id;
 
-  useEffect(() => {
-    if (userId) return;
-    void preloadVibi()
-      .then(({ model }) => {
-        const breathing = model.clips.get("breathing");
-        if (breathing) welcomeModelBounds(model.scene, breathing);
-      })
-      .catch((error) => console.warn("[Vibi] welcome preload failed", error));
-  }, [userId]);
 
   useEffect(() => {
     if (!isSessionLoading) return;

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { Text } from "../components/Typography";
+import AnimatedBrandLogo from "../components/AnimatedBrandLogo";
 import VibesActionButton from "../components/VibesActionButton";
 import ScreenContainer from "../components/ScreenContainer";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -35,12 +36,7 @@ const Welcome = () => {
           style={StyleSheet.absoluteFill}
         >
           <View style={styles.fallbackLogoWrap}>
-            <Image
-              source={require("../assets/adaptive-icon-flat.png")}
-              style={styles.fallbackLogo}
-              resizeMode="contain"
-              accessibilityIgnoresInvertColors
-            />
+            <AnimatedBrandLogo style={styles.fallbackLogo} />
           </View>
         </View>
         <View
@@ -52,7 +48,7 @@ const Welcome = () => {
             },
           ]}
         >
-          <Text style={styles.title}>Vibes</Text>
+          <Text style={styles.tagline}>Respirá. Conectá con vos.</Text>
         </View>
         <View style={styles.actions}>
           <VibesActionButton
@@ -96,6 +92,7 @@ const styles = StyleSheet.create({
     lineHeight: 54,
     color: colors.primaryText,
   },
+  tagline: { color: colors.secondaryText, fontSize: 18, lineHeight: 26, marginTop: 12, textAlign: "center", paddingHorizontal: 24 },
   actions: {
     position: "absolute",
     bottom: 36,
