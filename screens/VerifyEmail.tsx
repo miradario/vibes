@@ -1,5 +1,6 @@
+import VibesLoader from "../components/VibesLoader";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator } from "react-native";
+
 import { Text } from "../components/Typography";
 import {
   CommonActions,
@@ -82,7 +83,7 @@ export default function VerifyEmail() {
           : "Verificando tu email…"}
       </Text>
       {state === "loading" ? (
-        <ActivityIndicator />
+        <VibesLoader />
       ) : (
         <>
           <Text style={{ fontSize: 17, lineHeight: 25 }}>

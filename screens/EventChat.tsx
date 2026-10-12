@@ -735,7 +735,7 @@ const EventChat = () => {
               </Text>
             </View>
           ) : messagesLoading && !messagesLoadingTimedOut ? (
-            <VibesLoader size={72} style={{ marginVertical: 32 }} />
+            <VibesLoader  style={{ marginVertical: 32 }} />
           ) : messagesError ? (
             <View style={localStyles.emptyMessages}>
               <Text style={localStyles.emptyMessagesTitle}>

@@ -1,16 +1,8 @@
+import VibesLoader from "../VibesLoader";
 import { ALL_CHALLENGE_DAYS } from "../../src/lib/challengeDayContent";
 import { normalizeDayRecording } from "../../src/lib/normalizeDayRecording";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  AppState,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  View,
-} from "react-native";
+import { Alert, AppState, Image, KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
@@ -523,7 +515,7 @@ export default function ChallengeDayEditor({
               <Text style={s.hint}>Recuperamos tu borrador pendiente.</Text>
             ) : null}
             {!ready ? (
-              <ActivityIndicator color={vibesTheme.colors.primaryText} />
+              <VibesLoader />
             ) : (
               <>
                 <Text style={s.text}>Título</Text>
@@ -743,7 +735,7 @@ export default function ChallengeDayEditor({
                   </Text>
                 ) : null}
                 {busy ? (
-                  <ActivityIndicator color={vibesTheme.colors.primaryText} />
+                  <VibesLoader />
                 ) : null}
                 <View style={s.footerActions}>
                   <DayButton

@@ -266,7 +266,7 @@ const VibesMinimalOnboarding = ({
       />
       {isContinuing ? (
         <View pointerEvents="none" style={styles.loaderOverlay}>
-          <VibesLoader size={94} />
+          <VibesLoader />
         </View>
       ) : null}
     </SafeAreaView>

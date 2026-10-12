@@ -1,13 +1,6 @@
+import VibesLoader from "./VibesLoader";
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  type StyleProp,
-  type TextStyle,
-} from "react-native";
+import { Image, View, StyleSheet, TouchableOpacity, type StyleProp, type TextStyle } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { getInvitedEventId } from "../src/lib/eventInvites";
 import { useQuery } from "@tanstack/react-query";
@@ -85,7 +78,7 @@ export default function ChatMessageContent({
         }}
       >
         {photo.isLoading ? (
-          <ActivityIndicator color={vibesTheme.colors.primaryText} />
+          <VibesLoader />
         ) : photo.isError || imageFailed ? (
           <Text style={s.error}>
             No se pudo cargar la foto. Tocá para reintentar.

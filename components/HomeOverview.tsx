@@ -205,7 +205,7 @@ function ChallengeCard({
               No pudimos actualizar tu progreso.
             </Text>
           ) : checkins.isLoading ? (
-            <VibesLoader size={30} style={s.loader} />
+            <VibesLoader  style={s.loader} />
           ) : progress ? (
             <View style={s.progressLine}>
               <View
@@ -484,7 +484,7 @@ export default function HomeOverview({
           </ScrollView>
         ) : eventsFeed.isLoading ? (
           <View style={s.eventSuggestionsLoader}>
-            <VibesLoader size={48} />
+            <VibesLoader />
           </View>
         ) : (
           <View style={s.emptyEventCard}>

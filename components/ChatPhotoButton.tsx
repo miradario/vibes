@@ -1,12 +1,6 @@
+import VibesLoader from "./VibesLoader";
 import React, { useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { randomUUID } from "expo-crypto";
 import AnimatedSheetModal from "./AnimatedSheetModal";
@@ -142,7 +136,7 @@ export default function ChatPhotoButton({
             style={s.send}
           >
             {busy ? (
-              <ActivityIndicator color={vibesTheme.colors.primaryText} />
+              <VibesLoader />
             ) : (
               <Text style={s.sendText}>Enviar foto</Text>
             )}

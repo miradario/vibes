@@ -1,6 +1,7 @@
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
 import VibiOverlay from "./components/VibiOverlay";
+import VibesLoader from "./components/VibesLoader";
 import { useAuthSession } from "./src/auth/auth.queries";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
@@ -76,6 +77,11 @@ import {
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const BootLoading = () => (
+  <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.background }}>
+    <VibesLoader />
+  </View>
+);
 const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Navigator>) => {
   const { data: session, isLoading } = useAuthSession();
   const [sessionTimedOut, setSessionTimedOut] = React.useState(false);
@@ -85,7 +91,7 @@ const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Na
     return () => clearTimeout(timer);
   }, [isLoading]);
   if (isLoading && !sessionTimedOut) {
-    return <View style={{ flex: 1, backgroundColor: vibesTheme.colors.background }} />;
+    return <BootLoading />;
   }
   return <Stack.Navigator {...props} initialRouteName={session?.user?.id ? "Startup" : "Welcome"}>{children}</Stack.Navigator>;
 };
@@ -207,11 +213,7 @@ const AppNavigator = () => {
   }, [fontError, fontLoadTimedOut, fontsLoaded]);
 
   if (!fontsLoaded && !fontError && !fontLoadTimedOut) {
-    return (
-      <View
-        style={{ flex: 1, backgroundColor: vibesTheme.colors.background }}
-      />
-    );
+    return <BootLoading />;
   }
 
   const navigateToMessages = () => {

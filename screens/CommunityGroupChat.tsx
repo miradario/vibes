@@ -1,3 +1,4 @@
+import VibesLoader from "../components/VibesLoader";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
 import HeartMessageBubble from "../components/HeartMessageBubble";
@@ -14,17 +15,7 @@ import { supabase } from "../src/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import Avatar from "../components/Avatar";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, FlatList, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import {
   useNavigation,
@@ -221,7 +212,7 @@ export default function CommunityGroupChat() {
             }}
           >
             {updatePhoto.isPending ? (
-              <ActivityIndicator />
+              <VibesLoader />
             ) : group?.photoUrl ? (
               <Avatar uri={group.photoUrl} size={44} />
             ) : (
@@ -317,7 +308,7 @@ export default function CommunityGroupChat() {
           retry={() => void members.refetch()}
         />
         {messages.isLoading ? (
-          <ActivityIndicator color={vibesTheme.colors.accentMustard} />
+          <VibesLoader />
         ) : null}
         {messages.isError ? (
           <TouchableOpacity onPress={() => void messages.refetch()}>
@@ -471,7 +462,7 @@ export default function CommunityGroupChat() {
             onPress={() => void submit()}
           >
             {send.isPending ? (
-              <ActivityIndicator color={WHITE} />
+              <VibesLoader />
             ) : (
               <Icon name="send" size={22} color={WHITE} />
             )}

@@ -298,7 +298,7 @@ const OnboardingSpiritualPath = () => {
             disabled={completeMutation.isPending}
           >
             {completeMutation.isPending ? (
-              <VibesLoader size={34} />
+              <VibesLoader />
             ) : (
               <Text style={styles.onboardNextText}>{t("common.continue")}</Text>
             )}

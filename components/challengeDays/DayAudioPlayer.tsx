@@ -1,5 +1,6 @@
+import VibesLoader from "../VibesLoader";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { Audio, AVPlaybackStatus } from "expo-av";
 import { Text } from "../Typography";
 import { DayButton } from "./DayButton";
@@ -113,7 +114,7 @@ export default function DayAudioPlayer({
           disabled={busy}
           onPress={() => void play()}
         />
-        {busy && <ActivityIndicator color={vibesTheme.colors.primaryText} />}
+        {busy && <VibesLoader />}
         <DayButton
           label="−15 s"
           disabled={!status?.isLoaded || busy}

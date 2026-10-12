@@ -1,13 +1,7 @@
+import VibesLoader from "../components/VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, TouchableOpacity, View } from "react-native";
 import { Text } from "../components/Typography";
 import Icon from "../components/Icon";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -131,7 +125,7 @@ export default function ProfileQuestions() {
           }}
         >
           {query.isLoading ? (
-            <ActivityIndicator />
+            <VibesLoader />
           ) : query.isError ? (
             <View>
               <Text>No pudimos cargar tus respuestas.</Text>

@@ -196,7 +196,7 @@ const Profile = () => {
               {isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
             </Text>
             {isLoggingOut ? (
-              <VibesLoader size={28} />
+              <VibesLoader />
             ) : (
               <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
             )}

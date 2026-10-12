@@ -1,16 +1,9 @@
+import VibesLoader from "./VibesLoader";
 import UnreadBadge from "./UnreadBadge";
 import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 import KeyboardSheetModal from "./KeyboardSheetModal";
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, TextInput } from "./Typography";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -103,7 +96,7 @@ export default function CommunityGroups({
       ) : null}
       {variant === "list" ? (
         <>
-          {invitations.isLoading ? <ActivityIndicator color={vibesTheme.colors.accentBlue} /> : null}
+          {invitations.isLoading ? <VibesLoader /> : null}
           {invitations.isError ? (
             <TouchableOpacity accessibilityRole="button" onPress={() => void invitations.refetch()}>
               <Text style={s.hint}>No pudimos cargar tus invitaciones. Tocá para reintentar.</Text>
@@ -129,9 +122,9 @@ export default function CommunityGroups({
               </View>
             </View>
           ))}
-          {respond.isPending ? <ActivityIndicator color={vibesTheme.colors.accentBlue} /> : null}
+          {respond.isPending ? <VibesLoader /> : null}
           {invitationError ? <Text accessibilityRole="alert" style={s.hint}>{invitationError}</Text> : null}
-          {groups.isLoading ? <ActivityIndicator color={vibesTheme.colors.accentMustard} /> : null}
+          {groups.isLoading ? <VibesLoader /> : null}
           {groups.isError ? (
             <TouchableOpacity onPress={() => void groups.refetch()}>
               <Text style={s.hint}>

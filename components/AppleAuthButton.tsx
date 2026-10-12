@@ -44,7 +44,7 @@ const AppleAuthButton = ({
   if (loading) {
     return (
       <View style={[styles.fallbackButton, styles.disabled]}>
-        <VibesLoader size={26} />
+        <VibesLoader />
         <Text style={styles.fallbackText}>Conectando...</Text>
       </View>
     );

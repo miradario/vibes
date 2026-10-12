@@ -861,7 +861,7 @@ export const MessagesContent = ({
         ) : null}
         {(activeTab === "messages" ? isLoading : groupsLoading) ? (
           <View style={localStyles.loadingWrap}>
-            <VibesLoader size={62} />
+            <VibesLoader />
           </View>
         ) : null}
       </ScrollView>

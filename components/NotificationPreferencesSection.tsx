@@ -1,16 +1,6 @@
+import VibesLoader from "./VibesLoader";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  AppState,
-  Linking,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Switch,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, AppState, Linking, Platform, Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Notifications from "expo-notifications";
 import { useQueryClient } from "@tanstack/react-query";
@@ -214,7 +204,7 @@ export default function NotificationPreferencesSection() {
             </>
           ) : (
             <View style={s.row}>
-              <ActivityIndicator color={colors.primaryText} />
+              <VibesLoader />
               <Text style={s.description}>{t("configuration.loading")}</Text>
             </View>
           )}

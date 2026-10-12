@@ -568,7 +568,7 @@ const Chat = () => {
           {/* Messages */}
           {isLoading ? (
             <View style={localStyles.loadingWrap}>
-              <VibesLoader size={78} />
+              <VibesLoader />
             </View>
           ) : (
             <FlatList

@@ -1463,7 +1463,7 @@ export const DiscoverContent = forwardRef<
               : swipeHistory.isLoading
             : isLoading) ? (
             <View style={localStyles.emptyState}>
-              <VibesLoader size={86} />
+              <VibesLoader />
               <Text style={localStyles.emptyText}>
                 {t("discover.loadingProfiles")}
               </Text>

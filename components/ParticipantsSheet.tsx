@@ -1,10 +1,6 @@
+import VibesLoader from "./VibesLoader";
 import React from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Avatar from "./Avatar";
@@ -91,7 +87,7 @@ export default function ParticipantsSheet({
         </TouchableOpacity>
       </View>
       {loading ? (
-        <ActivityIndicator color={vibesTheme.colors.accentMustard} />
+        <VibesLoader />
       ) : error ? (
         <TouchableOpacity onPress={retry} style={{ minHeight: 48 }}>
           <Text>No pudimos cargar los participantes. Reintentar</Text>

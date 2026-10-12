@@ -180,7 +180,7 @@ export default function EventInviteSheet({
         </Text>
       ) : null}
       {matches.isLoading ? (
-        <VibesLoader size={32} />
+        <VibesLoader />
       ) : matches.isError ? (
         <View style={s.empty}>
           <Text style={s.copy}>No pudimos cargar tus conexiones.</Text>
@@ -233,7 +233,7 @@ export default function EventInviteSheet({
                   ]}
                 >
                   {sendingId === item.id ? (
-                    <VibesLoader size={22} />
+                    <VibesLoader />
                   ) : (
                     <Text style={s.buttonText}>
                       {invited ? "Enviada" : "Invitar"}

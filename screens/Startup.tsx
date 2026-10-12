@@ -7,7 +7,8 @@ import {
   useNavigation,
 } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
-import CalmPause from "../components/CalmPause";
+import ScreenContainer from "../components/ScreenContainer";
+import VibesLoader from "../components/VibesLoader";
 import { getStartupDestination } from "../src/lib/calmPause";
 import { authKeys, useAuthSession } from "../src/auth/auth.queries";
 import { supabase } from "../src/lib/supabase";
@@ -29,7 +30,6 @@ import {
 import { isOnboardingComplete } from "../src/lib/onboardingFlow";
 import {
   AUTH_VALIDATION_TIMEOUT_MS,
-  STARTUP_INTRO_MS,
   withBootTimeout as withTimeout,
 } from "../src/lib/startupBoot";
 
@@ -41,7 +41,6 @@ const Startup = () => {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const { data: session, isLoading: isSessionLoading } = useAuthSession();
-  const [introElapsed, setIntroElapsed] = useState(false);
   const didNavigateRef = useRef(false);
   const [isReadyToExit, setIsReadyToExit] = useState(false);
   const [sessionLoadTimedOut, setSessionLoadTimedOut] = useState(false);
@@ -51,12 +50,6 @@ const Startup = () => {
     useState<AppUpdateGateState | null>(null);
 
   const userId = session?.user?.id;
-  useEffect(() => {
-    // Allow the logo morph and text fade to finish, with a bounded fallback.
-    if (!userId || forceWelcome) return;
-    const timer = setTimeout(() => setIntroElapsed(true), STARTUP_INTRO_MS);
-    return () => clearTimeout(timer);
-  }, [userId, forceWelcome]);
   useEffect(() => {
     if (!isSessionLoading) return;
 
@@ -229,10 +222,8 @@ const Startup = () => {
   ]);
 
   useEffect(() => {
-    // Guests get the welcome introduction; don't make them wait for a second
-    // logo animation in Startup before it can begin.
+    // Loading artwork never delays navigation once boot data is ready.
     if (
-      (userId && !forceWelcome && !introElapsed) ||
       !isReadyToExit ||
       didNavigateRef.current
     )
@@ -257,7 +248,6 @@ const Startup = () => {
       })
     );
   }, [
-    introElapsed,
     isReadyToExit,
     userId,
     forceWelcome,
@@ -266,20 +256,13 @@ const Startup = () => {
     navigation,
   ]);
 
-  if (!userId || forceWelcome) {
-    return (
-      <View
-        style={{ flex: 1, backgroundColor: vibesTheme.colors.accentMustard }}
-      />
-    );
-  }
-
   return (
-    <CalmPause
-      pending={!isReadyToExit}
-      showAction={false}
-      onIntroComplete={() => setIntroElapsed(true)}
-    />
+    <ScreenContainer edges={["top", "bottom", "left", "right"]}
+      style={{ backgroundColor: vibesTheme.colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <VibesLoader />
+      </View>
+    </ScreenContainer>
   );
 };
 

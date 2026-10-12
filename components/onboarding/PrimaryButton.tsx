@@ -30,7 +30,7 @@ const PrimaryButton = ({
       activeOpacity={0.88}
     >
       {loading ? (
-        <VibesLoader size={34} />
+        <VibesLoader />
       ) : (
         <Text style={onboardingStyles.primaryButtonText}>{label}</Text>
       )}

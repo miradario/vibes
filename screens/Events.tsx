@@ -479,7 +479,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
           ) : null}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
-              {listIsLoading ? <VibesLoader size={72} /> : null}
+              {listIsLoading ? <VibesLoader /> : null}
               <Text style={localStyles.emptyTitle}>
                 {listIsLoading
                   ? section === "challenge"

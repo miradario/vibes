@@ -62,7 +62,7 @@ const Matches = () => {
 
         {isLoading ? (
           <View style={localStyles.emptyState}>
-            <VibesLoader size={82} />
+            <VibesLoader />
           </View>
         ) : (matches ?? []).length === 0 ? (
           <View style={localStyles.emptyState}>

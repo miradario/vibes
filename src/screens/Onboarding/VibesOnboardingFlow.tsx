@@ -796,7 +796,7 @@ const VibesOnboardingFlow = () => {
     <>
       {step === "completion" ? (
         <View style={localStyles.completionLoadingScreen}>
-          <VibesLoader size={94} />
+          <VibesLoader />
         </View>
       ) : (
         <OnboardingScreenContainer

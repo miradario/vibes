@@ -996,7 +996,7 @@ export const CheckInButton = memo(
         activeOpacity={0.88}
       >
         {isLoading ? (
-          <VibesLoader size={30} />
+          <VibesLoader />
         ) : (
           <>
             <Icon name={icon} size={21} color={vibesTheme.colors.background} />
@@ -1556,7 +1556,7 @@ const ChallengeDetailScreen = () => {
           {...footerSliderResponder.panHandlers}
         >
           {checkInMutation.isPending ? (
-            <VibesLoader size={30} />
+            <VibesLoader />
           ) : (
             <Icon name="sunny-outline" size={22} color={vibesTheme.colors.background} />
           )}
@@ -1568,7 +1568,7 @@ const ChallengeDetailScreen = () => {
   if (!event && linkedEventLoading) {
     return (
       <ScreenContainer style={localStyles.loadingScreen}>
-        <VibesLoader size={36} />
+        <VibesLoader />
       </ScreenContainer>
     );
   }
@@ -1620,7 +1620,7 @@ const ChallengeDetailScreen = () => {
               disabled={isPreparingShare || isSharing}
             >
               {isPreparingShare ? (
-                <VibesLoader size={24} />
+                <VibesLoader />
               ) : (
                 <Icon name="share-outline" size={21} color={WHITE} />
               )}
@@ -1838,7 +1838,7 @@ const ChallengeDetailScreen = () => {
                 }}
               >
                 {joinChallengeMutation.isPending ? (
-                  <VibesLoader size={32} />
+                  <VibesLoader />
                 ) : (
                   <>
                     <Text style={localStyles.joinRequestButtonTitle}>
@@ -1872,7 +1872,7 @@ const ChallengeDetailScreen = () => {
               >
                 {joinChallengeMutation.isPending ||
                 requestChallengeJoinMutation.isPending ? (
-                  <VibesLoader size={32} />
+                  <VibesLoader />
                 ) : (
                   <>
                     <Text style={localStyles.joinRequestButtonTitle}>
@@ -1981,7 +1981,7 @@ const ChallengeDetailScreen = () => {
           disabled={isPreparingShare || isSharing}
         >
           {isPreparingShare ? (
-            <VibesLoader size={24} />
+            <VibesLoader />
           ) : (
             <Icon name="share-social-outline" size={20} color={palette.text} />
           )}
@@ -2042,7 +2042,7 @@ const ChallengeDetailScreen = () => {
           accessibilityLabel="Preparando opciones para compartir"
         >
           <View style={localStyles.sharePreparingCard}>
-            <VibesLoader size={38} />
+            <VibesLoader />
             <Text style={localStyles.sharePreparingText}>
               Preparando para compartir…
             </Text>

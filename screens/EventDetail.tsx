@@ -653,7 +653,7 @@ const EventDetail = () => {
           : {})}
       >
         {checkInMutation.isPending ? (
-          <VibesLoader size={30} />
+          <VibesLoader />
         ) : (
           <Icon name="sunny-outline" size={22} color={vibesTheme.colors.accentCoral} />
         )}
@@ -760,7 +760,7 @@ const EventDetail = () => {
                 style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
                 disabled
               >
-                <VibesLoader size={30} />
+                <VibesLoader />
               </TouchableOpacity>
             </View>
           </View>
@@ -829,7 +829,7 @@ const EventDetail = () => {
               disabled={joinMutation.isPending}
             >
               {joinMutation.isPending ? (
-                <VibesLoader size={30} />
+                <VibesLoader />
               ) : (
                 <Text style={styles.eventDetailJoinButtonText}>
                   {userId ? "Sumarme al desafío" : "Registrarme para sumarme"}
@@ -896,7 +896,7 @@ const EventDetail = () => {
           disabled={joinEventMutation.isPending}
         >
           {joinEventMutation.isPending ? (
-            <VibesLoader size={30} />
+            <VibesLoader />
           ) : (
             <>
               <Text
@@ -1326,7 +1326,7 @@ const EventDetail = () => {
   if (!event && linkedEventLoading) {
     return (
       <ScreenContainer style={localStyles.publicStateScreen}>
-        <VibesLoader size={36} />
+        <VibesLoader />
       </ScreenContainer>
     );
   }
@@ -1863,7 +1863,7 @@ const EventDetail = () => {
         {isChallenge ? (
           <>
             {participantLoading ? (
-              <VibesLoader size={64} style={{ marginVertical: 24 }} />
+              <VibesLoader  style={{ marginVertical: 24 }} />
             ) : isJoined ? (
               <View style={localStyles.trackingCard}>
                 <View style={localStyles.daysPanel}>
@@ -2067,7 +2067,7 @@ const EventDetail = () => {
                   : {})}
               >
                 {checkInMutation.isPending ? (
-                  <VibesLoader size={30} />
+                  <VibesLoader />
                 ) : (
                   <Icon
                     name={checkedInToday ? "checkmark" : "sunny-outline"}

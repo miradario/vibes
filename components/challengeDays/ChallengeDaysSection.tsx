@@ -1,18 +1,11 @@
+import VibesLoader from "../VibesLoader";
 import {
   ALL_CHALLENGE_DAYS,
   getChallengeContentLabel,
   getChallengeContentForDay,
 } from "../../src/lib/challengeDayContent";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  type StyleProp,
-  ActivityIndicator,
-  AppState,
-  ScrollView,
-  TouchableOpacity,
-  View,
-  type ViewStyle,
-} from "react-native";
+import { type StyleProp, AppState, ScrollView, TouchableOpacity, View, type ViewStyle } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { Text } from "../Typography";
 import { useAuthSession } from "../../src/auth/auth.queries";
@@ -138,7 +131,7 @@ export default function ChallengeDaysSection({
         </ScrollView>
       ) : null}
       {days.isLoading ? (
-        <ActivityIndicator color={vibesTheme.colors.primaryText} />
+        <VibesLoader />
       ) : days.isError ? (
         <>
           <Text style={s.error}>No se pudo cargar el contenido del día.</Text>

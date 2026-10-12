@@ -819,7 +819,7 @@ const CreateEvent = () => {
                 disabled={isValidatingLocation}
               >
                 {isValidatingLocation ? (
-                  <VibesLoader size={30} />
+                  <VibesLoader />
                 ) : (
                   <Text style={localStyles.validateButtonText}>
                     Validar ubicación
@@ -1009,7 +1009,7 @@ const CreateEvent = () => {
           disabled={isSubmitting || isEventLinkInvalid}
         >
           {isSubmitting ? (
-            <VibesLoader size={30} />
+            <VibesLoader />
           ) : (
             <Text style={localStyles.createButtonText}>{submitButtonLabel}</Text>
           )}

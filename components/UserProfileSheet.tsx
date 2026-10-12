@@ -698,7 +698,7 @@ const UserProfileSheet = ({
       >
         {profileImages.length > 0 && photoReadyId !== profile.id && !swipeNextProfile ? (
           <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { alignItems: "center", justifyContent: "center" }]} accessibilityLabel="Cargando perfil">
-            <VibesLoader size={64} />
+            <VibesLoader />
           </View>
         ) : null}
         <View

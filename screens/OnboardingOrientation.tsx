@@ -113,7 +113,7 @@ const OnboardingOrientation = () => {
             }}
           >
             {completeMutation.isPending ? (
-              <VibesLoader size={34} />
+              <VibesLoader />
             ) : (
               <Text style={styles.onboardNextText}>{t("common.next")}</Text>
             )}
