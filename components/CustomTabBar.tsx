@@ -210,7 +210,7 @@ const TabButton = memo(
           <Text
             numberOfLines={1}
             adjustsFontSizeToFit
-            minimumFontScale={0.82}
+            minimumFontScale={0.8}
             style={[localStyles.tabLabel, isFocused && { color: accentColor }]}
           >
             {label}
@@ -480,7 +480,7 @@ const localStyles = StyleSheet.create({
     position: "relative",
   },
   tabLabel: {
-    maxWidth: 74,
+    width: "100%",
     color: localColors.muted,
     fontSize: 12,
     fontWeight: "400",
