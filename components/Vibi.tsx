@@ -54,8 +54,8 @@ function Vibi({ state, animation, followController = false, visible = true, loop
     scale.setValue(1);
     if (stopped || (preference ?? reducedMotion) || name === "idle") return;
     const pulse = Animated.loop(Animated.sequence([
-      Animated.timing(scale, { toValue: 1.018, duration: 3000, useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: 3000, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1.018, duration: 3000, useNativeDriver: true, isInteraction: false }),
+      Animated.timing(scale, { toValue: 1, duration: 3000, useNativeDriver: true, isInteraction: false }),
     ]));
     pulse.start();
     return () => { pulse.stop(); scale.setValue(1); };
