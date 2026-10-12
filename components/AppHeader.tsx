@@ -9,6 +9,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import VibesWordmark from "./VibesWordmark";
 import { Text } from "./Typography";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "./Icon";
@@ -82,6 +83,7 @@ const AppHeader = ({
         {children ?? (
           <>
             {title ? (
+              title === "Vibes" ? <VibesWordmark fontSize={StyleSheet.flatten(titleStyle)?.fontSize ?? 26} /> : (
               <Text
                 style={[styles.title, titleStyle]}
                 numberOfLines={titleNumberOfLines}
@@ -90,6 +92,7 @@ const AppHeader = ({
               >
                 {title}
               </Text>
+              )
             ) : null}
             {subtitle ? (
               <Text style={[styles.subtitle, subtitleStyle]} numberOfLines={2}>

@@ -24,7 +24,8 @@
     },
     "production": {
       "android": {
-        "credentialsSource": "local"
+        "credentialsSource": "local",
+        "gradleCommand": ":app:bundleRelease --no-daemon"
       }
     }
   },

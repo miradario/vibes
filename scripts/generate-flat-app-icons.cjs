@@ -9,6 +9,7 @@ async function main() {
   const foregroundSvg = svg.replace(/(<svg[^>]*>)/, '$1<g transform="translate(627 627) scale(0.64) translate(-627 -627)">').replace('</svg>', '</g></svg>');
   const icon = await sharp(Buffer.from(svg)).resize(1024, 1024).flatten({background:'#FEFEFD'}).removeAlpha().png().toBuffer();
   const foreground = await sharp(Buffer.from(foregroundSvg)).resize(1024, 1024).png().toBuffer();
+  await sharp(icon).resize(512,512).ensureAlpha().png().toFile(path.join(root,'assets/branding/play-store-icon-512.png'));
   for (const name of ['icon-flat.png', 'icon-ios-flat.png']) await fs.writeFile(path.join(root, 'assets', name), icon);
   await fs.writeFile(path.join(root, 'assets/adaptive-icon-flat.png'), foreground);
   await sharp(icon).resize(64,64).png().toFile(path.join(root,'assets/favicon-flat.png'));
