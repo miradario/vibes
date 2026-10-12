@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#FEFEFD"/>
+  <g id="vibes-mark">
+    <circle cx="512" cy="186" r="48" fill="#F4A340"/>
+    <circle cx="512" cy="286" r="27" fill="#F4A340"/>
+    <path d="M512 346 C475 386 440 421 440 458 C440 493 477 529 512 562 C547 529 584 493 584 458 C584 421 549 386 512 346Z" fill="#3978B8"/>
+    <g fill="none" stroke="#2B2B2B" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M412 596 C412 637 458 678 496 697 Q512 705 528 697 C566 678 612 637 612 596"/>
+      <path d="M284 866 C271 947 389 896 459 873 C482 865 498 844 512 844 C532 844 553 865 583 877 C649 905 727 943 740 866" transform="translate(0 -52)"/>
+    </g>
+  </g>
+</svg>

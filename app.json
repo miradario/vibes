@@ -6,7 +6,7 @@
     "scheme": "com.gurudevelopers.vibes",
     "version": "1.3.2",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-flat.png",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -14,7 +14,7 @@
       "**/*"
     ],
     "ios": {
-      "icon": "./assets/icon-ios.png",
+      "icon": "./assets/icon-ios-flat.png",
       "supportsTablet": false,
       "buildNumber": "36",
       "config": {
@@ -44,7 +44,7 @@
     "android": {
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-icon-flat.png",
         "backgroundColor": "#FEFEFD"
       },
       "versionCode": 37,
@@ -80,7 +80,7 @@
       "googleServicesFile": "./config/firebase/google-services.json"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon-flat.png"
     },
     "plugins": [
       [
@@ -88,7 +88,7 @@
         {
           "backgroundColor": "#FEFEFD",
           "ios": {
-            "image": "./assets/adaptive-icon.png",
+            "image": "./assets/adaptive-icon-flat.png",
             "imageWidth": 320,
             "resizeMode": "contain",
             "backgroundColor": "#FEFEFD"
