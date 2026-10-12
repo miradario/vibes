@@ -27,31 +27,15 @@ import {
   type AppUpdateGateState,
 } from "../src/lib/appUpdateGate";
 import { isOnboardingComplete } from "../src/lib/onboardingFlow";
+import {
+  AUTH_VALIDATION_TIMEOUT_MS,
+  STARTUP_INTRO_MS,
+  withBootTimeout as withTimeout,
+} from "../src/lib/startupBoot";
 
 const SESSION_BOOT_TIMEOUT_MS = 5000;
 const STARTUP_PREFETCH_TIMEOUT_MS = 8000;
 const UPDATE_GATE_TIMEOUT_MS = 3000;
-
-const withTimeout = async <T,>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  label: string
-): Promise<T> => {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error(`${label} timed out after ${timeoutMs}ms`)),
-          timeoutMs
-        );
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-};
 
 const Startup = () => {
   const navigation = useNavigation();
@@ -67,8 +51,11 @@ const Startup = () => {
     useState<AppUpdateGateState | null>(null);
 
   const userId = session?.user?.id;
-
-
+  useEffect(() => {
+    // Decorative animation callbacks must never control access to the app.
+    const timer = setTimeout(() => setIntroElapsed(true), STARTUP_INTRO_MS);
+    return () => clearTimeout(timer);
+  }, []);
   useEffect(() => {
     if (!isSessionLoading) return;
 
@@ -92,14 +79,23 @@ const Startup = () => {
         try {
           const {
             data: { user },
-          } = await supabase.auth.getUser();
+          } = await withTimeout(
+            supabase.auth.getUser(),
+            AUTH_VALIDATION_TIMEOUT_MS,
+            "startup auth validation"
+          );
+          if (cancelled) return;
           const isSoftDeleted = user?.app_metadata?.vibes_soft_deleted === true;
 
           if (isSoftDeleted) {
             setForceWelcome(true);
-            await supabase.auth.signOut({ scope: "local" });
             queryClient.setQueryData(authKeys.session, null);
-            queryClient.invalidateQueries();
+            void queryClient.invalidateQueries();
+            await withTimeout(
+              supabase.auth.signOut({ scope: "local" }),
+              AUTH_VALIDATION_TIMEOUT_MS,
+              "startup local sign out"
+            );
             if (!cancelled) {
               setIsReadyToExit(true);
             }
@@ -109,6 +105,8 @@ const Startup = () => {
           console.warn("[boot] failed to validate auth user", error);
         }
       }
+
+      if (cancelled) return;
 
       const startupTasks: Array<{
         label: string;
@@ -171,6 +169,8 @@ const Startup = () => {
       } catch (error) {
         console.warn("[boot] startup prefetch timed out, continuing", error);
       }
+
+      if (cancelled) return;
 
       if (userId) {
         const profileState = queryClient.getQueryState(

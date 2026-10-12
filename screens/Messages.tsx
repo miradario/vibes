@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import Avatar from "../components/Avatar";
 import CommunityGroups from "../components/CommunityGroups";
-import { useCommunityGroupsQuery } from "../src/queries/communityGroups.queries";
+import { useCommunityGroupsQuery, useCommunityInvitationsQuery } from "../src/queries/communityGroups.queries";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import ProfileMediaImage from "../components/ProfileMediaImage";
 import styles, { BG_MAIN, DARK_GRAY, TEXT_PRIMARY } from "../assets/styles";
@@ -157,6 +157,7 @@ export const MessagesContent = ({
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const communityGroups = useCommunityGroupsQuery();
+  const communityInvitations = useCommunityInvitationsQuery();
   const { data: unread = [] } = useCommunityUnreadQuery();
   const { data: matches, isLoading } = useMatchesQuery();
   const views = useConnectionViewsQuery();
@@ -663,7 +664,7 @@ export const MessagesContent = ({
     </TouchableOpacity>
   );
 
-  const loading = isLoading || groupsLoading || communityGroups.isLoading;
+  const loading = isLoading || groupsLoading || communityGroups.isLoading || communityInvitations.isLoading;
   const hasConnectionRequests = incomingConnectionRequests.length > 0;
   const hasConnectedNoChat = topConnections.length > 0;
   const hasConnectionsSection = hasConnectionRequests || hasConnectedNoChat;
@@ -671,6 +672,7 @@ export const MessagesContent = ({
     activeTab === "groups" ? entry.kind === "group" : entry.kind === "direct"
   );
   const groupCount =
+    (communityInvitations.data?.length ?? 0) +
     (communityGroups.data?.length ?? 0) +
     activeGroups.length +
     finishedEventGroups.length +
@@ -709,6 +711,7 @@ export const MessagesContent = ({
             variant="create"
             matches={matches ?? []}
             groups={communityGroups}
+            invitations={communityInvitations}
           />
         </View>
         {hasConnectionsSection ? (
@@ -749,7 +752,7 @@ export const MessagesContent = ({
                 key: "groups",
                 label: "Grupos",
                 icon: "people",
-                count: unread
+                count: (communityInvitations.data?.length ?? 0) + unread
                   .filter((r) => r.kind !== "direct")
                   .reduce((n, r) => n + Number(r.unread_count), 0),
               },
@@ -819,6 +822,7 @@ export const MessagesContent = ({
               variant="list"
               matches={matches ?? []}
               groups={communityGroups}
+              invitations={communityInvitations}
             />
             {renderGroupSection(
               "EVENTOS",
@@ -833,7 +837,7 @@ export const MessagesContent = ({
               "DESAFÍOS FINALIZADOS",
               finishedChallengeGroups
             )}
-            {!loading && !communityGroups.isError && groupCount === 0 ? (
+            {!loading && !communityGroups.isError && !communityInvitations.isError && groupCount === 0 ? (
               <View style={localStyles.emptyState}>
                 <Text style={localStyles.emptyStateText}>
                   Creá un grupo con tus conexiones o sumate a un evento o

@@ -27,6 +27,67 @@ export type CommunityMessage = {
   message_kind: "message" | "system";
 };
 
+export type CommunityGroupInvitation = {
+  id: string;
+  group_id: string;
+  group_name: string;
+  group_description: string;
+  invited_by: string;
+  inviterName: string;
+};
+
+export function useCommunityInvitationsQuery(enabled = true) {
+  const { data: session } = useAuthSession();
+  const client = useQueryClient();
+  const userId = session?.user.id;
+  useEffect(() => {
+    if (!userId || !enabled) return;
+    const channel = supabase.channel(`community-invitations:${userId}`)
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "community_group_invitations",
+        filter: `invitee_id=eq.${userId}`,
+      }, () => { void client.invalidateQueries({ queryKey: ["communityInvitations", userId] }); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [userId, enabled, client]);
+  return useQuery<CommunityGroupInvitation[]>({
+    queryKey: ["communityInvitations", userId],
+    enabled: Boolean(userId && enabled),
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("community_group_invitations")
+        .select("id,group_id,group_name,group_description,invited_by")
+        .eq("invitee_id", userId!).eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const profiles = await fetchProfileSummaries([...new Set((data ?? []).map(row => row.invited_by))]);
+      return (data ?? []).map(row => ({ ...row,
+        inviterName: profiles.find(profile => profile.userId === row.invited_by)?.displayName || "Una conexión",
+      }));
+    },
+  });
+}
+
+export function useRespondCommunityInvitationMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, accept }: { id: string; accept: boolean }) => {
+      const { data, error } = await supabase.rpc("respond_community_group_invitation", {
+        invitation_id: id, accept_invitation: accept,
+      });
+      if (error) throw error;
+      return String(data);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["communityInvitations"] }),
+        client.invalidateQueries({ queryKey: ["communityGroups"] }),
+        client.invalidateQueries({ queryKey: ["communityGroupMembers"] }),
+      ]);
+    },
+  });
+}
+
 export function useCommunityGroupsQuery() {
   const { data: session } = useAuthSession();
   const client = useQueryClient();
