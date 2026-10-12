@@ -21,7 +21,8 @@ import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import { playAnimation, setVisible, type VibiAnimation } from "../src/vibi/controller";
 import type { VibiModel } from "../src/vibi/model";
 
-const SIZE = 88;
+const SIZE = 64;
+const CLOSE_SPACE = 36;
 const GAP = 12;
 const colors = vibesTheme.colors;
 const AUTH_ROUTES = new Set([
@@ -129,7 +130,7 @@ export default function VibiOverlay({
   }, []);
   const boxWidth = SIZE;
   const expandedHeight = SIZE;
-  const boxHeight = SIZE;
+  const boxHeight = SIZE + CLOSE_SPACE;
   // Tab bar includes a raised selected icon, so leave space above its crest.
   const bottomSpace = hasBottomBar
     ? getBottomTabBarHeight(fontScale) + Math.max(insets.bottom + 8, 18) + 38
@@ -257,6 +258,7 @@ export default function VibiOverlay({
               onModelLoaded={onModelLoaded}
             />
           </View>
+        </Animated.View>
           <Pressable
             onPress={() => setVisible(false)}
             accessibilityRole="button"
@@ -266,7 +268,6 @@ export default function VibiOverlay({
           >
             <Ionicons name="close" size={20} color={colors.primaryText} />
           </Pressable>
-        </Animated.View>
       </Animated.View>
     </View>
   );
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
   character: { position: "absolute", left: 0, top: 0 },
   fullCharacter: {
     position: "absolute",
-    top: 0,
+    top: CLOSE_SPACE,
     left: 0,
     width: SIZE,
     alignItems: "center",
