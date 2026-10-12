@@ -31,6 +31,8 @@ const AgeAssurance = () => {
   );
   const [showPicker, setShowPicker] = useState(Platform.OS === "ios");
 
+  // Android clamps pre-1970 dates when maximumDate is set without minimumDate.
+  const minDate = useMemo(() => new Date(1900, 0, 1), []);
   const maxDate = useMemo(() => new Date(), []);
   const age = birthDate ? calculateAge(birthDate) : null;
   const isValidAge = typeof age === "number" && age >= MIN_AGE;
@@ -95,6 +97,7 @@ const AgeAssurance = () => {
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
                 onChange={handleChange}
+                minimumDate={minDate}
                 maximumDate={maxDate}
               />
             ) : null}
