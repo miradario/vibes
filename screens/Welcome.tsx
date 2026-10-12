@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -7,13 +7,11 @@ import AnimatedBrandLogo from "../components/AnimatedBrandLogo";
 import VibesActionButton from "../components/VibesActionButton";
 import ScreenContainer from "../components/ScreenContainer";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import { welcomeLayout } from "../src/vibi/welcomeIntro";
 
 const Welcome = () => {
   const navigation = useNavigation();
   const { data: session, isLoading } = useAuthSession();
   const focused = useIsFocused();
-  const [viewport, setViewport] = useState({ width: 0, height: 0 });
   useEffect(() => {
     if (!isLoading && focused && session?.user?.id)
       navigation.navigate("Tab" as never);
@@ -26,9 +24,6 @@ const Welcome = () => {
     >
       <View
         style={styles.content}
-        onLayout={({ nativeEvent: { layout } }) =>
-          setViewport({ width: layout.width, height: layout.height })
-        }
       >
         <View
           collapsable={false}
@@ -38,17 +33,6 @@ const Welcome = () => {
           <View style={styles.fallbackLogoWrap}>
             <AnimatedBrandLogo style={styles.fallbackLogo} />
           </View>
-        </View>
-        <View
-          pointerEvents="none"
-          style={[
-            styles.titleWrap,
-            {
-              top: welcomeLayout(viewport.height).titleTop,
-            },
-          ]}
-        >
-          <Text style={styles.tagline}>Respirá. Conectá con vos.</Text>
         </View>
         <View style={styles.actions}>
           <VibesActionButton
