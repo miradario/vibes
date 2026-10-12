@@ -52,10 +52,11 @@ const Startup = () => {
 
   const userId = session?.user?.id;
   useEffect(() => {
-    // Decorative animation callbacks must never control access to the app.
+    // Allow the logo morph and text fade to finish, with a bounded fallback.
+    if (!userId || forceWelcome) return;
     const timer = setTimeout(() => setIntroElapsed(true), STARTUP_INTRO_MS);
     return () => clearTimeout(timer);
-  }, []);
+  }, [userId, forceWelcome]);
   useEffect(() => {
     if (!isSessionLoading) return;
 
@@ -229,7 +230,7 @@ const Startup = () => {
 
   useEffect(() => {
     // Guests get the welcome introduction; don't make them wait for a second
-    // breathing cycle in Startup before it can begin.
+    // logo animation in Startup before it can begin.
     if (
       (userId && !forceWelcome && !introElapsed) ||
       !isReadyToExit ||
@@ -277,9 +278,7 @@ const Startup = () => {
     <CalmPause
       pending={!isReadyToExit}
       showAction={false}
-      onBreathComplete={() => {
-        if (isReadyToExit) setIntroElapsed(true);
-      }}
+      onIntroComplete={() => setIntroElapsed(true)}
     />
   );
 };

@@ -1,4 +1,4 @@
-export const STARTUP_INTRO_MS = 1200;
+export const STARTUP_INTRO_MS = 5000;
 export const AUTH_VALIDATION_TIMEOUT_MS = 3000;
 
 /** Bound boot dependencies even when a native/network promise never settles. */

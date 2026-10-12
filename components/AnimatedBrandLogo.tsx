@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import Animated, { cancelAnimation, Easing, useAnimatedProps, useSharedValue, withDelay, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { cancelAnimation, runOnJS, Easing, useAnimatedProps, useSharedValue, withDelay, withTiming, type SharedValue } from "react-native-reanimated";
 import { useIsFocused } from "@react-navigation/native";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
@@ -11,32 +11,41 @@ function MorphPart({ shape, progress }: { shape: LogoMorphShape; progress: Share
   return <AnimatedPath animatedProps={props} fill={shape.color} fillRule="nonzero" />;
 }
 /** Real letter contours bend continuously into the brand mark, without particles. */
-export default function AnimatedBrandLogo({ style }: { style?: StyleProp<ViewStyle> }) {
+export default function AnimatedBrandLogo({ style, onComplete }: { style?: StyleProp<ViewStyle>; onComplete?: () => void }) {
   const focused = useIsFocused();
   const { active, reducedMotion, motionReady } = useVibiRuntime();
   const progress = useSharedValue(0);
   const started = useRef(false);
+  const completed = useRef(false);
+  const completionRef = useRef(onComplete);
+  completionRef.current = onComplete;
+  const finish = React.useCallback(() => {
+    if (completed.current) return;
+    completed.current = true;
+    completionRef.current?.();
+  }, []);
   useEffect(() => {
     if (!motionReady) return;
     if (reducedMotion) {
       cancelAnimation(progress);
       progress.value = 1;
       started.current = true;
+      finish();
       return;
     }
     if (!focused || !active) {
       cancelAnimation(progress);
       return;
     }
-    if (progress.value >= 1) return;
+    if (progress.value >= 1) { finish(); return; }
     const delay = started.current ? 0 : 450;
     started.current = true;
     progress.value = withDelay(delay, withTiming(1, {
       duration: LOGO_MORPH_DURATION * (1 - progress.value),
       easing: Easing.inOut(Easing.cubic),
-    }));
+    }, (finished) => { if (finished) runOnJS(finish)(); }));
     return () => cancelAnimation(progress);
-  }, [motionReady, reducedMotion, focused, active, progress]);
+  }, [motionReady, reducedMotion, focused, active, progress, finish]);
   return (
     <View style={style} accessible accessibilityLabel="Vibes" pointerEvents="none">
       <Svg width="100%" height="100%" viewBox="0 0 1254 1254" preserveAspectRatio="xMidYMid meet">
