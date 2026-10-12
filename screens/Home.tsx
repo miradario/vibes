@@ -6,6 +6,7 @@ import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
 import DailyMoodCard from "../components/DailyMoodCard";
 import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
+import HomeConnectionRequests from "../components/HomeConnectionRequests";
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -948,6 +949,8 @@ const Home = () => {
               <Icon name="settings-outline" size={25} color={vibesTheme.colors.primaryText} />
             </TouchableOpacity>
           </View>
+
+          <HomeConnectionRequests canViewPhotos={Boolean(centerProfile.avatarUri)} />
 
           {session?.user?.id ? (
             <FirstHomePreferencesGate

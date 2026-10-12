@@ -1,5 +1,7 @@
 import { normalizeSchedule, formatSession } from "../src/lib/eventSchedule";
 import { useLocalDay } from "../src/hooks/useLocalDay";
+import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
+import { resolvePublicContentRoute } from "../src/lib/publicContentRoute";
 import { getChallengeDay, completedChallengeDays, getChallengeStreaks } from "../src/lib/challengeProgress";
 import MediaImage from "../components/MediaImage";
 import { getEventCategoryLabel, getEventParticipationLabel } from "../src/constants/eventClassification";
@@ -198,22 +200,19 @@ const EventDetail = () => {
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const routeEvent = route.params?.event as EventFeedItem | undefined;
-  const eventId =
-    routeEvent?.id ??
-    (typeof route.params?.eventId === "string"
-      ? route.params.eventId
-      : undefined);
+  const { id: eventId, inlineEvent } = resolvePublicContentRoute(route.params?.eventId, routeEvent);
   const { data: linkedEvent, isLoading: linkedEventLoading } = useQuery({
     queryKey: ["event_deep_link", eventId],
     queryFn: () => fetchEventFeedItemById(eventId as string, "event"),
     enabled: Boolean(eventId),
     staleTime: 60_000,
   });
-  const event = linkedEvent ?? routeEvent ?? undefined;
+  const event = linkedEvent ?? inlineEvent;
   const isChallenge = event?.type === "challenge";
 
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const handleBack = usePublicContentBack(Boolean(userId));
   const { data: currentUserProfile } = useProfileQuery(userId);
   const swipeMutation = useSwipeMutation();
 
@@ -326,6 +325,12 @@ const EventDetail = () => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
   const [inviteVisible, setInviteVisible] = useState(false);
+  useEffect(() => {
+    setMenuVisible(false);
+    setParticipantsVisible(false);
+    setInviteVisible(false);
+    setCheckInModalVisible(false);
+  }, [eventId]);
   const [eventMapPreviewFailed, setEventMapPreviewFailed] = useState(false);
   const [geocodedMapPreview, setGeocodedMapPreview] = useState<{
     latitude: number;
@@ -491,6 +496,8 @@ const EventDetail = () => {
   );
   const sliderTranslateX = useRef(new Animated.Value(0)).current;
   const eventScrollY = useRef(new Animated.Value(0)).current;
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
+  const compactHeaderVisibleRef = useRef(false);
   const [sliderWidth, setSliderWidth] = useState(0);
   const sliderMaxTranslate = Math.max(
     sliderWidth - CHECKIN_SLIDER_HANDLE_SIZE - CHECKIN_SLIDER_HORIZONTAL_PADDING * 2,
@@ -1196,7 +1203,7 @@ const EventDetail = () => {
                 challengeId: event.id,
                 userId,
               });
-              navigation.goBack();
+              handleBack();
             } catch (error: any) {
               Alert.alert(
                 "Error",
@@ -1222,7 +1229,7 @@ const EventDetail = () => {
             setMenuVisible(false);
             try {
               await deleteMutation.mutateAsync({ challengeId: event.id });
-              navigation.goBack();
+              handleBack();
             } catch (error: any) {
               Alert.alert(
                 "Error",
@@ -1327,6 +1334,10 @@ const EventDetail = () => {
     return (
       <ScreenContainer style={localStyles.publicStateScreen}>
         <VibesLoader />
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
+          style={localStyles.publicStateButton} onPress={handleBack}>
+          <Text style={localStyles.publicStateButtonText}>Volver</Text>
+        </TouchableOpacity>
       </ScreenContainer>
     );
   }
@@ -1339,7 +1350,7 @@ const EventDetail = () => {
         </Text>
         <TouchableOpacity
           style={localStyles.publicStateButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleBack()}
         >
           <Text style={localStyles.publicStateButtonText}>Volver</Text>
         </TouchableOpacity>
@@ -1357,6 +1368,7 @@ const EventDetail = () => {
     >
       {!isChallenge ? (
         <Animated.View
+          pointerEvents={compactHeaderVisible ? "none" : "box-none"}
           style={[
             localStyles.expandedEventHeader,
             {
@@ -1367,7 +1379,7 @@ const EventDetail = () => {
         >
           <TouchableOpacity
             style={localStyles.eventHeaderIconButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => handleBack()}
           >
             <Icon name="chevron-back" size={24} color={WHITE} />
           </TouchableOpacity>
@@ -1394,7 +1406,7 @@ const EventDetail = () => {
         <AppHeader
           title={undefined}
           showBack
-          onBack={() => navigation.goBack()}
+          onBack={() => handleBack()}
           style={[
             styles.eventDetailHeader,
             localStyles.persistentHeader,
@@ -1415,6 +1427,7 @@ const EventDetail = () => {
 
       {!isChallenge ? (
         <Animated.View
+          pointerEvents={compactHeaderVisible ? "box-none" : "none"}
           style={[
             localStyles.collapsedEventHeader,
             {
@@ -1426,7 +1439,7 @@ const EventDetail = () => {
         >
           <TouchableOpacity
             style={localStyles.collapsedHeaderBackButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => handleBack()}
           >
             <Icon name="chevron-back" size={24} color={DARK_GRAY} />
           </TouchableOpacity>
@@ -1497,7 +1510,16 @@ const EventDetail = () => {
           !isChallenge
             ? Animated.event(
                 [{ nativeEvent: { contentOffset: { y: eventScrollY } } }],
-                { useNativeDriver: false },
+                {
+                  useNativeDriver: false,
+                  listener: (scrollEvent: any) => {
+                    const compact = scrollEvent.nativeEvent.contentOffset.y >= 130;
+                    if (compactHeaderVisibleRef.current !== compact) {
+                      compactHeaderVisibleRef.current = compact;
+                      setCompactHeaderVisible(compact);
+                    }
+                  },
+                },
               )
             : undefined
         }

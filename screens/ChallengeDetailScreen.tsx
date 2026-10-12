@@ -1,4 +1,6 @@
 import { useLocalDay } from "../src/hooks/useLocalDay";
+import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
+import { resolvePublicContentRoute } from "../src/lib/publicContentRoute";
 import { getChallengeDay, completedChallengeDays, getChallengeStreaks } from "../src/lib/challengeProgress";
 import MediaImage from "../components/MediaImage";
 import { playAnimation } from "../src/vibi/controller";
@@ -1067,20 +1069,17 @@ const ChallengeDetailScreen = () => {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const routeEvent = route.params?.event as EventFeedItem | undefined;
-  const challengeId =
-    routeEvent?.id ??
-    (typeof route.params?.challengeId === "string"
-      ? route.params.challengeId
-      : undefined);
+  const { id: challengeId, inlineEvent } = resolvePublicContentRoute(route.params?.challengeId, routeEvent);
   const { data: linkedEvent, isLoading: linkedEventLoading } = useQuery({
     queryKey: ["challenge_deep_link", challengeId],
     queryFn: () => fetchEventFeedItemById(challengeId as string, "challenge"),
     enabled: Boolean(challengeId),
     staleTime: 60_000,
   });
-  const event = linkedEvent ?? routeEvent ?? undefined;
+  const event = linkedEvent ?? inlineEvent;
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const handleBack = usePublicContentBack(Boolean(userId));
   const { data: participant } = useChallengeParticipantQuery(event?.id, userId);
   const joinChallengeMutation = useJoinChallengeMutation();
   const leaveChallengeMutation = useLeaveChallengeMutation();
@@ -1298,7 +1297,7 @@ const ChallengeDetailScreen = () => {
                 challengeId: event.id,
                 userId,
               });
-              navigation.goBack();
+              handleBack();
             } catch (error: any) {
               Alert.alert(
                 "Error",
@@ -1328,7 +1327,7 @@ const ChallengeDetailScreen = () => {
               await deleteChallengeMutation.mutateAsync({
                 challengeId: event.id,
               });
-              navigation.goBack();
+              handleBack();
             } catch (error: any) {
               Alert.alert(
                 "Error",
@@ -1569,6 +1568,10 @@ const ChallengeDetailScreen = () => {
     return (
       <ScreenContainer style={localStyles.loadingScreen}>
         <VibesLoader />
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
+          style={localStyles.loadingBackButton} onPress={handleBack}>
+          <Text style={localStyles.loadingBackText}>Volver</Text>
+        </TouchableOpacity>
       </ScreenContainer>
     );
   }
@@ -1581,7 +1584,7 @@ const ChallengeDetailScreen = () => {
         </Text>
         <TouchableOpacity
           style={localStyles.loadingBackButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleBack()}
           activeOpacity={0.85}
         >
           <Text style={localStyles.loadingBackText}>Volver</Text>
@@ -1605,7 +1608,7 @@ const ChallengeDetailScreen = () => {
         <View style={localStyles.expandedChallengeHeaderTopRow}>
           <TouchableOpacity
             style={localStyles.expandedChallengeHeaderIconButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => handleBack()}
             activeOpacity={0.84}
           >
             <Icon name="chevron-back" size={22} color={WHITE} />
@@ -1664,7 +1667,7 @@ const ChallengeDetailScreen = () => {
       >
         <TouchableOpacity
           style={localStyles.collapsedChallengeHeaderBackButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleBack()}
           activeOpacity={0.84}
         >
           <Icon name="chevron-back" size={22} color={palette.text} />
