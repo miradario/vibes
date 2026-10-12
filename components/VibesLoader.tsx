@@ -43,13 +43,15 @@ const VibesLoader = ({ size = 72, style }: VibesLoaderProps) => {
         source={VIBES_LOGO}
         resizeMode="contain"
         accessible={false}
-        style={[StyleSheet.absoluteFillObject, {
+        style={{
+          width: size,
+          height: size,
           opacity: phase.interpolate({ inputRange: [0, 1], outputRange: [1, 0.6] }),
           transform: [
             { scale: phase.interpolate({ inputRange: [0, 1], outputRange: [0.88, 1] }) },
             { translateY: phase.interpolate({ inputRange: [0, 1], outputRange: [0, -size * 0.025] }) },
           ],
-        }]}
+        }}
       />
     </View>
   );
