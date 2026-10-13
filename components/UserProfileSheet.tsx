@@ -946,7 +946,7 @@ const UserProfileSheet = ({
         </Animated.View>
         <LikeBubbles trigger={burst} />
         {enableSwipe && (
-          <View pointerEvents="none" style={localStyles.swipeIndicators}>
+          <Animated.View pointerEvents="none" style={[localStyles.swipeIndicators, { transform: [{ translateX: swipeX }] }]}>
             <Animated.View
               style={[
                 localStyles.swipeStamp,
@@ -995,7 +995,7 @@ const UserProfileSheet = ({
             >
               <Icon name="close" size={42} color={vibesTheme.colors.primaryText} />
             </Animated.View>
-          </View>
+          </Animated.View>
         )}
         <Animated.View
           pointerEvents={detailsVisible ? "box-none" : "none"}

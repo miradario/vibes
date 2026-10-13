@@ -930,7 +930,11 @@ export const DiscoverContent = forwardRef<
         <AnimatedSheetModal
           visible={isFiltersVisible}
           onClose={() => setIsFiltersVisible(false)}
-          offsetY={320}
+          offsetY={120}
+          sheetInDelay={0}
+          sheetInDuration={140}
+          sheetInOpacityDuration={100}
+          backdropInDuration={100}
           sheetStyle={[
             localStyles.filtersSheet,
             { paddingBottom: Math.max(filterInsets.bottom, 16) },

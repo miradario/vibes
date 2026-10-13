@@ -21,7 +21,9 @@ function WheelColumn({ items, selected, onSelect, label, rowHeight, flex = 1 }: 
   }, [selected, rowHeight, items.length]);
   const settle = (offset: number) => onSelect(Math.max(0, Math.min(items.length - 1, Math.round(offset / rowHeight))));
   return <View style={{ flex, minWidth: 0 }}>
-    <ScrollView ref={scroll} style={{ height: rowHeight * 5 }}
+    <ScrollView ref={scroll} style={{ height: rowHeight * 5, flexGrow: 0 }}
+      contentOffset={{ x: 0, y: selected * rowHeight }}
+      onContentSizeChange={() => scroll.current?.scrollTo({ y: selected * rowHeight, animated: false })}
       contentContainerStyle={{ paddingVertical: rowHeight * 2 }}
       nestedScrollEnabled showsVerticalScrollIndicator={false}
       snapToInterval={rowHeight} decelerationRate="fast" bounces={false}
@@ -123,11 +125,11 @@ export default function BirthDateWheel({ value, onChange, minimumDate, maximumDa
 
 const s = StyleSheet.create({
   container: { width: "100%", gap: 10 },
-  labels: { flexDirection: "row" },
-  label: { color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 16 },
-  wheels: { position: "relative", flexDirection: "row" },
+  labels: { flexDirection: "row", alignItems: "center" },
+  label: { color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 16, lineHeight: 22, includeFontPadding: false },
+  wheels: { position: "relative", flexDirection: "row", alignItems: "flex-start" },
   selectionBand: { position: "absolute", left: 0, right: 0, borderRadius: 16, backgroundColor: `${vibesTheme.colors.accentBlue}14` },
-  option: { textAlign: "center", paddingHorizontal: 3, fontSize: 23 },
+  option: { textAlign: "center", paddingHorizontal: 3, fontSize: 23, lineHeight: 32, includeFontPadding: false },
   selected: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 26 },
   unselected: { color: vibesTheme.colors.secondaryText },
   manualLink: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8 },
