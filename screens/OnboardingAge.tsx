@@ -2,13 +2,12 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useMemo, useState } from "react";
-import { View, TouchableOpacity, Platform, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Text } from "../components/Typography";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+import BirthDateWheel from "../components/BirthDateWheel";
+import ScreenContainer from "../components/ScreenContainer";
 import { useNavigation } from "@react-navigation/native";
-import styles, { DARK_GRAY } from "../assets/styles";
+import styles from "../assets/styles";
 import AppHeader from "../components/AppHeader";
 import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
@@ -21,15 +20,13 @@ import {
 } from "../src/lib/birthDate";
 
 const OnboardingAge = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
-  const [showPicker, setShowPicker] = useState(Platform.OS === "ios");
   const [birthDate, setBirthDate] = useState<Date | null>(() =>
     parseBirthDate(draft.birthDate),
   );
 
-  // Android clamps pre-1970 dates when maximumDate is set without minimumDate.
   const minDate = useMemo(() => new Date(1900, 0, 1), []);
   const maxDate = useMemo(() => {
     const today = new Date();
@@ -43,17 +40,8 @@ const OnboardingAge = () => {
   const isValidAge = birthDate ? calculateAge(birthDate) >= 18 : false;
   const showUnderageError = birthDate ? !isValidAge : false;
 
-  const handleChange = (_event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === "android") {
-      setShowPicker(false);
-    }
-    if (date) {
-      setBirthDate(date);
-    }
-  };
-
   return (
-    <View style={styles.bg}>
+    <ScreenContainer scroll contentContainerStyle={{ flexGrow: 1 }} edges={["top", "bottom", "left", "right"]}>
       <View style={styles.onboardContainer}>
         <AppHeader
           style={styles.onboardHeader}
@@ -66,28 +54,8 @@ const OnboardingAge = () => {
         <Text style={styles.onboardTitle}>{t("onboarding.ageTitle")}</Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.ageSubtitle")}</Text>
 
-        <View style={styles.loginField}>
-          <TouchableOpacity
-            style={styles.loginInput}
-            onPress={() => setShowPicker(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={{ color: birthDate ? DARK_GRAY : vibesTheme.colors.secondaryText }}>
-              {birthDate ? formatBirthDate(birthDate) : t("onboarding.agePlaceholder")}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {showPicker ? (
-          <DateTimePicker
-            value={birthDate ?? maxDate}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={handleChange}
-            minimumDate={minDate}
-            maximumDate={maxDate}
-          />
-        ) : null}
+        <BirthDateWheel value={birthDate} onChange={setBirthDate}
+          minimumDate={minDate} maximumDate={maxDate} locale={locale} />
 
         {showUnderageError ? (
           <Text style={localStyles.ageError}>
@@ -114,7 +82,7 @@ const OnboardingAge = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScreenContainer>
   );
 };
 

@@ -9,6 +9,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import ScreenContainer from "../components/ScreenContainer";
 import VibesLoader from "../components/VibesLoader";
+import VibesActionButton from "../components/VibesActionButton";
+import { Text } from "../components/Typography";
 import { getStartupDestination } from "../src/lib/calmPause";
 import { authKeys, useAuthSession } from "../src/auth/auth.queries";
 import { supabase } from "../src/lib/supabase";
@@ -46,10 +48,26 @@ const Startup = () => {
   const [sessionLoadTimedOut, setSessionLoadTimedOut] = useState(false);
   const [forceWelcome, setForceWelcome] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [bootFailed, setBootFailed] = useState(false);
   const [updateGateState, setUpdateGateState] =
     useState<AppUpdateGateState | null>(null);
 
   const userId = session?.user?.id;
+  useEffect(() => {
+    if (isReadyToExit) return;
+    const timer = setTimeout(() => setBootFailed(true), 20000);
+    return () => clearTimeout(timer);
+  }, [attempt, isReadyToExit]);
+
+  const retryBoot = () => {
+    setBootFailed(false);
+    setSessionLoadTimedOut(false);
+    setAttempt(value => value + 1);
+    void queryClient.refetchQueries({ queryKey: authKeys.session }).catch(error => {
+      console.warn("[boot] session retry failed", error);
+    });
+  };
   useEffect(() => {
     if (!isSessionLoading) return;
 
@@ -61,7 +79,7 @@ const Startup = () => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [isSessionLoading]);
+  }, [isSessionLoading, attempt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -208,7 +226,10 @@ const Startup = () => {
       }
     };
 
-    void prefetch();
+    void prefetch().catch(error => {
+      console.warn("[boot] startup failed", error);
+      if (!cancelled) setBootFailed(true);
+    });
 
     return () => {
       cancelled = true;
@@ -219,6 +240,7 @@ const Startup = () => {
     queryClient,
     sessionLoadTimedOut,
     userId,
+    attempt,
   ]);
 
   useEffect(() => {
@@ -261,6 +283,14 @@ const Startup = () => {
       style={{ backgroundColor: vibesTheme.colors.background }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <VibesLoader />
+        {bootFailed ? (
+          <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: 24, gap: 16, marginTop: 24 }}>
+            <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 18 }}>
+              La carga está demorando. Revisá tu conexión y volvé a intentar.
+            </Text>
+            <VibesActionButton label="Reintentar" onPress={retryBoot} textStyle={{ color: vibesTheme.colors.primaryText }} />
+          </View>
+        ) : null}
       </View>
     </ScreenContainer>
   );

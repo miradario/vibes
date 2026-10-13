@@ -12,9 +12,7 @@ import {
   type TextInput as NativeTextInput,
 } from "react-native";
 import { Text, TextInput } from "../../../components/Typography";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+import BirthDateWheel from "../../../components/BirthDateWheel";
 import * as Location from "expo-location";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import KeyboardSheetModal from "../../../components/KeyboardSheetModal";
@@ -117,7 +115,6 @@ const VibesOnboardingFlow = () => {
   const [birthDate, setBirthDate] = useState<Date | null>(() =>
     parseBirthDate(draft.birthDate)
   );
-  const [showBirthDatePicker, setShowBirthDatePicker] = useState(false);
   const [photoUris, setPhotoUris] = useState<string[]>(() =>
     Array.from(
       new Set(
@@ -314,11 +311,6 @@ const VibesOnboardingFlow = () => {
       return;
     }
     setStepIndex((prev) => Math.max(0, prev - 1));
-  };
-
-  const handleBirthDateChange = (_event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === "android") setShowBirthDatePicker(false);
-    if (date) setBirthDate(date);
   };
 
   const goNext = async () => {
@@ -595,51 +587,8 @@ const VibesOnboardingFlow = () => {
           </View>
 
           {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
-            <>
-              <TouchableOpacity
-                style={onboardingStyles.inputRow}
-                activeOpacity={0.7}
-                onPress={() => setShowBirthDatePicker(true)}
-              >
-                <Icon
-                  name="calendar-outline"
-                  size={20}
-                  color={ONBOARDING_COLORS.mustard}
-                />
-                <Text
-                  style={[
-                    onboardingStyles.ageValue,
-                    !birthDate && { color: "rgba(110, 110, 110, 0.55)" },
-                  ]}
-                >
-                  {birthDate
-                    ? birthDate.toLocaleDateString(
-                        locale === "en" ? "en-US" : "es-AR"
-                      )
-                    : t("vibesOnboarding.profile.birthDatePlaceholder")}
-                </Text>
-                {age ? (
-                  <Text
-                    style={[
-                      onboardingStyles.ageValue,
-                      { flex: 0, marginLeft: 8 },
-                    ]}
-                  >
-                    {age} {t("vibesOnboarding.profile.years")}
-                  </Text>
-                ) : null}
-              </TouchableOpacity>
-              {showBirthDatePicker ? (
-                <DateTimePicker
-                  value={birthDate ?? birthDateLimits.maximumDate}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  minimumDate={birthDateLimits.minimumDate}
-                  maximumDate={birthDateLimits.maximumDate}
-                  onChange={handleBirthDateChange}
-                />
-              ) : null}
-            </>
+            <BirthDateWheel value={birthDate} onChange={setBirthDate}
+              minimumDate={birthDateLimits.minimumDate} maximumDate={birthDateLimits.maximumDate} locale={locale} />
           ) : null}
         </View>
       </View>

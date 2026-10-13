@@ -1,16 +1,14 @@
 /** @format */
 
 import React, { useMemo, useState } from "react";
-import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { Text } from "../components/Typography";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+import BirthDateWheel from "../components/BirthDateWheel";
+import { VIBES_LOGO } from "../src/constants/brandAssets";
 import { useNavigation } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
 import VibesActionButton from "../components/VibesActionButton";
 import AppHeader from "../components/AppHeader";
-import styles, { DARK_GRAY } from "../assets/styles";
 import { useI18n } from "../src/i18n";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import {
@@ -23,29 +21,18 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 const MIN_AGE = 18;
 
 const AgeAssurance = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
   const [birthDate, setBirthDate] = useState<Date | null>(() =>
     parseBirthDate(draft.birthDate)
   );
-  const [showPicker, setShowPicker] = useState(Platform.OS === "ios");
 
-  // Android clamps pre-1970 dates when maximumDate is set without minimumDate.
   const minDate = useMemo(() => new Date(1900, 0, 1), []);
   const maxDate = useMemo(() => new Date(), []);
   const age = birthDate ? calculateAge(birthDate) : null;
   const isValidAge = typeof age === "number" && age >= MIN_AGE;
   const showUnderageError = birthDate ? !isValidAge : false;
-
-  const handleChange = (_event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === "android") {
-      setShowPicker(false);
-    }
-    if (date) {
-      setBirthDate(date);
-    }
-  };
 
   const handleContinue = () => {
     if (!birthDate || !isValidAge) return;
@@ -58,16 +45,16 @@ const AgeAssurance = () => {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer scroll contentContainerStyle={{ flexGrow: 1 }} edges={["top", "bottom", "left", "right"]}>
       <View style={localStyles.container}>
         <AppHeader
           showBack
-          hideBackIcon
           backButtonStyle={localStyles.headerBackButton}
           onBack={() => navigation.goBack()}
         />
 
         <View style={localStyles.content}>
+          <Image source={VIBES_LOGO} resizeMode="contain" accessibilityLabel="Vibes" style={localStyles.logo} />
           <View style={localStyles.copyBlock}>
             <Text style={localStyles.title}>{t("ageAssurance.title")}</Text>
             <Text style={localStyles.subtitle}>
@@ -76,31 +63,8 @@ const AgeAssurance = () => {
           </View>
 
           <View style={localStyles.card}>
-            <Text style={styles.loginLabel}>
-              {t("ageAssurance.birthDateLabel")}
-            </Text>
-            <TouchableOpacity
-              style={styles.loginInput}
-              onPress={() => setShowPicker(true)}
-              activeOpacity={0.78}
-            >
-              <Text style={{ color: birthDate ? DARK_GRAY : vibesTheme.colors.secondaryText }}>
-                {birthDate
-                  ? formatBirthDate(birthDate)
-                  : t("ageAssurance.birthDatePlaceholder")}
-              </Text>
-            </TouchableOpacity>
-
-            {showPicker ? (
-              <DateTimePicker
-                value={birthDate ?? new Date(2000, 0, 1)}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={handleChange}
-                minimumDate={minDate}
-                maximumDate={maxDate}
-              />
-            ) : null}
+            <BirthDateWheel value={birthDate} onChange={setBirthDate}
+              minimumDate={minDate} maximumDate={maxDate} locale={locale} />
 
             {showUnderageError ? (
               <Text style={localStyles.error}>
@@ -132,15 +96,16 @@ export default AgeAssurance;
 
 const localStyles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingBottom: 24,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     gap: 24,
   },
+  logo: { width: 140, height: 140, alignSelf: "center" },
   copyBlock: {
     alignItems: "center",
     gap: 10,
@@ -152,10 +117,10 @@ const localStyles = StyleSheet.create({
     textTransform: "uppercase",
   },
   title: {
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.light,
-    fontSize: 42,
-    lineHeight: 48,
+    color: vibesTheme.colors.accentBlue,
+    fontFamily: vibesTheme.fonts.bold,
+    fontSize: 30,
+    lineHeight: 36,
     textAlign: "center",
   },
   subtitle: {
@@ -164,13 +129,7 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
   },
-  card: {
-    backgroundColor: "rgba(254, 254, 253, 0.78)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.24)",
-    borderRadius: 24,
-    padding: 18,
-  },
+  card: { width: "100%" },
   error: {
     marginTop: 10,
     color: vibesTheme.colors.accentBlue,

@@ -176,7 +176,7 @@ const baseTranslations = {
     },
     ageAssurance: {
       kicker: "Solo mayores de 18",
-      title: "Confirmá tu edad",
+      title: "Confirma tu fecha de nacimiento",
       subtitle:
         "Vibes es una comunidad exclusiva para personas mayores de 18 años. Necesitamos confirmar tu fecha de nacimiento antes de crear tu cuenta.",
       birthDateLabel: "Fecha de nacimiento",
@@ -782,7 +782,7 @@ const baseTranslations = {
     },
     ageAssurance: {
       kicker: "18+ only",
-      title: "Confirm your age",
+      title: "Confirm your birth date",
       subtitle:
         "Vibes is a community exclusively for people over 18. We need to confirm your birth date before creating your account.",
       birthDateLabel: "Birth date",
