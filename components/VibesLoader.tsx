@@ -3,10 +3,11 @@
 import React, { useContext, useEffect, useState } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import Animated, { cancelAnimation, Easing, useAnimatedProps, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { cancelAnimation, Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import { NavigationContext } from "@react-navigation/native";
-import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
+import { logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
+import { INHALE_MS, EXHALE_MS } from "../src/lib/calmPause";
 
 type VibesLoaderProps = {
   size?: number;
@@ -39,22 +40,23 @@ const VibesLoader = ({ size = 32, style, accessibilityLabel = "Cargando" }: Vibe
     if (!motionReady || reducedMotion) { phase.value = 1; return; }
     if (!active || !focused) return;
     phase.value = 1;
-    const timing = { duration: LOGO_MORPH_DURATION, easing: Easing.inOut(Easing.cubic) };
+    const easing = Easing.inOut(Easing.sin);
     phase.value = withRepeat(withSequence(
-      withDelay(450, withTiming(0, timing)),
-      withDelay(450, withTiming(1, timing)),
+      withTiming(0, { duration: INHALE_MS, easing }),
+      withTiming(1, { duration: EXHALE_MS, easing }),
     ), -1, false);
     return () => cancelAnimation(phase);
   }, [active, focused, reducedMotion, motionReady, phase]);
+  const breathingStyle = useAnimatedStyle(() => ({ transform: [{ scale: reducedMotion ? 1 : 1 + 0.04 * (1 - phase.value) }] }));
 
   return (
     <View accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel} accessibilityState={{ busy: true }}
       style={[styles.wrap, { width: size, height: size }, style]}>
-      <View style={{ width: size, height: size }}>
+      <Animated.View style={[{ width: size, height: size }, breathingStyle]}>
         <Svg width={size} height={size} viewBox="0 0 1254 1254" accessible={false}>
           {logoMorphRenderShapes.map(shape => <LoaderPiece key={shape.letter} shape={shape} phase={phase} />)}
         </Svg>
-      </View>
+      </Animated.View>
     </View>
   );
 };

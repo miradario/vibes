@@ -150,13 +150,14 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
   const eventsQuery = useEventsFeedQuery();
   const challengesQuery = useChallengesFeedQuery();
-  const { data: myEventGroups = [], isLoading: myEventGroupsLoading } =
-    useMyEventGroupsQuery(session?.user?.id);
+  const groupsQuery = useMyEventGroupsQuery(session?.user?.id);
+  const { data: myEventGroups = [], isLoading: myEventGroupsLoading } = groupsQuery;
   const {
     data: items = [],
     isLoading,
-    error,
+    error: feedError,
   } = section === "challenge" ? challengesQuery : eventsQuery;
+  const error = feedError ?? (section === "challenge" ? groupsQuery.error : null);
   const locationOptions = useMemo(() => getEventLocationOptions(items), [items]);
   const [modality, setModality] = useState<EventModality | null>(null);
   const [category, setCategory] = useState<EventCategory | null>(null);
@@ -479,7 +480,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
           ) : null}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
-              {listIsLoading ? <VibesLoader /> : null}
+              {listIsLoading ? <VibesLoader size={96} /> : null}
               <Text style={localStyles.emptyTitle}>
                 {listIsLoading
                   ? section === "challenge"
@@ -518,6 +519,14 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                       ? "Creá un desafío o conectá una fuente real para poblar esta lista."
                       : t("events.eventsEmpty")}
               </Text>
+              {error && !listIsLoading ? (
+                <TouchableOpacity accessibilityRole="button" onPress={() => {
+                  void (section === "challenge" ? challengesQuery : eventsQuery).refetch();
+                  if (section === "challenge") void groupsQuery.refetch();
+                }} style={{ padding: 16 }}>
+                  <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           }
           ListFooterComponent={

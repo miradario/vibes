@@ -47,8 +47,7 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
-import { useCalmMotion } from "../src/hooks/useCalmMotion";
+import VibesLoader from "../components/VibesLoader";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -224,25 +223,10 @@ const getSuggestionHint = (profile: DataT) => {
 };
 
 function PeopleSkeleton() {
-  const { visible, reduceMotion } = useCalmMotion();
-  const opacity = useSharedValue(1);
-  useEffect(() => {
-    opacity.value = visible && !reduceMotion
-      ? withRepeat(withTiming(0.45, { duration: 900 }), -1, true)
-      : 1;
-    return () => cancelAnimation(opacity);
-  }, [visible, reduceMotion, opacity]);
-  const pulse = useAnimatedStyle(() => ({ opacity: opacity.value }));
   return (
-    <Animated.View style={[localStyles.peopleCarousel, localStyles.peopleSkeletonRow, pulse]}
-      accessible accessibilityRole="progressbar" accessibilityLabel="Cargando personas con tu vibe">
-      {[0, 1, 2].map((index) => (
-        <View key={index} style={[localStyles.personCard, localStyles.personSkeleton]}>
-          <Text style={[localStyles.personName, localStyles.skeletonText]} accessible={false}>Nombre</Text>
-          <Text style={[localStyles.personHint, localStyles.skeletonText]} accessible={false}>Afinidad</Text>
-        </View>
-      ))}
-    </Animated.View>
+    <View style={{ minHeight: 170, alignItems: "center", justifyContent: "center" }}>
+      <VibesLoader size={96} accessibilityLabel="Cargando personas con tu vibe" />
+    </View>
   );
 }
 

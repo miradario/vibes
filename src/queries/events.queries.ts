@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { withBootTimeout } from "../lib/startupBoot";
 import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { uploadImageToSupabase } from "../lib/supabaseStorage";
@@ -968,13 +969,15 @@ export const useChallengesFeedQuery = () => {
 
 export const eventsFeedQueryOptions = () => ({
   queryKey: eventsKeys.all,
-  queryFn: fetchEvents,
+  queryFn: () => withBootTimeout(fetchEvents(), 15000, "La carga de eventos"),
+  retry: false,
   staleTime: 30_000,
 });
 
 export const challengesFeedQueryOptions = (userId?: string) => ({
   queryKey: challengesKeys.list(userId),
-  queryFn: () => fetchChallenges(userId),
+  queryFn: () => withBootTimeout(fetchChallenges(userId), 15000, "La carga de desafíos"),
+  retry: false,
   staleTime: 30_000,
 });
 
@@ -2390,7 +2393,7 @@ export const myEventGroupsKeys = {
 
 export const myEventGroupsQueryOptions = (userId: string | undefined) => ({
   queryKey: myEventGroupsKeys.all(userId ?? ""),
-  queryFn: async () => {
+  queryFn: () => withBootTimeout((async () => {
     if (!userId) return [];
 
     const { data: eventParticipations, error: eventParticipationErr } =
@@ -2557,7 +2560,8 @@ export const myEventGroupsQueryOptions = (userId: string | undefined) => ({
     });
 
     return groups;
-  },
+  })(), 15000, "La carga de tus inscripciones"),
+  retry: false,
   enabled: Boolean(userId),
   staleTime: 30_000,
 });
