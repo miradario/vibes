@@ -58,7 +58,7 @@ export default function BirthDateWheel({ value, onChange, minimumDate, maximumDa
   const rowHeight = Math.max(44, Math.ceil(32 * fontScale));
   const english = locale === "en";
   const selectedDate = selectBirthDateParts(
-    value?.getFullYear() ?? 2000, value?.getMonth() ?? 0, value?.getDate() ?? 1, minimumDate, maximumDate
+    value?.getFullYear() ?? 2000, value?.getMonth() ?? 5, value?.getDate() ?? 15, minimumDate, maximumDate
   );
   const year = selectedDate.getFullYear(), month = selectedDate.getMonth(), day = selectedDate.getDate();
   const years = useMemo(() => Array.from({ length: maximumDate.getFullYear() - minimumDate.getFullYear() + 1 },
