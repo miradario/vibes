@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import Animated, { cancelAnimation, runOnJS, Easing, useAnimatedProps, useSharedValue, withDelay, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { cancelAnimation, runOnJS, Easing, useAnimatedProps, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import { useIsFocused } from "@react-navigation/native";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
@@ -11,10 +11,11 @@ function MorphPart({ shape, progress }: { shape: LogoMorphShape; progress: Share
   return <AnimatedPath animatedProps={props} fill={shape.color} fillRule="nonzero" />;
 }
 /** Real letter contours bend continuously into the brand mark, without particles. */
-export default function AnimatedBrandLogo({ style, onComplete }: { style?: StyleProp<ViewStyle>; onComplete?: () => void }) {
+export default function AnimatedBrandLogo({ style, onComplete, direction = "word-to-logo", loop = false }: { style?: StyleProp<ViewStyle>; onComplete?: () => void; direction?: "word-to-logo" | "logo-to-word"; loop?: boolean }) {
+  const target = direction === "logo-to-word" ? 0 : 1;
   const focused = useIsFocused();
   const { active, reducedMotion, motionReady } = useVibiRuntime();
-  const progress = useSharedValue(0);
+  const progress = useSharedValue(direction === "logo-to-word" ? 1 : 0);
   const started = useRef(false);
   const completed = useRef(false);
   const completionRef = useRef(onComplete);
@@ -28,7 +29,7 @@ export default function AnimatedBrandLogo({ style, onComplete }: { style?: Style
     if (!motionReady) return;
     if (reducedMotion) {
       cancelAnimation(progress);
-      progress.value = 1;
+      progress.value = target;
       started.current = true;
       finish();
       return;
@@ -37,15 +38,24 @@ export default function AnimatedBrandLogo({ style, onComplete }: { style?: Style
       cancelAnimation(progress);
       return;
     }
-    if (progress.value >= 1) { finish(); return; }
+    if (loop) {
+      progress.value = 1 - target;
+      const timing = { duration: LOGO_MORPH_DURATION * 1.6, easing: Easing.inOut(Easing.cubic) };
+      progress.value = withRepeat(withSequence(
+        withDelay(900, withTiming(target, timing)),
+        withDelay(900, withTiming(1 - target, timing)),
+      ), -1, false);
+      return () => cancelAnimation(progress);
+    }
+    if (Math.abs(progress.value - target) < 0.001) { finish(); return; }
     const delay = started.current ? 0 : 450;
     started.current = true;
-    progress.value = withDelay(delay, withTiming(1, {
-      duration: LOGO_MORPH_DURATION * (1 - progress.value),
+    progress.value = withDelay(delay, withTiming(target, {
+      duration: LOGO_MORPH_DURATION * Math.abs(target - progress.value),
       easing: Easing.inOut(Easing.cubic),
     }, (finished) => { if (finished) runOnJS(finish)(); }));
     return () => cancelAnimation(progress);
-  }, [motionReady, reducedMotion, focused, active, progress, finish]);
+  }, [motionReady, reducedMotion, focused, active, progress, finish, target, loop]);
   return (
     <View style={style} accessible accessibilityLabel="Vibes" pointerEvents="none">
       <Svg width="100%" height="100%" viewBox="0 0 1254 1254" preserveAspectRatio="xMidYMid meet">

@@ -79,7 +79,7 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const BootLoading = () => (
   <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.background }}>
-    <VibesLoader />
+    <VibesLoader size={160} />
   </View>
 );
 const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Navigator>) => {

@@ -31,7 +31,7 @@ const Welcome = () => {
           style={StyleSheet.absoluteFill}
         >
           <View style={styles.fallbackLogoWrap}>
-            <AnimatedBrandLogo style={styles.fallbackLogo} />
+            <AnimatedBrandLogo direction="logo-to-word" loop style={styles.fallbackLogo} />
           </View>
         </View>
         <View style={styles.actions}>
@@ -64,11 +64,12 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, backgroundColor: colors.background },
   fallbackLogoWrap: {
-    height: "50%",
+    flex: 1,
+    marginBottom: 220,
     justifyContent: "center",
     alignItems: "center",
   },
-  fallbackLogo: { width: "65%", height: "85%" },
+  fallbackLogo: { width: "90%", height: "100%" },
   titleWrap: { position: "absolute", width: "100%", alignItems: "center" },
   title: {
     fontFamily: vibesTheme.fonts.thin,

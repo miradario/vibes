@@ -3,9 +3,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import Animated, { cancelAnimation, Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withRepeat, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { cancelAnimation, Easing, useAnimatedProps, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import { NavigationContext } from "@react-navigation/native";
-import { logoLoaderFrame, logoLoaderPath, logoLoaderShapes } from "../src/illustrations/logoLoader";
+import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 
 type VibesLoaderProps = {
@@ -15,14 +15,14 @@ type VibesLoaderProps = {
 };
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-function LoaderPiece({ shape, phase }: { shape: typeof logoLoaderShapes[number]; phase: SharedValue<number> }) {
-  const props = useAnimatedProps(() => ({ d: logoLoaderPath(shape, logoLoaderFrame(phase.value).morph) }));
+function LoaderPiece({ shape, phase }: { shape: LogoMorphShape; phase: SharedValue<number> }) {
+  const props = useAnimatedProps(() => ({ d: logoMorphPath(shape, phase.value) }));
   return <AnimatedPath animatedProps={props} fill={shape.color} fillRule="nonzero" />;
 }
 
 const VibesLoader = ({ size = 32, style, accessibilityLabel = "Cargando" }: VibesLoaderProps) => {
-  const phase = useSharedValue(0);
-  const { active, reducedMotion } = useVibiRuntime();
+  const phase = useSharedValue(1);
+  const { active, reducedMotion, motionReady } = useVibiRuntime();
   const navigation = useContext(NavigationContext);
   const [focused, setFocused] = useState(() => navigation?.isFocused() ?? true);
 
@@ -35,22 +35,26 @@ const VibesLoader = ({ size = 32, style, accessibilityLabel = "Cargando" }: Vibe
   }, [navigation]);
 
   useEffect(() => {
-    phase.value = 0;
-    if (!active || !focused || reducedMotion) return;
-    phase.value = withRepeat(withTiming(1, { duration: 4400, easing: Easing.linear }), -1, false);
-    return () => { cancelAnimation(phase); phase.value = 0; };
-  }, [active, focused, reducedMotion, phase]);
-
-  const rotation = useAnimatedStyle(() => ({ transform: [{ rotate: `${logoLoaderFrame(phase.value).rotation}deg` }] }));
+    cancelAnimation(phase);
+    if (!motionReady || reducedMotion) { phase.value = 1; return; }
+    if (!active || !focused) return;
+    phase.value = 1;
+    const timing = { duration: LOGO_MORPH_DURATION, easing: Easing.inOut(Easing.cubic) };
+    phase.value = withRepeat(withSequence(
+      withDelay(450, withTiming(0, timing)),
+      withDelay(450, withTiming(1, timing)),
+    ), -1, false);
+    return () => cancelAnimation(phase);
+  }, [active, focused, reducedMotion, motionReady, phase]);
 
   return (
     <View accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel} accessibilityState={{ busy: true }}
       style={[styles.wrap, { width: size, height: size }, style]}>
-      <Animated.View style={[{ width: size, height: size }, rotation]}>
+      <View style={{ width: size, height: size }}>
         <Svg width={size} height={size} viewBox="0 0 1254 1254" accessible={false}>
-          {logoLoaderShapes.map(shape => <LoaderPiece key={shape.key} shape={shape} phase={phase} />)}
+          {logoMorphRenderShapes.map(shape => <LoaderPiece key={shape.letter} shape={shape} phase={phase} />)}
         </Svg>
-      </Animated.View>
+      </View>
     </View>
   );
 };

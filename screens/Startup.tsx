@@ -282,7 +282,7 @@ const Startup = () => {
     <ScreenContainer edges={["top", "bottom", "left", "right"]}
       style={{ backgroundColor: vibesTheme.colors.background }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <VibesLoader />
+        <VibesLoader size={160} />
         {bootFailed ? (
           <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: 24, gap: 16, marginTop: 24 }}>
             <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 18 }}>

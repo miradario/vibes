@@ -47,7 +47,7 @@
         "foregroundImage": "./assets/adaptive-icon-flat.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 43,
+      "versionCode": 44,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
