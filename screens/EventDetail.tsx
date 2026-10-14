@@ -75,6 +75,7 @@ import {
 } from "../src/constants/challengeMediaPresets";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
+import { getIosMapPreviewSource } from "../src/config/mapPreview";
 import { shareEventInvite } from "../src/lib/socialShare";
 import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
 
@@ -973,6 +974,21 @@ const EventDetail = () => {
         googleMapsApiKey,
       )
     : null;
+  // iOS: preview vía la función map-preview (Android sigue igual).
+  const iosEventMapPreviewSource = eventMapQuery
+    ? getIosMapPreviewSource(
+        hasEventPreviewCoordinates
+          ? { latitude: eventPreviewLatitude, longitude: eventPreviewLongitude }
+          : { query: eventMapQuery },
+        session?.access_token,
+        { width: 640, height: 320 },
+      )
+    : null;
+  const eventMapPreviewSource =
+    iosEventMapPreviewSource ??
+    (eventMapPreviewUri
+      ? { uri: eventMapPreviewUri, headers: googleMapsConfig.headers }
+      : null);
 
   useEffect(() => {
     let isMounted = true;
@@ -1682,9 +1698,9 @@ const EventDetail = () => {
                     style={localStyles.eventMiniMapCard}
                     onPress={handleOpenMap}
                   >
-                    {!eventMapPreviewFailed && eventMapPreviewUri ? (
+                    {!eventMapPreviewFailed && eventMapPreviewSource ? (
                       <Image
-                        source={{ uri: eventMapPreviewUri, headers: googleMapsConfig.headers }}
+                        source={eventMapPreviewSource}
                         style={localStyles.eventMiniMapImage}
                         onError={() => setEventMapPreviewFailed(true)}
                       />

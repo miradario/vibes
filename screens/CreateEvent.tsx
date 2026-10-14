@@ -44,6 +44,7 @@ import {
 } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
+import { getIosMapPreviewSource } from "../src/config/mapPreview";
 
 const IMAGE_MEDIA_TYPE =
   (ImagePicker as any).MediaType?.Images
@@ -240,6 +241,16 @@ const CreateEvent = () => {
   const capacityInputRef = useRef<TextInput>(null);
   const googleMapsConfig = getGoogleMapsClientConfig();
   const googleMapsApiKey = googleMapsConfig.apiKey;
+  // iOS: preview vía la función map-preview (Android sigue igual).
+  const iosMapPreviewSource =
+    typeof validatedLocation?.lat === "number" &&
+    typeof validatedLocation?.lng === "number"
+      ? getIosMapPreviewSource(
+          { latitude: validatedLocation.lat, longitude: validatedLocation.lng },
+          session?.access_token,
+          { width: 640, height: 288 },
+        )
+      : null;
   const existingCoverImageUri = editingEvent?.imagePresetId
     ? null
     : editingEvent?.imageUrl || null;
@@ -841,17 +852,19 @@ const CreateEvent = () => {
                   >
                     {typeof validatedLocation.lat === "number" &&
                     typeof validatedLocation.lng === "number" &&
-                    googleMapsApiKey &&
+                    (iosMapPreviewSource || googleMapsApiKey) &&
                     !mapPreviewFailed ? (
                       <Image
-                        source={{
-                          uri: getStaticMapPreviewUrl(
-                            validatedLocation.lat,
-                            validatedLocation.lng,
-                            googleMapsApiKey,
-                          ),
-                          headers: googleMapsConfig.headers,
-                        }}
+                        source={
+                          iosMapPreviewSource ?? {
+                            uri: getStaticMapPreviewUrl(
+                              validatedLocation.lat,
+                              validatedLocation.lng,
+                              googleMapsApiKey as string,
+                            ),
+                            headers: googleMapsConfig.headers,
+                          }
+                        }
                         style={localStyles.mapPreviewImage}
                         onError={() => setMapPreviewFailed(true)}
                       />
