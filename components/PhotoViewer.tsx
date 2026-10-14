@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -15,6 +16,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import ScreenContainer from "./ScreenContainer";
 import Icon from "./Icon";
@@ -107,6 +109,10 @@ export default function PhotoViewer({
     if (visible) setIndex(initialIndex);
   }, [visible, initialIndex]);
   const current = Math.max(0, Math.min(index, images.length - 1));
+  // En iOS, dentro de un Modal el SafeAreaView puede recibir insets en 0
+  // (notch / Dynamic Island), así que aplicamos los insets explícitamente.
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === "ios";
   return (
     <AnimatedSheetModal
       visible={visible}
@@ -115,8 +121,15 @@ export default function PhotoViewer({
       sheetStyle={s.root}
     >
       <GestureHandlerRootView style={s.root}>
-        <ScreenContainer edges={["top", "bottom", "left", "right"]}>
-          <View style={s.toolbar}>
+        <ScreenContainer
+          edges={isIOS ? [] : ["top", "bottom", "left", "right"]}
+          style={
+            isIOS
+              ? { paddingLeft: insets.left, paddingRight: insets.right }
+              : undefined
+          }
+        >
+          <View style={[s.toolbar, isIOS && { paddingTop: insets.top }]}>
             <Text style={s.label}>
               {images.length ? `${current + 1} / ${images.length}` : "Foto"}
             </Text>
@@ -139,7 +152,7 @@ export default function PhotoViewer({
               source={images[current]}
             />
           ) : null}
-          <View style={s.toolbar}>
+          <View style={[s.toolbar, isIOS && { paddingBottom: insets.bottom }]}>
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Foto anterior"
