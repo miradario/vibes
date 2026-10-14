@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
 import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Image, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "../components/Typography";
 import VibesActionButton from "../components/VibesActionButton";
+import ScreenContainer from "../components/ScreenContainer";
+import QuietBrandHeader from "../components/QuietBrandHeader";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   dismissSuggestedUpdate,
@@ -78,105 +79,83 @@ const UpdateGate = () => {
   };
 
   return (
-    <SafeAreaView style={styles.screen} edges={["top", "bottom", "left", "right"]}>
+    <ScreenContainer
+      style={styles.screen}
+      edges={["top", "bottom", "left", "right"]}
+    >
       <View style={styles.content}>
-        <View style={styles.iconWrap}>
-          <Image
-            source={require("../assets/images/challenges/vibesLogo.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-
-        <Text style={styles.eyebrow}>
-          {isForce ? t("update.forceEyebrow") : t("update.suggestedEyebrow")}
-        </Text>
-        <Text style={styles.title} maxFontSizeMultiplier={1}>
-          {isForce ? t("update.forceTitle") : t("update.suggestedTitle")}
-        </Text>
-        <Text style={styles.body}>{body}</Text>
+        <QuietBrandHeader
+          title={isForce ? t("update.forceTitle") : t("update.suggestedTitle")}
+          subtitle={body}
+        />
       </View>
 
       <View style={styles.actions}>
         <VibesActionButton
           label={t("update.updateNow")}
+          style={styles.primaryButton}
           onPress={() => {
             void handleUpdateNow();
           }}
         />
         {!isForce ? (
-          <VibesActionButton
-            label={t("update.later")}
-            variant="skip"
-            style={styles.laterButton}
-            showDivider={false}
+          <Pressable
+            accessibilityRole="button"
             onPress={() => {
               void handleLater();
             }}
-          />
+            style={({ pressed }) => [
+              styles.secondaryButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.secondaryText}>{t("update.later")}</Text>
+          </Pressable>
         ) : null}
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 };
 
+const colors = vibesTheme.colors;
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: colors.background,
     paddingHorizontal: 24,
-    justifyContent: "space-between",
   },
   content: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  iconWrap: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+  actions: {
+    gap: 12,
+    alignItems: "center",
+    paddingBottom: 36,
+  },
+  primaryButton: {
+    maxWidth: 480,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  secondaryButton: {
+    width: "100%",
+    maxWidth: 480,
+    height: 58,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.accentBlue,
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
-    marginBottom: 24,
   },
-  logo: {
-    width: 58,
-    height: 58,
-  },
-  eyebrow: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
-    letterSpacing: 1,
-    textTransform: "uppercase",
+  secondaryText: {
+    color: colors.accentBlue,
+    fontSize: 19,
     fontFamily: vibesTheme.fonts.medium,
-    textAlign: "center",
   },
-  title: {
-    marginTop: 10,
-    color: vibesTheme.colors.primaryText,
-    fontSize: 32,
-    lineHeight: 36,
-    textAlign: "center",
-    fontFamily: vibesTheme.fonts.thin,
-  },
-  body: {
-    marginTop: 12,
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 18,
-    lineHeight: 24,
-    textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
-    maxWidth: 310,
-  },
-  actions: {
-    paddingBottom: 18,
-  },
-  laterButton: {
-    marginTop: 18,
-  },
+  pressed: { opacity: 0.8 },
 });
 
 export default UpdateGate;
