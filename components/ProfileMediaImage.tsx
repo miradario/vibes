@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { StyleSheet, View, type ImageStyle, type StyleProp } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import BrandImagePlaceholder from "./BrandImagePlaceholder";
+import VibesLoader from "./VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type ProfileMediaImageProps = {
@@ -114,7 +115,7 @@ const ProfileMediaImage = ({
       ) : null}
       {loading ? (
         <View pointerEvents="none" style={styles.loading} accessible accessibilityLabel="Cargando foto" accessibilityRole="progressbar">
-          <BrandImagePlaceholder />
+          <VibesLoader accessibilityLabel="Cargando foto" />
         </View>
       ) : null}
     </View>

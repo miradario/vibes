@@ -480,13 +480,9 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
           ) : null}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
-              {listIsLoading ? <VibesLoader size={96} /> : null}
-              <Text style={localStyles.emptyTitle}>
-                {listIsLoading
-                  ? section === "challenge"
-                    ? "Cargando desafíos..."
-                    : t("events.loadingEvents")
-                  : error
+              {listIsLoading ? <VibesLoader size={48} /> : null}
+              {!listIsLoading ? <Text style={localStyles.emptyTitle}>
+                {error
                     ? "No se pudieron cargar"
                     : pastOnly
                       ? "No hay eventos pasados"
@@ -501,11 +497,9 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                     : section === "challenge"
                       ? "Todavía no hay desafíos reales"
                       : t("events.noEventsYet")}
-              </Text>
-              <Text style={localStyles.emptyText}>
-                {listIsLoading
-                  ? "Cargando eventos..."
-                    : error
+              </Text> : null}
+              {!listIsLoading ? <Text style={localStyles.emptyText}>
+                {error
                     ? errorMessage
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
@@ -518,7 +512,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                     : section === "challenge"
                       ? "Creá un desafío o conectá una fuente real para poblar esta lista."
                       : t("events.eventsEmpty")}
-              </Text>
+              </Text> : null}
               {error && !listIsLoading ? (
                 <TouchableOpacity accessibilityRole="button" onPress={() => {
                   void (section === "challenge" ? challengesQuery : eventsQuery).refetch();

@@ -753,15 +753,7 @@ const EventDetail = () => {
                 ]}
                 disabled
               >
-                <Icon name="chatbubbles-outline" size={19} color={vibesTheme.colors.secondaryText} />
-                <Text
-                  style={[
-                    localStyles.challengeChatButtonText,
-                    localStyles.challengeChatButtonTextDisabled,
-                  ]}
-                >
-                  Cargando chat
-                </Text>
+                <VibesLoader accessibilityLabel="Cargando chat" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}

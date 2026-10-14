@@ -225,7 +225,7 @@ const getSuggestionHint = (profile: DataT) => {
 function PeopleSkeleton() {
   return (
     <View style={{ minHeight: 170, alignItems: "center", justifyContent: "center" }}>
-      <VibesLoader size={96} accessibilityLabel="Cargando personas con tu vibe" />
+      <VibesLoader size={48} accessibilityLabel="Cargando personas con tu vibe" />
     </View>
   );
 }

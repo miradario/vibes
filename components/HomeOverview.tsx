@@ -82,12 +82,12 @@ function OverviewLoadingPlaceholder() {
     <>
       <View style={s.sectionBlock}>
         <SectionHeader title="Tus desafíos" />
-        <View style={s.eventSuggestionsLoader}><VibesLoader size={96} accessibilityLabel="Cargando desafíos" /></View>
+        <View style={s.eventSuggestionsLoader}><VibesLoader size={48} accessibilityLabel="Cargando desafíos" /></View>
       </View>
 
       <View style={s.sectionBlock}>
         <SectionHeader title="Eventos para vos" />
-        <View style={s.eventSuggestionsLoader}><VibesLoader size={96} accessibilityLabel="Cargando eventos" /></View>
+        <View style={s.eventSuggestionsLoader}><VibesLoader size={48} accessibilityLabel="Cargando eventos" /></View>
       </View>
     </>
   );
@@ -419,7 +419,7 @@ export default function HomeOverview({
           onPress={() => openList(true)}
         />
         {isLoadingChallengeRecommendations ? (
-          <View style={s.eventSuggestionsLoader}><VibesLoader size={96} accessibilityLabel="Cargando desafíos" /></View>
+          <View style={s.eventSuggestionsLoader}><VibesLoader size={48} accessibilityLabel="Cargando desafíos" /></View>
         ) : null}
         {!isLoadingChallengeRecommendations && !challenges.length && (
           <TouchableOpacity
@@ -475,7 +475,7 @@ export default function HomeOverview({
           </ScrollView>
         ) : eventsFeed.isLoading ? (
           <View style={s.eventSuggestionsLoader}>
-            <VibesLoader size={96} />
+            <VibesLoader size={48} />
           </View>
         ) : (
           <View style={s.emptyEventCard}>

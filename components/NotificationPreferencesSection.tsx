@@ -205,7 +205,6 @@ export default function NotificationPreferencesSection() {
           ) : (
             <View style={s.row}>
               <VibesLoader />
-              <Text style={s.description}>{t("configuration.loading")}</Text>
             </View>
           )}
         </View>

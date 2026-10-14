@@ -1,4 +1,5 @@
 import EnergySlider from "./EnergySlider";
+import VibesLoader from "./VibesLoader";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   AppState,
@@ -373,7 +374,7 @@ export default function DailyMoodCard({
           </Text>
         ) : null}
         {loading ? (
-          <Text style={s.privacyText}>Cargando tu estado…</Text>
+          <VibesLoader accessibilityLabel="Cargando tu estado" />
         ) : null}
         {error ? (
           <Text accessibilityRole="alert" style={s.error}>
