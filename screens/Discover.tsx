@@ -1828,8 +1828,8 @@ const localStyles = StyleSheet.create({
     backgroundColor: `${vibesTheme.colors.secondaryText}14`,
   },
   filterPillActive: {
-    backgroundColor: vibesTheme.colors.primaryText,
-    borderColor: vibesTheme.colors.primaryText,
+    backgroundColor: vibesTheme.colors.accentBlue,
+    borderColor: vibesTheme.colors.accentBlue,
   },
   filterPillText: {
     color: vibesTheme.colors.primaryText,
