@@ -1456,6 +1456,9 @@ const ChallengeDetailScreen = () => {
     ]
   );
   const compactHeaderTop = Math.max(insets.top + 8, 18);
+  // Alto del hero expandido: barra superior (42) + gap (14) + título en 2 líneas (2 × 33)
+  // + subtítulo en 2 líneas (10 + 2 × 21) + margen inferior (16), sumado al inset superior.
+  const heroExpandedHeight = Math.max(210, compactHeaderTop + 42 + 14 + 66 + 52 + 16);
   const heroCollapse = (expanded: number, collapsed: number) =>
     challengeScrollY.interpolate({
       inputRange: [0, 168],
@@ -1600,7 +1603,7 @@ const ChallengeDetailScreen = () => {
         style={[
           localStyles.expandedChallengeHeader,
           {
-            top: Math.max(insets.top + 8, 18),
+            top: compactHeaderTop,
             opacity: expandedChallengeHeaderOpacity,
           },
         ]}
@@ -1642,12 +1645,14 @@ const ChallengeDetailScreen = () => {
           <Text
             style={localStyles.expandedChallengeHeaderTitle}
             numberOfLines={2}
+            ellipsizeMode="tail"
           >
             {challenge.title}
           </Text>
           <Text
             style={localStyles.expandedChallengeHeaderSubtitle}
             numberOfLines={2}
+            ellipsizeMode="tail"
           >
             {challenge.subtitle}
           </Text>
@@ -1701,7 +1706,7 @@ const ChallengeDetailScreen = () => {
             top: heroCollapse(0, compactHeaderTop + 5),
             left: heroCollapse(0, 80),
             width: heroCollapse(width - insets.left - insets.right, 38),
-            height: heroCollapse(210, 38),
+            height: heroCollapse(heroExpandedHeight, 38),
             borderRadius: heroCollapse(0, 19),
           }}
         >
@@ -1731,7 +1736,7 @@ const ChallengeDetailScreen = () => {
       >
         {coverImageSource ? (
           <NativeAnimated.View
-            style={{ height: heroCollapse(210, 168 + compactHeaderTop + 5 + 38) }}
+            style={{ height: heroCollapse(heroExpandedHeight, 168 + compactHeaderTop + 5 + 38) }}
           />
         ) : null}
         <View
