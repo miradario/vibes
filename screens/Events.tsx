@@ -745,7 +745,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                   <TouchableOpacity key={preset} accessibilityRole="button" accessibilityState={{ selected }}
                     style={[localStyles.datePreset, selected && localStyles.datePresetSelected]}
                     onPress={() => { Keyboard.dismiss(); setDateField(null); setDraftDatePreset(preset); setDraftDateFrom(range.from); setDraftDateTo(range.to); }}>
-                    <Text style={localStyles.datePresetText}>{label}</Text>
+                    <Text style={[localStyles.datePresetText, selected && { color: vibesTheme.colors.surface }]}>{label}</Text>
                   </TouchableOpacity>
                 );
               })}

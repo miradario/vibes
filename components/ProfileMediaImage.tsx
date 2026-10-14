@@ -40,6 +40,7 @@ const ProfileMediaImage = ({
   contentFit = "cover",
   onDisplay,
   blurBackground = false,
+  showLoading = true,
   priority = "high",
 }: ProfileMediaImageProps) => {
   const source = useMemo(
@@ -121,7 +122,7 @@ const ProfileMediaImage = ({
         />
         </>
       ) : null}
-      {loading ? (
+      {loading && showLoading ? (
         <View pointerEvents="none" style={styles.loading} accessible accessibilityLabel="Cargando foto" accessibilityRole="progressbar">
           <VibesLoader accessibilityLabel="Cargando foto" />
         </View>

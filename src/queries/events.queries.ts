@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
+import { participantCounts } from "../lib/participantCounts";
 import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { uploadImageToSupabase } from "../lib/supabaseStorage";
@@ -516,7 +517,7 @@ const fetchEventParticipantMeta = async (eventIds: string[]) => {
 };
 
 const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
-  if (!challengeIds.length) return {} as Record<string, string[]>;
+  if (!challengeIds.length) return { previewMap: {} as Record<string, string[]>, countMap: {} as Record<string, number> };
 
   const [
     { data: challengeRows, error: challengeError },
@@ -538,7 +539,7 @@ const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
   if (challengeError) throw challengeError;
   if (eventError) throw eventError;
 
-  return createParticipantPreviewMap([
+  const rows = [
     ...(challengeRows ?? []).map((row: any) => ({
       eventId: String(row.challenge_id),
       userId: String(row.user_id),
@@ -549,7 +550,11 @@ const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
       userId: String(row.user_id),
       joinedAt: typeof row.joined_at === "string" ? row.joined_at : null,
     })),
-  ]);
+  ];
+  return {
+    previewMap: await createParticipantPreviewMap(rows),
+    countMap: participantCounts(challengeIds, rows),
+  };
 };
 
 const fetchChallengeTodayCheckinCountMap = async (challengeIds: string[]) => {
@@ -737,9 +742,10 @@ const enrichFeedItemsWithProfileImages = async (
             ? participantCountMap[item.id]
             : item.participantCount,
         attendees:
-          item.type === "event" &&
           typeof participantCountMap?.[item.id] === "number"
-            ? formatAttendees(participantCountMap[item.id], item.capacity)
+            ? item.type === "event"
+              ? formatAttendees(participantCountMap[item.id], item.capacity)
+              : `${participantCountMap[item.id]} participantes`
             : item.attendees,
         hostImage: signedHostImage,
         participantPreviewImages,
@@ -822,7 +828,7 @@ const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
     viewerId
   );
   const challengeIds = items.map((item) => item.id);
-  const [previewMap, todayCheckinCountMap, viewerProgressMap] =
+  const [{ previewMap, countMap }, todayCheckinCountMap, viewerProgressMap] =
     await Promise.all([
       fetchChallengeParticipantPreviewMap(challengeIds),
       fetchChallengeTodayCheckinCountMap(challengeIds),
@@ -832,7 +838,8 @@ const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
     items,
     previewMap,
     todayCheckinCountMap,
-    viewerProgressMap
+    viewerProgressMap,
+    countMap
   );
 };
 

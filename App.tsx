@@ -1,7 +1,7 @@
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
 import VibiOverlay from "./components/VibiOverlay";
-import VibesLoader from "./components/VibesLoader";
+import AnimatedBrandLogo from "./components/AnimatedBrandLogo";
 import { useAuthSession } from "./src/auth/auth.queries";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
@@ -79,7 +79,7 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const BootLoading = () => (
   <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.background }}>
-    <VibesLoader size={160} />
+    <AnimatedBrandLogo direction="logo-to-word" loop style={{ width: 240, height: 240 }} />
   </View>
 );
 const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Navigator>) => {
