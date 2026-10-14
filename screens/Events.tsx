@@ -714,6 +714,20 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             onChange={(value) => setDraftLocation(value ?? "")}
           />
           <Text style={localStyles.filterActionText}>Fecha</Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: !draftDateFrom && !draftDateTo }}
+            style={[localStyles.datePreset, { alignSelf: "flex-start" }, !draftDateFrom && !draftDateTo && localStyles.datePresetSelected]}
+            onPress={() => {
+              Keyboard.dismiss();
+              setDateField(null);
+              setDraftDatePreset(null);
+              setDraftDateFrom(null);
+              setDraftDateTo(null);
+            }}
+          >
+            <Text style={[localStyles.datePresetText, !draftDateFrom && !draftDateTo && { color: vibesTheme.colors.surface }]}>Sin filtro de fecha</Text>
+          </TouchableOpacity>
           <View style={{ flexDirection: "row", gap: 12 }}>
             {(["from", "to"] as const).map((field) => {
               const date = field === "from" ? draftDateFrom : draftDateTo;
@@ -744,7 +758,13 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                 return (
                   <TouchableOpacity key={preset} accessibilityRole="button" accessibilityState={{ selected }}
                     style={[localStyles.datePreset, selected && localStyles.datePresetSelected]}
-                    onPress={() => { Keyboard.dismiss(); setDateField(null); setDraftDatePreset(preset); setDraftDateFrom(range.from); setDraftDateTo(range.to); }}>
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setDateField(null);
+                      setDraftDatePreset(selected ? null : preset);
+                      setDraftDateFrom(selected ? null : range.from);
+                      setDraftDateTo(selected ? null : range.to);
+                    }}>
                     <Text style={[localStyles.datePresetText, selected && { color: vibesTheme.colors.surface }]}>{label}</Text>
                   </TouchableOpacity>
                 );
