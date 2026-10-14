@@ -1654,7 +1654,7 @@ const EventDetail = () => {
                     <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
                   </View>
                   <View style={styles.eventDetailInfoCopy}>
-                    <Text style={styles.eventDetailInfoText}>{formatSession(entry.startsAt)}</Text>
+                    <Text style={styles.eventDetailInfoText}>{formatSession(entry.startsAt)}{entry.endsAt ? ` — ${formatSession(entry.endsAt)}` : ""}</Text>
                     <Text style={styles.eventDetailInfoLabel}>
                       Agregar a mi calendario
                     </Text>

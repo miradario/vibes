@@ -1,4 +1,5 @@
-import { eventHasExpired, normalizeSchedule, nextEventSession } from "../src/lib/eventSchedule";
+import DiscoverPathCards from "../components/DiscoverPathCards";
+import { eventHasExpired, normalizeSchedule, nextEventSession, sortEventsByDate } from "../src/lib/eventSchedule";
 import MediaImage from "../components/MediaImage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ScreenContainer from "../components/ScreenContainer";
@@ -206,9 +207,11 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
       : section === "challenge"
         ? "No se pudieron cargar los desafíos."
         : "No se pudieron cargar los eventos.";
+  const [spiritualPaths, setSpiritualPaths] = useState<string[]>([]);
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      if (section === "event" && spiritualPaths.length && !spiritualPaths.some((path) => item.tags?.includes(path))) return false;
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
       if (!normalizedSearch) return true;
@@ -231,11 +234,11 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
+  }, [items, spiritualPaths, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
-      return filteredItems.filter((item) => pastOnly ? isExpiredEvent(item) : !isExpiredEvent(item));
+      return sortEventsByDate(filteredItems.filter((item) => pastOnly ? isExpiredEvent(item) : !isExpiredEvent(item)));
     }
     return filteredItems;
   }, [filteredItems, section, pastOnly]);
@@ -294,12 +297,15 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
   const listItems = useMemo<FeedListItem[]>(() => {
     if (section !== "challenge") {
-      const nextItems: FeedListItem[] = visibleItems.map((item) => ({
-        kind: "feed",
-        item,
-      }));
-
-      return nextItems;
+      const joinedIds = new Set(myEventGroups.filter((group) => group.eventType === "event").map((group) => group.eventId));
+      const joined = visibleItems.filter((item) => joinedIds.has(item.id));
+      const others = visibleItems.filter((item) => !joinedIds.has(item.id));
+      return [
+        { kind: "section", id: "your-events", title: "Tus eventos", subtitle: joined.length ? "En los que te anotaste" : "Todavía no te anotaste a ningún evento con estos filtros" },
+        ...joined.map((item) => ({ kind: "feed" as const, item })),
+        ...(others.length ? [{ kind: "section" as const, id: "discover-events", title: "Más eventos" }] : []),
+        ...others.map((item) => ({ kind: "feed" as const, item })),
+      ];
     }
 
     const nextItems: FeedListItem[] = [];
@@ -355,6 +361,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
     return nextItems;
   }, [
+    myEventGroups,
     expiredEventItems,
     finishedChallengeItems,
     generalChallengeItems,
@@ -455,6 +462,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
         </View>
 
+        {section === "event" ? <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} /> : null}
         <FlatList
           data={listIsLoading ? [] : listItems}
           keyExtractor={(item) => (item.kind === "section" ? item.id : item.item.id)}
@@ -713,11 +721,12 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             value={draftLocation || null}
             onChange={(value) => setDraftLocation(value ?? "")}
           />
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text style={localStyles.filterActionText}>Fecha</Text>
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityState={{ selected: !draftDateFrom && !draftDateTo }}
-            style={[localStyles.datePreset, { alignSelf: "flex-start" }, !draftDateFrom && !draftDateTo && localStyles.datePresetSelected]}
+            accessibilityLabel="Restablecer filtro de fecha"
+            style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
             onPress={() => {
               Keyboard.dismiss();
               setDateField(null);
@@ -726,8 +735,9 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
               setDraftDateTo(null);
             }}
           >
-            <Text style={[localStyles.datePresetText, !draftDateFrom && !draftDateTo && { color: vibesTheme.colors.surface }]}>Sin filtro de fecha</Text>
+            <Icon name="refresh-outline" size={21} color={vibesTheme.colors.accentBlue} />
           </TouchableOpacity>
+          </View>
           <View style={{ flexDirection: "row", gap: 12 }}>
             {(["from", "to"] as const).map((field) => {
               const date = field === "from" ? draftDateFrom : draftDateTo;

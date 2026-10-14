@@ -73,6 +73,7 @@ export type EventFeedItem = {
 type EventRow = Record<string, any>;
 
 type CreateEventInput = {
+  tags?: string[];
   category?: EventCategory | null;
   participationType?: EventParticipationType | null;
   createdBy: string;
@@ -97,6 +98,7 @@ type CreateEventInput = {
 };
 
 type UpdateEventInput = {
+  tags?: string[];
   category?: EventCategory | null;
   participationType?: EventParticipationType | null;
   eventId: string;
@@ -104,7 +106,7 @@ type UpdateEventInput = {
   title: string;
   subtitle: string;
   description?: string | null;
-  startsAt: string;
+  startsAt: string | null;
   schedule?: EventSession[];
   location?: string | null;
   locationLatitude?: number | null;
@@ -1016,6 +1018,7 @@ export const useCreateEventMutation = () => {
           description: encodedDescription,
           starts_at: input.startsAt,
           schedule: normalizeSchedule(input.schedule, input.startsAt),
+          ...(input.tags ? { tags: input.tags } : {}),
           location: input.location ?? null,
           location_latitude: input.locationLatitude ?? null,
           location_longitude: input.locationLongitude ?? null,
@@ -1092,6 +1095,7 @@ export const useUpdateEventMutation = () => {
           description: encodedDescription,
           starts_at: input.startsAt,
           schedule: normalizeSchedule(input.schedule, input.startsAt),
+          ...(input.tags ? { tags: input.tags } : {}),
           location: input.location ?? null,
           location_latitude: input.locationLatitude ?? null,
           location_longitude: input.locationLongitude ?? null,
@@ -1115,8 +1119,10 @@ export const useUpdateEventMutation = () => {
 
       return mapEventRow(data);
     },
-    onSuccess: () => {
+    onSuccess: (event) => {
+      queryClient.setQueryData(["event_deep_link", event.id], event);
       queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
     },
   });
 };

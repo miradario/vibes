@@ -1,3 +1,5 @@
+import DiscoverPathCards from "../components/DiscoverPathCards";
+import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
 import EventScheduleEditor from "../components/EventScheduleEditor";
 import { normalizeSchedule, serializeSchedule, sessionDraft } from "../src/lib/eventSchedule";
 import EventClassificationPicker from "../components/EventClassificationPicker";
@@ -178,7 +180,7 @@ const CreateEvent = () => {
   );
   const [scheduleDrafts, setScheduleDrafts] = useState(() => {
     const existing = normalizeSchedule(editingEvent?.schedule, editingEvent?.startsAt);
-    return existing.length ? existing.map((entry) => sessionDraft(entry.startsAt)) : [sessionDraft()];
+    return existing.length ? existing.map((entry) => ({ ...sessionDraft(entry.startsAt), ...(entry.endsAt ? { endDate: sessionDraft(entry.endsAt).date, endTime: sessionDraft(entry.endsAt).time } : {}) })) : [sessionDraft()];
   });
   const schedule = serializeSchedule(scheduleDrafts);
   const eventDateTime = schedule?.length ? new Date(schedule[0].startsAt) : null;
@@ -212,6 +214,8 @@ const CreateEvent = () => {
   const [isValidatingLocation, setIsValidatingLocation] = useState(false);
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const pendingPhotoAction = useRef<null | "camera" | "gallery">(null);
+  const [spiritualPaths, setSpiritualPaths] = useState<string[]>(() => (editingEvent?.tags ?? []).filter((tag: string) => SPIRITUAL_PATH_OPTIONS.includes(tag as any)));
   const [validatedLocation, setValidatedLocation] = useState<{
     address: string;
     lat: number | null;
@@ -245,6 +249,7 @@ const CreateEvent = () => {
     : editingEvent?.imageUrl || null;
   const coverImageUri = eventImageUri || existingCoverImageUri;
   const hasSelectedImage = Boolean(coverImageUri);
+  const keepExistingUndated = isEditing && !normalizeSchedule(editingEvent?.schedule, editingEvent?.startsAt).length && scheduleDrafts.every((row) => !row.date && !row.time && !row.endDate && !row.endTime);
   const missingFields = getMissingEventFields({
     title,
     subtitle,
@@ -255,6 +260,10 @@ const CreateEvent = () => {
     capacity: unlimitedCapacity ? "1" : capacity,
     hasSelectedImage,
   });
+  if (keepExistingUndated) {
+    const index = missingFields.indexOf("fecha y hora");
+    if (index >= 0) missingFields.splice(index, 1);
+  }
   if (!category) missingFields.push("categoría");
   if (!participationType) missingFields.push("tipo");
   const invalidLinks = getInvalidEventLinks({
@@ -462,8 +471,8 @@ const CreateEvent = () => {
       return;
     }
 
-    const resolvedStartsAt = eventDateTime?.toISOString();
-    if (!resolvedStartsAt) {
+    const resolvedStartsAt = eventDateTime?.toISOString() ?? null;
+    if (!resolvedStartsAt && !keepExistingUndated) {
       Alert.alert("Falta fecha", "Elegí una fecha y hora para el evento.");
       return;
     }
@@ -521,7 +530,8 @@ const CreateEvent = () => {
           subtitle: subtitle.trim() || "Evento creado por la comunidad",
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt,
-          schedule: schedule!,
+          schedule: schedule ?? [],
+          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !SPIRITUAL_PATH_OPTIONS.includes(tag as any)), ...spiritualPaths],
           location: resolvedLocation,
           locationLatitude:
             modality === "in_person" && validatedLocation
@@ -548,8 +558,9 @@ const CreateEvent = () => {
           title: title.trim(),
           subtitle: subtitle.trim() || "Evento creado por la comunidad",
           description: subtitle.trim() || null,
-          startsAt: resolvedStartsAt,
-          schedule: schedule!,
+          startsAt: resolvedStartsAt!,
+          schedule: schedule ?? [],
+          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !SPIRITUAL_PATH_OPTIONS.includes(tag as any)), ...spiritualPaths],
           location: resolvedLocation,
           locationLatitude:
             modality === "in_person" && validatedLocation
@@ -746,6 +757,8 @@ const CreateEvent = () => {
 
           <Text style={localStyles.label}>Fechas y horarios</Text>
           <EventScheduleEditor value={scheduleDrafts} onChange={setScheduleDrafts} />
+          <Text style={localStyles.label}>Camino espiritual</Text>
+          <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} />
 
           <EventClassificationPicker label="Categoría · qué actividad es" options={EVENT_CATEGORIES} value={category} onChange={setCategory} />
           <EventClassificationPicker label="Tipo · cómo se participa" options={EVENT_PARTICIPATION_TYPES} value={participationType} onChange={setParticipationType} />
@@ -1018,6 +1031,12 @@ const CreateEvent = () => {
 
       <AnimatedSheetModal
         visible={photoModalVisible}
+        onClosed={() => {
+          const action = pendingPhotoAction.current;
+          pendingPhotoAction.current = null;
+          if (action === "camera") void takePhoto();
+          if (action === "gallery") void pickFromGallery();
+        }}
         onClose={() => setPhotoModalVisible(false)}
         offsetY={300}
         sheetStyle={localStyles.photoSheet}
@@ -1026,20 +1045,18 @@ const CreateEvent = () => {
         <Text style={localStyles.modalTitle}>Foto de portada</Text>
         <TouchableOpacity
           style={localStyles.modalPrimaryButton}
-          onPress={async () => {
+          onPress={() => {
+            pendingPhotoAction.current = "camera";
             setPhotoModalVisible(false);
-            await new Promise((resolve) => setTimeout(resolve, 200));
-            await takePhoto();
           }}
         >
           <Text style={localStyles.modalPrimaryText}>Usar cámara</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={localStyles.modalSecondaryButton}
-          onPress={async () => {
+          onPress={() => {
+            pendingPhotoAction.current = "gallery";
             setPhotoModalVisible(false);
-            await new Promise((resolve) => setTimeout(resolve, 200));
-            await pickFromGallery();
           }}
         >
           <Text style={localStyles.modalSecondaryText}>Elegir de galería</Text>
