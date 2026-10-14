@@ -15,6 +15,7 @@ import React, {
 } from "react";
 import {
   Animated,
+  ActivityIndicator,
   AccessibilityInfo,
   Easing,
   FlatList,
@@ -38,8 +39,8 @@ import { ArrowLeftToLine, ArrowRightToLine, Link, X } from "lucide-react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
-import ProfileMediaImage from "./ProfileMediaImage";
 import VibesLoader from "./VibesLoader";
+import ProfileMediaImage from "./ProfileMediaImage";
 import type { UserProfileCardData } from "./UserProfileCard";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useSharedActivitiesQuery } from "../src/queries/sharedActivities.queries";
@@ -298,8 +299,29 @@ const UserProfileSheet = ({
   }, [profile?.id]);
   const [swipeNextProfile, setSwipeNextProfile] = useState<UserProfileCardData | null>(null);
   const [swipeAnimating, setSwipeAnimating] = useState(false);
+  const openingProfileId = useRef<string | undefined>(undefined);
+  const wasVisible = useRef(false);
+  const [isFollowingProfile, setIsFollowingProfile] = useState(false);
   const [photoReadyId, setPhotoReadyId] = useState<string | undefined>(undefined);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const openingScale = useRef(new Animated.Value(1)).current;
+  useLayoutEffect(() => {
+    openingScale.stopAnimation();
+    if (!visible || reduceMotion) {
+      openingScale.setValue(1);
+      return;
+    }
+    openingScale.setValue(0.86);
+    const animation = Animated.timing(openingScale, {
+      toValue: 1,
+      duration: 380,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+      isInteraction: false,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [visible, reduceMotion, openingScale]);
   useEffect(() => {
     const animation = Animated.timing(photoHeight, {
       toValue: detailsVisible ? compactPhotoHeight : height,
@@ -326,8 +348,14 @@ const UserProfileSheet = ({
   }, []);
   useLayoutEffect(() => () => swipeX.stopAnimation(), [swipeX]);
   useLayoutEffect(() => {
+    if (!visible) {
+      wasVisible.current = false;
+      return;
+    }
+    if (!wasVisible.current) openingProfileId.current = profile?.id;
+    wasVisible.current = true;
+    setIsFollowingProfile(profile?.id !== openingProfileId.current);
     // Keep the outgoing card offscreen while the modal closes.
-    if (!visible) return;
     setDetailsVisible(false);
     swipingRef.current = false;
     setSwipeAnimating(false);
@@ -698,7 +726,7 @@ const UserProfileSheet = ({
       >
         {profileImages.length > 0 && photoReadyId !== profile.id && !swipeNextProfile ? (
           <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { alignItems: "center", justifyContent: "center" }]} accessibilityLabel="Cargando perfil">
-            <VibesLoader />
+            {isFollowingProfile ? <VibesLoader /> : <ActivityIndicator size="small" color={vibesTheme.colors.accentBlue} />}
           </View>
         ) : null}
         <View
@@ -722,7 +750,9 @@ const UserProfileSheet = ({
             ]}
           >
             <ProfileMediaImage
+                loadingVariant="vibes"
                 key={`next-profile-${(swipeNextProfile ?? nextProfile)?.id}`}
+                previewSource={canViewPhotos && (swipeNextProfile ?? nextProfile)?.hasPhotos !== false ? (swipeNextProfile ?? nextProfile)?.image : undefined}
                 contentFit="cover"
                 blurBackground
                 showLoading
@@ -773,6 +803,7 @@ const UserProfileSheet = ({
           ]}
           {...swipe.panHandlers}
         >
+          <Animated.View style={[StyleSheet.absoluteFillObject, { transform: [{ scale: openingScale }] }]}>
           {profileImages.length > 0 ? (
             enableSwipe ? (
               <View style={StyleSheet.absoluteFillObject}>
@@ -785,7 +816,9 @@ const UserProfileSheet = ({
                     style={[StyleSheet.absoluteFillObject, { opacity: index === safeActiveIndex ? 1 : 0 }]}
                   >
                     <ProfileMediaImage
+                loadingVariant={isFollowingProfile ? "vibes" : "spinner"}
                       contentFit="cover" blurBackground showLoading
+                      previewSource={index === 0 && canViewPhotos && profile.hasPhotos !== false ? profile.image : undefined}
                       priority={index === safeActiveIndex ? "high" : "low"}
                       onDisplay={() => {
                         if (currentProfileId.current !== profile.id) return;
@@ -821,9 +854,11 @@ const UserProfileSheet = ({
               renderItem={({ item, index }) => (
                 <Animated.View style={{ width, height: photoHeight }}>
                   <ProfileMediaImage
+                loadingVariant={isFollowingProfile ? "vibes" : "spinner"}
                 contentFit="cover"
                 blurBackground
                 showLoading
+                    previewSource={index === 0 && canViewPhotos && profile.hasPhotos !== false ? profile.image : undefined}
                     onDisplay={() => {
                       if (index === safeActiveIndex) setPhotoReadyId(profile.id);
                     }}
@@ -843,15 +878,11 @@ const UserProfileSheet = ({
             )
           ) : (
             <View style={localStyles.fallbackCanvas}>
-              <Image
-                source={VIBES_FALLBACK_ILLUSTRATION}
-                resizeMode="contain"
-                style={localStyles.fallbackIllustration}
-                accessibilityLabel="Logo de Vibes"
-              />
+              <Icon name="person-outline" size={72} color={vibesTheme.colors.secondaryText} />
             </View>
           )}
 
+          </Animated.View>
           {!canViewPhotos ? (
             <View style={{ position: "absolute", left: 20, right: 20, top: insets.top + 60, zIndex: 10 }}>
               <ProfilePhotoPrompt onPress={() => { onClose(); navigation.navigate("EditProfile" as never, { photoRequestId: Date.now() } as never); }} />

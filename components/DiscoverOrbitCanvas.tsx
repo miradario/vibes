@@ -416,25 +416,14 @@ const DiscoverOrbitCanvas = ({
                     },
                   ]}
                 >
-                  <View style={localStyles.userBubbleGlow} />
                   <View style={styles.discoverOrbitUserRing}>
-                    <LinearGradient
-                      pointerEvents="none"
-                      colors={[
-                        "rgba(254, 254, 253, 0.96)",
-                        "rgba(244, 163, 64, 0.2)",
-                        "rgba(57, 120, 184, 0.24)",
-                      ]}
-                      style={StyleSheet.absoluteFill}
-                    />
                     <Avatar
                       uri={getAvatarUri(user)}
                       version={photoAttempt || undefined}
                       onReady={failed => { const key = photoKey(user); setPhotoStatus(previous => previous[key] === !failed ? previous : { ...previous, [key]: !failed }); }}
-                      size={Math.max(config.size - 10, 18)}
+                      size={Math.max(config.size - 2, 18)}
                       style={styles.discoverOrbitUserImage}
                     />
-                    <View style={localStyles.userBubbleHighlight} />
                   </View>
                 </View>
                 {userPresenceLabel ? (
@@ -526,7 +515,7 @@ const localStyles = {
     elevation: 2,
   },
   dismissedAvatar: {
-    opacity: 0.82,
+    opacity: 1,
   },
   userBubbleGlow: {
     position: "absolute" as const,

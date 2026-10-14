@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { StyleSheet, TouchableOpacity, View, type ImageStyle, type StyleProp } from "react-native";
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View, type ImageStyle, type StyleProp } from "react-native";
 import { Text } from "./Typography";
 import { Image as ExpoImage } from "expo-image";
-import BrandImagePlaceholder from "./BrandImagePlaceholder";
 import VibesLoader from "./VibesLoader";
+import BrandImagePlaceholder from "./BrandImagePlaceholder";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type ProfileMediaImageProps = {
   source?: any;
+  previewSource?: any;
   style?: StyleProp<ImageStyle>;
   fallbackBackgroundColor?: string;
   fallbackIconColor?: string;
@@ -16,6 +17,7 @@ type ProfileMediaImageProps = {
   onDisplay?: () => void;
   blurBackground?: boolean;
   showLoading?: boolean;
+  loadingVariant?: "spinner" | "vibes";
   priority?: "low" | "normal" | "high";
 };
 
@@ -34,6 +36,7 @@ const hasValidUri = (value: unknown): value is { uri: string } => {
 
 const ProfileMediaImage = ({
   source: inputSource,
+  previewSource,
   style,
   fallbackBackgroundColor = vibesTheme.colors.background,
   transition = 250,
@@ -41,6 +44,7 @@ const ProfileMediaImage = ({
   onDisplay,
   blurBackground = false,
   showLoading = true,
+  loadingVariant = "spinner",
   priority = "high",
 }: ProfileMediaImageProps) => {
   const source = useMemo(
@@ -49,6 +53,8 @@ const ProfileMediaImage = ({
       : inputSource,
     [inputSource],
   );
+  const preview = typeof previewSource === "string" ? { uri: previewSource } : previewSource;
+  const canPreview = typeof preview === "number" || hasValidUri(preview);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [displayedKey, setDisplayedKey] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -84,6 +90,9 @@ const ProfileMediaImage = ({
       {!canRenderSource ? <BrandImagePlaceholder /> : null}
       {canRenderSource && !hasError ? (
         <>
+        {canPreview ? <ExpoImage source={preview} style={StyleSheet.absoluteFillObject}
+          contentFit="cover" cachePolicy="memory-disk" transition={0}
+          priority={priority} accessible={false} /> : null}
         {blurBackground && resolvedSize && !(isPortrait && contentFit === "cover") ? (
           <ExpoImage
             recyclingKey={`background-${sourceKey}`}
@@ -98,9 +107,11 @@ const ProfileMediaImage = ({
           />
         ) : null}
         <ExpoImage
-          key={`${sourceKey}-${resolvedFit}-${attempt}`}
+          key={`${sourceKey}-${attempt}`}
           recyclingKey={sourceKey}
           source={source}
+          placeholder={canPreview ? preview : undefined}
+          placeholderContentFit={resolvedFit}
           style={[StyleSheet.absoluteFillObject, { opacity: layoutReady ? 1 : 0 }]}
           cachePolicy="memory-disk"
           priority={priority}
@@ -122,13 +133,13 @@ const ProfileMediaImage = ({
         />
         </>
       ) : null}
-      {loading && showLoading ? (
+      {loading && showLoading && !canPreview ? (
         <View pointerEvents="none" style={styles.loading} accessible accessibilityLabel="Cargando foto" accessibilityRole="progressbar">
-          <VibesLoader accessibilityLabel="Cargando foto" />
+          {loadingVariant === "vibes" ? <VibesLoader accessibilityLabel="Cargando foto" /> : <ActivityIndicator size="small" color={vibesTheme.colors.accentBlue} accessibilityLabel="Cargando foto" />}
         </View>
       ) : null}
       {hasError ? (
-        <View style={styles.loading}>
+        <View style={[styles.loading, { backgroundColor: fallbackBackgroundColor }]}>
           <Text style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", marginBottom: 12 }}>No se pudo cargar la foto.</Text>
           <TouchableOpacity accessibilityRole="button" onPress={() => {
             setErrorKey(null); setDisplayedKey(null); setAttempt(value => value + 1);
@@ -142,7 +153,7 @@ const ProfileMediaImage = ({
 };
 
 const styles = StyleSheet.create({
-  loading: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.background },
+  loading: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
   container: {
     overflow: "hidden",
     alignItems: "center",
