@@ -4,6 +4,7 @@ import { stepBubbles, type BubbleBody } from "../src/lib/bubblePhysics";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   LayoutChangeEvent,
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -291,12 +292,18 @@ const DiscoverOrbitCanvas = ({
 
   return (
     <View style={styles.discoverOrbitScreen} onLayout={handleLayout}>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[vibesTheme.colors.background, "rgba(110, 110, 110, 0.10)", vibesTheme.colors.background]}
-        locations={[0, 0.55, 1]}
-        style={StyleSheet.absoluteFill}
-      />
+      {Platform.OS === "ios" ? null : (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[
+            vibesTheme.colors.background,
+            "rgba(110, 110, 110, 0.10)",
+            vibesTheme.colors.background,
+          ]}
+          locations={[0, 0.55, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <View style={{ flex: 1, overflow: "hidden" }}>
         <View pointerEvents="none" style={localStyles.ambientGlowMustard} />
         <View pointerEvents="none" style={localStyles.ambientGlowBlue} />
