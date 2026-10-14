@@ -50,9 +50,26 @@ const getNotificationData = (
   if (!response) return null;
 
   const rawData = response.notification.request.content.data;
-  return rawData && typeof rawData === "object"
-    ? (rawData as Record<string, unknown>)
-    : null;
+  if (
+    rawData &&
+    typeof rawData === "object" &&
+    Object.keys(rawData).length > 0
+  ) {
+    return rawData as Record<string, unknown>;
+  }
+
+  // iOS: con APNs directo, expo solo expone userInfo.body como content.data.
+  // Si viene vacío, usamos el payload crudo del trigger.
+  const trigger = response.notification.request.trigger as {
+    payload?: unknown;
+  } | null;
+  const payload = trigger?.payload;
+  if (!payload || typeof payload !== "object") return null;
+  const { aps: _aps, body, ...rest } = payload as Record<string, unknown>;
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    return body as Record<string, unknown>;
+  }
+  return Object.keys(rest).length > 0 ? rest : null;
 };
 
 const upsertPushToken = async (token: Notifications.DevicePushToken) => {

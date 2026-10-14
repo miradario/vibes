@@ -393,7 +393,10 @@ const sendApnsMessage = async (
             sound: "default",
             ...(typeof badgeCount === "number" ? { badge: badgeCount } : {}),
           },
+          // expo-notifications en iOS lee content.data desde userInfo.body;
+          // mantenemos las keys en la raíz por compatibilidad.
           ...data,
+          body: data,
         }),
       }
     );
