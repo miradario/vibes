@@ -293,6 +293,9 @@ const AppNavigator = () => {
       }
     }
 
+    if (Object.keys(data).length === 0) {
+      console.warn("[push] notification tap without data, falling back to messages");
+    }
     navigateToMessages();
   };
 
