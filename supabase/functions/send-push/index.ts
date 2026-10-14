@@ -709,7 +709,7 @@ const buildMatchNotifications = async (
   return [
     {
       recipientId: user1Id,
-      title: "Tenes un nuevo match",
+      title: "Tenés una nueva conexión",
       body: `Conectaste con ${
         names.get(user2Id) ?? "alguien"
       }.`,
@@ -721,7 +721,7 @@ const buildMatchNotifications = async (
     },
     {
       recipientId: user2Id,
-      title: "Tenes un nuevo match",
+      title: "Tenés una nueva conexión",
       body: `Conectaste con ${
         names.get(user1Id) ?? "alguien"
       }.`,
