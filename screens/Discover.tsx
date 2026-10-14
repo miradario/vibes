@@ -15,7 +15,10 @@ import {
   type DiscoverAnswerFilters,
 } from "../src/lib/discoverAnswerFilters";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
+import {
+  getBottomTabBarHeight,
+  getBottomTabContentPadding,
+} from "../src/lib/tabBarLayout";
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import {
   matchesDiscoverSpiritualPaths,
@@ -35,6 +38,7 @@ import React, {
 import {
   AppState,
   FlatList,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -1573,7 +1577,11 @@ const Discover = () => {
       style={{
         flex: 1,
         backgroundColor: vibesTheme.colors.background,
-        paddingBottom: getBottomTabContentPadding(insets.bottom, 118),
+        // iOS: sin el +48 de scroll screens; deja ~16pt sobre el tab bar.
+        paddingBottom:
+          Platform.OS === "ios"
+            ? getBottomTabBarHeight() + Math.max(insets.bottom + 8, 18) + 16
+            : getBottomTabContentPadding(insets.bottom, 118),
       }}
     >
       <DiscoverContent />
