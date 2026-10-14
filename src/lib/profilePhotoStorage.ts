@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { withBootTimeout } from "./startupBoot";
 
 const PROFILE_PICTURES_BUCKET = "profile pictures";
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 30;
@@ -57,9 +58,9 @@ export const createSignedProfilePhotoUrl = async (value?: string | null) => {
     return cached.promise;
   }
 
-  const promise = supabase.storage
+  const promise = withBootTimeout(supabase.storage
     .from(PROFILE_PICTURES_BUCKET)
-    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS)
+    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS), 5000, "La carga de foto")
     .then(({ data, error }) => {
       if (error) {
         if (error.message === "Object not found") {
@@ -80,6 +81,9 @@ export const createSignedProfilePhotoUrl = async (value?: string | null) => {
         expiresAt: now + SIGNED_URL_TTL_SECONDS * 1000,
       });
       return data.signedUrl;
+    }).catch(() => {
+      signedUrlCache.delete(path);
+      return null;
     });
 
   signedUrlCache.set(path, {

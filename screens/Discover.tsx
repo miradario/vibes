@@ -464,7 +464,6 @@ export const DiscoverContent = forwardRef<
     return () => clearTimeout(timeout);
   }, [answerFilters, answerFiltersOwner, session?.user?.id]);
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
-  const canViewProfilePhotos = hasProfilePhotos(ownProfileData);
   const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
     useUserPreferencesQuery(session?.user?.id);
   const {
@@ -476,6 +475,10 @@ export const DiscoverContent = forwardRef<
   } = useCandidatesQuery({
     limit: 200,
   });
+  // The candidates query already checks the viewer's photo before returning
+  // photos. Keep those authorized photos visible if the separate own-profile
+  // query is still loading or its signed photo URL failed.
+  const canViewProfilePhotos = hasProfilePhotos(ownProfileData) || candidates.some(hasProfilePhotos);
   const swipeHistory = useSwipeHistoryCandidatesQuery();
   const incomingLikes = useIncomingLikeCandidatesQuery();
   const swipeMutation = useSwipeMutation();
@@ -1475,6 +1478,9 @@ export const DiscoverContent = forwardRef<
                 {t("discover.loadFailed")}
               </Text>
               <Text style={localStyles.emptyText}>{errorMessage}</Text>
+              <TouchableOpacity accessibilityRole="button" onPress={() => void refetchCandidates()} style={{ padding: 16 }}>
+                <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text>
+              </TouchableOpacity>
             </View>
           ) : visibleProfiles.length === 0 ? (
             <View style={localStyles.emptyState}>

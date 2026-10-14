@@ -756,7 +756,7 @@ const UserProfileSheet = ({
           style={[
             localStyles.screen,
             {
-              opacity: !detailsVisible && (!profileImages.length || photoReadyId === profile.id) ? 1 : 0,
+              opacity: !detailsVisible ? 1 : 0,
               transform: [
                 { translateX: swipeX },
                 {
@@ -889,9 +889,9 @@ const UserProfileSheet = ({
             activeOpacity={0.82}
             onPress={onClose}
             hitSlop={8}
-            style={[localStyles.closeButton, { top: insets.top + 4 }]}
+            style={[localStyles.closeButton, { top: insets.top + 4, backgroundColor: `${vibesTheme.colors.background}E6`, borderRadius: 28 }]}
           >
-            <X size={44} color={vibesTheme.colors.background} strokeWidth={2.5} />
+            <X size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
           </TouchableOpacity>
 
           {profileImages.length > 0 ? (

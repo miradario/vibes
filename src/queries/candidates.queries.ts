@@ -11,6 +11,7 @@ import type {
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
+import { withBootTimeout } from "../lib/startupBoot";
 
 type ProfileRow = Record<string, any>;
 type PhotoRow = Record<string, any>;
@@ -57,7 +58,10 @@ const calculateDistanceKm = (
   return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const fetchCandidates = async (
+const fetchCandidates = (...args: Parameters<typeof fetchCandidatesInternal>) =>
+  withBootTimeout(fetchCandidatesInternal(...args), 20000, "No se pudieron cargar los perfiles. Volvé a intentar");
+
+const fetchCandidatesInternal = async (
   currentUserId?: string,
   params?: GetCandidatesParams,
   includePreviouslySwiped = false,
@@ -494,10 +498,12 @@ export const useCandidatesQuery = (params?: GetCandidatesParams, homePreview = f
   return useQuery<GetCandidatesResponse>({
     queryKey: [...candidatesKeys.list(currentUserId, params), homePreview ? "home-preview" : "discovery"],
     queryFn: () => fetchCandidates(currentUserId, params, false, undefined, homePreview),
+    retry: 1,
+    retryDelay: 1000,
     staleTime: 5 * 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
     refetchInterval: false,
   });
 };

@@ -25,6 +25,7 @@ import Avatar from "./Avatar";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const getImageUri = (value: unknown): string | null => {
+  if (typeof value === "string") return value.trim() || null;
   if (!value || typeof value !== "object" || !("uri" in value)) {
     return null;
   }

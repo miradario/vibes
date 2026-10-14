@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
-import { StyleSheet, View, type ImageStyle, type StyleProp } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { StyleSheet, TouchableOpacity, View, type ImageStyle, type StyleProp } from "react-native";
+import { Text } from "./Typography";
 import { Image as ExpoImage } from "expo-image";
 import BrandImagePlaceholder from "./BrandImagePlaceholder";
 import VibesLoader from "./VibesLoader";
@@ -49,6 +50,7 @@ const ProfileMediaImage = ({
   );
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [displayedKey, setDisplayedKey] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [imageSize, setImageSize] = useState<{ key: string; width: number; height: number } | null>(null);
 
   const canRenderSource = useMemo(() => {
@@ -69,10 +71,16 @@ const ProfileMediaImage = ({
   const layoutReady = !blurBackground || Boolean(resolvedSize);
   const resolvedFit = blurBackground ? (isPortrait && contentFit === "cover" ? "cover" : "contain") : contentFit;
   const hasError = errorKey === sourceKey;
-  const loading = !canRenderSource || hasError || displayedKey !== sourceKey;
+  const loading = canRenderSource && !hasError && displayedKey !== sourceKey;
+  useEffect(() => {
+    if (!loading) return;
+    const timer = setTimeout(() => setErrorKey(sourceKey), 15000);
+    return () => clearTimeout(timer);
+  }, [loading, sourceKey, attempt]);
 
   return (
     <View style={[styles.container, { backgroundColor: fallbackBackgroundColor }, style]}>
+      {!canRenderSource ? <BrandImagePlaceholder /> : null}
       {canRenderSource && !hasError ? (
         <>
         {blurBackground && resolvedSize && !(isPortrait && contentFit === "cover") ? (
@@ -89,7 +97,7 @@ const ProfileMediaImage = ({
           />
         ) : null}
         <ExpoImage
-          key={`${sourceKey}-${resolvedFit}`}
+          key={`${sourceKey}-${resolvedFit}-${attempt}`}
           recyclingKey={sourceKey}
           source={source}
           style={[StyleSheet.absoluteFillObject, { opacity: layoutReady ? 1 : 0 }]}
@@ -118,12 +126,22 @@ const ProfileMediaImage = ({
           <VibesLoader accessibilityLabel="Cargando foto" />
         </View>
       ) : null}
+      {hasError ? (
+        <View style={styles.loading}>
+          <Text style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", marginBottom: 12 }}>No se pudo cargar la foto.</Text>
+          <TouchableOpacity accessibilityRole="button" onPress={() => {
+            setErrorKey(null); setDisplayedKey(null); setAttempt(value => value + 1);
+          }} style={{ padding: 12 }}>
+            <Text style={{ color: vibesTheme.colors.accentBlue }}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  loading: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
+  loading: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.background },
   container: {
     overflow: "hidden",
     alignItems: "center",
