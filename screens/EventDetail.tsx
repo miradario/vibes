@@ -981,11 +981,19 @@ const EventDetail = () => {
         { width: 640, height: 320 },
       )
     : null;
+  // iOS nunca usa la URL directa de Google (falla); espera a map-preview.
   const eventMapPreviewSource =
-    iosEventMapPreviewSource ??
-    (eventMapPreviewUri
-      ? { uri: eventMapPreviewUri, headers: googleMapsConfig.headers }
-      : null);
+    Platform.OS === "ios"
+      ? iosEventMapPreviewSource
+      : eventMapPreviewUri
+        ? { uri: eventMapPreviewUri, headers: googleMapsConfig.headers }
+        : null;
+  const eventMapPreviewSourceUri = eventMapPreviewSource?.uri ?? null;
+
+  // Si cambia la URL (p.ej. llegó la sesión), reintentar el preview.
+  useEffect(() => {
+    setEventMapPreviewFailed(false);
+  }, [eventMapPreviewSourceUri, session?.access_token]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1483,6 +1491,7 @@ const EventDetail = () => {
                   >
                     {!eventMapPreviewFailed && eventMapPreviewSource ? (
                       <Image
+                        key={eventMapPreviewSource.uri}
                         source={eventMapPreviewSource}
                         style={localStyles.eventMiniMapImage}
                         onError={() => setEventMapPreviewFailed(true)}

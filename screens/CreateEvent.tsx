@@ -7,7 +7,7 @@ import { EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, parseEventCategory, parseE
 import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   View,
@@ -255,6 +255,10 @@ const CreateEvent = () => {
           { width: 640, height: 288 },
         )
       : null;
+  const iosMapPreviewUri = iosMapPreviewSource?.uri ?? null;
+  useEffect(() => {
+    if (Platform.OS === "ios") setMapPreviewFailed(false);
+  }, [iosMapPreviewUri]);
   const existingCoverImageUri = editingEvent?.imagePresetId
     ? null
     : editingEvent?.imageUrl || null;
@@ -866,7 +870,9 @@ const CreateEvent = () => {
                   >
                     {typeof validatedLocation.lat === "number" &&
                     typeof validatedLocation.lng === "number" &&
-                    (iosMapPreviewSource || googleMapsApiKey) &&
+                    (Platform.OS === "ios"
+                      ? iosMapPreviewSource
+                      : googleMapsApiKey) &&
                     !mapPreviewFailed ? (
                       <Image
                         source={
