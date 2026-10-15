@@ -43,8 +43,15 @@ export const getUserPreferences = async (userId: string) => {
   const raw = await AsyncStorage.getItem(getStorageKey(userId));
   if (!raw) return null;
 
-  const parsed = JSON.parse(raw) as Record<string, any>;
-  return addCamelAliases(parsed);
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid preferences cache");
+    return addCamelAliases(parsed);
+  } catch {
+    // Discard only malformed fallback preferences, not the session or other local data.
+    await AsyncStorage.removeItem(getStorageKey(userId));
+    return null;
+  }
 };
 
 export const upsertUserPreferences = async (

@@ -1,3 +1,4 @@
+import BackButton from "../components/BackButton";
 import VibesLoader from "../components/VibesLoader";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
@@ -187,17 +188,9 @@ export default function CommunityGroupChat() {
         keyboardVerticalOffset={Platform.OS === "android" ? insets.top : 0}
       >
         <View style={s.header}>
-          <TouchableOpacity
-            accessibilityLabel="Volver"
+          <BackButton accessibilityLabel="Volver"
             onPress={() => navigation.goBack()}
-            style={s.back}
-          >
-            <Icon
-              name="chevron-back"
-              size={26}
-              color={vibesTheme.colors.primaryText}
-            />
-          </TouchableOpacity>
+            style={s.back} />
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Editar foto del grupo"

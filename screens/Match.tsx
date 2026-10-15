@@ -189,7 +189,7 @@ const localStyles = StyleSheet.create({
     fontSize: 36,
     lineHeight: 39,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   heroWrap: {
     width: "100%",

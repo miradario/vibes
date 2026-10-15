@@ -1,3 +1,4 @@
+import BackButton from "./BackButton";
 /** @format */
 
 import React from "react";
@@ -60,17 +61,11 @@ const AppHeader = ({
 
   const leftSlot = left ?? (
     showBack ? (
-      <TouchableOpacity
-        accessibilityRole="button"
+      <BackButton accessibilityRole="button"
         accessibilityLabel="Volver"
         activeOpacity={0.84}
         onPress={handleBack}
-        style={[styles.iconButton, backButtonStyle]}
-      >
-        {hideBackIcon ? null : (
-          <Icon name="chevron-back" size={23} color={DARK_GRAY} />
-        )}
-      </TouchableOpacity>
+        style={[styles.iconButton, backButtonStyle]} hideIcon={hideBackIcon} />
     ) : (
       <View style={styles.iconPlaceholder} />
     )
@@ -150,7 +145,7 @@ const styles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 28,
     lineHeight: 32,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   subtitle: {

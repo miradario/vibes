@@ -1,3 +1,4 @@
+import CancelOnboardingButton from "../components/CancelOnboardingButton";
 /** @format */
 
 import React, { useState } from "react";
@@ -6,7 +7,6 @@ import { Text, TextInput } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import styles, { DARK_GRAY, GRAY, WHITE } from "../assets/styles";
 import AppHeader from "../components/AppHeader";
-import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import VibesLoader from "../components/VibesLoader";
 import SpiritualPathDetailsModal from "../components/SpiritualPathDetailsModal";
@@ -147,7 +147,7 @@ const OnboardingSpiritualPath = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader right={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingSpiritualPath" />
         </AppHeader>
 
@@ -286,7 +286,6 @@ const OnboardingSpiritualPath = () => {
           </View>
         </ScrollView>
 
-        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity
@@ -349,7 +348,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 18,
     marginBottom: 10,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   aboutInput: {
     minHeight: 104,

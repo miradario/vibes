@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   fallbackLogo: { width: "90%", height: "100%" },
   titleWrap: { position: "absolute", width: "100%", alignItems: "center" },
   title: {
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 44,
     lineHeight: 54,
     color: colors.primaryText,

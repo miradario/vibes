@@ -269,7 +269,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 30,
     lineHeight: 36,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     letterSpacing: 0.2,
   },
   subtitle: {

@@ -66,14 +66,14 @@ const localStyles = StyleSheet.create({
     fontSize: 48,
     lineHeight: 52,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   title: {
     marginTop: 10,
     fontSize: 26,
     lineHeight: 30,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   subtitle: {

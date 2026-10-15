@@ -1526,7 +1526,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
     lineHeight: 28,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 8,
   },
   summaryContent: {
@@ -1628,7 +1628,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   meditationButtonSubtitle: {
     marginTop: 4,
@@ -1698,7 +1698,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 22,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   guruSubtitle: {
     marginTop: 2,
@@ -1751,7 +1751,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 19,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   presenceSubtitle: {
     marginTop: 3,
@@ -1831,7 +1831,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 23,
     lineHeight: 27,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   sectionLink: {
     flexDirection: "row",
@@ -1919,7 +1919,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 4,
   },
   feedListMeta: {
@@ -1994,7 +1994,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 7,
   },
   eventMetaRow: {
@@ -2029,7 +2029,7 @@ const localStyles = StyleSheet.create({
     fontSize: 42,
     lineHeight: 46,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     letterSpacing: 0.3,
   },
   discoverOrbitWrap: {
@@ -2061,7 +2061,7 @@ const localStyles = StyleSheet.create({
   emptyStateTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   emptyStateText: {
@@ -2099,7 +2099,7 @@ const localStyles = StyleSheet.create({
   filtersTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 30,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersSubtitle: {
     marginTop: 4,
@@ -2175,7 +2175,7 @@ const localStyles = StyleSheet.create({
   filtersSectionTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersPillRow: {
     flexDirection: "row",
@@ -2228,7 +2228,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
   },
   filtersPrimaryButtonText: {
     color: vibesTheme.colors.surface,

@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     color: vibesTheme.colors.surface,
     fontSize: 21,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.light,
+    fontFamily: vibesTheme.fonts.regular,
   },
   skipWrap: {
     width: "100%",
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   skipText: {
     color: vibesTheme.colors.secondaryText,
     fontSize: 18,
-    fontFamily: vibesTheme.fonts.light,
+    fontFamily: vibesTheme.fonts.regular,
   },
   skipButtonDisabled: {
     opacity: 0.7,

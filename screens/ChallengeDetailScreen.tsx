@@ -1,3 +1,5 @@
+import ChallengeJourneyPath from "../components/ChallengeJourneyPath";
+import BackButton from "../components/BackButton";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
 import { resolvePublicContentRoute } from "../src/lib/publicContentRoute";
@@ -53,6 +55,7 @@ import {
   useLeaveChallengeMutation,
   useDeleteChallengeMutation,
   fetchEventFeedItemById,
+  fetchIsRestrictedChallenge,
   type EventFeedItem,
 } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -434,147 +437,9 @@ const ChallengeIntroMetaRow = memo(
   )
 );
 
-const ChallengeJourneyCard = memo(
-  ({
-    challenge,
-    percent,
-  }: {
-    challenge: ChallengeDetailData;
-    percent: number;
-  }) => {
-    const scrollRef = useRef<ScrollView>(null);
-    const timelineScrollX = useRef(0);
-    const [timelineWidth, setTimelineWidth] = useState(0);
-    const [timelineContentWidth, setTimelineContentWidth] = useState(0);
-    const progress = useAnimatedProgress(percent);
-    const fillStyle = useAnimatedStyle(() => ({
-      width: `${progress.value * 100}%`,
-    }));
-    const days = useMemo(
-      () =>
-        Array.from({ length: challenge.totalDays }, (_, index) => index + 1),
-      [challenge.totalDays]
-    );
-
-    useEffect(() => {
-      if (!timelineWidth || !timelineContentWidth || challenge.currentDay <= 0)
-        return;
-      const dayPitch = 66;
-      const activeCenter =
-        (Math.max(challenge.currentDay, 1) - 1) * dayPitch + 20;
-      const maxScrollX = Math.max(timelineContentWidth - timelineWidth, 0);
-      const targetX = Math.min(
-        Math.max(activeCenter - timelineWidth / 2, 0),
-        maxScrollX
-      );
-      const overshootX = Math.min(targetX + 28, maxScrollX);
-      let startTimer: ReturnType<typeof setTimeout> | undefined;
-      let reboundTimer: ReturnType<typeof setTimeout> | undefined;
-      let animationFrame: number | undefined;
-      const animateScrollTo = (
-        x: number,
-        duration: number,
-        onComplete?: () => void
-      ) => {
-        const startX = timelineScrollX.current;
-        const deltaX = x - startX;
-        const startTime = Date.now();
-        const easeInOutCubic = (value: number) =>
-          value < 0.5
-            ? 4 * value * value * value
-            : 1 - Math.pow(-2 * value + 2, 3) / 2;
-
-        const step = () => {
-          const elapsed = Date.now() - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const nextX = startX + deltaX * easeInOutCubic(progress);
-          timelineScrollX.current = nextX;
-          scrollRef.current?.scrollTo({ x: nextX, animated: false });
-
-          if (progress < 1) {
-            animationFrame = requestAnimationFrame(step);
-            return;
-          }
-
-          timelineScrollX.current = x;
-          onComplete?.();
-        };
-
-        animationFrame = requestAnimationFrame(step);
-      };
-
-      requestAnimationFrame(() => {
-        startTimer = setTimeout(() => {
-          animateScrollTo(overshootX, 720);
-          reboundTimer = setTimeout(() => {
-            animateScrollTo(targetX, 520);
-          }, 760);
-        }, 420);
-      });
-      return () => {
-        if (startTimer) clearTimeout(startTimer);
-        if (reboundTimer) clearTimeout(reboundTimer);
-        if (animationFrame) cancelAnimationFrame(animationFrame);
-      };
-    }, [challenge.currentDay, timelineContentWidth, timelineWidth]);
-
-    return (
-      <View style={localStyles.journeyCard}>
-        <View style={localStyles.journeyHeader}>
-          <View style={localStyles.journeyHeaderCopy}>
-            <Text style={localStyles.journeyTitle}>Tu camino</Text>
-            <Text style={localStyles.journeySubtitle}>
-              {challenge.completedDays.length} de {challenge.totalDays} días
-              completados
-            </Text>
-          </View>
-          <Text style={localStyles.journeyPercent}>{percent}%</Text>
-        </View>
-
-        <View style={localStyles.journeyTrack}>
-          <Reanimated.View style={[localStyles.journeyTrackFill, fillStyle]} />
-        </View>
-
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={localStyles.journeyDaysRow}
-          onLayout={(event) => setTimelineWidth(event.nativeEvent.layout.width)}
-          onContentSizeChange={(contentWidth) =>
-            setTimelineContentWidth(contentWidth)
-          }
-          onScroll={(event) => {
-            timelineScrollX.current = event.nativeEvent.contentOffset.x;
-          }}
-          scrollEventThrottle={16}
-        >
-          {days.map((day, index) => {
-            const state = getDayState(
-              day,
-              challenge.currentDay,
-              challenge.completedDays
-            );
-            return (
-              <View key={day} style={localStyles.journeyDayWrap}>
-                <DayCircle day={day} state={state} size={40} />
-                {state === "active" ? (
-                  <Text style={localStyles.journeyTodayLabel}>Hoy</Text>
-                ) : null}
-                {index < days.length - 1 ? (
-                  <View
-                    style={[
-                      localStyles.journeyConnector,
-                      state === "completed" && localStyles.journeyConnectorDone,
-                      state === "missed" && localStyles.journeyConnectorMissed,
-                    ]}
-                  />
-                ) : null}
-              </View>
-            );
-          })}
-        </ScrollView>
-
+const ChallengeJourneyCard = memo(({ challenge }: { challenge: ChallengeDetailData; percent: number }) => {
+  return (<View style={localStyles.journeyCard}>
+    <ChallengeJourneyPath totalDays={challenge.totalDays} currentDay={challenge.currentDay} completedDays={challenge.completedDays} />
         <View style={localStyles.journeyStatsRow}>
           <View style={localStyles.journeyStatItem}>
             <Icon name="flame-outline" size={24} color={vibesTheme.colors.accentCoral} />
@@ -750,7 +615,7 @@ export const PathProgress = memo(
               numberOfLines={2}
               maxFontSizeMultiplier={1}
             >
-              Tu camino
+              Tu progreso
             </Text>
             <Text style={localStyles.pathSubtitle}>
               {totalDays} días para conectar con vos
@@ -1027,7 +892,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
     onPress={onPress}
     activeOpacity={0.9}
   >
-    <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.primaryText} />
+    <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.surface} />
   </TouchableOpacity>
 ));
 
@@ -1084,6 +949,12 @@ const ChallengeDetailScreen = () => {
   const event = linkedEvent ?? inlineEvent;
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const { data: isRestrictedChallenge = false } = useQuery({
+    queryKey: ["challenge_restricted", challengeId, userId ?? null],
+    queryFn: () => fetchIsRestrictedChallenge(challengeId as string),
+    enabled: Boolean(challengeId) && !event && !linkedEventLoading,
+    staleTime: 60_000,
+  });
   const handleBack = usePublicContentBack(Boolean(userId));
   const { data: participant } = useChallengeParticipantQuery(event?.id, userId);
   const joinChallengeMutation = useJoinChallengeMutation();
@@ -1591,6 +1462,29 @@ const ChallengeDetailScreen = () => {
     );
   }
 
+  if (!event && challengeId && isRestrictedChallenge) {
+    return (
+      <ScreenContainer style={localStyles.loadingScreen}>
+        <Icon name="lock-closed-outline" size={30} color={palette.gold} />
+        <Text style={localStyles.loadingTitle}>Este desafío es privado</Text>
+        <Text style={localStyles.privateBody}>
+          {userId
+            ? "No tenés acceso a este desafío. Si te suman o te aceptan, lo vas a poder ver."
+            : "Si iniciás sesión y tenés acceso, lo vas a poder ver."}
+        </Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          style={localStyles.loadingBackButton}
+          onPress={() => handleBack()}
+          activeOpacity={0.85}
+        >
+          <Text style={localStyles.loadingBackText}>Volver</Text>
+        </TouchableOpacity>
+      </ScreenContainer>
+    );
+  }
+
   if (!event && challengeId) {
     return (
       <ScreenContainer style={localStyles.loadingScreen}>
@@ -1621,13 +1515,9 @@ const ChallengeDetailScreen = () => {
         ]}
       >
         <View style={localStyles.expandedChallengeHeaderTopRow}>
-          <TouchableOpacity
-            style={localStyles.expandedChallengeHeaderIconButton}
+          <BackButton style={localStyles.expandedChallengeHeaderIconButton}
             onPress={() => handleBack()}
-            activeOpacity={0.84}
-          >
-            <Icon name="chevron-back" size={22} color={WHITE} />
-          </TouchableOpacity>
+            activeOpacity={0.84} />
           <View style={localStyles.expandedChallengeHeaderSpacer} />
           <View style={localStyles.expandedChallengeHeaderActions}>
             <TouchableOpacity
@@ -1661,13 +1551,6 @@ const ChallengeDetailScreen = () => {
           >
             {challenge.title}
           </Text>
-          <Text
-            style={localStyles.expandedChallengeHeaderSubtitle}
-            numberOfLines={2}
-            ellipsizeMode="tail"
-          >
-            {challenge.subtitle}
-          </Text>
         </View>
       </NativeAnimated.View>
 
@@ -1682,13 +1565,9 @@ const ChallengeDetailScreen = () => {
           },
         ]}
       >
-        <TouchableOpacity
-          style={localStyles.collapsedChallengeHeaderBackButton}
+        <BackButton style={localStyles.collapsedChallengeHeaderBackButton}
           onPress={() => handleBack()}
-          activeOpacity={0.84}
-        >
-          <Icon name="chevron-back" size={22} color={palette.text} />
-        </TouchableOpacity>
+          activeOpacity={0.84} />
         {collapsedCoverImageSource ? (
           <View style={localStyles.collapsedChallengeHeaderThumbnail} />
         ) : null}
@@ -1765,6 +1644,10 @@ const ChallengeDetailScreen = () => {
             <ChallengeIntroMetaRow challenge={challenge} checkedInTodayCount={checkedInTodayCount} />
           </View>
           <View style={localStyles.content}>
+            {challenge.subtitle ? <View style={localStyles.descriptionSection}>
+              <Text style={localStyles.descriptionHeading}>Sobre el desafío</Text>
+              <Text selectable style={localStyles.fullDescription}>{challenge.subtitle}</Text>
+            </View> : null}
             <ChallengeJourneyCard challenge={challenge} percent={percent} />
             {event?.id && (isJoined || isAdmin) ? (
               <ChallengeDaysSection
@@ -2100,6 +1983,9 @@ const ChallengeDetailScreen = () => {
 };
 
 const localStyles = StyleSheet.create({
+  descriptionSection: { paddingVertical: 20, gap: 10 },
+  descriptionHeading: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 },
+  fullDescription: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 17, lineHeight: 26 },
   screen: {
     flex: 1,
     backgroundColor: palette.bg,
@@ -2118,6 +2004,14 @@ const localStyles = StyleSheet.create({
     lineHeight: 27,
     textAlign: "center",
     fontFamily: vibesTheme.fonts.medium,
+  },
+  privateBody: {
+    color: vibesTheme.colors.muted,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: "center",
+    fontFamily: vibesTheme.fonts.regular,
+    maxWidth: 320,
   },
   loadingBackButton: {
     borderRadius: 22,
@@ -2322,7 +2216,7 @@ const localStyles = StyleSheet.create({
   },
   joinRequestButton: {
     borderRadius: 20,
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     borderWidth: 2,
     borderColor: "rgba(254, 254, 253, 0.18)",
     paddingHorizontal: 18,
@@ -2400,7 +2294,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 24,
     lineHeight: 28,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   completionCelebrationBody: {
@@ -2525,7 +2419,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   requestCardCount: {
     color: palette.goldDeep,
@@ -2607,7 +2501,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 22,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   celebrationBody: {
     marginTop: 4,
@@ -2629,7 +2523,7 @@ const localStyles = StyleSheet.create({
   cardTitle: {
     color: palette.text,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   cardSubtitle: {
     marginTop: 4,
@@ -2813,7 +2707,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 27,
     lineHeight: 32,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   pathSubtitle: {
     marginTop: 2,
@@ -3069,7 +2963,7 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
   },
   checkInCompleted: {
-    backgroundColor: palette.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0,
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },
@@ -3167,7 +3061,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.16,
@@ -3226,7 +3120,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 22,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 10,
   },
   menuItem: {

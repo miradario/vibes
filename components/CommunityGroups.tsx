@@ -112,7 +112,7 @@ export default function CommunityGroups({
               <View style={s.row}>
                 <TouchableOpacity accessibilityRole="button" disabled={respond.isPending}
                   onPress={() => void answerInvitation(invitation, true)}
-                  style={[s.invitationAction, { backgroundColor: vibesTheme.colors.accentBlue, opacity: respond.isPending ? 0.5 : 1 }]}>
+                  style={[s.invitationAction, { backgroundColor: vibesTheme.colors.primaryText, opacity: respond.isPending ? 0.5 : 1 }]}>
                   <Text style={[s.title, { color: vibesTheme.colors.surface }]}>Aceptar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity accessibilityRole="button" disabled={respond.isPending}
@@ -317,18 +317,20 @@ const s = StyleSheet.create({
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.primaryText,
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: `${vibesTheme.colors.secondaryText}0C`,
   },
   createLabel: {
     flexShrink: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.bold,
+    fontSize: 16,
+    lineHeight: 20,
+    includeFontPadding: false,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   avatar: {
     width: 48,

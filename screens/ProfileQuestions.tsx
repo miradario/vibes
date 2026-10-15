@@ -1,3 +1,5 @@
+import BackButton from "../components/BackButton";
+import ProfileSectionTabs from "../components/ProfileSectionTabs";
 import VibesLoader from "../components/VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useState } from "react";
@@ -70,43 +72,14 @@ export default function ProfileQuestions() {
           }}
         >
           {!firstHomeVisit && (
-            <TouchableOpacity
-              accessibilityRole="button"
+            <BackButton accessibilityRole="button"
               accessibilityLabel="Volver"
               onPress={() => navigation.goBack()}
-              style={{ width: 48, minHeight: 48, justifyContent: "center" }}
-            >
-              <Icon name="chevron-back" size={24} color={vibesTheme.colors.primaryText} />
-            </TouchableOpacity>
+              style={{ width: 48, minHeight: 48, justifyContent: "center" }} />
           )}
           {query.isSuccess && (
             <>
-              <View
-                accessibilityRole="tablist"
-                style={{
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                  gap: 8,
-                  marginBottom: 12,
-                }}
-              >
-                {["Identidad", "Intereses", "Planes"].map((label, index) => (
-                  <TouchableOpacity
-                    key={label}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: group === index }}
-                    onPress={() => setGroup(index)}
-                    style={{
-                      paddingHorizontal: 16,
-                      paddingVertical: 12,
-                      borderRadius: 24,
-                      backgroundColor: group === index ? vibesTheme.colors.accentMustard : "rgba(216, 140, 122, 0.14)",
-                    }}
-                  >
-                    <Text style={{ color: group === index ? vibesTheme.colors.surface : vibesTheme.colors.primaryText }}>{label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <ProfileSectionTabs value={group} onChange={setGroup} />
               <ProfileQuestionsHeader group={group} />
             </>
           )}

@@ -7,6 +7,11 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import { parseBirthDate } from "../src/lib/birthDate";
 import { selectBirthDateParts } from "../src/lib/birthDateSelection";
 
+const MONTH_NAMES = {
+  es: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+};
+
 function WheelColumn({ items, selected, onSelect, label, rowHeight, flex = 1 }: {
   items: string[]; selected: number; onSelect: (index: number) => void;
   label: string; rowHeight: number; flex?: number;
@@ -96,7 +101,7 @@ export default function BirthDateWheel({ value, onChange, minimumDate, maximumDa
       <WheelColumn label={labels[0]} items={days.map(String)} selected={days.indexOf(day)} rowHeight={rowHeight}
         onSelect={i => select(year, month, days[i])} />
       <WheelColumn label={labels[1]} flex={1.65} rowHeight={rowHeight}
-        items={months.map(m => new Date(2000, m, 1).toLocaleDateString(english ? "en-US" : "es-AR", { month: "long" }))}
+        items={months.map(m => MONTH_NAMES[english ? "en" : "es"][m])}
         selected={months.indexOf(month)} onSelect={i => select(year, months[i], day)} />
       <WheelColumn label={labels[2]} items={years.map(String)} selected={years.indexOf(year)} rowHeight={rowHeight}
         onSelect={i => select(years[i], month, day)} />

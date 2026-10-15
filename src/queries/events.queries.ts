@@ -410,7 +410,10 @@ export const fetchEventFeedItemById = async (
     );
 
     if (publicError) throw publicError;
-    resolvedData = publicData as EventRow | null;
+    // Non-public challenges only come back as a stub; treat as not readable.
+    resolvedData = (publicData as { restricted?: boolean } | null)?.restricted
+      ? null
+      : (publicData as EventRow | null);
   }
 
   if (!resolvedData) return null;
@@ -418,6 +421,19 @@ export const fetchEventFeedItemById = async (
   return eventType === "challenge"
     ? mapChallengeRow(resolvedData)
     : mapEventRow(resolvedData);
+};
+
+/**
+ * True when the challenge exists but is not public and the viewer can't read it
+ * (RLS). Lets the detail screen show "Este desafío es privado" vs. not found.
+ */
+export const fetchIsRestrictedChallenge = async (challengeId: string): Promise<boolean> => {
+  const { data, error } = await supabase.rpc("get_public_shared_content", {
+    p_content_type: "challenge",
+    p_content_id: challengeId,
+  });
+  if (error) throw error;
+  return Boolean((data as { restricted?: boolean } | null)?.restricted);
 };
 
 type ParticipantPreviewRow = {

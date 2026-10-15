@@ -1,3 +1,4 @@
+import { createRecoveryStorage } from "../auth/recoveryStorage";
 import "./webCrypto.polyfill";
 import { createClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -16,12 +17,17 @@ if (!isSupabaseConfigured) {
   console.log("[boot] Supabase configuration detected");
 }
 
+const authStorageKey = `sb-${new URL(supabaseUrl ?? "https://invalid.supabase.local").hostname.split(".")[0]}-auth-token`;
+const recoveryStorage = createRecoveryStorage(AsyncStorage, authStorageKey);
+export const clearLocalAuthStorage = recoveryStorage.reset;
+
 export const supabase = createClient(
   supabaseUrl ?? "https://invalid.supabase.local",
   supabaseAnonKey ?? "invalid-anon-key",
   {
     auth: {
-      storage: AsyncStorage,
+      storage: recoveryStorage.adapter,
+      storageKey: authStorageKey,
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: false,

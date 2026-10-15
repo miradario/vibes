@@ -161,7 +161,13 @@ const ParticipantStack = ({
   );
 };
 
-const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
+const Events = ({
+  pastOnly = false,
+  section: requestedSection,
+}: {
+  pastOnly?: boolean;
+  section?: "event" | "challenge";
+}) => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const queryClient = useQueryClient();
@@ -169,7 +175,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   const { t } = useI18n();
   const { data: session } = useAuthSession();
   const section: "event" | "challenge" =
-    route.params?.section === "challenge" ? "challenge" : "event";
+    requestedSection ?? (route.params?.section === "challenge" ? "challenge" : "event");
   const title = pastOnly ? (section === "challenge" ? "Desafíos finalizados" : "Eventos pasados") : section === "challenge" ? "Desafíos" : "Eventos";
   const searchPlaceholder =
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
@@ -1404,7 +1410,7 @@ const localStyles = StyleSheet.create({
   emptyTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   emptyText: {

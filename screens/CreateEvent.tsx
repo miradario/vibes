@@ -106,7 +106,7 @@ const getMissingEventFields = (params: {
   const missing: string[] = [];
 
   if (!params.title.trim()) missing.push("título");
-  if (!params.subtitle.trim()) missing.push("descripción corta");
+  if (!params.subtitle.trim()) missing.push("descripción");
   if (!params.eventDateTime) missing.push("fecha y hora");
   if (params.modality === "in_person" && !params.location.trim()) {
     missing.push("ubicación");
@@ -700,17 +700,18 @@ const CreateEvent = () => {
             )}
           </TouchableOpacity>
 
-          <Text style={localStyles.label}>Descripción corta</Text>
+          <Text style={localStyles.label}>Descripción</Text>
           <TextInput
             ref={subtitleInputRef}
-            style={localStyles.input}
-            placeholder="Respiración, calma, conexión"
+            style={[localStyles.input, localStyles.descriptionInput]}
+            placeholder="Contá de qué se trata, qué incluye y qué hay que llevar."
             placeholderTextColor={PLACEHOLDER_COLOR}
             value={subtitle}
             onChangeText={setSubtitle}
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => eventLinkInputRef.current?.focus()}
+            multiline
+            scrollEnabled={false}
+            textAlignVertical="top"
+            submitBehavior="newline"
           />
 
           <Text style={localStyles.label}>Link del evento (opcional)</Text>
@@ -1131,6 +1132,12 @@ const localStyles = StyleSheet.create({
     borderColor: "rgba(216, 140, 122, 0.72)",
     backgroundColor: "rgba(216, 140, 122, 0.05)",
   },
+  descriptionInput: {
+    minHeight: 160,
+    fontSize: 17,
+    lineHeight: 25,
+    borderColor: `${vibesTheme.colors.secondaryText}40`,
+  },
   inputValid: {
     borderColor: "rgba(110, 110, 110, 0.58)",
   },
@@ -1340,7 +1347,7 @@ const localStyles = StyleSheet.create({
   mapPreviewFallbackTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   mapPreviewFallbackText: {
@@ -1463,7 +1470,7 @@ const localStyles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 12,
   },
   modalPrimaryButton: {

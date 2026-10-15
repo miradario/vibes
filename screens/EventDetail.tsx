@@ -1,3 +1,4 @@
+import BackButton from "../components/BackButton";
 import { normalizeSchedule, formatSession } from "../src/lib/eventSchedule";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
@@ -858,7 +859,7 @@ const EventDetail = () => {
             }
             activeOpacity={0.9}
           >
-            <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.primaryText} />
+            <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.surface} />
           </TouchableOpacity>
         </View>
       );
@@ -959,7 +960,6 @@ const EventDetail = () => {
     typeof event?.subtitle === "string" && event.subtitle.trim()
       ? event.subtitle.trim()
       : "Entrá a un espacio sereno para compartir presencia y conexión.";
-  const eventLeadText = eventDescription || eventSubtitle;
   const modalityLabel = modality === "online" ? "Online" : "Presencial";
   const pricingLabel = pricingType === "paid" ? "Pago" : "Gratis";
   const googleMapsConfig = getGoogleMapsClientConfig();
@@ -1385,12 +1385,8 @@ const EventDetail = () => {
             },
           ]}
         >
-          <TouchableOpacity
-            style={localStyles.eventHeaderIconButton}
-            onPress={() => handleBack()}
-          >
-            <Icon name="chevron-back" size={24} color={WHITE} />
-          </TouchableOpacity>
+          <BackButton style={localStyles.eventHeaderIconButton}
+            onPress={() => handleBack()} />
           <View style={localStyles.expandedEventHeaderSpacer} />
           <View style={localStyles.headerActions}>
             <TouchableOpacity
@@ -1445,12 +1441,8 @@ const EventDetail = () => {
             },
           ]}
         >
-          <TouchableOpacity
-            style={localStyles.collapsedHeaderBackButton}
-            onPress={() => handleBack()}
-          >
-            <Icon name="chevron-back" size={24} color={DARK_GRAY} />
-          </TouchableOpacity>
+          <BackButton style={localStyles.collapsedHeaderBackButton}
+            onPress={() => handleBack()} />
           {eventHeroImageSource ? (
             <MediaImage
               source={eventHeroImageSource}
@@ -1492,11 +1484,6 @@ const EventDetail = () => {
             <Text style={localStyles.eventHeroTitle} numberOfLines={2}>
               {event.title}
             </Text>
-            {eventLeadText ? (
-              <Text style={localStyles.eventHeroSubtitle} numberOfLines={2}>
-                {eventLeadText}
-              </Text>
-            ) : null}
           </Animated.View>
         </Animated.View>
       ) : null}
@@ -1571,6 +1558,10 @@ const EventDetail = () => {
               </View>
             </View>
             <View style={localStyles.eventDetailPanel}>
+              {eventDescription ? <View style={{ paddingTop: 20, gap: 10 }}>
+                <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 }}>Sobre el evento</Text>
+                <Text selectable style={localStyles.eventPanelDescription}>{eventDescription}</Text>
+              </View> : null}
               <View style={localStyles.eventMetaDivider} />
               <View style={styles.eventDetailInfoSection}>
                 <TouchableOpacity
@@ -2520,7 +2511,7 @@ const localStyles = StyleSheet.create({
   eventMiniMapTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   eventMiniMapText: {
     color: TEXT_SECONDARY,
@@ -2743,7 +2734,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.16,
@@ -2912,7 +2903,7 @@ const localStyles = StyleSheet.create({
   },
   footerCheckInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 13,
     lineHeight: 15,
   },
@@ -2965,7 +2956,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   checkInButtonDone: {
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
   },
   checkInButtonDisabled: {
     backgroundColor: "rgba(216, 140, 122, 0.55)",
@@ -3019,7 +3010,7 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
     textAlign: "center",
   },
@@ -3073,7 +3064,7 @@ const localStyles = StyleSheet.create({
   },
   checkInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 18,
   },
   checkInSliderSubtitle: {
@@ -3172,7 +3163,7 @@ const localStyles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 18,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
     marginBottom: 8,
   },
@@ -3232,7 +3223,7 @@ const localStyles = StyleSheet.create({
   },
   participantsModalTitle: {
     fontSize: 20,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
   },
   memberRow: {

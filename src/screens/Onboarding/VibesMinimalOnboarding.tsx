@@ -1,7 +1,7 @@
 /** @format */
 
 import React, { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Image, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Text } from "../../../components/Typography";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
@@ -13,23 +13,19 @@ import Animated, {
   withSequence,
 } from "react-native-reanimated";
 import { useNavigation } from "@react-navigation/native";
-import { ResizeMode, Video, type AVPlaybackStatus } from "expo-av";
+import { VIBES_LOGO } from "../../constants/brandAssets";
 import * as Haptics from "expo-haptics";
 import { vibesTheme } from "../../theme/vibesTheme";
 import Icon from "../../../components/Icon";
 import VibesLoader from "../../../components/VibesLoader";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const REVERSE_FRAME_MS = 16;
-const REVERSE_STEP_MS = 180;
-const MAX_REVERSE_DURATION_MS = 520;
 
 type VibesMinimalOnboardingProps = {
   title?: string;
   body?: string;
   ctaLabel?: string;
   onContinue?: () => void | boolean | Promise<void | boolean>;
-  reverseVideoOnContinue?: boolean;
   autoContinue?: boolean;
 };
 
@@ -38,19 +34,14 @@ const VibesMinimalOnboarding = ({
   body = "Conectá con personas afines y explorá una forma más consciente de vivir.",
   ctaLabel,
   onContinue: onContinueProp,
-  reverseVideoOnContinue = false,
   autoContinue = false,
 }: VibesMinimalOnboardingProps) => {
   const navigation = useNavigation();
   const { height } = useWindowDimensions();
   const illustrationHeight = Math.max(300, height * 0.5);
   const hasTitle = Boolean(title.trim());
-  const videoRef = useRef<Video>(null);
-  const durationRef = useRef(0);
-  const positionRef = useRef(0);
   const isContinuingRef = useRef(false);
   const hasAutoContinuedRef = useRef(false);
-  const [videoShouldPlay, setVideoShouldPlay] = useState(true);
   const [isContinuing, setIsContinuing] = useState(false);
 
   const illustrationOpacity = useSharedValue(0);
@@ -108,60 +99,6 @@ const VibesMinimalOnboarding = ({
     return true;
   };
 
-  const wait = (ms: number) =>
-    new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-
-  const updatePlaybackStatus = (status: AVPlaybackStatus) => {
-    if (!status.isLoaded) return;
-    positionRef.current = status.positionMillis;
-    durationRef.current = status.durationMillis ?? durationRef.current;
-  };
-
-  const playVideoBackToStart = async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    setVideoShouldPlay(false);
-    const status = await video.getStatusAsync();
-    if (!status.isLoaded) return;
-
-    const duration = status.durationMillis ?? durationRef.current;
-    let position = status.positionMillis || positionRef.current || duration;
-    const startedAt = Date.now();
-
-    while (position > 0 && Date.now() - startedAt < MAX_REVERSE_DURATION_MS) {
-      position = Math.max(0, position - REVERSE_STEP_MS);
-      await video.setPositionAsync(position);
-      await wait(REVERSE_FRAME_MS);
-    }
-
-    await video.setPositionAsync(0);
-  };
-
-  const showBlur = () => {
-    blurOpacity.value = withTiming(1, {
-      duration: 360,
-      easing: Easing.out(Easing.cubic),
-    });
-    blurScale.value = withTiming(1.04, {
-      duration: 360,
-      easing: Easing.out(Easing.cubic),
-    });
-  };
-
-  const hideBlur = () => {
-    blurOpacity.value = withTiming(0, {
-      duration: 220,
-      easing: Easing.out(Easing.cubic),
-    });
-    blurScale.value = withTiming(0.98, {
-      duration: 220,
-      easing: Easing.out(Easing.cubic),
-    });
-  };
-
   const onContinue = async () => {
     if (isContinuingRef.current) return;
     isContinuingRef.current = true;
@@ -172,32 +109,14 @@ const VibesMinimalOnboarding = ({
       withTiming(1, { duration: 120 })
     );
 
-    if (!reverseVideoOnContinue) {
-      setTimeout(() => {
-        void continueToNext().then((completed) => {
-          if (!completed) {
-            isContinuingRef.current = false;
-            setIsContinuing(false);
-          }
-        });
-      }, 110);
-      return;
-    }
-
     try {
-      await playVideoBackToStart();
-      showBlur();
       const completed = await continueToNext();
-      if (!completed) {
-        hideBlur();
-        isContinuingRef.current = false;
-        setIsContinuing(false);
-      }
+      if (completed) return;
     } catch {
-      hideBlur();
-      isContinuingRef.current = false;
-      setIsContinuing(false);
+      // Leave the action available if navigation or completion fails.
     }
+    isContinuingRef.current = false;
+    setIsContinuing(false);
   };
 
   useEffect(() => {
@@ -218,16 +137,7 @@ const VibesMinimalOnboarding = ({
           illustrationStyle,
         ]}
       >
-        <Video
-          ref={videoRef}
-          source={require("../../../assets/videos/surfaces/boarding-integrated.mp4")}
-          style={styles.video}
-          resizeMode={ResizeMode.CONTAIN}
-          shouldPlay={videoShouldPlay}
-          isMuted
-          isLooping={false}
-          onPlaybackStatusUpdate={updatePlaybackStatus}
-        />
+        <Image source={VIBES_LOGO} style={styles.video} resizeMode="contain" accessibilityLabel="Vibes" />
       </Animated.View>
 
       <Animated.View style={[styles.textBlock, titleStyle]}>
@@ -254,7 +164,7 @@ const VibesMinimalOnboarding = ({
             <Icon
               name="chevron-forward"
               size={26}
-              color={vibesTheme.colors.lineArt}
+              color={vibesTheme.colors.primaryText}
             />
           )}
         </AnimatedPressable>
@@ -309,7 +219,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   body: {
     marginTop: vibesTheme.spacing.lg,
@@ -330,7 +240,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.lineArt,
+    borderColor: vibesTheme.colors.primaryText,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
@@ -351,7 +261,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   ctaPillText: {
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
     fontSize: 16,
   },

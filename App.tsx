@@ -1,5 +1,7 @@
+import PastChallenges from "./screens/PastChallenges";
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
+import { checkDeferredLinkOnce, type DeferredDestination } from "./src/deeplinks/deferredLink";
 import VibiOverlay from "./components/VibiOverlay";
 import AnimatedBrandLogo from "./components/AnimatedBrandLogo";
 import { useAuthSession } from "./src/auth/auth.queries";
@@ -113,6 +115,22 @@ const linking = {
 };
 let isNavigationReady = false;
 let pendingNotificationData: Record<string, unknown> | null = null;
+// Deferred deep link (fresh install from a shared link), opened once Startup finishes.
+let pendingDeferredDestination: DeferredDestination | null = null;
+const deferredLinkCheck = checkDeferredLinkOnce().then((destination) => {
+  pendingDeferredDestination = destination;
+  flushDeferredDestination();
+});
+function flushDeferredDestination() {
+  const nav = navigationRef.current;
+  if (!pendingDeferredDestination || !isNavigationReady || !nav) return;
+  // Wait until Startup/UpdateGate reset the stack, and let a tapped notification go first.
+  if (pendingNotificationData || shouldDeferReminder(nav.getCurrentRoute()?.name)) return;
+  const destination = pendingDeferredDestination;
+  pendingDeferredDestination = null;
+  nav.dispatch(CommonActions.navigate(destination));
+}
+void deferredLinkCheck;
 let hasHiddenNativeSplash = false;
 const FONT_LOAD_TIMEOUT_MS = 3000;
 const MIN_NATIVE_SPLASH_MS = Platform.OS === "ios" ? 750 : 500;
@@ -149,10 +167,11 @@ const AppNavigator = () => {
     setVibiRoute(current => current.name === name && current.hasBottomBar === hasBottomBar ? current : { name, hasBottomBar });
   }, []);
   const [fontsLoaded, fontError] = useFonts({
-    "JosefinSans-Thin": require("./assets/font/JosefinSans-Thin.ttf"),
-    "JosefinSans-Regular": require("./assets/font/JosefinSans-Regular.ttf"),
-    "JosefinSans-Medium": require("./assets/font/JosefinSans-Medium.ttf"),
-    "JosefinSans-Bold": require("./assets/font/JosefinSans-Bold.ttf"),
+    "Inter-Regular": require("@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf"),
+    "Inter-Medium": require("@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf"),
+    "Inter-SemiBold": require("@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf"),
+    "Inter-Bold": require("@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf"),
+    "Inter-ExtraBold": require("@expo-google-fonts/inter/800ExtraBold/Inter_800ExtraBold.ttf"),
   });
   const [fontLoadTimedOut, setFontLoadTimedOut] = React.useState(false);
 
@@ -310,6 +329,7 @@ const AppNavigator = () => {
           linking={linking}
           onStateChange={() => {
             syncVibiRoute();
+            flushDeferredDestination();
             if (!pendingNotificationData || shouldDeferReminder(navigationRef.current?.getCurrentRoute()?.name)) return;
             const nextData = pendingNotificationData;
             pendingNotificationData = null;
@@ -318,6 +338,7 @@ const AppNavigator = () => {
           onReady={() => {
             isNavigationReady = true;
             syncVibiRoute();
+            flushDeferredDestination();
             if (!pendingNotificationData) return;
             const nextData = pendingNotificationData;
             pendingNotificationData = null;
@@ -600,7 +621,7 @@ const AppNavigator = () => {
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen name="PastEvents" component={PastEvents} options={{ headerShown: false }} />
-            <Stack.Screen name="PastChallenges" component={PastEvents} options={{ headerShown: false }} />
+            <Stack.Screen name="PastChallenges" component={PastChallenges} options={{ headerShown: false }} />
             <Stack.Screen
               name="EventChat"
               component={EventChat}

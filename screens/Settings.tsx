@@ -1,7 +1,8 @@
+import ProfileSectionTabs from "../components/ProfileSectionTabs";
 import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
 /** @format */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
 import { INTERESTED_IN_OPTIONS, interestedIn as readInterestedIn } from "../supabase/functions/vibi-chat/dating";
@@ -15,6 +16,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Switch,
+  Keyboard,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
@@ -22,7 +24,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import styles, {
   DARK_GRAY,
   GRAY,
-  PRIMARY_COLOR,
   TEXT_SECONDARY,
   WHITE,
 } from "../assets/styles";
@@ -67,6 +68,8 @@ const Settings = () => {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [group, setGroup] = useState(0);
+  const preferencesScroll = useRef<ScrollView>(null);
   const [hideAge, setHideAge] = useState(false);
   const [purposes, setPurposes] = useState<string[]>([]);
   const { data: session } = useAuthSession();
@@ -301,9 +304,11 @@ const Settings = () => {
             titleStyle={localStyles.headerTitle}
             subtitleStyle={localStyles.headerSubtitle}
           />
+          <ProfileSectionTabs value={group} onChange={(next) => { Keyboard.dismiss(); setGroup(next); preferencesScroll.current?.scrollTo({ y: 0, animated: false }); }} />
         </View>
 
         <ScrollView
+          ref={preferencesScroll}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           style={localStyles.scrollView}
@@ -320,7 +325,7 @@ const Settings = () => {
               </Text>
             </TouchableOpacity>
           ) : null}
-          <View style={localStyles.section}>
+          <View style={group !== 0 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
               <View style={{ flex: 1 }}>
                 <Text style={localStyles.sectionTitle}>{t("settings.hideAge")}</Text>
@@ -331,13 +336,13 @@ const Settings = () => {
                 value={hideAge}
                 onValueChange={setHideAge}
                 disabled={saving || isPending || isError}
-                trackColor={{ false: vibesTheme.colors.secondaryText, true: vibesTheme.colors.accentBlue }}
+                trackColor={{ false: vibesTheme.colors.secondaryText, true: vibesTheme.colors.primaryText }}
                 thumbColor={vibesTheme.colors.surface}
                 ios_backgroundColor={vibesTheme.colors.secondaryText}
               />
             </View>
-          </View>
-          <View style={localStyles.section}>
+          </View></View>
+          <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
               <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
@@ -381,9 +386,9 @@ const Settings = () => {
                 ))}
               </View>
             ) : null}
-          </View>
+          </View></View>
 
-          <View style={localStyles.section}>
+          <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
               <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
@@ -404,9 +409,9 @@ const Settings = () => {
                 )
               )}
             </View>
-          </View>
+          </View></View>
 
-          <View style={localStyles.section}>
+          <View style={group !== 0 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
               <Icon name="flower-outline" size={18} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
@@ -424,9 +429,9 @@ const Settings = () => {
               placeholderTextColor={GRAY}
               textAlignVertical="top"
             />
-          </View>
+          </View></View>
 
-          <View style={localStyles.preferencePanel}>
+          <View style={group !== 0 ? { display: "none" } : undefined}><View style={localStyles.preferencePanel}>
             <View style={localStyles.sectionHeader}>
               <Icon
                 name="person-circle-outline"
@@ -463,9 +468,9 @@ const Settings = () => {
               />
               <Text style={localStyles.heightUnit}>cm</Text>
             </View>
-          </View>
+          </View></View>
 
-          <View style={localStyles.preferencePanel}>
+          <View style={group !== 0 ? { display: "none" } : undefined}><View style={localStyles.preferencePanel}>
             <Text style={localStyles.sectionTitle}>Más sobre vos</Text>
             {(
               [
@@ -512,9 +517,9 @@ const Settings = () => {
                 <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
               </TouchableOpacity>
             ))}
-          </View>
+          </View></View>
 
-          <View style={localStyles.preferencePanel}>
+          <View style={group !== 2 ? { display: "none" } : undefined}><View style={localStyles.preferencePanel}>
             <Text style={localStyles.sectionTitle}>{t("settings.connectWith")}</Text>
             <Text style={localStyles.helperText}>{t("settings.connectWithHint")}</Text>
             <View style={localStyles.chipWrap}>
@@ -528,9 +533,9 @@ const Settings = () => {
                   : [...previous, value])
               ))}
             </View>
-          </View>
+          </View></View>
 
-          <View style={localStyles.preferencePanel}>
+          <View style={group !== 2 ? { display: "none" } : undefined}><View style={localStyles.preferencePanel}>
             <Text style={localStyles.sectionTitle}>Me trae a Vibes</Text>
             <Text style={localStyles.helperText}>
               Podés elegir varias motivaciones.
@@ -546,9 +551,9 @@ const Settings = () => {
                 )
               )}
             </View>
-          </View>
+          </View></View>
 
-          <View style={localStyles.preferencePanel}>
+          <View style={group !== 2 ? { display: "none" } : undefined}><View style={localStyles.preferencePanel}>
             <View style={localStyles.sectionHeader}>
               <Icon name="sparkles-outline" size={18} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>Qué busco en Vibes</Text>
@@ -561,9 +566,9 @@ const Settings = () => {
                 )
               )}
             </View>
-          </View>
+          </View></View>
 
-          {lookingFor.includes("Citas") && (
+          <View style={group !== 2 ? { display: "none" } : undefined}>{lookingFor.includes("Citas") && (
             <View style={localStyles.preferencePanel}>
               <Text style={localStyles.sectionTitle}>Estoy interesado en:</Text>
               <Text style={localStyles.fieldLabel}>Opcional · Visible en tu perfil</Text>
@@ -572,9 +577,9 @@ const Settings = () => {
                   () => setInterestedIn(interestedIn === item ? "" : item)))}
               </View>
             </View>
-          )}
+          )}</View>
 
-          <View style={localStyles.preferencePanel}>
+          <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.preferencePanel}>
             <View style={localStyles.sectionHeader}>
               <Icon name="language-outline" size={18} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
@@ -589,9 +594,9 @@ const Settings = () => {
                 )
               )}
             </View>
-          </View>
+          </View></View>
 
-          <View style={localStyles.section}>
+          <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
               <Icon name="bonfire-outline" size={18} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
@@ -610,9 +615,9 @@ const Settings = () => {
                 setSmoking("A veces")
               )}
             </View>
-          </View>
+          </View></View>
 
-          <View style={localStyles.section}>
+          <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
               <Icon name="moon-outline" size={18} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
@@ -646,7 +651,7 @@ const Settings = () => {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </View></View>
         </ScrollView>
 
         {/* Botón fijo abajo */}
@@ -720,13 +725,14 @@ const localStyles = StyleSheet.create({
     alignItems: "flex-start",
   },
   headerTitle: {
-    fontSize: 40,
-    lineHeight: 44,
+    fontSize: 26,
+    lineHeight: 34,
+    fontFamily: vibesTheme.fonts.bold,
   },
   headerSubtitle: {
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.subtitle,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.regular,
   },
   headerSpacer: {
     width: 20,
@@ -738,24 +744,19 @@ const localStyles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 12,
-    paddingBottom: 118,
+    paddingBottom: 24,
   },
   section: {
     marginTop: 18,
   },
   preferencePanel: {
     marginTop: 18,
-    borderRadius: 22,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.24)",
-    backgroundColor: "rgba(254, 254, 253, 0.72)",
+    borderColor: `${vibesTheme.colors.primaryText}20`,
+    backgroundColor: `${vibesTheme.colors.primaryText}03`,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    shadowColor: vibesTheme.colors.secondaryText,
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 1,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -764,9 +765,9 @@ const localStyles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 18,
-    color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontSize: 16,
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   line: {
     flex: 1,
@@ -795,28 +796,24 @@ const localStyles = StyleSheet.create({
     gap: 10,
   },
   chip: {
-    minHeight: 42,
-    borderRadius: 24,
+    minHeight: 44,
+    borderRadius: 14,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
+    borderColor: `${vibesTheme.colors.primaryText}20`,
     paddingHorizontal: 16,
     paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { height: 3, width: 0 },
   },
   chipActive: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
+    backgroundColor: vibesTheme.colors.primaryText,
+    borderColor: vibesTheme.colors.primaryText,
   },
   chipText: {
     color: DARK_GRAY,
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: vibesTheme.fonts.medium,
   },
   chipTextActive: {
@@ -838,7 +835,7 @@ const localStyles = StyleSheet.create({
   detailItemTitle: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   detailItemSubtitle: {
     color: TEXT_SECONDARY,
@@ -850,11 +847,11 @@ const localStyles = StyleSheet.create({
     backgroundColor: WHITE,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
+    borderColor: `${vibesTheme.colors.primaryText}20`,
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: DARK_GRAY,
-    minHeight: 180,
+    minHeight: 130,
     fontSize: 16,
     fontFamily: vibesTheme.fonts.primary,
   },
@@ -862,7 +859,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: WHITE,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
+    borderColor: `${vibesTheme.colors.primaryText}20`,
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: DARK_GRAY,
@@ -875,7 +872,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
+    borderColor: `${vibesTheme.colors.primaryText}20`,
     backgroundColor: WHITE,
     paddingHorizontal: 14,
     minHeight: 54,
@@ -922,10 +919,10 @@ const localStyles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
+    borderColor: `${vibesTheme.colors.primaryText}20`,
   },
   currentLocationButtonText: {
-    color: vibesTheme.colors.accentBlue,
+    color: vibesTheme.colors.primaryText,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -940,7 +937,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: WHITE,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
+    borderColor: `${vibesTheme.colors.primaryText}20`,
     paddingHorizontal: 12,
     paddingVertical: 10,
     color: DARK_GRAY,
@@ -953,11 +950,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { height: 3, width: 0 },
+    borderColor: `${vibesTheme.colors.primaryText}20`,
   },
   addButtonText: {
     color: DARK_GRAY,
@@ -977,20 +970,15 @@ const localStyles = StyleSheet.create({
     zIndex: 10,
   },
   saveButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: vibesTheme.colors.primaryText,
     borderRadius: 24,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
   },
   saveButtonText: {
     color: vibesTheme.colors.surface,
-    fontSize: 20,
+    fontSize: 16,
     fontFamily: vibesTheme.fonts.semibold,
   },
 });

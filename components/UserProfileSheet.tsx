@@ -1,3 +1,4 @@
+import { imageCacheSource } from "../src/lib/imageCacheSource";
 import { useNavigation } from "@react-navigation/native";
 import ProfilePhotoPrompt from "./ProfilePhotoPrompt";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -526,7 +527,7 @@ const UserProfileSheet = ({
   useEffect(() => {
     if (!visible) return;
     const urls: string[] = JSON.parse(upcomingPhotoUrls);
-    if (urls.length) void ExpoImage.prefetch(urls, { cachePolicy: "memory-disk" }).catch(() => {});
+    if (urls.length) void Promise.allSettled(urls.map(uri => ExpoImage.loadAsync(imageCacheSource({ uri }))));
   }, [visible, upcomingPhotoUrls]);
   const preferences = useMemo(
     () =>

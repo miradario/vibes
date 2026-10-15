@@ -1,3 +1,4 @@
+import CancelOnboardingButton from "../components/CancelOnboardingButton";
 import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
@@ -9,7 +10,6 @@ import * as Location from "expo-location";
 import styles from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
-import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useI18n } from "../src/i18n";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
@@ -92,7 +92,7 @@ const OnboardingCountry = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader right={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingCountry" />
         </AppHeader>
 
@@ -144,7 +144,6 @@ const OnboardingCountry = () => {
           </Text>
         </TouchableOpacity>
 
-        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity

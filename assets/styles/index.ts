@@ -3619,7 +3619,7 @@ export default StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     alignItems: "center",
     justifyContent: "center",
   },
