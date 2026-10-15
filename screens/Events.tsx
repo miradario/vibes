@@ -756,17 +756,18 @@ const localStyles = StyleSheet.create({
   },
   eventCount: { fontSize: 13, color: vibesTheme.colors.secondaryText },
   eventListRow: {
-    width: "100%", flexDirection: "row", alignItems: "center", gap: 10,
-    paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+    width: "100%", flexDirection: "row", alignItems: "center", gap: 14,
+    padding: 14, marginBottom: 12, borderRadius: 20,
+    borderWidth: 1, borderColor: `${vibesTheme.colors.primaryText}24`,
+    backgroundColor: vibesTheme.colors.surface,
   },
   eventThumbnail: {
-    width: 78, height: 82, borderRadius: 10,
+    width: 84, height: 96, borderRadius: 12, alignSelf: "flex-start",
     backgroundColor: "rgba(57, 120, 184, 0.13)",
   },
-  eventCopy: { flex: 1, minWidth: 0, gap: 4 },
+  eventCopy: { flex: 1, minWidth: 0, gap: 9 },
   eventTitle: {
-    fontSize: 16, lineHeight: 21, fontFamily: vibesTheme.fonts.bold,
+    fontSize: 17, lineHeight: 23, fontFamily: vibesTheme.fonts.bold,
     color: vibesTheme.colors.primaryText,
   },
   eventMetadataRow: { flexDirection: "row", alignItems: "center", gap: 6 },
@@ -775,7 +776,7 @@ const localStyles = StyleSheet.create({
   },
   eventViewButton: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2,
-    minWidth: 34, minHeight: 44,
+    minWidth: 22, minHeight: 44,
   },
   eventViewText: {
     fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.primaryText,
