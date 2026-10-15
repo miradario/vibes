@@ -10,15 +10,16 @@ export default function EventScheduleEditor({ value, onChange }: {
   onChange: (value: EventScheduleDraft[]) => void;
 }) {
   const [dateIndex, setDateIndex] = useState<number | null>(null);
+  const [editingEnd, setEditingEnd] = useState(false);
   const update = (index: number, patch: Partial<EventScheduleDraft>) =>
     onChange(value.map((row, i) => i === index ? { ...row, ...patch } : row));
-  const pickerValue = dateIndex !== null && value[dateIndex]?.date
-    ? new Date(`${value[dateIndex].date}T12:00:00`) : new Date();
+  const selectedDate = dateIndex !== null ? (editingEnd ? value[dateIndex]?.endDate : value[dateIndex]?.date) : null;
+  const pickerValue = selectedDate ? new Date(`${selectedDate}T12:00:00`) : new Date();
   return <View style={styles.container}>
-    <Text style={styles.hint}>Agregá cada día y horario del evento. Hora en formato 24 h.</Text>
+    <Text style={styles.hint}>Inicio y fin opcional de cada encuentro. Hora en formato 24 h. El fin debe ser posterior al inicio.</Text>
     {value.map((row, index) => <View key={index} style={styles.row}>
       <TouchableOpacity style={styles.date} accessibilityRole="button"
-        accessibilityLabel={`Fecha ${index + 1}`} onPress={() => setDateIndex(index)}>
+        accessibilityLabel={`Fecha de inicio ${index + 1}`} onPress={() => { setEditingEnd(false); setDateIndex(index); }}>
         <Text style={styles.text}>{row.date ? row.date.split("-").reverse().join("/") : "Elegir fecha"}</Text>
       </TouchableOpacity>
       <TextInput style={styles.time} value={row.time} placeholder="HH:mm"
@@ -30,6 +31,15 @@ export default function EventScheduleEditor({ value, onChange }: {
           update(index, { time: /^\d{4}$/.test(time) ? `${time.slice(0, 2)}:${time.slice(2)}` : time });
         }}
         onBlur={() => { if (/^\d{4}$/.test(row.time)) update(index, { time: `${row.time.slice(0, 2)}:${row.time.slice(2)}` }); }} />
+      <View style={styles.row}>
+        <TouchableOpacity style={styles.date} accessibilityRole="button" accessibilityLabel={`Fecha de fin ${index + 1}`} onPress={() => { setEditingEnd(true); setDateIndex(index); }}>
+          <Text style={styles.text}>{row.endDate ? `Fin: ${row.endDate.split("-").reverse().join("/")}` : "Agregar fecha de fin"}</Text>
+        </TouchableOpacity>
+        {row.endDate ? <>
+          <TextInput style={styles.time} value={row.endTime ?? ""} placeholder="HH:mm" placeholderTextColor={vibesTheme.colors.secondaryText} accessibilityLabel={`Hora de fin ${index + 1}`} maxLength={5} onChangeText={(text) => { const time = text.replace(/[^\d:]/g, ""); update(index, { endTime: /^\d{4}$/.test(time) ? `${time.slice(0, 2)}:${time.slice(2)}` : time }); }} />
+          <TouchableOpacity style={styles.remove} accessibilityRole="button" accessibilityLabel="Quitar fecha de fin" onPress={() => update(index, { endDate: undefined, endTime: undefined })}><Text style={styles.text}>Sin fin</Text></TouchableOpacity>
+        </> : null}
+      </View>
       {value.length > 1 ? <TouchableOpacity accessibilityRole="button"
         accessibilityLabel={`Quitar horario ${index + 1}`} style={styles.remove}
         onPress={() => { setDateIndex(null); onChange(value.filter((_, i) => i !== index)); }}>
@@ -41,7 +51,7 @@ export default function EventScheduleEditor({ value, onChange }: {
         display={Platform.OS === "ios" ? "spinner" : "default"}
         onChange={(event, selected) => {
           if (Platform.OS !== "ios") setDateIndex(null);
-          if (event.type !== "dismissed" && selected) update(dateIndex, { date: sessionDraft(selected.toISOString()).date });
+          if (event.type !== "dismissed" && selected) update(dateIndex, editingEnd ? { endDate: sessionDraft(selected.toISOString()).date } : { date: sessionDraft(selected.toISOString()).date });
         }} />
       {Platform.OS === "ios" ? <TouchableOpacity style={styles.add} onPress={() => setDateIndex(null)}>
         <Text style={styles.text}>Listo</Text>

@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import Animated, { cancelAnimation, runOnJS, Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
-import { useIsFocused } from "@react-navigation/native";
+import { NavigationContext } from "@react-navigation/native";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
 import { INHALE_MS, EXHALE_MS } from "../src/lib/calmPause";
@@ -14,7 +14,15 @@ function MorphPart({ shape, progress }: { shape: LogoMorphShape; progress: Share
 /** Real letter contours bend continuously into the brand mark, without particles. */
 export default function AnimatedBrandLogo({ style, onComplete, direction = "word-to-logo", loop = false }: { style?: StyleProp<ViewStyle>; onComplete?: () => void; direction?: "word-to-logo" | "logo-to-word"; loop?: boolean }) {
   const target = direction === "logo-to-word" ? 0 : 1;
-  const focused = useIsFocused();
+  const navigation = useContext(NavigationContext);
+  const [focused, setFocused] = useState(() => navigation?.isFocused() ?? true);
+  useEffect(() => {
+    setFocused(navigation?.isFocused() ?? true);
+    if (!navigation) return;
+    const onFocus = navigation.addListener("focus", () => setFocused(true));
+    const onBlur = navigation.addListener("blur", () => setFocused(false));
+    return () => { onFocus(); onBlur(); };
+  }, [navigation]);
   const { active, reducedMotion, motionReady } = useVibiRuntime();
   const progress = useSharedValue(direction === "logo-to-word" ? 1 : 0);
   const breathingStyle = useAnimatedStyle(() => {

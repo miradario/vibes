@@ -245,7 +245,7 @@ export default function DailyMoodCard({
             />
           </TouchableOpacity>
         </View>
-        <Text accessibilityRole="header" style={s.title}>
+        <Text accessibilityRole="header" style={[s.title, prompt.kind === "energy" && { fontSize: 32, lineHeight: 39 }]}>
           {prompt.title}
         </Text>
         {prompt.kind === "mood" ? (
@@ -289,10 +289,11 @@ export default function DailyMoodCard({
             })}
           </View>
         ) : prompt.kind === "energy" ? (
-          <View style={s.energySources}>
+          <View style={{ gap: 8 }}>
             <Text style={s.privacyText}>
               Del 1 (muy bajo) al 10 (muy alto).
             </Text>
+            <View style={s.energySources}>
             {ENERGY_SOURCES.map((source) => (
               <EnergySlider
                 key={source}
@@ -302,6 +303,7 @@ export default function DailyMoodCard({
                 onChange={(score) => setEnergy((current) => ({ ...current, [source]: score }))}
               />
             ))}
+            </View>
           </View>
         ) : prompt.kind === "service" ? (
           <View style={s.energySource}>
@@ -368,11 +370,6 @@ export default function DailyMoodCard({
             onClose={dismiss}
           />
         )}
-        {prompt.kind === "energy" || prompt.kind === "service" ? (
-          <Text style={s.privacyText}>
-            Tu respuesta se guarda en este dispositivo.
-          </Text>
-        ) : null}
         {loading ? (
           <VibesLoader accessibilityLabel="Cargando tu estado" />
         ) : null}

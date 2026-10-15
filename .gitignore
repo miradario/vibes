@@ -29,3 +29,6 @@ supabase/.temp/
 
 # macOS
 .DS_Store
+
+# Local event import deliverables; covers are hosted in Supabase Storage.
+/output/events/

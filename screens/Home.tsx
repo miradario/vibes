@@ -1,4 +1,5 @@
 import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
+import { matchesSavedDiscoverExtras } from "../src/lib/discoverSavedFilters";
 import PhotoViewer from "../components/PhotoViewer";
 import { LinearGradient } from "expo-linear-gradient";
 import ProfileMediaImage from "../components/ProfileMediaImage";
@@ -124,6 +125,7 @@ const normalizeGender = (
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
+    if (["all", "todos", "todas"].includes(normalized)) return "unknown";
 
     if (["woman", "female", "mujer"].includes(normalized)) return "woman";
     if (["man", "male", "hombre"].includes(normalized)) return "man";
@@ -384,7 +386,7 @@ const Home = () => {
             candidateAge,
             discoverFilters.ageMin,
             discoverFilters.ageMax,
-            { includeNullValue: true }
+            { includeNullValue: false }
           )
         ) {
           return false;
@@ -413,7 +415,7 @@ const Home = () => {
           return false;
         }
 
-        return true;
+        return matchesSavedDiscoverExtras(candidateRecord, userPreferences, candidateGender);
       });
     return rankHomeSuggestions(eligible, {
       ...ownProfileRecord, ...userPreferences,
@@ -2198,7 +2200,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.regular,
   },
   filterPillTextActive: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
   },
   filtersFooter: {
     flexDirection: "row",
@@ -2229,7 +2231,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentBlue,
   },
   filtersPrimaryButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.regular,
   },

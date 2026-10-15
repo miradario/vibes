@@ -5,6 +5,7 @@ export const EVENT_MODALITIES = [
 
 export const EVENT_CATEGORIES = [
   { id: "party", label: "Fiesta" },
+  { id: "festival", label: "Festival" },
   { id: "music", label: "Música" },
   { id: "wellness", label: "Meditación y bienestar" },
   { id: "arts", label: "Arte y cultura" },

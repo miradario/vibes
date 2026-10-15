@@ -43,3 +43,6 @@ session-*.mdx
 .agents/
 .codex/
 .aws/
+
+# Local event import deliverables; covers are hosted in Supabase Storage.
+/output/events/

@@ -1002,7 +1002,7 @@ export const CheckInButton = memo(
         ) : (
           <>
             <Icon name={icon} size={21} color={vibesTheme.colors.background} />
-            <Text style={localStyles.checkInText}>{label}</Text>
+            <Text style={[localStyles.checkInText, isCompleted && { color: vibesTheme.colors.surface }]}>{label}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -2308,7 +2308,7 @@ const localStyles = StyleSheet.create({
   },
   joinRequestButtonSubtitle: {
     marginTop: 4,
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.subtitle,

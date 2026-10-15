@@ -391,11 +391,11 @@ export default function NotificationPreferencesSection() {
             }}
             style={[s.option, timing === option && s.selected]}
           >
-            <Text style={[s.label, s.flex]}>
+            <Text style={[s.label, s.flex, timing === option && { color: colors.surface }]}>
               {t(`configuration.${reminderTimingLabel[option]}`)}
             </Text>
             {timing === option ? (
-              <Icon name="checkmark" size={22} color={colors.primaryText} />
+              <Icon name="checkmark" size={22} color={colors.surface} />
             ) : null}
           </Pressable>
         ))}

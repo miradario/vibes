@@ -113,7 +113,7 @@ export default function CommunityGroups({
                 <TouchableOpacity accessibilityRole="button" disabled={respond.isPending}
                   onPress={() => void answerInvitation(invitation, true)}
                   style={[s.invitationAction, { backgroundColor: vibesTheme.colors.accentBlue, opacity: respond.isPending ? 0.5 : 1 }]}>
-                  <Text style={s.title}>Aceptar</Text>
+                  <Text style={[s.title, { color: vibesTheme.colors.surface }]}>Aceptar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity accessibilityRole="button" disabled={respond.isPending}
                   onPress={() => void answerInvitation(invitation, false)} style={s.invitationAction}>

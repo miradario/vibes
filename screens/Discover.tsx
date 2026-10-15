@@ -1,3 +1,5 @@
+import RangeSlider from "../components/RangeSlider";
+import { normalizeRangeBounds } from "../src/lib/rangeSlider";
 import CountrySelector from "../components/CountrySelector";
 import { isCountryCode } from "../src/constants/countries";
 import ProfilePhotoPrompt from "../components/ProfilePhotoPrompt";
@@ -56,13 +58,15 @@ import styles, { DIMENSION_WIDTH, TEXT_PRIMARY } from "../assets/styles";
 import type { DataT } from "../types";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
+import DiscoverFiltersGuide from "../components/DiscoverFiltersGuide";
 import {
   useCandidatesQuery,
   useIncomingLikeCandidatesQuery,
   useSwipeHistoryCandidatesQuery,
 } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
-import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { useUserPreferencesQuery, userPreferencesKeys } from "../src/queries/userPreferences.queries";
+import { useQueryClient } from "@tanstack/react-query";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
@@ -212,6 +216,9 @@ const normalizeGender = (
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
+    // An explicit unrestricted selection overrides legacy default gender IDs.
+    if (["all", "todos", "todas"].includes(normalized)) return "unknown";
+
     if (["woman", "female", "mujer"].includes(normalized)) return "woman";
     if (["man", "male", "hombre"].includes(normalized)) return "man";
     if (
@@ -334,7 +341,7 @@ const areFiltersEqual = (
   left.spiritualPaths.every((path) => right.spiritualPaths.includes(path)) &&
   left.smoking === right.smoking;
 
-const readStoredFilters = (
+const readStoredFiltersRaw = (
   preferences: Record<string, any> | null
 ): DiscoverFiltersState => ({
   ageMin: toFiniteNumber(
@@ -383,11 +390,19 @@ const readStoredFilters = (
   ),
 });
 
+const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFiltersState => {
+  const stored = readStoredFiltersRaw(preferences);
+  const [ageMin, ageMax] = normalizeRangeBounds(stored.ageMin, stored.ageMax, MIN_DISCOVER_AGE, MAX_DISCOVER_AGE);
+  const [distanceMinKm, maxDistanceKm] = normalizeRangeBounds(stored.distanceMinKm, stored.maxDistanceKm, 0, 999);
+  return { ...stored, ageMin, ageMax, distanceMinKm, maxDistanceKm };
+};
+
 export const DiscoverContent = forwardRef<
   DiscoverContentHandle,
   DiscoverContentProps
 >(({ showHeader = true, onFilterCountChange }, ref) => {
   const navigation = useNavigation();
+  const queryClient = useQueryClient();
   const route = useRoute();
   const incomingRequestKey = (route.params as { incomingRequestKey?: number } | undefined)?.incomingRequestKey;
   const filterInsets = useSafeAreaInsets();
@@ -460,6 +475,7 @@ export const DiscoverContent = forwardRef<
           `discover_answer_filters:${answerFiltersOwner}`,
           JSON.stringify(answerFilters)
         );
+        void queryClient.invalidateQueries({ queryKey: userPreferencesKeys.byUser(answerFiltersOwner) });
       })().catch((error) => {
         console.warn("discover_answer_filters:persist_error", error);
         showToast("No se pudieron guardar los filtros");
@@ -813,7 +829,7 @@ export const DiscoverContent = forwardRef<
         discover_diets: discoverFilters.diets,
         discover_spiritual_paths: discoverFilters.spiritualPaths,
         discover_smoking: discoverFilters.smoking,
-      }).catch((persistError) => {
+      }).then(() => queryClient.invalidateQueries({ queryKey: userPreferencesKeys.byUser(userId) })).catch((persistError) => {
         console.warn("discover_filters:persist_error", persistError);
       });
     }, 350);
@@ -977,98 +993,25 @@ export const DiscoverContent = forwardRef<
               contentContainerStyle={localStyles.filtersContent}
             >
               <View style={localStyles.filtersSection}>
-                {filterSectionTitle(t("discover.age"))}
-                <View style={localStyles.rangeRow}>
-                  <View style={localStyles.rangeCard}>
-                    <Text style={localStyles.rangeLabel}>
-                      {locale === "en" ? "From" : "Desde"}
-                    </Text>
-                    <TextInput
-                      style={localStyles.rangeInput}
-                      value={discoverFilters.ageMin?.toString() ?? ""}
-                      onChangeText={(value) => setAgeInput("ageMin", value)}
-                      placeholder={t("discover.noLimit")}
-                      placeholderTextColor={vibesTheme.colors.primaryText}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                      onEndEditing={normalizeAgeInputs}
-                    />
-                  </View>
-                  <View style={localStyles.rangeCard}>
-                    <Text style={localStyles.rangeLabel}>
-                      {locale === "en" ? "To" : "Hasta"}
-                    </Text>
-                    <TextInput
-                      style={localStyles.rangeInput}
-                      value={discoverFilters.ageMax?.toString() ?? ""}
-                      onChangeText={(value) => setAgeInput("ageMax", value)}
-                      placeholder={t("discover.noLimit")}
-                      placeholderTextColor={vibesTheme.colors.primaryText}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                      onEndEditing={normalizeAgeInputs}
-                    />
-                  </View>
-                </View>
+                <RangeSlider label={t("discover.age")} minimum={MIN_DISCOVER_AGE} maximum={MAX_DISCOVER_AGE}
+                  lower={discoverFilters.ageMin} upper={discoverFilters.ageMax} unit={locale === "en" ? "years" : "años"}
+                  noLimitLabel={t("discover.noLimit")}
+                  onChange={(lower, upper) => {
+                    const [ageMin, ageMax] = normalizeRangeBounds(lower, upper, MIN_DISCOVER_AGE, MAX_DISCOVER_AGE);
+                    setDiscoverFilters(previous => ({ ...previous, ageMin, ageMax }));
+                  }}
+                  onClear={() => setDiscoverFilters(previous => ({ ...previous, ageMin: null, ageMax: null }))} />
               </View>
-
-              {hasLocation ? (
-                <View style={localStyles.filtersSection}>
-                  {filterSectionTitle(t("discover.distance"))}
-                  <View style={localStyles.rangeHeader}>
-                    <Text style={localStyles.rangeSummary}>
-                      {distanceSummary}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setDiscoverFilters((prev) => ({
-                          ...prev,
-                          distanceMinKm: null,
-                          maxDistanceKm: null,
-                        }))
-                      }
-                    >
-                      <Text style={localStyles.rangeReset}>
-                        {t("discover.clear")}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={localStyles.rangeRow}>
-                    <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>
-                        {t("discover.min")}
-                      </Text>
-                      <TextInput
-                        style={localStyles.rangeInput}
-                        value={discoverFilters.distanceMinKm?.toString() ?? ""}
-                        onChangeText={(value) =>
-                          setDistanceInput("distanceMinKm", value)
-                        }
-                        placeholder={t("discover.noLimit")}
-                        placeholderTextColor={vibesTheme.colors.primaryText}
-                        keyboardType="number-pad"
-                        maxLength={3}
-                      />
-                    </View>
-                    <View style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>
-                        {t("discover.max")}
-                      </Text>
-                      <TextInput
-                        style={localStyles.rangeInput}
-                        value={discoverFilters.maxDistanceKm?.toString() ?? ""}
-                        onChangeText={(value) =>
-                          setDistanceInput("maxDistanceKm", value)
-                        }
-                        placeholder={t("discover.noLimit")}
-                        placeholderTextColor={vibesTheme.colors.primaryText}
-                        keyboardType="number-pad"
-                        maxLength={3}
-                      />
-                    </View>
-                  </View>
-                </View>
-              ) : null}
+              {hasLocation ? <View style={localStyles.filtersSection}>
+                <RangeSlider label={t("discover.distance")} minimum={0} maximum={999}
+                  lower={discoverFilters.distanceMinKm} upper={discoverFilters.maxDistanceKm} unit="km"
+                  noLimitLabel={t("discover.noLimit")}
+                  onChange={(lower, upper) => {
+                    const [distanceMinKm, maxDistanceKm] = normalizeRangeBounds(lower, upper, 0, 999);
+                    setDiscoverFilters(previous => ({ ...previous, distanceMinKm, maxDistanceKm }));
+                  }}
+                  onClear={() => setDiscoverFilters(previous => ({ ...previous, distanceMinKm: null, maxDistanceKm: null }))} />
+              </View> : null}
 
               <View style={localStyles.filtersSection}>
                 {filterSectionTitle(t("discover.gender"))}
@@ -1080,6 +1023,7 @@ export const DiscoverContent = forwardRef<
                 <View style={localStyles.filtersPillRow}>
                   {(
                     [
+                      { value: "all", label: locale === "en" ? "All" : "Todos" },
                       { value: "man", label: t("discover.genderMan") },
                       { value: "woman", label: t("discover.genderWoman") },
                       { value: "other", label: t("discover.genderOther") },
@@ -1089,11 +1033,12 @@ export const DiscoverContent = forwardRef<
                       key={option.value}
                       style={[
                         localStyles.filterPill,
-                        discoverFilters.genders.includes(option.value) &&
+                        (option.value === "all" ? discoverFilters.genders.length === 0 : discoverFilters.genders.includes(option.value)) &&
                           localStyles.filterPillActive,
                       ]}
                       onPress={() =>
                         setDiscoverFilters((prev) => {
+                          if (option.value === "all") return { ...prev, genders: [] };
                           const selected = prev.genders.includes(option.value);
                           return {
                             ...prev,
@@ -1109,7 +1054,7 @@ export const DiscoverContent = forwardRef<
                       <Text
                         style={[
                           localStyles.filterPillText,
-                          discoverFilters.genders.includes(option.value) &&
+                          (option.value === "all" ? discoverFilters.genders.length === 0 : discoverFilters.genders.includes(option.value)) &&
                             localStyles.filterPillTextActive,
                         ]}
                       >
@@ -1218,7 +1163,7 @@ export const DiscoverContent = forwardRef<
                             <Icon
                               name="checkmark-circle"
                               size={20}
-                              color={vibesTheme.colors.primaryText}
+                              color={vibesTheme.colors.surface}
                             />
                           )}
                         </TouchableOpacity>
@@ -1341,6 +1286,7 @@ export const DiscoverContent = forwardRef<
                 <Text style={localStyles.filtersPrimaryButtonText}>
                   {locale === "en" ? "See profiles" : "Ver perfiles"}
                 </Text>
+                <Icon name="arrow-forward" size={24} color={vibesTheme.colors.surface} />
               </TouchableOpacity>
             </View>
           </>
@@ -1401,6 +1347,12 @@ export const DiscoverContent = forwardRef<
               onPress={() => setIsFiltersVisible(true)}
             >
               <Icon name="options-outline" size={28} color={vibesTheme.colors.accentBlue} />
+              <DiscoverFiltersGuide userId={session?.user?.id} opened={isFiltersVisible} />
+              {activeFilterCount > 0 ? (
+                <View style={{ position: "absolute", top: -2, right: -2, minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard, borderWidth: 1, borderColor: vibesTheme.colors.background }}>
+                  <Text style={{ color: vibesTheme.colors.primaryText, fontSize: 12, lineHeight: 16, fontFamily: vibesTheme.fonts.bold }}>{activeFilterCount}</Text>
+                </View>
+              ) : null}
             </TouchableOpacity>
           </View>
         ) : null}
@@ -1468,7 +1420,7 @@ export const DiscoverContent = forwardRef<
         ) : null}
 
         <View style={localStyles.orbitWrap}>
-          {(showHistory
+          {showHistory && (showHistory
             ? historyMode === "incoming"
               ? incomingLikes.isLoading
               : swipeHistory.isLoading
@@ -1486,7 +1438,7 @@ export const DiscoverContent = forwardRef<
                 <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text>
               </TouchableOpacity>
             </View>
-          ) : visibleProfiles.length === 0 ? (
+          ) : !isLoading && visibleProfiles.length === 0 ? (
             <View style={localStyles.emptyState}>
               <View style={localStyles.emptyIconCircle}>
                 <Icon name="compass-outline" size={34} color={vibesTheme.colors.primaryText} />
@@ -1523,6 +1475,7 @@ export const DiscoverContent = forwardRef<
           ) : (
             <>
               <DiscoverOrbitCanvas
+                loading={isLoading}
                 users={visibleProfiles}
                 onUserPress={(profile) => {
                   setProfileOpenKey((key) => key + 1);
@@ -1550,7 +1503,7 @@ export const DiscoverContent = forwardRef<
                   </Text>
                 </TouchableOpacity>
               ) : null}
-              {canvasProfiles.length === 0 ? (
+              {!isLoading && canvasProfiles.length === 0 ? (
                 <View style={localStyles.orbitHint}>
                   <Text style={localStyles.emptyTitle}>
                     {t("discover.noProfiles")}
@@ -1728,19 +1681,20 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentBlue,
   },
   emptyActionText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 15,
     lineHeight: 19,
     fontFamily: vibesTheme.fonts.bold,
   },
   filtersSheet: {
     backgroundColor: vibesTheme.colors.background,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
-    maxHeight: "88%",
+    height: "92%",
+    maxHeight: "92%",
   },
   filtersHandle: {
     width: 52,
@@ -1755,21 +1709,22 @@ const localStyles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
-    marginBottom: 8,
+    marginBottom: 20,
   },
   filtersHeaderText: {
     flex: 1,
   },
   filtersTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 30,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 38,
+    lineHeight: 46,
+    fontFamily: vibesTheme.fonts.bold,
   },
   filtersSubtitle: {
     marginTop: 4,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 24,
     fontFamily: vibesTheme.fonts.subtitle,
   },
   filtersCloseButton: {
@@ -1781,14 +1736,15 @@ const localStyles = StyleSheet.create({
     backgroundColor: "rgba(110, 110, 110, 0.13)",
   },
   filtersContent: {
-    paddingVertical: 8,
-    gap: 18,
+    paddingTop: 8,
+    paddingBottom: 24,
+    gap: 24,
   },
   filtersSection: {
-    gap: 10,
-    paddingBottom: 20,
+    gap: 14,
+    paddingBottom: 24,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+    borderBottomColor: `${vibesTheme.colors.secondaryText}26`,
   },
   rangeHeader: {
     flexDirection: "row",
@@ -1808,21 +1764,20 @@ const localStyles = StyleSheet.create({
   },
   rangeRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
   },
   rangeCard: {
     flex: 1,
     borderRadius: 20,
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    backgroundColor: `${vibesTheme.colors.secondaryText}14`,
+    minHeight: 80,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     gap: 2,
   },
   rangeLabel: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
+    fontSize: 15,
     fontFamily: vibesTheme.fonts.semibold,
   },
   rangeControls: {
@@ -1841,9 +1796,9 @@ const localStyles = StyleSheet.create({
   rangeInput: {
     minHeight: 48,
     borderRadius: 12,
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: `${vibesTheme.colors.background}00`,
     color: vibesTheme.colors.primaryText,
-    fontSize: 17,
+    fontSize: 21,
     fontFamily: vibesTheme.fonts.bold,
     textAlign: "left",
     paddingHorizontal: 0,
@@ -1851,8 +1806,9 @@ const localStyles = StyleSheet.create({
   },
   filtersSectionTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 22,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 26,
+    lineHeight: 32,
+    fontFamily: vibesTheme.fonts.bold,
   },
   filtersPillRow: {
     flexDirection: "row",
@@ -1860,29 +1816,28 @@ const localStyles = StyleSheet.create({
     gap: 10,
   },
   filterPill: {
-    minHeight: 48,
+    minHeight: 50,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
-    paddingHorizontal: 14,
+    borderWidth: 0,
+    paddingHorizontal: 18,
     paddingVertical: 10,
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: `${vibesTheme.colors.secondaryText}14`,
   },
   filterPillActive: {
-    backgroundColor: "rgba(244, 163, 64, 0.37)",
-    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: vibesTheme.colors.accentBlue,
+    borderColor: vibesTheme.colors.accentBlue,
   },
   filterPillText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: vibesTheme.fonts.semibold,
   },
   filterPillTextActive: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
   },
   filtersFooter: {
     flexDirection: "row",
@@ -1907,7 +1862,9 @@ const localStyles = StyleSheet.create({
   },
   filtersPrimaryButton: {
     flex: 1.6,
-    minHeight: 52,
+    minHeight: 60,
+    flexDirection: "row",
+    gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 24,
@@ -1917,7 +1874,7 @@ const localStyles = StyleSheet.create({
   },
   filtersPrimaryButtonText: {
     color: vibesTheme.colors.surface,
-    fontSize: 15,
+    fontSize: 20,
     fontFamily: vibesTheme.fonts.semibold,
   },
   historyButtonActive: {

@@ -8,7 +8,7 @@ import {
 } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import ScreenContainer from "../components/ScreenContainer";
-import VibesLoader from "../components/VibesLoader";
+import AnimatedBrandLogo from "../components/AnimatedBrandLogo";
 import VibesActionButton from "../components/VibesActionButton";
 import { Text } from "../components/Typography";
 import { getStartupDestination } from "../src/lib/calmPause";
@@ -282,7 +282,7 @@ const Startup = () => {
     <ScreenContainer edges={["top", "bottom", "left", "right"]}
       style={{ backgroundColor: vibesTheme.colors.background }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <VibesLoader size={160} />
+        <AnimatedBrandLogo direction="logo-to-word" loop style={{ width: 240, height: 240 }} />
         {bootFailed ? (
           <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: 24, gap: 16, marginTop: 24 }}>
             <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 18 }}>

@@ -22,9 +22,10 @@ export function matchesEventDateAndLocation(
   start?.setHours(0, 0, 0, 0);
   const end = to ? new Date(to) : null;
   end?.setHours(23, 59, 59, 999);
-  return normalizeSchedule(item.schedule, item.startsAt).some(({ startsAt }) => {
+  return normalizeSchedule(item.schedule, item.startsAt).some(({ startsAt, endsAt }) => {
     const time = Date.parse(startsAt);
-    return (!start || time >= start.getTime()) && (!end || time <= end.getTime());
+    const finish = endsAt ? Date.parse(endsAt) : time;
+    return (!start || finish >= start.getTime()) && (!end || time <= end.getTime());
   });
 }
 
