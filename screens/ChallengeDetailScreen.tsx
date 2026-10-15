@@ -53,6 +53,7 @@ import {
   useLeaveChallengeMutation,
   useDeleteChallengeMutation,
   fetchEventFeedItemById,
+  fetchIsRestrictedChallenge,
   type EventFeedItem,
 } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -1079,6 +1080,12 @@ const ChallengeDetailScreen = () => {
   const event = linkedEvent ?? inlineEvent;
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const { data: isRestrictedChallenge = false } = useQuery({
+    queryKey: ["challenge_restricted", challengeId, userId ?? null],
+    queryFn: () => fetchIsRestrictedChallenge(challengeId as string),
+    enabled: Boolean(challengeId) && !event && !linkedEventLoading,
+    staleTime: 60_000,
+  });
   const handleBack = usePublicContentBack(Boolean(userId));
   const { data: participant } = useChallengeParticipantQuery(event?.id, userId);
   const joinChallengeMutation = useJoinChallengeMutation();
@@ -1573,6 +1580,29 @@ const ChallengeDetailScreen = () => {
         <VibesLoader />
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
           style={localStyles.loadingBackButton} onPress={handleBack}>
+          <Text style={localStyles.loadingBackText}>Volver</Text>
+        </TouchableOpacity>
+      </ScreenContainer>
+    );
+  }
+
+  if (!event && challengeId && isRestrictedChallenge) {
+    return (
+      <ScreenContainer style={localStyles.loadingScreen}>
+        <Icon name="lock-closed-outline" size={30} color={palette.gold} />
+        <Text style={localStyles.loadingTitle}>Este desafío es privado</Text>
+        <Text style={localStyles.privateBody}>
+          {userId
+            ? "No tenés acceso a este desafío. Si te suman o te aceptan, lo vas a poder ver."
+            : "Si iniciás sesión y tenés acceso, lo vas a poder ver."}
+        </Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          style={localStyles.loadingBackButton}
+          onPress={() => handleBack()}
+          activeOpacity={0.85}
+        >
           <Text style={localStyles.loadingBackText}>Volver</Text>
         </TouchableOpacity>
       </ScreenContainer>
@@ -2080,6 +2110,14 @@ const localStyles = StyleSheet.create({
     lineHeight: 27,
     textAlign: "center",
     fontFamily: vibesTheme.fonts.medium,
+  },
+  privateBody: {
+    color: vibesTheme.colors.muted,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: "center",
+    fontFamily: vibesTheme.fonts.regular,
+    maxWidth: 320,
   },
   loadingBackButton: {
     borderRadius: 22,
