@@ -610,32 +610,18 @@ const VibesOnboardingFlow = () => {
                   ) : null}
                 </TouchableOpacity>
                 {showBirthDatePicker ? (
-                  <>
-                    <DateTimePicker
-                      value={birthDate ?? birthDateLimits.maximumDate}
-                      mode="date"
-                      display="spinner"
-                      themeVariant="light"
-                      locale={locale === "en" ? "en-US" : "es-AR"}
-                      minimumDate={birthDateLimits.minimumDate}
-                      maximumDate={birthDateLimits.maximumDate}
-                      onChange={(_event, date) => {
-                        if (date) setBirthDate(date);
-                      }}
-                    />
-                    <TouchableOpacity
-                      accessibilityRole="button"
-                      style={[onboardingStyles.inputRow, { justifyContent: "center" }]}
-                      onPress={() => {
-                        if (!birthDate) setBirthDate(birthDateLimits.maximumDate);
-                        setShowBirthDatePicker(false);
-                      }}
-                    >
-                      <Text style={[onboardingStyles.ageValue, { flex: 0, textAlign: "center" }]}>
-                        {t("common.done")}
-                      </Text>
-                    </TouchableOpacity>
-                  </>
+                  <DateTimePicker
+                    value={birthDate ?? birthDateLimits.maximumDate}
+                    mode="date"
+                    display="spinner"
+                    themeVariant="light"
+                    locale={locale === "en" ? "en-US" : "es-AR"}
+                    minimumDate={birthDateLimits.minimumDate}
+                    maximumDate={birthDateLimits.maximumDate}
+                    onChange={(_event, date) => {
+                      if (date) setBirthDate(date);
+                    }}
+                  />
                 ) : null}
               </>
             ) : (
