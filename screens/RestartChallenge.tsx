@@ -132,6 +132,7 @@ const RestartChallenge = () => {
       <VibesHeader
         align="left"
         title={t("challengeRestart.screenTitle")}
+        titleStyle={styles.screenTitle}
         subtitle={t("challengeRestart.screenSubtitle")}
       />
 
@@ -217,7 +218,7 @@ const RestartChallenge = () => {
 
       <TouchableOpacity
         accessibilityRole="button"
-        style={restartStyles.pill}
+        style={[restartStyles.pill, styles.inviteButton]}
         onPress={() => setFriendsVisible(true)}
       >
         <Icon name="people-outline" size={18} color={vibesTheme.colors.accentBlue} />
@@ -260,6 +261,23 @@ export default RestartChallenge;
 
 const { colors, fonts, radii, spacing } = vibesTheme;
 const styles = StyleSheet.create({
+  screenTitle: {
+    flexShrink: 1,
+    color: colors.primaryText,
+    fontFamily: fonts.semibold,
+    fontSize: 26,
+    lineHeight: 32,
+    marginTop: 0,
+    marginBottom: 0,
+    textAlign: "left",
+  },
+  inviteButton: {
+    alignSelf: "flex-start",
+    maxWidth: "100%",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.md,
+  },
   content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm },
   label: {
     marginTop: spacing.md,
