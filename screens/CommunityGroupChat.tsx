@@ -1,3 +1,4 @@
+import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import BackButton from "../components/BackButton";
 import VibesLoader from "../components/VibesLoader";
 import ChatPhotoButton from "../components/ChatPhotoButton";
@@ -128,7 +129,8 @@ export default function CommunityGroupChat() {
     (messages.data ?? []).map((m) => ({ id: m.id, senderId: m.sender_id })),
     focused
   );
-  const [actions, setActions] = useState(false);
+
+  const visibleDate = useChatVisibleDate(groupId, true, receipts.onViewableItemsChanged);  const [actions, setActions] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const client = useQueryClient();
   const leave = () => {
@@ -315,9 +317,9 @@ export default function CommunityGroupChat() {
             Este espacio ya es suyo. ¡Iniciá la conversación!
           </Text>
         ) : null}
-        <FlatList
+        <View style={{ flex: 1, position: "relative" }}><FlatList
           style={s.messages}
-          onViewableItemsChanged={receipts.onViewableItemsChanged}
+          onViewableItemsChanged={visibleDate.onViewableItemsChanged}
           viewabilityConfig={receipts.viewabilityConfig}
           keyboardShouldPersistTaps="handled"
           inverted
@@ -390,7 +392,7 @@ export default function CommunityGroupChat() {
               </View>
             )
           }
-        />
+        /><ChatVisibleDate date={visibleDate.date} /></View>
         <View
           style={[
             chatStyles.eventChatInputContainer,

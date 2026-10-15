@@ -1,3 +1,4 @@
+import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import { messagePreview } from "../src/lib/chatPhotos";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
@@ -111,7 +112,8 @@ const Chat = () => {
     messages ?? [],
     isFocused
   );
-  const sendMutation = useSendDirectMessageMutation();
+
+  const visibleDate = useChatVisibleDate(matchId, false, receipts.onViewableItemsChanged);  const sendMutation = useSendDirectMessageMutation();
   const deleteMutation = useDeleteDirectMessageMutation();
   const unmatchMutation = useUnmatchMutation();
   const reportMutation = useReportUserMutation();
@@ -571,7 +573,7 @@ const Chat = () => {
               <VibesLoader />
             </View>
           ) : (
-            <FlatList
+            <View style={{ flex: 1, position: "relative" }}><FlatList
               ref={flatListRef}
               style={{ flex: 1 }}
               onLayout={() => {
@@ -579,7 +581,7 @@ const Chat = () => {
                   flatListRef.current?.scrollToEnd({ animated: false });
                 }
               }}
-              onViewableItemsChanged={receipts.onViewableItemsChanged}
+              onViewableItemsChanged={visibleDate.onViewableItemsChanged}
               viewabilityConfig={receipts.viewabilityConfig}
               data={messages ?? []}
               keyExtractor={(item) => item.id}
@@ -615,7 +617,7 @@ const Chat = () => {
               onContentSizeChange={() =>
                 flatListRef.current?.scrollToEnd({ animated: false })
               }
-            />
+            /><ChatVisibleDate date={visibleDate.date} /></View>
           )}
 
           {/* Input */}

@@ -39,7 +39,7 @@ import {
 const TAB_BAR_HEIGHT = 82;
 const FLOATING_BUTTON_SIZE = 54;
 const HORIZONTAL_MARGIN = 18;
-const FLOATING_TOP = 8;
+const FLOATING_TOP = 14;
 const SELECTED_RISE = -38;
 const ANIMATION_CONFIG = { duration: 520, reduceMotion: ReduceMotion.System };
 
