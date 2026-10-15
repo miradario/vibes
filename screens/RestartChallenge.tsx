@@ -128,8 +128,17 @@ const RestartChallenge = () => {
   return (
     <ScreenContainer scroll contentContainerStyle={styles.content}>
       <AppHeader
-        showBack
-        onBack={() => navigation.goBack()}
+        left={(
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+            activeOpacity={0.72}
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Icon name="chevron-back" size={27} color={colors.primaryText} />
+          </TouchableOpacity>
+        )}
         title={t("challengeRestart.screenTitle")}
         subtitle={t("challengeRestart.screenSubtitle")}
         titleNumberOfLines={2}
@@ -264,6 +273,12 @@ export default RestartChallenge;
 
 const { colors, fonts, radii, spacing } = vibesTheme;
 const styles = StyleSheet.create({
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   header: {
     minHeight: 0,
     alignItems: "flex-start",
