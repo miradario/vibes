@@ -960,7 +960,6 @@ const EventDetail = () => {
     typeof event?.subtitle === "string" && event.subtitle.trim()
       ? event.subtitle.trim()
       : "Entrá a un espacio sereno para compartir presencia y conexión.";
-  const eventLeadText = eventDescription || eventSubtitle;
   const modalityLabel = modality === "online" ? "Online" : "Presencial";
   const pricingLabel = pricingType === "paid" ? "Pago" : "Gratis";
   const googleMapsConfig = getGoogleMapsClientConfig();
@@ -1485,11 +1484,6 @@ const EventDetail = () => {
             <Text style={localStyles.eventHeroTitle} numberOfLines={2}>
               {event.title}
             </Text>
-            {eventLeadText ? (
-              <Text style={localStyles.eventHeroSubtitle} numberOfLines={2}>
-                {eventLeadText}
-              </Text>
-            ) : null}
           </Animated.View>
         </Animated.View>
       ) : null}

@@ -1539,13 +1539,6 @@ const ChallengeDetailScreen = () => {
           >
             {challenge.title}
           </Text>
-          <Text
-            style={localStyles.expandedChallengeHeaderSubtitle}
-            numberOfLines={2}
-            ellipsizeMode="tail"
-          >
-            {challenge.subtitle}
-          </Text>
         </View>
       </NativeAnimated.View>
 
