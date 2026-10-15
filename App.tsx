@@ -1,5 +1,6 @@
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
+import { checkDeferredLinkOnce, type DeferredDestination } from "./src/deeplinks/deferredLink";
 import VibiOverlay from "./components/VibiOverlay";
 import AnimatedBrandLogo from "./components/AnimatedBrandLogo";
 import { useAuthSession } from "./src/auth/auth.queries";
@@ -112,6 +113,22 @@ const linking = {
 };
 let isNavigationReady = false;
 let pendingNotificationData: Record<string, unknown> | null = null;
+// Deferred deep link (fresh install from a shared link), opened once Startup finishes.
+let pendingDeferredDestination: DeferredDestination | null = null;
+const deferredLinkCheck = checkDeferredLinkOnce().then((destination) => {
+  pendingDeferredDestination = destination;
+  flushDeferredDestination();
+});
+function flushDeferredDestination() {
+  const nav = navigationRef.current;
+  if (!pendingDeferredDestination || !isNavigationReady || !nav) return;
+  // Wait until Startup/UpdateGate reset the stack, and let a tapped notification go first.
+  if (pendingNotificationData || shouldDeferReminder(nav.getCurrentRoute()?.name)) return;
+  const destination = pendingDeferredDestination;
+  pendingDeferredDestination = null;
+  nav.dispatch(CommonActions.navigate(destination));
+}
+void deferredLinkCheck;
 let hasHiddenNativeSplash = false;
 const FONT_LOAD_TIMEOUT_MS = 3000;
 const MIN_NATIVE_SPLASH_MS = Platform.OS === "ios" ? 750 : 500;
@@ -309,6 +326,7 @@ const AppNavigator = () => {
           linking={linking}
           onStateChange={() => {
             syncVibiRoute();
+            flushDeferredDestination();
             if (!pendingNotificationData || shouldDeferReminder(navigationRef.current?.getCurrentRoute()?.name)) return;
             const nextData = pendingNotificationData;
             pendingNotificationData = null;
@@ -317,6 +335,7 @@ const AppNavigator = () => {
           onReady={() => {
             isNavigationReady = true;
             syncVibiRoute();
+            flushDeferredDestination();
             if (!pendingNotificationData) return;
             const nextData = pendingNotificationData;
             pendingNotificationData = null;
