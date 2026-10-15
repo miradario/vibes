@@ -998,7 +998,7 @@ const localStyles = StyleSheet.create({
   tabRow: {
     flexDirection: "row",
     gap: vibesTheme.spacing.sm,
-    marginBottom: vibesTheme.spacing.sm,
+    marginBottom: vibesTheme.spacing.lg,
   },
   tab: {
     flex: 1,
