@@ -18,8 +18,8 @@ import {
   type MatchWithProfile,
 } from "../src/queries/matches.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
-import { buildEventInvitation } from "../src/lib/eventInvites";
-import { shareEventInvite } from "../src/lib/socialShare";
+import { buildChallengeInvitation, buildEventInvitation } from "../src/lib/eventInvites";
+import { shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 export default function EventInviteSheet({
@@ -33,6 +33,7 @@ export default function EventInviteSheet({
   onClose: () => void;
   onDiscover: () => void;
 }) {
+  const isChallenge = event.type === "challenge";
   const matches = useMatchesQuery();
   const send = useSendDirectMessageMutation();
   const [search, setSearch] = useState("");
@@ -43,7 +44,7 @@ export default function EventInviteSheet({
   const discoverAfterClose = useRef(false);
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const invitation = useMemo(() => buildEventInvitation(event), [event]);
+  const invitation = useMemo(() => isChallenge ? buildChallengeInvitation(event) : buildEventInvitation(event), [event, isChallenge]);
   useEffect(() => {
     setSent(new Set());
     setError("");
@@ -96,7 +97,7 @@ export default function EventInviteSheet({
       ]}
     >
       <View style={s.header}>
-        <Text style={s.title}>Invitar al evento</Text>
+        <Text style={s.title}>{isChallenge ? "Invitar al desafío" : "Invitar al evento"}</Text>
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Cerrar invitaciones"
@@ -112,11 +113,11 @@ export default function EventInviteSheet({
         </TouchableOpacity>
       </View>
       <Text style={s.copy}>
-        Invitá a gente con la que ya conectaste. Recibirá el evento en su chat.
+        Invitá a gente con la que ya conectaste. Recibirá la invitación en su chat.
       </Text>
       <View style={s.preview}>
         <Text style={s.previewTitle}>{event.title}</Text>
-        <Text style={s.copy}>Te invito a este evento en Vibes.</Text>
+        <Text style={s.copy}>{isChallenge ? "Te invito a este desafío en Vibes." : "Te invito a este evento en Vibes."}</Text>
       </View>
       <TouchableOpacity
         accessibilityRole="button"
@@ -149,7 +150,7 @@ export default function EventInviteSheet({
         style={s.discover}
         onPress={async () => {
           setError("");
-          try { await shareEventInvite(event); }
+          try { await (isChallenge ? shareChallengeInvite(event) : shareEventInvite(event)); }
           catch { setError("No pudimos abrir las opciones para compartir. Intentá de nuevo."); }
         }}
       >

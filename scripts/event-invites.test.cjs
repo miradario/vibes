@@ -34,3 +34,25 @@ test('external invitation includes the event URL in message text for Android', a
  assert.ok(shared.message.includes(`https://vibes.gurudevelopers.dev/event/${id}`));
  assert.equal(api.getInvitedEventId(shared.message), id);
 });
+
+test('challenge invitations open the matching challenge instead of an event', () => {
+ const body = api.buildChallengeInvitation({id, type: 'challenge', title: 'Una pausa', durationDays: 7});
+ assert.ok(body.includes('Una pausa'));
+ assert.ok(body.includes('7 días'));
+ assert.equal(api.getInvitedChallengeId(body), id);
+ assert.equal(api.getInvitedEventId(body), null);
+ assert.throws(() => api.buildChallengeInvitation({id, type: 'event'}));
+ assert.throws(() => api.buildChallengeInvitation({type: 'challenge'}));
+});
+test('challenge invitation parser rejects external domains and malformed IDs', () => {
+ for (const body of ['Hola', `https://another.example/challenge/${id}`, `https://vibes.gurudevelopers.dev.evil/challenge/${id}`, `https://vibes.gurudevelopers.dev/challenge/${id}extra`, `https://vibes.gurudevelopers.dev/event/${id}`]) assert.equal(api.getInvitedChallengeId(body), null);
+});
+
+test('challenge chat hides the URL but retains the destination for its button', () => {
+ const body = api.buildChallengeInvitation({id, type: 'challenge', title: 'Una pausa'});
+ assert.ok(api.getInvitationDisplayText(body).includes('Una pausa'));
+ assert.ok(!api.getInvitationDisplayText(body).includes('https://'));
+ assert.equal(api.getInvitedChallengeId(body), id);
+ assert.equal(api.getInvitationDisplayText('Hola https://another.example'), 'Hola https://another.example');
+ assert.equal(api.getInvitationDisplayText(`https://vibes.gurudevelopers.dev/challenge/${id}`), '');
+});

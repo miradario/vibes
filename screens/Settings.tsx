@@ -1,3 +1,4 @@
+import SelectablePill from "../components/onboarding/SelectablePill";
 import ProfileSectionTabs from "../components/ProfileSectionTabs";
 import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
 /** @format */
@@ -273,18 +274,7 @@ const Settings = () => {
   };
 
   const renderChip = (label: string, active: boolean, onPress: () => void) => (
-    <TouchableOpacity
-      key={label}
-      style={[localStyles.chip, active && localStyles.chipActive]}
-      onPress={onPress}
-    >
-      <Text
-        style={[localStyles.chipText, active && localStyles.chipTextActive]}
-      >
-        {label}
-      </Text>
-      {active ? <Icon name="checkmark" size={16} color={WHITE} /> : null}
-    </TouchableOpacity>
+    <SelectablePill key={label} label={label} selected={active} onPress={onPress} />
   );
 
   return (

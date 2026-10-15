@@ -1,3 +1,4 @@
+import SelectablePill from "../components/onboarding/SelectablePill";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
 import React, { useEffect, useMemo, useState } from "react";
@@ -5,10 +6,6 @@ import { View, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { Text } from "../components/Typography";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import styles, {
-  DARK_GRAY,
-  GRAY,
-  PRIMARY_COLOR,
-  WHITE,
 } from "../assets/styles";
 import AppHeader from "../components/AppHeader";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -115,39 +112,10 @@ const PreferenceDetail = () => {
               <Text style={styles.preferenceEmphasis}>{config.label}</Text>.
             </Text>
 
-            <View style={{ marginTop: 8 }}>
-              {config.options.map((option: string) => {
-                const active = selected.includes(option);
-                return (
-                  <TouchableOpacity
-                    key={option}
-                    onPress={() => toggleOption(option)}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: active ? PRIMARY_COLOR : vibesTheme.colors.accentBlue,
-                      backgroundColor: active ? vibesTheme.colors.background : WHITE,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      borderRadius: 12,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: active ? vibesTheme.colors.accentBlue : DARK_GRAY,
-                        fontWeight: "400",
-                      }}
-                    >
-                      {option}
-                    </Text>
-                    {config.multiple && (
-                      <Text style={{ color: GRAY, fontSize: 12, marginTop: 4 }}>
-                        {active ? "Seleccionado" : "Tocá para seleccionar"}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={{ marginTop: 8, flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+              {config.options.map((option: string) => (
+                <SelectablePill key={option} label={option} selected={selected.includes(option)} onPress={() => toggleOption(option)} />
+              ))}
             </View>
 
             <TouchableOpacity

@@ -1,3 +1,4 @@
+import EventInviteSheet from "../components/EventInviteSheet";
 import AppHeader from "../components/AppHeader";
 import ChallengeJourneyPath from "../components/ChallengeJourneyPath";
 import BackButton from "../components/BackButton";
@@ -979,6 +980,8 @@ const ChallengeDetailScreen = () => {
   const { t } = useI18n();
   const receivedInvitationsQuery = useReceivedChallengeInvitationsQuery(userId);
   const [participantsVisible, setParticipantsVisible] = useState(false);
+  const [inviteVisible, setInviteVisible] = useState(false);
+  useEffect(() => { setInviteVisible(false); }, [event?.id, userId]);
   const pendingParticipants = useRef(false);
   const pendingShare = useRef(false);
   const participantsQuery = useChallengeParticipantsQuery(
@@ -1533,6 +1536,10 @@ const ChallengeDetailScreen = () => {
                 ) : null}
               </View>
             </View> : null}
+            {event?.id && (!event.visibility || event.visibility === "public") ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Invitar personas al desafío" onPress={() => { if (!userId) { navigation.navigate("Login" as never); return; } setInviteVisible(true); }} style={localStyles.inviteAction}>
+              <Icon name="person-add-outline" size={22} color={vibesTheme.colors.primaryText} />
+              <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.medium, fontSize: 16 }}>Invitar a alguien</Text>
+            </TouchableOpacity> : null}
             <ChallengeJourneyCard challenge={challenge} percent={percent} />
             {event?.id && (isJoined || isAdmin) ? (
               <ChallengeDaysSection
@@ -1592,6 +1599,8 @@ const ChallengeDetailScreen = () => {
           </View>
         </View>
       </NativeAnimated.ScrollView>
+
+      {event?.id && userId && (!event.visibility || event.visibility === "public") ? <EventInviteSheet event={event} visible={inviteVisible} onClose={() => setInviteVisible(false)} onDiscover={() => navigation.navigate("Tab" as never, { screen: "Discover" } as never)} /> : null}
 
       <View
         style={[
@@ -1886,6 +1895,7 @@ const ChallengeDetailScreen = () => {
 };
 
 const localStyles = StyleSheet.create({
+  inviteAction: { minHeight: 50, marginBottom: 18, flexDirection: "row", gap: 10, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
   referenceAction: { width: 40, height: 44, justifyContent: "center", alignItems: "center" },
   referenceCover: { width: "auto", height: 190, marginHorizontal: 18, marginTop: 6, marginBottom: 16, borderRadius: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
   referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },

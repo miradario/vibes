@@ -2,7 +2,7 @@ import VibesLoader from "./VibesLoader";
 import React, { useState } from "react";
 import { Image, View, StyleSheet, TouchableOpacity, type StyleProp, type TextStyle } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { getInvitedEventId } from "../src/lib/eventInvites";
+import { getInvitationDisplayText, getInvitedChallengeId, getInvitedEventId } from "../src/lib/eventInvites";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "./Typography";
 import PhotoViewer from "./PhotoViewer";
@@ -24,6 +24,7 @@ export default function ChatMessageContent({
 }) {
   const navigation = useNavigation<any>();
   const invitedEventId = getInvitedEventId(body);
+  const invitedChallengeId = getInvitedChallengeId(body);
   const path = photoPath(body);
   const { data: session } = useAuthSession();
   const [expanded, setExpanded] = useState(false);
@@ -45,18 +46,20 @@ export default function ChatMessageContent({
   if (!path)
     return (
       <View style={s.textContent}>
-        <Text style={textStyle}>{body}</Text>
-        {invitedEventId ? (
+        {getInvitationDisplayText(body) ? <Text style={textStyle}>{getInvitationDisplayText(body)}</Text> : null}
+        {invitedEventId || invitedChallengeId ? (
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Ver evento invitado"
+            accessibilityLabel={invitedChallengeId ? "Ver desafío invitado" : "Ver evento invitado"}
             onLongPress={onLongPress}
             onPress={() =>
-              navigation.navigate("EventDetail", { eventId: invitedEventId })
+              invitedChallengeId
+                ? navigation.navigate("ChallengeDetailScreen", { challengeId: invitedChallengeId })
+                : navigation.navigate("EventDetail", { eventId: invitedEventId })
             }
             style={s.eventLink}
           >
-            <Text style={s.eventLinkText}>Ver evento</Text>
+            <Text style={s.eventLinkText}>{invitedChallengeId ? "Ver desafío" : "Ver evento"}</Text>
           </TouchableOpacity>
         ) : null}
       </View>
