@@ -19,7 +19,6 @@ import * as ImagePicker from "expo-image-picker";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
-import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
@@ -163,7 +162,7 @@ const OnboardingPhoto = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader left={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader right={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingPhoto" />
         </AppHeader>
         <ScrollView
@@ -240,7 +239,6 @@ const OnboardingPhoto = () => {
             ) : null}
           </View>
 
-          <OnboardingVideo containerStyle={localStyles.videoWrap} />
         </ScrollView>
 
         <View style={localStyles.footer}>

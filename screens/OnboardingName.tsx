@@ -17,7 +17,6 @@ import { Text, TextInput } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import AppHeader from "../components/AppHeader";
-import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
@@ -70,7 +69,7 @@ const OnboardingName = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.onboardContainer}>
-            <AppHeader left={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+            <AppHeader right={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
               <OnboardingProgressBar screenName="OnboardingName" />
             </AppHeader>
 
@@ -95,7 +94,6 @@ const OnboardingName = () => {
               />
             </View>
 
-            <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
             <View style={styles.onboardFooter}>
               <TouchableOpacity

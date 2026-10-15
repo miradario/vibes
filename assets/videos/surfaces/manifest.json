@@ -6,12 +6,6 @@
     "duration": 6.7
   },
   {
-    "file": "boarding.mp4",
-    "key": "0xf6f6f3",
-    "surface": "0xFEFEFD",
-    "duration": 8.4
-  },
-  {
     "file": "challenge.mp4",
     "key": "0xf6f6f3",
     "surface": "0xFEFEFD",
@@ -162,39 +156,9 @@
     "duration": 1.666667
   },
   {
-    "file": "connection.mp4",
-    "key": "0xf6f6f3",
-    "surface": "0xFEFEFD",
-    "duration": 8.7
-  },
-  {
-    "file": "onboardingVibes.mp4",
-    "key": "0xf6f6f3",
-    "surface": "0xFEFEFD",
-    "duration": 12.0
-  },
-  {
     "file": "signup.mp4",
     "key": "0xfdf5ec",
     "surface": "0xFEFEFD",
     "duration": 8.25
-  },
-  {
-    "file": "welcome.mp4",
-    "key": "0xffffff",
-    "surface": "0xFEFEFD",
-    "duration": 12.4
-  },
-  {
-    "file": "boarding-integrated.mp4",
-    "key": "0xf6f6f3",
-    "surface": "0xFFFFFF",
-    "duration": 8.4
-  },
-  {
-    "file": "bienvenidx-integrated.mp4",
-    "key": "0xf6f6f3",
-    "surface": "0xFFFFFF",
-    "duration": 6.7
   }
 ]

@@ -23,7 +23,6 @@ const ProgressHeader = ({
   cancelDisabled = false,
 }: ProgressHeaderProps) => (
   <View style={styles.wrap}>
-    <CancelOnboardingButton disabled={cancelDisabled} />
     {showBack ? (
       <TouchableOpacity
         onPress={onBack}
@@ -46,7 +45,7 @@ const ProgressHeader = ({
         ]}
       />
     </View>
-    <View style={styles.endSpacer} />
+    <CancelOnboardingButton disabled={cancelDisabled} />
   </View>
 );
 

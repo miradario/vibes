@@ -10,7 +10,6 @@ import ScreenContainer from "../components/ScreenContainer";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import AppHeader from "../components/AppHeader";
-import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
@@ -44,7 +43,7 @@ const OnboardingAge = () => {
   return (
     <ScreenContainer scroll contentContainerStyle={{ flexGrow: 1 }} edges={["top", "bottom", "left", "right"]}>
       <View style={styles.onboardContainer}>
-        <AppHeader left={<CancelOnboardingButton />}
+        <AppHeader right={<CancelOnboardingButton />}
           style={styles.onboardHeader}
           contentStyle={styles.onboardHeaderProgress}
           hideBackIcon
@@ -64,7 +63,6 @@ const OnboardingAge = () => {
           </Text>
         ) : null}
 
-        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity

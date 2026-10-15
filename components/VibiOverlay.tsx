@@ -18,8 +18,7 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import { useVibi } from "../src/vibi/useVibi";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
-import { playAnimation, setVisible, type VibiAnimation } from "../src/vibi/controller";
-import type { VibiModel } from "../src/vibi/model";
+import { setVisible } from "../src/vibi/controller";
 
 const SIZE = 64;
 const CLOSE_SPACE = 36;
@@ -94,21 +93,6 @@ export default function VibiOverlay({
       floatOffset.setValue(0);
     };
   }, [shown, active, reducedMotion, floatOffset]);
-  const [greeting, setGreeting] = useState<VibiAnimation | null>(null);
-  const greetedHome = useRef(false);
-  const onModelLoaded = React.useCallback((model: VibiModel) => {
-    setGreeting(model.clips.has("wave") ? "wave" : null);
-  }, []);
-  useEffect(() => {
-    if (routeName !== "Home") {
-      greetedHome.current = false;
-      return;
-    }
-    if (shown && greeting && !greetedHome.current) {
-      greetedHome.current = true;
-      playAnimation(greeting);
-    }
-  }, [routeName, shown, greeting]);
   useEffect(() => {
     if (eligible) setEverEnabled(true);
   }, [eligible]);
@@ -255,7 +239,7 @@ export default function VibiOverlay({
               size={SIZE}
               onPress={onPress}
               paused={!shown}
-              onModelLoaded={onModelLoaded}
+
             />
           </View>
         </Animated.View>

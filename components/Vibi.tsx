@@ -2,8 +2,6 @@ import React, { memo, useEffect, useRef, useSyncExternalStore } from "react";
 import { Animated, Image, Pressable, View } from "react-native";
 import { VIBES_LOGO } from "../src/constants/brandAssets";
 import { VIBI_LOOPS, finishAnimation, vibiController, type VibiAnimation } from "../src/vibi/controller";
-import type { VibiModel } from "../src/vibi/model";
-import type { VibiRendererProps } from "./VibiRenderer";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 export type VibiProps = {
   state?: VibiAnimation;
@@ -12,12 +10,9 @@ export type VibiProps = {
   visible?: boolean;
   animation?: VibiAnimation;
   loop?: boolean;
-  /** Turntable speed multiplier; true uses the default speed. */
-  spin?: boolean | number;
   size?: number;
   width?: number;
   height?: number;
-  welcomeIntro?: VibiRendererProps["welcomeIntro"];
   onReady?: () => void;
   onError?: () => void;
   paused?: boolean;
@@ -26,30 +21,17 @@ export type VibiProps = {
   onPress?: () => void;
   onLongPress?: () => void;
   onCycleComplete?: () => void;
-  viewportSize?: number;
-  onModelLoaded?: (model: VibiModel) => void;
 };
 
-export async function preloadVibi() {
-  const model = await import("../src/vibi/model").then(module => module.loadVibiModel());
-  return { model };
-}
 function Vibi({ state, animation, followController = false, visible = true, loop, size = 120, width = size, height = size,
-  paused = false, reducedMotion: preference, onPress, onLongPress, onReady, onError, onModelLoaded, onCycleComplete }: VibiProps) {
+  paused = false, reducedMotion: preference, onPress, onLongPress, onReady, onError, onCycleComplete }: VibiProps) {
   const snapshot = useSyncExternalStore(vibiController.subscribe, vibiController.getSnapshot, vibiController.getSnapshot);
   const name = state ?? animation ?? (followController ? snapshot.animation : "idle");
   const { active, reducedMotion } = useVibiRuntime();
   const stopped = paused || !visible || !active;
   const scale = useRef(new Animated.Value(1)).current;
-  const callbacks = useRef({ onReady, onError, onCycleComplete, onModelLoaded });
-  callbacks.current = { onReady, onError, onCycleComplete, onModelLoaded };
-  useEffect(() => {
-    if (!onModelLoaded) return;
-    let mounted = true;
-    void preloadVibi().then(({ model }) => { if (mounted) callbacks.current.onModelLoaded?.(model); })
-      .catch(() => { if (mounted) callbacks.current.onError?.(); });
-    return () => { mounted = false; };
-  }, [!!onModelLoaded]);
+  const callbacks = useRef({ onReady, onError, onCycleComplete });
+  callbacks.current = { onReady, onError, onCycleComplete };
   useEffect(() => {
     scale.setValue(1);
     if (stopped || (preference ?? reducedMotion) || name === "idle") return;
@@ -62,7 +44,7 @@ function Vibi({ state, animation, followController = false, visible = true, loop
   }, [name, stopped, reducedMotion, preference, scale]);
   useEffect(() => {
     if (stopped) return;
-    const durations = require("../assets/models/vibi-clips.json") as Record<string, number>;
+    const durations = require("../src/vibi/animationDurations.json") as Record<string, number>;
     const duration = (durations[name] ?? 3) * 1000;
     const looping = loop ?? VIBI_LOOPS.has(name);
     const complete = () => {

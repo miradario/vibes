@@ -7,7 +7,6 @@ import { Text } from "../components/Typography";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
 import AppHeader from "../components/AppHeader";
-import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import VibesLoader from "../components/VibesLoader";
 import { useAuthSession } from "../src/auth/auth.queries";
@@ -49,7 +48,7 @@ const OnboardingOrientation = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader left={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader right={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingOrientation" />
         </AppHeader>
 
@@ -76,7 +75,6 @@ const OnboardingOrientation = () => {
           ))}
         </View>
 
-        <OnboardingVideo containerStyle={localStyles.videoWrap} />
 
         <View style={styles.onboardFooter}>
           <TouchableOpacity
