@@ -600,6 +600,7 @@ const AppNavigator = () => {
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen name="PastEvents" component={PastEvents} options={{ headerShown: false }} />
+            <Stack.Screen name="PastChallenges" component={PastEvents} options={{ headerShown: false }} />
             <Stack.Screen
               name="EventChat"
               component={EventChat}

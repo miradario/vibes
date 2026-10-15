@@ -68,7 +68,7 @@ type FeedListItem =
       keyPrefix?: string;
     };
 
-type PrivateBlock = "mine" | "invitations" | "participating" | "finished";
+type PrivateBlock = "mine" | "invitations" | "participating";
 
 const normalizeSearchText = (value: string | null | undefined) =>
   (value ?? "")
@@ -170,7 +170,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   const { data: session } = useAuthSession();
   const section: "event" | "challenge" =
     route.params?.section === "challenge" ? "challenge" : "event";
-  const title = pastOnly ? "Eventos pasados" : section === "challenge" ? "Desafíos" : "Eventos";
+  const title = pastOnly ? (section === "challenge" ? "Desafíos finalizados" : "Eventos pasados") : section === "challenge" ? "Desafíos" : "Eventos";
   const searchPlaceholder =
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
   const eventsQuery = useEventsFeedQuery();
@@ -222,19 +222,17 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   };
 
   const [search, setSearch] = useState("");
-  const [challengeTab, setChallengeTab] = useState<"public" | "private">("public");
+  const [challengeTab, setChallengeTab] = useState<"public" | "private">(route.params?.challengeTab === "private" ? "private" : "public");
   const [openBlocks, setOpenBlocks] = useState<Record<PrivateBlock, boolean>>({
     mine: true,
     invitations: false,
     participating: false,
-    finished: false,
   });
   const [restartTarget, setRestartTarget] = useState<EventFeedItem | null>(null);
   const viewerId = session?.user?.id;
   const isPrivateTab = section === "challenge" && challengeTab === "private";
   const invitationsQuery = useReceivedChallengeInvitationsQuery(section === "challenge" ? viewerId : undefined);
   const respondInvitation = useRespondChallengeInvitationMutation();
-  const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
   const [showUpcomingChallenges, setShowUpcomingChallenges] = useState(false);
 
   const errorMessage =
@@ -346,6 +344,10 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
       ];
     }
 
+    if (pastOnly) {
+      return finishedChallengeItems.map((item) => ({ kind: "feed" as const, item, restartable: true }));
+    }
+
     if (challengeTab === "private") {
       const mine = sortChallengesByStartsAt(
         filteredItems.filter((item) => item.createdBy === viewerId && !isFinishedChallenge(item)),
@@ -354,9 +356,6 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
         filteredItems.filter(
           (item) => item.createdBy !== viewerId && joinedChallengeIds.has(item.id) && !isFinishedChallenge(item),
         ),
-      );
-      const finished = filteredItems.filter(
-        (item) => isFinishedChallenge(item) && (item.createdBy === viewerId || joinedChallengeIds.has(item.id)),
       );
       const invitations = (invitationsQuery.data ?? []).filter(
         (invitation) =>
@@ -372,13 +371,11 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
           keyPrefix: "invitation",
         }))],
         ["participating", participating.map((item) => ({ kind: "feed" as const, item, keyPrefix: "participating" }))],
-        ["finished", finished.map((item) => ({ kind: "feed" as const, item, restartable: true, keyPrefix: "finished" }))],
       ];
       const titles: Record<PrivateBlock, string> = {
         mine: t("challengeRestart.blockMine"),
         invitations: t("challengeRestart.blockInvitations"),
         participating: t("challengeRestart.blockParticipating"),
-        finished: t("challengeRestart.blockFinished"),
       };
       return blocks.flatMap(([id, rows]) => [
         { kind: "accordion" as const, id, title: titles[id], count: rows.length, open: openBlocks[id] },
@@ -426,17 +423,6 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
       );
     }
 
-    if (showFinishedChallenges && finishedChallengeItems.length > 0) {
-      nextItems.push({
-        kind: "section",
-        id: "finished-challenges",
-        title: "Desafíos finalizados",
-      });
-      nextItems.push(
-        ...finishedChallengeItems.map((item) => ({ kind: "feed" as const, item, restartable: true })),
-      );
-    }
-
     return nextItems;
   }, [
     myEventGroups,
@@ -446,7 +432,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
     joinedChallengeItems,
     joinedUpcomingChallengeItems,
     section,
-    showFinishedChallenges,
+    pastOnly,
     showUpcomingChallenges,
     upcomingGeneralChallengeItems,
     visibleItems,
@@ -502,11 +488,13 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
           ) : null}
           <View style={localStyles.titleRow}>
             <Text style={[styles.eventsTitle, localStyles.screenTitle]}>{title}</Text>
-            {!pastOnly && section === "event" ? (
+            {!pastOnly ? (
               <TouchableOpacity
                 accessibilityRole="button"
-                accessibilityLabel="Ver eventos pasados"
-                onPress={() => navigation.navigate("PastEvents" as never)}
+                accessibilityLabel={section === "challenge" ? "Ver desafíos finalizados" : "Ver eventos pasados"}
+                onPress={() => section === "challenge"
+                  ? navigation.navigate("PastChallenges" as never, { section: "challenge", challengeTab } as never)
+                  : navigation.navigate("PastEvents" as never)}
                 style={localStyles.filterButton}
               >
                 <Icon name="archive-outline" size={23} color={vibesTheme.colors.accentBlue} />
@@ -552,7 +540,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
         </View>
 
-        {section === "challenge" && !pastOnly ? (
+        {section === "challenge" ? (
           <View style={localStyles.tabRow} accessibilityRole="tablist">
             {(["public", "private"] as const).map((tab) => {
               const selected = challengeTab === tab;
@@ -605,7 +593,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                 {error
                     ? "No se pudieron cargar"
                     : pastOnly
-                      ? "No hay eventos pasados"
+                      ? section === "challenge" ? "No hay desafíos finalizados" : "No hay eventos pasados"
                     : normalizedSearch
                       ? section === "challenge"
                         ? "No encontramos desafíos"
@@ -621,6 +609,8 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
               {!listIsLoading ? <Text style={localStyles.emptyText}>
                 {error
                     ? errorMessage
+                    : pastOnly
+                      ? "Probá con otros filtros."
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
                     : section === "event" && expiredEventItems.length > 0
@@ -628,7 +618,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                     : section === "challenge" && upcomingGeneralChallengeItems.length > 0
                       ? "Los próximos están guardados abajo para que te sumes cuando quieras."
                     : section === "challenge" && finishedChallengeItems.length > 0
-                      ? "Tus desafíos finalizados están guardados abajo."
+                      ? "Podés consultar los finalizados desde el ícono de archivo junto al título."
                     : section === "challenge"
                       ? "Creá un desafío o conectá una fuente real para poblar esta lista."
                       : t("events.eventsEmpty")}
@@ -644,7 +634,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             </View>
           }
           ListFooterComponent={
-            section === "challenge" && !isPrivateTab && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0) ? (
+            section === "challenge" && !pastOnly && !isPrivateTab && upcomingGeneralChallengeItems.length > 0 ? (
               <View style={localStyles.footerToggleGroup}>
                 {upcomingGeneralChallengeItems.length > 0 ? (
                   <TouchableOpacity
@@ -664,29 +654,6 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                     </View>
                     <Icon
                       name={showUpcomingChallenges ? "chevron-up" : "chevron-down"}
-                      size={22}
-                      color={vibesTheme.colors.secondaryText}
-                    />
-                  </TouchableOpacity>
-                ) : null}
-                {finishedChallengeItems.length > 0 ? (
-                  <TouchableOpacity
-                    style={localStyles.finishedSectionToggle}
-                    onPress={() => setShowFinishedChallenges((prev) => !prev)}
-                    activeOpacity={0.85}
-                  >
-                    <View>
-                      <Text style={localStyles.finishedSectionTitle}>
-                        Desafíos finalizados
-                      </Text>
-                      <Text style={localStyles.finishedSectionSubtitle}>
-                        {showFinishedChallenges
-                          ? "Ocultar finalizados"
-                          : `${finishedChallengeItems.length} guardados`}
-                      </Text>
-                    </View>
-                    <Icon
-                      name={showFinishedChallenges ? "chevron-up" : "chevron-down"}
                       size={22}
                       color={vibesTheme.colors.secondaryText}
                     />

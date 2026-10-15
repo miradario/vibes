@@ -615,8 +615,8 @@ const baseTranslations = {
       everyone: "Todos",
     },
     challengeRestart: {
-      tabPublic: "Pública",
-      tabPrivate: "Privada",
+      tabPublic: "Públicos",
+      tabPrivate: "Privados",
       blockMine: "Mis desafíos",
       blockInvitations: "Invitaciones",
       blockParticipating: "Participando",
