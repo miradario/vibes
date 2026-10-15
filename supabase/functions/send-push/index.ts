@@ -393,9 +393,9 @@ const sendApnsMessage = async (
             sound: "default",
             ...(typeof badgeCount === "number" ? { badge: badgeCount } : {}),
           },
+          ...data,
           // expo-notifications en iOS lee content.data desde userInfo.body;
           // mantenemos las keys en la raíz por compatibilidad.
-          ...data,
           body: data,
         }),
       }
@@ -786,6 +786,27 @@ const buildNotifications = async (
 
   if (!table || !record) {
     throw new Error("Webhook payload missing table or record");
+  }
+
+  if (table === "profiles" && payload.type === "INSERT" && payload.schema === "public") {
+    const userId = typeof record.id === "string" ? record.id : "";
+    if (!userId) return [];
+
+    // Resolve staff through a service-only RPC; private is not a REST schema.
+    const { data: staff, error: staffError } = await supabase
+      .rpc("get_signup_push_recipients");
+    if (staffError) throw staffError;
+
+    const name = formatNotificationPersonName(
+      typeof record.display_name === "string" ? record.display_name : null
+    );
+    return [...new Set<string>((staff ?? []).map((row: { user_id: string }) => row.user_id))]
+      .map((recipientId) => ({
+        recipientId,
+        title: "Vibes",
+        body: `${name} se sumó a Vibes 💪`,
+        data: { type: "new_user", user_id: userId },
+      }));
   }
 
   if (table === "notification_reminders") {

@@ -12,5 +12,5 @@ export const notificationAllowed = (
   type: string
 ) =>
   preferences?.notifications_enabled !== false &&
-  Boolean(columns[type]) &&
-  preferences?.[columns[type]] !== false;
+  (type === "new_user" ||
+    (Boolean(columns[type]) && preferences?.[columns[type]] !== false));
