@@ -1,3 +1,4 @@
+import { preparePhotoUpload } from "../src/lib/preparePhotoUpload";
 import CountrySelector from "../components/CountrySelector";
 import { saveProfileNationality } from "../src/lib/profileNationality";
 import { launchAppCamera } from "../components/AppCamera";
@@ -778,14 +779,15 @@ const EditProfile = () => {
       profileData?.intentId ?? null
     );
 
-    const uriWithoutQuery = uri.split("?")[0];
+    const uploadUri = await preparePhotoUpload(uri);
+    const uriWithoutQuery = uploadUri.split("?")[0];
     const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
     const normalizedExt = rawExt.toLowerCase();
     const ext = EXTENSION_TO_CONTENT_TYPE[normalizedExt]
       ? normalizedExt
       : "jpg";
     const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";
-    const arrayBuffer = await readUriAsArrayBuffer(uri);
+    const arrayBuffer = await readUriAsArrayBuffer(uploadUri);
     const uploadBody = new Uint8Array(arrayBuffer).buffer;
     const filePath = `${userId}/${Date.now()}-${slotIndex}.${ext}`;
 

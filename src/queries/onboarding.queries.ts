@@ -1,3 +1,4 @@
+import { preparePhotoUpload } from "../lib/preparePhotoUpload";
 import { saveProfileAnswers, type ProfileAnswers } from "../lib/profileQuestions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as FileSystem from "expo-file-system/legacy";
@@ -88,7 +89,7 @@ const uploadOnboardingPhotos = async (userId: string, uris: string[]) => {
   }
 
   for (let i = 0; i < uris.length; i++) {
-    const uri = uris[i];
+    const uri = await preparePhotoUpload(uris[i]);
     const rawExt = uri.split("?")[0].split(".").pop() || "jpg";
     const ext = rawExt.toLowerCase();
     const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";

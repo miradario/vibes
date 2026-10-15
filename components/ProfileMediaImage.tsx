@@ -1,3 +1,4 @@
+import { imageCacheSource } from "../src/lib/imageCacheSource";
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View, type ImageStyle, type StyleProp } from "react-native";
 import { Text } from "./Typography";
@@ -90,13 +91,13 @@ const ProfileMediaImage = ({
       {!canRenderSource ? <BrandImagePlaceholder /> : null}
       {canRenderSource && !hasError ? (
         <>
-        {canPreview ? <ExpoImage source={preview} style={StyleSheet.absoluteFillObject}
+        {canPreview ? <ExpoImage source={imageCacheSource(preview)} style={StyleSheet.absoluteFillObject}
           contentFit="cover" cachePolicy="memory-disk" transition={0}
           priority={priority} accessible={false} /> : null}
         {blurBackground && resolvedSize && !(isPortrait && contentFit === "cover") ? (
           <ExpoImage
             recyclingKey={`background-${sourceKey}`}
-            source={source}
+            source={imageCacheSource(source)}
             style={[StyleSheet.absoluteFillObject, { transform: [{ scale: 1.08 }] }]}
             cachePolicy="memory-disk"
             contentFit="cover"
@@ -109,8 +110,8 @@ const ProfileMediaImage = ({
         <ExpoImage
           key={`${sourceKey}-${attempt}`}
           recyclingKey={sourceKey}
-          source={source}
-          placeholder={canPreview ? preview : undefined}
+          source={imageCacheSource(source)}
+          placeholder={canPreview ? imageCacheSource(preview) : undefined}
           placeholderContentFit={resolvedFit}
           style={[StyleSheet.absoluteFillObject, { opacity: layoutReady ? 1 : 0 }]}
           cachePolicy="memory-disk"

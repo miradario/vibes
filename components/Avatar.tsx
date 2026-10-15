@@ -1,3 +1,4 @@
+import { imageCacheSource } from "../src/lib/imageCacheSource";
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Image as ExpoImage } from "expo-image";
@@ -90,7 +91,7 @@ const Avatar = ({
         <ExpoImage
           key={resolvedUri || sourceKey}
           recyclingKey={resolvedUri || sourceKey}
-          source={hasUri ? { uri: resolvedUri } : source}
+          source={imageCacheSource(hasUri ? { uri: resolvedUri } : source)}
           style={[StyleSheet.absoluteFillObject, { borderRadius: resolvedRadius }]}
           contentFit="cover"
           cachePolicy="memory-disk"
