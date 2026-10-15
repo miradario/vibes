@@ -70,6 +70,7 @@ const AgeAssurance = () => {
           <View style={localStyles.card}>
             {Platform.OS === "ios" ? (
               <DateTimePicker
+                style={localStyles.nativeDatePicker}
                 value={birthDate ?? initialPickerDate}
                 mode="date"
                 display="spinner"
@@ -150,7 +151,8 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
   },
-  card: { width: "100%" },
+  card: { width: "100%", marginTop: -8 },
+  nativeDatePicker: { alignSelf: "center" },
   error: {
     marginTop: 10,
     color: vibesTheme.colors.accentBlue,
