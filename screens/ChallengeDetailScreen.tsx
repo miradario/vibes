@@ -123,7 +123,7 @@ const palette = {
   redSoft: "rgba(216, 140, 122, 0.17)",
 };
 
-const FOOTER_SLIDER_HANDLE_SIZE = 42;
+const FOOTER_SLIDER_HANDLE_SIZE = 50;
 const FOOTER_SLIDER_HORIZONTAL_PADDING = 8;
 const FOOTER_SLIDER_TRACK_HEIGHT = 68;
 const FOOTER_SLIDER_FILL_LEFT =
@@ -1367,13 +1367,12 @@ const ChallengeDetailScreen = () => {
             pointerEvents="none"
           />
           <View style={localStyles.footerSliderChevrons} pointerEvents="none">
-            <Icon name="chevron-forward" size={16} color={vibesTheme.colors.background} />
-            <Icon name="chevron-forward" size={16} color={vibesTheme.colors.background} />
+            <Icon name="chevron-forward" size={19} color={vibesTheme.colors.accentBlue} />
+            <Icon name="chevron-forward" size={19} color={vibesTheme.colors.accentBlue} />
           </View>
           <View style={localStyles.footerSliderCopy}>
-            <Text style={localStyles.footerSliderTitle}>Check-in diario</Text>
-            <Text style={localStyles.footerSliderSubtitle}>
-              Deslizá para completar tu día
+            <Text style={[localStyles.footerSliderTitle, { textAlign: "center", fontSize: 14 }]}>
+              {checkInMutation.isPending ? "Guardando…" : "Deslizá para completar tu día"}
             </Text>
           </View>
         </View>
@@ -1387,7 +1386,7 @@ const ChallengeDetailScreen = () => {
           {checkInMutation.isPending ? (
             <VibesLoader />
           ) : (
-            <Icon name="sunny-outline" size={22} color={vibesTheme.colors.background} />
+            <Icon name="arrow-forward" size={27} color={vibesTheme.colors.surface} />
           )}
         </View>
       </View>
@@ -2805,13 +2804,13 @@ const localStyles = StyleSheet.create({
   footerSliderTrack: {
     minHeight: 68,
     borderRadius: 34,
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderWidth: 2,
-    borderColor: "rgba(254, 254, 253, 0.22)",
+    backgroundColor: `${vibesTheme.colors.accentBlue}14`,
+    borderWidth: 1,
+    borderColor: `${vibesTheme.colors.accentBlue}70`,
     overflow: "hidden",
     justifyContent: "center",
-    paddingLeft: 124,
-    paddingRight: 20,
+    paddingLeft: 70,
+    paddingRight: 36,
   },
   footerSliderTrackCompleted: {
     backgroundColor: "rgba(254, 254, 253, 0.88)",
@@ -2823,27 +2822,27 @@ const localStyles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: 34,
-    backgroundColor: "rgba(244, 163, 64, 0.92)",
+    backgroundColor: `${vibesTheme.colors.accentBlue}14`,
   },
   footerSliderHandle: {
     position: "absolute",
     left: FOOTER_SLIDER_HORIZONTAL_PADDING + 2,
-    top: 13,
+    top: 9,
     width: FOOTER_SLIDER_HANDLE_SIZE,
     height: FOOTER_SLIDER_HANDLE_SIZE,
     borderRadius: FOOTER_SLIDER_HANDLE_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderWidth: 2,
+    backgroundColor: vibesTheme.colors.accentBlue,
+    borderWidth: 1,
     borderColor: "rgba(254, 254, 253, 0.82)",
     shadowColor: vibesTheme.colors.accentCoral,
-    shadowOpacity: 0.28,
+    shadowOpacity: 0,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
   },
   footerSliderHandleCompleted: {
-    backgroundColor: vibesTheme.colors.accentMustard,
+    backgroundColor: vibesTheme.colors.accentBlue,
     shadowOpacity: 0,
   },
   footerSliderCopy: {
@@ -2865,13 +2864,13 @@ const localStyles = StyleSheet.create({
   },
   footerSliderChevrons: {
     position: "absolute",
-    left: 70,
+    right: 20,
     top: 0,
     bottom: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
-    opacity: 1,
+    opacity: 0.4,
   },
   checkInText: {
     color: vibesTheme.colors.surface,
