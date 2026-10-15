@@ -1,3 +1,4 @@
+import ChallengeJourneyPath from "../components/ChallengeJourneyPath";
 import BackButton from "../components/BackButton";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
@@ -431,147 +432,9 @@ const ChallengeIntroMetaRow = memo(
   )
 );
 
-const ChallengeJourneyCard = memo(
-  ({
-    challenge,
-    percent,
-  }: {
-    challenge: ChallengeDetailData;
-    percent: number;
-  }) => {
-    const scrollRef = useRef<ScrollView>(null);
-    const timelineScrollX = useRef(0);
-    const [timelineWidth, setTimelineWidth] = useState(0);
-    const [timelineContentWidth, setTimelineContentWidth] = useState(0);
-    const progress = useAnimatedProgress(percent);
-    const fillStyle = useAnimatedStyle(() => ({
-      width: `${progress.value * 100}%`,
-    }));
-    const days = useMemo(
-      () =>
-        Array.from({ length: challenge.totalDays }, (_, index) => index + 1),
-      [challenge.totalDays]
-    );
-
-    useEffect(() => {
-      if (!timelineWidth || !timelineContentWidth || challenge.currentDay <= 0)
-        return;
-      const dayPitch = 66;
-      const activeCenter =
-        (Math.max(challenge.currentDay, 1) - 1) * dayPitch + 20;
-      const maxScrollX = Math.max(timelineContentWidth - timelineWidth, 0);
-      const targetX = Math.min(
-        Math.max(activeCenter - timelineWidth / 2, 0),
-        maxScrollX
-      );
-      const overshootX = Math.min(targetX + 28, maxScrollX);
-      let startTimer: ReturnType<typeof setTimeout> | undefined;
-      let reboundTimer: ReturnType<typeof setTimeout> | undefined;
-      let animationFrame: number | undefined;
-      const animateScrollTo = (
-        x: number,
-        duration: number,
-        onComplete?: () => void
-      ) => {
-        const startX = timelineScrollX.current;
-        const deltaX = x - startX;
-        const startTime = Date.now();
-        const easeInOutCubic = (value: number) =>
-          value < 0.5
-            ? 4 * value * value * value
-            : 1 - Math.pow(-2 * value + 2, 3) / 2;
-
-        const step = () => {
-          const elapsed = Date.now() - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const nextX = startX + deltaX * easeInOutCubic(progress);
-          timelineScrollX.current = nextX;
-          scrollRef.current?.scrollTo({ x: nextX, animated: false });
-
-          if (progress < 1) {
-            animationFrame = requestAnimationFrame(step);
-            return;
-          }
-
-          timelineScrollX.current = x;
-          onComplete?.();
-        };
-
-        animationFrame = requestAnimationFrame(step);
-      };
-
-      requestAnimationFrame(() => {
-        startTimer = setTimeout(() => {
-          animateScrollTo(overshootX, 720);
-          reboundTimer = setTimeout(() => {
-            animateScrollTo(targetX, 520);
-          }, 760);
-        }, 420);
-      });
-      return () => {
-        if (startTimer) clearTimeout(startTimer);
-        if (reboundTimer) clearTimeout(reboundTimer);
-        if (animationFrame) cancelAnimationFrame(animationFrame);
-      };
-    }, [challenge.currentDay, timelineContentWidth, timelineWidth]);
-
-    return (
-      <View style={localStyles.journeyCard}>
-        <View style={localStyles.journeyHeader}>
-          <View style={localStyles.journeyHeaderCopy}>
-            <Text style={localStyles.journeyTitle}>Tu camino</Text>
-            <Text style={localStyles.journeySubtitle}>
-              {challenge.completedDays.length} de {challenge.totalDays} días
-              completados
-            </Text>
-          </View>
-          <Text style={localStyles.journeyPercent}>{percent}%</Text>
-        </View>
-
-        <View style={localStyles.journeyTrack}>
-          <Reanimated.View style={[localStyles.journeyTrackFill, fillStyle]} />
-        </View>
-
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={localStyles.journeyDaysRow}
-          onLayout={(event) => setTimelineWidth(event.nativeEvent.layout.width)}
-          onContentSizeChange={(contentWidth) =>
-            setTimelineContentWidth(contentWidth)
-          }
-          onScroll={(event) => {
-            timelineScrollX.current = event.nativeEvent.contentOffset.x;
-          }}
-          scrollEventThrottle={16}
-        >
-          {days.map((day, index) => {
-            const state = getDayState(
-              day,
-              challenge.currentDay,
-              challenge.completedDays
-            );
-            return (
-              <View key={day} style={localStyles.journeyDayWrap}>
-                <DayCircle day={day} state={state} size={40} />
-                {state === "active" ? (
-                  <Text style={localStyles.journeyTodayLabel}>Hoy</Text>
-                ) : null}
-                {index < days.length - 1 ? (
-                  <View
-                    style={[
-                      localStyles.journeyConnector,
-                      state === "completed" && localStyles.journeyConnectorDone,
-                      state === "missed" && localStyles.journeyConnectorMissed,
-                    ]}
-                  />
-                ) : null}
-              </View>
-            );
-          })}
-        </ScrollView>
-
+const ChallengeJourneyCard = memo(({ challenge }: { challenge: ChallengeDetailData; percent: number }) => {
+  return (<View style={localStyles.journeyCard}>
+    <ChallengeJourneyPath totalDays={challenge.totalDays} currentDay={challenge.currentDay} completedDays={challenge.completedDays} />
         <View style={localStyles.journeyStatsRow}>
           <View style={localStyles.journeyStatItem}>
             <Icon name="flame-outline" size={24} color={vibesTheme.colors.accentCoral} />
@@ -747,7 +610,7 @@ export const PathProgress = memo(
               numberOfLines={2}
               maxFontSizeMultiplier={1}
             >
-              Tu camino
+              Tu progreso
             </Text>
             <Text style={localStyles.pathSubtitle}>
               {totalDays} días para conectar con vos
