@@ -1680,7 +1680,7 @@ const localStyles = StyleSheet.create({
   emptyTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   emptyText: {
@@ -1698,7 +1698,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 22,
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
   },
   emptyActionText: {
     color: vibesTheme.colors.surface,

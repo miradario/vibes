@@ -1023,7 +1023,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
     onPress={onPress}
     activeOpacity={0.9}
   >
-    <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.primaryText} />
+    <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.surface} />
   </TouchableOpacity>
 ));
 
@@ -1783,6 +1783,10 @@ const ChallengeDetailScreen = () => {
             <ChallengeIntroMetaRow challenge={challenge} checkedInTodayCount={checkedInTodayCount} />
           </View>
           <View style={localStyles.content}>
+            {challenge.subtitle ? <View style={localStyles.descriptionSection}>
+              <Text style={localStyles.descriptionHeading}>Sobre el desafío</Text>
+              <Text selectable style={localStyles.fullDescription}>{challenge.subtitle}</Text>
+            </View> : null}
             <ChallengeJourneyCard challenge={challenge} percent={percent} />
             {event?.id && (isJoined || isAdmin) ? (
               <ChallengeDaysSection
@@ -2092,6 +2096,9 @@ const ChallengeDetailScreen = () => {
 };
 
 const localStyles = StyleSheet.create({
+  descriptionSection: { paddingVertical: 20, gap: 10 },
+  descriptionHeading: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 },
+  fullDescription: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 17, lineHeight: 26 },
   screen: {
     flex: 1,
     backgroundColor: palette.bg,
@@ -2322,7 +2329,7 @@ const localStyles = StyleSheet.create({
   },
   joinRequestButton: {
     borderRadius: 20,
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     borderWidth: 2,
     borderColor: "rgba(254, 254, 253, 0.18)",
     paddingHorizontal: 18,
@@ -2400,7 +2407,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 24,
     lineHeight: 28,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   completionCelebrationBody: {
@@ -2525,7 +2532,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 20,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   requestCardCount: {
     color: palette.goldDeep,
@@ -2607,7 +2614,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 22,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   celebrationBody: {
     marginTop: 4,
@@ -2629,7 +2636,7 @@ const localStyles = StyleSheet.create({
   cardTitle: {
     color: palette.text,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   cardSubtitle: {
     marginTop: 4,
@@ -2813,7 +2820,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 27,
     lineHeight: 32,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   pathSubtitle: {
     marginTop: 2,
@@ -3069,7 +3076,7 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
   },
   checkInCompleted: {
-    backgroundColor: palette.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0,
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },
@@ -3167,7 +3174,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.16,
@@ -3226,7 +3233,7 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     fontSize: 22,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 10,
   },
   menuItem: {

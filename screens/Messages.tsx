@@ -1002,7 +1002,7 @@ const localStyles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 32,
     lineHeight: 38,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   connectionsHeader: {
@@ -1012,7 +1012,7 @@ const localStyles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 32,
     lineHeight: 38,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "left",
   },
   connectionsGrid: {
@@ -1128,7 +1128,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 27,
     lineHeight: 31,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   connectionsSheetList: {
     marginTop: 12,

@@ -766,7 +766,7 @@ const localStyles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   line: {
     flex: 1,
@@ -838,7 +838,7 @@ const localStyles = StyleSheet.create({
   detailItemTitle: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   detailItemSubtitle: {
     color: TEXT_SECONDARY,

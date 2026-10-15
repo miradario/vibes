@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const ts = require('typescript');
 function load(file, deps = {}) {
   const module = { exports: {} };
-  new Function('module', 'exports', 'require', ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(module, module.exports, name => deps[name]);
+  new Function('module', 'exports', 'require', ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText)(module, module.exports, name => deps[name]);
   return module.exports;
 }
 const { createRecoveryStorage } = load('src/auth/recoveryStorage.ts');

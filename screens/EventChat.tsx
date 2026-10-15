@@ -1049,7 +1049,7 @@ const localStyles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: vibesTheme.colors.primaryText,
     letterSpacing: 0.2,
   },
@@ -1129,7 +1129,7 @@ const localStyles = StyleSheet.create({
   emptyMessagesTitle: {
     color: DARK_GRAY,
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   emptyMessagesText: {
@@ -1254,7 +1254,7 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
   },
   memberRow: {

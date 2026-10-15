@@ -1,3 +1,4 @@
+import ScreenContainer from "../components/ScreenContainer";
 import { useQuery } from "@tanstack/react-query";
 import { readProfileAnswers } from "../src/lib/profileQuestions";
 import { useEmailOwnershipQuery } from "../src/queries/emailOwnership.queries";
@@ -7,7 +8,6 @@ import { isEmailOwnershipVerified } from "../src/auth/emailVerification";
 import React, { useCallback } from "react";
 import {
   Platform,
-  ScrollView,
   StyleSheet,
   View,
   TouchableOpacity,
@@ -122,23 +122,19 @@ const Profile = () => {
   };
 
   return (
-    <View style={styles.bg}>
-      <ScrollView
-        style={styles.containerProfile}
-        contentContainerStyle={{
-          paddingBottom: getBottomTabContentPadding(insets.bottom, 48),
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <AppHeader
-          title={t("profile.title")}
-          style={{ paddingHorizontal: 0, marginBottom: 8 }}
-          contentStyle={{ alignItems: "flex-start", paddingHorizontal: 0 }}
-          titleStyle={styles.auraScreenTitle}
-        />
+    <ScreenContainer scroll edges={["top", "left", "right"]}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: getBottomTabContentPadding(insets.bottom, 48) }}
+      scrollViewProps={{ showsVerticalScrollIndicator: false }}>
 
-        <View style={styles.auraProfileCard}>
-          <ProfileCompletionAvatar
+        <AppHeader title="Vibes" style={localStyles.header}
+          right={<TouchableOpacity accessibilityRole="button" accessibilityLabel={t("profile.configuration")} onPress={() => navigation.navigate("Settings" as never)} style={localStyles.settingsButton}>
+            <Icon name="settings-outline" size={24} color={vibesTheme.colors.primaryText} />
+          </TouchableOpacity>} />
+        <Text style={localStyles.eyebrow}>TU ESPACIO</Text>
+        <Text style={localStyles.title}>{t("profile.title")}</Text>
+
+        <View style={localStyles.profileCard}>
+          <View style={localStyles.avatarWrap}><ProfileCompletionAvatar
             uri={ownAvatarUri}
             percent={
               profile && !loadingPreferences && !preferencesError && !loadingAnswers && !answersError
@@ -146,53 +142,56 @@ const Profile = () => {
                 : null
             }
             onPress={() => navigation.navigate(completion.nextScreen as never)}
-          />
-          <View style={styles.auraProfileInfo}>
-            <Text style={styles.auraProfileName}>{displayName}</Text>
-            <Text style={styles.auraProfileLocation}>{location}</Text>
+          /></View>
+          <View style={localStyles.profileInfo}>
+            <Text style={localStyles.profileName}>{displayName}</Text>
+            <Text style={localStyles.profileLocation}>{location}</Text>
             {ownProfile.zodiac ? (
-              <Text style={[styles.auraProfileLocation, localStyles.zodiac]}>
+              <Text style={[localStyles.profileLocation, localStyles.zodiac]}>
                 {ownProfile.zodiac}
               </Text>
             ) : null}
           </View>
           <TouchableOpacity
-            style={styles.auraEditButton}
+            style={localStyles.editButton}
+            accessibilityRole="button" accessibilityLabel="Editar perfil"
             onPress={() => navigation.navigate("EditProfile" as never)}
           >
-            <Text style={styles.auraEditButtonText}>{t("common.edit")}</Text>
+            <Icon name="create-outline" size={20} color={vibesTheme.colors.surface} />
+            <Text style={localStyles.editText}>{t("common.edit")}</Text>
+            <Icon name="arrow-forward" size={20} color={vibesTheme.colors.surface} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.auraMenuList}>
+        <View style={localStyles.menuList}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={item.label}
               style={[
-                styles.auraMenuItem,
-                index === menuItems.length - 1 && styles.auraMenuItemLast,
+                localStyles.menuItem,
+                index === menuItems.length - 1 && localStyles.menuItemLast,
               ]}
               onPress={() =>
                 item.screen && navigation.navigate(item.screen as never)
               }
             >
-              <View style={styles.auraMenuIconWrap}>
-                <Icon name={item.icon} size={22} color={TEXT_SECONDARY} />
+              <View style={[localStyles.menuIcon, { backgroundColor: `${[vibesTheme.colors.accentBlue, vibesTheme.colors.accentMustard, vibesTheme.colors.accentCoral][index % 3]}24` }]}>
+                <Icon name={item.icon} size={22} color={vibesTheme.colors.primaryText} />
               </View>
-              <Text style={styles.auraMenuLabel}>{item.label}</Text>
+              <Text style={localStyles.menuLabel}>{item.label}</Text>
               <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           ))}
 
           <TouchableOpacity
-            style={[styles.auraMenuItem, styles.auraMenuItemLast]}
+            style={[localStyles.menuItem, localStyles.menuItemLast]}
             onPress={handleLogout}
             disabled={isLoggingOut}
           >
-            <View style={styles.auraMenuIconWrap}>
+            <View style={localStyles.menuIcon}>
               <Icon name="power" size={22} color={TEXT_SECONDARY} />
             </View>
-            <Text style={styles.auraMenuLabel}>
+            <Text style={localStyles.menuLabel}>
               {isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
             </Text>
             {isLoggingOut ? (
@@ -208,15 +207,29 @@ const Profile = () => {
             Vibes - v {formattedAppVersion}
           </Text>
         </View>
-      </ScrollView>
-    </View>
+    </ScreenContainer>
   );
 };
 
+const colors = vibesTheme.colors;
 const localStyles = StyleSheet.create({
-  zodiac: {
-    color: vibesTheme.colors.accentBlue,
-  },
+  header: { paddingHorizontal: 0, paddingTop: 8, paddingBottom: 16 },
+  settingsButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 24, backgroundColor: `${colors.primaryText}08` },
+  eyebrow: { color: colors.accentBlue, fontFamily: vibesTheme.fonts.semibold, fontSize: 12, letterSpacing: 2, marginTop: 16 },
+  title: { color: colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 36, lineHeight: 44, marginTop: 10, marginBottom: 24 },
+  profileCard: { backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, borderColor: `${colors.primaryText}20`, padding: 24, alignItems: "center", marginBottom: 28 },
+  avatarWrap: { paddingLeft: 12 },
+  profileInfo: { width: "100%", alignItems: "center", marginTop: 16, marginBottom: 22, gap: 6 },
+  profileName: { fontFamily: vibesTheme.fonts.bold, fontSize: 26, lineHeight: 34, textAlign: "center", color: colors.primaryText },
+  profileLocation: { fontFamily: vibesTheme.fonts.regular, fontSize: 15, lineHeight: 22, textAlign: "center", color: colors.secondaryText },
+  zodiac: { color: colors.accentBlue },
+  editButton: { minHeight: 56, borderRadius: 28, paddingHorizontal: 24, paddingVertical: 14, width: "100%", backgroundColor: colors.primaryText, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
+  editText: { fontFamily: vibesTheme.fonts.semibold, fontSize: 17, color: colors.surface, flexShrink: 1 },
+  menuList: { gap: 12, marginBottom: 12 },
+  menuItem: { minHeight: 76, flexDirection: "row", alignItems: "center", padding: 14, borderRadius: 20, borderWidth: 1, borderColor: `${colors.primaryText}20`, backgroundColor: `${colors.primaryText}03`, gap: 14 },
+  menuItemLast: { marginBottom: 0 },
+  menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: `${colors.accentCoral}24` },
+  menuLabel: { flex: 1, fontFamily: vibesTheme.fonts.semibold, fontSize: 16, lineHeight: 22, color: colors.primaryText },
 });
 
 export default Profile;

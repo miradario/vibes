@@ -133,7 +133,7 @@ const localStyles = {
   emptyTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center" as const,
   },
   emptyText: {

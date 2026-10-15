@@ -858,7 +858,7 @@ const EventDetail = () => {
             }
             activeOpacity={0.9}
           >
-            <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.primaryText} />
+            <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.surface} />
           </TouchableOpacity>
         </View>
       );
@@ -1571,6 +1571,10 @@ const EventDetail = () => {
               </View>
             </View>
             <View style={localStyles.eventDetailPanel}>
+              {eventDescription ? <View style={{ paddingTop: 20, gap: 10 }}>
+                <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 }}>Sobre el evento</Text>
+                <Text selectable style={localStyles.eventPanelDescription}>{eventDescription}</Text>
+              </View> : null}
               <View style={localStyles.eventMetaDivider} />
               <View style={styles.eventDetailInfoSection}>
                 <TouchableOpacity
@@ -2520,7 +2524,7 @@ const localStyles = StyleSheet.create({
   eventMiniMapTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   eventMiniMapText: {
     color: TEXT_SECONDARY,
@@ -2743,7 +2747,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.16,
@@ -2912,7 +2916,7 @@ const localStyles = StyleSheet.create({
   },
   footerCheckInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 13,
     lineHeight: 15,
   },
@@ -2965,7 +2969,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   checkInButtonDone: {
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
   },
   checkInButtonDisabled: {
     backgroundColor: "rgba(216, 140, 122, 0.55)",
@@ -3019,7 +3023,7 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
     textAlign: "center",
   },
@@ -3073,7 +3077,7 @@ const localStyles = StyleSheet.create({
   },
   checkInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 18,
   },
   checkInSliderSubtitle: {
@@ -3172,7 +3176,7 @@ const localStyles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 18,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
     marginBottom: 8,
   },
@@ -3232,7 +3236,7 @@ const localStyles = StyleSheet.create({
   },
   participantsModalTitle: {
     fontSize: 20,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
   },
   memberRow: {

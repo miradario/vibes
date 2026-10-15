@@ -92,7 +92,7 @@ const localStyles = StyleSheet.create({
   titleText: {
     color: DARK_GRAY,
     fontSize: 17,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginTop: 8,
     marginBottom: 6,
   },

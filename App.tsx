@@ -165,10 +165,11 @@ const AppNavigator = () => {
     setVibiRoute(current => current.name === name && current.hasBottomBar === hasBottomBar ? current : { name, hasBottomBar });
   }, []);
   const [fontsLoaded, fontError] = useFonts({
-    "JosefinSans-Thin": require("./assets/font/JosefinSans-Thin.ttf"),
-    "JosefinSans-Regular": require("./assets/font/JosefinSans-Regular.ttf"),
-    "JosefinSans-Medium": require("./assets/font/JosefinSans-Medium.ttf"),
-    "JosefinSans-Bold": require("./assets/font/JosefinSans-Bold.ttf"),
+    "Inter-Regular": require("@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf"),
+    "Inter-Medium": require("@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf"),
+    "Inter-SemiBold": require("@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf"),
+    "Inter-Bold": require("@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf"),
+    "Inter-ExtraBold": require("@expo-google-fonts/inter/800ExtraBold/Inter_800ExtraBold.ttf"),
   });
   const [fontLoadTimedOut, setFontLoadTimedOut] = React.useState(false);
 

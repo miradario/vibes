@@ -401,7 +401,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
   },
   modalTitle: {
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 22,
     color: vibesTheme.colors.primaryText,
     marginBottom: 4,

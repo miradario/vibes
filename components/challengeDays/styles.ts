@@ -89,7 +89,7 @@ export const dayStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: c.accentBlue,
+    backgroundColor: c.primaryText,
     alignItems: "center",
     justifyContent: "center",
   },

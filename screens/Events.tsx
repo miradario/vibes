@@ -1212,7 +1212,7 @@ const localStyles = StyleSheet.create({
   emptyTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   emptyText: {

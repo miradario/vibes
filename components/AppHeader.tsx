@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 28,
     lineHeight: 32,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   subtitle: {
