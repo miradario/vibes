@@ -1,5 +1,6 @@
 import { imageCacheSource } from "../src/lib/imageCacheSource";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import ProfilePhotoPrompt from "./ProfilePhotoPrompt";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { hasProfilePhotos } from "../src/lib/profilePhotos";
@@ -299,6 +300,19 @@ const UserProfileSheet = ({
     currentProfileId.current = profile?.id;
   }, [profile?.id]);
   const [swipeNextProfile, setSwipeNextProfile] = useState<UserProfileCardData | null>(null);
+  const previousProfileRef = useRef(profile);
+  const [handoffProfile, setHandoffProfile] = useState<UserProfileCardData | null>(null);
+  useLayoutEffect(() => {
+    const previous = previousProfileRef.current;
+    if (visible && previous && previous.id !== profile?.id) setHandoffProfile(previous);
+    if (!visible) setHandoffProfile(null);
+    previousProfileRef.current = profile;
+  }, [profile, visible]);
+  const transitionProfile = swipeNextProfile?.id === profile?.id
+    ? swipeNextProfile
+    : handoffProfile ?? swipeNextProfile ?? nextProfile;
+  const holdingPhoto = Boolean(handoffProfile || (swipeNextProfile && swipeNextProfile.id === profile?.id));
+
   const [swipeAnimating, setSwipeAnimating] = useState(false);
   const openingProfileId = useRef<string | undefined>(undefined);
   const wasVisible = useRef(false);
@@ -306,6 +320,22 @@ const UserProfileSheet = ({
   const [photoReadyId, setPhotoReadyId] = useState<string | undefined>(undefined);
   const [reduceMotion, setReduceMotion] = useState(false);
   const openingScale = useRef(new Animated.Value(1)).current;
+  const connectBounce = useRef(new Animated.Value(0)).current;
+  const profileFocused = useIsFocused();
+  const { active: appActive, reducedMotion: runtimeReducedMotion, motionReady } = useVibiRuntime();
+  useEffect(() => {
+    connectBounce.stopAnimation();
+    connectBounce.setValue(0);
+    if (!visible || !profileFocused || !appActive || !motionReady || runtimeReducedMotion || reduceMotion || actionPending || swipeAnimating) return;
+    const bounce = Animated.loop(Animated.sequence([
+      Animated.delay(2400),
+      Animated.timing(connectBounce, { toValue: -4, duration: 380, easing: Easing.out(Easing.quad), useNativeDriver: true, isInteraction: false }),
+      Animated.timing(connectBounce, { toValue: 0, duration: 580, easing: Easing.out(Easing.bounce), useNativeDriver: true, isInteraction: false }),
+    ]));
+    bounce.start();
+    return () => bounce.stop();
+  }, [visible, profileFocused, appActive, motionReady, runtimeReducedMotion, reduceMotion, actionPending, swipeAnimating, connectBounce]);
+
   useLayoutEffect(() => {
     openingScale.stopAnimation();
     if (!visible || reduceMotion) {
@@ -677,9 +707,9 @@ const UserProfileSheet = ({
             onPress={like}
             style={[localStyles.vibeAction, onPanel && localStyles.floatingProfileAction]}
           >
-            <View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon]}>
+            <Animated.View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon, { transform: [{ translateY: connectBounce }] }]}>
               <Link size={48} color={vibesTheme.colors.accentMustard} strokeWidth={2.5} />
-            </View>
+            </Animated.View>
             {!onPanel && <Text style={localStyles.vibeActionLabel}>
               {actionPending ? "Guardando…" : "Conectar"}
             </Text>}
@@ -735,7 +765,7 @@ const UserProfileSheet = ({
           style={StyleSheet.absoluteFillObject}
           onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
         />
-        {enableSwipe && (!detailsVisible || swipeAnimating) && (swipeNextProfile ?? nextProfile) ? (
+        {(enableSwipe || holdingPhoto) && (!detailsVisible || swipeAnimating) && transitionProfile ? (
           <Animated.View
             pointerEvents="none"
             accessibilityElementsHidden
@@ -746,19 +776,19 @@ const UserProfileSheet = ({
                 backgroundColor: PROFILE_PHOTO_BACKGROUND,
                 // Reveal the next card as soon as the current photo is ready,
                 // so dragging exposes it without waiting for the release.
-                opacity: photoReadyId === profile.id || !profileImages.length || swipeNextProfile ? 1 : 0,
+                opacity: holdingPhoto || photoReadyId === profile.id || !profileImages.length || swipeNextProfile ? 1 : 0,
               },
             ]}
           >
             <ProfileMediaImage
                 loadingVariant="vibes"
-                key={`next-profile-${(swipeNextProfile ?? nextProfile)?.id}`}
-                previewSource={canViewPhotos && (swipeNextProfile ?? nextProfile)?.hasPhotos !== false ? (swipeNextProfile ?? nextProfile)?.image : undefined}
+                key={`next-profile-${transitionProfile?.id}`}
+                previewSource={canViewPhotos && transitionProfile?.hasPhotos !== false ? transitionProfile?.image : undefined}
                 contentFit="cover"
                 blurBackground
                 showLoading
               source={
-                (canViewPhotos ? normalizeProfileImages(swipeNextProfile ?? nextProfile ?? null)[0] : undefined) ??
+                (canViewPhotos ? normalizeProfileImages(transitionProfile ?? null)[0] : undefined) ??
                 VIBES_FALLBACK_ILLUSTRATION
               }
               style={{ width, height }}
@@ -775,8 +805,8 @@ const UserProfileSheet = ({
               ]}
             >
               <Text style={localStyles.profileName} numberOfLines={2}>
-                {(swipeNextProfile ?? nextProfile)?.name}
-                {(swipeNextProfile ?? nextProfile)?.age ? `, ${(swipeNextProfile ?? nextProfile)?.age}` : ""}
+                {transitionProfile?.name}
+                {transitionProfile?.age ? `, ${transitionProfile?.age}` : ""}
               </Text>
             </LinearGradient>
           </Animated.View>
@@ -787,7 +817,7 @@ const UserProfileSheet = ({
           style={[
             localStyles.screen,
             {
-              opacity: !detailsVisible ? 1 : 0,
+              opacity: !detailsVisible && (!holdingPhoto || photoReadyId === profile.id || !profileImages.length) ? 1 : 0,
               transform: [
                 { translateX: swipeX },
                 {
@@ -825,6 +855,7 @@ const UserProfileSheet = ({
                         if (currentProfileId.current !== profile.id) return;
                         if (index === safeActiveIndex) {
                           setPhotoReadyId(profile.id);
+                          setHandoffProfile(null);
                           if (!swipingRef.current) {
                             setSwipeNextProfile((previous) => previous?.id === profile.id ? null : previous);
                           }
@@ -861,7 +892,11 @@ const UserProfileSheet = ({
                 showLoading
                     previewSource={index === 0 && canViewPhotos && profile.hasPhotos !== false ? profile.image : undefined}
                     onDisplay={() => {
-                      if (index === safeActiveIndex) setPhotoReadyId(profile.id);
+                      if (currentProfileId.current !== profile.id) return;
+                      if (index === safeActiveIndex) {
+                        setPhotoReadyId(profile.id);
+                        setHandoffProfile(null);
+                      }
                     }}
                     source={item}
                     style={StyleSheet.absoluteFillObject}
@@ -921,9 +956,9 @@ const UserProfileSheet = ({
             activeOpacity={0.82}
             onPress={onClose}
             hitSlop={8}
-            style={[localStyles.closeButton, { top: insets.top + 4, backgroundColor: `${vibesTheme.colors.background}E6`, borderRadius: 28 }]}
+            style={[localStyles.closeButton, { top: insets.top + 4 }]}
           >
-            <X size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
+            <X size={44} color={vibesTheme.colors.accentMustard} strokeWidth={2.5} />
           </TouchableOpacity>
 
           {profileImages.length > 0 ? (
@@ -978,31 +1013,7 @@ const UserProfileSheet = ({
         </Animated.View>
         <LikeBubbles trigger={burst} />
         {enableSwipe && (
-          <Animated.View pointerEvents="none" style={[localStyles.swipeIndicators, { transform: [{ translateX: swipeX }] }]}>
-            <Animated.View
-              style={[
-                localStyles.swipeStamp,
-                {
-                  borderColor: vibesTheme.colors.accentMustard,
-                  transform: [
-                    {
-                      scale: swipeX.interpolate({
-                        inputRange: [0, 120],
-                        outputRange: [0.65, 1.5],
-                        extrapolate: "clamp",
-                      }),
-                    },
-                  ],
-                  opacity: swipeX.interpolate({
-                    inputRange: [0, 85],
-                    outputRange: [0, 1],
-                    extrapolate: "clamp",
-                  }),
-                },
-              ]}
-            >
-              <Icon name="checkmark" size={42} color={vibesTheme.colors.primaryText} />
-            </Animated.View>
+          <View pointerEvents="none" style={localStyles.swipeIndicators}>
             <Animated.View
               style={[
                 localStyles.swipeStamp,
@@ -1010,24 +1021,62 @@ const UserProfileSheet = ({
                   borderColor: vibesTheme.colors.accentBlue,
                   transform: [
                     {
+                      translateX: swipeX.interpolate({
+                        inputRange: [0, width * 0.45],
+                        outputRange: [Math.max(0, width / 2 - 64), 0],
+                        extrapolate: "clamp",
+                      }),
+                    },
+                    {
                       scale: swipeX.interpolate({
-                        inputRange: [-120, 0],
-                        outputRange: [1.5, 0.65],
+                        inputRange: [0, 120],
+                        outputRange: [0.8, 1],
                         extrapolate: "clamp",
                       }),
                     },
                   ],
                   opacity: swipeX.interpolate({
-                    inputRange: [-85, 0],
+                    inputRange: [16, 100],
+                    outputRange: [0, 1],
+                    extrapolate: "clamp",
+                  }),
+                },
+              ]}
+            >
+              <Icon name="checkmark" size={36} color={vibesTheme.colors.accentBlue} />
+            </Animated.View>
+            <Animated.View
+              style={[
+                localStyles.swipeStamp,
+                {
+                  borderColor: vibesTheme.colors.accentCoral,
+                  transform: [
+                    {
+                      translateX: swipeX.interpolate({
+                        inputRange: [-width * 0.45, 0],
+                        outputRange: [0, -Math.max(0, width / 2 - 64)],
+                        extrapolate: "clamp",
+                      }),
+                    },
+                    {
+                      scale: swipeX.interpolate({
+                        inputRange: [-120, 0],
+                        outputRange: [1, 0.8],
+                        extrapolate: "clamp",
+                      }),
+                    },
+                  ],
+                  opacity: swipeX.interpolate({
+                    inputRange: [-100, -16],
                     outputRange: [1, 0],
                     extrapolate: "clamp",
                   }),
                 },
               ]}
             >
-              <Icon name="close" size={42} color={vibesTheme.colors.primaryText} />
+              <Icon name="close" size={36} color={vibesTheme.colors.accentCoral} />
             </Animated.View>
-          </Animated.View>
+          </View>
         )}
         <Animated.View
           pointerEvents={detailsVisible ? "box-none" : "none"}
@@ -1235,11 +1284,11 @@ const localStyles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     left: 24,
     right: 24,
-    flexDirection: "row-reverse",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
   },
   swipeStamp: {
+    position: "absolute",
     width: 72,
     height: 72,
     alignItems: "center",
