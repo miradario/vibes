@@ -46,3 +46,6 @@ session-*.mdx
 
 # Local event import deliverables; covers are hosted in Supabase Storage.
 /output/events/
+
+# Generated local artifacts are not app assets.
+/output/
