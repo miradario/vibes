@@ -347,13 +347,13 @@ export default function HomeOverview({
         .slice(0, 2);
   const visibleEvents = upcoming.length ? upcoming : suggestedEvents;
   const joinedChallenges = events.filter((event) => event.type === "challenge");
-  const activeChallenges = joinedChallenges.filter(
+  const currentAndUpcomingChallenges = joinedChallenges.filter(
     (event) =>
-      getChallengeTimeline(event.startsAt, event.durationDays).status ===
-      "active"
+      getChallengeTimeline(event.startsAt, event.durationDays).status !==
+      "finished"
   );
   const joinedChallengeIds = new Set(joinedChallenges.map((event) => event.id));
-  const activeHomeChallenges = activeChallenges
+  const homeChallenges = currentAndUpcomingChallenges
     .sort((a, b) => {
       const delta =
         new Date(a.startsAt ?? 0).getTime() -
@@ -361,7 +361,7 @@ export default function HomeOverview({
       return delta;
     })
     .slice(0, 3);
-  const recommendedChallenges = activeHomeChallenges.length
+  const recommendedChallenges = homeChallenges.length
     ? []
     : (challengesFeed.data ?? [])
         .filter((event) => (event.visibility ?? "public") === "public")
@@ -377,14 +377,14 @@ export default function HomeOverview({
             new Date(b.startsAt ?? 0).getTime()
         )
         .slice(0, 3);
-  const challenges = activeHomeChallenges.length
-    ? activeHomeChallenges
+  const challenges = homeChallenges.length
+    ? homeChallenges
     : recommendedChallenges;
-  const challengeSectionTitle = activeHomeChallenges.length
+  const challengeSectionTitle = homeChallenges.length
     ? "Tus desafíos"
     : "Desafíos para vos";
   const isLoadingChallengeRecommendations =
-    !activeHomeChallenges.length && challengesFeed.isLoading;
+    !homeChallenges.length && challengesFeed.isLoading;
   const openList = (challenge = false) =>
     navigation.navigate("Tab", {
       screen: challenge ? "Flow" : "EventsTab",
@@ -449,7 +449,7 @@ export default function HomeOverview({
                 key={event.id}
                 event={event}
                 userId={userId}
-                showTodayBadge={Boolean(activeHomeChallenges.length)}
+                showTodayBadge={Boolean(homeChallenges.length)}
               />
             ))}
           </ScrollView>
