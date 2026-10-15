@@ -1298,7 +1298,7 @@ export const useJoinChallengeMutation = () => {
         );
       if (eventParticipantError) throw eventParticipantError;
     },
-    onSuccess: (_data, { challengeId, userId }) => {
+    onSuccess: async (_data, { challengeId, userId }) => {
       queryClient.invalidateQueries({
         queryKey: challengeParticipantKeys.participant(challengeId, userId),
       });
@@ -1311,6 +1311,10 @@ export const useJoinChallengeMutation = () => {
       queryClient.invalidateQueries({ queryKey: challengesKeys.all });
       queryClient.invalidateQueries({
         queryKey: myEventGroupsKeys.all(userId),
+      });
+      await queryClient.refetchQueries({
+        queryKey: myEventGroupsKeys.all(userId),
+        type: "all",
       });
     },
   });

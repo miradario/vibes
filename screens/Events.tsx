@@ -9,8 +9,8 @@ import EventClassificationPicker from "../components/EventClassificationPicker";
 import { EVENT_MODALITIES, EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, getEventCategoryLabel, getEventParticipationLabel, matchesEventClassification, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
 /** @format */
 
-import React, { useCallback, useMemo, useState } from "react";
-import { View, FlatList, TouchableOpacity, StyleSheet, ScrollView, Keyboard, Platform } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, View, FlatList, TouchableOpacity, StyleSheet, ScrollView, Keyboard, Platform } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,14 +51,10 @@ type FeedListItem =
     }
   | {
       kind: "accordion";
-      id: PrivateBlock;
+      id: ChallengeBlock;
       title: string;
       count: number;
       open: boolean;
-    }
-  | {
-      kind: "empty";
-      id: string;
     }
   | {
       kind: "feed";
@@ -66,9 +62,40 @@ type FeedListItem =
       restartable?: boolean;
       invitation?: ReceivedChallengeInvitation;
       keyPrefix?: string;
+      reveal?: boolean;
     };
 
 type PrivateBlock = "mine" | "invitations" | "participating";
+type PublicBlock = "joined" | "active" | "upcoming";
+type ChallengeBlock = PrivateBlock | PublicBlock;
+
+const AccordionReveal = ({ children }: { children: React.ReactNode }) => {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(progress, {
+      toValue: 1,
+      damping: 16,
+      stiffness: 150,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start();
+  }, [progress]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: progress,
+        transform: [
+          { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [-14, 0] }) },
+          { scaleY: progress.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) },
+        ],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+};
 
 const normalizeSearchText = (value: string | null | undefined) =>
   (value ?? "")
@@ -229,17 +256,18 @@ const Events = ({
 
   const [search, setSearch] = useState("");
   const [challengeTab, setChallengeTab] = useState<"public" | "private">(route.params?.challengeTab === "private" ? "private" : "public");
-  const [openBlocks, setOpenBlocks] = useState<Record<PrivateBlock, boolean>>({
+  const [openBlocks, setOpenBlocks] = useState<Record<ChallengeBlock, boolean>>({
     mine: true,
     invitations: false,
     participating: false,
+    joined: true,
+    active: true,
+    upcoming: false,
   });
   const [restartTarget, setRestartTarget] = useState<EventFeedItem | null>(null);
   const viewerId = session?.user?.id;
-  const isPrivateTab = section === "challenge" && challengeTab === "private";
   const invitationsQuery = useReceivedChallengeInvitationsQuery(section === "challenge" ? viewerId : undefined);
   const respondInvitation = useRespondChallengeInvitationMutation();
-  const [showUpcomingChallenges, setShowUpcomingChallenges] = useState(false);
 
   const errorMessage =
     error instanceof Error && error.message.trim()
@@ -369,67 +397,58 @@ const Events = ({
           (!normalizedSearch || normalizeSearchText(invitation.challenge.title).includes(normalizedSearch)),
       );
       const blocks: Array<[PrivateBlock, FeedListItem[]]> = [
-        ["mine", mine.map((item) => ({ kind: "feed" as const, item, keyPrefix: "mine" }))],
+        ["mine", mine.map((item) => ({ kind: "feed" as const, item, keyPrefix: "mine", reveal: true }))],
         ["invitations", invitations.map((invitation) => ({
           kind: "feed" as const,
           item: invitation.challenge,
           invitation,
           keyPrefix: "invitation",
+          reveal: true,
         }))],
-        ["participating", participating.map((item) => ({ kind: "feed" as const, item, keyPrefix: "participating" }))],
+        ["participating", participating.map((item) => ({ kind: "feed" as const, item, keyPrefix: "participating", reveal: true }))],
       ];
       const titles: Record<PrivateBlock, string> = {
         mine: t("challengeRestart.blockMine"),
         invitations: t("challengeRestart.blockInvitations"),
         participating: t("challengeRestart.blockParticipating"),
       };
-      return blocks.flatMap(([id, rows]) => [
-        { kind: "accordion" as const, id, title: titles[id], count: rows.length, open: openBlocks[id] },
-        ...(openBlocks[id] ? (rows.length ? rows : [{ kind: "empty" as const, id: `empty-${id}` }]) : []),
+      return blocks
+        .filter(([, rows]) => rows.length > 0)
+        .flatMap(([id, rows]) => [
+          { kind: "accordion" as const, id, title: titles[id], count: rows.length, open: openBlocks[id] },
+          ...(openBlocks[id] ? rows : []),
+        ]);
+    }
+
+    const blocks: Array<[PublicBlock, string, FeedListItem[]]> = [
+      [
+        "joined",
+        "Tus desafíos",
+        [...joinedChallengeItems, ...joinedUpcomingChallengeItems].map((item) => ({
+          kind: "feed" as const,
+          item,
+          keyPrefix: "joined",
+          reveal: true,
+        })),
+      ],
+      [
+        "active",
+        "Desafíos vigentes",
+        generalChallengeItems.map((item) => ({ kind: "feed" as const, item, keyPrefix: "active", reveal: true })),
+      ],
+      [
+        "upcoming",
+        "Desafíos próximos",
+        upcomingGeneralChallengeItems.map((item) => ({ kind: "feed" as const, item, keyPrefix: "upcoming", reveal: true })),
+      ],
+    ];
+
+    return blocks
+      .filter(([, , rows]) => rows.length > 0)
+      .flatMap(([id, title, rows]) => [
+        { kind: "accordion" as const, id, title, count: rows.length, open: openBlocks[id] },
+        ...(openBlocks[id] ? rows : []),
       ]);
-    }
-
-    const nextItems: FeedListItem[] = [];
-
-    if (joinedChallengeItems.length > 0 || joinedUpcomingChallengeItems.length > 0) {
-      nextItems.push({
-        kind: "section",
-        id: "joined-challenges",
-        title: "Tus desafíos",
-      });
-      nextItems.push(
-        ...joinedChallengeItems.map((item) => ({ kind: "feed" as const, item })),
-      );
-      nextItems.push(
-        ...joinedUpcomingChallengeItems.map((item) => ({ kind: "feed" as const, item })),
-      );
-    }
-
-    if (generalChallengeItems.length > 0) {
-      nextItems.push({
-        kind: "section",
-        id: "general-challenges",
-        title: "Desafíos vigentes",
-        subtitle: "",
-      });
-      nextItems.push(
-        ...generalChallengeItems.map((item) => ({ kind: "feed" as const, item })),
-      );
-    }
-
-    if (showUpcomingChallenges && upcomingGeneralChallengeItems.length > 0) {
-      nextItems.push({
-        kind: "section",
-        id: "upcoming-challenges",
-        title: "Desafíos próximos",
-        subtitle: "Empiezan más adelante y todavía no te anotaste",
-      });
-      nextItems.push(
-        ...upcomingGeneralChallengeItems.map((item) => ({ kind: "feed" as const, item })),
-      );
-    }
-
-    return nextItems;
   }, [
     myEventGroups,
     expiredEventItems,
@@ -439,7 +458,6 @@ const Events = ({
     joinedUpcomingChallengeItems,
     section,
     pastOnly,
-    showUpcomingChallenges,
     upcomingGeneralChallengeItems,
     visibleItems,
     challengeTab,
@@ -639,35 +657,6 @@ const Events = ({
               ) : null}
             </View>
           }
-          ListFooterComponent={
-            section === "challenge" && !pastOnly && !isPrivateTab && upcomingGeneralChallengeItems.length > 0 ? (
-              <View style={localStyles.footerToggleGroup}>
-                {upcomingGeneralChallengeItems.length > 0 ? (
-                  <TouchableOpacity
-                    style={localStyles.finishedSectionToggle}
-                    onPress={() => setShowUpcomingChallenges((prev) => !prev)}
-                    activeOpacity={0.85}
-                  >
-                    <View>
-                      <Text style={localStyles.finishedSectionTitle}>
-                        Desafíos próximos
-                      </Text>
-                      <Text style={localStyles.finishedSectionSubtitle}>
-                        {showUpcomingChallenges
-                          ? "Ocultar próximos"
-                          : `${upcomingGeneralChallengeItems.length} guardados`}
-                      </Text>
-                    </View>
-                    <Icon
-                      name={showUpcomingChallenges ? "chevron-up" : "chevron-down"}
-                      size={22}
-                      color={vibesTheme.colors.secondaryText}
-                    />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            ) : null
-          }
           renderItem={({ item: listItem }) => {
             if (listItem.kind === "accordion") {
               return (
@@ -677,7 +666,10 @@ const Events = ({
                   style={localStyles.finishedSectionToggle}
                   activeOpacity={0.85}
                   onPress={() =>
-                    setOpenBlocks((previous) => ({ ...previous, [listItem.id]: !previous[listItem.id] }))
+                    setOpenBlocks((previous) => ({
+                      ...previous,
+                      [listItem.id]: !previous[listItem.id],
+                    }))
                   }
                 >
                   <Text style={localStyles.finishedSectionTitle}>
@@ -686,13 +678,10 @@ const Events = ({
                   <Icon
                     name={listItem.open ? "chevron-up" : "chevron-down"}
                     size={22}
-                    color={vibesTheme.colors.secondaryText}
+                    color={vibesTheme.colors.accentBlue}
                   />
                 </TouchableOpacity>
               );
-            }
-            if (listItem.kind === "empty") {
-              return <Text style={localStyles.blockEmpty}>{t("challengeRestart.blockEmpty")}</Text>;
             }
             if (listItem.kind === "section") {
               return (
@@ -761,7 +750,7 @@ const Events = ({
 
             const count = item.participantCount ?? participantCount;
             const participantsLabel = `${count} ${count === 1 ? "participante" : "participantes"}`;
-            return (
+            const challengeRow = (
               <TouchableOpacity
                 style={localStyles.eventListRow}
                 activeOpacity={0.78}
@@ -857,7 +846,11 @@ const Events = ({
                   <Icon name="chevron-forward" size={17} color={vibesTheme.colors.accentMustard} />
                 </View>
               </TouchableOpacity>
-          )}}
+            );
+            return listItem.reveal ? (
+              <AccordionReveal>{challengeRow}</AccordionReveal>
+            ) : challengeRow;
+          }}
         />
       </View>
       <KeyboardSheetModal visible={filtersVisible && section === "event"} onClose={() => setFiltersVisible(false)}>
@@ -1013,11 +1006,14 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: vibesTheme.radii.pill,
     borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
-    backgroundColor: vibesTheme.colors.surface,
+    borderColor: "rgba(110, 110, 110, 0.30)",
+    backgroundColor: "transparent",
   },
-  tabSelected: { backgroundColor: "rgba(57, 120, 184, 0.16)" },
-  tabText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 16 },
+  tabSelected: {
+    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: "rgba(244, 163, 64, 0.43)",
+  },
+  tabText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 16 },
   tabTextSelected: { color: vibesTheme.colors.primaryText },
   cardActions: {
     flexDirection: "row",
@@ -1025,13 +1021,6 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     gap: vibesTheme.spacing.sm,
     marginTop: vibesTheme.spacing.sm,
-  },
-  blockEmpty: {
-    color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.primary,
-    fontSize: 15,
-    paddingVertical: vibesTheme.spacing.sm,
-    paddingHorizontal: vibesTheme.spacing.xs,
   },
   filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
@@ -1375,32 +1364,23 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.semibold,
   },
   finishedSectionToggle: {
-    minHeight: 72,
-    borderRadius: 22,
-    backgroundColor: "rgba(254, 254, 253, 0.72)",
+    minHeight: 52,
+    marginBottom: vibesTheme.spacing.sm,
+    borderRadius: 16,
+    backgroundColor: "rgba(57, 120, 184, 0.14)",
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    borderColor: vibesTheme.colors.accentBlue,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  footerToggleGroup: {
-    gap: 12,
-  },
   finishedSectionTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontFamily: vibesTheme.fonts.semibold,
-  },
-  finishedSectionSubtitle: {
-    marginTop: 3,
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.subtitle,
   },
   emptyState: {
     paddingHorizontal: 28,

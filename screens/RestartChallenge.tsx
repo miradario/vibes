@@ -6,7 +6,6 @@ import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
-import AppHeader from "../components/AppHeader";
 import VibesActionButton from "../components/VibesActionButton";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Icon from "../components/Icon";
@@ -127,26 +126,25 @@ const RestartChallenge = () => {
 
   return (
     <ScreenContainer scroll contentContainerStyle={styles.content}>
-      <AppHeader
-        left={(
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Volver"
-            activeOpacity={0.72}
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Icon name="chevron-back" size={27} color={colors.primaryText} />
-          </TouchableOpacity>
-        )}
-        title={t("challengeRestart.screenTitle")}
-        subtitle={t("challengeRestart.screenSubtitle")}
-        titleNumberOfLines={2}
-        style={styles.header}
-        contentStyle={styles.headerContent}
-        titleStyle={styles.screenTitle}
-        subtitleStyle={styles.screenSubtitle}
-      />
+      <View style={styles.header}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          activeOpacity={0.72}
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Icon name="chevron-back" size={27} color={colors.primaryText} />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.screenTitle} numberOfLines={2}>
+            {t("challengeRestart.screenTitle")}
+          </Text>
+          <Text style={styles.screenSubtitle}>
+            {t("challengeRestart.screenSubtitle")}
+          </Text>
+        </View>
+      </View>
 
       <Text style={styles.label}>{t("challengeRestart.coverLabel")}</Text>
       <TouchableOpacity
@@ -274,22 +272,16 @@ export default RestartChallenge;
 const { colors, fonts, radii, spacing } = vibesTheme;
 const styles = StyleSheet.create({
   backButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
+    marginTop: 2,
   },
   header: {
-    minHeight: 0,
+    flexDirection: "row",
     alignItems: "flex-start",
-    paddingHorizontal: 0,
-    paddingVertical: 0,
+    gap: spacing.sm,
   },
   headerContent: {
+    flex: 1,
     alignItems: "flex-start",
-    justifyContent: "flex-start",
-    paddingLeft: spacing.sm,
-    paddingRight: 0,
   },
   screenTitle: {
     flexShrink: 1,
@@ -302,6 +294,7 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   screenSubtitle: {
+    marginTop: spacing.xs,
     color: colors.secondaryText,
     fontFamily: fonts.subtitle,
     fontSize: 16,

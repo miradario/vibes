@@ -989,6 +989,8 @@ const ChallengeDetailScreen = () => {
   const [isSharing, setIsSharing] = useState(false);
   const [isPreparingShare, setIsPreparingShare] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [descriptionVisible, setDescriptionVisible] = useState(false);
+  const [descriptionOverflow, setDescriptionOverflow] = useState(false);
   const [restartConfirmVisible, setRestartConfirmVisible] = useState(false);
   const { t } = useI18n();
   const receivedInvitationsQuery = useReceivedChallengeInvitationsQuery(userId);
@@ -1029,6 +1031,10 @@ const ChallengeDetailScreen = () => {
     checkInStatus: status,
     ...getChallengeStreaks(completedDays, getChallengeDay(event?.startsAt), baseChallenge.totalDays),
   };
+  useEffect(() => {
+    setDescriptionOverflow(false);
+    setDescriptionVisible(false);
+  }, [challenge.subtitle]);
   const isAdmin = Boolean(
     userId && event?.createdBy && userId === event.createdBy
   );
@@ -1367,7 +1373,7 @@ const ChallengeDetailScreen = () => {
   const renderFooterCheckIn = () => {
     if (isChallengeUpcoming) {
       return (
-        <View style={localStyles.chatLockedRow}>
+        <View style={[localStyles.chatLockedRow, localStyles.upcomingChallengeNotice]}>
           <Icon name="time-outline" size={18} color={palette.goldDeep} />
           <Text style={localStyles.chatLockedText}>
             {getChallengeStartsInLabel(challengeTimeline.startsInDays)}. El
@@ -1646,7 +1652,29 @@ const ChallengeDetailScreen = () => {
           <View style={localStyles.content}>
             {challenge.subtitle ? <View style={localStyles.descriptionSection}>
               <Text style={localStyles.descriptionHeading}>Sobre el desafío</Text>
-              <Text selectable style={localStyles.fullDescription}>{challenge.subtitle}</Text>
+              <View style={descriptionOverflow ? localStyles.descriptionPreviewRow : undefined}>
+                <Text
+                  selectable
+                  style={[localStyles.fullDescription, descriptionOverflow && localStyles.descriptionPreviewText]}
+                  numberOfLines={descriptionOverflow ? 3 : undefined}
+                  onTextLayout={(layoutEvent) => {
+                    if (layoutEvent.nativeEvent.lines.length > 3) setDescriptionOverflow(true);
+                  }}
+                >
+                  {challenge.subtitle}
+                </Text>
+                {descriptionOverflow ? (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="Ver descripción completa"
+                    activeOpacity={0.72}
+                    onPress={() => setDescriptionVisible(true)}
+                    style={localStyles.descriptionMoreButton}
+                  >
+                    <Text style={localStyles.descriptionMoreText}>Ver más</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             </View> : null}
             <ChallengeJourneyCard challenge={challenge} percent={percent} />
             {event?.id && (isJoined || isAdmin) ? (
@@ -1836,6 +1864,24 @@ const ChallengeDetailScreen = () => {
       ) : null}
 
       <AnimatedSheetModal
+        visible={descriptionVisible}
+        onClose={() => setDescriptionVisible(false)}
+        sheetStyle={localStyles.descriptionSheet}
+      >
+        <View style={localStyles.menuHandle} />
+        <Text style={localStyles.descriptionSheetTitle}>Sobre el desafío</Text>
+        <ScrollView
+          style={localStyles.descriptionSheetScroll}
+          contentContainerStyle={localStyles.descriptionSheetContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text selectable style={localStyles.fullDescription}>
+            {challenge.subtitle}
+          </Text>
+        </ScrollView>
+      </AnimatedSheetModal>
+
+      <AnimatedSheetModal
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
         onClosed={() => {
@@ -1986,6 +2032,45 @@ const localStyles = StyleSheet.create({
   descriptionSection: { paddingVertical: 20, gap: 10 },
   descriptionHeading: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 },
   fullDescription: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 17, lineHeight: 26 },
+  descriptionPreviewRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  descriptionPreviewText: {
+    flex: 1,
+  },
+  descriptionMoreButton: {
+    paddingVertical: 2,
+  },
+  descriptionMoreText: {
+    color: vibesTheme.colors.accentBlue,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 16,
+    lineHeight: 26,
+    textDecorationLine: "underline",
+  },
+  descriptionSheet: {
+    backgroundColor: vibesTheme.colors.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    paddingBottom: 28,
+  },
+  descriptionSheetTitle: {
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 24,
+    lineHeight: 30,
+    marginBottom: 14,
+  },
+  descriptionSheetScroll: {
+    maxHeight: 420,
+  },
+  descriptionSheetContent: {
+    paddingBottom: 12,
+  },
   screen: {
     flex: 1,
     backgroundColor: palette.bg,
@@ -2255,6 +2340,11 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+  },
+  upcomingChallengeNotice: {
+    backgroundColor: "rgba(244, 163, 64, 0.20)",
+    borderWidth: 1,
+    borderColor: "rgba(244, 163, 64, 0.48)",
   },
   chatLockedText: {
     flex: 1,
