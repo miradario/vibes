@@ -105,6 +105,7 @@ begin
       'subtitle', e.subtitle,
       'description', e.description,
       'starts_at', e.starts_at,
+      'schedule', e.schedule,
       'location', e.location,
       'location_latitude', e.location_latitude,
       'location_longitude', e.location_longitude,
