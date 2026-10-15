@@ -1,3 +1,4 @@
+import SessionRecoveryAction from "../components/SessionRecoveryAction";
 import RangeSlider from "../components/RangeSlider";
 import { normalizeRangeBounds } from "../src/lib/rangeSlider";
 import CountrySelector from "../components/CountrySelector";
@@ -729,6 +730,21 @@ export const DiscoverContent = forwardRef<
     },
     [historyMode, incomingLikes.data, swipeHistory.data, canViewProfilePhotos]
   );
+  const waitingForProfiles = showHistory ? (historyMode === "incoming" ? incomingLikes.isLoading : swipeHistory.isLoading) : isLoading;
+  const [profilesTimedOut, setProfilesTimedOut] = useState(false);
+  const [profileLoadAttempt, setProfileLoadAttempt] = useState(0);
+  useEffect(() => {
+    setProfilesTimedOut(false);
+    if (!waitingForProfiles) return;
+    const timer = setTimeout(() => setProfilesTimedOut(true), 20000);
+    return () => clearTimeout(timer);
+  }, [waitingForProfiles, showHistory, historyMode, profileLoadAttempt]);
+  const retryProfiles = () => {
+    setProfilesTimedOut(false);
+    setProfileLoadAttempt(value => value + 1);
+    if (showHistory) void (historyMode === "incoming" ? refetchIncoming() : refetchHistory());
+    else void refetchCandidates();
+  };
   const canvasProfiles = showHistory ? historyProfiles : profiles;
   const nextSelectedProfile = useMemo(() => {
     if (!selectedProfile) return null;
@@ -1420,11 +1436,14 @@ export const DiscoverContent = forwardRef<
         ) : null}
 
         <View style={localStyles.orbitWrap}>
-          {showHistory && (showHistory
-            ? historyMode === "incoming"
-              ? incomingLikes.isLoading
-              : swipeHistory.isLoading
-            : isLoading) ? (
+          {profilesTimedOut ? (
+            <View style={localStyles.emptyState}>
+              <Text style={localStyles.emptyTitle}>La carga está demorando</Text>
+              <Text style={localStyles.emptyText}>Podés reintentar o volver a iniciar sesión sin borrar los datos de tu cuenta.</Text>
+              <TouchableOpacity accessibilityRole="button" onPress={retryProfiles} style={{ padding: 16 }}><Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text></TouchableOpacity>
+              <SessionRecoveryAction />
+            </View>
+          ) : showHistory && waitingForProfiles ? (
             <View style={localStyles.emptyState}>
               <VibesLoader size={48} accessibilityLabel={t("discover.loadingProfiles")} />
             </View>
@@ -1437,6 +1456,7 @@ export const DiscoverContent = forwardRef<
               <TouchableOpacity accessibilityRole="button" onPress={() => void refetchCandidates()} style={{ padding: 16 }}>
                 <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text>
               </TouchableOpacity>
+              <SessionRecoveryAction />
             </View>
           ) : !isLoading && visibleProfiles.length === 0 ? (
             <View style={localStyles.emptyState}>

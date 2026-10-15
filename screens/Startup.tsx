@@ -1,3 +1,4 @@
+import SessionRecoveryAction from "../components/SessionRecoveryAction";
 import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -289,6 +290,7 @@ const Startup = () => {
               La carga está demorando. Revisá tu conexión y volvé a intentar.
             </Text>
             <VibesActionButton label="Reintentar" onPress={retryBoot} textStyle={{ color: vibesTheme.colors.primaryText }} />
+            <SessionRecoveryAction />
           </View>
         ) : null}
       </View>
