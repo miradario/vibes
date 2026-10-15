@@ -1,3 +1,4 @@
+import BackButton from "../components/BackButton";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
 import { resolvePublicContentRoute } from "../src/lib/publicContentRoute";
@@ -1639,13 +1640,9 @@ const ChallengeDetailScreen = () => {
         ]}
       >
         <View style={localStyles.expandedChallengeHeaderTopRow}>
-          <TouchableOpacity
-            style={localStyles.expandedChallengeHeaderIconButton}
+          <BackButton style={localStyles.expandedChallengeHeaderIconButton}
             onPress={() => handleBack()}
-            activeOpacity={0.84}
-          >
-            <Icon name="chevron-back" size={22} color={WHITE} />
-          </TouchableOpacity>
+            activeOpacity={0.84} />
           <View style={localStyles.expandedChallengeHeaderSpacer} />
           <View style={localStyles.expandedChallengeHeaderActions}>
             <TouchableOpacity
@@ -1700,13 +1697,9 @@ const ChallengeDetailScreen = () => {
           },
         ]}
       >
-        <TouchableOpacity
-          style={localStyles.collapsedChallengeHeaderBackButton}
+        <BackButton style={localStyles.collapsedChallengeHeaderBackButton}
           onPress={() => handleBack()}
-          activeOpacity={0.84}
-        >
-          <Icon name="chevron-back" size={22} color={palette.text} />
-        </TouchableOpacity>
+          activeOpacity={0.84} />
         {collapsedCoverImageSource ? (
           <View style={localStyles.collapsedChallengeHeaderThumbnail} />
         ) : null}

@@ -1,3 +1,4 @@
+import BackButton from "../components/BackButton";
 import { normalizeSchedule, formatSession } from "../src/lib/eventSchedule";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
@@ -1385,12 +1386,8 @@ const EventDetail = () => {
             },
           ]}
         >
-          <TouchableOpacity
-            style={localStyles.eventHeaderIconButton}
-            onPress={() => handleBack()}
-          >
-            <Icon name="chevron-back" size={24} color={WHITE} />
-          </TouchableOpacity>
+          <BackButton style={localStyles.eventHeaderIconButton}
+            onPress={() => handleBack()} />
           <View style={localStyles.expandedEventHeaderSpacer} />
           <View style={localStyles.headerActions}>
             <TouchableOpacity
@@ -1445,12 +1442,8 @@ const EventDetail = () => {
             },
           ]}
         >
-          <TouchableOpacity
-            style={localStyles.collapsedHeaderBackButton}
-            onPress={() => handleBack()}
-          >
-            <Icon name="chevron-back" size={24} color={DARK_GRAY} />
-          </TouchableOpacity>
+          <BackButton style={localStyles.collapsedHeaderBackButton}
+            onPress={() => handleBack()} />
           {eventHeroImageSource ? (
             <MediaImage
               source={eventHeroImageSource}

@@ -984,6 +984,7 @@ const EditProfile = () => {
     >
       <ScreenContainer
         scroll
+        edges={["top", "bottom", "left", "right"]}
         scrollViewProps={{
           style: styles.editContainer,
           showsVerticalScrollIndicator: false,
@@ -1277,7 +1278,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 4,
   },
   scrollContent: {
-    paddingBottom: 72,
+    paddingBottom: 104,
   },
   primaryBadge: {
     position: "absolute",

@@ -57,7 +57,7 @@ export default function VibiOverlay({
   const eligible =
     enabled &&
     Boolean(session?.user?.id) &&
-    routeName !== "Vibi" &&
+    routeName === "Home" &&
     !AUTH_ROUTES.has(routeName) &&
     !routeName.startsWith("Onboarding");
   // Visibility lives in the in-memory controller: dismissal survives navigation

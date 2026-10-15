@@ -1,3 +1,4 @@
+import { sectionTabStyles } from "../components/SectionTabStyles";
 import { messagePreview } from "../src/lib/chatPhotos";
 import { useConnectionViewsQuery } from "../src/queries/homeActivity.queries";
 import { getNewConnections } from "../src/lib/homeActivity";
@@ -737,7 +738,7 @@ export const MessagesContent = ({
           </>
         ) : null}
 
-        <View style={localStyles.chatTabs}>
+        <View style={sectionTabStyles.tabs}>
           {(
             [
               {
@@ -766,8 +767,8 @@ export const MessagesContent = ({
                 accessibilityState={{ selected }}
                 onPress={() => setActiveTab(tab.key)}
                 style={[
-                  localStyles.chatTab,
-                  selected && localStyles.chatTabActive,
+                  sectionTabStyles.tab,
+                  selected && sectionTabStyles.active,
                 ]}
               >
                 <Icon
@@ -777,8 +778,8 @@ export const MessagesContent = ({
                 />
                 <Text
                   style={[
-                    localStyles.chatTabText,
-                    selected && localStyles.chatTabTextActive,
+                    sectionTabStyles.text,
+                    selected && sectionTabStyles.activeText,
                   ]}
                 >
                   {tab.label}

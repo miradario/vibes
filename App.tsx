@@ -1,3 +1,4 @@
+import PastChallenges from "./screens/PastChallenges";
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
 import { checkDeferredLinkOnce, type DeferredDestination } from "./src/deeplinks/deferredLink";
@@ -619,6 +620,7 @@ const AppNavigator = () => {
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen name="PastEvents" component={PastEvents} options={{ headerShown: false }} />
+            <Stack.Screen name="PastChallenges" component={PastChallenges} options={{ headerShown: false }} />
             <Stack.Screen
               name="EventChat"
               component={EventChat}

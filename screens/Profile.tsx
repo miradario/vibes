@@ -130,10 +130,10 @@ const Profile = () => {
           right={<TouchableOpacity accessibilityRole="button" accessibilityLabel={t("profile.configuration")} onPress={() => navigation.navigate("Settings" as never)} style={localStyles.settingsButton}>
             <Icon name="settings-outline" size={24} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>} />
-        <Text style={localStyles.eyebrow}>TU ESPACIO</Text>
         <Text style={localStyles.title}>{t("profile.title")}</Text>
 
         <View style={localStyles.profileCard}>
+          <View style={localStyles.profileRow}>
           <View style={localStyles.avatarWrap}><ProfileCompletionAvatar
             uri={ownAvatarUri}
             percent={
@@ -144,7 +144,17 @@ const Profile = () => {
             onPress={() => navigation.navigate(completion.nextScreen as never)}
           /></View>
           <View style={localStyles.profileInfo}>
-            <Text style={localStyles.profileName}>{displayName}</Text>
+            <View style={localStyles.nameRow}>
+            <Text style={localStyles.profileName} numberOfLines={2}>{displayName}</Text>
+          <TouchableOpacity
+            style={localStyles.editButton}
+            accessibilityRole="button" accessibilityLabel="Editar perfil"
+            onPress={() => navigation.navigate("EditProfile" as never)}
+          >
+            <Icon name="create-outline" size={20} color={vibesTheme.colors.accentBlue} />
+            <Text style={localStyles.editText}>{t("common.edit")}</Text>
+          </TouchableOpacity>
+            </View>
             <Text style={localStyles.profileLocation}>{location}</Text>
             {ownProfile.zodiac ? (
               <Text style={[localStyles.profileLocation, localStyles.zodiac]}>
@@ -152,15 +162,8 @@ const Profile = () => {
               </Text>
             ) : null}
           </View>
-          <TouchableOpacity
-            style={localStyles.editButton}
-            accessibilityRole="button" accessibilityLabel="Editar perfil"
-            onPress={() => navigation.navigate("EditProfile" as never)}
-          >
-            <Icon name="create-outline" size={20} color={vibesTheme.colors.surface} />
-            <Text style={localStyles.editText}>{t("common.edit")}</Text>
-            <Icon name="arrow-forward" size={20} color={vibesTheme.colors.surface} />
-          </TouchableOpacity>
+          </View>
+
         </View>
 
         <View style={localStyles.menuList}>
@@ -176,7 +179,7 @@ const Profile = () => {
               }
             >
               <View style={[localStyles.menuIcon, { backgroundColor: `${[vibesTheme.colors.accentBlue, vibesTheme.colors.accentMustard, vibesTheme.colors.accentCoral][index % 3]}24` }]}>
-                <Icon name={item.icon} size={22} color={vibesTheme.colors.primaryText} />
+                <Icon name={item.icon} size={19} color={vibesTheme.colors.primaryText} />
               </View>
               <Text style={localStyles.menuLabel}>{item.label}</Text>
               <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
@@ -189,7 +192,7 @@ const Profile = () => {
             disabled={isLoggingOut}
           >
             <View style={localStyles.menuIcon}>
-              <Icon name="power" size={22} color={TEXT_SECONDARY} />
+              <Icon name="power" size={19} color={TEXT_SECONDARY} />
             </View>
             <Text style={localStyles.menuLabel}>
               {isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
@@ -215,21 +218,22 @@ const colors = vibesTheme.colors;
 const localStyles = StyleSheet.create({
   header: { paddingHorizontal: 0, paddingTop: 8, paddingBottom: 16 },
   settingsButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 24, backgroundColor: `${colors.primaryText}08` },
-  eyebrow: { color: colors.accentBlue, fontFamily: vibesTheme.fonts.semibold, fontSize: 12, letterSpacing: 2, marginTop: 16 },
-  title: { color: colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 36, lineHeight: 44, marginTop: 10, marginBottom: 24 },
-  profileCard: { backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, borderColor: `${colors.primaryText}20`, padding: 24, alignItems: "center", marginBottom: 28 },
-  avatarWrap: { paddingLeft: 12 },
-  profileInfo: { width: "100%", alignItems: "center", marginTop: 16, marginBottom: 22, gap: 6 },
-  profileName: { fontFamily: vibesTheme.fonts.bold, fontSize: 26, lineHeight: 34, textAlign: "center", color: colors.primaryText },
-  profileLocation: { fontFamily: vibesTheme.fonts.regular, fontSize: 15, lineHeight: 22, textAlign: "center", color: colors.secondaryText },
+  title: { color: colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 25, lineHeight: 32, marginTop: 4, marginBottom: 16 },
+  profileCard: { marginBottom: 20 },
+  profileRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
+  avatarWrap: { alignSelf: "flex-start" },
+  profileInfo: { flex: 1, minWidth: 0, gap: 4 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 10, justifyContent: "space-between" },
+  profileName: { flex: 1, minWidth: 0, fontFamily: vibesTheme.fonts.bold, fontSize: 20, lineHeight: 26, color: colors.primaryText },
+  profileLocation: { fontFamily: vibesTheme.fonts.regular, fontSize: 13, lineHeight: 18, color: colors.secondaryText },
   zodiac: { color: colors.accentBlue },
-  editButton: { minHeight: 56, borderRadius: 28, paddingHorizontal: 24, paddingVertical: 14, width: "100%", backgroundColor: colors.primaryText, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
-  editText: { fontFamily: vibesTheme.fonts.semibold, fontSize: 17, color: colors.surface, flexShrink: 1 },
-  menuList: { gap: 12, marginBottom: 12 },
-  menuItem: { minHeight: 76, flexDirection: "row", alignItems: "center", padding: 14, borderRadius: 20, borderWidth: 1, borderColor: `${colors.primaryText}20`, backgroundColor: `${colors.primaryText}03`, gap: 14 },
+  editButton: { minHeight: 44, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: `${colors.accentBlue}18`, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  editText: { fontFamily: vibesTheme.fonts.semibold, fontSize: 14, color: colors.accentBlue, flexShrink: 1 },
+  menuList: { gap: 8, marginBottom: 12 },
+  menuItem: { minHeight: 56, flexDirection: "row", alignItems: "center", padding: 10, borderRadius: 14, borderWidth: 1, borderColor: `${colors.primaryText}20`, backgroundColor: `${colors.primaryText}03`, gap: 10 },
   menuItemLast: { marginBottom: 0 },
-  menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: `${colors.accentCoral}24` },
-  menuLabel: { flex: 1, fontFamily: vibesTheme.fonts.semibold, fontSize: 16, lineHeight: 22, color: colors.primaryText },
+  menuIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: `${colors.accentCoral}24` },
+  menuLabel: { flex: 1, fontFamily: vibesTheme.fonts.semibold, fontSize: 14, lineHeight: 20, color: colors.primaryText },
 });
 
 export default Profile;

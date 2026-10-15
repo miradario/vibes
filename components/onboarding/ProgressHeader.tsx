@@ -1,3 +1,4 @@
+import BackButton from "../BackButton";
 import CancelOnboardingButton from "../CancelOnboardingButton";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -24,16 +25,10 @@ const ProgressHeader = ({
 }: ProgressHeaderProps) => (
   <View style={styles.wrap}>
     {showBack ? (
-      <TouchableOpacity
-        onPress={onBack}
+      <BackButton onPress={onBack}
         activeOpacity={0.8}
         style={styles.backButton}
-        accessibilityRole="button"
-      >
-        {hideBackIcon ? null : (
-          <Icon name="chevron-back" size={22} color={ONBOARDING_COLORS.text} />
-        )}
-      </TouchableOpacity>
+        accessibilityRole="button" hideIcon={hideBackIcon} />
     ) : (
       <View style={styles.backSpacer} />
     )}
