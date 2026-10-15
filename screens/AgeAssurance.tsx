@@ -119,11 +119,11 @@ export default AgeAssurance;
 const localStyles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   content: {
     flexGrow: 1,
+    paddingHorizontal: 24,
     justifyContent: "center",
     gap: 24,
   },
@@ -160,8 +160,9 @@ const localStyles = StyleSheet.create({
     lineHeight: 19,
   },
   footer: {
+    marginTop: "auto",
+    paddingHorizontal: 24,
     paddingTop: 18,
-    paddingBottom: 36,
   },
   backButton: {
     marginTop: 10,
