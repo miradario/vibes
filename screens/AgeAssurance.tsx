@@ -1,9 +1,10 @@
 /** @format */
 
 import React, { useMemo, useState } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, Platform, StyleSheet, View } from "react-native";
 import { Text } from "../components/Typography";
 import BirthDateWheel from "../components/BirthDateWheel";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { VIBES_LOGO } from "../src/constants/brandAssets";
 import { useNavigation } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
@@ -30,6 +31,10 @@ const AgeAssurance = () => {
 
   const minDate = useMemo(() => new Date(1900, 0, 1), []);
   const maxDate = useMemo(() => new Date(), []);
+  const initialPickerDate = useMemo(() => {
+    const today = new Date();
+    return new Date(today.getFullYear() - MIN_AGE, today.getMonth(), today.getDate());
+  }, []);
   const age = birthDate ? calculateAge(birthDate) : null;
   const isValidAge = typeof age === "number" && age >= MIN_AGE;
   const showUnderageError = birthDate ? !isValidAge : false;
@@ -63,8 +68,25 @@ const AgeAssurance = () => {
           </View>
 
           <View style={localStyles.card}>
-            <BirthDateWheel value={birthDate} onChange={setBirthDate}
-              minimumDate={minDate} maximumDate={maxDate} locale={locale} />
+            {Platform.OS === "ios" ? (
+              <DateTimePicker
+                style={localStyles.nativeDatePicker}
+                value={birthDate ?? initialPickerDate}
+                mode="date"
+                display="spinner"
+                themeVariant="light"
+                textColor={vibesTheme.colors.primaryText}
+                locale={locale === "en" ? "en-US" : "es-AR"}
+                minimumDate={minDate}
+                maximumDate={maxDate}
+                onChange={(_event, date) => {
+                  if (date) setBirthDate(date);
+                }}
+              />
+            ) : (
+              <BirthDateWheel value={birthDate} onChange={setBirthDate}
+                minimumDate={minDate} maximumDate={maxDate} locale={locale} />
+            )}
 
             {showUnderageError ? (
               <Text style={localStyles.error}>
@@ -97,11 +119,11 @@ export default AgeAssurance;
 const localStyles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   content: {
     flexGrow: 1,
+    paddingHorizontal: 24,
     justifyContent: "center",
     gap: 24,
   },
@@ -129,7 +151,8 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
   },
-  card: { width: "100%" },
+  card: { width: "100%", marginTop: -8 },
+  nativeDatePicker: { alignSelf: "center" },
   error: {
     marginTop: 10,
     color: vibesTheme.colors.accentBlue,
@@ -137,8 +160,9 @@ const localStyles = StyleSheet.create({
     lineHeight: 19,
   },
   footer: {
+    marginTop: "auto",
+    paddingHorizontal: 24,
     paddingTop: 18,
-    paddingBottom: 36,
   },
   backButton: {
     marginTop: 10,
