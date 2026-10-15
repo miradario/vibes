@@ -57,6 +57,7 @@ import {
   EventChat,
   CreateEvent,
   CreateChallenge,
+  RestartChallenge,
   Contact,
   Faq,
   TermsConditions,
@@ -612,6 +613,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="CreateChallenge"
               component={CreateChallenge}
+              options={{ headerShown: false, animationEnabled: true }}
+            />
+            <Stack.Screen
+              name="RestartChallenge"
+              component={RestartChallenge}
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen

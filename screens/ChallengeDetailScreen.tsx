@@ -71,6 +71,11 @@ import {
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { WHITE } from "../assets/styles";
 import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
+import { useI18n } from "../src/i18n";
+import { useReceivedChallengeInvitationsQuery } from "../src/queries/challengeRestart.queries";
+import RestartChallengeConfirmSheet from "../components/challengeRestart/RestartChallengeConfirmSheet";
+import ChallengeInviteesSection from "../components/challengeRestart/ChallengeInviteesSection";
+import ChallengeInvitationActions from "../components/challengeRestart/ChallengeInvitationActions";
 
 type CheckInStatus = "pending" | "completed" | "broken";
 type ProgressMode = "path" | "compact" | "calendar";
@@ -1113,6 +1118,9 @@ const ChallengeDetailScreen = () => {
   const [isSharing, setIsSharing] = useState(false);
   const [isPreparingShare, setIsPreparingShare] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [restartConfirmVisible, setRestartConfirmVisible] = useState(false);
+  const { t } = useI18n();
+  const receivedInvitationsQuery = useReceivedChallengeInvitationsQuery(userId);
   const [participantsVisible, setParticipantsVisible] = useState(false);
   const pendingParticipants = useRef(false);
   const pendingShare = useRef(false);
@@ -1154,6 +1162,9 @@ const ChallengeDetailScreen = () => {
     userId && event?.createdBy && userId === event.createdBy
   );
   const isJoined = Boolean(participant);
+  const receivedInvitation = receivedInvitationsQuery.data?.find(
+    (invitation) => invitation.challengeId === event?.id && invitation.status !== "accepted",
+  );
   const legacyPreset = getChallengeMediaPreset(
     event?.imagePresetId ?? parseChallengeMediaPreset(event?.imageUrl)
   );
@@ -1183,6 +1194,7 @@ const ChallengeDetailScreen = () => {
     challenge.totalDays
   );
   const isChallengeUpcoming = challengeTimeline.status === "upcoming";
+  const canRestart = Boolean(userId && event && challengeTimeline.status === "finished");
   const todayKey = localDay;
   const hasRemoteTodayCheckin =
     participant?.checkedInToday || remoteCheckins.includes(todayKey);
@@ -1806,6 +1818,9 @@ const ChallengeDetailScreen = () => {
             {challenge.streak >= 3 ? (
               <StreakCelebrationCard streak={challenge.streak} />
             ) : null}
+            {isAdmin && event?.id && event.visibility === "private" ? (
+              <ChallengeInviteesSection challengeId={event.id} />
+            ) : null}
           </View>
         </View>
       </NativeAnimated.ScrollView>
@@ -1835,6 +1850,8 @@ const ChallengeDetailScreen = () => {
               />
               {renderFooterCheckIn()}
             </>
+          ) : receivedInvitation && userId ? (
+            <ChallengeInvitationActions invitation={receivedInvitation} userId={userId} />
           ) : isAdmin ? (
             <>
               <TouchableOpacity
@@ -1965,6 +1982,19 @@ const ChallengeDetailScreen = () => {
             <Text style={localStyles.menuItemText}>Editar desafío</Text>
           </TouchableOpacity>
         ) : null}
+        {canRestart ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            style={localStyles.menuItem}
+            onPress={() => {
+              setMenuVisible(false);
+              setTimeout(() => setRestartConfirmVisible(true), 320);
+            }}
+          >
+            <Icon name="refresh-outline" size={20} color={palette.text} />
+            <Text style={localStyles.menuItemText}>{t("challengeRestart.restart")}</Text>
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           style={localStyles.menuItem}
           onPress={() => {
@@ -2034,6 +2064,14 @@ const ChallengeDetailScreen = () => {
           </TouchableOpacity>
         ) : null}
       </AnimatedSheetModal>
+      <RestartChallengeConfirmSheet
+        visible={restartConfirmVisible}
+        onClose={() => setRestartConfirmVisible(false)}
+        onConfirm={() => {
+          setRestartConfirmVisible(false);
+          if (event) navigation.navigate("RestartChallenge" as never, { source: event } as never);
+        }}
+      />
       <ParticipantsSheet
         visible={participantsVisible}
         onClose={() => setParticipantsVisible(false)}

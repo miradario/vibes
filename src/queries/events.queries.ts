@@ -68,6 +68,7 @@ export type EventFeedItem = {
   tags?: string[];
   createdAt?: string | null;
   createdBy?: string | null;
+  sourceChallengeId?: string | null;
 };
 
 type EventRow = Record<string, any>;
@@ -305,7 +306,7 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
   };
 };
 
-const mapChallengeRow = (row: EventRow): EventFeedItem => {
+export const mapChallengeRow = (row: EventRow): EventFeedItem => {
   const rawDescription =
     typeof row.description === "string" ? row.description : null;
   const startsAt =
@@ -377,6 +378,10 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
     createdBy:
       typeof row.created_by === "string" && row.created_by.trim()
         ? row.created_by
+        : null,
+    sourceChallengeId:
+      typeof row.source_challenge_id === "string" && row.source_challenge_id.trim()
+        ? row.source_challenge_id
         : null,
   };
 };
@@ -845,7 +850,7 @@ const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
   );
 };
 
-const maybeUploadEventImage = async (
+export const maybeUploadEventImage = async (
   uri: string | null | undefined,
   pathPrefix: string
 ) => {

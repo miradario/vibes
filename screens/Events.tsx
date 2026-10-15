@@ -33,6 +33,14 @@ import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
+import {
+  useReceivedChallengeInvitationsQuery,
+  useRespondChallengeInvitationMutation,
+  challengeInvitationKeys,
+  type ReceivedChallengeInvitation,
+} from "../src/queries/challengeRestart.queries";
+import RestartChallengeConfirmSheet from "../components/challengeRestart/RestartChallengeConfirmSheet";
+import { restartStyles } from "../components/challengeRestart/styles";
 
 type FeedListItem =
   | {
@@ -42,9 +50,25 @@ type FeedListItem =
       subtitle?: string;
     }
   | {
+      kind: "accordion";
+      id: PrivateBlock;
+      title: string;
+      count: number;
+      open: boolean;
+    }
+  | {
+      kind: "empty";
+      id: string;
+    }
+  | {
       kind: "feed";
       item: EventFeedItem;
+      restartable?: boolean;
+      invitation?: ReceivedChallengeInvitation;
+      keyPrefix?: string;
     };
+
+type PrivateBlock = "mine" | "invitations" | "participating" | "finished";
 
 const normalizeSearchText = (value: string | null | undefined) =>
   (value ?? "")
@@ -198,6 +222,18 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   };
 
   const [search, setSearch] = useState("");
+  const [challengeTab, setChallengeTab] = useState<"public" | "private">("public");
+  const [openBlocks, setOpenBlocks] = useState<Record<PrivateBlock, boolean>>({
+    mine: true,
+    invitations: false,
+    participating: false,
+    finished: false,
+  });
+  const [restartTarget, setRestartTarget] = useState<EventFeedItem | null>(null);
+  const viewerId = session?.user?.id;
+  const isPrivateTab = section === "challenge" && challengeTab === "private";
+  const invitationsQuery = useReceivedChallengeInvitationsQuery(section === "challenge" ? viewerId : undefined);
+  const respondInvitation = useRespondChallengeInvitationMutation();
   const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
   const [showUpcomingChallenges, setShowUpcomingChallenges] = useState(false);
 
@@ -211,6 +247,8 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      // Private challenges (restarted copies and other private ones) live only in the "Privada" tab.
+      if (section === "challenge" && (item.visibility === "private") !== (challengeTab === "private")) return false;
       if (section === "event" && spiritualPaths.length && !spiritualPaths.some((path) => item.tags?.includes(path))) return false;
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
@@ -234,7 +272,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, spiritualPaths, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
+  }, [items, challengeTab, spiritualPaths, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
@@ -308,6 +346,46 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
       ];
     }
 
+    if (challengeTab === "private") {
+      const mine = sortChallengesByStartsAt(
+        filteredItems.filter((item) => item.createdBy === viewerId && !isFinishedChallenge(item)),
+      );
+      const participating = sortChallengesByStartsAt(
+        filteredItems.filter(
+          (item) => item.createdBy !== viewerId && joinedChallengeIds.has(item.id) && !isFinishedChallenge(item),
+        ),
+      );
+      const finished = filteredItems.filter(
+        (item) => isFinishedChallenge(item) && (item.createdBy === viewerId || joinedChallengeIds.has(item.id)),
+      );
+      const invitations = (invitationsQuery.data ?? []).filter(
+        (invitation) =>
+          invitation.status !== "accepted" &&
+          (!normalizedSearch || normalizeSearchText(invitation.challenge.title).includes(normalizedSearch)),
+      );
+      const blocks: Array<[PrivateBlock, FeedListItem[]]> = [
+        ["mine", mine.map((item) => ({ kind: "feed" as const, item, keyPrefix: "mine" }))],
+        ["invitations", invitations.map((invitation) => ({
+          kind: "feed" as const,
+          item: invitation.challenge,
+          invitation,
+          keyPrefix: "invitation",
+        }))],
+        ["participating", participating.map((item) => ({ kind: "feed" as const, item, keyPrefix: "participating" }))],
+        ["finished", finished.map((item) => ({ kind: "feed" as const, item, restartable: true, keyPrefix: "finished" }))],
+      ];
+      const titles: Record<PrivateBlock, string> = {
+        mine: t("challengeRestart.blockMine"),
+        invitations: t("challengeRestart.blockInvitations"),
+        participating: t("challengeRestart.blockParticipating"),
+        finished: t("challengeRestart.blockFinished"),
+      };
+      return blocks.flatMap(([id, rows]) => [
+        { kind: "accordion" as const, id, title: titles[id], count: rows.length, open: openBlocks[id] },
+        ...(openBlocks[id] ? (rows.length ? rows : [{ kind: "empty" as const, id: `empty-${id}` }]) : []),
+      ]);
+    }
+
     const nextItems: FeedListItem[] = [];
 
     if (joinedChallengeItems.length > 0 || joinedUpcomingChallengeItems.length > 0) {
@@ -355,7 +433,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
         title: "Desafíos finalizados",
       });
       nextItems.push(
-        ...finishedChallengeItems.map((item) => ({ kind: "feed" as const, item })),
+        ...finishedChallengeItems.map((item) => ({ kind: "feed" as const, item, restartable: true })),
       );
     }
 
@@ -372,6 +450,14 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
     showUpcomingChallenges,
     upcomingGeneralChallengeItems,
     visibleItems,
+    challengeTab,
+    filteredItems,
+    invitationsQuery.data,
+    joinedChallengeIds,
+    normalizedSearch,
+    openBlocks,
+    t,
+    viewerId,
   ]);
 
   const listIsLoading =
@@ -389,6 +475,10 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
       void queryClient.refetchQueries({
         queryKey: challengesKeys.all,
+        type: "active",
+      });
+      void queryClient.refetchQueries({
+        queryKey: challengeInvitationKeys.all,
         type: "active",
       });
 
@@ -462,10 +552,32 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
         </View>
 
+        {section === "challenge" && !pastOnly ? (
+          <View style={localStyles.tabRow} accessibilityRole="tablist">
+            {(["public", "private"] as const).map((tab) => {
+              const selected = challengeTab === tab;
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected }}
+                  style={[localStyles.tab, selected && localStyles.tabSelected]}
+                  onPress={() => setChallengeTab(tab)}
+                >
+                  <Text style={[localStyles.tabText, selected && localStyles.tabTextSelected]}>
+                    {t(tab === "public" ? "challengeRestart.tabPublic" : "challengeRestart.tabPrivate")}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : null}
         {section === "event" ? <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} /> : null}
         <FlatList
           data={listIsLoading ? [] : listItems}
-          keyExtractor={(item) => (item.kind === "section" ? item.id : item.item.id)}
+          keyExtractor={(item) =>
+            item.kind === "feed" ? `${item.keyPrefix ?? "feed"}-${item.item.id}` : `${item.kind}-${item.id}`
+          }
           contentContainerStyle={[
             styles.eventsListContent,
             localStyles.eventsListContent,
@@ -532,7 +644,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             </View>
           }
           ListFooterComponent={
-            section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0) ? (
+            section === "challenge" && !isPrivateTab && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0) ? (
               <View style={localStyles.footerToggleGroup}>
                 {upcomingGeneralChallengeItems.length > 0 ? (
                   <TouchableOpacity
@@ -584,6 +696,31 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             ) : null
           }
           renderItem={({ item: listItem }) => {
+            if (listItem.kind === "accordion") {
+              return (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: listItem.open }}
+                  style={localStyles.finishedSectionToggle}
+                  activeOpacity={0.85}
+                  onPress={() =>
+                    setOpenBlocks((previous) => ({ ...previous, [listItem.id]: !previous[listItem.id] }))
+                  }
+                >
+                  <Text style={localStyles.finishedSectionTitle}>
+                    {listItem.title} · {listItem.count}
+                  </Text>
+                  <Icon
+                    name={listItem.open ? "chevron-up" : "chevron-down"}
+                    size={22}
+                    color={vibesTheme.colors.secondaryText}
+                  />
+                </TouchableOpacity>
+              );
+            }
+            if (listItem.kind === "empty") {
+              return <Text style={localStyles.blockEmpty}>{t("challengeRestart.blockEmpty")}</Text>;
+            }
             if (listItem.kind === "section") {
               return (
                 <View style={localStyles.feedSectionHeader}>
@@ -693,6 +830,53 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                           { count: checkedInTodayCount },
                         )}
                       </Text>
+                    </View>
+                  ) : null}
+                  {listItem.invitation ? (
+                    <View style={localStyles.cardActions}>
+                      <Text style={restartStyles.statusText}>
+                        {t(
+                          listItem.invitation.status === "rejected"
+                            ? "challengeRestart.statusRejected"
+                            : "challengeRestart.statusPending",
+                        )}
+                      </Text>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        style={restartStyles.pill}
+                        disabled={respondInvitation.isPending}
+                        onPress={() =>
+                          viewerId &&
+                          respondInvitation.mutate({ id: listItem.invitation!.id, accept: true, userId: viewerId })
+                        }
+                      >
+                        <Text style={restartStyles.pillText}>{t("challengeRestart.accept")}</Text>
+                      </TouchableOpacity>
+                      {listItem.invitation.status === "pending" ? (
+                        <TouchableOpacity
+                          accessibilityRole="button"
+                          style={restartStyles.pill}
+                          disabled={respondInvitation.isPending}
+                          onPress={() =>
+                            viewerId &&
+                            respondInvitation.mutate({ id: listItem.invitation!.id, accept: false, userId: viewerId })
+                          }
+                        >
+                          <Text style={restartStyles.pillText}>{t("challengeRestart.reject")}</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                  ) : null}
+                  {listItem.restartable && viewerId ? (
+                    <View style={localStyles.cardActions}>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        style={restartStyles.pill}
+                        onPress={() => setRestartTarget(item)}
+                      >
+                        <Icon name="refresh-outline" size={16} color={vibesTheme.colors.accentBlue} />
+                        <Text style={restartStyles.pillText}>{t("challengeRestart.restart")}</Text>
+                      </TouchableOpacity>
                     </View>
                   ) : null}
                 </View>
@@ -828,6 +1012,15 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
         </View>
         </View>
       </KeyboardSheetModal>
+      <RestartChallengeConfirmSheet
+        visible={Boolean(restartTarget)}
+        onClose={() => setRestartTarget(null)}
+        onConfirm={() => {
+          const source = restartTarget;
+          setRestartTarget(null);
+          if (source) navigation.navigate("RestartChallenge" as never, { source } as never);
+        }}
+      />
     </ScreenContainer>
   );
 };
@@ -835,6 +1028,38 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 export default Events;
 
 const localStyles = StyleSheet.create({
+  tabRow: {
+    flexDirection: "row",
+    gap: vibesTheme.spacing.sm,
+    marginBottom: vibesTheme.spacing.sm,
+  },
+  tab: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: vibesTheme.radii.pill,
+    borderWidth: 1,
+    borderColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.surface,
+  },
+  tabSelected: { backgroundColor: "rgba(57, 120, 184, 0.16)" },
+  tabText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 16 },
+  tabTextSelected: { color: vibesTheme.colors.primaryText },
+  cardActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: vibesTheme.spacing.sm,
+    marginTop: vibesTheme.spacing.sm,
+  },
+  blockEmpty: {
+    color: vibesTheme.colors.secondaryText,
+    fontFamily: vibesTheme.fonts.primary,
+    fontSize: 15,
+    paddingVertical: vibesTheme.spacing.sm,
+    paddingHorizontal: vibesTheme.spacing.xs,
+  },
   filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
   filterBadgeText: { color: vibesTheme.colors.primaryText, fontSize: 11, fontFamily: vibesTheme.fonts.bold },
