@@ -1,3 +1,4 @@
+import AppHeader from "../components/AppHeader";
 import ChallengeJourneyPath from "../components/ChallengeJourneyPath";
 import BackButton from "../components/BackButton";
 import { useLocalDay } from "../src/hooks/useLocalDay";
@@ -127,7 +128,7 @@ const palette = {
   redSoft: "rgba(216, 140, 122, 0.17)",
 };
 
-const FOOTER_SLIDER_HANDLE_SIZE = 42;
+const FOOTER_SLIDER_HANDLE_SIZE = 50;
 const FOOTER_SLIDER_HORIZONTAL_PADDING = 8;
 const FOOTER_SLIDER_TRACK_HEIGHT = 68;
 const FOOTER_SLIDER_FILL_LEFT =
@@ -407,35 +408,18 @@ const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
   );
 });
 
-const ChallengeIntroMetaRow = memo(
-  ({ challenge, checkedInTodayCount }: { challenge: ChallengeDetailData; checkedInTodayCount: number }) => (
-    <View style={localStyles.challengeIntroMetaRow}>
-      <View style={localStyles.challengeIntroMetaItem}>
-        <Icon name="calendar-outline" size={24} color={palette.text} />
-        <Text
-          style={localStyles.challengeIntroMetaText}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.72}
-        >
-          Día {Math.max(challenge.currentDay, 0)} de {challenge.totalDays}
-        </Text>
-      </View>
-      <View style={localStyles.challengeIntroDivider} />
-      <View style={localStyles.challengeIntroMetaItem}>
-        <Icon name="people-outline" size={26} color={palette.text} />
-        <View style={{ flex: 1 }}>
-          <Text style={localStyles.challengeParticipantText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
-            {challenge.participantsCount} participantes
-          </Text>
-          <Text style={localStyles.challengeTodayText} numberOfLines={1} adjustsFontSizeToFit>
-            {checkedInTodayCount} {checkedInTodayCount === 1 ? "completó" : "completaron"} hoy
-          </Text>
-        </View>
-      </View>
+const ChallengeIntroMetaRow = memo(({ challenge, checkedInTodayCount }: { challenge: ChallengeDetailData; checkedInTodayCount: number }) => (
+  <View style={{ gap: 16, paddingVertical: 8 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
+      <Icon name="calendar-outline" size={25} color={vibesTheme.colors.accentBlue} />
+      <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 }}>{challenge.currentDay > 0 ? `Día ${challenge.currentDay} de ${challenge.totalDays}` : `${challenge.totalDays} días de actividades`}</Text></View>
     </View>
-  )
-);
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
+      <Icon name="people-outline" size={25} color={vibesTheme.colors.accentBlue} />
+      <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 }}>{challenge.participantsCount} participantes</Text><Text style={{ color: vibesTheme.colors.secondaryText, fontSize: 14 }}>{checkedInTodayCount} {checkedInTodayCount === 1 ? "completó" : "completaron"} hoy</Text></View>
+    </View>
+  </View>
+));
 
 const ChallengeJourneyCard = memo(({ challenge }: { challenge: ChallengeDetailData; percent: number }) => {
   return (<View style={localStyles.journeyCard}>
@@ -1000,8 +984,6 @@ const ChallengeDetailScreen = () => {
   const participantsQuery = useChallengeParticipantsQuery(
     userId ? event?.id : undefined,
   );
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
-  const challengeScrollY = useRef(new NativeAnimated.Value(0)).current;
 
   const baseChallenge = useMemo(
     () => mapEventToChallengeData(event, remoteCheckins, participant),
@@ -1344,32 +1326,6 @@ const ChallengeDetailScreen = () => {
       footerSliderMaxOffset,
     ]
   );
-  const compactHeaderTop = Math.max(insets.top + 8, 18);
-  // Alto del hero expandido: barra superior (42) + gap (14) + título en 2 líneas (2 × 33)
-  // + subtítulo en 2 líneas (10 + 2 × 21) + margen inferior (16), sumado al inset superior.
-  const heroExpandedHeight = Math.max(210, compactHeaderTop + 42 + 14 + 66 + 52 + 16);
-  const heroCollapse = (expanded: number, collapsed: number) =>
-    challengeScrollY.interpolate({
-      inputRange: [0, 168],
-      outputRange: [expanded, collapsed],
-      extrapolate: "clamp",
-    });
-  const collapsedChallengeHeaderOpacity = challengeScrollY.interpolate({
-    inputRange: [92, 168],
-    outputRange: [0, 1],
-    extrapolate: "clamp",
-  });
-  const collapsedChallengeHeaderTranslateY = challengeScrollY.interpolate({
-    inputRange: [92, 168],
-    outputRange: [-8, 0],
-    extrapolate: "clamp",
-  });
-  const expandedChallengeHeaderOpacity = challengeScrollY.interpolate({
-    inputRange: [72, 132],
-    outputRange: [1, 0],
-    extrapolate: "clamp",
-  });
-
   const renderFooterCheckIn = () => {
     if (isChallengeUpcoming) {
       return (
@@ -1429,13 +1385,12 @@ const ChallengeDetailScreen = () => {
             pointerEvents="none"
           />
           <View style={localStyles.footerSliderChevrons} pointerEvents="none">
-            <Icon name="chevron-forward" size={16} color={vibesTheme.colors.background} />
-            <Icon name="chevron-forward" size={16} color={vibesTheme.colors.background} />
+            <Icon name="chevron-forward" size={19} color={vibesTheme.colors.accentBlue} />
+            <Icon name="chevron-forward" size={19} color={vibesTheme.colors.accentBlue} />
           </View>
           <View style={localStyles.footerSliderCopy}>
-            <Text style={localStyles.footerSliderTitle}>Check-in diario</Text>
-            <Text style={localStyles.footerSliderSubtitle}>
-              Deslizá para completar tu día
+            <Text style={[localStyles.footerSliderTitle, { textAlign: "center", fontSize: 14 }]}>
+              {checkInMutation.isPending ? "Guardando…" : "Deslizá para completar tu día"}
             </Text>
           </View>
         </View>
@@ -1449,7 +1404,7 @@ const ChallengeDetailScreen = () => {
           {checkInMutation.isPending ? (
             <VibesLoader />
           ) : (
-            <Icon name="sunny-outline" size={22} color={vibesTheme.colors.background} />
+            <Icon name="arrow-forward" size={27} color={vibesTheme.colors.surface} />
           )}
         </View>
       </View>
@@ -1510,132 +1465,29 @@ const ChallengeDetailScreen = () => {
 
   return (
     <ScreenContainer style={localStyles.screen} edges={["left", "right"]}>
-      <NativeAnimated.View
-        pointerEvents={headerCollapsed ? "none" : "box-none"}
-        style={[
-          localStyles.expandedChallengeHeader,
-          {
-            top: compactHeaderTop,
-            opacity: expandedChallengeHeaderOpacity,
-          },
-        ]}
-      >
-        <View style={localStyles.expandedChallengeHeaderTopRow}>
-          <BackButton style={localStyles.expandedChallengeHeaderIconButton}
-            onPress={() => handleBack()}
-            activeOpacity={0.84} />
-          <View style={localStyles.expandedChallengeHeaderSpacer} />
-          <View style={localStyles.expandedChallengeHeaderActions}>
-            <TouchableOpacity
-              accessibilityLabel="Compartir desafío"
-              style={localStyles.expandedChallengeHeaderIconButton}
-              onPress={handleDirectShare}
-              activeOpacity={0.84}
-              disabled={isPreparingShare || isSharing}
-            >
-              {isPreparingShare ? (
-                <VibesLoader />
-              ) : (
-                <Icon name="share-outline" size={21} color={WHITE} />
-              )}
+      <View style={{ paddingTop: insets.top, backgroundColor: vibesTheme.colors.surface }}>
+        <AppHeader title="Desafío" showBack onBack={handleBack}
+          titleStyle={{ fontSize: 18, fontFamily: vibesTheme.fonts.semibold }}
+          right={<View style={{ flexDirection: "row", alignItems: "center" }}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Compartir desafío" onPress={handleDirectShare} disabled={isPreparingShare || isSharing} style={localStyles.referenceAction}>
+              {isPreparingShare ? <VibesLoader /> : <Icon name="share-outline" size={25} color={vibesTheme.colors.primaryText} />}
             </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityLabel="Opciones del desafío"
-              style={localStyles.expandedChallengeHeaderIconButton}
-              onPress={() => setMenuVisible(true)}
-              activeOpacity={0.84}
-            >
-              <Icon name="ellipsis-horizontal" size={22} color={WHITE} />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={localStyles.expandedChallengeHeaderCopy}>
-          <Text
-            style={localStyles.expandedChallengeHeaderTitle}
-            numberOfLines={2}
-            ellipsizeMode="tail"
-          >
-            {challenge.title}
-          </Text>
-        </View>
-      </NativeAnimated.View>
-
-      <NativeAnimated.View
-        pointerEvents={headerCollapsed ? "auto" : "none"}
-        style={[
-          localStyles.collapsedChallengeHeader,
-          {
-            paddingTop: Math.max(insets.top + 8, 18),
-            opacity: collapsedChallengeHeaderOpacity,
-            transform: [{ translateY: collapsedChallengeHeaderTranslateY }],
-          },
-        ]}
-      >
-        <BackButton style={localStyles.collapsedChallengeHeaderBackButton}
-          onPress={() => handleBack()}
-          activeOpacity={0.84} />
-        {collapsedCoverImageSource ? (
-          <View style={localStyles.collapsedChallengeHeaderThumbnail} />
-        ) : null}
-        <Text
-          style={localStyles.collapsedChallengeHeaderTitle}
-          numberOfLines={2}
-        >
-          {challenge.title}
-        </Text>
-        <TouchableOpacity
-          accessibilityLabel="Opciones del desafío"
-          onPress={() => setMenuVisible(true)}
-          style={localStyles.collapsedChallengeHeaderBackButton}
-        >
-          <Icon name="ellipsis-horizontal" size={22} color={palette.text} />
-        </TouchableOpacity>
-      </NativeAnimated.View>
-
-      {collapsedCoverImageSource ? (
-        <NativeAnimated.View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            zIndex: 62,
-            elevation: 20,
-            overflow: "hidden",
-            top: heroCollapse(0, compactHeaderTop + 5),
-            left: heroCollapse(0, 80),
-            width: heroCollapse(width - insets.left - insets.right, 38),
-            height: heroCollapse(heroExpandedHeight, 38),
-            borderRadius: heroCollapse(0, 19),
-          }}
-        >
-          <MediaImage source={collapsedCoverImageSource} style={localStyles.heroImage} resizeMode="cover" />
-          <NativeAnimated.View style={[localStyles.heroScrim, { opacity: expandedChallengeHeaderOpacity }]} />
-        </NativeAnimated.View>
-      ) : null}
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Opciones del desafío" onPress={() => setMenuVisible(true)} style={localStyles.referenceAction}><Icon name="ellipsis-horizontal" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
+          </View>} />
+      </View>
 
       <NativeAnimated.ScrollView
         contentContainerStyle={[
           localStyles.scrollContent,
           {
             paddingBottom: insets.bottom + 188,
-            minHeight: height + 190,
           },
         ]}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
-        onScroll={NativeAnimated.event(
-          [{ nativeEvent: { contentOffset: { y: challengeScrollY } } }],
-          {
-            useNativeDriver: false,
-            listener: (event: any) =>
-              setHeaderCollapsed(event.nativeEvent.contentOffset.y >= 132),
-          }
-        )}
+
       >
-        {coverImageSource ? (
-          <NativeAnimated.View
-            style={{ height: heroCollapse(heroExpandedHeight, 168 + compactHeaderTop + 5 + 38) }}
-          />
-        ) : null}
+        {coverImageSource ? <MediaImage source={coverImageSource} resizeMode="cover" style={localStyles.referenceCover} /> : null}
         <View
           style={[
             localStyles.contentShell,
@@ -1646,6 +1498,11 @@ const ChallengeDetailScreen = () => {
             },
           ]}
         >
+          <View style={localStyles.referenceBadges}>
+            <Text style={localStyles.referenceBadge}>{challenge.totalDays} días</Text>
+            {isChallengeUpcoming ? <Text style={localStyles.referenceBadge}>{getChallengeStartsInLabel(challengeTimeline.startsInDays)}</Text> : null}
+          </View>
+          <Text style={localStyles.referenceTitle}>{challenge.title}</Text>
           <View style={localStyles.challengeIntroBlock}>
             <ChallengeIntroMetaRow challenge={challenge} checkedInTodayCount={checkedInTodayCount} />
           </View>
@@ -2029,6 +1886,12 @@ const ChallengeDetailScreen = () => {
 };
 
 const localStyles = StyleSheet.create({
+  referenceAction: { width: 40, height: 44, justifyContent: "center", alignItems: "center" },
+  referenceCover: { width: "auto", height: 190, marginHorizontal: 18, marginTop: 6, marginBottom: 16, borderRadius: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
+  referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
+  referenceBadge: { overflow: "hidden", borderRadius: 18, paddingHorizontal: 12, paddingVertical: 5, color: vibesTheme.colors.accentBlue, backgroundColor: `${vibesTheme.colors.accentBlue}14`, fontSize: 13, fontFamily: vibesTheme.fonts.medium },
+  referenceTitle: { fontSize: 32, lineHeight: 39, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, marginBottom: 12 },
+
   descriptionSection: { paddingVertical: 20, gap: 10 },
   descriptionHeading: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 },
   fullDescription: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 17, lineHeight: 26 },
@@ -3069,13 +2932,13 @@ const localStyles = StyleSheet.create({
   footerSliderTrack: {
     minHeight: 68,
     borderRadius: 34,
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderWidth: 2,
-    borderColor: "rgba(254, 254, 253, 0.22)",
+    backgroundColor: `${vibesTheme.colors.accentBlue}14`,
+    borderWidth: 1,
+    borderColor: `${vibesTheme.colors.accentBlue}70`,
     overflow: "hidden",
     justifyContent: "center",
-    paddingLeft: 124,
-    paddingRight: 20,
+    paddingLeft: 70,
+    paddingRight: 36,
   },
   footerSliderTrackCompleted: {
     backgroundColor: "rgba(254, 254, 253, 0.88)",
@@ -3087,27 +2950,27 @@ const localStyles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: 34,
-    backgroundColor: "rgba(244, 163, 64, 0.92)",
+    backgroundColor: `${vibesTheme.colors.accentBlue}14`,
   },
   footerSliderHandle: {
     position: "absolute",
     left: FOOTER_SLIDER_HORIZONTAL_PADDING + 2,
-    top: 13,
+    top: 9,
     width: FOOTER_SLIDER_HANDLE_SIZE,
     height: FOOTER_SLIDER_HANDLE_SIZE,
     borderRadius: FOOTER_SLIDER_HANDLE_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderWidth: 2,
+    backgroundColor: vibesTheme.colors.accentBlue,
+    borderWidth: 1,
     borderColor: "rgba(254, 254, 253, 0.82)",
     shadowColor: vibesTheme.colors.accentCoral,
-    shadowOpacity: 0.28,
+    shadowOpacity: 0,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
   },
   footerSliderHandleCompleted: {
-    backgroundColor: vibesTheme.colors.accentMustard,
+    backgroundColor: vibesTheme.colors.accentBlue,
     shadowOpacity: 0,
   },
   footerSliderCopy: {
@@ -3129,13 +2992,13 @@ const localStyles = StyleSheet.create({
   },
   footerSliderChevrons: {
     position: "absolute",
-    left: 70,
+    right: 20,
     top: 0,
     bottom: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
-    opacity: 1,
+    opacity: 0.4,
   },
   checkInText: {
     color: vibesTheme.colors.surface,

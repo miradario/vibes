@@ -1,5 +1,5 @@
 import { imageCacheSource } from "../src/lib/imageCacheSource";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View, type ImageStyle, type StyleProp } from "react-native";
 import { Text } from "./Typography";
 import { Image as ExpoImage } from "expo-image";
@@ -74,16 +74,48 @@ const ProfileMediaImage = ({
         ? `uri:${source.uri}`
         : "";
 
+  const request = useMemo(() => ({}), [sourceKey, attempt]);
+  const activeRequest = useRef(request);
+  activeRequest.current = request;
+  const successfulRequest = useRef<object | null>(null);
+  const loadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notifiedRequest = useRef<object | null>(null);
+  const displayCallback = useRef(onDisplay);
+  displayCallback.current = onDisplay;
+  const clearLoadTimer = () => {
+    if (loadTimer.current !== null) clearTimeout(loadTimer.current);
+    loadTimer.current = null;
+  };
+  const confirmLoaded = () => {
+    if (activeRequest.current !== request) return false;
+    successfulRequest.current = request;
+    clearLoadTimer();
+    return true;
+  };
+  const failRequest = () => {
+    if (activeRequest.current !== request || successfulRequest.current === request) return;
+    clearLoadTimer();
+    setErrorKey(sourceKey);
+    displayCallback.current?.();
+  };
+
   const resolvedSize = imageSize?.key === sourceKey ? imageSize : knownImageSizes.get(sourceKey);
   const isPortrait = resolvedSize && resolvedSize.height > resolvedSize.width;
   const layoutReady = !blurBackground || Boolean(resolvedSize);
   const resolvedFit = blurBackground ? (isPortrait && contentFit === "cover" ? "cover" : "contain") : contentFit;
+  useEffect(() => {
+    if (displayedKey !== sourceKey || !layoutReady || notifiedRequest.current === request) return;
+    notifiedRequest.current = request;
+    displayCallback.current?.();
+  }, [displayedKey, sourceKey, layoutReady, request]);
   const hasError = errorKey === sourceKey;
   const loading = canRenderSource && !hasError && displayedKey !== sourceKey;
   useEffect(() => {
     if (!loading) return;
-    const timer = setTimeout(() => setErrorKey(sourceKey), 15000);
-    return () => clearTimeout(timer);
+    if (successfulRequest.current === request) return;
+    const timer = setTimeout(failRequest, 15000);
+    loadTimer.current = timer;
+    return () => { clearTimeout(timer); if (loadTimer.current === timer) loadTimer.current = null; };
   }, [loading, sourceKey, attempt]);
 
   return (
@@ -118,19 +150,17 @@ const ProfileMediaImage = ({
           priority={priority}
           contentFit={resolvedFit}
           onLoad={({ source: image }) => {
+            if (!confirmLoaded()) return;
             if (knownImageSizes.size >= 300) knownImageSizes.delete(knownImageSizes.keys().next().value!);
             knownImageSizes.set(sourceKey, { width: image.width, height: image.height });
             setImageSize({ key: sourceKey, width: image.width, height: image.height });
           }}
           onDisplay={() => {
-            const size = knownImageSizes.get(sourceKey);
-            const finalFit = blurBackground ? (size && size.height > size.width && contentFit === "cover" ? "cover" : "contain") : contentFit;
-            if (blurBackground && (!size || finalFit !== resolvedFit)) return;
+            if (!confirmLoaded()) return;
             setDisplayedKey(sourceKey);
-            onDisplay?.();
           }}
           transition={transition}
-          onError={() => { setErrorKey(sourceKey); onDisplay?.(); }}
+          onError={failRequest}
         />
         </>
       ) : null}

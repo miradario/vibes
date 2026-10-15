@@ -796,6 +796,19 @@ export const DiscoverContent = forwardRef<
     [discoverFilters, hasLocation, answerFilters]
   );
 
+  const appliedFilterChips: { id: string; label: string; remove: () => void }[] = [];
+  if (discoverFilters.ageMin !== null || discoverFilters.ageMax !== null) appliedFilterChips.push({ id: "age", label: discoverFilters.ageMin !== null && discoverFilters.ageMax !== null ? `${discoverFilters.ageMin}–${discoverFilters.ageMax} años` : discoverFilters.ageMin !== null ? `Desde ${discoverFilters.ageMin} años` : `Hasta ${discoverFilters.ageMax} años`, remove: () => setDiscoverFilters(p => ({ ...p, ageMin: null, ageMax: null })) });
+  if (hasLocation && (discoverFilters.distanceMinKm !== null || discoverFilters.maxDistanceKm !== null)) appliedFilterChips.push({ id: "distance", label: discoverFilters.distanceMinKm !== null && discoverFilters.maxDistanceKm !== null ? `${discoverFilters.distanceMinKm}–${discoverFilters.maxDistanceKm} km` : discoverFilters.maxDistanceKm !== null ? `Hasta ${discoverFilters.maxDistanceKm} km` : `Desde ${discoverFilters.distanceMinKm} km`, remove: () => setDiscoverFilters(p => ({ ...p, distanceMinKm: null, maxDistanceKm: null })) });
+  if (discoverFilters.genders.length) appliedFilterChips.push({ id: "genders", label: discoverFilters.genders.map(g => t(g === "man" ? "discover.genderMan" : g === "woman" ? "discover.genderWoman" : "discover.genderOther")).join(" · "), remove: () => setDiscoverFilters(p => ({ ...p, genders: [] })) });
+  if (discoverFilters.diets.length) appliedFilterChips.push({ id: "diets", label: discoverFilters.diets.map(d => d === "vegetarian" ? "Vegetariano" : d === "nonVegetarian" ? "No vegetariano" : "Otra alimentación").join(" · "), remove: () => setDiscoverFilters(p => ({ ...p, diets: [] })) });
+  if (discoverFilters.spiritualPaths.length) appliedFilterChips.push({ id: "paths", label: discoverFilters.spiritualPaths.join(" · "), remove: () => setDiscoverFilters(p => ({ ...p, spiritualPaths: [] })) });
+  if (discoverFilters.smoking !== "all") appliedFilterChips.push({ id: "smoking", label: discoverFilters.smoking === "no" ? "No fuma" : discoverFilters.smoking === "yes" ? "Fuma" : "Fuma a veces", remove: () => setDiscoverFilters(p => ({ ...p, smoking: "all" })) });
+  for (const [key, values] of Object.entries(answerFilters)) {
+    if (!values.length) continue;
+    const label = ANSWER_FILTER_FIELDS.find(field => field.key === key)?.label ?? ({ heightMin: "Estatura desde", heightMax: "Estatura hasta", nationalityCode: "Nacionalidad" }[key] ?? key);
+    appliedFilterChips.push({ id: `answer-${key}`, label: `${label}: ${values.join(" · ")}${key.startsWith("height") ? " cm" : ""}`, remove: () => setAnswerFilters(p => ({ ...p, [key]: [] })) });
+  }
+
   useEffect(() => {
     onFilterCountChange?.(activeFilterCount);
   }, [activeFilterCount, onFilterCountChange]);
@@ -1009,35 +1022,9 @@ export const DiscoverContent = forwardRef<
               contentContainerStyle={localStyles.filtersContent}
             >
               <View style={localStyles.filtersSection}>
-                <RangeSlider label={t("discover.age")} minimum={MIN_DISCOVER_AGE} maximum={MAX_DISCOVER_AGE}
-                  lower={discoverFilters.ageMin} upper={discoverFilters.ageMax} unit={locale === "en" ? "years" : "años"}
-                  noLimitLabel={t("discover.noLimit")}
-                  onChange={(lower, upper) => {
-                    const [ageMin, ageMax] = normalizeRangeBounds(lower, upper, MIN_DISCOVER_AGE, MAX_DISCOVER_AGE);
-                    setDiscoverFilters(previous => ({ ...previous, ageMin, ageMax }));
-                  }}
-                  onClear={() => setDiscoverFilters(previous => ({ ...previous, ageMin: null, ageMax: null }))} />
-              </View>
-              {hasLocation ? <View style={localStyles.filtersSection}>
-                <RangeSlider label={t("discover.distance")} minimum={0} maximum={999}
-                  lower={discoverFilters.distanceMinKm} upper={discoverFilters.maxDistanceKm} unit="km"
-                  noLimitLabel={t("discover.noLimit")}
-                  onChange={(lower, upper) => {
-                    const [distanceMinKm, maxDistanceKm] = normalizeRangeBounds(lower, upper, 0, 999);
-                    setDiscoverFilters(previous => ({ ...previous, distanceMinKm, maxDistanceKm }));
-                  }}
-                  onClear={() => setDiscoverFilters(previous => ({ ...previous, distanceMinKm: null, maxDistanceKm: null }))} />
-              </View> : null}
-
-              <View style={localStyles.filtersSection}>
                 {filterSectionTitle(t("discover.gender"))}
-                <Text style={localStyles.filtersSubtitle}>
-                  {locale === "en"
-                    ? "No selection shows everyone."
-                    : "Sin selección, se muestran todos."}
-                </Text>
                 <View style={localStyles.filtersPillRow}>
-                  {(
+{(
                     [
                       { value: "all", label: locale === "en" ? "All" : "Todos" },
                       { value: "man", label: t("discover.genderMan") },
@@ -1046,11 +1033,15 @@ export const DiscoverContent = forwardRef<
                     ] as const
                   ).map((option) => (
                     <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t("discover.gender")}: ${option.label}`}
+                      accessibilityState={{ selected: option.value === "all" ? discoverFilters.genders.length === 0 : discoverFilters.genders.includes(option.value) }}
                       key={option.value}
                       style={[
                         localStyles.filterPill,
+                        { minHeight: 44, paddingHorizontal: 14 },
                         (option.value === "all" ? discoverFilters.genders.length === 0 : discoverFilters.genders.includes(option.value)) &&
-                          localStyles.filterPillActive,
+                          { backgroundColor: vibesTheme.colors.primaryText },
                       ]}
                       onPress={() =>
                         setDiscoverFilters((prev) => {
@@ -1078,8 +1069,30 @@ export const DiscoverContent = forwardRef<
                       </Text>
                     </TouchableOpacity>
                   ))}
+
                 </View>
               </View>
+
+              <View style={localStyles.filtersSection}>
+                <RangeSlider label={t("discover.age")} minimum={MIN_DISCOVER_AGE} maximum={MAX_DISCOVER_AGE}
+                  lower={discoverFilters.ageMin} upper={discoverFilters.ageMax} unit={locale === "en" ? "years" : "años"}
+                  noLimitLabel={t("discover.noLimit")}
+                  onChange={(lower, upper) => {
+                    const [ageMin, ageMax] = normalizeRangeBounds(lower, upper, MIN_DISCOVER_AGE, MAX_DISCOVER_AGE);
+                    setDiscoverFilters(previous => ({ ...previous, ageMin, ageMax }));
+                  }}
+                  onClear={() => setDiscoverFilters(previous => ({ ...previous, ageMin: null, ageMax: null }))} />
+              </View>
+              {hasLocation ? <View style={localStyles.filtersSection}>
+                <RangeSlider label={t("discover.distance")} minimum={0} maximum={999}
+                  lower={discoverFilters.distanceMinKm} upper={discoverFilters.maxDistanceKm} unit="km"
+                  noLimitLabel={t("discover.noLimit")}
+                  onChange={(lower, upper) => {
+                    const [distanceMinKm, maxDistanceKm] = normalizeRangeBounds(lower, upper, 0, 999);
+                    setDiscoverFilters(previous => ({ ...previous, distanceMinKm, maxDistanceKm }));
+                  }}
+                  onClear={() => setDiscoverFilters(previous => ({ ...previous, distanceMinKm: null, maxDistanceKm: null }))} />
+              </View> : null}
 
               <View style={localStyles.filtersSection}>
                 {filterSectionTitle("Estatura (cm)")}
@@ -1358,23 +1371,24 @@ export const DiscoverContent = forwardRef<
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel={`${t("discover.filters")}${activeFilterCount ? `, ${activeFilterCount} activos` : ""}`}
-              style={localStyles.headerFiltersButton}
+              style={[localStyles.headerFiltersButton, { width: "auto", paddingHorizontal: 14, flexDirection: "row", gap: 8, borderRadius: 24, backgroundColor: `${vibesTheme.colors.accentBlue}14` }]}
               activeOpacity={0.84}
               onPress={() => setIsFiltersVisible(true)}
             >
               <Icon name="options-outline" size={28} color={vibesTheme.colors.accentBlue} />
               <DiscoverFiltersGuide userId={session?.user?.id} opened={isFiltersVisible} />
-              {activeFilterCount > 0 ? (
-                <View style={{ position: "absolute", top: -2, right: -2, minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard, borderWidth: 1, borderColor: vibesTheme.colors.background }}>
-                  <Text style={{ color: vibesTheme.colors.primaryText, fontSize: 12, lineHeight: 16, fontFamily: vibesTheme.fonts.bold }}>{activeFilterCount}</Text>
-                </View>
-              ) : null}
+              <Text style={{ color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 14 }}>{t("discover.filters")}{activeFilterCount ? ` · ${activeFilterCount}` : ""}</Text>
             </TouchableOpacity>
           </View>
         ) : null}
 
         <ProfilePhotoPrompt />
-        <View style={localStyles.discoverySections}>
+        {appliedFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>
+          {appliedFilterChips.map(chip => <TouchableOpacity key={chip.id} accessibilityRole="button" accessibilityLabel={`Quitar filtro: ${chip.label}`} onPress={chip.remove} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 40, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14` }}>
+            <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 13 }}>{chip.label}</Text><Icon name="close" size={17} color={vibesTheme.colors.accentBlue} />
+          </TouchableOpacity>)}
+        </ScrollView> : null}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityState={{ selected: showHistory, expanded: showHistory }}
@@ -1388,6 +1402,8 @@ export const DiscoverContent = forwardRef<
             <Icon name="mail-outline" size={18} color={vibesTheme.colors.primaryText} />
             <Text style={localStyles.filtersButtonText}>Solicitudes</Text>
           </TouchableOpacity>
+                  
+
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityState={{ selected: showSpiritualPaths, expanded: showSpiritualPaths }}
@@ -1404,7 +1420,9 @@ export const DiscoverContent = forwardRef<
             <Icon name="leaf-outline" size={18} color={vibesTheme.colors.primaryText} />
             <Text style={localStyles.filtersButtonText}>Camino espiritual</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
+
+
 
         {showSpiritualPaths ? (
           <DiscoverPathCards
@@ -1580,7 +1598,7 @@ const localStyles = StyleSheet.create({
   },
   discoverySections: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "center",
     gap: 8,
     paddingHorizontal: 16,
     paddingBottom: 8,
