@@ -7,7 +7,6 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
 import AppHeader from "../components/AppHeader";
-import VibesHeader from "../src/components/VibesHeader";
 import VibesActionButton from "../components/VibesActionButton";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Icon from "../components/Icon";
@@ -128,12 +127,16 @@ const RestartChallenge = () => {
 
   return (
     <ScreenContainer scroll contentContainerStyle={styles.content}>
-      <AppHeader showBack onBack={() => navigation.goBack()} />
-      <VibesHeader
-        align="left"
+      <AppHeader
+        showBack
+        onBack={() => navigation.goBack()}
         title={t("challengeRestart.screenTitle")}
-        titleStyle={styles.screenTitle}
         subtitle={t("challengeRestart.screenSubtitle")}
+        titleNumberOfLines={2}
+        style={styles.header}
+        contentStyle={styles.headerContent}
+        titleStyle={styles.screenTitle}
+        subtitleStyle={styles.screenSubtitle}
       />
 
       <Text style={styles.label}>{t("challengeRestart.coverLabel")}</Text>
@@ -261,6 +264,18 @@ export default RestartChallenge;
 
 const { colors, fonts, radii, spacing } = vibesTheme;
 const styles = StyleSheet.create({
+  header: {
+    minHeight: 0,
+    alignItems: "flex-start",
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+  headerContent: {
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+    paddingLeft: spacing.sm,
+    paddingRight: 0,
+  },
   screenTitle: {
     flexShrink: 1,
     color: colors.primaryText,
@@ -269,6 +284,13 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     marginTop: 0,
     marginBottom: 0,
+    textAlign: "left",
+  },
+  screenSubtitle: {
+    color: colors.secondaryText,
+    fontFamily: fonts.subtitle,
+    fontSize: 16,
+    lineHeight: 21,
     textAlign: "left",
   },
   inviteButton: {
