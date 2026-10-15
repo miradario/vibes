@@ -1,4 +1,4 @@
-import BackButton from "../components/BackButton";
+import AppHeader from "../components/AppHeader";
 import ProfileSectionTabs from "../components/ProfileSectionTabs";
 import VibesLoader from "../components/VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -9,9 +9,7 @@ import Icon from "../components/Icon";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
-import ProfileQuestionsForm, {
-  ProfileQuestionsHeader,
-} from "../components/onboarding/ProfileQuestionsForm";
+import ProfileQuestionsForm from "../components/onboarding/ProfileQuestionsForm";
 import PrimaryButton from "../components/onboarding/PrimaryButton";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -67,20 +65,23 @@ export default function ProfileQuestions() {
         <View
           style={{
             paddingHorizontal: 24,
-            paddingTop: 8,
+            paddingTop: 6,
+            paddingBottom: 14,
             backgroundColor: vibesTheme.colors.background,
           }}
         >
-          {!firstHomeVisit && (
-            <BackButton accessibilityRole="button"
-              accessibilityLabel="Volver"
-              onPress={() => navigation.goBack()}
-              style={{ width: 48, minHeight: 48, justifyContent: "center" }} />
-          )}
+          <AppHeader
+            title="Sobre mí"
+            subtitle="Todo es opcional. Completá solo lo que quieras compartir."
+            showBack={!firstHomeVisit}
+            onBack={() => navigation.goBack()}
+            style={{ paddingHorizontal: 0, paddingVertical: 0 }}
+            titleStyle={{ fontSize: 26, lineHeight: 34, fontFamily: vibesTheme.fonts.bold }}
+            subtitleStyle={{ fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.regular }}
+          />
           {query.isSuccess && (
             <>
               <ProfileSectionTabs value={group} onChange={setGroup} />
-              <ProfileQuestionsHeader group={group} />
             </>
           )}
         </View>

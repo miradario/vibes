@@ -489,7 +489,7 @@ const Events = ({
   return (
     <ScreenContainer edges={pastOnly ? ["top", "left", "right"] : []} style={styles.bg}>
       <View style={[styles.eventsContainer, localStyles.eventsContainer, pastOnly && { paddingTop: 12 }]}>
-        <View style={localStyles.headerRow}>
+        <View style={[localStyles.headerRow, section === "challenge" && { gap: 6 } ]}>
           {pastOnly ? (
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
@@ -500,7 +500,8 @@ const Events = ({
           {!pastOnly ? <TouchableOpacity
             accessibilityRole="button"
             activeOpacity={0.78}
-            style={localStyles.createButton}
+            style={[localStyles.createButton, section === "challenge" && { width: 44, minHeight: 44, paddingHorizontal: 0, paddingVertical: 0, justifyContent: "center" }]}
+            accessibilityLabel={section === "challenge" ? "Crear desafío" : "Crear evento"}
             onPress={() => {
               if (section === "challenge") {
                 navigation.navigate("CreateChallenge" as never);
@@ -510,10 +511,17 @@ const Events = ({
             }}
           >
             <Icon name="add" size={20} color={vibesTheme.colors.primaryText} style={localStyles.createIcon} />
-            <Text style={localStyles.createButtonText} numberOfLines={1}>
-              Crear
-            </Text>
+            {section === "event" ? <Text style={localStyles.createButtonText} numberOfLines={1}>Crear</Text> : null}
           </TouchableOpacity> : null}
+          {section === "challenge" ? <TouchableOpacity
+            accessibilityRole="button" accessibilityLabel="Ver todos los desafíos"
+            onPress={() => {
+              setStartedOnly(false);
+              setSearch("");
+              if (pastOnly) navigation.navigate("Events" as never, { section: "challenge" } as never);
+            }}
+            style={[localStyles.filterButton, localStyles.headerAction]}
+          ><Icon name="home-outline" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
           {!pastOnly && section === "challenge" ? <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Ya comenzados"
@@ -732,8 +740,7 @@ const Events = ({
               );
             }
             const challengeRow = (
-              <View>
-                <ChallengeFeedCard item={item} joined={joinedChallengeIds.has(item.id)} onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)} />
+              <ChallengeFeedCard item={item} joined={joinedChallengeIds.has(item.id)} onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)} footer={listItem.invitation || (listItem.restartable && viewerId) ? <>
                   {listItem.invitation ? (
                     <View style={localStyles.cardActions}>
                       <Text style={restartStyles.statusText}>
@@ -781,8 +788,7 @@ const Events = ({
                       </TouchableOpacity>
                     </View>
                   ) : null}
-
-              </View>
+              </> : null} />
             );
             return listItem.reveal ? (
               <AccordionReveal>{challengeRow}</AccordionReveal>

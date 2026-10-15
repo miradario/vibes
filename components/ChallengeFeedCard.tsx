@@ -7,15 +7,15 @@ import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-export default function ChallengeFeedCard({ item, joined, onPress }: {
-  item: EventFeedItem; joined: boolean; onPress: () => void;
+export default function ChallengeFeedCard({ item, joined, onPress, footer }: {
+  item: EventFeedItem; joined: boolean; onPress: () => void; footer?: React.ReactNode;
 }) {
   const timeline = getChallengeTimeline(item.startsAt, item.durationDays);
   const completed = Math.min(timeline.totalDays, Math.max(0, Number(item.viewerCompletedDaysCount) || 0));
   const percent = Math.round(completed / timeline.totalDays * 100);
   const count = item.participantCount ?? (Number.parseInt(item.attendees, 10) || 0);
   const upcoming = timeline.status === "upcoming";
-  return <TouchableOpacity style={s.card} onPress={onPress} accessibilityRole="button" accessibilityLabel={`Ver ${item.title}${joined ? `, ${completed} de ${timeline.totalDays} días completados` : ""}`} activeOpacity={0.85}>
+  return <View style={s.card}><TouchableOpacity style={{ gap: 12 }} onPress={onPress} accessibilityRole="button" accessibilityLabel={`Ver ${item.title}${joined ? `, ${completed} de ${timeline.totalDays} días completados` : ""}`} activeOpacity={0.85}>
     <View style={s.row}>
       <MediaImage source={typeof item.image === "string" ? { uri: item.image } : item.image} style={s.photo} />
       <View style={s.copy}>
@@ -30,7 +30,9 @@ export default function ChallengeFeedCard({ item, joined, onPress }: {
       <View style={s.track} accessibilityRole="progressbar" accessibilityLabel="Tu avance" accessibilityValue={{ min: 0, max: 100, now: percent }}><View style={[s.fill, { width: `${percent}%` }]} /></View>
       <Text style={s.percent}>{percent}%</Text>
     </View> : null}
-  </TouchableOpacity>;
+  </TouchableOpacity>
+    {footer}
+  </View>;
 }
 const c = vibesTheme.colors;
 const s = StyleSheet.create({

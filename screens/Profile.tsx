@@ -128,9 +128,7 @@ const Profile = () => {
 
         <View style={localStyles.header}>
           <Text style={localStyles.title}>{t("profile.title")}</Text>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t("profile.configuration")} onPress={() => navigation.navigate("Settings" as never)} style={localStyles.settingsButton}>
-            <Icon name="settings-outline" size={24} color={vibesTheme.colors.primaryText} />
-          </TouchableOpacity>
+
         </View>
 
         <View style={localStyles.profileCard}>
@@ -220,7 +218,6 @@ const colors = vibesTheme.colors;
 const localStyles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4, marginBottom: 16 },
   footer: { alignItems: "center", gap: 8, paddingTop: 24, paddingBottom: 16 },
-  settingsButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 24, backgroundColor: `${colors.primaryText}08` },
   title: { color: colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 25, lineHeight: 32, marginTop: 0, marginBottom: 0 },
   profileCard: { marginBottom: 20 },
   profileRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
