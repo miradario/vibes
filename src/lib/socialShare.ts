@@ -23,6 +23,7 @@ export const shareChallengeInvite = async (challenge: EventFeedItem) => {
     challenge.subtitle || challenge.description || "Un ritual compartido para sostener en comunidad.",
     `Visibilidad: ${formatVisibilityLabel(challenge.visibility)}`,
     challenge.durationDays ? `${challenge.durationDays} días de práctica.` : null,
+    challengeUrl,
   ]
     .filter(Boolean)
     .join("\n");
@@ -40,6 +41,7 @@ export const shareChallengeProgress = async (
     `Día ${input.currentDay}/${input.totalDays}.`,
     input.streak > 0 ? `Racha actual: ${input.streak} días.` : null,
     "Volver a uno mismo también se comparte.",
+    challengeUrl,
   ]
     .filter(Boolean)
     .join("\n");

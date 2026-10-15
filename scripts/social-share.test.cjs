@@ -32,7 +32,7 @@ const loadSocialShare = () => {
   return { socialShare: output, calls };
 };
 
-test("challenge share sends one native URL item to Messages", async () => {
+test("challenge progress share includes its URL in text for every share destination", async () => {
   const { socialShare, calls } = loadSocialShare();
   const challenge = {
     id: "challenge-1",
@@ -54,5 +54,21 @@ test("challenge share sends one native URL item to Messages", async () => {
   const url =
     "https://vibes.gurudevelopers.dev/challenge/challenge-1";
   assert.equal(calls[0].url, url);
-  assert.equal(calls[0].message.includes(url), false);
+  assert.equal(calls[0].message.includes(url), true);
+});
+
+test("challenge invitation includes its URL in text for every share destination", async () => {
+  const { socialShare, calls } = loadSocialShare();
+  const challenge = {
+    id: "challenge-2",
+    type: "challenge",
+    title: "Respirar cada mañana",
+    visibility: "public",
+  };
+
+  await socialShare.shareChallengeInvite(challenge);
+
+  const url = "https://vibes.gurudevelopers.dev/challenge/challenge-2";
+  assert.equal(calls[0].url, url);
+  assert.equal(calls[0].message.includes(url), true);
 });
