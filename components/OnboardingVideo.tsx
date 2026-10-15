@@ -65,7 +65,7 @@ const OnboardingVideo = ({
   );
 
   return (
-    <View style={[localStyles.videoWrap, containerStyle]}>
+    <View style={[localStyles.videoWrap, containerStyle]} pointerEvents="none" importantForAccessibility="no-hide-descendants">
       <Image
         source={media.poster ?? DEFAULT_POSTER}
         style={[
@@ -74,6 +74,9 @@ const OnboardingVideo = ({
         ]}
       />
       <Video
+        focusable={false}
+        accessible={false}
+        useNativeControls={false}
         source={media.source}
         style={localStyles.video}
         resizeMode={resizeMode}

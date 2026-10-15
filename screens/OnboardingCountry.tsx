@@ -1,3 +1,4 @@
+import CancelOnboardingButton from "../components/CancelOnboardingButton";
 import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
@@ -92,7 +93,7 @@ const OnboardingCountry = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader left={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingCountry" />
         </AppHeader>
 

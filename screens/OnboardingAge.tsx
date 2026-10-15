@@ -1,3 +1,4 @@
+import CancelOnboardingButton from "../components/CancelOnboardingButton";
 import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
@@ -43,7 +44,7 @@ const OnboardingAge = () => {
   return (
     <ScreenContainer scroll contentContainerStyle={{ flexGrow: 1 }} edges={["top", "bottom", "left", "right"]}>
       <View style={styles.onboardContainer}>
-        <AppHeader
+        <AppHeader left={<CancelOnboardingButton />}
           style={styles.onboardHeader}
           contentStyle={styles.onboardHeaderProgress}
           hideBackIcon

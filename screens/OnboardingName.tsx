@@ -1,3 +1,4 @@
+import CancelOnboardingButton from "../components/CancelOnboardingButton";
 import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
@@ -62,12 +63,14 @@ const OnboardingName = () => {
           ref={scrollViewRef}
           contentContainerStyle={localStyles.scrollContent}
           automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-          keyboardDismissMode="interactive"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
           keyboardShouldPersistTaps="handled"
+          // Keep the focused input mounted when adjustResize shrinks the viewport.
+          removeClippedSubviews={false}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.onboardContainer}>
-            <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+            <AppHeader left={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
               <OnboardingProgressBar screenName="OnboardingName" />
             </AppHeader>
 

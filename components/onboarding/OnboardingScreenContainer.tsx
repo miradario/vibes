@@ -27,7 +27,9 @@ const OnboardingScreenContainer = ({
     <SafeAreaView style={onboardingStyles.safeArea}>
       <KeyboardAvoidingView
         style={onboardingStyles.keyboard}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        // Android already resizes the activity via windowSoftInputMode=adjustResize.
+        // Applying a second height adjustment can clip and blur the focused input.
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={0}
       >
         <View style={[onboardingStyles.content, contentStyle]}>
@@ -37,8 +39,9 @@ const OnboardingScreenContainer = ({
               style={onboardingStyles.bodyScroll}
               contentContainerStyle={onboardingStyles.body}
               automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-              keyboardDismissMode="interactive"
+              keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
               keyboardShouldPersistTaps="handled"
+              removeClippedSubviews={false}
               showsVerticalScrollIndicator={false}
             >
               {children}

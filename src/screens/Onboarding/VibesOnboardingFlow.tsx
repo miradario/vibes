@@ -424,7 +424,9 @@ const VibesOnboardingFlow = () => {
   };
 
   const scrollInputIntoView = (input: NativeTextInput | null) => {
-    if (!input) return;
+    // Let Android adjustResize keep its focused input visible without a delayed
+    // competing scroll while the keyboard is still changing the viewport.
+    if (Platform.OS !== "ios" || !input) return;
     const node = findNodeHandle(input);
     const scrollResponder = onboardingScrollRef.current?.getScrollResponder?.();
     if (!node || !scrollResponder) return;
@@ -820,6 +822,7 @@ const VibesOnboardingFlow = () => {
           }
         >
           <ProgressHeader
+            cancelDisabled={completeMutation.isPending}
             progress={getProgress(stepIndex)}
             onBack={goBack}
             showBack={stepIndex > 0}

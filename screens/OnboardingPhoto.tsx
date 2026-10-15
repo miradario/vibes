@@ -1,3 +1,4 @@
+import CancelOnboardingButton from "../components/CancelOnboardingButton";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { launchAppCamera } from "../components/AppCamera";
 /** @format */
@@ -162,7 +163,7 @@ const OnboardingPhoto = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader left={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingPhoto" />
         </AppHeader>
         <ScrollView
