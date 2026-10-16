@@ -1040,8 +1040,8 @@ const localStyles = StyleSheet.create({
     marginBottom: 12,
   },
   peopleTitle: {
-    flex: 1, color: vibesTheme.colors.primaryText, fontSize: 22,
-    lineHeight: 28, fontFamily: vibesTheme.fonts.bold,
+    flex: 1, color: vibesTheme.colors.primaryText, fontSize: 19,
+    lineHeight: 25, fontFamily: vibesTheme.fonts.bold,
   },
   peopleLink: {
     minHeight: 34,

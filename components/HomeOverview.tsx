@@ -1,10 +1,7 @@
 import { nextEventSession } from "../src/lib/eventSchedule";
-import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   AppState,
-  useWindowDimensions,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -14,7 +11,6 @@ import ProfileMediaImage from "./ProfileMediaImage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Text } from "./Typography";
 import Icon from "./Icon";
-import AvatarGroup from "./AvatarGroup";
 import VibesLoader from "./VibesLoader";
 import {
   useMyEventGroupsQuery,
@@ -103,8 +99,6 @@ function ChallengeCard({
   showTodayBadge?: boolean;
 }) {
   const navigation = useNavigation<any>();
-  const { width } = useWindowDimensions();
-  const cardWidth = Math.max(140, Math.min(260, (width - 50) / 2));
   const checkins = useChallengeCheckinsQuery(event.id, userId);
   const participant = useChallengeParticipantQuery(event.id, userId);
   useFocusEffect(
@@ -121,187 +115,51 @@ function ChallengeCard({
         timeline.totalDays
       )
     : null;
-  const todayKey = new Date().toISOString().split("T")[0];
-  const checkedInToday =
-    Boolean(participant.data?.checkedInToday) ||
-    Boolean(event.viewerCheckedInToday) ||
-    (checkins.isSuccess && checkins.data.includes(todayKey));
-  const shouldShowTodayBadge =
-    showTodayBadge &&
-    timeline.status === "active" &&
-    !checkins.isLoading &&
-    !participant.isLoading;
-  const status =
-    timeline.status === "upcoming"
-      ? `Empieza en ${timeline.startsInDays} día${
-          timeline.startsInDays === 1 ? "" : "s"
-        }`
-      : timeline.status === "finished"
-      ? progress?.percent === 100
-        ? "Completado"
-        : "Finalizado"
-      : `Día ${timeline.currentDay} de ${timeline.totalDays}`;
+  const status = timeline.status === "upcoming"
+    ? timeline.startsInDays === 1 ? "Empieza mañana" : `Empieza en ${timeline.startsInDays} días`
+    : timeline.status === "finished" ? "Finalizado"
+    : `Día del grupo: ${timeline.currentDay} de ${timeline.totalDays}`;
   return (
-    <TouchableOpacity
-      accessibilityRole="button"
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver desafío ${event.title}`}
       onPress={() => navigation.navigate("ChallengeDetailScreen", { event })}
-      style={[s.challengeCard, { width: cardWidth }]}
-      activeOpacity={0.8}
-    >
-      <View style={s.challengeFrame}>
-        <ProfileMediaImage
-          source={event.image as ImageSourcePropType}
-          style={s.challengeImage}
-          contentFit="cover"
-          transition={180}
-        />
-        <LinearGradient
-          pointerEvents="none"
-          colors={[
-            "rgba(43,43,43,0)",
-            "rgba(43,43,43,0.65)",
-            "rgba(43,43,43,0.94)",
-          ]}
-          locations={[0.18, 0.62, 1]}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={s.challengeStatusPill}>
-          <Text style={[s.meta, s.imageMeta]}>{status}</Text>
-        </View>
-        {shouldShowTodayBadge ? (
-          <View
-            accessibilityLabel={
-              checkedInToday ? "Completado hoy" : "Pendiente hoy"
-            }
-            style={[
-              s.challengeTodayBadge,
-              checkedInToday
-                ? s.challengeTodayBadgeDone
-                : s.challengeTodayBadgePending,
-            ]}
-          >
-            <Icon
-              name={checkedInToday ? "checkmark" : "time-outline"}
-              size={16}
-              color={vibesTheme.colors.primaryText}
-            />
-          </View>
-        ) : null}
-        <View style={s.challengeBody}>
-          <View style={s.cardFooter}>
-            <Text style={[s.cardTitle, s.challengeTitle]} numberOfLines={2}>
-              {event.title}
-            </Text>
-            <Icon name="chevron-forward" size={20} color={ACCENT} />
-          </View>
-          {checkins.isError || participant.isError ? (
-            <Text style={[s.meta, { color: vibesTheme.colors.background }]} numberOfLines={2}>
-              No pudimos actualizar tu progreso.
-            </Text>
-          ) : checkins.isLoading ? (
-            <VibesLoader  style={s.loader} />
-          ) : progress ? (
-            <View style={s.progressLine}>
-              <View
-                accessibilityRole="progressbar"
-                accessibilityValue={{
-                  min: 0,
-                  max: 100,
-                  now: progress.percent,
-                }}
-                style={s.track}
-              >
-                <View style={[s.fill, { width: `${progress.percent}%` }]} />
-              </View>
-              <Text style={s.percent}>{progress.percent}%</Text>
+      style={s.compactCard} activeOpacity={0.8}>
+      <ProfileMediaImage source={typeof event.image === "string" ? { uri: event.image } : event.image as ImageSourcePropType}
+        style={s.challengePhoto} contentFit="cover" transition={180} />
+      <View style={s.compactCopy}>
+        <Text style={s.cardTitle} numberOfLines={2}>{event.title}</Text>
+        <Text style={s.meta}>{status}</Text>
+        {showTodayBadge && timeline.status !== "upcoming" ? (
+          checkins.isError || participant.isError ? <Text style={s.progressCaption}>No pudimos actualizar tu progreso.</Text>
+          : checkins.isLoading ? <VibesLoader size={20} />
+          : progress ? <View style={s.progressLine}>
+            <Text style={s.progressCaption}>Tu avance: {progress.completed} de {progress.total}</Text>
+            <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: progress.percent }} style={s.track}>
+              <View style={[s.fill, { width: `${progress.percent}%` }]} />
             </View>
-          ) : null}
-        </View>
+          </View> : null
+        ) : null}
       </View>
+      <Icon name="chevron-forward" size={20} color={vibesTheme.colors.secondaryText} />
     </TouchableOpacity>
   );
 }
 
 function HomeEventCard({ event }: { event: EventFeedItem }) {
   const navigation = useNavigation<any>();
-  const { width } = useWindowDimensions();
-  const cardWidth = Math.max(140, Math.min(260, (width - 50) / 2));
   const label = getEventDateLabel(nextEventSession(event.schedule, event.startsAt)?.startsAt ?? event.startsAt!);
-  const participantImages = (event.participantPreviewImages ?? []).map(
-    (uri, index) => ({ id: `${event.id}-${index}`, uri })
-  );
-
-  return (
-    <TouchableOpacity
-      accessibilityRole="button"
-      key={event.id}
-      style={[s.eventCard, { width: cardWidth }]}
-      activeOpacity={0.8}
-      onPress={() => navigation.navigate("EventDetail", { event })}
-    >
-      <ProfileMediaImage
-        source={event.image as ImageSourcePropType}
-        style={s.eventImage}
-        contentFit="cover"
-        transition={180}
-      />
-      <LinearGradient
-        pointerEvents="none"
-        colors={[
-          "rgba(43,43,43,0)",
-          "rgba(43,43,43,0.65)",
-          "rgba(43,43,43,0.94)",
-        ]}
-        locations={[0.18, 0.62, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <View style={s.dateBadge}>
-        <Text style={s.dateWeekday}>{label.weekday}</Text>
-        <Text style={s.dateDay}>{label.day}</Text>
-        <Text style={s.dateWeekday}>{label.month}</Text>
-      </View>
-      {participantImages.length ? (
-        <AvatarGroup
-          items={participantImages}
-          size={26}
-          max={3}
-          overlap={8}
-          style={s.eventAvatars}
-        />
-      ) : null}
-      <View style={s.eventBody}>
-        <View style={s.eventCopy}>
-          <Text style={s.cardTitle} numberOfLines={2}>
-            {event.title}
-          </Text>
-          {event.modality === "online" || event.location ? (
-            <View style={s.eventMetaRow}>
-              <Icon
-                name={
-                  event.modality === "online"
-                    ? "videocam-outline"
-                    : "location-outline"
-                }
-                size={16}
-                color={vibesTheme.colors.background}
-              />
-              <Text
-                style={[
-                  s.meta,
-                  { flex: 1, color: vibesTheme.colors.background },
-                ]}
-                numberOfLines={2}
-              >
-                {event.modality === "online"
-                  ? `Online · ${label.time}`
-                  : event.location}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+  return <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver evento ${event.title}`}
+    style={s.compactCard} activeOpacity={0.8} onPress={() => navigation.navigate("EventDetail", { event })}>
+    <ProfileMediaImage source={typeof event.image === "string" ? { uri: event.image } : event.image as ImageSourcePropType}
+      style={s.eventPhoto} contentFit="cover" transition={180} />
+    <View style={s.compactCopy}>
+      <Text style={s.cardTitle} numberOfLines={2}>{event.title}</Text>
+      <Text style={s.eventDate}>{label.day} {label.month.toLowerCase()} · {label.time}</Text>
+      {event.modality === "online" || event.location ? <Text style={s.meta} numberOfLines={1}>
+        {event.modality === "online" ? "Online" : event.location}
+      </Text> : null}
+    </View>
+    <Icon name="chevron-forward" size={20} color={vibesTheme.colors.secondaryText} />
+  </TouchableOpacity>;
 }
 
 export default function HomeOverview({
@@ -439,11 +297,7 @@ export default function HomeOverview({
           </TouchableOpacity>
         )}
         {!isLoadingChallengeRecommendations && challenges.length ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.carousel}
-          >
+          <View style={s.compactList}>
             {challenges.map((event) => (
               <ChallengeCard
                 key={event.id}
@@ -452,7 +306,7 @@ export default function HomeOverview({
                 showTodayBadge={Boolean(homeChallenges.length)}
               />
             ))}
-          </ScrollView>
+          </View>
         ) : null}
       </View>
 
@@ -464,15 +318,11 @@ export default function HomeOverview({
           onPress={visibleEvents.length ? () => openList() : undefined}
         />
         {visibleEvents.length ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.carousel}
-          >
+          <View style={s.compactList}>
             {visibleEvents.map((event) => (
               <HomeEventCard key={event.id} event={event} />
             ))}
-          </ScrollView>
+          </View>
         ) : eventsFeed.isLoading ? (
           <View style={s.eventSuggestionsLoader}>
             <VibesLoader size={48} />
@@ -522,8 +372,8 @@ const s = StyleSheet.create({
   },
   section: {
     flex: 1,
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 19,
+    lineHeight: 25,
     color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.bold,
   },
@@ -555,55 +405,21 @@ const s = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "rgba(244, 163, 64, 0.18)",
   },
-  challengeCard: {
-    width: 174,
+  compactList: { gap: 10 },
+  compactCard: {
+    width: "100%", flexDirection: "row", alignItems: "center", gap: 12,
+    padding: 10, borderRadius: 16, borderWidth: 1,
+    borderColor: `${vibesTheme.colors.secondaryText}24`, backgroundColor: vibesTheme.colors.background,
   },
-  challengeFrame: {
-    minHeight: 170,
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: 14,
-    overflow: "hidden",
-    justifyContent: "flex-end",
-    paddingTop: 28,
-  },
-  challengeBody: { padding: 10, gap: 2 },
-  challengeImage: { ...StyleSheet.absoluteFillObject },
-  challengeStatusPill: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    zIndex: 2,
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-  },
-  challengeTodayBadge: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    zIndex: 2,
-    borderRadius: 999,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  challengeTodayBadgePending: {
-    backgroundColor: vibesTheme.colors.accentMustard,
-  },
-  challengeTodayBadgeDone: {
-    backgroundColor: vibesTheme.colors.accentBlue,
-  },
-  imageMeta: { color: vibesTheme.colors.primaryText },
+  compactCopy: { flex: 1, minWidth: 0, gap: 4 },
+  challengePhoto: { width: 76, height: 76, borderRadius: 12, overflow: "hidden" },
+  eventPhoto: { width: 112, height: 76, borderRadius: 12, overflow: "hidden" },
+  eventDate: { color: vibesTheme.colors.accentBlue, fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.medium },
   cardTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    color: vibesTheme.colors.background,
-    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 16,
+    lineHeight: 22,
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   meta: {
     fontSize: 14,
@@ -617,91 +433,10 @@ const s = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
   },
-  challengeTitle: { flex: 1 },
-  loader: { marginTop: 12, alignSelf: "flex-start" },
-  progressLine: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 9,
-  },
-  track: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "rgba(254, 254, 253, 0.3)",
-    overflow: "hidden",
-  },
-  fill: { height: "100%", backgroundColor: ACCENT, borderRadius: 3 },
-  percent: {
-    minWidth: 33,
-    color: vibesTheme.colors.background,
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: "right",
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  cardFooter: {
-    marginTop: "auto",
-    paddingTop: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  eventCard: {
-    width: 174,
-    minHeight: 170,
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: 14,
-    overflow: "hidden",
-    paddingTop: 58,
-    paddingBottom: 10,
-    justifyContent: "flex-end",
-  },
-  eventImage: { ...StyleSheet.absoluteFillObject },
-  dateBadge: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    width: 42,
-    minHeight: 44,
-    borderRadius: 10,
-    backgroundColor: vibesTheme.colors.background,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 5,
-  },
-  dateWeekday: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 10,
-    lineHeight: 13,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  dateDay: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 21,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  eventCopy: {
-    flex: 1,
-    minWidth: 0,
-    paddingHorizontal: 10,
-    gap: 4,
-  },
-  eventBody: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    paddingTop: 12,
-  },
-  eventMetaRow: {
-    minHeight: 22,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  eventAvatars: { position: "absolute", top: 12, right: 10 },
+  progressLine: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+  progressCaption: { fontSize: 12, lineHeight: 18, color: vibesTheme.colors.secondaryText, flexShrink: 1 },
+  track: { flex: 1, minWidth: 30, height: 6, borderRadius: 3, backgroundColor: `${vibesTheme.colors.secondaryText}1F`, overflow: "hidden" },
+  fill: { height: "100%", backgroundColor: vibesTheme.colors.accentBlue, borderRadius: 3 },
   eventSuggestionsLoader: {
     minHeight: 112,
     alignItems: "center",
