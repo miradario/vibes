@@ -122,6 +122,14 @@ export const onboardingStyles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: vibesTheme.colors.background,
   },
+  birthDateLabel: {
+    textAlign: "center",
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
   primaryButton: {
     minHeight: 56,
     borderRadius: 999,

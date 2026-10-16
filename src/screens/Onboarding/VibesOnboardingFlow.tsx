@@ -554,7 +554,11 @@ const VibesOnboardingFlow = () => {
         <ProfilePhotoPicker uris={photoUris} onChange={handlePhotoChange} />
         <View style={onboardingStyles.fieldGroup}>
           {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
-            Platform.OS === "ios" ? (
+            <>
+            <Text accessibilityRole="header" style={onboardingStyles.birthDateLabel}>
+              {t("vibesOnboarding.profile.birthDatePlaceholder")}
+            </Text>
+            {Platform.OS === "ios" ? (
               <>
                 <TouchableOpacity
                   style={onboardingStyles.inputRow}
@@ -592,7 +596,8 @@ const VibesOnboardingFlow = () => {
             ) : (
               <BirthDateWheel value={birthDate} onChange={setBirthDate}
                 minimumDate={birthDateLimits.minimumDate} maximumDate={birthDateLimits.maximumDate} locale={locale} />
-            )
+            )}
+            </>
           ) : null}
         </View>
       </View>

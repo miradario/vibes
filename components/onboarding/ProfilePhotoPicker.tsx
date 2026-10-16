@@ -1,6 +1,6 @@
 import { launchAppCamera } from "../AppCamera";
 import { vibesTheme } from "../../src/theme/vibesTheme";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -15,6 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import { CameraType } from "expo-image-picker";
 import Icon from "../Icon";
 import AnimatedSheetModal from "../AnimatedSheetModal";
+import PhotoCropEditor, { type CropPhoto } from "./PhotoCropEditor";
 import {
   ONBOARDING_COLORS,
   onboardingStyles,
@@ -76,6 +77,33 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
   const english = locale === "en";
   const [modalVisible, setModalVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [cropPhoto, setCropPhoto] = useState<CropPhoto | null>(null);
+  const cropResolve = useRef<((uri: string | null) => void) | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; cropResolve.current?.(null); cropResolve.current = null; };
+  }, []);
+  const adjustPhoto = async (uri: string) => {
+    const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) =>
+      Image.getSize(uri, (width, height) => resolve({ width, height }), reject));
+    if (!mounted.current) return null;
+    if (dimensions.width <= 0 || dimensions.height <= 0) throw new Error("Invalid photo dimensions");
+    return new Promise<string | null>(resolve => {
+      cropResolve.current = resolve;
+      setCropPhoto({ uri, ...dimensions });
+    });
+  };
+  const editPhoto = async (index: number) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const uri = await adjustPhoto(uris[index]);
+      if (uri && mounted.current) onChange(uris.map((photo, i) => i === index ? uri : photo));
+    } catch {
+      Alert.alert(t("common.error"), english ? "Could not open the photo." : "No pudimos abrir la foto.");
+    } finally { if (mounted.current) setBusy(false); }
+  };
   const pendingSource = useRef<"camera" | "gallery" | null>(null);
   const remaining = 6 - uris.length;
 
@@ -89,7 +117,15 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
         source === "camera"
           ? await pickFromCamera(t)
           : await pickFromGallery(t, remaining);
-      const added = typeof selected === "string" ? [selected] : selected ?? [];
+      const originals = typeof selected === "string" ? [selected] : selected ?? [];
+      const added: string[] = [];
+      for (const uri of originals.slice(0, remaining)) {
+        if (!mounted.current) break;
+        const adjusted = await adjustPhoto(uri);
+        if (!adjusted) break;
+        added.push(adjusted);
+      }
+      if (!mounted.current) return;
       if (added.length) {
         const nextPhotos = Array.from(new Set([...uris, ...added])).slice(0, 6);
         onChange(nextPhotos);
@@ -112,7 +148,7 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
           : "No pudimos abrir tus fotos. Intentá de nuevo."
       );
     } finally {
-      setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   };
   const selectSource = (source: "camera" | "gallery") => {
@@ -165,6 +201,12 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
               >
                 <Image source={{ uri }} style={onboardingStyles.photo} />
               </TouchableOpacity>
+              <View style={styles.photoTools}>
+              <TouchableOpacity accessibilityRole="button"
+                accessibilityLabel={english ? `Adjust photo ${index + 1}` : `Ajustar foto ${index + 1}`}
+                disabled={busy} style={styles.remove} onPress={() => void editPhoto(index)}>
+                <Icon name="create-outline" size={20} color={ONBOARDING_COLORS.text} />
+              </TouchableOpacity>
               <TouchableOpacity
                 accessibilityRole="button"
                 accessibilityLabel={
@@ -182,6 +224,7 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
                   color={ONBOARDING_COLORS.coral}
                 />
               </TouchableOpacity>
+              </View>
             </View>
           ))}
         </ScrollView>
@@ -199,7 +242,7 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
             size={20}
             color={ONBOARDING_COLORS.text}
           />
-          <Text style={styles.rowText}>
+          <Text style={styles.addText}>
             {uris.length > 0
               ? english ? "Add more photos" : "Agregar más fotos"
               : english ? "Add photos" : "Agregar fotos"}
@@ -234,6 +277,12 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
           <Text style={styles.cancelText}>{t("common.cancel")}</Text>
         </TouchableOpacity>
       </AnimatedSheetModal>
+      <PhotoCropEditor photo={cropPhoto} english={english} onDone={uri => {
+        setCropPhoto(null);
+        const resolve = cropResolve.current;
+        cropResolve.current = null;
+        resolve?.(uri);
+      }} />
     </View>
   );
 };
@@ -249,7 +298,8 @@ const styles = StyleSheet.create({
   },
   previews: { width: "100%", flexGrow: 0 },
   previewContent: { gap: 10 },
-  previewItem: { width: 76, alignItems: "center" },
+  previewItem: { width: 96, alignItems: "center" },
+  photoTools: { flexDirection: "row", alignItems: "center" },
   thumbnail: {
     width: 76,
     height: 76,
@@ -267,13 +317,20 @@ const styles = StyleSheet.create({
   },
   add: {
     minHeight: 48,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: "rgba(244, 163, 64, 0.43)",
+    backgroundColor: `${vibesTheme.colors.secondaryText}0C`,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+  },
+  addText: {
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 16,
+    lineHeight: 22,
+    flexShrink: 1,
   },
   sheet: {
     borderRadius: 22,
