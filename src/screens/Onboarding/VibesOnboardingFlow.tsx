@@ -475,6 +475,7 @@ const VibesOnboardingFlow = () => {
 
       const nextCity =
         address?.city ?? address?.subregion ?? address?.region ?? "";
+      const nextNeighborhood = address?.district?.trim() ?? "";
       const nextCountry = address?.country ?? "";
       const nextLocationLabel = getUniqueLocationParts(
         nextCity,
@@ -482,12 +483,14 @@ const VibesOnboardingFlow = () => {
       ).join(", ");
 
       setCity(nextCity);
+      setNeighborhood(nextNeighborhood);
       setCountry(nextCountry);
       setLocationLabel(nextLocationLabel);
       setLatitude(current.coords.latitude);
       setLongitude(current.coords.longitude);
       updateDraft({
         city: nextCity,
+        neighborhood: nextNeighborhood,
         country: nextCountry,
         locationLabel: nextLocationLabel,
         latitude: current.coords.latitude,
@@ -676,6 +679,33 @@ const VibesOnboardingFlow = () => {
         <View style={onboardingStyles.fieldGroup}>
           <View style={onboardingStyles.inputRow}>
             <Icon
+              name="earth-outline"
+              size={20}
+              color={ONBOARDING_COLORS.mustard}
+            />
+            <TextInput
+              ref={countryInputRef}
+              style={onboardingStyles.input}
+              placeholder={t("onboarding.countryPlaceholder")}
+              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              value={country}
+              onChangeText={(value) => {
+                setCountry(value);
+                setLocationLabel("");
+                setLatitude(undefined);
+                setLongitude(undefined);
+                setCitySuggestions([]);
+                locationSearchVersion.current += 1;
+              }}
+              autoCapitalize="words"
+              onFocus={() => scrollInputIntoView(countryInputRef.current)}
+              returnKeyType="next"
+              onSubmitEditing={() => cityInputRef.current?.focus()}
+              blurOnSubmit={false}
+            />
+          </View>
+          <View style={onboardingStyles.inputRow}>
+            <Icon
               name="business-outline"
               size={20}
               color={ONBOARDING_COLORS.mustard}
@@ -713,35 +743,8 @@ const VibesOnboardingFlow = () => {
               onChangeText={setNeighborhood}
               maxLength={100}
               autoCapitalize="words"
-              returnKeyType="next"
-              onFocus={() => scrollInputIntoView(neighborhoodInputRef.current)}
-              onSubmitEditing={() => countryInputRef.current?.focus()}
-              blurOnSubmit={false}
-            />
-          </View>
-          <View style={onboardingStyles.inputRow}>
-            <Icon
-              name="earth-outline"
-              size={20}
-              color={ONBOARDING_COLORS.mustard}
-            />
-            <TextInput
-              ref={countryInputRef}
-              style={onboardingStyles.input}
-              placeholder={t("onboarding.countryPlaceholder")}
-              placeholderTextColor="rgba(110, 110, 110, 0.55)"
-              value={country}
-              onChangeText={(value) => {
-                setCountry(value);
-                setLocationLabel("");
-                setLatitude(undefined);
-                setLongitude(undefined);
-                setCitySuggestions([]);
-                locationSearchVersion.current += 1;
-              }}
-              autoCapitalize="words"
-              onFocus={() => scrollInputIntoView(countryInputRef.current)}
               returnKeyType="done"
+              onFocus={() => scrollInputIntoView(neighborhoodInputRef.current)}
               onSubmitEditing={() => {
                 if (city.trim() || country.trim()) void goNext();
               }}
@@ -774,7 +777,7 @@ const VibesOnboardingFlow = () => {
           <Icon
             name="location"
             size={18}
-            color={ONBOARDING_COLORS.blue}
+            color={ONBOARDING_COLORS.text}
           />
           <Text style={onboardingStyles.locationButtonText}>
             {locationLoading
@@ -863,15 +866,15 @@ const VibesOnboardingFlow = () => {
                 disabled={!canContinue}
                 loading={completeMutation.isPending}
               />
-              {["identity", "interests"].includes(step) ? (
+              {["profileText", "location", "practices", "identity", "interests"].includes(step) ? (
                 <TouchableOpacity
                   onPress={() => {
                     updateDraft(currentDraft);
                     setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("completion"));
                   }}
                   accessibilityRole="button"
-                  disabled={completeMutation.isPending}
-                  style={localStyles.completeLaterButton}
+                  disabled={completeMutation.isPending || !displayName.trim()}
+                  style={[localStyles.completeLaterButton, !displayName.trim() && { opacity: 0.42 }]}
                 >
                   <Text style={localStyles.completeLaterText}>
                     {locale === "en" ? "Complete later" : "Completar después"}
@@ -974,20 +977,19 @@ export default VibesOnboardingFlow;
 
 const localStyles = StyleSheet.create({
   completeLaterButton: {
-    minHeight: 48,
+    minHeight: 56,
     marginTop: 10,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
-    borderRadius: vibesTheme.radii.pill,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
-    backgroundColor: vibesTheme.colors.surface,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   completeLaterText: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 16,
+    lineHeight: 22,
   },
   completionLoadingScreen: {
     flex: 1,

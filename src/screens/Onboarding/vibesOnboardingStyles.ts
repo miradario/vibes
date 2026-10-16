@@ -289,12 +289,10 @@ export const onboardingStyles = StyleSheet.create({
     marginTop: 28,
   },
   locationButton: {
-    minHeight: 56,
+    minHeight: 48,
     marginTop: 14,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
-    backgroundColor: vibesTheme.colors.surface,
+    borderRadius: 16,
+    backgroundColor: `${vibesTheme.colors.secondaryText}1F`,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -306,9 +304,10 @@ export const onboardingStyles = StyleSheet.create({
     opacity: 0.42,
   },
   locationButtonText: {
-    color: vibesTheme.colors.accentBlue,
-    fontFamily: vibesTheme.fonts.medium,
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 16,
+    lineHeight: 22,
   },
   pillGrid: {
     marginTop: 28,
