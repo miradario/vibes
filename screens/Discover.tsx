@@ -69,6 +69,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery, userPreferencesKeys } from "../src/queries/userPreferences.queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
+import { useMatchesQuery } from "../src/queries/matches.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
@@ -501,6 +502,11 @@ export const DiscoverContent = forwardRef<
   // query is still loading or its signed photo URL failed.
   const canViewProfilePhotos = hasProfilePhotos(ownProfileData) || candidates.some(hasProfilePhotos);
   const swipeHistory = useSwipeHistoryCandidatesQuery();
+  const matches = useMatchesQuery();
+  const matchedUserIds = useMemo(
+    () => new Set((matches.data ?? []).map((match) => match.otherUserId)),
+    [matches.data]
+  );
   const incomingLikes = useIncomingLikeCandidatesQuery();
   const swipeMutation = useSwipeMutation();
   const swipeBusy = useRef(false);
@@ -714,7 +720,7 @@ export const DiscoverContent = forwardRef<
         .filter((candidate) =>
           historyMode === "dismissed"
             ? candidate.swipeDirection === "pass"
-            : candidate.swipeDirection === "like"
+            : candidate.swipeDirection === "like" && !matchedUserIds.has(candidate.id)
         )
         .map((candidate) => {
           const profile = mapCandidateToConnectionProfile(candidate, canViewProfilePhotos);
@@ -728,7 +734,7 @@ export const DiscoverContent = forwardRef<
           } as DataT;
         });
     },
-    [historyMode, incomingLikes.data, swipeHistory.data, canViewProfilePhotos]
+    [historyMode, incomingLikes.data, swipeHistory.data, canViewProfilePhotos, matchedUserIds]
   );
   const waitingForProfiles = showHistory ? (historyMode === "incoming" ? incomingLikes.isLoading : swipeHistory.isLoading) : isLoading;
   const [profilesTimedOut, setProfilesTimedOut] = useState(false);
