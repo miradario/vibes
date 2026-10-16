@@ -1,7 +1,6 @@
 import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
 import { matchesSavedDiscoverExtras } from "../src/lib/discoverSavedFilters";
 import PhotoViewer from "../components/PhotoViewer";
-import { LinearGradient } from "expo-linear-gradient";
 import ProfileMediaImage from "../components/ProfileMediaImage";
 import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
@@ -217,9 +216,11 @@ const formatDistanceLabel = (distanceKm: number | null) => {
 };
 
 const getSuggestionHint = (profile: DataT) => {
-  const firstPreference = profile.preferences?.[0]?.split(":").pop()?.trim();
-  if (firstPreference) return firstPreference;
-  if (profile.spiritualPath?.[0]) return profile.spiritualPath[0];
+  const interests = Array.from(new Set([
+    ...(profile.spiritualPath ?? []),
+    ...(profile.preferences ?? []).map(value => value.split(":").pop()?.trim() ?? ""),
+  ].filter(Boolean))).slice(0, 2);
+  if (interests.length) return interests.join(" · ");
   if (profile.location) return profile.location;
   return "Afinidad con vos";
 };
@@ -277,15 +278,16 @@ function HomePeopleSuggestions({
           >
             <ProfileMediaImage
               source={profile.avatarUri ? { uri: profile.avatarUri } : profile.image}
-              style={StyleSheet.absoluteFillObject}
+              style={localStyles.personPhoto}
             />
-            <LinearGradient pointerEvents="none" colors={["rgba(43, 43, 43, 0)", "rgba(43, 43, 43, 0.65)", "rgba(43, 43, 43, 0.94)"]} locations={[0.5, 0.85, 1]} style={StyleSheet.absoluteFillObject} />
+            <View style={localStyles.personInfo}>
             <Text style={localStyles.personName} numberOfLines={1}>
               {profile.name.split(" ")[0]}{profile.age ? `, ${profile.age}` : ""}
             </Text>
             <Text style={localStyles.personHint} numberOfLines={1}>
               {getSuggestionHint(profile)}
             </Text>
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>}
@@ -1038,8 +1040,8 @@ const localStyles = StyleSheet.create({
     marginBottom: 12,
   },
   peopleTitle: {
-    flex: 1, color: vibesTheme.colors.primaryText, fontSize: 22,
-    lineHeight: 28, fontFamily: vibesTheme.fonts.bold,
+    flex: 1, color: vibesTheme.colors.primaryText, fontSize: 19,
+    lineHeight: 25, fontFamily: vibesTheme.fonts.bold,
   },
   peopleLink: {
     minHeight: 34,
@@ -1065,19 +1067,15 @@ const localStyles = StyleSheet.create({
   },
   skeletonText: { opacity: 0 },
   personCard: {
-    width: 136,
-    minHeight: 184,
+    width: 152,
     overflow: "hidden",
-    justifyContent: "flex-end",
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: `${vibesTheme.colors.secondaryText}24`,
     borderRadius: 14,
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 12,
-    paddingTop: 108,
-    paddingBottom: 12,
-    alignItems: "center",
   },
+  personPhoto: { width: "100%", height: 152 },
+  personInfo: { paddingHorizontal: 12, paddingVertical: 10 },
   personAddIcon: {
     backgroundColor: vibesTheme.colors.background,
     borderRadius: 16,
@@ -1089,16 +1087,15 @@ const localStyles = StyleSheet.create({
   },
   personName: {
     alignSelf: "stretch",
-    marginTop: 12,
-    color: vibesTheme.colors.background,
+    color: vibesTheme.colors.primaryText,
     fontSize: 17,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   personHint: {
     alignSelf: "stretch",
     marginTop: 2,
-    color: vibesTheme.colors.background,
+    color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 18,
     fontFamily: vibesTheme.fonts.regular,
