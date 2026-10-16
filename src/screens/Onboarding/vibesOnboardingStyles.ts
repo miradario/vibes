@@ -246,6 +246,13 @@ export const onboardingStyles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(43, 43, 43, 0.66)",
   },
+  nativeBirthDatePicker: {
+    width: "100%",
+    height: 216,
+    minHeight: 216,
+    flexShrink: 0,
+    alignSelf: "center",
+  },
   fieldGroup: {
     width: "100%",
     marginTop: 30,

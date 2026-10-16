@@ -5,7 +5,6 @@ import {
   Alert,
   Platform,
   Image,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -119,6 +118,9 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange }: ProfilePhotoP
     } finally { if (mounted.current) setBusy(false); }
   };
   const pendingSource = useRef<"camera" | "gallery" | null>(null);
+  const [gridWidth, setGridWidth] = useState(0);
+  const [photoMenuIndex, setPhotoMenuIndex] = useState<number | null>(null);
+  const pendingEditIndex = useRef<number | null>(null);
   const remaining = 6 - uris.length;
 
   const choosePhoto = async () => {
@@ -145,16 +147,7 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange }: ProfilePhotoP
       if (added.length) {
         const nextPhotos = Array.from(new Set([...uris, ...added])).slice(0, 6);
         onChange(nextPhotos, originalsByUri);
-        if (nextPhotos.length < 6) {
-          Alert.alert(
-            english ? "Photo added" : "Foto agregada",
-            english ? "Would you like to add another photo?" : "¿Querés agregar otra foto?",
-            [
-              { text: english ? "Continue" : "Continuar", style: "cancel" },
-              { text: english ? "Add another photo" : "Agregar otra foto", onPress: () => setModalVisible(true) },
-            ]
-          );
-        }
+
       }
     } catch {
       Alert.alert(
@@ -174,97 +167,69 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange }: ProfilePhotoP
 
   return (
     <View style={styles.container}>
-      <View style={onboardingStyles.photoPickerWrap}>
-        <View style={onboardingStyles.photoButton}>
-          {uris[0] ? (
-            <Image source={{ uri: uris[0] }} style={onboardingStyles.photo} resizeMode="contain" />
-          ) : (
-            <Icon
-              name="person-outline"
-              size={42}
-              color={ONBOARDING_COLORS.muted}
-            />
-          )}
-        </View>
-      </View>
-      <Text style={styles.hint}>
-        {english
-          ? `${uris.length}/6 photos · Tap a photo to make it primary`
-          : `${uris.length}/6 fotos · Tocá una foto para hacerla principal`}
-      </Text>
-      {uris.length > 0 && (
-        <ScrollView
-          horizontal
-          style={styles.previews}
-          contentContainerStyle={styles.previewContent}
-          showsHorizontalScrollIndicator={false}
-        >
-          {uris.map((uri, index) => (
-            <View key={uri} style={styles.previewItem}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel={
-                  english
-                    ? `Make photo ${index + 1} primary`
-                    : `Hacer principal la foto ${index + 1}`
-                }
-                accessibilityState={{ selected: index === 0 }}
-                disabled={busy}
-                onPress={() =>
-                  onChange([uri, ...uris.filter((photo) => photo !== uri)])
-                }
-                style={[styles.thumbnail, index === 0 && styles.primary]}
-              >
-                <Image source={{ uri }} style={onboardingStyles.photo} resizeMode="contain" />
-              </TouchableOpacity>
-              <View style={styles.photoTools}>
-              <TouchableOpacity accessibilityRole="button"
-                accessibilityLabel={english ? `Adjust photo ${index + 1}` : `Ajustar foto ${index + 1}`}
-                disabled={busy} style={styles.remove} onPress={() => void editPhoto(index)}>
-                <Icon name="create-outline" size={20} color={ONBOARDING_COLORS.text} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel={
-                  english
-                    ? `Remove photo ${index + 1}`
-                    : `Quitar foto ${index + 1}`
-                }
-                disabled={busy}
-                style={styles.remove}
-                onPress={() => onChange(uris.filter((photo) => photo !== uri))}
-              >
-                <Icon
-                  name="trash-outline"
-                  size={20}
-                  color={ONBOARDING_COLORS.coral}
-                />
-              </TouchableOpacity>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      )}
-      {remaining > 0 && (
-        <TouchableOpacity
-          accessibilityRole="button"
-          disabled={busy}
-          style={styles.add}
-          onPress={() => setModalVisible(true)}
-          activeOpacity={0.8}
-        >
-          <Icon
-            name="images-outline"
-            size={20}
-            color={ONBOARDING_COLORS.text}
-          />
-          <Text style={styles.addText}>
-            {uris.length > 0
-              ? english ? "Add more photos" : "Agregar más fotos"
-              : english ? "Add photos" : "Agregar fotos"}
-          </Text>
+      <View style={styles.mainPhotoWrap}>
+        <TouchableOpacity style={styles.mainPhoto} accessibilityRole="button"
+          accessibilityLabel={uris[0] ? (english ? "Adjust profile photo" : "Ajustar foto de perfil") : (english ? "Add profile photo" : "Agregar foto de perfil")}
+          disabled={busy} activeOpacity={0.8}
+          onPress={() => uris[0] ? void editPhoto(0) : setModalVisible(true)}>
+          {uris[0] ? <Image source={{ uri: uris[0] }} style={onboardingStyles.photo} resizeMode="contain" />
+            : <Icon name="person-outline" size={48} color={vibesTheme.colors.secondaryText} />}
         </TouchableOpacity>
-      )}
+        {uris[0] ? <TouchableOpacity accessibilityRole="button" accessibilityLabel={english ? "Edit main photo" : "Editar foto principal"}
+          disabled={busy} style={styles.mainEdit} onPress={() => void editPhoto(0)}>
+          <Icon name="create-outline" size={20} color={vibesTheme.colors.primaryText} />
+        </TouchableOpacity> : null}
+      </View>
+      {uris[0] ? <View style={styles.mainLabel}><Text style={styles.mainLabelText}>{english ? "Main photo" : "Foto principal"}</Text></View> : null}
+      <View style={styles.gridHeading}>
+        <Text style={styles.gridTitle}>{english ? "Your photos" : "Tus fotos"}</Text>
+        <Text style={styles.gridCount}>{english ? `${uris.length} of 6` : `${uris.length} de 6`}</Text>
+      </View>
+      <View style={styles.grid} onLayout={event => setGridWidth(event.nativeEvent.layout.width)}>
+        {Array.from({ length: 6 }, (_, index) => {
+          const uri = uris[index];
+          return <View key={index} style={[styles.tile, { width: gridWidth ? (gridWidth - 16) / 3 : 92 }, uri && index === 0 && styles.selectedTile]}>
+            <TouchableOpacity style={styles.tileTouch} disabled={busy} activeOpacity={0.8} accessibilityRole="button"
+              accessibilityState={{ selected: Boolean(uri && index === 0) }}
+              accessibilityLabel={uri ? (english ? `Make photo ${index + 1} primary` : `Hacer principal la foto ${index + 1}`) : (english ? "Add photo" : "Agregar foto")}
+              onPress={() => uri ? onChange([uri, ...uris.filter(photo => photo !== uri)]) : setModalVisible(true)}>
+              {uri ? <Image source={{ uri }} style={onboardingStyles.photo} resizeMode="contain" />
+                : <View style={styles.addCircle}><Icon name="add" size={25} color={vibesTheme.colors.primaryText} /></View>}
+            </TouchableOpacity>
+            {uri ? <>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={english ? `Photo ${index + 1} options` : `Opciones de foto ${index + 1}`}
+                disabled={busy} style={styles.photoMenu} onPress={() => setPhotoMenuIndex(index)}>
+                <Icon name="ellipsis-vertical" size={19} color={vibesTheme.colors.primaryText} />
+              </TouchableOpacity>
+              {index === 0 ? <View pointerEvents="none" style={styles.selectedBadge}><Icon name="checkmark" size={16} color={vibesTheme.colors.primaryText} /></View> : null}
+            </> : null}
+          </View>;
+        })}
+      </View>
+      <Text style={styles.hint}>{english ? "Tap a photo to make it primary. Photos are optional." : "Tocá una foto para hacerla principal. Son opcionales."}</Text>
+      {remaining > 0 ? <TouchableOpacity accessibilityRole="button" disabled={busy} style={styles.add}
+        onPress={() => setModalVisible(true)} activeOpacity={0.8}>
+        <Icon name="images-outline" size={22} color={vibesTheme.colors.primaryText} />
+        <Text style={styles.addText}>{english ? "Add photos" : "Agregar fotos"}</Text>
+      </TouchableOpacity> : null}
+      <AnimatedSheetModal visible={photoMenuIndex !== null} onClose={() => setPhotoMenuIndex(null)} sheetStyle={styles.sheet}
+        onClosed={() => {
+          const index = pendingEditIndex.current; pendingEditIndex.current = null;
+          if (index !== null) void editPhoto(index);
+        }}>
+        <TouchableOpacity accessibilityRole="button" style={styles.row} onPress={() => {
+          pendingEditIndex.current = photoMenuIndex; setPhotoMenuIndex(null);
+        }}><Text style={styles.rowText}>{english ? "Edit photo" : "Editar foto"}</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" style={styles.row} onPress={() => {
+          const uri = photoMenuIndex === null ? null : uris[photoMenuIndex];
+          if (uri) onChange([uri, ...uris.filter(photo => photo !== uri)]);
+          setPhotoMenuIndex(null);
+        }}><Text style={styles.rowText}>{english ? "Make primary" : "Hacer principal"}</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" style={styles.row} onPress={() => {
+          onChange(uris.filter((_, index) => index !== photoMenuIndex)); setPhotoMenuIndex(null);
+        }}><Text style={styles.cancelText}>{english ? "Remove photo" : "Quitar foto"}</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" style={styles.cancel} onPress={() => setPhotoMenuIndex(null)}><Text style={styles.rowText}>{t("common.cancel")}</Text></TouchableOpacity>
+      </AnimatedSheetModal>
       <AnimatedSheetModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -305,6 +270,21 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange }: ProfilePhotoP
 
 const styles = StyleSheet.create({
   container: { width: "100%", alignItems: "center" },
+  mainPhotoWrap: { width: 156, height: 156, position: "relative" },
+  mainPhoto: { width: 156, height: 156, borderRadius: 78, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, backgroundColor: `${vibesTheme.colors.secondaryText}08`, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  mainEdit: { position: "absolute", right: -2, bottom: -2, width: 44, height: 44, borderRadius: 22, backgroundColor: vibesTheme.colors.surface, borderWidth: 1, borderColor: `${vibesTheme.colors.accentBlue}60`, alignItems: "center", justifyContent: "center" },
+  mainLabel: { backgroundColor: `${vibesTheme.colors.accentBlue}14`, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 6, marginTop: 6 },
+  mainLabelText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.medium, fontSize: 13, lineHeight: 18 },
+  gridHeading: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 14, marginBottom: 10 },
+  gridTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 18, lineHeight: 24 },
+  gridCount: { color: vibesTheme.colors.secondaryText, fontSize: 14 },
+  grid: { width: "100%", flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  tile: { aspectRatio: 1, borderRadius: 14, borderWidth: 2, borderColor: "transparent", backgroundColor: `${vibesTheme.colors.secondaryText}0C`, position: "relative" },
+  selectedTile: { borderColor: vibesTheme.colors.accentBlue },
+  tileTouch: { flex: 1, borderRadius: 12, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  addCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: `${vibesTheme.colors.secondaryText}24`, alignItems: "center", justifyContent: "center" },
+  photoMenu: { position: "absolute", top: 0, right: 0, width: 44, height: 44, borderRadius: 22, backgroundColor: `${vibesTheme.colors.surface}E6`, alignItems: "center", justifyContent: "center" },
+  selectedBadge: { position: "absolute", bottom: 3, right: 3, width: 25, height: 25, borderRadius: 13, backgroundColor: vibesTheme.colors.accentBlue, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: vibesTheme.colors.surface },
   hint: {
     color: ONBOARDING_COLORS.muted,
     textAlign: "center",
@@ -312,26 +292,9 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginVertical: 8,
   },
-  previews: { width: "100%", flexGrow: 0 },
-  previewContent: { gap: 10 },
-  previewItem: { width: 96, alignItems: "center" },
-  photoTools: { flexDirection: "row", alignItems: "center" },
-  thumbnail: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: ONBOARDING_COLORS.line,
-  },
-  primary: { borderColor: ONBOARDING_COLORS.mustard },
-  remove: {
-    minWidth: 48,
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   add: {
+    width: "100%",
+    justifyContent: "center",
     minHeight: 48,
     paddingHorizontal: 20,
     paddingVertical: 12,

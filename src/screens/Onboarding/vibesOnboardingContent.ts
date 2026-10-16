@@ -1,7 +1,8 @@
 export const VIBES_ONBOARDING_STEPS = [
-  "purpose",
-  "profile",
   "profileText",
+  "profile",
+  "continueChoice",
+  "purpose",
   "location",
   "practices",
   "identity",
@@ -98,14 +99,19 @@ export const STEP_COPY: Record<
     subtitle: "Elegí lo que más resuene con vos",
     button: "Siguiente",
   },
+  continueChoice: {
+    title: "¿Querés seguir completando tu perfil?",
+    subtitle: "Ya tenés lo necesario para entrar. Podés completar el resto ahora o más adelante desde tu perfil.",
+    button: "Seguir completando",
+  },
   profile: {
     title: "Tu foto de perfil",
-    subtitle: "Elegí cómo querés mostrarte",
+    subtitle: "Podés agregar una foto ahora o hacerlo más adelante",
     button: "Siguiente",
   },
   profileText: {
     title: "Contanos sobre vos",
-    subtitle: "Así vas a poder mostrarte tal como sos",
+    subtitle: "Completá tu nombre y apellido. La descripción es opcional",
     button: "Siguiente",
   },
   location: {

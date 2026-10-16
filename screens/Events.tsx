@@ -430,7 +430,6 @@ const Events = ({
     if (startedOnly) return sortChallengesByStartsAt([...joinedChallengeItems, ...generalChallengeItems]).map(item => ({ kind: "feed" as const, item }));
     return [
       ...(joinedChallengeItems.length ? [{ kind: "section" as const, id: "active-challenges", title: "En curso" }, ...joinedChallengeItems.map(item => ({ kind: "feed" as const, item }))] : []),
-      ...(generalChallengeItems.length ? [{ kind: "section" as const, id: "general-challenges", title: "Desafíos vigentes", subtitle: "Todavía no te sumaste" }, ...sortChallengesByStartsAt(generalChallengeItems).map(item => ({ kind: "feed" as const, item }))] : []),
       ...(upcoming.length ? [{ kind: "section" as const, id: "upcoming-challenges", title: "Empieza pronto" }, ...upcoming.map(item => ({ kind: "feed" as const, item }))] : []),
     ];
   }, [
@@ -610,6 +609,10 @@ const Events = ({
                         : "No encontramos eventos"
                     : section === "event" && expiredEventItems.length > 0
                       ? "No hay eventos vigentes"
+                    : section === "challenge" && !startedOnly && challengeTab === "public" && generalChallengeItems.length > 0
+                      ? "No hay desafíos próximos"
+                    : section === "challenge" && startedOnly
+                      ? "No hay desafíos ya comenzados"
                     : section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0)
                       ? "No hay desafíos vigentes"
                     : section === "challenge"
@@ -625,6 +628,10 @@ const Events = ({
                       ? "Probá con otro nombre, lugar o fecha."
                     : section === "event" && expiredEventItems.length > 0
                       ? pastOnly ? "Probá con otros filtros." : "Podés consultar el historial en Eventos pasados."
+                    : section === "challenge" && !startedOnly && challengeTab === "public" && generalChallengeItems.length > 0
+                      ? "Encontrá los desafíos vigentes en Ya comenzados, junto al botón Crear."
+                    : section === "challenge" && startedOnly
+                      ? "Los desafíos aparecerán acá cuando llegue su fecha de inicio."
                     : section === "challenge" && upcomingGeneralChallengeItems.length > 0
                       ? "Los próximos están guardados abajo para que te sumes cuando quieras."
                     : section === "challenge" && finishedChallengeItems.length > 0

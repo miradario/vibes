@@ -1,3 +1,4 @@
+import { hasRegisteredProfile, isAccountAlreadyRegistered } from "../src/auth/signupRouting";
 import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
@@ -108,6 +109,14 @@ const Signup = () => {
     }
   }, [confirmedBirthDateParam, draft.birthDate, updateDraft]);
 
+  const openExistingAccountLogin = (accountEmail = email) => {
+    setPassword("");
+    navigation.dispatch(CommonActions.reset({
+      index: 0,
+      routes: [{ name: "Login", params: { email: accountEmail.trim().toLowerCase(), accountExists: true } }],
+    }));
+  };
+
   const handleSignup = async () => {
     if (!acceptedTerms) {
       setError(t("authTerms.required"));
@@ -136,6 +145,10 @@ const Signup = () => {
         email: email.trim().toLowerCase(),
         password,
       });
+      if (authResult.session?.user?.id && await hasRegisteredProfile(authResult.session.user.id)) {
+        openExistingAccountLogin(authResult.session.user.email ?? email);
+        return;
+      }
       if (confirmedBirthDate) {
         updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
       }
@@ -153,14 +166,11 @@ const Signup = () => {
       );
     } catch (e) {
       const rawMessage = e instanceof Error ? e.message : "";
-      const normalizedMessage = rawMessage.toLowerCase();
-      const msg =
-        normalizedMessage.includes("already registered") ||
-        normalizedMessage.includes("already exists") ||
-        normalizedMessage.includes("user already")
-          ? t("signup.accountExists")
-          : rawMessage || t("signup.failed");
-      setError(msg || t("signup.failed"));
+      if (isAccountAlreadyRegistered(e)) {
+        openExistingAccountLogin();
+        return;
+      }
+      setError(rawMessage || t("signup.failed"));
     }
   };
 
@@ -173,6 +183,10 @@ const Signup = () => {
           ? await googleLoginMutation.mutateAsync()
           : await appleLoginMutation.mutateAsync();
       if (session?.user?.id) {
+        if (await hasRegisteredProfile(session.user.id)) {
+          openExistingAccountLogin(session.user.email ?? email);
+          return;
+        }
         if (confirmedBirthDate) {
           updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
         }
@@ -184,6 +198,10 @@ const Signup = () => {
         );
       }
     } catch (e) {
+      if (isAccountAlreadyRegistered(e)) {
+        openExistingAccountLogin();
+        return;
+      }
       const fallback =
         provider === "google" ? t("signup.googleFailed") : t("signup.appleFailed");
       const msg = e instanceof Error ? e.message : fallback;
@@ -237,7 +255,7 @@ const Signup = () => {
           contentContainerStyle={localStyles.formScrollContent}
         >
           <View style={[styles.loginCard, localStyles.loginCard]}>
-            <QuietBrandHeader title={t("signup.title")} subtitle={t("signup.subtitle")} />
+            <QuietBrandHeader compact title={t("signup.title")} />
 
             <GoogleAuthButton
               label={
@@ -254,6 +272,7 @@ const Signup = () => {
             {isAppleAuthAvailable ? (
               <View style={localStyles.appleButton}>
                 <AppleAuthButton
+                  compact
                   type={
                     AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
                   }
@@ -460,6 +479,9 @@ const localStyles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   googleButton: {
+    minHeight: 44,
+    height: 44,
+    borderRadius: 18,
     marginTop: 14,
   },
   appleButton: {

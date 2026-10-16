@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
@@ -55,11 +55,13 @@ const isInvalidCredentialsError = (error: unknown) => {
 const Login = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
-  const [email, setEmail] = useState("");
+  const route = useRoute();
+  const loginParams = route.params as { email?: string; accountExists?: boolean } | undefined;
+  const [email, setEmail] = useState(loginParams?.email ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(loginParams?.accountExists ? t("signup.accountExists") : null);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const [showGoogleLoginDialog, setShowGoogleLoginDialog] = useState(false);
   const loginMutation = useLoginMutation();
@@ -71,6 +73,13 @@ const Login = () => {
   const appleLoading = appleLoginMutation.isPending;
   const resetPasswordLoading = resetPasswordMutation.isPending;
   const passwordInputRef = useRef<TextInput | null>(null);
+  React.useEffect(() => {
+    if (!loginParams?.accountExists) return;
+    setEmail(loginParams.email ?? "");
+    setPassword("");
+    setError(t("signup.accountExists"));
+  }, [loginParams?.accountExists, loginParams?.email, t]);
+
 
   React.useEffect(() => {
     if (Platform.OS !== "ios") return;

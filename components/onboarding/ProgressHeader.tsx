@@ -1,3 +1,4 @@
+import { vibesTheme } from "../../src/theme/vibesTheme";
 import BackButton from "../BackButton";
 import CancelOnboardingButton from "../CancelOnboardingButton";
 import React from "react";
@@ -10,6 +11,7 @@ import {
 
 type ProgressHeaderProps = {
   progress: number;
+  intro?: boolean;
   onBack: () => void;
   showBack?: boolean;
   hideBackIcon?: boolean;
@@ -18,6 +20,7 @@ type ProgressHeaderProps = {
 
 const ProgressHeader = ({
   progress,
+  intro = false,
   onBack,
   showBack = true,
   hideBackIcon = false,
@@ -30,12 +33,13 @@ const ProgressHeader = ({
         style={styles.backButton}
         accessibilityRole="button" />
     ) : (
-      <View style={styles.backSpacer} />
+      intro ? null : <View style={styles.backSpacer} />
     )}
     <View style={styles.track}>
       <View
         style={[
           styles.fill,
+          intro && { backgroundColor: vibesTheme.colors.accentBlue },
           { width: `${Math.max(0, Math.min(progress, 1)) * 100}%` },
         ]}
       />

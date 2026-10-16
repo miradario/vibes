@@ -147,8 +147,8 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
   },
-  card: { width: "100%", marginTop: -8 },
-  nativeDatePicker: { alignSelf: "center" },
+  card: { width: "100%", marginTop: -8, flexShrink: 0 },
+  nativeDatePicker: { alignSelf: "center", width: "100%", height: 216, minHeight: 216, flexShrink: 0 },
   error: {
     marginTop: 10,
     color: vibesTheme.colors.accentBlue,

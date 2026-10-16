@@ -155,6 +155,8 @@ const runOnboardingStep = async <T>(
 export type OnboardingDraft = {
   profileAnswers?: ProfileAnswers;
   displayName?: string;
+  firstName?: string;
+  lastName?: string;
   age?: string;
   ageRange?: string;
   birthDate?: string;
