@@ -72,6 +72,7 @@ import CustomTabBar from "./components/CustomTabBar";
 import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboarding";
 import { I18nProvider, useI18n } from "./src/i18n";
 import { PushNotificationsBootstrap } from "./src/notifications/pushNotifications";
+import { startAppOpenTracking } from "./src/lib/appOpens";
 import { vibesTheme } from "./src/theme/vibesTheme";
 import {
   fetchEventFeedItemById,
@@ -157,6 +158,7 @@ const CommunityRuntime = () => {
 };
 const AppNavigator = () => {
   React.useEffect(() => startRemoteConfig(), []);
+  React.useEffect(() => startAppOpenTracking(), []);
   const { t } = useI18n();
   const [vibiRoute, setVibiRoute] = React.useState({ name: "Startup", hasBottomBar: false });
   const syncVibiRoute = React.useCallback(() => {
