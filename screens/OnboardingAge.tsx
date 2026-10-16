@@ -3,9 +3,10 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useMemo, useState } from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { Text } from "../components/Typography";
 import BirthDateWheel from "../components/BirthDateWheel";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import ScreenContainer from "../components/ScreenContainer";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../assets/styles";
@@ -54,8 +55,24 @@ const OnboardingAge = () => {
         <Text style={styles.onboardTitle}>{t("onboarding.ageTitle")}</Text>
         <Text style={styles.onboardSubtitle}>{t("onboarding.ageSubtitle")}</Text>
 
-        <BirthDateWheel value={birthDate} onChange={setBirthDate}
-          minimumDate={minDate} maximumDate={maxDate} locale={locale} />
+        {Platform.OS === "ios" ? (
+          <DateTimePicker
+            value={birthDate ?? maxDate}
+            mode="date"
+            display="spinner"
+            themeVariant="light"
+            textColor={vibesTheme.colors.primaryText}
+            locale={locale === "en" ? "en-US" : "es-AR"}
+            minimumDate={minDate}
+            maximumDate={maxDate}
+            onChange={(_event, date) => {
+              if (date) setBirthDate(date);
+            }}
+          />
+        ) : (
+          <BirthDateWheel value={birthDate} onChange={setBirthDate}
+            minimumDate={minDate} maximumDate={maxDate} locale={locale} />
+        )}
 
         {showUnderageError ? (
           <Text style={localStyles.ageError}>
