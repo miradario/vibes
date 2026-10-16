@@ -115,7 +115,8 @@ export const onboardingStyles = StyleSheet.create({
     maxWidth: 280,
   },
   footer: {
-    marginTop: 24,
+    flexShrink: 0,
+    marginTop: 12,
     marginHorizontal: isCompactOnboardingScreen ? 18 : 22,
     paddingTop: 10,
     paddingBottom: 0,

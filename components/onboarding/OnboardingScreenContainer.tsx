@@ -82,8 +82,8 @@ const OnboardingScreenContainer = ({
               showsVerticalScrollIndicator={false}
             >
               {children}
-              {footer ? <View style={onboardingStyles.footer}>{footer}</View> : null}
             </ScrollView>
+            {footer ? <View style={onboardingStyles.footer}>{footer}</View> : null}
           </View>
         </View>
       </KeyboardContainer>
