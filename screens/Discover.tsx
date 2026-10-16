@@ -1368,17 +1368,18 @@ export const DiscoverContent = forwardRef<
         {showHeader ? (
           <View style={localStyles.header}>
             <Text style={localStyles.title}>{t("discover.title")}</Text>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={`${t("discover.filters")}${activeFilterCount ? `, ${activeFilterCount} activos` : ""}`}
-              style={[localStyles.headerFiltersButton, { width: "auto", paddingHorizontal: 14, flexDirection: "row", gap: 8, borderRadius: 24, backgroundColor: `${vibesTheme.colors.accentBlue}14` }]}
-              activeOpacity={0.84}
-              onPress={() => setIsFiltersVisible(true)}
-            >
-              <Icon name="options-outline" size={28} color={vibesTheme.colors.accentBlue} />
-              <DiscoverFiltersGuide userId={session?.user?.id} opened={isFiltersVisible} />
-              <Text style={{ color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 14 }}>{t("discover.filters")}{activeFilterCount ? ` · ${activeFilterCount}` : ""}</Text>
-            </TouchableOpacity>
+            <DiscoverFiltersGuide userId={session?.user?.id} opened={isFiltersVisible}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`${t("discover.filters")}${activeFilterCount ? `, ${activeFilterCount} activos` : ""}`}
+                style={[localStyles.headerFiltersButton, { width: "auto", paddingHorizontal: 14, flexDirection: "row", gap: 8, borderRadius: 24, backgroundColor: `${vibesTheme.colors.accentBlue}14` }]}
+                activeOpacity={0.84}
+                onPress={() => setIsFiltersVisible(true)}
+              >
+                <Icon name="options-outline" size={28} color={vibesTheme.colors.accentBlue} />
+                <Text style={{ color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 14 }}>{t("discover.filters")}{activeFilterCount ? ` · ${activeFilterCount}` : ""}</Text>
+              </TouchableOpacity>
+            </DiscoverFiltersGuide>
           </View>
         ) : null}
 
