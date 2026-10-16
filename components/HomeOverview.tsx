@@ -77,16 +77,16 @@ function OverviewLoadingPlaceholder() {
   return (
     <>
       <View style={s.sectionBlock}>
-        <SectionHeader title="Tus desafíos" />
+        <SectionHeader title="Eventos para vos" />
         <View style={s.eventSuggestionsLoader}>
-          <VibesLoader size={48} accessibilityLabel="Cargando desafíos" />
+          <VibesLoader size={48} accessibilityLabel="Cargando eventos" />
         </View>
       </View>
 
       <View style={s.sectionBlock}>
-        <SectionHeader title="Eventos para vos" />
+        <SectionHeader title="Tus desafíos" />
         <View style={s.eventSuggestionsLoader}>
-          <VibesLoader size={48} accessibilityLabel="Cargando eventos" />
+          <VibesLoader size={48} accessibilityLabel="Cargando desafíos" />
         </View>
       </View>
     </>
@@ -318,13 +318,14 @@ export default function HomeOverview({
   if (groups.isLoading)
     return (
       <>
-        <OverviewLoadingPlaceholder />
         {children}
+        <OverviewLoadingPlaceholder />
       </>
     );
   if (groups.isError)
     return (
       <>
+        {children}
         <TouchableOpacity
           accessibilityRole="button"
           style={s.card}
@@ -332,11 +333,50 @@ export default function HomeOverview({
         >
           <Text>No pudimos cargar tu agenda. Tocá para reintentar.</Text>
         </TouchableOpacity>
-        {children}
       </>
     );
   return (
     <>
+      {children}
+
+      <View style={s.sectionBlock}>
+        <SectionHeader
+          title="Eventos para vos"
+          onPress={visibleEvents.length ? () => openList() : undefined}
+        />
+        {visibleEvents.length ? (
+          <View style={s.compactList}>
+            {visibleEvents.map((event) => (
+              <HomeEventCard key={event.id} event={event} />
+            ))}
+          </View>
+        ) : eventsFeed.isLoading ? (
+          <View style={s.eventSuggestionsLoader}>
+            <VibesLoader size={48} />
+          </View>
+        ) : (
+          <View style={s.emptyEventCard}>
+            <View style={s.emptyIcon}>
+              <Icon name="calendar-outline" size={28} color={ACCENT} />
+            </View>
+            <View style={s.emptyCopy}>
+              <Text style={s.emptyTitle}>No tenés eventos próximos</Text>
+              <Text style={s.meta}>
+                Creá un encuentro para compartir algo que te gustaría hacer.
+              </Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={createEvent}
+                style={s.ctaButton}
+                activeOpacity={0.84}
+              >
+                <Text style={s.ctaText}>Crear evento</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
+
       <View style={s.sectionBlock}>
         <SectionHeader
           title={challengeSectionTitle}
@@ -378,45 +418,6 @@ export default function HomeOverview({
         ) : null}
       </View>
 
-      {children}
-
-      <View style={s.sectionBlock}>
-        <SectionHeader
-          title="Eventos para vos"
-          onPress={visibleEvents.length ? () => openList() : undefined}
-        />
-        {visibleEvents.length ? (
-          <View style={s.compactList}>
-            {visibleEvents.map((event) => (
-              <HomeEventCard key={event.id} event={event} />
-            ))}
-          </View>
-        ) : eventsFeed.isLoading ? (
-          <View style={s.eventSuggestionsLoader}>
-            <VibesLoader size={48} />
-          </View>
-        ) : (
-          <View style={s.emptyEventCard}>
-            <View style={s.emptyIcon}>
-              <Icon name="calendar-outline" size={28} color={ACCENT} />
-            </View>
-            <View style={s.emptyCopy}>
-              <Text style={s.emptyTitle}>No tenés eventos próximos</Text>
-              <Text style={s.meta}>
-                Creá un encuentro para compartir algo que te gustaría hacer.
-              </Text>
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={createEvent}
-                style={s.ctaButton}
-                activeOpacity={0.84}
-              >
-                <Text style={s.ctaText}>Crear evento</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </View>
     </>
   );
 }
