@@ -103,6 +103,9 @@ const VibesOnboardingFlow = () => {
   const onboardingScrollY = useRef(0);
   const displayNameInputRef = useRef<NativeTextInput | null>(null);
   const descriptionInputRef = useRef<NativeTextInput | null>(null);
+  const cityInputRef = useRef<NativeTextInput | null>(null);
+  const neighborhoodInputRef = useRef<NativeTextInput | null>(null);
+  const countryInputRef = useRef<NativeTextInput | null>(null);
   const focusedProfileInput = useRef<NativeTextInput | null>(null);
   const completionStartedRef = useRef(false);
   const [stepIndex, setStepIndex] = useState(0);
@@ -131,6 +134,7 @@ const VibesOnboardingFlow = () => {
   );
   const [photoOriginalUris, setPhotoOriginalUris] = useState<Record<string, string>>(draft.photoOriginalUris ?? {});
   const [city, setCity] = useState(draft.city ?? "");
+  const [neighborhood, setNeighborhood] = useState(draft.neighborhood ?? "");
   const [country, setCountry] = useState(draft.country ?? "");
   const [locationLabel, setLocationLabel] = useState(
     draft.locationLabel ?? ""
@@ -257,6 +261,7 @@ const VibesOnboardingFlow = () => {
       spiritualPathDetails: practiceDetails,
       aboutMe: briefDescription.trim(),
       city: city.trim(),
+      neighborhood: neighborhood.trim(),
       country: country.trim(),
       locationLabel:
         locationLabel.trim() ||
@@ -280,6 +285,7 @@ const VibesOnboardingFlow = () => {
       birthDate,
       briefDescription,
       city,
+      neighborhood,
       country,
       displayName,
       draft,
@@ -675,6 +681,7 @@ const VibesOnboardingFlow = () => {
               color={ONBOARDING_COLORS.mustard}
             />
             <TextInput
+              ref={cityInputRef}
               style={onboardingStyles.input}
               placeholder={t("onboarding.cityPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
@@ -689,6 +696,27 @@ const VibesOnboardingFlow = () => {
               }}
               autoCapitalize="words"
               returnKeyType="next"
+              onFocus={() => scrollInputIntoView(cityInputRef.current)}
+              onSubmitEditing={() => neighborhoodInputRef.current?.focus()}
+              blurOnSubmit={false}
+            />
+          </View>
+          <View style={onboardingStyles.inputRow}>
+            <Icon name="location-outline" size={20} color={ONBOARDING_COLORS.mustard} />
+            <TextInput
+              ref={neighborhoodInputRef}
+              style={onboardingStyles.input}
+              placeholder={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
+              accessibilityLabel={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
+              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              value={neighborhood}
+              onChangeText={setNeighborhood}
+              maxLength={100}
+              autoCapitalize="words"
+              returnKeyType="next"
+              onFocus={() => scrollInputIntoView(neighborhoodInputRef.current)}
+              onSubmitEditing={() => countryInputRef.current?.focus()}
+              blurOnSubmit={false}
             />
           </View>
           <View style={onboardingStyles.inputRow}>
@@ -698,6 +726,7 @@ const VibesOnboardingFlow = () => {
               color={ONBOARDING_COLORS.mustard}
             />
             <TextInput
+              ref={countryInputRef}
               style={onboardingStyles.input}
               placeholder={t("onboarding.countryPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
@@ -711,6 +740,7 @@ const VibesOnboardingFlow = () => {
                 locationSearchVersion.current += 1;
               }}
               autoCapitalize="words"
+              onFocus={() => scrollInputIntoView(countryInputRef.current)}
               returnKeyType="done"
               onSubmitEditing={() => {
                 if (city.trim() || country.trim()) void goNext();
