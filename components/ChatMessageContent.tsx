@@ -1,6 +1,8 @@
+import { Image } from "expo-image";
+import { imageCacheSource } from "../src/lib/imageCacheSource";
 import VibesLoader from "./VibesLoader";
 import React, { useState } from "react";
-import { Image, View, StyleSheet, TouchableOpacity, type StyleProp, type TextStyle } from "react-native";
+import { View, StyleSheet, TouchableOpacity, type StyleProp, type TextStyle } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { getInvitationDisplayText, getInvitedChallengeId, getInvitedEventId } from "../src/lib/eventInvites";
 import { useQuery } from "@tanstack/react-query";
@@ -88,7 +90,11 @@ export default function ChatMessageContent({
           </Text>
         ) : photo.data ? (
           <Image
-            source={{ uri: photo.data }}
+            source={imageCacheSource({ uri: photo.data })}
+            cachePolicy="memory-disk"
+            allowDownscaling
+            contentFit="cover"
+            recyclingKey={path ?? undefined}
             style={s.image}
             onError={() => setImageFailed(true)}
           />

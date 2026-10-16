@@ -3,6 +3,7 @@ import {
   Alert,
   Animated,
   Easing,
+  Keyboard,
   findNodeHandle,
   ScrollView,
   Platform,
@@ -101,6 +102,7 @@ const VibesOnboardingFlow = () => {
   const onboardingScrollRef = useRef<ScrollView | null>(null);
   const displayNameInputRef = useRef<NativeTextInput | null>(null);
   const descriptionInputRef = useRef<NativeTextInput | null>(null);
+  const focusedProfileInput = useRef<NativeTextInput | null>(null);
   const completionStartedRef = useRef(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [purposeIds, setPurposeIds] = useState<string[]>(
@@ -423,22 +425,21 @@ const VibesOnboardingFlow = () => {
     updateDraft({ primaryPhotoUri: photos[0] ?? "", photoUris: photos });
   };
 
-  const scrollInputIntoView = (input: NativeTextInput | null) => {
-    // Let Android adjustResize keep its focused input visible without a delayed
-    // competing scroll while the keyboard is still changing the viewport.
-    if (Platform.OS !== "ios" || !input) return;
+  const revealFocusedInput = () => {
+    const input = focusedProfileInput.current;
+    if (!input?.isFocused()) return;
     const node = findNodeHandle(input);
-    const scrollResponder = onboardingScrollRef.current?.getScrollResponder?.();
-    if (!node || !scrollResponder) return;
-
-    setTimeout(() => {
-      scrollResponder.scrollResponderScrollNativeHandleToKeyboard(
-        node,
-        130,
-        true
-      );
-    }, 300);
+    const responder = onboardingScrollRef.current?.getScrollResponder?.();
+    if (node && responder) responder.scrollResponderScrollNativeHandleToKeyboard(node, 24, true);
   };
+  const scrollInputIntoView = (input: NativeTextInput | null) => {
+    focusedProfileInput.current = input;
+    requestAnimationFrame(revealFocusedInput);
+  };
+  useEffect(() => {
+    const shown = Keyboard.addListener("keyboardDidShow", () => requestAnimationFrame(revealFocusedInput));
+    return () => shown.remove();
+  }, []);
 
   const requestLocation = async () => {
     if (locationLoading) return;
@@ -508,6 +509,7 @@ const VibesOnboardingFlow = () => {
         style={[
           onboardingStyles.title,
           targetStep === "completion" && onboardingStyles.centeredTitle,
+          targetStep === "profile" && { fontSize: 28, lineHeight: 34, marginTop: 16 },
         ]}
         maxFontSizeMultiplier={1}
       >
@@ -563,6 +565,10 @@ const VibesOnboardingFlow = () => {
               value={displayName}
               onChangeText={setDisplayName}
               onFocus={() => scrollInputIntoView(displayNameInputRef.current)}
+              onBlur={() => { if (focusedProfileInput.current === displayNameInputRef.current) focusedProfileInput.current = null; }}
+              keyboardType="default"
+              autoCorrect={false}
+              autoComplete="name"
               autoCapitalize="words"
               maxLength={50}
             />
@@ -584,6 +590,7 @@ const VibesOnboardingFlow = () => {
               value={briefDescription}
               onChangeText={setBriefDescription}
               onFocus={() => scrollInputIntoView(descriptionInputRef.current)}
+              onBlur={() => { if (focusedProfileInput.current === descriptionInputRef.current) focusedProfileInput.current = null; }}
               multiline
               maxLength={1000}
               textAlignVertical="top"

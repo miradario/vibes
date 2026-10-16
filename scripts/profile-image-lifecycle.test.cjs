@@ -44,6 +44,7 @@ function mount(props) {
   function nodes(node = tree) { if (!node || typeof node !== 'object') return []; return [node, ...(node.props?.children ?? []).flat(Infinity).flatMap(nodes)]; }
   render();
   return { render, image: () => nodes().find(n => n.type === 'Image' && n.props.onDisplay).props,
+    hasPreview: () => nodes().some(n => n.type === "Image" && n.props.source?.uri === "https://test/preview.jpg"),
     hasError: () => nodes().some(n => n.type === 'Text' && n.props.children.includes('No se pudo cargar la foto.')),
     expire: () => { const pending = [...timers.values()]; timers.clear(); pending.forEach(fn => fn()); }, timers };
 }
@@ -66,8 +67,10 @@ test('a decoded or displayed photo cannot become a late timeout or error', () =>
   image.onError(); view.expire(); view.render();
   assert.equal(view.hasError(), false);
 });
-test('a genuinely stalled photo shows a retry error after its deadline', () => {
+test('a stalled photo retries twice before showing the retry action', () => {
   const view = mount({ source: 'https://test/stalled.jpg' });
+  view.expire(); view.render(); assert.equal(view.hasError(), false);
+  view.expire(); view.render(); assert.equal(view.hasError(), false);
   view.expire(); view.render(); assert.equal(view.hasError(), true);
 });
 test('callbacks from the previous photo cannot fail the next photo', () => {
@@ -77,4 +80,20 @@ test('callbacks from the previous photo cannot fail the next photo', () => {
   old.onError(); old.onDisplay();
   view.render(); assert.equal(view.hasError(), false);
   assert.equal(view.timers.size, 1);
+});
+
+test('a photo can recover automatically after a transient error', () => {
+ const view = mount({ source: 'https://test/retry.jpg', previewSource: 'https://test/preview.jpg' });
+ view.image().onError(); view.render();
+ assert.equal(view.hasError(), false);
+ view.image().onLoad({ source: { width: 600, height: 900 } });
+ view.image().onDisplay(); view.render(); view.expire(); view.render();
+ assert.equal(view.hasError(), false);
+});
+
+test('a terminal image failure keeps the preview visible', () => {
+ const view = mount({ source: 'https://test/broken.jpg', previewSource: 'https://test/preview.jpg' });
+ for (let i = 0; i < 3; i++) { view.image().onError(); view.render(); }
+ assert.equal(view.hasError(), true);
+ assert.equal(view.hasPreview(), true);
 });

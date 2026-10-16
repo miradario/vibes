@@ -1,6 +1,6 @@
 import { imageCacheSource } from "../src/lib/imageCacheSource";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View, type ImageStyle, type StyleProp } from "react-native";
+import { StyleSheet, TouchableOpacity, View, type ImageStyle, type StyleProp } from "react-native";
 import { Text } from "./Typography";
 import { Image as ExpoImage } from "expo-image";
 import VibesLoader from "./VibesLoader";
@@ -78,6 +78,8 @@ const ProfileMediaImage = ({
   const activeRequest = useRef(request);
   activeRequest.current = request;
   const successfulRequest = useRef<object | null>(null);
+  const retries = useRef({ key: sourceKey, count: 0 });
+  if (retries.current.key !== sourceKey) retries.current = { key: sourceKey, count: 0 };
   const loadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notifiedRequest = useRef<object | null>(null);
   const displayCallback = useRef(onDisplay);
@@ -95,6 +97,11 @@ const ProfileMediaImage = ({
   const failRequest = () => {
     if (activeRequest.current !== request || successfulRequest.current === request) return;
     clearLoadTimer();
+    if (retries.current.count < 2) {
+      retries.current.count += 1;
+      setAttempt(value => value + 1);
+      return;
+    }
     setErrorKey(sourceKey);
     displayCallback.current?.();
   };
@@ -121,11 +128,11 @@ const ProfileMediaImage = ({
   return (
     <View style={[styles.container, { backgroundColor: fallbackBackgroundColor }, style]}>
       {!canRenderSource ? <BrandImagePlaceholder /> : null}
-      {canRenderSource && !hasError ? (
-        <>
         {canPreview ? <ExpoImage source={imageCacheSource(preview)} style={StyleSheet.absoluteFillObject}
           contentFit="cover" cachePolicy="memory-disk" transition={0}
           priority={priority} accessible={false} /> : null}
+      {canRenderSource && !hasError ? (
+        <>
         {blurBackground && resolvedSize && !(isPortrait && contentFit === "cover") ? (
           <ExpoImage
             recyclingKey={`background-${sourceKey}`}
@@ -166,14 +173,14 @@ const ProfileMediaImage = ({
       ) : null}
       {loading && showLoading && !canPreview ? (
         <View pointerEvents="none" style={styles.loading} accessible accessibilityLabel="Cargando foto" accessibilityRole="progressbar">
-          {loadingVariant === "vibes" ? <VibesLoader accessibilityLabel="Cargando foto" /> : <ActivityIndicator size="small" color={vibesTheme.colors.accentBlue} accessibilityLabel="Cargando foto" />}
+          <VibesLoader accessibilityLabel="Cargando foto" />
         </View>
       ) : null}
       {hasError ? (
-        <View style={[styles.loading, { backgroundColor: fallbackBackgroundColor }]}>
+        <View style={[styles.loading, canPreview ? { top: undefined, paddingVertical: 10, backgroundColor: `${vibesTheme.colors.background}E6` } : { backgroundColor: fallbackBackgroundColor }]}>
           <Text style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", marginBottom: 12 }}>No se pudo cargar la foto.</Text>
           <TouchableOpacity accessibilityRole="button" onPress={() => {
-            setErrorKey(null); setDisplayedKey(null); setAttempt(value => value + 1);
+            retries.current.count = 0; setErrorKey(null); setDisplayedKey(null); setAttempt(value => value + 1);
           }} style={{ padding: 12 }}>
             <Text style={{ color: vibesTheme.colors.accentBlue }}>Reintentar</Text>
           </TouchableOpacity>

@@ -37,17 +37,13 @@
       },
       "googleServicesFile": "./config/firebase/GoogleService-Info.plist"
     },
-    "androidNavigationBar": {
-      "backgroundColor": "#2B2B2B00",
-      "enforceContrast": false
-    },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon-flat.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 48,
+      "versionCode": 49,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
@@ -135,7 +131,8 @@
         }
       ],
       "./plugins/withFirebasePods",
-      "./plugins/withAndroidReleaseOptimization"
+      "./plugins/withAndroidReleaseOptimization",
+      "./plugins/withAndroidWindowCompatibility"
     ],
     "extra": {
       "eas": {

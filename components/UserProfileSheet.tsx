@@ -1,4 +1,4 @@
-import { imageCacheSource } from "../src/lib/imageCacheSource";
+import ProfileWithoutPhoto from "./ProfileWithoutPhoto";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import ProfilePhotoPrompt from "./ProfilePhotoPrompt";
@@ -36,7 +36,6 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { LinearGradient } from "expo-linear-gradient";
-import { Image as ExpoImage } from "expo-image";
 import { ArrowLeftToLine, ArrowRightToLine, Link, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
@@ -545,20 +544,12 @@ const UserProfileSheet = ({
     () => canViewPhotos ? normalizeProfileImages(profile) : [],
     [profile, canViewPhotos]
   );
+  const withoutPhoto = normalizeProfileImages(profile).length === 0;
   const hasMultipleImages = profileImages.length > 1;
   const safeActiveIndex = Math.min(
     activeIndex,
     Math.max(profileImages.length - 1, 0)
   );
-  const upcomingPhotoUrls = JSON.stringify(Array.from(new Set([
-    ...profileImages.slice(Math.max(0, safeActiveIndex - 1), safeActiveIndex + 3),
-    ...(canViewPhotos ? normalizeProfileImages(nextProfile ?? null).slice(0, 1) : []),
-  ].flatMap((source) => typeof source === "object" && source && "uri" in source && source.uri ? [source.uri] : []))));
-  useEffect(() => {
-    if (!visible) return;
-    const urls: string[] = JSON.parse(upcomingPhotoUrls);
-    if (urls.length) void Promise.allSettled(urls.map(uri => ExpoImage.loadAsync(imageCacheSource({ uri }))));
-  }, [visible, upcomingPhotoUrls]);
   const preferences = useMemo(
     () =>
       Array.from(
@@ -693,7 +684,7 @@ const UserProfileSheet = ({
             <View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon]}>
               <ArrowRightToLine size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
             </View>
-            {!onPanel && <Text style={localStyles.vibeActionLabel}>{nextActionLabel}</Text>}
+            {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>{nextActionLabel}</Text>}
           </TouchableOpacity>
         ) : null}
         {onContactPress && (
@@ -710,7 +701,7 @@ const UserProfileSheet = ({
             <Animated.View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon, { transform: [{ translateY: connectBounce }] }]}>
               <Link size={48} color={vibesTheme.colors.accentMustard} strokeWidth={2.5} />
             </Animated.View>
-            {!onPanel && <Text style={localStyles.vibeActionLabel}>
+            {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>
               {actionPending ? "Guardando…" : "Conectar"}
             </Text>}
           </TouchableOpacity>
@@ -732,7 +723,7 @@ const UserProfileSheet = ({
             >
               <ArrowLeftToLine size={44} color={vibesTheme.colors.accentCoral} strokeWidth={2.5} />
             </View>
-            {!onPanel && <Text style={localStyles.vibeActionLabel}>{secondaryActionLabel}</Text>}
+            {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>{secondaryActionLabel}</Text>}
           </TouchableOpacity>
         )}
 
@@ -780,6 +771,7 @@ const UserProfileSheet = ({
               },
             ]}
           >
+            {normalizeProfileImages(transitionProfile).length === 0 ? <ProfileWithoutPhoto active={false} name={transitionProfile.name} age={transitionProfile.age} zodiac={transitionProfile.zodiac} /> : <>
             <ProfileMediaImage
                 loadingVariant="vibes"
                 key={`next-profile-${transitionProfile?.id}`}
@@ -809,6 +801,8 @@ const UserProfileSheet = ({
                 {transitionProfile?.age ? `, ${transitionProfile?.age}` : ""}
               </Text>
             </LinearGradient>
+            </>}
+
           </Animated.View>
         ) : null}
         <Animated.View style={{ height: photoHeight }}>
@@ -838,7 +832,7 @@ const UserProfileSheet = ({
           {profileImages.length > 0 ? (
             enableSwipe ? (
               <View style={StyleSheet.absoluteFillObject}>
-                {profileImages.map((source, index) => (
+                {profileImages.map((source, index) => Math.abs(index - safeActiveIndex) <= 1 ? (
                   <View
                     key={`${profile.id ?? profile.name}-${getImageKey(source, index)}`}
                     pointerEvents="none"
@@ -849,7 +843,7 @@ const UserProfileSheet = ({
                     <ProfileMediaImage
                 loadingVariant={isFollowingProfile ? "vibes" : "spinner"}
                       contentFit="cover" blurBackground showLoading
-                      previewSource={index === 0 && canViewPhotos && profile.hasPhotos !== false ? profile.image : undefined}
+                      previewSource={canViewPhotos && profile.hasPhotos !== false ? (index === 0 ? profile.image : profileImages[index - 1]) : undefined}
                       priority={index === safeActiveIndex ? "high" : "low"}
                       onDisplay={() => {
                         if (currentProfileId.current !== profile.id) return;
@@ -868,7 +862,7 @@ const UserProfileSheet = ({
                       transition={0}
                     />
                   </View>
-                ))}
+                ) : null)}
               </View>
             ) : (
             <FlatList
@@ -890,7 +884,7 @@ const UserProfileSheet = ({
                 contentFit="cover"
                 blurBackground
                 showLoading
-                    previewSource={index === 0 && canViewPhotos && profile.hasPhotos !== false ? profile.image : undefined}
+                    previewSource={canViewPhotos && profile.hasPhotos !== false ? (index === 0 ? profile.image : profileImages[index - 1]) : undefined}
                     onDisplay={() => {
                       if (currentProfileId.current !== profile.id) return;
                       if (index === safeActiveIndex) {
@@ -913,9 +907,7 @@ const UserProfileSheet = ({
             />
             )
           ) : (
-            <View style={localStyles.fallbackCanvas}>
-              <Icon name="person-outline" size={72} color={vibesTheme.colors.secondaryText} />
-            </View>
+            withoutPhoto ? <ProfileWithoutPhoto active={visible && !detailsVisible} name={profile.name} age={profile.age} zodiac={profile.zodiac} /> : <View style={localStyles.fallbackCanvas}><Icon name="person-outline" size={72} color={vibesTheme.colors.secondaryText} /></View>
           )}
 
           </Animated.View>
@@ -941,13 +933,13 @@ const UserProfileSheet = ({
             pointerEvents="none"
             colors={PROFILE_PHOTO_GRADIENT}
             locations={[0, 0.55, 1]}
-            style={[localStyles.bottomGradient, detailsVisible && { opacity: 0 }]}
+            style={[localStyles.bottomGradient, (detailsVisible || withoutPhoto) && { opacity: 0 }]}
           />
 
           <LinearGradient
             pointerEvents="none"
             colors={["#00000080", "#00000000"]}
-            style={[localStyles.topGradient, { height: insets.top + 120 }]}
+            style={[localStyles.topGradient, { height: insets.top + 120, opacity: withoutPhoto ? 0 : 1 }]}
           />
 
           <TouchableOpacity
@@ -988,7 +980,7 @@ const UserProfileSheet = ({
               { paddingBottom: Math.max(insets.bottom, 4) },
             ]}
           >
-            <View style={localStyles.nameRow}>
+            <View style={[localStyles.nameRow, withoutPhoto && { display: "none" } ]}>
               <View style={localStyles.nameCopy}>
                 <Text style={localStyles.profileName} numberOfLines={2}>
                   {nameWithAge}
@@ -1006,7 +998,8 @@ const UserProfileSheet = ({
               onPress={showDetails}
               style={localStyles.galleryHint}
             >
-              <Icon name="chevron-up" size={32} color={vibesTheme.colors.background} />
+              {withoutPhoto ? <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 15 }}>Ver perfil completo</Text> : null}
+              <Icon name="chevron-up" size={32} color={withoutPhoto ? vibesTheme.colors.accentBlue : vibesTheme.colors.background} />
             </TouchableOpacity>
           </View>}
         </Animated.View>

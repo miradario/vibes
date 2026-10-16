@@ -80,7 +80,7 @@ export const onboardingStyles = StyleSheet.create({
     borderRadius: 28,
     overflow: "hidden",
     position: "relative",
-    paddingHorizontal: isCompactOnboardingScreen ? 18 : 22,
+    paddingHorizontal: 0,
     paddingTop: 16,
     paddingBottom: 12,
   },
