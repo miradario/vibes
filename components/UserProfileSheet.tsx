@@ -272,7 +272,8 @@ const UserProfileSheet = ({
   const { data: session } = useAuthSession();
   const navigation = useNavigation();
   const { data: ownProfile } = useProfileQuery(session?.user.id);
-  const canViewPhotos = profile?.id === session?.user.id || hasProfilePhotos(ownProfile);
+  const isOwnProfile = Boolean(profile?.id && profile.id === session?.user?.id);
+  const canViewPhotos = isOwnProfile || hasProfilePhotos(ownProfile);
   const { data: sharedActivities } = useSharedActivitiesQuery(
     session?.user?.id,
     profile?.id
@@ -408,10 +409,11 @@ const UserProfileSheet = ({
       if (actionPending || swipingRef.current) return;
       const action =
         direction === "like" ? onContactPress : onSecondaryActionPress;
-      if (!action) {
+      if (!action || isOwnProfile) {
         resetSwipe();
         return;
       }
+      if (direction === "like" && !reduceMotion) setBurst(value => value + 1);
       if (!enableSwipe) {
         void action();
         return;
@@ -449,6 +451,7 @@ const UserProfileSheet = ({
     },
     [
       actionPending,
+      isOwnProfile,
       onContactPress,
       onSecondaryActionPress,
       enableSwipe,
@@ -462,7 +465,6 @@ const UserProfileSheet = ({
   );
   const like = () => {
     if (!actionPending && !swipingRef.current) {
-      if (!reduceMotion) setBurst((value) => value + 1);
       commitSwipe("like");
     }
   };
@@ -510,9 +512,6 @@ const UserProfileSheet = ({
           } else if (action === "next") {
             onNextActionPress?.();
           } else if (action) {
-            if (action === "like" && !reduceMotion) {
-              setBurst((value) => value + 1);
-            }
             commitSwipe(action);
           } else {
             resetSwipe();
@@ -610,6 +609,7 @@ const UserProfileSheet = ({
 
   useLayoutEffect(() => {
     setActiveIndex(0);
+    setBurst(0);
     setDetailsVisible(false);
     panelDragY.setValue(0);
     requestAnimationFrame(() =>
@@ -687,7 +687,7 @@ const UserProfileSheet = ({
             {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>{nextActionLabel}</Text>}
           </TouchableOpacity>
         ) : null}
-        {onContactPress && (
+        {onContactPress && !isOwnProfile && (
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={`Conectar con ${
@@ -1004,7 +1004,7 @@ const UserProfileSheet = ({
           </View>}
         </Animated.View>
         </Animated.View>
-        <LikeBubbles trigger={burst} />
+        <LikeBubbles trigger={burst} showConfirmation />
         {enableSwipe && (
           <View pointerEvents="none" style={localStyles.swipeIndicators}>
             <Animated.View

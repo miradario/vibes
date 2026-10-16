@@ -1,12 +1,15 @@
 import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useEffect, useRef } from "react";
-import { AccessibilityInfo, Animated, StyleSheet, View } from "react-native";
+import { AccessibilityInfo, Animated, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Text } from "./Typography";
 
-export default function LikeBubbles({ trigger }: { trigger: number }) {
+export default function LikeBubbles({ trigger, showConfirmation = false }: { trigger: number; showConfirmation?: boolean }) {
+  const { width } = useWindowDimensions();
+  const radius = Math.min(130, width * 0.32);
   const progress = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     let active = true;
+    if (!trigger) progress.setValue(1);
     if (trigger)
       void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
         if (!active || reduced) return;
@@ -30,6 +33,14 @@ export default function LikeBubbles({ trigger }: { trigger: number }) {
         { zIndex: 20, alignItems: "center", justifyContent: "center" },
       ]}
     >
+      {showConfirmation ? <Animated.View style={{
+        width: 80, height: 80, borderRadius: 40,
+        alignItems: "center", justifyContent: "center",
+        backgroundColor: vibesTheme.colors.background,
+        borderWidth: 2, borderColor: vibesTheme.colors.accentMustard,
+        opacity: progress.interpolate({ inputRange: [0, 0.15, 0.65, 1], outputRange: [0, 1, 1, 0] }),
+        transform: [{ scale: progress.interpolate({ inputRange: [0, 0.22, 0.4, 1], outputRange: [0.6, 1.12, 1, 0.95] }) }],
+      }}><Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 40 }}>✓</Text></Animated.View> : null}
       {Array.from({ length: 9 }, (_, i) => {
         const angle = (i * Math.PI * 2) / 9;
         return (
@@ -51,13 +62,13 @@ export default function LikeBubbles({ trigger }: { trigger: number }) {
                 {
                   translateX: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0, Math.cos(angle) * 155],
+                    outputRange: [0, Math.cos(angle) * radius],
                   }),
                 },
                 {
                   translateY: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [30, Math.sin(angle) * 155 - 70],
+                    outputRange: [0, Math.sin(angle) * radius],
                   }),
                 },
                 {

@@ -781,6 +781,7 @@ const EventChat = () => {
                   sending={isMe && msg.deliveryStatus === "sending"}
                 >
                   <HeartMessageBubble
+                    canReact={!isMe}
                     count={hearts.byMessage.get(msg.id)?.count}
                     liked={hearts.byMessage.get(msg.id)?.liked}
                     onHeart={(remove) => hearts.react(msg.id, remove)}
@@ -798,7 +799,7 @@ const EventChat = () => {
                       isMe && localStyles.messageRowMe,
                     ]}
                   >
-                    {(press, longPress) => (
+                    {(press, longPress, reaction) => (
                       <>
                         {/* Avatar for other people's messages */}
                         {!isMe ? (
@@ -852,6 +853,7 @@ const EventChat = () => {
                               />
                             ) : null}
                           </View>
+                          {reaction}
                         </View>
                       </>
                     )}

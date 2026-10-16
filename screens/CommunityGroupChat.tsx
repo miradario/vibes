@@ -351,6 +351,7 @@ export default function CommunityGroupChat() {
                   <Avatar uri={item.senderAvatar} size={30} />
                 )}
                 <HeartMessageBubble
+                  canReact={item.sender_id !== session?.user.id}
                   count={hearts.byMessage.get(item.id)?.count}
                   liked={hearts.byMessage.get(item.id)?.liked}
                   onHeart={(remove) => hearts.react(item.id, remove)}
@@ -359,7 +360,7 @@ export default function CommunityGroupChat() {
                     item.sender_id === session?.user.id && s.own,
                   ]}
                 >
-                  {(press) => (
+                  {(press, _longPress, reaction) => (
                     <>
                       <Text style={s.sender}>
                         {item.sender_id === session?.user.id
@@ -386,6 +387,7 @@ export default function CommunityGroupChat() {
                           />
                         ) : null}
                       </View>
+                      {reaction}
                     </>
                   )}
                 </HeartMessageBubble>

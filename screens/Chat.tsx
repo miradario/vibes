@@ -310,6 +310,7 @@ const Chat = () => {
     const isOwn = item.senderId === myId;
     const bubble = (
       <HeartMessageBubble
+        canReact={!isOwn}
         count={hearts.byMessage.get(item.id)?.count}
         liked={hearts.byMessage.get(item.id)?.liked}
         onHeart={(remove) => hearts.react(item.id, remove)}
@@ -321,7 +322,7 @@ const Chat = () => {
             : localStyles.messageBubbleLeft,
         ]}
       >
-        {(press, longPress) => (
+        {(press, longPress, reaction) => (
           <>
             <ChatMessageContent
               onPhotoPress={press}
@@ -352,6 +353,7 @@ const Chat = () => {
                 />
               ) : null}
             </View>
+            {reaction}
           </>
         )}
       </HeartMessageBubble>
