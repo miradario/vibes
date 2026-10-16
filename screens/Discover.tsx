@@ -485,6 +485,12 @@ export const DiscoverContent = forwardRef<
     }, 350);
     return () => clearTimeout(timeout);
   }, [answerFilters, answerFiltersOwner, session?.user?.id]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showSpiritualPaths, setShowSpiritualPaths] = useState(false);
+  const [historyMode, setHistoryMode] = useState<
+    "dismissed" | "liked" | "incoming"
+  >("liked");
+  const focused = useIsFocused();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
     useUserPreferencesQuery(session?.user?.id);
@@ -496,30 +502,29 @@ export const DiscoverContent = forwardRef<
     refetch: refetchCandidates,
   } = useCandidatesQuery({
     limit: 200,
-  });
+  }, false, focused && !showHistory);
   // The candidates query already checks the viewer's photo before returning
   // photos. Keep those authorized photos visible if the separate own-profile
   // query is still loading or its signed photo URL failed.
   const canViewProfilePhotos = hasProfilePhotos(ownProfileData) || candidates.some(hasProfilePhotos);
-  const swipeHistory = useSwipeHistoryCandidatesQuery();
+  const swipeHistory = useSwipeHistoryCandidatesQuery(focused && showHistory && historyMode !== "incoming");
   const matches = useMatchesQuery();
   const matchedUserIds = useMemo(
     () => new Set((matches.data ?? []).map((match) => match.otherUserId)),
     [matches.data]
   );
-  const incomingLikes = useIncomingLikeCandidatesQuery();
+  const incomingLikes = useIncomingLikeCandidatesQuery(focused && showHistory && historyMode === "incoming");
   const swipeMutation = useSwipeMutation();
   const swipeBusy = useRef(false);
   const pendingNextProfile = useRef<{ fromId: string; next: DataT | null } | null>(null);
-  const focused = useIsFocused();
   const refetchHistory = swipeHistory.refetch;
   const refetchIncoming = incomingLikes.refetch;
   useEffect(() => {
     if (!focused || !session?.user?.id) return;
     const refresh = () => {
-      void refetchCandidates({ cancelRefetch: false });
-      void refetchHistory({ cancelRefetch: false });
-      void refetchIncoming({ cancelRefetch: false });
+      if (!showHistory) void refetchCandidates({ cancelRefetch: false });
+      else if (historyMode === "incoming") void refetchIncoming({ cancelRefetch: false });
+      else void refetchHistory({ cancelRefetch: false });
     };
     refresh();
     let previousState = AppState.currentState;
@@ -528,7 +533,7 @@ export const DiscoverContent = forwardRef<
       previousState = state;
     });
     return () => subscription.remove();
-  }, [focused, session?.user?.id, refetchCandidates, refetchHistory, refetchIncoming]);
+  }, [focused, showHistory, historyMode, session?.user?.id, refetchCandidates, refetchHistory, refetchIncoming]);
   const resumeAfterMatch = useRef<DataT | null>(null);
   useEffect(() => {
     if (focused && resumeAfterMatch.current) {
@@ -548,11 +553,6 @@ export const DiscoverContent = forwardRef<
     new Set()
   );
   const [showProfileSheet, setShowProfileSheet] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [showSpiritualPaths, setShowSpiritualPaths] = useState(false);
-  const [historyMode, setHistoryMode] = useState<
-    "dismissed" | "liked" | "incoming"
-  >("liked");
   const [viewingHistory, setViewingHistory] = useState(false);
   useEffect(() => {
     if (!incomingRequestKey) return;
@@ -737,6 +737,7 @@ export const DiscoverContent = forwardRef<
     [historyMode, incomingLikes.data, swipeHistory.data, canViewProfilePhotos, matchedUserIds]
   );
   const waitingForProfiles = showHistory ? (historyMode === "incoming" ? incomingLikes.isLoading : swipeHistory.isLoading) : isLoading;
+  const historyLoadFailed = showHistory && (historyMode === "incoming" ? incomingLikes.isError : swipeHistory.isError);
   const [profilesTimedOut, setProfilesTimedOut] = useState(false);
   const [profileLoadAttempt, setProfileLoadAttempt] = useState(0);
   useEffect(() => {
@@ -1461,10 +1462,10 @@ export const DiscoverContent = forwardRef<
         ) : null}
 
         <View style={localStyles.orbitWrap}>
-          {profilesTimedOut ? (
+          {profilesTimedOut || historyLoadFailed ? (
             <View style={localStyles.emptyState}>
-              <Text style={localStyles.emptyTitle}>La carga está demorando</Text>
-              <Text style={localStyles.emptyText}>Podés reintentar o volver a iniciar sesión sin borrar los datos de tu cuenta.</Text>
+              <Text style={localStyles.emptyTitle}>{historyLoadFailed ? "No pudimos cargar las solicitudes" : "La carga está demorando"}</Text>
+              <Text style={localStyles.emptyText}>No se perdió ninguna solicitud. Tocá Reintentar para volver a cargar.</Text>
               <TouchableOpacity accessibilityRole="button" onPress={retryProfiles} style={{ padding: 16 }}><Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text></TouchableOpacity>
               <SessionRecoveryAction />
             </View>

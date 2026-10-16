@@ -1,3 +1,4 @@
+import { showToast } from "../src/utils/toast";
 import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
 import { matchesSavedDiscoverExtras } from "../src/lib/discoverSavedFilters";
 import PhotoViewer from "../components/PhotoViewer";
@@ -461,6 +462,8 @@ const Home = () => {
   const [galleryInitialIndex, setGalleryInitialIndex] = useState<number>(0);
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
+  const [homeProfileQueue, setHomeProfileQueue] = useState<DataT[]>([]);
+  const nextHomeProfile = homeProfileQueue[0] ?? null;
   const swipeMutation = useSwipeMutation();
   const firstName =
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
@@ -603,46 +606,65 @@ const Home = () => {
     setShowGallery(true);
   };
 
-  const connectProfile = (profile: DataT | null) => {
-    if (!profile) return;
-
-    swipeMutation.mutate(
-      {
-        targetUserId: String(profile.id),
-        direction: "like",
-      },
-      {
-        onSuccess: (response) => {
-          if (response?.match) {
-            navigation.navigate("Match" as never, { profile } as never);
-          }
-        },
-        onError: (error) =>
-          handleApiError(error, { toastTitle: "Error de conexión" }),
-      }
-    );
-
-    closeProfileSheet();
+  const showProfilesComplete = () => {
+    showToast("Has visto todos los perfiles.", {
+      type: "info",
+      text2: "Sigue explorando Vibes",
+      visibilityTime: 4500,
+    });
   };
 
-  const dismissProfile = (profile: DataT | null) => {
-    if (!profile) return;
+  const connectProfile = async (profile: DataT | null) => {
+    if (!profile || swipeMutation.isPending) return false;
+    const next = nextHomeProfile;
+    try {
+      const response = await swipeMutation.mutateAsync({
+        targetUserId: String(profile.id),
+        direction: "like",
+      });
+      if (!next) showProfilesComplete();
+      if (response?.match) {
+        closeProfileSheet();
+        navigation.navigate("Match" as never, { profile } as never);
+      } else if (next) {
+        setSelectedProfile(next);
+        setHomeProfileQueue((queue) => queue.slice(1));
+      } else {
+        closeProfileSheet();
+      }
+      return true;
+    } catch (error) {
+      handleApiError(error, { toastTitle: "Error de conexión" });
+      return false;
+    }
+  };
 
-    swipeMutation.mutate(
-      {
+  const dismissProfile = async (profile: DataT | null) => {
+    if (!profile || swipeMutation.isPending) return false;
+    const next = nextHomeProfile;
+    try {
+      await swipeMutation.mutateAsync({
         targetUserId: String(profile.id),
         direction: "pass",
-      },
-      {
-        onError: (error) =>
-          handleApiError(error, { toastTitle: "Dismiss Error" }),
+      });
+      if (next) {
+        setSelectedProfile(next);
+        setHomeProfileQueue((queue) => queue.slice(1));
+      } else {
+        closeProfileSheet();
+        showProfilesComplete();
       }
-    );
-
-    closeProfileSheet();
+      return true;
+    } catch (error) {
+      handleApiError(error, { toastTitle: "Error al descartar" });
+      return false;
+    }
   };
 
   const openProfileSheet = (profile: DataT) => {
+    const suggestions = profiles.slice(0, 6);
+    const index = suggestions.findIndex((item) => item.id === profile.id);
+    setHomeProfileQueue(index >= 0 ? suggestions.slice(index + 1) : []);
     setSelectedProfile(profile);
     setShowProfileSheet(true);
   };
@@ -872,6 +894,8 @@ const Home = () => {
         <UserProfileSheet
           visible={showProfileSheet}
           profile={selectedProfileForSheet}
+          nextProfile={nextHomeProfile ? { ...nextHomeProfile, id: String(nextHomeProfile.id) } : null}
+          actionPending={swipeMutation.isPending}
           onClose={closeProfileSheet}
           onImagePress={(_image, index) =>
             selectedProfile

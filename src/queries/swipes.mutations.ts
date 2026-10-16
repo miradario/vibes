@@ -227,7 +227,7 @@ export const useSwipeMutation = () => {
         payload.targetUserId !== session.user.id &&
         Platform.OS !== "web"
       ) {
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {
           // Haptic availability must not interrupt the like.
         });
       }
