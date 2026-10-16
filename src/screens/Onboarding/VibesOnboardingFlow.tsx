@@ -129,6 +129,7 @@ const VibesOnboardingFlow = () => {
       )
     ).slice(0, 6)
   );
+  const [photoOriginalUris, setPhotoOriginalUris] = useState<Record<string, string>>(draft.photoOriginalUris ?? {});
   const [city, setCity] = useState(draft.city ?? "");
   const [country, setCountry] = useState(draft.country ?? "");
   const [locationLabel, setLocationLabel] = useState(
@@ -271,6 +272,7 @@ const VibesOnboardingFlow = () => {
         age ? `age:${age}` : "",
       ].filter(Boolean),
       photoUris,
+      photoOriginalUris,
       primaryPhotoUri: photoUris[0] ?? "",
     }),
     [
@@ -286,6 +288,7 @@ const VibesOnboardingFlow = () => {
       locationLabel,
       longitude,
       photoUris,
+      photoOriginalUris,
       practiceDetails,
       purposeIds,
       selectedPractices,
@@ -424,10 +427,12 @@ const VibesOnboardingFlow = () => {
     setCustomPracticeName("");
   };
 
-  const handlePhotoChange = (nextUris: string[]) => {
+  const handlePhotoChange = (nextUris: string[], originals = photoOriginalUris) => {
     const photos = Array.from(new Set(nextUris)).slice(0, 6);
+    const nextOriginals = Object.fromEntries(photos.map(uri => [uri, originals[uri] ?? uri]));
     setPhotoUris(photos);
-    updateDraft({ primaryPhotoUri: photos[0] ?? "", photoUris: photos });
+    setPhotoOriginalUris(nextOriginals);
+    updateDraft({ primaryPhotoUri: photos[0] ?? "", photoUris: photos, photoOriginalUris: nextOriginals });
   };
 
   const revealFocusedInput = () => {
@@ -551,7 +556,7 @@ const VibesOnboardingFlow = () => {
     <>
       {renderTitle("profile")}
       <View style={onboardingStyles.profileWrap}>
-        <ProfilePhotoPicker uris={photoUris} onChange={handlePhotoChange} />
+        <ProfilePhotoPicker uris={photoUris} originalUris={photoOriginalUris} onChange={handlePhotoChange} />
         <View style={onboardingStyles.fieldGroup}>
           {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
             <>

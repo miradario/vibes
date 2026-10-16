@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Text } from "../Typography";
 import * as ImagePicker from "expo-image-picker";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { CameraType } from "expo-image-picker";
 import Icon from "../Icon";
 import AnimatedSheetModal from "../AnimatedSheetModal";
@@ -27,7 +28,8 @@ const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   : ["images"];
 type ProfilePhotoPickerProps = {
   uris: string[];
-  onChange: (uris: string[]) => void;
+  originalUris?: Record<string, string>;
+  onChange: (uris: string[], originals?: Record<string, string>) => void;
 };
 
 const pickFromGallery = async (t: (key: string) => string, limit: number) => {
@@ -72,26 +74,37 @@ const pickFromCamera = async (t: (key: string) => string) => {
   return result.assets[0].uri;
 };
 
-const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
+const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange }: ProfilePhotoPickerProps) => {
   const { t, locale } = useI18n();
   const english = locale === "en";
   const [modalVisible, setModalVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [cropPhoto, setCropPhoto] = useState<CropPhoto | null>(null);
   const cropResolve = useRef<((uri: string | null) => void) | null>(null);
+  const normalizedOriginals = useRef(new Map<string, CropPhoto>());
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; cropResolve.current?.(null); cropResolve.current = null; };
   }, []);
   const adjustPhoto = async (uri: string) => {
-    const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) =>
-      Image.getSize(uri, (width, height) => resolve({ width, height }), reject));
+    uri = originalUris[uri] ?? uri;
+    let source = normalizedOriginals.current.get(uri);
+    if (!source) {
+      // Decode orientation once. Preview and crop must use the same pixels and
+      // dimensions, rather than mixing EXIF-oriented display with raw pixels.
+      source = await manipulateAsync(uri, [], { compress: 1, format: SaveFormat.JPEG });
+      if (normalizedOriginals.current.size >= 12) {
+        const oldest = normalizedOriginals.current.keys().next().value;
+        if (oldest) normalizedOriginals.current.delete(oldest);
+      }
+      normalizedOriginals.current.set(uri, source);
+    }
     if (!mounted.current) return null;
-    if (dimensions.width <= 0 || dimensions.height <= 0) throw new Error("Invalid photo dimensions");
+    if (source.width <= 0 || source.height <= 0) throw new Error("Invalid photo dimensions");
     return new Promise<string | null>(resolve => {
       cropResolve.current = resolve;
-      setCropPhoto({ uri, ...dimensions });
+      setCropPhoto(source);
     });
   };
   const editPhoto = async (index: number) => {
@@ -99,7 +112,8 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
     setBusy(true);
     try {
       const uri = await adjustPhoto(uris[index]);
-      if (uri && mounted.current) onChange(uris.map((photo, i) => i === index ? uri : photo));
+      if (uri && mounted.current) onChange(uris.map((photo, i) => i === index ? uri : photo),
+        { ...originalUris, [uri]: originalUris[uris[index]] ?? uris[index] });
     } catch {
       Alert.alert(t("common.error"), english ? "Could not open the photo." : "No pudimos abrir la foto.");
     } finally { if (mounted.current) setBusy(false); }
@@ -119,16 +133,18 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
           : await pickFromGallery(t, remaining);
       const originals = typeof selected === "string" ? [selected] : selected ?? [];
       const added: string[] = [];
+      const originalsByUri = { ...originalUris };
       for (const uri of originals.slice(0, remaining)) {
         if (!mounted.current) break;
         const adjusted = await adjustPhoto(uri);
         if (!adjusted) break;
         added.push(adjusted);
+        originalsByUri[adjusted] = originalUris[uri] ?? uri;
       }
       if (!mounted.current) return;
       if (added.length) {
         const nextPhotos = Array.from(new Set([...uris, ...added])).slice(0, 6);
-        onChange(nextPhotos);
+        onChange(nextPhotos, originalsByUri);
         if (nextPhotos.length < 6) {
           Alert.alert(
             english ? "Photo added" : "Foto agregada",
@@ -161,7 +177,7 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
       <View style={onboardingStyles.photoPickerWrap}>
         <View style={onboardingStyles.photoButton}>
           {uris[0] ? (
-            <Image source={{ uri: uris[0] }} style={onboardingStyles.photo} />
+            <Image source={{ uri: uris[0] }} style={onboardingStyles.photo} resizeMode="contain" />
           ) : (
             <Icon
               name="person-outline"
@@ -199,7 +215,7 @@ const ProfilePhotoPicker = ({ uris, onChange }: ProfilePhotoPickerProps) => {
                 }
                 style={[styles.thumbnail, index === 0 && styles.primary]}
               >
-                <Image source={{ uri }} style={onboardingStyles.photo} />
+                <Image source={{ uri }} style={onboardingStyles.photo} resizeMode="contain" />
               </TouchableOpacity>
               <View style={styles.photoTools}>
               <TouchableOpacity accessibilityRole="button"
@@ -303,7 +319,7 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: 76,
     height: 76,
-    borderRadius: 16,
+    borderRadius: 38,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: ONBOARDING_COLORS.line,

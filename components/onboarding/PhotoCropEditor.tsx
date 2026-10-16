@@ -36,6 +36,7 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [ready, setReady] = useState(false);
+  const [original, setOriginal] = useState(false);
   const result = useRef<string | null>(null);
   const requestVersion = useRef(0);
   const gesture = useRef<ReturnType<typeof touchPoint> & { value: CropTransform } | null>(null);
@@ -48,7 +49,7 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
   useEffect(() => {
     requestVersion.current += 1;
     setClosing(false); closingRef.current = false; setBusy(false); busyRef.current = false; result.current = null;
-    setReady(false); gesture.current = null; reset();
+    setReady(false); setOriginal(false); gesture.current = null; reset();
     return () => { requestVersion.current += 1; };
   }, [photo, size]);
 
@@ -56,7 +57,9 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
     onStartShouldSetPanResponder: () => !busyRef.current,
     onMoveShouldSetPanResponder: () => !busyRef.current,
     onPanResponderTerminationRequest: () => false,
-    onPanResponderGrant: event => { gesture.current = { ...touchPoint(event), value: current.current }; },
+    onPanResponderGrant: event => {
+      gesture.current = { ...touchPoint(event), value: current.current };
+    },
     onPanResponderMove: event => {
       if (!photo || busyRef.current) return;
       const next = touchPoint(event);
@@ -64,6 +67,7 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
       if (!start || start.count !== next.count) {
         gesture.current = { ...next, value: current.current }; return;
       }
+      setOriginal(false);
       const zoom = Math.max(1, Math.min(4, start.value.zoom * (start.distance > 0 ? next.distance / start.distance : 1)));
       const ratio = zoom / start.value.zoom;
       update(constrainPhotoCrop(photo.width, photo.height, size, {
@@ -81,6 +85,7 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
   };
   const save = async () => {
     if (!photo || busyRef.current || closingRef.current || !ready) return;
+    if (original) { close(photo.uri); return; }
     busyRef.current = true; setBusy(true);
     const version = requestVersion.current;
     try {
@@ -96,9 +101,11 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
       if (version === requestVersion.current) { busyRef.current = false; setBusy(false); }
     }
   };
-  const fit = photo ? size / Math.min(photo.width, photo.height) * transform.zoom : 1;
+  const fit = photo ? original ? size / Math.max(photo.width, photo.height)
+    : size / Math.min(photo.width, photo.height) * transform.zoom : 1;
   const changeZoom = (delta: number) => {
     if (!photo || busyRef.current) return;
+    setOriginal(false);
     const value = current.current;
     const zoom = Math.max(1, Math.min(4, value.zoom + delta));
     const ratio = zoom / value.zoom;
@@ -112,13 +119,17 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
     sheetStyle={styles.sheet}>
     <View style={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
       <Text accessibilityRole="header" style={styles.title}>{english ? "Adjust your photo" : "Ajustá tu foto"}</Text>
-      <Text style={styles.hint}>{english ? "Drag to move · Pinch to zoom" : "Mové la foto · Pellizcá para hacer zoom"}</Text>
-      <View style={[styles.frame, { width: size, height: size }]} {...pan.panHandlers}>
+      <Text style={styles.hint}>{original
+        ? (english ? "Original photo · No crop" : "Foto original · Sin recorte")
+        : (english ? "Drag to move · Pinch to zoom" : "Mové la foto · Pellizcá para hacer zoom")}</Text>
+      <View style={[styles.frame, { width: size, height: size, borderRadius: original ? 16 : size / 2 }]} {...pan.panHandlers}>
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         {photo ? <Image source={{ uri: photo.uri }} resizeMode="stretch"
           onLoad={() => setReady(true)} onError={() => setReady(false)}
-          style={{ position: "absolute", width: photo.width * fit, height: photo.height * fit, left: transform.x, top: transform.y }} /> : null}
-        <View pointerEvents="none" style={[styles.guide, { borderRadius: size / 2 }]} />
+          style={{ position: "absolute", width: photo.width * fit, height: photo.height * fit,
+            left: original ? (size - photo.width * fit) / 2 : transform.x,
+            top: original ? (size - photo.height * fit) / 2 : transform.y }} /> : null}
+        {!original ? <View pointerEvents="none" style={[styles.guide, { borderRadius: size / 2 }]} /> : null}
         </View>
       </View>
       <View style={styles.tools}>
@@ -126,7 +137,8 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
           disabled={busy || transform.zoom <= 1} style={styles.secondary} onPress={() => changeZoom(-0.25)}>
           <Text style={styles.text}>−</Text>
         </TouchableOpacity>
-        <TouchableOpacity accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={reset}>
+        <TouchableOpacity accessibilityRole="button" disabled={busy} style={styles.secondary}
+          onPress={() => { reset(); setOriginal(true); }}>
           <Text style={styles.text}>{english ? "Reset" : "Restablecer"}</Text>
         </TouchableOpacity>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={english ? "Zoom in" : "Acercar"}

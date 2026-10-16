@@ -28,3 +28,13 @@ test('panning cannot expose empty space and zoom remains between 1x and 4x', () 
     { zoom: 1, x: 0, y: -150 });
   assert.equal(constrainPhotoCrop(1200, 1200, 300, { zoom: 10, x: 0, y: 0 }).zoom, 4);
 });
+
+test('a feature centered in the selection stays centered in the saved crop', () => {
+  const width = 4000, height = 3000, size = 300, zoom = 2;
+  const feature = { x: 3000, y: 1800 };
+  const scale = size / Math.min(width, height) * zoom;
+  const value = { zoom, x: size / 2 - feature.x * scale, y: size / 2 - feature.y * scale };
+  const crop = photoCropRect(width, height, size, value);
+  assert.equal(crop.originX + crop.width / 2, feature.x);
+  assert.equal(crop.originY + crop.height / 2, feature.y);
+});

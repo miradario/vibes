@@ -177,6 +177,7 @@ export type OnboardingDraft = {
   vegetarian?: "Sí" | "No" | "";
   otherTags?: string[];
   photoUris?: string[];
+  photoOriginalUris?: Record<string, string>;
   primaryPhotoUri?: string;
 };
 
