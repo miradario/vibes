@@ -90,7 +90,7 @@ export default function VibiDailyTip({
     }
   };
   return (
-    <View style={s.card}>
+    <View style={[s.card, !accepted && s.cardBare]}>
       {!accepted ? (
         <View style={s.choices}>
           <TouchableOpacity
@@ -167,6 +167,12 @@ const s = StyleSheet.create({
     gap: 12,
     borderRadius: 18,
     backgroundColor: "rgba(244, 163, 64, 0.16)",
+  },
+  // Sí/No step: the buttons sit directly on the sheet, without the tinted card.
+  cardBare: {
+    padding: 0,
+    borderRadius: 0,
+    backgroundColor: "transparent",
   },
   choices: { flexDirection: "row", gap: 12 },
   choice: { flex: 1 },

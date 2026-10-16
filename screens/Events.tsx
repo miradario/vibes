@@ -574,7 +574,7 @@ const Events = ({
               <Icon name="chevron-down" size={14} color={vibesTheme.colors.primaryText} />
             </TouchableOpacity>)}
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.eventCategories}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={localStyles.eventCategoriesScroll} contentContainerStyle={localStyles.eventCategories}>
             {[{ id: null, label: "Todos" }, ...EVENT_CATEGORIES].map(option => <TouchableOpacity key={option.id ?? "all"} accessibilityRole="button" accessibilityState={{ selected: category === option.id }} onPress={() => setCategory(option.id)} style={[localStyles.eventCategory, category === option.id && { backgroundColor: vibesTheme.colors.primaryText }]}><Text style={[localStyles.eventCategoryLabel, category === option.id && { color: vibesTheme.colors.surface }]}>{option.label}</Text></TouchableOpacity>)}
           </ScrollView>
         </> : null}
@@ -596,14 +596,6 @@ const Events = ({
               : null,
           ]}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={section === "event" && !listIsLoading && !error ? (
-            <View style={localStyles.upcomingHeader}>
-              <Text style={localStyles.upcomingTitle}>{pastOnly ? "Eventos pasados" : "Próximos eventos"}</Text>
-              <Text style={localStyles.eventCount}>
-                {visibleItems.length} {visibleItems.length === 1 ? "evento" : "eventos"}
-              </Text>
-            </View>
-          ) : null}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
               {listIsLoading ? <VibesLoader size={48} /> : null}
@@ -996,15 +988,6 @@ dateFieldText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily:
 dateFilterButton: { flex: 0, backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.primaryText },
 filterApply: { flex: 1, minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
 filterActionText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.bold },
-upcomingHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    gap: 12, paddingVertical: 12,
-  },
-upcomingTitle: {
-    flex: 1, fontSize: 23, lineHeight: 30,
-    fontFamily: vibesTheme.fonts.bold, color: vibesTheme.colors.primaryText,
-  },
-eventCount: { fontSize: 13, color: vibesTheme.colors.secondaryText },
 eventListRow: {
     width: "100%", flexDirection: "row", alignItems: "center", gap: 14,
     padding: 14, marginBottom: 12, borderRadius: 20,
@@ -1359,6 +1342,7 @@ eventSubtitle: { fontSize: 15, lineHeight: 22, color: vibesTheme.colors.secondar
 eventFilterRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
 eventFilterChip: { flex: 1, minHeight: 44, borderRadius: 13, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}40`, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 8, gap: 6 },
 eventFilterLabel: { flexShrink: 1, fontSize: 13, fontFamily: vibesTheme.fonts.medium, color: vibesTheme.colors.primaryText },
+eventCategoriesScroll: { flexGrow: 0, flexShrink: 0 },
 eventCategories: { gap: 8, paddingBottom: 12 },
 eventCategory: { borderRadius: 24, paddingHorizontal: 18, minHeight: 38, justifyContent: "center", backgroundColor: `${vibesTheme.colors.secondaryText}12` },
 eventCategoryLabel: { fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.secondaryText },
