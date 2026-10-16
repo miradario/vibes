@@ -86,7 +86,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   body: {
     flexGrow: 1,
-    paddingBottom: 104,
+    paddingBottom: 12,
   },
   bodyScroll: {
     flex: 1,
@@ -115,10 +115,8 @@ export const onboardingStyles = StyleSheet.create({
     maxWidth: 280,
   },
   footer: {
-    position: "absolute",
-    left: isCompactOnboardingScreen ? 18 : 22,
-    right: isCompactOnboardingScreen ? 18 : 22,
-    bottom: 12,
+    marginTop: 24,
+    marginHorizontal: isCompactOnboardingScreen ? 18 : 22,
     paddingTop: 10,
     paddingBottom: 0,
     backgroundColor: vibesTheme.colors.background,

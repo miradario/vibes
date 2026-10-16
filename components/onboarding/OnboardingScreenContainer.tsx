@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  type ScrollViewProps,
   StyleProp,
   View,
   ViewStyle,
@@ -11,11 +12,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { onboardingStyles } from "../../src/screens/Onboarding/vibesOnboardingStyles";
 
+// Android uses native adjustResize or the measured overlap fallback below.
+// Keeping an idle KeyboardAvoidingView there adds a second IME layout listener.
+const KeyboardContainer = Platform.OS === "ios" ? KeyboardAvoidingView : View;
+
 type OnboardingScreenContainerProps = {
   children: React.ReactNode;
   footer?: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
   scrollViewRef?: React.RefObject<ScrollView | null>;
+  onViewportChange?: () => void;
+  onScroll?: ScrollViewProps["onScroll"];
 };
 
 const OnboardingScreenContainer = ({
@@ -23,6 +30,8 @@ const OnboardingScreenContainer = ({
   footer,
   contentStyle,
   scrollViewRef,
+  onViewportChange,
+  onScroll,
 }: OnboardingScreenContainerProps) => {
   const root = useRef<View>(null);
   const keyboardTop = useRef<number | null>(null);
@@ -49,12 +58,11 @@ const OnboardingScreenContainer = ({
   return (
   <View ref={root} style={onboardingStyles.screen} onLayout={updateOverlap}>
     <SafeAreaView style={onboardingStyles.safeArea}>
-      <KeyboardAvoidingView
+      <KeyboardContainer
         style={[onboardingStyles.keyboard, keyboardOverlap > 0 && { paddingBottom: keyboardOverlap }]}
         // Android already resizes the activity via windowSoftInputMode=adjustResize.
         // Applying a second height adjustment can clip and blur the focused input.
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={0}
+        {...(Platform.OS === "ios" ? { behavior: "padding" as const, keyboardVerticalOffset: 0 } : {})}
       >
         <View style={[onboardingStyles.content, contentStyle]}>
           <View style={onboardingStyles.card}>
@@ -62,18 +70,23 @@ const OnboardingScreenContainer = ({
               ref={scrollViewRef}
               style={onboardingStyles.bodyScroll}
               contentContainerStyle={onboardingStyles.body}
-              automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+              // KeyboardAvoidingView owns iOS insets; do not apply them twice.
+              automaticallyAdjustKeyboardInsets={false}
+              onLayout={onViewportChange}
+              onContentSizeChange={onViewportChange}
+              onScroll={onScroll}
+              scrollEventThrottle={16}
               keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
               keyboardShouldPersistTaps="handled"
               removeClippedSubviews={false}
               showsVerticalScrollIndicator={false}
             >
               {children}
+              {footer ? <View style={onboardingStyles.footer}>{footer}</View> : null}
             </ScrollView>
-            {footer ? <View style={onboardingStyles.footer}>{footer}</View> : null}
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardContainer>
     </SafeAreaView>
   </View>
   );

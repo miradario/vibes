@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { revealFocusedInput as revealInputInViewport } from "../../lib/revealFocusedInput";
 import {
   Alert,
   Animated,
   Easing,
   Keyboard,
-  findNodeHandle,
   ScrollView,
   Platform,
   StyleSheet,
@@ -100,6 +100,7 @@ const VibesOnboardingFlow = () => {
   const completeMutation = useCompleteOnboardingMutation();
   const transition = useRef(new Animated.Value(1)).current;
   const onboardingScrollRef = useRef<ScrollView | null>(null);
+  const onboardingScrollY = useRef(0);
   const displayNameInputRef = useRef<NativeTextInput | null>(null);
   const descriptionInputRef = useRef<NativeTextInput | null>(null);
   const focusedProfileInput = useRef<NativeTextInput | null>(null);
@@ -426,11 +427,8 @@ const VibesOnboardingFlow = () => {
   };
 
   const revealFocusedInput = () => {
-    const input = focusedProfileInput.current;
-    if (!input?.isFocused()) return;
-    const node = findNodeHandle(input);
-    const responder = onboardingScrollRef.current?.getScrollResponder?.();
-    if (node && responder) responder.scrollResponderScrollNativeHandleToKeyboard(node, 24, true);
+    revealInputInViewport(focusedProfileInput.current, onboardingScrollRef.current,
+      onboardingScrollY, focusedProfileInput);
   };
   const scrollInputIntoView = (input: NativeTextInput | null) => {
     focusedProfileInput.current = input;
@@ -798,6 +796,8 @@ const VibesOnboardingFlow = () => {
       ) : (
         <OnboardingScreenContainer
           scrollViewRef={onboardingScrollRef}
+          onScroll={event => { onboardingScrollY.current = event.nativeEvent.contentOffset.y; }}
+          onViewportChange={() => requestAnimationFrame(revealFocusedInput)}
           footer={
             <>
               <PrimaryButton
