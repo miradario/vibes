@@ -119,7 +119,7 @@ export const onboardingStyles = StyleSheet.create({
     marginTop: 12,
     marginHorizontal: isCompactOnboardingScreen ? 18 : 22,
     paddingTop: 10,
-    paddingBottom: 0,
+    paddingBottom: 20,
     backgroundColor: vibesTheme.colors.background,
   },
   primaryButton: {

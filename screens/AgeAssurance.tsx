@@ -1,7 +1,7 @@
 /** @format */
 
 import React, { useMemo, useState } from "react";
-import { Image, Platform, StyleSheet, View } from "react-native";
+import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "../components/Typography";
 import BirthDateWheel from "../components/BirthDateWheel";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -50,7 +50,7 @@ const AgeAssurance = () => {
   };
 
   return (
-    <ScreenContainer scroll contentContainerStyle={{ flexGrow: 1 }} edges={["top", "bottom", "left", "right"]}>
+    <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       <View style={localStyles.container}>
         <AppHeader
           showBack
@@ -58,7 +58,8 @@ const AgeAssurance = () => {
           onBack={() => navigation.goBack()}
         />
 
-        <View style={localStyles.content}>
+        <ScrollView style={localStyles.scroll} contentContainerStyle={localStyles.content}
+          keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Image source={VIBES_LOGO} resizeMode="contain" accessibilityLabel="Vibes" style={localStyles.logo} />
           <View style={localStyles.copyBlock}>
             <Text style={localStyles.title}>{t("ageAssurance.title")}</Text>
@@ -94,19 +95,13 @@ const AgeAssurance = () => {
               </Text>
             ) : null}
           </View>
-        </View>
+        </ScrollView>
 
         <View style={localStyles.footer}>
           <VibesActionButton
             label={t("ageAssurance.continue")}
             onPress={handleContinue}
             disabled={!isValidAge}
-          />
-          <VibesActionButton
-            label={t("common.back")}
-            variant="skip"
-            style={localStyles.backButton}
-            onPress={() => navigation.goBack()}
           />
         </View>
       </View>
@@ -118,16 +113,17 @@ export default AgeAssurance;
 
 const localStyles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     paddingBottom: 16,
   },
+  scroll: { flex: 1 },
   content: {
     flexGrow: 1,
     paddingHorizontal: 24,
     justifyContent: "center",
-    gap: 24,
+    gap: 16,
   },
-  logo: { width: 140, height: 140, alignSelf: "center" },
+  logo: { width: 100, height: 100, alignSelf: "center" },
   copyBlock: {
     alignItems: "center",
     gap: 10,
@@ -141,8 +137,8 @@ const localStyles = StyleSheet.create({
   title: {
     color: vibesTheme.colors.accentBlue,
     fontFamily: vibesTheme.fonts.bold,
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 24,
+    lineHeight: 30,
     textAlign: "center",
   },
   subtitle: {
@@ -160,12 +156,9 @@ const localStyles = StyleSheet.create({
     lineHeight: 19,
   },
   footer: {
-    marginTop: "auto",
+    flexShrink: 0,
     paddingHorizontal: 24,
     paddingTop: 18,
-  },
-  backButton: {
-    marginTop: 10,
   },
   headerBackButton: {
     backgroundColor: "transparent",

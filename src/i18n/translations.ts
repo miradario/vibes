@@ -255,6 +255,16 @@ const baseTranslations = {
         button: "Siguiente",
       },
       profile: {
+        title: "Tu foto de perfil",
+        subtitle: "Elegí cómo querés mostrarte",
+        button: "Siguiente",
+        namePlaceholder: "Tu nombre",
+        descriptionPlaceholder: "Una breve descripción sobre ti",
+        birthDatePlaceholder: "Fecha de nacimiento",
+        confirmedAge: "Edad confirmada",
+        years: "años",
+      },
+      profileText: {
         title: "Cuéntanos sobre ti",
         subtitle: "Así podrás mostrarnos tal y como eres",
         button: "Siguiente",
@@ -909,6 +919,16 @@ const baseTranslations = {
         button: "Next",
       },
       profile: {
+        title: "Your profile photo",
+        subtitle: "Choose how you want to show up",
+        button: "Next",
+        namePlaceholder: "Your name",
+        descriptionPlaceholder: "A brief description about you",
+        birthDatePlaceholder: "Birth date",
+        confirmedAge: "Age confirmed",
+        years: "years old",
+      },
+      profileText: {
         title: "Tell us about yourself",
         subtitle: "So you can show up as you are",
         button: "Next",

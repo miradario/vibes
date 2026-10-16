@@ -214,6 +214,10 @@ const VibesOnboardingFlow = () => {
     button: t(`vibesOnboarding.${step}.button`),
   };
   useEffect(() => {
+    focusedProfileInput.current = null;
+    Keyboard.dismiss();
+    onboardingScrollY.current = 0;
+    onboardingScrollRef.current?.scrollTo({ y: 0, animated: false });
     transition.setValue(0);
     const animation = Animated.timing(transition, {
       toValue: 1,
@@ -291,10 +295,10 @@ const VibesOnboardingFlow = () => {
   const canContinue =
     (step === "purpose" && purposeIds.length > 0) ||
     (step === "profile" &&
-      Boolean(displayName.trim()) &&
       Boolean(birthDate) &&
       Number(age) >= MIN_AGE &&
       Number(age) <= MAX_AGE) ||
+    (step === "profileText" && Boolean(displayName.trim())) ||
     (step === "location" && Boolean(city.trim() || country.trim())) ||
     step === "practices" ||
     ["identity", "interests", "completion"].includes(step);
@@ -507,7 +511,7 @@ const VibesOnboardingFlow = () => {
         style={[
           onboardingStyles.title,
           targetStep === "completion" && onboardingStyles.centeredTitle,
-          targetStep === "profile" && { fontSize: 28, lineHeight: 34, marginTop: 16 },
+          ["profile", "profileText"].includes(targetStep) && { fontSize: 28, lineHeight: 34, marginTop: 16 },
         ]}
         maxFontSizeMultiplier={1}
       >
@@ -549,6 +553,56 @@ const VibesOnboardingFlow = () => {
       <View style={onboardingStyles.profileWrap}>
         <ProfilePhotoPicker uris={photoUris} onChange={handlePhotoChange} />
         <View style={onboardingStyles.fieldGroup}>
+          {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
+            Platform.OS === "ios" ? (
+              <>
+                <TouchableOpacity
+                  style={onboardingStyles.inputRow}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  onPress={() => setShowBirthDatePicker(true)}
+                >
+                  <Icon name="calendar-outline" size={20} color={ONBOARDING_COLORS.mustard} />
+                  <Text style={[onboardingStyles.ageValue, !birthDate && { color: "rgba(110, 110, 110, 0.55)" }]}>
+                    {birthDate
+                      ? birthDate.toLocaleDateString(locale === "en" ? "en-US" : "es-AR")
+                      : t("vibesOnboarding.profile.birthDatePlaceholder")}
+                  </Text>
+                  {age ? (
+                    <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: 8 }]}>
+                      {age} {t("vibesOnboarding.profile.years")}
+                    </Text>
+                  ) : null}
+                </TouchableOpacity>
+                {showBirthDatePicker ? (
+                  <DateTimePicker
+                    value={birthDate ?? birthDateLimits.maximumDate}
+                    mode="date"
+                    display="spinner"
+                    themeVariant="light"
+                    locale={locale === "en" ? "en-US" : "es-AR"}
+                    minimumDate={birthDateLimits.minimumDate}
+                    maximumDate={birthDateLimits.maximumDate}
+                    onChange={(_event, date) => {
+                      if (date) setBirthDate(date);
+                    }}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <BirthDateWheel value={birthDate} onChange={setBirthDate}
+                minimumDate={birthDateLimits.minimumDate} maximumDate={birthDateLimits.maximumDate} locale={locale} />
+            )
+          ) : null}
+        </View>
+      </View>
+    </>
+  );
+
+  const renderProfileText = () => (
+    <>
+      {renderTitle("profileText")}
+      <View style={onboardingStyles.fieldGroup}>
           <View style={onboardingStyles.inputRow}>
             <Icon
               name="person-outline"
@@ -595,48 +649,6 @@ const VibesOnboardingFlow = () => {
             />
           </View>
 
-          {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
-            Platform.OS === "ios" ? (
-              <>
-                <TouchableOpacity
-                  style={onboardingStyles.inputRow}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  onPress={() => setShowBirthDatePicker(true)}
-                >
-                  <Icon name="calendar-outline" size={20} color={ONBOARDING_COLORS.mustard} />
-                  <Text style={[onboardingStyles.ageValue, !birthDate && { color: "rgba(110, 110, 110, 0.55)" }]}>
-                    {birthDate
-                      ? birthDate.toLocaleDateString(locale === "en" ? "en-US" : "es-AR")
-                      : t("vibesOnboarding.profile.birthDatePlaceholder")}
-                  </Text>
-                  {age ? (
-                    <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: 8 }]}>
-                      {age} {t("vibesOnboarding.profile.years")}
-                    </Text>
-                  ) : null}
-                </TouchableOpacity>
-                {showBirthDatePicker ? (
-                  <DateTimePicker
-                    value={birthDate ?? birthDateLimits.maximumDate}
-                    mode="date"
-                    display="spinner"
-                    themeVariant="light"
-                    locale={locale === "en" ? "en-US" : "es-AR"}
-                    minimumDate={birthDateLimits.minimumDate}
-                    maximumDate={birthDateLimits.maximumDate}
-                    onChange={(_event, date) => {
-                      if (date) setBirthDate(date);
-                    }}
-                  />
-                ) : null}
-              </>
-            ) : (
-              <BirthDateWheel value={birthDate} onChange={setBirthDate}
-                minimumDate={birthDateLimits.minimumDate} maximumDate={birthDateLimits.maximumDate} locale={locale} />
-            )
-          ) : null}
-        </View>
       </View>
     </>
   );
@@ -778,6 +790,7 @@ const VibesOnboardingFlow = () => {
         />
       );
     if (step === "profile") return renderProfile();
+    if (step === "profileText") return renderProfileText();
     if (step === "location") return renderLocation();
     if (step === "practices") return renderPractices();
     return null;

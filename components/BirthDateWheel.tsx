@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { Platform, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { Text, TextInput } from "./Typography";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -134,8 +134,8 @@ const s = StyleSheet.create({
   label: { color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 16, lineHeight: 22, includeFontPadding: false },
   wheels: { position: "relative", flexDirection: "row", alignItems: "flex-start" },
   selectionBand: { position: "absolute", left: 0, right: 0, borderRadius: 16, backgroundColor: `${vibesTheme.colors.accentBlue}14` },
-  option: { textAlign: "center", paddingHorizontal: 3, fontSize: 23, lineHeight: 32, includeFontPadding: false },
-  selected: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 26 },
+  option: { textAlign: "center", paddingHorizontal: 3, fontSize: Platform.OS === "android" ? 17 : 23, lineHeight: Platform.OS === "android" ? 24 : 32, includeFontPadding: false },
+  selected: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: Platform.OS === "android" ? 19 : 26 },
   unselected: { color: vibesTheme.colors.secondaryText },
   manualLink: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8 },
   hint: { color: vibesTheme.colors.secondaryText, fontSize: 14, textAlign: "center", lineHeight: 20 },

@@ -24,11 +24,11 @@ const ProgressHeader = ({
   cancelDisabled = false,
 }: ProgressHeaderProps) => (
   <View style={styles.wrap}>
-    {showBack ? (
+    {showBack && !hideBackIcon ? (
       <BackButton onPress={onBack}
         activeOpacity={0.8}
         style={styles.backButton}
-        accessibilityRole="button" hideIcon={hideBackIcon} />
+        accessibilityRole="button" />
     ) : (
       <View style={styles.backSpacer} />
     )}
