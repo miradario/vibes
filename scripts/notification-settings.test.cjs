@@ -25,6 +25,7 @@ function fixture({ fail = false, loaded = true } = {}) {
     'expo-notifications': { IosAuthorizationStatus: { PROVISIONAL:3, EPHEMERAL:4 } },
     '@tanstack/react-query': { useQueryClient:()=>({cancelQueries:async()=>{},setQueryData:(_key,value)=>{data=value;}}) },
     'react-native-safe-area-context': { useSafeAreaInsets:()=>({bottom:0}) },
+    './VibesLoader':{default:'Spinner',__esModule:true},
     './Typography': { Text:'Text' }, './Icon': {default:'Icon',__esModule:true}, './AnimatedSheetModal':{default:'Sheet',__esModule:true},
     '../src/auth/auth.queries': {useAuthSession:()=>({data:{user:{id:'user'}}})},
     '../src/queries/userPreferences.queries': {useUserPreferencesQuery:()=>({data,isSuccess:loaded,isError:false}),userPreferencesKeys:{byUser:id=>[id]}},

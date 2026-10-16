@@ -1,3 +1,6 @@
+if (!process.env.VIBES_LOCAL_DB_TESTS) {
+  require('node:test').test('integration test requires explicit VIBES_LOCAL_DB_TESTS opt-in', {skip:true}, () => {});
+} else {
 // Disposable PostgreSQL integration suite. No production connection or fixtures.
 // NODE_PATH=<directory containing pg and embedded-postgres> node scripts/community-invitations-db.test.cjs
 const fs = require('node:fs');
@@ -118,3 +121,5 @@ async function main() {
   }
 }
 main().catch(error => { console.error(error); process.exitCode=1; });
+
+}

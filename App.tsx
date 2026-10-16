@@ -1,3 +1,4 @@
+import { bindQueryAppState } from "./src/lib/queryAppState";
 import PastChallenges from "./screens/PastChallenges";
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
@@ -17,9 +18,9 @@ import Vibi from "./screens/Vibi";
 
 import "react-native-url-polyfill/auto";
 import React from "react";
-import { Platform, View } from "react-native";
+import { AppState, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer, CommonActions } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -152,6 +153,10 @@ const queryClient = new QueryClient({
 });
 
 const CommunityRuntime = () => {
+  React.useEffect(() => {
+    if (Platform.OS === "web") return;
+    return bindQueryAppState(AppState, focused => focusManager.setFocused(focused));
+  }, []);
   useCommunityDeliverySync();
   return null;
 };

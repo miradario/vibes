@@ -454,7 +454,7 @@ export const matchesQueryOptions = (userId?: string) => ({
   enabled: Boolean(userId),
   staleTime: 30_000,
   refetchInterval: userId ? 10_000 : (false as const),
-  refetchIntervalInBackground: true,
+  refetchIntervalInBackground: false,
 });
 
 export const useMarkDirectMessagesReadMutation = () => {
@@ -495,7 +495,7 @@ export const useIncomingLikesQuery = () => {
     enabled: Boolean(userId),
     staleTime: 30_000,
     refetchInterval: userId ? 10_000 : (false as const),
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {
@@ -777,7 +777,7 @@ export const useDirectMessagesQuery = (matchId?: string) => {
     enabled: Boolean(matchId),
     staleTime: 10_000,
     refetchInterval: matchId ? 2000 : false,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     structuralSharing: keepPendingDirectMessages,
   });

@@ -9,7 +9,9 @@
     "web": "expo start --web",
     "eject": "expo eject",
     "discover:check": "node scripts/check_discover_capacity.js",
-    "vibi:check": "node --test scripts/vibi.test.cjs"
+    "vibi:check": "node --test scripts/vibi.test.cjs",
+    "test": "node --test scripts/*.test.cjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -60,7 +62,6 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
-    "react-native-card-stack-swiper": "^1.2.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
@@ -70,8 +71,7 @@
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "^0.21.0",
     "react-native-webview": "13.15.0",
-    "react-native-worklets": "^0.5.1",
-    "react-navigation": "^4.4.4"
+    "react-native-worklets": "^0.5.1"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -84,5 +84,9 @@
   },
   "private": true,
   "name": "tinder-expo",
-  "version": "1.0.3"
+  "version": "1.0.3",
+  "overrides": {
+    "shell-quote": "1.12.0",
+    "tar": "7.5.22"
+  }
 }

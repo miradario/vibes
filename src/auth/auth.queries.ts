@@ -1,3 +1,4 @@
+import { updateSessionCache } from "./sessionCache";
 import { useEffect } from "react";
 import { resetVibiDailyGreeting } from "../lib/vibiDailyPrompts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +28,7 @@ export const useAuthSession = () => {
   useEffect(() => {
     const { data } = authService.onAuthStateChange?.((event, session) => {
       if (event === "SIGNED_OUT") resetVibiDailyGreeting();
-      queryClient.setQueryData(authKeys.session, session ?? null);
+      updateSessionCache(queryClient, session ?? null);
     }) ?? { data: null };
 
     const subscription = (data as any)?.subscription ?? (data as any) ?? null;
@@ -52,7 +53,7 @@ export const useLoginMutation = () => {
     mutationFn: authService.login,
     onSuccess: (session) => {
       if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
-      queryClient.setQueryData(authKeys.session, session ?? null);
+      updateSessionCache(queryClient, session ?? null);
       queryClient.invalidateQueries();
     },
   });
@@ -65,7 +66,7 @@ export const useSignupMutation = () => {
     mutationFn: authService.signup,
     onSuccess: ({ session }) => {
       if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
-      queryClient.setQueryData(authKeys.session, session ?? null);
+      updateSessionCache(queryClient, session ?? null);
       if (session) {
         queryClient.invalidateQueries();
       }
@@ -80,7 +81,7 @@ export const useGoogleLoginMutation = () => {
     mutationFn: authService.loginWithGoogle,
     onSuccess: (session) => {
       if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
-      queryClient.setQueryData(authKeys.session, session ?? null);
+      updateSessionCache(queryClient, session ?? null);
       if (session) {
         queryClient.invalidateQueries();
       }
@@ -95,7 +96,7 @@ export const useAppleLoginMutation = () => {
     mutationFn: authService.loginWithApple,
     onSuccess: (session) => {
       if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
-      queryClient.setQueryData(authKeys.session, session ?? null);
+      updateSessionCache(queryClient, session ?? null);
       if (session) {
         queryClient.invalidateQueries();
       }
@@ -116,7 +117,7 @@ export const useExchangePasswordResetCodeMutation = () => {
     mutationFn: authService.exchangePasswordResetCode,
     onSuccess: (session) => {
       if (session?.user?.id) resetVibiDailyGreeting(session.user.id);
-      queryClient.setQueryData(authKeys.session, session ?? null);
+      updateSessionCache(queryClient, session ?? null);
       if (session) {
         queryClient.invalidateQueries();
       }
@@ -137,8 +138,7 @@ export const useLogoutMutation = () => {
     mutationFn: authService.logout,
     onSuccess: () => {
       resetVibiDailyGreeting();
-      queryClient.setQueryData(authKeys.session, null);
-      queryClient.invalidateQueries();
+      updateSessionCache(queryClient, null);
     },
   });
 };

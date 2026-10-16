@@ -1315,7 +1315,7 @@ export const DiscoverContent = forwardRef<
                 <Text style={localStyles.filtersPrimaryButtonText}>
                   {locale === "en" ? "See profiles" : "Ver perfiles"}
                 </Text>
-                <Icon name="arrow-forward" size={24} color={vibesTheme.colors.surface} />
+                <Icon name="arrow-forward" size={24} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
             </View>
           </>
@@ -1911,7 +1911,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   filtersPrimaryButtonText: {
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontSize: 20,
     fontFamily: vibesTheme.fonts.semibold,
   },

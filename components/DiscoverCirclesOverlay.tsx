@@ -2,7 +2,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, type DimensionValue } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import Animated, {
   Easing,
@@ -13,8 +13,8 @@ import Animated, {
 } from "react-native-reanimated";
 
 type AnimatedCircleLayerProps = {
-  left: string;
-  top: string;
+  left: DimensionValue;
+  top: DimensionValue;
   size: number;
   color: string;
   opacity: number;

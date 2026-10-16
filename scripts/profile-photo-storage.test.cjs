@@ -12,7 +12,7 @@ function fixture(responses) {
   }).outputText, {
     exports, Date: { now: () => now },
     console: { warn: (...args) => warnings.push(args) },
-    require: () => ({ supabase: { storage: { from: () => ({
+    require: name => name === "./startupBoot" ? {withBootTimeout: promise => promise} : ({ supabase: { storage: { from: () => ({
       createSignedUrl: async () => responses[calls++],
     }) } } }),
   });

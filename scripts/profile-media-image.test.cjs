@@ -9,6 +9,8 @@ function render(source) {
     createElement: (type, props, ...children) => ({ type, props, children }),
     useMemo: (fn) => fn(),
     useState: () => [null, () => {}],
+    useRef: value => ({current:value}),
+    useEffect: () => {},
   };
   const output = { exports: {} };
   const code = ts.transpileModule(fs.readFileSync('components/ProfileMediaImage.tsx', 'utf8'), {
@@ -19,6 +21,7 @@ function render(source) {
     require: (name) => {
       if (name === 'react') return react;
       if (name === 'react-native') return { View: 'View', StyleSheet: { create: (s) => s, absoluteFillObject: {} } };
+      if (name.includes('imageCacheSource')) return {imageCacheSource: source => source};
       if (name === 'expo-image') return { Image: 'Image' };
       if (name.includes('vibesTheme')) return { vibesTheme: { colors: { background: '#FEFEFD' } } };
       return { default: 'Placeholder', __esModule: true };

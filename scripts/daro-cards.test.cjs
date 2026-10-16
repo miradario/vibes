@@ -177,6 +177,7 @@ function candidateQuery(hasOwnPhoto) {
     },
   };
   const imports = {
+    "../lib/startupBoot": {withBootTimeout: promise => promise},
     "../lib/profilePhotos": load("src/lib/profilePhotos.ts"),
     "../lib/zodiac": { zodiacFromBirthDate: () => undefined },
     "../lib/communityDiscovery": { isSwipeHidden: () => false },

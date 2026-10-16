@@ -1,3 +1,6 @@
+if (!process.env.VIBES_TEST_KEYS_FILE) {
+  require('node:test').test('integration test requires explicit VIBES_TEST_KEYS_FILE opt-in', {skip:true}, () => {});
+} else {
 // Opt-in integration test against the selected Supabase project. Creates and removes only its own fixtures.
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
@@ -59,3 +62,5 @@ const ok = result => { if(result.error) throw new Error(result.error.message); r
   console.log('Temporary test accounts, challenge and media cleaned up.');
  }
 })().catch(error=>{ console.error(error.message);process.exitCode=1; });
+
+}

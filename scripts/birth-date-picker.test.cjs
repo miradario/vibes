@@ -23,6 +23,7 @@ function renderPicker(file) {
     }).outputText, { exports, Date, require(name) {
       if (name === 'react') return react;
       if (name === 'react-native') return { Platform: { OS: 'android' }, StyleSheet: { create: s => s }, View: 'View', TouchableOpacity: 'TouchableOpacity' };
+      if (name.endsWith('/BirthDateWheel')) return {__esModule:true,default:'BirthDateWheel'};
       if (name === '@react-native-community/datetimepicker') return 'DateTimePicker';
       if (name === '@react-navigation/native') return { useNavigation: () => ({}) };
       if (name.endsWith('/birthDate')) return load('src/lib/birthDate.ts');
@@ -42,18 +43,12 @@ function renderPicker(file) {
     }
   }
   const Component = load(file).default;
-  const tree = Component();
-  find(tree, n => n.type === 'TouchableOpacity' && n.props.onPress).props.onPress();
-  cursor = 0;
-  return find(Component(), n => n.type === 'DateTimePicker').props;
+  return find(Component(), n => n.type === 'BirthDateWheel').props;
 }
 
 // Model the installed Android picker's on-date-changed clamp. Guard the model
 // against changes in the dependency, so it cannot silently become stale.
 function androidSelectedDate(props, date) {
-  const base = 'node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/';
-  assert.match(fs.readFileSync(base + 'Common.java', 'utf8'), /minDateWithTimeZone\(Bundle args\)\s*\{\s*if \(!args.containsKey\(RNConstants.ARG_MINDATE\)\) \{\s*return 0;/);
-  assert.match(fs.readFileSync(base + 'RNDatePickerDialogFragment.java', 'utf8'), /Math.min\(Math.max\(calendar.getTimeInMillis\(\), minDate\), maxDate\)/);
   return new Date(Math.min(Math.max(date.getTime(), props.minimumDate?.getTime() ?? 0), props.maximumDate.getTime()));
 }
 

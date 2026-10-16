@@ -9,7 +9,7 @@ function appNavigation(route = 'Tab') {
  function visit(n) { if (ts.isJsxAttribute(n) && n.name.getText(source) === 'onStateChange') onStateChange = n.initializer.expression; if(ts.isVariableDeclaration(n) && n.name.getText(source) === 'navigateFromNotification') declaration = n; ts.forEachChild(n, visit); }
  visit(source);
  const calls=[];
- const context={syncVibiRoute:()=>{},module:{},isNavigationReady:true,pendingNotificationData:null,navigationRef:{current:{getCurrentRoute:()=>({name:route}),dispatch:v=>calls.push(v)}},CommonActions:{navigate:v=>v}, fetchEventFeedItemById:async()=>null, navigateToMessages:()=>calls.push({name:'messages'}), console};
+ const context={syncVibiRoute:()=>{},flushDeferredDestination:()=>{},module:{},isNavigationReady:true,pendingNotificationData:null,navigationRef:{current:{getCurrentRoute:()=>({name:route}),dispatch:v=>calls.push(v)}},CommonActions:{navigate:v=>v}, fetchEventFeedItemById:async()=>null, navigateToMessages:()=>calls.push({name:'messages'}), console};
  if(fs.existsSync('src/notifications/reminderNavigation.ts')) {
   const exports={};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/notifications/reminderNavigation.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports});

@@ -1,3 +1,5 @@
+import type { StackNavigationProp } from "@react-navigation/stack";
+import type { ParamListBase } from "@react-navigation/native";
 /** @format */
 
 import React, { useCallback } from "react";
@@ -22,7 +24,7 @@ type OnboardingProgressBarProps = {
 let lastFocusedOnboardingScreen: string | null = null;
 
 const OnboardingProgressBar = ({ screenName }: OnboardingProgressBarProps) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
   const progress = getOnboardingProgress(screenName);
   const animatedProgress = useSharedValue(0);
 

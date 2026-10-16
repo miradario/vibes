@@ -22,6 +22,7 @@ import { View, StyleSheet } from "react-native";
 import Svg, { Path, Circle, Ellipse } from "react-native-svg";
 import Animated, {
   Easing,
+  type SharedValue,
   useAnimatedProps,
   useSharedValue,
   withTiming,
@@ -42,7 +43,7 @@ const localProgress = (global: number, start: number, end: number) =>
 type StrokePathProps = {
   d: string;
   dash: number;
-  progress: Animated.SharedValue<number>;
+  progress: SharedValue<number>;
   start: number;
   end: number;
   strokeWidth?: number;
@@ -79,7 +80,7 @@ const StrokePath = ({
 
 type FadeEllipseProps = {
   cx: number; cy: number; rx: number; ry: number;
-  progress: Animated.SharedValue<number>;
+  progress: SharedValue<number>;
   start: number; end: number;
   fill: string;
 };
@@ -95,7 +96,7 @@ const FadeEllipse = ({ cx, cy, rx, ry, progress, start, end, fill }: FadeEllipse
 
 type FadeCircleProps = {
   cx: number; cy: number; r: number;
-  progress: Animated.SharedValue<number>;
+  progress: SharedValue<number>;
   start: number; end: number;
   fill: string; maxOpacity?: number;
 };
