@@ -285,7 +285,7 @@ function HomePeopleSuggestions({
             <Text style={localStyles.personName} numberOfLines={1}>
               {profile.name.split(" ")[0]}{profile.age ? `, ${profile.age}` : ""}
             </Text>
-            <Text style={localStyles.personHint} numberOfLines={1}>
+            <Text style={localStyles.personHint} numberOfLines={2}>
               {getSuggestionHint(profile)}
             </Text>
             </View>
@@ -1091,15 +1091,15 @@ const localStyles = StyleSheet.create({
   },
   skeletonText: { opacity: 0 },
   personCard: {
-    width: 152,
+    width: 96,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: `${vibesTheme.colors.secondaryText}24`,
     borderRadius: 14,
     backgroundColor: vibesTheme.colors.background,
   },
-  personPhoto: { width: "100%", height: 152 },
-  personInfo: { paddingHorizontal: 12, paddingVertical: 10 },
+  personPhoto: { width: "100%", height: 96 },
+  personInfo: { paddingHorizontal: 8, paddingVertical: 6 },
   personAddIcon: {
     backgroundColor: vibesTheme.colors.background,
     borderRadius: 16,
@@ -1112,16 +1112,16 @@ const localStyles = StyleSheet.create({
   personName: {
     alignSelf: "stretch",
     color: vibesTheme.colors.primaryText,
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 20,
     fontFamily: vibesTheme.fonts.semibold,
   },
   personHint: {
     alignSelf: "stretch",
     marginTop: 2,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 15,
     fontFamily: vibesTheme.fonts.regular,
   },
   featureImage: {

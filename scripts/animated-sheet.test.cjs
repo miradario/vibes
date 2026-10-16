@@ -19,6 +19,7 @@ test('typing does not replay sheet animation; close calls the latest callback on
     },
   };
   const native = {
+    Platform: { OS: "android" },
     Animated: {
       Value: class { setValue() {} }, timing: () => ({}),
       parallel: () => {

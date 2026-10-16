@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Keyboard, Platform, useWindowDimensions, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Keyboard, Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 
-/** Keep the sheet above the IME even when Android's modal window does not resize. */
+/** Measure the modal itself: Android can resize the activity without resizing its modal window. */
 export default function KeyboardSheetModal({
   visible,
   onClose,
@@ -13,39 +13,56 @@ export default function KeyboardSheetModal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [keyboardTop, setKeyboardTop] = useState<number | null>(null);
+  const viewport = useRef<View>(null);
+  const keyboardTop = useRef<number | null>(null);
+  const [overlap, setOverlap] = useState(0);
+  const updateOverlap = useCallback(() => {
+    viewport.current?.measureInWindow((_x, y, _width, height) => {
+      const next = keyboardTop.current === null ? 0 : Math.max(0, y + height - keyboardTop.current);
+      setOverlap(previous => Math.abs(previous - next) > 1 ? next : previous);
+    });
+  }, []);
   useEffect(() => {
+    if (!visible) {
+      keyboardTop.current = null;
+      setOverlap(0);
+      return;
+    }
+    keyboardTop.current = Keyboard.metrics()?.screenY ?? null;
+    requestAnimationFrame(updateOverlap);
     const show = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillChangeFrame" : "keyboardDidShow",
-      (event) => setKeyboardTop(event.endCoordinates.screenY)
+      event => {
+        keyboardTop.current = event.endCoordinates.screenY;
+        requestAnimationFrame(updateOverlap);
+      }
     );
     const hide = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setKeyboardTop(null)
+      () => {
+        keyboardTop.current = null;
+        setOverlap(0);
+      }
     );
     return () => {
       show.remove();
       hide.remove();
     };
-  }, []);
-  useEffect(() => {
-    if (visible) setKeyboardTop(Keyboard.metrics()?.screenY ?? null);
-  }, [visible]);
-  const overlap = keyboardTop === null ? 0 : Math.max(0, height - keyboardTop);
+  }, [visible, updateOverlap]);
   return (
     <AnimatedSheetModal
       visible={visible}
+      fullScreen
       onClose={onClose}
       onClosed={() => Keyboard.dismiss()}
-      sheetStyle={{
-        height: height - insets.top - 20,
-        paddingBottom: Math.max(overlap, insets.bottom),
-      }}
+      sheetStyle={{ flex: 1 }}
     >
-      <View style={{ flex: 1, justifyContent: "flex-end", padding: 16 }}>
-        {children}
+      <View ref={viewport} collapsable={false} onLayout={updateOverlap} pointerEvents="box-none" style={{ flex: 1 }}>
+        <View pointerEvents="box-none" style={{ flex: 1, justifyContent: "flex-end", paddingHorizontal: 16,
+          paddingTop: insets.top + 20, paddingBottom: Math.max(overlap, insets.bottom) + 16 }}>
+          {children}
+        </View>
       </View>
     </AnimatedSheetModal>
   );

@@ -925,6 +925,10 @@ const VibesOnboardingFlow = () => {
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={false}
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
+          removeClippedSubviews={false}
+          style={{ flex: 1 }}
           contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
         >
           <View style={onboardingStyles.customPracticeCard}>

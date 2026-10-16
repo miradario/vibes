@@ -61,7 +61,7 @@ const OnboardingName = () => {
         <ScrollView
           ref={scrollViewRef}
           contentContainerStyle={localStyles.scrollContent}
-          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+          automaticallyAdjustKeyboardInsets={false}
           keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
           keyboardShouldPersistTaps="handled"
           // Keep the focused input mounted when adjustResize shrinks the viewport.
