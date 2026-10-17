@@ -293,6 +293,16 @@ const baseTranslations = {
         customPracticePlaceholder: "Ej. Qi Gong",
         add: "Agregar",
       },
+      identity: {
+        title: "Un poco más sobre vos",
+        subtitle: "Todo es opcional",
+        button: "Siguiente",
+      },
+      interests: {
+        title: "Lo que disfrutás",
+        subtitle: "Todo es opcional",
+        button: "Siguiente",
+      },
       completion: {
         title: "Tu vibe está listo.",
         subtitle: "Comencemos este viaje juntos.",
@@ -962,6 +972,16 @@ const baseTranslations = {
         customPracticeTitle: "Practice name",
         customPracticePlaceholder: "E.g. Qi Gong",
         add: "Add",
+      },
+      identity: {
+        title: "A little more about you",
+        subtitle: "Everything is optional",
+        button: "Next",
+      },
+      interests: {
+        title: "What you enjoy",
+        subtitle: "Everything is optional",
+        button: "Next",
       },
       completion: {
         title: "Your vibe is ready.",
