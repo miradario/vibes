@@ -131,6 +131,7 @@
         }
       ],
       "./plugins/withFirebasePods",
+      "./plugins/withIosDeploymentTarget",
       "./plugins/withAndroidReleaseOptimization",
       "./plugins/withAndroidWindowCompatibility"
     ],
