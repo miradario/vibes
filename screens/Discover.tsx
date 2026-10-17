@@ -1619,9 +1619,9 @@ const localStyles = StyleSheet.create({
   },
   title: {
     color: TEXT_PRIMARY,
-    fontSize: 26,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 34,
+    lineHeight: 42,
+    fontFamily: vibesTheme.fonts.extraBold,
     textAlign: "left",
   },
   filtersButton: {

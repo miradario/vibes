@@ -493,7 +493,7 @@ const Events = ({
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
           <View style={localStyles.titleRow}>
-            <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: section === "event" ? 34 : 30, lineHeight: 42 }]}>{title}</Text>
+            <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]}>{title}</Text>
 
           </View>
           {!pastOnly ? <TouchableOpacity
