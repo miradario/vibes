@@ -42,6 +42,7 @@ import Icon from "../components/Icon";
 import Avatar from "../components/Avatar";
 import ScreenContainer from "../components/ScreenContainer";
 import VibesLoader from "../components/VibesLoader";
+import DeepLinkLoadingState from "../components/DeepLinkLoadingState";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import {
   useChallengeCheckinsQuery,
@@ -925,7 +926,13 @@ const ChallengeDetailScreen = () => {
   const { width, height } = useWindowDimensions();
   const routeEvent = route.params?.event as EventFeedItem | undefined;
   const { id: challengeId, inlineEvent } = resolvePublicContentRoute(route.params?.challengeId, routeEvent);
-  const { data: linkedEvent, isLoading: linkedEventLoading } = useQuery({
+  const {
+    data: linkedEvent,
+    isPending: linkedEventPending,
+    isError: linkedEventError,
+    fetchStatus: linkedEventFetchStatus,
+    refetch: refetchLinkedEvent,
+  } = useQuery({
     queryKey: ["challenge_deep_link", challengeId],
     queryFn: () => fetchEventFeedItemById(challengeId as string, "challenge"),
     enabled: Boolean(challengeId),
@@ -937,7 +944,7 @@ const ChallengeDetailScreen = () => {
   const { data: isRestrictedChallenge = false } = useQuery({
     queryKey: ["challenge_restricted", challengeId, userId ?? null],
     queryFn: () => fetchIsRestrictedChallenge(challengeId as string),
-    enabled: Boolean(challengeId) && !event && !linkedEventLoading,
+    enabled: Boolean(challengeId) && !event && !linkedEventPending,
     staleTime: 60_000,
   });
   const handleBack = usePublicContentBack(Boolean(userId));
@@ -1414,15 +1421,14 @@ const ChallengeDetailScreen = () => {
     );
   };
 
-  if (!event && linkedEventLoading) {
+  if (!event && challengeId && linkedEventPending) {
     return (
-      <ScreenContainer style={localStyles.loadingScreen}>
-        <VibesLoader />
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
-          style={localStyles.loadingBackButton} onPress={handleBack}>
-          <Text style={localStyles.loadingBackText}>Volver</Text>
-        </TouchableOpacity>
-      </ScreenContainer>
+      <DeepLinkLoadingState
+        target="challenge"
+        offline={linkedEventFetchStatus === "paused"}
+        onRetry={() => void refetchLinkedEvent()}
+        onExit={handleBack}
+      />
     );
   }
 
@@ -1446,6 +1452,17 @@ const ChallengeDetailScreen = () => {
           <Text style={localStyles.loadingBackText}>Volver</Text>
         </TouchableOpacity>
       </ScreenContainer>
+    );
+  }
+
+  if (!event && challengeId && linkedEventError) {
+    return (
+      <DeepLinkLoadingState
+        target="challenge"
+        state="error"
+        onRetry={() => void refetchLinkedEvent()}
+        onExit={handleBack}
+      />
     );
   }
 
