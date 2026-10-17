@@ -336,6 +336,31 @@ const UserProfileSheet = ({
     return () => bounce.stop();
   }, [visible, profileFocused, appActive, motionReady, runtimeReducedMotion, reduceMotion, actionPending, swipeAnimating, connectBounce]);
 
+  // iOS only: fade the photo card out alongside the details sheet fade-in and
+  // keep the dark photo background until the details are actually visible, so
+  // the slide-up never flashes an empty light screen. Android is unchanged.
+  const isIOS = Platform.OS === "ios";
+  const iosPhotoOpacity = useMemo(() => new Animated.Value(1), [profile?.id]);
+  const [iosDetailsBgReady, setIosDetailsBgReady] = useState(false);
+  useEffect(() => {
+    if (!isIOS) return;
+    const duration = reduceMotion ? 0 : detailsVisible ? 260 : 180;
+    const animation = Animated.timing(iosPhotoOpacity, {
+      toValue: detailsVisible ? 0 : 1,
+      duration,
+      useNativeDriver: true,
+    });
+    animation.start();
+    if (!detailsVisible) {
+      setIosDetailsBgReady(false);
+      return () => animation.stop();
+    }
+    const timer = setTimeout(() => setIosDetailsBgReady(true), duration);
+    return () => {
+      animation.stop();
+      clearTimeout(timer);
+    };
+  }, [isIOS, detailsVisible, iosPhotoOpacity, reduceMotion]);
   useLayoutEffect(() => {
     openingScale.stopAnimation();
     if (!visible || reduceMotion) {
@@ -744,7 +769,7 @@ const UserProfileSheet = ({
         offsetY={0}
         sheetInDelay={0}
         sheetInOpacityDuration={0}
-        sheetStyle={[localStyles.fullscreenSheet, { flex: 1 }, detailsVisible && { backgroundColor: vibesTheme.colors.background }]}
+        sheetStyle={[localStyles.fullscreenSheet, { flex: 1 }, detailsVisible && (!isIOS || iosDetailsBgReady) && { backgroundColor: vibesTheme.colors.background }]}
       >
         {profileImages.length > 0 && photoReadyId !== profile.id && !swipeNextProfile ? (
           <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { alignItems: "center", justifyContent: "center" }]} accessibilityLabel="Cargando perfil">
@@ -811,7 +836,9 @@ const UserProfileSheet = ({
           style={[
             localStyles.screen,
             {
-              opacity: !detailsVisible && (!holdingPhoto || photoReadyId === profile.id || !profileImages.length) ? 1 : 0,
+              opacity: isIOS
+                ? (!holdingPhoto || photoReadyId === profile.id || !profileImages.length ? iosPhotoOpacity : 0)
+                : !detailsVisible && (!holdingPhoto || photoReadyId === profile.id || !profileImages.length) ? 1 : 0,
               transform: [
                 { translateX: swipeX },
                 {
@@ -1141,7 +1168,8 @@ const UserProfileSheet = ({
                     renderItem={({ item, index }) => (
                       <View style={{ width, height: compactPhotoHeight }}>
                         <ProfileMediaImage source={item} style={StyleSheet.absoluteFillObject}
-                          contentFit="contain" blurBackground showLoading transition={0}
+                          contentFit="contain" blurBackground={!isIOS} showLoading={!isIOS} transition={0}
+                          previewSource={isIOS && canViewPhotos && profile.hasPhotos !== false ? item : undefined}
                           fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND} />
                         {hasMultipleImages ? (
                           <View style={[StyleSheet.absoluteFillObject, { flexDirection: "row" }]}>
