@@ -653,9 +653,14 @@ const VibesOnboardingFlow = () => {
                 <Path d="M29 5 Q36 7 42 28 Q34 27 27 13 Q24 5 29 5 Z" fill={vibesTheme.colors.accentCoral} />
               </Svg>
             </View>
-            <Text accessibilityRole="header" style={localStyles.introTitle}>
-              {english ? "Let’s start\nwith you" : "Empecemos\npor vos"}
-            </Text>
+            <View accessibilityRole="header" accessible accessibilityLabel={english ? "Let’s start with you" : "Empecemos por vos"}>
+              <Text style={localStyles.introTitle} numberOfLines={1} adjustsFontSizeToFit>
+                {english ? "Let’s start" : "Empecemos"}
+              </Text>
+              <Text style={localStyles.introTitle} numberOfLines={1} adjustsFontSizeToFit>
+                {english ? "with you" : "por vos"}
+              </Text>
+            </View>
             <Text style={localStyles.introSubtitle}>{english ? "What’s your name?" : "¿Cómo te llamás?"}</Text>
           </View>
           <View style={localStyles.introMascot}>
