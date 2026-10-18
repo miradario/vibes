@@ -58,6 +58,7 @@ import {
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
 import { ONBOARDING_COLORS, onboardingStyles } from "./vibesOnboardingStyles";
+import { signupErrorCode, trackSignupEvent } from "../../lib/signupEvents";
 import { useI18n } from "../../i18n";
 import VibesLoader from "../../../components/VibesLoader";
 import { useProfileQuery } from "../../queries/profile.queries";
@@ -229,6 +230,10 @@ const VibesOnboardingFlow = () => {
     subtitle: t(`vibesOnboarding.${step}.subtitle`),
     button: t(`vibesOnboarding.${step}.button`),
   };
+  const onboardingStartedAt = useRef(Date.now());
+  useEffect(() => {
+    trackSignupEvent("onboarding_step_viewed", { step, stepIndex });
+  }, [stepIndex]);
   useEffect(() => {
     focusedProfileInput.current = null;
     Keyboard.dismiss();
@@ -351,6 +356,7 @@ const VibesOnboardingFlow = () => {
   const goNext = async () => {
     if (["profile", "profileText"].includes(step) && !canContinue) return false;
     updateDraft(currentDraft);
+    if (step !== "completion") trackSignupEvent("onboarding_step_completed", { step, stepIndex });
 
     if (step !== "completion") {
       setStepIndex((prev) =>
@@ -384,9 +390,13 @@ const VibesOnboardingFlow = () => {
       })
       .then(() => {
         resetDraft();
+        trackSignupEvent("onboarding_completed", {
+          props: { duration_s: Math.round((Date.now() - onboardingStartedAt.current) / 1000) },
+        });
         return true;
       })
       .catch((error) => {
+        trackSignupEvent("onboarding_failed", { props: { error_code: signupErrorCode(error) } });
         setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("continueChoice"));
         Alert.alert(
           t("common.error"),
@@ -401,7 +411,10 @@ const VibesOnboardingFlow = () => {
       completion,
       wait(COMPLETION_MIN_LOADING_MS),
     ]);
-    if (shouldNavigate) navigateHome();
+    if (shouldNavigate) {
+      navigateHome();
+      trackSignupEvent("first_home_viewed");
+    }
     return shouldNavigate;
   };
 
