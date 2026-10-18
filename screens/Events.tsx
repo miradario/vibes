@@ -488,7 +488,7 @@ const Events = ({
   return (
     <ScreenContainer edges={pastOnly ? ["top", "left", "right"] : []} style={styles.bg}>
       <View style={[styles.eventsContainer, localStyles.eventsContainer, pastOnly && { paddingTop: 12 }]}>
-        <View style={[localStyles.headerRow, section === "challenge" && { gap: 6 } ]}>
+        <View style={localStyles.headerRow}>
           {pastOnly ? (
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
@@ -499,7 +499,7 @@ const Events = ({
           {!pastOnly ? <TouchableOpacity
             accessibilityRole="button"
             activeOpacity={0.78}
-            style={[localStyles.createButton, section === "challenge" && { width: 44, minHeight: 44, paddingHorizontal: 0, paddingVertical: 0, justifyContent: "center" }]}
+            style={[localStyles.filterButton, localStyles.headerAction]}
             accessibilityLabel={section === "challenge" ? "Crear desafío" : "Crear evento"}
             onPress={() => {
               if (section === "challenge") {
@@ -510,7 +510,6 @@ const Events = ({
             }}
           >
             <Icon name="add" size={20} color={vibesTheme.colors.primaryText} style={localStyles.createIcon} />
-            {section === "event" ? <Text style={localStyles.createButtonText} numberOfLines={1}>Crear</Text> : null}
           </TouchableOpacity> : null}
           {section === "challenge" ? <TouchableOpacity
             accessibilityRole="button" accessibilityLabel="Ver todos los desafíos"
@@ -533,9 +532,9 @@ const Events = ({
                 accessibilityRole="button"
                 accessibilityLabel={section === "challenge" ? "Finalizados" : "Ver eventos pasados"}
                 onPress={() => section === "challenge" ? navigation.navigate("PastChallenges" as never, { section: "challenge", challengeTab } as never) : navigation.navigate("PastEvents" as never)}
-                style={[localStyles.filterButton, section === "challenge" && localStyles.headerAction]}
+                style={[localStyles.filterButton, localStyles.headerAction]}
               >
-                <Icon name={section === "event" ? "ellipsis-vertical" : "archive-outline"} size={23} color={vibesTheme.colors.primaryText} />
+                <Icon name="archive-outline" size={23} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
             ) : null}
         </View>
@@ -1029,7 +1028,7 @@ headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
+    gap: 6,
     marginBottom: 20,
   },
 screenTitle: {
@@ -1057,29 +1056,7 @@ bottomAlignedListFooter: {
 eventsListContent: {
     flexGrow: 1,
   },
-createButton: {
-    minHeight: 48,
-    maxWidth: "48%",
-    flexShrink: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: `${vibesTheme.colors.secondaryText}0C`,
-  },
 createIcon: { lineHeight: 20, includeFontPadding: false },
-createButtonText: {
-    flexShrink: 1,
-    lineHeight: 20,
-    includeFontPadding: false,
-    textAlignVertical: "center",
-    fontSize: 16,
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-  },
 searchBar: {
     height: 40,
     paddingVertical: 0,
