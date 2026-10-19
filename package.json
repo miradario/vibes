@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "eject": "expo eject",
     "discover:check": "node scripts/check_discover_capacity.js",
-    "vibi:check": "node --test scripts/vibi.test.cjs"
+    "vibi:check": "node --test scripts/vibi.test.cjs scripts/ftux.test.cjs"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

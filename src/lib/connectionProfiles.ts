@@ -22,6 +22,7 @@ type PhotoLike = {
 type ProfileLike = Record<string, any>;
 
 export type ConnectionProfile = {
+  gender?: string | null;
   id: string;
   name: string;
   avatarUri?: string | null;
@@ -356,6 +357,7 @@ export const mapCandidateToConnectionProfile = (
 
   return {
     id: String((candidate as ProfileLike).id ?? displayName),
+    gender: (candidate as ProfileLike).gender ?? (candidate as ProfileLike).genderLabel ?? (candidate as ProfileLike).gender_label ?? null,
     name: displayName,
     avatarUri: photos[0] ?? null,
     zodiac: zodiacFromBirthDate((candidate as ProfileLike).birthDate ?? (candidate as ProfileLike).birth_date),

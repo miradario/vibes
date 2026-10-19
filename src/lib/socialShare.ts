@@ -10,26 +10,23 @@ export const buildPublicContentUrl = (
     ? `${VIBES_PUBLIC_ORIGIN}/${content.type}/${encodeURIComponent(content.id)}`
     : null;
 
-export const shareChallengeInvite = async (challenge: EventFeedItem) => {
-  const challengeUrl = buildPublicContentUrl(challenge);
-  const message = [challenge.title, challengeUrl].filter(Boolean).join("\n");
+// The link goes ONLY inside `message`. Passing it also as `url` made iOS show it
+// twice (the share sheet appends `url` to the text in WhatsApp, Messages, etc.);
+// Android ignores `url`, so its visible text stays exactly the same.
+export const buildShareMessage = (title: string | null | undefined, url: string | null) =>
+  [title, url].filter(Boolean).join("\n");
 
-  return Share.share({ message, url: challengeUrl ?? undefined });
-};
+const shareContent = (content: EventFeedItem) =>
+  Share.share({ message: buildShareMessage(content.title, buildPublicContentUrl(content)) });
+
+export const shareChallengeInvite = async (challenge: EventFeedItem) => shareContent(challenge);
 
 export const shareChallengeProgress = async (
   challenge: EventFeedItem,
   input: { currentDay: number; totalDays: number; streak: number },
 ) => {
-  const challengeUrl = buildPublicContentUrl(challenge);
-  const message = [challenge.title, challengeUrl].filter(Boolean).join("\n");
-
-  return Share.share({ message, url: challengeUrl ?? undefined });
+  void input;
+  return shareContent(challenge);
 };
 
-export const shareEventInvite = async (event: EventFeedItem) => {
-  const eventUrl = buildPublicContentUrl(event);
-  const message = [event.title, eventUrl].filter(Boolean).join("\n");
-
-  return Share.share({ message, url: eventUrl ?? undefined });
-};
+export const shareEventInvite = async (event: EventFeedItem) => shareContent(event);

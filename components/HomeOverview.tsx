@@ -55,21 +55,13 @@ function SectionHeader({
   title: string;
   onPress?: () => void;
 }) {
+  if (!onPress) return <View style={s.heading}><Text style={s.section}>{title}</Text></View>;
   return (
-    <View style={s.heading}>
+    <TouchableOpacity style={[s.heading, { minHeight: 44 }]} onPress={onPress}
+      accessibilityRole="button" accessibilityLabel={`Ver ${title}`} activeOpacity={0.72}>
       <Text style={s.section}>{title}</Text>
-      {onPress ? (
-        <TouchableOpacity
-          style={s.link}
-          onPress={onPress}
-          accessibilityRole="button"
-          activeOpacity={0.72}
-        >
-          <Text style={s.action}>Ver todos</Text>
-          <Icon name="chevron-forward" size={18} color={ACCENT} />
-        </TouchableOpacity>
-      ) : null}
-    </View>
+      <Icon name="chevron-forward" size={20} color={ACCENT} />
+    </TouchableOpacity>
   );
 }
 
@@ -513,8 +505,8 @@ const s = StyleSheet.create({
     fontFamily: vibesTheme.fonts.regular,
   },
   action: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 18,
     color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.medium,
   },

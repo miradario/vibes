@@ -21,3 +21,12 @@ test('connection remains new until opened even when someone already sent a messa
   assert.equal(remaining.length, 1); assert.equal(remaining[0].id, 'b');
   assert.equal(getNewConnections(matches, ['a', 'b']).length, 0);
 });
+test('new connections are newest first, without changing the original list', () => {
+  const matches = [
+    { id: 'old', isActive: true, createdAt: '2026-10-01T10:00:00Z' },
+    { id: 'new', isActive: true, createdAt: '2026-10-19T10:00:00Z' },
+    { id: 'opened', isActive: true, createdAt: '2026-10-20T10:00:00Z' },
+  ];
+  assert.deepEqual(Array.from(getNewConnections(matches, ['opened']), x => x.id), ['new', 'old']);
+  assert.equal(matches[0].id, 'old');
+});

@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { AppState } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { NavigationContext } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
@@ -14,9 +14,15 @@ export function useEmailOwnershipQuery(userId?: string) {
       return data.user;
     },
   });
-  useFocusEffect(useCallback(() => {
-    if (userId) void query.refetch();
-  }, [userId, query.refetch]));
+  // Refetch when the screen gains focus, like useFocusEffect, but without
+  // requiring a navigator: overlays mounted outside the NavigationContainer
+  // (e.g. FtuxGuide) get null here and rely on the AppState refetch below.
+  const navigation = useContext(NavigationContext);
+  useEffect(() => {
+    if (!navigation || !userId) return;
+    if (navigation.isFocused()) void query.refetch();
+    return navigation.addListener("focus", () => void query.refetch());
+  }, [navigation, userId, query.refetch]);
   useEffect(() => {
     const subscription = AppState.addEventListener("change", state => {
       if (state === "active" && userId) void query.refetch();

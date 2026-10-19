@@ -3,6 +3,12 @@ import { getReminderDestination, shouldDeferReminder } from "./src/notifications
 import PastEvents from "./screens/PastEvents";
 import { checkDeferredLinkOnce, type DeferredDestination } from "./src/deeplinks/deferredLink";
 import VibiOverlay from "./components/VibiOverlay";
+import FtuxGuide from "./components/ftux/FtuxGuide";
+import {
+  markFtuxDeferredLinkSettled,
+  markFtuxExternalEntry,
+  setFtuxPendingExternalProbe,
+} from "./src/ftux/entrySignals";
 import AnimatedBrandLogo from "./components/AnimatedBrandLogo";
 import { useAuthSession } from "./src/auth/auth.queries";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -17,7 +23,7 @@ import Vibi from "./screens/Vibi";
 
 import "react-native-url-polyfill/auto";
 import React from "react";
-import { Platform, View } from "react-native";
+import { Linking, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavigationContainer, CommonActions } from "@react-navigation/native";
@@ -120,8 +126,12 @@ let pendingNotificationData: Record<string, unknown> | null = null;
 let pendingDeferredDestination: DeferredDestination | null = null;
 const deferredLinkCheck = checkDeferredLinkOnce().then((destination) => {
   pendingDeferredDestination = destination;
+  // Vibi's onboarding waits for this navigation instead of interrupting it.
+  if (destination) markFtuxExternalEntry();
+  markFtuxDeferredLinkSettled();
   flushDeferredDestination();
 });
+setFtuxPendingExternalProbe(() => Boolean(pendingNotificationData || pendingDeferredDestination));
 function flushDeferredDestination() {
   const nav = navigationRef.current;
   if (!pendingDeferredDestination || !isNavigationReady || !nav) return;
@@ -159,6 +169,16 @@ const CommunityRuntime = () => {
 const AppNavigator = () => {
   React.useEffect(() => startRemoteConfig(), []);
   React.useEffect(() => startAppOpenTracking(), []);
+  React.useEffect(() => {
+    // Opened from a universal link: the onboarding waits until it is done.
+    void Linking.getInitialURL()
+      .then((url) => {
+        if (url) markFtuxExternalEntry();
+      })
+      .catch(() => {});
+    const subscription = Linking.addEventListener("url", () => markFtuxExternalEntry());
+    return () => subscription.remove();
+  }, []);
   const { t } = useI18n();
   const [vibiRoute, setVibiRoute] = React.useState({ name: "Startup", hasBottomBar: false });
   const syncVibiRoute = React.useCallback(() => {
@@ -256,6 +276,7 @@ const AppNavigator = () => {
   };
 
   const navigateFromNotification = async (data: Record<string, unknown>) => {
+    markFtuxExternalEntry();
     if (!isNavigationReady || !navigationRef.current) {
       pendingNotificationData = data;
       return;
@@ -718,6 +739,13 @@ const AppNavigator = () => {
         </NavigationContainer>
         <VibiOverlay routeName={vibiRoute.name} hasBottomBar={vibiRoute.hasBottomBar}
           onPress={() => { if (isNavigationReady) navigationRef.current?.navigate("Vibi"); }} />
+        <FtuxGuide
+          routeName={vibiRoute.name}
+          hasBottomBar={vibiRoute.hasBottomBar}
+          navigate={(name, params) => {
+            if (isNavigationReady) navigationRef.current?.dispatch(CommonActions.navigate({ name, params }));
+          }}
+        />
         <AppCamera />
         <Toast />
       </QueryClientProvider>

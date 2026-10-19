@@ -8,7 +8,8 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 type VibesActionButtonProps = {
   label: string;
   onPress: () => void;
-  variant?: "start" | "skip";
+  /** "outline": secondary action with a blue outline (e.g. Vibi guide alternatives). */
+  variant?: "start" | "skip" | "outline";
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   disabled?: boolean;
@@ -26,11 +27,27 @@ const VibesActionButton = ({
 }: VibesActionButtonProps) => {
   const isStart = variant === "start";
 
+  if (variant === "outline") {
+    return (
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        style={[styles.outlineButton, style, disabled && styles.outlineDisabled]}
+        onPress={onPress}
+        activeOpacity={0.85}
+        disabled={disabled}
+      >
+        <Text style={[styles.outlineText, textStyle]}>{label}</Text>
+      </TouchableOpacity>
+    );
+  }
+
   if (!isStart) {
     return (
       <View style={[styles.skipWrap, style]}>
         {showDivider ? <View style={styles.skipDivider} /> : null}
         <TouchableOpacity
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           style={[styles.skipButton, disabled && styles.skipButtonDisabled]}
           onPress={onPress}
           activeOpacity={0.8}
@@ -80,6 +97,28 @@ const styles = StyleSheet.create({
     fontSize: 21,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.regular,
+  },
+  outlineButton: {
+    width: "100%",
+    minHeight: 52,
+    borderRadius: vibesTheme.radii.pill,
+    borderWidth: 1.5,
+    borderColor: "rgba(57, 120, 184, 0.45)",
+    backgroundColor: vibesTheme.colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: vibesTheme.spacing.md,
+    paddingVertical: 10,
+  },
+  outlineDisabled: {
+    opacity: 0.42,
+  },
+  outlineText: {
+    color: vibesTheme.colors.accentBlue,
+    fontSize: 16,
+    lineHeight: 22,
+    fontFamily: vibesTheme.fonts.semibold,
+    textAlign: "center",
   },
   skipWrap: {
     width: "100%",

@@ -38,6 +38,8 @@ type AnimatedSheetModalProps = {
    * waiting for a fresh mount. Defaults to false (unmount when hidden).
    */
   keepMounted?: boolean;
+  /** Optional spring for the sheet's slide in (replaces the timed slide). */
+  sheetInSpring?: { damping: number; stiffness: number; mass?: number };
 };
 
 const AnimatedSheetModal = ({
@@ -61,12 +63,16 @@ const AnimatedSheetModal = ({
   sheetOutOpacityDuration = vibesTheme.motion.modal.sheetOutOpacityDuration,
   sheetEasing,
   keepMounted = false,
+  sheetInSpring,
 }: AnimatedSheetModalProps) => {
   const stayMounted = inline && keepMounted;
   // Read through a ref: an inline easing function changes identity every
   // render and would otherwise restart the entrance animation.
   const sheetEasingRef = useRef(sheetEasing);
   sheetEasingRef.current = sheetEasing;
+  const springDamping = sheetInSpring?.damping;
+  const springStiffness = sheetInSpring?.stiffness;
+  const springMass = sheetInSpring?.mass ?? 1;
   const [isMounted, setIsMounted] = useState(visible);
   const mountedRef = useRef(visible);
   const onClosedRef = useRef(onClosed);
@@ -90,13 +96,22 @@ const AnimatedSheetModal = ({
           duration: backdropInDuration,
           useNativeDriver: true,
         }),
-        Animated.timing(sheetTranslateY, {
-          toValue: 0,
-          duration: sheetInDuration,
-          delay: sheetInDelay,
-          easing: sheetEasingRef.current,
-          useNativeDriver: true,
-        }),
+        springDamping !== undefined && springStiffness !== undefined
+          ? Animated.spring(sheetTranslateY, {
+              toValue: 0,
+              damping: springDamping,
+              stiffness: springStiffness,
+              mass: springMass,
+              delay: sheetInDelay,
+              useNativeDriver: true,
+            })
+          : Animated.timing(sheetTranslateY, {
+              toValue: 0,
+              duration: sheetInDuration,
+              delay: sheetInDelay,
+              easing: sheetEasingRef.current,
+              useNativeDriver: true,
+            }),
         Animated.timing(sheetOpacity, {
           toValue: 1,
           duration: sheetInOpacityDuration,
@@ -150,6 +165,9 @@ const AnimatedSheetModal = ({
     sheetOutDuration,
     sheetOutOpacityDuration,
     sheetTranslateY,
+    springDamping,
+    springStiffness,
+    springMass,
     visible,
   ]);
 

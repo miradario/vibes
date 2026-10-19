@@ -1,18 +1,19 @@
-import LikeBubbles from "../components/LikeBubbles";
+import { getSharedInterests, getMatchIcebreakers } from "../src/lib/matchIcebreakers";
+import MatchConnectionLogo from "../components/MatchConnectionLogo";
+import ScreenContainer from "../components/ScreenContainer";
 /** @format */
 
-import React, { useEffect, useMemo, useRef } from "react";
-import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Text } from "../components/Typography";
 import * as Haptics from "expo-haptics";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
-  SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import Avatar from "../components/Avatar";
 import Icon from "../components/Icon";
-import VibesActionButton from "../components/VibesActionButton";
+
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
@@ -69,7 +70,64 @@ const Match = () => {
     });
   }, []);
 
-  const openChat = () => {
+  const { width } = useWindowDimensions();
+  const avatarSize = Math.min(176, Math.max(96, (width - 62) / 2));
+  const [question] = useState(() => Math.floor(Math.random() * 1000));
+  const [circlesRoaming, setCirclesRoaming] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState<boolean | null>(null);
+  const entrance = useRef(new Animated.Value(0)).current;
+  const secondEntrance = useRef(new Animated.Value(0)).current;
+  const split = useRef(new Animated.Value(0)).current;
+  const titleReveal = useRef(new Animated.Value(0)).current;
+  const float = useRef(new Animated.Value(0)).current;
+  const sharedInterests = useMemo(() => getSharedInterests(
+    ownProfile, profile,
+  ), [ownProfile, profile]);
+  const questions = getMatchIcebreakers(sharedInterests);
+  const currentQuestion = questions[question % questions.length];
+
+  useEffect(() => {
+    let active = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then(value => { if (active) setReducedMotion(value); });
+    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReducedMotion);
+    return () => { active = false; subscription.remove(); };
+  }, []);
+
+  useEffect(() => {
+    if (reducedMotion === null) return;
+    setCirclesRoaming(false);
+    entrance.setValue(reducedMotion ? 1 : 0);
+    secondEntrance.setValue(reducedMotion ? 1 : 0);
+    split.setValue(reducedMotion ? 1 : 0);
+    titleReveal.setValue(reducedMotion ? 1 : 0);
+    float.setValue(0);
+    if (reducedMotion) return;
+    const arrival = Animated.stagger(220, [entrance, secondEntrance].map(value =>
+      Animated.spring(value, { toValue: 1, damping: 11, stiffness: 55, mass: 1.4, useNativeDriver: true })
+    ));
+    const drift = Animated.loop(Animated.sequence([
+      Animated.timing(float, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(float, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ]));
+    const heading = Animated.sequence([
+      Animated.delay(450),
+      Animated.spring(titleReveal, { toValue: 1, damping: 12, stiffness: 110, mass: 0.8, useNativeDriver: true }),
+    ]);
+    const reveal = Animated.sequence([
+      Animated.delay(350),
+      Animated.timing(split, { toValue: 1, duration: 850, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+      arrival,
+    ]);
+    // 350 ms lead-in + 850 ms split, then hold above the figure for one second.
+    const roamTimer = setTimeout(() => setCirclesRoaming(true), 2200);
+    heading.start();
+    reveal.start(({ finished }) => { if (finished) drift.start(); });
+    return () => { clearTimeout(roamTimer); heading.stop(); reveal.stop(); drift.stop(); };
+  }, [reducedMotion, entrance, secondEntrance, float, split, titleReveal]);
+
+
+
+  const openChat = (draft?: string) => {
     if (!profile || !matchData) {
       navigation.goBack();
       return;
@@ -82,245 +140,82 @@ const Match = () => {
         otherUserId: String(profile.id),
         otherUserName: profile.name,
         otherUserPhoto: getPrimaryPhotoUri(profile),
+        initialDraft: draft,
       } as never
     );
   };
 
   return (
-    <SafeAreaView style={localStyles.screen} edges={["top", "left", "right"]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          localStyles.content,
-          { paddingBottom: Math.max(insets.bottom + 22, 34) },
-        ]}
-      >
-        <View style={localStyles.header}>
-          <View style={localStyles.sparkleCluster}>
-            <Text style={localStyles.sparkleLarge}>✦</Text>
-            <Text style={localStyles.sparkleSmall}>✧</Text>
-          </View>
-          <Text style={localStyles.title}>¡Hay conexión!</Text>
-        </View>
+    <ScreenContainer style={localStyles.screen} scroll
+      scrollViewProps={{ showsVerticalScrollIndicator: false }}
+      contentContainerStyle={[localStyles.content, { paddingBottom: Math.max(insets.bottom + 18, 30) }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Cerrar nueva conexión" onPress={() => navigation.goBack()} style={localStyles.close}>
+        <Icon name="close" size={28} color={vibesTheme.colors.secondaryText} />
+      </Pressable>
+      <Text style={localStyles.eyebrow}>¡HAY BUENA VIBE!</Text>
+      <Animated.View style={{ opacity: titleReveal, transform: [
+        { translateY: titleReveal.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) },
+        { scale: titleReveal.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) },
+      ] }}>
+        <Text accessibilityRole="header" style={localStyles.title}>Nueva conexión</Text>
+      </Animated.View>
 
+
+      <View style={localStyles.hero}>
         <View style={localStyles.peopleRow}>
-          <View style={localStyles.personBlock}>
-            <View style={[localStyles.avatar, localStyles.avatarBlue]}>
-              <Avatar uri={ownProfile.avatarUri ?? null} size={76} />
-            </View>
-            <Text style={localStyles.personName}>{ownName}</Text>
-          </View>
-
-          <View style={localStyles.centerMark}>
-            <View style={localStyles.dottedLine} />
-            <View style={localStyles.centerSeal}>
-              <Icon name="leaf-outline" size={24} color={vibesTheme.colors.accentMustard} />
-            </View>
-            <View style={localStyles.dottedLine} />
-          </View>
-
-          <View style={localStyles.personBlock}>
-            <View style={[localStyles.avatar, localStyles.avatarGold]}>
-              <Avatar uri={getPrimaryPhotoUri(profile)} size={76} />
-            </View>
-            <Text style={localStyles.personName}>{otherName}</Text>
-          </View>
+          {[{ name: ownName, uri: ownProfile.avatarUri }, { name: otherName, uri: getPrimaryPhotoUri(profile) }].map((person, index) => (
+            <Animated.View key={index} style={[localStyles.person, { opacity: (index ? secondEntrance : entrance).interpolate({ inputRange: [0, 0.25, 1], outputRange: [0, 1, 1], extrapolate: "clamp" }), transform: [{ translateX: (index ? secondEntrance : entrance).interpolate({ inputRange: [0, 1], outputRange: [index ? width : -width, 0] }) }, { scale: (index ? secondEntrance : entrance).interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }]}>
+              <View style={localStyles.avatar}><Avatar uri={person.uri ?? null} size={avatarSize} /></View>
+              <Text numberOfLines={1} style={localStyles.personName}>{person.name}</Text>
+            </Animated.View>
+          ))}
         </View>
-
-        <View style={localStyles.actions}>
-          <VibesActionButton
-            label="Enviar mensaje"
-            variant="start"
-            onPress={openChat}
-            disabled={!profile || !matchData}
-          />
-
-          <VibesActionButton
-            label="Seguir descubriendo"
-            variant="skip"
-            onPress={() => navigation.goBack()}
-          />
-        </View>
-
-      </ScrollView>
-      <LikeBubbles trigger={1} />
-    </SafeAreaView>
+        <MatchConnectionLogo photoSize={avatarSize + 4} split={split} drift={float} animate={reducedMotion === false && circlesRoaming} top={40 + avatarSize / 2 - 76} />
+      </View>
+      <View style={{ width: "100%" }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Intereses en común: ${sharedInterests.join(", ") || "Todavía no encontramos coincidencias"}. ${currentQuestion}. Abrir en el chat`} accessibilityHint="Abre el chat con esta pregunta lista para enviar" onPress={() => openChat(currentQuestion)} style={localStyles.questionCard}>
+          <View style={localStyles.messageIcon}><Icon name="chatbubble-outline" size={27} color={vibesTheme.colors.accentBlue} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={localStyles.interestsLabel}>Intereses en común</Text>
+            <Text style={localStyles.sharedInterests}>{sharedInterests.join(" · ") || "Descubran qué les gusta a los dos"}</Text>
+            <Text accessibilityLiveRegion="polite" style={localStyles.question}>{currentQuestion}</Text>
+          </View>
+        </Pressable>
+      </View>
+      <View style={localStyles.actions}>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: (!profile || !matchData) }} disabled={(!profile || !matchData)} onPress={() => openChat()} style={[localStyles.primary, (!profile || !matchData) && { opacity: 0.5 }]}>
+          <Icon name="chatbubble-outline" size={24} color={vibesTheme.colors.surface} />
+          <Text style={localStyles.primaryText}>Conversar</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={localStyles.secondary}>
+          <Text style={localStyles.secondaryText}>Seguir descubriendo</Text>
+        </Pressable>
+      </View>
+    </ScreenContainer>
   );
 };
 
 const localStyles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: vibesTheme.colors.background,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 18,
-    alignItems: "center",
-  },
-  header: {
-    width: "100%",
-    alignItems: "center",
-  },
-  sparkleCluster: {
-    position: "absolute",
-    left: 18,
-    top: 0,
-    width: 34,
-    height: 34,
-  },
-  sparkleLarge: {
-    position: "absolute",
-    left: 0,
-    top: 4,
-    color: vibesTheme.colors.accentBlue,
-    fontSize: 24,
-  },
-  sparkleSmall: {
-    position: "absolute",
-    right: 0,
-    top: 0,
-    color: vibesTheme.colors.accentBlue,
-    fontSize: 16,
-  },
-  title: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 36,
-    lineHeight: 39,
-    textAlign: "center",
-    fontFamily: vibesTheme.fonts.regular,
-  },
-  heroWrap: {
-    width: "100%",
-    height: 260,
-    marginTop: 8,
-    marginBottom: 0,
-  },
-  heroVideo: {
-    width: "100%",
-    height: "100%",
-  },
-  peopleRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 34,
-    marginBottom: 18,
-  },
-  personBlock: {
-    width: 102,
-    alignItems: "center",
-  },
-  avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    overflow: "hidden",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-  },
-  avatarBlue: {
-    backgroundColor: "rgba(57, 120, 184, 0.20)",
-    borderColor: "rgba(110, 110, 110, 0.30)",
-  },
-  avatarGold: {
-    backgroundColor: "rgba(244, 163, 64, 0.37)",
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 38,
-  },
-  personName: {
-    marginTop: 8,
-    color: vibesTheme.colors.primaryText,
-    fontSize: 20,
-    textAlign: "center",
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  centerMark: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  dottedLine: {
-    flex: 1,
-    maxWidth: 78,
-    borderTopWidth: 4,
-    borderStyle: "dotted",
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  centerSeal: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.32)",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-  },
-  messageCard: {
-    width: "100%",
-    minHeight: 112,
-    borderRadius: 18,
-    backgroundColor: "rgba(254, 254, 253, 0.78)",
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 18,
-  },
-  messageIcon: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
-  },
-  messageText: {
-    flex: 1,
-    color: vibesTheme.colors.primaryText,
-    fontSize: 19,
-    lineHeight: 25,
-    fontFamily: vibesTheme.fonts.semibold,
-  },
-  actions: {
-    width: "100%",
-    marginTop: "auto",
-    paddingTop: 32,
-  },
-  footer: {
-    marginTop: 24,
-    alignItems: "center",
-    gap: 14,
-  },
-  footerSparkle: {
-    color: vibesTheme.colors.accentBlue,
-    fontSize: 22,
-  },
-  footerText: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 19,
-    lineHeight: 24,
-    textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
-  },
+  screen: { flex: 1, backgroundColor: vibesTheme.colors.background },
+  content: { flexGrow: 1, paddingHorizontal: 20, alignItems: "center", paddingTop: 12 },
+  close: { alignSelf: "flex-end", width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: `${vibesTheme.colors.secondaryText}12`, marginBottom: 12 },
+  eyebrow: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 12, letterSpacing: 2, textAlign: "center" },
+  title: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, textAlign: "center", marginTop: 10 },
+  hero: { width: "100%", marginTop: 46, paddingTop: 40, paddingBottom: 36 },
+  peopleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  person: { alignItems: "center", maxWidth: "49%" },
+  avatar: { borderWidth: 2, borderColor: vibesTheme.colors.primaryText, borderRadius: 180, overflow: "hidden" },
+  personName: { marginTop: 8, fontFamily: vibesTheme.fonts.bold, fontSize: 18, color: vibesTheme.colors.primaryText },
+  questionCard: { width: "100%", borderRadius: 20, padding: 18, flexDirection: "row", alignItems: "center", gap: 16, backgroundColor: `${vibesTheme.colors.accentBlue}0D` },
+  messageIcon: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: `${vibesTheme.colors.accentBlue}18` },
+  interestsLabel: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 12, marginBottom: 4 },
+  sharedInterests: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, marginBottom: 8 },
+  question: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 18, lineHeight: 25 },
+  actions: { width: "100%", marginTop: "auto", paddingTop: 28 },
+  primary: { minHeight: 56, padding: 14, borderRadius: 18, backgroundColor: vibesTheme.colors.primaryText, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
+  primaryText: { color: vibesTheme.colors.surface, fontFamily: vibesTheme.fonts.bold, fontSize: 18, flexShrink: 1, textAlign: "center" },
+  secondary: { minHeight: 52, alignItems: "center", justifyContent: "center", marginTop: 8 },
+  secondaryText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 },
 });
 
 export default Match;
