@@ -2,10 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
+import { useFtuxHighlightedTab } from "../src/ftux/ftuxStore";
 
 export default function DiscoverFiltersGuide({ userId, opened, children }: { userId?: string; opened: boolean; children: React.ReactNode }) {
   const [owner, setOwner] = useState<string | null>(null);
-  const { visible, reduceMotion } = useCalmMotion();
+  const { visible: screenVisible, reduceMotion } = useCalmMotion();
+  // Wait while Vibi's onboarding card is explaining Descubrir.
+  const ftuxTab = useFtuxHighlightedTab();
+  const visible = screenVisible && ftuxTab !== "Discover";
   const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     let active = true;

@@ -60,6 +60,7 @@ import type { DataT } from "../types";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { mapCandidateToConnectionProfile } from "../src/lib/connectionProfiles";
 import DiscoverFiltersGuide from "../components/DiscoverFiltersGuide";
+import { markFtuxAction } from "../src/ftux/ftuxStore";
 import {
   useCandidatesQuery,
   useIncomingLikeCandidatesQuery,
@@ -554,6 +555,10 @@ export const DiscoverContent = forwardRef<
   );
   const [showProfileSheet, setShowProfileSheet] = useState(false);
   const [viewingHistory, setViewingHistory] = useState(false);
+  useEffect(() => {
+    // Ticks "Mirar perfiles en Descubrir" in Vibi's first steps checklist.
+    if (showProfileSheet) void markFtuxAction(session?.user?.id, "viewedProfile");
+  }, [showProfileSheet, session?.user?.id]);
   useEffect(() => {
     if (!incomingRequestKey) return;
     setHistoryMode("incoming");

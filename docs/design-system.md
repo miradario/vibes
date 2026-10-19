@@ -83,13 +83,14 @@ Norma: una acción principal por bloque de decisión. Texto en forma de verbo co
 | Primario oscuro | Alto mínimo 56, radio `pill`, padding horizontal 20 | 18 / 24, `bold`, 700 | `surface` | `primaryText`, sin borde |
 | Primario de acento | Alto mínimo 58, radio `pill`, ancho del bloque | 18 / 24, `bold`, 700 | `primaryText` | `accentMustard`, sin borde |
 | Secundario contorneado | Alto mínimo 48, radio `md`, padding horizontal 16 | 16 / 22, `semibold`, 600 | `primaryText` | `surface`, borde 1 de `primaryText` al 12% |
+| Secundario de acento (contorno azul) | Alto mínimo 52, radio `pill`, padding horizontal 16 | 16 / 22, `semibold`, 600, centrado | `accentBlue` | `surface`, borde 1,5 de `accentBlue` al 45% |
 | Acción de cabecera | Alto mínimo 48, radio 14, padding horizontal 18, gap 8 | 16 / 20, `semibold`, 600 | `primaryText` | `secondaryText` al 4,7% (`0C`) |
 | Solo icono | Área mínima 44 × 44; icono 20–24 | Sin texto visual; label accesible obligatorio | `primaryText` | `surface` o superficie suave |
 | Volver | 44 × 44, radio 13; chevron 27 | Label accesible “Volver” | `primaryText` | `surface` con `secondaryText` al 4,7% |
 | Terciario / omitir | Área táctil mínima 44 de alto | 18 / 24, `regular`, 400 | `secondaryText` | Transparente |
 | Autenticación Google | Alto mínimo 54, radio 22, borde 1 | 16 / 22, `medium`, 500 | `primaryText` | `surface` al 92%; borde mostaza al 28% |
 
-Componentes: [`PrimaryButton`](../components/onboarding/PrimaryButton.tsx) para onboarding, [`VibesActionButton`](../components/VibesActionButton.tsx) para start/skip, [`BackButton`](../components/BackButton.tsx), [`GoogleAuthButton`](../components/GoogleAuthButton.tsx) y [`AppleAuthButton`](../components/AppleAuthButton.tsx). Conservar la implementación específica de autenticación; no sustituir sus comportamientos por un botón genérico.
+Componentes: [`PrimaryButton`](../components/onboarding/PrimaryButton.tsx) para onboarding, [`VibesActionButton`](../components/VibesActionButton.tsx) para start/skip y `variant="outline"` (secundario de acento, usado por la guía de Vibi junto a un primario de acento), [`BackButton`](../components/BackButton.tsx), [`GoogleAuthButton`](../components/GoogleAuthButton.tsx) y [`AppleAuthButton`](../components/AppleAuthButton.tsx). Conservar la implementación específica de autenticación; no sustituir sus comportamientos por un botón genérico.
 
 ### Cabeceras de Eventos y Desafíos
 
@@ -150,7 +151,7 @@ Norma: respetar reducción de movimiento en animaciones nuevas; mantener cierre 
 Esta documentación no modifica la UI ni afirma una migración completa:
 
 - `VibesActionButton.startText` usa actualmente 21 / 24 Regular y `surface` sobre mostaza. Contradice la norma de contraste; al intervenir ese botón, migrar a texto oscuro y al rol de primario de acento.
-- `VibesActionButton.skipButton` tiene padding vertical 6 y no fija un mínimo táctil de 44. Revisarlo al modificarlo.
+- `VibesActionButton.skipButton` tiene padding vertical 6 y no fija un mínimo táctil de 44 en el layout; desde el FTUX tiene `hitSlop` de 8 por lado (área táctil ≈ 50) sin cambiar su tamaño visual. Revisar el layout al modificarlo.
 - El título del modal de filtros de Descubrir usa 38 / Bold. Es una variante existente, no el estándar para nuevos sheets simples.
 - Eventos y Desafíos usan overrides para el título principal; el estilo base 26 / 32 SemiBold sigue atendiendo vistas históricas. No eliminarlo sin revisar `pastOnly`.
 - Tamaños, interlineados y labels todavía están distribuidos en estilos locales. Esta escala es normativa, pero no equivale a un conjunto de componentes o tokens ya implementados.

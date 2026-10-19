@@ -8,6 +8,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
 import { participantCounts } from "../lib/participantCounts";
+import { markFtuxAction } from "../ftux/ftuxStore";
 import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { uploadImageToSupabase } from "../lib/supabaseStorage";
@@ -1299,6 +1300,8 @@ export const useJoinChallengeMutation = () => {
       if (eventParticipantError) throw eventParticipantError;
     },
     onSuccess: async (_data, { challengeId, userId }) => {
+      // Ticks "Sumarte a un desafío" in Vibi's first steps checklist.
+      void markFtuxAction(userId, "joinedChallenge");
       queryClient.invalidateQueries({
         queryKey: challengeParticipantKeys.participant(challengeId, userId),
       });
