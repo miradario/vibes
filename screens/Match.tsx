@@ -1,5 +1,5 @@
 import { getSharedInterests, getMatchIcebreakers } from "../src/lib/matchIcebreakers";
-import MatchConnectionLogo from "../components/MatchConnectionLogo";
+import MatchConnectionLogo, { MatchConnectionSymbol } from "../components/MatchConnectionLogo";
 import ScreenContainer from "../components/ScreenContainer";
 /** @format */
 
@@ -71,6 +71,11 @@ const Match = () => {
   }, []);
 
   const { width } = useWindowDimensions();
+  const logoAnchorRef = useRef<View>(null);
+  const [logoTop, setLogoTop] = useState<number | null>(null);
+  const measureLogoAnchor = () => logoAnchorRef.current?.measureInWindow((_x, y) => {
+    if (Number.isFinite(y)) setLogoTop(previous => previous === y ? previous : y);
+  });
   const avatarSize = Math.min(176, Math.max(96, (width - 62) / 2));
   const [question] = useState(() => Math.floor(Math.random() * 1000));
   const [circlesRoaming, setCirclesRoaming] = useState(false);
@@ -146,8 +151,9 @@ const Match = () => {
   };
 
   return (
+    <View style={localStyles.screen}>
     <ScreenContainer style={localStyles.screen} scroll
-      scrollViewProps={{ showsVerticalScrollIndicator: false }}
+      scrollViewProps={{ showsVerticalScrollIndicator: false, onScroll: measureLogoAnchor, scrollEventThrottle: 32 }}
       contentContainerStyle={[localStyles.content, { paddingBottom: Math.max(insets.bottom + 18, 30) }]}>
       <Pressable accessibilityRole="button" accessibilityLabel="Cerrar nueva conexión" onPress={() => navigation.goBack()} style={localStyles.close}>
         <Icon name="close" size={28} color={vibesTheme.colors.secondaryText} />
@@ -170,7 +176,9 @@ const Match = () => {
             </Animated.View>
           ))}
         </View>
-        <MatchConnectionLogo photoSize={avatarSize + 4} split={split} drift={float} animate={reducedMotion === false && circlesRoaming} top={40 + avatarSize / 2 - 76} />
+        <MatchConnectionSymbol drift={float} top={40 + (avatarSize + 4) / 2 - 32} />
+        <View ref={logoAnchorRef} collapsable={false} pointerEvents="none"
+          onLayout={measureLogoAnchor} style={{ position: "absolute", left: "50%", top: 40 + avatarSize / 2 - 76, width: 1, height: 1 }} />
       </View>
       <View style={{ width: "100%" }}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Intereses en común: ${sharedInterests.join(", ") || "Todavía no encontramos coincidencias"}. ${currentQuestion}. Abrir en el chat`} accessibilityHint="Abre el chat con esta pregunta lista para enviar" onPress={() => openChat(currentQuestion)} style={localStyles.questionCard}>
@@ -192,6 +200,9 @@ const Match = () => {
         </Pressable>
       </View>
     </ScreenContainer>
+    {logoTop !== null && <MatchConnectionLogo photoSize={avatarSize + 4} split={split}
+      animate={reducedMotion === false && circlesRoaming} top={logoTop} />}
+    </View>
   );
 };
 

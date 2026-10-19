@@ -1,18 +1,21 @@
 import { bounceOffPhoto } from "../src/lib/matchCirclePhysics";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-type Props = { split: Animated.Value; drift: Animated.Value; top: number; animate: boolean; photoSize: number };
+type Props = { split: Animated.Value; top: number; animate: boolean; photoSize: number };
 
 /** Two colored accents pause above the Vibes figure, then roam around the photos. */
-export default function MatchConnectionLogo({ split, drift, top, animate, photoSize }: Props) {
+export default function MatchConnectionLogo({ split, top, animate, photoSize }: Props) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const logoRef = useRef<View>(null);
-  const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
+  // Full-screen sibling of the scroll content: moving circles must not be clipped
+  // or detached when they leave the original logo/hero bounds.
+  const origin = useMemo(() => ({ x: width / 2 - 13, y: top }), [width, top]);
+  const overlayRef = useRef<View>(null);
+  const [overlayOrigin, setOverlayOrigin] = useState({ x: 0, y: 0 });
   const wander = useRef([new Animated.ValueXY(), new Animated.ValueXY()]).current;
   const sizes = useRef([new Animated.Value(1.5), new Animated.Value(1.8)]).current;
   useEffect(() => {
@@ -69,11 +72,10 @@ export default function MatchConnectionLogo({ split, drift, top, animate, photoS
   }, [animate, wander, sizes, origin, width, height, photoSize, insets.top, insets.bottom]);
 
   return (
-    <View ref={logoRef} onLayout={() => logoRef.current?.measureInWindow((x, y) => {
-      setOrigin(previous => previous?.x === x + 47 && previous?.y === y ? previous : { x: x + 47, y });
-    })} pointerEvents="none" accessible={false} style={[styles.logo, { top }]}>
+    <View ref={overlayRef} collapsable={false} pointerEvents="none" accessible={false} style={styles.overlay}
+      onLayout={() => overlayRef.current?.measureInWindow((x, y) => setOverlayOrigin(previous => previous.x === x && previous.y === y ? previous : { x, y }))}>
       {[0, 1].map(index => (
-        <Animated.View key={index} style={[styles.circle, {
+        <Animated.View key={index} style={[styles.circle, { left: origin.x - overlayOrigin.x, top: origin.y - overlayOrigin.y,
           transform: [
             { translateY: Animated.add(split.interpolate({ inputRange: [0, 1], outputRange: [index ? 34 : 0, index ? 34 : 0] }), wander[index].y) },
             { translateX: wander[index].x },
@@ -83,21 +85,25 @@ export default function MatchConnectionLogo({ split, drift, top, animate, photoS
         }]}>
         </Animated.View>
       ))}
-      <Animated.View style={[styles.body, { transform: [
-        { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [0, 5] }) },
-        { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [0, -3] }) },
-        { rotate: drift.interpolate({ inputRange: [0, 1], outputRange: ["-3deg", "3deg"] }) },
-      ] }]}>
-      <Svg width="120" height="116" viewBox="0 0 150 145">
-        <Path d="M75 8 C68 18 53 29 53 42 C53 54 69 69 75 73 C81 69 97 54 97 42 C97 29 82 18 75 8Z" fill={vibesTheme.colors.accentBlue} />
-      </Svg>
-      </Animated.View>
+
     </View>
   );
 }
 
+export function MatchConnectionSymbol({ drift, top }: { drift: Animated.Value; top: number }) {
+  return (
+    <Animated.View pointerEvents="none" accessible={false} style={[styles.body, { top, left: "50%", marginLeft: -60, transform: [
+      { rotate: drift.interpolate({ inputRange: [0, 1], outputRange: ["-3deg", "3deg"] }) },
+    ] }]}>
+      <Svg width="120" height="116" viewBox="0 0 150 145">
+        <Path d="M75 8 C68 18 53 29 53 42 C53 54 69 69 75 73 C81 69 97 54 97 42 C97 29 82 18 75 8Z" fill={vibesTheme.colors.accentBlue} />
+      </Svg>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
-  logo: { position: "absolute", left: "50%", marginLeft: -60, width: 120, height: 174 },
-  circle: { position: "absolute", left: 47, top: 0, width: 26, height: 26, borderRadius: 13, overflow: "hidden", opacity: 0.82 },
-  body: { position: "absolute", top: 52, left: 0 },
+  overlay: { ...StyleSheet.absoluteFillObject, overflow: "visible" },
+  circle: { position: "absolute", width: 26, height: 26, borderRadius: 13, overflow: "hidden", opacity: 0.82 },
+  body: { position: "absolute", width: 120, height: 116 },
 });
