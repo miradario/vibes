@@ -3,6 +3,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { fetchProfileSummaries } from "../lib/profileSummaries";
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRefetchOnFocus } from "../hooks/useRefetchOnFocus";
 import { supabase } from "../lib/supabase";
 import { useAuthSession } from "../auth/auth.queries";
 
@@ -53,7 +54,7 @@ export function useCommunityInvitationsQuery(enabled = true) {
   return useQuery<CommunityGroupInvitation[]>({
     queryKey: ["communityInvitations", userId],
     enabled: Boolean(userId && enabled),
-    refetchInterval: 15000,
+    // No polling (was 15s): realtime invalidation + focus refetch.
     queryFn: async () => {
       const { data, error } = await supabase.from("community_group_invitations")
         .select("id,group_id,group_name,group_description,invited_by")
@@ -124,7 +125,9 @@ export function useCommunityGroupsQuery() {
   return useQuery<CommunityGroup[]>({
     queryKey: ["communityGroups", userId],
     enabled: Boolean(userId),
-    refetchInterval: 30000,
+    // No polling (was 30s, re-signing every photo): realtime invalidates.
+    // Signed photo URLs last 1h; keep data fresh for 50 min.
+    staleTime: 50 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_groups")
@@ -199,7 +202,7 @@ export function useCommunityMessagesQuery(groupId: string) {
   return useQuery<CommunityMessage[]>({
     queryKey: ["communityMessages", userId, groupId],
     enabled: Boolean(userId && groupId),
-    refetchInterval: 15000,
+    // No polling (was 15s): realtime invalidation + focus refetch.
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_group_messages")
@@ -289,10 +292,10 @@ export function useUpdateCommunityGroupPhotoMutation() {
 
 export function useCommunityGroupMembersQuery(groupId: string) {
   const { data: session } = useAuthSession();
-  return useQuery({
+  const query = useQuery({
     queryKey: ["communityGroupMembers", session?.user.id, groupId],
     enabled: Boolean(session?.user.id && groupId),
-    refetchInterval: 15000,
+    // No polling (was 15s): refetch on screen focus / app foreground.
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_group_members")
@@ -304,4 +307,6 @@ export function useCommunityGroupMembersQuery(groupId: string) {
       );
     },
   });
+  useRefetchOnFocus(query.refetch, Boolean(session?.user.id && groupId));
+  return query;
 }

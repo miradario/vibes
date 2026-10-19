@@ -3,6 +3,7 @@ import { AppState, type ViewToken } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
+import { useRefetchOnFocus } from "../hooks/useRefetchOnFocus";
 export type MessageKind = "direct" | "group";
 export type ReceiptStatus = "sending" | "sent" | "delivered" | "read";
 type Unread = {
@@ -23,16 +24,19 @@ export function useAppActive() {
 export function useCommunityUnreadQuery() {
   const { data: session } = useAuthSession();
   const active = useAppActive();
-  return useQuery<Unread[]>({
+  const query = useQuery<Unread[]>({
     queryKey: ["communityUnread", session?.user.id],
     enabled: Boolean(session) && active,
-    refetchInterval: active ? 5000 : false,
+    // Was 5s. Delivery sync invalidates this when new messages arrive.
+    refetchInterval: active ? 60_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("community_unread_counts");
       if (error) throw error;
       return data ?? [];
     },
   });
+  useRefetchOnFocus(query.refetch, Boolean(session));
+  return query;
 }
 export function useCommunityDeliverySync() {
   const { data: session } = useAuthSession();
@@ -41,7 +45,8 @@ export function useCommunityDeliverySync() {
   useQuery({
     queryKey: ["communityDelivery", session?.user.id],
     enabled: Boolean(session) && active,
-    refetchInterval: active ? 3000 : false,
+    // Was 3s. Foreground only (focusManager pauses it in background).
+    refetchInterval: active ? 30_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("community_receive_messages");
       if (error) throw error;
@@ -94,7 +99,8 @@ export function useMessageReceipts(
     enabled: Boolean(
       session && conversationId && ownIds.length && focused && active
     ),
-    refetchInterval: focused && active ? 2000 : false,
+    // Was 2s. Only while the chat is focused and the app is foreground.
+    refetchInterval: focused && active ? 30_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("community_message_statuses", {
         k: kind,

@@ -11,6 +11,7 @@ import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { assertAcceptableContent } from "../lib/moderation";
 import { mapSupabaseSelect } from "../api/mappers/case.mapper";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useRefetchOnFocus } from "../hooks/useRefetchOnFocus";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -380,6 +381,7 @@ export const useMatchesQuery = () => {
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   const query = useQuery<MatchWithProfile[]>(matchesQueryOptions(userId));
+  useRefetchOnFocus(query.refetch, Boolean(userId));
 
   useEffect(() => {
     if (!userId || !accessToken) return;
@@ -453,8 +455,7 @@ export const matchesQueryOptions = (userId?: string) => ({
   queryFn: () => fetchMatches(userId as string),
   enabled: Boolean(userId),
   staleTime: 30_000,
-  refetchInterval: userId ? 10_000 : (false as const),
-  refetchIntervalInBackground: true,
+  // No polling (was 10s, also in background): realtime + foreground refetch.
 });
 
 export const useMarkDirectMessagesReadMutation = () => {
@@ -494,9 +495,9 @@ export const useIncomingLikesQuery = () => {
     queryFn: () => fetchIncomingLikes(userId!),
     enabled: Boolean(userId),
     staleTime: 30_000,
-    refetchInterval: userId ? 10_000 : (false as const),
-    refetchIntervalInBackground: true,
+    // No polling (was 10s, also in background): realtime on swipes/matches.
   });
+  useRefetchOnFocus(query.refetch, Boolean(userId));
 
   useEffect(() => {
     if (!userId || !accessToken) return;
@@ -776,8 +777,9 @@ export const useDirectMessagesQuery = (matchId?: string) => {
     queryFn: () => fetchDirectMessages(matchId!),
     enabled: Boolean(matchId),
     staleTime: 10_000,
-    refetchInterval: matchId ? 2000 : false,
-    refetchIntervalInBackground: true,
+    // Was 2s, also in background. Realtime (dm channel) delivers new
+    // messages; this is only a foreground safety net.
+    refetchInterval: matchId ? 30_000 : false,
     refetchOnWindowFocus: true,
     structuralSharing: keepPendingDirectMessages,
   });

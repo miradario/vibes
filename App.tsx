@@ -23,9 +23,9 @@ import Vibi from "./screens/Vibi";
 
 import "react-native-url-polyfill/auto";
 import React from "react";
-import { Linking, Platform, View } from "react-native";
+import { AppState, Linking, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { NavigationContainer, CommonActions } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -156,10 +156,22 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
+      // "Window focus" = app back to foreground, via focusManager below.
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
+      staleTime: 30_000,
     },
   },
+});
+
+// React Native has no window focus events: wire React Query's focusManager
+// to AppState so stale queries refetch when the app returns to foreground,
+// and intervals pause while backgrounded.
+focusManager.setEventListener((handleFocus) => {
+  const subscription = AppState.addEventListener("change", (state) => {
+    handleFocus(state === "active");
+  });
+  return () => subscription.remove();
 });
 
 const CommunityRuntime = () => {
