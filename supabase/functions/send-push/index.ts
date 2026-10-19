@@ -593,6 +593,18 @@ const fetchDirectUnreadCountForUser = async (
   return unreadCount;
 };
 
+// Las invitaciones internas a eventos/desafíos se guardan como mensaje de chat
+// con el link público al final (el chat lo usa para el botón "Ver evento").
+// En la push no aporta nada: se saca y queda solo el texto de la invitación.
+const INVITE_LINK_RE =
+  /\s*https:\/\/vibes\.gurudevelopers\.dev\/(?:event|challenge)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=$|[\s.,!?])/gi;
+
+const buildMessagePreview = (text: string) => {
+  if (text.startsWith("vibes-photo:v1:")) return "📷 Foto";
+  const withoutInviteLink = text.replace(INVITE_LINK_RE, "").trim();
+  return (withoutInviteLink || text).slice(0, 120);
+};
+
 const buildDirectMessageNotifications = async (
   supabase: SupabaseClient,
   record: Record<string, unknown>
@@ -623,7 +635,7 @@ const buildDirectMessageNotifications = async (
     {
       recipientId,
       title: senderName,
-      body: text.startsWith("vibes-photo:v1:") ? "📷 Foto" : text.slice(0, 120),
+      body: buildMessagePreview(text),
       data: {
         type: "direct_message",
         matchId,
@@ -684,7 +696,7 @@ const buildEventMessageNotifications = async (
     .map((recipientId: string) => ({
       recipientId,
       title: `${senderName} escribio en ${groupTitle}`,
-      body: body.startsWith("vibes-photo:v1:") ? "📷 Foto" : body.slice(0, 120),
+      body: buildMessagePreview(body),
       data: {
         type: "event_message",
         eventId,
