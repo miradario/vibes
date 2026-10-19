@@ -130,16 +130,6 @@ export const markFtuxAction = async (userId: string | null | undefined, action: 
   }
 };
 
-/**
- * Dev helper: forgets this user's FTUX and makes the next Home show the
- * welcome again, even for old accounts. Wired to Configuración in __DEV__.
- */
-export const resetFtuxForDev = async (userId: string) => {
-  const fresh = createInitialState(userId, true, new Date(), { forced: true });
-  await AsyncStorage.setItem(ftuxStorageKey(userId), JSON.stringify(fresh));
-  set(fresh, false);
-};
-
 // Tab the coach card is pointing at, so the tab bar can draw the spotlight ring.
 let highlightedTab: string | null = null;
 const highlightListeners = new Set<() => void>();

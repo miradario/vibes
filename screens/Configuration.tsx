@@ -18,9 +18,6 @@ import NotificationPreferencesSection from "../components/NotificationPreference
 import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import { useAuthSession } from "../src/auth/auth.queries";
-import { resetFtuxForDev } from "../src/ftux/ftuxStore";
-import { resetVibiDailyGreeting } from "../src/lib/vibiDailyPrompts";
 
 const ACCOUNT_DELETION_URL =
   "https://vibes.gurudevelopers.dev/eliminacion-de-datos";
@@ -28,15 +25,6 @@ const ACCOUNT_DELETION_URL =
 const Configuration = () => {
   const navigation = useNavigation();
   const { t } = useI18n();
-  const { data: session } = useAuthSession();
-  // Dev only (__DEV__): replays Vibi's onboarding for the current account.
-  const handleResetFtux = async () => {
-    const userId = session?.user?.id;
-    if (!userId) return;
-    await resetFtuxForDev(userId);
-    resetVibiDailyGreeting(userId);
-    navigation.navigate("Tab" as never, { screen: "Home" } as never);
-  };
   const handleDeleteAccount = () => {
     Alert.alert(
       t("profile.deleteAccountTitle"),
@@ -77,19 +65,6 @@ const Configuration = () => {
         contentContainerStyle={localStyles.scrollContent}
       >
         <NotificationPreferencesSection />
-        {__DEV__ ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            style={[localStyles.card, { marginTop: 28 }]}
-            onPress={() => void handleResetFtux()}
-          >
-            <Icon name="refresh-outline" size={22} color={TEXT_SECONDARY} />
-            <Text style={[localStyles.cardText, { flex: 1, marginLeft: 12 }]}>
-              [Dev] Reiniciar recorrido de Vibi (FTUX)
-            </Text>
-            <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
-          </TouchableOpacity>
-        ) : null}
         <TouchableOpacity
           accessibilityRole="button"
           style={[localStyles.card, { marginTop: 28 }]}
