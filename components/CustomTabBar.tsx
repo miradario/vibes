@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { getBottomTabBarHeight } from "../src/lib/tabBarLayout";
+import { useFtuxHighlightedTab } from "../src/ftux/ftuxStore";
 import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 import { LinearGradient } from "expo-linear-gradient";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
@@ -227,6 +228,8 @@ const CustomTabBar = ({
   navigation,
 }: BottomTabBarProps) => {
   const { data: unread = [] } = useCommunityUnreadQuery();
+  // Vibi's onboarding points at a tab: draw a spotlight ring on its bubble.
+  const ftuxHighlightedTab = useFtuxHighlightedTab();
   const insets = useSafeAreaInsets();
   const { width, fontScale } = useWindowDimensions();
   const barHeight = getBottomTabBarHeight(fontScale);
@@ -387,6 +390,9 @@ const CustomTabBar = ({
             onPress={() => handlePress(selectedVisualRoute, true)}
             style={localStyles.floatingTouch}
           >
+            {ftuxHighlightedTab === selectedVisualRoute?.name ? (
+              <View pointerEvents="none" style={localStyles.ftuxRing} />
+            ) : null}
             <View
               style={[
                 localStyles.glow,
@@ -515,6 +521,15 @@ const localStyles = StyleSheet.create({
         elevation: 4,
       },
     }),
+  },
+  ftuxRing: {
+    position: "absolute",
+    width: FLOATING_BUTTON_SIZE + 18,
+    height: FLOATING_BUTTON_SIZE + 18,
+    borderRadius: (FLOATING_BUTTON_SIZE + 18) / 2,
+    borderWidth: 3,
+    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: vibesTheme.colors.surface,
   },
   floatingRing: {
     width: FLOATING_BUTTON_SIZE,

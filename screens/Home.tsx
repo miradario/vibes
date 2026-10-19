@@ -7,6 +7,10 @@ import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
 import DailyMoodCard from "../components/DailyMoodCard";
 import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
+import FtuxChecklistCard from "../components/ftux/FtuxChecklistCard";
+import { useFtuxState } from "../src/ftux/ftuxStore";
+import { ownsHomePrompts, suppressesDailyMood } from "../src/ftux/ftuxMachine";
+import { useLocalDay } from "../src/hooks/useLocalDay";
 import HomeConnectionRequests from "../components/HomeConnectionRequests";
 /** @format */
 
@@ -340,6 +344,14 @@ const Home = () => {
   const navigation = useNavigation();
   const [moodGateUser, setMoodGateUser] = useState<string | null>(null);
   const { data: session } = useAuthSession();
+  const today = useLocalDay();
+  // Vibi's first-day welcome (FTUX) replaces that day's mood check-in.
+  const ftuxState = useFtuxState(session?.user?.id, session?.user?.created_at);
+  const ftuxBlocksMood = suppressesDailyMood(
+    ftuxState,
+    today,
+    Boolean(session?.user?.id) && !ftuxState
+  );
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
   const { data: candidates = [], isLoading: candidatesLoading } = useCandidatesQuery(undefined, true);
@@ -974,9 +986,16 @@ const Home = () => {
           <DailyMoodCard
             key={`daily-mood-${session?.user?.id ?? "anonymous"}`}
             userId={session?.user?.id}
-            enabled={moodGateUser === session?.user?.id}
+            enabled={moodGateUser === session?.user?.id && !ftuxBlocksMood}
           />
-          <CompleteProfilePrompt userId={session?.user?.id} />
+          {ownsHomePrompts(ftuxState) ? (
+            <FtuxChecklistCard
+              userId={session?.user?.id}
+              accountCreatedAt={session?.user?.created_at}
+            />
+          ) : (
+            <CompleteProfilePrompt userId={session?.user?.id} />
+          )}
 
           <HomeOverview userId={session?.user?.id}>
 

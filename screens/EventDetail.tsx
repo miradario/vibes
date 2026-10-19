@@ -79,6 +79,7 @@ import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
 import { getIosMapPreviewSource } from "../src/config/mapPreview";
 import { shareEventInvite } from "../src/lib/socialShare";
 import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
+import { markFtuxAction } from "../src/ftux/ftuxStore";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
 const CHECKIN_SLIDER_HANDLE_SIZE = 72;
@@ -224,6 +225,10 @@ const EventDetail = () => {
     isChallenge ? event?.id : undefined,
     userId,
   );
+  useEffect(() => {
+    // Ticks "Mirar los próximos eventos" in Vibi's first steps checklist.
+    if (event?.id && !isChallenge) void markFtuxAction(userId, "openedEvent");
+  }, [event?.id, isChallenge, userId]);
   const joinMutation = useJoinChallengeMutation();
   const checkInMutation = useCheckInChallengeMutation();
   const leaveMutation = useLeaveChallengeMutation();
