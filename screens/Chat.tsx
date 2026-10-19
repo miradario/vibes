@@ -120,6 +120,13 @@ const Chat = () => {
   const blockMutation = useBlockUserMutation();
 
   const [text, setText] = useState("");
+  // Consume a suggested opener once; never send automatically or overwrite later edits.
+  useEffect(() => {
+    const draft = route?.params?.initialDraft;
+    if (typeof draft !== "string" || !draft.trim()) return;
+    setText(draft.trim());
+    navigation.setParams({ initialDraft: undefined } as never);
+  }, [route?.params?.initialDraft, matchId, navigation]);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [composerHeight, setComposerHeight] = useState(COMPOSER_MIN_HEIGHT);
   const [showActionsModal, setShowActionsModal] = useState(false);
