@@ -41,6 +41,7 @@ import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AvatarGroup from "../components/AvatarGroup";
 import VibesLoader from "../components/VibesLoader";
+import DeepLinkLoadingState from "../components/DeepLinkLoadingState";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import EventInviteSheet from "../components/EventInviteSheet";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -203,7 +204,13 @@ const EventDetail = () => {
   const { height, width } = useWindowDimensions();
   const routeEvent = route.params?.event as EventFeedItem | undefined;
   const { id: eventId, inlineEvent } = resolvePublicContentRoute(route.params?.eventId, routeEvent);
-  const { data: linkedEvent, isLoading: linkedEventLoading } = useQuery({
+  const {
+    data: linkedEvent,
+    isPending: linkedEventPending,
+    isError: linkedEventError,
+    fetchStatus: linkedEventFetchStatus,
+    refetch: refetchLinkedEvent,
+  } = useQuery({
     queryKey: ["event_deep_link", eventId],
     queryFn: () => fetchEventFeedItemById(eventId as string, "event"),
     enabled: Boolean(eventId),
@@ -1311,15 +1318,25 @@ const EventDetail = () => {
     }
   };
 
-  if (!event && linkedEventLoading) {
+  if (!event && eventId && linkedEventPending) {
     return (
-      <ScreenContainer style={localStyles.publicStateScreen}>
-        <VibesLoader />
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver"
-          style={localStyles.publicStateButton} onPress={handleBack}>
-          <Text style={localStyles.publicStateButtonText}>Volver</Text>
-        </TouchableOpacity>
-      </ScreenContainer>
+      <DeepLinkLoadingState
+        target="event"
+        offline={linkedEventFetchStatus === "paused"}
+        onRetry={() => void refetchLinkedEvent()}
+        onExit={handleBack}
+      />
+    );
+  }
+
+  if (!event && eventId && linkedEventError) {
+    return (
+      <DeepLinkLoadingState
+        target="event"
+        state="error"
+        onRetry={() => void refetchLinkedEvent()}
+        onExit={handleBack}
+      />
     );
   }
 
