@@ -167,6 +167,18 @@ const registerPushToken = async (userId: string) => {
   await upsertPushToken(deviceToken);
 };
 
+const refreshCommunityFromPush = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  data: Record<string, unknown> | null
+) => {
+  // Data-only refresh for group-chat pushes; never changes how a
+  // notification is displayed (Android/iOS presentation untouched).
+  if (!data || typeof data.groupId !== "string") return;
+  void queryClient.invalidateQueries({ queryKey: ["communityMessages"] });
+  void queryClient.invalidateQueries({ queryKey: ["communityGroups"] });
+  void queryClient.invalidateQueries({ queryKey: ["communityUnread"] });
+};
+
 const handleNotificationResponse = (
   response: Notifications.NotificationResponse | null,
   navigateFromNotification: (data: Record<string, unknown>) => void,
@@ -312,6 +324,7 @@ export const PushNotificationsBootstrap = ({
             ? (rawData as Record<string, unknown>)
             : null;
 
+        refreshCommunityFromPush(queryClient, data);
         if (!isChatNotificationData(data)) return;
 
         if (
@@ -351,6 +364,7 @@ export const PushNotificationsBootstrap = ({
 
     const responseSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
+        refreshCommunityFromPush(queryClient, getNotificationData(response));
         handleNotificationResponse(
           response,
           navigateFromNotification,

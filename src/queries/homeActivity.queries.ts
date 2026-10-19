@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
 import { useAppActive } from "./communityReceipts.queries";
+import { useRefetchOnFocus } from "../hooks/useRefetchOnFocus";
 
 export const connectionViewsKey = (userId?: string) => [
   "connectionViews",
@@ -12,10 +13,10 @@ export function useConnectionViewsQuery() {
   const { data: session } = useAuthSession();
   const userId = session?.user.id;
   const active = useAppActive();
-  return useQuery({
+  const query = useQuery({
     queryKey: connectionViewsKey(userId),
     enabled: !!userId && active,
-    refetchInterval: active ? 5000 : false,
+    // No polling: own data, updated optimistically on open + refetch on focus.
     queryFn: async () => {
       const { data, error } = await supabase
         .from("connection_views")
@@ -25,6 +26,8 @@ export function useConnectionViewsQuery() {
       return (data ?? []).map((row) => String(row.match_id));
     },
   });
+  useRefetchOnFocus(query.refetch, !!userId);
+  return query;
 }
 
 export function useConnectionOpened(
