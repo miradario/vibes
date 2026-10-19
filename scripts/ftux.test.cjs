@@ -73,9 +73,11 @@ test("'otra cosa' branch picks challenges or events; 'Ahora no' pauses", () => {
 });
 
 test("'Ahora no, gracias' dismisses but stays resumable from the checklist", () => {
+  assert.equal(m.ownsHomePrompts(fresh()), true, "pending welcome owns Home");
   const s = run(fresh(), { type: "WELCOME_SHOWN", day: "2026-10-19" }, { type: "LATER" });
   assert.equal(s.status, "paused");
   assert.equal(s.entry, "later");
+  assert.equal(m.ownsHomePrompts(s), false, "paused tour gives Home back");
   assert.equal(m.isChecklistVisible(s, false), true);
   const resumed = run(s, { type: "RESUME", step: "events" });
   assert.equal(resumed.status, "active");

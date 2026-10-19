@@ -166,7 +166,7 @@ export const parseState = (raw: string | null, userId: string): FtuxState | null
 
 /**
  * On a new app start never relaunch a tour that was left half way: keep the
- * progress and fall back to the Home checklist.
+ * progress paused (it is not resumed from Home anymore).
  */
 export const normalizeOnLoad = (state: FtuxState, now: Date): FtuxState => {
   if (state.status !== "active") return state;
@@ -285,12 +285,13 @@ export const isChecklistVisible = (state: FtuxState | null | undefined, profileC
   return count < total;
 };
 
-/** True while the FTUX owns Home (CompleteProfilePrompt steps aside). */
-export const ownsHomePrompts = (state: FtuxState | null | undefined) => {
-  if (!state || state.status === "ineligible") return false;
-  if (state.status === "pending" || state.status === "active") return true;
-  return !state.checklistHidden && checklistProgress(state, false).count < CHECKLIST_ITEMS.length;
-};
+/**
+ * True while the welcome or the tour is on screen (CompleteProfilePrompt steps
+ * aside). Home has no checklist card anymore, so a paused or finished tour
+ * gives Home back.
+ */
+export const ownsHomePrompts = (state: FtuxState | null | undefined) =>
+  Boolean(state && (state.status === "pending" || state.status === "active"));
 
 export type WelcomeGateInput = {
   now: number;

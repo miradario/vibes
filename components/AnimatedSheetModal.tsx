@@ -30,6 +30,8 @@ type AnimatedSheetModalProps = {
   sheetInDelay?: number;
   sheetInOpacityDuration?: number;
   sheetOutOpacityDuration?: number;
+  /** Optional spring for the sheet's slide in (replaces the timed slide). */
+  sheetInSpring?: { damping: number; stiffness: number; mass?: number };
 };
 
 const AnimatedSheetModal = ({
@@ -51,7 +53,11 @@ const AnimatedSheetModal = ({
   sheetInDelay = vibesTheme.motion.modal.sheetInDelay,
   sheetInOpacityDuration = vibesTheme.motion.modal.sheetInOpacityDuration,
   sheetOutOpacityDuration = vibesTheme.motion.modal.sheetOutOpacityDuration,
+  sheetInSpring,
 }: AnimatedSheetModalProps) => {
+  const springDamping = sheetInSpring?.damping;
+  const springStiffness = sheetInSpring?.stiffness;
+  const springMass = sheetInSpring?.mass ?? 1;
   const [isMounted, setIsMounted] = useState(visible);
   const mountedRef = useRef(visible);
   const onClosedRef = useRef(onClosed);
@@ -75,12 +81,21 @@ const AnimatedSheetModal = ({
           duration: backdropInDuration,
           useNativeDriver: true,
         }),
-        Animated.timing(sheetTranslateY, {
-          toValue: 0,
-          duration: sheetInDuration,
-          delay: sheetInDelay,
-          useNativeDriver: true,
-        }),
+        springDamping !== undefined && springStiffness !== undefined
+          ? Animated.spring(sheetTranslateY, {
+              toValue: 0,
+              damping: springDamping,
+              stiffness: springStiffness,
+              mass: springMass,
+              delay: sheetInDelay,
+              useNativeDriver: true,
+            })
+          : Animated.timing(sheetTranslateY, {
+              toValue: 0,
+              duration: sheetInDuration,
+              delay: sheetInDelay,
+              useNativeDriver: true,
+            }),
         Animated.timing(sheetOpacity, {
           toValue: 1,
           duration: sheetInOpacityDuration,
@@ -131,6 +146,9 @@ const AnimatedSheetModal = ({
     sheetOutDuration,
     sheetOutOpacityDuration,
     sheetTranslateY,
+    springDamping,
+    springStiffness,
+    springMass,
     visible,
   ]);
 

@@ -1,6 +1,9 @@
 import { PixelRatio, Platform } from "react-native";
 
 const IOS_BOTTOM_TAB_SCROLL_EXTRA = 48;
+/** Raised selected-tab bubble in CustomTabBar (size and top offset in the bar root). */
+export const TAB_FLOATING_BUTTON_SIZE = 54;
+export const TAB_FLOATING_TOP = 14;
 
 export const getBottomTabBarHeight = (fontScale = PixelRatio.getFontScale()) =>
   Math.max(82, 52 + 28 * fontScale);

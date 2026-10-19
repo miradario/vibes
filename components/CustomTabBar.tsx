@@ -11,13 +11,18 @@ import {
   type ColorValue,
 } from "react-native";
 import { Text } from "./Typography";
-import { getBottomTabBarHeight } from "../src/lib/tabBarLayout";
+import {
+  TAB_FLOATING_BUTTON_SIZE,
+  TAB_FLOATING_TOP,
+  getBottomTabBarHeight,
+} from "../src/lib/tabBarLayout";
 import { useFtuxHighlightedTab } from "../src/ftux/ftuxStore";
 import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 import { LinearGradient } from "expo-linear-gradient";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
+  FadeIn,
   ReduceMotion,
   Extrapolation,
   interpolate,
@@ -38,9 +43,9 @@ import {
 } from "lucide-react-native";
 
 const TAB_BAR_HEIGHT = 82;
-const FLOATING_BUTTON_SIZE = 54;
+const FLOATING_BUTTON_SIZE = TAB_FLOATING_BUTTON_SIZE;
 const HORIZONTAL_MARGIN = 18;
-const FLOATING_TOP = 14;
+const FLOATING_TOP = TAB_FLOATING_TOP;
 const SELECTED_RISE = -38;
 const ANIMATION_CONFIG = { duration: 520, reduceMotion: ReduceMotion.System };
 
@@ -391,7 +396,11 @@ const CustomTabBar = ({
             style={localStyles.floatingTouch}
           >
             {ftuxHighlightedTab === selectedVisualRoute?.name ? (
-              <View pointerEvents="none" style={localStyles.ftuxRing} />
+              <Animated.View
+                pointerEvents="none"
+                entering={FadeIn.duration(240).reduceMotion(ReduceMotion.System)}
+                style={localStyles.ftuxRing}
+              />
             ) : null}
             <View
               style={[

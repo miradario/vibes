@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "../Typography";
-import Vibi from "../Vibi";
+import PlayfulVibesLogo from "../PlayfulVibesLogo";
 import AnimatedSheetModal from "../AnimatedSheetModal";
 import VibesActionButton from "../VibesActionButton";
 import { vibesTheme } from "../../src/theme/vibesTheme";
@@ -18,7 +18,13 @@ import { useAuthSession } from "../../src/auth/auth.queries";
 import { useVibiEnabled } from "../../src/featureFlags/useVibiEnabled";
 import { useVibiRuntime } from "../../src/vibi/useMotionPreference";
 import { localDayKey } from "../../src/lib/profileQuestions";
-import { getTabBarFrame, getTabSlotCenterX } from "../../src/lib/tabBarLayout";
+import Svg, { Path } from "react-native-svg";
+import {
+  TAB_FLOATING_BUTTON_SIZE,
+  TAB_FLOATING_TOP,
+  getTabBarFrame,
+  getTabSlotCenterX,
+} from "../../src/lib/tabBarLayout";
 import {
   STEP_ROUTE,
   TOUR_ORDER,
@@ -41,7 +47,10 @@ import { useFtuxProfileCompletion } from "./useFtuxProfileCompletion";
 /** Visible tabs, in CustomTabBar order ("Aura" is hidden). */
 const VISIBLE_TABS = ["Flow", "EventsTab", "Home", "Discover", "Calendar"];
 const TOTAL_STEPS = TOUR_ORDER.length;
+/** Each new step shows its screen first; Vibi's card/panel appears after this. */
+export const STEP_REVEAL_DELAY_MS = 1000;
 const colors = vibesTheme.colors;
+const DIM_COLOR = "rgba(43, 43, 43, 0.42)";
 
 type SheetStep = "welcome" | "alt" | "profile" | "closing";
 export type FtuxGuideProps = {
@@ -54,7 +63,7 @@ export type FtuxGuideProps = {
 /**
  * Vibi-guided tour over the real screens. Mounted once in App.tsx, next to
  * VibiOverlay. Welcome → Descubrir (1/4) → Desafíos (2/4) → Eventos (3/4) →
- * Perfil (4/4) → Cierre; the Home checklist (FtuxChecklistCard) resumes it.
+ * Perfil (4/4) → Cierre. Leaving midway pauses it (no Home checklist).
  */
 export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGuideProps) {
   const { t } = useI18n();
@@ -142,8 +151,9 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
       ? state.step
       : null;
 
+  // The ring is turned on by CoachCard once it is revealed; clear it otherwise.
   useEffect(() => {
-    setFtuxHighlightedTab(coachStep ? STEP_ROUTE[coachStep] : null);
+    if (!coachStep) setFtuxHighlightedTab(null);
   }, [coachStep]);
   useEffect(() => () => setFtuxHighlightedTab(null), []);
 
@@ -165,10 +175,24 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
     return getFtuxState(userId);
   };
 
-  // Keep the last sheet content while the modal animates out.
+  // Hide the panel on every step change and reveal it after STEP_REVEAL_DELAY_MS.
+  // The welcome already waits for a settled Home (WELCOME_SETTLE_MS), so no extra delay.
+  const [revealedSheet, setRevealedSheet] = useState<SheetStep | null>(null);
+  useEffect(() => {
+    if (!sheetStep || sheetStep === "welcome") {
+      setRevealedSheet(sheetStep);
+      return;
+    }
+    setRevealedSheet(null);
+    const timer = setTimeout(() => setRevealedSheet(sheetStep), STEP_REVEAL_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [sheetStep]);
+  const sheetVisible = sheetStep !== null && revealedSheet === sheetStep;
+
+  // Keep the last revealed content while the modal animates out (and during the delay).
   const lastSheet = useRef<SheetStep>("welcome");
-  if (sheetStep) lastSheet.current = sheetStep;
-  const shownSheet = sheetStep ?? lastSheet.current;
+  if (sheetVisible && sheetStep) lastSheet.current = sheetStep;
+  const shownSheet = lastSheet.current;
 
   const profile = completion.profile as Record<string, unknown> | null | undefined;
   const rawName = String(profile?.display_name ?? profile?.displayName ?? "").trim();
@@ -185,7 +209,7 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
   return (
     <>
       <FtuxSheet
-        visible={sheetStep !== null}
+        visible={sheetVisible}
         step={shownSheet}
         onClose={closeSheet}
         title={
@@ -211,6 +235,13 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
             : null
         }
         vibiLabel={t("ftux.vibi")}
+        bubble={
+          shownSheet === "welcome"
+            ? firstName
+              ? t("ftux.welcome.bubble", { name: firstName })
+              : t("ftux.welcome.bubbleNoName")
+            : t(`ftux.${shownSheet}.bubble`)
+        }
         actions={
           shownSheet === "welcome"
             ? [
@@ -258,6 +289,7 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
           body={t(`ftux.${coachStep}.body`)}
           stepLabel={t("ftux.step", { current: stepNumber(coachStep) ?? 1, total: TOTAL_STEPS })}
           vibiLabel={t("ftux.vibi")}
+          bubble={t(`ftux.${coachStep}.bubble`)}
           a11yLabel={t("ftux.a11y.coach")}
           pauseHint={t("ftux.a11y.pauseHint")}
           exploreLabel={t(`ftux.${coachStep}.explore`)}
@@ -278,13 +310,66 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
 
 type SheetAction = { label: string; variant: "start" | "outline" | "skip"; onPress: () => void };
 
-function VibiBadge({ size }: { size: number }) {
+/** Playful Vibi (same figure as the signup onboarding) with its speech bubble. */
+function VibiFigure({
+  size,
+  bubble,
+  play,
+  delay,
+  reducedMotion,
+}: {
+  size: number;
+  bubble: string;
+  /** Pops the bubble in each time this turns true (it is not hidden on false, so it stays during the exit). */
+  play: boolean;
+  delay: number;
+  reducedMotion: boolean;
+}) {
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!play) return;
+    pop.setValue(0);
+    const animation = reducedMotion
+      ? Animated.timing(pop, { toValue: 1, duration: 200, delay, useNativeDriver: true })
+      : Animated.spring(pop, { toValue: 1, delay, damping: 13, stiffness: 260, mass: 0.7, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [play, delay, reducedMotion, pop]);
   return (
-    <View style={[styles.vibiBadge, { width: size, height: size, borderRadius: size / 2 }]}>
-      <Vibi state="happy" size={size * 0.72} />
+    <View style={[styles.mascot, { width: Math.max(size, 84) }]}>
+      <PlayfulVibesLogo style={{ width: size, height: size * 1.2 }} />
+      {bubble ? (
+        <Animated.View
+          style={[
+            styles.greetingBubble,
+            {
+              opacity: pop.interpolate({ inputRange: [0, 0.3], outputRange: [0, 1], extrapolate: "clamp" }),
+              // Grows from its "tail": the top center, right under Vibi.
+              transformOrigin: ["50%", 0, 0],
+              transform: reducedMotion
+                ? []
+                : [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }) }],
+            },
+          ]}
+        >
+          <Text style={styles.greetingText} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+            {bubble}
+          </Text>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
+
+/** Spring shared by the card pop and the panel slide: playful, little bounce, ~350ms. */
+const UNFOLD_SPRING = { damping: 18, stiffness: 220, mass: 0.9 };
+const BUBBLE_STAGGER_MS = 120;
+
+/** Smaller figure on narrow screens or with large text so the card still fits. */
+const useCompact = () => {
+  const { width, fontScale } = useWindowDimensions();
+  return width < 380 || fontScale > 1.15;
+};
 
 function Dots({ total, current }: { total: number; current: number }) {
   return (
@@ -305,6 +390,7 @@ export function FtuxSheet({
   stepLabel,
   progress,
   vibiLabel,
+  bubble,
   actions,
   dots,
 }: {
@@ -316,18 +402,36 @@ export function FtuxSheet({
   stepLabel: string | null;
   progress: { percent: number; label: string } | null;
   vibiLabel: string;
+  bubble: string;
   actions: SheetAction[];
   dots: number | null;
 }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const { reducedMotion } = useVibiRuntime();
+  const compact = useCompact();
+  // Panel slides up with a spring, then its content and Vibi's bubble unfold in sequence.
+  const content = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!visible) return;
+    content.setValue(0);
+    const animation = reducedMotion
+      ? Animated.timing(content, { toValue: 1, duration: 200, useNativeDriver: true })
+      : Animated.spring(content, { toValue: 1, delay: 90, ...UNFOLD_SPRING, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [visible, reducedMotion, content]);
+  const contentStyle = {
+    opacity: content.interpolate({ inputRange: [0, 0.4], outputRange: [0, 1], extrapolate: "clamp" as const }),
+    transform: reducedMotion ? [] : [{ translateY: content.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
+  };
   return (
     <AnimatedSheetModal
       visible={visible}
       onClose={onClose}
       closeOnBackdropPress={false}
-      offsetY={reducedMotion ? 0 : 80}
+      offsetY={reducedMotion ? 0 : 140}
+      sheetInSpring={reducedMotion ? undefined : UNFOLD_SPRING}
       sheetInDuration={reducedMotion ? 0 : 260}
       sheetOutDuration={reducedMotion ? 0 : 180}
       sheetStyle={[
@@ -339,33 +443,45 @@ export function FtuxSheet({
       <ScrollView
         bounces={false}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.sheetContent}
         accessibilityViewIsModal
       >
+        <Animated.View style={[styles.sheetContent, contentStyle]}>
         <View style={styles.sheetHeader}>
-          <VibiBadge size={56} />
           <View style={styles.sheetCopy}>
             <View style={styles.metaRow}>
               <Text style={styles.vibiLabel}>{vibiLabel}</Text>
               {stepLabel ? <Text style={styles.stepLabel}>{stepLabel}</Text> : null}
             </View>
-            <Text accessibilityRole="header" style={styles.sheetTitle}>
+            <Text
+              accessibilityRole="header"
+              style={[styles.sheetTitle, compact && styles.sheetTitleCompact]}
+              maxFontSizeMultiplier={1.4}
+            >
               {title}
             </Text>
-            <Text style={styles.body}>{body}</Text>
-            {progress ? (
-              <View style={styles.progressRow}>
-                <View
-                  accessibilityRole="progressbar"
-                  accessibilityValue={{ min: 0, max: 100, now: progress.percent }}
-                  style={styles.track}
-                >
-                  <View style={[styles.fill, { width: `${Math.max(4, Math.min(100, progress.percent))}%` }]} />
-                </View>
-                <Text style={styles.progressText}>{progress.label}</Text>
-              </View>
-            ) : null}
           </View>
+          <VibiFigure
+            size={compact ? 72 : 92}
+            bubble={bubble}
+            play={visible}
+            delay={90 + BUBBLE_STAGGER_MS * 2}
+            reducedMotion={reducedMotion}
+          />
+        </View>
+        <View style={styles.sheetBody}>
+          <Text style={styles.body}>{body}</Text>
+          {progress ? (
+            <View style={styles.progressRow}>
+              <View
+                accessibilityRole="progressbar"
+                accessibilityValue={{ min: 0, max: 100, now: progress.percent }}
+                style={styles.track}
+              >
+                <View style={[styles.fill, { width: `${Math.max(4, Math.min(100, progress.percent))}%` }]} />
+              </View>
+              <Text style={styles.progressText}>{progress.label}</Text>
+            </View>
+          ) : null}
         </View>
         <View style={styles.sheetActions} key={step}>
           {actions.map((action) =>
@@ -390,6 +506,7 @@ export function FtuxSheet({
           )}
         </View>
         {dots ? <Dots total={dots} current={dots} /> : null}
+        </Animated.View>
       </ScrollView>
     </AnimatedSheetModal>
   );
@@ -401,6 +518,7 @@ export function CoachCard({
   body,
   stepLabel,
   vibiLabel,
+  bubble,
   a11yLabel,
   pauseHint,
   exploreLabel,
@@ -413,6 +531,7 @@ export function CoachCard({
   body: string;
   stepLabel: string;
   vibiLabel: string;
+  bubble: string;
   a11yLabel: string;
   pauseHint: string;
   exploreLabel: string;
@@ -423,31 +542,98 @@ export function CoachCard({
   const insets = useSafeAreaInsets();
   const { width, height, fontScale } = useWindowDimensions();
   const { reducedMotion } = useVibiRuntime();
+  const compact = useCompact();
   const frame = getTabBarFrame(width, insets.bottom, fontScale);
   const cardWidth = Math.min(width - 32, 520);
   const cardLeft = (width - cardWidth) / 2;
   const slotX = getTabSlotCenterX(VISIBLE_TABS.indexOf(STEP_ROUTE[step]), VISIBLE_TABS.length, width);
   const arrowLeft = Math.min(Math.max(slotX - cardLeft - 9, 24), cardWidth - 42);
-  const dimHeight = Math.max(0, height - frame.totalHeight);
+  // Measure the real overlay (mounted at the app root, same box the tab bar sits
+  // in) instead of trusting the window size, which differs on Android.
+  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
+  const rootWidth = box?.width ?? width;
+  const rootHeight = box?.height ?? height;
+  const dimHeight = Math.max(0, rootHeight - frame.totalHeight);
+  // Spotlight hole around the raised tab bubble (CustomTabBar: floatingWrap + ftuxRing).
+  const holeX = slotX + (rootWidth - width) / 2;
+  const holeY = dimHeight + TAB_FLOATING_TOP + TAB_FLOATING_BUTTON_SIZE / 2;
+  const holeR = (TAB_FLOATING_BUTTON_SIZE + 18) / 2 + 6;
+  const dimPath =
+    `M0 0H${rootWidth}V${rootHeight}H0Z` +
+    `M${holeX - holeR} ${holeY}a${holeR} ${holeR} 0 1 0 ${holeR * 2} 0a${holeR} ${holeR} 0 1 0 ${-holeR * 2} 0Z`;
   const opacity = useRef(new Animated.Value(reducedMotion ? 1 : 0)).current;
+  // Let the person see the new screen first; reduce motion only skips the fade.
+  const [revealed, setRevealed] = useState(false);
   useEffect(() => {
+    const timer = setTimeout(() => setRevealed(true), STEP_REVEAL_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  // The tab ring appears together with the card (CustomTabBar fades it in).
+  useEffect(() => {
+    if (!revealed) return;
+    setFtuxHighlightedTab(STEP_ROUTE[step]);
+    return () => setFtuxHighlightedTab(null);
+  }, [revealed, step]);
+  useEffect(() => {
+    if (!revealed) return;
     if (reducedMotion) {
       opacity.setValue(1);
       return;
     }
-    const animation = Animated.timing(opacity, { toValue: 1, duration: 220, delay: 120, useNativeDriver: true });
+    const animation = Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true });
     animation.start();
     return () => animation.stop();
-  }, [opacity, reducedMotion]);
+  }, [opacity, reducedMotion, revealed]);
+  // The card "unfolds" from the arrow (pointing at the tab): scale + lift + fade, with a spring.
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!revealed) return;
+    const animation = reducedMotion
+      ? Animated.timing(pop, { toValue: 1, duration: 200, useNativeDriver: true })
+      : Animated.spring(pop, { toValue: 1, ...UNFOLD_SPRING, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [pop, reducedMotion, revealed]);
+  const cardPopStyle = {
+    opacity: pop.interpolate({ inputRange: [0, 0.4], outputRange: [0, 1], extrapolate: "clamp" as const }),
+    transformOrigin: [arrowLeft + 9, "100%", 0],
+    transform: reducedMotion
+      ? []
+      : [
+          { translateY: pop.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) },
+          { scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) },
+        ],
+  };
   return (
-    <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, styles.coachRoot]}>
-      {/* Dim everything but the tab bar, so the highlighted tab stands out. */}
-      <Animated.View
-        style={[styles.dim, { height: dimHeight, opacity }]}
+    <View
+      pointerEvents="box-none"
+      style={[StyleSheet.absoluteFill, styles.coachRoot]}
+      onLayout={(event) => {
+        const { width: w, height: h } = event.nativeEvent.layout;
+        setBox((prev) => (prev && prev.width === w && prev.height === h ? prev : { width: w, height: h }));
+      }}
+    >
+      {/* Touch blocker above the tab bar (also during the reveal delay); the tab bar stays tappable. */}
+      <View
+        style={[styles.touchBlocker, { height: dimHeight }]}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         onStartShouldSetResponder={() => true}
       />
+      {revealed ? (
+        <>
+      {/* Visual dim: the whole screen (status bar to bottom, around the floating bar)
+          with a round cutout on the highlighted tab. Never takes touches. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { opacity }]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Svg width={rootWidth} height={rootHeight}>
+          <Path d={dimPath} fill={DIM_COLOR} fillRule="evenodd" />
+        </Svg>
+      </Animated.View>
       <Animated.View
         accessibilityViewIsModal
         accessibilityLabel={a11yLabel}
@@ -459,22 +645,32 @@ export function CoachCard({
             left: cardLeft,
             bottom: frame.totalHeight + 10,
             maxHeight: Math.max(220, dimHeight - insets.top - 24),
-            opacity,
           },
+          cardPopStyle,
         ]}
       >
         <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
           <View style={styles.coachHeader}>
-            <VibiBadge size={48} />
             <View style={styles.sheetCopy}>
               <View style={styles.metaRow}>
                 <Text style={styles.vibiLabel}>{vibiLabel}</Text>
                 <Text style={styles.stepLabel}>{stepLabel}</Text>
               </View>
-              <Text accessibilityRole="header" style={styles.coachTitle}>
+              <Text
+                accessibilityRole="header"
+                style={[styles.coachTitle, compact && styles.coachTitleCompact]}
+                maxFontSizeMultiplier={1.4}
+              >
                 {title}
               </Text>
             </View>
+            <VibiFigure
+              size={compact ? 60 : 76}
+              bubble={bubble}
+              play={revealed}
+              delay={BUBBLE_STAGGER_MS}
+              reducedMotion={reducedMotion}
+            />
           </View>
           <Text style={[styles.body, styles.coachBody]}>{body}</Text>
           <View style={styles.coachActions}>
@@ -495,6 +691,8 @@ export function CoachCard({
         </ScrollView>
         <View pointerEvents="none" style={[styles.arrow, { left: arrowLeft }]} />
       </Animated.View>
+        </>
+      ) : null}
     </View>
   );
 }
@@ -520,19 +718,35 @@ const styles = StyleSheet.create({
   },
   sheetHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 14,
+    alignItems: "center",
+    gap: 12,
   },
   sheetCopy: {
     flex: 1,
     gap: 6,
   },
-  vibiBadge: {
+  sheetBody: {
+    gap: 6,
+    marginTop: -8,
+  },
+  mascot: {
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
+    gap: 4,
+  },
+  // Same bubble as the signup onboarding greeting ("¡Hola, {nombre}!").
+  greetingBubble: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 18,
+    backgroundColor: `${colors.accentBlue}14`,
+    maxWidth: 120,
+  },
+  greetingText: {
+    color: colors.accentBlue,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "center",
   },
   metaRow: {
     flexDirection: "row",
@@ -541,7 +755,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   vibiLabel: {
-    color: colors.accentBlue,
+    color: colors.accentCoral,
     fontFamily: vibesTheme.fonts.semibold,
     fontSize: 14,
     lineHeight: 18,
@@ -554,9 +768,13 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 22,
-    lineHeight: 28,
+    fontFamily: vibesTheme.fonts.extraBold,
+    fontSize: 27,
+    lineHeight: 33,
+  },
+  sheetTitleCompact: {
+    fontSize: 23,
+    lineHeight: 29,
   },
   body: {
     color: colors.secondaryText,
@@ -571,13 +789,13 @@ const styles = StyleSheet.create({
   track: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(57, 120, 184, 0.14)",
+    backgroundColor: "rgba(244, 163, 64, 0.18)",
     overflow: "hidden",
   },
   fill: {
     height: "100%",
     borderRadius: 4,
-    backgroundColor: colors.accentBlue,
+    backgroundColor: colors.accentMustard,
   },
   progressText: {
     color: colors.primaryText,
@@ -616,18 +834,17 @@ const styles = StyleSheet.create({
   },
   dotActive: {
     width: 20,
-    backgroundColor: colors.accentBlue,
+    backgroundColor: colors.accentMustard,
   },
   coachRoot: {
     zIndex: 60,
     elevation: 60,
   },
-  dim: {
+  touchBlocker: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(43, 43, 43, 0.42)",
   },
   coachCard: {
     position: "absolute",
@@ -649,12 +866,16 @@ const styles = StyleSheet.create({
   },
   coachTitle: {
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 19,
+    fontFamily: vibesTheme.fonts.extraBold,
+    fontSize: 23,
+    lineHeight: 29,
+  },
+  coachTitleCompact: {
+    fontSize: 20,
     lineHeight: 25,
   },
   coachBody: {
-    marginTop: 12,
+    marginTop: 8,
   },
   coachActions: {
     flexDirection: "row",

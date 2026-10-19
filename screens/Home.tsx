@@ -7,7 +7,6 @@ import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
 import DailyMoodCard from "../components/DailyMoodCard";
 import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
-import FtuxChecklistCard from "../components/ftux/FtuxChecklistCard";
 import { useFtuxState } from "../src/ftux/ftuxStore";
 import { ownsHomePrompts, suppressesDailyMood } from "../src/ftux/ftuxMachine";
 import { useLocalDay } from "../src/hooks/useLocalDay";
@@ -988,12 +987,7 @@ const Home = () => {
             userId={session?.user?.id}
             enabled={moodGateUser === session?.user?.id && !ftuxBlocksMood}
           />
-          {ownsHomePrompts(ftuxState) ? (
-            <FtuxChecklistCard
-              userId={session?.user?.id}
-              accountCreatedAt={session?.user?.created_at}
-            />
-          ) : (
+          {ownsHomePrompts(ftuxState) ? null : (
             <CompleteProfilePrompt userId={session?.user?.id} />
           )}
 
