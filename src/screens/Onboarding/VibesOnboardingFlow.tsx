@@ -1,3 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
+import { useUserPreferencesQuery } from "../../queries/userPreferences.queries";
+import { buildResumeOnboardingDraft } from "../../lib/resumeOnboarding";
+import { readProfileAnswers } from "../../lib/profileQuestions";
+import ScreenContainer from "../../../components/ScreenContainer";
 import OnboardingPlayfulShapes from "../../../components/OnboardingPlayfulShapes";
 import OnboardingGlobe from "../../../components/OnboardingGlobe";
 import ProfileReadyIllustration from "../../../components/ProfileReadyIllustration";
@@ -22,7 +27,7 @@ import { Text, TextInput } from "../../../components/Typography";
 import BirthDateWheel from "../../../components/BirthDateWheel";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Location from "expo-location";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import AnimatedSheetModal from "../../../components/AnimatedSheetModal";
 import KeyboardSheetModal from "../../../components/KeyboardSheetModal";
 import ProfileQuestionsForm from "../../../components/onboarding/ProfileQuestionsForm";
@@ -98,7 +103,7 @@ const getSelectedLabels = (
     .filter((option) => selectedIds.includes(option.id))
     .map((option) => option.label);
 
-const VibesOnboardingFlow = () => {
+const VibesOnboardingContent = () => {
   const navigation = useNavigation();
   const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
@@ -286,14 +291,15 @@ const VibesOnboardingFlow = () => {
         getUniqueLocationParts(city.trim(), country.trim()).join(", "),
       latitude,
       longitude,
-      purpose: getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
+      purpose: Array.from(new Set([...(draft.purpose ?? []).filter(label => !PURPOSE_OPTIONS.some(option => option.label === label)), ...getSelectedLabels(purposeIds, PURPOSE_OPTIONS)])),
       energy: [],
       energyIds: [],
-      otherTags: [
+      otherTags: Array.from(new Set([
+        ...(draft.otherTags ?? []).filter(tag => !PURPOSE_OPTIONS.some(option => option.label === tag) && !(draft.spiritualPath ?? []).includes(tag) && !tag.startsWith("age:")),
         ...getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
         ...selectedPractices,
         age ? `age:${age}` : "",
-      ].filter(Boolean),
+      ].filter(Boolean))),
       photoUris,
       photoOriginalUris,
       primaryPhotoUri: photoUris[0] ?? "",
@@ -549,6 +555,24 @@ const VibesOnboardingFlow = () => {
     const key = `vibesOnboarding.practicesOptions.${practice}`;
     const translated = t(key);
     return translated === key ? practice : translated;
+  };
+
+  const stepHints: Partial<Record<VibesOnboardingStep, string>> = locale.startsWith("en") ? {
+    profileText: "Only your first name is required. You can update your profile later.",
+    profile: "Photos are optional. Tap a photo to make it your main one; use its menu to adjust it.",
+    purpose: "Choose as many as you like. You can change your choices later.",
+    location: "Neighborhood is optional. You can enter your city manually without granting location access.",
+    practices: "Choose several practices, or add your own with Other.",
+    identity: "Skip any question you prefer not to answer.",
+    interests: "Choose several interests to help you find people with things in common.",
+  } : {
+    profileText: "Solo el nombre es obligatorio. Después podés editar lo que compartís.",
+    profile: "Las fotos son opcionales. Tocá una para hacerla principal; en su menú podés ajustarla.",
+    purpose: "Podés elegir varias opciones y cambiarlas más adelante.",
+    location: "El barrio es opcional. También podés escribir tu ciudad sin dar acceso a tu ubicación.",
+    practices: "Elegí varias prácticas o agregá la tuya en Otras.",
+    identity: "Podés dejar sin responder cualquier pregunta que prefieras.",
+    interests: "Elegí varios intereses para encontrar personas con cosas en común.",
   };
 
   const renderTitle = (targetStep: VibesOnboardingStep) => (
@@ -1011,7 +1035,13 @@ const VibesOnboardingFlow = () => {
             showBack={stepIndex > 0}
             hideBackIcon={false}
           />
-          <Animated.View style={animatedStyle}>{renderStep()}</Animated.View>
+          <Animated.View style={animatedStyle}>
+            {renderStep()}
+            {stepHints[step] ? <View style={localStyles.stepHint}>
+              <Icon name="information-circle-outline" size={20} color={vibesTheme.colors.accentBlue} />
+              <Text style={localStyles.stepHintText}>{stepHints[step]}</Text>
+            </View> : null}
+          </Animated.View>
         </OnboardingScreenContainer>
       )}
 
@@ -1130,9 +1160,34 @@ const VibesOnboardingFlow = () => {
   );
 };
 
+const VibesOnboardingFlow = () => {
+  const route = useRoute();
+  const resume = Boolean((route.params as {resume?: boolean} | undefined)?.resume);
+  const {data:session} = useAuthSession();
+  const profile = useProfileQuery(session?.user?.id);
+  const preferences = useUserPreferencesQuery(resume ? session?.user?.id : undefined);
+  const answers = useQuery({queryKey:["profileAnswers",session?.user?.id],
+    queryFn:()=>readProfileAnswers(session!.user.id), enabled:resume && Boolean(session?.user?.id)});
+  const {setDraft,resetDraft} = useOnboardingDraft();
+  useEffect(() => () => { if (resume) resetDraft(); }, [resume]);
+  const [ready, setReady] = useState(!resume);
+  useEffect(() => {
+    if (!resume || ready || !profile.data || !preferences.isSuccess || !answers.isSuccess) return;
+    setDraft(buildResumeOnboardingDraft(profile.data, preferences.data, answers.data));
+    setReady(true);
+  }, [resume,ready,profile.data,preferences.isSuccess,preferences.data,answers.isSuccess,answers.data]);
+  if (!ready) return <ScreenContainer><View style={{flex:1,justifyContent:"center",alignItems:"center",padding:24}}>
+    {profile.isError || preferences.isError || answers.isError || (profile.isSuccess && !profile.data)
+      ? <PrimaryButton label="Reintentar cargar tu perfil" onPress={()=>{void profile.refetch();void preferences.refetch();void answers.refetch();}} />
+      : <VibesLoader size={48} accessibilityLabel="Cargando tu perfil" />}
+  </View></ScreenContainer>;
+  return <VibesOnboardingContent />;
+};
 export default VibesOnboardingFlow;
 
 const localStyles = StyleSheet.create({
+  stepHint: {flexDirection:"row", gap:8, marginTop:16, marginBottom:12, alignItems:"flex-start"},
+  stepHintText: {flex:1, fontSize:14, lineHeight:20, color:vibesTheme.colors.secondaryText},
   purposeHero: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 },
   purposeTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 34, marginBottom: 10 },
   choiceTitle: { marginTop: 20, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 32, lineHeight: 39 },

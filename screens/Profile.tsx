@@ -140,7 +140,7 @@ const Profile = () => {
                 ? completion.percent
                 : null
             }
-            onPress={() => navigation.navigate(completion.nextScreen as never)}
+            onPress={() => navigation.navigate("VibesOnboardingFlow" as never, {resume:true} as never)}
           /></View>
           <View style={localStyles.profileInfo}>
             <View style={localStyles.nameRow}>

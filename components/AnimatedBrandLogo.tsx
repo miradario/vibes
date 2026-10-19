@@ -12,7 +12,7 @@ function MorphPart({ shape, progress }: { shape: LogoMorphShape; progress: Share
   return <AnimatedPath animatedProps={props} fill={shape.color} fillRule="nonzero" />;
 }
 /** Real letter contours bend continuously into the brand mark, without particles. */
-export default function AnimatedBrandLogo({ style, onComplete, direction = "word-to-logo", loop = false }: { style?: StyleProp<ViewStyle>; onComplete?: () => void; direction?: "word-to-logo" | "logo-to-word"; loop?: boolean }) {
+export default function AnimatedBrandLogo({ style, onComplete, direction = "word-to-logo", loop = false, animate = true }: { style?: StyleProp<ViewStyle>; onComplete?: () => void; direction?: "word-to-logo" | "logo-to-word"; loop?: boolean; animate?: boolean }) {
   const target = direction === "logo-to-word" ? 0 : 1;
   const navigation = useContext(NavigationContext);
   const [focused, setFocused] = useState(() => navigation?.isFocused() ?? true);
@@ -39,6 +39,7 @@ export default function AnimatedBrandLogo({ style, onComplete, direction = "word
     completionRef.current?.();
   }, []);
   useEffect(() => {
+    if (!animate) { cancelAnimation(progress); progress.value = 1 - target; return; }
     if (!motionReady) return;
     if (reducedMotion) {
       cancelAnimation(progress);
@@ -68,7 +69,7 @@ export default function AnimatedBrandLogo({ style, onComplete, direction = "word
       easing: Easing.inOut(Easing.cubic),
     }, (finished) => { if (finished) runOnJS(finish)(); }));
     return () => cancelAnimation(progress);
-  }, [motionReady, reducedMotion, focused, active, progress, finish, target, loop]);
+  }, [motionReady, reducedMotion, focused, active, progress, finish, target, loop, animate]);
   return (
     <View style={style} accessible accessibilityLabel="Vibes" pointerEvents="none">
       <Animated.View style={[{ width: "100%", height: "100%" }, breathingStyle]}>

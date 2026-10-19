@@ -1,5 +1,9 @@
+import { getProfilePicturePath } from "../lib/profilePhotoStorage";
 import { preparePhotoUpload } from "../lib/preparePhotoUpload";
-import { saveProfileAnswers, type ProfileAnswers } from "../lib/profileQuestions";
+import {
+  saveProfileAnswers,
+  type ProfileAnswers,
+} from "../lib/profileQuestions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../lib/supabase";
@@ -59,36 +63,35 @@ const normalizeOnboardingPhotoUris = (draft: OnboardingDraft) => {
   return Array.from(new Set(allUris.map((uri) => uri.trim()))).slice(0, 6);
 };
 
-const uploadOnboardingPhotos = async (userId: string, uris: string[]) => {
-  const uploadedPaths: string[] = [];
-
-  const { data: existingRows, error: existingRowsError } = await supabase
+export const saveProfilePhotoSelection = async (
+  userId: string,
+  uris: string[]
+) => {
+  if (uris.length > 6) throw new Error("Podés agregar hasta 6 fotos");
+  const { data: existingRows, error } = await supabase
     .from("profile_photos")
-    .select("id")
+    .select("id,url,order,is_primary")
     .eq("profile_id", userId);
-
-  if (existingRowsError) {
-    console.error("onboarding:photo_existing_rows_error", existingRowsError);
-    throw existingRowsError;
-  }
-
-  const existingIds = (existingRows ?? [])
-    .map((row) => (row as Record<string, unknown>).id)
-    .filter((id): id is string => typeof id === "string" && id.length > 0);
-
-  if (existingIds.length) {
-    const { error: deleteRowsError } = await supabase
-      .from("profile_photos")
-      .delete()
-      .in("id", existingIds);
-
-    if (deleteRowsError) {
-      console.error("onboarding:photo_delete_existing_error", deleteRowsError);
-      throw deleteRowsError;
-    }
-  }
-
+  if (error) throw error;
+  const uploadedPaths: string[] = [];
+  // Upload everything first. A failed upload must never delete the saved photos.
   for (let i = 0; i < uris.length; i++) {
+    const existingPath = getProfilePicturePath(uris[i]);
+    const existing = existingRows?.find(
+      (row) => row.url === existingPath || row.url === uris[i]
+    );
+    if (existing) {
+      uploadedPaths.push(existing.url);
+      continue;
+    }
+    // Legacy profile photos can exist without a profile_photos row.
+    if (
+      existingPath?.startsWith(`${userId}/`) ||
+      /^https?:\/\//i.test(uris[i])
+    ) {
+      uploadedPaths.push(existingPath ?? uris[i]);
+      continue;
+    }
     const uri = await preparePhotoUpload(uris[i]);
     const rawExt = uri.split("?")[0].split(".").pop() || "jpg";
     const ext = rawExt.toLowerCase();
@@ -106,23 +109,51 @@ const uploadOnboardingPhotos = async (userId: string, uris: string[]) => {
       throw uploadError;
     }
 
-    const { error: insertError } = await supabase
-      .from("profile_photos")
-      .insert({
-        profile_id: userId,
-        url: filePath,
-        order: i,
-        is_primary: i === 0,
-      });
-
-    if (insertError) {
-      console.error("onboarding:photo_insert_error", insertError);
-      throw insertError;
-    }
-
     uploadedPaths.push(filePath);
   }
-
+  // Keep the same row IDs at each slot; replace all slot URLs in one statement.
+  // The unique primary flag is restored only after the new selection is saved.
+  const clear = await supabase
+    .from("profile_photos")
+    .update({ is_primary: false })
+    .eq("profile_id", userId);
+  if (clear.error) throw clear.error;
+  if (uploadedPaths.length) {
+    const result = await supabase.from("profile_photos").upsert(
+      uploadedPaths.map((url, order) => ({
+        profile_id: userId,
+        url,
+        order,
+        is_primary: false,
+      })),
+      { onConflict: "profile_id,order" }
+    );
+    if (result.error) {
+      const previousPrimary = existingRows?.find((row) => row.is_primary);
+      if (previousPrimary)
+        await supabase
+          .from("profile_photos")
+          .update({ is_primary: true })
+          .eq("profile_id", userId)
+          .eq("id", previousPrimary.id);
+      throw result.error;
+    }
+  }
+  const removed = await supabase
+    .from("profile_photos")
+    .delete()
+    .eq("profile_id", userId)
+    .gte("order", uploadedPaths.length);
+  if (removed.error) throw removed.error;
+  if (uploadedPaths.length) {
+    const primary = await supabase
+      .from("profile_photos")
+      .update({ is_primary: true })
+      .eq("profile_id", userId)
+      .eq("order", 0);
+    if (primary.error) throw primary.error;
+  }
+  await updateProfileWithFallback(userId, { photos: uploadedPaths });
   return uploadedPaths;
 };
 
@@ -154,6 +185,8 @@ const runOnboardingStep = async <T>(
 
 export type OnboardingDraft = {
   profileAnswers?: ProfileAnswers;
+  genderId?: number;
+  editingExistingProfile?: boolean;
   displayName?: string;
   firstName?: string;
   lastName?: string;
@@ -329,7 +362,7 @@ export const useCompleteOnboardingMutation = () => {
       const payload: Record<string, unknown> = {
         id: userId,
         display_name: draft.displayName?.trim() ?? "",
-        gender_id: DEFAULT_GENDER_ID,
+        gender_id: draft.genderId ?? DEFAULT_GENDER_ID,
         intent_id: draft.intentId ?? DEFAULT_INTENT_ID,
       };
 
@@ -362,28 +395,28 @@ export const useCompleteOnboardingMutation = () => {
         })
       );
 
-      if (draft.profileAnswers && Object.values(draft.profileAnswers).some(value => value.length)) {
-        await runOnboardingStep("Preguntas opcionales", () => saveProfileAnswers(userId, draft.profileAnswers!));
+      if (
+        draft.profileAnswers &&
+        (draft.editingExistingProfile ||
+          Object.values(draft.profileAnswers).some((value) => value.length))
+      ) {
+        await runOnboardingStep("Preguntas opcionales", () =>
+          saveProfileAnswers(userId, draft.profileAnswers!)
+        );
       }
 
       const photoUris = normalizeOnboardingPhotoUris(draft);
 
-      if (photoUris.length) {
-        const uploadedPhotoPaths = await runOnboardingStep("Fotos", () =>
-          uploadOnboardingPhotos(userId, photoUris)
+      if (photoUris.length || draft.editingExistingProfile) {
+        await runOnboardingStep("Fotos", () =>
+          saveProfilePhotoSelection(userId, photoUris)
         );
-
-        if (uploadedPhotoPaths.length) {
-          await runOnboardingStep("Fotos del perfil", () =>
-            updateProfileWithFallback(userId, {
-              photos: uploadedPhotoPaths,
-            })
-          );
-        }
       }
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["profileAnswers", variables.userId] });
+      queryClient.invalidateQueries({
+        queryKey: ["profileAnswers", variables.userId],
+      });
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
       queryClient.invalidateQueries({
         queryKey: profileKeys.byUser(variables.userId),

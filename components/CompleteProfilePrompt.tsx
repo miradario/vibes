@@ -110,7 +110,7 @@ export default function CompleteProfilePrompt({
   return (
     <TouchableOpacity
       accessibilityRole="button"
-      onPress={() => navigation.navigate(completion.nextScreen as never)}
+      onPress={() => navigation.navigate("VibesOnboardingFlow" as never, {resume:true} as never)}
       style={[styles.card, compact && styles.compactCard]}
       activeOpacity={0.84}
     >

@@ -1,24 +1,26 @@
-import { preparePhotoUpload } from "../src/lib/preparePhotoUpload";
+import ProfilePhotoPicker from "../components/onboarding/ProfilePhotoPicker";
+import VibesLoader from "../components/VibesLoader";
+import { saveProfilePhotoSelection } from "../src/queries/onboarding.queries";
 import CountrySelector from "../components/CountrySelector";
 import { saveProfileNationality } from "../src/lib/profileNationality";
-import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   TouchableOpacity,
-  Image,
   Alert,
-  InteractionManager,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Linking,
-  type LayoutChangeEvent,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
-import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
+import {
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import styles, {
   BLACK,
@@ -30,48 +32,14 @@ import styles, {
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import EmailVerificationCard from "../components/EmailVerificationCard";
-import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import ScreenContainer from "../components/ScreenContainer";
-import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
-import { createSignedProfilePhotoUrl } from "../src/lib/profilePhotoStorage";
 import { profileKeys, useProfileQuery } from "../src/queries/profile.queries";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  runOnJS,
-} from "react-native-reanimated";
+
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
-
-const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
-  ? [(ImagePicker as any).MediaType.Images]
-  : ["images"];
-const PROFILE_PICTURES_BUCKET = "profile pictures";
-const EXTENSION_TO_CONTENT_TYPE: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  heic: "image/heic",
-  heif: "image/heif",
-};
-
-const getErrorMessage = (error: unknown) => {
-  if (!error) return "Unknown error";
-  if (typeof error === "string") return error;
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object" && "message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string") return message;
-  }
-  return JSON.stringify(error);
-};
 
 const PROFILE_SINGLE_PHOTO_KEYS = [
   "photo_url",
@@ -136,79 +104,6 @@ const buildProfilePhotosFromRow = (profileRow: Record<string, any> | null) => {
   return [];
 };
 
-const buildExistingPhotoRows = (profileRow: Record<string, any> | null) => {
-  if (!profileRow || !Array.isArray(profileRow.photos)) return [];
-
-  return profileRow.photos
-    .map((photo: any, index: number) => {
-      if (!photo || typeof photo !== "object") return null;
-
-      return {
-        id: typeof photo.id === "string" ? photo.id : null,
-        url: typeof photo.url === "string" ? photo.url : null,
-        order: typeof photo.order === "number" ? photo.order : index,
-        isPrimary:
-          typeof photo.isPrimary === "boolean" ? photo.isPrimary : index === 0,
-      };
-    })
-    .filter(
-      (
-        photo
-      ): photo is {
-        id: string | null;
-        url: string | null;
-        order: number;
-        isPrimary: boolean;
-      } => Boolean(photo)
-    );
-};
-
-const isArrayBuffer = (value: unknown): value is ArrayBuffer =>
-  typeof ArrayBuffer !== "undefined" && value instanceof ArrayBuffer;
-
-const base64ToArrayBuffer = (base64: string) => {
-  if (typeof atob !== "function") {
-    throw new Error("Base64 decoder is not available in this runtime");
-  }
-
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes.buffer;
-};
-
-const readUriAsArrayBuffer = async (uri: string) => {
-  try {
-    const response = await fetch(uri);
-    const fetched = await response.arrayBuffer();
-    if (isArrayBuffer(fetched) && fetched.byteLength > 0) {
-      return fetched.slice(0);
-    }
-  } catch (error) {
-    console.warn("readUriAsArrayBuffer: fetch fallback", { uri, error });
-  }
-
-  const base64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  const fromBase64 = base64ToArrayBuffer(base64);
-  if (!isArrayBuffer(fromBase64) || fromBase64.byteLength === 0) {
-    throw new Error("Failed to convert file URI to ArrayBuffer");
-  }
-  return fromBase64.slice(0);
-};
-
-const DEFAULT_INTENT_ID = 3;
-const DEFAULT_GENDER_ID = 3;
-type PhotoSlotLayout = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 type ResolvedLocationMeta = {
   label: string;
   neighborhood: string | null;
@@ -218,7 +113,10 @@ type ResolvedLocationMeta = {
   longitude: number;
 };
 
-const formatCityCountryLabel = (city?: string | null, country?: string | null) =>
+const formatCityCountryLabel = (
+  city?: string | null,
+  country?: string | null
+) =>
   [city, country]
     .map((item) => (typeof item === "string" ? item.trim() : ""))
     .filter(Boolean)
@@ -239,196 +137,16 @@ const parseCityCountryFromLabel = (label?: string | null) => {
   };
 };
 
-const ensureProfileExists = async (
-  userId: string,
-  displayName?: string | null,
-  intentId?: number | null
-) => {
-  const resolvedDisplayName =
-    typeof displayName === "string" && displayName.trim().length > 0
-      ? displayName.trim()
-      : "Vibes";
-
-  const { error } = await supabase.from("profiles").upsert(
-    {
-      id: userId,
-      display_name: resolvedDisplayName,
-      gender_id: DEFAULT_GENDER_ID,
-      intent_id: intentId ?? DEFAULT_INTENT_ID,
-    },
-    { onConflict: "id" }
-  );
-
-  if (error) {
-    console.error("ensureProfileExists:error", error);
-    throw error;
-  }
-};
-
-const DraggablePhotoSlot = ({
-  index,
-  item,
-  onPress,
-  onRemove,
-  getSlotLayout,
-  onSlotLayout,
-  onDragStart,
-  onDragEnd,
-  onReorder,
-  disabled,
-}: {
-  index: number;
-  disabled: boolean;
-  item: string | null;
-  onPress: (i: number) => void;
-  onRemove: (i: number) => void;
-  getSlotLayout: (i: number) => PhotoSlotLayout | null;
-  onSlotLayout: (i: number, event: LayoutChangeEvent) => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onReorder: (from: number, to: number) => void;
-}) => {
-  const { t } = useI18n();
-  const tx = useSharedValue(0);
-  const ty = useSharedValue(0);
-  const scale = useSharedValue(1);
-  const zIdx = useSharedValue(1);
-
-  const calcTarget = (fromIdx: number, dx: number, dy: number) => {
-    const currentLayout = getSlotLayout(fromIdx);
-    if (!currentLayout) return fromIdx;
-
-    const draggedCenterX = currentLayout.x + currentLayout.width / 2 + dx;
-    const draggedCenterY = currentLayout.y + currentLayout.height / 2 + dy;
-
-    let bestIndex = fromIdx;
-    let bestDistance = Number.POSITIVE_INFINITY;
-
-    for (let candidateIndex = 0; candidateIndex < 6; candidateIndex += 1) {
-      const candidateLayout = getSlotLayout(candidateIndex);
-      if (!candidateLayout) continue;
-
-      const candidateCenterX = candidateLayout.x + candidateLayout.width / 2;
-      const candidateCenterY = candidateLayout.y + candidateLayout.height / 2;
-      const distance = Math.hypot(
-        draggedCenterX - candidateCenterX,
-        draggedCenterY - candidateCenterY
-      );
-
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        bestIndex = candidateIndex;
-      }
-    }
-
-    return bestIndex;
-  };
-
-  const handleDrop = (dx: number, dy: number) => {
-    const target = calcTarget(index, dx, dy);
-    if (target !== index) onReorder(index, target);
-    onDragEnd();
-  };
-
-  const pan = Gesture.Pan()
-    .activateAfterLongPress(150)
-    .enabled(!!item && !disabled)
-    .onStart(() => {
-      "worklet";
-      scale.value = withSpring(1.1);
-      zIdx.value = 100;
-      runOnJS(onDragStart)();
-    })
-    .onUpdate((e) => {
-      "worklet";
-      tx.value = e.translationX;
-      ty.value = e.translationY;
-    })
-    .onEnd(() => {
-      "worklet";
-      const dx = tx.value;
-      const dy = ty.value;
-      tx.value = withSpring(0);
-      ty.value = withSpring(0);
-      scale.value = withSpring(1);
-      zIdx.value = 1;
-      runOnJS(handleDrop)(dx, dy);
-    })
-    .onFinalize(() => {
-      "worklet";
-      tx.value = withSpring(0);
-      ty.value = withSpring(0);
-      scale.value = withSpring(1);
-      zIdx.value = 1;
-      runOnJS(onDragEnd)();
-    });
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: tx.value },
-      { translateY: ty.value },
-      { scale: scale.value },
-    ],
-    zIndex: zIdx.value,
-  }));
-
-  return (
-    <GestureDetector gesture={pan}>
-      <Animated.View
-        style={[styles.mediaSlot, animStyle]}
-        onLayout={(event) => onSlotLayout(index, event)}
-      >
-        <TouchableOpacity
-          style={{ flex: 1 }}
-          disabled={disabled}
-          onPress={() => onPress(index)}
-          activeOpacity={0.8}
-        >
-          {item ? (
-            <>
-              <Image
-                source={typeof item === "string" ? { uri: item } : item}
-                style={styles.mediaImage}
-              />
-              {index === 0 && (
-                <View style={localStyles.primaryBadge}>
-                  <Text style={localStyles.primaryBadgeText}>
-                    {t("editProfile.primary")}
-                  </Text>
-                </View>
-              )}
-              <TouchableOpacity
-                style={styles.mediaRemove}
-                disabled={disabled}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  onRemove(index);
-                }}
-              >
-                <Icon name="close" size={14} color={WHITE} />
-              </TouchableOpacity>
-            </>
-          ) : (
-            <View style={styles.mediaPlaceholder}>
-              <View style={styles.mediaAdd}>
-                <Icon name="add" size={16} color={WHITE} />
-              </View>
-            </View>
-          )}
-        </TouchableOpacity>
-      </Animated.View>
-    </GestureDetector>
-  );
-};
-
 const EditProfile = () => {
   const { t, locale } = useI18n();
   const navigation = useNavigation();
   const route = useRoute();
   const focused = useIsFocused();
-  const photoRequestId = (route.params as { photoRequestId?: number } | undefined)?.photoRequestId;
-  const consumedPhotoRequest = useRef<number | undefined>(undefined);
+  const photoRequestId = (
+    route.params as { photoRequestId?: number } | undefined
+  )?.photoRequestId;
   const leaveProfile = () => {
+    if (photoSaveBusy.current || savingProfile) return;
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
@@ -465,18 +183,54 @@ const EditProfile = () => {
     });
   }, [profilePhotos, supportsMultiPhotos]);
 
-  const reorderBusyRef = useRef(false);
-  const [reordering, setReordering] = useState(false);
-  const [busyIndex, setBusyIndex] = useState<number | null>(null);
-  const [photoModalVisible, setPhotoModalVisible] = useState(false);
-  const pendingPhotoAction = useRef<(() => Promise<void>) | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [scrollEnabled, setScrollEnabled] = useState(true);
-  const slotLayoutsRef = useRef<Record<number, PhotoSlotLayout>>({});
   const [displayName, setDisplayName] = useState(
     (profileData as any)?.displayName ?? ""
   );
   const [savingName, setSavingName] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPhotos, setSavingPhotos] = useState(false);
+  const [photoOriginals, setPhotoOriginals] = useState<Record<string, string>>(
+    {}
+  );
+  const photoSaveBusy = useRef(false);
+  const handlePhotoSelection = async (
+    uris: string[],
+    originals?: Record<string, string>
+  ) => {
+    const userId = session?.user?.id;
+    if (!userId || photoSaveBusy.current) return;
+    photoSaveBusy.current = true;
+    setSavingPhotos(true);
+    try {
+      await saveProfilePhotoSelection(userId, uris);
+      await refreshProfileCache();
+      const refreshed = queryClient.getQueryData<Record<string, any>>(
+        profileKeys.byUser(userId)
+      );
+      const savedUris = buildProfilePhotosFromRow(refreshed ?? null).filter(
+        Boolean
+      );
+      setPhotoOriginals(
+        Object.fromEntries(
+          savedUris.map((uri, index) => [
+            uri!,
+            originals?.[uris[index]] ?? uris[index],
+          ])
+        )
+      );
+    } catch (error) {
+      Alert.alert(
+        t("common.error"),
+        locale.startsWith("en")
+          ? "Could not save photos. Please try again."
+          : "No se pudieron guardar las fotos. Intentá de nuevo."
+      );
+      await refreshProfileCache();
+    } finally {
+      photoSaveBusy.current = false;
+      setSavingPhotos(false);
+    }
+  };
   const [profileCity, setProfileCity] = useState("");
   const [profileCountry, setProfileCountry] = useState("");
   const [currentLocation, setCurrentLocation] = useState("");
@@ -492,13 +246,27 @@ const EditProfile = () => {
     nationalitySaving.current = true;
     setSavingNationality(true);
     try {
-      const nationalityCode = await saveProfileNationality(userId, codes[0] ?? null);
-      queryClient.setQueryData(profileKeys.byUser(userId), (previous: Record<string, unknown> | undefined) => ({ ...previous, nationalityCode }));
+      const nationalityCode = await saveProfileNationality(
+        userId,
+        codes[0] ?? null
+      );
+      queryClient.setQueryData(
+        profileKeys.byUser(userId),
+        (previous: Record<string, unknown> | undefined) => ({
+          ...previous,
+          nationalityCode,
+        })
+      );
       await queryClient.invalidateQueries({ queryKey: profileKeys.all });
       await queryClient.invalidateQueries({ queryKey: ["candidates"] });
     } catch (error) {
       console.warn("saveNationality:error", error);
-      Alert.alert(t("common.error"), locale.startsWith("en") ? "Could not save nationality. Please try again." : "No se pudo guardar la nacionalidad. Intentá de nuevo.");
+      Alert.alert(
+        t("common.error"),
+        locale.startsWith("en")
+          ? "Could not save nationality. Please try again."
+          : "No se pudo guardar la nacionalidad. Intentá de nuevo."
+      );
     } finally {
       nationalitySaving.current = false;
       setSavingNationality(false);
@@ -537,11 +305,7 @@ const EditProfile = () => {
 
     setProfileCity(nextCity);
     setProfileCountry(nextCountry);
-  }, [
-    profileData?.city,
-    profileData?.country,
-    profileData?.locationLabel,
-  ]);
+  }, [profileData?.city, profileData?.country, profileData?.locationLabel]);
 
   useEffect(() => {
     let active = true;
@@ -594,7 +358,7 @@ const EditProfile = () => {
 
   const saveDisplayName = async () => {
     const userId = session?.user?.id;
-    if (!userId || !displayName.trim()) return;
+    if (!userId || !displayName.trim()) return false;
     setSavingName(true);
     try {
       const { error } = await supabase
@@ -604,11 +368,15 @@ const EditProfile = () => {
       if (error) {
         Alert.alert(t("common.error"), t("editProfile.saveNameError"));
         console.error("saveDisplayName:error", error);
+        return false;
       } else {
         await refreshProfileCache();
+        return true;
       }
     } catch (err) {
       console.error("saveDisplayName:error", err);
+      Alert.alert(t("common.error"), t("editProfile.saveNameError"));
+      return false;
     } finally {
       setSavingName(false);
     }
@@ -619,7 +387,7 @@ const EditProfile = () => {
     nextCountry = profileCountry
   ) => {
     const userId = session?.user?.id;
-    if (!userId) return;
+    if (!userId) return false;
 
     const trimmedCity = nextCity.trim();
     const trimmedCountry = nextCountry.trim();
@@ -631,7 +399,10 @@ const EditProfile = () => {
         .update({
           city: trimmedCity || null,
           country: trimmedCountry || null,
-          neighborhood: null,
+          ...(trimmedCity !== ((profileData as any)?.city ?? "") ||
+          trimmedCountry !== ((profileData as any)?.country ?? "")
+            ? { neighborhood: null }
+            : {}),
           location_label: locationLabel || null,
         })
         .eq("id", userId);
@@ -639,11 +410,15 @@ const EditProfile = () => {
       if (error) {
         Alert.alert(t("common.error"), t("settings.saveError"));
         console.error("saveLocation:error", error);
+        return false;
       } else {
         await refreshProfileCache();
+        return true;
       }
     } catch (error) {
+      Alert.alert(t("common.error"), t("settings.saveError"));
       console.error("saveLocation:error", error);
+      return false;
     } finally {
       setSavingLocation(false);
     }
@@ -688,295 +463,6 @@ const EditProfile = () => {
     }
   };
 
-  const handleReorder = async (fromIndex: number, toIndex: number) => {
-    if (fromIndex === toIndex || reorderBusyRef.current || busyIndex !== null)
-      return;
-    const userId = session?.user?.id;
-    if (!userId || !mediaSlots[fromIndex]) return;
-    reorderBusyRef.current = true;
-    setReordering(true);
-    const previousSlots = [...mediaSlots];
-    const nextSlots = [...previousSlots];
-    [nextSlots[fromIndex], nextSlots[toIndex]] = [
-      nextSlots[toIndex],
-      nextSlots[fromIndex],
-    ];
-    setMediaSlots(nextSlots);
-    try {
-      const source = buildExistingPhotoRows(profileData ?? null).find(
-        (row) => row.order === fromIndex
-      );
-      if (!source?.id) throw new Error("No se encontró la foto para mover.");
-      const { error } = await supabase.rpc("reorder_profile_photo", {
-        photo_id: source.id,
-        expected_order: fromIndex,
-        target_order: toIndex,
-      });
-      if (error) throw error;
-      await refreshProfileCache();
-    } catch (error) {
-      console.error("handleReorder:error", error);
-      setMediaSlots(previousSlots);
-      Alert.alert(
-        t("common.error"),
-        "No pudimos cambiar el orden de las fotos. Intentá nuevamente."
-      );
-    } finally {
-      reorderBusyRef.current = false;
-      setReordering(false);
-      setScrollEnabled(true);
-    }
-  };
-
-  const promptOpenSettings = () => {
-    Alert.alert(
-      t("editProfile.permissionsTitle"),
-      t("editProfile.openSettingsBody"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("editProfile.openSettingsAction"),
-          onPress: () => Linking.openSettings(),
-        },
-      ]
-    );
-  };
-
-  const ensureCameraPermission = async () => {
-    const current = await ImagePicker.getCameraPermissionsAsync();
-    if (current.status === "granted") return true;
-
-    const requested = await ImagePicker.requestCameraPermissionsAsync();
-    if (requested.status === "granted") return true;
-    if (!requested.canAskAgain) {
-      promptOpenSettings();
-    } else {
-      Alert.alert(
-        t("editProfile.permissionsTitle"),
-        t("editProfile.cameraPermissionBody")
-      );
-    }
-    return false;
-  };
-
-  const uploadPhoto = async (uri: string, slotIndex: number) => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      console.error("uploadPhoto: missing session userId");
-      throw new Error("Missing user session");
-    }
-
-    const optimistic = Array.from(
-      { length: maxPhotos },
-      (_, index) => mediaSlots[index] ?? null
-    );
-    optimistic[slotIndex] = uri;
-    setMediaSlots(optimistic);
-
-    await ensureProfileExists(
-      userId,
-      profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
-      profileData?.intentId ?? null
-    );
-
-    const uploadUri = await preparePhotoUpload(uri);
-    const uriWithoutQuery = uploadUri.split("?")[0];
-    const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
-    const normalizedExt = rawExt.toLowerCase();
-    const ext = EXTENSION_TO_CONTENT_TYPE[normalizedExt]
-      ? normalizedExt
-      : "jpg";
-    const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";
-    const arrayBuffer = await readUriAsArrayBuffer(uploadUri);
-    const uploadBody = new Uint8Array(arrayBuffer).buffer;
-    const filePath = `${userId}/${Date.now()}-${slotIndex}.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from(PROFILE_PICTURES_BUCKET)
-      .upload(filePath, uploadBody, {
-        contentType,
-        upsert: true,
-      });
-    if (uploadError) {
-      console.error("uploadPhoto:storage_upload_error", uploadError);
-      throw uploadError;
-    }
-
-    const signedUrl = await createSignedProfilePhotoUrl(filePath);
-
-    const nextPhotos = Array.from(
-      { length: maxPhotos },
-      (_, index) => optimistic[index] ?? null
-    );
-    nextPhotos[slotIndex] = signedUrl || uri;
-
-    // Resolve the real row at save time; cached/legacy photo IDs may be stale.
-    const { data: savedPhotoRows, error: lookupError } = await supabase
-      .from("profile_photos")
-      .select("id, order, is_primary")
-      .eq("profile_id", userId);
-    if (lookupError) {
-      await supabase.storage.from(PROFILE_PICTURES_BUCKET).remove([filePath]);
-      throw lookupError;
-    }
-
-    const existingForSlot = savedPhotoRows?.find((photo) => photo.order === slotIndex);
-    const photoValues = {
-      profile_id: userId,
-      url: filePath,
-      order: slotIndex,
-      is_primary: existingForSlot?.is_primary ?? slotIndex === 0,
-    };
-    const { error: saveError } = existingForSlot?.id
-      ? await supabase
-          .from("profile_photos")
-          .update(photoValues)
-          .eq("id", existingForSlot.id)
-          .eq("profile_id", userId)
-          .select("id, url")
-          .single()
-      : await supabase.from("profile_photos").insert(photoValues)
-          .select("id, url")
-          .single();
-    if (saveError) {
-      await supabase.storage.from(PROFILE_PICTURES_BUCKET).remove([filePath]);
-      throw saveError;
-    }
-
-    setMediaSlots(nextPhotos);
-    await refreshProfileCache();
-  };
-
-  const pickFromLibrary = async (slotIndex: number) => {
-    let result;
-    try {
-      result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: IMAGE_MEDIA_TYPE,
-        allowsEditing: true,
-        quality: 0.8,
-      });
-    } catch (error) {
-      Alert.alert(t("common.error"), t("editProfile.galleryError"));
-      return;
-    }
-
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      setBusyIndex(slotIndex);
-      try {
-        await uploadPhoto(result.assets[0].uri, slotIndex);
-      } catch (error) {
-        setMediaSlots(buildSlots(profilePhotos));
-        const message = getErrorMessage(error);
-        console.error("Error uploading photo from gallery", { message, error });
-        Alert.alert(
-          t("common.error"),
-          t("editProfile.uploadError", { message })
-        );
-      } finally {
-        setBusyIndex(null);
-      }
-    }
-  };
-
-  const takePhoto = async (slotIndex: number) => {
-    const hasPermission = await ensureCameraPermission();
-    if (!hasPermission) {
-      return;
-    }
-
-    let result;
-    try {
-      result = await launchAppCamera({
-        mediaTypes: IMAGE_MEDIA_TYPE,
-        allowsEditing: true,
-        cameraType: Platform.OS === "android" ? ImagePicker.CameraType.front : ImagePicker.CameraType.back,
-        quality: 0.8,
-      });
-    } catch (error) {
-      Alert.alert(t("common.error"), t("editProfile.cameraError"));
-      return;
-    }
-
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      setBusyIndex(slotIndex);
-      try {
-        await uploadPhoto(result.assets[0].uri, slotIndex);
-      } catch (error) {
-        setMediaSlots(buildSlots(profilePhotos));
-        const message = getErrorMessage(error);
-        console.error("Error uploading photo from camera", { message, error });
-        Alert.alert(
-          t("common.error"),
-          t("editProfile.uploadError", { message })
-        );
-      } finally {
-        setBusyIndex(null);
-      }
-    }
-  };
-
-  const handleAddMedia = (slotIndex: number) => {
-    setSelectedSlot(slotIndex);
-    setPhotoModalVisible(true);
-  };
-
-  useEffect(() => {
-    if (!focused || !photoRequestId || consumedPhotoRequest.current === photoRequestId || !profileData) return;
-    const slot = mediaSlots.findIndex(photo => !photo);
-    if (slot < 0) return;
-    // Wait for navigation and any profile sheet to close before presenting another native modal.
-    const task = InteractionManager.runAfterInteractions(() => {
-      consumedPhotoRequest.current = photoRequestId;
-      navigation.setParams({ photoRequestId: undefined } as never);
-      handleAddMedia(slot);
-    });
-    return () => task.cancel();
-  }, [focused, photoRequestId, profileData, mediaSlots, navigation]);
-
-  const handleRemove = async (slotIndex: number) => {
-    const userId = session?.user?.id;
-    if (!userId) return;
-
-    await ensureProfileExists(
-      userId,
-      profileData?.displayName ?? session?.user?.email?.split("@")[0] ?? null,
-      profileData?.intentId ?? null
-    );
-
-    const nextPhotos = Array.from(
-      { length: maxPhotos },
-      (_, index) => mediaSlots[index] ?? null
-    );
-    nextPhotos[slotIndex] = null;
-
-    const existingRows = buildExistingPhotoRows(
-      (profileData as Record<string, any>) ?? null
-    );
-    const existingForSlot = existingRows.find(
-      (photo) => photo.order === slotIndex
-    );
-
-    if (!existingForSlot?.id) {
-      setMediaSlots(nextPhotos);
-      await refreshProfileCache();
-      return;
-    }
-
-    const { error: deleteError } = await supabase
-      .from("profile_photos")
-      .delete()
-      .eq("id", existingForSlot.id)
-      .eq("profile_id", userId);
-
-    if (deleteError) {
-      Alert.alert(t("common.error"), t("editProfile.deleteError"));
-      return;
-    }
-
-    setMediaSlots(nextPhotos);
-    await refreshProfileCache();
-  };
-
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -988,7 +474,6 @@ const EditProfile = () => {
         scrollViewProps={{
           style: styles.editContainer,
           showsVerticalScrollIndicator: false,
-          scrollEnabled,
           keyboardShouldPersistTaps: "handled",
           keyboardDismissMode: "on-drag",
         }}
@@ -1002,41 +487,72 @@ const EditProfile = () => {
           titleStyle={[styles.title, { fontFamily: vibesTheme.fonts.semibold }]}
           right={
             <TouchableOpacity
+              style={localStyles.saveButton}
+              disabled={
+                savingProfile || savingName || savingLocation || savingPhotos
+              }
+              accessibilityRole="button"
+              accessibilityLabel={
+                savingProfile ? "Guardando perfil" : "Guardar perfil"
+              }
+              accessibilityState={{
+                busy: savingProfile,
+                disabled:
+                  savingProfile || savingName || savingLocation || savingPhotos,
+              }}
               onPress={async () => {
-                await saveDisplayName();
-                await saveLocation();
-                leaveProfile();
+                if (savingProfile) return;
+                setSavingProfile(true);
+                try {
+                  const nameSaved = await saveDisplayName();
+                  if (nameSaved && (await saveLocation())) leaveProfile();
+                } finally {
+                  setSavingProfile(false);
+                }
               }}
             >
-              <Icon name="checkmark" color={DARK_GRAY} size={22} />
+              {savingProfile ? (
+                <VibesLoader size={22} />
+              ) : (
+                <Icon
+                  name="checkmark"
+                  color={vibesTheme.colors.primaryText}
+                  size={22}
+                />
+              )}
+              <Text style={localStyles.saveButtonLabel}>
+                {locale.startsWith("en") ? "Save" : "Guardar"}
+              </Text>
             </TouchableOpacity>
           }
         />
 
         <View style={styles.editSection}>
-          <Text style={styles.editSectionTitle}>{t("editProfile.photos")}</Text>
-          <View style={styles.mediaGrid}>
-            {mediaSlots.map((item, index) => (
-              <DraggablePhotoSlot
-                key={`media-${index}`}
-                index={index}
-                item={item}
-                disabled={reordering || busyIndex !== null}
-                onPress={handleAddMedia}
-                onRemove={handleRemove}
-                getSlotLayout={(slotIndex) =>
-                  slotLayoutsRef.current[slotIndex] ?? null
-                }
-                onSlotLayout={(slotIndex, event) => {
-                  const { x, y, width, height } = event.nativeEvent.layout;
-                  slotLayoutsRef.current[slotIndex] = { x, y, width, height };
-                }}
-                onDragStart={() => setScrollEnabled(false)}
-                onDragEnd={() => setScrollEnabled(true)}
-                onReorder={handleReorder}
-              />
-            ))}
+          <View
+            pointerEvents={savingPhotos ? "none" : "auto"}
+            accessibilityState={{ busy: savingPhotos }}
+          >
+            <ProfilePhotoPicker
+              uris={mediaSlots.filter((uri): uri is string => Boolean(uri))}
+              originalUris={photoOriginals}
+              requestOpen={focused && profileData ? photoRequestId : undefined}
+              onChange={(uris, originals) =>
+                void handlePhotoSelection(uris, originals)
+              }
+            />
           </View>
+          {savingPhotos ? (
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <VibesLoader size={24} />
+              <Text>
+                {locale.startsWith("en")
+                  ? "Saving photos…"
+                  : "Guardando fotos…"}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.editSection}>
@@ -1045,8 +561,8 @@ const EditProfile = () => {
             style={localStyles.nameInput}
             value={displayName}
             onChangeText={setDisplayName}
-            onBlur={saveDisplayName}
-            onSubmitEditing={saveDisplayName}
+            onBlur={() => void saveDisplayName()}
+            onSubmitEditing={() => void saveDisplayName()}
             placeholder={t("editProfile.namePlaceholder")}
             placeholderTextColor={GRAY}
             returnKeyType="done"
@@ -1057,7 +573,10 @@ const EditProfile = () => {
 
         <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>{t("editProfile.email")}</Text>
-          <EmailVerificationCard userId={session?.user?.id} email={session?.user?.email} />
+          <EmailVerificationCard
+            userId={session?.user?.id}
+            email={session?.user?.email}
+          />
         </View>
 
         <View style={styles.editSection}>
@@ -1107,172 +626,43 @@ const EditProfile = () => {
           ) : null}
         </View>
         <View style={styles.editSection}>
-          <Text style={styles.editSectionTitle}>{locale.startsWith("en") ? "Nationality" : "Nacionalidad"}</Text>
+          <Text style={styles.editSectionTitle}>
+            {locale.startsWith("en") ? "Nationality" : "Nacionalidad"}
+          </Text>
           <CountrySelector
-            selected={profileData?.nationalityCode ? [profileData.nationalityCode] : []}
-            onChange={codes => { void updateNationality(codes); }}
+            selected={
+              profileData?.nationalityCode ? [profileData.nationalityCode] : []
+            }
+            onChange={(codes) => {
+              void updateNationality(codes);
+            }}
             disabled={savingNationality || !profileData}
           />
         </View>
       </ScreenContainer>
-
-      <AnimatedSheetModal
-        visible={photoModalVisible}
-        onClosed={() => {
-          const action = pendingPhotoAction.current;
-          pendingPhotoAction.current = null;
-          if (action) void action().catch((error) => {
-            Alert.alert(t("common.error"), getErrorMessage(error));
-          });
-        }}
-        onClose={() => setPhotoModalVisible(false)}
-        sheetStyle={modalStyles.card}
-      >
-        <View>
-          <View style={modalStyles.header}>
-            <View>
-              <Text style={modalStyles.title}>{t("editProfile.addPhoto")}</Text>
-              <Text style={modalStyles.subtitle}>
-                {t("editProfile.chooseOption")}
-              </Text>
-            </View>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t("common.cancel")}
-              style={modalStyles.closeButton}
-              onPress={() => setPhotoModalVisible(false)}
-              activeOpacity={0.72}
-            >
-              <Icon name="close" size={22} color={DARK_GRAY} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={modalStyles.actions}>
-            <TouchableOpacity
-              style={modalStyles.optionButton}
-              onPress={async () => {
-                if (selectedSlot === null) return;
-                const slot = selectedSlot;
-                pendingPhotoAction.current = () => takePhoto(slot);
-                setPhotoModalVisible(false);
-              }}
-              activeOpacity={0.84}
-            >
-              <View style={modalStyles.optionIcon}>
-                <Icon name="camera-outline" size={22} color={PRIMARY_COLOR} />
-              </View>
-              <Text style={modalStyles.optionText}>{t("editProfile.camera")}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={modalStyles.optionButton}
-              onPress={async () => {
-                if (selectedSlot === null) return;
-                const slot = selectedSlot;
-                pendingPhotoAction.current = () => pickFromLibrary(slot);
-                setPhotoModalVisible(false);
-              }}
-              activeOpacity={0.84}
-            >
-              <View style={modalStyles.optionIcon}>
-                <Icon name="image-outline" size={22} color={PRIMARY_COLOR} />
-              </View>
-              <Text style={modalStyles.optionText}>{t("editProfile.gallery")}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </AnimatedSheetModal>
     </KeyboardAvoidingView>
   );
 };
 
 export default EditProfile;
 
-const modalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.45)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-  },
-  card: {
-    width: "100%",
-    backgroundColor: WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 20,
-    shadowColor: BLACK,
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 14,
-  },
-  closeButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(43, 43, 43, 0.05)",
-  },
-  title: {
-    fontSize: 20,
-    lineHeight: 26,
-    color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  subtitle: {
-    marginTop: 6,
-    fontSize: 14,
-    color: GRAY,
-    fontFamily: vibesTheme.fonts.subtitle,
-  },
-  actions: {
-    marginTop: 22,
-    gap: 12,
-  },
-  optionButton: {
-    minHeight: 58,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    alignItems: "center",
-    flexDirection: "row",
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.36)",
-    shadowColor: BLACK,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  optionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
-    marginRight: 12,
-  },
-  optionText: {
-    color: DARK_GRAY,
-    fontSize: 17,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-});
-
 const localStyles = StyleSheet.create({
+  saveButton: {
+    minWidth: 112,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: 24,
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: vibesTheme.colors.accentBlue,
+  },
+  saveButtonLabel: {
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 14,
+    color: vibesTheme.colors.primaryText,
+  },
   header: {
     paddingHorizontal: 0,
     marginBottom: 4,
