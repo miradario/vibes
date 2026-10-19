@@ -1,3 +1,4 @@
+import ConnectionStrip from "../components/ConnectionStrip";
 import { sectionTabStyles } from "../components/SectionTabStyles";
 import { messagePreview } from "../src/lib/chatPhotos";
 import { useConnectionViewsQuery } from "../src/queries/homeActivity.queries";
@@ -10,7 +11,7 @@ import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
 import { Text } from "../components/Typography";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
 import Avatar from "../components/Avatar";
@@ -41,10 +42,6 @@ import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
 
-type NewConnectionItem =
-  | { type: "match"; item: MatchWithProfile }
-  | { type: "incoming"; item: IncomingLike };
-
 type ArchivedChatItem =
   | { kind: "group"; item: EventGroupSummary }
   | { kind: "direct"; item: MatchWithProfile };
@@ -53,7 +50,7 @@ type ConnectionsSheet = "incoming" | "new" | null;
 
 type MessagesContentProps = {
   homeEntryKey?: number;
-  homeTarget?: "messages" | "connections";
+  homeTarget?: "messages" | "connections" | "incoming";
   initialMessagesTab?: "messages" | "groups";
   showHeader?: boolean;
   contentTopPadding?: number;
@@ -154,6 +151,18 @@ export const MessagesContent = ({
 }: MessagesContentProps) => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const focused = useIsFocused();
+  const incomingQueue = React.useRef<IncomingLike[]>([]);
+  const resumeIncoming = React.useRef<IncomingLike | null>(null);
+  const leftForMatch = React.useRef(false);
+  useEffect(() => {
+    if (!focused) { leftForMatch.current = true; return; }
+    if (leftForMatch.current && resumeIncoming.current) {
+      setSelectedIncomingLike(resumeIncoming.current);
+      resumeIncoming.current = null;
+    }
+    leftForMatch.current = false;
+  }, [focused]);
   const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
@@ -198,18 +207,8 @@ export const MessagesContent = ({
         ? "messages"
         : initialMessagesTab ?? "messages"
     );
-    setConnectionsSheet(homeTarget === "connections" ? "new" : null);
+    setConnectionsSheet(homeTarget === "incoming" ? "incoming" : homeTarget === "connections" ? "new" : null);
   }, [homeEntryKey, homeTarget, initialMessagesTab]);
-  const topConnections: NewConnectionItem[] = newConnections.map((item) => ({
-    type: "match" as const,
-    item,
-  }));
-  const incomingConnectionRequests: NewConnectionItem[] = incomingLikes.map(
-    (item) => ({
-      type: "incoming" as const,
-      item,
-    })
-  );
   const sectionTitle = (key: string) => t(key).toLocaleUpperCase(locale);
   const selectedIncomingLikeCard = selectedIncomingLike
     ? mapCandidateToConnectionProfile({
@@ -347,8 +346,12 @@ export const MessagesContent = ({
     navigation.navigate("EventChat" as never, { event: item.event } as never);
   };
 
+  const nextIncoming = () => {
+    if (swipeMutation.isPending) return;
+    setSelectedIncomingLike(incomingQueue.current.shift() ?? null);
+  };
   const handleConnectIncomingLike = () => {
-    if (!selectedIncomingLike || !selectedIncomingLikeCard) return;
+    if (swipeMutation.isPending || !selectedIncomingLike || !selectedIncomingLikeCard) return;
 
     swipeMutation.mutate(
       {
@@ -357,13 +360,15 @@ export const MessagesContent = ({
       },
       {
         onSuccess: (response) => {
+          const next = incomingQueue.current.shift() ?? null;
           if (response?.match) {
+            resumeIncoming.current = next;
             navigation.navigate(
               "Match" as never,
               { profile: selectedIncomingLikeCard } as never
             );
           }
-          setSelectedIncomingLike(null);
+          setSelectedIncomingLike(response?.match ? null : next);
         },
         onError: (error) =>
           handleApiError(error, { toastTitle: "Error al conectar" }),
@@ -372,7 +377,7 @@ export const MessagesContent = ({
   };
 
   const handleDismissIncomingLike = () => {
-    if (!selectedIncomingLike) return;
+    if (!selectedIncomingLike || swipeMutation.isPending) return;
 
     swipeMutation.mutate(
       {
@@ -380,7 +385,7 @@ export const MessagesContent = ({
         direction: "pass",
       },
       {
-        onSuccess: () => setSelectedIncomingLike(null),
+        onSuccess: () => setSelectedIncomingLike(incomingQueue.current.shift() ?? null),
         onError: (error) =>
           handleApiError(error, { toastTitle: "Error al descartar" }),
       }
@@ -429,92 +434,10 @@ export const MessagesContent = ({
     </View>
   );
 
-  const getPreviewPhoto = (connection: NewConnectionItem) =>
-    connection.type === "match"
-      ? connection.item.otherUserPhoto
-      : connection.item.likerUserPhoto;
-
-  const renderConnectionPreview = (
-    items: NewConnectionItem[],
-    blurred: boolean
-  ) => {
-    const previewItems = items.slice(0, 1);
-
-    if (previewItems.length === 0) {
-      return (
-        <View style={localStyles.connectionPreviewEmpty}>
-          <Icon name="sparkles-outline" color={vibesTheme.colors.accentMustard} size={22} />
-        </View>
-      );
-    }
-
-    return (
-      <View style={localStyles.connectionPreviewRow}>
-        {previewItems.map((item, index) => {
-          const uri = getPreviewPhoto(item);
-
-          return (
-            <View
-              key={`${item.type}-preview-${item.item.id}`}
-              style={[
-                localStyles.connectionPreviewAvatar,
-                index > 0 && localStyles.connectionPreviewAvatarStacked,
-              ]}
-            >
-              <Avatar
-                uri={uri}
-                size={32}
-                blurRadius={blurred ? 10 : 0}
-                style={localStyles.connectionPreviewImage}
-              />
-              {blurred ? (
-                <View style={localStyles.connectionPreviewOverlay} />
-              ) : null}
-            </View>
-          );
-        })}
-      </View>
-    );
-  };
-
-  const renderConnectionSummaryCard = ({
-    title,
-    count,
-    icon,
-    items,
-    blurred,
-    onPress,
-  }: {
-    title: string;
-    count: number;
-    icon: string;
-    items: NewConnectionItem[];
-    blurred: boolean;
-    onPress: () => void;
-  }) => (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityLabel={`${title}: ${count}`}
-      style={localStyles.connectionSummaryCard}
-      activeOpacity={0.72}
-      onPress={onPress}
-    >
-      <View style={localStyles.connectionCardMeta}>
-        <View style={localStyles.connectionIconWrap}>
-          <Icon name={icon as any} color={vibesTheme.colors.accentMustard} size={18} />
-        </View>
-        <View style={localStyles.connectionCountBadge}>
-          <Text style={localStyles.connectionCountText}>{count}</Text>
-        </View>
-        <View style={{ marginLeft: "auto" }}>
-          {renderConnectionPreview(items, blurred)}
-        </View>
-      </View>
-      <Text style={localStyles.connectionCardTitle}>{title}</Text>
-    </TouchableOpacity>
-  );
-
   const openIncomingProfile = (item: IncomingLike) => {
+    const index = incomingLikes.findIndex(person => person.likerUserId === item.likerUserId);
+    incomingQueue.current = [...incomingLikes.slice(index + 1), ...incomingLikes.slice(0, index)];
+    resumeIncoming.current = null;
     setPendingIncomingLike(item);
     setConnectionsSheet(null);
   };
@@ -533,20 +456,16 @@ export const MessagesContent = ({
   const renderIncomingSheetRow = (item: IncomingLike, index: number) => (
     <TouchableOpacity
       key={item.id}
-      style={[
-        localStyles.connectionSheetRow,
-        index > 0 && localStyles.connectionSheetRowWithDivider,
-      ]}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver perfil de ${item.likerUserName}`}
+      style={[localStyles.connectionSheetRow, localStyles.incomingCard]}
       activeOpacity={0.82}
       onPress={() => openIncomingProfile(item)}
     >
-      <Avatar uri={item.likerUserPhoto} size={48} />
+      <Avatar uri={item.likerUserPhoto} size={62} />
       <View style={localStyles.connectionSheetBody}>
         <Text style={localStyles.connectionSheetName} numberOfLines={1}>
           {item.likerUserName}
-        </Text>
-        <Text style={localStyles.connectionSheetHint} numberOfLines={1}>
-          {t("messages.wantsToConnectHint")}
         </Text>
       </View>
       <Icon name="chevron-forward" color={vibesTheme.colors.secondaryText} size={18} />
@@ -666,9 +585,6 @@ export const MessagesContent = ({
   );
 
   const loading = isLoading || groupsLoading || communityGroups.isLoading || communityInvitations.isLoading;
-  const hasConnectionRequests = incomingConnectionRequests.length > 0;
-  const hasConnectedNoChat = topConnections.length > 0;
-  const hasConnectionsSection = hasConnectionRequests || hasConnectedNoChat;
   const visibleArchivedChats = archivedChats.filter((entry) =>
     activeTab === "groups" ? entry.kind === "group" : entry.kind === "direct"
   );
@@ -715,28 +631,10 @@ export const MessagesContent = ({
             invitations={communityInvitations}
           />
         </View>
-        {hasConnectionsSection ? (
-          <>
-            <View style={localStyles.connectionsGrid}>
-              {renderConnectionSummaryCard({
-                title: "Solicitudes",
-                count: incomingConnectionRequests.length,
-                icon: "heart-outline",
-                items: incomingConnectionRequests,
-                blurred: true,
-                onPress: () => setConnectionsSheet("incoming"),
-              })}
-              {renderConnectionSummaryCard({
-                title: "Nuevas conexiones",
-                count: topConnections.length,
-                icon: "people-outline",
-                items: topConnections,
-                blurred: false,
-                onPress: () => setConnectionsSheet("new"),
-              })}
-            </View>
-          </>
-        ) : null}
+        <ConnectionStrip incomingLikes={incomingLikes} newConnections={newConnections}
+          onRequests={() => setConnectionsSheet("incoming")}
+          onViewAll={() => setConnectionsSheet("new")}
+          onConnection={openNewConnectionChat} />
 
         <View style={sectionTabStyles.tabs}>
           {(
@@ -878,11 +776,11 @@ export const MessagesContent = ({
         ]}
       >
         <View style={localStyles.connectionsSheetHandle} />
-        <Text style={localStyles.connectionsSheetTitle}>
-          {connectionsSheet === "incoming"
-            ? t("messages.wantsToConnectWithYou")
-            : "Conexiones nuevas"}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Text style={localStyles.connectionsSheetTitle}>{connectionsSheet === "incoming" ? "Quieren conectar" : "Conexiones nuevas"}</Text>
+          <View style={localStyles.sheetCount}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold }}>{connectionsSheet === "incoming" ? incomingLikes.length : newConnections.length}</Text></View>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar conexiones" onPress={() => setConnectionsSheet(null)} style={{ marginLeft: "auto", padding: 10 }}><Icon name="close" size={24} color={vibesTheme.colors.secondaryText} /></TouchableOpacity>
+        </View>
         <ScrollView
           style={localStyles.connectionsSheetList}
           showsVerticalScrollIndicator={false}
@@ -911,7 +809,12 @@ export const MessagesContent = ({
         onClose={() => {
           setSelectedIncomingLike(null);
           setPendingIncomingLike(null);
+          incomingQueue.current = [];
+          resumeIncoming.current = null;
         }}
+        actionPending={swipeMutation.isPending}
+        nextActionLabel="Siguiente"
+        onNextActionPress={nextIncoming}
         onContactPress={handleConnectIncomingLike}
         secondaryActionLabel="Descartar"
         onSecondaryActionPress={handleDismissIncomingLike}
@@ -1016,99 +919,6 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.regular,
     textAlign: "left",
   },
-  connectionsGrid: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: 12,
-    marginBottom: 12,
-  },
-  connectionSummaryCard: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 104,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
-    backgroundColor: vibesTheme.colors.background,
-    padding: 12,
-  },
-  connectionIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.31)",
-  },
-  connectionCardMeta: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 8,
-  },
-  connectionCountBadge: {
-    minWidth: 24,
-    minHeight: 24,
-    borderRadius: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(110, 110, 110, 0.12)",
-  },
-  connectionCountText: {
-    color: DARK_GRAY,
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  connectionCardTitle: {
-    color: DARK_GRAY,
-    fontSize: 16,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  connectionPreviewRow: {
-    height: 32,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  connectionPreviewAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "rgba(254, 254, 253, 0.96)",
-    backgroundColor: "rgba(244, 163, 64, 0.2)",
-  },
-  connectionPreviewAvatarStacked: {
-    marginLeft: -9,
-  },
-  connectionPreviewImage: {
-    width: "100%",
-    height: "100%",
-  },
-  connectionPreviewOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(254, 254, 253, 0.34)",
-  },
-  connectionPreviewEmpty: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginTop: 4,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
-  },
-  connectionCardAction: {
-    marginLeft: 8,
-    color: vibesTheme.colors.accentBlue,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.bold,
-  },
   connectionsSheet: {
     maxHeight: "76%",
     borderTopLeftRadius: 26,
@@ -1125,11 +935,14 @@ const localStyles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: "rgba(110, 110, 110, 0.24)",
   },
+  incomingCard: { backgroundColor: `${vibesTheme.colors.secondaryText}08`, borderRadius: 18, padding: 14, marginBottom: 10, minHeight: 90 },
+  sheetCount: { backgroundColor: `${vibesTheme.colors.accentMustard}40`, padding: 8, minWidth: 30, alignItems: "center", borderRadius: 18 },
   connectionsSheetTitle: {
     color: DARK_GRAY,
-    fontSize: 27,
-    lineHeight: 31,
-    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 24,
+    lineHeight: 30,
+    flexShrink: 1,
+    fontFamily: vibesTheme.fonts.bold,
   },
   connectionsSheetList: {
     marginTop: 12,

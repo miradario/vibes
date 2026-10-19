@@ -252,20 +252,12 @@ function HomePeopleSuggestions({
   if (!suggestions.length && !loading) return null;
   return (
     <View style={localStyles.peopleSection}>
-      <View style={localStyles.peopleHeading}>
+      <TouchableOpacity style={[localStyles.peopleHeading, { minHeight: 44 }]}
+        accessibilityRole="button" accessibilityLabel="Ver personas con tu vibe"
+        disabled={loading} accessibilityState={{ disabled: loading }} onPress={onSeeAll} activeOpacity={0.72}>
         <Text style={localStyles.peopleTitle}>Personas con tu vibe</Text>
-        <TouchableOpacity
-          accessibilityRole="button"
-          disabled={loading}
-          accessibilityState={{ disabled: loading }}
-          onPress={onSeeAll}
-          activeOpacity={0.72}
-          style={localStyles.peopleLink}
-        >
-          <Text style={localStyles.peopleLinkText}>Ver todos</Text>
-          <Icon name="chevron-forward" size={18} color={vibesTheme.colors.secondaryText} />
-        </TouchableOpacity>
-      </View>
+        <Icon name="chevron-forward" size={20} color={vibesTheme.colors.secondaryText} />
+      </TouchableOpacity>
       {loading ? <PeopleSkeleton /> : <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -973,6 +965,10 @@ const Home = () => {
             </TouchableOpacity>
           </View>
 
+          {ownsHomePrompts(ftuxState) ? null : (
+            <CompleteProfilePrompt userId={session?.user?.id} />
+          )}
+
           <HomeConnectionRequests canViewPhotos={Boolean(centerProfile.avatarUri)} />
 
           {session?.user?.id ? (
@@ -987,9 +983,6 @@ const Home = () => {
             userId={session?.user?.id}
             enabled={moodGateUser === session?.user?.id && !ftuxBlocksMood}
           />
-          {ownsHomePrompts(ftuxState) ? null : (
-            <CompleteProfilePrompt userId={session?.user?.id} />
-          )}
 
           <HomeOverview userId={session?.user?.id}>
 
@@ -1089,8 +1082,8 @@ const localStyles = StyleSheet.create({
   },
   peopleLinkText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 18,
     fontFamily: vibesTheme.fonts.medium,
   },
   peopleCarousel: {

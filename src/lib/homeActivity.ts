@@ -1,9 +1,11 @@
-export const getNewConnections = <T extends { id: string; isActive: boolean }>(
+export const getNewConnections = <T extends { id: string; isActive: boolean; createdAt?: string }>(
   matches: T[],
   openedIds: string[]
 ): T[] => {
   const opened = new Set(openedIds);
-  return matches.filter((match) => match.isActive && !opened.has(match.id));
+  return matches.filter((match) => match.isActive && !opened.has(match.id)).sort((left, right) =>
+    (Date.parse(right.createdAt ?? "") || 0) - (Date.parse(left.createdAt ?? "") || 0) || left.id.localeCompare(right.id)
+  );
 };
 
 export const getHomeUnreadSummary = (

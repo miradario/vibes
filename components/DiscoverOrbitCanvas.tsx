@@ -1,3 +1,4 @@
+import { discoverProfileColor } from "../src/lib/discoverProfileColor";
 import { stepBubbles, type BubbleBody } from "../src/lib/bubblePhysics";
 /** @format */
 
@@ -317,8 +318,6 @@ const DiscoverOrbitCanvas = ({
         />
       )}
       <View style={{ flex: 1, overflow: "hidden" }}>
-        <View pointerEvents="none" style={localStyles.ambientGlowMustard} />
-        <View pointerEvents="none" style={localStyles.ambientGlowBlue} />
         <View pointerEvents="none" style={localStyles.sparkleOne} />
         <View pointerEvents="none" style={localStyles.sparkleTwo} />
 
@@ -372,6 +371,7 @@ const DiscoverOrbitCanvas = ({
                 onPress={() => (onDismissedUserPress ?? onUserPress)(user)}
                 style={[
                   localStyles.dismissedDot,
+                  { borderColor: discoverProfileColor(user.gender) },
                   {
                     width: config.size,
                     height: config.size,
@@ -416,12 +416,12 @@ const DiscoverOrbitCanvas = ({
                     },
                   ]}
                 >
-                  <View style={styles.discoverOrbitUserRing}>
+                  <View style={[styles.discoverOrbitUserRing, { borderWidth: 2, borderColor: discoverProfileColor(user.gender) }]}>
                     <Avatar
                       uri={getAvatarUri(user)}
                       version={photoAttempt || undefined}
                       onReady={failed => { const key = photoKey(user); setPhotoStatus(previous => previous[key] === !failed ? previous : { ...previous, [key]: !failed }); }}
-                      size={Math.max(config.size - 2, 18)}
+                      size={Math.max(config.size - 4, 18)}
                       style={styles.discoverOrbitUserImage}
                     />
                   </View>
@@ -456,24 +456,6 @@ export default DiscoverOrbitCanvas;
 const localStyles = {
   userBubbleTouch: {
     alignItems: "center" as const,
-  },
-  ambientGlowMustard: {
-    position: "absolute" as const,
-    right: -52,
-    top: 34,
-    width: 210,
-    height: 210,
-    borderRadius: 105,
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
-  },
-  ambientGlowBlue: {
-    position: "absolute" as const,
-    left: -64,
-    bottom: 72,
-    width: 230,
-    height: 230,
-    borderRadius: 115,
-    backgroundColor: "rgba(57, 120, 184, 0.2)",
   },
   sparkleOne: {
     position: "absolute" as const,
