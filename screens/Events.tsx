@@ -655,7 +655,7 @@ const Events = ({
                 <TouchableOpacity
                   accessibilityRole="button"
                   accessibilityState={{ expanded: listItem.open }}
-                  style={localStyles.finishedSectionToggle}
+                  style={[localStyles.feedSectionHeader, localStyles.accordionSectionHeader]}
                   activeOpacity={0.85}
                   onPress={() =>
                     setOpenBlocks((previous) => ({
@@ -664,7 +664,7 @@ const Events = ({
                     }))
                   }
                 >
-                  <Text style={localStyles.finishedSectionTitle}>
+                  <Text style={[localStyles.feedSectionTitle, localStyles.accordionSectionTitle]}>
                     {listItem.title} · {listItem.count}
                   </Text>
                   <Icon
@@ -1072,6 +1072,15 @@ feedSectionHeader: {
     marginBottom: 10,
     paddingHorizontal: 4,
   },
+accordionSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+accordionSectionTitle: {
+    flex: 1,
+  },
 feedSectionTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 25,
@@ -1283,24 +1292,6 @@ progressPillText: {
     color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 16,
-    fontFamily: vibesTheme.fonts.semibold,
-  },
-finishedSectionToggle: {
-    minHeight: 72,
-    borderRadius: 22,
-    backgroundColor: "rgba(254, 254, 253, 0.72)",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-finishedSectionTitle: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 22,
     fontFamily: vibesTheme.fonts.semibold,
   },
 emptyState: {
