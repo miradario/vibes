@@ -89,6 +89,24 @@ const upsertPushToken = async (token: Notifications.DevicePushToken) => {
   if (error) {
     throw error;
   }
+
+  // Reinstalls and dev/TestFlight/App Store builds each register a new token,
+  // and the old ones stay active, so one event reached the same phone several
+  // times (e.g. the "quiere conectar con vos" push). Keep only this device's
+  // current token per platform. Best effort: a failure must not block push.
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user.id;
+  if (!userId) return;
+  const { error: cleanupError } = await supabase
+    .from("push_tokens")
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("platform", Platform.OS === "ios" ? "ios" : "android")
+    .eq("is_active", true)
+    .neq("token", tokenValue);
+  if (cleanupError) {
+    console.warn("[push] failed to deactivate stale push tokens", cleanupError);
+  }
 };
 
 export const deactivateUserPushTokens = async (userId: string) => {
@@ -165,6 +183,25 @@ const registerPushToken = async (userId: string) => {
 
   const deviceToken = await Notifications.getDevicePushTokenAsync();
   await upsertPushToken(deviceToken);
+};
+
+// Once a pair matches, the earlier "quiere conectar con vos" push from that
+// person is stale; remove it from the notification tray. Only dismisses
+// already-delivered entries, never changes how notifications are shown.
+const dismissSupersededConnectionRequests = async (otherUserId: string) => {
+  try {
+    const presented = await Notifications.getPresentedNotificationsAsync();
+    await Promise.all(
+      presented
+        .filter((item) => {
+          const data = item.request.content.data as Record<string, unknown> | null;
+          return data?.type === "connection_request" && data?.senderId === otherUserId;
+        })
+        .map((item) => Notifications.dismissNotificationAsync(item.request.identifier))
+    );
+  } catch (error) {
+    console.warn("[push] failed to dismiss superseded connection requests", error);
+  }
 };
 
 const refreshCommunityFromPush = (
@@ -325,6 +362,9 @@ export const PushNotificationsBootstrap = ({
             : null;
 
         refreshCommunityFromPush(queryClient, data);
+        if (data?.type === "new_match" && typeof data.otherUserId === "string") {
+          void dismissSupersededConnectionRequests(data.otherUserId);
+        }
         if (!isChatNotificationData(data)) return;
 
         if (
