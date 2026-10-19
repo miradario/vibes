@@ -7,11 +7,15 @@ import AnimatedBrandLogo from "../components/AnimatedBrandLogo";
 import VibesActionButton from "../components/VibesActionButton";
 import ScreenContainer from "../components/ScreenContainer";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { trackSignupEvent } from "../src/lib/signupEvents";
 
 const Welcome = () => {
   const navigation = useNavigation();
   const { data: session, isLoading } = useAuthSession();
   const focused = useIsFocused();
+  useEffect(() => {
+    if (!isLoading && focused && !session?.user?.id) trackSignupEvent("welcome_viewed");
+  }, [focused, isLoading, session?.user?.id]);
   useEffect(() => {
     if (!isLoading && focused && session?.user?.id)
       navigation.navigate("Tab" as never);
@@ -37,7 +41,10 @@ const Welcome = () => {
         <View style={styles.actions}>
           <VibesActionButton
             label="Crear cuenta"
-            onPress={() => navigation.navigate("AgeAssurance" as never)}
+            onPress={() => {
+              trackSignupEvent("signup_started");
+              navigation.navigate("AgeAssurance" as never);
+            }}
             style={styles.primaryButton}
           />
           <Pressable

@@ -1,5 +1,6 @@
 import { hasRegisteredProfile, isAccountAlreadyRegistered } from "../src/auth/signupRouting";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { signupErrorCode, trackAccountCreated, trackSignupEvent } from "../src/lib/signupEvents";
 /** @format */
 
 import React, { useRef, useState } from "react";
@@ -139,6 +140,7 @@ const Signup = () => {
     }
 
     setError(null);
+    trackSignupEvent("signup_method_selected", { props: { method: "email" } });
 
     try {
       const authResult = await signupMutation.mutateAsync({
@@ -153,11 +155,13 @@ const Signup = () => {
         updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
       }
       if (!authResult.session?.user?.id) {
+        trackSignupEvent("signup_failed", { props: { method: "email", error_code: "no_session" } });
         setError(
           "La cuenta se creó, pero falta iniciar sesión. Revisá tu email o intentá ingresar."
         );
         return;
       }
+      trackAccountCreated(authResult.session.user.id, "email");
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
@@ -165,6 +169,9 @@ const Signup = () => {
         })
       );
     } catch (e) {
+      trackSignupEvent("signup_failed", {
+        props: { method: "email", error_code: isAccountAlreadyRegistered(e) ? "already_registered" : signupErrorCode(e) },
+      });
       const rawMessage = e instanceof Error ? e.message : "";
       if (isAccountAlreadyRegistered(e)) {
         openExistingAccountLogin();
@@ -176,6 +183,7 @@ const Signup = () => {
 
   const continueWithSocialSignup = async (provider: SocialProvider) => {
     setError(null);
+    trackSignupEvent("signup_method_selected", { props: { method: provider } });
 
     try {
       const session =
@@ -190,6 +198,7 @@ const Signup = () => {
         if (confirmedBirthDate) {
           updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
         }
+        trackAccountCreated(session.user.id, provider);
         navigation.dispatch(
           CommonActions.reset({
             index: 0,
@@ -198,6 +207,9 @@ const Signup = () => {
         );
       }
     } catch (e) {
+      trackSignupEvent("signup_failed", {
+        props: { method: provider, error_code: isAccountAlreadyRegistered(e) ? "already_registered" : signupErrorCode(e) },
+      });
       if (isAccountAlreadyRegistered(e)) {
         openExistingAccountLogin();
         return;

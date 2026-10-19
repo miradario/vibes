@@ -7,6 +7,7 @@ import BirthDateWheel from "../components/BirthDateWheel";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { VIBES_LOGO } from "../src/constants/brandAssets";
 import { useNavigation } from "@react-navigation/native";
+import { trackSignupEvent } from "../src/lib/signupEvents";
 import ScreenContainer from "../components/ScreenContainer";
 import VibesActionButton from "../components/VibesActionButton";
 import AppHeader from "../components/AppHeader";
@@ -43,6 +44,7 @@ const AgeAssurance = () => {
     if (!birthDate || !isValidAge) return;
     const confirmedBirthDate = formatBirthDate(birthDate);
     updateDraft({ birthDate: confirmedBirthDate });
+    trackSignupEvent("age_confirmed");
     navigation.navigate(
       "Signup" as never,
       { birthDate: confirmedBirthDate } as never
