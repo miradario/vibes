@@ -27,7 +27,7 @@ export function useCommunityUnreadQuery() {
   const query = useQuery<Unread[]>({
     queryKey: ["communityUnread", session?.user.id],
     enabled: Boolean(session) && active,
-    // Was 5s. Delivery sync invalidates this when new messages arrive.
+    // Was 5s; fallback only. Receipts realtime + delivery sync invalidate this when new messages arrive.
     refetchInterval: active ? 60_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("community_unread_counts");
@@ -42,10 +42,36 @@ export function useCommunityDeliverySync() {
   const { data: session } = useAuthSession();
   const active = useAppActive();
   const client = useQueryClient();
+  const userId = session?.user.id;
+  // Realtime on own receipt rows (new incoming message, read elsewhere):
+  // debounced delivery sync + unread refresh. Intervals below are fallback.
+  // Subscribed only while logged in and foreground; re-subscribes on return.
+  useEffect(() => {
+    if (!userId || !active) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const channel = supabase
+      .channel(`community-receipts:${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "community_message_receipts", filter: `user_id=eq.${userId}` },
+        () => {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => {
+            void client.invalidateQueries({ queryKey: ["communityDelivery", userId] });
+            void client.invalidateQueries({ queryKey: ["communityUnread", userId] });
+          }, 1500);
+        }
+      )
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, active, client]);
   useQuery({
     queryKey: ["communityDelivery", session?.user.id],
     enabled: Boolean(session) && active,
-    // Was 3s. Foreground only (focusManager pauses it in background).
+    // Was 3s; fallback only (realtime above). Foreground only (focusManager pauses it in background).
     refetchInterval: active ? 30_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("community_receive_messages");
