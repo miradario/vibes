@@ -17,7 +17,8 @@ import {
   useSendDirectMessageMutation,
   type MatchWithProfile,
 } from "../src/queries/matches.queries";
-import type { EventFeedItem } from "../src/queries/events.queries";
+import { useEventParticipantsQuery, useChallengeParticipantsQuery, type EventFeedItem } from "../src/queries/events.queries";
+import { eligibleInviteContacts } from "../src/lib/eventInviteContacts";
 import { buildChallengeInvitation, buildEventInvitation } from "../src/lib/eventInvites";
 import { shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -35,6 +36,9 @@ export default function EventInviteSheet({
 }) {
   const isChallenge = event.type === "challenge";
   const matches = useMatchesQuery();
+  const eventParticipants = useEventParticipantsQuery(visible && !isChallenge ? event.id : undefined);
+  const challengeParticipants = useChallengeParticipantsQuery(visible && isChallenge ? event.id : undefined);
+  const participants = isChallenge ? challengeParticipants : eventParticipants;
   const send = useSendDirectMessageMutation();
   const [search, setSearch] = useState("");
   const [sent, setSent] = useState<Set<string>>(new Set());
@@ -50,18 +54,12 @@ export default function EventInviteSheet({
     setError("");
     setSearch("");
   }, [event.id]);
-  const contacts = (matches.data ?? []).filter(
-    (match) =>
-      match.isActive &&
-      match.otherUserName
-        .toLocaleLowerCase()
-        .includes(search.trim().toLocaleLowerCase())
-  );
+  const contacts = eligibleInviteContacts(matches.data ?? [], (participants.data ?? []).map(person => person.userId), event.createdBy, search);
   const close = () => {
     if (!sending.current) onClose();
   };
   const invite = async (match: MatchWithProfile) => {
-    if (sending.current || sent.has(match.id)) return;
+    if (sending.current || sent.has(match.id) || participants.isLoading || participants.isError || !contacts.some(contact => contact.id === match.id)) return;
     sending.current = true;
     setSendingId(match.id);
     setError("");
@@ -180,14 +178,14 @@ export default function EventInviteSheet({
             : `${sent.size} invitaciones enviadas`}
         </Text>
       ) : null}
-      {matches.isLoading ? (
+      {matches.isLoading || participants.isLoading ? (
         <VibesLoader />
-      ) : matches.isError ? (
+      ) : matches.isError || participants.isError ? (
         <View style={s.empty}>
-          <Text style={s.copy}>No pudimos cargar tus conexiones.</Text>
+          <Text style={s.copy}>No pudimos cargar las conexiones o los participantes.</Text>
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => void matches.refetch()}
+            onPress={() => { void matches.refetch(); void participants.refetch(); }}
             style={s.invite}
           >
             <Text style={s.buttonText}>Reintentar</Text>
@@ -203,7 +201,9 @@ export default function EventInviteSheet({
             <Text style={s.empty}>
               {search.trim()
                 ? "No encontramos conexiones con ese nombre."
-                : "Todavía no tenés conexiones. Encontrá personas en Discover."}
+                : matches.data?.some(match => match.isActive)
+                  ? "Todas tus conexiones ya participan. No hay personas nuevas para invitar."
+                  : "Todavía no tenés conexiones. Encontrá personas en Discover."}
             </Text>
           }
           renderItem={({ item }) => {
