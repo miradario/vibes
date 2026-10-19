@@ -185,6 +185,25 @@ const registerPushToken = async (userId: string) => {
   await upsertPushToken(deviceToken);
 };
 
+// Once a pair matches, the earlier "quiere conectar con vos" push from that
+// person is stale; remove it from the notification tray. Only dismisses
+// already-delivered entries, never changes how notifications are shown.
+const dismissSupersededConnectionRequests = async (otherUserId: string) => {
+  try {
+    const presented = await Notifications.getPresentedNotificationsAsync();
+    await Promise.all(
+      presented
+        .filter((item) => {
+          const data = item.request.content.data as Record<string, unknown> | null;
+          return data?.type === "connection_request" && data?.senderId === otherUserId;
+        })
+        .map((item) => Notifications.dismissNotificationAsync(item.request.identifier))
+    );
+  } catch (error) {
+    console.warn("[push] failed to dismiss superseded connection requests", error);
+  }
+};
+
 const refreshCommunityFromPush = (
   queryClient: ReturnType<typeof useQueryClient>,
   data: Record<string, unknown> | null
@@ -343,6 +362,9 @@ export const PushNotificationsBootstrap = ({
             : null;
 
         refreshCommunityFromPush(queryClient, data);
+        if (data?.type === "new_match" && typeof data.otherUserId === "string") {
+          void dismissSupersededConnectionRequests(data.otherUserId);
+        }
         if (!isChatNotificationData(data)) return;
 
         if (

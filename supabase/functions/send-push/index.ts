@@ -744,6 +744,14 @@ const buildConnectionNotification = async (supabase: SupabaseClient, record: Rec
     .select("blocker_id").or(`and(blocker_id.eq.${senderId},blocked_user_id.eq.${recipientId}),and(blocker_id.eq.${recipientId},blocked_user_id.eq.${senderId})`).limit(1);
   if (error) throw error;
   if (blocked?.length) return [];
+  // If the recipient already liked the sender, this like is an instant mutual
+  // match: the matches trigger sends "Tenés una nueva conexión", so skip the
+  // redundant "quiere conectar con vos" push. Checked via the reverse swipe
+  // (not the matches row) to avoid racing the match insert.
+  const { data: reverseLike, error: reverseError } = await supabase.from("swipes")
+    .select("id").eq("swiper_id", recipientId).eq("target_id", senderId).eq("direction", "like").limit(1);
+  if (reverseError) throw reverseError;
+  if (reverseLike?.length) return [];
   const { data: profiles, error: profileError } = await supabase.from("profiles")
     .select("id").in("id", [senderId, recipientId]).eq("is_active", true).is("deleted_at", null);
   if (profileError) throw profileError;
