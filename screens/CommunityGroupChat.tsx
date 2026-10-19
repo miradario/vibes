@@ -1,3 +1,6 @@
+import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
+import BackButton from "../components/BackButton";
+import VibesLoader from "../components/VibesLoader";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
 import HeartMessageBubble from "../components/HeartMessageBubble";
@@ -14,17 +17,7 @@ import { supabase } from "../src/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import Avatar from "../components/Avatar";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, FlatList, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import {
   useNavigation,
@@ -136,7 +129,8 @@ export default function CommunityGroupChat() {
     (messages.data ?? []).map((m) => ({ id: m.id, senderId: m.sender_id })),
     focused
   );
-  const [actions, setActions] = useState(false);
+
+  const visibleDate = useChatVisibleDate(groupId, true, receipts.onViewableItemsChanged);  const [actions, setActions] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const client = useQueryClient();
   const leave = () => {
@@ -196,17 +190,9 @@ export default function CommunityGroupChat() {
         keyboardVerticalOffset={Platform.OS === "android" ? insets.top : 0}
       >
         <View style={s.header}>
-          <TouchableOpacity
-            accessibilityLabel="Volver"
+          <BackButton accessibilityLabel="Volver"
             onPress={() => navigation.goBack()}
-            style={s.back}
-          >
-            <Icon
-              name="chevron-back"
-              size={26}
-              color={vibesTheme.colors.primaryText}
-            />
-          </TouchableOpacity>
+            style={s.back} />
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Editar foto del grupo"
@@ -221,7 +207,7 @@ export default function CommunityGroupChat() {
             }}
           >
             {updatePhoto.isPending ? (
-              <ActivityIndicator />
+              <VibesLoader />
             ) : group?.photoUrl ? (
               <Avatar uri={group.photoUrl} size={44} />
             ) : (
@@ -317,7 +303,7 @@ export default function CommunityGroupChat() {
           retry={() => void members.refetch()}
         />
         {messages.isLoading ? (
-          <ActivityIndicator color={vibesTheme.colors.accentMustard} />
+          <VibesLoader />
         ) : null}
         {messages.isError ? (
           <TouchableOpacity onPress={() => void messages.refetch()}>
@@ -331,9 +317,9 @@ export default function CommunityGroupChat() {
             Este espacio ya es suyo. ¡Iniciá la conversación!
           </Text>
         ) : null}
-        <FlatList
+        <View style={{ flex: 1, position: "relative" }}><FlatList
           style={s.messages}
-          onViewableItemsChanged={receipts.onViewableItemsChanged}
+          onViewableItemsChanged={visibleDate.onViewableItemsChanged}
           viewabilityConfig={receipts.viewabilityConfig}
           keyboardShouldPersistTaps="handled"
           inverted
@@ -365,6 +351,7 @@ export default function CommunityGroupChat() {
                   <Avatar uri={item.senderAvatar} size={30} />
                 )}
                 <HeartMessageBubble
+                  canReact={item.sender_id !== session?.user.id}
                   count={hearts.byMessage.get(item.id)?.count}
                   liked={hearts.byMessage.get(item.id)?.liked}
                   onHeart={(remove) => hearts.react(item.id, remove)}
@@ -373,7 +360,7 @@ export default function CommunityGroupChat() {
                     item.sender_id === session?.user.id && s.own,
                   ]}
                 >
-                  {(press) => (
+                  {(press, _longPress, reaction) => (
                     <>
                       <Text style={s.sender}>
                         {item.sender_id === session?.user.id
@@ -400,13 +387,14 @@ export default function CommunityGroupChat() {
                           />
                         ) : null}
                       </View>
+                      {reaction}
                     </>
                   )}
                 </HeartMessageBubble>
               </View>
             )
           }
-        />
+        /><ChatVisibleDate date={visibleDate.date} /></View>
         <View
           style={[
             chatStyles.eventChatInputContainer,
@@ -471,7 +459,7 @@ export default function CommunityGroupChat() {
             onPress={() => void submit()}
           >
             {send.isPending ? (
-              <ActivityIndicator color={WHITE} />
+              <VibesLoader />
             ) : (
               <Icon name="send" size={22} color={WHITE} />
             )}

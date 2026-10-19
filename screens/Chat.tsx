@@ -1,3 +1,4 @@
+import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import { messagePreview } from "../src/lib/chatPhotos";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
@@ -111,13 +112,21 @@ const Chat = () => {
     messages ?? [],
     isFocused
   );
-  const sendMutation = useSendDirectMessageMutation();
+
+  const visibleDate = useChatVisibleDate(matchId, false, receipts.onViewableItemsChanged);  const sendMutation = useSendDirectMessageMutation();
   const deleteMutation = useDeleteDirectMessageMutation();
   const unmatchMutation = useUnmatchMutation();
   const reportMutation = useReportUserMutation();
   const blockMutation = useBlockUserMutation();
 
   const [text, setText] = useState("");
+  // Consume a suggested opener once; never send automatically or overwrite later edits.
+  useEffect(() => {
+    const draft = route?.params?.initialDraft;
+    if (typeof draft !== "string" || !draft.trim()) return;
+    setText(draft.trim());
+    navigation.setParams({ initialDraft: undefined } as never);
+  }, [route?.params?.initialDraft, matchId, navigation]);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [composerHeight, setComposerHeight] = useState(COMPOSER_MIN_HEIGHT);
   const [showActionsModal, setShowActionsModal] = useState(false);
@@ -308,6 +317,7 @@ const Chat = () => {
     const isOwn = item.senderId === myId;
     const bubble = (
       <HeartMessageBubble
+        canReact={!isOwn}
         count={hearts.byMessage.get(item.id)?.count}
         liked={hearts.byMessage.get(item.id)?.liked}
         onHeart={(remove) => hearts.react(item.id, remove)}
@@ -319,7 +329,7 @@ const Chat = () => {
             : localStyles.messageBubbleLeft,
         ]}
       >
-        {(press, longPress) => (
+        {(press, longPress, reaction) => (
           <>
             <ChatMessageContent
               onPhotoPress={press}
@@ -350,6 +360,7 @@ const Chat = () => {
                 />
               ) : null}
             </View>
+            {reaction}
           </>
         )}
       </HeartMessageBubble>
@@ -568,10 +579,10 @@ const Chat = () => {
           {/* Messages */}
           {isLoading ? (
             <View style={localStyles.loadingWrap}>
-              <VibesLoader size={78} />
+              <VibesLoader />
             </View>
           ) : (
-            <FlatList
+            <View style={{ flex: 1, position: "relative" }}><FlatList
               ref={flatListRef}
               style={{ flex: 1 }}
               onLayout={() => {
@@ -579,7 +590,7 @@ const Chat = () => {
                   flatListRef.current?.scrollToEnd({ animated: false });
                 }
               }}
-              onViewableItemsChanged={receipts.onViewableItemsChanged}
+              onViewableItemsChanged={visibleDate.onViewableItemsChanged}
               viewabilityConfig={receipts.viewabilityConfig}
               data={messages ?? []}
               keyExtractor={(item) => item.id}
@@ -615,7 +626,7 @@ const Chat = () => {
               onContentSizeChange={() =>
                 flatListRef.current?.scrollToEnd({ animated: false })
               }
-            />
+            /><ChatVisibleDate date={visibleDate.date} /></View>
           )}
 
           {/* Input */}
@@ -805,7 +816,7 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 22,
     lineHeight: 27,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   modalSubtitle: {
     marginTop: 4,

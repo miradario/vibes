@@ -1,3 +1,4 @@
+import { preparePhotoUpload } from "../src/lib/preparePhotoUpload";
 import CountrySelector from "../components/CountrySelector";
 import { saveProfileNationality } from "../src/lib/profileNationality";
 import { launchAppCamera } from "../components/AppCamera";
@@ -9,6 +10,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  InteractionManager,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -16,7 +18,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import styles, {
   BLACK,
@@ -422,6 +424,10 @@ const DraggablePhotoSlot = ({
 const EditProfile = () => {
   const { t, locale } = useI18n();
   const navigation = useNavigation();
+  const route = useRoute();
+  const focused = useIsFocused();
+  const photoRequestId = (route.params as { photoRequestId?: number } | undefined)?.photoRequestId;
+  const consumedPhotoRequest = useRef<number | undefined>(undefined);
   const leaveProfile = () => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -463,6 +469,7 @@ const EditProfile = () => {
   const [reordering, setReordering] = useState(false);
   const [busyIndex, setBusyIndex] = useState<number | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const pendingPhotoAction = useRef<(() => Promise<void>) | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const slotLayoutsRef = useRef<Record<number, PhotoSlotLayout>>({});
@@ -752,23 +759,6 @@ const EditProfile = () => {
     return false;
   };
 
-  const ensureLibraryPermission = async () => {
-    const current = await ImagePicker.getMediaLibraryPermissionsAsync();
-    if (current.status === "granted") return true;
-
-    const requested = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (requested.status === "granted") return true;
-    if (!requested.canAskAgain) {
-      promptOpenSettings();
-    } else {
-      Alert.alert(
-        t("editProfile.permissionsTitle"),
-        t("editProfile.galleryPermissionBody")
-      );
-    }
-    return false;
-  };
-
   const uploadPhoto = async (uri: string, slotIndex: number) => {
     const userId = session?.user?.id;
     if (!userId) {
@@ -789,14 +779,15 @@ const EditProfile = () => {
       profileData?.intentId ?? null
     );
 
-    const uriWithoutQuery = uri.split("?")[0];
+    const uploadUri = await preparePhotoUpload(uri);
+    const uriWithoutQuery = uploadUri.split("?")[0];
     const rawExt = uriWithoutQuery.split(".").pop() || "jpg";
     const normalizedExt = rawExt.toLowerCase();
     const ext = EXTENSION_TO_CONTENT_TYPE[normalizedExt]
       ? normalizedExt
       : "jpg";
     const contentType = EXTENSION_TO_CONTENT_TYPE[ext] || "image/jpeg";
-    const arrayBuffer = await readUriAsArrayBuffer(uri);
+    const arrayBuffer = await readUriAsArrayBuffer(uploadUri);
     const uploadBody = new Uint8Array(arrayBuffer).buffer;
     const filePath = `${userId}/${Date.now()}-${slotIndex}.${ext}`;
 
@@ -857,11 +848,6 @@ const EditProfile = () => {
   };
 
   const pickFromLibrary = async (slotIndex: number) => {
-    const hasPermission = await ensureLibraryPermission();
-    if (!hasPermission) {
-      return;
-    }
-
     let result;
     try {
       result = await ImagePicker.launchImageLibraryAsync({
@@ -934,6 +920,19 @@ const EditProfile = () => {
     setPhotoModalVisible(true);
   };
 
+  useEffect(() => {
+    if (!focused || !photoRequestId || consumedPhotoRequest.current === photoRequestId || !profileData) return;
+    const slot = mediaSlots.findIndex(photo => !photo);
+    if (slot < 0) return;
+    // Wait for navigation and any profile sheet to close before presenting another native modal.
+    const task = InteractionManager.runAfterInteractions(() => {
+      consumedPhotoRequest.current = photoRequestId;
+      navigation.setParams({ photoRequestId: undefined } as never);
+      handleAddMedia(slot);
+    });
+    return () => task.cancel();
+  }, [focused, photoRequestId, profileData, mediaSlots, navigation]);
+
   const handleRemove = async (slotIndex: number) => {
     const userId = session?.user?.id;
     if (!userId) return;
@@ -985,6 +984,7 @@ const EditProfile = () => {
     >
       <ScreenContainer
         scroll
+        edges={["top", "bottom", "left", "right"]}
         scrollViewProps={{
           style: styles.editContainer,
           showsVerticalScrollIndicator: false,
@@ -1118,6 +1118,13 @@ const EditProfile = () => {
 
       <AnimatedSheetModal
         visible={photoModalVisible}
+        onClosed={() => {
+          const action = pendingPhotoAction.current;
+          pendingPhotoAction.current = null;
+          if (action) void action().catch((error) => {
+            Alert.alert(t("common.error"), getErrorMessage(error));
+          });
+        }}
         onClose={() => setPhotoModalVisible(false)}
         sheetStyle={modalStyles.card}
       >
@@ -1145,9 +1152,9 @@ const EditProfile = () => {
               style={modalStyles.optionButton}
               onPress={async () => {
                 if (selectedSlot === null) return;
+                const slot = selectedSlot;
+                pendingPhotoAction.current = () => takePhoto(slot);
                 setPhotoModalVisible(false);
-                await new Promise((resolve) => setTimeout(resolve, 250));
-                await takePhoto(selectedSlot);
               }}
               activeOpacity={0.84}
             >
@@ -1160,9 +1167,9 @@ const EditProfile = () => {
               style={modalStyles.optionButton}
               onPress={async () => {
                 if (selectedSlot === null) return;
+                const slot = selectedSlot;
+                pendingPhotoAction.current = () => pickFromLibrary(slot);
                 setPhotoModalVisible(false);
-                await new Promise((resolve) => setTimeout(resolve, 250));
-                await pickFromLibrary(selectedSlot);
               }}
               activeOpacity={0.84}
             >
@@ -1271,7 +1278,7 @@ const localStyles = StyleSheet.create({
     marginBottom: 4,
   },
   scrollContent: {
-    paddingBottom: 72,
+    paddingBottom: 104,
   },
   primaryBadge: {
     position: "absolute",

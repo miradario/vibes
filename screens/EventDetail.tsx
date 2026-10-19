@@ -1,5 +1,8 @@
+import BackButton from "../components/BackButton";
 import { normalizeSchedule, formatSession } from "../src/lib/eventSchedule";
 import { useLocalDay } from "../src/hooks/useLocalDay";
+import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
+import { resolvePublicContentRoute } from "../src/lib/publicContentRoute";
 import { getChallengeDay, completedChallengeDays, getChallengeStreaks } from "../src/lib/challengeProgress";
 import MediaImage from "../components/MediaImage";
 import { getEventCategoryLabel, getEventParticipationLabel } from "../src/constants/eventClassification";
@@ -38,6 +41,7 @@ import AppHeader from "../components/AppHeader";
 import Avatar from "../components/Avatar";
 import AvatarGroup from "../components/AvatarGroup";
 import VibesLoader from "../components/VibesLoader";
+import DeepLinkLoadingState from "../components/DeepLinkLoadingState";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import EventInviteSheet from "../components/EventInviteSheet";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -73,8 +77,10 @@ import {
 } from "../src/constants/challengeMediaPresets";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
+import { getIosMapPreviewSource } from "../src/config/mapPreview";
 import { shareEventInvite } from "../src/lib/socialShare";
 import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
+import { markFtuxAction } from "../src/ftux/ftuxStore";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
 const CHECKIN_SLIDER_HANDLE_SIZE = 72;
@@ -198,22 +204,25 @@ const EventDetail = () => {
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const routeEvent = route.params?.event as EventFeedItem | undefined;
-  const eventId =
-    routeEvent?.id ??
-    (typeof route.params?.eventId === "string"
-      ? route.params.eventId
-      : undefined);
-  const { data: linkedEvent, isLoading: linkedEventLoading } = useQuery({
+  const { id: eventId, inlineEvent } = resolvePublicContentRoute(route.params?.eventId, routeEvent);
+  const {
+    data: linkedEvent,
+    isPending: linkedEventPending,
+    isError: linkedEventError,
+    fetchStatus: linkedEventFetchStatus,
+    refetch: refetchLinkedEvent,
+  } = useQuery({
     queryKey: ["event_deep_link", eventId],
     queryFn: () => fetchEventFeedItemById(eventId as string, "event"),
     enabled: Boolean(eventId),
     staleTime: 60_000,
   });
-  const event = linkedEvent ?? routeEvent ?? undefined;
+  const event = linkedEvent ?? inlineEvent;
   const isChallenge = event?.type === "challenge";
 
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
+  const handleBack = usePublicContentBack(Boolean(userId));
   const { data: currentUserProfile } = useProfileQuery(userId);
   const swipeMutation = useSwipeMutation();
 
@@ -223,6 +232,10 @@ const EventDetail = () => {
     isChallenge ? event?.id : undefined,
     userId,
   );
+  useEffect(() => {
+    // Ticks "Mirar los próximos eventos" in Vibi's first steps checklist.
+    if (event?.id && !isChallenge) void markFtuxAction(userId, "openedEvent");
+  }, [event?.id, isChallenge, userId]);
   const joinMutation = useJoinChallengeMutation();
   const checkInMutation = useCheckInChallengeMutation();
   const leaveMutation = useLeaveChallengeMutation();
@@ -326,6 +339,12 @@ const EventDetail = () => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [participantsVisible, setParticipantsVisible] = useState(false);
   const [inviteVisible, setInviteVisible] = useState(false);
+  useEffect(() => {
+    setMenuVisible(false);
+    setParticipantsVisible(false);
+    setInviteVisible(false);
+    setCheckInModalVisible(false);
+  }, [eventId]);
   const [eventMapPreviewFailed, setEventMapPreviewFailed] = useState(false);
   const [geocodedMapPreview, setGeocodedMapPreview] = useState<{
     latitude: number;
@@ -490,7 +509,6 @@ const EventDetail = () => {
     (_, index) => index + 1,
   );
   const sliderTranslateX = useRef(new Animated.Value(0)).current;
-  const eventScrollY = useRef(new Animated.Value(0)).current;
   const [sliderWidth, setSliderWidth] = useState(0);
   const sliderMaxTranslate = Math.max(
     sliderWidth - CHECKIN_SLIDER_HANDLE_SIZE - CHECKIN_SLIDER_HORIZONTAL_PADDING * 2,
@@ -653,7 +671,7 @@ const EventDetail = () => {
           : {})}
       >
         {checkInMutation.isPending ? (
-          <VibesLoader size={30} />
+          <VibesLoader />
         ) : (
           <Icon name="sunny-outline" size={22} color={vibesTheme.colors.accentCoral} />
         )}
@@ -746,21 +764,13 @@ const EventDetail = () => {
                 ]}
                 disabled
               >
-                <Icon name="chatbubbles-outline" size={19} color={vibesTheme.colors.secondaryText} />
-                <Text
-                  style={[
-                    localStyles.challengeChatButtonText,
-                    localStyles.challengeChatButtonTextDisabled,
-                  ]}
-                >
-                  Cargando chat
-                </Text>
+                <VibesLoader accessibilityLabel="Cargando chat" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
                 disabled
               >
-                <VibesLoader size={30} />
+                <VibesLoader />
               </TouchableOpacity>
             </View>
           </View>
@@ -829,7 +839,7 @@ const EventDetail = () => {
               disabled={joinMutation.isPending}
             >
               {joinMutation.isPending ? (
-                <VibesLoader size={30} />
+                <VibesLoader />
               ) : (
                 <Text style={styles.eventDetailJoinButtonText}>
                   {userId ? "Sumarme al desafío" : "Registrarme para sumarme"}
@@ -858,7 +868,7 @@ const EventDetail = () => {
             }
             activeOpacity={0.9}
           >
-            <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.primaryText} />
+            <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.surface} />
           </TouchableOpacity>
         </View>
       );
@@ -896,7 +906,7 @@ const EventDetail = () => {
           disabled={joinEventMutation.isPending}
         >
           {joinEventMutation.isPending ? (
-            <VibesLoader size={30} />
+            <VibesLoader />
           ) : (
             <>
               <Text
@@ -959,7 +969,6 @@ const EventDetail = () => {
     typeof event?.subtitle === "string" && event.subtitle.trim()
       ? event.subtitle.trim()
       : "Entrá a un espacio sereno para compartir presencia y conexión.";
-  const eventLeadText = eventDescription || eventSubtitle;
   const modalityLabel = modality === "online" ? "Online" : "Presencial";
   const pricingLabel = pricingType === "paid" ? "Pago" : "Gratis";
   const googleMapsConfig = getGoogleMapsClientConfig();
@@ -974,6 +983,21 @@ const EventDetail = () => {
         googleMapsApiKey,
       )
     : null;
+  // iOS: preview vía la función map-preview (Android sigue igual).
+  const iosEventMapPreviewSource = eventMapQuery
+    ? getIosMapPreviewSource(
+        hasEventPreviewCoordinates
+          ? { latitude: eventPreviewLatitude, longitude: eventPreviewLongitude }
+          : { query: eventMapQuery },
+        session?.access_token,
+        { width: 640, height: 320 },
+      )
+    : null;
+  const eventMapPreviewSource =
+    iosEventMapPreviewSource ??
+    (eventMapPreviewUri
+      ? { uri: eventMapPreviewUri, headers: googleMapsConfig.headers }
+      : null);
 
   useEffect(() => {
     let isMounted = true;
@@ -1196,7 +1220,7 @@ const EventDetail = () => {
                 challengeId: event.id,
                 userId,
               });
-              navigation.goBack();
+              handleBack();
             } catch (error: any) {
               Alert.alert(
                 "Error",
@@ -1222,7 +1246,7 @@ const EventDetail = () => {
             setMenuVisible(false);
             try {
               await deleteMutation.mutateAsync({ challengeId: event.id });
-              navigation.goBack();
+              handleBack();
             } catch (error: any) {
               Alert.alert(
                 "Error",
@@ -1290,30 +1314,6 @@ const EventDetail = () => {
     }
   };
 
-  const heroCollapse = (expanded: number, collapsed: number) =>
-    eventScrollY.interpolate({
-      inputRange: [0, 168],
-      outputRange: [expanded, collapsed],
-      extrapolate: "clamp",
-    });
-  const compactHeaderTop = Math.max(insets.top + 10, 24);
-
-  const collapsedEventHeaderOpacity = eventScrollY.interpolate({
-    inputRange: [92, 168],
-    outputRange: [0, 1],
-    extrapolate: "clamp",
-  });
-  const collapsedEventHeaderTranslateY = eventScrollY.interpolate({
-    inputRange: [92, 168],
-    outputRange: [-8, 0],
-    extrapolate: "clamp",
-  });
-  const expandedEventHeaderOpacity = eventScrollY.interpolate({
-    inputRange: [72, 132],
-    outputRange: [1, 0],
-    extrapolate: "clamp",
-  });
-
   const handleShareEvent = async () => {
     if (!event || event.type !== "event") return;
     try {
@@ -1323,11 +1323,25 @@ const EventDetail = () => {
     }
   };
 
-  if (!event && linkedEventLoading) {
+  if (!event && eventId && linkedEventPending) {
     return (
-      <ScreenContainer style={localStyles.publicStateScreen}>
-        <VibesLoader size={36} />
-      </ScreenContainer>
+      <DeepLinkLoadingState
+        target="event"
+        offline={linkedEventFetchStatus === "paused"}
+        onRetry={() => void refetchLinkedEvent()}
+        onExit={handleBack}
+      />
+    );
+  }
+
+  if (!event && eventId && linkedEventError) {
+    return (
+      <DeepLinkLoadingState
+        target="event"
+        state="error"
+        onRetry={() => void refetchLinkedEvent()}
+        onExit={handleBack}
+      />
     );
   }
 
@@ -1339,7 +1353,7 @@ const EventDetail = () => {
         </Text>
         <TouchableOpacity
           style={localStyles.publicStateButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleBack()}
         >
           <Text style={localStyles.publicStateButtonText}>Volver</Text>
         </TouchableOpacity>
@@ -1356,45 +1370,21 @@ const EventDetail = () => {
       ]}
     >
       {!isChallenge ? (
-        <Animated.View
-          style={[
-            localStyles.expandedEventHeader,
-            {
-              top: Math.max(insets.top + 10, 24),
-              opacity: expandedEventHeaderOpacity,
-            },
-          ]}
-        >
-          <TouchableOpacity
-            style={localStyles.eventHeaderIconButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="chevron-back" size={24} color={WHITE} />
-          </TouchableOpacity>
-          <View style={localStyles.expandedEventHeaderSpacer} />
-          <View style={localStyles.headerActions}>
-            <TouchableOpacity
-              style={localStyles.eventHeaderIconButton}
-              accessibilityLabel="Compartir evento"
-              onPress={() => void handleShareEvent()}
-            >
-              <Icon name="share-outline" size={22} color={WHITE} />
-            </TouchableOpacity>
-            {isAdmin ? (
-              <TouchableOpacity
-                style={localStyles.eventHeaderIconButton}
-                onPress={() => setMenuVisible(true)}
-              >
-                <Icon name="ellipsis-horizontal" size={24} color={WHITE} />
+        <View style={{ paddingTop: insets.top, backgroundColor: vibesTheme.colors.surface }}>
+          <AppHeader title="Evento" showBack onBack={handleBack}
+            titleStyle={{ fontSize: 18, fontFamily: vibesTheme.fonts.semibold }}
+            right={<View style={localStyles.headerActions}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Compartir evento" onPress={() => void handleShareEvent()} style={localStyles.referenceHeaderAction}>
+                <Icon name="share-outline" size={25} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
-            ) : null}
-          </View>
-        </Animated.View>
+              {isAdmin ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Opciones del evento" onPress={() => setMenuVisible(true)} style={localStyles.referenceHeaderAction}><Icon name="ellipsis-horizontal" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
+            </View>} />
+        </View>
       ) : (
         <AppHeader
           title={undefined}
           showBack
-          onBack={() => navigation.goBack()}
+          onBack={() => handleBack()}
           style={[
             styles.eventDetailHeader,
             localStyles.persistentHeader,
@@ -1413,73 +1403,6 @@ const EventDetail = () => {
         />
       )}
 
-      {!isChallenge ? (
-        <Animated.View
-          style={[
-            localStyles.collapsedEventHeader,
-            {
-              paddingTop: Math.max(insets.top + 10, 24),
-              opacity: collapsedEventHeaderOpacity,
-              transform: [{ translateY: collapsedEventHeaderTranslateY }],
-            },
-          ]}
-        >
-          <TouchableOpacity
-            style={localStyles.collapsedHeaderBackButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="chevron-back" size={24} color={DARK_GRAY} />
-          </TouchableOpacity>
-          {eventHeroImageSource ? (
-            <MediaImage
-              source={eventHeroImageSource}
-              style={localStyles.collapsedEventHeaderThumbnail}
-              resizeMode="cover"
-            />
-          ) : null}
-          <Text style={localStyles.collapsedEventHeaderTitle} numberOfLines={2}>
-            {event.title}
-          </Text>
-          <TouchableOpacity
-            style={localStyles.collapsedHeaderBackButton}
-            accessibilityLabel="Compartir evento"
-            onPress={() => void handleShareEvent()}
-          >
-            <Icon name="share-outline" size={21} color={DARK_GRAY} />
-          </TouchableOpacity>
-        </Animated.View>
-      ) : null}
-
-      {!isChallenge && eventHeroImageSource ? (
-        <Animated.View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            zIndex: 62,
-            elevation: 26,
-            overflow: "hidden",
-            top: heroCollapse(0, compactHeaderTop + 1),
-            left: heroCollapse(0, 72),
-            width: heroCollapse(width, 38),
-            height: heroCollapse(210, 38),
-            borderRadius: heroCollapse(0, 19),
-          }}
-        >
-          <MediaImage source={eventHeroImageSource} style={localStyles.eventHeroImage} resizeMode="cover" />
-          <Animated.View style={[localStyles.eventHeroScrim, { opacity: expandedEventHeaderOpacity }]} />
-          <Animated.View style={[localStyles.eventHeroContent, { opacity: expandedEventHeaderOpacity, width }]}>
-            <Text style={localStyles.eventHeroTitle} numberOfLines={2}>
-              {event.title}
-            </Text>
-            {eventLeadText ? (
-              <Text style={localStyles.eventHeroSubtitle} numberOfLines={2}>
-                {eventLeadText}
-              </Text>
-            ) : null}
-          </Animated.View>
-        </Animated.View>
-      ) : null}
-
       <Animated.ScrollView
         style={[
           styles.eventDetailContent,
@@ -1489,60 +1412,46 @@ const EventDetail = () => {
           localStyles.scrollContent,
           !isChallenge && localStyles.eventScrollContent,
           isChallenge && localStyles.scrollContentChallenge,
-          !isChallenge && { minHeight: height + 190 },
+
         ]}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
-        onScroll={
-          !isChallenge
-            ? Animated.event(
-                [{ nativeEvent: { contentOffset: { y: eventScrollY } } }],
-                { useNativeDriver: false },
-              )
-            : undefined
-        }
+
       >
         {!isChallenge ? (
           <>
-            <Animated.View
-              style={[
-                localStyles.eventHeroMedia,
-                // Match the moving image's bottom edge in scroll coordinates.
-                { height: heroCollapse(210, 168 + compactHeaderTop + 1 + 38) },
-              ]}
-            />
-            {event?.category || event?.participationType ? (
-              <View style={{ paddingHorizontal: 24, paddingVertical: 12, gap: 6 }}>
-                {getEventCategoryLabel(event.category) ? <Text style={{ color: vibesTheme.colors.primaryText }}>Categoría: {getEventCategoryLabel(event.category)}</Text> : null}
-                {getEventParticipationLabel(event.participationType) ? <Text style={{ color: vibesTheme.colors.primaryText }}>Tipo: {getEventParticipationLabel(event.participationType)}</Text> : null}
+            {eventHeroImageSource ? <MediaImage source={eventHeroImageSource} style={localStyles.referenceCover} resizeMode="cover" /> : null}
+            <View style={localStyles.referenceIntro}>
+              <View style={localStyles.referenceBadges}>
+                {[getEventCategoryLabel(event.category), getEventParticipationLabel(event.participationType)].filter(Boolean).map(label => <View key={label} style={localStyles.referenceBadge}><Text style={localStyles.referenceBadgeText}>{label}</Text></View>)}
               </View>
-            ) : null}
-            <View style={localStyles.eventIntroMetaRow}>
-              <View style={localStyles.eventIntroMetaItem}>
-                <Icon
-                  name={modality === "online" ? "videocam-outline" : "location"}
-                  size={24}
-                  color={vibesTheme.colors.accentMustard}
-                />
-                <Text style={localStyles.eventIntroMetaText}>
-                  {modalityLabel}
-                </Text>
-              </View>
-              <View style={localStyles.eventIntroDivider} />
-              <View style={localStyles.eventIntroMetaItem}>
-                <Icon
-                  name={pricingType === "paid" ? "card-outline" : "sparkles-outline"}
-                  size={24}
-                  color={vibesTheme.colors.accentMustard}
-                />
-                <Text style={localStyles.eventIntroMetaText}>
-                  {pricingLabel}
-                </Text>
+              <Text style={localStyles.referenceTitle}>{event.title}</Text>
+              {normalizeSchedule(event.schedule, event.startsAt).map(entry => <TouchableOpacity key={entry.startsAt} accessibilityRole="button" accessibilityLabel="Agregar fecha a mi calendario" onPress={() => handleOpenCalendar(entry.startsAt)} style={localStyles.referenceMetaRow}>
+                <Icon name="calendar-outline" size={25} color={vibesTheme.colors.accentBlue} />
+                <View style={{ flex: 1 }}><Text style={localStyles.referenceMetaTitle}>{formatSession(entry.startsAt)}{entry.endsAt ? ` — ${formatSession(entry.endsAt)}` : ""}</Text><Text style={localStyles.referenceMetaHint}>Agregar a mi calendario</Text></View>
+              </TouchableOpacity>)}
+              <TouchableOpacity accessibilityRole="button" disabled={modality !== "in_person" || !eventLocation} onPress={handleOpenMap} style={localStyles.referenceMetaRow}>
+                <Icon name={modality === "online" ? "videocam-outline" : "location-outline"} size={25} color={vibesTheme.colors.accentBlue} />
+                <View style={{ flex: 1 }}><Text style={localStyles.referenceMetaTitle}>{eventLocation || modalityLabel}</Text><Text style={localStyles.referenceMetaHint}>{modalityLabel}</Text></View>
+              </TouchableOpacity>
+              <View style={localStyles.referenceMetaRow}>
+                <Icon name="ticket-outline" size={25} color={vibesTheme.colors.accentBlue} />
+                <View style={{ flex: 1 }}><Text style={localStyles.referenceMetaTitle}>{pricingLabel}</Text><Text style={localStyles.referenceMetaHint}>{event.capacity && event.capacity > 0 ? `Cupos: ${event.capacity}` : "Cupos ilimitados"}</Text></View>
               </View>
             </View>
             <View style={localStyles.eventDetailPanel}>
+              {eventDescription ? <View style={{ paddingTop: 20, gap: 10 }}>
+                <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 }}>Sobre el evento</Text>
+                <Text selectable style={localStyles.eventPanelDescription}>{eventDescription}</Text>
+              </View> : null}
               <View style={localStyles.eventMetaDivider} />
               <View style={styles.eventDetailInfoSection}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver participantes" activeOpacity={0.85} onPress={() => setParticipantsVisible(true)} style={[localStyles.referenceMetaRow, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: `${vibesTheme.colors.secondaryText}40`, paddingVertical: 16 }]}>
+                  {visibleParticipants.length ? <AvatarGroup size={38} max={3} overlap={7} items={visibleParticipants.map(item => ({ id: item.id, uri: item.avatarUrl }))} /> : <Icon name="people-outline" size={25} color={vibesTheme.colors.secondaryText} />}
+                  <Text style={[localStyles.referenceMetaTitle, { flex: 1 }]}>{visibleParticipantCount} {visibleParticipantCount === 1 ? "participante" : "participantes"}</Text>
+                  <Icon name="chevron-forward" size={22} color={vibesTheme.colors.secondaryText} />
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   accessibilityRole="button"
                   accessibilityLabel="Invitar personas al evento"
@@ -1554,9 +1463,7 @@ const EventDetail = () => {
                     borderRadius: 18,
                     minHeight: 56,
                     marginBottom: 14,
-                    backgroundColor: "rgba(57, 120, 184, 0.12)",
-                    borderWidth: 1,
-                    borderColor: vibesTheme.colors.accentBlue,
+                    backgroundColor: `${vibesTheme.colors.secondaryText}0C`,
                   }}
                   onPress={() => {
                     if (!userId) {
@@ -1579,7 +1486,7 @@ const EventDetail = () => {
                       fontFamily: vibesTheme.fonts.medium,
                     }}
                   >
-                    Invitar al evento
+                    Invitar a alguien
                   </Text>
                   <Icon
                     name="chevron-forward"
@@ -1587,80 +1494,8 @@ const EventDetail = () => {
                     color={vibesTheme.colors.primaryText}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  style={styles.eventDetailInfoRow}
-                  onPress={() => setParticipantsVisible(true)}
-                >
-                  <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
-                    <Icon name="people" size={18} color={PRIMARY_COLOR} />
-                  </View>
-                  <View style={styles.eventDetailInfoCopy}>
-                    <Text style={styles.eventDetailInfoText}>
-                      {visibleParticipantCount} participantes
-                    </Text>
-                      {visibleParticipants.length > 0 ? (
-                       <View style={localStyles.participantsPreviewRow}>
-                         <AvatarGroup
-                           size={28}
-                           max={4}
-                           overlap={8}
-                            items={visibleParticipants.map((item) => ({
-                             id: item.id,
-                             uri: item.avatarUrl,
-                           }))}
-                         />
-                         {visibleParticipantCount > 4 ? (
-                           <View
-                            style={[
-                              localStyles.participantPreviewAvatar,
-                              localStyles.participantPreviewMore,
-                              localStyles.participantPreviewAvatarOverlap,
-                            ]}
-                          >
-                            <Text style={localStyles.participantPreviewMoreText}>
-                              +{visibleParticipantCount - 4}
-                            </Text>
-                          </View>
-                        ) : null}
-                      </View>
-                    ) : null}
-                  </View>
-                  <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
-                </TouchableOpacity>
-
-                {normalizeSchedule(event.schedule, event.startsAt).map((entry) => (
-                <TouchableOpacity
-                  key={entry.startsAt}
-                  activeOpacity={0.85}
-                  style={styles.eventDetailInfoRow}
-                  onPress={() => handleOpenCalendar(entry.startsAt)}
-                >
-                  <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
-                    <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
-                  </View>
-                  <View style={styles.eventDetailInfoCopy}>
-                    <Text style={styles.eventDetailInfoText}>{formatSession(entry.startsAt)}</Text>
-                    <Text style={styles.eventDetailInfoLabel}>
-                      Agregar a mi calendario
-                    </Text>
-                  </View>
-                  <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
-                </TouchableOpacity>
-
-                ))}
-                <Text style={styles.eventDetailInfoText}>{event.capacity && event.capacity > 0 ? `Cupos: ${event.capacity}` : "Cupos ilimitados"}</Text>
-
                 {modality === "in_person" && eventLocation ? (
                   <>
-                  <View style={[styles.eventDetailInfoRow, { borderBottomWidth: 0 }]}>
-                    <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
-                      <Icon name="location" size={18} color={PRIMARY_COLOR} />
-                    </View>
-                    <View style={styles.eventDetailInfoCopy}>
-                      <Text style={styles.eventDetailInfoText}>{eventLocation}</Text>
-                    </View>
-                  </View>
                   <TouchableOpacity
                     accessibilityRole="button"
                     accessibilityLabel="Abrir ubicación del evento en el mapa"
@@ -1668,9 +1503,9 @@ const EventDetail = () => {
                     style={localStyles.eventMiniMapCard}
                     onPress={handleOpenMap}
                   >
-                    {!eventMapPreviewFailed && eventMapPreviewUri ? (
+                    {!eventMapPreviewFailed && eventMapPreviewSource ? (
                       <Image
-                        source={{ uri: eventMapPreviewUri, headers: googleMapsConfig.headers }}
+                        source={eventMapPreviewSource}
                         style={localStyles.eventMiniMapImage}
                         onError={() => setEventMapPreviewFailed(true)}
                       />
@@ -1863,7 +1698,7 @@ const EventDetail = () => {
         {isChallenge ? (
           <>
             {participantLoading ? (
-              <VibesLoader size={64} style={{ marginVertical: 24 }} />
+              <VibesLoader  style={{ marginVertical: 24 }} />
             ) : isJoined ? (
               <View style={localStyles.trackingCard}>
                 <View style={localStyles.daysPanel}>
@@ -2067,7 +1902,7 @@ const EventDetail = () => {
                   : {})}
               >
                 {checkInMutation.isPending ? (
-                  <VibesLoader size={30} />
+                  <VibesLoader />
                 ) : (
                   <Icon
                     name={checkedInToday ? "checkmark" : "sunny-outline"}
@@ -2275,6 +2110,17 @@ const EventDetail = () => {
 };
 
 const localStyles = StyleSheet.create({
+  referenceHeaderAction: { width: 40, height: 44, alignItems: "center", justifyContent: "center" },
+  referenceCover: { width: "auto", height: 190, borderRadius: 16, marginHorizontal: 18, marginTop: 6, marginBottom: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
+  referenceIntro: { paddingHorizontal: 24 },
+  referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
+  referenceBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, backgroundColor: `${vibesTheme.colors.accentBlue}14` },
+  referenceBadgeText: { color: vibesTheme.colors.accentBlue, fontSize: 13, fontFamily: vibesTheme.fonts.medium },
+  referenceTitle: { color: vibesTheme.colors.primaryText, fontSize: 32, lineHeight: 39, fontFamily: vibesTheme.fonts.extraBold, marginBottom: 18 },
+  referenceMetaRow: { flexDirection: "row", alignItems: "center", gap: 18, minHeight: 60, paddingVertical: 10 },
+  referenceMetaTitle: { color: vibesTheme.colors.primaryText, fontSize: 16, lineHeight: 22, fontFamily: vibesTheme.fonts.semibold },
+  referenceMetaHint: { color: vibesTheme.colors.secondaryText, fontSize: 14, lineHeight: 20 },
+
   publicStateScreen: {
     alignItems: "center",
     justifyContent: "center",
@@ -2414,7 +2260,7 @@ const localStyles = StyleSheet.create({
   eventDetailPanel: {
     marginTop: 0,
     width: "100%",
-    minHeight: 520,
+    minHeight: 0,
     paddingTop: 0,
     paddingHorizontal: 24,
     paddingBottom: 34,
@@ -2490,7 +2336,7 @@ const localStyles = StyleSheet.create({
   eventMiniMapTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   eventMiniMapText: {
     color: TEXT_SECONDARY,
@@ -2713,7 +2559,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
     shadowColor: vibesTheme.colors.primaryText,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.16,
@@ -2882,7 +2728,7 @@ const localStyles = StyleSheet.create({
   },
   footerCheckInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 13,
     lineHeight: 15,
   },
@@ -2935,7 +2781,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   checkInButtonDone: {
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
   },
   checkInButtonDisabled: {
     backgroundColor: "rgba(216, 140, 122, 0.55)",
@@ -2989,7 +2835,7 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
     textAlign: "center",
   },
@@ -3043,7 +2889,7 @@ const localStyles = StyleSheet.create({
   },
   checkInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 18,
   },
   checkInSliderSubtitle: {
@@ -3142,7 +2988,7 @@ const localStyles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 18,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
     marginBottom: 8,
   },
@@ -3202,7 +3048,7 @@ const localStyles = StyleSheet.create({
   },
   participantsModalTitle: {
     fontSize: 20,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
   },
   memberRow: {

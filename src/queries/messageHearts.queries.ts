@@ -37,7 +37,8 @@ export function useMessageHearts(
     enabled: Boolean(
       userId && conversationId && ids.length && focused && active
     ),
-    refetchInterval: focused && active ? 2000 : false,
+    // Was 2s. Only while the chat is focused and the app is foreground.
+    refetchInterval: focused && active ? 30_000 : false,
     queryFn: async () => {
       const rows: Heart[] = [];
       for (let start = 0; start < ids.length; start += 100) {

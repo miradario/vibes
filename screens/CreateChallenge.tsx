@@ -200,7 +200,7 @@ const CreateChallenge = () => {
     const missing: string[] = [];
 
     if (!title.trim()) missing.push("título");
-    if (!subtitle.trim()) missing.push("descripción corta");
+    if (!subtitle.trim()) missing.push("descripción");
     if (!challengeImageUri && !editing?.image) missing.push("foto de portada");
     if (!challengeStartDate && !editing) missing.push("fecha de comienzo");
 
@@ -383,20 +383,18 @@ const CreateChallenge = () => {
               </View>
             ) : null}
 
-            <Text style={localStyles.label}>Descripción corta</Text>
+            <Text style={localStyles.label}>Descripción</Text>
             <TextInput
               ref={subtitleInputRef}
               style={[localStyles.input, localStyles.descriptionInput]}
-              placeholder="Ej: Un hábito diario para sostener en comunidad"
+              placeholder="Contá el objetivo, cómo participar y qué van a hacer cada día."
               placeholderTextColor={TEXT_SECONDARY}
               value={subtitle}
               onChangeText={setSubtitle}
               multiline
               scrollEnabled={false}
               textAlignVertical="top"
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => daysInputRef.current?.focus()}
+              submitBehavior="newline"
             />
 
             <Text style={localStyles.label}>Duración en días</Text>
@@ -630,8 +628,8 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.regular,
   },
   descriptionInput: {
-    minHeight: 92,
-    lineHeight: 23,
+    minHeight: 160,
+    lineHeight: 25,
   },
   coverPicker: {
     marginTop: 6,

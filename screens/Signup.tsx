@@ -1,4 +1,6 @@
+import { hasRegisteredProfile, isAccountAlreadyRegistered } from "../src/auth/signupRouting";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { signupErrorCode, trackAccountCreated, trackSignupEvent } from "../src/lib/signupEvents";
 /** @format */
 
 import React, { useRef, useState } from "react";
@@ -22,9 +24,9 @@ import {
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles from "../assets/styles";
-import VibesHeader from "../src/components/VibesHeader";
+import QuietBrandHeader from "../components/QuietBrandHeader";
+import ScreenContainer from "../components/ScreenContainer";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
@@ -45,7 +47,6 @@ const Signup = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
   const route = useRoute();
-  const insets = useSafeAreaInsets();
   const { draft, updateDraft } = useOnboardingDraft();
   const confirmedBirthDateParam =
     typeof (route.params as { birthDate?: unknown } | undefined)?.birthDate ===
@@ -109,6 +110,14 @@ const Signup = () => {
     }
   }, [confirmedBirthDateParam, draft.birthDate, updateDraft]);
 
+  const openExistingAccountLogin = (accountEmail = email) => {
+    setPassword("");
+    navigation.dispatch(CommonActions.reset({
+      index: 0,
+      routes: [{ name: "Login", params: { email: accountEmail.trim().toLowerCase(), accountExists: true } }],
+    }));
+  };
+
   const handleSignup = async () => {
     if (!acceptedTerms) {
       setError(t("authTerms.required"));
@@ -131,21 +140,28 @@ const Signup = () => {
     }
 
     setError(null);
+    trackSignupEvent("signup_method_selected", { props: { method: "email" } });
 
     try {
       const authResult = await signupMutation.mutateAsync({
         email: email.trim().toLowerCase(),
         password,
       });
+      if (authResult.session?.user?.id && await hasRegisteredProfile(authResult.session.user.id)) {
+        openExistingAccountLogin(authResult.session.user.email ?? email);
+        return;
+      }
       if (confirmedBirthDate) {
         updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
       }
       if (!authResult.session?.user?.id) {
+        trackSignupEvent("signup_failed", { props: { method: "email", error_code: "no_session" } });
         setError(
           "La cuenta se creó, pero falta iniciar sesión. Revisá tu email o intentá ingresar."
         );
         return;
       }
+      trackAccountCreated(authResult.session.user.id, "email");
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
@@ -153,20 +169,21 @@ const Signup = () => {
         })
       );
     } catch (e) {
+      trackSignupEvent("signup_failed", {
+        props: { method: "email", error_code: isAccountAlreadyRegistered(e) ? "already_registered" : signupErrorCode(e) },
+      });
       const rawMessage = e instanceof Error ? e.message : "";
-      const normalizedMessage = rawMessage.toLowerCase();
-      const msg =
-        normalizedMessage.includes("already registered") ||
-        normalizedMessage.includes("already exists") ||
-        normalizedMessage.includes("user already")
-          ? t("signup.accountExists")
-          : rawMessage || t("signup.failed");
-      setError(msg || t("signup.failed"));
+      if (isAccountAlreadyRegistered(e)) {
+        openExistingAccountLogin();
+        return;
+      }
+      setError(rawMessage || t("signup.failed"));
     }
   };
 
   const continueWithSocialSignup = async (provider: SocialProvider) => {
     setError(null);
+    trackSignupEvent("signup_method_selected", { props: { method: provider } });
 
     try {
       const session =
@@ -174,9 +191,14 @@ const Signup = () => {
           ? await googleLoginMutation.mutateAsync()
           : await appleLoginMutation.mutateAsync();
       if (session?.user?.id) {
+        if (await hasRegisteredProfile(session.user.id)) {
+          openExistingAccountLogin(session.user.email ?? email);
+          return;
+        }
         if (confirmedBirthDate) {
           updateDraft({ birthDate: formatBirthDate(confirmedBirthDate) });
         }
+        trackAccountCreated(session.user.id, provider);
         navigation.dispatch(
           CommonActions.reset({
             index: 0,
@@ -185,6 +207,13 @@ const Signup = () => {
         );
       }
     } catch (e) {
+      trackSignupEvent("signup_failed", {
+        props: { method: provider, error_code: isAccountAlreadyRegistered(e) ? "already_registered" : signupErrorCode(e) },
+      });
+      if (isAccountAlreadyRegistered(e)) {
+        openExistingAccountLogin();
+        return;
+      }
       const fallback =
         provider === "google" ? t("signup.googleFailed") : t("signup.appleFailed");
       const msg = e instanceof Error ? e.message : fallback;
@@ -226,7 +255,7 @@ const Signup = () => {
   };
 
   return (
-    <View style={[styles.bg, { paddingTop: insets.top }]}>
+    <ScreenContainer style={styles.bg} edges={["top", "bottom", "left", "right"]}>
       <KeyboardAvoidingView
         style={[styles.loginContainer, localStyles.loginContainer]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -238,11 +267,7 @@ const Signup = () => {
           contentContainerStyle={localStyles.formScrollContent}
         >
           <View style={[styles.loginCard, localStyles.loginCard]}>
-            <VibesHeader
-              title={t("signup.header")}
-              subtitle=""
-              style={localStyles.header}
-            />
+            <QuietBrandHeader compact title={t("signup.title")} />
 
             <GoogleAuthButton
               label={
@@ -259,6 +284,7 @@ const Signup = () => {
             {isAppleAuthAvailable ? (
               <View style={localStyles.appleButton}>
                 <AppleAuthButton
+                  compact
                   type={
                     AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
                   }
@@ -326,7 +352,7 @@ const Signup = () => {
             <View
               style={[
                 localStyles.bottomBlock,
-                { paddingBottom: Math.max(insets.bottom + 10, 22) },
+                { paddingBottom: 22 },
               ]}
             >
               <TouchableOpacity
@@ -408,7 +434,7 @@ const Signup = () => {
         onSecondaryPress={viewTermsFromDialog}
         onClose={closeTermsDialog}
       />
-    </View>
+    </ScreenContainer>
   );
 };
 
@@ -465,6 +491,9 @@ const localStyles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   googleButton: {
+    minHeight: 44,
+    height: 44,
+    borderRadius: 18,
     marginTop: 14,
   },
   appleButton: {
@@ -511,6 +540,12 @@ const localStyles = StyleSheet.create({
     marginTop: 0,
   },
   loginCard: {
+    shadowOpacity: 0,
+    elevation: 0,
+    backgroundColor: vibesTheme.colors.background,
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
     flexGrow: 1,
   },
   formScrollContent: {

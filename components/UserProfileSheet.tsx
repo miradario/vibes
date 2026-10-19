@@ -1,4 +1,6 @@
-import { useNavigation } from "@react-navigation/native";
+import ProfileWithoutPhoto from "./ProfileWithoutPhoto";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import ProfilePhotoPrompt from "./ProfilePhotoPrompt";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { hasProfilePhotos } from "../src/lib/profilePhotos";
@@ -15,6 +17,7 @@ import React, {
 } from "react";
 import {
   Animated,
+  ActivityIndicator,
   AccessibilityInfo,
   Easing,
   FlatList,
@@ -33,13 +36,12 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { LinearGradient } from "expo-linear-gradient";
-import { Image as ExpoImage } from "expo-image";
 import { ArrowLeftToLine, ArrowRightToLine, Link, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
-import ProfileMediaImage from "./ProfileMediaImage";
 import VibesLoader from "./VibesLoader";
+import ProfileMediaImage from "./ProfileMediaImage";
 import type { UserProfileCardData } from "./UserProfileCard";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useSharedActivitiesQuery } from "../src/queries/sharedActivities.queries";
@@ -249,6 +251,15 @@ const GroupedPillList = ({
   </View>
 );
 
+// iOS photo <-> details crossfade timings (ms / px).
+const IOS_DETAILS_FADE_IN_MS = 220;
+const IOS_DETAILS_RISE_MS = 240;
+const IOS_DETAILS_FADE_OUT_MS = 200;
+const IOS_DETAILS_OFFSET_Y = 14;
+const IOS_DETAILS_PREWARM_MS = 450;
+// Module-level so its identity is stable across renders.
+const IOS_DETAILS_EASING = Easing.out(Easing.cubic);
+
 const UserProfileSheet = ({
   visible,
   enableSwipe = false,
@@ -270,7 +281,8 @@ const UserProfileSheet = ({
   const { data: session } = useAuthSession();
   const navigation = useNavigation();
   const { data: ownProfile } = useProfileQuery(session?.user.id);
-  const canViewPhotos = profile?.id === session?.user.id || hasProfilePhotos(ownProfile);
+  const isOwnProfile = Boolean(profile?.id && profile.id === session?.user?.id);
+  const canViewPhotos = isOwnProfile || hasProfilePhotos(ownProfile);
   const { data: sharedActivities } = useSharedActivitiesQuery(
     session?.user?.id,
     profile?.id
@@ -297,10 +309,108 @@ const UserProfileSheet = ({
     currentProfileId.current = profile?.id;
   }, [profile?.id]);
   const [swipeNextProfile, setSwipeNextProfile] = useState<UserProfileCardData | null>(null);
+  const previousProfileRef = useRef(profile);
+  const [handoffProfile, setHandoffProfile] = useState<UserProfileCardData | null>(null);
+  useLayoutEffect(() => {
+    const previous = previousProfileRef.current;
+    if (visible && previous && previous.id !== profile?.id) setHandoffProfile(previous);
+    if (!visible) setHandoffProfile(null);
+    previousProfileRef.current = profile;
+  }, [profile, visible]);
+  const transitionProfile = swipeNextProfile?.id === profile?.id
+    ? swipeNextProfile
+    : handoffProfile ?? swipeNextProfile ?? nextProfile;
+  const holdingPhoto = Boolean(handoffProfile || (swipeNextProfile && swipeNextProfile.id === profile?.id));
+
   const [swipeAnimating, setSwipeAnimating] = useState(false);
+  const openingProfileId = useRef<string | undefined>(undefined);
+  const wasVisible = useRef(false);
+  const [isFollowingProfile, setIsFollowingProfile] = useState(false);
   const [photoReadyId, setPhotoReadyId] = useState<string | undefined>(undefined);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const openingScale = useRef(new Animated.Value(1)).current;
+  const connectBounce = useRef(new Animated.Value(0)).current;
+  const profileFocused = useIsFocused();
+  const { active: appActive, reducedMotion: runtimeReducedMotion, motionReady } = useVibiRuntime();
   useEffect(() => {
+    connectBounce.stopAnimation();
+    connectBounce.setValue(0);
+    if (!visible || !profileFocused || !appActive || !motionReady || runtimeReducedMotion || reduceMotion || actionPending || swipeAnimating) return;
+    const bounce = Animated.loop(Animated.sequence([
+      Animated.delay(2400),
+      Animated.timing(connectBounce, { toValue: -4, duration: 380, easing: Easing.out(Easing.quad), useNativeDriver: true, isInteraction: false }),
+      Animated.timing(connectBounce, { toValue: 0, duration: 580, easing: Easing.out(Easing.bounce), useNativeDriver: true, isInteraction: false }),
+    ]));
+    bounce.start();
+    return () => bounce.stop();
+  }, [visible, profileFocused, appActive, motionReady, runtimeReducedMotion, reduceMotion, actionPending, swipeAnimating, connectBounce]);
+
+  // iOS only: photo <-> details crossfade. Forward, the details fade in ON
+  // TOP of the untouched photo (one opacity animation, no gap showing the
+  // background); the photo and its name/buttons/gradient are hidden only once
+  // the details fully cover them. Going back, the photo is restored instantly
+  // underneath and the details fade out on top. Android unchanged.
+  const isIOS = Platform.OS === "ios";
+  const iosPhotoOpacity = useMemo(() => new Animated.Value(1), [profile?.id]);
+  // True once the details fully cover the photo (iOS forward transition done).
+  const [iosDetailsBgReady, setIosDetailsBgReady] = useState(false);
+  useEffect(() => {
+    if (!isIOS) return;
+    if (!detailsVisible) {
+      // Mirror of the forward path: put the photo (and its chrome + dark
+      // background) back instantly UNDER the still-opaque details, which then
+      // fade out on top. One opacity animation, nothing ever exposes the
+      // background.
+      iosPhotoOpacity.stopAnimation();
+      iosPhotoOpacity.setValue(1);
+      setIosDetailsBgReady(false);
+      return;
+    }
+    iosPhotoOpacity.stopAnimation();
+    iosPhotoOpacity.setValue(1);
+    const timer = setTimeout(() => {
+      iosPhotoOpacity.setValue(0);
+      setIosDetailsBgReady(true);
+    }, reduceMotion ? 0 : IOS_DETAILS_RISE_MS);
+    return () => clearTimeout(timer);
+  }, [isIOS, detailsVisible, iosPhotoOpacity, reduceMotion]);
+  // What used to hide instantly on tap (gradient, name/buttons overlay) waits
+  // on iOS until the details cover the photo, so nothing pops before the fade.
+  const photoChromeHidden = isIOS ? detailsVisible && iosDetailsBgReady : detailsVisible;
+  // iOS only: mount the details panel (hidden) shortly after the profile opens,
+  // so tapping into the details doesn't wait for that heavy first render.
+  const [iosDetailsPrewarmedId, setIosDetailsPrewarmedId] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!isIOS || !visible || !profile?.id) return;
+    const id = profile.id;
+    const timer = setTimeout(() => setIosDetailsPrewarmedId(id), IOS_DETAILS_PREWARM_MS);
+    return () => clearTimeout(timer);
+  }, [isIOS, visible, profile?.id]);
+  const detailsScrollRef = useRef<ScrollView>(null);
+  useLayoutEffect(() => {
+    openingScale.stopAnimation();
+    if (!visible || reduceMotion) {
+      openingScale.setValue(1);
+      return;
+    }
+    openingScale.setValue(0.86);
+    const animation = Animated.timing(openingScale, {
+      toValue: 1,
+      duration: 380,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+      isInteraction: false,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [visible, reduceMotion, openingScale]);
+  useEffect(() => {
+    // iOS crossfades instead: the photo stays full height (hidden behind the
+    // details), avoiding a 420ms JS-driven layout animation on every tap.
+    if (isIOS) {
+      photoHeight.setValue(height);
+      return;
+    }
     const animation = Animated.timing(photoHeight, {
       toValue: detailsVisible ? compactPhotoHeight : height,
       duration: reduceMotion ? 0 : 420,
@@ -309,7 +419,7 @@ const UserProfileSheet = ({
     });
     animation.start();
     return () => animation.stop();
-  }, [compactPhotoHeight, detailsVisible, height, photoHeight, reduceMotion]);
+  }, [compactPhotoHeight, detailsVisible, height, isIOS, photoHeight, reduceMotion]);
   useEffect(() => {
     let active = true;
     void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
@@ -326,8 +436,14 @@ const UserProfileSheet = ({
   }, []);
   useLayoutEffect(() => () => swipeX.stopAnimation(), [swipeX]);
   useLayoutEffect(() => {
+    if (!visible) {
+      wasVisible.current = false;
+      return;
+    }
+    if (!wasVisible.current) openingProfileId.current = profile?.id;
+    wasVisible.current = true;
+    setIsFollowingProfile(profile?.id !== openingProfileId.current);
     // Keep the outgoing card offscreen while the modal closes.
-    if (!visible) return;
     setDetailsVisible(false);
     swipingRef.current = false;
     setSwipeAnimating(false);
@@ -350,10 +466,11 @@ const UserProfileSheet = ({
       if (actionPending || swipingRef.current) return;
       const action =
         direction === "like" ? onContactPress : onSecondaryActionPress;
-      if (!action) {
+      if (!action || isOwnProfile) {
         resetSwipe();
         return;
       }
+      if (direction === "like" && !reduceMotion) setBurst(value => value + 1);
       if (!enableSwipe) {
         void action();
         return;
@@ -391,6 +508,7 @@ const UserProfileSheet = ({
     },
     [
       actionPending,
+      isOwnProfile,
       onContactPress,
       onSecondaryActionPress,
       enableSwipe,
@@ -404,7 +522,6 @@ const UserProfileSheet = ({
   );
   const like = () => {
     if (!actionPending && !swipingRef.current) {
-      if (!reduceMotion) setBurst((value) => value + 1);
       commitSwipe("like");
     }
   };
@@ -452,9 +569,6 @@ const UserProfileSheet = ({
           } else if (action === "next") {
             onNextActionPress?.();
           } else if (action) {
-            if (action === "like" && !reduceMotion) {
-              setBurst((value) => value + 1);
-            }
             commitSwipe(action);
           } else {
             resetSwipe();
@@ -486,20 +600,12 @@ const UserProfileSheet = ({
     () => canViewPhotos ? normalizeProfileImages(profile) : [],
     [profile, canViewPhotos]
   );
+  const withoutPhoto = normalizeProfileImages(profile).length === 0;
   const hasMultipleImages = profileImages.length > 1;
   const safeActiveIndex = Math.min(
     activeIndex,
     Math.max(profileImages.length - 1, 0)
   );
-  const upcomingPhotoUrls = JSON.stringify(Array.from(new Set([
-    ...profileImages.slice(Math.max(0, safeActiveIndex - 1), safeActiveIndex + 3),
-    ...(canViewPhotos ? normalizeProfileImages(nextProfile ?? null).slice(0, 1) : []),
-  ].flatMap((source) => typeof source === "object" && source && "uri" in source && source.uri ? [source.uri] : []))));
-  useEffect(() => {
-    if (!visible) return;
-    const urls: string[] = JSON.parse(upcomingPhotoUrls);
-    if (urls.length) void ExpoImage.prefetch(urls, { cachePolicy: "memory-disk" }).catch(() => {});
-  }, [visible, upcomingPhotoUrls]);
   const preferences = useMemo(
     () =>
       Array.from(
@@ -560,6 +666,7 @@ const UserProfileSheet = ({
 
   useLayoutEffect(() => {
     setActiveIndex(0);
+    setBurst(0);
     setDetailsVisible(false);
     panelDragY.setValue(0);
     requestAnimationFrame(() =>
@@ -576,6 +683,15 @@ const UserProfileSheet = ({
       })
     );
   }, [profileImages.length, safeActiveIndex, width]);
+
+  // iOS: the details stay mounted between openings, so reset them to the top
+  // and to the current photo right before they fade in.
+  useLayoutEffect(() => {
+    if (!isIOS || !detailsVisible) return;
+    detailsScrollRef.current?.scrollTo({ y: 0, animated: false });
+    detailsGalleryRef.current?.scrollToOffset({ offset: safeActiveIndex * width, animated: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIOS, detailsVisible]);
 
   const closeDetails = useCallback(() => setDetailsVisible(false), [setDetailsVisible]);
   const showDetails = () => {
@@ -634,10 +750,10 @@ const UserProfileSheet = ({
             <View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon]}>
               <ArrowRightToLine size={44} color={vibesTheme.colors.accentBlue} strokeWidth={2.5} />
             </View>
-            {!onPanel && <Text style={localStyles.vibeActionLabel}>{nextActionLabel}</Text>}
+            {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>{nextActionLabel}</Text>}
           </TouchableOpacity>
         ) : null}
-        {onContactPress && (
+        {onContactPress && !isOwnProfile && (
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={`Conectar con ${
@@ -648,10 +764,10 @@ const UserProfileSheet = ({
             onPress={like}
             style={[localStyles.vibeAction, onPanel && localStyles.floatingProfileAction]}
           >
-            <View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon]}>
+            <Animated.View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon, { transform: [{ translateY: connectBounce }] }]}>
               <Link size={48} color={vibesTheme.colors.accentMustard} strokeWidth={2.5} />
-            </View>
-            {!onPanel && <Text style={localStyles.vibeActionLabel}>
+            </Animated.View>
+            {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>
               {actionPending ? "Guardando…" : "Conectar"}
             </Text>}
           </TouchableOpacity>
@@ -673,7 +789,7 @@ const UserProfileSheet = ({
             >
               <ArrowLeftToLine size={44} color={vibesTheme.colors.accentCoral} strokeWidth={2.5} />
             </View>
-            {!onPanel && <Text style={localStyles.vibeActionLabel}>{secondaryActionLabel}</Text>}
+            {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>{secondaryActionLabel}</Text>}
           </TouchableOpacity>
         )}
 
@@ -694,11 +810,11 @@ const UserProfileSheet = ({
         offsetY={0}
         sheetInDelay={0}
         sheetInOpacityDuration={0}
-        sheetStyle={[localStyles.fullscreenSheet, { flex: 1 }, detailsVisible && { backgroundColor: vibesTheme.colors.background }]}
+        sheetStyle={[localStyles.fullscreenSheet, { flex: 1 }, detailsVisible && (!isIOS || iosDetailsBgReady) && { backgroundColor: vibesTheme.colors.background }]}
       >
         {profileImages.length > 0 && photoReadyId !== profile.id && !swipeNextProfile ? (
           <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { alignItems: "center", justifyContent: "center" }]} accessibilityLabel="Cargando perfil">
-            <VibesLoader size={64} />
+            {isFollowingProfile ? <VibesLoader /> : <ActivityIndicator size="small" color={vibesTheme.colors.accentBlue} />}
           </View>
         ) : null}
         <View
@@ -706,7 +822,7 @@ const UserProfileSheet = ({
           style={StyleSheet.absoluteFillObject}
           onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
         />
-        {enableSwipe && (!detailsVisible || swipeAnimating) && (swipeNextProfile ?? nextProfile) ? (
+        {(enableSwipe || holdingPhoto) && (!detailsVisible || swipeAnimating) && transitionProfile ? (
           <Animated.View
             pointerEvents="none"
             accessibilityElementsHidden
@@ -717,17 +833,20 @@ const UserProfileSheet = ({
                 backgroundColor: PROFILE_PHOTO_BACKGROUND,
                 // Reveal the next card as soon as the current photo is ready,
                 // so dragging exposes it without waiting for the release.
-                opacity: photoReadyId === profile.id || !profileImages.length || swipeNextProfile ? 1 : 0,
+                opacity: holdingPhoto || photoReadyId === profile.id || !profileImages.length || swipeNextProfile ? 1 : 0,
               },
             ]}
           >
+            {normalizeProfileImages(transitionProfile).length === 0 ? <ProfileWithoutPhoto active={false} name={transitionProfile.name} age={transitionProfile.age} zodiac={transitionProfile.zodiac} /> : <>
             <ProfileMediaImage
-                key={`next-profile-${(swipeNextProfile ?? nextProfile)?.id}`}
+                loadingVariant="vibes"
+                key={`next-profile-${transitionProfile?.id}`}
+                previewSource={canViewPhotos && transitionProfile?.hasPhotos !== false ? transitionProfile?.image : undefined}
                 contentFit="cover"
                 blurBackground
                 showLoading
               source={
-                (canViewPhotos ? normalizeProfileImages(swipeNextProfile ?? nextProfile ?? null)[0] : undefined) ??
+                (canViewPhotos ? normalizeProfileImages(transitionProfile ?? null)[0] : undefined) ??
                 VIBES_FALLBACK_ILLUSTRATION
               }
               style={{ width, height }}
@@ -744,10 +863,12 @@ const UserProfileSheet = ({
               ]}
             >
               <Text style={localStyles.profileName} numberOfLines={2}>
-                {(swipeNextProfile ?? nextProfile)?.name}
-                {(swipeNextProfile ?? nextProfile)?.age ? `, ${(swipeNextProfile ?? nextProfile)?.age}` : ""}
+                {transitionProfile?.name}
+                {transitionProfile?.age ? `, ${transitionProfile?.age}` : ""}
               </Text>
             </LinearGradient>
+            </>}
+
           </Animated.View>
         ) : null}
         <Animated.View style={{ height: photoHeight }}>
@@ -756,7 +877,9 @@ const UserProfileSheet = ({
           style={[
             localStyles.screen,
             {
-              opacity: !detailsVisible && (!profileImages.length || photoReadyId === profile.id) ? 1 : 0,
+              opacity: isIOS
+                ? (!holdingPhoto || photoReadyId === profile.id || !profileImages.length ? iosPhotoOpacity : 0)
+                : !detailsVisible && (!holdingPhoto || photoReadyId === profile.id || !profileImages.length) ? 1 : 0,
               transform: [
                 { translateX: swipeX },
                 {
@@ -773,10 +896,11 @@ const UserProfileSheet = ({
           ]}
           {...swipe.panHandlers}
         >
+          <Animated.View style={[StyleSheet.absoluteFillObject, { transform: [{ scale: openingScale }] }]}>
           {profileImages.length > 0 ? (
             enableSwipe ? (
               <View style={StyleSheet.absoluteFillObject}>
-                {profileImages.map((source, index) => (
+                {profileImages.map((source, index) => Math.abs(index - safeActiveIndex) <= 1 ? (
                   <View
                     key={`${profile.id ?? profile.name}-${getImageKey(source, index)}`}
                     pointerEvents="none"
@@ -785,12 +909,15 @@ const UserProfileSheet = ({
                     style={[StyleSheet.absoluteFillObject, { opacity: index === safeActiveIndex ? 1 : 0 }]}
                   >
                     <ProfileMediaImage
+                loadingVariant={isFollowingProfile ? "vibes" : "spinner"}
                       contentFit="cover" blurBackground showLoading
+                      previewSource={canViewPhotos && profile.hasPhotos !== false ? (index === 0 ? profile.image : profileImages[index - 1]) : undefined}
                       priority={index === safeActiveIndex ? "high" : "low"}
                       onDisplay={() => {
                         if (currentProfileId.current !== profile.id) return;
                         if (index === safeActiveIndex) {
                           setPhotoReadyId(profile.id);
+                          setHandoffProfile(null);
                           if (!swipingRef.current) {
                             setSwipeNextProfile((previous) => previous?.id === profile.id ? null : previous);
                           }
@@ -803,7 +930,7 @@ const UserProfileSheet = ({
                       transition={0}
                     />
                   </View>
-                ))}
+                ) : null)}
               </View>
             ) : (
             <FlatList
@@ -821,11 +948,17 @@ const UserProfileSheet = ({
               renderItem={({ item, index }) => (
                 <Animated.View style={{ width, height: photoHeight }}>
                   <ProfileMediaImage
+                loadingVariant={isFollowingProfile ? "vibes" : "spinner"}
                 contentFit="cover"
                 blurBackground
                 showLoading
+                    previewSource={canViewPhotos && profile.hasPhotos !== false ? (index === 0 ? profile.image : profileImages[index - 1]) : undefined}
                     onDisplay={() => {
-                      if (index === safeActiveIndex) setPhotoReadyId(profile.id);
+                      if (currentProfileId.current !== profile.id) return;
+                      if (index === safeActiveIndex) {
+                        setPhotoReadyId(profile.id);
+                        setHandoffProfile(null);
+                      }
                     }}
                     source={item}
                     style={StyleSheet.absoluteFillObject}
@@ -842,19 +975,13 @@ const UserProfileSheet = ({
             />
             )
           ) : (
-            <View style={localStyles.fallbackCanvas}>
-              <Image
-                source={VIBES_FALLBACK_ILLUSTRATION}
-                resizeMode="contain"
-                style={localStyles.fallbackIllustration}
-                accessibilityLabel="Logo de Vibes"
-              />
-            </View>
+            withoutPhoto ? <ProfileWithoutPhoto active={visible && !photoChromeHidden} name={profile.name} age={profile.age} zodiac={profile.zodiac} /> : <View style={localStyles.fallbackCanvas}><Icon name="person-outline" size={72} color={vibesTheme.colors.secondaryText} /></View>
           )}
 
+          </Animated.View>
           {!canViewPhotos ? (
             <View style={{ position: "absolute", left: 20, right: 20, top: insets.top + 60, zIndex: 10 }}>
-              <ProfilePhotoPrompt onPress={() => { onClose(); navigation.navigate("EditProfile" as never); }} />
+              <ProfilePhotoPrompt onPress={() => { onClose(); navigation.navigate("EditProfile" as never, { photoRequestId: Date.now() } as never); }} />
             </View>
           ) : null}
 
@@ -874,13 +1001,13 @@ const UserProfileSheet = ({
             pointerEvents="none"
             colors={PROFILE_PHOTO_GRADIENT}
             locations={[0, 0.55, 1]}
-            style={[localStyles.bottomGradient, detailsVisible && { opacity: 0 }]}
+            style={[localStyles.bottomGradient, (photoChromeHidden || withoutPhoto) && { opacity: 0 }]}
           />
 
           <LinearGradient
             pointerEvents="none"
             colors={["#00000080", "#00000000"]}
-            style={[localStyles.topGradient, { height: insets.top + 120 }]}
+            style={[localStyles.topGradient, { height: insets.top + 120, opacity: withoutPhoto ? 0 : 1 }]}
           />
 
           <TouchableOpacity
@@ -891,7 +1018,7 @@ const UserProfileSheet = ({
             hitSlop={8}
             style={[localStyles.closeButton, { top: insets.top + 4 }]}
           >
-            <X size={44} color={vibesTheme.colors.background} strokeWidth={2.5} />
+            <X size={44} color={vibesTheme.colors.accentMustard} strokeWidth={2.5} />
           </TouchableOpacity>
 
           {profileImages.length > 0 ? (
@@ -915,13 +1042,14 @@ const UserProfileSheet = ({
             </>
           ) : null}
 
-          {!detailsVisible && <View
+          {!photoChromeHidden && <View
+            pointerEvents={detailsVisible ? "none" : undefined}
             style={[
               localStyles.profileOverlay,
               { paddingBottom: Math.max(insets.bottom, 4) },
             ]}
           >
-            <View style={localStyles.nameRow}>
+            <View style={[localStyles.nameRow, withoutPhoto && { display: "none" } ]}>
               <View style={localStyles.nameCopy}>
                 <Text style={localStyles.profileName} numberOfLines={2}>
                   {nameWithAge}
@@ -939,38 +1067,15 @@ const UserProfileSheet = ({
               onPress={showDetails}
               style={localStyles.galleryHint}
             >
-              <Icon name="chevron-up" size={32} color={vibesTheme.colors.background} />
+              {withoutPhoto ? <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 15 }}>Ver perfil completo</Text> : null}
+              <Icon name="chevron-up" size={32} color={withoutPhoto ? vibesTheme.colors.accentBlue : vibesTheme.colors.background} />
             </TouchableOpacity>
           </View>}
         </Animated.View>
         </Animated.View>
-        <LikeBubbles trigger={burst} />
+        <LikeBubbles trigger={burst} showConfirmation />
         {enableSwipe && (
           <View pointerEvents="none" style={localStyles.swipeIndicators}>
-            <Animated.View
-              style={[
-                localStyles.swipeStamp,
-                {
-                  borderColor: vibesTheme.colors.accentMustard,
-                  transform: [
-                    {
-                      scale: swipeX.interpolate({
-                        inputRange: [0, 120],
-                        outputRange: [0.65, 1.5],
-                        extrapolate: "clamp",
-                      }),
-                    },
-                  ],
-                  opacity: swipeX.interpolate({
-                    inputRange: [0, 85],
-                    outputRange: [0, 1],
-                    extrapolate: "clamp",
-                  }),
-                },
-              ]}
-            >
-              <Icon name="checkmark" size={42} color={vibesTheme.colors.primaryText} />
-            </Animated.View>
             <Animated.View
               style={[
                 localStyles.swipeStamp,
@@ -978,22 +1083,60 @@ const UserProfileSheet = ({
                   borderColor: vibesTheme.colors.accentBlue,
                   transform: [
                     {
+                      translateX: swipeX.interpolate({
+                        inputRange: [0, width * 0.45],
+                        outputRange: [Math.max(0, width / 2 - 64), 0],
+                        extrapolate: "clamp",
+                      }),
+                    },
+                    {
                       scale: swipeX.interpolate({
-                        inputRange: [-120, 0],
-                        outputRange: [1.5, 0.65],
+                        inputRange: [0, 120],
+                        outputRange: [0.8, 1],
                         extrapolate: "clamp",
                       }),
                     },
                   ],
                   opacity: swipeX.interpolate({
-                    inputRange: [-85, 0],
+                    inputRange: [16, 100],
+                    outputRange: [0, 1],
+                    extrapolate: "clamp",
+                  }),
+                },
+              ]}
+            >
+              <Icon name="checkmark" size={36} color={vibesTheme.colors.accentBlue} />
+            </Animated.View>
+            <Animated.View
+              style={[
+                localStyles.swipeStamp,
+                {
+                  borderColor: vibesTheme.colors.accentCoral,
+                  transform: [
+                    {
+                      translateX: swipeX.interpolate({
+                        inputRange: [-width * 0.45, 0],
+                        outputRange: [0, -Math.max(0, width / 2 - 64)],
+                        extrapolate: "clamp",
+                      }),
+                    },
+                    {
+                      scale: swipeX.interpolate({
+                        inputRange: [-120, 0],
+                        outputRange: [1, 0.8],
+                        extrapolate: "clamp",
+                      }),
+                    },
+                  ],
+                  opacity: swipeX.interpolate({
+                    inputRange: [-100, -16],
                     outputRange: [1, 0],
                     extrapolate: "clamp",
                   }),
                 },
               ]}
             >
-              <Icon name="close" size={42} color={vibesTheme.colors.primaryText} />
+              <Icon name="close" size={36} color={vibesTheme.colors.accentCoral} />
             </Animated.View>
           </View>
         )}
@@ -1007,12 +1150,14 @@ const UserProfileSheet = ({
           visible={visible && detailsVisible}
           onClose={closeDetails}
           closeOnBackdropPress={false}
-          offsetY={reduceMotion ? 0 : 28}
+          offsetY={reduceMotion ? 0 : isIOS ? IOS_DETAILS_OFFSET_Y : 28}
           sheetInDelay={0}
-          sheetInDuration={reduceMotion ? 0 : 300}
-          sheetOutDuration={reduceMotion ? 0 : 240}
-          sheetInOpacityDuration={reduceMotion ? 0 : 220}
-          sheetOutOpacityDuration={reduceMotion ? 0 : 180}
+          sheetInDuration={reduceMotion ? 0 : isIOS ? IOS_DETAILS_RISE_MS : 300}
+          sheetOutDuration={reduceMotion ? 0 : isIOS ? IOS_DETAILS_FADE_OUT_MS : 240}
+          sheetInOpacityDuration={reduceMotion ? 0 : isIOS ? IOS_DETAILS_FADE_IN_MS : 220}
+          sheetOutOpacityDuration={reduceMotion ? 0 : isIOS ? IOS_DETAILS_FADE_OUT_MS : 180}
+          sheetEasing={isIOS ? IOS_DETAILS_EASING : undefined}
+          keepMounted={isIOS && iosDetailsPrewarmedId === profile.id}
           backdropColor="transparent"
           sheetStyle={[
             localStyles.detailsSheet,
@@ -1021,6 +1166,7 @@ const UserProfileSheet = ({
         >
           <View style={localStyles.detailsPanel}>
             <ScrollView
+              ref={detailsScrollRef}
               style={localStyles.detailsScroll}
               alwaysBounceVertical
               refreshControl={
@@ -1067,7 +1213,8 @@ const UserProfileSheet = ({
                     renderItem={({ item, index }) => (
                       <View style={{ width, height: compactPhotoHeight }}>
                         <ProfileMediaImage source={item} style={StyleSheet.absoluteFillObject}
-                          contentFit="contain" blurBackground showLoading transition={0}
+                          contentFit="contain" blurBackground={!isIOS} showLoading={!isIOS} transition={0}
+                          previewSource={isIOS && canViewPhotos && profile.hasPhotos !== false ? item : undefined}
                           fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND} />
                         {hasMultipleImages ? (
                           <View style={[StyleSheet.absoluteFillObject, { flexDirection: "row" }]}>
@@ -1203,11 +1350,11 @@ const localStyles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     left: 24,
     right: 24,
-    flexDirection: "row-reverse",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
   },
   swipeStamp: {
+    position: "absolute",
     width: 72,
     height: 72,
     alignItems: "center",

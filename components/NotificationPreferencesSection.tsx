@@ -1,16 +1,6 @@
+import VibesLoader from "./VibesLoader";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  AppState,
-  Linking,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Switch,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, AppState, Linking, Platform, Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Notifications from "expo-notifications";
 import { useQueryClient } from "@tanstack/react-query";
@@ -214,8 +204,7 @@ export default function NotificationPreferencesSection() {
             </>
           ) : (
             <View style={s.row}>
-              <ActivityIndicator color={colors.primaryText} />
-              <Text style={s.description}>{t("configuration.loading")}</Text>
+              <VibesLoader />
             </View>
           )}
         </View>
@@ -402,11 +391,11 @@ export default function NotificationPreferencesSection() {
             }}
             style={[s.option, timing === option && s.selected]}
           >
-            <Text style={[s.label, s.flex]}>
+            <Text style={[s.label, s.flex, timing === option && { color: colors.surface }]}>
               {t(`configuration.${reminderTimingLabel[option]}`)}
             </Text>
             {timing === option ? (
-              <Icon name="checkmark" size={22} color={colors.primaryText} />
+              <Icon name="checkmark" size={22} color={colors.surface} />
             ) : null}
           </Pressable>
         ))}

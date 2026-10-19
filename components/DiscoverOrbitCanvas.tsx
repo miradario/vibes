@@ -1,9 +1,11 @@
+import { discoverProfileColor } from "../src/lib/discoverProfileColor";
 import { stepBubbles, type BubbleBody } from "../src/lib/bubblePhysics";
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
   LayoutChangeEvent,
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -22,9 +24,12 @@ import Animated, {
 import type { DataT } from "../types";
 import styles from "../assets/styles";
 import Avatar from "./Avatar";
+import VibesLoader from "./VibesLoader";
+import { discoverPhotoReadiness } from "../src/lib/discoverPhotoReadiness";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const getImageUri = (value: unknown): string | null => {
+  if (typeof value === "string") return value.trim() || null;
   if (!value || typeof value !== "object" || !("uri" in value)) {
     return null;
   }
@@ -61,6 +66,7 @@ type OrbitNodeProps = {
 };
 
 type DiscoverOrbitCanvasProps = {
+  loading?: boolean;
   users: DataT[];
   dismissedUsers?: DataT[];
   centerUser?: DataT | null;
@@ -135,35 +141,21 @@ const OrbitNode = ({
   );
 };
 
-function CollidingBubble({
-  bodies,
-  index,
-  size,
-  children,
-}: {
-  bodies: SharedValue<BubbleBody[]>;
-  index: number;
-  size: number;
-  children: React.ReactNode;
+function CollidingBubble({ bodies, index, size, children }: {
+  bodies: SharedValue<BubbleBody[]>; index: number; size: number; children: React.ReactNode;
 }) {
   const style = useAnimatedStyle(() => {
     const body = bodies.value[index];
-    return {
-      opacity: body ? 1 : 0,
-      transform: [
-        { translateX: body ? body.x + (body.width - size) / 2 : 0 },
-        { translateY: body?.y ?? 0 },
-      ],
-    };
+    return { opacity: body ? 1 : 0, transform: [
+      { translateX: body ? body.x + (body.width - size) / 2 : 0 },
+      { translateY: body?.y ?? 0 },
+    ] };
   });
-  return (
-    <Animated.View style={[styles.discoverOrbitUserBubble, style]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[styles.discoverOrbitUserBubble, style]}>{children}</Animated.View>;
 }
 
 const DiscoverOrbitCanvas = ({
+  loading = false,
   users,
   dismissedUsers = [],
   centerUser,
@@ -174,7 +166,22 @@ const DiscoverOrbitCanvas = ({
   const window = useWindowDimensions();
   const focused = useIsFocused();
   const reducedMotion = useReducedMotion();
-  const motionActive = focused && !reducedMotion;
+  const [photoStatus, setPhotoStatus] = useState<Record<string, boolean>>({});
+  const [photoAttempt, setPhotoAttempt] = useState(0);
+  const photoKey = (user: DataT) => `${user.id}:${getAvatarUri(user) ?? ""}`;
+  const readiness = discoverPhotoReadiness(users.map(user => ({ key: photoKey(user), uri: getAvatarUri(user) })), photoStatus);
+  const photoFailed = readiness.failed;
+  const pendingPhotos = readiness.pending.join("|");
+  useEffect(() => {
+    if (!pendingPhotos || !focused) return;
+    const timer = setTimeout(() => setPhotoStatus(previous => {
+      const next = { ...previous };
+      for (const key of pendingPhotos.split("|")) if (next[key] === undefined) next[key] = false;
+      return next;
+    }), 15000);
+    return () => clearTimeout(timer);
+  }, [pendingPhotos, focused, photoAttempt]);
+  const motionActive = focused && !reducedMotion && !loading;
   const [layout, setLayout] = useState({ width: 0, height: 0 });
 
   const centerSpin = useSharedValue(0);
@@ -290,15 +297,27 @@ const DiscoverOrbitCanvas = ({
 
   return (
     <View style={styles.discoverOrbitScreen} onLayout={handleLayout}>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[vibesTheme.colors.background, "rgba(110, 110, 110, 0.10)", vibesTheme.colors.background]}
-        locations={[0, 0.55, 1]}
-        style={StyleSheet.absoluteFill}
-      />
+      {loading ? <View style={[StyleSheet.absoluteFill, { zIndex: 10, backgroundColor: vibesTheme.colors.background, alignItems: "center", justifyContent: "center" }]}>
+        <VibesLoader size={48} accessibilityLabel="Cargando perfiles" />
+      </View> : null}
+      {!loading && photoFailed ? <View style={{ position: "absolute", zIndex: 10, bottom: 0, alignSelf: "center", borderRadius: 18, backgroundColor: vibesTheme.colors.background }}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => { setPhotoStatus({}); setPhotoAttempt(value => value + 1); }} style={{ padding: 12 }}>
+          <Text style={{ color: vibesTheme.colors.accentBlue }}>Reintentar fotos</Text>
+        </TouchableOpacity>
+      </View> : null}
+      {Platform.OS === "ios" ? null : (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[
+            vibesTheme.colors.background,
+            "rgba(110, 110, 110, 0.10)",
+            vibesTheme.colors.background,
+          ]}
+          locations={[0, 0.55, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <View style={{ flex: 1, overflow: "hidden" }}>
-        <View pointerEvents="none" style={localStyles.ambientGlowMustard} />
-        <View pointerEvents="none" style={localStyles.ambientGlowBlue} />
         <View pointerEvents="none" style={localStyles.sparkleOne} />
         <View pointerEvents="none" style={localStyles.sparkleTwo} />
 
@@ -352,6 +371,7 @@ const DiscoverOrbitCanvas = ({
                 onPress={() => (onDismissedUserPress ?? onUserPress)(user)}
                 style={[
                   localStyles.dismissedDot,
+                  { borderColor: discoverProfileColor(user.gender) },
                   {
                     width: config.size,
                     height: config.size,
@@ -396,23 +416,14 @@ const DiscoverOrbitCanvas = ({
                     },
                   ]}
                 >
-                  <View style={localStyles.userBubbleGlow} />
-                  <View style={styles.discoverOrbitUserRing}>
-                    <LinearGradient
-                      pointerEvents="none"
-                      colors={[
-                        "rgba(254, 254, 253, 0.96)",
-                        "rgba(244, 163, 64, 0.2)",
-                        "rgba(57, 120, 184, 0.24)",
-                      ]}
-                      style={StyleSheet.absoluteFill}
-                    />
+                  <View style={[styles.discoverOrbitUserRing, { borderWidth: 2, borderColor: discoverProfileColor(user.gender) }]}>
                     <Avatar
                       uri={getAvatarUri(user)}
-                      size={Math.max(config.size - 10, 18)}
+                      version={photoAttempt || undefined}
+                      onReady={failed => { const key = photoKey(user); setPhotoStatus(previous => previous[key] === !failed ? previous : { ...previous, [key]: !failed }); }}
+                      size={Math.max(config.size - 4, 18)}
                       style={styles.discoverOrbitUserImage}
                     />
-                    <View style={localStyles.userBubbleHighlight} />
                   </View>
                 </View>
                 {userPresenceLabel ? (
@@ -445,24 +456,6 @@ export default DiscoverOrbitCanvas;
 const localStyles = {
   userBubbleTouch: {
     alignItems: "center" as const,
-  },
-  ambientGlowMustard: {
-    position: "absolute" as const,
-    right: -52,
-    top: 34,
-    width: 210,
-    height: 210,
-    borderRadius: 105,
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
-  },
-  ambientGlowBlue: {
-    position: "absolute" as const,
-    left: -64,
-    bottom: 72,
-    width: 230,
-    height: 230,
-    borderRadius: 115,
-    backgroundColor: "rgba(57, 120, 184, 0.2)",
   },
   sparkleOne: {
     position: "absolute" as const,
@@ -504,7 +497,7 @@ const localStyles = {
     elevation: 2,
   },
   dismissedAvatar: {
-    opacity: 0.82,
+    opacity: 1,
   },
   userBubbleGlow: {
     position: "absolute" as const,

@@ -1,7 +1,6 @@
+import SessionRecoveryAction from "../components/SessionRecoveryAction";
 import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
-import { preloadVibi } from "../components/Vibi";
-import { welcomeModelBounds } from "../src/vibi/welcomeIntro";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import {
   CommonActions,
@@ -9,7 +8,10 @@ import {
   useNavigation,
 } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
-import CalmPause from "../components/CalmPause";
+import ScreenContainer from "../components/ScreenContainer";
+import AnimatedBrandLogo from "../components/AnimatedBrandLogo";
+import VibesActionButton from "../components/VibesActionButton";
+import { Text } from "../components/Typography";
 import { getStartupDestination } from "../src/lib/calmPause";
 import { authKeys, useAuthSession } from "../src/auth/auth.queries";
 import { supabase } from "../src/lib/supabase";
@@ -29,57 +31,44 @@ import {
   type AppUpdateGateState,
 } from "../src/lib/appUpdateGate";
 import { isOnboardingComplete } from "../src/lib/onboardingFlow";
+import {
+  AUTH_VALIDATION_TIMEOUT_MS,
+  withBootTimeout as withTimeout,
+} from "../src/lib/startupBoot";
 
 const SESSION_BOOT_TIMEOUT_MS = 5000;
 const STARTUP_PREFETCH_TIMEOUT_MS = 8000;
 const UPDATE_GATE_TIMEOUT_MS = 3000;
 
-const withTimeout = async <T,>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  label: string
-): Promise<T> => {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error(`${label} timed out after ${timeoutMs}ms`)),
-          timeoutMs
-        );
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-};
-
 const Startup = () => {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const { data: session, isLoading: isSessionLoading } = useAuthSession();
-  const [introElapsed, setIntroElapsed] = useState(false);
   const didNavigateRef = useRef(false);
   const [isReadyToExit, setIsReadyToExit] = useState(false);
   const [sessionLoadTimedOut, setSessionLoadTimedOut] = useState(false);
   const [forceWelcome, setForceWelcome] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [bootFailed, setBootFailed] = useState(false);
   const [updateGateState, setUpdateGateState] =
     useState<AppUpdateGateState | null>(null);
 
   const userId = session?.user?.id;
-
   useEffect(() => {
-    if (userId) return;
-    void preloadVibi()
-      .then(({ model }) => {
-        const breathing = model.clips.get("breathing");
-        if (breathing) welcomeModelBounds(model.scene, breathing);
-      })
-      .catch((error) => console.warn("[Vibi] welcome preload failed", error));
-  }, [userId]);
+    if (isReadyToExit) return;
+    const timer = setTimeout(() => setBootFailed(true), 20000);
+    return () => clearTimeout(timer);
+  }, [attempt, isReadyToExit]);
 
+  const retryBoot = () => {
+    setBootFailed(false);
+    setSessionLoadTimedOut(false);
+    setAttempt(value => value + 1);
+    void queryClient.refetchQueries({ queryKey: authKeys.session }).catch(error => {
+      console.warn("[boot] session retry failed", error);
+    });
+  };
   useEffect(() => {
     if (!isSessionLoading) return;
 
@@ -91,7 +80,7 @@ const Startup = () => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [isSessionLoading]);
+  }, [isSessionLoading, attempt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,14 +92,23 @@ const Startup = () => {
         try {
           const {
             data: { user },
-          } = await supabase.auth.getUser();
+          } = await withTimeout(
+            supabase.auth.getUser(),
+            AUTH_VALIDATION_TIMEOUT_MS,
+            "startup auth validation"
+          );
+          if (cancelled) return;
           const isSoftDeleted = user?.app_metadata?.vibes_soft_deleted === true;
 
           if (isSoftDeleted) {
             setForceWelcome(true);
-            await supabase.auth.signOut({ scope: "local" });
             queryClient.setQueryData(authKeys.session, null);
-            queryClient.invalidateQueries();
+            void queryClient.invalidateQueries();
+            await withTimeout(
+              supabase.auth.signOut({ scope: "local" }),
+              AUTH_VALIDATION_TIMEOUT_MS,
+              "startup local sign out"
+            );
             if (!cancelled) {
               setIsReadyToExit(true);
             }
@@ -120,6 +118,8 @@ const Startup = () => {
           console.warn("[boot] failed to validate auth user", error);
         }
       }
+
+      if (cancelled) return;
 
       const startupTasks: Array<{
         label: string;
@@ -183,6 +183,8 @@ const Startup = () => {
         console.warn("[boot] startup prefetch timed out, continuing", error);
       }
 
+      if (cancelled) return;
+
       if (userId) {
         const profileState = queryClient.getQueryState(
           profileKeys.byUser(userId)
@@ -225,7 +227,10 @@ const Startup = () => {
       }
     };
 
-    void prefetch();
+    void prefetch().catch(error => {
+      console.warn("[boot] startup failed", error);
+      if (!cancelled) setBootFailed(true);
+    });
 
     return () => {
       cancelled = true;
@@ -236,13 +241,12 @@ const Startup = () => {
     queryClient,
     sessionLoadTimedOut,
     userId,
+    attempt,
   ]);
 
   useEffect(() => {
-    // Guests get the welcome introduction; don't make them wait for a second
-    // breathing cycle in Startup before it can begin.
+    // Loading artwork never delays navigation once boot data is ready.
     if (
-      (userId && !forceWelcome && !introElapsed) ||
       !isReadyToExit ||
       didNavigateRef.current
     )
@@ -267,7 +271,6 @@ const Startup = () => {
       })
     );
   }, [
-    introElapsed,
     isReadyToExit,
     userId,
     forceWelcome,
@@ -276,22 +279,22 @@ const Startup = () => {
     navigation,
   ]);
 
-  if (!userId || forceWelcome) {
-    return (
-      <View
-        style={{ flex: 1, backgroundColor: vibesTheme.colors.accentMustard }}
-      />
-    );
-  }
-
   return (
-    <CalmPause
-      pending={!isReadyToExit}
-      showAction={false}
-      onBreathComplete={() => {
-        if (isReadyToExit) setIntroElapsed(true);
-      }}
-    />
+    <ScreenContainer edges={["top", "bottom", "left", "right"]}
+      style={{ backgroundColor: vibesTheme.colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <AnimatedBrandLogo direction="logo-to-word" loop style={{ width: 240, height: 240 }} />
+        {bootFailed ? (
+          <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: 24, gap: 16, marginTop: 24 }}>
+            <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 18 }}>
+              La carga está demorando. Revisá tu conexión y volvé a intentar.
+            </Text>
+            <VibesActionButton label="Reintentar" onPress={retryBoot} textStyle={{ color: vibesTheme.colors.primaryText }} />
+            <SessionRecoveryAction />
+          </View>
+        ) : null}
+      </View>
+    </ScreenContainer>
   );
 };
 

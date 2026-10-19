@@ -11,6 +11,7 @@ type AppleAuthButtonProps = {
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
+  compact?: boolean;
   type?: AppleAuthentication.AppleAuthenticationButtonType;
 };
 
@@ -18,6 +19,7 @@ const AppleAuthButton = ({
   onPress,
   disabled = false,
   loading = false,
+  compact = false,
   type = AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN,
 }: AppleAuthButtonProps) => {
   const [isAvailable, setIsAvailable] = useState(false);
@@ -43,8 +45,8 @@ const AppleAuthButton = ({
 
   if (loading) {
     return (
-      <View style={[styles.fallbackButton, styles.disabled]}>
-        <VibesLoader size={26} />
+      <View style={[styles.fallbackButton, compact && { minHeight: 44 }, styles.disabled]}>
+        <VibesLoader />
         <Text style={styles.fallbackText}>Conectando...</Text>
       </View>
     );
@@ -58,8 +60,8 @@ const AppleAuthButton = ({
       <AppleAuthentication.AppleAuthenticationButton
         buttonType={type}
         buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-        cornerRadius={22}
-        style={styles.button}
+        cornerRadius={compact ? 18 : 22}
+        style={[styles.button, compact && { height: 44 }]}
         onPress={onPress}
       />
     </View>

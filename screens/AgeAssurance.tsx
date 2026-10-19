@@ -1,16 +1,16 @@
 /** @format */
 
 import React, { useMemo, useState } from "react";
-import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "../components/Typography";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+import BirthDateWheel from "../components/BirthDateWheel";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { VIBES_LOGO } from "../src/constants/brandAssets";
 import { useNavigation } from "@react-navigation/native";
+import { trackSignupEvent } from "../src/lib/signupEvents";
 import ScreenContainer from "../components/ScreenContainer";
 import VibesActionButton from "../components/VibesActionButton";
 import AppHeader from "../components/AppHeader";
-import styles, { DARK_GRAY } from "../assets/styles";
 import { useI18n } from "../src/i18n";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import {
@@ -23,32 +23,28 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 const MIN_AGE = 18;
 
 const AgeAssurance = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
   const [birthDate, setBirthDate] = useState<Date | null>(() =>
     parseBirthDate(draft.birthDate)
   );
-  const [showPicker, setShowPicker] = useState(Platform.OS === "ios");
 
+  const minDate = useMemo(() => new Date(1900, 0, 1), []);
   const maxDate = useMemo(() => new Date(), []);
+  const initialPickerDate = useMemo(() => {
+    const today = new Date();
+    return new Date(today.getFullYear() - MIN_AGE, today.getMonth(), today.getDate());
+  }, []);
   const age = birthDate ? calculateAge(birthDate) : null;
   const isValidAge = typeof age === "number" && age >= MIN_AGE;
   const showUnderageError = birthDate ? !isValidAge : false;
-
-  const handleChange = (_event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === "android") {
-      setShowPicker(false);
-    }
-    if (date) {
-      setBirthDate(date);
-    }
-  };
 
   const handleContinue = () => {
     if (!birthDate || !isValidAge) return;
     const confirmedBirthDate = formatBirthDate(birthDate);
     updateDraft({ birthDate: confirmedBirthDate });
+    trackSignupEvent("age_confirmed");
     navigation.navigate(
       "Signup" as never,
       { birthDate: confirmedBirthDate } as never
@@ -56,16 +52,17 @@ const AgeAssurance = () => {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       <View style={localStyles.container}>
         <AppHeader
           showBack
-          hideBackIcon
           backButtonStyle={localStyles.headerBackButton}
           onBack={() => navigation.goBack()}
         />
 
-        <View style={localStyles.content}>
+        <ScrollView style={localStyles.scroll} contentContainerStyle={localStyles.content}
+          keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Image source={VIBES_LOGO} resizeMode="contain" accessibilityLabel="Vibes" style={localStyles.logo} />
           <View style={localStyles.copyBlock}>
             <Text style={localStyles.title}>{t("ageAssurance.title")}</Text>
             <Text style={localStyles.subtitle}>
@@ -74,30 +71,25 @@ const AgeAssurance = () => {
           </View>
 
           <View style={localStyles.card}>
-            <Text style={styles.loginLabel}>
-              {t("ageAssurance.birthDateLabel")}
-            </Text>
-            <TouchableOpacity
-              style={styles.loginInput}
-              onPress={() => setShowPicker(true)}
-              activeOpacity={0.78}
-            >
-              <Text style={{ color: birthDate ? DARK_GRAY : vibesTheme.colors.secondaryText }}>
-                {birthDate
-                  ? formatBirthDate(birthDate)
-                  : t("ageAssurance.birthDatePlaceholder")}
-              </Text>
-            </TouchableOpacity>
-
-            {showPicker ? (
+            {Platform.OS === "ios" ? (
               <DateTimePicker
-                value={birthDate ?? new Date(2000, 0, 1)}
+                style={localStyles.nativeDatePicker}
+                value={birthDate ?? initialPickerDate}
                 mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={handleChange}
+                display="spinner"
+                themeVariant="light"
+                textColor={vibesTheme.colors.primaryText}
+                locale={locale === "en" ? "en-US" : "es-AR"}
+                minimumDate={minDate}
                 maximumDate={maxDate}
+                onChange={(_event, date) => {
+                  if (date) setBirthDate(date);
+                }}
               />
-            ) : null}
+            ) : (
+              <BirthDateWheel value={birthDate} onChange={setBirthDate}
+                minimumDate={minDate} maximumDate={maxDate} locale={locale} />
+            )}
 
             {showUnderageError ? (
               <Text style={localStyles.error}>
@@ -105,19 +97,13 @@ const AgeAssurance = () => {
               </Text>
             ) : null}
           </View>
-        </View>
+        </ScrollView>
 
         <View style={localStyles.footer}>
           <VibesActionButton
             label={t("ageAssurance.continue")}
             onPress={handleContinue}
             disabled={!isValidAge}
-          />
-          <VibesActionButton
-            label={t("common.back")}
-            variant="skip"
-            style={localStyles.backButton}
-            onPress={() => navigation.goBack()}
           />
         </View>
       </View>
@@ -130,14 +116,16 @@ export default AgeAssurance;
 const localStyles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
+  scroll: { flex: 1 },
   content: {
-    flex: 1,
+    flexGrow: 1,
+    paddingHorizontal: 24,
     justifyContent: "center",
-    gap: 24,
+    gap: 16,
   },
+  logo: { width: 100, height: 100, alignSelf: "center" },
   copyBlock: {
     alignItems: "center",
     gap: 10,
@@ -149,10 +137,10 @@ const localStyles = StyleSheet.create({
     textTransform: "uppercase",
   },
   title: {
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.light,
-    fontSize: 42,
-    lineHeight: 48,
+    color: vibesTheme.colors.accentBlue,
+    fontFamily: vibesTheme.fonts.bold,
+    fontSize: 24,
+    lineHeight: 30,
     textAlign: "center",
   },
   subtitle: {
@@ -161,13 +149,8 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
   },
-  card: {
-    backgroundColor: "rgba(254, 254, 253, 0.78)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.24)",
-    borderRadius: 24,
-    padding: 18,
-  },
+  card: { width: "100%", marginTop: -8, flexShrink: 0 },
+  nativeDatePicker: { alignSelf: "center", width: "100%", height: 216, minHeight: 216, flexShrink: 0 },
   error: {
     marginTop: 10,
     color: vibesTheme.colors.accentBlue,
@@ -175,11 +158,9 @@ const localStyles = StyleSheet.create({
     lineHeight: 19,
   },
   footer: {
+    flexShrink: 0,
+    paddingHorizontal: 24,
     paddingTop: 18,
-    paddingBottom: 36,
-  },
-  backButton: {
-    marginTop: 10,
   },
   headerBackButton: {
     backgroundColor: "transparent",

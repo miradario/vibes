@@ -1,3 +1,4 @@
+import { preparePhotoUpload } from "./preparePhotoUpload";
 import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "./supabase";
 
@@ -65,7 +66,8 @@ export const uploadImageToSupabase = async (params: {
   bucket: string;
   pathPrefix: string;
 }) => {
-  const { uri, bucket, pathPrefix } = params;
+  const { bucket, pathPrefix } = params;
+  const uri = await preparePhotoUpload(params.uri);
   const { ext, contentType } = inferContentType(uri);
   const arrayBuffer = await readUriAsArrayBuffer(uri);
   const uploadBody = new Uint8Array(arrayBuffer).buffer;

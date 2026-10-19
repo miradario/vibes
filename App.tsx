@@ -1,9 +1,16 @@
 import {LearningExplore, LearningProfileDetail, LearningActivityDetail, LearningMine, LearningManage, LearningRoster, LearningProfileEditor, LearningActivityEditor} from "./screens/Learning";
+import PastChallenges from "./screens/PastChallenges";
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
+import { checkDeferredLinkOnce, type DeferredDestination } from "./src/deeplinks/deferredLink";
 import VibiOverlay from "./components/VibiOverlay";
-import { preloadVibi } from "./components/Vibi";
-import { welcomeModelBounds } from "./src/vibi/welcomeIntro";
+import FtuxGuide from "./components/ftux/FtuxGuide";
+import {
+  markFtuxDeferredLinkSettled,
+  markFtuxExternalEntry,
+  setFtuxPendingExternalProbe,
+} from "./src/ftux/entrySignals";
+import AnimatedBrandLogo from "./components/AnimatedBrandLogo";
 import { useAuthSession } from "./src/auth/auth.queries";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
@@ -17,9 +24,9 @@ import Vibi from "./screens/Vibi";
 
 import "react-native-url-polyfill/auto";
 import React from "react";
-import { Platform, View } from "react-native";
+import { AppState, Linking, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { NavigationContainer, CommonActions } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -59,6 +66,7 @@ import {
   EventChat,
   CreateEvent,
   CreateChallenge,
+  RestartChallenge,
   Contact,
   Faq,
   TermsConditions,
@@ -71,6 +79,7 @@ import CustomTabBar from "./components/CustomTabBar";
 import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboarding";
 import { I18nProvider, useI18n } from "./src/i18n";
 import { PushNotificationsBootstrap } from "./src/notifications/pushNotifications";
+import { startAppOpenTracking } from "./src/lib/appOpens";
 import { vibesTheme } from "./src/theme/vibesTheme";
 import {
   fetchEventFeedItemById,
@@ -79,6 +88,11 @@ import {
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const BootLoading = () => (
+  <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.background }}>
+    <AnimatedBrandLogo direction="logo-to-word" loop style={{ width: 240, height: 240 }} />
+  </View>
+);
 const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Navigator>) => {
   const { data: session, isLoading } = useAuthSession();
   const [sessionTimedOut, setSessionTimedOut] = React.useState(false);
@@ -87,15 +101,8 @@ const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Na
     const timer = setTimeout(() => setSessionTimedOut(true), 5000);
     return () => clearTimeout(timer);
   }, [isLoading]);
-  React.useEffect(() => {
-    if (session?.user?.id) return;
-    void preloadVibi().then(({ model }) => {
-      const breathing = model.clips.get("breathing");
-      if (breathing) welcomeModelBounds(model.scene, breathing);
-    }).catch(error => console.warn("[Vibi] welcome preload failed", error));
-  }, [session?.user?.id]);
   if (isLoading && !sessionTimedOut) {
-    return <View style={{ flex: 1, backgroundColor: vibesTheme.colors.accentMustard }} />;
+    return <BootLoading />;
   }
   return <Stack.Navigator {...props} initialRouteName={session?.user?.id ? "Startup" : "Welcome"}>{children}</Stack.Navigator>;
 };
@@ -116,6 +123,26 @@ const linking = {
 };
 let isNavigationReady = false;
 let pendingNotificationData: Record<string, unknown> | null = null;
+// Deferred deep link (fresh install from a shared link), opened once Startup finishes.
+let pendingDeferredDestination: DeferredDestination | null = null;
+const deferredLinkCheck = checkDeferredLinkOnce().then((destination) => {
+  pendingDeferredDestination = destination;
+  // Vibi's onboarding waits for this navigation instead of interrupting it.
+  if (destination) markFtuxExternalEntry();
+  markFtuxDeferredLinkSettled();
+  flushDeferredDestination();
+});
+setFtuxPendingExternalProbe(() => Boolean(pendingNotificationData || pendingDeferredDestination));
+function flushDeferredDestination() {
+  const nav = navigationRef.current;
+  if (!pendingDeferredDestination || !isNavigationReady || !nav) return;
+  // Wait until Startup/UpdateGate reset the stack, and let a tapped notification go first.
+  if (pendingNotificationData || shouldDeferReminder(nav.getCurrentRoute()?.name)) return;
+  const destination = pendingDeferredDestination;
+  pendingDeferredDestination = null;
+  nav.dispatch(CommonActions.navigate(destination));
+}
+void deferredLinkCheck;
 let hasHiddenNativeSplash = false;
 const FONT_LOAD_TIMEOUT_MS = 3000;
 const MIN_NATIVE_SPLASH_MS = Platform.OS === "ios" ? 750 : 500;
@@ -130,10 +157,22 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
+      // "Window focus" = app back to foreground, via focusManager below.
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
+      staleTime: 30_000,
     },
   },
+});
+
+// React Native has no window focus events: wire React Query's focusManager
+// to AppState so stale queries refetch when the app returns to foreground,
+// and intervals pause while backgrounded.
+focusManager.setEventListener((handleFocus) => {
+  const subscription = AppState.addEventListener("change", (state) => {
+    handleFocus(state === "active");
+  });
+  return () => subscription.remove();
 });
 
 const CommunityRuntime = () => {
@@ -142,13 +181,16 @@ const CommunityRuntime = () => {
 };
 const AppNavigator = () => {
   React.useEffect(() => startRemoteConfig(), []);
-  // Begin before fonts finish and EntryStack mounts, hiding cold GLB/renderer
-  // loading behind work the app already has to do.
+  React.useEffect(() => startAppOpenTracking(), []);
   React.useEffect(() => {
-    void preloadVibi().then(({ model }) => {
-      const breathing = model.clips.get("breathing");
-      if (breathing) welcomeModelBounds(model.scene, breathing);
-    }).catch(error => console.warn("[Vibi] early preload failed", error));
+    // Opened from a universal link: the onboarding waits until it is done.
+    void Linking.getInitialURL()
+      .then((url) => {
+        if (url) markFtuxExternalEntry();
+      })
+      .catch(() => {});
+    const subscription = Linking.addEventListener("url", () => markFtuxExternalEntry());
+    return () => subscription.remove();
   }, []);
   const { t } = useI18n();
   const [vibiRoute, setVibiRoute] = React.useState({ name: "Startup", hasBottomBar: false });
@@ -160,10 +202,11 @@ const AppNavigator = () => {
     setVibiRoute(current => current.name === name && current.hasBottomBar === hasBottomBar ? current : { name, hasBottomBar });
   }, []);
   const [fontsLoaded, fontError] = useFonts({
-    "JosefinSans-Thin": require("./assets/font/JosefinSans-Thin.ttf"),
-    "JosefinSans-Regular": require("./assets/font/JosefinSans-Regular.ttf"),
-    "JosefinSans-Medium": require("./assets/font/JosefinSans-Medium.ttf"),
-    "JosefinSans-Bold": require("./assets/font/JosefinSans-Bold.ttf"),
+    "Inter-Regular": require("@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf"),
+    "Inter-Medium": require("@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf"),
+    "Inter-SemiBold": require("@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf"),
+    "Inter-Bold": require("@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf"),
+    "Inter-ExtraBold": require("@expo-google-fonts/inter/800ExtraBold/Inter_800ExtraBold.ttf"),
   });
   const [fontLoadTimedOut, setFontLoadTimedOut] = React.useState(false);
 
@@ -225,11 +268,7 @@ const AppNavigator = () => {
   }, [fontError, fontLoadTimedOut, fontsLoaded]);
 
   if (!fontsLoaded && !fontError && !fontLoadTimedOut) {
-    return (
-      <View
-        style={{ flex: 1, backgroundColor: vibesTheme.colors.background }}
-      />
-    );
+    return <BootLoading />;
   }
 
   const navigateToMessages = () => {
@@ -250,6 +289,7 @@ const AppNavigator = () => {
   };
 
   const navigateFromNotification = async (data: Record<string, unknown>) => {
+    markFtuxExternalEntry();
     if (!isNavigationReady || !navigationRef.current) {
       pendingNotificationData = data;
       return;
@@ -309,6 +349,9 @@ const AppNavigator = () => {
       }
     }
 
+    if (Object.keys(data).length === 0) {
+      console.warn("[push] notification tap without data, falling back to messages");
+    }
     navigateToMessages();
   };
 
@@ -322,6 +365,7 @@ const AppNavigator = () => {
           linking={linking}
           onStateChange={() => {
             syncVibiRoute();
+            flushDeferredDestination();
             if (!pendingNotificationData || shouldDeferReminder(navigationRef.current?.getCurrentRoute()?.name)) return;
             const nextData = pendingNotificationData;
             pendingNotificationData = null;
@@ -330,6 +374,7 @@ const AppNavigator = () => {
           onReady={() => {
             isNavigationReady = true;
             syncVibiRoute();
+            flushDeferredDestination();
             if (!pendingNotificationData) return;
             const nextData = pendingNotificationData;
             pendingNotificationData = null;
@@ -620,6 +665,7 @@ const AppNavigator = () => {
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen name="PastEvents" component={PastEvents} options={{ headerShown: false }} />
+            <Stack.Screen name="PastChallenges" component={PastChallenges} options={{ headerShown: false }} />
             <Stack.Screen
               name="EventChat"
               component={EventChat}
@@ -633,6 +679,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="CreateChallenge"
               component={CreateChallenge}
+              options={{ headerShown: false, animationEnabled: true }}
+            />
+            <Stack.Screen
+              name="RestartChallenge"
+              component={RestartChallenge}
               options={{ headerShown: false, animationEnabled: true }}
             />
             <Stack.Screen
@@ -709,6 +760,13 @@ const AppNavigator = () => {
         </NavigationContainer>
         <VibiOverlay routeName={vibiRoute.name} hasBottomBar={vibiRoute.hasBottomBar}
           onPress={() => { if (isNavigationReady) navigationRef.current?.navigate("Vibi"); }} />
+        <FtuxGuide
+          routeName={vibiRoute.name}
+          hasBottomBar={vibiRoute.hasBottomBar}
+          navigate={(name, params) => {
+            if (isNavigationReady) navigationRef.current?.dispatch(CommonActions.navigate({ name, params }));
+          }}
+        />
         <AppCamera />
         <Toast />
       </QueryClientProvider>

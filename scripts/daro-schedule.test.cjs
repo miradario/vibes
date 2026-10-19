@@ -16,6 +16,16 @@ function load(file) {
 const schedule = load('src/lib/eventSchedule.ts');
 const filters = load('src/lib/eventFilters.ts');
 const suggestions = load('src/lib/homeSuggestions.ts');
+test('event order uses the next occurrence and puts missing or invalid dates last without mutating input', () => {
+  const items = [
+    { id: 'missing' },
+    { id: 'multi', startsAt: '2026-10-01T12:00:00Z', schedule: [{ startsAt: '2026-10-01T12:00:00Z' }, { startsAt: '2026-10-20T12:00:00Z' }] },
+    { id: 'invalid', startsAt: 'invalid' },
+    { id: 'soon', startsAt: '2026-10-15T12:00:00Z' },
+  ];
+  assert.deepEqual(schedule.sortEventsByDate(items, Date.parse('2026-10-14T12:00:00Z')).map(item => item.id), ['soon', 'multi', 'missing', 'invalid']);
+  assert.equal(items[0].id, 'missing');
+});
 test('accepts exact hours/minutes and rejects invalid local dates and hours', () => {
   assert.equal(schedule.parseSession({ date: '2026-10-09', time: '09:37' }).getMinutes(), 37);
   for (const time of ['24:00', '12:60', '7:0', 'abc', '']) assert.equal(schedule.parseSession({ date: '2026-10-09', time }), null);
@@ -71,4 +81,19 @@ test('Home agenda includes the next occurrence even after the first has passed',
   assert.equal(home.getUpcomingHomeEvents([event], now)[0].id, 'multi');
   assert.equal(schedule.nextEventSession(event.schedule, event.startsAt, now).startsAt, '2026-10-12T21:45:00.000Z');
   assert.equal(event.startsAt, '2026-10-09T12:00:00Z');
+});
+
+test('event end survives save/edit and invalid end ranges are rejected', () => {
+  const draft = { date: '2026-10-15', time: '10:00', endDate: '2026-10-17', endTime: '18:00' };
+  const sessions = schedule.serializeSchedule([draft]);
+  assert.equal(sessions.length, 1);
+  assert.equal(schedule.sessionDraft(sessions[0].endsAt).date, draft.endDate);
+  assert.deepEqual(schedule.normalizeSchedule(sessions), sessions);
+  assert.equal(schedule.serializeSchedule([{ ...draft, endDate: '2026-10-14' }]), null);
+  assert.equal(schedule.serializeSchedule([{ ...draft, endTime: '' }]), null);
+  const during = new Date(2026, 9, 16, 12).getTime();
+  assert.equal(schedule.eventHasExpired(sessions, null, during), false);
+  assert.equal(schedule.nextEventSession(sessions, null, during).endsAt, sessions[0].endsAt);
+  assert.equal(schedule.eventHasExpired(sessions, null, new Date(2026, 9, 17, 19).getTime()), true);
+  assert.equal(filters.matchesEventDateAndLocation({ schedule: sessions }, new Date(2026, 9, 16), new Date(2026, 9, 16), ''), true);
 });

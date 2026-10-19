@@ -3,12 +3,6 @@ import type { EventFeedItem } from "../queries/events.queries";
 
 export const VIBES_PUBLIC_ORIGIN = "https://vibes.gurudevelopers.dev";
 
-const formatVisibilityLabel = (visibility?: string | null) => {
-  if (visibility === "friends") return "Solo amigos";
-  if (visibility === "private") return "Privado";
-  return "Público";
-};
-
 export const buildPublicContentUrl = (
   content: Pick<EventFeedItem, "id" | "type">,
 ) =>
@@ -16,48 +10,23 @@ export const buildPublicContentUrl = (
     ? `${VIBES_PUBLIC_ORIGIN}/${content.type}/${encodeURIComponent(content.id)}`
     : null;
 
-export const shareChallengeInvite = async (challenge: EventFeedItem) => {
-  const challengeUrl = buildPublicContentUrl(challenge);
-  const message = [
-    `Te invito a sumarte a "${challenge.title}" en Vibes.`,
-    challenge.subtitle || challenge.description || "Un ritual compartido para sostener en comunidad.",
-    `Visibilidad: ${formatVisibilityLabel(challenge.visibility)}`,
-    challenge.durationDays ? `${challenge.durationDays} días de práctica.` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
+// The link goes ONLY inside `message`. Passing it also as `url` made iOS show it
+// twice (the share sheet appends `url` to the text in WhatsApp, Messages, etc.);
+// Android ignores `url`, so its visible text stays exactly the same.
+export const buildShareMessage = (title: string | null | undefined, url: string | null) =>
+  [title, url].filter(Boolean).join("\n");
 
-  return Share.share({ message, url: challengeUrl ?? undefined });
-};
+const shareContent = (content: EventFeedItem) =>
+  Share.share({ message: buildShareMessage(content.title, buildPublicContentUrl(content)) });
+
+export const shareChallengeInvite = async (challenge: EventFeedItem) => shareContent(challenge);
 
 export const shareChallengeProgress = async (
   challenge: EventFeedItem,
   input: { currentDay: number; totalDays: number; streak: number },
 ) => {
-  const challengeUrl = buildPublicContentUrl(challenge);
-  const message = [
-    `Hoy sigo presente en "${challenge.title}" en Vibes.`,
-    `Día ${input.currentDay}/${input.totalDays}.`,
-    input.streak > 0 ? `Racha actual: ${input.streak} días.` : null,
-    "Volver a uno mismo también se comparte.",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  return Share.share({ message, url: challengeUrl ?? undefined });
+  void input;
+  return shareContent(challenge);
 };
 
-export const shareEventInvite = async (event: EventFeedItem) => {
-  const eventUrl = buildPublicContentUrl(event);
-  const message = [
-    `Te invito a este evento en Vibes: "${event.title}".`,
-    event.subtitle || event.description || "Un espacio para conectar con calma.",
-    event.date || null,
-    event.location || event.onlineLink || null,
-    eventUrl,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  return Share.share({ message, url: eventUrl ?? undefined });
-};
+export const shareEventInvite = async (event: EventFeedItem) => shareContent(event);

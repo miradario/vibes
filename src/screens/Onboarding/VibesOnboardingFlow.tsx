@@ -1,9 +1,16 @@
+import OnboardingPlayfulShapes from "../../../components/OnboardingPlayfulShapes";
+import OnboardingGlobe from "../../../components/OnboardingGlobe";
+import ProfileReadyIllustration from "../../../components/ProfileReadyIllustration";
+import Svg, { Path } from "react-native-svg";
+import PlayfulVibesLogo from "../../../components/PlayfulVibesLogo";
+import { hasOnboardingBasics, onboardingFullName, splitOnboardingName } from "../../lib/onboardingBasics";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { revealFocusedInput as revealInputInViewport } from "../../lib/revealFocusedInput";
 import {
   Alert,
   Animated,
   Easing,
-  findNodeHandle,
+  Keyboard,
   ScrollView,
   Platform,
   StyleSheet,
@@ -12,14 +19,14 @@ import {
   type TextInput as NativeTextInput,
 } from "react-native";
 import { Text, TextInput } from "../../../components/Typography";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+import BirthDateWheel from "../../../components/BirthDateWheel";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Location from "expo-location";
 import { CommonActions, useNavigation } from "@react-navigation/native";
+import AnimatedSheetModal from "../../../components/AnimatedSheetModal";
 import KeyboardSheetModal from "../../../components/KeyboardSheetModal";
 import ProfileQuestionsForm from "../../../components/onboarding/ProfileQuestionsForm";
-import type { ProfileAnswers } from "../../lib/profileQuestions";
+import { QUESTION_GROUPS, type ProfileAnswers } from "../../lib/profileQuestions";
 import Icon from "../../../components/Icon";
 import SpiritualPathDetailsModal from "../../../components/SpiritualPathDetailsModal";
 import OnboardingScreenContainer from "../../../components/onboarding/OnboardingScreenContainer";
@@ -51,6 +58,7 @@ import {
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
 import { ONBOARDING_COLORS, onboardingStyles } from "./vibesOnboardingStyles";
+import { signupErrorCode, trackSignupEvent } from "../../lib/signupEvents";
 import { useI18n } from "../../i18n";
 import VibesLoader from "../../../components/VibesLoader";
 import { useProfileQuery } from "../../queries/profile.queries";
@@ -100,8 +108,14 @@ const VibesOnboardingFlow = () => {
   const completeMutation = useCompleteOnboardingMutation();
   const transition = useRef(new Animated.Value(1)).current;
   const onboardingScrollRef = useRef<ScrollView | null>(null);
+  const onboardingScrollY = useRef(0);
   const displayNameInputRef = useRef<NativeTextInput | null>(null);
+  const lastNameInputRef = useRef<NativeTextInput | null>(null);
   const descriptionInputRef = useRef<NativeTextInput | null>(null);
+  const cityInputRef = useRef<NativeTextInput | null>(null);
+  const neighborhoodInputRef = useRef<NativeTextInput | null>(null);
+  const countryInputRef = useRef<NativeTextInput | null>(null);
+  const focusedProfileInput = useRef<NativeTextInput | null>(null);
   const completionStartedRef = useRef(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [purposeIds, setPurposeIds] = useState<string[]>(
@@ -110,7 +124,9 @@ const VibesOnboardingFlow = () => {
   const [answers, setAnswers] = useState<ProfileAnswers>(
     draft.profileAnswers ?? {}
   );
-  const [displayName, setDisplayName] = useState(draft.displayName ?? "");
+  const [firstName, setFirstName] = useState(draft.firstName ?? splitOnboardingName(draft.displayName).firstName);
+  const [lastName, setLastName] = useState(draft.lastName ?? splitOnboardingName(draft.displayName).lastName);
+  const displayName = onboardingFullName(firstName, lastName);
   const [briefDescription, setBriefDescription] = useState(
     draft.briefDescription ?? ""
   );
@@ -118,6 +134,7 @@ const VibesOnboardingFlow = () => {
     parseBirthDate(draft.birthDate)
   );
   const [showBirthDatePicker, setShowBirthDatePicker] = useState(false);
+  const [pendingBirthDate, setPendingBirthDate] = useState<Date | null>(null);
   const [photoUris, setPhotoUris] = useState<string[]>(() =>
     Array.from(
       new Set(
@@ -127,7 +144,9 @@ const VibesOnboardingFlow = () => {
       )
     ).slice(0, 6)
   );
+  const [photoOriginalUris, setPhotoOriginalUris] = useState<Record<string, string>>(draft.photoOriginalUris ?? {});
   const [city, setCity] = useState(draft.city ?? "");
+  const [neighborhood, setNeighborhood] = useState(draft.neighborhood ?? "");
   const [country, setCountry] = useState(draft.country ?? "");
   const [locationLabel, setLocationLabel] = useState(
     draft.locationLabel ?? ""
@@ -211,7 +230,15 @@ const VibesOnboardingFlow = () => {
     subtitle: t(`vibesOnboarding.${step}.subtitle`),
     button: t(`vibesOnboarding.${step}.button`),
   };
+  const onboardingStartedAt = useRef(Date.now());
   useEffect(() => {
+    trackSignupEvent("onboarding_step_viewed", { step, stepIndex });
+  }, [stepIndex]);
+  useEffect(() => {
+    focusedProfileInput.current = null;
+    Keyboard.dismiss();
+    onboardingScrollY.current = 0;
+    onboardingScrollRef.current?.scrollTo({ y: 0, animated: false });
     transition.setValue(0);
     const animation = Animated.timing(transition, {
       toValue: 1,
@@ -242,6 +269,8 @@ const VibesOnboardingFlow = () => {
       purposeIds,
       profileAnswers: answers,
       displayName,
+      firstName,
+      lastName,
       briefDescription,
       age,
       ageRange: age,
@@ -250,6 +279,7 @@ const VibesOnboardingFlow = () => {
       spiritualPathDetails: practiceDetails,
       aboutMe: briefDescription.trim(),
       city: city.trim(),
+      neighborhood: neighborhood.trim(),
       country: country.trim(),
       locationLabel:
         locationLabel.trim() ||
@@ -265,6 +295,7 @@ const VibesOnboardingFlow = () => {
         age ? `age:${age}` : "",
       ].filter(Boolean),
       photoUris,
+      photoOriginalUris,
       primaryPhotoUri: photoUris[0] ?? "",
     }),
     [
@@ -272,14 +303,18 @@ const VibesOnboardingFlow = () => {
       birthDate,
       briefDescription,
       city,
+      neighborhood,
       country,
       displayName,
+      firstName,
+      lastName,
       draft,
       answers,
       latitude,
       locationLabel,
       longitude,
       photoUris,
+      photoOriginalUris,
       practiceDetails,
       purposeIds,
       selectedPractices,
@@ -289,10 +324,12 @@ const VibesOnboardingFlow = () => {
   const canContinue =
     (step === "purpose" && purposeIds.length > 0) ||
     (step === "profile" &&
-      Boolean(displayName.trim()) &&
+      hasOnboardingBasics(firstName, lastName) &&
       Boolean(birthDate) &&
       Number(age) >= MIN_AGE &&
       Number(age) <= MAX_AGE) ||
+    (step === "profileText" && hasOnboardingBasics(firstName, lastName)) ||
+    step === "continueChoice" ||
     (step === "location" && Boolean(city.trim() || country.trim())) ||
     step === "practices" ||
     ["identity", "interests", "completion"].includes(step);
@@ -316,13 +353,10 @@ const VibesOnboardingFlow = () => {
     setStepIndex((prev) => Math.max(0, prev - 1));
   };
 
-  const handleBirthDateChange = (_event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === "android") setShowBirthDatePicker(false);
-    if (date) setBirthDate(date);
-  };
-
   const goNext = async () => {
+    if (["profile", "profileText"].includes(step) && !canContinue) return false;
     updateDraft(currentDraft);
+    if (step !== "completion") trackSignupEvent("onboarding_step_completed", { step, stepIndex });
 
     if (step !== "completion") {
       setStepIndex((prev) =>
@@ -356,9 +390,14 @@ const VibesOnboardingFlow = () => {
       })
       .then(() => {
         resetDraft();
+        trackSignupEvent("onboarding_completed", {
+          props: { duration_s: Math.round((Date.now() - onboardingStartedAt.current) / 1000) },
+        });
         return true;
       })
       .catch((error) => {
+        trackSignupEvent("onboarding_failed", { props: { error_code: signupErrorCode(error) } });
+        setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("continueChoice"));
         Alert.alert(
           t("common.error"),
           error instanceof Error
@@ -372,7 +411,10 @@ const VibesOnboardingFlow = () => {
       completion,
       wait(COMPLETION_MIN_LOADING_MS),
     ]);
-    if (shouldNavigate) navigateHome();
+    if (shouldNavigate) {
+      navigateHome();
+      trackSignupEvent("first_home_viewed");
+    }
     return shouldNavigate;
   };
 
@@ -423,26 +465,26 @@ const VibesOnboardingFlow = () => {
     setCustomPracticeName("");
   };
 
-  const handlePhotoChange = (nextUris: string[]) => {
+  const handlePhotoChange = (nextUris: string[], originals = photoOriginalUris) => {
     const photos = Array.from(new Set(nextUris)).slice(0, 6);
+    const nextOriginals = Object.fromEntries(photos.map(uri => [uri, originals[uri] ?? uri]));
     setPhotoUris(photos);
-    updateDraft({ primaryPhotoUri: photos[0] ?? "", photoUris: photos });
+    setPhotoOriginalUris(nextOriginals);
+    updateDraft({ primaryPhotoUri: photos[0] ?? "", photoUris: photos, photoOriginalUris: nextOriginals });
   };
 
+  const revealFocusedInput = () => {
+    revealInputInViewport(focusedProfileInput.current, onboardingScrollRef.current,
+      onboardingScrollY, focusedProfileInput);
+  };
   const scrollInputIntoView = (input: NativeTextInput | null) => {
-    if (!input) return;
-    const node = findNodeHandle(input);
-    const scrollResponder = onboardingScrollRef.current?.getScrollResponder?.();
-    if (!node || !scrollResponder) return;
-
-    setTimeout(() => {
-      scrollResponder.scrollResponderScrollNativeHandleToKeyboard(
-        node,
-        130,
-        true
-      );
-    }, 300);
+    focusedProfileInput.current = input;
+    requestAnimationFrame(revealFocusedInput);
   };
+  useEffect(() => {
+    const shown = Keyboard.addListener("keyboardDidShow", () => requestAnimationFrame(revealFocusedInput));
+    return () => shown.remove();
+  }, []);
 
   const requestLocation = async () => {
     if (locationLoading) return;
@@ -465,6 +507,7 @@ const VibesOnboardingFlow = () => {
 
       const nextCity =
         address?.city ?? address?.subregion ?? address?.region ?? "";
+      const nextNeighborhood = address?.district?.trim() ?? "";
       const nextCountry = address?.country ?? "";
       const nextLocationLabel = getUniqueLocationParts(
         nextCity,
@@ -472,12 +515,14 @@ const VibesOnboardingFlow = () => {
       ).join(", ");
 
       setCity(nextCity);
+      setNeighborhood(nextNeighborhood);
       setCountry(nextCountry);
       setLocationLabel(nextLocationLabel);
       setLatitude(current.coords.latitude);
       setLongitude(current.coords.longitude);
       updateDraft({
         city: nextCity,
+        neighborhood: nextNeighborhood,
         country: nextCountry,
         locationLabel: nextLocationLabel,
         latitude: current.coords.latitude,
@@ -512,6 +557,7 @@ const VibesOnboardingFlow = () => {
         style={[
           onboardingStyles.title,
           targetStep === "completion" && onboardingStyles.centeredTitle,
+          ["profile", "profileText"].includes(targetStep) && { fontSize: 28, lineHeight: 34, marginTop: 16 },
         ]}
         maxFontSizeMultiplier={1}
       >
@@ -530,7 +576,13 @@ const VibesOnboardingFlow = () => {
 
   const renderPurpose = () => (
     <>
-      {renderTitle("purpose")}
+      <View style={localStyles.purposeHero}>
+        <View style={localStyles.introCopy}>
+          <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
+          <Text style={localStyles.aboutHint}>{copy.subtitle}</Text>
+        </View>
+        <PlayfulVibesLogo style={{ width: 78, height: 96 }} />
+      </View>
       <View style={onboardingStyles.optionList}>
         {PURPOSE_OPTIONS.map((option) => (
           <OptionCard
@@ -549,96 +601,50 @@ const VibesOnboardingFlow = () => {
 
   const renderProfile = () => (
     <>
-      {renderTitle("profile")}
-      <View style={onboardingStyles.profileWrap}>
-        <ProfilePhotoPicker uris={photoUris} onChange={handlePhotoChange} />
+      <View style={localStyles.photoHero}>
+        <View style={localStyles.introCopy}>
+          <Text accessibilityRole="header" style={localStyles.photoTitle}>{locale === "en" ? "Show your vibe" : "Mostrá tu vibe"}</Text>
+          <Text style={localStyles.aboutHint}>{locale === "en" ? "Add a photo now or later." : "Sumá una foto ahora o más adelante."}</Text>
+        </View>
+        <View style={localStyles.photoMascot}>
+          <PlayfulVibesLogo style={{ width: 60, height: 72 }} />
+          <View style={localStyles.photoGreeting}><Text style={localStyles.photoGreetingText}>{locale === "en" ? "Your profile is taking shape!" : "¡Ese perfil toma forma!"}</Text></View>
+        </View>
+      </View>
+      <View style={{ alignItems: "center" }}>
+        <ProfilePhotoPicker uris={photoUris} originalUris={photoOriginalUris} onChange={handlePhotoChange} />
         <View style={onboardingStyles.fieldGroup}>
-          <View style={onboardingStyles.inputRow}>
-            <Icon
-              name="person-outline"
-              size={20}
-              color={ONBOARDING_COLORS.mustard}
-            />
-            <TextInput
-              ref={displayNameInputRef}
-              style={onboardingStyles.input}
-              placeholder={t("vibesOnboarding.profile.namePlaceholder")}
-              placeholderTextColor="rgba(110, 110, 110, 0.55)"
-              value={displayName}
-              onChangeText={setDisplayName}
-              onFocus={() => scrollInputIntoView(displayNameInputRef.current)}
-              autoCapitalize="words"
-              maxLength={50}
-            />
-          </View>
-
-          <View
-            style={[onboardingStyles.inputRow, onboardingStyles.textAreaRow]}
-          >
-            <Icon
-              name="document-text-outline"
-              size={20}
-              color={ONBOARDING_COLORS.mustard}
-            />
-            <TextInput
-              ref={descriptionInputRef}
-              style={[onboardingStyles.input, onboardingStyles.textAreaInput]}
-              placeholder={t("vibesOnboarding.profile.descriptionPlaceholder")}
-              placeholderTextColor="rgba(110, 110, 110, 0.55)"
-              value={briefDescription}
-              onChangeText={setBriefDescription}
-              onFocus={() => scrollInputIntoView(descriptionInputRef.current)}
-              multiline
-              maxLength={1000}
-              textAlignVertical="top"
-            />
-          </View>
-
           {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
             <>
-              <TouchableOpacity
-                style={onboardingStyles.inputRow}
-                activeOpacity={0.7}
-                onPress={() => setShowBirthDatePicker(true)}
-              >
-                <Icon
-                  name="calendar-outline"
-                  size={20}
-                  color={ONBOARDING_COLORS.mustard}
-                />
-                <Text
-                  style={[
-                    onboardingStyles.ageValue,
-                    !birthDate && { color: "rgba(110, 110, 110, 0.55)" },
-                  ]}
+            <Text accessibilityRole="header" style={onboardingStyles.birthDateLabel}>
+              {t("vibesOnboarding.profile.birthDatePlaceholder")}
+            </Text>
+            {Platform.OS === "ios" ? (
+              <>
+                <TouchableOpacity
+                  style={onboardingStyles.inputRow}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  onPress={() => { Keyboard.dismiss(); setPendingBirthDate(birthDate ?? birthDateLimits.maximumDate); setShowBirthDatePicker(true); }}
                 >
-                  {birthDate
-                    ? birthDate.toLocaleDateString(
-                        locale === "en" ? "en-US" : "es-AR"
-                      )
-                    : t("vibesOnboarding.profile.birthDatePlaceholder")}
-                </Text>
-                {age ? (
-                  <Text
-                    style={[
-                      onboardingStyles.ageValue,
-                      { flex: 0, marginLeft: 8 },
-                    ]}
-                  >
-                    {age} {t("vibesOnboarding.profile.years")}
+                  <Icon name="calendar-outline" size={20} color={ONBOARDING_COLORS.mustard} />
+                  <Text style={[onboardingStyles.ageValue, !birthDate && { color: "rgba(110, 110, 110, 0.55)" }]}>
+                    {birthDate
+                      ? birthDate.toLocaleDateString(locale === "en" ? "en-US" : "es-AR")
+                      : t("vibesOnboarding.profile.birthDatePlaceholder")}
                   </Text>
-                ) : null}
-              </TouchableOpacity>
-              {showBirthDatePicker ? (
-                <DateTimePicker
-                  value={birthDate ?? birthDateLimits.maximumDate}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  minimumDate={birthDateLimits.minimumDate}
-                  maximumDate={birthDateLimits.maximumDate}
-                  onChange={handleBirthDateChange}
-                />
-              ) : null}
+                  {age ? (
+                    <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: 8 }]}>
+                      {age} {t("vibesOnboarding.profile.years")}
+                    </Text>
+                  ) : null}
+                </TouchableOpacity>
+
+              </>
+            ) : (
+              <BirthDateWheel value={birthDate} onChange={setBirthDate}
+                minimumDate={birthDateLimits.minimumDate} maximumDate={birthDateLimits.maximumDate} locale={locale} />
+            )}
             </>
           ) : null}
         </View>
@@ -646,11 +652,149 @@ const VibesOnboardingFlow = () => {
     </>
   );
 
+  const renderProfileText = () => {
+    const english = locale === "en";
+    const ideas = english ? ["I’m excited about…", "My ideal plan…", "I could talk for hours about…"]
+      : ["Me entusiasma…", "Mi plan ideal…", "Podría hablar horas de…"];
+    return (
+      <>
+        <View style={localStyles.introHero}>
+          <View style={localStyles.introCopy}>
+            <View pointerEvents="none" accessible={false} style={localStyles.introConfetti}>
+              <Svg width="36" height="30" viewBox="0 0 48 40">
+                <Path d="M9 28 Q18 29 25 37 Q11 36 4 30 Q1 24 9 28 Z" fill={vibesTheme.colors.accentMustard} />
+                <Path d="M29 5 Q36 7 42 28 Q34 27 27 13 Q24 5 29 5 Z" fill={vibesTheme.colors.accentCoral} />
+              </Svg>
+            </View>
+            <View accessibilityRole="header" accessible accessibilityLabel={english ? "Let’s start with you" : "Empecemos por vos"}>
+              <Text style={localStyles.introTitle} numberOfLines={1} adjustsFontSizeToFit>
+                {english ? "Let’s start" : "Empecemos"}
+              </Text>
+              <Text style={localStyles.introTitle} numberOfLines={1} adjustsFontSizeToFit>
+                {english ? "with you" : "por vos"}
+              </Text>
+            </View>
+            <Text style={localStyles.introSubtitle}>{english ? "What’s your name?" : "¿Cómo te llamás?"}</Text>
+          </View>
+          <View style={localStyles.introMascot}>
+            <PlayfulVibesLogo style={localStyles.introLogo} />
+            <View style={localStyles.greetingBubble}>
+              <Text style={localStyles.greetingText} numberOfLines={2}>
+                {firstName.trim() ? (english ? `Hi, ${firstName.trim()}!` : `¡Hola, ${firstName.trim()}!`) : (english ? "Hi there!" : "¡Hola!")}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View style={localStyles.introFields}>
+          <View style={localStyles.introField}>
+            <Text style={localStyles.introLabel}>{english ? "First name" : "Nombre"}</Text>
+            <TextInput
+              ref={displayNameInputRef} style={localStyles.introInput}
+              accessibilityLabel={english ? "First name" : "Nombre"}
+              placeholder={t("vibesOnboarding.profile.namePlaceholder")}
+              placeholderTextColor={vibesTheme.colors.secondaryText}
+              value={firstName} onChangeText={setFirstName}
+              onFocus={() => scrollInputIntoView(displayNameInputRef.current)}
+              onBlur={() => { if (focusedProfileInput.current === displayNameInputRef.current) focusedProfileInput.current = null; }}
+              autoCorrect={false} autoComplete="given-name" autoCapitalize="words" maxLength={50}
+              returnKeyType="next" onSubmitEditing={() => lastNameInputRef.current?.focus()}
+            />
+          </View>
+          <View style={localStyles.introField}>
+            <Text style={localStyles.introLabel}>{english ? "Last name" : "Apellido"} <Text style={localStyles.optionalLabel}>{english ? "Optional" : "Opcional"}</Text></Text>
+            <TextInput
+              ref={lastNameInputRef} style={localStyles.introInput}
+              accessibilityLabel={english ? "Last name, optional" : "Apellido, opcional"}
+              placeholder={t("vibesOnboarding.profile.lastNamePlaceholder")}
+              placeholderTextColor={vibesTheme.colors.secondaryText}
+              value={lastName} onChangeText={setLastName}
+              onFocus={() => scrollInputIntoView(lastNameInputRef.current)}
+              onBlur={() => { if (focusedProfileInput.current === lastNameInputRef.current) focusedProfileInput.current = null; }}
+              autoCorrect={false} autoComplete="family-name" autoCapitalize="words" maxLength={50}
+              returnKeyType="next" onSubmitEditing={() => descriptionInputRef.current?.focus()}
+            />
+          </View>
+          <View style={localStyles.introField}>
+            <Text style={localStyles.introLabel}>{english ? "Gender" : "Género"} <Text style={localStyles.optionalLabel}>{english ? "Optional" : "Opcional"}</Text></Text>
+            <View style={localStyles.ideaChips}>
+              {QUESTION_GROUPS[0].fields.find(field => field.key === "gender")?.options?.map(option => (
+                <SelectablePill key={option} label={english ? ({ Hombre: "Man", Mujer: "Woman", Otro: "Other" }[option] ?? option) : option}
+                  selected={answers.gender === option}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setAnswers(previous => ({ ...previous, gender: previous.gender === option ? "" : option }));
+                  }} />
+              ))}
+            </View>
+          </View>
+          <View style={localStyles.aboutSection}>
+            <Text accessibilityRole="header" style={localStyles.aboutHeading}>{english ? "Something about you" : "Algo muy vos"} <Text style={localStyles.optionalLabel}>{english ? "Optional" : "Opcional"}</Text></Text>
+            <Text style={localStyles.aboutHint}>{english ? "A passion, a favorite activity or a plan you’re always up for…" : "Un gusto, una pasión o ese plan al que siempre te sumás…"}</Text>
+            <TextInput
+              ref={descriptionInputRef} style={[localStyles.introInput, localStyles.introDescription]}
+              accessibilityLabel={english ? "About you, optional" : "Algo muy vos, opcional"}
+              placeholder={english ? "Tell us a little about yourself" : "Contanos un poquito de vos"}
+              placeholderTextColor={vibesTheme.colors.secondaryText}
+              value={briefDescription} onChangeText={setBriefDescription}
+              onFocus={() => scrollInputIntoView(descriptionInputRef.current)}
+              onBlur={() => { if (focusedProfileInput.current === descriptionInputRef.current) focusedProfileInput.current = null; }}
+              multiline maxLength={1000} textAlignVertical="top"
+            />
+            <Text style={localStyles.aboutHint}>{english ? "Need an idea?" : "¿Necesitás una idea?"}</Text>
+            <View style={localStyles.ideaChips}>
+              {ideas.map(idea => <TouchableOpacity key={idea} accessibilityRole="button" style={localStyles.ideaChip}
+                onPress={() => {
+                  const prefix = idea.replace(/…$/, "");
+                  setBriefDescription(previous => `${previous.trim() ? `${previous.trim()}\n` : ""}${prefix} `.slice(0, 1000));
+                  requestAnimationFrame(() => descriptionInputRef.current?.focus());
+                }}>
+                <Text style={localStyles.ideaText}>{idea}</Text>
+              </TouchableOpacity>)}
+            </View>
+          </View>
+        </View>
+      </>
+    );
+  };
+
   const renderLocation = () => (
     <>
-      {renderTitle("location")}
+      <View style={localStyles.purposeHero}>
+        <View style={localStyles.introCopy}>
+          <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
+          <Text style={localStyles.aboutHint}>{copy.subtitle}</Text>
+        </View>
+        <OnboardingGlobe style={{ width: 92, height: 100 }} />
+      </View>
       <View style={onboardingStyles.locationWrap}>
         <View style={onboardingStyles.fieldGroup}>
+          <View style={onboardingStyles.inputRow}>
+            <Icon
+              name="earth-outline"
+              size={20}
+              color={ONBOARDING_COLORS.mustard}
+            />
+            <TextInput
+              ref={countryInputRef}
+              style={onboardingStyles.input}
+              placeholder={t("onboarding.countryPlaceholder")}
+              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              value={country}
+              onChangeText={(value) => {
+                setCountry(value);
+                setLocationLabel("");
+                setLatitude(undefined);
+                setLongitude(undefined);
+                setCitySuggestions([]);
+                locationSearchVersion.current += 1;
+              }}
+              autoCapitalize="words"
+              onFocus={() => scrollInputIntoView(countryInputRef.current)}
+              returnKeyType="next"
+              onSubmitEditing={() => cityInputRef.current?.focus()}
+              blurOnSubmit={false}
+            />
+          </View>
           <View style={onboardingStyles.inputRow}>
             <Icon
               name="business-outline"
@@ -658,6 +802,7 @@ const VibesOnboardingFlow = () => {
               color={ONBOARDING_COLORS.mustard}
             />
             <TextInput
+              ref={cityInputRef}
               style={onboardingStyles.input}
               placeholder={t("onboarding.cityPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
@@ -672,29 +817,25 @@ const VibesOnboardingFlow = () => {
               }}
               autoCapitalize="words"
               returnKeyType="next"
+              onFocus={() => scrollInputIntoView(cityInputRef.current)}
+              onSubmitEditing={() => neighborhoodInputRef.current?.focus()}
+              blurOnSubmit={false}
             />
           </View>
           <View style={onboardingStyles.inputRow}>
-            <Icon
-              name="earth-outline"
-              size={20}
-              color={ONBOARDING_COLORS.mustard}
-            />
+            <Icon name="location-outline" size={20} color={ONBOARDING_COLORS.mustard} />
             <TextInput
+              ref={neighborhoodInputRef}
               style={onboardingStyles.input}
-              placeholder={t("onboarding.countryPlaceholder")}
+              placeholder={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
+              accessibilityLabel={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
-              value={country}
-              onChangeText={(value) => {
-                setCountry(value);
-                setLocationLabel("");
-                setLatitude(undefined);
-                setLongitude(undefined);
-                setCitySuggestions([]);
-                locationSearchVersion.current += 1;
-              }}
+              value={neighborhood}
+              onChangeText={setNeighborhood}
+              maxLength={100}
               autoCapitalize="words"
               returnKeyType="done"
+              onFocus={() => scrollInputIntoView(neighborhoodInputRef.current)}
               onSubmitEditing={() => {
                 if (city.trim() || country.trim()) void goNext();
               }}
@@ -727,7 +868,7 @@ const VibesOnboardingFlow = () => {
           <Icon
             name="location"
             size={18}
-            color={ONBOARDING_COLORS.blue}
+            color={ONBOARDING_COLORS.text}
           />
           <Text style={onboardingStyles.locationButtonText}>
             {locationLoading
@@ -741,7 +882,13 @@ const VibesOnboardingFlow = () => {
 
   const renderPractices = () => (
     <>
-      {renderTitle("practices")}
+      <View style={localStyles.purposeHero}>
+        <View style={localStyles.introCopy}>
+          <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
+          <Text style={localStyles.aboutHint}>{copy.subtitle}</Text>
+        </View>
+        <OnboardingPlayfulShapes kind="practices" style={{ width: 88, height: 96 }} />
+      </View>
       <View style={onboardingStyles.pillGrid}>
         {practiceOptions.map((practice) => (
           <SelectablePill
@@ -771,18 +918,37 @@ const VibesOnboardingFlow = () => {
   );
 
   const renderStep = () => {
+    if (step === "continueChoice") return (
+      <>
+        <Text accessibilityRole="header" style={localStyles.choiceTitle}>{copy.title}</Text>
+        <Text style={localStyles.choiceSubtitle}>{copy.subtitle}</Text>
+        <ProfileReadyIllustration english={locale === "en"} />
+      </>
+    );
     if (step === "purpose") return renderPurpose();
     const questionGroup = ["identity", "interests"].indexOf(step);
     if (questionGroup >= 0)
       return (
-        <ProfileQuestionsForm
-          onInputFocus={scrollInputIntoView}
-          group={questionGroup}
-          value={answers}
-          onChange={setAnswers}
-        />
+        <>
+          <View style={localStyles.purposeHero}>
+            <View style={localStyles.introCopy}>
+              <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
+              <Text style={localStyles.aboutHint}>{locale === "en" ? "Everything is optional. Share only what you want." : "Todo es opcional. Compartí solo lo que quieras."}</Text>
+            </View>
+            <OnboardingPlayfulShapes kind={step === "identity" ? "identity" : "interests"} style={{ width: 88, height: 96 }} />
+          </View>
+          <ProfileQuestionsForm
+            hiddenFields={["gender"]}
+            showHeader={false}
+            onInputFocus={scrollInputIntoView}
+            group={questionGroup}
+            value={answers}
+            onChange={setAnswers}
+          />
+        </>
       );
     if (step === "profile") return renderProfile();
+    if (step === "profileText") return renderProfileText();
     if (step === "location") return renderLocation();
     if (step === "practices") return renderPractices();
     return null;
@@ -796,16 +962,18 @@ const VibesOnboardingFlow = () => {
     <>
       {step === "completion" ? (
         <View style={localStyles.completionLoadingScreen}>
-          <VibesLoader size={94} />
+          <VibesLoader />
         </View>
       ) : (
         <OnboardingScreenContainer
           scrollViewRef={onboardingScrollRef}
+          onScroll={event => { onboardingScrollY.current = event.nativeEvent.contentOffset.y; }}
+          onViewportChange={() => requestAnimationFrame(revealFocusedInput)}
           footer={
             <>
               <PrimaryButton
                 label={
-                  ["identity", "interests"].includes(step)
+                  ["profileText", "profile"].includes(step) ? (locale === "en" ? "Continue" : "Continuar") : ["identity", "interests"].includes(step)
                     ? "Siguiente"
                     : copy.button
                 }
@@ -813,15 +981,19 @@ const VibesOnboardingFlow = () => {
                 disabled={!canContinue}
                 loading={completeMutation.isPending}
               />
-              {["identity", "interests"].includes(step) ? (
+              {step === "profile" ? <TouchableOpacity accessibilityRole="button" onPress={() => void goNext()}
+                disabled={!canContinue || completeMutation.isPending} style={localStyles.completeLaterButton}>
+                <Text style={localStyles.photoLaterText}>{locale === "en" ? "Add photos later" : "Agregar fotos más adelante"}</Text>
+              </TouchableOpacity> : null}
+              {["continueChoice", "purpose", "location", "practices", "identity", "interests"].includes(step) ? (
                 <TouchableOpacity
                   onPress={() => {
                     updateDraft(currentDraft);
                     setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("completion"));
                   }}
                   accessibilityRole="button"
-                  disabled={completeMutation.isPending}
-                  style={localStyles.completeLaterButton}
+                  disabled={completeMutation.isPending || !displayName.trim()}
+                  style={[localStyles.completeLaterButton, !displayName.trim() && { opacity: 0.42 }]}
                 >
                   <Text style={localStyles.completeLaterText}>
                     {locale === "en" ? "Complete later" : "Completar después"}
@@ -832,14 +1004,49 @@ const VibesOnboardingFlow = () => {
           }
         >
           <ProgressHeader
+            intro={["profileText", "continueChoice"].includes(step)}
+            cancelDisabled={completeMutation.isPending}
             progress={getProgress(stepIndex)}
             onBack={goBack}
             showBack={stepIndex > 0}
-            hideBackIcon={step === "profile" && !hasAgeAssuranceBirthDate}
+            hideBackIcon={false}
           />
           <Animated.View style={animatedStyle}>{renderStep()}</Animated.View>
         </OnboardingScreenContainer>
       )}
+
+      {Platform.OS === "ios" ? (
+        <AnimatedSheetModal
+          visible={showBirthDatePicker}
+          placement="center"
+          onClose={() => setShowBirthDatePicker(false)}
+          sheetStyle={localStyles.birthDateSheet}
+        >
+          <Text accessibilityRole="header" style={localStyles.birthDateTitle}>
+            {t("vibesOnboarding.profile.birthDatePlaceholder")}
+          </Text>
+          {showBirthDatePicker ? <DateTimePicker
+            style={onboardingStyles.nativeBirthDatePicker}
+            value={pendingBirthDate ?? birthDateLimits.maximumDate}
+            mode="date"
+            display="spinner"
+            themeVariant="light"
+            textColor={vibesTheme.colors.primaryText}
+            locale={locale === "en" ? "en-US" : "es-AR"}
+            minimumDate={birthDateLimits.minimumDate}
+            maximumDate={birthDateLimits.maximumDate}
+            onChange={(_event, date) => { if (date) setPendingBirthDate(date); }}
+          /> : null}
+          <PrimaryButton label={t("common.done")} onPress={() => {
+            setBirthDate(pendingBirthDate ?? birthDateLimits.maximumDate);
+            setShowBirthDatePicker(false);
+          }} />
+          <TouchableOpacity accessibilityRole="button" style={localStyles.completeLaterButton}
+            onPress={() => setShowBirthDatePicker(false)}>
+            <Text style={localStyles.completeLaterText}>{t("common.cancel")}</Text>
+          </TouchableOpacity>
+        </AnimatedSheetModal>
+      ) : null}
 
       <SpiritualPathDetailsModal
         visible={Boolean(activePractice)}
@@ -871,6 +1078,10 @@ const VibesOnboardingFlow = () => {
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={false}
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
+          removeClippedSubviews={false}
+          style={{ flex: 1 }}
           contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
         >
           <View style={onboardingStyles.customPracticeCard}>
@@ -922,21 +1133,53 @@ const VibesOnboardingFlow = () => {
 export default VibesOnboardingFlow;
 
 const localStyles = StyleSheet.create({
+  purposeHero: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 },
+  purposeTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 34, marginBottom: 10 },
+  choiceTitle: { marginTop: 20, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 32, lineHeight: 39 },
+  choiceSubtitle: { marginTop: 14, color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 15, lineHeight: 22 },
+  photoHero: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 0, marginBottom: 8 },
+  photoTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 26, lineHeight: 32, marginBottom: 6 },
+  photoMascot: { width: 100, alignItems: "center", gap: 3 },
+  photoGreeting: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 16, backgroundColor: `${vibesTheme.colors.accentBlue}14`, maxWidth: "100%" },
+  photoGreetingText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold, fontSize: 12, lineHeight: 16, textAlign: "center" },
+  photoLaterText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 13, lineHeight: 18 },
+  introHero: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 18 },
+  introCopy: { flex: 1, minWidth: 0 },
+  introConfetti: { position: "absolute", top: -28, left: -6, width: 36, height: 30 },
+  introTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 39 },
+  introSubtitle: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 19, lineHeight: 25, marginTop: 10 },
+  introMascot: { width: 112, alignItems: "center", gap: 6 },
+  introLogo: { width: 106, height: 128 },
+  greetingBubble: { paddingHorizontal: 10, paddingVertical: 10, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14`, maxWidth: "100%" },
+  greetingText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold, fontSize: 14, lineHeight: 19, textAlign: "center" },
+  introFields: { gap: 16 },
+  introField: { gap: 7 },
+  introLabel: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 14, lineHeight: 20 },
+  optionalLabel: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, lineHeight: 18 },
+  introInput: { minHeight: 52, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}30`, borderRadius: 14, backgroundColor: `${vibesTheme.colors.secondaryText}05`, paddingHorizontal: 16, paddingVertical: 12, fontFamily: vibesTheme.fonts.regular, fontSize: 17, lineHeight: 23, color: vibesTheme.colors.primaryText },
+  aboutSection: { gap: 12, marginTop: 10 },
+  aboutHeading: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 24, lineHeight: 31 },
+  aboutHint: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 13, lineHeight: 19 },
+  introDescription: { minHeight: 112 },
+  ideaChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  ideaChip: { minHeight: 44, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 24, backgroundColor: `${vibesTheme.colors.accentBlue}14`, justifyContent: "center" },
+  ideaText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.medium, fontSize: 13, lineHeight: 19 },
+  birthDateSheet: { padding: 20, borderRadius: 24, backgroundColor: vibesTheme.colors.surface },
+  birthDateTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 20, lineHeight: 26, textAlign: "center" },
   completeLaterButton: {
-    minHeight: 48,
+    minHeight: 56,
     marginTop: 10,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
-    borderRadius: vibesTheme.radii.pill,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
-    backgroundColor: vibesTheme.colors.surface,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   completeLaterText: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.medium,
+    fontFamily: vibesTheme.fonts.semibold,
     fontSize: 16,
+    lineHeight: 22,
   },
   completionLoadingScreen: {
     flex: 1,

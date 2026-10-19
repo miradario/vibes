@@ -6,6 +6,9 @@ import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { withBootTimeout } from "../lib/startupBoot";
+import { participantCounts } from "../lib/participantCounts";
+import { markFtuxAction } from "../ftux/ftuxStore";
 import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { uploadImageToSupabase } from "../lib/supabaseStorage";
@@ -66,11 +69,13 @@ export type EventFeedItem = {
   tags?: string[];
   createdAt?: string | null;
   createdBy?: string | null;
+  sourceChallengeId?: string | null;
 };
 
 type EventRow = Record<string, any>;
 
 type CreateEventInput = {
+  tags?: string[];
   category?: EventCategory | null;
   participationType?: EventParticipationType | null;
   createdBy: string;
@@ -95,6 +100,7 @@ type CreateEventInput = {
 };
 
 type UpdateEventInput = {
+  tags?: string[];
   category?: EventCategory | null;
   participationType?: EventParticipationType | null;
   eventId: string;
@@ -102,7 +108,7 @@ type UpdateEventInput = {
   title: string;
   subtitle: string;
   description?: string | null;
-  startsAt: string;
+  startsAt: string | null;
   schedule?: EventSession[];
   location?: string | null;
   locationLatitude?: number | null;
@@ -301,7 +307,7 @@ const mapEventRow = (row: EventRow): EventFeedItem => {
   };
 };
 
-const mapChallengeRow = (row: EventRow): EventFeedItem => {
+export const mapChallengeRow = (row: EventRow): EventFeedItem => {
   const rawDescription =
     typeof row.description === "string" ? row.description : null;
   const startsAt =
@@ -374,6 +380,10 @@ const mapChallengeRow = (row: EventRow): EventFeedItem => {
       typeof row.created_by === "string" && row.created_by.trim()
         ? row.created_by
         : null,
+    sourceChallengeId:
+      typeof row.source_challenge_id === "string" && row.source_challenge_id.trim()
+        ? row.source_challenge_id
+        : null,
   };
 };
 
@@ -401,7 +411,10 @@ export const fetchEventFeedItemById = async (
     );
 
     if (publicError) throw publicError;
-    resolvedData = publicData as EventRow | null;
+    // Non-public challenges only come back as a stub; treat as not readable.
+    resolvedData = (publicData as { restricted?: boolean } | null)?.restricted
+      ? null
+      : (publicData as EventRow | null);
   }
 
   if (!resolvedData) return null;
@@ -409,6 +422,19 @@ export const fetchEventFeedItemById = async (
   return eventType === "challenge"
     ? mapChallengeRow(resolvedData)
     : mapEventRow(resolvedData);
+};
+
+/**
+ * True when the challenge exists but is not public and the viewer can't read it
+ * (RLS). Lets the detail screen show "Este desafío es privado" vs. not found.
+ */
+export const fetchIsRestrictedChallenge = async (challengeId: string): Promise<boolean> => {
+  const { data, error } = await supabase.rpc("get_public_shared_content", {
+    p_content_type: "challenge",
+    p_content_id: challengeId,
+  });
+  if (error) throw error;
+  return Boolean((data as { restricted?: boolean } | null)?.restricted);
 };
 
 type ParticipantPreviewRow = {
@@ -515,7 +541,7 @@ const fetchEventParticipantMeta = async (eventIds: string[]) => {
 };
 
 const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
-  if (!challengeIds.length) return {} as Record<string, string[]>;
+  if (!challengeIds.length) return { previewMap: {} as Record<string, string[]>, countMap: {} as Record<string, number> };
 
   const [
     { data: challengeRows, error: challengeError },
@@ -537,7 +563,7 @@ const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
   if (challengeError) throw challengeError;
   if (eventError) throw eventError;
 
-  return createParticipantPreviewMap([
+  const rows = [
     ...(challengeRows ?? []).map((row: any) => ({
       eventId: String(row.challenge_id),
       userId: String(row.user_id),
@@ -548,7 +574,11 @@ const fetchChallengeParticipantPreviewMap = async (challengeIds: string[]) => {
       userId: String(row.user_id),
       joinedAt: typeof row.joined_at === "string" ? row.joined_at : null,
     })),
-  ]);
+  ];
+  return {
+    previewMap: await createParticipantPreviewMap(rows),
+    countMap: participantCounts(challengeIds, rows),
+  };
 };
 
 const fetchChallengeTodayCheckinCountMap = async (challengeIds: string[]) => {
@@ -736,9 +766,10 @@ const enrichFeedItemsWithProfileImages = async (
             ? participantCountMap[item.id]
             : item.participantCount,
         attendees:
-          item.type === "event" &&
           typeof participantCountMap?.[item.id] === "number"
-            ? formatAttendees(participantCountMap[item.id], item.capacity)
+            ? item.type === "event"
+              ? formatAttendees(participantCountMap[item.id], item.capacity)
+              : `${participantCountMap[item.id]} participantes`
             : item.attendees,
         hostImage: signedHostImage,
         participantPreviewImages,
@@ -821,7 +852,7 @@ const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
     viewerId
   );
   const challengeIds = items.map((item) => item.id);
-  const [previewMap, todayCheckinCountMap, viewerProgressMap] =
+  const [{ previewMap, countMap }, todayCheckinCountMap, viewerProgressMap] =
     await Promise.all([
       fetchChallengeParticipantPreviewMap(challengeIds),
       fetchChallengeTodayCheckinCountMap(challengeIds),
@@ -831,11 +862,12 @@ const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
     items,
     previewMap,
     todayCheckinCountMap,
-    viewerProgressMap
+    viewerProgressMap,
+    countMap
   );
 };
 
-const maybeUploadEventImage = async (
+export const maybeUploadEventImage = async (
   uri: string | null | undefined,
   pathPrefix: string
 ) => {
@@ -968,13 +1000,15 @@ export const useChallengesFeedQuery = () => {
 
 export const eventsFeedQueryOptions = () => ({
   queryKey: eventsKeys.all,
-  queryFn: fetchEvents,
+  queryFn: () => withBootTimeout(fetchEvents(), 15000, "La carga de eventos"),
+  retry: false,
   staleTime: 30_000,
 });
 
 export const challengesFeedQueryOptions = (userId?: string) => ({
   queryKey: challengesKeys.list(userId),
-  queryFn: () => fetchChallenges(userId),
+  queryFn: () => withBootTimeout(fetchChallenges(userId), 15000, "La carga de desafíos"),
+  retry: false,
   staleTime: 30_000,
 });
 
@@ -1006,6 +1040,7 @@ export const useCreateEventMutation = () => {
           description: encodedDescription,
           starts_at: input.startsAt,
           schedule: normalizeSchedule(input.schedule, input.startsAt),
+          ...(input.tags ? { tags: input.tags } : {}),
           location: input.location ?? null,
           location_latitude: input.locationLatitude ?? null,
           location_longitude: input.locationLongitude ?? null,
@@ -1082,6 +1117,7 @@ export const useUpdateEventMutation = () => {
           description: encodedDescription,
           starts_at: input.startsAt,
           schedule: normalizeSchedule(input.schedule, input.startsAt),
+          ...(input.tags ? { tags: input.tags } : {}),
           location: input.location ?? null,
           location_latitude: input.locationLatitude ?? null,
           location_longitude: input.locationLongitude ?? null,
@@ -1105,8 +1141,10 @@ export const useUpdateEventMutation = () => {
 
       return mapEventRow(data);
     },
-    onSuccess: () => {
+    onSuccess: (event) => {
+      queryClient.setQueryData(["event_deep_link", event.id], event);
       queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
     },
   });
 };
@@ -1261,7 +1299,9 @@ export const useJoinChallengeMutation = () => {
         );
       if (eventParticipantError) throw eventParticipantError;
     },
-    onSuccess: (_data, { challengeId, userId }) => {
+    onSuccess: async (_data, { challengeId, userId }) => {
+      // Ticks "Sumarte a un desafío" in Vibi's first steps checklist.
+      void markFtuxAction(userId, "joinedChallenge");
       queryClient.invalidateQueries({
         queryKey: challengeParticipantKeys.participant(challengeId, userId),
       });
@@ -1274,6 +1314,10 @@ export const useJoinChallengeMutation = () => {
       queryClient.invalidateQueries({ queryKey: challengesKeys.all });
       queryClient.invalidateQueries({
         queryKey: myEventGroupsKeys.all(userId),
+      });
+      await queryClient.refetchQueries({
+        queryKey: myEventGroupsKeys.all(userId),
+        type: "all",
       });
     },
   });
@@ -2390,7 +2434,7 @@ export const myEventGroupsKeys = {
 
 export const myEventGroupsQueryOptions = (userId: string | undefined) => ({
   queryKey: myEventGroupsKeys.all(userId ?? ""),
-  queryFn: async () => {
+  queryFn: () => withBootTimeout((async () => {
     if (!userId) return [];
 
     const { data: eventParticipations, error: eventParticipationErr } =
@@ -2557,7 +2601,8 @@ export const myEventGroupsQueryOptions = (userId: string | undefined) => ({
     });
 
     return groups;
-  },
+  })(), 15000, "La carga de tus inscripciones"),
+  retry: false,
   enabled: Boolean(userId),
   staleTime: 30_000,
 });

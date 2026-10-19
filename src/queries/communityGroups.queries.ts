@@ -3,6 +3,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { fetchProfileSummaries } from "../lib/profileSummaries";
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRefetchOnFocus } from "../hooks/useRefetchOnFocus";
 import { supabase } from "../lib/supabase";
 import { useAuthSession } from "../auth/auth.queries";
 
@@ -27,43 +28,125 @@ export type CommunityMessage = {
   message_kind: "message" | "system";
 };
 
+export type CommunityGroupInvitation = {
+  id: string;
+  group_id: string;
+  group_name: string;
+  group_description: string;
+  invited_by: string;
+  inviterName: string;
+};
+
+export function useCommunityInvitationsQuery(enabled = true) {
+  const { data: session } = useAuthSession();
+  const client = useQueryClient();
+  const userId = session?.user.id;
+  useEffect(() => {
+    if (!userId || !enabled) return;
+    const channel = supabase.channel(`community-invitations:${userId}`)
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "community_group_invitations",
+        filter: `invitee_id=eq.${userId}`,
+      }, () => { void client.invalidateQueries({ queryKey: ["communityInvitations", userId] }); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [userId, enabled, client]);
+  return useQuery<CommunityGroupInvitation[]>({
+    queryKey: ["communityInvitations", userId],
+    enabled: Boolean(userId && enabled),
+    // No polling (was 15s): realtime invalidation + focus refetch.
+    queryFn: async () => {
+      const { data, error } = await supabase.from("community_group_invitations")
+        .select("id,group_id,group_name,group_description,invited_by")
+        .eq("invitee_id", userId!).eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const profiles = await fetchProfileSummaries([...new Set((data ?? []).map(row => row.invited_by))]);
+      return (data ?? []).map(row => ({ ...row,
+        inviterName: profiles.find(profile => profile.userId === row.invited_by)?.displayName || "Una conexión",
+      }));
+    },
+  });
+}
+
+export function useRespondCommunityInvitationMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, accept }: { id: string; accept: boolean }) => {
+      const { data, error } = await supabase.rpc("respond_community_group_invitation", {
+        invitation_id: id, accept_invitation: accept,
+      });
+      if (error) throw error;
+      return String(data);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["communityInvitations"] }),
+        client.invalidateQueries({ queryKey: ["communityGroups"] }),
+        client.invalidateQueries({ queryKey: ["communityGroupMembers"] }),
+      ]);
+    },
+  });
+}
+
+// Signed photo URLs last 1h; reuse each one per photo_path until ~5 min
+// before expiry so list refreshes don't re-sign every photo.
+const SIGNED_URL_TTL_S = 3600;
+const SIGNED_URL_MARGIN_MS = 5 * 60_000;
+const signedPhotoCache = new Map<string, { url: string; expiresAt: number }>();
+async function getGroupPhotoUrl(path: string): Promise<string | null> {
+  const cached = signedPhotoCache.get(path);
+  if (cached && cached.expiresAt - SIGNED_URL_MARGIN_MS > Date.now()) return cached.url;
+  const signed = await supabase.storage
+    .from("community-group-photos")
+    .createSignedUrl(path, SIGNED_URL_TTL_S);
+  const url = signed.data?.signedUrl ?? null;
+  if (url) signedPhotoCache.set(path, { url, expiresAt: Date.now() + SIGNED_URL_TTL_S * 1000 });
+  else signedPhotoCache.delete(path);
+  return url;
+}
+
 export function useCommunityGroupsQuery() {
   const { data: session } = useAuthSession();
   const client = useQueryClient();
   const userId = session?.user.id;
   useEffect(() => {
     if (!userId) return;
+    let messageTimer: ReturnType<typeof setTimeout> | undefined;
+    const invalidateGroups = () =>
+      void client.invalidateQueries({ queryKey: ["communityGroups", userId] });
     const channel = supabase
       .channel(`community-groups:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "community_groups",
-        },
-        () => {
-          void client.invalidateQueries({
-            queryKey: ["communityGroups", userId],
-          });
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "community_groups" }, invalidateGroups)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "community_group_messages" },
         () => {
-          void client.invalidateQueries({ queryKey: ["communityGroups", userId] });
+          // Debounce: a burst of group messages triggers one list refresh.
+          if (messageTimer) clearTimeout(messageTimer);
+          messageTimer = setTimeout(invalidateGroups, 2500);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "community_group_members" },
+        () => {
+          // Joined/removed from a group, or membership changed in one.
+          invalidateGroups();
+          void client.invalidateQueries({ queryKey: ["communityGroupMembers", userId] });
         }
       )
       .subscribe();
     return () => {
+      if (messageTimer) clearTimeout(messageTimer);
       void supabase.removeChannel(channel);
     };
   }, [userId, client]);
-  return useQuery<CommunityGroup[]>({
+  const query = useQuery<CommunityGroup[]>({
     queryKey: ["communityGroups", userId],
     enabled: Boolean(userId),
-    refetchInterval: 30000,
+    // No polling (was 30s). Realtime + focus/foreground refresh; photo URLs
+    // come from a per-path signed URL cache so refreshes stay cheap.
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_groups")
@@ -76,14 +159,13 @@ export function useCommunityGroupsQuery() {
         (data ?? []).map(async ({ community_group_messages, ...group }) => {
           const preview = { ...group, lastMessage: community_group_messages?.[0] ?? null };
           if (!group.photo_path) return preview;
-          const signed = await supabase.storage
-            .from("community-group-photos")
-            .createSignedUrl(group.photo_path, 3600);
-          return { ...preview, photoUrl: signed.data?.signedUrl ?? null };
+          return { ...preview, photoUrl: await getGroupPhotoUrl(group.photo_path) };
         })
       );
     },
   });
+  useRefetchOnFocus(query.refetch, Boolean(userId));
+  return query;
 }
 
 export function useCreateCommunityGroupMutation() {
@@ -135,10 +217,12 @@ export function useCommunityMessagesQuery(groupId: string) {
       void supabase.removeChannel(channel);
     };
   }, [groupId, userId, client]);
-  return useQuery<CommunityMessage[]>({
+  const query = useQuery<CommunityMessage[]>({
+    // Opened from a notification/deep link: always refetch on mount.
+    refetchOnMount: "always",
     queryKey: ["communityMessages", userId, groupId],
     enabled: Boolean(userId && groupId),
-    refetchInterval: 15000,
+    // No polling (was 15s): realtime invalidation + focus refetch.
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_group_messages")
@@ -159,6 +243,8 @@ export function useCommunityMessagesQuery(groupId: string) {
       }));
     },
   });
+  useRefetchOnFocus(query.refetch, Boolean(userId && groupId));
+  return query;
 }
 
 export function useSendCommunityMessageMutation(groupId: string) {
@@ -228,10 +314,10 @@ export function useUpdateCommunityGroupPhotoMutation() {
 
 export function useCommunityGroupMembersQuery(groupId: string) {
   const { data: session } = useAuthSession();
-  return useQuery({
+  const query = useQuery({
     queryKey: ["communityGroupMembers", session?.user.id, groupId],
     enabled: Boolean(session?.user.id && groupId),
-    refetchInterval: 15000,
+    // No polling (was 15s): refetch on screen focus / app foreground.
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_group_members")
@@ -243,4 +329,6 @@ export function useCommunityGroupMembersQuery(groupId: string) {
       );
     },
   });
+  useRefetchOnFocus(query.refetch, Boolean(session?.user.id && groupId));
+  return query;
 }

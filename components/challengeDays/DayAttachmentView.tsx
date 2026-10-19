@@ -1,11 +1,6 @@
+import VibesLoader from "../VibesLoader";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Linking,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Linking, TouchableOpacity, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "../Typography";
 import PhotoViewer from "../PhotoViewer";
@@ -73,10 +68,7 @@ function LinkCard({ item }: { item: DayAttachment }) {
           />
         ) : null}
         {loading && !error ? (
-          <ActivityIndicator
-            accessibilityLabel="Cargando YouTube"
-            color={vibesTheme.colors.primaryText}
-          />
+          <VibesLoader accessibilityLabel="Cargando YouTube" />
         ) : null}
         {error ? (
           <>
@@ -157,7 +149,7 @@ export default function DayAttachmentView({ item }: { item: DayAttachment }) {
   });
   if (item.type === "link") return <LinkCard item={item} />;
   if (signed.isLoading)
-    return <ActivityIndicator color={vibesTheme.colors.primaryText} />;
+    return <VibesLoader />;
   if (signed.isError || !signed.data || imageError)
     return (
       <View style={s.card}>

@@ -34,7 +34,7 @@ export default function ProfilePhotoPrompt({
       accessibilityRole="button"
       accessibilityLabel="Agregar una foto a mi perfil"
       activeOpacity={0.85}
-      onPress={onPress ?? (() => navigation.navigate("EditProfile" as never))}
+      onPress={onPress ?? (() => navigation.navigate("EditProfile" as never, { photoRequestId: Date.now() } as never))}
       style={s.card}
     >
       <View style={s.content}>

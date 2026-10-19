@@ -24,7 +24,8 @@
     },
     "production": {
       "android": {
-        "credentialsSource": "local"
+        "credentialsSource": "local",
+        "gradleCommand": ":app:bundleRelease --no-daemon"
       }
     }
   },
@@ -32,6 +33,15 @@
     "production": {
       "android": {
         "track": "internal",
+        "releaseStatus": "completed"
+      },
+      "ios": {
+        "ascAppId": "6775540891"
+      }
+    },
+    "store-release": {
+      "android": {
+        "track": "production",
         "releaseStatus": "completed"
       },
       "ios": {

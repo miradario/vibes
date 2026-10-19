@@ -1,16 +1,9 @@
+import VibesLoader from "./VibesLoader";
 import UnreadBadge from "./UnreadBadge";
 import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 import KeyboardSheetModal from "./KeyboardSheetModal";
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, TextInput } from "./Typography";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,6 +13,9 @@ import { Icon } from "./index";
 import {
   useCommunityGroupsQuery,
   useCreateCommunityGroupMutation,
+  useCommunityInvitationsQuery,
+  useRespondCommunityInvitationMutation,
+  type CommunityGroupInvitation,
 } from "../src/queries/communityGroups.queries";
 import type { MatchWithProfile } from "../src/queries/matches.queries";
 import { handleApiError } from "../src/utils/handleApiError";
@@ -28,15 +24,19 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 export default function CommunityGroups({
   matches,
   groups,
+  invitations,
   variant = "list",
 }: {
   variant?: "create" | "list";
   matches: MatchWithProfile[];
   groups: ReturnType<typeof useCommunityGroupsQuery>;
+  invitations: ReturnType<typeof useCommunityInvitationsQuery>;
 }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const create = useCreateCommunityGroupMutation();
+  const respond = useRespondCommunityInvitationMutation();
+  const [invitationError, setInvitationError] = useState<string | null>(null);
   const { data: unread = [] } = useCommunityUnreadQuery();
   const [visible, setVisible] = useState(false);
   const [name, setName] = useState("");
@@ -67,6 +67,17 @@ export default function CommunityGroups({
       handleApiError(error, { toastTitle: "No se pudo crear el grupo" });
     }
   };
+  const answerInvitation = async (invitation: CommunityGroupInvitation, accept: boolean) => {
+    if (respond.isPending) return;
+    setInvitationError(null);
+    try {
+      const groupId = await respond.mutateAsync({ id: invitation.id, accept });
+      if (accept) open(groupId, invitation.group_name, invitation.group_description);
+    } catch (error) {
+      setInvitationError("No pudimos responder la invitación. Intentá nuevamente.");
+      handleApiError(error, { toastTitle: "No se pudo responder la invitación" });
+    }
+  };
   return (
     <View
       style={
@@ -85,7 +96,35 @@ export default function CommunityGroups({
       ) : null}
       {variant === "list" ? (
         <>
-          {groups.isLoading ? <ActivityIndicator color={vibesTheme.colors.accentMustard} /> : null}
+          {invitations.isLoading ? <VibesLoader /> : null}
+          {invitations.isError ? (
+            <TouchableOpacity accessibilityRole="button" onPress={() => void invitations.refetch()}>
+              <Text style={s.hint}>No pudimos cargar tus invitaciones. Tocá para reintentar.</Text>
+            </TouchableOpacity>
+          ) : null}
+          {(invitations.data?.length ?? 0) > 0 ? <Text style={s.heading}>INVITACIONES A GRUPOS</Text> : null}
+          {(invitations.data ?? []).map(invitation => (
+            <View key={invitation.id} style={s.invitation}>
+              <Text style={s.title}>{invitation.group_name}</Text>
+              <Text style={s.hint}>{invitation.inviterName} te invita a unirte.</Text>
+              {invitation.group_description ? <Text style={s.hint}>{invitation.group_description}</Text> : null}
+              <Text style={s.hint}>Solo entrarás al grupo si aceptás.</Text>
+              <View style={s.row}>
+                <TouchableOpacity accessibilityRole="button" disabled={respond.isPending}
+                  onPress={() => void answerInvitation(invitation, true)}
+                  style={[s.invitationAction, { backgroundColor: vibesTheme.colors.primaryText, opacity: respond.isPending ? 0.5 : 1 }]}>
+                  <Text style={[s.title, { color: vibesTheme.colors.surface }]}>Aceptar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button" disabled={respond.isPending}
+                  onPress={() => void answerInvitation(invitation, false)} style={s.invitationAction}>
+                  <Text style={s.title}>Rechazar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+          {respond.isPending ? <VibesLoader /> : null}
+          {invitationError ? <Text accessibilityRole="alert" style={s.hint}>{invitationError}</Text> : null}
+          {groups.isLoading ? <VibesLoader /> : null}
           {groups.isError ? (
             <TouchableOpacity onPress={() => void groups.refetch()}>
               <Text style={s.hint}>
@@ -148,7 +187,7 @@ export default function CommunityGroups({
               </TouchableOpacity>
             </View>
             <Text style={s.hint}>
-              Elegí un nombre y sumá conexiones para compartir lo que les gusta.
+              Elegí un nombre e invitá conexiones. Cada persona deberá aceptar para entrar al grupo.
             </Text>
             <Text style={s.heading}>Nombre del grupo</Text>
             <TextInput
@@ -185,11 +224,11 @@ export default function CommunityGroups({
               editable={!create.isPending}
             />
             <Text style={s.heading}>
-              Sumar conexiones · {selected.length} seleccionadas
+              Invitar conexiones · {selected.length} seleccionadas
             </Text>
             {matches.length === 0 ? (
               <Text style={s.hint}>
-                Conectá con alguien para poder sumarlo a tu primer grupo.
+                Conectá con alguien para poder invitarlo a tu primer grupo.
               </Text>
             ) : null}
             {matches.map((match) => (
@@ -239,8 +278,8 @@ export default function CommunityGroups({
                 },
               ]}
             >
-              <Text style={[s.title, { color: vibesTheme.colors.surface }]}>
-                {create.isPending ? "Creando…" : "Crear grupo"}
+              <Text style={s.title}>
+                {create.isPending ? "Creando…" : "Crear grupo y enviar invitaciones"}
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -250,6 +289,24 @@ export default function CommunityGroups({
   );
 }
 const s = StyleSheet.create({
+  invitation: {
+    padding: 16,
+    marginVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.surface,
+  },
+  invitationAction: {
+    flex: 1,
+    minHeight: 44,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: vibesTheme.colors.primaryText,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   section: { marginTop: 4, marginBottom: 0 },
   conversationRow: {
     minHeight: 76,
@@ -260,18 +317,20 @@ const s = StyleSheet.create({
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.primaryText,
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: `${vibesTheme.colors.secondaryText}0C`,
   },
   createLabel: {
     flexShrink: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.bold,
+    fontSize: 16,
+    lineHeight: 20,
+    includeFontPadding: false,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   avatar: {
     width: 48,

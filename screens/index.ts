@@ -30,6 +30,7 @@ export { default as ChallengeDetailScreen } from "./ChallengeDetailScreen";
 export { default as EventChat } from "./EventChat";
 export { default as CreateEvent } from "./CreateEvent";
 export { default as CreateChallenge } from "./CreateChallenge";
+export { default as RestartChallenge } from "./RestartChallenge";
 export { default as Contact } from "./Contact";
 export { default as Faq } from "./Faq";
 export { default as TermsConditions } from "./TermsConditions";

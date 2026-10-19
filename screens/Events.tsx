@@ -1,4 +1,7 @@
-import { eventHasExpired, normalizeSchedule, nextEventSession } from "../src/lib/eventSchedule";
+import { sectionTabStyles } from "../components/SectionTabStyles";
+import BackButton from "../components/BackButton";
+import ChallengeFeedCard from "../components/ChallengeFeedCard";
+import { eventHasExpired, normalizeSchedule, nextEventSession, sortEventsByDate } from "../src/lib/eventSchedule";
 import MediaImage from "../components/MediaImage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ScreenContainer from "../components/ScreenContainer";
@@ -8,8 +11,8 @@ import EventClassificationPicker from "../components/EventClassificationPicker";
 import { EVENT_MODALITIES, EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, getEventCategoryLabel, getEventParticipationLabel, matchesEventClassification, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
 /** @format */
 
-import React, { useCallback, useMemo, useState } from "react";
-import { View, FlatList, TouchableOpacity, StyleSheet, ScrollView, Keyboard, Platform } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, View, FlatList, TouchableOpacity, StyleSheet, ScrollView, Keyboard, Platform } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,6 +35,14 @@ import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
+import {
+  useReceivedChallengeInvitationsQuery,
+  useRespondChallengeInvitationMutation,
+  challengeInvitationKeys,
+  type ReceivedChallengeInvitation,
+} from "../src/queries/challengeRestart.queries";
+import RestartChallengeConfirmSheet from "../components/challengeRestart/RestartChallengeConfirmSheet";
+import { restartStyles } from "../components/challengeRestart/styles";
 
 type FeedListItem =
   | {
@@ -41,9 +52,52 @@ type FeedListItem =
       subtitle?: string;
     }
   | {
+      kind: "accordion";
+      id: ChallengeBlock;
+      title: string;
+      count: number;
+      open: boolean;
+    }
+  | {
       kind: "feed";
       item: EventFeedItem;
+      restartable?: boolean;
+      invitation?: ReceivedChallengeInvitation;
+      keyPrefix?: string;
+      reveal?: boolean;
     };
+
+type PrivateBlock = "mine" | "invitations" | "participating";
+type PublicBlock = "joined" | "active" | "upcoming";
+type ChallengeBlock = PrivateBlock | PublicBlock;
+
+const AccordionReveal = ({ children }: { children: React.ReactNode }) => {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(progress, {
+      toValue: 1,
+      damping: 16,
+      stiffness: 150,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start();
+  }, [progress]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: progress,
+        transform: [
+          { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [-14, 0] }) },
+          { scaleY: progress.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) },
+        ],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+};
 
 const normalizeSearchText = (value: string | null | undefined) =>
   (value ?? "")
@@ -136,7 +190,13 @@ const ParticipantStack = ({
   );
 };
 
-const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
+const Events = ({
+  pastOnly = false,
+  section: requestedSection,
+}: {
+  pastOnly?: boolean;
+  section?: "event" | "challenge";
+}) => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const queryClient = useQueryClient();
@@ -144,19 +204,20 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   const { t } = useI18n();
   const { data: session } = useAuthSession();
   const section: "event" | "challenge" =
-    route.params?.section === "challenge" ? "challenge" : "event";
-  const title = pastOnly ? "Eventos pasados" : section === "challenge" ? "Desafíos" : "Eventos";
+    requestedSection ?? (route.params?.section === "challenge" ? "challenge" : "event");
+  const title = pastOnly ? (section === "challenge" ? "Desafíos finalizados" : "Eventos pasados") : section === "challenge" ? "Desafíos" : "Eventos";
   const searchPlaceholder =
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
   const eventsQuery = useEventsFeedQuery();
   const challengesQuery = useChallengesFeedQuery();
-  const { data: myEventGroups = [], isLoading: myEventGroupsLoading } =
-    useMyEventGroupsQuery(session?.user?.id);
+  const groupsQuery = useMyEventGroupsQuery(session?.user?.id);
+  const { data: myEventGroups = [], isLoading: myEventGroupsLoading } = groupsQuery;
   const {
     data: items = [],
     isLoading,
-    error,
+    error: feedError,
   } = section === "challenge" ? challengesQuery : eventsQuery;
+  const error = feedError ?? (section === "challenge" ? groupsQuery.error : null);
   const locationOptions = useMemo(() => getEventLocationOptions(items), [items]);
   const [modality, setModality] = useState<EventModality | null>(null);
   const [category, setCategory] = useState<EventCategory | null>(null);
@@ -178,15 +239,18 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
     (draftDateFrom && draftDateTo && draftDateFrom > draftDateTo) ||
     (!pastOnly && ((draftDateFrom && draftDateFrom < today) || (draftDateTo && draftDateTo < today)))
   );
+  const [pricingType, setPricingType] = useState<"free" | "paid" | null>(null);
   const [draftFilters, setDraftFilters] = useState<{
-    category: EventCategory | null;
+    pricingType: "free" | "paid" | null;
     participationType: EventParticipationType | null;
     modality: EventModality | null;
-  }>({ category: null, participationType: null, modality: null });
+  }>({ pricingType: null, participationType: null, modality: null });
   const activeFilterCount = [category, participationType, modality, dateFrom, dateTo, locationFilter.trim()].filter(Boolean).length;
-  const openFilters = () => {
+  const [filterPanel, setFilterPanel] = useState<"date" | "location" | "other">("date");
+  const openFilters = (panel: "date" | "location" | "other") => {
+    setFilterPanel(panel);
     Keyboard.dismiss();
-    setDraftFilters({ category, participationType, modality });
+    setDraftFilters({ pricingType, participationType, modality });
     setDraftDatePreset(datePreset);
     setDraftDateFrom(dateFrom);
     setDraftDateTo(dateTo);
@@ -196,8 +260,20 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   };
 
   const [search, setSearch] = useState("");
-  const [showFinishedChallenges, setShowFinishedChallenges] = useState(false);
-  const [showUpcomingChallenges, setShowUpcomingChallenges] = useState(false);
+  const [startedOnly, setStartedOnly] = useState(false);
+  const [challengeTab, setChallengeTab] = useState<"public" | "private">(route.params?.challengeTab === "private" ? "private" : "public");
+  const [openBlocks, setOpenBlocks] = useState<Record<ChallengeBlock, boolean>>({
+    mine: true,
+    invitations: false,
+    participating: false,
+    joined: true,
+    active: true,
+    upcoming: false,
+  });
+  const [restartTarget, setRestartTarget] = useState<EventFeedItem | null>(null);
+  const viewerId = session?.user?.id;
+  const invitationsQuery = useReceivedChallengeInvitationsQuery(section === "challenge" ? viewerId : undefined);
+  const respondInvitation = useRespondChallengeInvitationMutation();
 
   const errorMessage =
     error instanceof Error && error.message.trim()
@@ -208,8 +284,12 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      // Private challenges (restarted copies and other private ones) live only in the "Privada" tab.
+      if (section === "challenge" && !pastOnly && startedOnly && (isUpcomingChallenge(item) || isFinishedChallenge(item))) return false;
+      if (section === "challenge" && (item.visibility === "private") !== (challengeTab === "private")) return false;
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
+      if (section === "event" && pricingType && item.pricingType !== pricingType) return false;
       if (!normalizedSearch) return true;
       const haystack = normalizeSearchText(
         [
@@ -230,11 +310,11 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
+  }, [items, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
-      return filteredItems.filter((item) => pastOnly ? isExpiredEvent(item) : !isExpiredEvent(item));
+      return sortEventsByDate(filteredItems.filter((item) => pastOnly ? isExpiredEvent(item) : !isExpiredEvent(item)));
     }
     return filteredItems;
   }, [filteredItems, section, pastOnly]);
@@ -293,77 +373,85 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
   const listItems = useMemo<FeedListItem[]>(() => {
     if (section !== "challenge") {
-      const nextItems: FeedListItem[] = visibleItems.map((item) => ({
-        kind: "feed",
-        item,
-      }));
-
-      return nextItems;
+      const joinedIds = new Set(myEventGroups.filter((group) => group.eventType === "event").map((group) => group.eventId));
+      const joined = visibleItems.filter((item) => joinedIds.has(item.id));
+      const others = visibleItems.filter((item) => !joinedIds.has(item.id));
+      return [
+        ...(joined.length ? [{ kind: "section" as const, id: "your-events", title: "Tus eventos", subtitle: "En los que te anotaste" }] : []),
+        ...joined.map((item) => ({ kind: "feed" as const, item })),
+        ...(joined.length && others.length ? [{ kind: "section" as const, id: "discover-events", title: "Más eventos" }] : []),
+        ...others.map((item) => ({ kind: "feed" as const, item })),
+      ];
     }
 
-    const nextItems: FeedListItem[] = [];
-
-    if (joinedChallengeItems.length > 0 || joinedUpcomingChallengeItems.length > 0) {
-      nextItems.push({
-        kind: "section",
-        id: "joined-challenges",
-        title: "Tus desafíos",
-      });
-      nextItems.push(
-        ...joinedChallengeItems.map((item) => ({ kind: "feed" as const, item })),
-      );
-      nextItems.push(
-        ...joinedUpcomingChallengeItems.map((item) => ({ kind: "feed" as const, item })),
-      );
+    if (pastOnly) {
+      return finishedChallengeItems.map((item) => ({ kind: "feed" as const, item, restartable: true }));
     }
 
-    if (generalChallengeItems.length > 0) {
-      nextItems.push({
-        kind: "section",
-        id: "general-challenges",
-        title: "Desafíos vigentes",
-        subtitle: "",
-      });
-      nextItems.push(
-        ...generalChallengeItems.map((item) => ({ kind: "feed" as const, item })),
+    if (challengeTab === "private") {
+      const mine = sortChallengesByStartsAt(
+        filteredItems.filter((item) => item.createdBy === viewerId && !isFinishedChallenge(item)),
       );
+      const participating = sortChallengesByStartsAt(
+        filteredItems.filter(
+          (item) => item.createdBy !== viewerId && joinedChallengeIds.has(item.id) && !isFinishedChallenge(item),
+        ),
+      );
+      const invitations = (invitationsQuery.data ?? []).filter(
+        (invitation) =>
+          invitation.status !== "accepted" &&
+          (!normalizedSearch || normalizeSearchText(invitation.challenge.title).includes(normalizedSearch)),
+      );
+      const blocks: Array<[PrivateBlock, FeedListItem[]]> = [
+        ["mine", mine.map((item) => ({ kind: "feed" as const, item, keyPrefix: "mine", reveal: true }))],
+        ["invitations", invitations.map((invitation) => ({
+          kind: "feed" as const,
+          item: invitation.challenge,
+          invitation,
+          keyPrefix: "invitation",
+          reveal: true,
+        }))],
+        ["participating", participating.map((item) => ({ kind: "feed" as const, item, keyPrefix: "participating", reveal: true }))],
+      ];
+      const titles: Record<PrivateBlock, string> = {
+        mine: t("challengeRestart.blockMine"),
+        invitations: t("challengeRestart.blockInvitations"),
+        participating: t("challengeRestart.blockParticipating"),
+      };
+      return blocks
+        .filter(([, rows]) => rows.length > 0)
+        .flatMap(([id, rows]) => [
+          { kind: "accordion" as const, id, title: titles[id], count: rows.length, open: openBlocks[id] },
+          ...(openBlocks[id] ? rows : []),
+        ]);
     }
 
-    if (showUpcomingChallenges && upcomingGeneralChallengeItems.length > 0) {
-      nextItems.push({
-        kind: "section",
-        id: "upcoming-challenges",
-        title: "Desafíos próximos",
-        subtitle: "Empiezan más adelante y todavía no te anotaste",
-      });
-      nextItems.push(
-        ...upcomingGeneralChallengeItems.map((item) => ({ kind: "feed" as const, item })),
-      );
-    }
-
-    if (showFinishedChallenges && finishedChallengeItems.length > 0) {
-      nextItems.push({
-        kind: "section",
-        id: "finished-challenges",
-        title: "Desafíos finalizados",
-      });
-      nextItems.push(
-        ...finishedChallengeItems.map((item) => ({ kind: "feed" as const, item })),
-      );
-    }
-
-    return nextItems;
+    const upcoming = sortChallengesByStartsAt([...joinedUpcomingChallengeItems, ...upcomingGeneralChallengeItems]);
+    if (startedOnly) return sortChallengesByStartsAt([...joinedChallengeItems, ...generalChallengeItems]).map(item => ({ kind: "feed" as const, item }));
+    return [
+      ...(joinedChallengeItems.length ? [{ kind: "section" as const, id: "active-challenges", title: "En curso" }, ...joinedChallengeItems.map(item => ({ kind: "feed" as const, item }))] : []),
+      ...(upcoming.length ? [{ kind: "section" as const, id: "upcoming-challenges", title: "Empieza pronto" }, ...upcoming.map(item => ({ kind: "feed" as const, item }))] : []),
+    ];
   }, [
+    myEventGroups,
     expiredEventItems,
     finishedChallengeItems,
     generalChallengeItems,
     joinedChallengeItems,
     joinedUpcomingChallengeItems,
     section,
-    showFinishedChallenges,
-    showUpcomingChallenges,
+    pastOnly,
     upcomingGeneralChallengeItems,
     visibleItems,
+    challengeTab,
+    startedOnly,
+    filteredItems,
+    invitationsQuery.data,
+    joinedChallengeIds,
+    normalizedSearch,
+    openBlocks,
+    t,
+    viewerId,
   ]);
 
   const listIsLoading =
@@ -383,6 +471,10 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
         queryKey: challengesKeys.all,
         type: "active",
       });
+      void queryClient.refetchQueries({
+        queryKey: challengeInvitationKeys.all,
+        type: "active",
+      });
 
       if (session?.user?.id) {
         void queryClient.refetchQueries({
@@ -398,27 +490,17 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
       <View style={[styles.eventsContainer, localStyles.eventsContainer, pastOnly && { paddingTop: 12 }]}>
         <View style={localStyles.headerRow}>
           {pastOnly ? (
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton}>
-              <Icon name="chevron-back" size={26} color={vibesTheme.colors.primaryText} />
-            </TouchableOpacity>
+            <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
           <View style={localStyles.titleRow}>
-            <Text style={[styles.eventsTitle, localStyles.screenTitle]}>{title}</Text>
-            {!pastOnly && section === "event" ? (
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Ver eventos pasados"
-                onPress={() => navigation.navigate("PastEvents" as never)}
-                style={localStyles.filterButton}
-              >
-                <Icon name="archive-outline" size={23} color={vibesTheme.colors.accentBlue} />
-              </TouchableOpacity>
-            ) : null}
+            <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]}>{title}</Text>
+
           </View>
           {!pastOnly ? <TouchableOpacity
             accessibilityRole="button"
             activeOpacity={0.78}
-            style={localStyles.createButton}
+            style={[localStyles.filterButton, localStyles.headerAction]}
+            accessibilityLabel={section === "challenge" ? "Crear desafío" : "Crear evento"}
             onPress={() => {
               if (section === "challenge") {
                 navigation.navigate("CreateChallenge" as never);
@@ -428,21 +510,45 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             }}
           >
             <Icon name="add" size={20} color={vibesTheme.colors.primaryText} style={localStyles.createIcon} />
-            <Text style={localStyles.createButtonText} numberOfLines={1}>
-              {section === "challenge" ? "Crear desafío" : "Crear evento"}
-            </Text>
           </TouchableOpacity> : null}
-          {section === "event" ? (
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Filtros de eventos${activeFilterCount ? `, ${activeFilterCount} activos` : ""}`} accessibilityState={{ expanded: filtersVisible }} onPress={openFilters} style={localStyles.filterButton}>
-              <Icon name="options-outline" size={28} color={vibesTheme.colors.accentBlue} />
-              {activeFilterCount > 0 ? <View style={localStyles.filterBadge}><Text style={localStyles.filterBadgeText}>{activeFilterCount}</Text></View> : null}
-            </TouchableOpacity>
-           ) : null}
+          {section === "challenge" ? <TouchableOpacity
+            accessibilityRole="button" accessibilityLabel="Ver todos los desafíos"
+            onPress={() => {
+              setStartedOnly(false);
+              setSearch("");
+              if (pastOnly) navigation.navigate("Events" as never, { section: "challenge" } as never);
+            }}
+            style={[localStyles.filterButton, localStyles.headerAction]}
+          ><Icon name="home-outline" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
+          {!pastOnly && section === "challenge" ? <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Ya comenzados"
+            accessibilityState={{ selected: startedOnly }}
+            onPress={() => setStartedOnly(value => !value)}
+            style={[localStyles.filterButton, localStyles.headerAction, startedOnly && { borderWidth: 1, borderColor: vibesTheme.colors.primaryText }]}
+          ><Icon name="time-outline" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
+            {!pastOnly ? (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={section === "challenge" ? "Finalizados" : "Ver eventos pasados"}
+                onPress={() => section === "challenge" ? navigation.navigate("PastChallenges" as never, { section: "challenge", challengeTab } as never) : navigation.navigate("PastEvents" as never)}
+                style={[localStyles.filterButton, localStyles.headerAction]}
+              >
+                <Icon name="archive-outline" size={23} color={vibesTheme.colors.primaryText} />
+              </TouchableOpacity>
+            ) : null}
         </View>
-        <View style={[styles.eventsSearchBar, localStyles.searchBar]}>
+        {section === "event" && !pastOnly ? <Text style={localStyles.eventSubtitle}>Encontrá tu próximo plan.</Text> : null}
+        {section === "challenge" && !pastOnly ? <>
+          <Text style={localStyles.challengeSubtitle}>Pequeños pasos, en buena compañía.</Text>
+          <View style={sectionTabStyles.tabs} accessibilityRole="tablist">
+            {([ ["public", "Público"], ["private", "Privado"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[sectionTabStyles.tab, challengeTab === mode && sectionTabStyles.active]}><Text style={[sectionTabStyles.text, challengeTab === mode && sectionTabStyles.activeText]}>{label}</Text></TouchableOpacity>)}
+          </View>
+        </> : null}
+        <View style={[styles.eventsSearchBar, localStyles.searchBar, localStyles.challengeSearch]}>
           <Icon name="search" size={20} color={TEXT_SECONDARY} />
           <TextInput
-            style={[styles.eventsSearchInput, localStyles.searchInput]}
+            style={[styles.eventsSearchInput, localStyles.searchInput, { fontSize: 16 }]}
             placeholder={searchPlaceholder}
             placeholderTextColor="rgba(43, 43, 43, 0.34)"
             value={search}
@@ -454,9 +560,28 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 
         </View>
 
+        {section === "event" ? <>
+          <View style={localStyles.eventFilterRow}>
+            {([
+              ["date", "calendar-outline", "Fecha", Boolean(dateFrom || dateTo)],
+              ["location", "location-outline", "Ubicación", Boolean(locationFilter)],
+              ["other", "options-outline", "Otros", Boolean(pricingType || participationType || modality)],
+            ] as const).map(([panel, icon, label, active]) => <TouchableOpacity key={label} accessibilityRole="button" accessibilityLabel={`Filtrar por ${label}`} accessibilityState={{ expanded: filtersVisible && filterPanel === panel }} onPress={() => openFilters(panel)} style={[localStyles.eventFilterChip, active && { borderColor: vibesTheme.colors.primaryText, backgroundColor: `${vibesTheme.colors.primaryText}0C` }]}>
+              <Icon name={icon} size={18} color={vibesTheme.colors.primaryText} />
+              <Text numberOfLines={1} style={localStyles.eventFilterLabel}>{label}</Text>
+              <Icon name="chevron-down" size={14} color={vibesTheme.colors.primaryText} />
+            </TouchableOpacity>)}
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={localStyles.eventCategoriesScroll} contentContainerStyle={localStyles.eventCategories}>
+            {[{ id: null, label: "Todos" }, ...EVENT_CATEGORIES].map(option => <TouchableOpacity key={option.id ?? "all"} accessibilityRole="button" accessibilityState={{ selected: category === option.id }} onPress={() => setCategory(option.id)} style={[localStyles.eventCategory, category === option.id && { backgroundColor: vibesTheme.colors.primaryText }]}><Text style={[localStyles.eventCategoryLabel, category === option.id && { color: vibesTheme.colors.surface }]}>{option.label}</Text></TouchableOpacity>)}
+          </ScrollView>
+        </> : null}
+        {section === "challenge" && startedOnly && !pastOnly ? <Text style={localStyles.feedSectionTitle}>Ya comenzados</Text> : null}
         <FlatList
           data={listIsLoading ? [] : listItems}
-          keyExtractor={(item) => (item.kind === "section" ? item.id : item.item.id)}
+          keyExtractor={(item) =>
+            item.kind === "feed" ? `${item.keyPrefix ?? "feed"}-${item.item.id}` : `${item.kind}-${item.id}`
+          }
           contentContainerStyle={[
             styles.eventsListContent,
             localStyles.eventsListContent,
@@ -469,110 +594,88 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
               : null,
           ]}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={section === "event" && !listIsLoading && !error ? (
-            <View style={localStyles.upcomingHeader}>
-              <Text style={localStyles.upcomingTitle}>{pastOnly ? "Eventos pasados" : "Próximos eventos"}</Text>
-              <Text style={localStyles.eventCount}>
-                {visibleItems.length} {visibleItems.length === 1 ? "evento" : "eventos"}
-              </Text>
-            </View>
-          ) : null}
           ListEmptyComponent={
             <View style={localStyles.emptyState}>
-              {listIsLoading ? <VibesLoader size={72} /> : null}
-              <Text style={localStyles.emptyTitle}>
-                {listIsLoading
-                  ? section === "challenge"
-                    ? "Cargando desafíos..."
-                    : t("events.loadingEvents")
-                  : error
+              {listIsLoading ? <VibesLoader size={48} /> : null}
+              {!listIsLoading ? <Text style={localStyles.emptyTitle}>
+                {error
                     ? "No se pudieron cargar"
                     : pastOnly
-                      ? "No hay eventos pasados"
+                      ? section === "challenge" ? "No hay desafíos finalizados" : "No hay eventos pasados"
                     : normalizedSearch
                       ? section === "challenge"
                         ? "No encontramos desafíos"
                         : "No encontramos eventos"
                     : section === "event" && expiredEventItems.length > 0
                       ? "No hay eventos vigentes"
+                    : section === "challenge" && !startedOnly && challengeTab === "public" && generalChallengeItems.length > 0
+                      ? "No hay desafíos próximos"
+                    : section === "challenge" && startedOnly
+                      ? "No hay desafíos ya comenzados"
                     : section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0)
                       ? "No hay desafíos vigentes"
                     : section === "challenge"
-                      ? "Todavía no hay desafíos reales"
+                      ? challengeTab === "private" ? "Todavía no tenés desafíos privados" : "Todavía no hay desafíos públicos"
                       : t("events.noEventsYet")}
-              </Text>
-              <Text style={localStyles.emptyText}>
-                {listIsLoading
-                  ? "Cargando eventos..."
-                    : error
+              </Text> : null}
+              {!listIsLoading ? <Text style={localStyles.emptyText}>
+                {error
                     ? errorMessage
+                    : pastOnly
+                      ? "Probá con otros filtros."
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
                     : section === "event" && expiredEventItems.length > 0
                       ? pastOnly ? "Probá con otros filtros." : "Podés consultar el historial en Eventos pasados."
+                    : section === "challenge" && !startedOnly && challengeTab === "public" && generalChallengeItems.length > 0
+                      ? "Encontrá los desafíos vigentes en Ya comenzados, junto al botón Crear."
+                    : section === "challenge" && startedOnly
+                      ? "Los desafíos aparecerán acá cuando llegue su fecha de inicio."
                     : section === "challenge" && upcomingGeneralChallengeItems.length > 0
                       ? "Los próximos están guardados abajo para que te sumes cuando quieras."
                     : section === "challenge" && finishedChallengeItems.length > 0
-                      ? "Tus desafíos finalizados están guardados abajo."
+                      ? "Podés consultar los finalizados desde el ícono de archivo junto al título."
                     : section === "challenge"
-                      ? "Creá un desafío o conectá una fuente real para poblar esta lista."
+                      ? "Creá un desafío para empezar."
                       : t("events.eventsEmpty")}
-              </Text>
+              </Text> : null}
+              {error && !listIsLoading ? (
+                <TouchableOpacity accessibilityRole="button" onPress={() => {
+                  void (section === "challenge" ? challengesQuery : eventsQuery).refetch();
+                  if (section === "challenge") void groupsQuery.refetch();
+                }} style={{ padding: 16 }}>
+                  <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           }
-          ListFooterComponent={
-            section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0) ? (
-              <View style={localStyles.footerToggleGroup}>
-                {upcomingGeneralChallengeItems.length > 0 ? (
-                  <TouchableOpacity
-                    style={localStyles.finishedSectionToggle}
-                    onPress={() => setShowUpcomingChallenges((prev) => !prev)}
-                    activeOpacity={0.85}
-                  >
-                    <View>
-                      <Text style={localStyles.finishedSectionTitle}>
-                        Desafíos próximos
-                      </Text>
-                      <Text style={localStyles.finishedSectionSubtitle}>
-                        {showUpcomingChallenges
-                          ? "Ocultar próximos"
-                          : `${upcomingGeneralChallengeItems.length} guardados`}
-                      </Text>
-                    </View>
-                    <Icon
-                      name={showUpcomingChallenges ? "chevron-up" : "chevron-down"}
-                      size={22}
-                      color={vibesTheme.colors.secondaryText}
-                    />
-                  </TouchableOpacity>
-                ) : null}
-                {finishedChallengeItems.length > 0 ? (
-                  <TouchableOpacity
-                    style={localStyles.finishedSectionToggle}
-                    onPress={() => setShowFinishedChallenges((prev) => !prev)}
-                    activeOpacity={0.85}
-                  >
-                    <View>
-                      <Text style={localStyles.finishedSectionTitle}>
-                        Desafíos finalizados
-                      </Text>
-                      <Text style={localStyles.finishedSectionSubtitle}>
-                        {showFinishedChallenges
-                          ? "Ocultar finalizados"
-                          : `${finishedChallengeItems.length} guardados`}
-                      </Text>
-                    </View>
-                    <Icon
-                      name={showFinishedChallenges ? "chevron-up" : "chevron-down"}
-                      size={22}
-                      color={vibesTheme.colors.secondaryText}
-                    />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            ) : null
-          }
           renderItem={({ item: listItem }) => {
+            if (listItem.kind === "accordion") {
+              return (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: listItem.open }}
+                  style={[localStyles.feedSectionHeader, localStyles.accordionSectionHeader]}
+                  activeOpacity={0.85}
+                  onPress={() =>
+                    setOpenBlocks((previous) => ({
+                      ...previous,
+                      [listItem.id]: !previous[listItem.id],
+                    }))
+                  }
+                >
+                  <Text style={[localStyles.feedSectionTitle, localStyles.accordionSectionTitle]}>
+                    {listItem.title}{" "}
+                    <Text style={localStyles.accordionSectionCount}>({listItem.count})</Text>
+                  </Text>
+                  <Icon
+                    name={listItem.open ? "chevron-up" : "chevron-down"}
+                    size={22}
+                    color={vibesTheme.colors.accentBlue}
+                  />
+                </TouchableOpacity>
+              );
+            }
             if (listItem.kind === "section") {
               return (
                 <View style={localStyles.feedSectionHeader}>
@@ -597,7 +700,7 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
               const upcoming = nextEventSession(sessions);
               const startsAt = upcoming ? new Date(upcoming.startsAt) : sessions.length ? new Date(sessions[sessions.length - 1].startsAt) : null;
               const dateLabel = startsAt && !Number.isNaN(startsAt.getTime())
-                ? `${startsAt.toLocaleDateString("es-AR", { day: "numeric", month: "short" }).replace(/\./g, "")} · ${startsAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })}`
+                ? `${startsAt.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" }).replace(/\./g, "")} · ${startsAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })}`
                 : item.date;
               const scheduleLabel = sessions.length > 1 ? `${dateLabel} · ${sessions.length} horarios` : dateLabel;
               const count = item.participantCount ?? participantCount;
@@ -617,91 +720,92 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                   <View style={localStyles.eventCopy}>
                     <Text style={localStyles.eventTitle} numberOfLines={2}>{item.title}</Text>
                     <View style={localStyles.eventMetadataRow}>
-                      <Icon name="calendar-outline" size={17} color={vibesTheme.colors.secondaryText} />
-                      <Text style={localStyles.eventMetadataText}>{scheduleLabel}</Text>
+                      <Icon name="calendar-outline" size={17} color={vibesTheme.colors.accentBlue} />
+                      <Text style={[localStyles.eventMetadataText, { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold }]}>{scheduleLabel}</Text>
                     </View>
-                    <View style={localStyles.eventMetadataRow}>
+                    {item.location || item.modality === "online" ? <View style={localStyles.eventMetadataRow}>
+                      <Icon name={item.modality === "online" ? "videocam-outline" : "location"} size={17} color={vibesTheme.colors.secondaryText} />
+                      <Text style={localStyles.eventMetadataText} numberOfLines={2}>{item.modality === "online" ? "Online" : item.location}</Text>
+                    </View> : null}
+                    {count > 1 ? <View style={localStyles.eventMetadataRow}>
                       <Icon name="people" size={17} color={vibesTheme.colors.secondaryText} />
-                      <Text style={localStyles.eventMetadataText}>{count}</Text>
-                    </View>
+                      <Text style={localStyles.eventMetadataText}>{count} personas de Vibes</Text>
+                    </View> : null}
                   </View>
                   <View style={localStyles.eventViewButton}>
-                    <Icon name="chevron-forward" size={17} color={vibesTheme.colors.accentMustard} />
+                    <Icon name="chevron-forward" size={20} color={vibesTheme.colors.secondaryText} />
                   </View>
                 </TouchableOpacity>
               );
             }
-            const challengeProgress = getChallengeProgress(item);
-            const checkedInTodayCount = Math.max(
-              0,
-              Number(item.checkedInTodayCount ?? 0) || 0,
-            );
-            const visibilityMeta = getVisibilityMeta(item.visibility);
-
-            const count = item.participantCount ?? participantCount;
-            const participantsLabel = `${count} ${count === 1 ? "participante" : "participantes"}`;
-            return (
-              <TouchableOpacity
-                style={localStyles.eventListRow}
-                activeOpacity={0.78}
-                accessibilityRole="button"
-                accessibilityLabel={`Ver ${item.title}, ${participantsLabel}`}
-                onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)}
-              >
-                <MediaImage
-                  source={typeof item.image === "string" ? { uri: item.image } : item.image}
-                  style={localStyles.eventThumbnail}
-                />
-                <View style={localStyles.eventCopy}>
-                  <View style={localStyles.feedRowTitleLine}>
-                    <Icon name={visibilityMeta.icon} size={13} color={vibesTheme.colors.secondaryText} />
-                    <Text style={[localStyles.eventTitle, { flex: 1 }]} numberOfLines={2}>{item.title}</Text>
-                  </View>
-                  <View style={localStyles.eventMetadataRow}>
-                    <Icon name="people" size={17} color={vibesTheme.colors.secondaryText} />
-                    <Text style={localStyles.eventMetadataText}>{count}</Text>
-                  </View>
-                  {challengeProgress ? (
-                    <View style={localStyles.eventMetadataRow}>
-                      <Icon
-                        name={challengeProgress.tone === "done" ? "checkmark-circle" : "time-outline"}
-                        size={17}
-                        color={challengeProgress.tone === "done" ? vibesTheme.colors.accentBlue : vibesTheme.colors.accentMustard}
-                      />
-                      <Text style={localStyles.eventMetadataText}>{challengeProgress.label}</Text>
-                    </View>
-                  ) : null}
-                  {checkedInTodayCount > 0 ? (
-                    <View style={localStyles.eventMetadataRow}>
-                      <Icon name="sparkles-outline" size={17} color={vibesTheme.colors.accentMustard} />
-                      <Text style={localStyles.eventMetadataText}>
+            const challengeRow = (
+              <ChallengeFeedCard item={item} joined={joinedChallengeIds.has(item.id)} onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)} footer={listItem.invitation || (listItem.restartable && viewerId) ? <>
+                  {listItem.invitation ? (
+                    <View style={localStyles.cardActions}>
+                      <Text style={restartStyles.statusText}>
                         {t(
-                          checkedInTodayCount === 1
-                            ? "home.challengeCheckedInTodayOne"
-                            : "home.challengeCheckedInToday",
-                          { count: checkedInTodayCount },
+                          listItem.invitation.status === "rejected"
+                            ? "challengeRestart.statusRejected"
+                            : "challengeRestart.statusPending",
                         )}
                       </Text>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        style={restartStyles.pill}
+                        disabled={respondInvitation.isPending}
+                        onPress={() =>
+                          viewerId &&
+                          respondInvitation.mutate({ id: listItem.invitation!.id, accept: true, userId: viewerId })
+                        }
+                      >
+                        <Text style={restartStyles.pillText}>{t("challengeRestart.accept")}</Text>
+                      </TouchableOpacity>
+                      {listItem.invitation.status === "pending" ? (
+                        <TouchableOpacity
+                          accessibilityRole="button"
+                          style={restartStyles.pill}
+                          disabled={respondInvitation.isPending}
+                          onPress={() =>
+                            viewerId &&
+                            respondInvitation.mutate({ id: listItem.invitation!.id, accept: false, userId: viewerId })
+                          }
+                        >
+                          <Text style={restartStyles.pillText}>{t("challengeRestart.reject")}</Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   ) : null}
-                </View>
-                <View style={localStyles.eventViewButton}>
-                  <Icon name="chevron-forward" size={17} color={vibesTheme.colors.accentMustard} />
-                </View>
-              </TouchableOpacity>
-          )}}
+                  {listItem.restartable && viewerId ? (
+                    <View style={localStyles.cardActions}>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        style={restartStyles.pill}
+                        onPress={() => setRestartTarget(item)}
+                      >
+                        <Icon name="refresh-outline" size={16} color={vibesTheme.colors.accentBlue} />
+                        <Text style={restartStyles.pillText}>{t("challengeRestart.restart")}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+              </> : null} />
+            );
+            return listItem.reveal ? (
+              <AccordionReveal>{challengeRow}</AccordionReveal>
+            ) : challengeRow;
+          }}
         />
       </View>
       <KeyboardSheetModal visible={filtersVisible && section === "event"} onClose={() => setFiltersVisible(false)}>
         <View style={[localStyles.filtersSheet, { maxHeight: "100%" }]}>
         <View style={localStyles.filterHandle} />
         <View style={localStyles.filterHeader}>
-          <Text style={localStyles.filterTitle}>Filtros de eventos</Text>
+          <Text style={localStyles.filterTitle}>{filterPanel === "date" ? "Fecha" : filterPanel === "location" ? "Ubicación" : "Otros filtros"}</Text>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar filtros" onPress={() => setFiltersVisible(false)} style={localStyles.filterButton}>
             <Icon name="close" size={22} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={localStyles.filterContent} showsVerticalScrollIndicator={false}>
+          {filterPanel === "location" ? <>
           <EventClassificationPicker
             filter
             searchable
@@ -710,7 +814,25 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             value={draftLocation || null}
             onChange={(value) => setDraftLocation(value ?? "")}
           />
+          </> : null}
+          {filterPanel === "date" ? <>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text style={localStyles.filterActionText}>Fecha</Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Restablecer filtro de fecha"
+            style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
+            onPress={() => {
+              Keyboard.dismiss();
+              setDateField(null);
+              setDraftDatePreset(null);
+              setDraftDateFrom(null);
+              setDraftDateTo(null);
+            }}
+          >
+            <Icon name="refresh-outline" size={21} color={vibesTheme.colors.primaryText} />
+          </TouchableOpacity>
+          </View>
           <View style={{ flexDirection: "row", gap: 12 }}>
             {(["from", "to"] as const).map((field) => {
               const date = field === "from" ? draftDateFrom : draftDateTo;
@@ -741,8 +863,14 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
                 return (
                   <TouchableOpacity key={preset} accessibilityRole="button" accessibilityState={{ selected }}
                     style={[localStyles.datePreset, selected && localStyles.datePresetSelected]}
-                    onPress={() => { Keyboard.dismiss(); setDateField(null); setDraftDatePreset(preset); setDraftDateFrom(range.from); setDraftDateTo(range.to); }}>
-                    <Text style={localStyles.datePresetText}>{label}</Text>
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setDateField(null);
+                      setDraftDatePreset(selected ? null : preset);
+                      setDraftDateFrom(selected ? null : range.from);
+                      setDraftDateTo(selected ? null : range.to);
+                    }}>
+                    <Text style={[localStyles.datePresetText, selected && { color: vibesTheme.colors.surface }]}>{label}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -772,29 +900,45 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
             }}
           /> : null}
           {invalidDateRange ? <Text style={{ color: vibesTheme.colors.primaryText }}>La fecha final debe ser igual o posterior a la inicial.</Text> : null}
-          <EventClassificationPicker filter label="Categoría" options={EVENT_CATEGORIES} value={draftFilters.category} onChange={(value) => setDraftFilters((draft) => ({ ...draft, category: value }))} />
+          </> : null}
+          {filterPanel === "other" ? <>
+          <EventClassificationPicker filter label="Precio" options={[{ id: "free", label: "Gratis" }, { id: "paid", label: "Pago" }] as const} value={draftFilters.pricingType} onChange={(value) => setDraftFilters((draft) => ({ ...draft, pricingType: value }))} />
           <EventClassificationPicker filter label="Tipo" options={EVENT_PARTICIPATION_TYPES} value={draftFilters.participationType} onChange={(value) => setDraftFilters((draft) => ({ ...draft, participationType: value }))} />
           <EventClassificationPicker filter label="Modalidad" options={EVENT_MODALITIES} value={draftFilters.modality} onChange={(value) => setDraftFilters((draft) => ({ ...draft, modality: value }))} />
+          </> : null}
         </ScrollView>
         <View style={[localStyles.filterFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => { setDraftFilters({ category: null, participationType: null, modality: null }); setDraftDatePreset(null); setDraftDateFrom(null); setDraftDateTo(null); setDraftLocation(""); setDateField(null); }}>
+          <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => {
+            if (filterPanel === "other") setDraftFilters({ pricingType: null, participationType: null, modality: null });
+            if (filterPanel === "date") { setDraftDatePreset(null); setDraftDateFrom(null); setDraftDateTo(null); setDateField(null); }
+            if (filterPanel === "location") setDraftLocation("");
+          }}>
             <Text style={localStyles.filterActionText}>Limpiar</Text>
           </TouchableOpacity>
-          <TouchableOpacity accessibilityRole="button" disabled={invalidDateRange} style={[localStyles.filterApply, invalidDateRange && { opacity: 0.5 }]} onPress={() => {
-            setDatePreset(draftDatePreset);
-            setDateFrom(draftDateFrom);
-            setDateTo(draftDateTo);
-            setLocationFilter(draftLocation.trim());
-            setCategory(draftFilters.category);
-            setParticipationType(draftFilters.participationType);
-            setModality(draftFilters.modality);
+          <TouchableOpacity accessibilityRole="button" disabled={filterPanel === "date" && invalidDateRange} style={[localStyles.filterApply, filterPanel === "date" && invalidDateRange && { opacity: 0.5 }]} onPress={() => {
+            if (filterPanel === "date") {
+              setDatePreset(draftDatePreset); setDateFrom(draftDateFrom); setDateTo(draftDateTo);
+            }
+            if (filterPanel === "location") setLocationFilter(draftLocation.trim());
+            if (filterPanel === "other") {
+              setPricingType(draftFilters.pricingType); setParticipationType(draftFilters.participationType); setModality(draftFilters.modality);
+            }
             setFiltersVisible(false);
           }}>
-            <Text style={[localStyles.filterActionText, { color: vibesTheme.colors.surface }]}>Aplicar</Text>
+            <Text style={localStyles.filterActionText}>Aplicar</Text>
           </TouchableOpacity>
         </View>
         </View>
       </KeyboardSheetModal>
+      <RestartChallengeConfirmSheet
+        visible={Boolean(restartTarget)}
+        onClose={() => setRestartTarget(null)}
+        onConfirm={() => {
+          const source = restartTarget;
+          setRestartTarget(null);
+          if (source) navigation.navigate("RestartChallenge" as never, { source } as never);
+        }}
+      />
     </ScreenContainer>
   );
 };
@@ -802,72 +946,93 @@ const Events = ({ pastOnly = false }: { pastOnly?: boolean }) => {
 export default Events;
 
 const localStyles = StyleSheet.create({
-  filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
-  filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
-  filterBadgeText: { color: vibesTheme.colors.primaryText, fontSize: 11, fontFamily: vibesTheme.fonts.bold },
-  filtersSheet: { maxHeight: "85%", backgroundColor: vibesTheme.colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
-  filterHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginTop: 12, backgroundColor: "rgba(43,43,43,0.2)" },
-  filterHeader: { paddingHorizontal: 20, paddingTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  filterTitle: { fontSize: 24, fontFamily: vibesTheme.fonts.bold, color: vibesTheme.colors.primaryText },
-  filterContent: { paddingHorizontal: 20, paddingBottom: 16 },
-  filterFooter: { flexDirection: "row", gap: 12, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(43,43,43,0.08)" },
-  filterClear: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: "rgba(43,43,43,0.2)", borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  datePresets: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-  datePreset: { minHeight: 44, paddingHorizontal: 12, borderRadius: 22, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, backgroundColor: vibesTheme.colors.surface, justifyContent: "center" },
-  datePresetSelected: { backgroundColor: vibesTheme.colors.accentBlue, borderColor: vibesTheme.colors.primaryText },
-  datePresetText: { fontSize: 14, color: vibesTheme.colors.primaryText },
-  dateField: { flex: 1, justifyContent: "flex-end", gap: 6 },
-  dateFieldLabel: { color: vibesTheme.colors.primaryText, fontSize: 14, fontFamily: vibesTheme.fonts.regular, paddingLeft: 12 },
-  dateFieldText: { color: vibesTheme.colors.surface, fontSize: 16, fontFamily: vibesTheme.fonts.regular },
-  dateFilterButton: { flex: 0, backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.primaryText },
-  filterApply: { flex: 1, minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
-  filterActionText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.bold },
-  upcomingHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    gap: 12, paddingVertical: 12,
+  headerAction: { borderRadius: 14, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
+tabRow: {
+    flexDirection: "row",
+    gap: vibesTheme.spacing.sm,
+    marginBottom: vibesTheme.spacing.lg,
   },
-  upcomingTitle: {
-    flex: 1, fontSize: 21, lineHeight: 27,
-    fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.primaryText,
+tab: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: vibesTheme.radii.pill,
+    borderWidth: 1,
+    borderColor: "rgba(110, 110, 110, 0.30)",
+    backgroundColor: "transparent",
   },
-  eventCount: { fontSize: 13, color: vibesTheme.colors.secondaryText },
-  eventListRow: {
-    width: "100%", flexDirection: "row", alignItems: "center", gap: 10,
-    paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+tabSelected: {
+    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: "rgba(244, 163, 64, 0.43)",
   },
-  eventThumbnail: {
-    width: 64, height: 72, borderRadius: 10,
+tabText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 16 },
+tabTextSelected: { color: vibesTheme.colors.primaryText },
+cardActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: vibesTheme.spacing.sm,
+    marginTop: vibesTheme.spacing.sm,
+  },
+filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
+filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
+filterBadgeText: { color: vibesTheme.colors.primaryText, fontSize: 11, fontFamily: vibesTheme.fonts.bold },
+filtersSheet: { maxHeight: "85%", backgroundColor: vibesTheme.colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+filterHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginTop: 12, backgroundColor: "rgba(43,43,43,0.2)" },
+filterHeader: { paddingHorizontal: 20, paddingTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+filterTitle: { fontSize: 24, fontFamily: vibesTheme.fonts.bold, color: vibesTheme.colors.primaryText },
+filterContent: { paddingHorizontal: 20, paddingBottom: 16 },
+filterFooter: { flexDirection: "row", gap: 12, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(43,43,43,0.08)" },
+filterClear: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: "rgba(43,43,43,0.2)", borderRadius: 24, alignItems: "center", justifyContent: "center" },
+datePresets: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
+datePreset: { minHeight: 44, paddingHorizontal: 12, borderRadius: 22, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, backgroundColor: vibesTheme.colors.surface, justifyContent: "center" },
+datePresetSelected: { backgroundColor: vibesTheme.colors.primaryText, borderColor: vibesTheme.colors.primaryText },
+datePresetText: { fontSize: 14, color: vibesTheme.colors.primaryText },
+dateField: { flex: 1, justifyContent: "flex-end", gap: 6 },
+dateFieldLabel: { color: vibesTheme.colors.primaryText, fontSize: 14, fontFamily: vibesTheme.fonts.regular, paddingLeft: 12 },
+dateFieldText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.regular },
+dateFilterButton: { flex: 0, backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.primaryText },
+filterApply: { flex: 1, minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
+filterActionText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.bold },
+eventListRow: {
+    width: "100%", flexDirection: "row", alignItems: "center", gap: 14,
+    padding: 14, marginBottom: 12, borderRadius: 20,
+    borderWidth: 1, borderColor: `${vibesTheme.colors.primaryText}24`,
+    backgroundColor: vibesTheme.colors.surface,
+  },
+eventThumbnail: {
+    width: 84, height: 96, borderRadius: 12, alignSelf: "flex-start",
     backgroundColor: "rgba(57, 120, 184, 0.13)",
   },
-  eventCopy: { flex: 1, minWidth: 0, gap: 4 },
-  eventTitle: {
-    fontSize: 16, lineHeight: 21, fontFamily: vibesTheme.fonts.bold,
+eventCopy: { flex: 1, minWidth: 0, gap: 9 },
+eventTitle: {
+    fontSize: 17, lineHeight: 23, fontFamily: vibesTheme.fonts.bold,
     color: vibesTheme.colors.primaryText,
   },
-  eventMetadataRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  eventMetadataText: {
+eventMetadataRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+eventMetadataText: {
     flex: 1, fontSize: 13, lineHeight: 18, color: vibesTheme.colors.secondaryText,
   },
-  eventViewButton: {
+eventViewButton: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2,
-    minWidth: 34, minHeight: 44,
+    minWidth: 22, minHeight: 44,
   },
-  eventViewText: {
+eventViewText: {
     fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.primaryText,
   },
-  eventsContainer: {
+eventsContainer: {
     paddingTop: 68,
   },
-  headerRow: {
+headerRow: {
     minHeight: 48,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
+    gap: 6,
     marginBottom: 20,
   },
-  screenTitle: {
+screenTitle: {
     flexShrink: 1,
     color: TEXT_PRIMARY,
     fontFamily: vibesTheme.fonts.semibold,
@@ -876,85 +1041,78 @@ const localStyles = StyleSheet.create({
     marginBottom: 0,
     textAlign: "left",
   },
-  titleRow: {
+titleRow: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     minWidth: 0,
   },
-  listFooter: {
+listFooter: {
     marginTop: 8,
     marginBottom: 20,
   },
-  bottomAlignedListFooter: {
+bottomAlignedListFooter: {
     marginTop: "auto",
   },
-  eventsListContent: {
+eventsListContent: {
     flexGrow: 1,
   },
-  createButton: {
-    minHeight: 48,
-    maxWidth: "48%",
-    flexShrink: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.primaryText,
-  },
-  createIcon: { lineHeight: 20, includeFontPadding: false },
-  createButtonText: {
-    flexShrink: 1,
-    lineHeight: 20,
-    includeFontPadding: false,
-    textAlignVertical: "center",
-    fontSize: 14,
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-  },
-  searchBar: {
+createIcon: { lineHeight: 20, includeFontPadding: false },
+searchBar: {
     height: 40,
     paddingVertical: 0,
   },
-  searchInput: {
+searchInput: {
     paddingVertical: 0,
     fontSize: 14,
     fontFamily: vibesTheme.fonts.medium,
     color: vibesTheme.colors.primaryText,
   },
-  feedSectionHeader: {
+feedSectionHeader: {
     marginTop: 4,
     marginBottom: 10,
     paddingHorizontal: 4,
   },
-  feedSectionTitle: {
+accordionSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+accordionSectionTitle: {
+    flex: 1,
+  },
+accordionSectionCount: {
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 18,
+    lineHeight: 29,
+    fontFamily: vibesTheme.fonts.regular,
+  },
+feedSectionTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 25,
     lineHeight: 29,
     fontFamily: vibesTheme.fonts.semibold,
   },
-  activeChallengesTitle: {
+activeChallengesTitle: {
     fontSize: 20,
     lineHeight: 25,
   },
-  joinedChallengesTitle: {
+joinedChallengesTitle: {
     marginTop: 12,
     fontSize: 20,
     lineHeight: 25,
     color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.regular,
   },
-  feedSectionSubtitle: {
+feedSectionSubtitle: {
     marginTop: 2,
     color: "rgba(43, 43, 43, 0.58)",
     fontSize: 15,
     lineHeight: 19,
     fontFamily: vibesTheme.fonts.subtitle,
   },
-  feedRowCard: {
+feedRowCard: {
     minHeight: 98,
     borderRadius: 24,
     backgroundColor: vibesTheme.colors.background,
@@ -972,71 +1130,71 @@ const localStyles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 2,
   },
-  feedRowThumb: {
+feedRowThumb: {
     width: 64,
     height: 64,
     borderRadius: 32,
     backgroundColor: vibesTheme.colors.background,
   },
-  feedRowThumbWrap: {
+feedRowThumbWrap: {
     width: 64,
     height: 64,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
   },
-  feedRowContent: {
+feedRowContent: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
-  feedRowContentChallenge: {
+feedRowContentChallenge: {
     alignItems: "flex-start",
   },
-  feedRowCopy: {
+feedRowCopy: {
     flex: 1,
     justifyContent: "center",
   },
-  feedRowTopMeta: {
+feedRowTopMeta: {
     width: "100%",
     flexDirection: "row",
     justifyContent: "flex-end",
     marginBottom: 6,
   },
-  feedRowTitleLine: {
+feedRowTitleLine: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  feedRowTitle: {
+feedRowTitle: {
     flex: 1,
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 24,
     fontFamily: vibesTheme.fonts.medium,
   },
-  feedRowMeta: {
+feedRowMeta: {
     marginTop: 4,
     color: vibesTheme.colors.primaryText,
     fontSize: 15,
     lineHeight: 19,
     fontFamily: vibesTheme.fonts.semibold,
   },
-  communityTodayRow: {
+communityTodayRow: {
     marginTop: 6,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
   },
-  communityTodayText: {
+communityTodayText: {
     flex: 1,
     color: vibesTheme.colors.primaryText,
     fontSize: 14,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.semibold,
   },
-  feedThumbProgressPill: {
+feedThumbProgressPill: {
     position: "absolute",
     top: -6,
     alignSelf: "center",
@@ -1048,33 +1206,33 @@ const localStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(254, 254, 253, 0.9)",
   },
-  feedThumbProgressPillPending: {
+feedThumbProgressPillPending: {
     backgroundColor: "rgba(254, 254, 253, 0.94)",
     borderColor: "rgba(244, 163, 64, 0.82)",
   },
-  feedThumbProgressText: {
+feedThumbProgressText: {
     color: vibesTheme.colors.background,
     fontSize: 12,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.semibold,
     textAlign: "center",
   },
-  feedThumbProgressTextPending: {
+feedThumbProgressTextPending: {
     color: vibesTheme.colors.primaryText,
   },
-  feedInlineProgressPill: {
+feedInlineProgressPill: {
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
     flexShrink: 0,
   },
-  feedInlineProgressText: {
+feedInlineProgressText: {
     color: vibesTheme.colors.primaryText,
     fontSize: 12,
     lineHeight: 14,
     fontFamily: vibesTheme.fonts.semibold,
   },
-  feedRowBottom: {
+feedRowBottom: {
     width: "100%",
     marginTop: 10,
     flexDirection: "row",
@@ -1082,33 +1240,33 @@ const localStyles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10,
   },
-  feedParticipantsWrap: {
+feedParticipantsWrap: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  feedParticipantsCount: {
+feedParticipantsCount: {
     color: vibesTheme.colors.primaryText,
     fontSize: 14,
     lineHeight: 17,
     fontFamily: vibesTheme.fonts.semibold,
   },
-  feedParticipantsCountWrap: {
+feedParticipantsCountWrap: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
   },
-  feedRowRight: {
+feedRowRight: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  avatarStack: {
+avatarStack: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
   },
-  stackAvatar: {
+stackAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -1116,14 +1274,14 @@ const localStyles = StyleSheet.create({
     borderColor: vibesTheme.colors.background,
     backgroundColor: "rgba(216, 140, 122, 0.20)",
   },
-  feedRowArrow: {
+feedRowArrow: {
     width: 34,
     height: 34,
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
-  progressPill: {
+progressPill: {
     alignSelf: "flex-start",
     marginTop: 8,
     borderRadius: 999,
@@ -1131,58 +1289,30 @@ const localStyles = StyleSheet.create({
     paddingVertical: 4,
     backgroundColor: "rgba(57, 120, 184, 0.18)",
   },
-  progressPillPending: {
+progressPillPending: {
     backgroundColor: "rgba(244, 163, 64, 0.18)",
   },
-  progressPillDone: {
+progressPillDone: {
     backgroundColor: "rgba(216, 140, 122, 0.18)",
   },
-  progressPillText: {
+progressPillText: {
     color: vibesTheme.colors.secondaryText,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: vibesTheme.fonts.semibold,
   },
-  finishedSectionToggle: {
-    minHeight: 72,
-    borderRadius: 22,
-    backgroundColor: "rgba(254, 254, 253, 0.72)",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  footerToggleGroup: {
-    gap: 12,
-  },
-  finishedSectionTitle: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.semibold,
-  },
-  finishedSectionSubtitle: {
-    marginTop: 3,
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.subtitle,
-  },
-  emptyState: {
+emptyState: {
     paddingHorizontal: 28,
     paddingVertical: 48,
     alignItems: "center",
   },
-  emptyTitle: {
+emptyTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
-  emptyText: {
+emptyText: {
     marginTop: 10,
     color: vibesTheme.colors.secondaryText,
     fontSize: 16,
@@ -1190,4 +1320,26 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
+eventSubtitle: { fontSize: 15, lineHeight: 22, color: vibesTheme.colors.secondaryText, marginTop: -12, marginBottom: 16 },
+eventFilterRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
+eventFilterChip: { flex: 1, minHeight: 44, borderRadius: 13, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}40`, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 8, gap: 6 },
+eventFilterLabel: { flexShrink: 1, fontSize: 13, fontFamily: vibesTheme.fonts.medium, color: vibesTheme.colors.primaryText },
+eventCategoriesScroll: { flexGrow: 0, flexShrink: 0 },
+eventCategories: { gap: 8, paddingBottom: 12 },
+eventCategory: { borderRadius: 24, paddingHorizontal: 18, minHeight: 38, justifyContent: "center", backgroundColor: `${vibesTheme.colors.secondaryText}12` },
+eventCategoryLabel: { fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.secondaryText },
+challengeSearch: { height: 48, borderRadius: 20, backgroundColor: `${vibesTheme.colors.accentBlue}09`, borderWidth: 0 },
+challengeSubtitle: { color: vibesTheme.colors.secondaryText, fontSize: 15, lineHeight: 22, marginBottom: 20 },
+challengeCount: { color: vibesTheme.colors.accentBlue, fontSize: 16 },
+challengeExploreButton: { backgroundColor: vibesTheme.colors.primaryText, padding: 16, borderRadius: 24, marginTop: 16 },
+footerToggleGroup: {
+    gap: 12,
+  },
+finishedSectionSubtitle: {
+    marginTop: 3,
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: vibesTheme.fonts.subtitle,
+  }
 });

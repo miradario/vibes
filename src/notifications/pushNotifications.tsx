@@ -50,9 +50,26 @@ const getNotificationData = (
   if (!response) return null;
 
   const rawData = response.notification.request.content.data;
-  return rawData && typeof rawData === "object"
-    ? (rawData as Record<string, unknown>)
-    : null;
+  if (
+    rawData &&
+    typeof rawData === "object" &&
+    Object.keys(rawData).length > 0
+  ) {
+    return rawData as Record<string, unknown>;
+  }
+
+  // iOS: con APNs directo, expo solo expone userInfo.body como content.data.
+  // Si viene vacío, usamos el payload crudo del trigger.
+  const trigger = response.notification.request.trigger as {
+    payload?: unknown;
+  } | null;
+  const payload = trigger?.payload;
+  if (!payload || typeof payload !== "object") return null;
+  const { aps: _aps, body, ...rest } = payload as Record<string, unknown>;
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    return body as Record<string, unknown>;
+  }
+  return Object.keys(rest).length > 0 ? rest : null;
 };
 
 const upsertPushToken = async (token: Notifications.DevicePushToken) => {
@@ -148,6 +165,18 @@ const registerPushToken = async (userId: string) => {
 
   const deviceToken = await Notifications.getDevicePushTokenAsync();
   await upsertPushToken(deviceToken);
+};
+
+const refreshCommunityFromPush = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  data: Record<string, unknown> | null
+) => {
+  // Data-only refresh for group-chat pushes; never changes how a
+  // notification is displayed (Android/iOS presentation untouched).
+  if (!data || typeof data.groupId !== "string") return;
+  void queryClient.invalidateQueries({ queryKey: ["communityMessages"] });
+  void queryClient.invalidateQueries({ queryKey: ["communityGroups"] });
+  void queryClient.invalidateQueries({ queryKey: ["communityUnread"] });
 };
 
 const handleNotificationResponse = (
@@ -295,6 +324,7 @@ export const PushNotificationsBootstrap = ({
             ? (rawData as Record<string, unknown>)
             : null;
 
+        refreshCommunityFromPush(queryClient, data);
         if (!isChatNotificationData(data)) return;
 
         if (
@@ -334,6 +364,7 @@ export const PushNotificationsBootstrap = ({
 
     const responseSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
+        refreshCommunityFromPush(queryClient, getNotificationData(response));
         handleNotificationResponse(
           response,
           navigateFromNotification,

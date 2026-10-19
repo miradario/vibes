@@ -35,3 +35,17 @@ web-build/
 .env
 .env.local
 .DS_Store
+
+# Keep local credentials and session history out of build archives.
+credentials.json
+.env.*
+session-*.mdx
+.agents/
+.codex/
+.aws/
+
+# Local event import deliverables; covers are hosted in Supabase Storage.
+/output/events/
+
+# Generated local artifacts are not app assets.
+/output/

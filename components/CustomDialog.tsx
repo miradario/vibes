@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 22,
     lineHeight: 28,
     textAlign: "center",

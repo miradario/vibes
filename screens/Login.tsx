@@ -17,13 +17,13 @@ import {
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { CommonActions, useNavigation } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
-import VibesHeader from "../src/components/VibesHeader";
+import QuietBrandHeader from "../components/QuietBrandHeader";
+import ScreenContainer from "../components/ScreenContainer";
 import Icon from "../components/Icon";
 import CustomDialog from "../components/CustomDialog";
 import { useI18n } from "../src/i18n";
@@ -55,12 +55,13 @@ const isInvalidCredentialsError = (error: unknown) => {
 const Login = () => {
   const { t } = useI18n();
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState("");
+  const route = useRoute();
+  const loginParams = route.params as { email?: string; accountExists?: boolean } | undefined;
+  const [email, setEmail] = useState(loginParams?.email ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(loginParams?.accountExists ? t("signup.accountExists") : null);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const [showGoogleLoginDialog, setShowGoogleLoginDialog] = useState(false);
   const loginMutation = useLoginMutation();
@@ -72,6 +73,13 @@ const Login = () => {
   const appleLoading = appleLoginMutation.isPending;
   const resetPasswordLoading = resetPasswordMutation.isPending;
   const passwordInputRef = useRef<TextInput | null>(null);
+  React.useEffect(() => {
+    if (!loginParams?.accountExists) return;
+    setEmail(loginParams.email ?? "");
+    setPassword("");
+    setError(t("signup.accountExists"));
+  }, [loginParams?.accountExists, loginParams?.email, t]);
+
 
   React.useEffect(() => {
     if (Platform.OS !== "ios") return;
@@ -195,12 +203,12 @@ const Login = () => {
     appleLoading ||
     resetPasswordLoading;
   return (
-    <View style={styles.bg}>
+    <ScreenContainer style={styles.bg} edges={["top", "bottom", "left", "right"]}>
       <KeyboardAvoidingView
         style={[
           styles.loginContainer,
           localStyles.loginContainer,
-          { paddingTop: Math.max(insets.top + 12, 36) },
+          { paddingTop: 12 },
         ]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={24}
@@ -211,13 +219,7 @@ const Login = () => {
           contentContainerStyle={localStyles.formScrollContent}
         >
           <View style={[styles.loginCard, localStyles.loginCard]}>
-            <VibesHeader
-              title={t("login.header")}
-              subtitle=""
-              style={localStyles.header}
-            />
-            <Text style={styles.loginTitle}>{t("login.title")}</Text>
-            <Text style={styles.loginSubtitle}>{t("login.subtitle")}</Text>
+            <QuietBrandHeader title={t("login.title")} subtitle={t("login.subtitle")} />
 
             <GoogleAuthButton
               label={
@@ -367,7 +369,7 @@ const Login = () => {
         onPrimaryPress={() => setShowResetPasswordDialog(false)}
         onClose={() => setShowResetPasswordDialog(false)}
       />
-    </View>
+    </ScreenContainer>
   );
 };
 
@@ -421,6 +423,12 @@ const localStyles = StyleSheet.create({
     marginTop: 0,
   },
   loginCard: {
+    shadowOpacity: 0,
+    elevation: 0,
+    backgroundColor: vibesTheme.colors.background,
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
     flexGrow: 1,
   },
   formScrollContent: {

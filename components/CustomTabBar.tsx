@@ -11,12 +11,18 @@ import {
   type ColorValue,
 } from "react-native";
 import { Text } from "./Typography";
-import { getBottomTabBarHeight } from "../src/lib/tabBarLayout";
+import {
+  TAB_FLOATING_BUTTON_SIZE,
+  TAB_FLOATING_TOP,
+  getBottomTabBarHeight,
+} from "../src/lib/tabBarLayout";
+import { useFtuxHighlightedTab } from "../src/ftux/ftuxStore";
 import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
 import { LinearGradient } from "expo-linear-gradient";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
+  FadeIn,
   ReduceMotion,
   Extrapolation,
   interpolate,
@@ -37,9 +43,9 @@ import {
 } from "lucide-react-native";
 
 const TAB_BAR_HEIGHT = 82;
-const FLOATING_BUTTON_SIZE = 54;
+const FLOATING_BUTTON_SIZE = TAB_FLOATING_BUTTON_SIZE;
 const HORIZONTAL_MARGIN = 18;
-const FLOATING_TOP = 8;
+const FLOATING_TOP = TAB_FLOATING_TOP;
 const SELECTED_RISE = -38;
 const ANIMATION_CONFIG = { duration: 520, reduceMotion: ReduceMotion.System };
 
@@ -210,7 +216,7 @@ const TabButton = memo(
           <Text
             numberOfLines={1}
             adjustsFontSizeToFit
-            minimumFontScale={0.82}
+            minimumFontScale={0.8}
             style={[localStyles.tabLabel, isFocused && { color: accentColor }]}
           >
             {label}
@@ -227,6 +233,8 @@ const CustomTabBar = ({
   navigation,
 }: BottomTabBarProps) => {
   const { data: unread = [] } = useCommunityUnreadQuery();
+  // Vibi's onboarding points at a tab: draw a spotlight ring on its bubble.
+  const ftuxHighlightedTab = useFtuxHighlightedTab();
   const insets = useSafeAreaInsets();
   const { width, fontScale } = useWindowDimensions();
   const barHeight = getBottomTabBarHeight(fontScale);
@@ -387,6 +395,13 @@ const CustomTabBar = ({
             onPress={() => handlePress(selectedVisualRoute, true)}
             style={localStyles.floatingTouch}
           >
+            {ftuxHighlightedTab === selectedVisualRoute?.name ? (
+              <Animated.View
+                pointerEvents="none"
+                entering={FadeIn.duration(240).reduceMotion(ReduceMotion.System)}
+                style={localStyles.ftuxRing}
+              />
+            ) : null}
             <View
               style={[
                 localStyles.glow,
@@ -480,7 +495,7 @@ const localStyles = StyleSheet.create({
     position: "relative",
   },
   tabLabel: {
-    maxWidth: 74,
+    width: "100%",
     color: localColors.muted,
     fontSize: 12,
     fontWeight: "400",
@@ -515,6 +530,15 @@ const localStyles = StyleSheet.create({
         elevation: 4,
       },
     }),
+  },
+  ftuxRing: {
+    position: "absolute",
+    width: FLOATING_BUTTON_SIZE + 18,
+    height: FLOATING_BUTTON_SIZE + 18,
+    borderRadius: (FLOATING_BUTTON_SIZE + 18) / 2,
+    borderWidth: 3,
+    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: vibesTheme.colors.surface,
   },
   floatingRing: {
     width: FLOATING_BUTTON_SIZE,

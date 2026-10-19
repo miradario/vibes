@@ -1,70 +1,21 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Image, Pressable, StyleSheet, View } from "react-native";
+import React, { useEffect } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { Text } from "../components/Typography";
-import Vibi from "../components/Vibi";
+import AnimatedBrandLogo from "../components/AnimatedBrandLogo";
 import VibesActionButton from "../components/VibesActionButton";
 import ScreenContainer from "../components/ScreenContainer";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import { useVibiRuntime } from "../src/vibi/useMotionPreference";
-import {
-  welcomeIntroFrame,
-  welcomeLayout,
-  WELCOME_INTRO_DURATION,
-} from "../src/vibi/welcomeIntro";
+import { trackSignupEvent } from "../src/lib/signupEvents";
 
-// Process lifetime: returning from authentication (even after unmount) skips it.
-let welcomeIntroShown = false;
 const Welcome = () => {
   const navigation = useNavigation();
   const { data: session, isLoading } = useAuthSession();
   const focused = useIsFocused();
-  const { active, reducedMotion, motionReady } = useVibiRuntime();
-  const [modelReady, setModelReady] = useState(false);
-  const [renderUnavailable, setRenderUnavailable] = useState(false);
-  const [viewport, setViewport] = useState({ width: 0, height: 0 });
-  const [intro] = useState({ replayKey: 0, skip: welcomeIntroShown });
-  const [buttonsEnabled, setButtonsEnabled] = useState(welcomeIntroShown);
-  const titleOpacity = useRef(
-    new Animated.Value(welcomeIntroShown ? 1 : 0)
-  ).current;
-  const buttonsOpacity = useRef(
-    new Animated.Value(welcomeIntroShown ? 1 : 0)
-  ).current;
-  const buttonsTranslateY = useRef(
-    new Animated.Value(welcomeIntroShown ? 0 : 12)
-  ).current;
-  const progress = useCallback(
-    (seconds: number) => {
-      const frame = welcomeIntroFrame(seconds);
-      titleOpacity.setValue(frame.titleOpacity);
-      buttonsOpacity.setValue(frame.buttonsOpacity);
-      buttonsTranslateY.setValue(frame.buttonsTranslateY);
-      if (frame.complete) setButtonsEnabled(true);
-    },
-    [titleOpacity, buttonsOpacity, buttonsTranslateY]
-  );
-  const ready = useCallback(() => {
-    welcomeIntroShown = true;
-    setModelReady(true);
-  }, []);
-  const failed = useCallback(() => {
-    welcomeIntroShown = true;
-    setRenderUnavailable(true);
-    setModelReady(true);
-    progress(WELCOME_INTRO_DURATION);
-  }, [progress]);
-  // Authentication must remain reachable even if model loading, GL setup or
-  // the intro frame scheduler stalls without reporting an error.
   useEffect(() => {
-    if (!focused || !active || buttonsEnabled) return;
-    const timeout = setTimeout(() => {
-      console.warn("[Welcome] intro timed out; showing static welcome");
-      failed();
-    }, 8000);
-    return () => clearTimeout(timeout);
-  }, [focused, active, buttonsEnabled, failed]);
+    if (!isLoading && focused && !session?.user?.id) trackSignupEvent("welcome_viewed");
+  }, [focused, isLoading, session?.user?.id]);
   useEffect(() => {
     if (!isLoading && focused && session?.user?.id)
       navigation.navigate("Tab" as never);
@@ -72,76 +23,32 @@ const Welcome = () => {
 
   return (
     <ScreenContainer
-      style={[styles.screen, !modelReady && styles.loading]}
+      style={styles.screen}
       edges={["top", "bottom", "left", "right"]}
     >
       <View
-        style={[styles.content, !modelReady && styles.loading]}
-        onLayout={({ nativeEvent: { layout } }) =>
-          setViewport({ width: layout.width, height: layout.height })
-        }
+        style={styles.content}
       >
         <View
           collapsable={false}
           pointerEvents="none"
           style={StyleSheet.absoluteFill}
         >
-          {renderUnavailable ? (
-            <View style={styles.fallbackLogoWrap}>
-              <Image
-                source={require("../assets/adaptive-icon.png")}
-                style={styles.fallbackLogo}
-                resizeMode="contain"
-                accessibilityIgnoresInvertColors
-              />
-            </View>
-          ) : motionReady && viewport.width > 0 && viewport.height > 0 && (
-            <Vibi
-              width={viewport.width}
-              height={viewport.height}
-              reducedMotion={reducedMotion}
-              paused={!focused || !active}
-              onReady={ready}
-              onError={failed}
-              welcomeIntro={{ ...intro, onProgress: progress }}
-            />
-          )}
+          <View style={styles.fallbackLogoWrap}>
+            <AnimatedBrandLogo direction="logo-to-word" loop style={styles.fallbackLogo} />
+          </View>
         </View>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.titleWrap,
-            {
-              top: welcomeLayout(viewport.height).titleTop,
-              opacity: titleOpacity,
-            },
-          ]}
-        >
-          <Text style={styles.title}>Vibes</Text>
-        </Animated.View>
-        <Animated.View
-          pointerEvents={buttonsEnabled ? "auto" : "none"}
-          accessibilityElementsHidden={!buttonsEnabled}
-          importantForAccessibility={
-            buttonsEnabled ? "auto" : "no-hide-descendants"
-          }
-          style={[
-            styles.actions,
-            {
-              opacity: buttonsOpacity,
-              transform: [{ translateY: buttonsTranslateY }],
-            },
-          ]}
-        >
+        <View style={styles.actions}>
           <VibesActionButton
             label="Crear cuenta"
-            disabled={!buttonsEnabled}
-            onPress={() => navigation.navigate("AgeAssurance" as never)}
+            onPress={() => {
+              trackSignupEvent("signup_started");
+              navigation.navigate("AgeAssurance" as never);
+            }}
             style={styles.primaryButton}
           />
           <Pressable
             accessibilityRole="button"
-            disabled={!buttonsEnabled}
             onPress={() => navigation.navigate("Login" as never)}
             style={({ pressed }) => [
               styles.button,
@@ -153,7 +60,7 @@ const Welcome = () => {
               Iniciar sesión
             </Text>
           </Pressable>
-        </Animated.View>
+        </View>
       </View>
     </ScreenContainer>
   );
@@ -162,21 +69,22 @@ export default Welcome;
 const colors = vibesTheme.colors;
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  loading: { backgroundColor: colors.accentMustard },
   content: { flex: 1, backgroundColor: colors.background },
   fallbackLogoWrap: {
-    height: "50%",
+    flex: 1,
+    marginBottom: 220,
     justifyContent: "center",
     alignItems: "center",
   },
-  fallbackLogo: { width: "65%", height: "85%" },
+  fallbackLogo: { width: "90%", height: "100%" },
   titleWrap: { position: "absolute", width: "100%", alignItems: "center" },
   title: {
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 44,
     lineHeight: 54,
     color: colors.primaryText,
   },
+  tagline: { color: colors.secondaryText, fontSize: 18, lineHeight: 26, marginTop: 12, textAlign: "center", paddingHorizontal: 24 },
   actions: {
     position: "absolute",
     bottom: 36,

@@ -3,6 +3,7 @@ import { AppState, type ViewToken } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
+import { useRefetchOnFocus } from "../hooks/useRefetchOnFocus";
 export type MessageKind = "direct" | "group";
 export type ReceiptStatus = "sending" | "sent" | "delivered" | "read";
 type Unread = {
@@ -23,25 +24,55 @@ export function useAppActive() {
 export function useCommunityUnreadQuery() {
   const { data: session } = useAuthSession();
   const active = useAppActive();
-  return useQuery<Unread[]>({
+  const query = useQuery<Unread[]>({
     queryKey: ["communityUnread", session?.user.id],
     enabled: Boolean(session) && active,
-    refetchInterval: active ? 5000 : false,
+    // Was 5s; fallback only. Receipts realtime + delivery sync invalidate this when new messages arrive.
+    refetchInterval: active ? 60_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("community_unread_counts");
       if (error) throw error;
       return data ?? [];
     },
   });
+  useRefetchOnFocus(query.refetch, Boolean(session));
+  return query;
 }
 export function useCommunityDeliverySync() {
   const { data: session } = useAuthSession();
   const active = useAppActive();
   const client = useQueryClient();
+  const userId = session?.user.id;
+  // Realtime on own receipt rows (new incoming message, read elsewhere):
+  // debounced delivery sync + unread refresh. Intervals below are fallback.
+  // Subscribed only while logged in and foreground; re-subscribes on return.
+  useEffect(() => {
+    if (!userId || !active) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const channel = supabase
+      .channel(`community-receipts:${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "community_message_receipts", filter: `user_id=eq.${userId}` },
+        () => {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => {
+            void client.invalidateQueries({ queryKey: ["communityDelivery", userId] });
+            void client.invalidateQueries({ queryKey: ["communityUnread", userId] });
+          }, 1500);
+        }
+      )
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, active, client]);
   useQuery({
     queryKey: ["communityDelivery", session?.user.id],
     enabled: Boolean(session) && active,
-    refetchInterval: active ? 3000 : false,
+    // Was 3s; fallback only (realtime above). Foreground only (focusManager pauses it in background).
+    refetchInterval: active ? 30_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("community_receive_messages");
       if (error) throw error;
@@ -94,7 +125,8 @@ export function useMessageReceipts(
     enabled: Boolean(
       session && conversationId && ownIds.length && focused && active
     ),
-    refetchInterval: focused && active ? 2000 : false,
+    // Was 2s. Only while the chat is focused and the app is foreground.
+    refetchInterval: focused && active ? 30_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("community_message_statuses", {
         k: kind,

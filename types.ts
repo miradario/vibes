@@ -68,6 +68,7 @@ export type TabBarIconT = {
 };
 
 export type DataT = {
+  gender?: string | null;
   id: string | number;
   name: string;
   isOnline: boolean;

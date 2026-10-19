@@ -33,7 +33,7 @@ const GoogleAuthButton = ({
     >
       <View style={styles.iconWrap}>
         {loading ? (
-          <VibesLoader size={26} />
+          <VibesLoader />
         ) : (
           <GoogleIcon />
         )}

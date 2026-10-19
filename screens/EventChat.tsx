@@ -1,3 +1,4 @@
+import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
 import HeartMessageBubble from "../components/HeartMessageBubble";
@@ -130,6 +131,14 @@ const EventChat = () => {
     messages.map((m) => m.id),
     isFocused
   );
+  const visibleDate = useChatVisibleDate(eventId);
+  const messagePositions = useRef(new Map<string, { y: number; height: number; date: string }>());
+  const visibleMessageOffset = useRef(0);
+  const updateVisibleDate = () => {
+    const first = [...messagePositions.current.values()].filter(row => row.y + row.height > visibleMessageOffset.current + 8).sort((a, b) => a.y - b.y)[0];
+    if (first) visibleDate.setDate(first.date);
+  };
+  useEffect(() => { messagePositions.current.clear(); visibleMessageOffset.current = 0; }, [eventId]);
   const markReadMutation = useMarkEventGroupReadMutation();
   const sendMutation = useSendEventMessageMutation();
   const deleteMutation = useDeleteEventMessageMutation();
@@ -712,7 +721,10 @@ const EventChat = () => {
           </View>
         ) : null}
 
+        <View style={{ flex: 1, position: "relative" }}>
         <ScrollView
+          scrollEventThrottle={32}
+          onScroll={event => { visibleMessageOffset.current = event.nativeEvent.contentOffset.y; updateVisibleDate(); }}
           ref={scrollRef}
           style={styles.eventChatMessagesContainer}
           contentContainerStyle={[
@@ -735,7 +747,7 @@ const EventChat = () => {
               </Text>
             </View>
           ) : messagesLoading && !messagesLoadingTimedOut ? (
-            <VibesLoader size={72} style={{ marginVertical: 32 }} />
+            <VibesLoader  style={{ marginVertical: 32 }} />
           ) : messagesError ? (
             <View style={localStyles.emptyMessages}>
               <Text style={localStyles.emptyMessagesTitle}>
@@ -763,11 +775,13 @@ const EventChat = () => {
               const isMe = msg.senderId === userId;
               const sender = getSenderInfo(msg.senderId);
               return (
+                <View key={msg.id} onLayout={event => { messagePositions.current.set(msg.id, { ...event.nativeEvent.layout, date: msg.createdAt }); updateVisibleDate(); }}>
                 <MessageEntrance
                   key={msg.id}
                   sending={isMe && msg.deliveryStatus === "sending"}
                 >
                   <HeartMessageBubble
+                    canReact={!isMe}
                     count={hearts.byMessage.get(msg.id)?.count}
                     liked={hearts.byMessage.get(msg.id)?.liked}
                     onHeart={(remove) => hearts.react(msg.id, remove)}
@@ -785,7 +799,7 @@ const EventChat = () => {
                       isMe && localStyles.messageRowMe,
                     ]}
                   >
-                    {(press, longPress) => (
+                    {(press, longPress, reaction) => (
                       <>
                         {/* Avatar for other people's messages */}
                         {!isMe ? (
@@ -839,15 +853,19 @@ const EventChat = () => {
                               />
                             ) : null}
                           </View>
+                          {reaction}
                         </View>
                       </>
                     )}
                   </HeartMessageBubble>
                 </MessageEntrance>
+                </View>
               );
             })
           )}
         </ScrollView>
+        <ChatVisibleDate date={visibleDate.date} />
+        </View>
 
         <View
           style={[
@@ -1049,7 +1067,7 @@ const localStyles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: vibesTheme.colors.primaryText,
     letterSpacing: 0.2,
   },
@@ -1129,7 +1147,7 @@ const localStyles = StyleSheet.create({
   emptyMessagesTitle: {
     color: DARK_GRAY,
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   emptyMessagesText: {
@@ -1254,7 +1272,7 @@ const localStyles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
   },
   memberRow: {

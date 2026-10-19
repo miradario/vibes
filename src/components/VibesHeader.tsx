@@ -10,6 +10,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { Text } from "../../components/Typography";
+import VibesWordmark from "../../components/VibesWordmark";
 import { vibesTheme } from "../theme/vibesTheme";
 
 export type VibesHeaderProps = {
@@ -39,6 +40,9 @@ const VibesHeader = ({
     <View
       style={[styles.container, isCenter ? styles.center : styles.left, style]}
     >
+      {title === "Vibes" ? (
+        <VibesWordmark fontSize={StyleSheet.flatten(titleStyle)?.fontSize ?? 54} style={{ marginTop: 22 }} />
+      ) : (
       <Text
         style={[styles.title, !isCenter && styles.leftText, titleStyle]}
         numberOfLines={titleNumberOfLines}
@@ -47,6 +51,7 @@ const VibesHeader = ({
       >
         {title}
       </Text>
+      )}
       {subtitle ? (
         <Text
           style={[styles.subtitle, !isCenter && styles.leftText, subtitleStyle]}
@@ -75,7 +80,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
     fontSize: 54,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     letterSpacing: 0.3,
     textAlign: "center",
   },

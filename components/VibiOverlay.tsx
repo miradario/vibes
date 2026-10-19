@@ -18,10 +18,10 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import { useVibi } from "../src/vibi/useVibi";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
-import { playAnimation, setVisible, type VibiAnimation } from "../src/vibi/controller";
-import type { VibiModel } from "../src/vibi/model";
+import { setVisible } from "../src/vibi/controller";
 
-const SIZE = 88;
+const SIZE = 64;
+const CLOSE_SPACE = 36;
 const GAP = 12;
 const colors = vibesTheme.colors;
 const AUTH_ROUTES = new Set([
@@ -57,7 +57,7 @@ export default function VibiOverlay({
   const eligible =
     enabled &&
     Boolean(session?.user?.id) &&
-    routeName !== "Vibi" &&
+    routeName === "Home" &&
     !AUTH_ROUTES.has(routeName) &&
     !routeName.startsWith("Onboarding");
   // Visibility lives in the in-memory controller: dismissal survives navigation
@@ -93,21 +93,6 @@ export default function VibiOverlay({
       floatOffset.setValue(0);
     };
   }, [shown, active, reducedMotion, floatOffset]);
-  const [greeting, setGreeting] = useState<VibiAnimation | null>(null);
-  const greetedHome = useRef(false);
-  const onModelLoaded = React.useCallback((model: VibiModel) => {
-    setGreeting(model.clips.has("wave") ? "wave" : null);
-  }, []);
-  useEffect(() => {
-    if (routeName !== "Home") {
-      greetedHome.current = false;
-      return;
-    }
-    if (shown && greeting && !greetedHome.current) {
-      greetedHome.current = true;
-      playAnimation(greeting);
-    }
-  }, [routeName, shown, greeting]);
   useEffect(() => {
     if (eligible) setEverEnabled(true);
   }, [eligible]);
@@ -129,7 +114,7 @@ export default function VibiOverlay({
   }, []);
   const boxWidth = SIZE;
   const expandedHeight = SIZE;
-  const boxHeight = SIZE;
+  const boxHeight = SIZE + CLOSE_SPACE;
   // Tab bar includes a raised selected icon, so leave space above its crest.
   const bottomSpace = hasBottomBar
     ? getBottomTabBarHeight(fontScale) + Math.max(insets.bottom + 8, 18) + 38
@@ -254,9 +239,10 @@ export default function VibiOverlay({
               size={SIZE}
               onPress={onPress}
               paused={!shown}
-              onModelLoaded={onModelLoaded}
+
             />
           </View>
+        </Animated.View>
           <Pressable
             onPress={() => setVisible(false)}
             accessibilityRole="button"
@@ -266,7 +252,6 @@ export default function VibiOverlay({
           >
             <Ionicons name="close" size={20} color={colors.primaryText} />
           </Pressable>
-        </Animated.View>
       </Animated.View>
     </View>
   );
@@ -277,7 +262,7 @@ const styles = StyleSheet.create({
   character: { position: "absolute", left: 0, top: 0 },
   fullCharacter: {
     position: "absolute",
-    top: 0,
+    top: CLOSE_SPACE,
     left: 0,
     width: SIZE,
     alignItems: "center",

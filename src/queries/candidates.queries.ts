@@ -11,6 +11,7 @@ import type {
 import { useAuthSession } from "../auth/auth.queries";
 import { supabase } from "../lib/supabase";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
+import { withBootTimeout } from "../lib/startupBoot";
 
 type ProfileRow = Record<string, any>;
 type PhotoRow = Record<string, any>;
@@ -57,7 +58,10 @@ const calculateDistanceKm = (
   return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const fetchCandidates = async (
+const fetchCandidates = (...args: Parameters<typeof fetchCandidatesInternal>) =>
+  withBootTimeout(fetchCandidatesInternal(...args), 20000, "No se pudieron cargar los perfiles. Volvé a intentar");
+
+const fetchCandidatesInternal = async (
   currentUserId?: string,
   params?: GetCandidatesParams,
   includePreviouslySwiped = false,
@@ -75,10 +79,12 @@ const fetchCandidates = async (
   if (currentUserId) {
     const [swipesResponse, profileResponse, blocksResponse, ownPhotosResponse] = await Promise.all(
       [
-        supabase
-          .from("swipes")
-          .select("target_id, direction, created_at")
-          .eq("swiper_id", currentUserId),
+        includePreviouslySwiped
+          ? Promise.resolve({ data: [], error: null })
+          : supabase
+              .from("swipes")
+              .select("target_id, direction, created_at")
+              .eq("swiper_id", currentUserId),
         supabase
           .from("profiles")
           .select("*")
@@ -390,13 +396,13 @@ export const fetchCandidateById = async (userId: string, profileId: string) => {
   return candidates.find((candidate) => candidate.id === profileId && candidate.isActive) ?? null;
 };
 
-export const useSwipeHistoryCandidatesQuery = () => {
+export const useSwipeHistoryCandidatesQuery = (enabled = true) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   return useQuery<SwipeHistoryCandidate[]>({
     queryKey: ["candidates", "swipe-history", "all-v3", userId ?? "anonymous"],
-    enabled: Boolean(userId),
-    queryFn: async () => {
+    enabled: Boolean(userId) && enabled,
+    queryFn: () => withBootTimeout((async () => {
       const { data: swipes, error } = await supabase
         .from("swipes")
         .select("target_id,direction,created_at")
@@ -438,18 +444,20 @@ export const useSwipeHistoryCandidatesQuery = () => {
           (a, b) =>
             new Date(b.swipedAt).getTime() - new Date(a.swipedAt).getTime()
         );
-    },
+    })(), 18000, "No pudimos cargar las solicitudes. Volvé a intentar."),
+    retry: 1,
+    retryDelay: 1000,
     staleTime: 30_000,
   });
 };
 
-export const useIncomingLikeCandidatesQuery = () => {
+export const useIncomingLikeCandidatesQuery = (enabled = true) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   return useQuery<Candidate[]>({
     queryKey: ["candidates", "incoming-likes", "all-v1", userId ?? "anonymous"],
-    enabled: Boolean(userId),
-    queryFn: async () => {
+    enabled: Boolean(userId) && enabled,
+    queryFn: () => withBootTimeout((async () => {
       const [{ data: swipes, error: swipeError }, { data: matches, error: matchError }] =
         await Promise.all([
           supabase
@@ -482,22 +490,27 @@ export const useIncomingLikeCandidatesQuery = () => {
       );
       if (likerIds.length === 0) return [];
       return fetchCandidates(userId, { limit: 500 }, true, likerIds);
-    },
+    })(), 18000, "No pudimos cargar las solicitudes. Volvé a intentar."),
+    retry: 1,
+    retryDelay: 1000,
     staleTime: 30_000,
   });
 };
 
-export const useCandidatesQuery = (params?: GetCandidatesParams, homePreview = false) => {
+export const useCandidatesQuery = (params?: GetCandidatesParams, homePreview = false, enabled = true) => {
   const { data: session } = useAuthSession();
   const currentUserId = session?.user?.id;
 
   return useQuery<GetCandidatesResponse>({
     queryKey: [...candidatesKeys.list(currentUserId, params), homePreview ? "home-preview" : "discovery"],
+    enabled: Boolean(currentUserId) && enabled,
     queryFn: () => fetchCandidates(currentUserId, params, false, undefined, homePreview),
+    retry: 1,
+    retryDelay: 1000,
     staleTime: 5 * 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
     refetchInterval: false,
   });
 };

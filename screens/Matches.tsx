@@ -62,7 +62,7 @@ const Matches = () => {
 
         {isLoading ? (
           <View style={localStyles.emptyState}>
-            <VibesLoader size={82} />
+            <VibesLoader />
           </View>
         ) : (matches ?? []).length === 0 ? (
           <View style={localStyles.emptyState}>
@@ -133,7 +133,7 @@ const localStyles = {
   emptyTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center" as const,
   },
   emptyText: {

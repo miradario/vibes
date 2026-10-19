@@ -1,5 +1,7 @@
+import Icon from "../Icon";
+import { vibesTheme } from "../../src/theme/vibesTheme";
 import React from "react";
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { Text } from "../Typography";
 import { onboardingStyles } from "../../src/screens/Onboarding/vibesOnboardingStyles";
 import VibesLoader from "../VibesLoader";
@@ -30,9 +32,9 @@ const PrimaryButton = ({
       activeOpacity={0.88}
     >
       {loading ? (
-        <VibesLoader size={34} />
+        <VibesLoader />
       ) : (
-        <Text style={onboardingStyles.primaryButtonText}>{label}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 }}><Text style={onboardingStyles.primaryButtonText}>{label}</Text><Icon name="arrow-forward" size={22} color={vibesTheme.colors.surface} /></View>
       )}
     </TouchableOpacity>
   );

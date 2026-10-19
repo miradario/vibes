@@ -4,9 +4,9 @@
     "name": "Vibes",
     "slug": "vibe",
     "scheme": "com.gurudevelopers.vibes",
-    "version": "1.3.2",
+    "version": "1.3.6",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-flat.png",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -14,9 +14,9 @@
       "**/*"
     ],
     "ios": {
-      "icon": "./assets/icon-ios.png",
+      "icon": "./assets/icon-ios-flat.png",
       "supportsTablet": false,
-      "buildNumber": "36",
+      "buildNumber": "48",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -33,21 +33,17 @@
         "NSLocationWhenInUseUsageDescription": "Vibes uses your location while the app is open to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
-        "NSMicrophoneUsageDescription": "Vibes usa el micr\u00f3fono cuando eleg\u00eds grabar un audio para un d\u00eda de tu desaf\u00edo."
+        "NSMicrophoneUsageDescription": "Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío."
       },
       "googleServicesFile": "./config/firebase/GoogleService-Info.plist"
-    },
-    "androidNavigationBar": {
-      "backgroundColor": "#2B2B2B00",
-      "enforceContrast": false
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-icon-flat.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 38,
+      "versionCode": 53,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
@@ -80,7 +76,7 @@
       "googleServicesFile": "./config/firebase/google-services.json"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon-flat.png"
     },
     "plugins": [
       [
@@ -88,7 +84,7 @@
         {
           "backgroundColor": "#FEFEFD",
           "ios": {
-            "image": "./assets/adaptive-icon.png",
+            "image": "./assets/adaptive-icon-flat.png",
             "imageWidth": 320,
             "resizeMode": "contain",
             "backgroundColor": "#FEFEFD"
@@ -135,7 +131,9 @@
         }
       ],
       "./plugins/withFirebasePods",
-      "./plugins/withAndroidReleaseOptimization"
+      "./plugins/withIosDeploymentTarget",
+      "./plugins/withAndroidReleaseOptimization",
+      "./plugins/withAndroidWindowCompatibility"
     ],
     "extra": {
       "eas": {

@@ -30,6 +30,16 @@ type AnimatedSheetModalProps = {
   sheetInDelay?: number;
   sheetInOpacityDuration?: number;
   sheetOutOpacityDuration?: number;
+  /** Easing for the sheet translate/opacity (defaults to Animated's ease). */
+  sheetEasing?: (value: number) => number;
+  /**
+   * Inline only: keep the children mounted (hidden, non-interactive) while
+   * not visible, so showing it again starts animating immediately instead of
+   * waiting for a fresh mount. Defaults to false (unmount when hidden).
+   */
+  keepMounted?: boolean;
+  /** Optional spring for the sheet's slide in (replaces the timed slide). */
+  sheetInSpring?: { damping: number; stiffness: number; mass?: number };
 };
 
 const AnimatedSheetModal = ({
@@ -51,10 +61,22 @@ const AnimatedSheetModal = ({
   sheetInDelay = vibesTheme.motion.modal.sheetInDelay,
   sheetInOpacityDuration = vibesTheme.motion.modal.sheetInOpacityDuration,
   sheetOutOpacityDuration = vibesTheme.motion.modal.sheetOutOpacityDuration,
+  sheetEasing,
+  keepMounted = false,
+  sheetInSpring,
 }: AnimatedSheetModalProps) => {
+  const stayMounted = inline && keepMounted;
+  // Read through a ref: an inline easing function changes identity every
+  // render and would otherwise restart the entrance animation.
+  const sheetEasingRef = useRef(sheetEasing);
+  sheetEasingRef.current = sheetEasing;
+  const springDamping = sheetInSpring?.damping;
+  const springStiffness = sheetInSpring?.stiffness;
+  const springMass = sheetInSpring?.mass ?? 1;
   const [isMounted, setIsMounted] = useState(visible);
   const mountedRef = useRef(visible);
   const onClosedRef = useRef(onClosed);
+  const closedPending = useRef(false);
   useEffect(() => { onClosedRef.current = onClosed; }, [onClosed]);
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(offsetY)).current;
@@ -74,16 +96,27 @@ const AnimatedSheetModal = ({
           duration: backdropInDuration,
           useNativeDriver: true,
         }),
-        Animated.timing(sheetTranslateY, {
-          toValue: 0,
-          duration: sheetInDuration,
-          delay: sheetInDelay,
-          useNativeDriver: true,
-        }),
+        springDamping !== undefined && springStiffness !== undefined
+          ? Animated.spring(sheetTranslateY, {
+              toValue: 0,
+              damping: springDamping,
+              stiffness: springStiffness,
+              mass: springMass,
+              delay: sheetInDelay,
+              useNativeDriver: true,
+            })
+          : Animated.timing(sheetTranslateY, {
+              toValue: 0,
+              duration: sheetInDuration,
+              delay: sheetInDelay,
+              easing: sheetEasingRef.current,
+              useNativeDriver: true,
+            }),
         Animated.timing(sheetOpacity, {
           toValue: 1,
           duration: sheetInOpacityDuration,
           delay: sheetInDelay,
+          easing: sheetEasingRef.current,
           useNativeDriver: true,
         }),
       ]);
@@ -102,11 +135,13 @@ const AnimatedSheetModal = ({
       Animated.timing(sheetTranslateY, {
         toValue: offsetY,
         duration: sheetOutDuration,
+        easing: sheetEasingRef.current,
         useNativeDriver: true,
       }),
       Animated.timing(sheetOpacity, {
         toValue: 0,
         duration: sheetOutOpacityDuration,
+        easing: sheetEasingRef.current,
         useNativeDriver: true,
       }),
     ]);
@@ -114,7 +149,7 @@ const AnimatedSheetModal = ({
       if (finished) {
         mountedRef.current = false;
         setIsMounted(false);
-        onClosedRef.current?.();
+        closedPending.current = true;
       }
     });
     return () => animation.stop();
@@ -130,13 +165,29 @@ const AnimatedSheetModal = ({
     sheetOutDuration,
     sheetOutOpacityDuration,
     sheetTranslateY,
+    springDamping,
+    springStiffness,
+    springMass,
     visible,
   ]);
 
-  if (!isMounted) return null;
+  const notifyClosed = () => {
+    if (!closedPending.current) return;
+    closedPending.current = false;
+    onClosedRef.current?.();
+  };
+  useEffect(() => {
+    if (!isMounted && (inline || Platform.OS !== "ios")) notifyClosed();
+  }, [isMounted, inline]);
+
+  if (!isMounted && !stayMounted && (inline || Platform.OS !== "ios")) return null;
+  const hiddenButMounted = stayMounted && !visible;
 
   const content = (
     <KeyboardAvoidingView
+      pointerEvents={hiddenButMounted ? "none" : undefined}
+      accessibilityElementsHidden={hiddenButMounted || undefined}
+      importantForAccessibility={hiddenButMounted ? "no-hide-descendants" : undefined}
       enabled={placement === "center"}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={[
@@ -178,13 +229,14 @@ const AnimatedSheetModal = ({
   ) : (
     <Modal
       transparent
-      visible
+      visible={isMounted}
+      onDismiss={notifyClosed}
       animationType="none"
       statusBarTranslucent={fullScreen}
       navigationBarTranslucent={fullScreen}
       onRequestClose={onClose}
     >
-      {content}
+      {isMounted ? content : null}
     </Modal>
   );
 };

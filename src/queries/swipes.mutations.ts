@@ -82,14 +82,20 @@ export const useSwipeMutation = () => {
         payload.direction === "pass" ? "nope" : payload.direction;
 
       // Existing profiles must never be overwritten when connecting.
-      const { data: existingProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", userId)
-        .maybeSingle();
+      const { data: existingProfile, error: profileError } = await withTimeout(
+        supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", userId)
+          .maybeSingle(),
+        "No se pudo verificar tu perfil. Revisá tu conexión e intentá de nuevo."
+      );
       if (profileError) throw profileError;
       if (!existingProfile)
-        await ensureProfileExists(userId, session.user.email?.split("@")[0]);
+        await withTimeout(
+          ensureProfileExists(userId, session.user.email?.split("@")[0]),
+          "No se pudo preparar tu perfil. Revisá tu conexión e intentá de nuevo."
+        );
 
       // 1. Persist swipe. Insert first, then update if the pair already exists.
       let { data: swipe, error: swipeErr } = await withTimeout(
@@ -221,7 +227,7 @@ export const useSwipeMutation = () => {
         payload.targetUserId !== session.user.id &&
         Platform.OS !== "web"
       ) {
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {
           // Haptic availability must not interrupt the like.
         });
       }

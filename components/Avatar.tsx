@@ -1,10 +1,13 @@
+import { imageCacheSource } from "../src/lib/imageCacheSource";
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import BrandImagePlaceholder from "./BrandImagePlaceholder";
+import VibesLoader from "./VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type AvatarProps = {
+  onReady?: (failed: boolean) => void;
   source?: any;
   uri?: string | null;
   size: number;
@@ -21,6 +24,7 @@ type AvatarProps = {
 const DEFAULT_BG = vibesTheme.colors.background;
 
 const Avatar = ({
+  onReady,
   source,
   uri,
   size,
@@ -32,6 +36,7 @@ const Avatar = ({
   borderRadius,
 }: AvatarProps) => {
   const [hasError, setHasError] = useState(false);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const sourceUri =
     source && typeof source === "object" && "uri" in source && typeof source.uri === "string"
       ? source.uri
@@ -55,6 +60,7 @@ const Avatar = ({
       : sourceUri
         ? `uri:${sourceUri}`
         : "";
+  const displayKey = resolvedUri || sourceKey;
 
   useEffect(() => {
     setHasError(false);
@@ -85,14 +91,21 @@ const Avatar = ({
         <ExpoImage
           key={resolvedUri || sourceKey}
           recyclingKey={resolvedUri || sourceKey}
-          source={hasUri ? { uri: resolvedUri } : source}
+          source={imageCacheSource(hasUri ? { uri: resolvedUri } : source)}
           style={[StyleSheet.absoluteFillObject, { borderRadius: resolvedRadius }]}
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={250}
           blurRadius={blurRadius}
-          onError={() => setHasError(true)}
+          onLoad={() => { setLoadedKey(displayKey); onReady?.(false); }}
+          onDisplay={() => { setLoadedKey(displayKey); onReady?.(false); }}
+          onError={() => { setHasError(true); onReady?.(true); }}
         />
+      ) : null}
+      {(hasSource || hasUri) && !hasError && loadedKey !== displayKey ? (
+        <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { backgroundColor: fallbackBackgroundColor, alignItems: "center", justifyContent: "center" }]}>
+          <VibesLoader size={Math.min(32, size * .5)} accessibilityLabel="Cargando foto" />
+        </View>
       ) : null}
     </View>
   );

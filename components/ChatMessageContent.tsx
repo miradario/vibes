@@ -1,15 +1,10 @@
+import { Image } from "expo-image";
+import { imageCacheSource } from "../src/lib/imageCacheSource";
+import VibesLoader from "./VibesLoader";
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  type StyleProp,
-  type TextStyle,
-} from "react-native";
+import { View, StyleSheet, TouchableOpacity, type StyleProp, type TextStyle } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { getInvitedEventId } from "../src/lib/eventInvites";
+import { getInvitationDisplayText, getInvitedChallengeId, getInvitedEventId } from "../src/lib/eventInvites";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "./Typography";
 import PhotoViewer from "./PhotoViewer";
@@ -31,6 +26,7 @@ export default function ChatMessageContent({
 }) {
   const navigation = useNavigation<any>();
   const invitedEventId = getInvitedEventId(body);
+  const invitedChallengeId = getInvitedChallengeId(body);
   const path = photoPath(body);
   const { data: session } = useAuthSession();
   const [expanded, setExpanded] = useState(false);
@@ -52,18 +48,20 @@ export default function ChatMessageContent({
   if (!path)
     return (
       <View style={s.textContent}>
-        <Text style={textStyle}>{body}</Text>
-        {invitedEventId ? (
+        {getInvitationDisplayText(body) ? <Text style={textStyle}>{getInvitationDisplayText(body)}</Text> : null}
+        {invitedEventId || invitedChallengeId ? (
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Ver evento invitado"
+            accessibilityLabel={invitedChallengeId ? "Ver desafío invitado" : "Ver evento invitado"}
             onLongPress={onLongPress}
             onPress={() =>
-              navigation.navigate("EventDetail", { eventId: invitedEventId })
+              invitedChallengeId
+                ? navigation.navigate("ChallengeDetailScreen", { challengeId: invitedChallengeId })
+                : navigation.navigate("EventDetail", { eventId: invitedEventId })
             }
             style={s.eventLink}
           >
-            <Text style={s.eventLinkText}>Ver evento</Text>
+            <Text style={s.eventLinkText}>{invitedChallengeId ? "Ver desafío" : "Ver evento"}</Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -85,14 +83,18 @@ export default function ChatMessageContent({
         }}
       >
         {photo.isLoading ? (
-          <ActivityIndicator color={vibesTheme.colors.primaryText} />
+          <VibesLoader />
         ) : photo.isError || imageFailed ? (
           <Text style={s.error}>
             No se pudo cargar la foto. Tocá para reintentar.
           </Text>
         ) : photo.data ? (
           <Image
-            source={{ uri: photo.data }}
+            source={imageCacheSource({ uri: photo.data })}
+            cachePolicy="memory-disk"
+            allowDownscaling
+            contentFit="cover"
+            recyclingKey={path ?? undefined}
             style={s.image}
             onError={() => setImageFailed(true)}
           />

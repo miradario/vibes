@@ -29,3 +29,9 @@ supabase/.temp/
 
 # macOS
 .DS_Store
+
+# Local generated deliverables; app images are assets or hosted in Supabase Storage.
+/output/
+
+# Local Kotlin compiler sessions
+/android/.kotlin/

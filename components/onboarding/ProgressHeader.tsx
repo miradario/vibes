@@ -1,3 +1,6 @@
+import { vibesTheme } from "../../src/theme/vibesTheme";
+import BackButton from "../BackButton";
+import CancelOnboardingButton from "../CancelOnboardingButton";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Icon from "../Icon";
@@ -8,47 +11,46 @@ import {
 
 type ProgressHeaderProps = {
   progress: number;
+  intro?: boolean;
   onBack: () => void;
   showBack?: boolean;
   hideBackIcon?: boolean;
+  cancelDisabled?: boolean;
 };
 
 const ProgressHeader = ({
   progress,
+  intro = false,
   onBack,
   showBack = true,
   hideBackIcon = false,
+  cancelDisabled = false,
 }: ProgressHeaderProps) => (
   <View style={styles.wrap}>
-    {showBack ? (
-      <TouchableOpacity
-        onPress={onBack}
+    {showBack && !hideBackIcon ? (
+      <BackButton onPress={onBack}
         activeOpacity={0.8}
         style={styles.backButton}
-        accessibilityRole="button"
-      >
-        {hideBackIcon ? null : (
-          <Icon name="chevron-back" size={22} color={ONBOARDING_COLORS.text} />
-        )}
-      </TouchableOpacity>
+        accessibilityRole="button" />
     ) : (
-      <View style={styles.backSpacer} />
+      intro ? null : <View style={styles.backSpacer} />
     )}
     <View style={styles.track}>
       <View
         style={[
           styles.fill,
+          intro && { backgroundColor: vibesTheme.colors.accentBlue },
           { width: `${Math.max(0, Math.min(progress, 1)) * 100}%` },
         ]}
       />
     </View>
-    <View style={styles.endSpacer} />
+    <CancelOnboardingButton disabled={cancelDisabled} />
   </View>
 );
 
 const styles = StyleSheet.create({
   wrap: {
-    height: 38,
+    minHeight: 56,
     flexDirection: "row",
     alignItems: "center",
   },

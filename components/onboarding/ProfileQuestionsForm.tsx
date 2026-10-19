@@ -12,6 +12,7 @@ type Props = {
   onInputFocus?: (input: NativeTextInput | null) => void;
   group: number;
   showHeader?: boolean;
+  hiddenFields?: string[];
   value: ProfileAnswers;
   onChange: (value: ProfileAnswers) => void;
 };
@@ -32,12 +33,13 @@ export default function ProfileQuestionsForm({
   value,
   onChange,
   showHeader = true,
+  hiddenFields = [],
 }: Props) {
   const inputs = React.useRef<Record<string, NativeTextInput | null>>({});
   return (
     <View>
       {showHeader && <ProfileQuestionsHeader group={group} />}
-      {QUESTION_GROUPS[group].fields.filter(field => field.key !== "interestedIn" ||
+      {QUESTION_GROUPS[group].fields.filter(field => !hiddenFields.includes(field.key)).filter(field => field.key !== "interestedIn" ||
         (Array.isArray(value.lookingFor) && value.lookingFor.includes("Citas"))).map((field) => (
         <View key={field.key} style={styles.field}>
           <Text style={styles.label}>{field.label}</Text>

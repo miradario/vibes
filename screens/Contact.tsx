@@ -120,7 +120,7 @@ const localStyles = StyleSheet.create({
   rowTitle: {
     color: DARK_GRAY,
     fontSize: 16,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   rowSubtitle: {
     fontFamily: vibesTheme.fonts.subtitle,

@@ -46,7 +46,7 @@ const Configuration = () => {
   };
 
   return (
-    <SafeAreaView style={styles.bg} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.bg} edges={["top", "bottom", "left", "right"]}>
       <View style={localStyles.fixedHeader}>
         <AppHeader
           title={t("configuration.title")}
@@ -114,7 +114,7 @@ const localStyles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 12,
-    paddingBottom: 118,
+    paddingBottom: 150,
   },
   card: {
     borderRadius: 24,

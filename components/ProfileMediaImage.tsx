@@ -1,11 +1,15 @@
-import React, { useMemo, useState } from "react";
-import { StyleSheet, View, type ImageStyle, type StyleProp } from "react-native";
+import { imageCacheSource } from "../src/lib/imageCacheSource";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { StyleSheet, TouchableOpacity, View, type ImageStyle, type StyleProp } from "react-native";
+import { Text } from "./Typography";
 import { Image as ExpoImage } from "expo-image";
+import VibesLoader from "./VibesLoader";
 import BrandImagePlaceholder from "./BrandImagePlaceholder";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 type ProfileMediaImageProps = {
   source?: any;
+  previewSource?: any;
   style?: StyleProp<ImageStyle>;
   fallbackBackgroundColor?: string;
   fallbackIconColor?: string;
@@ -14,6 +18,7 @@ type ProfileMediaImageProps = {
   onDisplay?: () => void;
   blurBackground?: boolean;
   showLoading?: boolean;
+  loadingVariant?: "spinner" | "vibes";
   priority?: "low" | "normal" | "high";
 };
 
@@ -32,12 +37,15 @@ const hasValidUri = (value: unknown): value is { uri: string } => {
 
 const ProfileMediaImage = ({
   source: inputSource,
+  previewSource,
   style,
   fallbackBackgroundColor = vibesTheme.colors.background,
   transition = 250,
   contentFit = "cover",
   onDisplay,
   blurBackground = false,
+  showLoading = true,
+  loadingVariant = "spinner",
   priority = "high",
 }: ProfileMediaImageProps) => {
   const source = useMemo(
@@ -46,8 +54,11 @@ const ProfileMediaImage = ({
       : inputSource,
     [inputSource],
   );
+  const preview = typeof previewSource === "string" ? { uri: previewSource } : previewSource;
+  const canPreview = typeof preview === "number" || hasValidUri(preview);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [displayedKey, setDisplayedKey] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [imageSize, setImageSize] = useState<{ key: string; width: number; height: number } | null>(null);
 
   const canRenderSource = useMemo(() => {
@@ -63,21 +74,69 @@ const ProfileMediaImage = ({
         ? `uri:${source.uri}`
         : "";
 
+  const request = useMemo(() => ({}), [sourceKey, attempt]);
+  const activeRequest = useRef(request);
+  activeRequest.current = request;
+  const successfulRequest = useRef<object | null>(null);
+  const retries = useRef({ key: sourceKey, count: 0 });
+  if (retries.current.key !== sourceKey) retries.current = { key: sourceKey, count: 0 };
+  const loadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notifiedRequest = useRef<object | null>(null);
+  const displayCallback = useRef(onDisplay);
+  displayCallback.current = onDisplay;
+  const clearLoadTimer = () => {
+    if (loadTimer.current !== null) clearTimeout(loadTimer.current);
+    loadTimer.current = null;
+  };
+  const confirmLoaded = () => {
+    if (activeRequest.current !== request) return false;
+    successfulRequest.current = request;
+    clearLoadTimer();
+    return true;
+  };
+  const failRequest = () => {
+    if (activeRequest.current !== request || successfulRequest.current === request) return;
+    clearLoadTimer();
+    if (retries.current.count < 2) {
+      retries.current.count += 1;
+      setAttempt(value => value + 1);
+      return;
+    }
+    setErrorKey(sourceKey);
+    displayCallback.current?.();
+  };
+
   const resolvedSize = imageSize?.key === sourceKey ? imageSize : knownImageSizes.get(sourceKey);
   const isPortrait = resolvedSize && resolvedSize.height > resolvedSize.width;
   const layoutReady = !blurBackground || Boolean(resolvedSize);
   const resolvedFit = blurBackground ? (isPortrait && contentFit === "cover" ? "cover" : "contain") : contentFit;
+  useEffect(() => {
+    if (displayedKey !== sourceKey || !layoutReady || notifiedRequest.current === request) return;
+    notifiedRequest.current = request;
+    displayCallback.current?.();
+  }, [displayedKey, sourceKey, layoutReady, request]);
   const hasError = errorKey === sourceKey;
-  const loading = !canRenderSource || hasError || displayedKey !== sourceKey;
+  const loading = canRenderSource && !hasError && displayedKey !== sourceKey;
+  useEffect(() => {
+    if (!loading) return;
+    if (successfulRequest.current === request) return;
+    const timer = setTimeout(failRequest, 15000);
+    loadTimer.current = timer;
+    return () => { clearTimeout(timer); if (loadTimer.current === timer) loadTimer.current = null; };
+  }, [loading, sourceKey, attempt]);
 
   return (
     <View style={[styles.container, { backgroundColor: fallbackBackgroundColor }, style]}>
+      {!canRenderSource ? <BrandImagePlaceholder /> : null}
+        {canPreview ? <ExpoImage source={imageCacheSource(preview)} style={StyleSheet.absoluteFillObject}
+          contentFit="cover" cachePolicy="memory-disk" transition={0}
+          priority={priority} accessible={false} /> : null}
       {canRenderSource && !hasError ? (
         <>
         {blurBackground && resolvedSize && !(isPortrait && contentFit === "cover") ? (
           <ExpoImage
             recyclingKey={`background-${sourceKey}`}
-            source={source}
+            source={imageCacheSource(source)}
             style={[StyleSheet.absoluteFillObject, { transform: [{ scale: 1.08 }] }]}
             cachePolicy="memory-disk"
             contentFit="cover"
@@ -88,33 +147,43 @@ const ProfileMediaImage = ({
           />
         ) : null}
         <ExpoImage
-          key={`${sourceKey}-${resolvedFit}`}
+          key={`${sourceKey}-${attempt}`}
           recyclingKey={sourceKey}
-          source={source}
+          source={imageCacheSource(source)}
+          placeholder={canPreview ? imageCacheSource(preview) : undefined}
+          placeholderContentFit={resolvedFit}
           style={[StyleSheet.absoluteFillObject, { opacity: layoutReady ? 1 : 0 }]}
           cachePolicy="memory-disk"
           priority={priority}
           contentFit={resolvedFit}
           onLoad={({ source: image }) => {
+            if (!confirmLoaded()) return;
             if (knownImageSizes.size >= 300) knownImageSizes.delete(knownImageSizes.keys().next().value!);
             knownImageSizes.set(sourceKey, { width: image.width, height: image.height });
             setImageSize({ key: sourceKey, width: image.width, height: image.height });
           }}
           onDisplay={() => {
-            const size = knownImageSizes.get(sourceKey);
-            const finalFit = blurBackground ? (size && size.height > size.width && contentFit === "cover" ? "cover" : "contain") : contentFit;
-            if (blurBackground && (!size || finalFit !== resolvedFit)) return;
+            if (!confirmLoaded()) return;
             setDisplayedKey(sourceKey);
-            onDisplay?.();
           }}
           transition={transition}
-          onError={() => { setErrorKey(sourceKey); onDisplay?.(); }}
+          onError={failRequest}
         />
         </>
       ) : null}
-      {loading ? (
+      {loading && showLoading && !canPreview ? (
         <View pointerEvents="none" style={styles.loading} accessible accessibilityLabel="Cargando foto" accessibilityRole="progressbar">
-          <BrandImagePlaceholder />
+          <VibesLoader accessibilityLabel="Cargando foto" />
+        </View>
+      ) : null}
+      {hasError ? (
+        <View style={[styles.loading, canPreview ? { top: undefined, paddingVertical: 10, backgroundColor: `${vibesTheme.colors.background}E6` } : { backgroundColor: fallbackBackgroundColor }]}>
+          <Text style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", marginBottom: 12 }}>No se pudo cargar la foto.</Text>
+          <TouchableOpacity accessibilityRole="button" onPress={() => {
+            retries.current.count = 0; setErrorKey(null); setDisplayedKey(null); setAttempt(value => value + 1);
+          }} style={{ padding: 12 }}>
+            <Text style={{ color: vibesTheme.colors.accentBlue }}>Reintentar</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
     </View>

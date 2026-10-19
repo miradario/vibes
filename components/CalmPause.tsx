@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Animated,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -9,7 +10,7 @@ import {
 import { Text } from "./Typography";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ScreenContainer from "./ScreenContainer";
-import Vibi from "./Vibi";
+import AnimatedBrandLogo from "./AnimatedBrandLogo";
 import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
@@ -21,16 +22,30 @@ export default function CalmPause({
   onContinue,
   pending = false,
   showAction = true,
-  onBreathComplete,
+  onIntroComplete,
 }: {
   onContinue?: () => void;
   pending?: boolean;
   showAction?: boolean;
-  onBreathComplete?: () => void;
+  onIntroComplete?: () => void;
 }) {
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { visible, reduceMotion } = useCalmMotion();
+  const [logoComplete, setLogoComplete] = React.useState(false);
+  const textOpacity = React.useRef(new Animated.Value(0)).current;
+  const completionRef = React.useRef(onIntroComplete);
+  completionRef.current = onIntroComplete;
+  React.useEffect(() => {
+    if (!logoComplete || !visible) return;
+    const fade = Animated.timing(textOpacity, {
+      toValue: 1,
+      duration: reduceMotion ? 0 : 650,
+      useNativeDriver: true,
+    });
+    fade.start(({ finished }) => { if (finished) completionRef.current?.(); });
+    return () => fade.stop();
+  }, [logoComplete, visible, reduceMotion, textOpacity]);
   const size = getCalmIllustrationSize(
     width,
     height - insets.top - insets.bottom,
@@ -50,22 +65,20 @@ export default function CalmPause({
           <View
             style={[s.scene, { width: size, height: size }]}
             accessible
-            accessibilityLabel="Logo de Vibes respirando"
+            accessibilityLabel="Vibes"
           >
-            <Vibi
-              state="breathing"
-              loop
-              viewportSize={4.6}
-              onCycleComplete={onBreathComplete}
-              size={size * 0.72}
-              paused={!visible}
+            <AnimatedBrandLogo
+              style={{ width: size, height: size }}
+              onComplete={() => setLogoComplete(true)}
             />
           </View>
+          <Animated.View style={{ opacity: textOpacity }}>
           <Text style={s.help}>
             {reduceMotion
               ? "Este momento es para vos"
               : "Respirá a tu ritmo"}
           </Text>
+          </Animated.View>
         </ScrollView>
         {showAction ? (
           <View style={s.footer}>

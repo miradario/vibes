@@ -1,12 +1,13 @@
+import CancelOnboardingButton from "../components/CancelOnboardingButton";
+import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Platform,
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -18,7 +19,6 @@ import * as ImagePicker from "expo-image-picker";
 import styles, { TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
-import OnboardingVideo from "../components/OnboardingVideo";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
@@ -49,15 +49,6 @@ const normalizeDraftPhotos = (
 };
 
 const pickFromGallery = async () => {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== "granted") {
-    Alert.alert(
-      "Permiso denegado",
-      "Permití acceso a tus fotos para subir una imagen.",
-    );
-    return null;
-  }
-
   try {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: IMAGE_MEDIA_TYPE,
@@ -111,6 +102,7 @@ const OnboardingPhoto = () => {
   );
   const [photoUris, setPhotoUris] = useState<string[]>(initialPhotos);
   const [showPickerModal, setShowPickerModal] = useState(false);
+  const pendingPhotoSource = useRef<"camera" | "gallery" | null>(null);
 
   useEffect(() => {
     setPhotoUris(initialPhotos);
@@ -130,16 +122,21 @@ const OnboardingPhoto = () => {
     setShowPickerModal(true);
   };
 
-  const handlePickCamera = async () => {
-    setShowPickerModal(false);
-    const uri = await pickFromCamera();
-    if (uri) persistPhotos([...photoUris, uri]);
+  const handlePickerClosed = async () => {
+    const source = pendingPhotoSource.current;
+    pendingPhotoSource.current = null;
+    if (!source) return;
+    try {
+      const uri = await (source === "camera" ? pickFromCamera() : pickFromGallery());
+      if (uri) persistPhotos([...photoUris, uri]);
+    } catch (error) {
+      Alert.alert("Error", error instanceof Error ? error.message : "No se pudo abrir el selector de fotos.");
+    }
   };
 
-  const handlePickGallery = async () => {
+  const choosePhotoSource = (source: "camera" | "gallery") => {
+    pendingPhotoSource.current = source;
     setShowPickerModal(false);
-    const uri = await pickFromGallery();
-    if (uri) persistPhotos([...photoUris, uri]);
   };
 
   const setAsPrimary = (index: number) => {
@@ -165,7 +162,7 @@ const OnboardingPhoto = () => {
   return (
     <View style={styles.bg}>
       <View style={styles.onboardContainer}>
-        <AppHeader showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
+        <AppHeader right={<CancelOnboardingButton />} showBack onBack={() => navigation.goBack()} style={styles.onboardHeader} contentStyle={styles.onboardHeaderProgress}>
           <OnboardingProgressBar screenName="OnboardingPhoto" />
         </AppHeader>
         <ScrollView
@@ -242,7 +239,6 @@ const OnboardingPhoto = () => {
             ) : null}
           </View>
 
-          <OnboardingVideo containerStyle={localStyles.videoWrap} />
         </ScrollView>
 
         <View style={localStyles.footer}>
@@ -256,18 +252,13 @@ const OnboardingPhoto = () => {
       </View>
 
       {/* Photo source picker modal */}
-      <Modal
+      <AnimatedSheetModal
         visible={showPickerModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowPickerModal(false)}
+        onClose={() => setShowPickerModal(false)}
+        onClosed={() => void handlePickerClosed()}
+        sheetStyle={localStyles.modalCard}
       >
-        <TouchableOpacity
-          style={localStyles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowPickerModal(false)}
-        >
-          <View style={localStyles.modalCard}>
+          <View>
             <Text style={localStyles.modalTitle}>{t("onboarding.chooseSource")}</Text>
             <Text style={localStyles.modalSubtitle}>
               {t("onboarding.chooseSourceSubtitle")}
@@ -276,7 +267,7 @@ const OnboardingPhoto = () => {
             <View style={localStyles.modalButtons}>
               <TouchableOpacity
                 style={localStyles.modalOption}
-                onPress={handlePickCamera}
+                onPress={() => choosePhotoSource("camera")}
               >
                 <View style={localStyles.modalIconWrap}>
                   <Icon name="camera" size={26} color={vibesTheme.colors.accentCoral} />
@@ -286,7 +277,7 @@ const OnboardingPhoto = () => {
 
               <TouchableOpacity
                 style={localStyles.modalOption}
-                onPress={handlePickGallery}
+                onPress={() => choosePhotoSource("gallery")}
               >
                 <View style={localStyles.modalIconWrap}>
                   <Icon name="images" size={26} color={vibesTheme.colors.accentCoral} />
@@ -302,8 +293,7 @@ const OnboardingPhoto = () => {
               <Text style={localStyles.modalCancelText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-      </Modal>
+      </AnimatedSheetModal>
     </View>
   );
 };
@@ -411,7 +401,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
   },
   modalTitle: {
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     fontSize: 22,
     color: vibesTheme.colors.primaryText,
     marginBottom: 4,

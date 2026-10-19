@@ -17,9 +17,10 @@ import {
   useSendDirectMessageMutation,
   type MatchWithProfile,
 } from "../src/queries/matches.queries";
-import type { EventFeedItem } from "../src/queries/events.queries";
-import { buildEventInvitation } from "../src/lib/eventInvites";
-import { shareEventInvite } from "../src/lib/socialShare";
+import { useEventParticipantsQuery, useChallengeParticipantsQuery, type EventFeedItem } from "../src/queries/events.queries";
+import { eligibleInviteContacts } from "../src/lib/eventInviteContacts";
+import { buildChallengeInvitation, buildEventInvitation } from "../src/lib/eventInvites";
+import { shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 export default function EventInviteSheet({
@@ -33,7 +34,11 @@ export default function EventInviteSheet({
   onClose: () => void;
   onDiscover: () => void;
 }) {
+  const isChallenge = event.type === "challenge";
   const matches = useMatchesQuery();
+  const eventParticipants = useEventParticipantsQuery(visible && !isChallenge ? event.id : undefined);
+  const challengeParticipants = useChallengeParticipantsQuery(visible && isChallenge ? event.id : undefined);
+  const participants = isChallenge ? challengeParticipants : eventParticipants;
   const send = useSendDirectMessageMutation();
   const [search, setSearch] = useState("");
   const [sent, setSent] = useState<Set<string>>(new Set());
@@ -43,24 +48,18 @@ export default function EventInviteSheet({
   const discoverAfterClose = useRef(false);
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const invitation = useMemo(() => buildEventInvitation(event), [event]);
+  const invitation = useMemo(() => isChallenge ? buildChallengeInvitation(event) : buildEventInvitation(event), [event, isChallenge]);
   useEffect(() => {
     setSent(new Set());
     setError("");
     setSearch("");
   }, [event.id]);
-  const contacts = (matches.data ?? []).filter(
-    (match) =>
-      match.isActive &&
-      match.otherUserName
-        .toLocaleLowerCase()
-        .includes(search.trim().toLocaleLowerCase())
-  );
+  const contacts = eligibleInviteContacts(matches.data ?? [], (participants.data ?? []).map(person => person.userId), event.createdBy, search);
   const close = () => {
     if (!sending.current) onClose();
   };
   const invite = async (match: MatchWithProfile) => {
-    if (sending.current || sent.has(match.id)) return;
+    if (sending.current || sent.has(match.id) || participants.isLoading || participants.isError || !contacts.some(contact => contact.id === match.id)) return;
     sending.current = true;
     setSendingId(match.id);
     setError("");
@@ -96,7 +95,7 @@ export default function EventInviteSheet({
       ]}
     >
       <View style={s.header}>
-        <Text style={s.title}>Invitar al evento</Text>
+        <Text style={s.title}>{isChallenge ? "Invitar al desafío" : "Invitar al evento"}</Text>
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Cerrar invitaciones"
@@ -112,11 +111,11 @@ export default function EventInviteSheet({
         </TouchableOpacity>
       </View>
       <Text style={s.copy}>
-        Invitá a gente con la que ya conectaste. Recibirá el evento en su chat.
+        Invitá a gente con la que ya conectaste. Recibirá la invitación en su chat.
       </Text>
       <View style={s.preview}>
         <Text style={s.previewTitle}>{event.title}</Text>
-        <Text style={s.copy}>Te invito a este evento en Vibes.</Text>
+        <Text style={s.copy}>{isChallenge ? "Te invito a este desafío en Vibes." : "Te invito a este evento en Vibes."}</Text>
       </View>
       <TouchableOpacity
         accessibilityRole="button"
@@ -149,7 +148,7 @@ export default function EventInviteSheet({
         style={s.discover}
         onPress={async () => {
           setError("");
-          try { await shareEventInvite(event); }
+          try { await (isChallenge ? shareChallengeInvite(event) : shareEventInvite(event)); }
           catch { setError("No pudimos abrir las opciones para compartir. Intentá de nuevo."); }
         }}
       >
@@ -179,14 +178,14 @@ export default function EventInviteSheet({
             : `${sent.size} invitaciones enviadas`}
         </Text>
       ) : null}
-      {matches.isLoading ? (
-        <VibesLoader size={32} />
-      ) : matches.isError ? (
+      {matches.isLoading || participants.isLoading ? (
+        <VibesLoader />
+      ) : matches.isError || participants.isError ? (
         <View style={s.empty}>
-          <Text style={s.copy}>No pudimos cargar tus conexiones.</Text>
+          <Text style={s.copy}>No pudimos cargar las conexiones o los participantes.</Text>
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => void matches.refetch()}
+            onPress={() => { void matches.refetch(); void participants.refetch(); }}
             style={s.invite}
           >
             <Text style={s.buttonText}>Reintentar</Text>
@@ -202,7 +201,9 @@ export default function EventInviteSheet({
             <Text style={s.empty}>
               {search.trim()
                 ? "No encontramos conexiones con ese nombre."
-                : "Todavía no tenés conexiones. Encontrá personas en Discover."}
+                : matches.data?.some(match => match.isActive)
+                  ? "Todas tus conexiones ya participan. No hay personas nuevas para invitar."
+                  : "Todavía no tenés conexiones. Encontrá personas en Discover."}
             </Text>
           }
           renderItem={({ item }) => {
@@ -233,7 +234,7 @@ export default function EventInviteSheet({
                   ]}
                 >
                   {sendingId === item.id ? (
-                    <VibesLoader size={22} />
+                    <VibesLoader />
                   ) : (
                     <Text style={s.buttonText}>
                       {invited ? "Enviada" : "Invitar"}

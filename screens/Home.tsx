@@ -1,11 +1,16 @@
+import { showToast } from "../src/utils/toast";
 import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
+import { matchesSavedDiscoverExtras } from "../src/lib/discoverSavedFilters";
 import PhotoViewer from "../components/PhotoViewer";
-import { LinearGradient } from "expo-linear-gradient";
 import ProfileMediaImage from "../components/ProfileMediaImage";
 import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
 import DailyMoodCard from "../components/DailyMoodCard";
 import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
+import { useFtuxState } from "../src/ftux/ftuxStore";
+import { ownsHomePrompts, suppressesDailyMood } from "../src/ftux/ftuxMachine";
+import { useLocalDay } from "../src/hooks/useLocalDay";
+import HomeConnectionRequests from "../components/HomeConnectionRequests";
 /** @format */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -46,8 +51,7 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
-import { useCalmMotion } from "../src/hooks/useCalmMotion";
+import VibesLoader from "../components/VibesLoader";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -124,6 +128,7 @@ const normalizeGender = (
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
+    if (["all", "todos", "todas"].includes(normalized)) return "unknown";
 
     if (["woman", "female", "mujer"].includes(normalized)) return "woman";
     if (["man", "male", "hombre"].includes(normalized)) return "man";
@@ -215,33 +220,20 @@ const formatDistanceLabel = (distanceKm: number | null) => {
 };
 
 const getSuggestionHint = (profile: DataT) => {
-  const firstPreference = profile.preferences?.[0]?.split(":").pop()?.trim();
-  if (firstPreference) return firstPreference;
-  if (profile.spiritualPath?.[0]) return profile.spiritualPath[0];
+  const interests = Array.from(new Set([
+    ...(profile.spiritualPath ?? []),
+    ...(profile.preferences ?? []).map(value => value.split(":").pop()?.trim() ?? ""),
+  ].filter(Boolean))).slice(0, 2);
+  if (interests.length) return interests.join(" · ");
   if (profile.location) return profile.location;
   return "Afinidad con vos";
 };
 
 function PeopleSkeleton() {
-  const { visible, reduceMotion } = useCalmMotion();
-  const opacity = useSharedValue(1);
-  useEffect(() => {
-    opacity.value = visible && !reduceMotion
-      ? withRepeat(withTiming(0.45, { duration: 900 }), -1, true)
-      : 1;
-    return () => cancelAnimation(opacity);
-  }, [visible, reduceMotion, opacity]);
-  const pulse = useAnimatedStyle(() => ({ opacity: opacity.value }));
   return (
-    <Animated.View style={[localStyles.peopleCarousel, localStyles.peopleSkeletonRow, pulse]}
-      accessible accessibilityRole="progressbar" accessibilityLabel="Cargando personas con tu vibe">
-      {[0, 1, 2].map((index) => (
-        <View key={index} style={[localStyles.personCard, localStyles.personSkeleton]}>
-          <Text style={[localStyles.personName, localStyles.skeletonText]} accessible={false}>Nombre</Text>
-          <Text style={[localStyles.personHint, localStyles.skeletonText]} accessible={false}>Afinidad</Text>
-        </View>
-      ))}
-    </Animated.View>
+    <View style={{ minHeight: 170, alignItems: "center", justifyContent: "center" }}>
+      <VibesLoader size={48} accessibilityLabel="Cargando personas con tu vibe" />
+    </View>
   );
 }
 
@@ -260,20 +252,12 @@ function HomePeopleSuggestions({
   if (!suggestions.length && !loading) return null;
   return (
     <View style={localStyles.peopleSection}>
-      <View style={localStyles.peopleHeading}>
+      <TouchableOpacity style={[localStyles.peopleHeading, { minHeight: 44 }]}
+        accessibilityRole="button" accessibilityLabel="Ver personas con tu vibe"
+        disabled={loading} accessibilityState={{ disabled: loading }} onPress={onSeeAll} activeOpacity={0.72}>
         <Text style={localStyles.peopleTitle}>Personas con tu vibe</Text>
-        <TouchableOpacity
-          accessibilityRole="button"
-          disabled={loading}
-          accessibilityState={{ disabled: loading }}
-          onPress={onSeeAll}
-          activeOpacity={0.72}
-          style={localStyles.peopleLink}
-        >
-          <Text style={localStyles.peopleLinkText}>Ver todos</Text>
-          <Icon name="chevron-forward" size={18} color={vibesTheme.colors.secondaryText} />
-        </TouchableOpacity>
-      </View>
+        <Icon name="chevron-forward" size={20} color={vibesTheme.colors.secondaryText} />
+      </TouchableOpacity>
       {loading ? <PeopleSkeleton /> : <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -290,15 +274,16 @@ function HomePeopleSuggestions({
           >
             <ProfileMediaImage
               source={profile.avatarUri ? { uri: profile.avatarUri } : profile.image}
-              style={StyleSheet.absoluteFillObject}
+              style={localStyles.personPhoto}
             />
-            <LinearGradient pointerEvents="none" colors={["rgba(43, 43, 43, 0)", "rgba(43, 43, 43, 0.65)", "rgba(43, 43, 43, 0.94)"]} locations={[0.5, 0.85, 1]} style={StyleSheet.absoluteFillObject} />
+            <View style={localStyles.personInfo}>
             <Text style={localStyles.personName} numberOfLines={1}>
               {profile.name.split(" ")[0]}{profile.age ? `, ${profile.age}` : ""}
             </Text>
-            <Text style={localStyles.personHint} numberOfLines={1}>
+            <Text style={localStyles.personHint} numberOfLines={2}>
               {getSuggestionHint(profile)}
             </Text>
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>}
@@ -350,6 +335,14 @@ const Home = () => {
   const navigation = useNavigation();
   const [moodGateUser, setMoodGateUser] = useState<string | null>(null);
   const { data: session } = useAuthSession();
+  const today = useLocalDay();
+  // Vibi's first-day welcome (FTUX) replaces that day's mood check-in.
+  const ftuxState = useFtuxState(session?.user?.id, session?.user?.created_at);
+  const ftuxBlocksMood = suppressesDailyMood(
+    ftuxState,
+    today,
+    Boolean(session?.user?.id) && !ftuxState
+  );
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
   const { data: candidates = [], isLoading: candidatesLoading } = useCandidatesQuery(undefined, true);
@@ -399,7 +392,7 @@ const Home = () => {
             candidateAge,
             discoverFilters.ageMin,
             discoverFilters.ageMax,
-            { includeNullValue: true }
+            { includeNullValue: false }
           )
         ) {
           return false;
@@ -428,7 +421,7 @@ const Home = () => {
           return false;
         }
 
-        return true;
+        return matchesSavedDiscoverExtras(candidateRecord, userPreferences, candidateGender);
       });
     return rankHomeSuggestions(eligible, {
       ...ownProfileRecord, ...userPreferences,
@@ -472,6 +465,8 @@ const Home = () => {
   const [galleryInitialIndex, setGalleryInitialIndex] = useState<number>(0);
   const [showProfileSheet, setShowProfileSheet] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<DataT | null>(null);
+  const [homeProfileQueue, setHomeProfileQueue] = useState<DataT[]>([]);
+  const nextHomeProfile = homeProfileQueue[0] ?? null;
   const swipeMutation = useSwipeMutation();
   const firstName =
     (centerProfile.name || session?.user?.email?.split("@")[0] || "miradario")
@@ -614,46 +609,65 @@ const Home = () => {
     setShowGallery(true);
   };
 
-  const connectProfile = (profile: DataT | null) => {
-    if (!profile) return;
-
-    swipeMutation.mutate(
-      {
-        targetUserId: String(profile.id),
-        direction: "like",
-      },
-      {
-        onSuccess: (response) => {
-          if (response?.match) {
-            navigation.navigate("Match" as never, { profile } as never);
-          }
-        },
-        onError: (error) =>
-          handleApiError(error, { toastTitle: "Error de conexión" }),
-      }
-    );
-
-    closeProfileSheet();
+  const showProfilesComplete = () => {
+    showToast("Has visto todos los perfiles.", {
+      type: "info",
+      text2: "Sigue explorando Vibes",
+      visibilityTime: 4500,
+    });
   };
 
-  const dismissProfile = (profile: DataT | null) => {
-    if (!profile) return;
+  const connectProfile = async (profile: DataT | null) => {
+    if (!profile || swipeMutation.isPending) return false;
+    const next = nextHomeProfile;
+    try {
+      const response = await swipeMutation.mutateAsync({
+        targetUserId: String(profile.id),
+        direction: "like",
+      });
+      if (!next) showProfilesComplete();
+      if (response?.match) {
+        closeProfileSheet();
+        navigation.navigate("Match" as never, { profile } as never);
+      } else if (next) {
+        setSelectedProfile(next);
+        setHomeProfileQueue((queue) => queue.slice(1));
+      } else {
+        closeProfileSheet();
+      }
+      return true;
+    } catch (error) {
+      handleApiError(error, { toastTitle: "Error de conexión" });
+      return false;
+    }
+  };
 
-    swipeMutation.mutate(
-      {
+  const dismissProfile = async (profile: DataT | null) => {
+    if (!profile || swipeMutation.isPending) return false;
+    const next = nextHomeProfile;
+    try {
+      await swipeMutation.mutateAsync({
         targetUserId: String(profile.id),
         direction: "pass",
-      },
-      {
-        onError: (error) =>
-          handleApiError(error, { toastTitle: "Dismiss Error" }),
+      });
+      if (next) {
+        setSelectedProfile(next);
+        setHomeProfileQueue((queue) => queue.slice(1));
+      } else {
+        closeProfileSheet();
+        showProfilesComplete();
       }
-    );
-
-    closeProfileSheet();
+      return true;
+    } catch (error) {
+      handleApiError(error, { toastTitle: "Error al descartar" });
+      return false;
+    }
   };
 
   const openProfileSheet = (profile: DataT) => {
+    const suggestions = profiles.slice(0, 6);
+    const index = suggestions.findIndex((item) => item.id === profile.id);
+    setHomeProfileQueue(index >= 0 ? suggestions.slice(index + 1) : []);
     setSelectedProfile(profile);
     setShowProfileSheet(true);
   };
@@ -883,6 +897,8 @@ const Home = () => {
         <UserProfileSheet
           visible={showProfileSheet}
           profile={selectedProfileForSheet}
+          nextProfile={nextHomeProfile ? { ...nextHomeProfile, id: String(nextHomeProfile.id) } : null}
+          actionPending={swipeMutation.isPending}
           onClose={closeProfileSheet}
           onImagePress={(_image, index) =>
             selectedProfile
@@ -949,6 +965,12 @@ const Home = () => {
             </TouchableOpacity>
           </View>
 
+          {ownsHomePrompts(ftuxState) ? null : (
+            <CompleteProfilePrompt userId={session?.user?.id} />
+          )}
+
+          <HomeConnectionRequests canViewPhotos={Boolean(centerProfile.avatarUri)} />
+
           {session?.user?.id ? (
             <FirstHomePreferencesGate
               key={`preferences-${session.user.id}`}
@@ -959,9 +981,8 @@ const Home = () => {
           <DailyMoodCard
             key={`daily-mood-${session?.user?.id ?? "anonymous"}`}
             userId={session?.user?.id}
-            enabled={moodGateUser === session?.user?.id}
+            enabled={moodGateUser === session?.user?.id && !ftuxBlocksMood}
           />
-          <CompleteProfilePrompt userId={session?.user?.id} />
 
           <HomeOverview userId={session?.user?.id}>
 
@@ -1049,8 +1070,8 @@ const localStyles = StyleSheet.create({
     marginBottom: 12,
   },
   peopleTitle: {
-    flex: 1, color: vibesTheme.colors.primaryText, fontSize: 22,
-    lineHeight: 28, fontFamily: vibesTheme.fonts.bold,
+    flex: 1, color: vibesTheme.colors.primaryText, fontSize: 19,
+    lineHeight: 25, fontFamily: vibesTheme.fonts.bold,
   },
   peopleLink: {
     minHeight: 34,
@@ -1061,8 +1082,8 @@ const localStyles = StyleSheet.create({
   },
   peopleLinkText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 18,
     fontFamily: vibesTheme.fonts.medium,
   },
   peopleCarousel: {
@@ -1076,19 +1097,15 @@ const localStyles = StyleSheet.create({
   },
   skeletonText: { opacity: 0 },
   personCard: {
-    width: 136,
-    minHeight: 184,
+    width: 96,
     overflow: "hidden",
-    justifyContent: "flex-end",
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: `${vibesTheme.colors.secondaryText}24`,
     borderRadius: 14,
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 12,
-    paddingTop: 108,
-    paddingBottom: 12,
-    alignItems: "center",
   },
+  personPhoto: { width: "100%", height: 96 },
+  personInfo: { paddingHorizontal: 8, paddingVertical: 6 },
   personAddIcon: {
     backgroundColor: vibesTheme.colors.background,
     borderRadius: 16,
@@ -1100,18 +1117,17 @@ const localStyles = StyleSheet.create({
   },
   personName: {
     alignSelf: "stretch",
-    marginTop: 12,
-    color: vibesTheme.colors.background,
-    fontSize: 17,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    color: vibesTheme.colors.primaryText,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   personHint: {
     alignSelf: "stretch",
     marginTop: 2,
-    color: vibesTheme.colors.background,
-    fontSize: 13,
-    lineHeight: 18,
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 11,
+    lineHeight: 15,
     fontFamily: vibesTheme.fonts.regular,
   },
   featureImage: {
@@ -1537,7 +1553,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
     lineHeight: 28,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 8,
   },
   summaryContent: {
@@ -1639,7 +1655,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   meditationButtonSubtitle: {
     marginTop: 4,
@@ -1709,7 +1725,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 22,
     lineHeight: 26,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   guruSubtitle: {
     marginTop: 2,
@@ -1762,7 +1778,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 19,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   presenceSubtitle: {
     marginTop: 3,
@@ -1842,7 +1858,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 23,
     lineHeight: 27,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   sectionLink: {
     flexDirection: "row",
@@ -1930,7 +1946,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 18,
     lineHeight: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 4,
   },
   feedListMeta: {
@@ -2005,7 +2021,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.primaryText,
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     marginBottom: 7,
   },
   eventMetaRow: {
@@ -2040,7 +2056,7 @@ const localStyles = StyleSheet.create({
     fontSize: 42,
     lineHeight: 46,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     letterSpacing: 0.3,
   },
   discoverOrbitWrap: {
@@ -2072,7 +2088,7 @@ const localStyles = StyleSheet.create({
   emptyStateTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 24,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   emptyStateText: {
@@ -2110,7 +2126,7 @@ const localStyles = StyleSheet.create({
   filtersTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 30,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersSubtitle: {
     marginTop: 4,
@@ -2186,7 +2202,7 @@ const localStyles = StyleSheet.create({
   filtersSectionTitle: {
     color: vibesTheme.colors.primaryText,
     fontSize: 22,
-    fontFamily: vibesTheme.fonts.thin,
+    fontFamily: vibesTheme.fonts.regular,
   },
   filtersPillRow: {
     flexDirection: "row",
@@ -2211,7 +2227,7 @@ const localStyles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.regular,
   },
   filterPillTextActive: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
   },
   filtersFooter: {
     flexDirection: "row",
@@ -2239,10 +2255,10 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: vibesTheme.colors.primaryText,
   },
   filtersPrimaryButtonText: {
-    color: vibesTheme.colors.primaryText,
+    color: vibesTheme.colors.surface,
     fontSize: 15,
     fontFamily: vibesTheme.fonts.regular,
   },

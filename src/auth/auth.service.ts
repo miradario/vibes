@@ -1,3 +1,4 @@
+import { isObfuscatedExistingSignup } from "./signupRouting";
 import { sendEmailVerification } from "./emailVerification";
 import { isValidEmail, isValidPassword } from "./passwordPolicy";
 import type {
@@ -32,6 +33,9 @@ export const signup = async ({ email, password }: LoginInput) => {
     throw error;
   }
 
+  if (isObfuscatedExistingSignup(data)) {
+    throw Object.assign(new Error("User already registered"), { code: "user_already_exists" });
+  }
   let session = data.session ?? null;
   if (!session) {
     const loginResponse = await authClient.signInWithPassword(email, password);
