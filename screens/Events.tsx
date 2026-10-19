@@ -665,7 +665,8 @@ const Events = ({
                   }
                 >
                   <Text style={[localStyles.feedSectionTitle, localStyles.accordionSectionTitle]}>
-                    {listItem.title} · {listItem.count}
+                    {listItem.title}{" "}
+                    <Text style={localStyles.accordionSectionCount}>({listItem.count})</Text>
                   </Text>
                   <Icon
                     name={listItem.open ? "chevron-up" : "chevron-down"}
@@ -1080,6 +1081,12 @@ accordionSectionHeader: {
   },
 accordionSectionTitle: {
     flex: 1,
+  },
+accordionSectionCount: {
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 18,
+    lineHeight: 29,
+    fontFamily: vibesTheme.fonts.regular,
   },
 feedSectionTitle: {
     color: vibesTheme.colors.primaryText,

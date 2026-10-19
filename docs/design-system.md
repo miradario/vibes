@@ -94,6 +94,8 @@ Componentes: [`PrimaryButton`](../components/onboarding/PrimaryButton.tsx) para 
 
 ### Cabeceras de Eventos y Desafíos
 
+En los acordeones de Desafíos privados, mantener el título de sección en 25 / 29 SemiBold y mostrar la cantidad a continuación entre paréntesis, en 18 / 29 Regular y `secondaryText`.
+
 Usar botones de solo icono de 44 × 44, radio 14, fondo `secondaryText` al 4,7% y separación 6. Crear usa `add` de 20; historial usa `archive-outline` de 23, ambos en `primaryText`. Eventos muestra **+ → archivo**; Desafíos conserva **+ → inicio → comenzados → archivo**. Mantener labels accesibles específicos (“Crear evento”, “Ver eventos pasados”, etc.).
 
 ### Estados de interacción
