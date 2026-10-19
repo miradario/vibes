@@ -251,6 +251,15 @@ const GroupedPillList = ({
   </View>
 );
 
+// iOS photo <-> details crossfade timings (ms / px).
+const IOS_DETAILS_FADE_IN_MS = 220;
+const IOS_DETAILS_RISE_MS = 240;
+const IOS_DETAILS_FADE_OUT_MS = 200;
+const IOS_DETAILS_OFFSET_Y = 14;
+const IOS_DETAILS_PREWARM_MS = 450;
+// Module-level so its identity is stable across renders.
+const IOS_DETAILS_EASING = Easing.out(Easing.cubic);
+
 const UserProfileSheet = ({
   visible,
   enableSwipe = false,
@@ -336,31 +345,48 @@ const UserProfileSheet = ({
     return () => bounce.stop();
   }, [visible, profileFocused, appActive, motionReady, runtimeReducedMotion, reduceMotion, actionPending, swipeAnimating, connectBounce]);
 
-  // iOS only: fade the photo card out alongside the details sheet fade-in and
-  // keep the dark photo background until the details are actually visible, so
-  // the slide-up never flashes an empty light screen. Android is unchanged.
+  // iOS only: photo <-> details crossfade. Forward, the details fade in ON
+  // TOP of the untouched photo (one opacity animation, no gap showing the
+  // background); the photo and its name/buttons/gradient are hidden only once
+  // the details fully cover them. Going back, the photo is restored instantly
+  // underneath and the details fade out on top. Android unchanged.
   const isIOS = Platform.OS === "ios";
   const iosPhotoOpacity = useMemo(() => new Animated.Value(1), [profile?.id]);
+  // True once the details fully cover the photo (iOS forward transition done).
   const [iosDetailsBgReady, setIosDetailsBgReady] = useState(false);
   useEffect(() => {
     if (!isIOS) return;
-    const duration = reduceMotion ? 0 : detailsVisible ? 260 : 180;
-    const animation = Animated.timing(iosPhotoOpacity, {
-      toValue: detailsVisible ? 0 : 1,
-      duration,
-      useNativeDriver: true,
-    });
-    animation.start();
     if (!detailsVisible) {
+      // Mirror of the forward path: put the photo (and its chrome + dark
+      // background) back instantly UNDER the still-opaque details, which then
+      // fade out on top. One opacity animation, nothing ever exposes the
+      // background.
+      iosPhotoOpacity.stopAnimation();
+      iosPhotoOpacity.setValue(1);
       setIosDetailsBgReady(false);
-      return () => animation.stop();
+      return;
     }
-    const timer = setTimeout(() => setIosDetailsBgReady(true), duration);
-    return () => {
-      animation.stop();
-      clearTimeout(timer);
-    };
+    iosPhotoOpacity.stopAnimation();
+    iosPhotoOpacity.setValue(1);
+    const timer = setTimeout(() => {
+      iosPhotoOpacity.setValue(0);
+      setIosDetailsBgReady(true);
+    }, reduceMotion ? 0 : IOS_DETAILS_RISE_MS);
+    return () => clearTimeout(timer);
   }, [isIOS, detailsVisible, iosPhotoOpacity, reduceMotion]);
+  // What used to hide instantly on tap (gradient, name/buttons overlay) waits
+  // on iOS until the details cover the photo, so nothing pops before the fade.
+  const photoChromeHidden = isIOS ? detailsVisible && iosDetailsBgReady : detailsVisible;
+  // iOS only: mount the details panel (hidden) shortly after the profile opens,
+  // so tapping into the details doesn't wait for that heavy first render.
+  const [iosDetailsPrewarmedId, setIosDetailsPrewarmedId] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!isIOS || !visible || !profile?.id) return;
+    const id = profile.id;
+    const timer = setTimeout(() => setIosDetailsPrewarmedId(id), IOS_DETAILS_PREWARM_MS);
+    return () => clearTimeout(timer);
+  }, [isIOS, visible, profile?.id]);
+  const detailsScrollRef = useRef<ScrollView>(null);
   useLayoutEffect(() => {
     openingScale.stopAnimation();
     if (!visible || reduceMotion) {
@@ -379,6 +405,12 @@ const UserProfileSheet = ({
     return () => animation.stop();
   }, [visible, reduceMotion, openingScale]);
   useEffect(() => {
+    // iOS crossfades instead: the photo stays full height (hidden behind the
+    // details), avoiding a 420ms JS-driven layout animation on every tap.
+    if (isIOS) {
+      photoHeight.setValue(height);
+      return;
+    }
     const animation = Animated.timing(photoHeight, {
       toValue: detailsVisible ? compactPhotoHeight : height,
       duration: reduceMotion ? 0 : 420,
@@ -387,7 +419,7 @@ const UserProfileSheet = ({
     });
     animation.start();
     return () => animation.stop();
-  }, [compactPhotoHeight, detailsVisible, height, photoHeight, reduceMotion]);
+  }, [compactPhotoHeight, detailsVisible, height, isIOS, photoHeight, reduceMotion]);
   useEffect(() => {
     let active = true;
     void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
@@ -651,6 +683,15 @@ const UserProfileSheet = ({
       })
     );
   }, [profileImages.length, safeActiveIndex, width]);
+
+  // iOS: the details stay mounted between openings, so reset them to the top
+  // and to the current photo right before they fade in.
+  useLayoutEffect(() => {
+    if (!isIOS || !detailsVisible) return;
+    detailsScrollRef.current?.scrollTo({ y: 0, animated: false });
+    detailsGalleryRef.current?.scrollToOffset({ offset: safeActiveIndex * width, animated: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIOS, detailsVisible]);
 
   const closeDetails = useCallback(() => setDetailsVisible(false), [setDetailsVisible]);
   const showDetails = () => {
@@ -934,7 +975,7 @@ const UserProfileSheet = ({
             />
             )
           ) : (
-            withoutPhoto ? <ProfileWithoutPhoto active={visible && !detailsVisible} name={profile.name} age={profile.age} zodiac={profile.zodiac} /> : <View style={localStyles.fallbackCanvas}><Icon name="person-outline" size={72} color={vibesTheme.colors.secondaryText} /></View>
+            withoutPhoto ? <ProfileWithoutPhoto active={visible && !photoChromeHidden} name={profile.name} age={profile.age} zodiac={profile.zodiac} /> : <View style={localStyles.fallbackCanvas}><Icon name="person-outline" size={72} color={vibesTheme.colors.secondaryText} /></View>
           )}
 
           </Animated.View>
@@ -960,7 +1001,7 @@ const UserProfileSheet = ({
             pointerEvents="none"
             colors={PROFILE_PHOTO_GRADIENT}
             locations={[0, 0.55, 1]}
-            style={[localStyles.bottomGradient, (detailsVisible || withoutPhoto) && { opacity: 0 }]}
+            style={[localStyles.bottomGradient, (photoChromeHidden || withoutPhoto) && { opacity: 0 }]}
           />
 
           <LinearGradient
@@ -1001,7 +1042,8 @@ const UserProfileSheet = ({
             </>
           ) : null}
 
-          {!detailsVisible && <View
+          {!photoChromeHidden && <View
+            pointerEvents={detailsVisible ? "none" : undefined}
             style={[
               localStyles.profileOverlay,
               { paddingBottom: Math.max(insets.bottom, 4) },
@@ -1108,12 +1150,14 @@ const UserProfileSheet = ({
           visible={visible && detailsVisible}
           onClose={closeDetails}
           closeOnBackdropPress={false}
-          offsetY={reduceMotion ? 0 : 28}
+          offsetY={reduceMotion ? 0 : isIOS ? IOS_DETAILS_OFFSET_Y : 28}
           sheetInDelay={0}
-          sheetInDuration={reduceMotion ? 0 : 300}
-          sheetOutDuration={reduceMotion ? 0 : 240}
-          sheetInOpacityDuration={reduceMotion ? 0 : 220}
-          sheetOutOpacityDuration={reduceMotion ? 0 : 180}
+          sheetInDuration={reduceMotion ? 0 : isIOS ? IOS_DETAILS_RISE_MS : 300}
+          sheetOutDuration={reduceMotion ? 0 : isIOS ? IOS_DETAILS_FADE_OUT_MS : 240}
+          sheetInOpacityDuration={reduceMotion ? 0 : isIOS ? IOS_DETAILS_FADE_IN_MS : 220}
+          sheetOutOpacityDuration={reduceMotion ? 0 : isIOS ? IOS_DETAILS_FADE_OUT_MS : 180}
+          sheetEasing={isIOS ? IOS_DETAILS_EASING : undefined}
+          keepMounted={isIOS && iosDetailsPrewarmedId === profile.id}
           backdropColor="transparent"
           sheetStyle={[
             localStyles.detailsSheet,
@@ -1122,6 +1166,7 @@ const UserProfileSheet = ({
         >
           <View style={localStyles.detailsPanel}>
             <ScrollView
+              ref={detailsScrollRef}
               style={localStyles.detailsScroll}
               alwaysBounceVertical
               refreshControl={

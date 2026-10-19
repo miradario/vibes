@@ -30,6 +30,14 @@ type AnimatedSheetModalProps = {
   sheetInDelay?: number;
   sheetInOpacityDuration?: number;
   sheetOutOpacityDuration?: number;
+  /** Easing for the sheet translate/opacity (defaults to Animated's ease). */
+  sheetEasing?: (value: number) => number;
+  /**
+   * Inline only: keep the children mounted (hidden, non-interactive) while
+   * not visible, so showing it again starts animating immediately instead of
+   * waiting for a fresh mount. Defaults to false (unmount when hidden).
+   */
+  keepMounted?: boolean;
 };
 
 const AnimatedSheetModal = ({
@@ -51,7 +59,14 @@ const AnimatedSheetModal = ({
   sheetInDelay = vibesTheme.motion.modal.sheetInDelay,
   sheetInOpacityDuration = vibesTheme.motion.modal.sheetInOpacityDuration,
   sheetOutOpacityDuration = vibesTheme.motion.modal.sheetOutOpacityDuration,
+  sheetEasing,
+  keepMounted = false,
 }: AnimatedSheetModalProps) => {
+  const stayMounted = inline && keepMounted;
+  // Read through a ref: an inline easing function changes identity every
+  // render and would otherwise restart the entrance animation.
+  const sheetEasingRef = useRef(sheetEasing);
+  sheetEasingRef.current = sheetEasing;
   const [isMounted, setIsMounted] = useState(visible);
   const mountedRef = useRef(visible);
   const onClosedRef = useRef(onClosed);
@@ -79,12 +94,14 @@ const AnimatedSheetModal = ({
           toValue: 0,
           duration: sheetInDuration,
           delay: sheetInDelay,
+          easing: sheetEasingRef.current,
           useNativeDriver: true,
         }),
         Animated.timing(sheetOpacity, {
           toValue: 1,
           duration: sheetInOpacityDuration,
           delay: sheetInDelay,
+          easing: sheetEasingRef.current,
           useNativeDriver: true,
         }),
       ]);
@@ -103,11 +120,13 @@ const AnimatedSheetModal = ({
       Animated.timing(sheetTranslateY, {
         toValue: offsetY,
         duration: sheetOutDuration,
+        easing: sheetEasingRef.current,
         useNativeDriver: true,
       }),
       Animated.timing(sheetOpacity, {
         toValue: 0,
         duration: sheetOutOpacityDuration,
+        easing: sheetEasingRef.current,
         useNativeDriver: true,
       }),
     ]);
@@ -143,10 +162,14 @@ const AnimatedSheetModal = ({
     if (!isMounted && (inline || Platform.OS !== "ios")) notifyClosed();
   }, [isMounted, inline]);
 
-  if (!isMounted && (inline || Platform.OS !== "ios")) return null;
+  if (!isMounted && !stayMounted && (inline || Platform.OS !== "ios")) return null;
+  const hiddenButMounted = stayMounted && !visible;
 
   const content = (
     <KeyboardAvoidingView
+      pointerEvents={hiddenButMounted ? "none" : undefined}
+      accessibilityElementsHidden={hiddenButMounted || undefined}
+      importantForAccessibility={hiddenButMounted ? "no-hide-descendants" : undefined}
       enabled={placement === "center"}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={[
