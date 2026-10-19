@@ -89,6 +89,24 @@ const upsertPushToken = async (token: Notifications.DevicePushToken) => {
   if (error) {
     throw error;
   }
+
+  // Reinstalls and dev/TestFlight/App Store builds each register a new token,
+  // and the old ones stay active, so one event reached the same phone several
+  // times (e.g. the "quiere conectar con vos" push). Keep only this device's
+  // current token per platform. Best effort: a failure must not block push.
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user.id;
+  if (!userId) return;
+  const { error: cleanupError } = await supabase
+    .from("push_tokens")
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("platform", Platform.OS === "ios" ? "ios" : "android")
+    .eq("is_active", true)
+    .neq("token", tokenValue);
+  if (cleanupError) {
+    console.warn("[push] failed to deactivate stale push tokens", cleanupError);
+  }
 };
 
 export const deactivateUserPushTokens = async (userId: string) => {
