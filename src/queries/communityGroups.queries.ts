@@ -26,6 +26,7 @@ export type CommunityMessage = {
   senderName: string;
   senderAvatar?: string | null;
   message_kind: "message" | "system";
+  reply_to_message_id?: string | null;
 };
 
 export type CommunityGroupInvitation = {
@@ -251,13 +252,21 @@ export function useSendCommunityMessageMutation(groupId: string) {
   const { data: session } = useAuthSession();
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (body: string) => {
+    mutationFn: async ({
+      body,
+      replyToMessageId,
+    }: {
+      body: string;
+      replyToMessageId?: string | null;
+    }) => {
       if (!session?.user.id)
         throw new Error("Iniciá sesión para enviar mensajes");
       const { error } = await supabase.from("community_group_messages").insert({
         group_id: groupId,
         sender_id: session.user.id,
         body: body.trim(),
+        // Only sent for replies, so plain messages keep working before the migration.
+        ...(replyToMessageId ? { reply_to_message_id: replyToMessageId } : {}),
       });
       if (error) throw error;
     },

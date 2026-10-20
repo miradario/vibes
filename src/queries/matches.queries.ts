@@ -50,6 +50,7 @@ export type DirectMessage = {
   senderId: string;
   text: string;
   createdAt: string;
+  replyToMessageId?: string | null;
   deliveryStatus?: "sending" | "sent";
 };
 
@@ -729,6 +730,7 @@ async function fetchDirectMessages(matchId: string): Promise<DirectMessage[]> {
       senderId: String(r.senderId),
       text: String(r.text),
       createdAt: String(r.createdAt),
+      replyToMessageId: r.replyToMessageId ? String(r.replyToMessageId) : null,
     })
   );
 }
@@ -815,6 +817,9 @@ export const useDirectMessagesQuery = (matchId?: string) => {
                 senderId: String(raw.senderId),
                 text: String(raw.text),
                 createdAt: String(raw.createdAt),
+                replyToMessageId: raw.replyToMessageId
+                  ? String(raw.replyToMessageId)
+                  : null,
               };
 
               queryClient.setQueryData<DirectMessage[]>(queryKey, (prev) => {
@@ -870,10 +875,10 @@ export const useSendDirectMessageMutation = () => {
   return useMutation<
     DirectMessage,
     Error,
-    { matchId: string; body: string },
+    { matchId: string; body: string; replyToMessageId?: string | null },
     { tempId: string; matchId: string }
   >({
-    onMutate: async ({ matchId, body }) => {
+    onMutate: async ({ matchId, body, replyToMessageId }) => {
       const senderId = session?.user?.id;
       const tempId = `pending-${Date.now()}`;
 
@@ -890,6 +895,7 @@ export const useSendDirectMessageMutation = () => {
             senderId,
             text: body,
             createdAt: new Date().toISOString(),
+            replyToMessageId: replyToMessageId ?? null,
             deliveryStatus: "sending",
           },
         ]
@@ -897,14 +903,20 @@ export const useSendDirectMessageMutation = () => {
 
       return { tempId, matchId };
     },
-    mutationFn: async ({ matchId, body }) => {
+    mutationFn: async ({ matchId, body, replyToMessageId }) => {
       const senderId = session?.user?.id;
       if (!senderId) throw new Error("Not authenticated");
       assertAcceptableContent([body]);
 
       const { data, error } = await supabase
         .from("messages")
-        .insert({ match_id: matchId, sender_id: senderId, text: body })
+        .insert({
+          match_id: matchId,
+          sender_id: senderId,
+          text: body,
+          // Only sent for replies, so plain messages keep working before the migration.
+          ...(replyToMessageId ? { reply_to_message_id: replyToMessageId } : {}),
+        })
         .select("*")
         .single();
 
@@ -916,6 +928,9 @@ export const useSendDirectMessageMutation = () => {
         senderId: String(raw.senderId),
         text: String(raw.text),
         createdAt: String(raw.createdAt),
+        replyToMessageId: raw.replyToMessageId
+          ? String(raw.replyToMessageId)
+          : null,
         deliveryStatus: "sent",
       };
     },
