@@ -32,7 +32,7 @@ import appConfig from "../app.json";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 const Profile = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { data: session } = useAuthSession();
@@ -89,6 +89,11 @@ const Profile = () => {
       icon: "options",
       label: t("profile.configuration"),
       screen: "Configuration",
+    },
+    {
+      icon: "shield-checkmark-outline",
+      label: locale.startsWith("en") ? "Help and child safety" : "Ayuda y seguridad infantil",
+      screen: "Contact",
     },
     {
       icon: "document-text",
