@@ -363,23 +363,25 @@ const EventChat = () => {
     if (
       !isFocused ||
       !eventId ||
-      messages.length === 0 ||
+      messagesLoading ||
       markReadMutation.isPending
     ) {
       return;
     }
 
+    // Also runs with no visible messages: the mutation reads up to the latest
+    // stored one, including messages hidden from deleted accounts.
     const latestMessage = messages[messages.length - 1];
-    if (!latestMessage?.createdAt) return;
-    if (lastMarkedReadAtRef.current === latestMessage.createdAt) return;
+    const readKey = latestMessage?.createdAt ?? "empty";
+    if (lastMarkedReadAtRef.current === readKey) return;
 
-    lastMarkedReadAtRef.current = latestMessage.createdAt;
+    lastMarkedReadAtRef.current = readKey;
     markReadMutation.mutate({
       eventId,
       eventType,
-      readAt: latestMessage.createdAt,
+      readAt: latestMessage?.createdAt,
     });
-  }, [eventId, eventType, isFocused, markReadMutation, messages]);
+  }, [eventId, eventType, isFocused, markReadMutation, messages, messagesLoading]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
