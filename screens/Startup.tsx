@@ -1,4 +1,3 @@
-import { Platform } from "react-native";
 import SessionRecoveryAction from "../components/SessionRecoveryAction";
 import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
@@ -284,7 +283,7 @@ const Startup = () => {
     <ScreenContainer edges={["top", "bottom", "left", "right"]}
       style={{ backgroundColor: vibesTheme.colors.background }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <AnimatedBrandLogo direction="logo-to-word" loop animate={Platform.OS !== "android"} style={{ width: 240, height: 240 }} />
+        <AnimatedBrandLogo direction="logo-to-word" loop style={{ width: 240, height: 240 }} />
         {bootFailed ? (
           <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: 24, gap: 16, marginTop: 24 }}>
             <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 18 }}>

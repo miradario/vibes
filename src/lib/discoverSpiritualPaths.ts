@@ -1,6 +1,6 @@
+import { PRACTICE_OPTIONS } from "../screens/Onboarding/vibesOnboardingContent";
 import {
   getSelectedSpiritualPaths,
-  SPIRITUAL_PATH_OPTIONS,
 } from "./spiritualPaths";
 
 const normalize = (value: string) => {
@@ -19,7 +19,7 @@ export const readDiscoverSpiritualPaths = (value: unknown): string[] => {
   const selected = new Set(
     value.filter((v): v is string => typeof v === "string").map(normalize)
   );
-  return SPIRITUAL_PATH_OPTIONS.filter((option) =>
+  return PRACTICE_OPTIONS.filter((option) => option !== "Otras" &&
     selected.has(normalize(option))
   );
 };

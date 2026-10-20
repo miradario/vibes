@@ -9,7 +9,7 @@ function load(file, deps = {}) {
  return exports;
 }
 const paths = load('src/lib/spiritualPaths.ts');
-const {readDiscoverSpiritualPaths: read, matchesDiscoverSpiritualPaths: matches} = load('src/lib/discoverSpiritualPaths.ts', {'./spiritualPaths': paths});
+const {readDiscoverSpiritualPaths: read, matchesDiscoverSpiritualPaths: matches} = load('src/lib/discoverSpiritualPaths.ts', {'./spiritualPaths': paths, '../screens/Onboarding/vibesOnboardingContent': load('src/screens/Onboarding/vibesOnboardingContent.ts')});
 test('no selection includes profiles with no practices; selected paths require a match', () => {
  assert.equal(matches({}, []), true);
  assert.equal(matches({}, ['Tantra']), false);
@@ -25,6 +25,6 @@ test('persisted filters normalize, deduplicate and reject unknown values', () =>
  assert.equal(read(null).length, 0);
  const result = read(['Art of Living', 'Arte de vivir', 'Tantra', 7, 'invalid']);
  assert.equal(result.length, 2);
- assert.ok(result.includes('El Arte de Vivir'));
+ assert.ok(result.includes('Art of Living'));
  assert.ok(result.includes('Tantra'));
 });

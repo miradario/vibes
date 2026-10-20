@@ -35,3 +35,9 @@ test('legacy height filters are ignored after removal',()=>{
  assert.equal(matches({heightCm:185},{heightMax:['180']}),true);
  assert.equal(matches({},{heightMin:['150']}),true);
 });
+test('diet and smoking use the onboarding answers, including legacy profiles',()=>{
+ assert.equal(matches({profileAnswers:{diet:'Vegana',smoking:'A veces',alcohol:'No'}},{diet:['Vegana'],smoking:['A veces'],alcohol:['No']}),true);
+ assert.equal(matches({vegetarian:'Vegano',smoking:'occasionally'},{diet:['Vegana'],smoking:['A veces']}),true);
+ assert.equal(matches({vegetarian:'No'},{diet:['Omnívora (como de todo)']}),true);
+ assert.equal(matches({profile_answers:{diet:'Pescetariana'}},{diet:['Vegana']}),false);
+});

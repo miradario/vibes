@@ -13,10 +13,19 @@ export function matchesDiscoverAnswers(
     }
     if (key === "interestedIn") return matchesInterestedInFilter(candidate, selected);
     if (key === "heightMin" || key === "heightMax") return true;
-    const value =
+    let value =
       answers[key] ??
       candidate[key] ??
       candidate[key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)];
+    // Older profiles stored these answers in dedicated preference columns.
+    if (key === "diet") {
+      const legacy = candidate.vegetarian;
+      value = value || ({ "Sí": "Vegetariana", Vegetariano: "Vegetariana", Vegano: "Vegana", Pescetariano: "Pescetariana", No: "Omnívora (como de todo)" } as Record<string, string>)[legacy];
+      if (value === "Omnívora") value = "Omnívora (como de todo)";
+    }
+    if (key === "smoking" && typeof value === "string") {
+      value = ({ yes: "Sí", no: "No", occasionally: "A veces", sometimes: "A veces" } as Record<string, string>)[value] ?? value;
+    }
     const values = Array.isArray(value)
       ? value
       : typeof value === "string"

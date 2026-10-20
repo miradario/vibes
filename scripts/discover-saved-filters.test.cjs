@@ -30,3 +30,33 @@ test('Home applies persisted multiple genders, diet, spiritual path and national
 test('empty saved filters allow profiles with incomplete answers', () => {
   assert.equal(matches({}, {}, 'unknown'), true);
 });
+const { DISCOVER_ANSWER_FILTER_FIELDS: fields, readDiscoverAnswerFilters: read } = load('src/lib/discoverFilterOptions.ts');
+const { QUESTION_GROUPS } = load('src/lib/profileQuestionOptions.ts');
+const { PURPOSE_OPTIONS, PRACTICE_OPTIONS } = load('src/screens/Onboarding/vibesOnboardingContent.ts');
+test('filter choices match current profile questions exactly, without legacy duplicates', () => {
+ const questions = QUESTION_GROUPS.flatMap(group=>group.fields);
+ for(const field of fields.filter(field=>field.key!=='openTo')) {
+  assert.deepEqual(field.options, questions.find(question=>question.key===field.key).options);
+ }
+ assert.deepEqual(fields.find(field=>field.key==='openTo').options, PURPOSE_OPTIONS.map(option=>option.label));
+ assert.equal(new Set(fields.map(field=>field.key)).size,fields.length);
+ for(const key of ['education','familyPlan','communicationStyle','lookingFor','habits']) assert.equal(fields.some(field=>field.key===key),false);
+});
+test('saved retired filters do not secretly exclude profiles on Home',()=>{
+ assert.equal(matches({}, {discover_answer_filters:{education:['Universidad']}}, 'unknown'),true);
+ assert.equal(matches({profileAnswers:{diet:'Vegana'}}, {discover_answer_filters:{diet:['Vegana']}}, 'unknown'),true);
+ assert.equal(matches({profileAnswers:{diet:'Vegetariana'}}, {discover_answer_filters:{diet:['Vegana']}}, 'unknown'),false);
+});
+test('legacy duplicate controls migrate to current labels and explicit reset wins',()=>{
+ assert.equal(read({}, {discover_diets:['other']}).diet.join(','),'Vegana,Pescetariana');
+ assert.equal(read({}, {discover_smoking:'occasionally'}).smoking[0],'A veces');
+ assert.equal(read({diet:[],smoking:[]}, {discover_diets:['vegetarian'],discover_smoking:'yes'}).diet.length,0);
+});
+test('every named onboarding practice can be selected and matched',()=>{
+ const {readDiscoverSpiritualPaths, matchesDiscoverSpiritualPaths}=load('src/lib/discoverSpiritualPaths.ts');
+ for(const practice of PRACTICE_OPTIONS.filter(value=>value!=='Otras')) {
+  assert.equal(readDiscoverSpiritualPaths([practice]).length,1);
+  assert.equal(matchesDiscoverSpiritualPaths({spiritual_path:[practice]},[practice]),true);
+ }
+ assert.equal(readDiscoverSpiritualPaths(['El Arte de Vivir'])[0],'Art of Living');
+});

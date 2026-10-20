@@ -2,15 +2,15 @@ import React from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "./Typography";
 import Icon from "./Icon";
-import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
+import { PRACTICE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-const featuredPaths = ["El Arte de Vivir", "Tantra"];
+const featuredPaths = ["Art of Living", "Tantra"];
 const paths = [
   ...featuredPaths,
-  ...SPIRITUAL_PATH_OPTIONS.filter((path) => !featuredPaths.includes(path)),
+  ...PRACTICE_OPTIONS.filter((path) => path !== "Otras" && !featuredPaths.includes(path)),
 ];
 
 export default function DiscoverPathCards({

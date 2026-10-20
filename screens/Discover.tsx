@@ -2,16 +2,13 @@ import SessionRecoveryAction from "../components/SessionRecoveryAction";
 import RangeSlider from "../components/RangeSlider";
 import { normalizeRangeBounds } from "../src/lib/rangeSlider";
 import CountrySelector from "../components/CountrySelector";
-import { isCountryCode } from "../src/constants/countries";
 import ProfilePhotoPrompt from "../components/ProfilePhotoPrompt";
 import { hasProfilePhotos, comparePhotoPriority } from "../src/lib/profilePhotos";
 import PhotoViewer from "../components/PhotoViewer";
 import { getNextProfile } from "../src/lib/profileSwipe";
 import { supabase } from "../src/lib/supabase";
-import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
-import { PURPOSE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
+import { DISCOVER_ANSWER_FILTER_FIELDS as ANSWER_FILTER_FIELDS, readDiscoverAnswerFilters } from "../src/lib/discoverFilterOptions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
 import { matchesDatingPreferences } from "../supabase/functions/vibi-chat/dating";
 import {
   matchesDiscoverAnswers,
@@ -80,7 +77,6 @@ import VibesLoader from "../components/VibesLoader";
 import { showToast } from "../src/utils/toast";
 
 type DiscoverGender = "woman" | "man" | "other";
-type DiscoverDiet = "vegetarian" | "nonVegetarian" | "other";
 
 type DiscoverFiltersState = {
   ageMin: number | null;
@@ -88,44 +84,8 @@ type DiscoverFiltersState = {
   distanceMinKm: number | null;
   maxDistanceKm: number | null;
   genders: DiscoverGender[];
-  diets: DiscoverDiet[];
   spiritualPaths: string[];
-  smoking: "all" | "no" | "occasionally" | "yes";
 };
-
-const ANSWER_FILTER_FIELDS: {
-  key: string;
-  label: string;
-  options: readonly string[];
-}[] = (() => {
-  const fields = QUESTION_GROUPS.flatMap((group) =>
-    group.fields.filter((field) => "options" in field && field.key !== "gender")
-  ) as readonly { key: string; label: string; options: readonly string[] }[];
-  const result = fields.map((field) => ({
-    ...field,
-    label: field.key === "interestedIn" ? "Está interesado en" : field.label,
-    options: [...field.options],
-  }));
-  for (const [key, config] of Object.entries(PROFILE_PREFERENCE_OPTIONS)) {
-    if (["open_to", "vegetarian", "smoking", "vaccine"].includes(key)) continue;
-    const camelKey = key.replace(/_([a-z])/g, (_, letter: string) =>
-      letter.toUpperCase()
-    );
-    const existing = result.find((field) => field.key === camelKey);
-    if (!existing)
-      result.push({
-        key: camelKey,
-        label: config.label,
-        options: [...config.options],
-      });
-  }
-  result.unshift({
-    key: "openTo",
-    label: "Me trae a Vibes",
-    options: PURPOSE_OPTIONS.map((option) => option.label),
-  });
-  return result;
-})();
 
 const DEFAULT_FILTERS: DiscoverFiltersState = {
   ageMin: null,
@@ -133,9 +93,7 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   distanceMinKm: null,
   maxDistanceKm: null,
   genders: [],
-  diets: [],
   spiritualPaths: [],
-  smoking: "all",
 };
 
 export type DiscoverContentHandle = {
@@ -172,42 +130,6 @@ const parseAge = (value: unknown) => {
 const clampAge = (value: number) =>
   Math.min(MAX_DISCOVER_AGE, Math.max(MIN_DISCOVER_AGE, value));
 
-const normalizeSmoking = (value: unknown): DiscoverFiltersState["smoking"] => {
-  if (typeof value !== "string") return "all";
-
-  const normalized = value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-  if (!normalized) return "all";
-  if (
-    normalized.includes("no") ||
-    normalized.includes("never") ||
-    normalized.includes("non")
-  ) {
-    return "no";
-  }
-  if (
-    normalized.includes("occasion") ||
-    normalized.includes("social") ||
-    normalized.includes("sometimes") ||
-    normalized.includes("a veces")
-  ) {
-    return "occasionally";
-  }
-  if (
-    normalized.includes("yes") ||
-    normalized.includes("si") ||
-    normalized.includes("daily") ||
-    normalized.includes("smoker") ||
-    normalized.includes("fuma")
-  ) {
-    return "yes";
-  }
-  return "all";
-};
-
 const normalizeGender = (
   value: unknown,
   genderId?: unknown
@@ -242,32 +164,6 @@ const normalizeGender = (
   if (parsedGenderId === 3) return "other";
   if (parsedGenderId === 4) return "other";
   return "unknown";
-};
-
-const normalizeDiet = (value: unknown): DiscoverDiet | "unknown" => {
-  if (typeof value !== "string" || !value.trim()) return "unknown";
-
-  const normalized = value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-  if (
-    ["si", "yes", "vegetarian", "vegetariano", "vegetariana"].includes(
-      normalized
-    )
-  ) {
-    return "vegetarian";
-  }
-  if (
-    ["no", "non-vegetarian", "no vegetariano", "no vegetariana"].includes(
-      normalized
-    )
-  ) {
-    return "nonVegetarian";
-  }
-  return "other";
 };
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
@@ -338,11 +234,8 @@ const areFiltersEqual = (
   left.maxDistanceKm === right.maxDistanceKm &&
   left.genders.length === right.genders.length &&
   left.genders.every((gender) => right.genders.includes(gender)) &&
-  left.diets.length === right.diets.length &&
-  left.diets.every((diet) => right.diets.includes(diet)) &&
   left.spiritualPaths.length === right.spiritualPaths.length &&
-  left.spiritualPaths.every((path) => right.spiritualPaths.includes(path)) &&
-  left.smoking === right.smoking;
+  left.spiritualPaths.every((path) => right.spiritualPaths.includes(path));
 
 const readStoredFiltersRaw = (
   preferences: Record<string, any> | null
@@ -377,20 +270,10 @@ const readStoredFiltersRaw = (
     );
     return storedGender === "unknown" ? [] : [storedGender];
   })(),
-  diets: (() => {
-    const storedDiets =
-      preferences?.discoverDiets ?? preferences?.discover_diets;
-    if (!Array.isArray(storedDiets)) return [];
-    return storedDiets.filter((value): value is DiscoverDiet =>
-      ["vegetarian", "nonVegetarian", "other"].includes(String(value))
-    );
-  })(),
   spiritualPaths: readDiscoverSpiritualPaths(
     preferences?.discoverSpiritualPaths ?? preferences?.discover_spiritual_paths
   ),
-  smoking: normalizeSmoking(
-    preferences?.discoverSmoking ?? preferences?.discover_smoking
-  ),
+
 });
 
 const readStoredFilters = (preferences: Record<string, any> | null): DiscoverFiltersState => {
@@ -424,7 +307,7 @@ export const DiscoverContent = forwardRef<
     Promise.all([
       supabase
         .from("user_preferences")
-        .select("discover_answer_filters")
+        .select("discover_answer_filters, discover_diets, discover_smoking")
         .eq("user_id", userId)
         .maybeSingle(),
       AsyncStorage.getItem(`discover_answer_filters:${userId}`),
@@ -434,18 +317,7 @@ export const DiscoverContent = forwardRef<
         if (!active) return;
         const parsed =
           remote.data?.discover_answer_filters ?? (raw ? JSON.parse(raw) : {});
-        const valid: DiscoverAnswerFilters = {};
-        for (const field of ANSWER_FILTER_FIELDS) {
-          if (Array.isArray(parsed?.[field.key])) {
-            valid[field.key] = parsed[field.key].filter(
-              (value: unknown) =>
-                typeof value === "string" && field.options.includes(value)
-            );
-          }
-        }
-        if (Array.isArray(parsed?.nationalityCode)) {
-          valid.nationalityCode = parsed.nationalityCode.filter(isCountryCode);
-        }
+        const valid = readDiscoverAnswerFilters(parsed, remote.data ?? {});
         setAnswerFilters(valid);
         setAnswerFiltersOwner(userId);
       })
@@ -603,8 +475,6 @@ export const DiscoverContent = forwardRef<
             candidateRecord.birthDate ??
             candidateRecord.birth_date
         );
-        const candidateSmoking = normalizeSmoking(candidateRecord.smoking);
-        const candidateDiet = normalizeDiet(candidateRecord.vegetarian);
         const candidateGender = normalizeGender(
           candidateRecord.gender ??
             candidateRecord.genderLabel ??
@@ -638,21 +508,6 @@ export const DiscoverContent = forwardRef<
           discoverFilters.genders.length > 0 &&
           (candidateGender === "unknown" ||
             !discoverFilters.genders.includes(candidateGender))
-        ) {
-          return false;
-        }
-
-        if (
-          discoverFilters.smoking !== "all" &&
-          candidateSmoking !== discoverFilters.smoking
-        ) {
-          return false;
-        }
-
-        if (
-          discoverFilters.diets.length > 0 &&
-          (candidateDiet === "unknown" ||
-            !discoverFilters.diets.includes(candidateDiet))
         ) {
           return false;
         }
@@ -795,9 +650,7 @@ export const DiscoverContent = forwardRef<
           (discoverFilters.distanceMinKm !== null ||
             discoverFilters.maxDistanceKm !== null),
         discoverFilters.genders.length > 0,
-        discoverFilters.diets.length > 0,
         discoverFilters.spiritualPaths.length > 0,
-        discoverFilters.smoking !== "all",
       ].filter(Boolean).length +
       Object.values(answerFilters).filter((values) => values.length > 0).length,
     [discoverFilters, hasLocation, answerFilters]
@@ -807,9 +660,7 @@ export const DiscoverContent = forwardRef<
   if (discoverFilters.ageMin !== null || discoverFilters.ageMax !== null) appliedFilterChips.push({ id: "age", label: discoverFilters.ageMin !== null && discoverFilters.ageMax !== null ? `${discoverFilters.ageMin}–${discoverFilters.ageMax} años` : discoverFilters.ageMin !== null ? `Desde ${discoverFilters.ageMin} años` : `Hasta ${discoverFilters.ageMax} años`, remove: () => setDiscoverFilters(p => ({ ...p, ageMin: null, ageMax: null })) });
   if (hasLocation && (discoverFilters.distanceMinKm !== null || discoverFilters.maxDistanceKm !== null)) appliedFilterChips.push({ id: "distance", label: discoverFilters.distanceMinKm !== null && discoverFilters.maxDistanceKm !== null ? `${discoverFilters.distanceMinKm}–${discoverFilters.maxDistanceKm} km` : discoverFilters.maxDistanceKm !== null ? `Hasta ${discoverFilters.maxDistanceKm} km` : `Desde ${discoverFilters.distanceMinKm} km`, remove: () => setDiscoverFilters(p => ({ ...p, distanceMinKm: null, maxDistanceKm: null })) });
   if (discoverFilters.genders.length) appliedFilterChips.push({ id: "genders", label: discoverFilters.genders.map(g => t(g === "man" ? "discover.genderMan" : g === "woman" ? "discover.genderWoman" : "discover.genderOther")).join(" · "), remove: () => setDiscoverFilters(p => ({ ...p, genders: [] })) });
-  if (discoverFilters.diets.length) appliedFilterChips.push({ id: "diets", label: discoverFilters.diets.map(d => d === "vegetarian" ? "Vegetariano" : d === "nonVegetarian" ? "No vegetariano" : "Otra alimentación").join(" · "), remove: () => setDiscoverFilters(p => ({ ...p, diets: [] })) });
   if (discoverFilters.spiritualPaths.length) appliedFilterChips.push({ id: "paths", label: discoverFilters.spiritualPaths.join(" · "), remove: () => setDiscoverFilters(p => ({ ...p, spiritualPaths: [] })) });
-  if (discoverFilters.smoking !== "all") appliedFilterChips.push({ id: "smoking", label: discoverFilters.smoking === "no" ? "No fuma" : discoverFilters.smoking === "yes" ? "Fuma" : "Fuma a veces", remove: () => setDiscoverFilters(p => ({ ...p, smoking: "all" })) });
   for (const [key, values] of Object.entries(answerFilters)) {
     if (!values.length) continue;
     const label = ANSWER_FILTER_FIELDS.find(field => field.key === key)?.label ?? ({ nationalityCode: "Nacionalidad" }[key] ?? key);
@@ -862,9 +713,9 @@ export const DiscoverContent = forwardRef<
             ? discoverFilters.genders[0]
             : "all",
         discover_gender_id: null,
-        discover_diets: discoverFilters.diets,
+        discover_diets: [],
         discover_spiritual_paths: discoverFilters.spiritualPaths,
-        discover_smoking: discoverFilters.smoking,
+        discover_smoking: "all",
       }).then(() => queryClient.invalidateQueries({ queryKey: userPreferencesKeys.byUser(userId) })).catch((persistError) => {
         console.warn("discover_filters:persist_error", persistError);
       });
@@ -1163,98 +1014,6 @@ export const DiscoverContent = forwardRef<
                 </View>
               ))}
 
-              <View style={localStyles.filtersSection}>
-                {filterSectionTitle(t("discover.diet"))}
-                <View style={localStyles.filtersPillRow}>
-                  {(
-                    [
-                      {
-                        value: "vegetarian",
-                        label: t("discover.dietVegetarian"),
-                      },
-                      {
-                        value: "nonVegetarian",
-                        label: t("discover.dietNonVegetarian"),
-                      },
-                      { value: "other", label: t("discover.dietOther") },
-                    ] as const
-                  ).map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        localStyles.filterPill,
-                        discoverFilters.diets.includes(option.value) &&
-                          localStyles.filterPillActive,
-                      ]}
-                      onPress={() =>
-                        setDiscoverFilters((prev) => {
-                          const selected = prev.diets.includes(option.value);
-                          return {
-                            ...prev,
-                            diets: selected
-                              ? prev.diets.filter(
-                                  (value) => value !== option.value
-                                )
-                              : [...prev.diets, option.value],
-                          };
-                        })
-                      }
-                    >
-                      <Text
-                        style={[
-                          localStyles.filterPillText,
-                          discoverFilters.diets.includes(option.value) &&
-                            localStyles.filterPillTextActive,
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View style={localStyles.filtersSection}>
-                {filterSectionTitle(t("discover.smoking"))}
-                <View style={localStyles.filtersPillRow}>
-                  {(
-                    [
-                      { value: "all", label: t("discover.smokingAll") },
-                      { value: "no", label: t("discover.smokingNo") },
-                      {
-                        value: "occasionally",
-                        label: t("discover.smokingSometimes"),
-                      },
-                      { value: "yes", label: t("discover.smokingYes") },
-                    ] as const
-                  ).map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        localStyles.filterPill,
-                        discoverFilters.smoking === option.value &&
-                          localStyles.filterPillActive,
-                      ]}
-                      onPress={() =>
-                        setDiscoverFilters((prev) => ({
-                          ...prev,
-                          smoking: option.value,
-                        }))
-                      }
-                    >
-                      <Text
-                        style={[
-                          localStyles.filterPillText,
-                          discoverFilters.smoking === option.value &&
-                            localStyles.filterPillTextActive,
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
             </ScrollView>
 
             <View style={localStyles.filtersFooter}>

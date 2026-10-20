@@ -144,7 +144,7 @@ Los valores actuales de `vibesTheme.motion.modal` son: backdrop `primaryText` al
 
 Norma: respetar reducción de movimiento en animaciones nuevas; mantener cierre accesible, acceso al teclado y foco coherente. El componente actual no debe interpretarse como garantía de que toda la accesibilidad modal ya esté resuelta.
 
-En Android, los estados transitorios de arranque mantienen el logo estático para que no reinicie su animación al pasar de boot a Startup. Welcome conserva su animación de marca; iOS conserva el comportamiento existente.
+Los estados de arranque Boot y Startup muestran la animación de marca en Android e iOS, respetando la preferencia de reducción de movimiento. El splash nativo del sistema permanece estático; al ocultarse, continúa la pantalla animada de la app.
 
 ## Marca y capturas
 
@@ -175,3 +175,5 @@ Esta documentación no modifica la UI ni afirma una migración completa:
 3. Comprobar ancho compacto, escalado de texto, teclado, safe areas y truncamientos. En pantallas hermanas comparar títulos lado a lado.
 4. Ejecutar `npm run colors:check` después de cambiar colores, estilos o ilustraciones. El script valida paleta; no reemplaza la revisión de contraste, tipografía o layout.
 5. Registrar cualquier excepción nueva en esta guía y mantener sus enlaces a fuentes vigentes.
+
+Los filtros de personas comparten las opciones de las preguntas de perfil y los motivos del onboarding. No ofrecer preferencias antiguas que ya no se solicitan ni duplicar alimentación o tabaco.
