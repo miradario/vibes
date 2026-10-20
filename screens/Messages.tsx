@@ -1165,14 +1165,14 @@ const localStyles = StyleSheet.create({
   },
   rowTitleLine: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    rowGap: 4,
     alignItems: "center",
   },
   kindIcon: {
+    flexShrink: 0,
     marginRight: 5,
   },
   finishedTag: {
+    flexShrink: 0,
     marginLeft: 6,
     color: vibesTheme.colors.secondaryText,
     fontSize: 12,
