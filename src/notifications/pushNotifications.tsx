@@ -2,6 +2,7 @@ import { vibesTheme } from "../theme/vibesTheme";
 import { useCommunityUnreadQuery } from "../queries/communityReceipts.queries";
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { AppState, Platform } from "react-native";
+import * as Application from "expo-application";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useQueryClient } from "@tanstack/react-query";
@@ -230,6 +231,62 @@ const handleNotificationResponse = (
   navigateFromNotification(getNotificationData(response) ?? {});
 };
 
+// Launch response, read once per app process: a tap that opened the app
+// from closed is logged as cold_start even if the listener also reports it.
+let launchResponseIdPromise: Promise<string | null> | null = null;
+const getLaunchResponseId = () => {
+  launchResponseIdPromise ??= Notifications.getLastNotificationResponseAsync()
+    .then((response) => response?.notification.request.identifier ?? null)
+    .catch(() => null);
+  return launchResponseIdPromise;
+};
+const loggedOpenIds = new Set<string>();
+
+const pickString = (data: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    const value = data[key];
+    if (typeof value === "string" && value) return value;
+    if (typeof value === "number") return String(value);
+  }
+  return null;
+};
+
+// Fire-and-forget tap log for push metrics; never blocks or breaks navigation.
+// The table's unique (user_id, notification_identifier) drops repeats.
+const logNotificationOpen = async (
+  response: Notifications.NotificationResponse,
+  appStateAtTap: "foreground" | "background"
+) => {
+  try {
+    const identifier = response.notification.request.identifier;
+    if (!identifier || loggedOpenIds.has(identifier)) return;
+    loggedOpenIds.add(identifier);
+    const launchId = await getLaunchResponseId();
+    const data = getNotificationData(response) ?? {};
+    const reengagementKind = pickString(data, ["reengagementKind"]);
+    const { error } = await supabase.from("notification_opens").insert({
+      notification_identifier: identifier.slice(0, 300),
+      notification_type: reengagementKind
+        ? `reengagement_${reengagementKind}`
+        : pickString(data, ["type"]) ?? "unknown",
+      notification_ref: pickString(data, [
+        "reengagementId", "reminderId", "messageId", "swipeId", "matchId", "user_id",
+      ]),
+      reengagement_id: pickString(data, ["reengagementId"]),
+      app_state: launchId === identifier
+        ? "cold_start"
+        : appStateAtTap,
+      platform: Platform.OS === "ios" ? "ios" : "android",
+      app_version: Application.nativeApplicationVersion ?? null,
+    });
+    if (error && error.code !== "23505") {
+      console.warn("[push] failed to log notification open", error.message);
+    }
+  } catch (error) {
+    console.warn("[push] failed to log notification open", error);
+  }
+};
+
 const isCurrentChatRoute = (
   route: { name?: string; params?: Record<string, unknown> } | null,
   data: Record<string, unknown>
@@ -259,6 +316,7 @@ export const PushNotificationsBootstrap = ({
   const preferencesQuery = useUserPreferencesQuery(userId);
   const notificationsEnabled = preferencesQuery.data?.notificationsEnabled;
   const lastHandledResponseIdRef = useRef<string | null>(null);
+  const appStateRef = useRef({ state: AppState.currentState as string, since: 0 });
 
   useEffect(() => {
     if (!userId || !preferencesQuery.isSuccess) return;
@@ -352,6 +410,15 @@ export const PushNotificationsBootstrap = ({
 
   useEffect(() => {
     if (Platform.OS === "web") return;
+    // A tap from background can arrive just after AppState turns "active",
+    // so "foreground" needs the app to have been active for a moment.
+    const appStateSubscription = AppState.addEventListener("change", (state) => {
+      if (state === "active" && appStateRef.current.state !== "active") {
+        appStateRef.current = { state, since: Date.now() };
+      } else if (state !== "active") {
+        appStateRef.current = { state, since: Date.now() };
+      }
+    });
 
     const receivedSubscription = Notifications.addNotificationReceivedListener(
       (notification) => {
@@ -404,6 +471,11 @@ export const PushNotificationsBootstrap = ({
 
     const responseSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
+        const { state, since } = appStateRef.current;
+        void logNotificationOpen(
+          response,
+          state === "active" && Date.now() - since > 1500 ? "foreground" : "background"
+        );
         refreshCommunityFromPush(queryClient, getNotificationData(response));
         handleNotificationResponse(
           response,
@@ -413,6 +485,7 @@ export const PushNotificationsBootstrap = ({
       });
 
     void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) void logNotificationOpen(response, "background");
       handleNotificationResponse(
         response,
         navigateFromNotification,
@@ -423,6 +496,7 @@ export const PushNotificationsBootstrap = ({
     return () => {
       receivedSubscription.remove();
       responseSubscription.remove();
+      appStateSubscription.remove();
     };
   }, [getCurrentRoute, navigateFromNotification, queryClient, userId]);
 

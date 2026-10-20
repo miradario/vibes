@@ -70,7 +70,7 @@ export const buildReengagementNotification = async (
     return [{
       recipientId: job.user_id,
       ...reengagementCopy(job.kind, senders.length, null, listed.map((id) => names.get(id) ?? "Alguien")),
-      data: { type: "connection_request", senderId: senders[0], reengagementId: job.id },
+      data: { type: "connection_request", senderId: senders[0], reengagementId: String(job.id), reengagementKind: job.kind },
     }];
   }
 
@@ -90,7 +90,8 @@ export const buildReengagementNotification = async (
       type: challenge ? "challenge_reminder" : "event_reminder",
       eventId: job.subject_id,
       eventType: challenge ? "challenge" : "event",
-      reengagementId: job.id,
+      reengagementId: String(job.id),
+      reengagementKind: job.kind,
     },
   }];
 };
