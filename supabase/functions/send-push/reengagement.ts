@@ -7,8 +7,7 @@ type Notification = { recipientId: string; title: string; body: string; data: Re
 
 // All re-engagement texts live here so final wording can be swapped verbatim.
 // Pending connections always go in one push per day. 1-2 people keep the
-// original copy; 3+ (Agus' rule, provisional wording) switch to a grouped
-// summary listing up to three first names and "y N más".
+// original copy; 3+ (Agus' rule) switch to the grouped copy.
 export const MAX_LISTED_NAMES = 3;
 
 export const REENGAGEMENT_COPY = {
@@ -19,23 +18,18 @@ export const REENGAGEMENT_COPY = {
       `${name} y ${others === 1 ? "1 persona más quieren" : `${others} personas más quieren`} conectar con vos`,
   },
   groupedConnections: {
-    title: "Tenés conexiones pendientes",
-    body: (names: string) => `${names} quieren conectar con vos`,
+    title: "Alguien quiere conectar con vos",
+    // Agus' wording: first names comma-separated; over two, first two + "...".
+    body: (names: string[]) => names.length > 2 ? `${names.slice(0, 2).join(", ")}...` : names.join(", "),
   },
   newEvent: {
-    title: "Un evento que te puede interesar",
-    body: (title: string | null) => `Se sumó ${title ?? "un nuevo evento"}. Mirá los detalles.`,
+    title: "Hay un nuevo evento que creemos que podría interesarte",
+    body: (title: string | null) => title ?? "",
   },
   newChallenge: {
-    title: "Un nuevo desafío para vos",
-    body: (title: string | null) => `Se sumó ${title ?? "un nuevo desafío"}. ¿Te sumás?`,
+    title: "Tenemos un nuevo desafío que te podría interesar",
+    body: (title: string | null) => title ?? "",
   },
-};
-
-const listNames = (names: string[], total: number) => {
-  const others = total - names.length;
-  if (others > 0) return `${names.join(", ")} y ${others} más`;
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}` : names[0] ?? "Alguien";
 };
 
 export const reengagementCopy = (
@@ -47,7 +41,7 @@ export const reengagementCopy = (
   if (kind === "pending_connections") {
     if (itemCount >= 3) {
       const copy = REENGAGEMENT_COPY.groupedConnections;
-      return { title: copy.title, body: copy.body(listNames(names.slice(0, MAX_LISTED_NAMES), itemCount)) };
+      return { title: copy.title, body: copy.body(names.slice(0, MAX_LISTED_NAMES)) };
     }
     const copy = REENGAGEMENT_COPY.pendingConnections;
     const first = names[0] ?? "Alguien";
