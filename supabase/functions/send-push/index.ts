@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { notificationAllowed } from "./preferences.ts";
 import { authorizedWebhook, isConnectionRequest } from "./webhook.ts";
+import { buildReengagementNotification } from "./reengagement.ts";
 
 type SupabaseClient = ReturnType<typeof createAdminClient>;
 
@@ -833,6 +834,10 @@ const buildNotifications = async (
     return buildReminderNotification(supabase, record);
   }
 
+  if (table === "reengagement_notifications") {
+    return buildReengagementNotification(supabase, record, (ids) => fetchDisplayNames(supabase, ids));
+  }
+
   if (table === "messages") {
     return buildDirectMessageNotifications(supabase, record);
   }
@@ -940,11 +945,17 @@ serve(async (req: Request) => {
           : undefined,
     }));
 
-    const reminderId = payload.table === "notification_reminders" ? String(getRecord(payload)?.id ?? "") : null;
+    // Scheduled jobs record per-token deliveries so retries never duplicate a push.
+    const deliveryLog = payload.table === "notification_reminders"
+      ? { table: "notification_reminder_deliveries", column: "reminder_id" }
+      : payload.table === "reengagement_notifications"
+      ? { table: "reengagement_notification_deliveries", column: "notification_id" }
+      : null;
+    const reminderId = deliveryLog ? String(getRecord(payload)?.id ?? "") : null;
     const deliveredTokenIds = new Set<string>();
-    if (reminderId) {
-      const { data: deliveries, error } = await supabase.from("notification_reminder_deliveries")
-        .select("token_id").eq("reminder_id", reminderId);
+    if (deliveryLog && reminderId) {
+      const { data: deliveries, error } = await supabase.from(deliveryLog.table)
+        .select("token_id").eq(deliveryLog.column, reminderId);
       if (error) throw error;
       for (const delivery of deliveries ?? []) deliveredTokenIds.add(delivery.token_id);
     }
@@ -1012,9 +1023,9 @@ serve(async (req: Request) => {
         }
 
         if (result.ok) {
-          if (reminderId) {
-            const { error } = await supabase.from("notification_reminder_deliveries")
-              .upsert({ reminder_id: reminderId, token_id: token.id }, { onConflict: "reminder_id,token_id" });
+          if (deliveryLog && reminderId) {
+            const { error } = await supabase.from(deliveryLog.table)
+              .upsert({ [deliveryLog.column]: reminderId, token_id: token.id }, { onConflict: `${deliveryLog.column},token_id` });
             if (error) throw error;
           }
           sentCount += 1;
@@ -1043,7 +1054,7 @@ serve(async (req: Request) => {
     return new Response(
       JSON.stringify({ sent: sentCount, deactivatedTokens: inactiveCount, retryableFailures }),
       {
-        status: payload.table === "notification_reminders" && retryableFailures > 0 ? 503 : 200,
+        status: deliveryLog && retryableFailures > 0 ? 503 : 200,
         headers: jsonHeaders,
       }
     );
