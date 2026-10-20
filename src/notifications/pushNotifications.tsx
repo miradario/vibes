@@ -255,7 +255,7 @@ const pickString = (data: Record<string, unknown>, keys: string[]) => {
 type PendingOpen = { row: Record<string, string | null>; queuedAt: number };
 const PENDING_OPENS_KEY = "vibes.pendingNotificationOpens";
 // A tap waits this long for a session (restored or new login) before it is dropped.
-const PENDING_OPEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const PENDING_OPEN_MAX_AGE_MS = 60 * 60 * 1000;
 let pendingOpens: PendingOpen[] = [];
 let pendingOpensLoaded: Promise<void> | null = null;
 let flushingOpens = false;
