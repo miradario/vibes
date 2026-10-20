@@ -26,6 +26,14 @@ import {
   getUpcomingHomeEvents,
 } from "../src/lib/homeOverview";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { useQuery } from "@tanstack/react-query";
+import { matchesQueryOptions } from "../src/queries/matches.queries";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import {
+  orderHomeSections,
+  pickFeaturedItem,
+  type HomeSection,
+} from "../src/lib/homePersonalization";
 
 const ACCENT = vibesTheme.colors.accentMustard;
 
@@ -55,13 +63,31 @@ function SectionHeader({
   title: string;
   onPress?: () => void;
 }) {
-  if (!onPress) return <View style={s.heading}><Text style={s.section}>{title}</Text></View>;
+  if (!onPress)
+    return (
+      <View style={s.heading}>
+        <Text style={s.section}>{title}</Text>
+      </View>
+    );
   return (
-    <TouchableOpacity style={[s.heading, { minHeight: 44 }]} onPress={onPress}
-      accessibilityRole="button" accessibilityLabel={`Ver ${title}`} activeOpacity={0.72}>
+    <TouchableOpacity
+      style={[s.heading, { minHeight: 44 }]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver ${title}`}
+      activeOpacity={0.72}
+    >
       <Text style={s.section}>{title}</Text>
       <Icon name="chevron-forward" size={20} color={ACCENT} />
     </TouchableOpacity>
+  );
+}
+
+function ForYouTag() {
+  return (
+    <View style={s.forYouTag}>
+      <Text style={s.forYouText}>Para ti</Text>
+    </View>
   );
 }
 
@@ -89,10 +115,12 @@ function ChallengeCard({
   event,
   userId,
   showProgress = true,
+  featured = false,
 }: {
   event: EventFeedItem;
   userId?: string;
   showProgress?: boolean;
+  featured?: boolean;
 }) {
   const navigation = useNavigation<any>();
   const checkins = useChallengeCheckinsQuery(event.id, userId);
@@ -138,6 +166,7 @@ function ChallengeCard({
         transition={180}
       />
       <View style={s.compactCopy}>
+        {featured ? <ForYouTag /> : null}
         <Text style={s.cardTitle} numberOfLines={2}>
           {event.title}
         </Text>
@@ -174,7 +203,13 @@ function ChallengeCard({
   );
 }
 
-function HomeEventCard({ event }: { event: EventFeedItem }) {
+function HomeEventCard({
+  event,
+  featured = false,
+}: {
+  event: EventFeedItem;
+  featured?: boolean;
+}) {
   const navigation = useNavigation<any>();
   const label = getEventDateLabel(
     nextEventSession(event.schedule, event.startsAt)?.startsAt ??
@@ -199,6 +234,7 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
         transition={180}
       />
       <View style={s.compactCopy}>
+        {featured ? <ForYouTag /> : null}
         <Text style={s.cardTitle} numberOfLines={2}>
           {event.title}
         </Text>
@@ -263,7 +299,25 @@ export default function HomeOverview({
     : getUpcomingHomeEvents(eventsFeed.data ?? [], now)
         .filter((event) => !joinedEventIds.has(event.id))
         .slice(0, 2);
-  const visibleEvents = upcoming.length ? upcoming : suggestedEvents;
+  const preferences = useUserPreferencesQuery(userId).data;
+  const matchesCount = useQuery(matchesQueryOptions(userId)).data?.length ?? 0;
+  const featuredEvent = pickFeaturedItem(
+    eventsFeed.data ?? [],
+    events,
+    preferences,
+    now
+  );
+  const visibleEvents = [
+    ...(featuredEvent ? [featuredEvent] : []),
+    ...(upcoming.length ? upcoming : suggestedEvents).filter(
+      (event) => event.id !== featuredEvent?.id
+    ),
+  ];
+  const sectionOrder = orderHomeSections({
+    preferences,
+    joined: events,
+    matchesCount,
+  });
   const joinedChallenges = events.filter((event) => event.type === "challenge");
   const currentAndUpcomingChallenges = joinedChallenges.filter(
     (event) =>
@@ -295,9 +349,18 @@ export default function HomeOverview({
             new Date(b.startsAt ?? 0).getTime()
         )
         .slice(0, 3);
-  const challenges = homeChallenges.length
-    ? homeChallenges
-    : recommendedChallenges;
+  const featuredChallenge = pickFeaturedItem(
+    challengesFeed.data ?? [],
+    events,
+    preferences,
+    now
+  );
+  const challenges = [
+    ...(featuredChallenge ? [featuredChallenge] : []),
+    ...(homeChallenges.length ? homeChallenges : recommendedChallenges).filter(
+      (event) => event.id !== featuredChallenge?.id
+    ),
+  ];
   const challengeSectionTitle = homeChallenges.length
     ? "Tus desafíos"
     : "Desafíos para vos";
@@ -329,93 +392,116 @@ export default function HomeOverview({
         </TouchableOpacity>
       </>
     );
-  return (
-    <>
-      {children}
-
-      <View style={s.sectionBlock}>
-        <SectionHeader
-          title="Eventos para vos"
-          onPress={visibleEvents.length ? () => openList() : undefined}
-        />
-        {visibleEvents.length ? (
-          <View style={s.compactList}>
-            {visibleEvents.map((event) => (
-              <HomeEventCard key={event.id} event={event} />
-            ))}
+  const eventsSection = (
+    <View key="events" style={s.sectionBlock}>
+      <SectionHeader
+        title="Eventos para vos"
+        onPress={visibleEvents.length ? () => openList() : undefined}
+      />
+      {visibleEvents.length ? (
+        <View style={s.compactList}>
+          {visibleEvents.map((event) => (
+            <HomeEventCard
+              key={event.id}
+              event={event}
+              featured={event.id === featuredEvent?.id}
+            />
+          ))}
+        </View>
+      ) : eventsFeed.isLoading ? (
+        <View style={s.eventSuggestionsLoader}>
+          <VibesLoader size={48} />
+        </View>
+      ) : (
+        <View style={s.emptyEventCard}>
+          <View style={s.emptyIcon}>
+            <Icon name="calendar-outline" size={28} color={ACCENT} />
           </View>
-        ) : eventsFeed.isLoading ? (
-          <View style={s.eventSuggestionsLoader}>
-            <VibesLoader size={48} />
+          <View style={s.emptyCopy}>
+            <Text style={s.emptyTitle}>No tenés eventos próximos</Text>
+            <Text style={s.meta}>
+              Creá un encuentro para compartir algo que te gustaría hacer.
+            </Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={createEvent}
+              style={s.ctaButton}
+              activeOpacity={0.84}
+            >
+              <Text style={s.ctaText}>Crear evento</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={s.emptyEventCard}>
-            <View style={s.emptyIcon}>
-              <Icon name="calendar-outline" size={28} color={ACCENT} />
-            </View>
-            <View style={s.emptyCopy}>
-              <Text style={s.emptyTitle}>No tenés eventos próximos</Text>
-              <Text style={s.meta}>
-                Creá un encuentro para compartir algo que te gustaría hacer.
-              </Text>
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={createEvent}
-                style={s.ctaButton}
-                activeOpacity={0.84}
-              >
-                <Text style={s.ctaText}>Crear evento</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </View>
-
-      <View style={s.sectionBlock}>
-        <SectionHeader
-          title={challengeSectionTitle}
-          onPress={() => openList(true)}
-        />
-        {isLoadingChallengeRecommendations ? (
-          <View style={s.eventSuggestionsLoader}>
-            <VibesLoader size={48} accessibilityLabel="Cargando desafíos" />
-          </View>
-        ) : null}
-        {!isLoadingChallengeRecommendations && !challenges.length && (
-          <TouchableOpacity
-            style={s.emptyCard}
-            accessibilityRole="button"
-            onPress={() => openList(true)}
-            activeOpacity={0.82}
-          >
-            <View style={s.emptyIcon}>
-              <Icon name="trophy-outline" size={26} color={ACCENT} />
-            </View>
-            <View style={s.emptyCopy}>
-              <Text style={s.meta}>
-                Elegí un desafío y empezá a construir tu práctica.
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
-        {!isLoadingChallengeRecommendations && challenges.length ? (
-          <View style={s.compactList}>
-            {challenges.map((event) => (
-              <ChallengeCard
-                key={event.id}
-                event={event}
-                userId={userId}
-                showProgress={Boolean(homeChallenges.length)}
-              />
-            ))}
-          </View>
-        ) : null}
-      </View>
-
-    </>
+        </View>
+      )}
+    </View>
   );
+  const challengesSection = (
+    <View key="challenges" style={s.sectionBlock}>
+      <SectionHeader
+        title={challengeSectionTitle}
+        onPress={() => openList(true)}
+      />
+      {isLoadingChallengeRecommendations ? (
+        <View style={s.eventSuggestionsLoader}>
+          <VibesLoader size={48} accessibilityLabel="Cargando desafíos" />
+        </View>
+      ) : null}
+      {!isLoadingChallengeRecommendations && !challenges.length && (
+        <TouchableOpacity
+          style={s.emptyCard}
+          accessibilityRole="button"
+          onPress={() => openList(true)}
+          activeOpacity={0.82}
+        >
+          <View style={s.emptyIcon}>
+            <Icon name="trophy-outline" size={26} color={ACCENT} />
+          </View>
+          <View style={s.emptyCopy}>
+            <Text style={s.meta}>
+              Elegí un desafío y empezá a construir tu práctica.
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
+      {!isLoadingChallengeRecommendations && challenges.length ? (
+        <View style={s.compactList}>
+          {challenges.map((event) => (
+            <ChallengeCard
+              key={event.id}
+              event={event}
+              userId={userId}
+              featured={event.id === featuredChallenge?.id}
+              showProgress={
+                Boolean(homeChallenges.length) &&
+                event.id !== featuredChallenge?.id
+              }
+            />
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+  const sections: Record<HomeSection, React.ReactNode> = {
+    events: eventsSection,
+    challenges: challengesSection,
+    people: <React.Fragment key="people">{children}</React.Fragment>,
+  };
+  return <>{sectionOrder.map((section) => sections[section])}</>;
 }
 const s = StyleSheet.create({
+  forYouTag: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: ACCENT,
+  },
+  forYouText: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: vibesTheme.colors.surface,
+    fontFamily: vibesTheme.fonts.semibold,
+  },
   sectionBlock: {
     marginBottom: 24,
   },
