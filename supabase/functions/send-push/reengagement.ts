@@ -6,21 +6,15 @@ type Client = { from: (table: string) => any };
 type Notification = { recipientId: string; title: string; body: string; data: Record<string, string> };
 
 // All re-engagement texts live here so final wording can be swapped verbatim.
-// Pending connections always go in one push per day. 1-2 people keep the
-// original copy; 3+ (Agus' rule) switch to the grouped copy.
+// Pending connections always go in one push per day, whatever the count.
 export const MAX_LISTED_NAMES = 3;
 
 export const REENGAGEMENT_COPY = {
+  // Agus' wording, same for any count: 1 "Agustín", 2 "Agustín, Mariana",
+  // 3+ "Agustín, Mariana, ...".
   pendingConnections: {
-    title: "Te están esperando",
-    one: (name: string) => `${name} quiere conectar con vos`,
-    many: (name: string, others: number) =>
-      `${name} y ${others === 1 ? "1 persona más quieren" : `${others} personas más quieren`} conectar con vos`,
-  },
-  groupedConnections: {
     title: "Alguien quiere conectar con vos",
-    // Agus' wording: first names comma-separated; over two, first two + "...".
-    body: (names: string[]) => names.length > 2 ? `${names.slice(0, 2).join(", ")}...` : names.join(", "),
+    body: (names: string[]) => names.length > 2 ? `${names.slice(0, 2).join(", ")}, ...` : names.join(", "),
   },
   newEvent: {
     title: "Hay un nuevo evento que creemos que podría interesarte",
@@ -39,13 +33,8 @@ export const reengagementCopy = (
   names: string[],
 ) => {
   if (kind === "pending_connections") {
-    if (itemCount >= 3) {
-      const copy = REENGAGEMENT_COPY.groupedConnections;
-      return { title: copy.title, body: copy.body(names.slice(0, MAX_LISTED_NAMES)) };
-    }
     const copy = REENGAGEMENT_COPY.pendingConnections;
-    const first = names[0] ?? "Alguien";
-    return { title: copy.title, body: itemCount > 1 ? copy.many(first, itemCount - 1) : copy.one(first) };
+    return { title: copy.title, body: copy.body(names.slice(0, Math.min(itemCount, MAX_LISTED_NAMES))) };
   }
   const copy = kind === "new_event" ? REENGAGEMENT_COPY.newEvent : REENGAGEMENT_COPY.newChallenge;
   return { title: copy.title, body: copy.body(title) };
