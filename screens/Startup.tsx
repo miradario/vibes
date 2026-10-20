@@ -148,12 +148,12 @@ const Startup = () => {
           },
           {
             label: "events feed prefetch",
-            run: () => queryClient.prefetchQuery(eventsFeedQueryOptions()),
+            run: () => queryClient.prefetchInfiniteQuery(eventsFeedQueryOptions()),
           },
           {
             label: "challenges feed prefetch",
             run: () =>
-              queryClient.prefetchQuery(challengesFeedQueryOptions(userId)),
+              queryClient.prefetchInfiniteQuery(challengesFeedQueryOptions(userId)),
           }
         );
       }

@@ -208,17 +208,6 @@ const Events = ({
   const title = pastOnly ? (section === "challenge" ? "Desafíos finalizados" : "Eventos pasados") : section === "challenge" ? "Desafíos" : "Eventos";
   const searchPlaceholder =
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
-  const eventsQuery = useEventsFeedQuery();
-  const challengesQuery = useChallengesFeedQuery();
-  const groupsQuery = useMyEventGroupsQuery(session?.user?.id);
-  const { data: myEventGroups = [], isLoading: myEventGroupsLoading } = groupsQuery;
-  const {
-    data: items = [],
-    isLoading,
-    error: feedError,
-  } = section === "challenge" ? challengesQuery : eventsQuery;
-  const error = feedError ?? (section === "challenge" ? groupsQuery.error : null);
-  const locationOptions = useMemo(() => getEventLocationOptions(items), [items]);
   const [modality, setModality] = useState<EventModality | null>(null);
   const [category, setCategory] = useState<EventCategory | null>(null);
   const [participationType, setParticipationType] = useState<EventParticipationType | null>(null);
@@ -262,6 +251,34 @@ const Events = ({
   const [search, setSearch] = useState("");
   const [startedOnly, setStartedOnly] = useState(false);
   const [challengeTab, setChallengeTab] = useState<"public" | "private">(route.params?.challengeTab === "private" ? "private" : "public");
+  // Lazy loading: the feed loads page by page while scrolling. Search,
+  // filters and the views that group or sort the whole set (past, already
+  // started, private) need every row, so they load the remaining pages.
+  const needsFullFeed =
+    pastOnly ||
+    startedOnly ||
+    (section === "challenge" && challengeTab === "private") ||
+    normalizeSearchText(search).length > 0 ||
+    activeFilterCount > 0 ||
+    pricingType !== null;
+  const eventsQuery = useEventsFeedQuery({ loadAll: section === "event" && needsFullFeed });
+  const challengesQuery = useChallengesFeedQuery({ loadAll: section === "challenge" && needsFullFeed });
+  const groupsQuery = useMyEventGroupsQuery(session?.user?.id);
+  const { data: myEventGroups = [], isLoading: myEventGroupsLoading } = groupsQuery;
+  const activeFeed = section === "challenge" ? challengesQuery : eventsQuery;
+  const {
+    data: items = [],
+    isLoading,
+    error: feedError,
+    hasNextPage: feedHasNextPage,
+    isFetchingNextPage: feedIsFetchingNextPage,
+    fetchNextPage: fetchNextFeedPage,
+  } = activeFeed;
+  const error = feedError ?? (section === "challenge" ? groupsQuery.error : null);
+  const locationOptions = useMemo(() => getEventLocationOptions(items), [items]);
+  const loadMoreFeed = useCallback(() => {
+    if (feedHasNextPage && !feedIsFetchingNextPage) void fetchNextFeedPage();
+  }, [feedHasNextPage, feedIsFetchingNextPage, fetchNextFeedPage]);
   const [openBlocks, setOpenBlocks] = useState<Record<ChallengeBlock, boolean>>({
     mine: true,
     invitations: false,
@@ -455,7 +472,10 @@ const Events = ({
   ]);
 
   const listIsLoading =
-    isLoading || (section === "challenge" && Boolean(session?.user?.id) && myEventGroupsLoading);
+    isLoading ||
+    // Searching or filtering shows results only once every page is in, so
+    // a match on a later page never shows up as "no results".
+    activeFeed.isLoadingAll || (section === "challenge" && Boolean(session?.user?.id) && myEventGroupsLoading);
 
   useFocusEffect(
     useCallback(() => {
@@ -579,6 +599,9 @@ const Events = ({
         {section === "challenge" && startedOnly && !pastOnly ? <Text style={localStyles.feedSectionTitle}>Ya comenzados</Text> : null}
         <FlatList
           data={listIsLoading ? [] : listItems}
+          onEndReached={loadMoreFeed}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={feedIsFetchingNextPage && !listIsLoading ? <VibesLoader size={32} /> : null}
           keyExtractor={(item) =>
             item.kind === "feed" ? `${item.keyPrefix ?? "feed"}-${item.item.id}` : `${item.kind}-${item.id}`
           }
@@ -1048,6 +1071,8 @@ titleRow: {
     minWidth: 0,
   },
 listFooter: {
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 8,
     marginBottom: 20,
   },
