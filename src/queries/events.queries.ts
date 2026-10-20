@@ -2125,11 +2125,13 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
         .from("event_messages")
         .select("id, event_id, sender_id, body, created_at")
         .eq("event_id", eventId)
-        .order("created_at", { ascending: true })
+        // Newest 200, so long chats still show (and can mark read) the latest.
+        .order("created_at", { ascending: false })
         .limit(200);
 
       if (error) throw error;
       if (!rows || rows.length === 0) return [];
+      rows.reverse();
 
       // Fetch profiles + first photo for all unique senders
       const senderIds = [...new Set(rows.map((r: any) => String(r.sender_id)))];
@@ -2657,12 +2659,28 @@ export const useMarkEventGroupReadMutation = () => {
     mutationFn: async ({ eventId, eventType, readAt }) => {
       if (!userId) throw new Error("Not authenticated");
 
+      // The chat hides messages from deleted accounts, but unread counts
+      // include them. Read up to the latest stored message so those hidden
+      // messages don't stay unread forever (e.g. in finished challenges).
+      const { data: latest, error: latestError } = await supabase
+        .from("event_messages")
+        .select("created_at")
+        .eq("event_id", eventId)
+        .eq("event_type", eventType)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestError) throw latestError;
+      const latestAt =
+        typeof latest?.created_at === "string" ? latest.created_at : null;
+      const lastReadAt = latestAt ?? readAt ?? new Date().toISOString();
+
       const { error } = await supabase.from("event_group_reads").upsert(
         {
           event_id: eventId,
           event_type: eventType,
           user_id: userId,
-          last_read_at: readAt ?? new Date().toISOString(),
+          last_read_at: lastReadAt,
         },
         { onConflict: "event_id,event_type,user_id" }
       );
@@ -2671,6 +2689,8 @@ export const useMarkEventGroupReadMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
+      // Badges come from community_unread_counts; refresh them right away.
+      queryClient.invalidateQueries({ queryKey: ["communityUnread"] });
     },
   });
 };
