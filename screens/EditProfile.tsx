@@ -1,3 +1,7 @@
+import {
+  onboardingFullName,
+  splitOnboardingName,
+} from "../src/lib/onboardingBasics";
 import ProfilePhotoPicker from "../components/onboarding/ProfilePhotoPicker";
 import VibesLoader from "../components/VibesLoader";
 import { saveProfilePhotoSelection } from "../src/queries/onboarding.queries";
@@ -145,8 +149,8 @@ const EditProfile = () => {
   const photoRequestId = (
     route.params as { photoRequestId?: number } | undefined
   )?.photoRequestId;
-  const leaveProfile = () => {
-    if (photoSaveBusy.current || savingProfile) return;
+  const leaveProfile = (saved = false) => {
+    if (!saved && (photoSaveBusy.current || savingProfile)) return;
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
@@ -183,9 +187,13 @@ const EditProfile = () => {
     });
   }, [profilePhotos, supportsMultiPhotos]);
 
-  const [displayName, setDisplayName] = useState(
-    (profileData as any)?.displayName ?? ""
+  const [firstName, setFirstName] = useState(
+    () => splitOnboardingName(profileData?.displayName ?? "").firstName
   );
+  const [lastName, setLastName] = useState(
+    () => splitOnboardingName(profileData?.displayName ?? "").lastName
+  );
+  const displayName = onboardingFullName(firstName, lastName);
   const [savingName, setSavingName] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPhotos, setSavingPhotos] = useState(false);
@@ -233,6 +241,7 @@ const EditProfile = () => {
   };
   const [profileCity, setProfileCity] = useState("");
   const [profileCountry, setProfileCountry] = useState("");
+  const [profileNeighborhood, setProfileNeighborhood] = useState("");
   const [currentLocation, setCurrentLocation] = useState("");
   const [currentLocationMeta, setCurrentLocationMeta] =
     useState<ResolvedLocationMeta | null>(null);
@@ -287,7 +296,11 @@ const EditProfile = () => {
 
   useEffect(() => {
     const name = (profileData as any)?.displayName;
-    if (typeof name === "string") setDisplayName(name);
+    if (typeof name === "string") {
+      const parts = splitOnboardingName(name);
+      setFirstName(parts.firstName);
+      setLastName(parts.lastName);
+    }
   }, [(profileData as any)?.displayName]);
 
   useEffect(() => {
@@ -305,7 +318,13 @@ const EditProfile = () => {
 
     setProfileCity(nextCity);
     setProfileCountry(nextCountry);
-  }, [profileData?.city, profileData?.country, profileData?.locationLabel]);
+    setProfileNeighborhood(profileData?.neighborhood ?? "");
+  }, [
+    profileData?.city,
+    profileData?.country,
+    profileData?.neighborhood,
+    profileData?.locationLabel,
+  ]);
 
   useEffect(() => {
     let active = true;
@@ -327,14 +346,17 @@ const EditProfile = () => {
 
         const city = address?.city ?? address?.region ?? null;
         const country = address?.country ?? null;
-        const label = formatCityCountryLabel(city, country);
+        const neighborhood = address?.district?.trim() || null;
+        const label = Array.from(
+          new Set([neighborhood, city, country].filter(Boolean))
+        ).join(", ");
 
         if (!label) return;
 
         setCurrentLocation(label);
         setCurrentLocationMeta({
           label,
-          neighborhood: null,
+          neighborhood,
           city,
           country,
           latitude: current.coords.latitude,
@@ -358,7 +380,7 @@ const EditProfile = () => {
 
   const saveDisplayName = async () => {
     const userId = session?.user?.id;
-    if (!userId || !displayName.trim()) return false;
+    if (!userId || !firstName.trim()) return false;
     setSavingName(true);
     try {
       const { error } = await supabase
@@ -384,14 +406,19 @@ const EditProfile = () => {
 
   const saveLocation = async (
     nextCity = profileCity,
-    nextCountry = profileCountry
+    nextCountry = profileCountry,
+    nextNeighborhood = profileNeighborhood
   ) => {
     const userId = session?.user?.id;
     if (!userId) return false;
 
     const trimmedCity = nextCity.trim();
     const trimmedCountry = nextCountry.trim();
-    const locationLabel = formatCityCountryLabel(trimmedCity, trimmedCountry);
+    const locationLabel = Array.from(
+      new Set(
+        [nextNeighborhood.trim(), trimmedCity, trimmedCountry].filter(Boolean)
+      )
+    ).join(", ");
     setSavingLocation(true);
     try {
       const { error } = await supabase
@@ -399,10 +426,7 @@ const EditProfile = () => {
         .update({
           city: trimmedCity || null,
           country: trimmedCountry || null,
-          ...(trimmedCity !== ((profileData as any)?.city ?? "") ||
-          trimmedCountry !== ((profileData as any)?.country ?? "")
-            ? { neighborhood: null }
-            : {}),
+          neighborhood: nextNeighborhood.trim() || null,
           location_label: locationLabel || null,
         })
         .eq("id", userId);
@@ -436,6 +460,7 @@ const EditProfile = () => {
     const nextCountry = currentLocationMeta.country?.trim() ?? "";
     setProfileCity(nextCity);
     setProfileCountry(nextCountry);
+    setProfileNeighborhood(currentLocationMeta.neighborhood ?? "");
     setSavingLocation(true);
     try {
       const { error } = await supabase
@@ -485,46 +510,6 @@ const EditProfile = () => {
           onBack={leaveProfile}
           style={localStyles.header}
           titleStyle={[styles.title, { fontFamily: vibesTheme.fonts.semibold }]}
-          right={
-            <TouchableOpacity
-              style={localStyles.saveButton}
-              disabled={
-                savingProfile || savingName || savingLocation || savingPhotos
-              }
-              accessibilityRole="button"
-              accessibilityLabel={
-                savingProfile ? "Guardando perfil" : "Guardar perfil"
-              }
-              accessibilityState={{
-                busy: savingProfile,
-                disabled:
-                  savingProfile || savingName || savingLocation || savingPhotos,
-              }}
-              onPress={async () => {
-                if (savingProfile) return;
-                setSavingProfile(true);
-                try {
-                  const nameSaved = await saveDisplayName();
-                  if (nameSaved && (await saveLocation())) leaveProfile();
-                } finally {
-                  setSavingProfile(false);
-                }
-              }}
-            >
-              {savingProfile ? (
-                <VibesLoader size={22} />
-              ) : (
-                <Icon
-                  name="checkmark"
-                  color={vibesTheme.colors.primaryText}
-                  size={22}
-                />
-              )}
-              <Text style={localStyles.saveButtonLabel}>
-                {locale.startsWith("en") ? "Save" : "Guardar"}
-              </Text>
-            </TouchableOpacity>
-          }
         />
 
         <View style={styles.editSection}>
@@ -559,12 +544,43 @@ const EditProfile = () => {
           <Text style={styles.editSectionTitle}>{t("editProfile.name")}</Text>
           <TextInput
             style={localStyles.nameInput}
-            value={displayName}
-            onChangeText={setDisplayName}
+            value={firstName}
+            onChangeText={setFirstName}
+            autoComplete="given-name"
+            autoCapitalize="words"
             onBlur={() => void saveDisplayName()}
             onSubmitEditing={() => void saveDisplayName()}
             placeholder={t("editProfile.namePlaceholder")}
             placeholderTextColor={GRAY}
+            returnKeyType="done"
+            editable={!savingName}
+            maxLength={50}
+          />
+        </View>
+
+        <View style={styles.editSection}>
+          <Text style={styles.editSectionTitle}>
+            {locale.startsWith("en") ? "Last name" : "Apellido"}
+          </Text>
+          <TextInput
+            style={localStyles.nameInput}
+            accessibilityLabel={
+              locale.startsWith("en")
+                ? "Last name, optional"
+                : "Apellido, opcional"
+            }
+            value={lastName}
+            onChangeText={setLastName}
+            onBlur={() => void saveDisplayName()}
+            onSubmitEditing={() => void saveDisplayName()}
+            placeholder={
+              locale.startsWith("en")
+                ? "Enter your last name"
+                : "Ingresá tu apellido"
+            }
+            placeholderTextColor={GRAY}
+            autoComplete="family-name"
+            autoCapitalize="words"
             returnKeyType="done"
             editable={!savingName}
             maxLength={50}
@@ -586,6 +602,18 @@ const EditProfile = () => {
           <View style={localStyles.locationFields}>
             <TextInput
               style={localStyles.nameInput}
+              value={profileCountry}
+              onChangeText={setProfileCountry}
+              onBlur={() => void saveLocation()}
+              onSubmitEditing={() => void saveLocation()}
+              placeholder={t("settings.countryPlaceholder")}
+              placeholderTextColor={GRAY}
+              autoCapitalize="words"
+              returnKeyType="next"
+              editable={!savingLocation}
+            />{" "}
+            <TextInput
+              style={localStyles.nameInput}
               value={profileCity}
               onChangeText={setProfileCity}
               onBlur={() => void saveLocation()}
@@ -598,15 +626,23 @@ const EditProfile = () => {
             />
             <TextInput
               style={localStyles.nameInput}
-              value={profileCountry}
-              onChangeText={setProfileCountry}
+              accessibilityLabel={
+                locale.startsWith("en") ? "Neighborhood" : "Barrio"
+              }
+              value={profileNeighborhood}
+              onChangeText={setProfileNeighborhood}
               onBlur={() => void saveLocation()}
               onSubmitEditing={() => void saveLocation()}
-              placeholder={t("settings.countryPlaceholder")}
+              placeholder={
+                locale.startsWith("en")
+                  ? "Neighborhood (optional)"
+                  : "Barrio (opcional)"
+              }
               placeholderTextColor={GRAY}
               autoCapitalize="words"
               returnKeyType="done"
               editable={!savingLocation}
+              maxLength={100}
             />
           </View>
           {currentLocation ? (
@@ -639,6 +675,46 @@ const EditProfile = () => {
             disabled={savingNationality || !profileData}
           />
         </View>
+        <View style={localStyles.saveFooter}>
+          <TouchableOpacity
+            style={localStyles.saveButton}
+            disabled={
+              savingProfile || savingName || savingLocation || savingPhotos
+            }
+            accessibilityRole="button"
+            accessibilityLabel={
+              savingProfile ? "Guardando perfil" : "Guardar perfil"
+            }
+            accessibilityState={{
+              busy: savingProfile,
+              disabled:
+                savingProfile || savingName || savingLocation || savingPhotos,
+            }}
+            onPress={async () => {
+              if (savingProfile) return;
+              setSavingProfile(true);
+              try {
+                const nameSaved = await saveDisplayName();
+                if (nameSaved && (await saveLocation())) leaveProfile(true);
+              } finally {
+                setSavingProfile(false);
+              }
+            }}
+          >
+            {savingProfile ? (
+              <VibesLoader size={22} />
+            ) : (
+              <Icon
+                name="checkmark"
+                color={vibesTheme.colors.surface}
+                size={22}
+              />
+            )}
+            <Text style={localStyles.saveButtonLabel}>
+              {locale.startsWith("en") ? "Save" : "Guardar"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScreenContainer>
     </KeyboardAvoidingView>
   );
@@ -647,21 +723,23 @@ const EditProfile = () => {
 export default EditProfile;
 
 const localStyles = StyleSheet.create({
+  saveFooter: { marginHorizontal: 20, marginTop: 24 },
   saveButton: {
-    minWidth: 112,
-    minHeight: 48,
-    paddingHorizontal: 12,
-    borderRadius: 24,
+    width: "100%",
+    minHeight: 56,
+    paddingHorizontal: 20,
+    borderRadius: vibesTheme.radii.pill,
     flexDirection: "row",
-    gap: 6,
+    gap: 10,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentBlue,
+    justifyContent: "center",
+    backgroundColor: vibesTheme.colors.primaryText,
   },
   saveButtonLabel: {
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 14,
-    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.bold,
+    fontSize: 18,
+    lineHeight: 24,
+    color: vibesTheme.colors.surface,
   },
   header: {
     paddingHorizontal: 0,

@@ -20,43 +20,21 @@ export type OnboardingOption = {
 };
 
 export const PURPOSE_OPTIONS: OnboardingOption[] = [
-  {
-    id: "deep_conversations",
-    label: "Conversaciones profundas",
-    icon: "chatbubble-ellipses-outline",
-    tone: "lavender",
-  },
-  {
-    id: "personal_growth",
-    label: "Crecimiento personal",
-    icon: "leaf-outline",
-    tone: "sage",
-  },
-  {
-    id: "friendship",
-    label: "Amistad",
-    icon: "people-outline",
-    tone: "blue",
-  },
-  {
-    id: "events",
-    label: "Eventos",
-    icon: "calendar-outline",
-    tone: "mustard",
-  },
-  {
-    id: "spirituality",
-    label: "Espiritualidad",
-    icon: "flower-outline",
-    tone: "lavender",
-  },
-  {
-    id: "inspiration",
-    label: "Inspiración",
-    icon: "sunny-outline",
-    tone: "blue",
-  },
+  { id: "service", label: "Hacer servicio", icon: "heart-outline", tone: "coral" },
+  { id: "challenges", label: "Desafíos", icon: "trophy-outline", tone: "mustard" },
+  { id: "discover", label: "Conocer Gente (Descubrir)", icon: "people-outline", tone: "blue" },
+  { id: "events", label: "Eventos", icon: "calendar-outline", tone: "mustard" },
+  { id: "classes", label: "Clases", icon: "school-outline", tone: "blue" },
+  { id: "all", label: "¡Todas!", icon: "sparkles-outline", tone: "coral" },
 ];
+
+export const togglePurposeSelection = (selected: string[], id: string): string[] => {
+  const options = PURPOSE_OPTIONS.map(option => option.id);
+  if (id === "all") return selected.includes("all") ? [] : options;
+  const next = selected.filter(value => value !== "all" && value !== id);
+  if (!selected.includes(id)) next.push(id);
+  return options.filter(value => value !== "all").every(value => next.includes(value)) ? [...next, "all"] : next;
+};
 
 export const ENERGY_OPTIONS: OnboardingOption[] = [
   { id: "calm", label: "Calmado", icon: "water-outline", tone: "lavender" },

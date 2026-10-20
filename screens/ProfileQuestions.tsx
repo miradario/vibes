@@ -1,11 +1,25 @@
+import ProfileOnboardingFields from "../components/ProfileOnboardingFields";
+import {
+  aboutMePreferencesFromSaved,
+  aboutMePreferencesPayload,
+  type AboutMePreferences,
+} from "../src/lib/aboutMeProfile";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
+import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
+import { assertAcceptableContent } from "../src/lib/moderation";
 import AppHeader from "../components/AppHeader";
 import ProfileSectionTabs from "../components/ProfileSectionTabs";
 import VibesLoader from "../components/VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Text } from "../components/Typography";
-import Icon from "../components/Icon";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import ScreenContainer from "../components/ScreenContainer";
@@ -26,6 +40,12 @@ export default function ProfileQuestions() {
   const { data: session } = useAuthSession();
   const userId = session?.user.id;
   const client = useQueryClient();
+  const preferences = useUserPreferencesQuery(userId);
+  const [preferencesDraft, setPreferencesDraft] =
+    useState<AboutMePreferences | null>(null);
+  const preferencesValue =
+    preferencesDraft ?? aboutMePreferencesFromSaved(preferences.data);
+
   const query = useQuery({
     queryKey: ["profileAnswers", userId],
     queryFn: () => readProfileAnswers(userId!),
@@ -35,13 +55,29 @@ export default function ProfileQuestions() {
   const [group, setGroup] = useState(0);
   const [saving, setSaving] = useState(false);
   const value = draft ?? query.data ?? {};
+  const ready = query.isSuccess && preferences.isSuccess;
+  const loading = query.isLoading || preferences.isLoading;
+  const failed = query.isError || preferences.isError;
   const save = async () => {
-    if (!userId || saving) return;
+    if (!userId || saving || !ready) return;
     setSaving(true);
     try {
+      assertAcceptableContent([
+        preferencesValue.aboutMe,
+        ...preferencesValue.openTo,
+        ...preferencesValue.spiritualPath,
+        ...Object.values(preferencesValue.spiritualPathDetails).flatMap(
+          (detail) => Object.values(detail)
+        ),
+      ]);
+      await upsertUserPreferences(
+        userId,
+        aboutMePreferencesPayload(preferencesValue)
+      );
       await saveProfileAnswers(userId, value);
       await Promise.all([
         client.invalidateQueries({ queryKey: ["profileAnswers", userId] }),
+        client.invalidateQueries({ queryKey: ["candidates"] }),
         client.invalidateQueries({
           queryKey: userPreferencesKeys.byUser(userId),
         }),
@@ -76,10 +112,18 @@ export default function ProfileQuestions() {
             showBack={!firstHomeVisit}
             onBack={() => navigation.goBack()}
             style={{ paddingHorizontal: 0, paddingVertical: 0 }}
-            titleStyle={{ fontSize: 26, lineHeight: 34, fontFamily: vibesTheme.fonts.bold }}
-            subtitleStyle={{ fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.regular }}
+            titleStyle={{
+              fontSize: 26,
+              lineHeight: 34,
+              fontFamily: vibesTheme.fonts.bold,
+            }}
+            subtitleStyle={{
+              fontSize: 14,
+              lineHeight: 20,
+              fontFamily: vibesTheme.fonts.regular,
+            }}
           />
-          {query.isSuccess && (
+          {ready && (
             <>
               <ProfileSectionTabs value={group} onChange={setGroup} />
             </>
@@ -98,13 +142,16 @@ export default function ProfileQuestions() {
             paddingTop: 8,
           }}
         >
-          {query.isLoading ? (
+          {loading ? (
             <VibesLoader />
-          ) : query.isError ? (
+          ) : failed ? (
             <View>
               <Text>No pudimos cargar tus respuestas.</Text>
               <TouchableOpacity
-                onPress={() => void query.refetch()}
+                onPress={() => {
+                  void query.refetch();
+                  void preferences.refetch();
+                }}
                 style={{ padding: 16 }}
               >
                 <Text>Reintentar</Text>
@@ -112,12 +159,20 @@ export default function ProfileQuestions() {
             </View>
           ) : (
             <>
+              <ProfileOnboardingFields
+                group={group}
+                value={preferencesValue}
+                onChange={setPreferencesDraft}
+              />
               <ProfileQuestionsForm
+                favoritePlansInPlans
+                hiddenFields={["lookingFor", "habits", "idealPlan", "talkAbout", "trySomething"]}
                 showHeader={false}
                 group={group}
                 value={value}
                 onChange={setDraft}
               />
+
             </>
           )}
         </ScreenContainer>
@@ -130,9 +185,9 @@ export default function ProfileQuestions() {
           }}
         >
           <PrimaryButton
-            label="Guardar respuestas"
+            label="Guardar"
             loading={saving}
-            disabled={!userId || saving || !query.isSuccess}
+            disabled={!userId || saving || !ready}
             onPress={() => void save()}
           />
           {firstHomeVisit && (
@@ -149,7 +204,9 @@ export default function ProfileQuestions() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ color: vibesTheme.colors.secondaryText }}>Completar después</Text>
+              <Text style={{ color: vibesTheme.colors.secondaryText }}>
+                Completar después
+              </Text>
             </TouchableOpacity>
           )}
         </View>

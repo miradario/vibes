@@ -45,3 +45,19 @@ export const buildResumeOnboardingDraft = (
     primaryPhotoUri: photos[0] ?? "",
   };
 };
+
+/** Keep the resumed flow focused on missing data, including backward navigation. */
+export const getCompletedResumeSteps = (draft: OnboardingDraft) => {
+  if (!draft.editingExistingProfile) return [];
+  const completed: Array<"profileText" | "profile"> = [];
+  const nameParts = (draft.displayName ?? "").trim().split(/\s+/);
+  const firstName = draft.firstName ?? nameParts[0] ?? "";
+  const lastName = draft.lastName ?? nameParts.slice(1).join(" ");
+  if (firstName.trim() && lastName.trim() && draft.briefDescription?.trim() && draft.profileAnswers?.gender) {
+    completed.push("profileText");
+  }
+  const photos = new Set([draft.primaryPhotoUri, ...(draft.photoUris ?? [])].filter(uri => uri?.trim()));
+  // Birth date shares the photo step: don't hide it if age assurance is missing.
+  if (photos.size >= 6 && draft.birthDate) completed.push("profile");
+  return completed;
+};

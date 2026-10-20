@@ -164,6 +164,10 @@ Esta documentación no modifica la UI ni afirma una migración completa:
 - Eventos y Desafíos usan overrides para el título principal; el estilo base 26 / 32 SemiBold sigue atendiendo vistas históricas. No eliminarlo sin revisar `pastOnly`.
 - Tamaños, interlineados y labels todavía están distribuidos en estilos locales. Esta escala es normativa, pero no equivale a un conjunto de componentes o tokens ya implementados.
 
+## Sobre mí
+
+“Sobre mí” reúne los datos pedidos durante el onboarding: Identidad muestra la descripción y las respuestas personales; Intereses reúne prácticas con sus detalles e intereses; Planes incluye motivos para usar Vibes y preguntas sobre planes. Los datos personales y las fotos se administran en Editar perfil. Los accesos “Más opciones de perfil” y “Preferencias” están ocultos por ahora; conservar sus datos guardados.
+
 ## Verificación al cambiar interfaz
 
 1. Elegir el rol semántico y componente existente antes de definir estilos nuevos.

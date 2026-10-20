@@ -1,6 +1,7 @@
+import VibesWordmark from "../../../components/VibesWordmark";
 import { useQuery } from "@tanstack/react-query";
 import { useUserPreferencesQuery } from "../../queries/userPreferences.queries";
-import { buildResumeOnboardingDraft } from "../../lib/resumeOnboarding";
+import { buildResumeOnboardingDraft, getCompletedResumeSteps } from "../../lib/resumeOnboarding";
 import { readProfileAnswers } from "../../lib/profileQuestions";
 import ScreenContainer from "../../../components/ScreenContainer";
 import OnboardingPlayfulShapes from "../../../components/OnboardingPlayfulShapes";
@@ -59,6 +60,7 @@ import {
 import {
   PRACTICE_OPTIONS,
   PURPOSE_OPTIONS,
+  togglePurposeSelection,
   VIBES_ONBOARDING_STEPS,
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
@@ -92,9 +94,6 @@ const getUniqueLocationParts = (...parts: Array<string | null | undefined>) => {
     });
 };
 
-const getProgress = (stepIndex: number) =>
-  (stepIndex + 1) / VIBES_ONBOARDING_STEPS.length;
-
 const getSelectedLabels = (
   selectedIds: string[],
   options: { id: string; label: string }[]
@@ -103,7 +102,7 @@ const getSelectedLabels = (
     .filter((option) => selectedIds.includes(option.id))
     .map((option) => option.label);
 
-const VibesOnboardingContent = () => {
+const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueChoice?: boolean }) => {
   const navigation = useNavigation();
   const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
@@ -122,7 +121,12 @@ const VibesOnboardingContent = () => {
   const countryInputRef = useRef<NativeTextInput | null>(null);
   const focusedProfileInput = useRef<NativeTextInput | null>(null);
   const completionStartedRef = useRef(false);
-  const [stepIndex, setStepIndex] = useState(0);
+  const [completedEntrySteps] = useState(() => getCompletedResumeSteps(draft));
+  const availableStepIndices = VIBES_ONBOARDING_STEPS.map((_, index) => index).filter(index => {
+    const candidate = VIBES_ONBOARDING_STEPS[index];
+    return !completedEntrySteps.some(completed => completed === candidate) && !(skipContinueChoice && candidate === "continueChoice");
+  });
+  const [stepIndex, setStepIndex] = useState(() => availableStepIndices[0]);
   const [purposeIds, setPurposeIds] = useState<string[]>(
     draft.purposeIds ?? []
   );
@@ -352,11 +356,9 @@ const VibesOnboardingContent = () => {
   }, [selectedPractices]);
 
   const goBack = () => {
-    if (stepIndex === 0) {
-      navigation.goBack();
-      return;
-    }
-    setStepIndex((prev) => Math.max(0, prev - 1));
+    const previous = availableStepIndices.filter(index => index < stepIndex).pop();
+    if (previous === undefined) navigation.goBack();
+    else setStepIndex(previous);
   };
 
   const goNext = async () => {
@@ -365,9 +367,7 @@ const VibesOnboardingContent = () => {
     if (step !== "completion") trackSignupEvent("onboarding_step_completed", { step, stepIndex });
 
     if (step !== "completion") {
-      setStepIndex((prev) =>
-        Math.min(VIBES_ONBOARDING_STEPS.length - 1, prev + 1)
-      );
+      setStepIndex(availableStepIndices.find(index => index > stepIndex) ?? stepIndex);
       return true;
     }
 
@@ -403,7 +403,7 @@ const VibesOnboardingContent = () => {
       })
       .catch((error) => {
         trackSignupEvent("onboarding_failed", { props: { error_code: signupErrorCode(error) } });
-        setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("continueChoice"));
+        setStepIndex(VIBES_ONBOARDING_STEPS.indexOf(skipContinueChoice ? "interests" : "continueChoice"));
         Alert.alert(
           t("common.error"),
           error instanceof Error
@@ -435,9 +435,7 @@ const VibesOnboardingContent = () => {
   }, [step]);
 
   const togglePurpose = (id: string) => {
-    setPurposeIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+    setPurposeIds(previous => togglePurposeSelection(previous, id));
   };
 
   const togglePractice = (practice: string) => {
@@ -557,24 +555,6 @@ const VibesOnboardingContent = () => {
     return translated === key ? practice : translated;
   };
 
-  const stepHints: Partial<Record<VibesOnboardingStep, string>> = locale.startsWith("en") ? {
-    profileText: "Only your first name is required. You can update your profile later.",
-    profile: "Photos are optional. Tap a photo to make it your main one; use its menu to adjust it.",
-    purpose: "Choose as many as you like. You can change your choices later.",
-    location: "Neighborhood is optional. You can enter your city manually without granting location access.",
-    practices: "Choose several practices, or add your own with Other.",
-    identity: "Skip any question you prefer not to answer.",
-    interests: "Choose several interests to help you find people with things in common.",
-  } : {
-    profileText: "Solo el nombre es obligatorio. Después podés editar lo que compartís.",
-    profile: "Las fotos son opcionales. Tocá una para hacerla principal; en su menú podés ajustarla.",
-    purpose: "Podés elegir varias opciones y cambiarlas más adelante.",
-    location: "El barrio es opcional. También podés escribir tu ciudad sin dar acceso a tu ubicación.",
-    practices: "Elegí varias prácticas o agregá la tuya en Otras.",
-    identity: "Podés dejar sin responder cualquier pregunta que prefieras.",
-    interests: "Elegí varios intereses para encontrar personas con cosas en común.",
-  };
-
   const renderTitle = (targetStep: VibesOnboardingStep) => (
     <>
       <Text
@@ -602,14 +582,18 @@ const VibesOnboardingContent = () => {
     <>
       <View style={localStyles.purposeHero}>
         <View style={localStyles.introCopy}>
-          <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
+          <View accessible accessibilityRole="header" accessibilityLabel={copy.title} style={localStyles.purposeHeading}>
+            <Text style={[localStyles.purposeTitle, {marginBottom:0,flexShrink:1,fontSize:26}]} numberOfLines={1} adjustsFontSizeToFit>{locale.startsWith("en") ? "What brings you to" : "¿Qué te trae a"}</Text>
+            <VibesWordmark fontSize={30} style={{ transform: [{ translateY: -4 }] }} />
+            <Text style={[localStyles.purposeTitle, {marginBottom:0,fontSize:26}]}>?</Text>
+          </View>
           <Text style={localStyles.aboutHint}>{copy.subtitle}</Text>
         </View>
-        <PlayfulVibesLogo style={{ width: 78, height: 96 }} />
       </View>
-      <View style={onboardingStyles.optionList}>
+      <View style={[onboardingStyles.optionList, localStyles.purposeGrid]}>
         {PURPOSE_OPTIONS.map((option) => (
           <OptionCard
+            tile
             key={option.id}
             option={{
               ...option,
@@ -924,20 +908,25 @@ const VibesOnboardingContent = () => {
           />
         ))}
       </View>
-      {selectedPractices.map((practice) => (
-        <TouchableOpacity
-          key={practice}
-          accessibilityRole="button"
-          activeOpacity={0.8}
-          onPress={() => setActivePractice(practice)}
-          style={onboardingStyles.practiceDetailsButton}
-        >
-          <Icon name="create-outline" size={20} color={ONBOARDING_COLORS.text} />
-          <Text style={onboardingStyles.practiceDetailsButtonText}>
-            {locale === "en" ? "Add details" : "Agregar detalles"} · {getPracticeLabel(practice)}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {selectedPractices.length ? <Text style={localStyles.experienceHint}>{locale.startsWith("en") ? "Tell us more about your experience" : "Contanos más de tu experiencia"}</Text> : null}
+      {selectedPractices.map((practice) => {
+        const hasDetails = Object.values(practiceDetails[practice] ?? {}).some(value => Boolean(value?.trim()));
+        return (
+          <TouchableOpacity
+            key={practice}
+            accessibilityRole="button"
+            accessibilityLabel={`${getPracticeLabel(practice)}. ${locale.startsWith("en") ? (hasDetails ? "Has details. Edit" : "No details. Add") : (hasDetails ? "Con detalles. Editar" : "Sin detalles. Agregar")}`}
+            activeOpacity={0.8}
+            onPress={() => setActivePractice(practice)}
+            style={[onboardingStyles.practiceDetailsButton, hasDetails && localStyles.practiceWithDetails]}
+          >
+            <View style={[localStyles.practiceDot, hasDetails && {backgroundColor:vibesTheme.colors.accentBlue}]} />
+            <Text style={onboardingStyles.practiceDetailsButtonText}>{getPracticeLabel(practice)}</Text>
+            <Icon name={hasDetails ? "checkmark-circle" : "add"} size={24}
+              color={hasDetails ? vibesTheme.colors.accentBlue : vibesTheme.colors.accentMustard} />
+          </TouchableOpacity>
+        );
+      })}
     </>
   );
 
@@ -962,7 +951,7 @@ const VibesOnboardingContent = () => {
             <OnboardingPlayfulShapes kind={step === "identity" ? "identity" : "interests"} style={{ width: 88, height: 96 }} />
           </View>
           <ProfileQuestionsForm
-            hiddenFields={["gender"]}
+            hiddenFields={["gender", "lookingFor", "habits"]}
             showHeader={false}
             onInputFocus={scrollInputIntoView}
             group={questionGroup}
@@ -1030,17 +1019,21 @@ const VibesOnboardingContent = () => {
           <ProgressHeader
             intro={["profileText", "continueChoice"].includes(step)}
             cancelDisabled={completeMutation.isPending}
-            progress={getProgress(stepIndex)}
+            onCancel={draft.editingExistingProfile ? () => {
+              resetDraft();
+              navigation.dispatch(CommonActions.reset({
+                index: 0,
+                routes: [{name: "Tab", params: {screen: "Home"}}],
+              }));
+            } : undefined}
+            progress={(availableStepIndices.indexOf(stepIndex) + 1) / availableStepIndices.length}
             onBack={goBack}
-            showBack={stepIndex > 0}
+            showBack={availableStepIndices.indexOf(stepIndex) > 0}
             hideBackIcon={false}
           />
           <Animated.View style={animatedStyle}>
             {renderStep()}
-            {stepHints[step] ? <View style={localStyles.stepHint}>
-              <Icon name="information-circle-outline" size={20} color={vibesTheme.colors.accentBlue} />
-              <Text style={localStyles.stepHintText}>{stepHints[step]}</Text>
-            </View> : null}
+
           </Animated.View>
         </OnboardingScreenContainer>
       )}
@@ -1181,13 +1174,16 @@ const VibesOnboardingFlow = () => {
       ? <PrimaryButton label="Reintentar cargar tu perfil" onPress={()=>{void profile.refetch();void preferences.refetch();void answers.refetch();}} />
       : <VibesLoader size={48} accessibilityLabel="Cargando tu perfil" />}
   </View></ScreenContainer>;
-  return <VibesOnboardingContent />;
+  return <VibesOnboardingContent skipContinueChoice={Boolean((route.params as {skipContinueChoice?:boolean} | undefined)?.skipContinueChoice)} />;
 };
 export default VibesOnboardingFlow;
 
 const localStyles = StyleSheet.create({
-  stepHint: {flexDirection:"row", gap:8, marginTop:16, marginBottom:12, alignItems:"flex-start"},
-  stepHintText: {flex:1, fontSize:14, lineHeight:20, color:vibesTheme.colors.secondaryText},
+  experienceHint: {marginTop:20,marginBottom:2,fontSize:14,lineHeight:20,color:vibesTheme.colors.secondaryText},
+  practiceWithDetails: {borderColor:vibesTheme.colors.accentBlue,backgroundColor:`${vibesTheme.colors.accentBlue}0C`},
+  practiceDot: {width:10,height:10,borderRadius:5,backgroundColor:vibesTheme.colors.accentMustard},
+  purposeGrid: {width:"100%",maxWidth:280,alignSelf:"center",flexDirection:"row",flexWrap:"wrap",justifyContent:"space-between",gap:0,rowGap:10,marginTop:16},
+  purposeHeading: {flexDirection:"row",alignItems:"center",gap:5,marginBottom:10},
   purposeHero: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 },
   purposeTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 34, marginBottom: 10 },
   choiceTitle: { marginTop: 20, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 32, lineHeight: 39 },

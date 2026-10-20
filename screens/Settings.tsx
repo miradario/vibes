@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
 import { INTERESTED_IN_OPTIONS, interestedIn as readInterestedIn } from "../supabase/functions/vibi-chat/dating";
-import { PURPOSE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
+import { PURPOSE_OPTIONS, togglePurposeSelection } from "../src/screens/Onboarding/vibesOnboardingContent";
 import {
   View,
   TouchableOpacity,
@@ -20,7 +20,7 @@ import {
   Keyboard,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import styles, {
   DARK_GRAY,
@@ -67,6 +67,8 @@ const normalizeHeightInput = (value: string) =>
 const Settings = () => {
   const { locale, t } = useI18n();
   const navigation = useNavigation();
+  const route = useRoute();
+  const fromAboutMe = Boolean((route.params as {fromAboutMe?:boolean}|undefined)?.fromAboutMe);
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [group, setGroup] = useState(0);
@@ -285,8 +287,8 @@ const Settings = () => {
       >
         <View style={localStyles.fixedHeader}>
           <AppHeader
-            title={t("settings.title")}
-            subtitle={t("settings.subtitle")}
+            title={fromAboutMe ? "Más opciones de perfil" : t("settings.title")}
+            subtitle={fromAboutMe ? "Visibilidad y datos adicionales" : t("settings.subtitle")}
             showBack
             onBack={() => navigation.goBack()}
             style={localStyles.appHeader}
@@ -531,12 +533,12 @@ const Settings = () => {
               Podés elegir varias motivaciones.
             </Text>
             <View style={localStyles.chipWrap}>
-              {PURPOSE_OPTIONS.map(({ label }) =>
+              {PURPOSE_OPTIONS.map(({ id, label }) =>
                 renderChip(label, purposes.includes(label), () =>
                   setPurposes((previous) =>
-                    previous.includes(label)
-                      ? previous.filter((value) => value !== label)
-                      : [...previous, label]
+                    [...previous.filter(value => !PURPOSE_OPTIONS.some(option => option.label === value)),
+                      ...togglePurposeSelection(PURPOSE_OPTIONS.filter(option => previous.includes(option.label)).map(option => option.id), id)
+                        .map(selectedId => PURPOSE_OPTIONS.find(option => option.id === selectedId)!.label)]
                   )
                 )
               )}

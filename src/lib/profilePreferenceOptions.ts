@@ -45,7 +45,7 @@ export const PROFILE_PREFERENCE_OPTIONS = {
   personality: {
     label: "Personalidad",
     multiple: false,
-    options: ["Introvertido", "Extrovertido", "Ambivertido"],
+    options: ["Introvertido", "Medio", "Extrovertido"],
   },
   communication_style: {
     label: "Estilo de comunicación",

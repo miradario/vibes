@@ -20,7 +20,25 @@ export const QUESTION_GROUPS = [
       {
         key: "personality",
         label: "Personalidad",
-        options: ["Introvertido", "Extrovertido"],
+        options: ["Introvertido", "Medio", "Extrovertido"],
+        single: true,
+      },
+      {
+        key: "diet",
+        label: "Tipo de alimentación",
+        options: ["Vegetariana", "Vegana", "Pescetariana", "Omnívora (como de todo)"],
+        single: true,
+      },
+      {
+        key: "smoking",
+        label: "Fumador",
+        options: ["Sí", "No", "A veces"],
+        single: true,
+      },
+      {
+        key: "alcohol",
+        label: "Tomo alcohol",
+        options: ["Sí", "No", "A veces"],
         single: true,
       },
       {
@@ -114,7 +132,7 @@ export const readProfileAnswers = async (
 ): Promise<ProfileAnswers> => {
   const publicResult = await supabase
     .from("user_preferences")
-    .select("profile_answers, gender, looking_for, personality, languages")
+    .select("profile_answers, gender, looking_for, personality, languages, vegetarian, smoking")
     .eq("user_id", userId)
     .maybeSingle();
   if (publicResult.error) throw publicResult.error;
@@ -122,6 +140,8 @@ export const readProfileAnswers = async (
   const { availability: _legacyAvailability, ...publicAnswers } = profile?.profile_answers ?? {};
   return {
     ...publicAnswers,
+    diet: ({"Sí":"Vegetariana", "Vegetariano":"Vegetariana", "Vegano":"Vegana", "No":"Omnívora (como de todo)", "Pescetariano":"Pescetariana"} as Record<string,string>)[profile?.vegetarian ?? ""] ?? publicAnswers.diet ?? "",
+    smoking: profile?.smoking ?? publicAnswers.smoking ?? "",
     gender: profile?.gender ?? "",
     lookingFor: profile?.looking_for ?? [],
     personality: profile?.personality ?? "",
@@ -139,6 +159,8 @@ export const saveProfileAnswers = async (
     {
       user_id: userId,
       profile_answers: publicAnswers,
+      ...("diet" in answers ? {vegetarian: ({Vegetariana:"Sí", Vegana:"Vegano", Omnívora:"No", "Omnívora (como de todo)":"No", Pescetariana:"Pescetariano"} as Record<string,string>)[String(answers.diet)] ?? null} : {}),
+      ...("smoking" in answers ? {smoking: answers.smoking || null} : {}),
       gender: answers.gender || null,
       looking_for: Array.isArray(answers.lookingFor) ? answers.lookingFor : [],
       personality: answers.personality || null,

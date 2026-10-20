@@ -124,7 +124,7 @@ export const saveProfilePhotoSelection = async (
         profile_id: userId,
         url,
         order,
-        is_primary: false,
+        is_primary: order === 0,
       })),
       { onConflict: "profile_id,order" }
     );
@@ -139,19 +139,13 @@ export const saveProfilePhotoSelection = async (
       throw result.error;
     }
   }
-  const removed = await supabase
-    .from("profile_photos")
-    .delete()
-    .eq("profile_id", userId)
-    .gte("order", uploadedPaths.length);
-  if (removed.error) throw removed.error;
-  if (uploadedPaths.length) {
-    const primary = await supabase
-      .from("profile_photos")
-      .update({ is_primary: true })
-      .eq("profile_id", userId)
-      .eq("order", 0);
-    if (primary.error) throw primary.error;
+  // `order` is a reserved PostgREST query parameter. Delete obsolete rows
+  // by owner-scoped IDs instead of generating order=gte.N in the URL.
+  const obsoleteIds = (existingRows ?? []).filter(row => row.order >= uploadedPaths.length).map(row => row.id);
+  if (obsoleteIds.length) {
+    const removed = await supabase.from("profile_photos").delete()
+      .eq("profile_id", userId).in("id", obsoleteIds);
+    if (removed.error) throw removed.error;
   }
   await updateProfileWithFallback(userId, { photos: uploadedPaths });
   return uploadedPaths;
