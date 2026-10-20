@@ -129,3 +129,9 @@ Validación local: `node --test scripts/notification-settings.test.cjs scripts/p
 Validación SQL: `scripts/notification-reminders.test.sql` usa fixtures dentro de
 una transacción que se revierte; prueba también el despachador. `pg_net` solo
 procesa solicitudes tras un commit, por lo que esta prueba no envía notificaciones.
+
+## Re-engagement (`reengagement_notifications`)
+
+`private.dispatch_reengagement_notifications()` (pg_cron `vibes-reengagement-notifications`, cada 15 min, creado **inactivo**) encola como máximo una push por usuario por día local desde `public.reengagement_candidates` y la manda acá con `table: "reengagement_notifications"`. Casos: solicitudes de conexión pendientes de más de 24 h (un recordatorio por persona), eventos nuevos y desafíos públicos nuevos afines al usuario. Los taps reusan la navegación de `connection_request`, `event_reminder` y `challenge_reminder`, y respetan los opt-outs de cada tipo. Las entregas se registran por token en `reengagement_notification_deliveries`.
+
+Activación: aplicar la migración, desplegar send-push y después `select cron.alter_job((select jobid from cron.job where jobname = 'vibes-reengagement-notifications'), active := true);`
