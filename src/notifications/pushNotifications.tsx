@@ -2,6 +2,8 @@ import { vibesTheme } from "../theme/vibesTheme";
 import { useCommunityUnreadQuery } from "../queries/communityReceipts.queries";
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { AppState, Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Application from "expo-application";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useQueryClient } from "@tanstack/react-query";
@@ -230,6 +232,145 @@ const handleNotificationResponse = (
   navigateFromNotification(getNotificationData(response) ?? {});
 };
 
+// Launch response, read once per app process: a tap that opened the app
+// from closed is logged as cold_start even if the listener also reports it.
+let launchResponseIdPromise: Promise<string | null> | null = null;
+const getLaunchResponseId = () => {
+  launchResponseIdPromise ??= Notifications.getLastNotificationResponseAsync()
+    .then((response) => response?.notification.request.identifier ?? null)
+    .catch(() => null);
+  return launchResponseIdPromise;
+};
+const loggedOpenIds = new Set<string>();
+
+const pickString = (data: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    const value = data[key];
+    if (typeof value === "string" && value) return value;
+    if (typeof value === "number") return String(value);
+  }
+  return null;
+};
+
+type PendingOpen = { row: Record<string, string | null>; queuedAt: number };
+const PENDING_OPENS_KEY = "vibes.pendingNotificationOpens";
+// A tap waits this long for a session (restored or new login) before it is dropped.
+const PENDING_OPEN_MAX_AGE_MS = 60 * 60 * 1000;
+let pendingOpens: PendingOpen[] = [];
+let pendingOpensLoaded: Promise<void> | null = null;
+let flushingOpens = false;
+let flushAgain = false;
+
+const savePendingOpens = () =>
+  AsyncStorage.setItem(PENDING_OPENS_KEY, JSON.stringify(pendingOpens)).catch(() => undefined);
+
+const loadPendingOpens = () => {
+  pendingOpensLoaded ??= AsyncStorage.getItem(PENDING_OPENS_KEY)
+    .then((stored) => {
+      const parsed = stored ? (JSON.parse(stored) as PendingOpen[]) : [];
+      const known = new Set(pendingOpens.map((item) => item.row.notification_identifier));
+      pendingOpens = [
+        ...(Array.isArray(parsed) ? parsed : []).filter(
+          (item) => item?.row?.notification_identifier && !known.has(item.row.notification_identifier)
+        ),
+        ...pendingOpens,
+      ];
+      pendingOpens.forEach((item) => loggedOpenIds.add(String(item.row.notification_identifier)));
+    })
+    .catch(() => undefined);
+  return pendingOpensLoaded;
+};
+
+const clearPendingOpens = async () => {
+  await loadPendingOpens();
+  pendingOpens = [];
+  await savePendingOpens();
+};
+
+// Sends queued taps once there is a session; keeps them (up to the max age)
+// while there is none or the insert fails. Duplicates (23505) count as sent.
+const flushPendingOpens = async () => {
+  if (flushingOpens) {
+    flushAgain = true;
+    return;
+  }
+  flushingOpens = true;
+  try {
+    await loadPendingOpens();
+    const now = Date.now();
+    pendingOpens = pendingOpens.filter((item) => now - item.queuedAt < PENDING_OPEN_MAX_AGE_MS);
+    if (!pendingOpens.length) return;
+    const { data } = await supabase.auth.getSession();
+    const userId = data.session?.user.id;
+    if (!userId) return;
+    const sent = new Set<PendingOpen>();
+    for (const item of [...pendingOpens]) {
+      const { error } = await supabase
+        .from("notification_opens")
+        .insert({ ...item.row, user_id: userId });
+      if (error && error.code !== "23505") {
+        console.warn("[push] failed to log notification open", error.message);
+      } else {
+        sent.add(item);
+      }
+    }
+    pendingOpens = pendingOpens.filter((item) => !sent.has(item));
+  } catch (error) {
+    console.warn("[push] failed to log notification open", error);
+  } finally {
+    await savePendingOpens();
+    flushingOpens = false;
+    if (flushAgain) {
+      flushAgain = false;
+      void flushPendingOpens();
+    }
+  }
+};
+
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT") void clearPendingOpens();
+  else if (session?.user) void flushPendingOpens();
+});
+
+// Fire-and-forget tap log for push metrics; never blocks or breaks navigation.
+// The tap is queued first, so one that happens before the session is restored
+// is sent once a user is signed in. The table's unique
+// (user_id, notification_identifier) drops repeats.
+const logNotificationOpen = async (
+  response: Notifications.NotificationResponse,
+  appStateAtTap: "foreground" | "background"
+) => {
+  try {
+    const identifier = response.notification.request.identifier;
+    await loadPendingOpens();
+    if (!identifier || loggedOpenIds.has(identifier)) return;
+    loggedOpenIds.add(identifier);
+    const launchId = await getLaunchResponseId();
+    const data = getNotificationData(response) ?? {};
+    const reengagementKind = pickString(data, ["reengagementKind"]);
+    pendingOpens.push({
+      queuedAt: Date.now(),
+      row: {
+        notification_identifier: identifier.slice(0, 300),
+        notification_type: reengagementKind
+          ? `reengagement_${reengagementKind}`
+          : pickString(data, ["type"]) ?? "unknown",
+        notification_ref: pickString(data, [
+          "reengagementId", "reminderId", "messageId", "swipeId", "matchId", "user_id",
+        ]),
+        reengagement_id: pickString(data, ["reengagementId"]),
+        app_state: launchId === identifier ? "cold_start" : appStateAtTap,
+        platform: Platform.OS === "ios" ? "ios" : "android",
+        app_version: Application.nativeApplicationVersion ?? null,
+      },
+    });
+    await savePendingOpens();
+    await flushPendingOpens();
+  } catch (error) {
+    console.warn("[push] failed to log notification open", error);
+  }
+};
+
 const isCurrentChatRoute = (
   route: { name?: string; params?: Record<string, unknown> } | null,
   data: Record<string, unknown>
@@ -259,6 +400,7 @@ export const PushNotificationsBootstrap = ({
   const preferencesQuery = useUserPreferencesQuery(userId);
   const notificationsEnabled = preferencesQuery.data?.notificationsEnabled;
   const lastHandledResponseIdRef = useRef<string | null>(null);
+  const appStateRef = useRef({ state: AppState.currentState as string, since: 0 });
 
   useEffect(() => {
     if (!userId || !preferencesQuery.isSuccess) return;
@@ -352,6 +494,15 @@ export const PushNotificationsBootstrap = ({
 
   useEffect(() => {
     if (Platform.OS === "web") return;
+    // A tap from background can arrive just after AppState turns "active",
+    // so "foreground" needs the app to have been active for a moment.
+    const appStateSubscription = AppState.addEventListener("change", (state) => {
+      if (state === "active" && appStateRef.current.state !== "active") {
+        appStateRef.current = { state, since: Date.now() };
+      } else if (state !== "active") {
+        appStateRef.current = { state, since: Date.now() };
+      }
+    });
 
     const receivedSubscription = Notifications.addNotificationReceivedListener(
       (notification) => {
@@ -404,6 +555,11 @@ export const PushNotificationsBootstrap = ({
 
     const responseSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
+        const { state, since } = appStateRef.current;
+        void logNotificationOpen(
+          response,
+          state === "active" && Date.now() - since > 1500 ? "foreground" : "background"
+        );
         refreshCommunityFromPush(queryClient, getNotificationData(response));
         handleNotificationResponse(
           response,
@@ -413,6 +569,7 @@ export const PushNotificationsBootstrap = ({
       });
 
     void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) void logNotificationOpen(response, "background");
       handleNotificationResponse(
         response,
         navigateFromNotification,
@@ -423,6 +580,7 @@ export const PushNotificationsBootstrap = ({
     return () => {
       receivedSubscription.remove();
       responseSubscription.remove();
+      appStateSubscription.remove();
     };
   }, [getCurrentRoute, navigateFromNotification, queryClient, userId]);
 
