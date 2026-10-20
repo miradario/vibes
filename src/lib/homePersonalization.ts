@@ -6,9 +6,9 @@ export type HomeSection = "events" | "challenges" | "people";
 
 // Fallback order when there is no signal (or on ties).
 export const DEFAULT_HOME_SECTION_ORDER: HomeSection[] = [
+  "people",
   "events",
   "challenges",
-  "people",
 ];
 
 const normalize = (value: unknown) =>
