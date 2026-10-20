@@ -593,6 +593,18 @@ const fetchDirectUnreadCountForUser = async (
   return unreadCount;
 };
 
+// Las invitaciones internas a eventos/desafíos se guardan como mensaje de chat
+// con el link público al final (el chat lo usa para el botón "Ver evento").
+// En la push no aporta nada: se saca y queda solo el texto de la invitación.
+const INVITE_LINK_RE =
+  /\s*https:\/\/vibes\.gurudevelopers\.dev\/(?:event|challenge)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=$|[\s.,!?])/gi;
+
+const buildMessagePreview = (text: string) => {
+  if (text.startsWith("vibes-photo:v1:")) return "📷 Foto";
+  const withoutInviteLink = text.replace(INVITE_LINK_RE, "").trim();
+  return (withoutInviteLink || text).slice(0, 120);
+};
+
 const buildDirectMessageNotifications = async (
   supabase: SupabaseClient,
   record: Record<string, unknown>
@@ -623,7 +635,7 @@ const buildDirectMessageNotifications = async (
     {
       recipientId,
       title: senderName,
-      body: text.startsWith("vibes-photo:v1:") ? "📷 Foto" : text.slice(0, 120),
+      body: buildMessagePreview(text),
       data: {
         type: "direct_message",
         matchId,
@@ -684,7 +696,7 @@ const buildEventMessageNotifications = async (
     .map((recipientId: string) => ({
       recipientId,
       title: `${senderName} escribio en ${groupTitle}`,
-      body: body.startsWith("vibes-photo:v1:") ? "📷 Foto" : body.slice(0, 120),
+      body: buildMessagePreview(body),
       data: {
         type: "event_message",
         eventId,
@@ -744,6 +756,14 @@ const buildConnectionNotification = async (supabase: SupabaseClient, record: Rec
     .select("blocker_id").or(`and(blocker_id.eq.${senderId},blocked_user_id.eq.${recipientId}),and(blocker_id.eq.${recipientId},blocked_user_id.eq.${senderId})`).limit(1);
   if (error) throw error;
   if (blocked?.length) return [];
+  // If the recipient already liked the sender, this like is an instant mutual
+  // match: the matches trigger sends "Tenés una nueva conexión", so skip the
+  // redundant "quiere conectar con vos" push. Checked via the reverse swipe
+  // (not the matches row) to avoid racing the match insert.
+  const { data: reverseLike, error: reverseError } = await supabase.from("swipes")
+    .select("id").eq("swiper_id", recipientId).eq("target_id", senderId).eq("direction", "like").limit(1);
+  if (reverseError) throw reverseError;
+  if (reverseLike?.length) return [];
   const { data: profiles, error: profileError } = await supabase.from("profiles")
     .select("id").in("id", [senderId, recipientId]).eq("is_active", true).is("deleted_at", null);
   if (profileError) throw profileError;
