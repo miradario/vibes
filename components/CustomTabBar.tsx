@@ -110,7 +110,7 @@ const routeAccent: Record<
 const labelByRoute: Record<string, string> = {
   Discover: "Descubrir",
   Flow: "Desafíos",
-  EventsTab: "Eventos",
+  EventsTab: "Actividades",
   Home: "Inicio",
   Calendar: "Chats",
   Aura: "Perfil",
@@ -124,6 +124,7 @@ const getRouteLabel = (
   label: BottomTabBarProps["descriptors"][string]["options"]["tabBarLabel"],
   title?: string
 ) => {
+  if (routeName === "EventsTab" && typeof label === "string") return label;
   if (labelByRoute[routeName]) return labelByRoute[routeName];
   if (typeof label === "string") return label;
   return title ?? routeName;

@@ -40,7 +40,7 @@ export const PURPOSE_OPTIONS: OnboardingOption[] = [
   },
   {
     id: "events",
-    label: "Eventos",
+    label: "Actividades",
     icon: "calendar-outline",
     tone: "mustard",
   },

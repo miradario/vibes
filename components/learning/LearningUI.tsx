@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getBottomTabContentPadding } from "../../src/lib/tabBarLayout";
 import { useNavigation } from "@react-navigation/native";
-import { BookOpen, ChevronLeft, MapPin } from "lucide-react-native";
+import { BookOpen, ChevronLeft, ChevronRight, MapPin } from "lucide-react-native";
 import { Text, TextInput } from "../Typography";
 import ScreenContainer from "../ScreenContainer";
 import VibesActionButton from "../VibesActionButton";
@@ -39,7 +41,7 @@ const c = vibesTheme.colors;
 export const ui = StyleSheet.create({
   page: { flex: 1, backgroundColor: c.background },
   content: {
-    padding: 20,
+    padding: 24,
     paddingBottom: 48,
     width: "100%",
     maxWidth: 740,
@@ -54,14 +56,14 @@ export const ui = StyleSheet.create({
   },
   grow: { flex: 1 },
   heading: {
-    fontSize: 30,
-    lineHeight: 35,
+    fontSize: 26,
+    lineHeight: 32,
     color: c.primaryText,
     fontFamily: vibesTheme.fonts.bold,
   },
-  title: { fontSize: 23, lineHeight: 28, color: c.primaryText },
-  body: { fontSize: 19, lineHeight: 25, color: c.primaryText },
-  muted: { fontSize: 17, lineHeight: 23, color: c.secondaryText },
+  title: { fontSize: 24, lineHeight: 30, fontFamily: vibesTheme.fonts.bold, color: c.primaryText },
+  body: { fontSize: 16, lineHeight: 24, fontFamily: vibesTheme.fonts.regular, color: c.primaryText },
+  muted: { fontSize: 15, lineHeight: 22, color: c.secondaryText },
   card: {
     borderWidth: 1,
     borderColor: c.borderSoft,
@@ -72,23 +74,26 @@ export const ui = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: c.accentBlue,
+    borderColor: `${c.primaryText}1F`,
     borderRadius: 16,
+    minHeight: 48,
     padding: 14,
     color: c.primaryText,
-    fontSize: 19,
+    fontSize: 16,
     backgroundColor: c.surface,
   },
   chip: {
     borderWidth: 1,
-    borderColor: c.accentBlue,
+    borderColor: `${c.primaryText}1F`,
     borderRadius: 24,
+    minHeight: 44,
+    justifyContent: "center",
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  selected: { backgroundColor: c.accentBlue },
-  chipText: { fontSize: 17, color: c.primaryText },
-  selectedText: { color: c.surface },
+  selected: { backgroundColor: `${c.accentMustard}24`, borderColor: c.accentMustard },
+  chipText: { fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.semibold, color: c.primaryText },
+  selectedText: { color: c.primaryText },
   link: { color: c.accentBlue, fontSize: 18 },
   photo: { width: 92, height: 100, borderRadius: 16 },
   cover: { height: 190, width: "100%", borderRadius: 18 },
@@ -312,21 +317,24 @@ export function Photo({
 }
 export function Page({
   title,
+  embedded = false,
   children,
 }: {
   title: string;
+  embedded?: boolean;
   children: React.ReactNode;
 }) {
   const nav = useNavigation();
+  const insets = useSafeAreaInsets();
   return (
     <ScreenContainer
       scroll
       style={ui.page}
-      edges={["top", "left", "right", "bottom"]}
-      contentContainerStyle={ui.content}
+      edges={embedded ? [] : ["top", "left", "right", "bottom"]}
+      contentContainerStyle={[ui.content, embedded && {paddingBottom: getBottomTabContentPadding(insets.bottom, 48)}]}
       scrollViewProps={{ keyboardShouldPersistTaps: "handled" }}
     >
-      <View style={ui.row}>
+      {!embedded && <View style={ui.row}>
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Volver"
@@ -336,7 +344,7 @@ export function Page({
           <ChevronLeft color={c.accentBlue} size={28} />
         </TouchableOpacity>
         <Text style={[ui.heading, ui.grow]}>{title}</Text>
-      </View>
+      </View>}
       {children}
     </ScreenContainer>
   );
@@ -427,6 +435,7 @@ export function ProfileCard({
   );
 }
 export function ActivityCard({
+  compact = false,
   activity,
   data,
   onPress,
@@ -435,6 +444,7 @@ export function ActivityCard({
   activity: LearningActivity;
   data: LearningData;
   onPress: () => void;
+  compact?: boolean;
   status?: string;
 }) {
   const first =
@@ -443,6 +453,18 @@ export function ActivityCard({
     ) ?? sessionsFor(data, activity.id)[0];
   const teachers = data.profiles.filter((p) =>
     activity.teacher_ids.includes(p.id)
+  );
+  if (compact) return (
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver ${activity.title}`} onPress={onPress} activeOpacity={0.84} style={exploreCard.row}>
+      <View style={exploreCard.image}><Photo key={activity.image_url} url={activity.image_url} /></View>
+      <View style={exploreCard.copy}>
+        <Text style={exploreCard.title} numberOfLines={2}>{activity.title}</Text>
+        {first && <Text style={exploreCard.date}>{formatSession(first, activity.timezone)}</Text>}
+        <Text style={exploreCard.meta} numberOfLines={1}>{teachers.map(p => p.name).join(" · ") || modalityLabels[activity.modality]}</Text>
+        <Text style={exploreCard.meta} numberOfLines={1}>{[activity.location, priceLabel(activity)].filter(Boolean).join(" · ")}</Text>
+      </View>
+      <ChevronRight size={20} color={c.secondaryText} />
+    </TouchableOpacity>
   );
   return (
     <TouchableOpacity
@@ -579,3 +601,12 @@ export const modalityOptions = Object.entries(modalityLabels).map(
   ([value, label]) => ({ value, label })
 );
 export { statusLabels };
+
+const exploreCard = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "center", gap: 12, padding: 10, borderRadius: 20, borderWidth: 1, borderColor: `${c.primaryText}14`, backgroundColor: c.surface },
+  image: { width: 92, height: 100, borderRadius: 14, overflow: "hidden" },
+  copy: { flex: 1, gap: 3 },
+  title: { fontFamily: vibesTheme.fonts.bold, fontSize: 17, lineHeight: 23, color: c.primaryText },
+  date: { fontFamily: vibesTheme.fonts.medium, fontSize: 14, lineHeight: 20, color: c.accentBlue },
+  meta: { fontSize: 13, lineHeight: 18, color: c.secondaryText },
+});

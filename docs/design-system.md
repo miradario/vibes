@@ -165,3 +165,5 @@ Esta documentación no modifica la UI ni afirma una migración completa:
 3. Comprobar ancho compacto, escalado de texto, teclado, safe areas y truncamientos. En pantallas hermanas comparar títulos lado a lado.
 4. Ejecutar `npm run colors:check` después de cambiar colores, estilos o ilustraciones. El script valida paleta; no reemplaza la revisión de contraste, tipografía o layout.
 5. Registrar cualquier excepción nueva en esta guía y mantener sus enlaces a fuentes vigentes.
+
+La pestaña Actividades reúne Eventos y Clases con un selector de dos opciones. La selección activa usa fondo primaryText y texto surface; cada opción tiene área táctil mínima de 44. Clases reutiliza la sección existente y conserva su habilitación por entorno.

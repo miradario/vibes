@@ -109,3 +109,7 @@ npx expo export --platform android --platform ios --output-dir /tmp/vibes-learni
 Prueba en Android e iOS físicos con el Supabase de staging, sesión real y selector/subida de imágenes; ejecutar asesores de Supabase después de aplicar la migración en ese entorno. El análisis remoto leído corresponde al esquema previo; no valida una migración que aún no está aplicada allí.
 
 Mercado Pago, onboarding/aprobación de responsables, consentimiento entre profesores/lugares de diferentes responsables, notificaciones, calendario nativo y enlaces privados de videollamada no están implementados. Las fechas del editor usan campos con formato explícito, y el listado de esta primera versión carga hasta 500 perfiles/actividades: paginación y búsqueda en servidor quedan para una oferta mayor. No se agregaron datos ficticios a producción ni se publicó una nueva versión en las tiendas.
+
+## Catálogo externo de Buenos Aires
+
+`assets/catalog/buenos-aires-classes.json` conserva el JSON aportado el 20/10/2026: 9 propuestas y 5 lugares. `src/learning/externalCatalog.ts` lo carga como catálogo incluido en la app; no crea cuentas de profesores, inscripciones, sesiones ni filas en Supabase. Los horarios semanales se muestran como referencia y no se convierten en próximas fechas. Precios desconocidos siguen siendo desconocidos. Las fichas externas abren el sitio oficial y no permiten reservar en Vibes. La vista Clases los integra a la búsqueda, disciplinas y lugares sin mezclarlos con Mis clases.

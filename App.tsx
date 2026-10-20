@@ -1,3 +1,5 @@
+import {ExternalCatalogDetailScreen} from "./components/learning/ExternalCatalog";
+import Activities from "./screens/Activities";
 import {LearningExplore, LearningProfileDetail, LearningActivityDetail, LearningMine, LearningManage, LearningRoster, LearningProfileEditor, LearningActivityEditor} from "./screens/Learning";
 import PastChallenges from "./screens/PastChallenges";
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
@@ -501,7 +503,7 @@ const AppNavigator = () => {
                   />
                   <Tab.Screen
                     name="EventsTab"
-                    component={Events}
+                    component={Activities}
                     initialParams={{ section: "event" }}
                     options={{
                       tabBarLabel: t("tabs.events"),
@@ -564,6 +566,7 @@ const AppNavigator = () => {
                 </View>
               )}
             </Stack.Screen>
+            <Stack.Screen name="ExternalCatalogDetail" component={ExternalCatalogDetailScreen} options={{headerShown:false}} />
             <Stack.Screen name="LearningExplore" component={LearningExplore} options={{headerShown:false}} />
             <Stack.Screen name="LearningProfile" component={LearningProfileDetail} options={{headerShown:false}} />
             <Stack.Screen name="LearningActivity" component={LearningActivityDetail} options={{headerShown:false}} />
