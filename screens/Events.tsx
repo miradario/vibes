@@ -1071,6 +1071,8 @@ titleRow: {
     minWidth: 0,
   },
 listFooter: {
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 8,
     marginBottom: 20,
   },
