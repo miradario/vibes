@@ -775,6 +775,32 @@ const buildConnectionNotification = async (supabase: SupabaseClient, record: Rec
   }] satisfies OutgoingNotification[];
 };
 
+// Every pending challenge of the day is due at the user's reminder time, so
+// they are grouped into one push: the reminder with the lowest challenge id
+// sends it ("X y N más") and the others return nothing (marked processed).
+const buildGroupedChallengeReminder = async (
+  supabase: SupabaseClient,
+  job: { id: string; user_id: string; event_id: string; target_at: string; due_at: string },
+) => {
+  const { data: pending, error } = await supabase.from("notification_reminder_candidates")
+    .select("event_id, title").eq("user_id", job.user_id).eq("kind", "challenge_reminder")
+    .eq("target_at", job.target_at).eq("due_at", job.due_at);
+  if (error) throw error;
+  const challenges = [...new Map((pending ?? []).map((row: { event_id: string; title: string | null }) =>
+    [String(row.event_id), row])).values()].sort((a, b) => String(a.event_id).localeCompare(String(b.event_id)));
+  if (!challenges.length || String(challenges[0].event_id) !== String(job.event_id)) return [];
+  const first = challenges[0].title ?? "tu desafío";
+  const others = challenges.length - 1;
+  return [{
+    recipientId: job.user_id,
+    title: others ? "Tus desafíos de hoy te esperan" : "Tu desafío de hoy te espera",
+    body: others ? `Todavía estás a tiempo de completar ${first} y ${others} más hoy.`
+      : `Todavía estás a tiempo de completar ${first} hoy.`,
+    // Tapping opens the first challenge, same as a single reminder.
+    data: { type: "challenge_reminder", eventId: job.event_id, eventType: "challenge", reminderId: job.id },
+  }] satisfies OutgoingNotification[];
+};
+
 const buildReminderNotification = async (supabase: SupabaseClient, record: Record<string, unknown>) => {
   const { data: job, error } = await supabase.from("notification_reminders")
     .select("*").eq("id", String(record.id ?? "")).maybeSingle();
@@ -788,6 +814,7 @@ const buildReminderNotification = async (supabase: SupabaseClient, record: Recor
   if (candidateError) throw candidateError;
   if (!candidate) return [];
   const challenge = job.kind === "challenge_reminder";
+  if (challenge) return buildGroupedChallengeReminder(supabase, job);
   return [{
     recipientId: job.user_id,
     title: challenge ? "Tu desafío de hoy te espera" : "Tenés un evento próximo",
