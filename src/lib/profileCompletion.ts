@@ -35,24 +35,24 @@ export const getProfileCompletion = (profile: Data, preferences: Data, emailVeri
     {
       label: "Sobre mí",
       value: preferences?.aboutMe ?? preferences?.about_me,
-      screen: "Settings",
+      screen: "ProfileQuestions",
     },
     {
       label: "Me trae a Vibes",
       value: preferences?.openTo ?? preferences?.open_to,
-      screen: "Settings",
+      screen: "ProfileQuestions",
     },
     {
       label: "Prácticas",
       value: preferences?.spiritualPath ?? preferences?.spiritual_path,
-      screen: "Settings",
+      screen: "ProfileQuestions",
     },
     {
       label: "Fecha de nacimiento",
       value: profile?.birthDate ?? profile?.birth_date,
       screen: "EditProfile",
     },
-    ...QUESTION_GROUPS.flatMap((group) => group.fields.filter(field => field.key !== "interestedIn").map((field) => {
+    ...QUESTION_GROUPS.flatMap((group) => group.fields.filter(field => !["interestedIn", "lookingFor", "habits"].includes(field.key)).map((field) => {
       const stored = preferences?.profileAnswers ?? preferences?.profile_answers;
       const snakeKey = field.key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
       // Canonical columns take precedence over legacy JSON, including cleared values.

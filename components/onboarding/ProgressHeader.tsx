@@ -16,6 +16,7 @@ type ProgressHeaderProps = {
   showBack?: boolean;
   hideBackIcon?: boolean;
   cancelDisabled?: boolean;
+  onCancel?: () => void;
 };
 
 const ProgressHeader = ({
@@ -25,6 +26,7 @@ const ProgressHeader = ({
   showBack = true,
   hideBackIcon = false,
   cancelDisabled = false,
+  onCancel,
 }: ProgressHeaderProps) => (
   <View style={styles.wrap}>
     {showBack && !hideBackIcon ? (
@@ -44,7 +46,7 @@ const ProgressHeader = ({
         ]}
       />
     </View>
-    <CancelOnboardingButton disabled={cancelDisabled} />
+    <CancelOnboardingButton disabled={cancelDisabled} onCancel={onCancel} />
   </View>
 );
 

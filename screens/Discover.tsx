@@ -446,11 +446,6 @@ export const DiscoverContent = forwardRef<
         if (Array.isArray(parsed?.nationalityCode)) {
           valid.nationalityCode = parsed.nationalityCode.filter(isCountryCode);
         }
-        for (const key of ["heightMin", "heightMax"]) {
-          const value = parsed?.[key]?.[0];
-          if (typeof value === "string" && /^\d{1,3}$/.test(value))
-            valid[key] = [value];
-        }
         setAnswerFilters(valid);
         setAnswerFiltersOwner(userId);
       })
@@ -817,8 +812,8 @@ export const DiscoverContent = forwardRef<
   if (discoverFilters.smoking !== "all") appliedFilterChips.push({ id: "smoking", label: discoverFilters.smoking === "no" ? "No fuma" : discoverFilters.smoking === "yes" ? "Fuma" : "Fuma a veces", remove: () => setDiscoverFilters(p => ({ ...p, smoking: "all" })) });
   for (const [key, values] of Object.entries(answerFilters)) {
     if (!values.length) continue;
-    const label = ANSWER_FILTER_FIELDS.find(field => field.key === key)?.label ?? ({ heightMin: "Estatura desde", heightMax: "Estatura hasta", nationalityCode: "Nacionalidad" }[key] ?? key);
-    appliedFilterChips.push({ id: `answer-${key}`, label: `${label}: ${values.join(" · ")}${key.startsWith("height") ? " cm" : ""}`, remove: () => setAnswerFilters(p => ({ ...p, [key]: [] })) });
+    const label = ANSWER_FILTER_FIELDS.find(field => field.key === key)?.label ?? ({ nationalityCode: "Nacionalidad" }[key] ?? key);
+    appliedFilterChips.push({ id: `answer-${key}`, label: `${label}: ${values.join(" · ")}`, remove: () => setAnswerFilters(p => ({ ...p, [key]: [] })) });
   }
 
   useEffect(() => {
@@ -1105,52 +1100,6 @@ export const DiscoverContent = forwardRef<
                   }}
                   onClear={() => setDiscoverFilters(previous => ({ ...previous, distanceMinKm: null, maxDistanceKm: null }))} />
               </View> : null}
-
-              <View style={localStyles.filtersSection}>
-                {filterSectionTitle("Estatura (cm)")}
-                <View style={localStyles.rangeRow}>
-                  {(["heightMin", "heightMax"] as const).map((key, index) => (
-                    <View key={key} style={localStyles.rangeCard}>
-                      <Text style={localStyles.rangeLabel}>
-                        {index === 0 ? "Desde" : "Hasta"}
-                      </Text>
-                      <TextInput
-                        accessibilityLabel={
-                          index === 0
-                            ? "Estatura mínima en centímetros"
-                            : "Estatura máxima en centímetros"
-                        }
-                        style={localStyles.rangeInput}
-                        value={answerFilters[key]?.[0] ?? ""}
-                        placeholder="Sin límite"
-                        placeholderTextColor={vibesTheme.colors.primaryText}
-                        keyboardType="number-pad"
-                        maxLength={3}
-                        onChangeText={(text) => {
-                          const value = text.replace(/\D/g, "");
-                          setAnswerFilters((previous) => ({
-                            ...previous,
-                            [key]: value ? [value] : [],
-                          }));
-                        }}
-                        onEndEditing={() =>
-                          setAnswerFilters((previous) => {
-                            const min = Number(previous.heightMin?.[0]);
-                            const max = Number(previous.heightMax?.[0]);
-                            return min && max && min > max
-                              ? {
-                                  ...previous,
-                                  heightMin: [String(max)],
-                                  heightMax: [String(min)],
-                                }
-                              : previous;
-                          })
-                        }
-                      />
-                    </View>
-                  ))}
-                </View>
-              </View>
 
               <View style={localStyles.filtersSection}>
                 {filterSectionTitle(locale.startsWith("en") ? "Nationality" : "Nacionalidad")}

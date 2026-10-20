@@ -89,7 +89,7 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const BootLoading = () => (
   <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.background }}>
-    <AnimatedBrandLogo direction="logo-to-word" loop style={{ width: 240, height: 240 }} />
+    <AnimatedBrandLogo direction="logo-to-word" loop animate={Platform.OS !== "android"} style={{ width: 240, height: 240 }} />
   </View>
 );
 const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Navigator>) => {

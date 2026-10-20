@@ -1,3 +1,9 @@
+import VibesWordmark from "../../../components/VibesWordmark";
+import { useQuery } from "@tanstack/react-query";
+import { useUserPreferencesQuery } from "../../queries/userPreferences.queries";
+import { buildResumeOnboardingDraft, getCompletedResumeSteps } from "../../lib/resumeOnboarding";
+import { readProfileAnswers } from "../../lib/profileQuestions";
+import ScreenContainer from "../../../components/ScreenContainer";
 import OnboardingPlayfulShapes from "../../../components/OnboardingPlayfulShapes";
 import OnboardingGlobe from "../../../components/OnboardingGlobe";
 import ProfileReadyIllustration from "../../../components/ProfileReadyIllustration";
@@ -22,7 +28,7 @@ import { Text, TextInput } from "../../../components/Typography";
 import BirthDateWheel from "../../../components/BirthDateWheel";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Location from "expo-location";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import AnimatedSheetModal from "../../../components/AnimatedSheetModal";
 import KeyboardSheetModal from "../../../components/KeyboardSheetModal";
 import ProfileQuestionsForm from "../../../components/onboarding/ProfileQuestionsForm";
@@ -54,6 +60,7 @@ import {
 import {
   PRACTICE_OPTIONS,
   PURPOSE_OPTIONS,
+  togglePurposeSelection,
   VIBES_ONBOARDING_STEPS,
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
@@ -87,9 +94,6 @@ const getUniqueLocationParts = (...parts: Array<string | null | undefined>) => {
     });
 };
 
-const getProgress = (stepIndex: number) =>
-  (stepIndex + 1) / VIBES_ONBOARDING_STEPS.length;
-
 const getSelectedLabels = (
   selectedIds: string[],
   options: { id: string; label: string }[]
@@ -98,7 +102,7 @@ const getSelectedLabels = (
     .filter((option) => selectedIds.includes(option.id))
     .map((option) => option.label);
 
-const VibesOnboardingFlow = () => {
+const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueChoice?: boolean }) => {
   const navigation = useNavigation();
   const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
@@ -117,7 +121,12 @@ const VibesOnboardingFlow = () => {
   const countryInputRef = useRef<NativeTextInput | null>(null);
   const focusedProfileInput = useRef<NativeTextInput | null>(null);
   const completionStartedRef = useRef(false);
-  const [stepIndex, setStepIndex] = useState(0);
+  const [completedEntrySteps] = useState(() => getCompletedResumeSteps(draft));
+  const availableStepIndices = VIBES_ONBOARDING_STEPS.map((_, index) => index).filter(index => {
+    const candidate = VIBES_ONBOARDING_STEPS[index];
+    return !completedEntrySteps.some(completed => completed === candidate) && !(skipContinueChoice && candidate === "continueChoice");
+  });
+  const [stepIndex, setStepIndex] = useState(() => availableStepIndices[0]);
   const [purposeIds, setPurposeIds] = useState<string[]>(
     draft.purposeIds ?? []
   );
@@ -286,14 +295,15 @@ const VibesOnboardingFlow = () => {
         getUniqueLocationParts(city.trim(), country.trim()).join(", "),
       latitude,
       longitude,
-      purpose: getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
+      purpose: Array.from(new Set([...(draft.purpose ?? []).filter(label => !PURPOSE_OPTIONS.some(option => option.label === label)), ...getSelectedLabels(purposeIds, PURPOSE_OPTIONS)])),
       energy: [],
       energyIds: [],
-      otherTags: [
+      otherTags: Array.from(new Set([
+        ...(draft.otherTags ?? []).filter(tag => !PURPOSE_OPTIONS.some(option => option.label === tag) && !(draft.spiritualPath ?? []).includes(tag) && !tag.startsWith("age:")),
         ...getSelectedLabels(purposeIds, PURPOSE_OPTIONS),
         ...selectedPractices,
         age ? `age:${age}` : "",
-      ].filter(Boolean),
+      ].filter(Boolean))),
       photoUris,
       photoOriginalUris,
       primaryPhotoUri: photoUris[0] ?? "",
@@ -346,11 +356,9 @@ const VibesOnboardingFlow = () => {
   }, [selectedPractices]);
 
   const goBack = () => {
-    if (stepIndex === 0) {
-      navigation.goBack();
-      return;
-    }
-    setStepIndex((prev) => Math.max(0, prev - 1));
+    const previous = availableStepIndices.filter(index => index < stepIndex).pop();
+    if (previous === undefined) navigation.goBack();
+    else setStepIndex(previous);
   };
 
   const goNext = async () => {
@@ -359,9 +367,7 @@ const VibesOnboardingFlow = () => {
     if (step !== "completion") trackSignupEvent("onboarding_step_completed", { step, stepIndex });
 
     if (step !== "completion") {
-      setStepIndex((prev) =>
-        Math.min(VIBES_ONBOARDING_STEPS.length - 1, prev + 1)
-      );
+      setStepIndex(availableStepIndices.find(index => index > stepIndex) ?? stepIndex);
       return true;
     }
 
@@ -397,7 +403,7 @@ const VibesOnboardingFlow = () => {
       })
       .catch((error) => {
         trackSignupEvent("onboarding_failed", { props: { error_code: signupErrorCode(error) } });
-        setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("continueChoice"));
+        setStepIndex(VIBES_ONBOARDING_STEPS.indexOf(skipContinueChoice ? "interests" : "continueChoice"));
         Alert.alert(
           t("common.error"),
           error instanceof Error
@@ -429,9 +435,7 @@ const VibesOnboardingFlow = () => {
   }, [step]);
 
   const togglePurpose = (id: string) => {
-    setPurposeIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+    setPurposeIds(previous => togglePurposeSelection(previous, id));
   };
 
   const togglePractice = (practice: string) => {
@@ -578,14 +582,18 @@ const VibesOnboardingFlow = () => {
     <>
       <View style={localStyles.purposeHero}>
         <View style={localStyles.introCopy}>
-          <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
+          <View accessible accessibilityRole="header" accessibilityLabel={copy.title} style={localStyles.purposeHeading}>
+            <Text style={[localStyles.purposeTitle, {marginBottom:0,flexShrink:1,fontSize:26}]} numberOfLines={1} adjustsFontSizeToFit>{locale.startsWith("en") ? "What brings you to" : "¿Qué te trae a"}</Text>
+            <VibesWordmark fontSize={30} style={{ transform: [{ translateY: -4 }] }} />
+            <Text style={[localStyles.purposeTitle, {marginBottom:0,fontSize:26}]}>?</Text>
+          </View>
           <Text style={localStyles.aboutHint}>{copy.subtitle}</Text>
         </View>
-        <PlayfulVibesLogo style={{ width: 78, height: 96 }} />
       </View>
-      <View style={onboardingStyles.optionList}>
+      <View style={[onboardingStyles.optionList, localStyles.purposeGrid]}>
         {PURPOSE_OPTIONS.map((option) => (
           <OptionCard
+            tile
             key={option.id}
             option={{
               ...option,
@@ -900,20 +908,25 @@ const VibesOnboardingFlow = () => {
           />
         ))}
       </View>
-      {selectedPractices.map((practice) => (
-        <TouchableOpacity
-          key={practice}
-          accessibilityRole="button"
-          activeOpacity={0.8}
-          onPress={() => setActivePractice(practice)}
-          style={onboardingStyles.practiceDetailsButton}
-        >
-          <Icon name="create-outline" size={20} color={ONBOARDING_COLORS.text} />
-          <Text style={onboardingStyles.practiceDetailsButtonText}>
-            {locale === "en" ? "Add details" : "Agregar detalles"} · {getPracticeLabel(practice)}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {selectedPractices.length ? <Text style={localStyles.experienceHint}>{locale.startsWith("en") ? "Tell us more about your experience" : "Contanos más de tu experiencia"}</Text> : null}
+      {selectedPractices.map((practice) => {
+        const hasDetails = Object.values(practiceDetails[practice] ?? {}).some(value => Boolean(value?.trim()));
+        return (
+          <TouchableOpacity
+            key={practice}
+            accessibilityRole="button"
+            accessibilityLabel={`${getPracticeLabel(practice)}. ${locale.startsWith("en") ? (hasDetails ? "Has details. Edit" : "No details. Add") : (hasDetails ? "Con detalles. Editar" : "Sin detalles. Agregar")}`}
+            activeOpacity={0.8}
+            onPress={() => setActivePractice(practice)}
+            style={[onboardingStyles.practiceDetailsButton, hasDetails && localStyles.practiceWithDetails]}
+          >
+            <View style={[localStyles.practiceDot, hasDetails && {backgroundColor:vibesTheme.colors.accentBlue}]} />
+            <Text style={onboardingStyles.practiceDetailsButtonText}>{getPracticeLabel(practice)}</Text>
+            <Icon name={hasDetails ? "checkmark-circle" : "add"} size={24}
+              color={hasDetails ? vibesTheme.colors.accentBlue : vibesTheme.colors.accentMustard} />
+          </TouchableOpacity>
+        );
+      })}
     </>
   );
 
@@ -938,7 +951,7 @@ const VibesOnboardingFlow = () => {
             <OnboardingPlayfulShapes kind={step === "identity" ? "identity" : "interests"} style={{ width: 88, height: 96 }} />
           </View>
           <ProfileQuestionsForm
-            hiddenFields={["gender"]}
+            hiddenFields={["gender", "lookingFor", "habits"]}
             showHeader={false}
             onInputFocus={scrollInputIntoView}
             group={questionGroup}
@@ -1006,12 +1019,22 @@ const VibesOnboardingFlow = () => {
           <ProgressHeader
             intro={["profileText", "continueChoice"].includes(step)}
             cancelDisabled={completeMutation.isPending}
-            progress={getProgress(stepIndex)}
+            onCancel={draft.editingExistingProfile ? () => {
+              resetDraft();
+              navigation.dispatch(CommonActions.reset({
+                index: 0,
+                routes: [{name: "Tab", params: {screen: "Home"}}],
+              }));
+            } : undefined}
+            progress={(availableStepIndices.indexOf(stepIndex) + 1) / availableStepIndices.length}
             onBack={goBack}
-            showBack={stepIndex > 0}
+            showBack={availableStepIndices.indexOf(stepIndex) > 0}
             hideBackIcon={false}
           />
-          <Animated.View style={animatedStyle}>{renderStep()}</Animated.View>
+          <Animated.View style={animatedStyle}>
+            {renderStep()}
+
+          </Animated.View>
         </OnboardingScreenContainer>
       )}
 
@@ -1130,9 +1153,37 @@ const VibesOnboardingFlow = () => {
   );
 };
 
+const VibesOnboardingFlow = () => {
+  const route = useRoute();
+  const resume = Boolean((route.params as {resume?: boolean} | undefined)?.resume);
+  const {data:session} = useAuthSession();
+  const profile = useProfileQuery(session?.user?.id);
+  const preferences = useUserPreferencesQuery(resume ? session?.user?.id : undefined);
+  const answers = useQuery({queryKey:["profileAnswers",session?.user?.id],
+    queryFn:()=>readProfileAnswers(session!.user.id), enabled:resume && Boolean(session?.user?.id)});
+  const {setDraft,resetDraft} = useOnboardingDraft();
+  useEffect(() => () => { if (resume) resetDraft(); }, [resume]);
+  const [ready, setReady] = useState(!resume);
+  useEffect(() => {
+    if (!resume || ready || !profile.data || !preferences.isSuccess || !answers.isSuccess) return;
+    setDraft(buildResumeOnboardingDraft(profile.data, preferences.data, answers.data));
+    setReady(true);
+  }, [resume,ready,profile.data,preferences.isSuccess,preferences.data,answers.isSuccess,answers.data]);
+  if (!ready) return <ScreenContainer><View style={{flex:1,justifyContent:"center",alignItems:"center",padding:24}}>
+    {profile.isError || preferences.isError || answers.isError || (profile.isSuccess && !profile.data)
+      ? <PrimaryButton label="Reintentar cargar tu perfil" onPress={()=>{void profile.refetch();void preferences.refetch();void answers.refetch();}} />
+      : <VibesLoader size={48} accessibilityLabel="Cargando tu perfil" />}
+  </View></ScreenContainer>;
+  return <VibesOnboardingContent skipContinueChoice={Boolean((route.params as {skipContinueChoice?:boolean} | undefined)?.skipContinueChoice)} />;
+};
 export default VibesOnboardingFlow;
 
 const localStyles = StyleSheet.create({
+  experienceHint: {marginTop:20,marginBottom:2,fontSize:14,lineHeight:20,color:vibesTheme.colors.secondaryText},
+  practiceWithDetails: {borderColor:vibesTheme.colors.accentBlue,backgroundColor:`${vibesTheme.colors.accentBlue}0C`},
+  practiceDot: {width:10,height:10,borderRadius:5,backgroundColor:vibesTheme.colors.accentMustard},
+  purposeGrid: {width:"100%",maxWidth:280,alignSelf:"center",flexDirection:"row",flexWrap:"wrap",justifyContent:"space-between",gap:0,rowGap:10,marginTop:16},
+  purposeHeading: {flexDirection:"row",alignItems:"center",gap:5,marginBottom:10},
   purposeHero: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 },
   purposeTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 34, marginBottom: 10 },
   choiceTitle: { marginTop: 20, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 32, lineHeight: 39 },

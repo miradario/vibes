@@ -207,7 +207,7 @@ const baseTranslations = {
       countrySubtitle:
         "Podés escribir tu ciudad o usar tu ubicación una sola vez",
       cityPlaceholder: "Ingresá tu ciudad",
-      countryPlaceholder: "Ingresá tu país",
+      countryPlaceholder: "Argentina",
       useMyLocation: "Usar mi ubicación",
       gettingLocation: "Obteniendo ubicación...",
       locationPermissionDeniedTitle: "Permiso denegado",
@@ -309,12 +309,12 @@ const baseTranslations = {
         button: "Entrar a Vibes",
       },
       purposeOptions: {
-        deep_conversations: "Conversaciones profundas",
-        personal_growth: "Crecimiento personal",
-        friendship: "Amistad",
+        service: "Hacer servicio",
+        challenges: "Desafíos",
+        discover: "Conocer Gente (Descubrir)",
         events: "Eventos",
-        spirituality: "Espiritualidad",
-        inspiration: "Inspiración",
+        classes: "Clases",
+        all: "¡Todas!",
       },
       energyOptions: {
         calm: "Calmado",
@@ -951,7 +951,7 @@ const baseTranslations = {
       countrySubtitle:
         "Enter your city or use your location once",
       cityPlaceholder: "Enter your city",
-      countryPlaceholder: "Enter your country",
+      countryPlaceholder: "Argentina",
       useMyLocation: "Use my location",
       gettingLocation: "Getting location...",
       locationPermissionDeniedTitle: "Permission denied",
@@ -1051,12 +1051,12 @@ const baseTranslations = {
         button: "Enter Vibes",
       },
       purposeOptions: {
-        deep_conversations: "Deep conversations",
-        personal_growth: "Personal growth",
-        friendship: "Friendship",
+        service: "Volunteer",
+        challenges: "Challenges",
+        discover: "Meet People (Discover)",
         events: "Events",
-        spirituality: "Spirituality",
-        inspiration: "Inspiration",
+        classes: "Classes",
+        all: "All!",
       },
       energyOptions: {
         calm: "Calm",

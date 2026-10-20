@@ -936,12 +936,12 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     fontSize: 16,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.regular,
   },
   messageTextRight: {
     color: DARK_GRAY,
     fontSize: 16,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.regular,
   },
 });

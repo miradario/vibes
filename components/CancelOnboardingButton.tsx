@@ -6,7 +6,7 @@ import { useLogoutMutation } from "../src/auth/auth.queries";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-export default function CancelOnboardingButton({ disabled = false }: { disabled?: boolean }) {
+export default function CancelOnboardingButton({ disabled = false, onCancel }: { disabled?: boolean; onCancel?: () => void }) {
   const navigation = useNavigation();
   const logout = useLogoutMutation();
   const { resetDraft } = useOnboardingDraft();
@@ -16,6 +16,7 @@ export default function CancelOnboardingButton({ disabled = false }: { disabled?
     busy.current = true;
     Keyboard.dismiss();
     try {
+      if (onCancel) { onCancel(); return; }
       await logout.mutateAsync();
       resetDraft();
       navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: "Welcome" }] }));

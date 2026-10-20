@@ -59,7 +59,7 @@ const Profile = () => {
 
   const displayName = ownProfile.name;
 
-  const location = ownProfile.location || "Ubicación sin completar";
+  const location = [profile?.neighborhood, profile?.city, profile?.country].filter((part):part is string => typeof part === "string" && Boolean(part.trim())).map(part => part.trim()).join(", ") || ownProfile.location || "Ubicación sin completar";
   const ownAvatarUri = ownProfile.avatarUri ?? null;
 
   const { data: emailOwner } = useEmailOwnershipQuery(session?.user?.id);
@@ -84,11 +84,6 @@ const Profile = () => {
       icon: "create-outline",
       label: "Sobre mí",
       screen: "ProfileQuestions",
-    },
-    {
-      icon: "heart-outline",
-      label: t("profile.preferences"),
-      screen: "Settings",
     },
     {
       icon: "options",
@@ -140,7 +135,7 @@ const Profile = () => {
                 ? completion.percent
                 : null
             }
-            onPress={() => navigation.navigate(completion.nextScreen as never)}
+            onPress={() => navigation.navigate("VibesOnboardingFlow" as never, {resume:true} as never)}
           /></View>
           <View style={localStyles.profileInfo}>
             <View style={localStyles.nameRow}>

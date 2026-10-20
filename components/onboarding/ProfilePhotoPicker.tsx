@@ -3,6 +3,7 @@ import { vibesTheme } from "../../src/theme/vibesTheme";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  InteractionManager,
   Platform,
   Image,
   StyleSheet,
@@ -27,6 +28,7 @@ const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   : ["images"];
 type ProfilePhotoPickerProps = {
   uris: string[];
+  requestOpen?: number;
   originalUris?: Record<string, string>;
   onChange: (uris: string[], originals?: Record<string, string>) => void;
 };
@@ -73,10 +75,20 @@ const pickFromCamera = async (t: (key: string) => string) => {
   return result.assets[0].uri;
 };
 
-const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange }: ProfilePhotoPickerProps) => {
+const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange, requestOpen }: ProfilePhotoPickerProps) => {
   const { t, locale } = useI18n();
   const english = locale === "en";
   const [modalVisible, setModalVisible] = useState(false);
+  const consumedRequest = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (requestOpen && consumedRequest.current !== requestOpen && uris.length < 6) {
+      const task = InteractionManager.runAfterInteractions(() => {
+        consumedRequest.current = requestOpen;
+        setModalVisible(true);
+      });
+      return () => task.cancel();
+    }
+  }, [requestOpen,uris.length]);
   const [busy, setBusy] = useState(false);
   const [cropPhoto, setCropPhoto] = useState<CropPhoto | null>(null);
   const cropResolve = useRef<((uri: string | null) => void) | null>(null);

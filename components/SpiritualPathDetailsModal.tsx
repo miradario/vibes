@@ -1,14 +1,11 @@
+import PrimaryButton from "./onboarding/PrimaryButton";
+import VibesActionButton from "./VibesActionButton";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, TextInput } from "./Typography";
 import KeyboardSheetModal from "./KeyboardSheetModal";
 import Icon from "./Icon";
-import styles, {
-  DARK_GRAY,
-  GRAY,
-  PRIMARY_COLOR,
-  WHITE,
-} from "../assets/styles";
+
 import { vibesTheme } from "../src/theme/vibesTheme";
 import type { SpiritualPathDetail } from "../src/lib/spiritualPaths";
 import {
@@ -43,6 +40,7 @@ const SpiritualPathDetailsModal = ({
   readOnly = false,
 }: SpiritualPathDetailsModalProps) => {
   const { locale, t } = useI18n();
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [yearsError, setYearsError] = useState<string | null>(null);
   const filledEntries = getSpiritualPathDetailEntries(detail);
 
@@ -79,7 +77,7 @@ const SpiritualPathDetailsModal = ({
     <KeyboardSheetModal visible={visible} onClose={closeKeepingDetails}>
       <View style={localStyles.card}>
         <View style={localStyles.header}>
-          <Text style={localStyles.title} maxFontSizeMultiplier={1}>
+          <Text style={localStyles.title} accessibilityRole="header">
             {pathLabel
               ? translateSpiritualPathLabel(locale, pathLabel)
               : t("spiritual.defaultTitle")}
@@ -91,7 +89,11 @@ const SpiritualPathDetailsModal = ({
             activeOpacity={0.8}
             style={localStyles.closeButton}
           >
-            <Icon name="close-outline" size={24} color={DARK_GRAY} />
+            <Icon
+              name="close-outline"
+              size={24}
+              color={vibesTheme.colors.primaryText}
+            />
           </TouchableOpacity>
         </View>
         <ScrollView
@@ -103,7 +105,7 @@ const SpiritualPathDetailsModal = ({
           automaticallyAdjustKeyboardInsets={false}
         >
           <Text style={localStyles.subtitle}>
-            {readOnly ? t("spiritual.sharedData") : t("spiritual.optionalData")}
+            {readOnly ? t("spiritual.sharedData") : locale.startsWith("en") ? "Tell us more about your experience" : "Contanos más de tu experiencia"}
           </Text>
 
           {readOnly ? (
@@ -140,6 +142,12 @@ const SpiritualPathDetailsModal = ({
                             localStyles.optionChip,
                             active && localStyles.optionChipActive,
                           ]}
+                          accessibilityRole="radio"
+                          accessibilityLabel={translateSpiritualOption(
+                            locale,
+                            option
+                          )}
+                          accessibilityState={{ selected: active }}
                           onPress={() =>
                             onChange?.({
                               ...detail,
@@ -156,6 +164,17 @@ const SpiritualPathDetailsModal = ({
                           >
                             {translateSpiritualOption(locale, option)}
                           </Text>
+                          <Icon
+                            name={
+                              active ? "checkmark-circle" : "ellipse-outline"
+                            }
+                            size={18}
+                            color={
+                              active
+                                ? vibesTheme.colors.accentBlue
+                                : vibesTheme.colors.secondaryText
+                            }
+                          />
                         </TouchableOpacity>
                       );
                     })}
@@ -163,15 +182,25 @@ const SpiritualPathDetailsModal = ({
                 ) : (
                   <TextInput
                     style={[
-                      styles.loginInput,
                       localStyles.input,
                       field.multiline && localStyles.notesInput,
+                      focusedField === field.key && localStyles.inputFocused,
+                      field.key === "years" && yearsError
+                        ? localStyles.inputError
+                        : null,
                     ]}
                     placeholder={translateSpiritualPlaceholder(
                       locale,
                       field.placeholder
                     )}
-                    placeholderTextColor={GRAY}
+                    accessibilityLabel={translateSpiritualFieldLabel(
+                      locale,
+                      field.label
+                    )}
+                    onFocus={() => setFocusedField(field.key)}
+                    onBlur={() => setFocusedField(null)}
+                    maxLength={field.key === "years" ? 2 : 500}
+                    placeholderTextColor={vibesTheme.colors.secondaryText}
                     keyboardType={field.keyboardType ?? "default"}
                     multiline={Boolean(field.multiline)}
                     numberOfLines={field.multiline ? 4 : 1}
@@ -189,7 +218,12 @@ const SpiritualPathDetailsModal = ({
                   />
                 )}
                 {field.key === "years" && yearsError ? (
-                  <Text style={localStyles.errorText}>{yearsError}</Text>
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    style={localStyles.errorText}
+                  >
+                    {yearsError}
+                  </Text>
                 ) : null}
               </View>
             ))
@@ -197,227 +231,156 @@ const SpiritualPathDetailsModal = ({
         </ScrollView>
         <View style={localStyles.footer}>
           {!readOnly && onRemove ? (
-            <TouchableOpacity
-              style={localStyles.removeButton}
-              accessibilityRole="button"
-              onPress={onRemove}
-              activeOpacity={0.85}
-            >
-              <Text style={localStyles.removeButtonText}>
-                {t("spiritual.removePath")}
-              </Text>
-            </TouchableOpacity>
+            <View style={localStyles.footerAction}>
+              <VibesActionButton
+                variant="outline"
+                label={t("spiritual.removePath")}
+                onPress={onRemove}
+                style={{ minHeight: 56 }}
+              />
+            </View>
           ) : null}
 
-          <TouchableOpacity
-            style={localStyles.primaryButton}
-            accessibilityRole="button"
-            onPress={closeWithValidation}
-            activeOpacity={0.9}
-          >
-            <Text style={localStyles.primaryButtonText}>
-              {readOnly ? t("common.close") : t("common.done")}
-            </Text>
-          </TouchableOpacity>
+          <View style={localStyles.footerAction}>
+            <PrimaryButton
+              label={readOnly ? t("common.close") : t("common.done")}
+              onPress={closeWithValidation}
+            />
+          </View>
         </View>
       </View>
     </KeyboardSheetModal>
   );
 };
 
+const c = vibesTheme.colors;
 const localStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.34)",
-    justifyContent: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-  },
-  keyboardWrap: {
-    width: "100%",
-    justifyContent: "center",
-  },
   card: {
     width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
     maxHeight: "100%",
-    borderRadius: 28,
-    backgroundColor: WHITE,
-    paddingHorizontal: 26,
-    paddingTop: 24,
-    paddingBottom: 22,
-    shadowColor: vibesTheme.colors.secondaryText,
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 4,
+    borderRadius: vibesTheme.radii.lg,
+    backgroundColor: c.surface,
+    padding: 20,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
+  header: { flexDirection: "row", alignItems: "center", gap: 12 },
   closeButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 24,
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: `${c.secondaryText}0C`,
   },
   title: {
     flex: 1,
-    color: DARK_GRAY,
-    fontSize: 30,
-    lineHeight: 36,
-    fontFamily: vibesTheme.fonts.regular,
-    letterSpacing: 0.2,
+    color: c.primaryText,
+    fontSize: 24,
+    lineHeight: 30,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   subtitle: {
-    color: "rgba(43, 43, 43, 0.58)",
-    fontSize: 15,
-    lineHeight: 22,
-    marginTop: 8,
-    fontFamily: vibesTheme.fonts.subtitle,
+    color: c.secondaryText,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.regular,
+    marginBottom: 20,
   },
-  content: {
-    marginTop: 8,
-    flexGrow: 0,
-  },
-  contentInner: {
-    paddingBottom: 12,
-  },
-  fieldWrap: {
-    marginBottom: 22,
-  },
+  content: { marginTop: 16, flexGrow: 0, flexShrink: 1 },
+  contentInner: { paddingBottom: 4 },
+  fieldWrap: { marginBottom: 20 },
   fieldLabel: {
-    color: DARK_GRAY,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
-    letterSpacing: 0.2,
+    color: c.primaryText,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.semibold,
   },
-  optionRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    marginTop: 12,
-  },
+  optionRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
   optionChip: {
-    minHeight: 46,
-    borderRadius: 23,
+    minHeight: 44,
+    borderRadius: vibesTheme.radii.pill,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.44)",
-    backgroundColor: "rgba(254, 254, 253, 0.86)",
-    paddingHorizontal: 20,
-    paddingVertical: 11,
+    borderColor: `${c.primaryText}20`,
+    backgroundColor: c.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: "row",
+    gap: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   optionChipActive: {
-    backgroundColor: "rgba(244, 163, 64, 0.16)",
-    borderColor: vibesTheme.colors.accentMustard,
+    backgroundColor: `${c.accentBlue}14`,
+    borderColor: c.accentBlue,
   },
   optionChipText: {
-    color: DARK_GRAY,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
+    color: c.primaryText,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.semibold,
   },
-  optionChipTextActive: {
-    color: DARK_GRAY,
-  },
+  optionChipTextActive: { color: c.primaryText },
   input: {
-    marginTop: 10,
-    minHeight: 54,
-    borderRadius: 18,
-    borderColor: "rgba(244, 163, 64, 0.36)",
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.primary,
+    marginTop: 8,
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: vibesTheme.radii.md,
+    borderColor: `${c.primaryText}20`,
+    backgroundColor: c.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: c.primaryText,
+    fontSize: 16,
+    lineHeight: 24,
+    includeFontPadding: true,
+    fontFamily: vibesTheme.fonts.regular,
   },
-  notesInput: {
-    minHeight: 118,
-    paddingTop: 16,
-  },
+  inputFocused: { borderColor: c.accentBlue },
+  inputError: { borderColor: c.accentCoral },
+  notesInput: { minHeight: 104 },
   errorText: {
-    color: vibesTheme.colors.accentBlue,
+    color: c.primaryText,
     fontSize: 13,
     lineHeight: 18,
-    marginTop: 7,
+    marginTop: 6,
     fontFamily: vibesTheme.fonts.medium,
   },
   readOnlyItem: {
     borderWidth: 1,
-    borderColor: "rgba(216, 140, 122, 0.18)",
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: `${c.primaryText}20`,
+    borderRadius: vibesTheme.radii.md,
+    padding: 14,
     marginBottom: 10,
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: c.surface,
   },
   readOnlyLabel: {
-    color: vibesTheme.colors.accentBlue,
-    fontSize: 13,
-    fontWeight: "400",
+    color: c.secondaryText,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: vibesTheme.fonts.semibold,
   },
   readOnlyValue: {
-    color: DARK_GRAY,
+    color: c.primaryText,
     fontSize: 16,
+    lineHeight: 24,
     marginTop: 4,
   },
   emptyState: {
-    borderRadius: 16,
-    paddingVertical: 22,
-    paddingHorizontal: 16,
-    backgroundColor: vibesTheme.colors.background,
+    borderRadius: vibesTheme.radii.md,
+    padding: 16,
+    backgroundColor: `${c.secondaryText}0C`,
   },
-  emptyStateText: {
-    color: GRAY,
-    fontSize: 15,
-  },
+  emptyStateText: { color: c.secondaryText, fontSize: 14, lineHeight: 20 },
   footer: {
     flexDirection: "row",
-    gap: 14,
-    marginTop: 18,
-    paddingTop: 0,
+    gap: 12,
+    marginTop: 12,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: `${c.primaryText}14`,
   },
-  removeButton: {
-    flex: 1,
-    minHeight: 56,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(216, 140, 122, 0.28)",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.72)",
-  },
-  removeButtonText: {
-    textAlign: "center",
-    color: vibesTheme.colors.accentBlue,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  primaryButton: {
-    flex: 1,
-    minHeight: 56,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    backgroundColor: PRIMARY_COLOR,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: PRIMARY_COLOR,
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 3,
-  },
-  primaryButtonText: {
-    textAlign: "center",
-    color: WHITE,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
-  },
+  footerAction: { flex: 1 },
 });
 
 export default SpiritualPathDetailsModal;

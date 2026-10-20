@@ -12,13 +12,7 @@ export function matchesDiscoverAnswers(
       return selected.includes(candidate.nationalityCode ?? candidate.nationality_code);
     }
     if (key === "interestedIn") return matchesInterestedInFilter(candidate, selected);
-    if (key === "heightMin" || key === "heightMax") {
-      const height = Number(candidate.heightCm ?? candidate.height_cm);
-      if (!Number.isFinite(height) || height <= 0) return false;
-      return key === "heightMin"
-        ? height >= Number(selected[0])
-        : height <= Number(selected[0]);
-    }
+    if (key === "heightMin" || key === "heightMax") return true;
     const value =
       answers[key] ??
       candidate[key] ??

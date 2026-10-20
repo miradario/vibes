@@ -30,8 +30,8 @@ test('additional profile choices use real camel and snake case values',()=>{
  assert.equal(matches({openTo:['Amistad'],education:'Universidad',family_plan:'Quiero hijos',communicationStyle:'Directo'}, {openTo:['Amistad'],education:['Universidad'],familyPlan:['Quiero hijos'],communicationStyle:['Directo']}),true);
  assert.equal(matches({zodiac:'Aries'},{zodiac:['Leo']}),false);
 });
-test('height ranges exclude unknown values and include endpoints',()=>{
+test('legacy height filters are ignored after removal',()=>{
  assert.equal(matches({height_cm:170},{heightMin:['170'],heightMax:['180']}),true);
- assert.equal(matches({heightCm:185},{heightMax:['180']}),false);
- assert.equal(matches({},{heightMin:['150']}),false);
+ assert.equal(matches({heightCm:185},{heightMax:['180']}),true);
+ assert.equal(matches({},{heightMin:['150']}),true);
 });

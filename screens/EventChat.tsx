@@ -658,6 +658,7 @@ const EventChat = () => {
       <View style={styles.eventChatBackground}>
         <AppHeader
           title={event?.title || "Evento"}
+          onTitlePress={event?.id ? () => navigation.navigate((eventType === "challenge" ? "ChallengeDetailScreen" : "EventDetail") as never, { event } as never) : undefined}
           showBack
           onBack={() => navigation.goBack()}
           style={styles.eventChatHeader}
@@ -1205,7 +1206,7 @@ const localStyles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     lineHeight: 21,
-    fontFamily: vibesTheme.fonts.semibold,
+    fontFamily: vibesTheme.fonts.regular,
     color: DARK_GRAY,
   },
   messageTime: {

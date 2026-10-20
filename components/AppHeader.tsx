@@ -23,6 +23,7 @@ type AppHeaderProps = {
   subtitle?: string;
   showBack?: boolean;
   onBack?: () => void;
+  onTitlePress?: () => void;
   right?: React.ReactNode;
   left?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -40,6 +41,7 @@ const AppHeader = ({
   subtitle,
   showBack = false,
   onBack,
+  onTitlePress,
   right,
   left,
   style,
@@ -59,34 +61,50 @@ const AppHeader = ({
     if (navigation.canGoBack()) navigation.goBack();
   };
 
-  const leftSlot = left ?? (
-    showBack ? (
-      <BackButton accessibilityRole="button"
+  const leftSlot =
+    left ??
+    (showBack ? (
+      <BackButton
+        accessibilityRole="button"
         accessibilityLabel="Volver"
         activeOpacity={0.84}
         onPress={handleBack}
-        style={[styles.iconButton, backButtonStyle]} hideIcon={hideBackIcon} />
+        style={[styles.iconButton, backButtonStyle]}
+        hideIcon={hideBackIcon}
+      />
     ) : (
       <View style={styles.iconPlaceholder} />
-    )
-  );
+    ));
 
+  const Content = onTitlePress ? TouchableOpacity : View;
   return (
     <View style={[styles.container, style]}>
       <View style={styles.side}>{leftSlot}</View>
-      <View style={[styles.content, contentStyle]}>
+      <Content
+        style={[styles.content, contentStyle]}
+        onPress={onTitlePress}
+        accessibilityRole={onTitlePress ? "button" : undefined}
+        accessibilityLabel={
+          onTitlePress ? `Ver detalle de ${title}` : undefined
+        }
+        activeOpacity={0.8}
+      >
         {children ?? (
           <>
             {title ? (
-              title === "Vibes" ? <VibesWordmark fontSize={StyleSheet.flatten(titleStyle)?.fontSize ?? 26} /> : (
-              <Text
-                style={[styles.title, titleStyle]}
-                numberOfLines={titleNumberOfLines}
-                adjustsFontSizeToFit
-                maxFontSizeMultiplier={1}
-              >
-                {title}
-              </Text>
+              title === "Vibes" ? (
+                <VibesWordmark
+                  fontSize={StyleSheet.flatten(titleStyle)?.fontSize ?? 26}
+                />
+              ) : (
+                <Text
+                  style={[styles.title, titleStyle]}
+                  numberOfLines={titleNumberOfLines}
+                  adjustsFontSizeToFit
+                  maxFontSizeMultiplier={1}
+                >
+                  {title}
+                </Text>
               )
             ) : null}
             {subtitle ? (
@@ -96,8 +114,10 @@ const AppHeader = ({
             ) : null}
           </>
         )}
+      </Content>
+      <View style={styles.side}>
+        {right ?? <View style={styles.iconPlaceholder} />}
       </View>
-      <View style={styles.side}>{right ?? <View style={styles.iconPlaceholder} />}</View>
     </View>
   );
 };

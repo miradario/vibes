@@ -106,6 +106,8 @@ Usar botones de solo icono de 44 × 44, radio 14, fondo `secondaryText` al 4,7% 
 - **Seleccionado:** texto legible, borde o indicador visible, `accessibilityState.selected`; no comunicar selección solo con un cambio sutil de fondo.
 - **Destructivo:** acción explícita y confirmación proporcional a la pérdida de datos; usar paleta autorizada, no rojo agregado.
 
+En Editar perfil, “Guardar” mantiene sus dimensiones y su texto durante el envío: el tilde se reemplaza por `VibesLoader`. La pantalla permanece abierta si falla el guardado.
+
 ## Campos, búsqueda y selección
 
 - Label persistente sobre el campo; placeholder como ejemplo o ayuda, no como único nombre accesible.
@@ -115,6 +117,8 @@ Usar botones de solo icono de 44 × 44, radio 14, fondo `secondaryText` al 4,7% 
 - Búsqueda actual de Eventos: contenedor de 40 de alto; el input termina en 16 / `medium` por un override. No copiar esta altura como estándar de control táctil nuevo.
 - Opciones de onboarding actuales: mínimo 64 de alto, radio 18, label 16 / `semibold`, fondo `surface` al 86%, borde mostaza al 22%. Selección: fondo mostaza al 8% y borde mostaza sólido.
 - Chips: label 14 / 20 `semibold`; área táctil mínima 44 aunque la cápsula visible sea menor. Mantener seleccionados distinguibles de su fondo.
+
+El selector de fotos de onboarding y Editar perfil es el mismo `ProfilePhotoPicker`: foto principal circular, grilla de hasta seis fotos y menú para ajustar o eliminar. Mostrar el estado de guardado y bloquear cambios mientras se suben las fotos. Las ayudas de onboarding usan cuerpo 14 / 20 y `secondaryText` con un icono azul.
 
 ## Layout, superficies e iconografía
 
@@ -140,6 +144,8 @@ Los valores actuales de `vibesTheme.motion.modal` son: backdrop `primaryText` al
 
 Norma: respetar reducción de movimiento en animaciones nuevas; mantener cierre accesible, acceso al teclado y foco coherente. El componente actual no debe interpretarse como garantía de que toda la accesibilidad modal ya esté resuelta.
 
+En Android, los estados transitorios de arranque mantienen el logo estático para que no reinicie su animación al pasar de boot a Startup. Welcome conserva su animación de marca; iOS conserva el comportamiento existente.
+
 ## Marca y capturas
 
 - Fuente del logo actual: [`assets/branding/vibes-logo-palette.svg`](../assets/branding/vibes-logo-palette.svg). Esferas coral y mostaza, hoja azul, trazos oscuros. Ver [guía de assets](../assets/branding/README.md).
@@ -157,6 +163,10 @@ Esta documentación no modifica la UI ni afirma una migración completa:
 - El título del modal de filtros de Descubrir usa 38 / Bold. Es una variante existente, no el estándar para nuevos sheets simples.
 - Eventos y Desafíos usan overrides para el título principal; el estilo base 26 / 32 SemiBold sigue atendiendo vistas históricas. No eliminarlo sin revisar `pastOnly`.
 - Tamaños, interlineados y labels todavía están distribuidos en estilos locales. Esta escala es normativa, pero no equivale a un conjunto de componentes o tokens ya implementados.
+
+## Sobre mí
+
+“Sobre mí” reúne los datos pedidos durante el onboarding: Identidad muestra la descripción y las respuestas personales; Intereses reúne prácticas con sus detalles e intereses; Planes incluye motivos para usar Vibes y preguntas sobre planes. Los datos personales y las fotos se administran en Editar perfil. Los accesos “Más opciones de perfil” y “Preferencias” están ocultos por ahora; conservar sus datos guardados.
 
 ## Verificación al cambiar interfaz
 

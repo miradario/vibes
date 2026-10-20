@@ -13,6 +13,7 @@ type Props = {
   group: number;
   showHeader?: boolean;
   hiddenFields?: string[];
+  favoritePlansInPlans?: boolean;
   value: ProfileAnswers;
   onChange: (value: ProfileAnswers) => void;
 };
@@ -34,17 +35,23 @@ export default function ProfileQuestionsForm({
   onChange,
   showHeader = true,
   hiddenFields = [],
+  favoritePlansInPlans = false,
 }: Props) {
+  const fields = favoritePlansInPlans && group === 1
+    ? QUESTION_GROUPS[group].fields.filter(field => field.key !== "favoritePlans")
+    : favoritePlansInPlans && group === 2
+      ? [...QUESTION_GROUPS[1].fields.filter(field => field.key === "favoritePlans"), ...QUESTION_GROUPS[group].fields]
+      : QUESTION_GROUPS[group].fields;
   const inputs = React.useRef<Record<string, NativeTextInput | null>>({});
   return (
     <View>
       {showHeader && <ProfileQuestionsHeader group={group} />}
-      {QUESTION_GROUPS[group].fields.filter(field => !hiddenFields.includes(field.key)).filter(field => field.key !== "interestedIn" ||
+      {fields.filter(field => !hiddenFields.includes(field.key)).filter(field => field.key !== "interestedIn" ||
         (Array.isArray(value.lookingFor) && value.lookingFor.includes("Citas"))).map((field) => (
         <View key={field.key} style={styles.field}>
           <Text style={styles.label}>{field.label}</Text>
           {"options" in field ? (
-            <View style={styles.options}>
+            <View style={[styles.options, field.key === "personality" && styles.personalityOptions]}>
               {field.options.map((option) => {
                 const current = value[field.key];
                 const single = "single" in field && field.single;
@@ -54,6 +61,8 @@ export default function ProfileQuestionsForm({
                 return (
                   <SelectablePill
                     key={option}
+                    compact={field.key === "personality"}
+                    style={field.key === "personality" && option === "Medio" ? {flex:0.65} : undefined}
                     label={option}
                     selected={selected}
                     onPress={() => {
@@ -103,6 +112,7 @@ const styles = StyleSheet.create({
   hint: { fontSize: 16, lineHeight: 23, color: vibesTheme.colors.secondaryText, marginBottom: 16 },
   field: { marginBottom: 30 },
   label: { fontFamily: vibesTheme.fonts.semibold, fontSize: 21, lineHeight: 28, color: vibesTheme.colors.primaryText, marginBottom: 12 },
+  personalityOptions: {flexWrap:"nowrap",gap:6},
   options: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   input: {
     borderWidth: 1,
