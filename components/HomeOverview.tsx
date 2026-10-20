@@ -229,8 +229,10 @@ export default function HomeOverview({
 }) {
   const navigation = useNavigation<any>();
   const groups = useMyEventGroupsQuery(userId);
-  const eventsFeed = useEventsFeedQuery();
-  const challengesFeed = useChallengesFeedQuery();
+  // Home picks upcoming events and the viewer's challenges from the whole
+  // set, so it keeps loading every page.
+  const eventsFeed = useEventsFeedQuery({ loadAll: true });
+  const challengesFeed = useChallengesFeedQuery({ loadAll: true });
   const [now, setNow] = useState(Date.now());
   useFocusEffect(
     useCallback(() => {

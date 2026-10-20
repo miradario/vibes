@@ -2,8 +2,8 @@ import { normalizeSchedule, formatAttendees, type EventSession } from "../lib/ev
 import { localDayKey, calendarDayNumber } from "../lib/challengeProgress";
 import { useLocalDay } from "../hooks/useLocalDay";
 import { parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../constants/eventClassification";
-import { useEffect, useRef } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef } from "react";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
@@ -788,28 +788,45 @@ const enrichFeedItemsWithProfileImages = async (
   );
 };
 
-const fetchEvents = async (): Promise<EventFeedItem[]> => {
+/** Page size for the events and challenges feeds (lazy loading). */
+export const FEED_PAGE_SIZE = 20;
+
+export type FeedPage = { items: EventFeedItem[]; nextOffset: number | null };
+
+const pageRange = (offset: number) => [offset, offset + FEED_PAGE_SIZE - 1] as const;
+
+const nextOffsetFor = (offset: number, rowCount: number) =>
+  rowCount < FEED_PAGE_SIZE ? null : offset + FEED_PAGE_SIZE;
+
+const fetchEventsPage = async (offset: number): Promise<FeedPage> => {
+  const [from, to] = pageRange(offset);
   const { data, error } = await supabase
     .from("events")
     .select("*")
     .eq("type", "event")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(from, to);
 
   if (error) {
     throw error;
   }
 
-  const items = (data ?? []).map(mapEventRow);
+  const rows = data ?? [];
+  const items = rows.map(mapEventRow);
   const { previewMap, countMap } = await fetchEventParticipantMeta(
     items.map((item) => item.id)
   );
-  return enrichFeedItemsWithProfileImages(
-    items,
-    previewMap,
-    undefined,
-    undefined,
-    countMap
-  );
+  return {
+    items: await enrichFeedItemsWithProfileImages(
+      items,
+      previewMap,
+      undefined,
+      undefined,
+      countMap
+    ),
+    nextOffset: nextOffsetFor(offset, rows.length),
+  };
 };
 
 const filterChallengesForViewer = async (
@@ -837,18 +854,25 @@ const filterChallengesForViewer = async (
   });
 };
 
-const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
+const fetchChallengesPage = async (
+  offset: number,
+  viewerId?: string
+): Promise<FeedPage> => {
+  const [from, to] = pageRange(offset);
   const { data, error } = await supabase
     .from("challenges")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(from, to);
 
   if (error) {
     throw error;
   }
 
+  const rows = data ?? [];
   const items = await filterChallengesForViewer(
-    (data ?? []).map(mapChallengeRow),
+    rows.map(mapChallengeRow),
     viewerId
   );
   const challengeIds = items.map((item) => item.id);
@@ -858,13 +882,18 @@ const fetchChallenges = async (viewerId?: string): Promise<EventFeedItem[]> => {
       fetchChallengeTodayCheckinCountMap(challengeIds),
       fetchChallengeViewerProgressMap(items, viewerId),
     ]);
-  return enrichFeedItemsWithProfileImages(
-    items,
-    previewMap,
-    todayCheckinCountMap,
-    viewerProgressMap,
-    countMap
-  );
+  return {
+    items: await enrichFeedItemsWithProfileImages(
+      items,
+      previewMap,
+      todayCheckinCountMap,
+      viewerProgressMap,
+      countMap
+    ),
+    // Paginate on raw rows: the visibility filter can shorten a page without
+    // meaning there are no more rows.
+    nextOffset: nextOffsetFor(offset, rows.length),
+  };
 };
 
 export const maybeUploadEventImage = async (
@@ -887,11 +916,53 @@ export const maybeUploadEventImage = async (
   }
 };
 
-export const useEventsFeedQuery = () => {
+export type FeedQueryOptions = {
+  /**
+   * Load every remaining page. Use it when a search or filter is active so
+   * matches beyond the loaded pages are not missed.
+   */
+  loadAll?: boolean;
+};
+
+const useFlattenedFeed = (
+  query: ReturnType<typeof useInfiniteQuery<FeedPage, Error, InfiniteData<FeedPage, number>, readonly unknown[], number>>,
+  loadAll: boolean
+) => {
+  const { hasNextPage, isFetchingNextPage, fetchNextPage, isError } = query;
+  useEffect(() => {
+    if (loadAll && hasNextPage && !isFetchingNextPage && !isError) {
+      void fetchNextPage();
+    }
+  }, [loadAll, hasNextPage, isFetchingNextPage, isError, fetchNextPage]);
+
+  const pages = query.data?.pages;
+  const data = useMemo(() => {
+    if (!pages) return undefined;
+    const seen = new Set<string>();
+    const items: EventFeedItem[] = [];
+    for (const page of pages) {
+      for (const item of page.items) {
+        // Offsets can shift when rows are inserted; drop duplicates.
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        items.push(item);
+      }
+    }
+    return items;
+  }, [pages]);
+
+  return {
+    ...query,
+    data,
+    isLoadingAll: loadAll && (Boolean(hasNextPage) || isFetchingNextPage),
+  };
+};
+
+export const useEventsFeedQuery = ({ loadAll = false }: FeedQueryOptions = {}) => {
   const queryClient = useQueryClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
 
-  const query = useQuery<EventFeedItem[]>(eventsFeedQueryOptions());
+  const query = useFlattenedFeed(useInfiniteQuery(eventsFeedQueryOptions()), loadAll);
 
   useEffect(() => {
     const invalidateEvents = () => {
@@ -933,13 +1004,13 @@ export const useEventsFeedQuery = () => {
   return query;
 };
 
-export const useChallengesFeedQuery = () => {
+export const useChallengesFeedQuery = ({ loadAll = false }: FeedQueryOptions = {}) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const queryClient = useQueryClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
 
-  const query = useQuery<EventFeedItem[]>(challengesFeedQueryOptions(userId));
+  const query = useFlattenedFeed(useInfiniteQuery(challengesFeedQueryOptions(userId)), loadAll);
 
   useEffect(() => {
     const invalidateChallenges = () => {
@@ -999,15 +1070,21 @@ export const useChallengesFeedQuery = () => {
 };
 
 export const eventsFeedQueryOptions = () => ({
-  queryKey: eventsKeys.all,
-  queryFn: () => withBootTimeout(fetchEvents(), 15000, "La carga de eventos"),
+  queryKey: [...eventsKeys.all, "feed"] as readonly unknown[],
+  queryFn: ({ pageParam }: { pageParam: number }) =>
+    withBootTimeout(fetchEventsPage(pageParam), 15000, "La carga de eventos"),
+  initialPageParam: 0,
+  getNextPageParam: (lastPage: FeedPage) => lastPage.nextOffset ?? undefined,
   retry: false,
   staleTime: 30_000,
 });
 
 export const challengesFeedQueryOptions = (userId?: string) => ({
-  queryKey: challengesKeys.list(userId),
-  queryFn: () => withBootTimeout(fetchChallenges(userId), 15000, "La carga de desafíos"),
+  queryKey: [...challengesKeys.list(userId), "feed"] as readonly unknown[],
+  queryFn: ({ pageParam }: { pageParam: number }) =>
+    withBootTimeout(fetchChallengesPage(pageParam, userId), 15000, "La carga de desafíos"),
+  initialPageParam: 0,
+  getNextPageParam: (lastPage: FeedPage) => lastPage.nextOffset ?? undefined,
   retry: false,
   staleTime: 30_000,
 });
@@ -2125,11 +2202,13 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
         .from("event_messages")
         .select("id, event_id, sender_id, body, created_at")
         .eq("event_id", eventId)
-        .order("created_at", { ascending: true })
+        // Newest 200, so long chats still show (and can mark read) the latest.
+        .order("created_at", { ascending: false })
         .limit(200);
 
       if (error) throw error;
       if (!rows || rows.length === 0) return [];
+      rows.reverse();
 
       // Fetch profiles + first photo for all unique senders
       const senderIds = [...new Set(rows.map((r: any) => String(r.sender_id)))];
@@ -2657,12 +2736,28 @@ export const useMarkEventGroupReadMutation = () => {
     mutationFn: async ({ eventId, eventType, readAt }) => {
       if (!userId) throw new Error("Not authenticated");
 
+      // The chat hides messages from deleted accounts, but unread counts
+      // include them. Read up to the latest stored message so those hidden
+      // messages don't stay unread forever (e.g. in finished challenges).
+      const { data: latest, error: latestError } = await supabase
+        .from("event_messages")
+        .select("created_at")
+        .eq("event_id", eventId)
+        .eq("event_type", eventType)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestError) throw latestError;
+      const latestAt =
+        typeof latest?.created_at === "string" ? latest.created_at : null;
+      const lastReadAt = latestAt ?? readAt ?? new Date().toISOString();
+
       const { error } = await supabase.from("event_group_reads").upsert(
         {
           event_id: eventId,
           event_type: eventType,
           user_id: userId,
-          last_read_at: readAt ?? new Date().toISOString(),
+          last_read_at: lastReadAt,
         },
         { onConflict: "event_id,event_type,user_id" }
       );
@@ -2671,6 +2766,8 @@ export const useMarkEventGroupReadMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myEventGroups"] });
+      // Badges come from community_unread_counts; refresh them right away.
+      queryClient.invalidateQueries({ queryKey: ["communityUnread"] });
     },
   });
 };

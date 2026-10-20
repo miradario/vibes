@@ -26,8 +26,11 @@ export default function CommunityGroups({
   groups,
   invitations,
   variant = "list",
+  showGroups = true,
 }: {
   variant?: "create" | "list";
+  // Messages renders the groups itself, merged with event/challenge groups.
+  showGroups?: boolean;
   matches: MatchWithProfile[];
   groups: ReturnType<typeof useCommunityGroupsQuery>;
   invitations: ReturnType<typeof useCommunityInvitationsQuery>;
@@ -132,10 +135,10 @@ export default function CommunityGroups({
               </Text>
             </TouchableOpacity>
           ) : null}
-          {(groups.data ?? []).length > 0 ? (
+          {showGroups && (groups.data ?? []).length > 0 ? (
             <Text style={s.heading}>COMUNIDAD</Text>
           ) : null}
-          {(groups.data ?? []).map((group) => (
+          {(showGroups ? groups.data ?? [] : []).map((group) => (
             <TouchableOpacity
               accessibilityRole="button"
               key={group.id}
