@@ -91,6 +91,27 @@ const getArchiveItemKey = (
     ? `group:${item.item.eventType}:${item.item.eventId}`
     : `direct:${item.item.id}`;
 
+type GroupKind = "community" | "challenge" | "event";
+const GROUP_KIND_ICON: Record<GroupKind, { name: string; label: string }> = {
+  community: { name: "people-outline", label: "Grupo de comunidad" },
+  challenge: { name: "trophy-outline", label: "Desafío" },
+  event: { name: "calendar-outline", label: "Evento" },
+};
+
+const GroupKindIcon = ({ kind }: { kind: GroupKind }) => (
+  <View
+    accessible
+    accessibilityLabel={GROUP_KIND_ICON[kind].label}
+    style={localStyles.kindIcon}
+  >
+    <Icon
+      name={GROUP_KIND_ICON[kind].name}
+      size={14}
+      color={vibesTheme.colors.secondaryText}
+    />
+  </View>
+);
+
 const isFinishedChallengeGroup = (group: EventGroupSummary) => {
   if (group.eventType !== "challenge") return false;
   const startsAt = group.event?.startsAt;
@@ -519,9 +540,13 @@ export const MessagesContent = ({
         <ProfileMediaImage source={imgSource} style={localStyles.groupAvatar} />
         <View style={localStyles.rowBody}>
           <View style={localStyles.rowTitleLine}>
+            <GroupKindIcon kind={item.eventType} />
             <Text style={localStyles.rowTitle} numberOfLines={1}>
               {item.title}
             </Text>
+            {isFinishedChallengeGroup(item) || isFinishedEventGroup(item) ? (
+              <Text style={localStyles.finishedTag}>Finalizado</Text>
+            ) : null}
           </View>
           <Text style={localStyles.lastMessage} numberOfLines={2}>
             {messagePreview(item.lastMessage) ?? "No hay mensajes aún"}
@@ -594,15 +619,87 @@ export const MessagesContent = ({
     activeGroups.length +
     finishedEventGroups.length +
     finishedChallengeGroups.length;
-  const renderGroupSection = (title: string, items: EventGroupSummary[]) =>
-    items.length ? (
-      <View>
-        <Text style={localStyles.groupSectionLabel}>{title}</Text>
-        <View style={localStyles.rowsCard}>
-          {items.map((item, index) => renderGroupRow(item, index))}
+  const renderCommunityRow = (
+    group: NonNullable<typeof communityGroups.data>[number]
+  ) => (
+    <TouchableOpacity
+      key={`community:${group.id}`}
+      accessibilityRole="button"
+      style={localStyles.cardRow}
+      activeOpacity={0.78}
+      onPress={() =>
+        navigation.navigate(
+          "CommunityGroupChat" as never,
+          {
+            groupId: group.id,
+            name: group.name,
+            description: group.description,
+          } as never
+        )
+      }
+    >
+      {group.photoUrl ? (
+        <ProfileMediaImage
+          source={{ uri: group.photoUrl }}
+          style={localStyles.groupAvatar}
+        />
+      ) : (
+        <View style={[localStyles.groupAvatar, localStyles.groupAvatarEmpty]}>
+          <Icon
+            name="people-outline"
+            size={26}
+            color={vibesTheme.colors.accentMustard}
+          />
         </View>
+      )}
+      <View style={localStyles.rowBody}>
+        <View style={localStyles.rowTitleLine}>
+          <GroupKindIcon kind="community" />
+          <Text style={localStyles.rowTitle} numberOfLines={1}>
+            {group.name}
+          </Text>
+        </View>
+        <Text style={localStyles.lastMessage} numberOfLines={2}>
+          {messagePreview(group.lastMessage?.body ?? null) ??
+            "Todavía no hay mensajes"}
+        </Text>
       </View>
-    ) : null;
+      <View style={localStyles.rowMeta}>
+        <Text style={localStyles.rowTime}>
+          {formatTime(group.lastMessage?.created_at ?? null)}
+        </Text>
+        <UnreadBadge
+          count={Number(
+            unread.find(
+              (r) => r.kind === "group" && r.conversation_id === group.id
+            )?.unread_count ?? 0
+          )}
+        />
+      </View>
+    </TouchableOpacity>
+  );
+
+  // One list for every group type, newest activity first. Groups without
+  // messages fall back to their creation date (community) or go last.
+  const toTime = (iso: string | null | undefined) => {
+    const time = iso ? new Date(iso).getTime() : NaN;
+    return Number.isNaN(time) ? 0 : time;
+  };
+  const unifiedGroups = [
+    ...(communityGroups.data ?? []).map((group) => ({
+      at: toTime(group.lastMessage?.created_at ?? group.created_at),
+      title: group.name,
+      render: () => renderCommunityRow(group),
+    })),
+    ...[...activeGroups, ...finishedEventGroups, ...finishedChallengeGroups].map(
+      (group, index) => ({
+        at: toTime(group.lastMessageAt),
+        title: group.title,
+        render: () => renderGroupRow(group, index),
+      })
+    ),
+  ].sort((a, b) => b.at - a.at || a.title.localeCompare(b.title));
+
 
   return (
     <View style={[styles.bg, localStyles.screenBackground]}>
@@ -719,23 +816,16 @@ export const MessagesContent = ({
           <>
             <CommunityGroups
               variant="list"
+              showGroups={false}
               matches={matches ?? []}
               groups={communityGroups}
               invitations={communityInvitations}
             />
-            {renderGroupSection(
-              "EVENTOS",
-              activeGroups.filter((group) => group.eventType === "event")
-            )}
-            {renderGroupSection(
-              "DESAFÍOS",
-              activeGroups.filter((group) => group.eventType === "challenge")
-            )}
-            {renderGroupSection("EVENTOS FINALIZADOS", finishedEventGroups)}
-            {renderGroupSection(
-              "DESAFÍOS FINALIZADOS",
-              finishedChallengeGroups
-            )}
+            {unifiedGroups.length ? (
+              <View style={localStyles.rowsCard}>
+                {unifiedGroups.map((entry) => entry.render())}
+              </View>
+            ) : null}
             {!loading && !communityGroups.isError && !communityInvitations.isError && groupCount === 0 ? (
               <View style={localStyles.emptyState}>
                 <Text style={localStyles.emptyStateText}>
@@ -1078,6 +1168,20 @@ const localStyles = StyleSheet.create({
     flexWrap: "wrap",
     rowGap: 4,
     alignItems: "center",
+  },
+  kindIcon: {
+    marginRight: 5,
+  },
+  finishedTag: {
+    marginLeft: 6,
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: vibesTheme.fonts.medium,
+  },
+  groupAvatarEmpty: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   rowTitle: {
     flexShrink: 1,
