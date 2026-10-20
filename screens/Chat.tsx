@@ -11,7 +11,7 @@ import MessageReceipt from "../components/MessageReceipt";
 import { useMessageReceipts } from "../src/queries/communityReceipts.queries";
 /** @format */
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useMemo, useState } from "react";
 import {
   View,
   TouchableOpacity,
@@ -54,6 +54,12 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
+import SwipeToReply from "../components/SwipeToReply";
+import {
+  QuotedMessage,
+  ReplyPreviewBar,
+  type ReplyTarget,
+} from "../components/MessageReply";
 
 const REPORT_REASONS: ReportReason[] = [
   "Spam o contenido irrelevante",
@@ -135,6 +141,31 @@ const Chat = () => {
     useState<ReportReason | null>(null);
   const [reportDetails, setReportDetails] = useState("");
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  const messagesById = useMemo(
+    () => new Map((messages ?? []).map((message) => [message.id, message])),
+    [messages]
+  );
+  const otherDisplayName =
+    profile?.display_name || profile?.name || otherUserName || "Conexión";
+  const authorName = (senderId: string) =>
+    senderId === myId ? "Vos" : otherDisplayName;
+
+  const startReply = (msg: DirectMessage) => {
+    setReplyTo({ id: msg.id, author: authorName(msg.senderId), body: msg.text });
+    inputRef.current?.focus();
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    const index = (messages ?? []).findIndex((m) => m.id === messageId);
+    if (index < 0) return;
+    flatListRef.current?.scrollToIndex({
+      index,
+      animated: true,
+      viewPosition: 0.5,
+    });
+  };
   const lastMarkedReadAtRef = useRef<string | null>(null);
 
   // Auto-scroll when new messages arrive
@@ -169,12 +200,15 @@ const Chat = () => {
   const handleSend = () => {
     const body = text.trim();
     if (!body || !matchId) return;
+    const reply = replyTo;
     setText("");
+    setReplyTo(null);
     sendMutation.mutate(
-      { matchId, body },
+      { matchId, body, replyToMessageId: reply?.id ?? null },
       {
         onError: (err) => {
           setText(body);
+          setReplyTo(reply);
           Alert.alert("Error", err.message || "No se pudo enviar el mensaje");
         },
       }
@@ -315,6 +349,9 @@ const Chat = () => {
 
   const renderMessage = ({ item }: { item: DirectMessage }) => {
     const isOwn = item.senderId === myId;
+    const quoted = item.replyToMessageId
+      ? messagesById.get(item.replyToMessageId)
+      : null;
     const bubble = (
       <HeartMessageBubble
         canReact={!isOwn}
@@ -331,6 +368,13 @@ const Chat = () => {
       >
         {(press, longPress, reaction) => (
           <>
+            {item.replyToMessageId ? (
+              <QuotedMessage
+                author={quoted ? authorName(quoted.senderId) : undefined}
+                body={quoted?.text ?? null}
+                onPress={() => scrollToMessage(item.replyToMessageId!)}
+              />
+            ) : null}
             <ChatMessageContent
               onPhotoPress={press}
               onLongPress={longPress}
@@ -366,18 +410,23 @@ const Chat = () => {
       </HeartMessageBubble>
     );
 
+    const canReply = item.deliveryStatus !== "sending";
+
     if (isOwn) {
       return (
-        <MessageEntrance
-          sending={item.deliveryStatus === "sending"}
-          style={localStyles.ownMessageRow}
-        >
-          {bubble}
-        </MessageEntrance>
+        <SwipeToReply enabled={canReply} onReply={() => startReply(item)}>
+          <MessageEntrance
+            sending={item.deliveryStatus === "sending"}
+            style={localStyles.ownMessageRow}
+          >
+            {bubble}
+          </MessageEntrance>
+        </SwipeToReply>
       );
     }
 
     return (
+      <SwipeToReply enabled={canReply} onReply={() => startReply(item)}>
       <View style={localStyles.incomingMessageRow}>
         <TouchableOpacity
           activeOpacity={0.85}
@@ -387,6 +436,7 @@ const Chat = () => {
         </TouchableOpacity>
         {bubble}
       </View>
+      </SwipeToReply>
     );
   };
 
@@ -595,6 +645,12 @@ const Chat = () => {
               data={messages ?? []}
               keyExtractor={(item) => item.id}
               renderItem={renderMessage}
+              onScrollToIndexFailed={({ index, averageItemLength }) => {
+                flatListRef.current?.scrollToOffset({
+                  offset: index * averageItemLength,
+                  animated: true,
+                });
+              }}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode={
                 Platform.OS === "ios" ? "interactive" : "on-drag"
@@ -629,6 +685,12 @@ const Chat = () => {
             /><ChatVisibleDate date={visibleDate.date} /></View>
           )}
 
+          {replyTo ? (
+            <ReplyPreviewBar
+              target={replyTo}
+              onClose={() => setReplyTo(null)}
+            />
+          ) : null}
           {/* Input */}
           <View
             style={[
@@ -649,6 +711,7 @@ const Chat = () => {
               onSend={(body) => sendMutation.mutateAsync({ matchId, body })}
             />
             <TextInput
+              ref={inputRef}
               style={[
                 styles.eventChatInput,
                 localStyles.composerInput,

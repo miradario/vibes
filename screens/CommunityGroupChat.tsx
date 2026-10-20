@@ -16,7 +16,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../src/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import Avatar from "../components/Avatar";
-import React, { useEffect, useRef, useState } from "react";
+import SwipeToReply from "../components/SwipeToReply";
+import {
+  QuotedMessage,
+  ReplyPreviewBar,
+  type ReplyTarget,
+} from "../components/MessageReply";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, FlatList, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import {
@@ -33,6 +39,7 @@ import {
   useCommunityGroupsQuery,
   useUpdateCommunityGroupPhotoMutation,
   useSendCommunityMessageMutation,
+  type CommunityMessage,
 } from "../src/queries/communityGroups.queries";
 import { handleApiError } from "../src/utils/handleApiError";
 
@@ -167,11 +174,34 @@ export default function CommunityGroupChat() {
     );
   };
   const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  const listRef = useRef<FlatList<CommunityMessage>>(null);
+  const inputRef = useRef<TextInput>(null);
+  const messagesById = useMemo(
+    () => new Map((messages.data ?? []).map((m) => [m.id, m])),
+    [messages.data]
+  );
+  const authorName = (message: CommunityMessage) =>
+    message.sender_id === session?.user.id ? "Vos" : message.senderName;
+  const startReply = (message: CommunityMessage) => {
+    setReplyTo({
+      id: message.id,
+      author: authorName(message),
+      body: message.body,
+    });
+    inputRef.current?.focus();
+  };
+  const scrollToMessage = (messageId: string) => {
+    const index = (messages.data ?? []).findIndex((m) => m.id === messageId);
+    if (index < 0) return;
+    listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+  };
   const submit = async () => {
     if (!body.trim() || send.isPending) return;
     try {
-      await send.mutateAsync(body);
+      await send.mutateAsync({ body, replyToMessageId: replyTo?.id ?? null });
       setBody("");
+      setReplyTo(null);
     } catch (error) {
       handleApiError(error, { toastTitle: "No se pudo enviar el mensaje" });
     }
@@ -318,7 +348,14 @@ export default function CommunityGroupChat() {
           </Text>
         ) : null}
         <View style={{ flex: 1, position: "relative" }}><FlatList
+          ref={listRef}
           style={s.messages}
+          onScrollToIndexFailed={({ index, averageItemLength }) => {
+            listRef.current?.scrollToOffset({
+              offset: index * averageItemLength,
+              animated: true,
+            });
+          }}
           onViewableItemsChanged={visibleDate.onViewableItemsChanged}
           viewabilityConfig={receipts.viewabilityConfig}
           keyboardShouldPersistTaps="handled"
@@ -339,6 +376,7 @@ export default function CommunityGroupChat() {
                 {item.body}
               </Text>
             ) : (
+              <SwipeToReply onReply={() => startReply(item)}>
               <View
                 style={[
                   s.messageRow,
@@ -367,6 +405,24 @@ export default function CommunityGroupChat() {
                           ? "Vos"
                           : item.senderName}
                       </Text>
+                      {item.reply_to_message_id ? (
+                        <QuotedMessage
+                          author={
+                            messagesById.get(item.reply_to_message_id)
+                              ? authorName(
+                                  messagesById.get(item.reply_to_message_id)!
+                                )
+                              : undefined
+                          }
+                          body={
+                            messagesById.get(item.reply_to_message_id)?.body ??
+                            null
+                          }
+                          onPress={() =>
+                            scrollToMessage(item.reply_to_message_id!)
+                          }
+                        />
+                      ) : null}
                       <ChatMessageContent
                         onPhotoPress={press}
                         body={item.body}
@@ -392,9 +448,13 @@ export default function CommunityGroupChat() {
                   )}
                 </HeartMessageBubble>
               </View>
+              </SwipeToReply>
             )
           }
         /><ChatVisibleDate date={visibleDate.date} /></View>
+        {replyTo ? (
+          <ReplyPreviewBar target={replyTo} onClose={() => setReplyTo(null)} />
+        ) : null}
         <View
           style={[
             chatStyles.eventChatInputContainer,
@@ -410,9 +470,10 @@ export default function CommunityGroupChat() {
             chatId={groupId}
             userId={session?.user.id}
             disabled={send.isPending}
-            onSend={(body) => send.mutateAsync(body)}
+            onSend={(photoBody) => send.mutateAsync({ body: photoBody })}
           />
           <TextInput
+            ref={inputRef}
             accessibilityLabel="Mensaje"
             placeholder="Escribí un mensaje…"
             style={[
