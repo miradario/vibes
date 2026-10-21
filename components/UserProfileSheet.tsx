@@ -254,6 +254,8 @@ const GroupedPillList = ({
 // iOS photo <-> details crossfade timings (ms / px).
 const IOS_DETAILS_FADE_IN_MS = 220;
 const IOS_DETAILS_RISE_MS = 240;
+// Long enough for the LikeBubbles confirmation (850ms) to read before the card leaves.
+const CONNECT_BUTTON_CONFIRM_MS = 650;
 const IOS_DETAILS_FADE_OUT_MS = 200;
 const IOS_DETAILS_OFFSET_Y = 14;
 const IOS_DETAILS_PREWARM_MS = 450;
@@ -302,8 +304,18 @@ const UserProfileSheet = ({
   // Each card owns its native transform. Never recenter the outgoing card
   // while React is replacing its photo with the next profile.
   const swipeX = useMemo(() => new Animated.Value(0), [profile?.id]);
+  // Fades the ✓/✕ swipe stamp out once the card has left, so it doesn't stay
+  // frozen in the middle of the screen while the next profile loads.
+  const stampFade = useMemo(() => new Animated.Value(1), [profile?.id]);
   const swipeUp = useRef(new Animated.Value(0)).current;
   const swipingRef = useRef(false);
+  // Button connects play the confirmation first, then move to the next card.
+  const connectDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearConnectDelay = useCallback(() => {
+    if (connectDelayRef.current) clearTimeout(connectDelayRef.current);
+    connectDelayRef.current = null;
+  }, []);
+  useEffect(() => clearConnectDelay, [clearConnectDelay, profile?.id]);
   const currentProfileId = useRef(profile?.id);
   useLayoutEffect(() => {
     currentProfileId.current = profile?.id;
@@ -434,7 +446,10 @@ const UserProfileSheet = ({
       sub.remove();
     };
   }, []);
-  useLayoutEffect(() => () => swipeX.stopAnimation(), [swipeX]);
+  useLayoutEffect(() => () => {
+    swipeX.stopAnimation();
+    stampFade.stopAnimation();
+  }, [swipeX, stampFade]);
   useLayoutEffect(() => {
     if (!visible) {
       wasVisible.current = false;
@@ -445,24 +460,27 @@ const UserProfileSheet = ({
     setIsFollowingProfile(profile?.id !== openingProfileId.current);
     // Keep the outgoing card offscreen while the modal closes.
     setDetailsVisible(false);
+    clearConnectDelay();
     swipingRef.current = false;
     setSwipeAnimating(false);
     swipeX.stopAnimation();
     swipeX.setValue(0);
     swipeUp.setValue(0);
     setSwipeNextProfile((previous) => visible && previous?.id === profile?.id ? previous : null);
-  }, [profile?.id, visible, swipeX, swipeUp]);
+  }, [profile?.id, visible, swipeX, swipeUp, clearConnectDelay]);
   const resetSwipe = useCallback(() => {
     if (swipingRef.current) return;
     swipeUp.setValue(0);
+    stampFade.stopAnimation();
+    stampFade.setValue(1);
     Animated.timing(swipeX, {
       toValue: 0,
       duration: reduceMotion ? 0 : 180,
       useNativeDriver: true,
     }).start();
-  }, [swipeX, swipeUp, reduceMotion]);
+  }, [swipeX, swipeUp, stampFade, reduceMotion]);
   const commitSwipe = useCallback(
-    (direction: "like" | "pass") => {
+    (direction: "like" | "pass", source: "gesture" | "button" = "gesture") => {
       if (actionPending || swipingRef.current) return;
       const action =
         direction === "like" ? onContactPress : onSecondaryActionPress;
@@ -478,7 +496,8 @@ const UserProfileSheet = ({
       swipingRef.current = true;
       setSwipeNextProfile(nextProfile ?? null);
       setSwipeAnimating(true);
-      Animated.timing(swipeX, {
+      stampFade.setValue(1);
+      const flyOut = () => Animated.timing(swipeX, {
         toValue: (direction === "like" ? 1 : -1) * width * 1.3,
         duration: reduceMotion ? 0 : 240,
         useNativeDriver: true,
@@ -488,6 +507,12 @@ const UserProfileSheet = ({
           setSwipeAnimating(false);
           return;
         }
+        Animated.timing(stampFade, {
+          toValue: 0,
+          delay: reduceMotion ? 0 : 250,
+          duration: reduceMotion ? 0 : 220,
+          useNativeDriver: true,
+        }).start();
         void (async () => {
           try {
             const result = await action();
@@ -505,6 +530,15 @@ const UserProfileSheet = ({
           }
         })();
       });
+      if (direction === "like" && source === "button" && !reduceMotion) {
+        clearConnectDelay();
+        connectDelayRef.current = setTimeout(() => {
+          connectDelayRef.current = null;
+          if (swipingRef.current) flyOut();
+        }, CONNECT_BUTTON_CONFIRM_MS);
+      } else {
+        flyOut();
+      }
     },
     [
       actionPending,
@@ -513,6 +547,8 @@ const UserProfileSheet = ({
       onSecondaryActionPress,
       enableSwipe,
       swipeX,
+      stampFade,
+      clearConnectDelay,
       width,
       reduceMotion,
       resetSwipe,
@@ -522,7 +558,7 @@ const UserProfileSheet = ({
   );
   const like = () => {
     if (!actionPending && !swipingRef.current) {
-      commitSwipe("like");
+      commitSwipe("like", "button");
     }
   };
   const [gallerySelection, setGallerySelection] = useState({ profileId: profile?.id, index: 0 });
@@ -1097,11 +1133,11 @@ const UserProfileSheet = ({
                       }),
                     },
                   ],
-                  opacity: swipeX.interpolate({
+                  opacity: Animated.multiply(swipeX.interpolate({
                     inputRange: [16, 100],
                     outputRange: [0, 1],
                     extrapolate: "clamp",
-                  }),
+                  }), stampFade),
                 },
               ]}
             >
@@ -1128,11 +1164,11 @@ const UserProfileSheet = ({
                       }),
                     },
                   ],
-                  opacity: swipeX.interpolate({
+                  opacity: Animated.multiply(swipeX.interpolate({
                     inputRange: [-100, -16],
                     outputRange: [1, 0],
                     extrapolate: "clamp",
-                  }),
+                  }), stampFade),
                 },
               ]}
             >
