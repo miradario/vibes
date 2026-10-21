@@ -31,7 +31,6 @@ import { matchesQueryOptions } from "../src/queries/matches.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import {
   orderHomeSections,
-  pickFeaturedItem,
   type HomeSection,
 } from "../src/lib/homePersonalization";
 
@@ -83,14 +82,6 @@ function SectionHeader({
   );
 }
 
-function ForYouTag() {
-  return (
-    <View style={s.forYouTag}>
-      <Text style={s.forYouText}>Para ti</Text>
-    </View>
-  );
-}
-
 function OverviewLoadingPlaceholder() {
   return (
     <>
@@ -115,12 +106,10 @@ function ChallengeCard({
   event,
   userId,
   showProgress = true,
-  featured = false,
 }: {
   event: EventFeedItem;
   userId?: string;
   showProgress?: boolean;
-  featured?: boolean;
 }) {
   const navigation = useNavigation<any>();
   const checkins = useChallengeCheckinsQuery(event.id, userId);
@@ -166,7 +155,6 @@ function ChallengeCard({
         transition={180}
       />
       <View style={s.compactCopy}>
-        {featured ? <ForYouTag /> : null}
         <Text style={s.cardTitle} numberOfLines={2}>
           {event.title}
         </Text>
@@ -203,13 +191,7 @@ function ChallengeCard({
   );
 }
 
-function HomeEventCard({
-  event,
-  featured = false,
-}: {
-  event: EventFeedItem;
-  featured?: boolean;
-}) {
+function HomeEventCard({ event }: { event: EventFeedItem }) {
   const navigation = useNavigation<any>();
   const label = getEventDateLabel(
     nextEventSession(event.schedule, event.startsAt)?.startsAt ??
@@ -234,7 +216,6 @@ function HomeEventCard({
         transition={180}
       />
       <View style={s.compactCopy}>
-        {featured ? <ForYouTag /> : null}
         <Text style={s.cardTitle} numberOfLines={2}>
           {event.title}
         </Text>
@@ -301,18 +282,7 @@ export default function HomeOverview({
         .slice(0, 2);
   const preferences = useUserPreferencesQuery(userId).data;
   const matchesCount = useQuery(matchesQueryOptions(userId)).data?.length ?? 0;
-  const featuredEvent = pickFeaturedItem(
-    eventsFeed.data ?? [],
-    events,
-    preferences,
-    now
-  );
-  const visibleEvents = [
-    ...(featuredEvent ? [featuredEvent] : []),
-    ...(upcoming.length ? upcoming : suggestedEvents).filter(
-      (event) => event.id !== featuredEvent?.id
-    ),
-  ];
+  const visibleEvents = upcoming.length ? upcoming : suggestedEvents;
   const sectionOrder = orderHomeSections({
     preferences,
     joined: events,
@@ -349,18 +319,9 @@ export default function HomeOverview({
             new Date(b.startsAt ?? 0).getTime()
         )
         .slice(0, 3);
-  const featuredChallenge = pickFeaturedItem(
-    challengesFeed.data ?? [],
-    events,
-    preferences,
-    now
-  );
-  const challenges = [
-    ...(featuredChallenge ? [featuredChallenge] : []),
-    ...(homeChallenges.length ? homeChallenges : recommendedChallenges).filter(
-      (event) => event.id !== featuredChallenge?.id
-    ),
-  ];
+  const challenges = homeChallenges.length
+    ? homeChallenges
+    : recommendedChallenges;
   const challengeSectionTitle = homeChallenges.length
     ? "Tus desafíos"
     : "Desafíos para vos";
@@ -401,11 +362,7 @@ export default function HomeOverview({
       {visibleEvents.length ? (
         <View style={s.compactList}>
           {visibleEvents.map((event) => (
-            <HomeEventCard
-              key={event.id}
-              event={event}
-              featured={event.id === featuredEvent?.id}
-            />
+            <HomeEventCard key={event.id} event={event} />
           ))}
         </View>
       ) : eventsFeed.isLoading ? (
@@ -470,11 +427,7 @@ export default function HomeOverview({
               key={event.id}
               event={event}
               userId={userId}
-              featured={event.id === featuredChallenge?.id}
-              showProgress={
-                Boolean(homeChallenges.length) &&
-                event.id !== featuredChallenge?.id
-              }
+              showProgress={Boolean(homeChallenges.length)}
             />
           ))}
         </View>
@@ -489,19 +442,6 @@ export default function HomeOverview({
   return <>{sectionOrder.map((section) => sections[section])}</>;
 }
 const s = StyleSheet.create({
-  forYouTag: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: ACCENT,
-  },
-  forYouText: {
-    fontSize: 12,
-    lineHeight: 16,
-    color: vibesTheme.colors.surface,
-    fontFamily: vibesTheme.fonts.semibold,
-  },
   sectionBlock: {
     marginBottom: 24,
   },

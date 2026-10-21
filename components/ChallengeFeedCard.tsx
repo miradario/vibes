@@ -5,10 +5,11 @@ import Icon from "./Icon";
 import MediaImage from "./MediaImage";
 import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 import type { EventFeedItem } from "../src/queries/events.queries";
+import ForYouTag from "./ForYouTag";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-export default function ChallengeFeedCard({ item, joined, onPress, footer }: {
-  item: EventFeedItem; joined: boolean; onPress: () => void; footer?: React.ReactNode;
+export default function ChallengeFeedCard({ item, joined, onPress, footer, featured = false }: {
+  item: EventFeedItem; joined: boolean; onPress: () => void; footer?: React.ReactNode; featured?: boolean;
 }) {
   const timeline = getChallengeTimeline(item.startsAt, item.durationDays);
   const completed = Math.min(timeline.totalDays, Math.max(0, Number(item.viewerCompletedDaysCount) || 0));
@@ -19,6 +20,7 @@ export default function ChallengeFeedCard({ item, joined, onPress, footer }: {
     <View style={s.row}>
       <MediaImage source={typeof item.image === "string" ? { uri: item.image } : item.image} style={s.photo} />
       <View style={s.copy}>
+        {featured ? <ForYouTag /> : null}
         <Text style={s.title}>{item.title}</Text>
         <View style={s.metaRow}><Icon name="people" size={15} color={c.secondaryText} /><Text style={s.meta}>{count} {count === 1 ? "participante" : "participantes"}</Text><Icon name="time-outline" size={15} color={c.secondaryText} /><Text style={s.meta}>{timeline.totalDays} días</Text></View>
         {upcoming ? <View style={s.pending}><Text style={s.pendingText}>{timeline.startsInDays === 1 ? "Empieza mañana" : `Empieza en ${timeline.startsInDays} días`}</Text></View> : !joined ? <Text style={s.caption}>{timeline.status === "finished" ? "Finalizado" : `Día del grupo: ${timeline.currentDay} de ${timeline.totalDays}`}</Text> : null}
