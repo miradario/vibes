@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Text } from "../components/Typography";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import styles, { GRAY, TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
@@ -19,10 +19,14 @@ import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { supabase } from "../src/lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
+import { authKeys } from "../src/auth/auth.queries";
+import { resetVibiDailyGreeting } from "../src/lib/vibiDailyPrompts";
 
 const Configuration = () => {
   const navigation = useNavigation();
   const { t } = useI18n();
+  const queryClient = useQueryClient();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const deleteAccount = async () => {
@@ -35,11 +39,23 @@ const Configuration = () => {
       if (error || !(data as { ok?: boolean } | null)?.ok) {
         throw error ?? new Error("delete-account failed");
       }
-      // The auth user no longer exists: clear only the local session so the
-      // auth listener sends the app back to login.
-      try {
-        await supabase.auth.signOut({ scope: "local" });
-      } catch {}
+      // The auth user no longer exists: clear the local session (with a
+      // timeout, since signOut can hang once the user is gone), reset the
+      // cached session and send the app back to the Welcome screen.
+      await Promise.race([
+        supabase.auth.signOut({ scope: "local" }).catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+      resetVibiDailyGreeting();
+      queryClient.setQueryData(authKeys.session, null);
+      queryClient.clear();
+      setIsDeletingAccount(false);
+      const resetToWelcome = CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Welcome" as never }],
+      });
+      const parentNavigation = navigation.getParent();
+      (parentNavigation ?? navigation).dispatch(resetToWelcome);
     } catch (error) {
       console.error("[Configuration] delete account failed", error);
       setIsDeletingAccount(false);
