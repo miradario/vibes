@@ -132,6 +132,7 @@
       ],
       "./plugins/withFirebasePods",
       "./plugins/withIosDeploymentTarget",
+      "./plugins/withSceneLifecycle",
       "./plugins/withAndroidReleaseOptimization",
       "./plugins/withAndroidWindowCompatibility"
     ],
