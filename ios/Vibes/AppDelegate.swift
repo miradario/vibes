@@ -23,13 +23,7 @@ public class AppDelegate: ExpoAppDelegate {
     reactNativeFactory = factory
     bindReactNativeFactory(factory)
 
-#if os(iOS) || os(tvOS)
-    window = UIWindow(frame: UIScreen.main.bounds)
-    factory.startReactNative(
-      withModuleName: "main",
-      in: window,
-      launchOptions: launchOptions)
-#endif
+    // The window and React Native root are created in SceneDelegate (UIScene life cycle, required by iOS 27).
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
