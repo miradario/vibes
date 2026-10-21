@@ -1,16 +1,16 @@
 /** @format */
 
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
   Alert,
-  Linking,
+  ActivityIndicator,
 } from "react-native";
 import { Text } from "../components/Typography";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import styles, { GRAY, TEXT_SECONDARY } from "../assets/styles";
 import Icon from "../components/Icon";
@@ -18,14 +18,56 @@ import NotificationPreferencesSection from "../components/NotificationPreference
 import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
-
-const ACCOUNT_DELETION_URL =
-  "https://vibes.gurudevelopers.dev/eliminacion-de-datos";
+import { supabase } from "../src/lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
+import { authKeys } from "../src/auth/auth.queries";
+import { resetVibiDailyGreeting } from "../src/lib/vibiDailyPrompts";
 
 const Configuration = () => {
   const navigation = useNavigation();
   const { t } = useI18n();
+  const queryClient = useQueryClient();
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const deleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-account", {
+        method: "POST",
+        body: {},
+      });
+      if (error || !(data as { ok?: boolean } | null)?.ok) {
+        throw error ?? new Error("delete-account failed");
+      }
+      // The auth user no longer exists: clear the local session (with a
+      // timeout, since signOut can hang once the user is gone), reset the
+      // cached session and send the app back to the Welcome screen.
+      await Promise.race([
+        supabase.auth.signOut({ scope: "local" }).catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+      resetVibiDailyGreeting();
+      queryClient.setQueryData(authKeys.session, null);
+      queryClient.clear();
+      setIsDeletingAccount(false);
+      const resetToWelcome = CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Welcome" as never }],
+      });
+      const parentNavigation = navigation.getParent();
+      (parentNavigation ?? navigation).dispatch(resetToWelcome);
+    } catch (error) {
+      console.error("[Configuration] delete account failed", error);
+      setIsDeletingAccount(false);
+      Alert.alert(
+        t("profile.deleteAccountErrorTitle"),
+        t("profile.deleteAccountErrorMessage")
+      );
+    }
+  };
+
   const handleDeleteAccount = () => {
+    if (isDeletingAccount) return;
     Alert.alert(
       t("profile.deleteAccountTitle"),
       t("profile.deleteAccountMessage"),
@@ -38,7 +80,7 @@ const Configuration = () => {
           text: t("profile.deleteAccountConfirm"),
           style: "destructive",
           onPress: () => {
-            void Linking.openURL(ACCOUNT_DELETION_URL);
+            void deleteAccount();
           },
         },
       ]
@@ -67,14 +109,26 @@ const Configuration = () => {
         <NotificationPreferencesSection />
         <TouchableOpacity
           accessibilityRole="button"
-          style={[localStyles.card, { marginTop: 28 }]}
+          accessibilityState={{ disabled: isDeletingAccount, busy: isDeletingAccount }}
+          disabled={isDeletingAccount}
+          style={[
+            localStyles.card,
+            { marginTop: 28 },
+            isDeletingAccount && { opacity: 0.6 },
+          ]}
           onPress={handleDeleteAccount}
         >
           <Icon name="trash-outline" size={22} color={TEXT_SECONDARY} />
           <Text style={[localStyles.cardText, { flex: 1, marginLeft: 12 }]}>
-            {t("profile.deleteAccount")}
+            {isDeletingAccount
+              ? t("profile.deletingAccount")
+              : t("profile.deleteAccount")}
           </Text>
-          <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+          {isDeletingAccount ? (
+            <ActivityIndicator size="small" color={TEXT_SECONDARY} />
+          ) : (
+            <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

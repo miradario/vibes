@@ -353,9 +353,13 @@ const baseTranslations = {
       deleteAccount: "Eliminar cuenta",
       deleteAccountTitle: "Eliminar cuenta",
       deleteAccountMessage:
-        "Vas a ser redirigido al sitio oficial de Vibes para iniciar la eliminación permanente de tu cuenta y tus datos personales.",
+        "Tu cuenta y tus datos personales (perfil, fotos, mensajes y participaciones) se van a eliminar de forma permanente e inmediata. Esta acción no se puede deshacer.",
       deleteAccountCancel: "Cancelar",
-      deleteAccountConfirm: "Continuar",
+      deleteAccountConfirm: "Eliminar",
+      deletingAccount: "Eliminando cuenta...",
+      deleteAccountErrorTitle: "No pudimos eliminar tu cuenta",
+      deleteAccountErrorMessage:
+        "Ocurrió un error. Revisá tu conexión e intentá de nuevo.",
       loggingOut: "Cerrando sesión...",
       logout: "Cerrar sesión",
       aboutVibes: "Sobre Vibes",
@@ -1096,9 +1100,13 @@ const baseTranslations = {
       deleteAccount: "Delete account",
       deleteAccountTitle: "Delete account",
       deleteAccountMessage:
-        "You will be redirected to the official Vibes website to start the permanent deletion of your account and personal data.",
+        "Your account and personal data (profile, photos, messages and participations) will be permanently and immediately deleted. This action cannot be undone.",
       deleteAccountCancel: "Cancel",
-      deleteAccountConfirm: "Continue",
+      deleteAccountConfirm: "Delete",
+      deletingAccount: "Deleting account...",
+      deleteAccountErrorTitle: "We couldn't delete your account",
+      deleteAccountErrorMessage:
+        "Something went wrong. Check your connection and try again.",
       loggingOut: "Signing out...",
       logout: "Sign out",
       aboutVibes: "About Vibes",
