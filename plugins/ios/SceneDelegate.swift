@@ -32,6 +32,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
       fatalError("SceneDelegate: AppDelegate did not create the React Native factory.")
     }
 
+    let existingRootViewController = appDelegate.window?.rootViewController
+    appDelegate.window?.rootViewController = nil
     let window = UIWindow(windowScene: windowScene)
     self.window = window
     // Keep `UIApplication.shared.delegate?.window` working for libraries that read it.
@@ -40,14 +42,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     let browsingWebActivity = connectionOptions.userActivities.first {
       $0.activityType == NSUserActivityTypeBrowsingWeb
     }
-    factory.startReactNative(
-      withModuleName: "main",
-      in: window,
-      launchOptions: Self.launchOptions(
-        url: connectionOptions.urlContexts.first?.url,
-        userActivity: browsingWebActivity
+    if let existingRootViewController {
+      // A scene can reconnect while the React Native / Expo Updates instance is still running.
+      // Reattach its controller instead of starting Expo Updates a second time.
+      window.rootViewController = existingRootViewController
+      window.makeKeyAndVisible()
+    } else {
+      factory.startReactNative(
+        withModuleName: "main",
+        in: window,
+        launchOptions: Self.launchOptions(
+          url: connectionOptions.urlContexts.first?.url,
+          userActivity: browsingWebActivity
+        )
       )
-    )
+    }
 
     // Let the Expo subscribers (e.g. expo-linking's initial URL registry) see cold-start links.
     let application = UIApplication.shared
