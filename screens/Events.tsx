@@ -1,6 +1,9 @@
 import { sectionTabStyles } from "../components/SectionTabStyles";
 import BackButton from "../components/BackButton";
 import ChallengeFeedCard from "../components/ChallengeFeedCard";
+import ForYouTag from "../components/ForYouTag";
+import { pickFeaturedItem } from "../src/lib/homePersonalization";
+import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { eventHasExpired, normalizeSchedule, nextEventSession, sortEventsByDate } from "../src/lib/eventSchedule";
 import MediaImage from "../components/MediaImage";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -65,6 +68,7 @@ type FeedListItem =
       invitation?: ReceivedChallengeInvitation;
       keyPrefix?: string;
       reveal?: boolean;
+      featured?: boolean;
     };
 
 type PrivateBlock = "mine" | "invitations" | "participating";
@@ -388,7 +392,7 @@ const Events = ({
     return upcomingChallengeItems.filter((item) => !joinedChallengeIds.has(item.id));
   }, [joinedChallengeIds, section, upcomingChallengeItems]);
 
-  const listItems = useMemo<FeedListItem[]>(() => {
+  const baseListItems = useMemo<FeedListItem[]>(() => {
     if (section !== "challenge") {
       const joinedIds = new Set(myEventGroups.filter((group) => group.eventType === "event").map((group) => group.eventId));
       const joined = visibleItems.filter((item) => joinedIds.has(item.id));
@@ -470,6 +474,32 @@ const Events = ({
     t,
     viewerId,
   ]);
+
+  // "Para ti": one public, not-joined, still-open item picked with the Home
+  // scoring, shown first in the default list (not in past/private/started views).
+  const preferences = useUserPreferencesQuery(viewerId).data;
+  const featuredItem = useMemo(() => {
+    if (pastOnly || startedOnly || (section === "challenge" && challengeTab === "private")) return null;
+    const joined = myEventGroups.map((group) => group.event).filter(Boolean);
+    return pickFeaturedItem(
+      filteredItems.filter((item) => item.type === section),
+      joined,
+      preferences,
+      Date.now(),
+    );
+  }, [challengeTab, filteredItems, myEventGroups, pastOnly, preferences, section, startedOnly]);
+
+  const listItems = useMemo<FeedListItem[]>(() => {
+    if (!featuredItem) return baseListItems;
+    const rest = baseListItems.filter(
+      (row) => !(row.kind === "feed" && row.item.id === featuredItem.id),
+    );
+    // Drop section headers left without rows after moving the featured item.
+    const cleaned = rest.filter(
+      (row, index) => row.kind !== "section" || rest[index + 1]?.kind === "feed",
+    );
+    return [{ kind: "feed" as const, item: featuredItem, featured: true, keyPrefix: "featured" }, ...cleaned];
+  }, [baseListItems, featuredItem]);
 
   const listIsLoading =
     isLoading ||
@@ -741,6 +771,7 @@ const Events = ({
                     style={localStyles.eventThumbnail}
                   />
                   <View style={localStyles.eventCopy}>
+                    {listItem.featured ? <ForYouTag /> : null}
                     <Text style={localStyles.eventTitle} numberOfLines={2}>{item.title}</Text>
                     <View style={localStyles.eventMetadataRow}>
                       <Icon name="calendar-outline" size={17} color={vibesTheme.colors.accentBlue} />
@@ -762,7 +793,7 @@ const Events = ({
               );
             }
             const challengeRow = (
-              <ChallengeFeedCard item={item} joined={joinedChallengeIds.has(item.id)} onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)} footer={listItem.invitation || (listItem.restartable && viewerId) ? <>
+              <ChallengeFeedCard item={item} featured={listItem.featured} joined={joinedChallengeIds.has(item.id)} onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)} footer={listItem.invitation || (listItem.restartable && viewerId) ? <>
                   {listItem.invitation ? (
                     <View style={localStyles.cardActions}>
                       <Text style={restartStyles.statusText}>
