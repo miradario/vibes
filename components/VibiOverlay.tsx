@@ -250,7 +250,9 @@ export default function VibiOverlay({
             accessibilityHint="Quedará oculta hasta que vuelvas a iniciar la app."
             style={styles.control}
           >
-            <Ionicons name="close" size={20} color={colors.primaryText} />
+            <View style={styles.controlChip}>
+              <Ionicons name="close" size={18} color={colors.primaryText} />
+            </View>
           </Pressable>
       </Animated.View>
     </View>
@@ -267,7 +269,16 @@ const styles = StyleSheet.create({
     width: SIZE,
     alignItems: "center",
     borderRadius: SIZE / 2,
-    backgroundColor: "rgba(254, 254, 253, 0.8)",
+    // Solid surface + brand-blue ring + soft shadow so Vibi never blends into
+    // photos or cards underneath (Home and every screen where it floats).
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: "rgba(57, 120, 184, 0.35)",
+    shadowColor: colors.primaryText,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
   control: {
     position: "absolute",
@@ -277,5 +288,20 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+  },
+  controlChip: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    shadowColor: colors.primaryText,
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
 });
