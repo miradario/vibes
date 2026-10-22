@@ -3,6 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { Platform } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import { supabase } from "../lib/supabase";
 import { recoverInvalidRefreshToken } from "./session.recovery";
 import { vibesTheme } from "../theme/vibesTheme";
@@ -127,7 +128,87 @@ export const updatePassword = async (password: string) => {
   return auth.updateUser({ password });
 };
 
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim();
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+
+type GoogleSigninModule = typeof import("@react-native-google-signin/google-signin");
+let googleSigninModule: GoogleSigninModule | null | undefined;
+let googleSigninConfigured = false;
+
+// Native Google Sign-In needs a native build with the module linked and the
+// client IDs configured. Until both exist, keep the previous browser flow.
+const getNativeGoogleSignin = (): GoogleSigninModule | null => {
+  if (Platform.OS !== "ios" && Platform.OS !== "android") return null;
+  if (!GOOGLE_WEB_CLIENT_ID) return null;
+  if (Platform.OS === "ios" && !GOOGLE_IOS_CLIENT_ID) return null;
+  if (googleSigninModule === undefined) {
+    try {
+      googleSigninModule = require("@react-native-google-signin/google-signin");
+    } catch (error) {
+      console.warn("[auth] native Google Sign-In unavailable, using browser", error);
+      googleSigninModule = null;
+    }
+  }
+  if (googleSigninModule && !googleSigninConfigured) {
+    googleSigninModule.GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      iosClientId: GOOGLE_IOS_CLIENT_ID,
+      scopes: ["email", "profile"],
+    });
+    googleSigninConfigured = true;
+  }
+  return googleSigninModule ?? null;
+};
+
+const signInWithGoogleNative = async (
+  module: GoogleSigninModule
+): Promise<Session | null> => {
+  const { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } = module;
+  try {
+    if (Platform.OS === "android") {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    }
+    // Always show the account picker, like the previous prompt=select_account.
+    if (GoogleSignin.hasPreviousSignIn()) {
+      await GoogleSignin.signOut();
+    }
+    const response = await GoogleSignin.signIn();
+    if (!isSuccessResponse(response)) {
+      return null;
+    }
+    const idToken = response.data.idToken;
+    if (!idToken) {
+      throw new Error("Google ID token was not returned.");
+    }
+    const { data, error } = await (supabase.auth as any).signInWithIdToken({
+      provider: "google",
+      token: idToken,
+    });
+    if (error) {
+      throw error;
+    }
+    return data?.session ?? null;
+  } catch (error) {
+    if (
+      isErrorWithCode(error) &&
+      (error.code === statusCodes.SIGN_IN_CANCELLED ||
+        error.code === statusCodes.IN_PROGRESS)
+    ) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 export const signInWithGoogle = async (): Promise<Session | null> => {
+  const nativeGoogle = getNativeGoogleSignin();
+  if (nativeGoogle) {
+    return signInWithGoogleNative(nativeGoogle);
+  }
+  return signInWithGoogleBrowser();
+};
+
+const signInWithGoogleBrowser = async (): Promise<Session | null> => {
   const auth = supabase.auth as any;
   const { data, error } = await auth.signInWithOAuth({
     provider: "google",
@@ -190,7 +271,15 @@ export const signInWithApple = async (): Promise<Session | null> => {
     throw new Error("Sign in with Apple is only available on iOS.");
   }
 
+  // Supabase verifies the hashed nonce embedded in Apple's identity token.
+  const rawNonce = Crypto.randomUUID();
+  const hashedNonce = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    rawNonce
+  );
+
   const credential = await AppleAuthentication.signInAsync({
+    nonce: hashedNonce,
     requestedScopes: [
       AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
       AppleAuthentication.AppleAuthenticationScope.EMAIL,
@@ -205,6 +294,7 @@ export const signInWithApple = async (): Promise<Session | null> => {
   const { data, error } = await auth.signInWithIdToken({
     provider: "apple",
     token: credential.identityToken,
+    nonce: rawNonce,
   });
 
   if (error) {

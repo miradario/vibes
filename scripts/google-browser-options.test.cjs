@@ -10,6 +10,7 @@ function fixture(os, result) {
   'expo-linking': { createURL: (path) => `com.gurudevelopers.vibes://${path}` },
   'react-native': { Platform: { OS: os } },
   'expo-apple-authentication': {},
+  'expo-crypto': {},
   '../lib/supabase': { supabase: { auth: {
    signInWithOAuth: async () => ({ data: { url: 'https://example.com/oauth' } }),
    exchangeCodeForSession: async (code) => { exchanges.push(code); return { data: { session: { token: 'test' } } }; },
