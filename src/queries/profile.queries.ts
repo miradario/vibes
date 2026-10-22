@@ -86,3 +86,23 @@ export const profileQueryOptions = (userId?: string) => ({
   refetchOnWindowFocus: true,
   refetchOnReconnect: true,
 });
+
+/**
+ * Whether the signed-in user has photos that were marked as not valid from the
+ * backoffice (they are hidden by RLS, so the profile looks photo-less). Used
+ * only to pick the copy of the "add a photo" notice; any error (e.g. the RPC
+ * not deployed yet) falls back to the generic copy.
+ */
+export const useOwnInvalidPhotoQuery = (userId?: string, enabled = true) =>
+  useQuery<boolean>({
+    queryKey: ["own-invalid-photo", userId],
+    enabled: Boolean(userId) && enabled,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("my_profile_photo_status");
+      if (error) return false;
+      const row = (Array.isArray(data) ? data[0] : data) as { invalid_count?: number } | null;
+      return Number(row?.invalid_count ?? 0) > 0;
+    },
+  });

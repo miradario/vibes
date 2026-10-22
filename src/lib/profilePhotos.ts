@@ -4,6 +4,8 @@ export function hasProfilePhotos(
   return (
     Array.isArray(profile?.photos) &&
     profile.photos.some((photo: unknown) => {
+      // Photos marked as not valid from the backoffice don't count.
+      if (photo && typeof photo === "object" && "is_invalid" in photo && photo.is_invalid === true) return false;
       const url =
         typeof photo === "string"
           ? photo
