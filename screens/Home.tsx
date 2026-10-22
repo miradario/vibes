@@ -13,7 +13,7 @@ import { useLocalDay } from "../src/hooks/useLocalDay";
 import HomeConnectionRequests from "../components/HomeConnectionRequests";
 /** @format */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   TouchableOpacity,
@@ -22,7 +22,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Text } from "../components/Typography";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useScrollToTop } from "@react-navigation/native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -330,6 +330,15 @@ const readStoredFilters = (
 });
 
 const Home = () => {
+  // Any way of landing on Home (tab press, back, another tab, programmatic
+  // navigation) must show it from the top. useScrollToTop covers tapping the
+  // Home tab while already on Home; the focus effect covers every return.
+  const homeScrollRef = useRef<ScrollView>(null);
+  useScrollToTop(homeScrollRef as React.RefObject<ScrollView>);
+  useFocusEffect(useCallback(() => {
+    homeScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+    return () => homeScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+  }, []));
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -918,6 +927,7 @@ const Home = () => {
         />
 
         <ScrollView
+          ref={homeScrollRef}
           style={localStyles.homeScroll}
           contentContainerStyle={[
             localStyles.homeContent,
