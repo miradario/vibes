@@ -19,6 +19,8 @@ builds/
 # Environment variable files
 .env
 .env.local
+.env*
+!.env.example
 
 # Local tooling and generated/store assets
 .vscode/
