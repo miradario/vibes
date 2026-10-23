@@ -1,4 +1,5 @@
--- Matches are created on the server when two users like each other.
+-- Matches are created on the server when two users like each other,
+-- unless either one has blocked the other (user_blocks, both directions).
 -- Existing app builds keep working: they look up the match after a like and
 -- find the row created here, or their own insert hits the unique pair and
 -- they recover it with a lookup (swipes.mutations.ts).
@@ -28,6 +29,10 @@ begin
     where s.swiper_id = new.target_id
       and s.target_id = new.swiper_id
       and s.direction = 'like'
+  ) and not exists (
+    select 1 from public.user_blocks b
+    where (b.blocker_id = new.swiper_id and b.blocked_user_id = new.target_id)
+       or (b.blocker_id = new.target_id and b.blocked_user_id = new.swiper_id)
   ) then
     insert into public.matches (user1_id, user2_id)
     values (low_id, high_id)
@@ -62,4 +67,12 @@ create policy matches_insert on public.matches
       select 1 from public.swipes s
       where s.swiper_id = user2_id and s.target_id = user1_id and s.direction = 'like'
     )
+    and not exists (
+      select 1 from public.user_blocks b
+      where (b.blocker_id = user1_id and b.blocked_user_id = user2_id)
+         or (b.blocker_id = user2_id and b.blocked_user_id = user1_id)
+    )
   );
+
+-- A later nope/pass does not undo an existing match: unmatching is an
+-- explicit delete of the matches row (matches.queries.ts, unmatch).
