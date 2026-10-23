@@ -15,6 +15,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import {
   PRACTICE_OPTIONS,
   PURPOSE_OPTIONS,
+  getPurposeDisplayLabel,
   togglePurposeSelection,
 } from "../src/screens/Onboarding/vibesOnboardingContent";
 
@@ -136,7 +137,7 @@ export default function ProfileOnboardingFields({
             {PURPOSE_OPTIONS.map((option) => (
               <SelectablePill
                 key={option.id}
-                label={option.label}
+                label={getPurposeDisplayLabel(option.label)}
                 selected={value.openTo.includes(option.label)}
                 onPress={() => {
                   const selected = PURPOSE_OPTIONS.filter((item) =>

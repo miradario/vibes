@@ -45,6 +45,7 @@ import ProfileMediaImage from "./ProfileMediaImage";
 import type { UserProfileCardData } from "./UserProfileCard";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useSharedActivitiesQuery } from "../src/queries/sharedActivities.queries";
+import { getPurposeDisplayLabel } from "../src/screens/Onboarding/vibesOnboardingContent";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 import { VIBES_LOGO as VIBES_FALLBACK_ILLUSTRATION } from "../src/constants/brandAssets";
@@ -1289,7 +1290,7 @@ const UserProfileSheet = ({
               {profile.description || purpose || energy || profile.prompt ? (
                 <DetailSection label="Sobre mí" emphasized>
                   {profile.description ? <PillList items={[profile.description]} /> : null}
-                  {purpose ? <View style={localStyles.detailItem}><Text style={[localStyles.detailLabel, localStyles.emphasizedDetailLabel]}>Me trae a Vibes</Text><PillList items={[purpose]} /></View> : null}
+                  {purpose ? <View style={localStyles.detailItem}><Text style={[localStyles.detailLabel, localStyles.emphasizedDetailLabel]}>Me trae a Vibes</Text><PillList items={[getPurposeDisplayLabel(purpose)]} /></View> : null}
                   {energy ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Hoy me siento</Text><PillList items={[energy === "Sanando" ? "Óptimo" : energy]} blue /></View> : null}
                   {profile.prompt ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Ritual</Text><PillList items={[profile.prompt]} /></View> : null}
                 </DetailSection>

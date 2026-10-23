@@ -309,7 +309,7 @@ const baseTranslations = {
         button: "Entrar a Vibes",
       },
       purposeOptions: {
-        service: "Hacer servicio",
+        service: "Ayudar",
         challenges: "Desafíos",
         discover: "Conocer Gente (Descubrir)",
         dating: "Citas",
@@ -1056,7 +1056,7 @@ const baseTranslations = {
         button: "Enter Vibes",
       },
       purposeOptions: {
-        service: "Volunteer",
+        service: "Help",
         challenges: "Challenges",
         discover: "Meet People (Discover)",
         dating: "Dating",
