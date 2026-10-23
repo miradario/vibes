@@ -15,7 +15,14 @@ type Props = {
   compact?: boolean;
   canViewPhotos?: boolean;
 };
+const MAX_STACKED_REQUESTS = 3;
 export default function ConnectionStrip({ incomingLikes, newConnections, onRequests, onViewAll, onConnection, compact = false, canViewPhotos = true }: Props) {
+  // Requesters' photos overlap like an avatar stack; without a viewable photo each falls back to the Vibes logo.
+  const stackedLikes = incomingLikes.slice(0, MAX_STACKED_REQUESTS);
+  const avatarBox = compact ? 54 : 66;
+  const avatarSize = compact ? 48 : 60;
+  const stackStep = Math.round(avatarBox * 0.55);
+  const stackWidth = avatarBox + Math.max(0, stackedLikes.length - 1) * stackStep;
   return (<>
         {(incomingLikes.length > 0 || newConnections.length > 0) ? (
           <View style={[s.connectionsStrip, compact && { marginBottom: 12 }]}>
@@ -25,11 +32,13 @@ export default function ConnectionStrip({ incomingLikes, newConnections, onReque
             </TouchableOpacity>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripPeople}>
               {incomingLikes.length > 0 && <>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver ${incomingLikes.length} solicitudes de conexión`} onPress={onRequests} style={[s.stripPerson, compact && { width: 62 }]}>
-                  <View style={[s.requestAvatarWrap, compact && { width: 54, height: 54 }]}>
-                    <View style={[s.stripAvatar, { borderColor: vibesTheme.colors.accentMustard }, compact && { width: 54, height: 54, borderRadius: 27 }]}>
-                      <Avatar uri={incomingLikes[0]?.likerUserPhoto ?? null} size={compact ? 48 : 60} blurRadius={16} />
-                    </View>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver ${incomingLikes.length} solicitudes de conexión`} onPress={onRequests} style={[s.stripPerson, { width: stackWidth }]}>
+                  <View style={[s.requestStack, { width: stackWidth, height: avatarBox }]}>
+                    {stackedLikes.map((like, index) => (
+                      <View key={like.id ?? index} style={[s.stripAvatar, s.stackedAvatar, { width: avatarBox, height: avatarBox, borderRadius: avatarBox / 2, left: index * stackStep, zIndex: stackedLikes.length - index }]}>
+                        <Avatar uri={canViewPhotos ? like.likerUserPhoto ?? null : null} size={avatarSize} />
+                      </View>
+                    ))}
                     <View style={s.requestBadge}><Text style={s.requestCount}>{incomingLikes.length > 99 ? "99+" : incomingLikes.length}</Text></View>
                   </View>
                   <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.stripName, { fontFamily: vibesTheme.fonts.bold }]}>Solicitudes</Text>
@@ -53,7 +62,8 @@ const s = StyleSheet.create({
   stripPeople: { alignItems: "flex-start", gap: 12, paddingTop: 6, paddingBottom: 4, paddingRight: 8 },
   stripPerson: { width: 74, alignItems: "center", gap: 8 },
   stripAvatar: { width: 66, height: 66, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, borderRadius: 33, padding: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.surface, overflow: "hidden" },
-  requestAvatarWrap: { width: 66, height: 66 },
+  requestStack: { position: "relative" },
+  stackedAvatar: { position: "absolute", top: 0, borderColor: vibesTheme.colors.accentMustard },
   requestBadge: { position: "absolute", top: -4, right: -4, minWidth: 24, height: 24, paddingHorizontal: 5, borderRadius: 12, borderWidth: 2, borderColor: vibesTheme.colors.surface, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
   requestCount: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 12 },
   stripName: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, lineHeight: 16, textAlign: "center" },
