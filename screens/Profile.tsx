@@ -5,7 +5,7 @@ import { useEmailOwnershipQuery } from "../src/queries/emailOwnership.queries";
 import { isEmailOwnershipVerified } from "../src/auth/emailVerification";
 /** @format */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Platform,
   StyleSheet,
@@ -30,6 +30,7 @@ import VibesLoader from "../components/VibesLoader";
 import { getInstalledAppVersion, getInstalledAppBuildNumber } from "../src/lib/appUpdateGate";
 import appConfig from "../app.json";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import UserProfileSheet from "../components/UserProfileSheet";
 
 const Profile = () => {
   const { t, locale } = useI18n();
@@ -58,6 +59,7 @@ const Profile = () => {
   );
 
   const displayName = ownProfile.name;
+  const [showPreview, setShowPreview] = useState(false);
 
   const location = [profile?.neighborhood, profile?.city, profile?.country].filter((part):part is string => typeof part === "string" && Boolean(part.trim())).map(part => part.trim()).join(", ") || ownProfile.location || "Ubicación sin completar";
   const ownAvatarUri = ownProfile.avatarUri ?? null;
@@ -162,8 +164,23 @@ const Profile = () => {
             ) : null}
           </View>
           </View>
-
+          <TouchableOpacity
+            style={[localStyles.editButton, localStyles.previewButton]}
+            accessibilityRole="button"
+            accessibilityLabel="Ver mi perfil como lo ven los demás"
+            disabled={!profile}
+            onPress={() => setShowPreview(true)}
+          >
+            <Icon name="eye-outline" size={20} color={vibesTheme.colors.accentBlue} />
+            <Text style={localStyles.editText}>Ver mi perfil</Text>
+          </TouchableOpacity>
         </View>
+
+        <UserProfileSheet
+          visible={showPreview}
+          profile={ownProfile}
+          onClose={() => setShowPreview(false)}
+        />
 
         <View style={localStyles.menuList}>
           {menuItems.map((item, index) => (
@@ -229,6 +246,7 @@ const localStyles = StyleSheet.create({
   zodiac: { color: colors.accentBlue },
   editButton: { minHeight: 44, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: `${colors.accentBlue}18`, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   editText: { fontFamily: vibesTheme.fonts.semibold, fontSize: 14, color: colors.accentBlue, flexShrink: 1 },
+  previewButton: { marginTop: 14 },
   menuList: { gap: 8, marginBottom: 12 },
   menuItem: { minHeight: 56, flexDirection: "row", alignItems: "center", padding: 10, borderRadius: 14, borderWidth: 1, borderColor: `${colors.primaryText}20`, backgroundColor: `${colors.primaryText}03`, gap: 10 },
   menuItemLast: { marginBottom: 0 },
