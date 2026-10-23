@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import VibiCharacter from "../components/Vibi";
+import VibesLoader from "../components/VibesLoader";
 import ScreenContainer from "../components/ScreenContainer";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import UserProfileSheet from "../components/UserProfileSheet";
@@ -160,6 +161,8 @@ function VibiConversation({ userId }: { userId: string }) {
   const [exchanges, setExchanges] = useState<VibiExchange[]>([]);
   const [before, setBefore] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [conversationHeight, setConversationHeight] = useState(0);
+  const [anchoredRequestId, setAnchoredRequestId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [sending, setSending] = useState(false);
@@ -241,6 +244,8 @@ function VibiConversation({ userId }: { userId: string }) {
     setSending(true);
     reactWithVibi("thinking");
     setPending(request);
+    setDraft("");
+    setAnchoredRequestId(request.id);
     setError(null);
     setNotice(null);
     autoScroll.current = true;
@@ -256,7 +261,6 @@ function VibiConversation({ userId }: { userId: string }) {
       setExchanges((current) => mergeVibiExchanges(current, [result.exchange]));
       setPending(null);
       setDraft("");
-      autoScroll.current = true;
     } catch (e) {
       if (mounted.current) {
         reactWithVibi("sad");
@@ -351,6 +355,7 @@ function VibiConversation({ userId }: { userId: string }) {
       await resetVibiHistory(conversationId);
       if (!mounted.current) return;
       setExchanges([]);
+      setAnchoredRequestId(null);
       setPending(null);
       setDraft("");
       setConversationId(null);
@@ -457,13 +462,29 @@ function VibiConversation({ userId }: { userId: string }) {
                 data={exchanges}
                 keyExtractor={(item) => String(item.id)}
                 renderItem={({ item }) => (
-                  <Exchange item={item} onOpen={openCard} disabled={disabled} />
+                  <View
+                    style={item.request_id === anchoredRequestId
+                      ? { minHeight: conversationHeight }
+                      : undefined}
+                  >
+                    <Exchange item={item} onOpen={openCard} disabled={disabled} />
+                  </View>
                 )}
+                onLayout={(event) => setConversationHeight(event.nativeEvent.layout.height)}
                 contentContainerStyle={s.messages}
                 keyboardShouldPersistTaps="handled"
-                onContentSizeChange={() => {
+                onContentSizeChange={(_width, height) => {
                   if (autoScroll.current) {
-                    list.current?.scrollToEnd({ animated: false });
+                    if (pending && conversationHeight > 0) {
+                      // The full-height footer provides enough space below the
+                      // new bubble to align its top with the viewport.
+                      list.current?.scrollToOffset({
+                        offset: Math.max(0, height - conversationHeight - 24),
+                        animated: false,
+                      });
+                    } else {
+                      list.current?.scrollToEnd({ animated: false });
+                    }
                     autoScroll.current = false;
                   }
                 }}
@@ -496,22 +517,23 @@ function VibiConversation({ userId }: { userId: string }) {
                 }
                 ListFooterComponent={
                   pending ? (
+                    <View style={{ minHeight: conversationHeight }}>
                     <View style={s.exchange}>
                       <View style={s.userBubble}>
                         <Text style={s.message}>{pending.message}</Text>
                       </View>
                       <Text style={s.subtitle} accessibilityLiveRegion="polite">
                         {sending
-                          ? "Vibi está buscando…"
+                          ? "Vibi está meditando la respuesta…"
                           : "El mensaje todavía no se completó."}
                       </Text>
                       {sending ? (
-                        <VibiCharacter
-                          state="breathing"
-                          size={64}
-                          paused={!chatVisible}
+                        <VibesLoader
+                          size={32}
+                          accessibilityLabel="Vibi está meditando la respuesta"
                         />
                       ) : null}
+                    </View>
                     </View>
                   ) : null
                 }
@@ -712,7 +734,6 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.accentMustard,
     alignItems: "center",
     justifyContent: "center",
   },
