@@ -1016,7 +1016,7 @@ const UserProfileSheet = ({
 
           </Animated.View>
           {!canViewPhotos ? (
-            <View style={{ position: "absolute", left: 20, right: 20, top: insets.top + 60, zIndex: 10 }}>
+            <View style={{ position: "absolute", left: 78, right: 16, top: insets.top + 4, zIndex: 10 }}>
               <ProfilePhotoPrompt onPress={() => { onClose(); navigation.navigate("EditProfile" as never, { photoRequestId: Date.now() } as never); }} />
             </View>
           ) : null}
