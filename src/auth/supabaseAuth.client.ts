@@ -128,8 +128,13 @@ export const updatePassword = async (password: string) => {
   return auth.updateUser({ password });
 };
 
-const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim();
-const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+// OAuth client IDs are public identifiers (not secrets); env vars can override.
+const GOOGLE_WEB_CLIENT_ID =
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() ||
+  "882317782417-0g7fu4cv1dn5sj06mqm53ucuqf56ak82.apps.googleusercontent.com";
+const GOOGLE_IOS_CLIENT_ID =
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() ||
+  "882317782417-auap7o54o3s60vnec3raf9a8kph8qtn8.apps.googleusercontent.com";
 
 type GoogleSigninModule = typeof import("@react-native-google-signin/google-signin");
 let googleSigninModule: GoogleSigninModule | null | undefined;

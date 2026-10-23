@@ -123,7 +123,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.REPLACE_WITH_IOS_CLIENT_ID"
+          "iosUrlScheme": "com.googleusercontent.apps.882317782417-auap7o54o3s60vnec3raf9a8kph8qtn8"
         }
       ],
       "expo-web-browser",
