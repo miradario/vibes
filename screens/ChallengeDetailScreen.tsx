@@ -1387,6 +1387,7 @@ const ChallengeDetailScreen = () => {
         }
       >
         <View style={localStyles.footerSliderTrack}>
+          <View pointerEvents="none" style={localStyles.footerSliderTint} />
           <View
             style={[
               localStyles.footerSliderFill,
@@ -2959,17 +2960,21 @@ const localStyles = StyleSheet.create({
   footerSliderTrack: {
     minHeight: 68,
     borderRadius: 34,
-    backgroundColor: `${vibesTheme.colors.accentBlue}14`,
-    borderWidth: 1,
-    borderColor: `${vibesTheme.colors.accentBlue}70`,
+    backgroundColor: `${vibesTheme.colors.surface}D9`,
+    borderWidth: 1.5,
+    borderColor: `${vibesTheme.colors.accentBlue}A6`,
     overflow: "hidden",
     justifyContent: "center",
     paddingLeft: 70,
     paddingRight: 36,
   },
   footerSliderTrackCompleted: {
-    backgroundColor: "rgba(254, 254, 253, 0.88)",
-    borderColor: "rgba(254, 254, 253, 0.88)",
+    backgroundColor: vibesTheme.colors.surface,
+    borderColor: `${vibesTheme.colors.accentBlue}A6`,
+  },
+  footerSliderTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: `${vibesTheme.colors.accentBlue}24`,
   },
   footerSliderFill: {
     position: "absolute",
@@ -2977,7 +2982,7 @@ const localStyles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: 34,
-    backgroundColor: `${vibesTheme.colors.accentBlue}14`,
+    backgroundColor: `${vibesTheme.colors.accentBlue}2E`,
   },
   footerSliderHandle: {
     position: "absolute",
