@@ -19,6 +19,8 @@ builds/
 # Environment variable files
 .env
 .env.local
+.env*
+!.env.example
 
 # Local tooling and generated/store assets
 .vscode/
@@ -35,3 +37,10 @@ supabase/.temp/
 
 # Local Kotlin compiler sessions
 /android/.kotlin/
+
+# Scripts locales y archivos temporales
+/_*.cjs
+/check-*.cjs
+/check-*.mjs
+/session-*.mdx
+/tmp/
