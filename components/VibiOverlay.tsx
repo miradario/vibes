@@ -20,8 +20,13 @@ import { useVibi } from "../src/vibi/useVibi";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import { setVisible } from "../src/vibi/controller";
 
-const SIZE = 64;
-const CLOSE_SPACE = 36;
+const OVERLAY_SCALE = 0.8;
+const SIZE = 64 * OVERLAY_SCALE;
+const BUTTON_PADDING = vibesTheme.spacing.sm * OVERLAY_SCALE;
+const BUTTON_BORDER = 2 * OVERLAY_SCALE;
+const BUTTON_SIZE = SIZE + (BUTTON_PADDING + BUTTON_BORDER) * 2;
+const CLOSE_SPACE = 36 * OVERLAY_SCALE;
+const CLOSE_INSET = (BUTTON_SIZE / 2) * (1 - Math.SQRT1_2);
 const GAP = 12;
 const colors = vibesTheme.colors;
 const AUTH_ROUTES = new Set([
@@ -112,9 +117,9 @@ export default function VibiOverlay({
       hide.remove();
     };
   }, []);
-  const boxWidth = SIZE;
-  const expandedHeight = SIZE;
-  const boxHeight = SIZE + CLOSE_SPACE;
+  const boxWidth = BUTTON_SIZE;
+  const expandedHeight = BUTTON_SIZE;
+  const boxHeight = BUTTON_SIZE + CLOSE_SPACE;
   // Tab bar includes a raised selected icon, so leave space above its crest.
   const bottomSpace = hasBottomBar
     ? getBottomTabBarHeight(fontScale) + Math.max(insets.bottom + 8, 18) + 38
@@ -218,7 +223,7 @@ export default function VibiOverlay({
           {
             width: boxWidth,
             height: boxHeight,
-            transform: position.getTranslateTransform(),
+            transform: [...position.getTranslateTransform(), { translateY: floatOffset }],
           },
         ]}
       >
@@ -228,7 +233,7 @@ export default function VibiOverlay({
           pointerEvents={shown ? "auto" : "none"}
           style={[
             styles.fullCharacter,
-            { height: expandedHeight, transform: [{ translateY: floatOffset }] },
+            { height: expandedHeight },
           ]}
           accessibilityElementsHidden={!shown}
           importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
@@ -250,7 +255,9 @@ export default function VibiOverlay({
             accessibilityHint="Quedará oculta hasta que vuelvas a iniciar la app."
             style={styles.control}
           >
-            <Ionicons name="close" size={20} color={colors.primaryText} />
+            <View style={styles.controlChip}>
+              <Ionicons name="close" size={18 * OVERLAY_SCALE} color={colors.primaryText} />
+            </View>
           </Pressable>
       </Animated.View>
     </View>
@@ -264,18 +271,44 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: CLOSE_SPACE,
     left: 0,
-    width: SIZE,
+    width: BUTTON_SIZE,
     alignItems: "center",
-    borderRadius: SIZE / 2,
-    backgroundColor: "rgba(254, 254, 253, 0.8)",
+    justifyContent: "center",
+    padding: BUTTON_PADDING,
+    borderRadius: BUTTON_SIZE / 2,
+    // Solid surface + brand-blue ring + soft shadow so Vibi never blends into
+    // photos or cards underneath (Home and every screen where it floats).
+    backgroundColor: colors.surface,
+    borderWidth: BUTTON_BORDER,
+    borderColor: `${colors.accentBlue}59`,
+    shadowColor: colors.primaryText,
+    shadowOpacity: 0.18,
+    shadowRadius: 10 * OVERLAY_SCALE,
+    shadowOffset: { width: 0, height: 4 * OVERLAY_SCALE },
+    elevation: 6,
   },
   control: {
     position: "absolute",
-    top: 0,
-    right: 0,
+    top: CLOSE_SPACE + CLOSE_INSET - 25,
+    right: CLOSE_INSET - 22,
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+  },
+  controlChip: {
+    width: 28 * OVERLAY_SCALE,
+    height: 28 * OVERLAY_SCALE,
+    borderRadius: 14 * OVERLAY_SCALE,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    shadowColor: colors.primaryText,
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
 });
