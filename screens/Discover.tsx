@@ -2,7 +2,6 @@ import SessionRecoveryAction from "../components/SessionRecoveryAction";
 import RangeSlider from "../components/RangeSlider";
 import { normalizeRangeBounds } from "../src/lib/rangeSlider";
 import CountrySelector from "../components/CountrySelector";
-import ProfilePhotoPrompt from "../components/ProfilePhotoPrompt";
 import { hasProfilePhotos, comparePhotoPriority } from "../src/lib/profilePhotos";
 import PhotoViewer from "../components/PhotoViewer";
 import { getNextProfile } from "../src/lib/profileSwipe";
@@ -1103,7 +1102,6 @@ export const DiscoverContent = forwardRef<
           </View>
         ) : null}
 
-        <ProfilePhotoPrompt />
         {appliedFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>
           {appliedFilterChips.map(chip => <TouchableOpacity key={chip.id} accessibilityRole="button" accessibilityLabel={`Quitar filtro: ${chip.label}`} onPress={chip.remove} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 40, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14` }}>
             <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 13 }}>{chip.label}</Text><Icon name="close" size={17} color={vibesTheme.colors.accentBlue} />
