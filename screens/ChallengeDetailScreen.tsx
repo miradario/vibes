@@ -1387,6 +1387,7 @@ const ChallengeDetailScreen = () => {
         }
       >
         <View style={localStyles.footerSliderTrack}>
+          <View pointerEvents="none" style={localStyles.footerSliderTint} />
           <View
             style={[
               localStyles.footerSliderFill,
@@ -2959,9 +2960,7 @@ const localStyles = StyleSheet.create({
   footerSliderTrack: {
     minHeight: 68,
     borderRadius: 34,
-    // Opaque track (surface tinted with the brand blue) so the slider stays
-    // visible over the challenge background instead of blending into it.
-    backgroundColor: "#E3ECF5",
+    backgroundColor: `${vibesTheme.colors.surface}D9`,
     borderWidth: 1.5,
     borderColor: `${vibesTheme.colors.accentBlue}A6`,
     overflow: "hidden",
@@ -2972,6 +2971,10 @@ const localStyles = StyleSheet.create({
   footerSliderTrackCompleted: {
     backgroundColor: vibesTheme.colors.surface,
     borderColor: `${vibesTheme.colors.accentBlue}A6`,
+  },
+  footerSliderTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: `${vibesTheme.colors.accentBlue}24`,
   },
   footerSliderFill: {
     position: "absolute",
