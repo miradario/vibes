@@ -1,3 +1,5 @@
+import ScreenContainer from "../components/ScreenContainer";
+import {creationFormStyles} from "../src/theme/creationFormStyles";
 import { launchAppCamera } from "../components/AppCamera";
 import ChallengeDaysSection from "../components/challengeDays/ChallengeDaysSection";
 /** @format */
@@ -18,7 +20,6 @@ import { Text, TextInput } from "../components/Typography";
 import * as ImagePicker from "expo-image-picker";
 import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import {
-  SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import DateTimePicker, {
@@ -87,16 +88,14 @@ const CreateChallenge = () => {
   const createChallengeMutation = useCreateChallengeMutation();
   const updateChallengeMutation = useUpdateChallengeMutation();
   const [title, setTitle] = useState(editing?.title ?? "");
-  const [subtitle, setSubtitle] = useState(editing?.description ?? editing?.subtitle ?? "");
+  const [subtitle, setSubtitle] = useState(editing?.description?.trim() ? editing.description : editing?.subtitle ?? "");
   const [days, setDays] = useState(editing?.durationDays ? String(editing.durationDays) : "");
   const [visibility, setVisibility] = useState<ChallengeVisibility>(editing?.visibility ?? "public");
   const [challengeStartDate, setChallengeStartDate] = useState<Date | null>(
     editing?.startsAt ? new Date(editing.startsAt) : null
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [challengeImageUri, setChallengeImageUri] = useState<string | null>(
-    editing?.imageUrl && /^https?:\/\//i.test(editing.imageUrl) ? editing.imageUrl : null
-  );
+  const [challengeImageUri, setChallengeImageUri] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const titleInputRef = useRef<TextInput>(null);
   const subtitleInputRef = useRef<TextInput>(null);
@@ -105,7 +104,7 @@ const CreateChallenge = () => {
   const isFormReady =
     title.trim().length > 0 &&
     subtitle.trim().length > 0 &&
-    Boolean(challengeImageUri || editing?.image) &&
+    Boolean(challengeImageUri || editing?.image || editing?.imageUrl) &&
     Boolean(challengeStartDate || editing) &&
     Number.isFinite(parsedDays) &&
     parsedDays > 0;
@@ -197,11 +196,12 @@ const CreateChallenge = () => {
   };
 
   const handleCreate = async () => {
+    if (createChallengeMutation.isPending || updateChallengeMutation.isPending) return;
     const missing: string[] = [];
 
     if (!title.trim()) missing.push("título");
     if (!subtitle.trim()) missing.push("descripción");
-    if (!challengeImageUri && !editing?.image) missing.push("foto de portada");
+    if (!challengeImageUri && !editing?.image && !editing?.imageUrl) missing.push("foto de portada");
     if (!challengeStartDate && !editing) missing.push("fecha de comienzo");
 
     if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
@@ -275,25 +275,25 @@ const CreateChallenge = () => {
   };
 
   return (
-    <SafeAreaView style={styles.bg} edges={["top", "left", "right"]}>
+    <ScreenContainer edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         style={localStyles.keyboardAvoiding}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Math.max(insets.top - 8, 0)}
+        keyboardVerticalOffset={0}
       >
         <AppHeader
           title={editing ? "Editar desafío" : "Crear desafío"}
           showBack
           onBack={() => navigation.goBack()}
-          style={localStyles.fixedHeader}
+          style={[localStyles.fixedHeader,{paddingHorizontal:24,marginHorizontal:0}]}
           titleStyle={localStyles.screenTitle}
         />
 
         <ScrollView
-          style={styles.editContainer}
+          style={{flex:1}}
           contentContainerStyle={[
             localStyles.content,
-            { paddingBottom: 132 + insets.bottom },
+            { paddingBottom: 24 },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
@@ -321,10 +321,10 @@ const CreateChallenge = () => {
               activeOpacity={0.88}
               onPress={() => setPhotoModalVisible(true)}
             >
-              {challengeImageUri || editing?.image ? (
+              {challengeImageUri || editing?.image || editing?.imageUrl ? (
                 <>
                   <Image
-                    source={challengeImageUri ? { uri: challengeImageUri } : typeof editing?.image === "string" ? { uri: editing.image } : editing?.image}
+                    source={challengeImageUri || editing?.imageUrl ? { uri: challengeImageUri || editing!.imageUrl! } : typeof editing?.image === "string" ? { uri: editing.image } : editing?.image}
                     style={localStyles.coverImage}
                   />
                   <View style={localStyles.coverScrim} />
@@ -568,11 +568,11 @@ const CreateChallenge = () => {
           </TouchableOpacity>
         </AnimatedSheetModal>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 };
 
-const localStyles = StyleSheet.create({
+const legacyStyles = StyleSheet.create({
   keyboardAvoiding: {
     flex: 1,
   },
@@ -899,3 +899,5 @@ const localStyles = StyleSheet.create({
 });
 
 export default CreateChallenge;
+
+const localStyles = {...legacyStyles, ...creationFormStyles};

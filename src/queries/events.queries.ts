@@ -1206,9 +1206,11 @@ export const useUpdateEventMutation = () => {
           modality: input.modality,
           online_link: input.onlineLink ?? null,
           capacity: input.capacity,
-          image_url: imageUrl,
+          ...(input.imageUri || input.imagePresetId ? {image_url: imageUrl} : {}),
         })
         .eq("id", input.eventId)
+        .eq("created_by", input.updatedBy)
+        .eq("type", "event")
         .select("*")
         .single();
 
