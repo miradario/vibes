@@ -36,7 +36,7 @@ export default function ConnectionStrip({ incomingLikes, newConnections, onReque
                   <View style={[s.requestStack, { width: stackWidth, height: avatarBox }]}>
                     {stackedLikes.map((like, index) => (
                       <View key={like.id ?? index} style={[s.stripAvatar, s.stackedAvatar, { width: avatarBox, height: avatarBox, borderRadius: avatarBox / 2, left: index * stackStep, zIndex: stackedLikes.length - index }]}>
-                        <Avatar uri={canViewPhotos ? like.likerUserPhoto ?? null : null} size={avatarSize} blurRadius={16} />
+                        <Avatar uri={canViewPhotos ? like.likerUserPhoto ?? null : null} size={avatarSize} />
                       </View>
                     ))}
                     <View style={s.requestBadge}><Text style={s.requestCount}>{incomingLikes.length > 99 ? "99+" : incomingLikes.length}</Text></View>
