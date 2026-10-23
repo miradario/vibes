@@ -1,3 +1,4 @@
+import {chatComposerBottomPadding} from "../src/lib/chatComposerLayout";
 import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import ChatPhotoButton from "../components/ChatPhotoButton";
 import ChatMessageContent from "../components/ChatMessageContent";
@@ -649,11 +650,7 @@ const EventChat = () => {
     <KeyboardAvoidingView
       style={localStyles.keyboardAvoidingRoot}
       behavior={
-        Platform.OS === "ios"
-          ? "padding"
-          : Platform.OS === "android"
-          ? "height"
-          : undefined
+        Platform.OS === "ios" ? "padding" : undefined
       }
       keyboardVerticalOffset={0}
     >
@@ -876,7 +873,7 @@ const EventChat = () => {
             {
               paddingTop: 10,
               paddingBottom:
-                keyboardHeight > 0 ? 12 : Math.max(insets.bottom + 8, 18),
+                chatComposerBottomPadding(insets.bottom, keyboardHeight > 0),
               alignItems: "flex-end",
             },
           ]}

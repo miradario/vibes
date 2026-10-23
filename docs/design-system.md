@@ -177,3 +177,9 @@ Esta documentación no modifica la UI ni afirma una migración completa:
 5. Registrar cualquier excepción nueva en esta guía y mantener sus enlaces a fuentes vigentes.
 
 Los filtros de personas comparten las opciones de las preguntas de perfil y los motivos del onboarding. No ofrecer preferencias antiguas que ya no se solicitan ni duplicar alimentación o tabaco.
+
+## Creación y edición de contenido
+
+Crear/editar eventos y desafíos comparten `src/theme/creationFormStyles.ts`: título secundario 26/32, labels 14/20, campos 16/24 con borde suave y radio 16, botón principal oscuro de 56 y radio pill. El pie forma parte del layout y no se superpone al formulario. Usar ScreenContainer con top/left/right y aplicar el inset inferior una sola vez en el pie. En Android el teclado usa adjustResize; no agregar una segunda compensación de altura mediante KeyboardAvoidingView.
+
+Los compositores de chats directos, eventos y grupos comparten `chatComposerBottomPadding`: safe area inferior una sola vez con teclado cerrado; 8 con teclado abierto.

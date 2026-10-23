@@ -1,3 +1,5 @@
+import ScreenContainer from "../components/ScreenContainer";
+import {creationFormStyles} from "../src/theme/creationFormStyles";
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
 import EventScheduleEditor from "../components/EventScheduleEditor";
@@ -259,7 +261,7 @@ const CreateEvent = () => {
     ? null
     : editingEvent?.imageUrl || null;
   const coverImageUri = eventImageUri || existingCoverImageUri;
-  const hasSelectedImage = Boolean(coverImageUri);
+  const hasSelectedImage = Boolean(coverImageUri || editingEvent?.image);
   const keepExistingUndated = isEditing && !normalizeSchedule(editingEvent?.schedule, editingEvent?.startsAt).length && scheduleDrafts.every((row) => !row.date && !row.time && !row.endDate && !row.endTime);
   const missingFields = getMissingEventFields({
     title,
@@ -275,8 +277,8 @@ const CreateEvent = () => {
     const index = missingFields.indexOf("fecha y hora");
     if (index >= 0) missingFields.splice(index, 1);
   }
-  if (!category) missingFields.push("categoría");
-  if (!participationType) missingFields.push("tipo");
+  if (!category && !isEditing) missingFields.push("categoría");
+  if (!participationType && !isEditing) missingFields.push("tipo");
   const invalidLinks = getInvalidEventLinks({
     eventLink,
     pricingType,
@@ -461,6 +463,7 @@ const CreateEvent = () => {
   };
 
   const handleCreate = async (allowUnvalidatedLocation = false) => {
+    if (isSubmitting) return;
     if (!isFormComplete) {
       Alert.alert(
         "Faltan datos",
@@ -560,8 +563,8 @@ const CreateEvent = () => {
           modality,
           onlineLink: resolvedOnlineLink,
           capacity: parsedCapacity,
-          imageUri: eventImageUri || existingCoverImageUri,
-          imagePresetId: null,
+          imageUri: eventImageUri,
+          imagePresetId: eventImageUri ? null : editingEvent?.imagePresetId ?? null,
         });
       } else {
         savedEvent = await createEventMutation.mutateAsync({
@@ -597,10 +600,7 @@ const CreateEvent = () => {
       }
 
       if (isEditing) {
-        navigation.navigate(
-          "EventDetail" as never,
-          { event: savedEvent } as never,
-        );
+        navigation.goBack();
       } else {
         navigation.navigate(
           "Tab" as never,
@@ -631,30 +631,21 @@ const CreateEvent = () => {
   };
 
   return (
+    <ScreenContainer edges={["top","left","right"]}>
     <KeyboardAvoidingView
       style={styles.bg}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       enabled={Platform.OS === "ios"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
+      keyboardVerticalOffset={0}
     >
       <View style={styles.bg}>
+        <AppHeader title={isEditing ? "Editar evento" : "Crear evento"} showBack onBack={() => navigation.goBack()} style={{paddingHorizontal:24,marginBottom:8}} titleStyle={localStyles.screenTitle} />
       <ScrollView
-        style={styles.editContainer}
+        style={{flex:1}}
         contentContainerStyle={localStyles.content}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
       >
-        <AppHeader
-          title={isEditing ? "Editar evento" : "Crear evento"}
-          showBack
-          onBack={() => navigation.goBack()}
-          style={[
-            localStyles.header,
-            { marginTop: Math.max(insets.top + 8, 24) },
-          ]}
-          titleStyle={localStyles.screenTitle}
-        />
-
         <View style={localStyles.formCard}>
           <Text style={localStyles.label}>Título</Text>
           <TextInput
@@ -675,10 +666,10 @@ const CreateEvent = () => {
             activeOpacity={0.88}
             onPress={() => setPhotoModalVisible(true)}
           >
-            {coverImageUri ? (
+            {coverImageUri || editingEvent?.image ? (
               <>
                 <Image
-                  source={{ uri: coverImageUri }}
+                  source={coverImageUri ? {uri:coverImageUri} : typeof editingEvent.image === "string" ? {uri:editingEvent.image} : editingEvent.image}
                   style={localStyles.coverImage}
                 />
                 <View style={localStyles.coverScrim} />
@@ -1084,10 +1075,11 @@ const CreateEvent = () => {
       </AnimatedSheetModal>
       </View>
     </KeyboardAvoidingView>
+    </ScreenContainer>
   );
 };
 
-const localStyles = StyleSheet.create({
+const legacyStyles = StyleSheet.create({
   header: {
     paddingHorizontal: 0,
     marginBottom: 4,
@@ -1515,3 +1507,5 @@ const localStyles = StyleSheet.create({
 });
 
 export default CreateEvent;
+
+const localStyles = {...legacyStyles, ...creationFormStyles};

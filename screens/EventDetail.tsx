@@ -26,7 +26,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ExpoLocation from "expo-location";
@@ -1290,10 +1290,7 @@ const EventDetail = () => {
 
   const handleEditEvent = () => {
     setMenuVisible(false);
-    navigation.navigate(
-      "CreateEvent" as never,
-      { event } as never,
-    );
+    navigation.dispatch(StackActions.push("CreateEvent", { event }));
   };
 
   const handleCheckIn = async () => {

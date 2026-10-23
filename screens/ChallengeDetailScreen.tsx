@@ -26,7 +26,7 @@ import {
 } from "react-native";
 import { Text } from "../components/Typography";
 import * as Haptics from "expo-haptics";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated, {
@@ -1789,7 +1789,7 @@ const ChallengeDetailScreen = () => {
         {isAdmin && event ? (
           <TouchableOpacity style={localStyles.menuItem} onPress={() => {
             setMenuVisible(false);
-            navigation.navigate("CreateChallenge" as never, { event } as never);
+            navigation.dispatch(StackActions.push("CreateChallenge", { event }));
           }}>
             <Icon name="create-outline" size={20} color={palette.text} />
             <Text style={localStyles.menuItemText}>Editar desafío</Text>

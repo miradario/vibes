@@ -1,3 +1,4 @@
+import {chatComposerBottomPadding} from "../src/lib/chatComposerLayout";
 import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import BackButton from "../components/BackButton";
 import VibesLoader from "../components/VibesLoader";
@@ -211,13 +212,9 @@ export default function CommunityGroupChat() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={
-          Platform.OS === "ios"
-            ? "padding"
-            : Platform.OS === "android"
-            ? "height"
-            : undefined
+          Platform.OS === "ios" ? "padding" : undefined
         }
-        keyboardVerticalOffset={Platform.OS === "android" ? insets.top : 0}
+        keyboardVerticalOffset={0}
       >
         <View style={s.header}>
           <BackButton accessibilityLabel="Volver"
@@ -461,7 +458,7 @@ export default function CommunityGroupChat() {
             s.composer,
             {
               paddingBottom:
-                keyboardHeight > 0 ? 12 : Math.max(insets.bottom + 8, 18),
+                chatComposerBottomPadding(insets.bottom, keyboardHeight > 0),
             },
           ]}
         >
