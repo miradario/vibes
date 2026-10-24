@@ -566,17 +566,18 @@ const Home = () => {
 
         if (!needsSync) return;
 
-        const { error: syncError } = await supabase.from("profiles").upsert(
-          {
-            id: userId,
+        // Plain UPDATE: the row exists once the user reaches Home, and an
+        // upsert would need read access to the coordinate columns.
+        const { error: syncError } = await supabase
+          .from("profiles")
+          .update({
             country,
             city,
             location_label: locationLabel,
             latitude: currentLatitude,
             longitude: currentLongitude,
-          },
-          { onConflict: "id" }
-        );
+          })
+          .eq("id", userId);
         if (!syncError) {
           await AsyncStorage.setItem(
             syncKey,

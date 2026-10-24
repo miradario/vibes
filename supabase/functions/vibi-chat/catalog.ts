@@ -21,9 +21,20 @@ async function rows(query: any): Promise<Row[]> {
 }
 const preferenceFields =
   "user_id,spiritual_path,spiritual_path_details,other_tags,languages,onboarding_purpose,looking_for,profile_answers,gender,height_cm,smoking,vegetarian,education,family_plan,pets,zodiac,personality,communication_style,love_style,open_to";
-export async function loadCatalog(db: SupabaseClient, userId: string) {
+/**
+ * `peopleDb` reads profiles/user_preferences with the service role, because
+ * other users' coordinates, birth dates and preference rows are not readable
+ * by `authenticated`. The result is intersected with the profile ids the
+ * caller can see through RLS (`db`), so visibility rules are unchanged.
+ */
+export async function loadCatalog(
+  db: SupabaseClient,
+  userId: string,
+  peopleDb: SupabaseClient = db
+) {
   const [
-    profiles,
+    visibleProfileIds,
+    allProfiles,
     preferences,
     ownResult,
     blocks,
@@ -36,6 +47,14 @@ export async function loadCatalog(db: SupabaseClient, userId: string) {
     rows(
       db
         .from("profiles")
+        .select("id")
+        .is("deleted_at", null)
+        .eq("is_active", true)
+        .order("id")
+    ),
+    rows(
+      peopleDb
+        .from("profiles")
         .select(
           "id,display_name,birth_date,gender_id,is_active,deleted_at,latitude,longitude"
         )
@@ -43,7 +62,7 @@ export async function loadCatalog(db: SupabaseClient, userId: string) {
         .eq("is_active", true)
         .order("id")
     ),
-    rows(db.from("user_preferences").select(preferenceFields).order("user_id")),
+    rows(peopleDb.from("user_preferences").select(preferenceFields).order("user_id")),
     db
       .from("user_preferences")
       .select(
@@ -100,6 +119,8 @@ export async function loadCatalog(db: SupabaseClient, userId: string) {
     ),
   ]);
   if (ownResult.error) throw ownResult.error;
+  const visible = new Set(visibleProfileIds.map((p) => p.id));
+  const profiles = allProfiles.filter((p) => visible.has(p.id));
   const own = profiles.find((p) => p.id === userId);
   if (!own) throw new Error("inactive_profile");
   const ownPreferences = ownResult.data ?? {};
