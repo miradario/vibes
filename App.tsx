@@ -1,3 +1,4 @@
+import { useMeetPeople } from "./src/queries/meetPeople.queries";
 import PastChallenges from "./screens/PastChallenges";
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
@@ -179,6 +180,7 @@ const CommunityRuntime = () => {
   return null;
 };
 const AppNavigator = () => {
+  const { enabled: meetPeopleEnabled } = useMeetPeople();
   React.useEffect(() => startRemoteConfig(), []);
   React.useEffect(() => startAppOpenTracking(), []);
   React.useEffect(() => {
@@ -522,6 +524,7 @@ const AppNavigator = () => {
                       ),
                     }}
                   />
+                  {meetPeopleEnabled ? (
                   <Tab.Screen
                     name="Discover"
                     component={Discover}
@@ -532,6 +535,7 @@ const AppNavigator = () => {
                       ),
                     }}
                   />
+                  ) : null}
                   <Tab.Screen
                     name="Calendar"
                     component={Connections}

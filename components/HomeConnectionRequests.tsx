@@ -21,7 +21,7 @@ export default function HomeConnectionRequests({ canViewPhotos }: { canViewPhoto
       <Text style={{ color: vibesTheme.colors.secondaryText }}>No pudimos cargar las conexiones. Tocá para reintentar.</Text>
     </TouchableOpacity>;
   }
-  return <ConnectionStrip compact canViewPhotos={canViewPhotos}
+  return <ConnectionStrip compact blurHiddenPhotos canViewPhotos={canViewPhotos}
     incomingLikes={requests.data ?? []}
     newConnections={views.isSuccess ? getNewConnections(matches.data ?? [], views.data) : []}
     onRequests={() => navigation.navigate("Tab" as never, { screen: "Calendar", params: { homeEntryKey: Date.now(), homeTarget: "incoming" } } as never)}

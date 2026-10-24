@@ -1,4 +1,19 @@
-export type EventSession = { startsAt: string; endsAt?: string };
+export type EventRecurrence = { frequency: "weekly" | "monthly"; count: number; weekdays: number[] };
+export type EventSession = { startsAt: string; endsAt?: string; recurrence?: EventRecurrence };
+
+export function parseEventRecurrence(value: unknown): EventRecurrence | null {
+  if (!value || typeof value !== "object") return null;
+  const rule = value as Partial<EventRecurrence>;
+  if ((rule.frequency !== "weekly" && rule.frequency !== "monthly") || !Number.isInteger(rule.count) || rule.count! < 2 || rule.count! > 52) return null;
+  const weekdays = Array.isArray(rule.weekdays) ? [...new Set(rule.weekdays.filter(day => Number.isInteger(day) && day >= 0 && day <= 6))] : [];
+  if (rule.frequency === "weekly" && !weekdays.length) return null;
+  return { frequency: rule.frequency, count: rule.count!, weekdays };
+}
+
+export function getEventRecurrence(schedule: unknown): EventRecurrence | null {
+  if (!Array.isArray(schedule)) return null;
+  return schedule.map(entry => parseEventRecurrence(entry?.recurrence)).find(Boolean) ?? null;
+}
 export type EventScheduleDraft = { date: string; time: string; endDate?: string; endTime?: string };
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -35,10 +50,11 @@ export function normalizeSchedule(value: unknown, fallback?: string | null): Eve
   if (!timestamps.length && fallback && Number.isFinite(Date.parse(fallback))) {
     timestamps.push(new Date(fallback).toISOString());
   }
-  return [...new Set(timestamps)].sort().map((startsAt) => {
+  const recurrence = getEventRecurrence(values);
+  return [...new Set(timestamps)].sort().map((startsAt, index) => {
     const entry = values.find((value) => typeof value?.startsAt === "string" && Date.parse(value.startsAt) === Date.parse(startsAt));
     const endsAt = entry?.endsAt;
-    return { startsAt, ...(typeof endsAt === "string" && Date.parse(endsAt) > Date.parse(startsAt) ? { endsAt: new Date(endsAt).toISOString() } : {}) };
+    return { startsAt, ...(index === 0 && recurrence ? { recurrence } : {}), ...(typeof endsAt === "string" && Date.parse(endsAt) > Date.parse(startsAt) ? { endsAt: new Date(endsAt).toISOString() } : {}) };
   });
 }
 
@@ -88,4 +104,43 @@ export function sortEventsByDate<T extends { schedule?: unknown; startsAt?: stri
   return items.map((item) => ({ item, time: timestamp(item) }))
     .sort((left, right) => left.time - right.time)
     .map(({ item }) => item);
+}
+
+/** Generate a finite series at the same local time, preserving month-end anchors. */
+export function buildRecurringSchedule(draft: EventScheduleDraft, rule: EventRecurrence): EventSession[] | null {
+  const recurrence = parseEventRecurrence(rule);
+  const seed = serializeSchedule([draft])?.[0];
+  if (!recurrence || !seed) return null;
+  const start = new Date(seed.startsAt);
+  const duration = seed.endsAt ? Date.parse(seed.endsAt) - start.getTime() : null;
+  const sessions: EventSession[] = [];
+  for (let offset = 0; sessions.length < recurrence.count && offset < 370; offset++) {
+    let date: Date;
+    if (recurrence.frequency === "monthly") {
+      const lastDay = new Date(start.getFullYear(), start.getMonth() + offset + 1, 0).getDate();
+      date = new Date(start.getFullYear(), start.getMonth() + offset, Math.min(start.getDate(), lastDay), 12);
+    } else {
+      date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset, 12);
+      if (!recurrence.weekdays.includes(date.getDay())) continue;
+    }
+    const local = parseSession({ date: sessionDraft(date.toISOString()).date, time: draft.time });
+    if (!local) return null;
+    sessions.push({ startsAt: local.toISOString(), ...(duration !== null ? { endsAt: new Date(local.getTime() + duration).toISOString() } : {}) });
+  }
+  if (sessions.length !== recurrence.count) return null;
+  sessions[0].recurrence = recurrence;
+  return sessions;
+}
+
+export function formatEventRecurrence(schedule: unknown): string | null {
+  const recurrence = getEventRecurrence(schedule);
+  if (!recurrence) return null;
+  const first = normalizeSchedule(schedule)[0];
+  if (!first) return null;
+  const date = new Date(first.startsAt);
+  const time = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false });
+  if (recurrence.frequency === "monthly") return `Cada mes · ${time}`;
+  const names = ["domingos", "lunes", "martes", "miércoles", "jueves", "viernes", "sábados"];
+  const days = [...recurrence.weekdays].sort((a, b) => (a || 7) - (b || 7)).map(day => names[day]);
+  return `Todos los ${days.join(" y ")} · ${time}`;
 }

@@ -1,3 +1,4 @@
+import { useMeetPeople } from "../../src/queries/meetPeople.queries";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -67,6 +68,7 @@ export type FtuxGuideProps = {
  */
 export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGuideProps) {
   const { t } = useI18n();
+  const { enabled: meetPeopleEnabled } = useMeetPeople();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   const state = useFtuxState(userId, session?.user?.created_at);
@@ -168,6 +170,11 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
 
   const goToStep = (step: FtuxStep | undefined) => {
     if (!step || step === "closing" || step === "welcome" || step === "alt") return;
+    if (step === "discover" && !meetPeopleEnabled) {
+      dispatchFtux(userId, { type: "NEXT", profileComplete: false });
+      navigate("Tab", { screen: STEP_ROUTE.challenges });
+      return;
+    }
     navigate("Tab", { screen: STEP_ROUTE[step] });
   };
   const send = (event: Parameters<typeof dispatchFtux>[1]) => {
@@ -546,7 +553,9 @@ export function CoachCard({
   const frame = getTabBarFrame(width, insets.bottom, fontScale);
   const cardWidth = Math.min(width - 32, 520);
   const cardLeft = (width - cardWidth) / 2;
-  const slotX = getTabSlotCenterX(VISIBLE_TABS.indexOf(STEP_ROUTE[step]), VISIBLE_TABS.length, width);
+  const { enabled: meetPeopleEnabled } = useMeetPeople();
+  const visibleTabs = VISIBLE_TABS.filter(route => meetPeopleEnabled || route !== "Discover");
+  const slotX = getTabSlotCenterX(visibleTabs.indexOf(STEP_ROUTE[step]), visibleTabs.length, width);
   const arrowLeft = Math.min(Math.max(slotX - cardLeft - 9, 24), cardWidth - 42);
   // Measure the real overlay (mounted at the app root, same box the tab bar sits
   // in) instead of trusting the window size, which differs on Android.

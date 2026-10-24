@@ -190,6 +190,7 @@ export type OnboardingDraft = {
   birthDate?: string;
   purpose?: string[];
   purposeIds?: string[];
+  meetPeopleEnabled?: boolean;
   energy?: string[];
   energyIds?: string[];
   country?: string;
@@ -389,6 +390,7 @@ export const useCompleteOnboardingMutation = () => {
           about_me: draft.aboutMe?.trim() ?? "",
           other_tags: draft.otherTags ?? [],
           open_to: draft.purpose ?? [],
+          ...(draft.meetPeopleEnabled !== undefined ? { meet_people_enabled: draft.meetPeopleEnabled } : {}),
         })
       );
 

@@ -1,3 +1,4 @@
+import MeetPeopleSettings from "../components/MeetPeopleSettings";
 /** @format */
 
 import React, { useState } from "react";
@@ -106,6 +107,7 @@ const Configuration = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={localStyles.scrollContent}
       >
+        <MeetPeopleSettings />
         <NotificationPreferencesSection />
         <TouchableOpacity
           accessibilityRole="button"

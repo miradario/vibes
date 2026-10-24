@@ -1,3 +1,4 @@
+import { isMeetPeopleEnabled } from "./meetPeople";
 import type { OnboardingDraft } from "../queries/onboarding.queries";
 import type { ProfileAnswers } from "./profileQuestions";
 import { PURPOSE_OPTIONS } from "../screens/Onboarding/vibesOnboardingContent";
@@ -18,6 +19,7 @@ export const buildResumeOnboardingDraft = (
   const purpose = prefs.openTo ?? [];
   return {
     editingExistingProfile: true,
+    meetPeopleEnabled: isMeetPeopleEnabled(prefs),
     displayName: profile.displayName ?? "",
     birthDate: profile.birthDate ?? "",
     genderId: profile.genderId,

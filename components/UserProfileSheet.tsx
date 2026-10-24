@@ -1,3 +1,4 @@
+import { useMeetPeople } from "../src/queries/meetPeople.queries";
 import ProfileWithoutPhoto from "./ProfileWithoutPhoto";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
@@ -52,6 +53,7 @@ import { VIBES_LOGO as VIBES_FALLBACK_ILLUSTRATION } from "../src/constants/bran
 type Props = {
   visible: boolean;
   enableSwipe?: boolean;
+  blurHiddenPhotos?: boolean;
   actionPending?: boolean;
   profile: UserProfileCardData | null;
   nextProfile?: UserProfileCardData | null;
@@ -267,6 +269,7 @@ const IOS_DETAILS_EASING = Easing.out(Easing.cubic);
 const UserProfileSheet = ({
   visible,
   enableSwipe = false,
+  blurHiddenPhotos = false,
   actionPending = false,
   profile,
   nextProfile,
@@ -287,8 +290,11 @@ const UserProfileSheet = ({
   const { data: session } = useAuthSession();
   const navigation = useNavigation();
   const { data: ownProfile } = useProfileQuery(session?.user.id);
+  const { enabled: meetPeopleEnabled } = useMeetPeople();
   const isOwnProfile = Boolean(profile?.id && profile.id === session?.user?.id);
   const canViewPhotos = isOwnProfile || hasProfilePhotos(ownProfile);
+  const canPreviewPhotos = canViewPhotos || blurHiddenPhotos;
+  const photoBlurRadius = !canViewPhotos && blurHiddenPhotos ? 24 : 0;
   const { data: sharedActivities } = useSharedActivitiesQuery(
     session?.user?.id,
     profile?.id
@@ -489,7 +495,7 @@ const UserProfileSheet = ({
   }, [swipeX, swipeUp, stampFade, reduceMotion]);
   const commitSwipe = useCallback(
     (direction: "like" | "pass", source: "gesture" | "button" = "gesture") => {
-      if (actionPending || swipingRef.current || (direction === "like" && contactActionDisabled)) return;
+      if (actionPending || swipingRef.current || (direction === "like" && (contactActionDisabled || !meetPeopleEnabled))) return;
       const action =
         direction === "like" ? onContactPress : onSecondaryActionPress;
       if (!action || isOwnProfile) {
@@ -562,6 +568,7 @@ const UserProfileSheet = ({
       resetSwipe,
       nextProfile,
       contactActionDisabled,
+      meetPeopleEnabled,
       profile?.id,
     ]
   );
@@ -642,8 +649,8 @@ const UserProfileSheet = ({
     ]
   );
   const profileImages = useMemo(
-    () => canViewPhotos ? normalizeProfileImages(profile) : [],
-    [profile, canViewPhotos]
+    () => canPreviewPhotos ? normalizeProfileImages(profile) : [],
+    [profile, canPreviewPhotos]
   );
   const withoutPhoto = normalizeProfileImages(profile).length === 0;
   const hasMultipleImages = profileImages.length > 1;
@@ -798,7 +805,7 @@ const UserProfileSheet = ({
             {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>{nextActionLabel}</Text>}
           </TouchableOpacity>
         ) : null}
-        {onContactPress && !isOwnProfile && (
+        {onContactPress && meetPeopleEnabled && !isOwnProfile && (
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={`${contactActionLabel ?? "Conectar"} con ${profile?.name ?? "este perfil"}`}
@@ -883,14 +890,15 @@ const UserProfileSheet = ({
           >
             {normalizeProfileImages(transitionProfile).length === 0 ? <ProfileWithoutPhoto active={false} name={transitionProfile.name} age={transitionProfile.age} zodiac={transitionProfile.zodiac} /> : <>
             <ProfileMediaImage
+                blurRadius={photoBlurRadius}
                 loadingVariant="vibes"
                 key={`next-profile-${transitionProfile?.id}`}
-                previewSource={canViewPhotos && transitionProfile?.hasPhotos !== false ? transitionProfile?.image : undefined}
+                previewSource={canPreviewPhotos && transitionProfile?.hasPhotos !== false ? transitionProfile?.image : undefined}
                 contentFit="cover"
                 blurBackground
                 showLoading
               source={
-                (canViewPhotos ? normalizeProfileImages(transitionProfile ?? null)[0] : undefined) ??
+                (canPreviewPhotos ? normalizeProfileImages(transitionProfile ?? null)[0] : undefined) ??
                 VIBES_FALLBACK_ILLUSTRATION
               }
               style={{ width, height }}
@@ -953,9 +961,10 @@ const UserProfileSheet = ({
                     style={[StyleSheet.absoluteFillObject, { opacity: index === safeActiveIndex ? 1 : 0 }]}
                   >
                     <ProfileMediaImage
+                blurRadius={photoBlurRadius}
                 loadingVariant={isFollowingProfile ? "vibes" : "spinner"}
                       contentFit="cover" blurBackground showLoading
-                      previewSource={canViewPhotos && profile.hasPhotos !== false ? (index === 0 ? profile.image : profileImages[index - 1]) : undefined}
+                      previewSource={canPreviewPhotos && profile.hasPhotos !== false ? (index === 0 ? profile.image : profileImages[index - 1]) : undefined}
                       priority={index === safeActiveIndex ? "high" : "low"}
                       onDisplay={() => {
                         if (currentProfileId.current !== profile.id) return;
@@ -992,11 +1001,12 @@ const UserProfileSheet = ({
               renderItem={({ item, index }) => (
                 <Animated.View style={{ width, height: photoHeight }}>
                   <ProfileMediaImage
+                blurRadius={photoBlurRadius}
                 loadingVariant={isFollowingProfile ? "vibes" : "spinner"}
                 contentFit="cover"
                 blurBackground
                 showLoading
-                    previewSource={canViewPhotos && profile.hasPhotos !== false ? (index === 0 ? profile.image : profileImages[index - 1]) : undefined}
+                    previewSource={canPreviewPhotos && profile.hasPhotos !== false ? (index === 0 ? profile.image : profileImages[index - 1]) : undefined}
                     onDisplay={() => {
                       if (currentProfileId.current !== profile.id) return;
                       if (index === safeActiveIndex) {
@@ -1256,9 +1266,9 @@ const UserProfileSheet = ({
                     onMomentumScrollEnd={handleGalleryMomentumEnd}
                     renderItem={({ item, index }) => (
                       <View style={{ width, height: compactPhotoHeight }}>
-                        <ProfileMediaImage source={item} style={StyleSheet.absoluteFillObject}
+                        <ProfileMediaImage blurRadius={photoBlurRadius} source={item} style={StyleSheet.absoluteFillObject}
                           contentFit="contain" blurBackground={!isIOS} showLoading={!isIOS} transition={0}
-                          previewSource={isIOS && canViewPhotos && profile.hasPhotos !== false ? item : undefined}
+                          previewSource={isIOS && canPreviewPhotos && profile.hasPhotos !== false ? item : undefined}
                           fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND} />
                         {hasMultipleImages ? (
                           <View style={[StyleSheet.absoluteFillObject, { flexDirection: "row" }]}>

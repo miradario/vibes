@@ -66,6 +66,9 @@ type OrbitNodeProps = {
 };
 
 type DiscoverOrbitCanvasProps = {
+  blurPhotos?: boolean;
+  onRetryPhotos?: () => void;
+  photoVersion?: number;
   loading?: boolean;
   users: DataT[];
   dismissedUsers?: DataT[];
@@ -155,6 +158,9 @@ function CollidingBubble({ bodies, index, size, children }: {
 }
 
 const DiscoverOrbitCanvas = ({
+  blurPhotos = false,
+  onRetryPhotos,
+  photoVersion = 0,
   loading = false,
   users,
   dismissedUsers = [],
@@ -301,7 +307,7 @@ const DiscoverOrbitCanvas = ({
         <VibesLoader size={48} accessibilityLabel="Cargando perfiles" />
       </View> : null}
       {!loading && photoFailed ? <View style={{ position: "absolute", zIndex: 10, bottom: 0, alignSelf: "center", borderRadius: 18, backgroundColor: vibesTheme.colors.background }}>
-        <TouchableOpacity accessibilityRole="button" onPress={() => { setPhotoStatus({}); setPhotoAttempt(value => value + 1); }} style={{ padding: 12 }}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => { if (onRetryPhotos) onRetryPhotos(); else { setPhotoStatus({}); setPhotoAttempt(value => value + 1); } }} style={{ padding: 12 }}>
           <Text style={{ color: vibesTheme.colors.accentBlue }}>Reintentar fotos</Text>
         </TouchableOpacity>
       </View> : null}
@@ -382,6 +388,7 @@ const DiscoverOrbitCanvas = ({
               >
                 <Avatar
                   uri={getAvatarUri(user)}
+                      blurRadius={blurPhotos ? 24 : 0}
                   size={Math.max(config.size - 4, 16)}
                   style={localStyles.dismissedAvatar}
                 />
@@ -418,8 +425,10 @@ const DiscoverOrbitCanvas = ({
                 >
                   <View style={[styles.discoverOrbitUserRing, { borderWidth: 2, borderColor: discoverProfileColor(user.gender) }]}>
                     <Avatar
+                      key={`${user.id}:${photoAttempt}`}
                       uri={getAvatarUri(user)}
-                      version={photoAttempt || undefined}
+                      blurRadius={blurPhotos ? 24 : 0}
+                      version={photoVersion || photoAttempt ? `${photoVersion}-${photoAttempt}` : undefined}
                       onReady={failed => { const key = photoKey(user); setPhotoStatus(previous => previous[key] === !failed ? previous : { ...previous, [key]: !failed }); }}
                       size={Math.max(config.size - 4, 18)}
                       style={styles.discoverOrbitUserImage}

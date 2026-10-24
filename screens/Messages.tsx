@@ -1,3 +1,4 @@
+import { useMeetPeople } from "../src/queries/meetPeople.queries";
 import { matchesConversationSearch } from "../src/lib/conversationSearch";
 import ConnectionStrip from "../components/ConnectionStrip";
 import { sectionTabStyles } from "../components/SectionTabStyles";
@@ -172,6 +173,7 @@ export const MessagesContent = ({
   contentBottomPadding,
 }: MessagesContentProps) => {
   const navigation = useNavigation();
+  const { enabled: meetPeopleEnabled } = useMeetPeople();
   const insets = useSafeAreaInsets();
   const focused = useIsFocused();
   const incomingQueue = React.useRef<IncomingLike[]>([]);
@@ -738,10 +740,10 @@ export const MessagesContent = ({
             invitations={communityInvitations}
           />
         </View>
-        <ConnectionStrip incomingLikes={incomingLikes} newConnections={newConnections}
+        {meetPeopleEnabled ? <ConnectionStrip incomingLikes={incomingLikes} newConnections={newConnections}
           onRequests={() => setConnectionsSheet("incoming")}
           onViewAll={() => setConnectionsSheet("new")}
-          onConnection={openNewConnectionChat} />
+          onConnection={openNewConnectionChat} /> : null}
 
         <View style={sectionTabStyles.tabs}>
           {(

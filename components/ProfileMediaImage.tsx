@@ -17,6 +17,7 @@ type ProfileMediaImageProps = {
   contentFit?: "cover" | "contain";
   onDisplay?: () => void;
   blurBackground?: boolean;
+  blurRadius?: number;
   showLoading?: boolean;
   loadingVariant?: "spinner" | "vibes";
   priority?: "low" | "normal" | "high";
@@ -44,6 +45,7 @@ const ProfileMediaImage = ({
   contentFit = "cover",
   onDisplay,
   blurBackground = false,
+  blurRadius = 0,
   showLoading = true,
   loadingVariant = "spinner",
   priority = "high",
@@ -129,7 +131,7 @@ const ProfileMediaImage = ({
     <View style={[styles.container, { backgroundColor: fallbackBackgroundColor }, style]}>
       {!canRenderSource ? <BrandImagePlaceholder /> : null}
         {canPreview ? <ExpoImage source={imageCacheSource(preview)} style={StyleSheet.absoluteFillObject}
-          contentFit="cover" cachePolicy="memory-disk" transition={0}
+          contentFit="cover" cachePolicy="memory-disk" transition={0} blurRadius={blurRadius}
           priority={priority} accessible={false} /> : null}
       {canRenderSource && !hasError ? (
         <>
@@ -141,7 +143,7 @@ const ProfileMediaImage = ({
             cachePolicy="memory-disk"
             contentFit="cover"
             priority="low"
-            blurRadius={24}
+            blurRadius={Math.max(24, blurRadius)}
             transition={0}
             accessible={false}
           />
@@ -152,6 +154,7 @@ const ProfileMediaImage = ({
           source={imageCacheSource(source)}
           placeholder={canPreview ? imageCacheSource(preview) : undefined}
           placeholderContentFit={resolvedFit}
+          blurRadius={blurRadius}
           style={[StyleSheet.absoluteFillObject, { opacity: layoutReady ? 1 : 0 }]}
           cachePolicy="memory-disk"
           priority={priority}

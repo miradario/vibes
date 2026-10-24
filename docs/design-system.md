@@ -189,3 +189,23 @@ La barra de navegación inferior se apoya en el borde inferior, sin margen exter
 La barra inferior compacta usa 64 de alto base (adaptable al tamaño de texto), 12 de espacio superior y botón seleccionado de 48 que sobresale 6 sobre la superficie. El contenido reserva su altura real más 20 de separación, sin espacio extra específico de iOS.
 
 El padding inferior de la barra descuenta 12 del inset (mínimo 0), considerando el espacio interno bajo los labels. Esto baja toda la barra 12 en iPhone con indicador de inicio; usar `getTabBarBottomPadding` también en la geometría del contenido y FTUX.
+
+## Eventos frecuentes
+
+Crear y editar eventos permite repetición semanal (uno o más días) o mensual, con entre 2 y 52 encuentros. La repetición mensual conserva el día original y usa el último día del mes cuando corresponde. El formulario muestra las primeras tres fechas antes de guardar y aclara que la inscripción y los cupos son compartidos por la serie.
+
+Cada serie ocupa una sola tarjeta en Eventos, con frecuencia y próxima fecha. El filtro “Frecuentes” muestra solo series. El detalle muestra tres encuentros próximos y permite desplegar todas las fechas, incluidas las anteriores. Usar `EventRecurrenceEditor` y `EventOccurrenceList`, con los mismos tokens y roles tipográficos del formulario.
+
+La regla de repetición se guarda como `recurrence` en el primer encuentro de `events.schedule`; `normalizeSchedule` conserva esos metadatos al leer y guardar. Las fechas se generan al guardar la serie; no hay generación indefinida ni nuevas inscripciones por encuentro.
+
+En Home, si la persona que navega no tiene una foto válida, las fotos de perfiles sugeridos, solicitudes y conexiones se muestran desenfocadas (radio 24). Aplicar el desenfoque también a las previsualizaciones durante la carga. Al subir una foto válida se muestran nítidas; los perfiles sin imagen conservan su placeholder.
+
+Descubrir aplica el mismo desenfoque de radio 24 en las burbujas, el historial y el visor de perfiles cuando quien navega no tiene foto válida. Las URLs de preview nunca habilitan fotos nítidas; la autorización depende únicamente de la foto propia. Mantener desenfocadas también la siguiente tarjeta y las fotos de la vista de detalles, y bloquear la galería nítida.
+
+## Conocer gente
+
+Onboarding y Configuración comparten `MeetPeopleChoice`: switch “Conocer gente” y explicación persistente del alcance. Desactivado, el perfil queda fuera de Descubrir, se oculta la pestaña y Home no muestra sugerencias ni solicitudes sociales. Los chats existentes, eventos y grupos siguen disponibles. No depender de los motivos seleccionados para inferir esta preferencia; guardar `user_preferences.meet_people_enabled` explícitamente. Las cuentas existentes mantienen la opción activa hasta desactivarla. La elección es reversible y solo se refleja como guardada tras confirmación del servidor.
+
+La exclusión del servidor se aplica a `get_discovery_candidates`. Las versiones antiguas que consultan `profiles` directamente requieren reglas adicionales de lectura; esas reglas globales no forman parte de la migración aplicada.
+
+Al entrar a Descubrir, cambiar entre perfiles e historial o reintentar, ocultar el resultado anterior hasta que termine la recarga activa. “Reintentar” renueva los perfiles y las URLs de fotos, y reinicia las vistas de imagen. No mostrar la acción “Volver a iniciar” en estos errores. Las respuestas tardías de intentos anteriores no deben liberar el estado de carga del intento actual.

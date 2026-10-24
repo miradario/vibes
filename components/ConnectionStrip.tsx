@@ -14,10 +14,11 @@ type Props = {
   onConnection: (item: MatchWithProfile) => void;
   compact?: boolean;
   canViewPhotos?: boolean;
+  blurHiddenPhotos?: boolean;
 };
 const MAX_STACKED_REQUESTS = 3;
-export default function ConnectionStrip({ incomingLikes, newConnections, onRequests, onViewAll, onConnection, compact = false, canViewPhotos = true }: Props) {
-  // Requesters' photos overlap like an avatar stack; without a viewable photo each falls back to the Vibes logo.
+export default function ConnectionStrip({ incomingLikes, newConnections, onRequests, onViewAll, onConnection, compact = false, canViewPhotos = true, blurHiddenPhotos = false }: Props) {
+  // Home can show blurred previews; other surfaces retain their photo gate.
   const stackedLikes = incomingLikes.slice(0, MAX_STACKED_REQUESTS);
   const avatarBox = compact ? 54 : 66;
   const avatarSize = compact ? 48 : 60;
@@ -36,7 +37,7 @@ export default function ConnectionStrip({ incomingLikes, newConnections, onReque
                   <View style={[s.requestStack, { width: stackWidth, height: avatarBox }]}>
                     {stackedLikes.map((like, index) => (
                       <View key={like.id ?? index} style={[s.stripAvatar, s.stackedAvatar, { width: avatarBox, height: avatarBox, borderRadius: avatarBox / 2, left: index * stackStep, zIndex: stackedLikes.length - index }]}>
-                        <Avatar uri={canViewPhotos ? like.likerUserPhoto ?? null : null} size={avatarSize} />
+                        <Avatar uri={canViewPhotos || blurHiddenPhotos ? like.likerUserPhoto ?? null : null} blurRadius={!canViewPhotos && blurHiddenPhotos ? 24 : 0} size={avatarSize} />
                       </View>
                     ))}
                     <View style={s.requestBadge}><Text style={s.requestCount}>{incomingLikes.length > 99 ? "99+" : incomingLikes.length}</Text></View>
@@ -46,7 +47,7 @@ export default function ConnectionStrip({ incomingLikes, newConnections, onReque
                 {newConnections.length > 0 && <View style={[s.stripDivider, compact && { height: 72 }]} />}
               </>}
               {newConnections.map(item => <TouchableOpacity key={item.id} accessibilityRole="button" accessibilityLabel={`Conversar con ${item.otherUserName}`} onPress={() => onConnection(item)} style={[s.stripPerson, compact && { width: 62 }]}>
-                <View style={[s.stripAvatar, compact && { width: 54, height: 54, borderRadius: 27 }]}><Avatar uri={canViewPhotos ? item.otherUserPhoto : null} size={compact ? 48 : 60} /></View>
+                <View style={[s.stripAvatar, compact && { width: 54, height: 54, borderRadius: 27 }]}><Avatar uri={canViewPhotos || blurHiddenPhotos ? item.otherUserPhoto : null} blurRadius={!canViewPhotos && blurHiddenPhotos ? 24 : 0} size={compact ? 48 : 60} /></View>
                 <Text numberOfLines={1} style={s.stripName}>{item.otherUserName?.trim().split(/\s+/)[0] || "Vibes"}</Text>
               </TouchableOpacity>)}
             </ScrollView>

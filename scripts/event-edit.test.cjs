@@ -23,3 +23,12 @@ test('an explicitly selected replacement cover is written',async()=>{
  const state=setup();await state.mutation.mutationFn({...input,imageUri:'https://example.com/new.jpg'});
  assert.equal(state.patch.image_url,'https://example.com/new.jpg');
 });
+test('editing a recurring event persists the series rule and all occurrences',async()=>{
+ const state=setup();
+ const recurring=schedule.buildRecurringSchedule({date:'2026-10-27',time:'19:00'},{frequency:'weekly',count:4,weekdays:[2]});
+ const result=await state.mutation.mutationFn({...input,startsAt:recurring[0].startsAt,schedule:recurring});
+ assert.equal(state.patch.schedule.length,4);
+ assert.equal(result.schedule.length,4);
+ assert.equal(schedule.getEventRecurrence(result.schedule).frequency,'weekly');
+ assert.equal(schedule.getEventRecurrence(result.schedule).count,4);
+});

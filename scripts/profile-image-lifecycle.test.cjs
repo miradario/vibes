@@ -43,7 +43,7 @@ function mount(props) {
   function render(next = props) { props = next; cursor = 0; tree = module.exports.default(props); while (effects.length) effects.shift()(); return tree; }
   function nodes(node = tree) { if (!node || typeof node !== 'object') return []; return [node, ...(node.props?.children ?? []).flat(Infinity).flatMap(nodes)]; }
   render();
-  return { render, image: () => nodes().find(n => n.type === 'Image' && n.props.onDisplay).props,
+  return { render, images: () => nodes().filter(n => n.type === "Image").map(n => n.props), image: () => nodes().find(n => n.type === 'Image' && n.props.onDisplay).props,
     hasPreview: () => nodes().some(n => n.type === "Image" && n.props.source?.uri === "https://test/preview.jpg"),
     hasError: () => nodes().some(n => n.type === 'Text' && n.props.children.includes('No se pudo cargar la foto.')),
     expire: () => { const pending = [...timers.values()]; timers.clear(); pending.forEach(fn => fn()); }, timers };
@@ -96,4 +96,13 @@ test('a terminal image failure keeps the preview visible', () => {
  for (let i = 0; i < 3; i++) { view.image().onError(); view.render(); }
  assert.equal(view.hasError(), true);
  assert.equal(view.hasPreview(), true);
+});
+
+test('blur covers both the photo and its preview and clears when photo access is restored', () => {
+  const props = { source: 'https://test/person.jpg', previewSource: 'https://test/preview.jpg', blurRadius: 24 };
+  const view = mount(props);
+  assert.ok(view.images().length >= 2);
+  assert.ok(view.images().every(image => image.blurRadius === 24));
+  view.render({ ...props, blurRadius: 0 });
+  assert.ok(view.images().every(image => image.blurRadius === 0));
 });

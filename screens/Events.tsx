@@ -4,7 +4,7 @@ import ChallengeFeedCard from "../components/ChallengeFeedCard";
 import ForYouTag from "../components/ForYouTag";
 import { pickFeaturedItem } from "../src/lib/homePersonalization";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
-import { eventHasExpired, normalizeSchedule, nextEventSession, sortEventsByDate } from "../src/lib/eventSchedule";
+import { formatEventRecurrence, getEventRecurrence, eventHasExpired, normalizeSchedule, nextEventSession, sortEventsByDate } from "../src/lib/eventSchedule";
 import MediaImage from "../components/MediaImage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ScreenContainer from "../components/ScreenContainer";
@@ -216,6 +216,7 @@ const Events = ({
   const [category, setCategory] = useState<EventCategory | null>(null);
   const [participationType, setParticipationType] = useState<EventParticipationType | null>(null);
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const [frequentOnly, setFrequentOnly] = useState(false);
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
   const [datePreset, setDatePreset] = useState<EventDatePreset | null>(null);
@@ -238,7 +239,7 @@ const Events = ({
     participationType: EventParticipationType | null;
     modality: EventModality | null;
   }>({ pricingType: null, participationType: null, modality: null });
-  const activeFilterCount = [category, participationType, modality, dateFrom, dateTo, locationFilter.trim()].filter(Boolean).length;
+  const activeFilterCount = [frequentOnly, category, participationType, modality, dateFrom, dateTo, locationFilter.trim()].filter(Boolean).length;
   const [filterPanel, setFilterPanel] = useState<"date" | "location" | "other">("date");
   const openFilters = (panel: "date" | "location" | "other") => {
     setFilterPanel(panel);
@@ -310,6 +311,7 @@ const Events = ({
       if (section === "challenge" && (item.visibility === "private") !== (challengeTab === "private")) return false;
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
+      if (section === "event" && frequentOnly && !getEventRecurrence(item.schedule)) return false;
       if (section === "event" && pricingType && item.pricingType !== pricingType) return false;
       if (!normalizedSearch) return true;
       const haystack = normalizeSearchText(
@@ -331,7 +333,7 @@ const Events = ({
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
+  }, [items, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
@@ -623,6 +625,9 @@ const Events = ({
             </TouchableOpacity>)}
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={localStyles.eventCategoriesScroll} contentContainerStyle={localStyles.eventCategories}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mostrar solo eventos frecuentes" accessibilityState={{ selected: frequentOnly }} onPress={() => setFrequentOnly(value => !value)} style={[localStyles.eventCategory, frequentOnly && { backgroundColor: vibesTheme.colors.accentMustard }]}>
+              <Text style={[localStyles.eventCategoryLabel, { color: vibesTheme.colors.primaryText }]}>Frecuentes</Text>
+            </TouchableOpacity>
             {[{ id: null, label: "Todos" }, ...EVENT_CATEGORIES].map(option => <TouchableOpacity key={option.id ?? "all"} accessibilityRole="button" accessibilityState={{ selected: category === option.id }} onPress={() => setCategory(option.id)} style={[localStyles.eventCategory, category === option.id && { backgroundColor: vibesTheme.colors.primaryText }]}><Text style={[localStyles.eventCategoryLabel, category === option.id && { color: vibesTheme.colors.surface }]}>{option.label}</Text></TouchableOpacity>)}
           </ScrollView>
         </> : null}
@@ -659,6 +664,8 @@ const Events = ({
                       ? section === "challenge"
                         ? "No encontramos desafíos"
                         : "No encontramos eventos"
+                    : section === "event" && frequentOnly
+                      ? "No encontramos eventos frecuentes"
                     : section === "event" && expiredEventItems.length > 0
                       ? "No hay eventos vigentes"
                     : section === "challenge" && !startedOnly && challengeTab === "public" && generalChallengeItems.length > 0
@@ -678,6 +685,8 @@ const Events = ({
                       ? "Probá con otros filtros."
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
+                    : section === "event" && frequentOnly
+                      ? "Probá con otros filtros o desactivá Frecuentes para ver todos los eventos."
                     : section === "event" && expiredEventItems.length > 0
                       ? pastOnly ? "Probá con otros filtros." : "Podés consultar el historial en Eventos pasados."
                     : section === "challenge" && !startedOnly && challengeTab === "public" && generalChallengeItems.length > 0
@@ -755,6 +764,7 @@ const Events = ({
               const dateLabel = startsAt && !Number.isNaN(startsAt.getTime())
                 ? `${startsAt.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" }).replace(/\./g, "")} · ${startsAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })}`
                 : item.date;
+              const frequencyLabel = formatEventRecurrence(sessions);
               const scheduleLabel = sessions.length > 1 ? `${dateLabel} · ${sessions.length} horarios` : dateLabel;
               const count = item.participantCount ?? participantCount;
               const participantsLabel = `${count} ${count === 1 ? "participante" : "participantes"}`;
@@ -773,6 +783,7 @@ const Events = ({
                   <View style={localStyles.eventCopy}>
                     {listItem.featured ? <ForYouTag /> : null}
                     <Text style={localStyles.eventTitle} numberOfLines={2}>{item.title}</Text>
+                    {frequencyLabel ? <Text style={[localStyles.eventMetadataText, { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold }]}>{frequencyLabel}</Text> : null}
                     <View style={localStyles.eventMetadataRow}>
                       <Icon name="calendar-outline" size={17} color={vibesTheme.colors.accentBlue} />
                       <Text style={[localStyles.eventMetadataText, { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold }]}>{scheduleLabel}</Text>

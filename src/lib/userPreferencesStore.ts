@@ -71,7 +71,7 @@ export const upsertUserPreferences = async (
     }
 
     if (isMissingUserPreferencesTableError(error)) {
-      if ("hide_age" in payload) throw error;
+      if ("hide_age" in payload || "meet_people_enabled" in payload) throw error;
       await AsyncStorage.setItem(getStorageKey(userId), JSON.stringify(working));
       return;
     }
@@ -82,7 +82,7 @@ export const upsertUserPreferences = async (
 
     const match = error.message.match(/'([^']+)' column/);
     const missingColumn = match?.[1];
-    if (!missingColumn || missingColumn === "user_id" || missingColumn === "hide_age") {
+    if (!missingColumn || missingColumn === "user_id" || missingColumn === "hide_age" || missingColumn === "meet_people_enabled") {
       throw error;
     }
     if (!(missingColumn in working)) {

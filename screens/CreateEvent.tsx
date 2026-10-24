@@ -2,8 +2,9 @@ import ScreenContainer from "../components/ScreenContainer";
 import {creationFormStyles} from "../src/theme/creationFormStyles";
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
+import EventRecurrenceEditor, { type EventRecurrenceDraft } from "../components/EventRecurrenceEditor";
 import EventScheduleEditor from "../components/EventScheduleEditor";
-import { normalizeSchedule, serializeSchedule, sessionDraft } from "../src/lib/eventSchedule";
+import { normalizeSchedule, serializeSchedule, sessionDraft, getEventRecurrence, buildRecurringSchedule } from "../src/lib/eventSchedule";
 import EventClassificationPicker from "../components/EventClassificationPicker";
 import { EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
 import { launchAppCamera } from "../components/AppCamera";
@@ -185,7 +186,17 @@ const CreateEvent = () => {
     const existing = normalizeSchedule(editingEvent?.schedule, editingEvent?.startsAt);
     return existing.length ? existing.map((entry) => ({ ...sessionDraft(entry.startsAt), ...(entry.endsAt ? { endDate: sessionDraft(entry.endsAt).date, endTime: sessionDraft(entry.endsAt).time } : {}) })) : [sessionDraft()];
   });
-  const schedule = serializeSchedule(scheduleDrafts);
+  const [recurrenceDraft, setRecurrenceDraft] = useState<EventRecurrenceDraft>(() => {
+    const existing = getEventRecurrence(editingEvent?.schedule);
+    return { frequency: existing?.frequency ?? "none", count: String(existing?.count ?? 12), weekdays: existing?.weekdays ?? [] };
+  });
+  const seedDate = scheduleDrafts[0]?.date ? new Date(`${scheduleDrafts[0].date}T12:00:00`) : new Date();
+  const defaultWeekday = Number.isFinite(seedDate.getTime()) ? seedDate.getDay() : 1;
+  const schedule = recurrenceDraft.frequency === "none" ? serializeSchedule(scheduleDrafts) : buildRecurringSchedule(scheduleDrafts[0], {
+    frequency: recurrenceDraft.frequency,
+    count: Number(recurrenceDraft.count),
+    weekdays: recurrenceDraft.weekdays.length ? recurrenceDraft.weekdays : [defaultWeekday],
+  });
   const eventDateTime = schedule?.length ? new Date(schedule[0].startsAt) : null;
   const [unlimitedCapacity, setUnlimitedCapacity] = useState(editingEvent?.capacity === 0);
   const [category, setCategory] = useState<EventCategory | null>(parseEventCategory(editingEvent?.category));
@@ -262,7 +273,7 @@ const CreateEvent = () => {
     : editingEvent?.imageUrl || null;
   const coverImageUri = eventImageUri || existingCoverImageUri;
   const hasSelectedImage = Boolean(coverImageUri || editingEvent?.image);
-  const keepExistingUndated = isEditing && !normalizeSchedule(editingEvent?.schedule, editingEvent?.startsAt).length && scheduleDrafts.every((row) => !row.date && !row.time && !row.endDate && !row.endTime);
+  const keepExistingUndated = recurrenceDraft.frequency === "none" && isEditing && !normalizeSchedule(editingEvent?.schedule, editingEvent?.startsAt).length && scheduleDrafts.every((row) => !row.date && !row.time && !row.endDate && !row.endTime);
   const missingFields = getMissingEventFields({
     title,
     subtitle,
@@ -758,8 +769,9 @@ const CreateEvent = () => {
             </View>
           ) : null}
 
-          <Text style={localStyles.label}>Fechas y horarios</Text>
-          <EventScheduleEditor value={scheduleDrafts} onChange={setScheduleDrafts} />
+          <Text style={localStyles.label}>{recurrenceDraft.frequency === "none" ? "Fechas y horarios" : "Primer encuentro de la serie"}</Text>
+          <EventScheduleEditor value={recurrenceDraft.frequency === "none" ? scheduleDrafts : scheduleDrafts.slice(0, 1)} onChange={setScheduleDrafts} allowMultiple={recurrenceDraft.frequency === "none"} />
+          <EventRecurrenceEditor value={recurrenceDraft} onChange={setRecurrenceDraft} defaultWeekday={defaultWeekday} schedule={schedule} />
           <Text style={localStyles.label}>Camino espiritual</Text>
           <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} />
 

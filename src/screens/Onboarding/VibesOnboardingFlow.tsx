@@ -1,3 +1,4 @@
+import MeetPeopleChoice from "../../../components/MeetPeopleChoice";
 import VibesWordmark from "../../../components/VibesWordmark";
 import { useQuery } from "@tanstack/react-query";
 import { useUserPreferencesQuery } from "../../queries/userPreferences.queries";
@@ -127,6 +128,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
     return !completedEntrySteps.some(completed => completed === candidate) && !(skipContinueChoice && candidate === "continueChoice");
   });
   const [stepIndex, setStepIndex] = useState(() => availableStepIndices[0]);
+  const [meetPeopleEnabled, setMeetPeopleEnabled] = useState(draft.meetPeopleEnabled !== false);
   const [purposeIds, setPurposeIds] = useState<string[]>(
     draft.purposeIds ?? []
   );
@@ -276,6 +278,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
     () => ({
       ...draft,
       purposeIds,
+      meetPeopleEnabled,
       profileAnswers: answers,
       displayName,
       firstName,
@@ -327,12 +330,13 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
       photoOriginalUris,
       practiceDetails,
       purposeIds,
+      meetPeopleEnabled,
       selectedPractices,
     ]
   );
 
   const canContinue =
-    (step === "purpose" && purposeIds.length > 0) ||
+    (step === "purpose" && (!meetPeopleEnabled || purposeIds.length > 0)) ||
     (step === "profile" &&
       hasOnboardingBasics(firstName, lastName) &&
       Boolean(birthDate) &&
@@ -591,7 +595,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
         </View>
       </View>
       <View style={[onboardingStyles.optionList, localStyles.purposeGrid]}>
-        {PURPOSE_OPTIONS.map((option) => (
+        {PURPOSE_OPTIONS.filter(option => meetPeopleEnabled || !["discover", "dating", "all"].includes(option.id)).map((option) => (
           <OptionCard
             tile
             key={option.id}
@@ -604,6 +608,10 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
           />
         ))}
       </View>
+      <MeetPeopleChoice enabled={meetPeopleEnabled} english={locale === "en"} onChange={enabled => {
+        setMeetPeopleEnabled(enabled);
+        if (!enabled) setPurposeIds(current => current.filter(id => !["discover", "dating", "all"].includes(id)));
+      }} />
     </>
   );
 

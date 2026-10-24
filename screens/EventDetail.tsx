@@ -1,5 +1,6 @@
+import EventOccurrenceList from "../components/EventOccurrenceList";
 import BackButton from "../components/BackButton";
-import { normalizeSchedule, formatSession } from "../src/lib/eventSchedule";
+import { normalizeSchedule } from "../src/lib/eventSchedule";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
 import { resolvePublicContentRoute } from "../src/lib/publicContentRoute";
@@ -1107,12 +1108,13 @@ const EventDetail = () => {
   const handleOpenCalendar = async (sessionStart?: string) => {
     const baseDate = sessionStart ? new Date(sessionStart) : validStartDate ?? todayDate;
     const start = new Date(baseDate);
-    const end = new Date(baseDate);
+    const occurrence = !isChallenge ? normalizeSchedule(event.schedule, event.startsAt).find(entry => Date.parse(entry.startsAt) === start.getTime()) : null;
+    const end = new Date(occurrence?.endsAt ?? baseDate);
     const isAllDayChallenge = isChallenge;
 
     if (isAllDayChallenge) {
       end.setDate(end.getDate() + Math.max(durationDays, 1));
-    } else {
+    } else if (!occurrence?.endsAt) {
       end.setHours(end.getHours() + 1);
     }
 
@@ -1423,10 +1425,7 @@ const EventDetail = () => {
                 {[getEventCategoryLabel(event.category), getEventParticipationLabel(event.participationType)].filter(Boolean).map(label => <View key={label} style={localStyles.referenceBadge}><Text style={localStyles.referenceBadgeText}>{label}</Text></View>)}
               </View>
               <Text style={localStyles.referenceTitle}>{event.title}</Text>
-              {normalizeSchedule(event.schedule, event.startsAt).map(entry => <TouchableOpacity key={entry.startsAt} accessibilityRole="button" accessibilityLabel="Agregar fecha a mi calendario" onPress={() => handleOpenCalendar(entry.startsAt)} style={localStyles.referenceMetaRow}>
-                <Icon name="calendar-outline" size={25} color={vibesTheme.colors.accentBlue} />
-                <View style={{ flex: 1 }}><Text style={localStyles.referenceMetaTitle}>{formatSession(entry.startsAt)}{entry.endsAt ? ` — ${formatSession(entry.endsAt)}` : ""}</Text><Text style={localStyles.referenceMetaHint}>Agregar a mi calendario</Text></View>
-              </TouchableOpacity>)}
+              <EventOccurrenceList key={event.id} schedule={event.schedule} startsAt={event.startsAt} onCalendar={handleOpenCalendar} />
               <TouchableOpacity accessibilityRole="button" disabled={modality !== "in_person" || !eventLocation} onPress={handleOpenMap} style={localStyles.referenceMetaRow}>
                 <Icon name={modality === "online" ? "videocam-outline" : "location-outline"} size={25} color={vibesTheme.colors.accentBlue} />
                 <View style={{ flex: 1 }}><Text style={localStyles.referenceMetaTitle}>{eventLocation || modalityLabel}</Text><Text style={localStyles.referenceMetaHint}>{modalityLabel}</Text></View>

@@ -7,8 +7,9 @@ import { Text, TextInput } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { sessionDraft, type EventScheduleDraft } from "../src/lib/eventSchedule";
 
-export default function EventScheduleEditor({ value, onChange }: {
+export default function EventScheduleEditor({ value, onChange, allowMultiple = true }: {
   value: EventScheduleDraft[];
+  allowMultiple?: boolean;
   onChange: (value: EventScheduleDraft[]) => void;
 }) {
   const insets = useSafeAreaInsets();
@@ -84,10 +85,10 @@ export default function EventScheduleEditor({ value, onChange }: {
         else setDateIndex(null);
       }}
     /> : null}
-    <TouchableOpacity accessibilityRole="button" style={styles.add}
+    {allowMultiple ? <TouchableOpacity accessibilityRole="button" style={styles.add}
       onPress={() => onChange([...value, { date: "", time: "" }])}>
       <Text style={styles.text}>+ Agregar día u horario</Text>
-    </TouchableOpacity>
+    </TouchableOpacity> : null}
   </View>;
 }
 const colors = vibesTheme.colors;

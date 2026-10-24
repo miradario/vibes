@@ -49,7 +49,7 @@ const fetchCandidatesInternal = async (
   _params?: GetCandidatesParams,
   includePreviouslySwiped = false,
   targetProfileIds?: string[],
-  homePreview = false,
+  photoPreview = false,
   ageRange?: CandidateAgeRange
 ): Promise<GetCandidatesResponse> => {
   if (!currentUserId) return [] as unknown as GetCandidatesResponse;
@@ -62,7 +62,7 @@ const fetchCandidatesInternal = async (
     .select("url")
     .eq("profile_id", currentUserId);
   if (ownPhotosResponse.error) throw ownPhotosResponse.error;
-  const canViewPhotos = homePreview || hasProfilePhotos({ photos: ownPhotosResponse.data });
+  const canViewPhotos = photoPreview || hasProfilePhotos({ photos: ownPhotosResponse.data });
 
   const rows: DiscoveryRpcRow[] = [];
   let after: string | null = null;
@@ -259,11 +259,11 @@ export const fetchCandidateById = async (userId: string, profileId: string) => {
   return candidates.find((candidate) => candidate.id === profileId && candidate.isActive) ?? null;
 };
 
-export const useSwipeHistoryCandidatesQuery = (enabled = true) => {
+export const useSwipeHistoryCandidatesQuery = (enabled = true, photoPreview = false) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   return useQuery<SwipeHistoryCandidate[]>({
-    queryKey: ["candidates", "swipe-history", "all-v3", userId ?? "anonymous"],
+    queryKey: ["candidates", "swipe-history", "all-v3", userId ?? "anonymous", photoPreview],
     enabled: Boolean(userId) && enabled,
     queryFn: () => withBootTimeout((async () => {
       const { data: swipes, error } = await supabase
@@ -291,7 +291,8 @@ export const useSwipeHistoryCandidatesQuery = (enabled = true) => {
         userId,
         { limit: 500 },
         true,
-        [...latest.keys()]
+        [...latest.keys()],
+        photoPreview
       );
       return candidates
         .filter((candidate) => latest.has(String(candidate.id)))
@@ -314,11 +315,11 @@ export const useSwipeHistoryCandidatesQuery = (enabled = true) => {
   });
 };
 
-export const useIncomingLikeCandidatesQuery = (enabled = true) => {
+export const useIncomingLikeCandidatesQuery = (enabled = true, photoPreview = false) => {
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
   return useQuery<Candidate[]>({
-    queryKey: ["candidates", "incoming-likes", "all-v1", userId ?? "anonymous"],
+    queryKey: ["candidates", "incoming-likes", "all-v1", userId ?? "anonymous", photoPreview],
     enabled: Boolean(userId) && enabled,
     queryFn: () => withBootTimeout((async () => {
       const [{ data: swipes, error: swipeError }, { data: matches, error: matchError }] =
@@ -352,7 +353,7 @@ export const useIncomingLikeCandidatesQuery = (enabled = true) => {
         )
       );
       if (likerIds.length === 0) return [];
-      return fetchCandidates(userId, { limit: 500 }, true, likerIds);
+      return fetchCandidates(userId, { limit: 500 }, true, likerIds, photoPreview);
     })(), 18000, "No pudimos cargar las solicitudes. Volvé a intentar."),
     retry: 1,
     retryDelay: 1000,
@@ -362,7 +363,7 @@ export const useIncomingLikeCandidatesQuery = (enabled = true) => {
 
 export const useCandidatesQuery = (
   params?: GetCandidatesParams,
-  homePreview = false,
+  photoPreview = false,
   enabled = true,
   ageRange?: CandidateAgeRange
 ) => {
@@ -374,13 +375,13 @@ export const useCandidatesQuery = (
   return useQuery<GetCandidatesResponse>({
     queryKey: [
       ...candidatesKeys.list(currentUserId, params),
-      homePreview ? "home-preview" : "discovery",
+      photoPreview ? "home-preview" : "discovery",
       normalizedAgeRange?.min ?? null,
       normalizedAgeRange?.max ?? null,
     ],
     enabled: Boolean(currentUserId) && enabled,
     queryFn: () =>
-      fetchCandidates(currentUserId, params, false, undefined, homePreview, normalizedAgeRange),
+      fetchCandidates(currentUserId, params, false, undefined, photoPreview, normalizedAgeRange),
     retry: 1,
     retryDelay: 1000,
     staleTime: 5 * 60_000,

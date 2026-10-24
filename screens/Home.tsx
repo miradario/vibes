@@ -1,3 +1,5 @@
+import { useMeetPeople } from "../src/queries/meetPeople.queries";
+import { hasProfilePhotos } from "../src/lib/profilePhotos";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { showToast } from "../src/utils/toast";
 import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
@@ -211,12 +213,14 @@ function PeopleSkeleton() {
 }
 
 function HomePeopleSuggestions({
+  canViewPhotos,
   profiles,
   loading,
   onOpenProfile,
   onSeeAll,
 }: {
   profiles: DataT[];
+  canViewPhotos: boolean;
   loading: boolean;
   onOpenProfile: (profile: DataT) => void;
   onSeeAll: () => void;
@@ -248,6 +252,7 @@ function HomePeopleSuggestions({
             <ProfileMediaImage
               source={profile.avatarUri ? { uri: profile.avatarUri } : profile.image}
               style={localStyles.personPhoto}
+              blurRadius={canViewPhotos ? 0 : 24}
             />
             <View style={localStyles.personInfo}>
             <Text style={localStyles.personName} numberOfLines={1}>
@@ -325,11 +330,12 @@ const Home = () => {
     today,
     Boolean(session?.user?.id) && !ftuxState
   );
+  const { enabled: meetPeopleEnabled } = useMeetPeople();
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
-  const { data: candidates = [], isLoading: candidatesLoading } = useCandidatesQuery(undefined, true, true, {
+  const { data: candidates = [], isLoading: candidatesLoading } = useCandidatesQuery(undefined, true, meetPeopleEnabled, {
     min: discoverFilters.ageMin,
     max: discoverFilters.ageMax,
   });
@@ -601,7 +607,7 @@ const Home = () => {
   ]);
 
   const openGallery = (images: any[] | undefined, initialIndex = 0) => {
-    if (!images || images.length === 0) return;
+    if (!hasProfilePhotos(ownProfileData) || !images || images.length === 0) return;
     setGalleryImages(images);
     setGalleryInitialIndex(
       initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0
@@ -892,10 +898,11 @@ const Home = () => {
           </>
         </AnimatedSheetModal>
 
-        <PhotoViewer visible={showGallery} images={galleryImages} initialIndex={galleryInitialIndex} onClose={() => setShowGallery(false)} />
+        <PhotoViewer visible={showGallery && hasProfilePhotos(ownProfileData)} images={galleryImages} initialIndex={galleryInitialIndex} onClose={() => setShowGallery(false)} />
 
         <UserProfileSheet
-          visible={showProfileSheet}
+          blurHiddenPhotos
+          visible={showProfileSheet && meetPeopleEnabled}
           profile={selectedProfileForSheet}
           nextProfile={nextHomeProfile ? { ...nextHomeProfile, id: String(nextHomeProfile.id) } : null}
           actionPending={swipeMutation.isPending}
@@ -970,7 +977,7 @@ const Home = () => {
             <CompleteProfilePrompt userId={session?.user?.id} />
           )}
 
-          <HomeConnectionRequests canViewPhotos={Boolean(centerProfile.avatarUri)} />
+          {meetPeopleEnabled ? <HomeConnectionRequests canViewPhotos={hasProfilePhotos(ownProfileData)} /> : null}
 
           {session?.user?.id ? (
             <FirstHomePreferencesGate
@@ -987,7 +994,8 @@ const Home = () => {
 
           <HomeOverview userId={session?.user?.id}>
 
-          <HomePeopleSuggestions
+          {meetPeopleEnabled ? <HomePeopleSuggestions
+            canViewPhotos={hasProfilePhotos(ownProfileData)}
             profiles={profiles}
             loading={candidatesLoading && profiles.length === 0}
             onOpenProfile={openProfileSheet}
@@ -997,7 +1005,7 @@ const Home = () => {
                 { screen: "Discover" } as never
               )
             }
-          />
+          /> : null}
           </HomeOverview>
         </ScrollView>
       </SafeAreaView>
