@@ -166,34 +166,6 @@ const normalizeGender = (
   return "unknown";
 };
 
-const toRadians = (value: number) => (value * Math.PI) / 180;
-
-const getDistanceKm = (
-  fromLatitude?: unknown,
-  fromLongitude?: unknown,
-  toLatitude?: unknown,
-  toLongitude?: unknown
-) => {
-  const lat1 = toFiniteNumber(fromLatitude);
-  const lon1 = toFiniteNumber(fromLongitude);
-  const lat2 = toFiniteNumber(toLatitude);
-  const lon2 = toFiniteNumber(toLongitude);
-
-  if ([lat1, lon1, lat2, lon2].some((item) => item === null)) return null;
-
-  const earthRadiusKm = 6371;
-  const dLat = toRadians((lat2 as number) - (lat1 as number));
-  const dLon = toRadians((lon2 as number) - (lon1 as number));
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1 as number)) *
-      Math.cos(toRadians(lat2 as number)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-
-  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
-
 const matchesNumberRange = (
   value: number | null,
   min: number | null,
@@ -362,6 +334,8 @@ export const DiscoverContent = forwardRef<
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences, isFetched: hasFetchedUserPreferences } =
     useUserPreferencesQuery(session?.user?.id);
+  const [discoverFilters, setDiscoverFilters] =
+    useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const {
     data: candidates = [],
     isLoading,
@@ -370,7 +344,10 @@ export const DiscoverContent = forwardRef<
     refetch: refetchCandidates,
   } = useCandidatesQuery({
     limit: 200,
-  }, false, focused && !showHistory);
+  }, false, focused && !showHistory, {
+    min: discoverFilters.ageMin,
+    max: discoverFilters.ageMax,
+  });
   // The candidates query already checks the viewer's photo before returning
   // photos. Keep those authorized photos visible if the separate own-profile
   // query is still loading or its signed photo URL failed.
@@ -411,8 +388,6 @@ export const DiscoverContent = forwardRef<
       resumeAfterMatch.current = null;
     }
   }, [focused]);
-  const [discoverFilters, setDiscoverFilters] =
-    useState<DiscoverFiltersState>(DEFAULT_FILTERS);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [hasHydratedStoredFilters, setHasHydratedStoredFilters] =
     useState(false);
@@ -441,9 +416,7 @@ export const DiscoverContent = forwardRef<
     string,
     any
   > | null;
-  const hasLocation =
-    toFiniteNumber(ownProfileRecord?.latitude) !== null &&
-    toFiniteNumber(ownProfileRecord?.longitude) !== null;
+  const hasLocation = Boolean(ownProfileRecord?.hasLocation);
 
   const profiles = useMemo<DataT[]>(() => {
     return candidates
@@ -454,12 +427,9 @@ export const DiscoverContent = forwardRef<
       )
       .map((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
-        const distanceKm = getDistanceKm(
-          ownProfileRecord?.latitude,
-          ownProfileRecord?.longitude,
-          candidateRecord.latitude,
-          candidateRecord.longitude
-        );
+        // Distance is computed server-side (get_discovery_candidates).
+        const distanceKm =
+          typeof candidateRecord.distanceKm === "number" ? candidateRecord.distanceKm : null;
 
         return {
           ...candidateRecord,
@@ -483,7 +453,12 @@ export const DiscoverContent = forwardRef<
           candidateRecord.genderId ?? candidateRecord.gender_id
         );
 
+        // Hidden ages come back as null; those profiles were already
+        // filtered by age on the server.
+        const ageCheckedOnServer =
+          candidateAge === null && Boolean(candidateRecord.ageHidden) && Boolean(candidateRecord.ageFilteredServerSide);
         if (
+          !ageCheckedOnServer &&
           !matchesNumberRange(
             candidateAge,
             discoverFilters.ageMin,
@@ -546,8 +521,6 @@ export const DiscoverContent = forwardRef<
     hiddenProfileIds,
     hasLocation,
     canViewProfilePhotos,
-    ownProfileRecord?.latitude,
-    ownProfileRecord?.longitude,
   ]);
 
   const errorMessage =

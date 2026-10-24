@@ -13,12 +13,9 @@ export const profileKeys = {
 
 const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
   const [profileResponse, photosResponse] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .is("deleted_at", null)
-      .maybeSingle(),
+    // Own profile via RPC: returns every own column except the raw
+    // coordinates (replaced by has_location).
+    supabase.rpc("get_my_profile").maybeSingle(),
     supabase
       .from("profile_photos")
       .select("*")
@@ -35,13 +32,20 @@ const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
     throw photosResponse.error;
   }
 
-  if (!profileResponse.data) {
+  const myProfileRow = profileResponse.data as
+    | { profile: ProfileRow | null; has_location: boolean | null }
+    | null;
+  if (!myProfileRow?.profile || String(myProfileRow.profile.id) !== userId) {
     return null;
   }
+  const ownProfile: ProfileRow = {
+    ...myProfileRow.profile,
+    has_location: Boolean(myProfileRow.has_location),
+  };
 
-  const signedProfileFallbackPhotos = Array.isArray((profileResponse.data as any).photos)
+  const signedProfileFallbackPhotos = Array.isArray((ownProfile as any).photos)
     ? await Promise.all(
-        ((profileResponse.data as any).photos ?? []).map(async (photo: any) => {
+        ((ownProfile as any).photos ?? []).map(async (photo: any) => {
           if (typeof photo === "string") {
             return await createSignedProfilePhotoUrl(photo);
           }
@@ -67,8 +71,8 @@ const fetchProfile = async (userId: string): Promise<ProfileRow | null> => {
 
   return mapProfileWithPhotos(
     signedProfileFallbackPhotos
-      ? { ...profileResponse.data, photos: signedProfileFallbackPhotos }
-      : profileResponse.data,
+      ? { ...ownProfile, photos: signedProfileFallbackPhotos }
+      : ownProfile,
     signedPhotoRows,
   );
 };

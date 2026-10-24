@@ -67,14 +67,12 @@ export const isOnboardingComplete = (profile: unknown) => {
 export const getPostAuthRoute = async (
   userId: string,
 ): Promise<"Tab" | "VibesOnboardingFlow"> => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("display_name, birth_date")
-    .eq("id", userId)
-    .is("deleted_at", null)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_my_profile").maybeSingle();
 
   if (error) throw error;
 
-  return isOnboardingComplete(data) ? "Tab" : "VibesOnboardingFlow";
+  const profile = (data as { profile?: Record<string, any> | null } | null)?.profile ?? null;
+  const ownProfile = profile && String(profile.id) === userId ? profile : null;
+
+  return isOnboardingComplete(ownProfile) ? "Tab" : "VibesOnboardingFlow";
 };

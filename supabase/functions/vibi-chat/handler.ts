@@ -111,7 +111,7 @@ export function createHandler({
       if (body.action === "resolve") {
         if (!isUUID(body.id) || !isCategory(body.type))
           throw new VibiError("invalid_request");
-        const { candidates } = await loadCatalog(db, userId);
+        const { candidates } = await loadCatalog(db, userId, admin);
         const [card] = await hydrateCards(
           db,
           [{ id: body.id, type: body.type, reason: "" }],
@@ -154,7 +154,7 @@ export function createHandler({
         const page = records.slice(0, 20).reverse();
         const needsCatalog = page.some((r) => r.recommendations.length);
         const catalog = needsCatalog
-          ? (await loadCatalog(db, userId)).candidates
+          ? (await loadCatalog(db, userId, admin)).candidates
           : [];
         const exchanges = await Promise.all(
           page.map(async (row) => ({
@@ -193,7 +193,7 @@ export function createHandler({
           .maybeSingle()
       ).data;
       if (existing) {
-        const { candidates } = await loadCatalog(db, userId);
+        const { candidates } = await loadCatalog(db, userId, admin);
         return json({
           exchange: {
             ...existing,
@@ -226,7 +226,7 @@ export function createHandler({
           .eq("request_id", send.requestId)
           .maybeSingle()
       ).data;
-      const catalog = await loadCatalog(db, userId);
+      const catalog = await loadCatalog(db, userId, admin);
       if (retry)
         return json({
           exchange: {
@@ -267,7 +267,7 @@ export function createHandler({
         candidates,
       });
       // Revalidate after inference; visibility, blocks and capacity may have changed.
-      const fresh = await loadCatalog(db, userId);
+      const fresh = await loadCatalog(db, userId, admin);
       const cards = await hydrateCards(
         db,
         reply.recommendations,
