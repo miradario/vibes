@@ -8,7 +8,7 @@ export const ENERGY_SOURCES = [
 const QUESTIONS = [
   { kind: "mood", title: "¿Cómo estás hoy?" },
   { kind: "energy", title: "¿Cómo están tus fuentes de energía?" },
-  { kind: "service", title: "¿Has hecho algún servicio hoy?" },
+  { kind: "service", title: "¿Ayudaste a alguien hoy?" },
   { kind: "tip", title: "¿Querés saber cómo tener un gran día?" },
   { kind: "person", title: "¿Querés que te recomiende una persona de la app?" },
 ] as const;

@@ -309,9 +309,9 @@ const baseTranslations = {
         button: "Entrar a Vibes",
       },
       purposeOptions: {
-        service: "Hacer servicio",
+        service: "Ayudar",
         challenges: "Desafíos",
-        discover: "Conocer Gente (Descubrir)",
+        discover: "Conocer Gente",
         dating: "Citas",
         events: "Eventos",
         classes: "Clases",
@@ -1056,9 +1056,9 @@ const baseTranslations = {
         button: "Enter Vibes",
       },
       purposeOptions: {
-        service: "Volunteer",
+        service: "Help",
         challenges: "Challenges",
-        discover: "Meet People (Discover)",
+        discover: "Meet People",
         dating: "Dating",
         events: "Events",
         classes: "Classes",

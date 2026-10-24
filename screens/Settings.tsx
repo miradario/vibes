@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUESTION_GROUPS } from "../src/lib/profileQuestions";
 import { INTERESTED_IN_OPTIONS, interestedIn as readInterestedIn } from "../supabase/functions/vibi-chat/dating";
-import { PURPOSE_OPTIONS, togglePurposeSelection } from "../src/screens/Onboarding/vibesOnboardingContent";
+import { PURPOSE_OPTIONS, getPurposeDisplayLabel, togglePurposeSelection } from "../src/screens/Onboarding/vibesOnboardingContent";
 import {
   View,
   TouchableOpacity,
@@ -534,7 +534,7 @@ const Settings = () => {
             </Text>
             <View style={localStyles.chipWrap}>
               {PURPOSE_OPTIONS.map(({ id, label }) =>
-                renderChip(label, purposes.includes(label), () =>
+                renderChip(getPurposeDisplayLabel(label), purposes.includes(label), () =>
                   setPurposes((previous) =>
                     [...previous.filter(value => !PURPOSE_OPTIONS.some(option => option.label === value)),
                       ...togglePurposeSelection(PURPOSE_OPTIONS.filter(option => previous.includes(option.label)).map(option => option.id), id)
