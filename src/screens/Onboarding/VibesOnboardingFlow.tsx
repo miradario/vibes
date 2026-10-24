@@ -494,12 +494,15 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
     return () => shown.remove();
   }, []);
 
-  const requestLocation = async () => {
+  const requestLocation = async ({ silent = false }: { silent?: boolean } = {}) => {
     if (locationLoading) return;
+    // Si el usuario escribe mientras buscamos, no pisamos lo que cargó a mano.
+    const version = ++locationSearchVersion.current;
     setLocationLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
+        if (silent) return;
         Alert.alert(
           t("onboarding.locationPermissionDeniedTitle"),
           t("onboarding.locationPermissionDeniedMessage")
@@ -512,6 +515,8 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
         latitude: current.coords.latitude,
         longitude: current.coords.longitude,
       });
+
+      if (version !== locationSearchVersion.current) return;
 
       const nextCity =
         address?.city ?? address?.subregion ?? address?.region ?? "";
@@ -537,11 +542,22 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
         longitude: current.coords.longitude,
       });
     } catch (_error) {
-      Alert.alert(t("common.error"), t("onboarding.locationError"));
+      if (!silent) Alert.alert(t("common.error"), t("onboarding.locationError"));
     } finally {
       setLocationLoading(false);
     }
   };
+
+  // Por defecto usamos la ubicación actual al llegar al paso, si todavía no hay datos.
+  // El botón queda para volver a aplicarla a mano. Sin permiso, se completa a mano.
+  const autoLocationRequested = useRef(false);
+  useEffect(() => {
+    if (step !== "location" || autoLocationRequested.current) return;
+    autoLocationRequested.current = true;
+    if (city.trim() || country.trim()) return;
+    void requestLocation({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const updatePracticeDetail = (
     practice: string,
@@ -791,6 +807,27 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
         <OnboardingGlobe style={{ width: 92, height: 100 }} />
       </View>
       <View style={onboardingStyles.locationWrap}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          activeOpacity={0.84}
+          disabled={locationLoading}
+          onPress={() => void requestLocation()}
+          style={[
+            onboardingStyles.locationButton,
+            locationLoading && onboardingStyles.locationButtonDisabled,
+          ]}
+        >
+          <Icon
+            name="location"
+            size={18}
+            color={ONBOARDING_COLORS.text}
+          />
+          <Text style={onboardingStyles.locationButtonText}>
+            {locationLoading
+              ? t("onboarding.gettingLocation")
+              : t("onboarding.useMyLocation")}
+          </Text>
+        </TouchableOpacity>
         <View style={onboardingStyles.fieldGroup}>
           <View style={onboardingStyles.inputRow}>
             <Icon
@@ -800,7 +837,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
             />
             <TextInput
               ref={countryInputRef}
-              style={onboardingStyles.input}
+              style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={t("onboarding.countryPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={country}
@@ -827,7 +864,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
             />
             <TextInput
               ref={cityInputRef}
-              style={onboardingStyles.input}
+              style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={t("onboarding.cityPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={city}
@@ -850,7 +887,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
             <Icon name="location-outline" size={20} color={ONBOARDING_COLORS.mustard} />
             <TextInput
               ref={neighborhoodInputRef}
-              style={onboardingStyles.input}
+              style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
               accessibilityLabel={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
@@ -879,27 +916,6 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
             <Text style={onboardingStyles.input}>{suggestion.city}, {suggestion.country}</Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity
-          accessibilityRole="button"
-          activeOpacity={0.84}
-          disabled={locationLoading}
-          onPress={() => void requestLocation()}
-          style={[
-            onboardingStyles.locationButton,
-            locationLoading && onboardingStyles.locationButtonDisabled,
-          ]}
-        >
-          <Icon
-            name="location"
-            size={18}
-            color={ONBOARDING_COLORS.text}
-          />
-          <Text style={onboardingStyles.locationButtonText}>
-            {locationLoading
-              ? t("onboarding.gettingLocation")
-              : t("onboarding.useMyLocation")}
-          </Text>
-        </TouchableOpacity>
       </View>
     </>
   );
@@ -1195,6 +1211,13 @@ const VibesOnboardingFlow = () => {
 export default VibesOnboardingFlow;
 
 const localStyles = StyleSheet.create({
+  locationInput: {
+    // Let single-line native inputs center the font without extra line leading.
+    lineHeight: undefined,
+    paddingVertical: 0,
+    includeFontPadding: false,
+    textAlignVertical: "center",
+  },
   experienceHint: {marginTop:20,marginBottom:2,fontSize:14,lineHeight:20,color:vibesTheme.colors.secondaryText},
   practiceWithDetails: {borderColor:vibesTheme.colors.accentBlue,backgroundColor:`${vibesTheme.colors.accentBlue}0C`},
   practiceDot: {width:10,height:10,borderRadius:5,backgroundColor:vibesTheme.colors.accentMustard},
