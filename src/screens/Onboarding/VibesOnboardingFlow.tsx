@@ -821,7 +821,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
             />
             <TextInput
               ref={countryInputRef}
-              style={onboardingStyles.input}
+              style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={t("onboarding.countryPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={country}
@@ -848,7 +848,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
             />
             <TextInput
               ref={cityInputRef}
-              style={onboardingStyles.input}
+              style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={t("onboarding.cityPlaceholder")}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
               value={city}
@@ -871,7 +871,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
             <Icon name="location-outline" size={20} color={ONBOARDING_COLORS.mustard} />
             <TextInput
               ref={neighborhoodInputRef}
-              style={onboardingStyles.input}
+              style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
               accessibilityLabel={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
               placeholderTextColor="rgba(110, 110, 110, 0.55)"
@@ -1195,6 +1195,13 @@ const VibesOnboardingFlow = () => {
 export default VibesOnboardingFlow;
 
 const localStyles = StyleSheet.create({
+  locationInput: {
+    // Let single-line native inputs center the font without extra line leading.
+    lineHeight: undefined,
+    paddingVertical: 0,
+    includeFontPadding: false,
+    textAlignVertical: "center",
+  },
   experienceHint: {marginTop:20,marginBottom:2,fontSize:14,lineHeight:20,color:vibesTheme.colors.secondaryText},
   practiceWithDetails: {borderColor:vibesTheme.colors.accentBlue,backgroundColor:`${vibesTheme.colors.accentBlue}0C`},
   practiceDot: {width:10,height:10,borderRadius:5,backgroundColor:vibesTheme.colors.accentMustard},
