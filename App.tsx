@@ -358,7 +358,6 @@ const AppNavigator = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
         <CommunityRuntime />
         <StatusBar style="dark" />
         <NavigationContainer
@@ -764,7 +763,6 @@ const AppNavigator = () => {
         />
         <AppCamera />
         <Toast />
-      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 };
@@ -772,7 +770,9 @@ const AppNavigator = () => {
 const App = () => (
   <SafeAreaProvider>
     <I18nProvider>
-      <AppNavigator />
+      <QueryClientProvider client={queryClient}>
+        <AppNavigator />
+      </QueryClientProvider>
     </I18nProvider>
   </SafeAreaProvider>
 );

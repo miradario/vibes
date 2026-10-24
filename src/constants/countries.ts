@@ -1262,3 +1262,31 @@ export const searchCountries = (query: string, locale = "es-AR") => {
     .map(country => ({ code: country.code, label: getCountryName(country.code, locale) }))
     .sort((a, b) => a.label.localeCompare(b.label, locale));
 };
+
+const normalizeCountryName = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+const COUNTRY_NAME_ALIASES: Record<string, string> = {
+  "united states of america": "US", usa: "US", "estados unidos de america": "US",
+  "united kingdom of great britain and northern ireland": "GB", uk: "GB", "reino unido de gran bretana e irlanda del norte": "GB",
+  "brasil": "BR", "mexico": "MX",
+};
+const countryCodeByName = new Map<string, string>();
+COUNTRIES.forEach(country => {
+  countryCodeByName.set(normalizeCountryName(country.es), country.code);
+  countryCodeByName.set(normalizeCountryName(country.en), country.code);
+});
+Object.entries(COUNTRY_NAME_ALIASES).forEach(([name, code]) => {
+  if (!countryCodeByName.has(name)) countryCodeByName.set(name, code);
+});
+/** Maps a stored/free-text country name (es or en, any accents/case) or ISO code to its code. */
+export const findCountryCodeByName = (value: string | null | undefined): string | null => {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (isCountryCode(trimmed.toUpperCase()) && trimmed.length === 2) return trimmed.toUpperCase();
+  return countryCodeByName.get(normalizeCountryName(trimmed)) ?? null;
+};
+/** Returns the list name for a free-text country if it matches; otherwise the original text. */
+export const normalizeCountryForStorage = (value: string | null | undefined, locale = "es-AR") => {
+  const code = findCountryCodeByName(value);
+  return code ? getCountryName(code, locale) : (value?.trim() ?? "");
+};

@@ -12,27 +12,34 @@ type Props = {
   onChange: (codes: string[]) => void;
   multiple?: boolean;
   disabled?: boolean;
+  /** Sheet title / a11y label. Defaults to "Nationality". */
+  title?: string;
+  /** Text shown when nothing in the list is selected (e.g. a legacy free-text value). */
+  fallbackLabel?: string;
 };
 
-export default function CountrySelector({ selected, onChange, multiple = false, disabled = false }: Props) {
+export default function CountrySelector({ selected, onChange, multiple = false, disabled = false, title, fallbackLabel }: Props) {
   const { locale } = useI18n();
   const english = locale.startsWith("en");
   const [expanded, setExpanded] = useState(false);
   const [search, setSearch] = useState("");
   const countries = useMemo(() => searchCountries(search, locale), [search, locale]);
   const placeholder = english ? "Select a country" : "Seleccionar país";
-  const summary = selected.length ? selected.map(code => getCountryName(code, locale)).join(", ") : placeholder;
+  const heading = title ?? (english ? "Nationality" : "Nacionalidad");
+  const fallback = fallbackLabel?.trim();
+  const summary = selected.length ? selected.map(code => getCountryName(code, locale)).join(", ") : (fallback || placeholder);
+  const showingPlaceholder = !selected.length && !fallback;
   return (
     <View style={styles.container}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${english ? "Nationality" : "Nacionalidad"}: ${summary}`}
+        accessibilityLabel={`${heading}: ${summary}`}
         accessibilityState={{ expanded, disabled }}
         disabled={disabled}
         onPress={() => { setExpanded(!expanded); setSearch(""); }}
         style={[styles.trigger, disabled && styles.disabled]}
       >
-        <Text style={[styles.value, !selected.length && styles.placeholder]}>{summary}</Text>
+        <Text style={[styles.value, showingPlaceholder && styles.placeholder]}>{summary}</Text>
         <Icon name={expanded ? "chevron-up" : "chevron-down"} size={20} color={vibesTheme.colors.primaryText} />
       </Pressable>
       <AnimatedSheetModal
@@ -43,7 +50,7 @@ export default function CountrySelector({ selected, onChange, multiple = false, 
         sheetStyle={styles.dropdown}
       >
           <View style={styles.header}>
-            <Text style={styles.title}>{english ? "Nationality" : "Nacionalidad"}</Text>
+            <Text style={styles.title}>{heading}</Text>
             <Pressable accessibilityRole="button" accessibilityLabel={english ? "Close" : "Cerrar"}
               onPress={() => setExpanded(false)} style={styles.close}>
               <Icon name="close" size={24} color={vibesTheme.colors.primaryText} />

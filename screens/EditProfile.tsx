@@ -6,6 +6,10 @@ import ProfilePhotoPicker from "../components/onboarding/ProfilePhotoPicker";
 import VibesLoader from "../components/VibesLoader";
 import { saveProfilePhotoSelection } from "../src/queries/onboarding.queries";
 import CountrySelector from "../components/CountrySelector";
+import {
+  findCountryCodeByName,
+  normalizeCountryForStorage,
+} from "../src/constants/countries";
 import { saveProfileNationality } from "../src/lib/profileNationality";
 /** @format */
 
@@ -345,7 +349,8 @@ const EditProfile = () => {
         if (!active) return;
 
         const city = address?.city ?? address?.region ?? null;
-        const country = address?.country ?? null;
+        const country =
+          normalizeCountryForStorage(address?.country, locale) || null;
         const neighborhood = address?.district?.trim() || null;
         const label = Array.from(
           new Set([neighborhood, city, country].filter(Boolean))
@@ -600,18 +605,22 @@ const EditProfile = () => {
             {t("editProfile.location")}
           </Text>
           <View style={localStyles.locationFields}>
-            <TextInput
-              style={localStyles.nameInput}
-              value={profileCountry}
-              onChangeText={setProfileCountry}
-              onBlur={() => void saveLocation()}
-              onSubmitEditing={() => void saveLocation()}
-              placeholder={t("settings.countryPlaceholder")}
-              placeholderTextColor={GRAY}
-              autoCapitalize="words"
-              returnKeyType="next"
-              editable={!savingLocation}
-            />{" "}
+            <CountrySelector
+              title={locale.startsWith("en") ? "Country" : "País"}
+              selected={(() => {
+                const code = findCountryCodeByName(profileCountry);
+                return code ? [code] : [];
+              })()}
+              fallbackLabel={profileCountry}
+              onChange={(codes) => {
+                const nextCountry = codes[0]
+                  ? normalizeCountryForStorage(codes[0], locale)
+                  : "";
+                setProfileCountry(nextCountry);
+                void saveLocation(profileCity, nextCountry);
+              }}
+              disabled={savingLocation}
+            />
             <TextInput
               style={localStyles.nameInput}
               value={profileCity}
