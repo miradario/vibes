@@ -24,3 +24,8 @@ drop policy if exists user_preferences_select_own on public.user_preferences;
 create policy user_preferences_select_own on public.user_preferences
   as permissive for select to authenticated
   using (user_id = (select auth.uid()));
+
+-- 3) anon never needs user_preferences (no anon policy grants rows; every
+--    policy requires auth.uid()/authenticated). Baseline granted anon all
+--    privileges and only RLS stopped it. profiles has no anon grant already.
+revoke all on table public.user_preferences from anon;
