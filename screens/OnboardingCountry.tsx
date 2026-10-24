@@ -9,6 +9,11 @@ import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import styles from "../assets/styles";
 import Icon from "../components/Icon";
+import CountrySelector from "../components/CountrySelector";
+import {
+  findCountryCodeByName,
+  normalizeCountryForStorage,
+} from "../src/constants/countries";
 import AppHeader from "../components/AppHeader";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useI18n } from "../src/i18n";
@@ -29,7 +34,7 @@ const getUniqueLocationParts = (...parts: Array<string | null | undefined>) => {
 };
 
 const OnboardingCountry = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
   const [city, setCity] = useState(draft.city ?? "");
@@ -70,7 +75,7 @@ const OnboardingCountry = () => {
       });
 
       const nextCity = address?.city ?? address?.subregion ?? address?.region ?? "";
-      const nextCountry = address?.country ?? "";
+      const nextCountry = normalizeCountryForStorage(address?.country, locale);
       const locationLabel = getUniqueLocationParts(nextCity, nextCountry).join(", ");
 
       setCity(nextCity);
@@ -112,15 +117,16 @@ const OnboardingCountry = () => {
         </View>
 
         <View style={styles.loginField}>
-          <TextInput
-            style={styles.loginInput}
-            placeholder={t("onboarding.countryPlaceholder")}
-            placeholderTextColor={vibesTheme.colors.secondaryText}
-            autoCapitalize="words"
-            returnKeyType="done"
-            value={country}
-            onChangeText={setCountry}
-            onSubmitEditing={goToNextStep}
+          <CountrySelector
+            title={locale.startsWith("en") ? "Country" : "País"}
+            selected={(() => {
+              const code = findCountryCodeByName(country);
+              return code ? [code] : [];
+            })()}
+            fallbackLabel={country}
+            onChange={(codes) =>
+              setCountry(codes[0] ? normalizeCountryForStorage(codes[0], locale) : "")
+            }
           />
         </View>
 
