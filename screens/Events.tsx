@@ -1,3 +1,4 @@
+import DiscoverPathCards from "../components/DiscoverPathCards";
 import { sectionTabStyles } from "../components/SectionTabStyles";
 import BackButton from "../components/BackButton";
 import ChallengeFeedCard from "../components/ChallengeFeedCard";
@@ -214,6 +215,7 @@ const Events = ({
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
   const [modality, setModality] = useState<EventModality | null>(null);
   const [category, setCategory] = useState<EventCategory | null>(null);
+  const [spiritualPaths, setSpiritualPaths] = useState<string[]>([]);
   const [participationType, setParticipationType] = useState<EventParticipationType | null>(null);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [frequentOnly, setFrequentOnly] = useState(false);
@@ -238,13 +240,14 @@ const Events = ({
     pricingType: "free" | "paid" | null;
     participationType: EventParticipationType | null;
     modality: EventModality | null;
-  }>({ pricingType: null, participationType: null, modality: null });
-  const activeFilterCount = [frequentOnly, category, participationType, modality, dateFrom, dateTo, locationFilter.trim()].filter(Boolean).length;
+    spiritualPaths: string[];
+  }>({ pricingType: null, participationType: null, modality: null, spiritualPaths: [] });
+  const activeFilterCount = [frequentOnly, category, participationType, modality, spiritualPaths.length > 0, dateFrom, dateTo, locationFilter.trim()].filter(Boolean).length;
   const [filterPanel, setFilterPanel] = useState<"date" | "location" | "other">("date");
   const openFilters = (panel: "date" | "location" | "other") => {
     setFilterPanel(panel);
     Keyboard.dismiss();
-    setDraftFilters({ pricingType, participationType, modality });
+    setDraftFilters({ pricingType, participationType, modality, spiritualPaths });
     setDraftDatePreset(datePreset);
     setDraftDateFrom(dateFrom);
     setDraftDateTo(dateTo);
@@ -311,6 +314,7 @@ const Events = ({
       if (section === "challenge" && (item.visibility === "private") !== (challengeTab === "private")) return false;
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
+      if (section === "event" && spiritualPaths.length > 0 && !spiritualPaths.some((path) => item.tags?.includes(path))) return false;
       if (section === "event" && frequentOnly && !getEventRecurrence(item.schedule)) return false;
       if (section === "event" && pricingType && item.pricingType !== pricingType) return false;
       if (!normalizedSearch) return true;
@@ -333,7 +337,7 @@ const Events = ({
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
+  }, [items, spiritualPaths, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
@@ -617,7 +621,7 @@ const Events = ({
             {([
               ["date", "calendar-outline", "Fecha", Boolean(dateFrom || dateTo)],
               ["location", "location-outline", "Ubicación", Boolean(locationFilter)],
-              ["other", "options-outline", "Otros", Boolean(pricingType || participationType || modality)],
+              ["other", "options-outline", "Otros", Boolean(pricingType || participationType || modality || spiritualPaths.length)],
             ] as const).map(([panel, icon, label, active]) => <TouchableOpacity key={label} accessibilityRole="button" accessibilityLabel={`Filtrar por ${label}`} accessibilityState={{ expanded: filtersVisible && filterPanel === panel }} onPress={() => openFilters(panel)} style={[localStyles.eventFilterChip, active && { borderColor: vibesTheme.colors.primaryText, backgroundColor: `${vibesTheme.colors.primaryText}0C` }]}>
               <Icon name={icon} size={18} color={vibesTheme.colors.primaryText} />
               <Text numberOfLines={1} style={localStyles.eventFilterLabel}>{label}</Text>
@@ -967,6 +971,12 @@ const Events = ({
           {invalidDateRange ? <Text style={{ color: vibesTheme.colors.primaryText }}>La fecha final debe ser igual o posterior a la inicial.</Text> : null}
           </> : null}
           {filterPanel === "other" ? <>
+          <Text style={localStyles.filterActionText}>Camino espiritual</Text>
+          <DiscoverPathCards
+            selected={draftFilters.spiritualPaths}
+            onToggle={(path) => setDraftFilters((draft) => ({ ...draft, spiritualPaths: draft.spiritualPaths.includes(path) ? draft.spiritualPaths.filter((value) => value !== path) : [...draft.spiritualPaths, path] }))}
+            onClear={() => setDraftFilters((draft) => ({ ...draft, spiritualPaths: [] }))}
+          />
           <EventClassificationPicker filter label="Precio" options={[{ id: "free", label: "Gratis" }, { id: "paid", label: "Pago" }] as const} value={draftFilters.pricingType} onChange={(value) => setDraftFilters((draft) => ({ ...draft, pricingType: value }))} />
           <EventClassificationPicker filter label="Tipo" options={EVENT_PARTICIPATION_TYPES} value={draftFilters.participationType} onChange={(value) => setDraftFilters((draft) => ({ ...draft, participationType: value }))} />
           <EventClassificationPicker filter label="Modalidad" options={EVENT_MODALITIES} value={draftFilters.modality} onChange={(value) => setDraftFilters((draft) => ({ ...draft, modality: value }))} />
@@ -974,7 +984,7 @@ const Events = ({
         </ScrollView>
         <View style={[localStyles.filterFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => {
-            if (filterPanel === "other") setDraftFilters({ pricingType: null, participationType: null, modality: null });
+            if (filterPanel === "other") setDraftFilters({ pricingType: null, participationType: null, modality: null, spiritualPaths: [] });
             if (filterPanel === "date") { setDraftDatePreset(null); setDraftDateFrom(null); setDraftDateTo(null); setDateField(null); }
             if (filterPanel === "location") setDraftLocation("");
           }}>
@@ -986,7 +996,7 @@ const Events = ({
             }
             if (filterPanel === "location") setLocationFilter(draftLocation.trim());
             if (filterPanel === "other") {
-              setPricingType(draftFilters.pricingType); setParticipationType(draftFilters.participationType); setModality(draftFilters.modality);
+              setSpiritualPaths(draftFilters.spiritualPaths); setPricingType(draftFilters.pricingType); setParticipationType(draftFilters.participationType); setModality(draftFilters.modality);
             }
             setFiltersVisible(false);
           }}>

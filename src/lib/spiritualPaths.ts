@@ -8,6 +8,7 @@ export const SPIRITUAL_PATH_OPTIONS = [
   "Kundalini",
   "Hatha Yoga",
   "Tantra",
+  "Contact",
   "Otro",
 ] as const;
 
