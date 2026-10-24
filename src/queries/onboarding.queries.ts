@@ -1,4 +1,4 @@
-import { saveOwnProfileRow } from "../lib/ownProfileWrite";
+import { isUuid, saveOwnProfileRow } from "../lib/ownProfileWrite";
 import { getProfilePicturePath } from "../lib/profilePhotoStorage";
 import { preparePhotoUpload } from "../lib/preparePhotoUpload";
 import {
@@ -290,9 +290,13 @@ type CompleteOnboardingInput = {
 
 const upsertProfileWithFallback = async (payload: Record<string, unknown>) => {
   const workingPayload: Record<string, unknown> = { ...payload };
+  if (!isUuid(workingPayload.id)) {
+    throw new Error("upsertProfileWithFallback: payload.id is not a valid UUID");
+  }
+  const profileId = workingPayload.id;
 
   while (true) {
-    const { error } = await saveOwnProfileRow(String(workingPayload.id), workingPayload);
+    const { error } = await saveOwnProfileRow(profileId, workingPayload);
 
     if (!error) return;
 

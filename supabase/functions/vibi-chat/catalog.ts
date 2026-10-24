@@ -19,6 +19,18 @@ async function rows(query: any): Promise<Row[]> {
     if (!data || data.length < 500) return result;
   }
 }
+// Keep each `.in()` list short enough for PostgREST URL limits.
+const ID_CHUNK = 150;
+async function rowsByIds(
+  ids: string[],
+  build: (chunk: string[]) => any
+): Promise<Row[]> {
+  const result: Row[] = [];
+  for (let i = 0; i < ids.length; i += ID_CHUNK) {
+    result.push(...(await rows(build(ids.slice(i, i + ID_CHUNK)))));
+  }
+  return result;
+}
 const preferenceFields =
   "user_id,spiritual_path,spiritual_path_details,other_tags,languages,onboarding_purpose,looking_for,profile_answers,gender,height_cm,smoking,vegetarian,education,family_plan,pets,zodiac,personality,communication_style,love_style,open_to";
 /**
@@ -32,10 +44,42 @@ export async function loadCatalog(
   userId: string,
   peopleDb: SupabaseClient = db
 ) {
+  const visibleIdsPromise = rows(
+    db
+      .from("profiles")
+      .select("id")
+      .is("deleted_at", null)
+      .eq("is_active", true)
+      .order("id")
+  );
+  // Service-role reads are limited to the ids the caller can see through RLS,
+  // instead of fetching every profile/preferences row.
+  const peoplePromise = visibleIdsPromise.then((visibleRows) => {
+    const ids = visibleRows.map((p) => String(p.id));
+    return Promise.all([
+      rowsByIds(ids, (chunk) =>
+        peopleDb
+          .from("profiles")
+          .select(
+            "id,display_name,birth_date,gender_id,is_active,deleted_at,latitude,longitude"
+          )
+          .in("id", chunk)
+          .is("deleted_at", null)
+          .eq("is_active", true)
+          .order("id")
+      ),
+      rowsByIds(ids, (chunk) =>
+        peopleDb
+          .from("user_preferences")
+          .select(preferenceFields)
+          .in("user_id", chunk)
+          .order("user_id")
+      ),
+    ]);
+  });
   const [
     visibleProfileIds,
-    allProfiles,
-    preferences,
+    [allProfiles, preferences],
     ownResult,
     blocks,
     swipes,
@@ -44,25 +88,8 @@ export async function loadCatalog(
     eventJoins,
     challengeJoins,
   ] = await Promise.all([
-    rows(
-      db
-        .from("profiles")
-        .select("id")
-        .is("deleted_at", null)
-        .eq("is_active", true)
-        .order("id")
-    ),
-    rows(
-      peopleDb
-        .from("profiles")
-        .select(
-          "id,display_name,birth_date,gender_id,is_active,deleted_at,latitude,longitude"
-        )
-        .is("deleted_at", null)
-        .eq("is_active", true)
-        .order("id")
-    ),
-    rows(peopleDb.from("user_preferences").select(preferenceFields).order("user_id")),
+    visibleIdsPromise,
+    peoplePromise,
     db
       .from("user_preferences")
       .select(
