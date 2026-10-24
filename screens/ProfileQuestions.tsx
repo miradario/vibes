@@ -33,6 +33,8 @@ import {
 } from "../src/lib/profileQuestions";
 import { userPreferencesKeys } from "../src/queries/userPreferences.queries";
 
+const SECTION_COUNT = 3;
+
 export default function ProfileQuestions() {
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -58,6 +60,8 @@ export default function ProfileQuestions() {
   const ready = query.isSuccess && preferences.isSuccess;
   const loading = query.isLoading || preferences.isLoading;
   const failed = query.isError || preferences.isError;
+  const isLastGroup = group >= SECTION_COUNT - 1;
+  // En Identidad e Intereses guardamos y pasamos a la tab siguiente; en Planes guardamos y salimos.
   const save = async () => {
     if (!userId || saving || !ready) return;
     setSaving(true);
@@ -82,7 +86,8 @@ export default function ProfileQuestions() {
           queryKey: userPreferencesKeys.byUser(userId),
         }),
       ]);
-      navigation.goBack();
+      if (isLastGroup) navigation.goBack();
+      else setGroup((current) => Math.min(current + 1, SECTION_COUNT - 1));
     } catch {
       Alert.alert(
         "No pudimos guardar",
@@ -185,7 +190,7 @@ export default function ProfileQuestions() {
           }}
         >
           <PrimaryButton
-            label="Guardar"
+            label={isLastGroup ? "Guardar" : "Continuar"}
             loading={saving}
             disabled={!userId || saving || !ready}
             onPress={() => void save()}
