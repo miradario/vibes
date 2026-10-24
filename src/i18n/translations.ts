@@ -311,7 +311,7 @@ const baseTranslations = {
       purposeOptions: {
         service: "Ayudar",
         challenges: "Desafíos",
-        discover: "Conocer Gente (Descubrir)",
+        discover: "Conocer Gente",
         dating: "Citas",
         events: "Eventos",
         classes: "Clases",
@@ -1058,7 +1058,7 @@ const baseTranslations = {
       purposeOptions: {
         service: "Help",
         challenges: "Challenges",
-        discover: "Meet People (Discover)",
+        discover: "Meet People",
         dating: "Dating",
         events: "Events",
         classes: "Classes",

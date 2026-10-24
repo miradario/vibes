@@ -24,7 +24,7 @@ export type OnboardingOption = {
 export const PURPOSE_OPTIONS: OnboardingOption[] = [
   { id: "service", label: "Hacer servicio", displayLabel: "Ayudar", icon: "heart-outline", tone: "coral" },
   { id: "challenges", label: "Desafíos", icon: "trophy-outline", tone: "mustard" },
-  { id: "discover", label: "Conocer Gente (Descubrir)", icon: "people-outline", tone: "blue" },
+  { id: "discover", label: "Conocer Gente (Descubrir)", displayLabel: "Conocer Gente", icon: "people-outline", tone: "blue" },
   { id: "dating", label: "Citas", icon: "heart-outline", tone: "coral" },
   { id: "events", label: "Eventos", icon: "calendar-outline", tone: "mustard" },
   { id: "classes", label: "Clases", icon: "school-outline", tone: "blue" },
