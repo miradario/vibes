@@ -1,6 +1,4 @@
 import { hasProfilePhotos, comparePhotoPriority } from "../lib/profilePhotos";
-import { zodiacFromBirthDate } from "../lib/zodiac";
-import { isSwipeHidden } from "../lib/communityDiscovery";
 import { useQuery } from "@tanstack/react-query";
 import { mapSupabaseSelect } from "../api/mappers/case.mapper";
 import type {
@@ -17,207 +15,104 @@ type ProfileRow = Record<string, any>;
 type PhotoRow = Record<string, any>;
 type UserPreferenceRow = Record<string, any>;
 
-const isMissingRelationError = (error: unknown) => {
-  if (!error || typeof error !== "object") return false;
-  const record = error as Record<string, unknown>;
-  const code = typeof record.code === "string" ? record.code : "";
-  const message = typeof record.message === "string" ? record.message : "";
-  return code === "42P01" || message.toLowerCase().includes("user_blocks");
-};
-
 export const candidatesKeys = {
   all: ["candidates"] as const,
   list: (userId?: string, params?: GetCandidatesParams) =>
     [...candidatesKeys.all, userId ?? "anonymous", params ?? {}] as const,
 };
 
-const toCoordinate = (value: unknown) =>
-  typeof value === "number"
-    ? value
-    : typeof value === "string" && value.trim()
-    ? Number(value)
-    : null;
-
-const toRadians = (value: number) => (value * Math.PI) / 180;
-
-const calculateDistanceKm = (
-  originLat: number,
-  originLng: number,
-  targetLat: number,
-  targetLng: number
-) => {
-  const earthRadiusKm = 6371;
-  const deltaLat = toRadians(targetLat - originLat);
-  const deltaLng = toRadians(targetLng - originLng);
-  const a =
-    Math.sin(deltaLat / 2) ** 2 +
-    Math.cos(toRadians(originLat)) *
-      Math.cos(toRadians(targetLat)) *
-      Math.sin(deltaLng / 2) ** 2;
-
-  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+type DiscoveryRpcRow = {
+  id: string;
+  profile: ProfileRow | null;
+  preferences: UserPreferenceRow | null;
+  age: number | null;
+  zodiac: string | null;
+  distance_km: number | null;
 };
+
+export type CandidateAgeRange = { min: number | null; max: number | null };
+
+const DISCOVERY_PAGE_SIZE = 200;
 
 const fetchCandidates = (...args: Parameters<typeof fetchCandidatesInternal>) =>
   withBootTimeout(fetchCandidatesInternal(...args), 20000, "No se pudieron cargar los perfiles. Volvé a intentar");
 
+/**
+ * Candidates come from the get_discovery_candidates RPC: the server applies
+ * eligibility (active, not deleted, not blocked, not recently swiped) and
+ * returns the derived distance/age instead of other users' coordinates or
+ * birth dates. When an age range is given it is applied server-side, so
+ * profiles that hide their age still respect the viewer's age filter.
+ */
 const fetchCandidatesInternal = async (
   currentUserId?: string,
-  params?: GetCandidatesParams,
+  _params?: GetCandidatesParams,
   includePreviouslySwiped = false,
   targetProfileIds?: string[],
-  homePreview = false
+  homePreview = false,
+  ageRange?: CandidateAgeRange
 ): Promise<GetCandidatesResponse> => {
-  let canViewPhotos = false;
-  const pageSize = Math.max(1, Math.min(params?.limit ?? 200, 500));
-  let currentUserCoordinates: { latitude: number; longitude: number } | null =
-    null;
-
-  // Fetch IDs the current user has already swiped on
-  let swipedIds: string[] = [];
-  let blockedUserIds: string[] = [];
-  if (currentUserId) {
-    const [swipesResponse, profileResponse, blocksResponse, ownPhotosResponse] = await Promise.all(
-      [
-        includePreviouslySwiped
-          ? Promise.resolve({ data: [], error: null })
-          : supabase
-              .from("swipes")
-              .select("target_id, direction, created_at")
-              .eq("swiper_id", currentUserId),
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", currentUserId)
-          .is("deleted_at", null)
-          .maybeSingle(),
-        supabase
-          .from("user_blocks")
-          .select("blocker_id, blocked_user_id")
-          .or(
-            `blocker_id.eq.${currentUserId},blocked_user_id.eq.${currentUserId}`
-          ),
-        supabase.from("profile_photos").select("url").eq("profile_id", currentUserId),
-      ]
-    );
-
-    const { data: swipeRows } = swipesResponse;
-    const { data: currentUserProfile } = profileResponse;
-    if (profileResponse.error) throw profileResponse.error;
-    if (ownPhotosResponse.error) throw ownPhotosResponse.error;
-    canViewPhotos = homePreview || hasProfilePhotos({ photos: ownPhotosResponse.data }) || hasProfilePhotos(currentUserProfile);
-    if (blocksResponse.error && !isMissingRelationError(blocksResponse.error)) {
-      throw blocksResponse.error;
-    }
-
-    if (swipesResponse.error) throw swipesResponse.error;
-    swipedIds = (swipeRows ?? [])
-      .filter((row: any) => isSwipeHidden(row))
-      .map((r: any) => String(r.target_id));
-    blockedUserIds = blocksResponse.error
-      ? []
-      : ((blocksResponse.data ?? []) as Record<string, any>[]).map((row) =>
-          String(row.blocker_id) === currentUserId
-            ? String(row.blocked_user_id)
-            : String(row.blocker_id)
-        );
-
-    const currentLatitude = toCoordinate((currentUserProfile as any)?.latitude);
-    const currentLongitude = toCoordinate(
-      (currentUserProfile as any)?.longitude
-    );
-
-    if (
-      currentLatitude !== null &&
-      Number.isFinite(currentLatitude) &&
-      currentLongitude !== null &&
-      Number.isFinite(currentLongitude)
-    ) {
-      currentUserCoordinates = {
-        latitude: currentLatitude,
-        longitude: currentLongitude,
-      };
-    }
+  if (!currentUserId) return [] as unknown as GetCandidatesResponse;
+  if (targetProfileIds && targetProfileIds.length === 0) {
+    return [] as unknown as GetCandidatesResponse;
   }
 
-  let query = supabase
-    .from("profiles")
-    .select("*")
-    .is("deleted_at", null)
-    .order("id", { ascending: true })
-    .limit(pageSize);
+  const ownPhotosResponse = await supabase
+    .from("profile_photos")
+    .select("url")
+    .eq("profile_id", currentUserId);
+  if (ownPhotosResponse.error) throw ownPhotosResponse.error;
+  const canViewPhotos = homePreview || hasProfilePhotos({ photos: ownPhotosResponse.data });
 
-  if (targetProfileIds?.length) {
-    query = query.in("id", targetProfileIds);
-  } else {
-    query = query.eq("is_active", true);
-  }
-
-  if (currentUserId) {
-    query = query.neq("id", currentUserId);
-  }
-
-  // Exclude already-swiped profiles
-  if (!includePreviouslySwiped && swipedIds.length > 0) {
-    query = query.not("id", "in", `(${swipedIds.join(",")})`);
-  }
-
-  if (blockedUserIds.length > 0) {
-    query = query.not("id", "in", `(${blockedUserIds.join(",")})`);
-  }
-
-  // Read the full eligible pool before ranking, rather than the 200 newest accounts.
-  const profileRows: ProfileRow[] = [];
-  let after: string | undefined;
+  const rows: DiscoveryRpcRow[] = [];
+  let after: string | null = null;
   while (true) {
-    const { data, error } = await (after ? query.gt("id", after) : query);
+    const { data, error } = await supabase.rpc("get_discovery_candidates", {
+      p_target_ids: targetProfileIds?.length ? targetProfileIds : null,
+      p_include_previously_swiped: includePreviouslySwiped,
+      p_limit: DISCOVERY_PAGE_SIZE,
+      p_after_id: after,
+      p_age_min: ageRange?.min ?? null,
+      p_age_max: ageRange?.max ?? null,
+    });
     if (error) throw error;
-    profileRows.push(...(data ?? []));
-    if (!data?.length || data.length < pageSize) break;
-    after = String(data[data.length - 1].id);
+    const page = (data ?? []) as DiscoveryRpcRow[];
+    rows.push(...page);
+    if (page.length < DISCOVERY_PAGE_SIZE) break;
+    after = String(page[page.length - 1].id);
   }
 
-  const profiles = (mapSupabaseSelect(profileRows ?? []) as ProfileRow[]) ?? [];
-  const profileIds = profiles
-    .map((profile) => String(profile.id ?? ""))
-    .filter((id) => id.length > 0);
+  const profiles = rows.map((row) => {
+    const profile = (mapSupabaseSelect([row.profile ?? { id: row.id }]) as ProfileRow[])[0] ?? {};
+    return { ...profile, id: String(row.id) } as ProfileRow;
+  });
+  const profileIds = profiles.map((profile) => String(profile.id));
+  const rpcById = new Map(rows.map((row) => [String(row.id), row]));
 
   let photosByProfileId = new Map<string, PhotoRow[]>();
-  let preferencesByUserId = new Map<string, UserPreferenceRow>();
+  const preferencesByUserId = new Map<string, UserPreferenceRow>();
+  for (const row of rows) {
+    if (row.preferences) {
+      const mapped = (mapSupabaseSelect([row.preferences]) as UserPreferenceRow[])[0];
+      if (mapped) preferencesByUserId.set(String(row.id), mapped);
+    }
+  }
 
   if (profileIds.length > 0) {
-    const photosResponse: { data: PhotoRow[]; error: any } = {
-      data: [],
-      error: null,
-    };
-    const preferencesResponse: { data: UserPreferenceRow[]; error: any } = {
-      data: [],
-      error: null,
-    };
+    const photoRows: PhotoRow[] = [];
     for (let i = 0; i < profileIds.length; i += 50) {
       const ids = profileIds.slice(i, i + 50);
-      const [photos, preferences] = await Promise.all([
-        supabase
-          .from("profile_photos")
-          .select("*")
-          .in("profile_id", ids)
-          .order("is_primary", { ascending: false })
-          .order("order", { ascending: true }),
-        supabase.from("user_preferences").select("*").in("user_id", ids),
-      ]);
-      photosResponse.data.push(...(photos.data ?? []));
-      photosResponse.error ||= photos.error;
-      preferencesResponse.data.push(...(preferences.data ?? []));
-      preferencesResponse.error ||= preferences.error;
+      const photos = await supabase
+        .from("profile_photos")
+        .select("*")
+        .in("profile_id", ids)
+        .order("is_primary", { ascending: false })
+        .order("order", { ascending: true });
+      if (photos.error) throw photos.error;
+      photoRows.push(...(photos.data ?? []));
     }
 
-    const { data: photoRows, error: photosError } = photosResponse;
-
-    if (photosError) {
-      throw photosError;
-    }
-
-    const photos = (mapSupabaseSelect(photoRows ?? []) as PhotoRow[]) ?? [];
+    const photos = (mapSupabaseSelect(photoRows) as PhotoRow[]) ?? [];
     photosByProfileId = photos.reduce<Map<string, PhotoRow[]>>((acc, photo) => {
       const profileId = String(photo.profileId ?? "");
       if (!profileId) return acc;
@@ -226,33 +121,6 @@ const fetchCandidatesInternal = async (
       acc.set(profileId, existing);
       return acc;
     }, new Map<string, PhotoRow[]>());
-
-    const { data: preferenceRows, error: preferencesError } =
-      preferencesResponse;
-    if (preferencesError) {
-      const message =
-        typeof preferencesError.message === "string"
-          ? preferencesError.message.toLowerCase()
-          : "";
-      if (
-        !message.includes("could not find the table 'public.user_preferences'")
-      ) {
-        throw preferencesError;
-      }
-    } else {
-      const mappedPreferences =
-        (mapSupabaseSelect(preferenceRows ?? []) as UserPreferenceRow[]) ?? [];
-      preferencesByUserId = mappedPreferences.reduce<
-        Map<string, UserPreferenceRow>
-      >((acc, preferenceRow) => {
-        const userId = String(
-          preferenceRow.userId ?? preferenceRow.user_id ?? ""
-        );
-        if (!userId) return acc;
-        acc.set(userId, preferenceRow);
-        return acc;
-      }, new Map<string, UserPreferenceRow>());
-    }
   }
 
   const candidates = await Promise.all(
@@ -332,22 +200,17 @@ const fetchCandidatesInternal = async (
         }[];
       }
 
+      const rpcRow = rpcById.get(id);
+      const ageHidden = Boolean(preferencesByUserId.get(id)?.hideAge);
       return {
         ...profile,
         ...preferencesByUserId.get(id),
         id,
-        zodiac: zodiacFromBirthDate(profile.birthDate ?? profile.birth_date),
-        distanceKm:
-          currentUserCoordinates &&
-          Number.isFinite(toCoordinate(profile.latitude) ?? NaN) &&
-          Number.isFinite(toCoordinate(profile.longitude) ?? NaN)
-            ? calculateDistanceKm(
-                currentUserCoordinates.latitude,
-                currentUserCoordinates.longitude,
-                Number(toCoordinate(profile.latitude)),
-                Number(toCoordinate(profile.longitude))
-              )
-            : undefined,
+        age: typeof rpcRow?.age === "number" ? rpcRow.age : undefined,
+        ageHidden,
+        ageFilteredServerSide: Boolean(ageRange && (ageRange.min !== null || ageRange.max !== null)),
+        zodiac: rpcRow?.zodiac ?? undefined,
+        distanceKm: typeof rpcRow?.distance_km === "number" ? rpcRow.distance_km : undefined,
         displayName:
           typeof profile.displayName === "string"
             ? profile.displayName
@@ -497,14 +360,27 @@ export const useIncomingLikeCandidatesQuery = (enabled = true) => {
   });
 };
 
-export const useCandidatesQuery = (params?: GetCandidatesParams, homePreview = false, enabled = true) => {
+export const useCandidatesQuery = (
+  params?: GetCandidatesParams,
+  homePreview = false,
+  enabled = true,
+  ageRange?: CandidateAgeRange
+) => {
   const { data: session } = useAuthSession();
   const currentUserId = session?.user?.id;
+  const normalizedAgeRange =
+    ageRange && (ageRange.min !== null || ageRange.max !== null) ? ageRange : undefined;
 
   return useQuery<GetCandidatesResponse>({
-    queryKey: [...candidatesKeys.list(currentUserId, params), homePreview ? "home-preview" : "discovery"],
+    queryKey: [
+      ...candidatesKeys.list(currentUserId, params),
+      homePreview ? "home-preview" : "discovery",
+      normalizedAgeRange?.min ?? null,
+      normalizedAgeRange?.max ?? null,
+    ],
     enabled: Boolean(currentUserId) && enabled,
-    queryFn: () => fetchCandidates(currentUserId, params, false, undefined, homePreview),
+    queryFn: () =>
+      fetchCandidates(currentUserId, params, false, undefined, homePreview, normalizedAgeRange),
     retry: 1,
     retryDelay: 1000,
     staleTime: 5 * 60_000,

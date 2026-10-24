@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { showToast } from "../src/utils/toast";
 import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
 import { matchesSavedDiscoverExtras } from "../src/lib/discoverSavedFilters";
@@ -158,34 +159,6 @@ const getDiscoverGenderId = (gender: DiscoverFiltersState["gender"]) => {
   if (gender === "other") return 3;
   if (gender === "nonbinary") return 4;
   return null;
-};
-
-const toRadians = (value: number) => (value * Math.PI) / 180;
-
-const getDistanceKm = (
-  fromLatitude?: unknown,
-  fromLongitude?: unknown,
-  toLatitude?: unknown,
-  toLongitude?: unknown
-) => {
-  const lat1 = toFiniteNumber(fromLatitude);
-  const lon1 = toFiniteNumber(fromLongitude);
-  const lat2 = toFiniteNumber(toLatitude);
-  const lon2 = toFiniteNumber(toLongitude);
-
-  if ([lat1, lon1, lat2, lon2].some((item) => item === null)) return null;
-
-  const earthRadiusKm = 6371;
-  const dLat = toRadians((lat2 as number) - (lat1 as number));
-  const dLon = toRadians((lon2 as number) - (lon1 as number));
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1 as number)) *
-      Math.cos(toRadians(lat2 as number)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-
-  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
 const matchesNumberRange = (
@@ -354,9 +327,12 @@ const Home = () => {
   );
   const { data: ownProfileData } = useProfileQuery(session?.user?.id);
   const { data: userPreferences } = useUserPreferencesQuery(session?.user?.id);
-  const { data: candidates = [], isLoading: candidatesLoading } = useCandidatesQuery(undefined, true);
   const [discoverFilters, setDiscoverFilters] =
     useState<DiscoverFiltersState>(DEFAULT_FILTERS);
+  const { data: candidates = [], isLoading: candidatesLoading } = useCandidatesQuery(undefined, true, true, {
+    min: discoverFilters.ageMin,
+    max: discoverFilters.ageMax,
+  });
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [hasHydratedStoredFilters, setHasHydratedStoredFilters] =
     useState(false);
@@ -368,12 +344,9 @@ const Home = () => {
     const eligible = candidates
       .map((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
-        const distanceKm = getDistanceKm(
-          ownProfileRecord?.latitude,
-          ownProfileRecord?.longitude,
-          candidateRecord.latitude,
-          candidateRecord.longitude
-        );
+        // Distance is computed server-side (get_discovery_candidates).
+        const distanceKm =
+          typeof candidateRecord.distanceKm === "number" ? candidateRecord.distanceKm : null;
 
         return {
           ...candidateRecord,
@@ -396,7 +369,12 @@ const Home = () => {
           candidateRecord.genderId ?? candidateRecord.gender_id
         );
 
+        // Hidden ages come back as null; those profiles were already
+        // filtered by age on the server.
+        const ageCheckedOnServer =
+          candidateAge === null && Boolean(candidateRecord.ageHidden) && Boolean(candidateRecord.ageFilteredServerSide);
         if (
+          !ageCheckedOnServer &&
           !matchesNumberRange(
             candidateAge,
             discoverFilters.ageMin,
@@ -570,8 +548,15 @@ const Home = () => {
           [city, country].filter(Boolean).join(", ") || null;
         const currentLatitude = current.coords.latitude;
         const currentLongitude = current.coords.longitude;
-        const storedLatitude = toFiniteNumber(ownProfileRecord?.latitude);
-        const storedLongitude = toFiniteNumber(ownProfileRecord?.longitude);
+        // Raw coordinates are not read back from the server; remember the
+        // last synced position on the device instead.
+        const syncKey = `own_location_sync:${userId}`;
+        const lastSynced = await AsyncStorage.getItem(syncKey)
+          .then((raw) => (raw ? (JSON.parse(raw) as { latitude?: unknown; longitude?: unknown }) : null))
+          .catch(() => null);
+        if (!active) return;
+        const storedLatitude = ownProfileRecord?.hasLocation ? toFiniteNumber(lastSynced?.latitude) : null;
+        const storedLongitude = ownProfileRecord?.hasLocation ? toFiniteNumber(lastSynced?.longitude) : null;
         const needsSync =
           storedLatitude === null ||
           storedLongitude === null ||
@@ -581,17 +566,24 @@ const Home = () => {
 
         if (!needsSync) return;
 
-        await supabase.from("profiles").upsert(
-          {
-            id: userId,
+        // Plain UPDATE: the row exists once the user reaches Home, and an
+        // upsert would need read access to the coordinate columns.
+        const { error: syncError } = await supabase
+          .from("profiles")
+          .update({
             country,
             city,
             location_label: locationLabel,
             latitude: currentLatitude,
             longitude: currentLongitude,
-          },
-          { onConflict: "id" }
-        );
+          })
+          .eq("id", userId);
+        if (!syncError) {
+          await AsyncStorage.setItem(
+            syncKey,
+            JSON.stringify({ latitude: currentLatitude, longitude: currentLongitude })
+          ).catch(() => undefined);
+        }
       } catch (_error) {
         // Keep discover usable even if location sync fails.
       }
@@ -603,9 +595,8 @@ const Home = () => {
       active = false;
     };
   }, [
-    ownProfileRecord?.latitude,
+    ownProfileRecord?.hasLocation,
     ownProfileRecord?.locationLabel,
-    ownProfileRecord?.longitude,
     session?.user?.id,
   ]);
 

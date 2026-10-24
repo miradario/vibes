@@ -259,7 +259,7 @@ const buildPreferences = (profile: ProfileLike): string[] => {
     profile.lookingFor ?? profile.looking_for
   );
   pushPreference("Idiomas", profile.languages);
-  pushPreference("Signo zodiacal", zodiacFromBirthDate(profile.birthDate ?? profile.birth_date));
+  pushPreference("Signo zodiacal", zodiacFromBirthDate(profile.birthDate ?? profile.birth_date) ?? profile.zodiac);
   pushPreference("Educación", profile.education);
   pushPreference("Plan familiar", profile.familyPlan ?? profile.family_plan);
   pushPreference("Vacuna", profile.vaccine);
@@ -360,7 +360,10 @@ export const mapCandidateToConnectionProfile = (
     gender: (candidate as ProfileLike).gender ?? (candidate as ProfileLike).genderLabel ?? (candidate as ProfileLike).gender_label ?? null,
     name: displayName,
     avatarUri: photos[0] ?? null,
-    zodiac: zodiacFromBirthDate((candidate as ProfileLike).birthDate ?? (candidate as ProfileLike).birth_date),
+    // Other users' zodiac comes precomputed from get_discovery_candidates.
+    zodiac:
+      zodiacFromBirthDate((candidate as ProfileLike).birthDate ?? (candidate as ProfileLike).birth_date) ??
+      (isNonEmptyString((candidate as ProfileLike).zodiac) ? (candidate as ProfileLike).zodiac : undefined),
     age,
     image: photoSources[0] ?? FALLBACK_PROFILE_IMAGE,
     hasPhotos: photoSources.length > 0,
