@@ -71,6 +71,7 @@ export const PRACTICE_OPTIONS = [
   "Baile",
   "Canto",
   "Tantra",
+  "Contact",
   "Música",
   "Otras",
 ] as const;
