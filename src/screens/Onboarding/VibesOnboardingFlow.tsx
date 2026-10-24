@@ -621,6 +621,14 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
       </View>
       <View style={{ alignItems: "center" }}>
         <ProfilePhotoPicker uris={photoUris} originalUris={photoOriginalUris} onChange={handlePhotoChange} />
+        {photoUris.length === 0 ? (
+          <View style={localStyles.photoExperienceNotice}>
+            <Icon name="information-circle-outline" size={22} color={vibesTheme.colors.accentBlue} />
+            <Text accessibilityLiveRegion="polite" style={localStyles.photoExperienceNoticeText}>
+              {locale === "en" ? "Improve your experience by adding a photo of yourself." : "Mejorá tu experiencia subiendo una foto de vos."}
+            </Text>
+          </View>
+        ) : null}
         <View style={onboardingStyles.fieldGroup}>
           {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
             <>
@@ -1215,6 +1223,8 @@ const localStyles = StyleSheet.create({
   ideaChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   ideaChip: { minHeight: 44, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 24, backgroundColor: `${vibesTheme.colors.accentBlue}14`, justifyContent: "center" },
   ideaText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.medium, fontSize: 13, lineHeight: 19 },
+  photoExperienceNotice: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 16, marginTop: 16, marginBottom: 8, alignSelf: "stretch", borderRadius: 16, backgroundColor: `${vibesTheme.colors.accentBlue}14` },
+  photoExperienceNoticeText: { flex: 1, color: vibesTheme.colors.primaryText, fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.regular },
   birthDateSheet: { padding: 20, borderRadius: 24, backgroundColor: vibesTheme.colors.surface },
   birthDateTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 20, lineHeight: 26, textAlign: "center" },
   completeLaterButton: {

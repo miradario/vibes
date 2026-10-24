@@ -57,6 +57,8 @@ type Props = {
   nextProfile?: UserProfileCardData | null;
   onClose: () => void;
   onContactPress?: () => void | Promise<unknown>;
+  contactActionLabel?: string;
+  contactActionDisabled?: boolean;
   secondaryActionLabel?: string;
   onSecondaryActionPress?: () => void | Promise<unknown>;
   nextActionLabel?: string;
@@ -270,6 +272,8 @@ const UserProfileSheet = ({
   nextProfile,
   onClose,
   onContactPress,
+  contactActionLabel,
+  contactActionDisabled = false,
   secondaryActionLabel,
   onSecondaryActionPress,
   nextActionLabel,
@@ -325,8 +329,12 @@ const UserProfileSheet = ({
   const [handoffProfile, setHandoffProfile] = useState<UserProfileCardData | null>(null);
   useLayoutEffect(() => {
     const previous = previousProfileRef.current;
-    if (visible && previous && previous.id !== profile?.id) setHandoffProfile(previous);
-    if (!visible) setHandoffProfile(null);
+    // Android must never bring back the outgoing profile after its swipe.
+    // Its next-card preview already bridges loading of the incoming photo.
+    if (Platform.OS === "ios" && visible && previous && previous.id !== profile?.id) {
+      setHandoffProfile(previous);
+    }
+    if (!visible || Platform.OS !== "ios") setHandoffProfile(null);
     previousProfileRef.current = profile;
   }, [profile, visible]);
   const transitionProfile = swipeNextProfile?.id === profile?.id
@@ -481,7 +489,7 @@ const UserProfileSheet = ({
   }, [swipeX, swipeUp, stampFade, reduceMotion]);
   const commitSwipe = useCallback(
     (direction: "like" | "pass", source: "gesture" | "button" = "gesture") => {
-      if (actionPending || swipingRef.current) return;
+      if (actionPending || swipingRef.current || (direction === "like" && contactActionDisabled)) return;
       const action =
         direction === "like" ? onContactPress : onSecondaryActionPress;
       if (!action || isOwnProfile) {
@@ -553,6 +561,7 @@ const UserProfileSheet = ({
       reduceMotion,
       resetSwipe,
       nextProfile,
+      contactActionDisabled,
       profile?.id,
     ]
   );
@@ -792,19 +801,18 @@ const UserProfileSheet = ({
         {onContactPress && !isOwnProfile && (
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel={`Conectar con ${
-              profile?.name ?? "este perfil"
-            }`}
-            disabled={actionPending || swipeAnimating}
+            accessibilityLabel={`${contactActionLabel ?? "Conectar"} con ${profile?.name ?? "este perfil"}`}
+            accessibilityState={{ disabled: contactActionDisabled || actionPending || swipeAnimating }}
+            disabled={contactActionDisabled || actionPending || swipeAnimating}
             activeOpacity={0.85}
             onPress={like}
-            style={[localStyles.vibeAction, onPanel && localStyles.floatingProfileAction]}
+            style={[localStyles.vibeAction, onPanel && localStyles.floatingProfileAction, contactActionDisabled && { opacity: 0.5 }]}
           >
             <Animated.View style={[localStyles.vibeActionCircle, localStyles.bareActionIcon, { transform: [{ translateY: connectBounce }] }]}>
               <Link size={48} color={vibesTheme.colors.accentMustard} strokeWidth={2.5} />
             </Animated.View>
             {!onPanel && <Text style={[localStyles.vibeActionLabel, withoutPhoto && !onPanel && { color: vibesTheme.colors.primaryText }]}>
-              {actionPending ? "Guardando…" : "Conectar"}
+              {actionPending ? "Guardando…" : contactActionLabel ?? "Conectar"}
             </Text>}
           </TouchableOpacity>
         )}

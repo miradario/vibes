@@ -12,9 +12,11 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import {
+  TAB_BAR_TOP_SPACE,
   TAB_FLOATING_BUTTON_SIZE,
   TAB_FLOATING_TOP,
   getBottomTabBarHeight,
+  getTabBarBottomPadding,
 } from "../src/lib/tabBarLayout";
 import { useFtuxHighlightedTab } from "../src/ftux/ftuxStore";
 import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.queries";
@@ -42,11 +44,11 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 
-const TAB_BAR_HEIGHT = 82;
+const TAB_BAR_HEIGHT = 64;
 const FLOATING_BUTTON_SIZE = TAB_FLOATING_BUTTON_SIZE;
 const HORIZONTAL_MARGIN = 18;
 const FLOATING_TOP = TAB_FLOATING_TOP;
-const SELECTED_RISE = -38;
+const SELECTED_RISE = -18;
 const ANIMATION_CONFIG = { duration: 520, reduceMotion: ReduceMotion.System };
 
 const iconByRoute: Record<string, LucideIcon> = {
@@ -340,12 +342,9 @@ const CustomTabBar = ({
   return (
     <View
       pointerEvents="box-none"
-      style={[
-        localStyles.root,
-        { paddingBottom: Math.max(insets.bottom + 8, 18) },
-      ]}
+      style={localStyles.root}
     >
-      <View style={[localStyles.barShadow, { width: barWidth }]}>
+      <View style={[localStyles.barShadow, { width: barWidth, paddingBottom: getTabBarBottomPadding(insets.bottom) }]}>
         <View style={[localStyles.bar, { height: barHeight }]}>
           {visibleRoutes.map((route) => {
             const { options } = descriptors[route.key];
@@ -421,7 +420,7 @@ const CustomTabBar = ({
                 <Animated.View style={floatingIconStyle}>
                   <SelectedIcon
                     size={25}
-                    color={vibesTheme.colors.surface}
+                    color={vibesTheme.colors.primaryText}
                     strokeWidth={2.25}
                   />
                 </Animated.View>
@@ -456,11 +455,12 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     alignItems: "center",
-    paddingTop: 32,
+    paddingTop: TAB_BAR_TOP_SPACE,
   },
   barShadow: {
     maxWidth: 620,
-    borderRadius: 38,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     backgroundColor: localColors.surface,
     shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.07,
@@ -470,7 +470,7 @@ const localStyles = StyleSheet.create({
   },
   bar: {
     height: TAB_BAR_HEIGHT,
-    borderRadius: 38,
+    borderRadius: 28,
     backgroundColor: localColors.surface,
     flexDirection: "row",
     alignItems: "center",
@@ -516,9 +516,9 @@ const localStyles = StyleSheet.create({
   },
   glow: {
     position: "absolute",
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     opacity: 0.34,
     ...Platform.select({
       ios: {

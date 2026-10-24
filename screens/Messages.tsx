@@ -1,3 +1,4 @@
+import { matchesConversationSearch } from "../src/lib/conversationSearch";
 import ConnectionStrip from "../components/ConnectionStrip";
 import { sectionTabStyles } from "../components/SectionTabStyles";
 import { messagePreview } from "../src/lib/chatPhotos";
@@ -10,7 +11,7 @@ import { useCommunityUnreadQuery } from "../src/queries/communityReceipts.querie
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
-import { Text } from "../components/Typography";
+import { Text, TextInput } from "../components/Typography";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components";
@@ -203,6 +204,8 @@ export const MessagesContent = ({
   const [connectionsSheet, setConnectionsSheet] =
     useState<ConnectionsSheet>(null);
   const [activeTab, setActiveTab] = useState<"messages" | "groups">("messages");
+  const [conversationSearch, setConversationSearch] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [archivedKeys, setArchivedKeys] = useState<string[]>([]);
   const { data: selectedIncomingProfile } = useProfileQuery(
     selectedIncomingLike?.likerUserId
@@ -326,7 +329,8 @@ export const MessagesContent = ({
   );
   const activeDirectMessages = withMessages.filter(
     (item) =>
-      !archivedKeys.includes(getArchiveItemKey({ kind: "direct", item }))
+      !archivedKeys.includes(getArchiveItemKey({ kind: "direct", item })) &&
+      matchesConversationSearch(conversationSearch, item.otherUserName, messagePreview(item.lastMessage))
   );
   const archivedChats: ArchivedChatItem[] = [
     ...eventGroups
@@ -339,7 +343,10 @@ export const MessagesContent = ({
         archivedKeys.includes(getArchiveItemKey({ kind: "direct", item }))
       )
       .map((item) => ({ kind: "direct" as const, item })),
-  ].sort((left, right) => {
+  ].filter(entry => entry.kind === "direct"
+    ? matchesConversationSearch(conversationSearch, entry.item.otherUserName, messagePreview(entry.item.lastMessage))
+    : matchesConversationSearch(conversationSearch, entry.item.title)
+  ).sort((left, right) => {
     const leftTime =
       left.kind === "group" ? left.item.lastMessageAt : left.item.lastMessageAt;
     const rightTime =
@@ -698,13 +705,16 @@ export const MessagesContent = ({
         render: () => renderGroupRow(group, index),
       })
     ),
-  ].sort((a, b) => b.at - a.at || a.title.localeCompare(b.title));
+  ].filter(entry => matchesConversationSearch(conversationSearch, entry.title))
+    .sort((a, b) => b.at - a.at || a.title.localeCompare(b.title));
 
 
   return (
     <View style={[styles.bg, localStyles.screenBackground]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[
           localStyles.content,
           {
@@ -788,6 +798,26 @@ export const MessagesContent = ({
             );
           })}
         </View>
+        <Text style={localStyles.searchLabel}>Buscar conversaciones</Text>
+        <View style={[localStyles.searchField, searchFocused && { borderColor: vibesTheme.colors.accentBlue }]}>
+          <Icon name="search-outline" size={22} color={vibesTheme.colors.secondaryText} />
+          <TextInput
+            accessibilityLabel="Buscar conversaciones"
+            placeholder={activeTab === "messages" ? "Nombre o último mensaje" : "Nombre del grupo"}
+            placeholderTextColor={vibesTheme.colors.secondaryText}
+            value={conversationSearch}
+            onChangeText={setConversationSearch}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            autoCorrect={false}
+            autoCapitalize="none"
+            returnKeyType="search"
+            style={localStyles.searchInput}
+          />
+          {conversationSearch ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setConversationSearch("")} style={localStyles.clearSearch}>
+            <Icon name="close" size={22} color={vibesTheme.colors.primaryText} />
+          </TouchableOpacity> : null}
+        </View>
         {activeTab === "messages" ? (
           <>
             <View style={localStyles.rowsCard}>
@@ -805,8 +835,8 @@ export const MessagesContent = ({
                   />
                 </View>
                 <Text style={localStyles.conversationHintText}>
-                  {activeDirectMessages.length
-                    ? "Tus conversaciones, en un solo lugar"
+                  {conversationSearch.trim()
+                    ? "No encontramos conversaciones con esa búsqueda"
                     : "Conectá con alguien para iniciar una conversación"}
                 </Text>
               </View>
@@ -826,11 +856,10 @@ export const MessagesContent = ({
                 {unifiedGroups.map((entry) => entry.render())}
               </View>
             ) : null}
-            {!loading && !communityGroups.isError && !communityInvitations.isError && groupCount === 0 ? (
+            {!loading && !communityGroups.isError && !communityInvitations.isError && (conversationSearch.trim() ? unifiedGroups.length === 0 : groupCount === 0) ? (
               <View style={localStyles.emptyState}>
                 <Text style={localStyles.emptyStateText}>
-                  Creá un grupo con tus conexiones o sumate a un evento o
-                  desafío.
+                  {conversationSearch.trim() ? "No encontramos grupos con esa búsqueda" : "Creá un grupo con tus conexiones o sumate a un evento o desafío."}
                 </Text>
               </View>
             ) : null}
@@ -918,6 +947,10 @@ const Messages = () => <MessagesContent />;
 export default Messages;
 
 const localStyles = StyleSheet.create({
+  searchLabel: { color: vibesTheme.colors.primaryText, fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.semibold, marginBottom: 6 },
+  searchField: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 48, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: `${vibesTheme.colors.primaryText}1F`, backgroundColor: vibesTheme.colors.surface, marginBottom: 12 },
+  searchInput: { flex: 1, minWidth: 0, paddingVertical: 12, color: vibesTheme.colors.primaryText, fontSize: 16, lineHeight: 24, fontFamily: vibesTheme.fonts.regular },
+  clearSearch: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   communityHeader: {
     flexDirection: "row",
     alignItems: "center",

@@ -67,6 +67,7 @@ import { useUserPreferencesQuery, userPreferencesKeys } from "../src/queries/use
 import { useQueryClient } from "@tanstack/react-query";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useMatchesQuery } from "../src/queries/matches.queries";
+import { useReconnectRequests } from "../src/queries/reconnect.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
@@ -382,6 +383,7 @@ export const DiscoverContent = forwardRef<
   );
   const incomingLikes = useIncomingLikeCandidatesQuery(focused && showHistory && historyMode === "incoming");
   const swipeMutation = useSwipeMutation();
+  const reconnect = useReconnectRequests(focused && showHistory && historyMode === "liked");
   const swipeBusy = useRef(false);
   const pendingNextProfile = useRef<{ fromId: string; next: DataT | null } | null>(null);
   const refetchHistory = swipeHistory.refetch;
@@ -631,7 +633,7 @@ export const DiscoverContent = forwardRef<
   const currentPage = profilePage % pageCount;
   const visibleProfiles = useMemo(
     () =>
-      showHistory && historyMode !== "dismissed"
+      showHistory && historyMode === "incoming"
         ? canvasProfiles
         : canvasProfiles.slice(
             currentPage * DISCOVER_PAGE_SIZE,
@@ -640,7 +642,7 @@ export const DiscoverContent = forwardRef<
     [canvasProfiles, currentPage, historyMode, showHistory]
   );
   const canShowMoreProfiles =
-    pageCount > 1 && !(showHistory && historyMode !== "dismissed");
+    pageCount > 1 && !(showHistory && historyMode === "incoming");
   const activeFilterCount = useMemo(
     () =>
       [
@@ -672,7 +674,7 @@ export const DiscoverContent = forwardRef<
 
   useEffect(() => {
     setProfilePage(0);
-  }, [discoverFilters, answerFilters, hiddenProfileIds, showHistory]);
+  }, [discoverFilters, answerFilters, hiddenProfileIds, showHistory, historyMode]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -763,6 +765,20 @@ export const DiscoverContent = forwardRef<
     } finally {
       pendingNextProfile.current = null;
       swipeBusy.current = false;
+    }
+  };
+  const reconnectSelected = viewingHistory && historyMode === "liked";
+  const reconnectSent = Boolean(selectedProfile && reconnect.requests.data?.includes(String(selectedProfile.id)));
+  const sendReconnect = async () => {
+    if (!selectedProfile || reconnect.mutation.isPending || reconnectSent) return;
+    try {
+      const result = await reconnect.mutation.mutateAsync(String(selectedProfile.id));
+      showToast(result === "queued" ? "Recordatorio enviado. Solo podés reconectar una vez con esta persona."
+        : result === "already_sent" ? "Ya enviaste el recordatorio de reconexión."
+        : result === "try_later" ? "No se pudo enviar ahora. Intentá otro día."
+        : "Esta solicitud ya no permite enviar un recordatorio.");
+    } catch (error) {
+      handleApiError(error, { toastTitle: "No se pudo enviar el recordatorio. Intentá nuevamente." });
     }
   };
   const connectProfile = (profile: DataT | null) =>
@@ -1044,7 +1060,9 @@ export const DiscoverContent = forwardRef<
           key={profileOpenKey}
           visible={showProfileSheet}
           enableSwipe={!viewingHistory}
-          actionPending={swipeMutation.isPending}
+          actionPending={swipeMutation.isPending || reconnect.mutation.isPending}
+          contactActionLabel={reconnectSelected ? "Conectar" : undefined}
+          contactActionDisabled={reconnectSelected && (reconnectSent || !reconnect.requests.isSuccess || reconnect.requests.isFetching)}
           profile={selectedProfileForSheet}
           nextProfile={
             nextSelectedProfile
@@ -1064,7 +1082,7 @@ export const DiscoverContent = forwardRef<
               : undefined
           }
           onContactPress={
-            !viewingHistory || selectedHistoryProfileCanConnect
+            reconnectSelected ? sendReconnect : !viewingHistory || selectedHistoryProfileCanConnect
               ? () => connectProfile(selectedProfile)
               : undefined
           }
