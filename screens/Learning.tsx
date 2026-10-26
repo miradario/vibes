@@ -1,3 +1,7 @@
+import ClassLocationMap from "../components/learning/ClassLocationMap";
+import ClassReservationPanel from "../components/learning/ClassReservationPanel";
+import { useReservationRequests } from "../src/learning/reservationQueries";
+import { reservationDateLabel } from "../src/learning/reservations";
 import {ExternalClassCard, ExternalPlaceCard} from "../components/learning/ExternalCatalog";
 import {externalClasses, externalPlaces, matchesExternalClass, matchesExternalPlace} from "../src/learning/externalCatalog";
 import React, { useState } from "react";
@@ -53,6 +57,7 @@ export function LearningCreateAction() {
 }
 
 export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
+  const requests = useReservationRequests();
   const nav = useNav(),
     q = useLearningData();
   const [tab, setTab] = useState("activity"),
@@ -82,7 +87,10 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           const listedExternalPlaces = externalPlaces.filter(item => matchesExternalPlace(item,query,specialty));
           const enrolledIds = new Set(data.enrollments.filter(enrollment => enrollment.status === "confirmed").map(enrollment => enrollment.activity_id));
           const myClasses = activities.filter(activity => enrolledIds.has(activity.id));
-          const otherClasses = activities.filter(activity => !enrolledIds.has(activity.id));
+          const requestedIds = new Set((requests.data ?? []).filter(request => request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now())).map(request => request.source_id));
+          const myRequestedClasses = listedExternalClasses.filter(item => requestedIds.has(item.id));
+          const myRequestedActivities = activities.filter(activity => requestedIds.has(activity.id) && !enrolledIds.has(activity.id));
+          const otherClasses = activities.filter(activity => !enrolledIds.has(activity.id) && !requestedIds.has(activity.id));
           const profiles = data.profiles.filter(
             (p) =>
               p.kind === tab &&
@@ -117,14 +125,17 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               ]} />
               <Chips value={specialty} onChange={setSpecialty} options={[{value:"",label:"Todas las prácticas"},...specs.map(value=>({value,label:value}))]} />
               {tab === "activity" ? <>
+                {myClasses.length + myRequestedClasses.length + myRequestedActivities.length > 0 ? <>
                 <Text accessibilityRole="header" style={explore.sectionTitle}>Mis clases</Text>
-                <Text style={explore.sectionHint}>En las que te anotaste</Text>
-                {myClasses.length ? myClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />) :
-                  <Text style={explore.sectionHint}>{query || specialty || modality || location || date ? "Ninguna de tus clases coincide con esta búsqueda." : "Todavía no te anotaste en ninguna clase."}</Text>}
+                <Text style={explore.sectionHint}>Inscripciones y solicitudes pendientes</Text>
+                {myRequestedActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} status="Solicitud pendiente" onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
+                {myRequestedClasses.map(item => <View key={item.id}><ExternalClassCard item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} /><Text style={explore.sectionHint}>Pendiente de confirmación con el organizador</Text></View>)}
+                {myClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver todas mis clases y cursos" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Ver mis clases y cursos</Text><Icon name="chevron-forward" size={18} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
+                </> : null}
                 {!!(otherClasses.length + listedExternalClasses.length) && <Text accessibilityRole="header" style={explore.sectionTitle}>Más clases</Text>}
                 {otherClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
-                {listedExternalClasses.map(item => <ExternalClassCard key={item.id} item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} />)}
+                {listedExternalClasses.filter(item => !requestedIds.has(item.id)).map(item => <ExternalClassCard key={item.id} item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} />)}
               </> : <>
                 <Text accessibilityRole="header" style={explore.sectionTitle}>Lugares para practicar</Text>
                 {profiles.map(profile => <ProfileCard key={profile.id} profile={profile} onPress={() => nav.navigate("LearningProfile", {id:profile.id})} />)}
@@ -333,6 +344,7 @@ export function LearningActivityDetail() {
                 {modalityLabels[a.modality]}
                 {a.location ? ` · ${a.location}` : ""}
               </Text>
+              {a.modality !== "online" && /\d/.test(a.location) && <ClassLocationMap key={a.location} address={a.location} />}
               <Text style={ui.body}>{a.description}</Text>
               <Text style={ui.title}>Programa y encuentros</Text>
               {sessions.map((s, index) => (
@@ -357,7 +369,7 @@ export function LearningActivityDetail() {
                 <Text style={ui.body}>
                   {a.capacity - a.reserved_count} cupos disponibles
                 </Text>
-                {paid && (
+                {paid && a.kind === "course" && (
                   <Text style={ui.body}>
                     El pago con Mercado Pago todavía no está disponible. No
                     podés reservar esta actividad paga por ahora.
@@ -387,6 +399,8 @@ export function LearningActivityDetail() {
                     })
                   }
                 />
+              ) : a.kind === "class" ? (
+                <ClassReservationPanel key={a.id} source={{id:a.id,timezone:a.timezone,sessions}} />
               ) : (
                 <Button
                   label={
@@ -448,6 +462,7 @@ export function LearningActivityDetail() {
 }
 
 export function LearningMine() {
+  const requests = useReservationRequests();
   const q = useLearningData(),
     nav = useNav(),
     [tab, setTab] = useState("next");
@@ -482,6 +497,16 @@ export function LearningMine() {
                   { value: "history", label: "Historial" },
                 ]}
               />
+              {requests.isError && <Button secondary label="Reintentar cargar solicitudes" onPress={() => void requests.refetch()} />}
+              {(requests.data ?? []).filter(request => {
+                const upcoming = request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now());
+                return tab === "next" ? upcoming : !upcoming;
+              }).map(request => <TouchableOpacity key={request.id} accessibilityRole="button" onPress={() => nav.navigate(request.source_id.startsWith("clase_") ? "ExternalCatalogDetail" : "LearningActivity", {id:request.source_id})} style={ui.card}>
+                <Text style={ui.title}>{request.title}</Text>
+                <Text style={ui.body}>{request.status === "cancelled" ? "Solicitud cancelada" : "Pendiente de confirmación con el organizador"}</Text>
+                <Text style={ui.muted}>{request.mode === "monthly" ? "Plan mensual" : "Clase suelta"} · {request.starts_at.length} fechas</Text>
+                {request.starts_at.map(iso => <Text key={iso} style={ui.muted}>{reservationDateLabel(iso)}</Text>)}
+              </TouchableOpacity>)}
               {shown.length ? (
                 shown.map(({ a, e }) => (
                   <ActivityCard
@@ -498,7 +523,10 @@ export function LearningMine() {
                     }
                   />
                 ))
-              ) : (
+              ) : !(requests.data ?? []).some(request => {
+                const upcoming = request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now());
+                return tab === "next" ? upcoming : !upcoming;
+              }) && !requests.isLoading ? (
                 <Empty
                   text={
                     tab === "next"
@@ -506,7 +534,7 @@ export function LearningMine() {
                       : "Todavía no hay actividades en tu historial."
                   }
                 />
-              )}
+              ) : null}
               <Button
                 label="Explorar clases y cursos"
                 secondary

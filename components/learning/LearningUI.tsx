@@ -118,7 +118,7 @@ export const ui = StyleSheet.create({
     elevation: 0,
   },
   disabled: { opacity: 0.5 },
-  sheet: { padding: 24, gap: 18, maxHeight: "85%" },
+  sheet: { backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 18, maxHeight: "85%" },
   tiny: { fontSize: 15, color: c.secondaryText },
 });
 export function Button({
@@ -459,8 +459,8 @@ export function ActivityCard({
     <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver ${activity.title}`} onPress={onPress} activeOpacity={0.84} style={exploreCard.row}>
       <View style={exploreCard.image}><Photo key={activity.image_url} url={activity.image_url} /></View>
       <View style={exploreCard.copy}>
-        <Text style={exploreCard.title} numberOfLines={2}>{activity.title}</Text>
-        {first && <Text style={exploreCard.date}>{formatSession(first, activity.timezone)}</Text>}
+        <Text style={exploreCard.title} numberOfLines={1}>{activity.title}</Text>
+        {first && <Text style={exploreCard.date} numberOfLines={1}>{formatSession(first, activity.timezone)}</Text>}
         <Text style={exploreCard.meta} numberOfLines={1}>{teachers.map(p => p.name).join(" · ") || modalityLabels[activity.modality]}</Text>
         <Text style={exploreCard.meta} numberOfLines={1}>{[activity.location, priceLabel(activity)].filter(Boolean).join(" · ")}</Text>
       </View>
@@ -507,6 +507,7 @@ export function ActivityCard({
   );
 }
 export function useLearningAction() {
+  const insets = useSafeAreaInsets();
   const mutation = useLearningMutation();
   const [feedback, setFeedback] = useState<{
     error: boolean;
@@ -558,7 +559,7 @@ export function useLearningAction() {
             if (!mutation.isPending) setConfirmation(null);
           }}
           closeOnBackdropPress={!mutation.isPending}
-          sheetStyle={ui.sheet}
+          sheetStyle={[ui.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}
         >
           <Text style={ui.title}>Confirmar acción</Text>
           <Text style={ui.body}>{confirmation?.text}</Text>

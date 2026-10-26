@@ -216,3 +216,35 @@ La pestaña Actividades reúne Eventos y Clases con un selector de dos opciones.
 ## Imagen para compartir un desafío completado
 
 `ChallengeCompletionShareCard` genera una pieza vertical de 1080 × 1350 con `VibesWordmark` (V mayúscula, punto coral, i mostaza y e azul semillena), círculos de la paleta con opacidad, imagen y título del desafío, “DESAFÍO COMPLETADO”, “¡Lo logré!” y “Un día a la vez. Un cambio para mí.”. No agregar una firma promocional al pie. Usar la imagen original sin regenerarla; si no carga, usar la ilustración de desafío incluida en la app. El lienzo de exportación tiene tipografía fija; la interfaz que lo presenta conserva escalado de accesibilidad. Esperar a que la imagen se muestre antes de capturar y al cierre completo del sheet antes de abrir Compartir.
+
+Las tarjetas del listado de Eventos usan una fila compacta: padding 10, separación 12, foto cuadrada de 88 con radio 12 centrada verticalmente y cuerpo con separación 3. Mantener título 17/23 en una línea, fecha y ubicación en una línea cada una y una última línea combinando frecuencia/horarios y personas. “Para ti” se superpone en la esquina inferior de la foto. El cuerpo no supera el alto de la imagen de 88; la imagen crece proporcionalmente al escalado de texto de accesibilidad. Conservar flecha de acceso al detalle para leer la información completa. “Para ti” usa texto oscuro sobre mostaza.
+
+En Actividades, Crear evento e Historial se ubican junto al título, antes del selector Eventos/Clases. El feed embebido no duplica esa cabecera ni el subtítulo. Eventos muestra primero las inscripciones en “Tus eventos (cantidad)”, luego la recomendación en “Para vos” y finalmente el resto en “Explorá más”; muestra los resultados completos de cada grupo. Los filtros de Fecha, Ubicación y Más filtros preceden a las categorías (Todos primero), con áreas táctiles de al menos 44.
+
+La barra completa de filtros de los listados (búsqueda, fecha, ubicación, otros filtros, categorías y caminos) se oculta al avanzar y reaparece al retroceder o llegar al inicio, con umbral de 28 para evitar saltos por movimientos mínimos. Respeta reducción de movimiento. Los caminos usan DiscoverPathCards y las opciones compartidas de la app. Las categorías y tipos de participación ofrecidos en Eventos se derivan del catálogo completo vigente (del catálogo vencido en Historial), independientemente de los filtros seleccionados.
+
+La barra de filtros se anima con translateY sobre el listado, sin modificar la altura de FlatList durante el gesto. El listado reserva una cabecera de altura fija para su posición inicial. Ignorar el rebote de ambos extremos al detectar el sentido, para evitar alternancias y saltos provocados por cambios de viewport.
+
+## Solicitudes de clases sin pagos
+
+El detalle de clases externas muestra foto, docente, horario, lugar y acordeón “Sobre esta clase”. ClassReservationPanel permite clase suelta o plan mensual, mes y frecuencia; los selectores abren AnimatedSheetModal. El resumen usa fechas calculadas en la zona horaria de la clase, excluyendo las pasadas. Las referencias externas son solicitudes personales pendientes, no se envían al organizador ni confirman cupo. Indicar que la persona debe contactar al organizador. No mostrar checkout ni total mensual. Guardar y cancelar persiste en el servidor; Mis clases incluye las solicitudes pendientes y el historial conserva las canceladas. Las clases propias usan sus encuentros reales; los cursos conservan su inscripción completa.
+
+La cabecera de Actividades usa título compacto 26/32 SemiBold, a pedido del usuario. En Desafíos el título usa 22/28 SemiBold y comparte una sola fila con los cuatro botones de 44, con separación 6. Permitir ajuste del título en ancho compacto sin partir la palabra. No mostrar el subtítulo “Pequeños pasos, en buena compañía”. Los labels de la barra inferior conservan una sola línea.
+
+El detalle externo de clase usa layout compacto: padding 16, separación 10, foto de 168 de alto y título 22/28. Notas y fecha de consulta se despliegan con “Sobre esta clase”. El formulario de solicitud usa separación 10, resumen con padding 12 y fechas en grilla; mantiene controles de al menos 44–48 de alto y un único aviso breve sobre contacto y ausencia de cobros.
+
+En el archivo de Desafíos, el control de la derecha pasa a “Volver a desafíos” (arrow-back) y regresa con goBack para conservar los filtros del listado. No duplicar una segunda acción Volver a la izquierda ni mostrar la casita en ese historial.
+
+Las tarjetas compactas de clases mantienen título y horario en una línea y separación 3, para que el cuerpo no supere el alto de la imagen. Omitir el precio cuando no está publicado; no mostrar “Precio a consultar” en el listado. En las referencias externas la imagen acompaña el escalado de fuente.
+
+“Tipo de evento” (categoría) se elige dentro de Más filtros, con opciones presentes en los eventos cargados. Se guarda al Aplicar y se restablece con Limpiar. No mostrar categorías en la barra horizontal; conservar allí Todos y Frecuentes.
+
+Camino espiritual se elige únicamente en la barra principal de Eventos. Más filtros no lo duplica ni modifica su selección al aplicar o limpiar.
+
+El detalle de clase muestra ClassLocationMap cuando dispone de dirección concreta (campo dirección del catálogo; en clases propias, ubicación con numeración). No ubicar el pin usando únicamente la ciudad. La vista previa tiene 120 de alto y acción Ver ubicación de al menos 44; abre el mapa externo y conserva la dirección como alternativa si falla la imagen. Reutiliza la configuración de mapas de Eventos.
+
+En el detalle externo de clase, la cabecera muestra el nombre de la clase sobre la foto, entre Volver y Compartir. Omitir “Detalle de clase” y no repetir el nombre debajo de la foto; permitir varias líneas para títulos largos.
+
+Los sheets compartidos de Clases (ui.sheet) deben declarar fondo surface opaco y radios superiores 24. La confirmación de solicitudes respeta el safe area inferior con padding mínimo 24 para que el contenido y las acciones no se superpongan al fondo ni al área de gestos.
+
+En el detalle de clase con mapa, omitir la fila “Presencial”; conservar la modalidad si es online o mixta.
