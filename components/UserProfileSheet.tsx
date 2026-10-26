@@ -40,6 +40,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeftToLine, ArrowRightToLine, Link, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
+import PhotoViewer from "./PhotoViewer";
 import Icon from "./Icon";
 import VibesLoader from "./VibesLoader";
 import ProfileMediaImage from "./ProfileMediaImage";
@@ -760,10 +761,21 @@ const UserProfileSheet = ({
 
   // Full-screen viewer (pinch / double-tap zoom) for the photo on screen.
   const canZoomPhotos = Boolean(onImagePress) && canViewPhotos && profileImages.length > 0;
+  // The viewer is rendered inside this sheet's own Modal tree: on iOS a sibling
+  // Modal declared by the screen can't present on top of an open sheet Modal.
+  const [zoomIndex, setZoomIndex] = useState<number | null>(null);
   const openZoom = (index = safeActiveIndex) => {
     if (swipingRef.current || !canZoomPhotos) return;
-    onImagePress?.(profileImages[index], index);
+    setZoomIndex(index);
   };
+  const renderPhotoViewer = (forDetails: boolean) => (
+    <PhotoViewer
+      visible={zoomIndex !== null && visible && detailsVisible === forDetails}
+      images={profileImages}
+      initialIndex={zoomIndex ?? 0}
+      onClose={() => setZoomIndex(null)}
+    />
+  );
   const openZoomRef = useRef(openZoom);
   openZoomRef.current = openZoom;
   const zoomAccessibilityActions = canZoomPhotos ? [{ name: "magicTap" as const }, { name: "zoom", label: "Ampliar foto" }] : [];
@@ -1393,8 +1405,10 @@ const UserProfileSheet = ({
               </View>
             ) : null}
           </View>
+          {renderPhotoViewer(true)}
         </AnimatedSheetModal>
         </Animated.View>
+        {renderPhotoViewer(false)}
       </AnimatedSheetModal>
     </>
   );
