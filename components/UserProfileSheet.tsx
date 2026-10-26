@@ -37,7 +37,7 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeftToLine, ArrowRightToLine, Link, Maximize2, X } from "lucide-react-native";
+import { ArrowLeftToLine, ArrowRightToLine, Link, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
@@ -626,8 +626,9 @@ const UserProfileSheet = ({
             commitSwipe(action);
           } else {
             resetSwipe();
+            // Single tap (no real movement) opens the full-screen viewer.
             if (Math.abs(g.dx) < 8 && Math.abs(g.dy) < 8) {
-              setGalleryIndex(activeIndex + (g.x0 < width / 2 ? -1 : 1));
+              openZoomRef.current();
             }
           }
         },
@@ -759,10 +760,13 @@ const UserProfileSheet = ({
 
   // Full-screen viewer (pinch / double-tap zoom) for the photo on screen.
   const canZoomPhotos = Boolean(onImagePress) && canViewPhotos && profileImages.length > 0;
-  const openZoom = () => {
+  const openZoom = (index = safeActiveIndex) => {
     if (swipingRef.current || !canZoomPhotos) return;
-    onImagePress?.(profileImages[safeActiveIndex], safeActiveIndex);
+    onImagePress?.(profileImages[index], index);
   };
+  const openZoomRef = useRef(openZoom);
+  openZoomRef.current = openZoom;
+  const zoomAccessibilityActions = canZoomPhotos ? [{ name: "magicTap" as const }, { name: "zoom", label: "Ampliar foto" }] : [];
 
   const setGalleryIndex = (nextIndex: number) => {
     if (!hasMultipleImages) return;
@@ -1050,15 +1054,20 @@ const UserProfileSheet = ({
 
           <View
             style={{ position: "absolute", left: 0, right: 0, top: "12%", height: "53%" }}
-            accessible={hasMultipleImages}
+            accessible={hasMultipleImages || canZoomPhotos}
             accessibilityLabel={`Foto ${safeActiveIndex + 1} de ${profileImages.length}`}
+            accessibilityHint={canZoomPhotos ? "Tocá para ver en pantalla completa" : undefined}
             accessibilityActions={[
-              { name: "increment", label: "Foto siguiente" },
-              { name: "decrement", label: "Foto anterior" },
+              ...(hasMultipleImages ? [
+                { name: "increment", label: "Foto siguiente" },
+                { name: "decrement", label: "Foto anterior" },
+              ] : []),
+              ...zoomAccessibilityActions,
             ]}
-            onAccessibilityAction={({ nativeEvent }) =>
-              setGalleryIndex(safeActiveIndex + (nativeEvent.actionName === "increment" ? 1 : -1))
-            }
+            onAccessibilityAction={({ nativeEvent }) => {
+              if (nativeEvent.actionName === "zoom" || nativeEvent.actionName === "magicTap") return openZoom();
+              setGalleryIndex(safeActiveIndex + (nativeEvent.actionName === "increment" ? 1 : -1));
+            }}
           />
           <LinearGradient
             pointerEvents="none"
@@ -1102,18 +1111,6 @@ const UserProfileSheet = ({
                   />
                 ))}
               </View>
-              {canZoomPhotos ? (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ampliar foto ${safeActiveIndex + 1} de ${profileImages.length}`}
-                  activeOpacity={0.82}
-                  onPress={openZoom}
-                  hitSlop={8}
-                  style={[localStyles.zoomButton, { top: insets.top + 44 }]}
-                >
-                  <Maximize2 size={20} color={vibesTheme.colors.background} strokeWidth={2.4} />
-                </TouchableOpacity>
-              ) : null}
             </>
           ) : null}
 
@@ -1291,17 +1288,11 @@ const UserProfileSheet = ({
                           contentFit="contain" blurBackground={!isIOS} showLoading={!isIOS} transition={0}
                           previewSource={isIOS && canPreviewPhotos && profile.hasPhotos !== false ? item : undefined}
                           fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND} />
-                        {hasMultipleImages ? (
-                          <View style={[StyleSheet.absoluteFillObject, { flexDirection: "row" }]}>
-                            <TouchableOpacity style={{ flex: 1 }} activeOpacity={1}
-                              accessibilityRole="button" accessibilityLabel="Foto anterior"
-                              disabled={index === 0}
-                              onPress={() => setGalleryIndex(index - 1)} />
-                            <TouchableOpacity style={{ flex: 1 }} activeOpacity={1}
-                              accessibilityRole="button" accessibilityLabel="Foto siguiente"
-                              disabled={index === profileImages.length - 1}
-                              onPress={() => setGalleryIndex(index + 1)} />
-                          </View>
+                        {canZoomPhotos ? (
+                          <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1}
+                            accessibilityRole="imagebutton"
+                            accessibilityLabel={`Ampliar foto ${index + 1} de ${profileImages.length}`}
+                            onPress={() => openZoom(index)} />
                         ) : null}
                       </View>
                     )}
@@ -1310,18 +1301,6 @@ const UserProfileSheet = ({
                   <ProfileMediaImage source={VIBES_FALLBACK_ILLUSTRATION}
                     style={StyleSheet.absoluteFillObject} contentFit="contain" />
                 )}
-                {canZoomPhotos ? (
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    accessibilityLabel={`Ampliar foto ${safeActiveIndex + 1} de ${profileImages.length}`}
-                    activeOpacity={0.82}
-                    onPress={openZoom}
-                    hitSlop={8}
-                    style={[localStyles.zoomButton, { top: 12 }]}
-                  >
-                    <Maximize2 size={20} color={vibesTheme.colors.background} strokeWidth={2.4} />
-                  </TouchableOpacity>
-                ) : null}
                 {hasMultipleImages ? (
                   <View style={localStyles.detailsPhotoIndicators}>
                     {profileImages.map((_, index) => (
@@ -1529,17 +1508,6 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentMustard,
     borderColor: "rgba(0, 0, 0, 0.28)",
     transform: [{ scaleY: 1.35 }],
-  },
-  zoomButton: {
-    position: "absolute",
-    right: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
-    zIndex: 10,
   },
   profileOverlay: {
     position: "absolute",
