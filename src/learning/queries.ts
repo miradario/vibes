@@ -82,7 +82,11 @@ export function useLearningMutation() {
       args?: Record<string, unknown>;
     }) => learningRpc(name, args),
     onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: ["learning"] });
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["learning"] }),
+        client.invalidateQueries({ queryKey: ["communityGroups"] }),
+        client.invalidateQueries({ queryKey: ["communityGroupMembers"] }),
+      ]);
     },
   });
 }

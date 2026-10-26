@@ -1,7 +1,12 @@
+import EventInviteSheet from "../components/EventInviteSheet";
+import ClassLocationMap from "../components/learning/ClassLocationMap";
+import ClassReservationPanel from "../components/learning/ClassReservationPanel";
+import { useReservationRequests } from "../src/learning/reservationQueries";
+import { reservationDateLabel } from "../src/learning/reservations";
 import {ExternalClassCard, ExternalPlaceCard} from "../components/learning/ExternalCatalog";
 import {externalClasses, externalPlaces, matchesExternalClass, matchesExternalPlace} from "../src/learning/externalCatalog";
 import React, { useState } from "react";
-import { View, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { Alert, View, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text, TextInput } from "../components/Typography";
 import Icon from "../components/Icon";
@@ -47,12 +52,23 @@ const useId = () => (useRoute().params as { id?: string } | undefined)?.id;
 
 export function LearningCreateAction() {
   const nav = useNav();
-  const { data } = useLearningData();
-  if (!data || !(data.access.can_create || data.access.managed_ids.length > 0)) return null;
-  return <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mi espacio" onPress={() => nav.navigate("LearningManage")} style={explore.iconButton}><Icon name="add" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>;
+  const { data, isLoading, isError, refetch } = useLearningData();
+  return <TouchableOpacity accessibilityRole="button" accessibilityLabel="Crear clase" accessibilityState={{busy:isLoading}} onPress={() => {
+    if (isLoading) return;
+    if (isError || !data) {
+      Alert.alert("No pudimos comprobar tus permisos", "Volvé a intentar cargar la información.", [{text:"Cerrar",style:"cancel"},{text:"Reintentar",onPress:()=>{void refetch();}}]);
+      return;
+    }
+    if (!data.access.can_create && !data.access.managed_ids.length) {
+      Alert.alert("Crear clase", "Tu cuenta todavía no está habilitada como responsable de clases. Necesitás esa habilitación para crear y publicar una clase.");
+      return;
+    }
+    nav.navigate(data.access.managed_ids.length ? "LearningActivityEditor" : "LearningProfileEditor", data.access.managed_ids.length ? undefined : { continueToClass: true });
+  }} style={explore.iconButton}><Icon name="add" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>;
 }
 
 export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
+  const requests = useReservationRequests();
   const nav = useNav(),
     q = useLearningData();
   const [tab, setTab] = useState("activity"),
@@ -66,11 +82,18 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
     <Page title="Clases y espacios" embedded={embedded}>
       <LearningGate query={q}>
         {(data) => {
-          const specs = Array.from(
-            new Set([...data.profiles.flatMap((p) => p.specialties), ...externalClasses.map(item => item.categoria)])
-          ).sort();
-          const activities = data.activities.filter((a) =>
-            matchesActivity(a, data, {
+          const availableClasses = data.activities.filter(activity => activity.status === "published" && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
+          const availableExternalClasses = externalClasses.filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
+          const teacherIds = new Set(availableClasses.flatMap(activity => activity.teacher_ids));
+          const specs = Array.from(new Set([
+            ...data.profiles.filter(profile => teacherIds.has(profile.id)).flatMap(profile => profile.specialties),
+            ...availableExternalClasses.map(item => item.categoria),
+          ])).sort();
+          const availableModalities = modalityOptions.filter(option => availableClasses.some(activity => activity.modality === option.value || activity.modality === "mixed") || availableExternalClasses.some(item => option.value === "in_person" ? /presencial/i.test(item.modalidad) : option.value === "online" ? /online|distancia/i.test(item.modalidad) : /presencial/i.test(item.modalidad) && /online|distancia/i.test(item.modalidad)));
+          const availableLocations = Array.from(new Set([...availableClasses.map(activity => activity.location), ...availableExternalClasses.map(item => {const place = externalPlaces.find(place => place.id === item.lugar_id); return place?.ubicacion.barrio || place?.ubicacion.ciudad || "";})].filter(Boolean))).sort();
+          const availableDates = Array.from(new Set([...availableClasses.flatMap(activity => sessionsFor(data, activity.id).filter(session => Date.parse(session.starts_at) > Date.now()).map(session => wallDate(session.starts_at,activity.timezone).slice(0,10))), ...availableExternalClasses.flatMap(item => { const confirmed = item.proxima_fecha_confirmada as string | null; return confirmed ? [confirmed] : []; })])).sort();
+          const activities = availableClasses.filter((a) =>
+            sessionsFor(data, a.id).length > 0 && matchesActivity(a, data, {
               query,
               specialty,
               modality,
@@ -78,11 +101,16 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               date,
             })
           );
-          const listedExternalClasses = externalClasses.filter(item => matchesExternalClass(item, {query,specialty,location,modality,date}));
+          const listedExternalClasses = availableExternalClasses.filter(item =>
+            (item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada)) &&
+            matchesExternalClass(item, {query,specialty,location,modality,date}));
           const listedExternalPlaces = externalPlaces.filter(item => matchesExternalPlace(item,query,specialty));
           const enrolledIds = new Set(data.enrollments.filter(enrollment => enrollment.status === "confirmed").map(enrollment => enrollment.activity_id));
           const myClasses = activities.filter(activity => enrolledIds.has(activity.id));
-          const otherClasses = activities.filter(activity => !enrolledIds.has(activity.id));
+          const requestedIds = new Set((requests.data ?? []).filter(request => request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now())).map(request => request.source_id));
+          const myRequestedClasses = listedExternalClasses.filter(item => requestedIds.has(item.id));
+          const myRequestedActivities = activities.filter(activity => requestedIds.has(activity.id) && !enrolledIds.has(activity.id));
+          const otherClasses = activities.filter(activity => !enrolledIds.has(activity.id) && !requestedIds.has(activity.id));
           const profiles = data.profiles.filter(
             (p) =>
               p.kind === tab &&
@@ -106,10 +134,11 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           );
           return (
             <>
-              {!embedded && (data.access.can_create || data.access.managed_ids.length > 0) && <View style={explore.toolbar}><LearningCreateAction /></View>}
+              {!embedded && <View style={explore.toolbar}><LearningCreateAction /></View>}
               <View style={explore.search}>
                 <Icon name="search" size={20} color={vibesTheme.colors.secondaryText} />
                 <TextInput accessibilityLabel="Buscar clases o lugares" placeholder="¿Qué te gustaría practicar?" placeholderTextColor={vibesTheme.colors.secondaryText} value={query} onChangeText={setQuery} style={explore.searchInput} returnKeyType="search" />
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Filtrar clases" onPress={() => setFilters(true)} style={explore.clear}><Icon name="options-outline" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
                 {!!query && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setQuery("")} style={explore.clear}><Icon name="close" size={20} color={vibesTheme.colors.secondaryText} /></TouchableOpacity>}
               </View>
               <Chips value={tab} onChange={setTab} options={[
@@ -117,14 +146,17 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               ]} />
               <Chips value={specialty} onChange={setSpecialty} options={[{value:"",label:"Todas las prácticas"},...specs.map(value=>({value,label:value}))]} />
               {tab === "activity" ? <>
+                {myClasses.length + myRequestedClasses.length + myRequestedActivities.length > 0 ? <>
                 <Text accessibilityRole="header" style={explore.sectionTitle}>Mis clases</Text>
-                <Text style={explore.sectionHint}>En las que te anotaste</Text>
-                {myClasses.length ? myClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />) :
-                  <Text style={explore.sectionHint}>{query || specialty || modality || location || date ? "Ninguna de tus clases coincide con esta búsqueda." : "Todavía no te anotaste en ninguna clase."}</Text>}
+                <Text style={explore.sectionHint}>Inscripciones y solicitudes pendientes</Text>
+                {myRequestedActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} status="Solicitud pendiente" onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
+                {myRequestedClasses.map(item => <View key={item.id}><ExternalClassCard item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} /><Text style={explore.sectionHint}>Pendiente de confirmación con el organizador</Text></View>)}
+                {myClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver todas mis clases y cursos" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Ver mis clases y cursos</Text><Icon name="chevron-forward" size={18} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
+                </> : null}
                 {!!(otherClasses.length + listedExternalClasses.length) && <Text accessibilityRole="header" style={explore.sectionTitle}>Más clases</Text>}
                 {otherClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
-                {listedExternalClasses.map(item => <ExternalClassCard key={item.id} item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} />)}
+                {listedExternalClasses.filter(item => !requestedIds.has(item.id)).map(item => <ExternalClassCard key={item.id} item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} />)}
               </> : <>
                 <Text accessibilityRole="header" style={explore.sectionTitle}>Lugares para practicar</Text>
                 {profiles.map(profile => <ProfileCard key={profile.id} profile={profile} onPress={() => nav.navigate("LearningProfile", {id:profile.id})} />)}
@@ -153,20 +185,11 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
                     onChange={setModality}
                     options={[
                       { value: "", label: "Todas" },
-                      ...modalityOptions,
+                      ...availableModalities,
                     ]}
                   />
-                  <Field
-                    label="Ciudad o barrio"
-                    value={location}
-                    onChange={setLocation}
-                  />
-                  <Field
-                    label="Fecha del encuentro"
-                    value={date}
-                    onChange={setDate}
-                    hint="AAAA-MM-DD. Dejá vacío para ver todas las fechas."
-                  />
+                  {!!availableLocations.length && <><Text style={ui.body}>Ciudad o barrio</Text><Chips value={location} onChange={setLocation} options={[{value:"",label:"Todas"},...availableLocations.map(value=>({value,label:value}))]} /></>}
+                  {!!availableDates.length && <><Text style={ui.body}>Fecha del encuentro</Text><Chips value={date} onChange={setDate} options={[{value:"",label:"Todas"},...availableDates.map(value=>({value,label:value}))]} /></>}
                   <Button
                     label="Ver resultados"
                     onPress={() => setFilters(false)}
@@ -283,6 +306,7 @@ export function LearningProfileDetail() {
 }
 
 export function LearningActivityDetail() {
+  const [inviteVisible, setInviteVisible] = useState(false);
   const id = useId(),
     nav = useNav(),
     q = useLearningData(),
@@ -333,6 +357,9 @@ export function LearningActivityDetail() {
                 {modalityLabels[a.modality]}
                 {a.location ? ` · ${a.location}` : ""}
               </Text>
+              {a.modality !== "online" && /\d/.test(a.location) && <ClassLocationMap key={a.location} address={a.location} />}
+              <Button secondary label="Invitar a alguien" onPress={() => setInviteVisible(true)} />
+              <EventInviteSheet classInvite={{id:a.id,title:a.title,date:sessions[0] ? formatSession(sessions[0],a.timezone) : undefined,url:`com.gurudevelopers.vibes://learning/${a.id}`}} visible={inviteVisible} onClose={()=>setInviteVisible(false)} onDiscover={()=>nav.navigate("Tab",{screen:"Discover"})} />
               <Text style={ui.body}>{a.description}</Text>
               <Text style={ui.title}>Programa y encuentros</Text>
               {sessions.map((s, index) => (
@@ -357,7 +384,7 @@ export function LearningActivityDetail() {
                 <Text style={ui.body}>
                   {a.capacity - a.reserved_count} cupos disponibles
                 </Text>
-                {paid && (
+                {paid && a.kind === "course" && (
                   <Text style={ui.body}>
                     El pago con Mercado Pago todavía no está disponible. No
                     podés reservar esta actividad paga por ahora.
@@ -387,6 +414,8 @@ export function LearningActivityDetail() {
                     })
                   }
                 />
+              ) : a.kind === "class" ? (
+                <ClassReservationPanel key={a.id} source={{id:a.id,timezone:a.timezone,sessions}} />
               ) : (
                 <Button
                   label={
@@ -448,6 +477,7 @@ export function LearningActivityDetail() {
 }
 
 export function LearningMine() {
+  const requests = useReservationRequests();
   const q = useLearningData(),
     nav = useNav(),
     [tab, setTab] = useState("next");
@@ -482,6 +512,16 @@ export function LearningMine() {
                   { value: "history", label: "Historial" },
                 ]}
               />
+              {requests.isError && <Button secondary label="Reintentar cargar solicitudes" onPress={() => void requests.refetch()} />}
+              {(requests.data ?? []).filter(request => {
+                const upcoming = request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now());
+                return tab === "next" ? upcoming : !upcoming;
+              }).map(request => <TouchableOpacity key={request.id} accessibilityRole="button" onPress={() => nav.navigate(request.source_id.startsWith("clase_") ? "ExternalCatalogDetail" : "LearningActivity", {id:request.source_id})} style={ui.card}>
+                <Text style={ui.title}>{request.title}</Text>
+                <Text style={ui.body}>{request.status === "cancelled" ? "Solicitud cancelada" : "Pendiente de confirmación con el organizador"}</Text>
+                <Text style={ui.muted}>{request.mode === "monthly" ? "Plan mensual" : "Clase suelta"} · {request.starts_at.length} fechas</Text>
+                {request.starts_at.map(iso => <Text key={iso} style={ui.muted}>{reservationDateLabel(iso)}</Text>)}
+              </TouchableOpacity>)}
               {shown.length ? (
                 shown.map(({ a, e }) => (
                   <ActivityCard
@@ -498,7 +538,10 @@ export function LearningMine() {
                     }
                   />
                 ))
-              ) : (
+              ) : !(requests.data ?? []).some(request => {
+                const upcoming = request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now());
+                return tab === "next" ? upcoming : !upcoming;
+              }) && !requests.isLoading ? (
                 <Empty
                   text={
                     tab === "next"
@@ -506,7 +549,7 @@ export function LearningMine() {
                       : "Todavía no hay actividades en tu historial."
                   }
                 />
-              )}
+              ) : null}
               <Button
                 label="Explorar clases y cursos"
                 secondary
@@ -847,6 +890,7 @@ export function LearningRoster() {
 }
 
 function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
+  const continueToClass = Boolean((useRoute().params as { continueToClass?: boolean } | undefined)?.continueToClass);
   const nav = useNav(),
     action = useLearningAction(),
     existing = data.profiles.find((p) => p.id === id);
@@ -962,7 +1006,7 @@ function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
               },
             },
             "Perfil guardado.",
-            () => nav.goBack()
+            () => continueToClass ? nav.replace("LearningActivityEditor") : nav.goBack()
           )
         }
       />
@@ -1112,8 +1156,8 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
       void action.run(
         "save_activity",
         { p_id: id ?? null, p_data: input },
-        existing ? "Cambios guardados." : "Actividad guardada como borrador.",
-        () => nav.goBack()
+        existing ? "Cambios guardados." : "Clase guardada como borrador.",
+        () => existing ? nav.goBack() : nav.replace("LearningManage")
       );
     } catch (e) {
       setError(learningError(e));
@@ -1321,7 +1365,7 @@ export function LearningActivityEditor() {
   const id = useId(),
     q = useLearningData();
   return (
-    <Page title={id ? "Editar actividad" : "Nueva actividad"}>
+    <Page title={id ? "Editar actividad" : "Crear clase"}>
       <LearningGate query={q}>
         {(data) => <ActivityEditorForm key={id ?? "new"} data={data} id={id} />}
       </LearningGate>

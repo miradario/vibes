@@ -36,7 +36,18 @@ export function getInvitedChallengeId(body: string) {
 
 // Keep the destination in the stored message for navigation, but hide it in chat.
 export function getInvitationDisplayText(body: string) {
+  const classId = getInvitedClassId(body);
+  if (classId) return body.replace(`com.gurudevelopers.vibes://class/${classId}`, "").trim();
   const challengeId = getInvitedChallengeId(body);
   if (!challengeId) return body;
   return body.replace(new RegExp(`https://vibes\\.gurudevelopers\\.dev/challenge/${challengeId}`, "gi"), "").trim();
+}
+
+export type ClassInvitation = { id: string; title: string; date?: string; url: string | null };
+export function buildClassInvitation(activity: ClassInvitation) {
+  return [`Te invito a "${activity.title}" en Vibes.`, activity.date,
+    `com.gurudevelopers.vibes://class/${encodeURIComponent(activity.id)}`, activity.url].filter(Boolean).join("\n");
+}
+export function getInvitedClassId(body: string) {
+  return body.match(/com\.gurudevelopers\.vibes:\/\/class\/([A-Za-z0-9_-]{1,80})(?=$|[\s.,!?])/i)?.[1] ?? null;
 }

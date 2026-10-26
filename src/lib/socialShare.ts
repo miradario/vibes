@@ -48,3 +48,7 @@ export const shareChallengeCompletion = async (
 };
 
 export const shareEventInvite = async (event: EventFeedItem) => shareContent(event);
+
+/** Classes use their existing official URL until a public Vibes class page is available. */
+export const shareClassInvite = async (title: string, officialUrl: string | null) =>
+  Share.share({ message: buildShareMessage(title, officialUrl) });

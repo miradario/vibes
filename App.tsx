@@ -120,6 +120,8 @@ const linking = {
       ResetPassword: "reset-password",
       VerifyEmail: "verify-email",
       EventDetail: "event/:eventId",
+      ExternalCatalogDetail: "class/:id",
+      LearningActivity: "learning/:id",
       ChallengeDetailScreen: "challenge/:challengeId",
     },
   },

@@ -12,6 +12,7 @@
     "vibi:check": "node --test scripts/vibi.test.cjs scripts/ftux.test.cjs"
   },
   "dependencies": {
+    "@babel/runtime": "^7.28.6",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/playfair-display": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
@@ -82,6 +83,7 @@
     "@types/react": "~19.1.10",
     "@types/react-dom": "~19.1.7",
     "@types/react-native": "^0.73.0",
+    "babel-preset-expo": "~54.0.12",
     "prettier": "^2.2.1",
     "typescript": "~5.9.2"
   },

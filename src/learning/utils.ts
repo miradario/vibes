@@ -180,6 +180,10 @@ export function learningError(error: unknown) {
     error instanceof Error
       ? error.message
       : String((error as any)?.message ?? error);
+  if (raw.includes("CLASS_CHAT_REQUIRES_REQUEST")) return "Necesitás una solicitud activa para entrar al chat de esta clase.";
+  if (raw.includes("RESERVATION_OVERLAP")) return "Ya tenés una solicitud pendiente para alguna de esas fechas. Podés verla o cancelarla en Mis clases.";
+  if (raw.includes("NO_RESERVATION_DATES")) return "No hay fechas disponibles para esa selección. Elegí otro mes o frecuencia.";
+  if (raw.includes("INVALID_RESERVATION")) return "La fecha elegida ya no está disponible. Actualizá la selección e intentá nuevamente.";
   for (const [code, message] of Object.entries(messages))
     if (raw.includes(code)) return message;
   if (/does not exist|schema cache|Could not find/.test(raw))

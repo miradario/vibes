@@ -56,3 +56,14 @@ test('challenge chat hides the URL but retains the destination for its button', 
  assert.equal(api.getInvitationDisplayText('Hola https://another.example'), 'Hola https://another.example');
  assert.equal(api.getInvitationDisplayText(`https://vibes.gurudevelopers.dev/challenge/${id}`), '');
 });
+
+test('class invitation opens the same class and hides its internal destination in chat',()=>{
+ const body=api.buildClassInvitation({id:'clase_001',title:'Yoga',date:'Lunes 09:00',url:'https://example.org/clases'});
+ assert.equal(api.getInvitedClassId(body),'clase_001');
+ assert.ok(body.includes('Te invito a "Yoga"')); assert.ok(body.includes('Lunes 09:00'));
+ assert.ok(!api.getInvitationDisplayText(body).includes('com.gurudevelopers.vibes://'));
+});
+test('class invitation parser rejects another scheme and oversized ids',()=>{
+ assert.equal(api.getInvitedClassId('https://evil.example/class/clase_001'),null);
+ assert.equal(api.getInvitedClassId('com.gurudevelopers.vibes://class/'+ 'a'.repeat(81)),null);
+});

@@ -23,7 +23,7 @@ const s = StyleSheet.create({
   text: {
     fontSize: 12,
     lineHeight: 16,
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.semibold,
   },
 });
