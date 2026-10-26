@@ -121,6 +121,7 @@ const linking = {
       VerifyEmail: "verify-email",
       EventDetail: "event/:eventId",
       ExternalCatalogDetail: "class/:id",
+      LearningActivity: "learning/:id",
       ChallengeDetailScreen: "challenge/:challengeId",
     },
   },

@@ -1,3 +1,4 @@
+import EventInviteSheet from "../components/EventInviteSheet";
 import ClassLocationMap from "../components/learning/ClassLocationMap";
 import ClassReservationPanel from "../components/learning/ClassReservationPanel";
 import { useReservationRequests } from "../src/learning/reservationQueries";
@@ -5,7 +6,7 @@ import { reservationDateLabel } from "../src/learning/reservations";
 import {ExternalClassCard, ExternalPlaceCard} from "../components/learning/ExternalCatalog";
 import {externalClasses, externalPlaces, matchesExternalClass, matchesExternalPlace} from "../src/learning/externalCatalog";
 import React, { useState } from "react";
-import { View, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { Alert, View, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text, TextInput } from "../components/Typography";
 import Icon from "../components/Icon";
@@ -51,9 +52,19 @@ const useId = () => (useRoute().params as { id?: string } | undefined)?.id;
 
 export function LearningCreateAction() {
   const nav = useNav();
-  const { data } = useLearningData();
-  if (!data || !(data.access.can_create || data.access.managed_ids.length > 0)) return null;
-  return <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mi espacio" onPress={() => nav.navigate("LearningManage")} style={explore.iconButton}><Icon name="add" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>;
+  const { data, isLoading, isError, refetch } = useLearningData();
+  return <TouchableOpacity accessibilityRole="button" accessibilityLabel="Crear clase" accessibilityState={{busy:isLoading}} onPress={() => {
+    if (isLoading) return;
+    if (isError || !data) {
+      Alert.alert("No pudimos comprobar tus permisos", "Volvé a intentar cargar la información.", [{text:"Cerrar",style:"cancel"},{text:"Reintentar",onPress:()=>{void refetch();}}]);
+      return;
+    }
+    if (!data.access.can_create && !data.access.managed_ids.length) {
+      Alert.alert("Crear clase", "Tu cuenta todavía no está habilitada como responsable de clases. Necesitás esa habilitación para crear y publicar una clase.");
+      return;
+    }
+    nav.navigate(data.access.managed_ids.length ? "LearningActivityEditor" : "LearningProfileEditor", data.access.managed_ids.length ? undefined : { continueToClass: true });
+  }} style={explore.iconButton}><Icon name="add" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>;
 }
 
 export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
@@ -71,10 +82,17 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
     <Page title="Clases y espacios" embedded={embedded}>
       <LearningGate query={q}>
         {(data) => {
-          const specs = Array.from(
-            new Set([...data.profiles.flatMap((p) => p.specialties), ...externalClasses.map(item => item.categoria)])
-          ).sort();
-          const activities = data.activities.filter((a) =>
+          const availableClasses = data.activities.filter(activity => activity.status === "published" && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
+          const availableExternalClasses = externalClasses.filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
+          const teacherIds = new Set(availableClasses.flatMap(activity => activity.teacher_ids));
+          const specs = Array.from(new Set([
+            ...data.profiles.filter(profile => teacherIds.has(profile.id)).flatMap(profile => profile.specialties),
+            ...availableExternalClasses.map(item => item.categoria),
+          ])).sort();
+          const availableModalities = modalityOptions.filter(option => availableClasses.some(activity => activity.modality === option.value || activity.modality === "mixed") || availableExternalClasses.some(item => option.value === "in_person" ? /presencial/i.test(item.modalidad) : option.value === "online" ? /online|distancia/i.test(item.modalidad) : /presencial/i.test(item.modalidad) && /online|distancia/i.test(item.modalidad)));
+          const availableLocations = Array.from(new Set([...availableClasses.map(activity => activity.location), ...availableExternalClasses.map(item => {const place = externalPlaces.find(place => place.id === item.lugar_id); return place?.ubicacion.barrio || place?.ubicacion.ciudad || "";})].filter(Boolean))).sort();
+          const availableDates = Array.from(new Set([...availableClasses.flatMap(activity => sessionsFor(data, activity.id).filter(session => Date.parse(session.starts_at) > Date.now()).map(session => wallDate(session.starts_at,activity.timezone).slice(0,10))), ...availableExternalClasses.flatMap(item => { const confirmed = item.proxima_fecha_confirmada as string | null; return confirmed ? [confirmed] : []; })])).sort();
+          const activities = availableClasses.filter((a) =>
             sessionsFor(data, a.id).length > 0 && matchesActivity(a, data, {
               query,
               specialty,
@@ -83,7 +101,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               date,
             })
           );
-          const listedExternalClasses = externalClasses.filter(item =>
+          const listedExternalClasses = availableExternalClasses.filter(item =>
             (item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada)) &&
             matchesExternalClass(item, {query,specialty,location,modality,date}));
           const listedExternalPlaces = externalPlaces.filter(item => matchesExternalPlace(item,query,specialty));
@@ -116,10 +134,11 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           );
           return (
             <>
-              {!embedded && (data.access.can_create || data.access.managed_ids.length > 0) && <View style={explore.toolbar}><LearningCreateAction /></View>}
+              {!embedded && <View style={explore.toolbar}><LearningCreateAction /></View>}
               <View style={explore.search}>
                 <Icon name="search" size={20} color={vibesTheme.colors.secondaryText} />
                 <TextInput accessibilityLabel="Buscar clases o lugares" placeholder="¿Qué te gustaría practicar?" placeholderTextColor={vibesTheme.colors.secondaryText} value={query} onChangeText={setQuery} style={explore.searchInput} returnKeyType="search" />
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Filtrar clases" onPress={() => setFilters(true)} style={explore.clear}><Icon name="options-outline" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
                 {!!query && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setQuery("")} style={explore.clear}><Icon name="close" size={20} color={vibesTheme.colors.secondaryText} /></TouchableOpacity>}
               </View>
               <Chips value={tab} onChange={setTab} options={[
@@ -166,20 +185,11 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
                     onChange={setModality}
                     options={[
                       { value: "", label: "Todas" },
-                      ...modalityOptions,
+                      ...availableModalities,
                     ]}
                   />
-                  <Field
-                    label="Ciudad o barrio"
-                    value={location}
-                    onChange={setLocation}
-                  />
-                  <Field
-                    label="Fecha del encuentro"
-                    value={date}
-                    onChange={setDate}
-                    hint="AAAA-MM-DD. Dejá vacío para ver todas las fechas."
-                  />
+                  {!!availableLocations.length && <><Text style={ui.body}>Ciudad o barrio</Text><Chips value={location} onChange={setLocation} options={[{value:"",label:"Todas"},...availableLocations.map(value=>({value,label:value}))]} /></>}
+                  {!!availableDates.length && <><Text style={ui.body}>Fecha del encuentro</Text><Chips value={date} onChange={setDate} options={[{value:"",label:"Todas"},...availableDates.map(value=>({value,label:value}))]} /></>}
                   <Button
                     label="Ver resultados"
                     onPress={() => setFilters(false)}
@@ -296,6 +306,7 @@ export function LearningProfileDetail() {
 }
 
 export function LearningActivityDetail() {
+  const [inviteVisible, setInviteVisible] = useState(false);
   const id = useId(),
     nav = useNav(),
     q = useLearningData(),
@@ -347,6 +358,8 @@ export function LearningActivityDetail() {
                 {a.location ? ` · ${a.location}` : ""}
               </Text>
               {a.modality !== "online" && /\d/.test(a.location) && <ClassLocationMap key={a.location} address={a.location} />}
+              <Button secondary label="Invitar a alguien" onPress={() => setInviteVisible(true)} />
+              <EventInviteSheet classInvite={{id:a.id,title:a.title,date:sessions[0] ? formatSession(sessions[0],a.timezone) : undefined,url:`com.gurudevelopers.vibes://learning/${a.id}`}} visible={inviteVisible} onClose={()=>setInviteVisible(false)} onDiscover={()=>nav.navigate("Tab",{screen:"Discover"})} />
               <Text style={ui.body}>{a.description}</Text>
               <Text style={ui.title}>Programa y encuentros</Text>
               {sessions.map((s, index) => (
@@ -877,6 +890,7 @@ export function LearningRoster() {
 }
 
 function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
+  const continueToClass = Boolean((useRoute().params as { continueToClass?: boolean } | undefined)?.continueToClass);
   const nav = useNav(),
     action = useLearningAction(),
     existing = data.profiles.find((p) => p.id === id);
@@ -992,7 +1006,7 @@ function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
               },
             },
             "Perfil guardado.",
-            () => nav.goBack()
+            () => continueToClass ? nav.replace("LearningActivityEditor") : nav.goBack()
           )
         }
       />
@@ -1142,8 +1156,8 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
       void action.run(
         "save_activity",
         { p_id: id ?? null, p_data: input },
-        existing ? "Cambios guardados." : "Actividad guardada como borrador.",
-        () => nav.goBack()
+        existing ? "Cambios guardados." : "Clase guardada como borrador.",
+        () => existing ? nav.goBack() : nav.replace("LearningManage")
       );
     } catch (e) {
       setError(learningError(e));
@@ -1351,7 +1365,7 @@ export function LearningActivityEditor() {
   const id = useId(),
     q = useLearningData();
   return (
-    <Page title={id ? "Editar actividad" : "Nueva actividad"}>
+    <Page title={id ? "Editar actividad" : "Crear clase"}>
       <LearningGate query={q}>
         {(data) => <ActivityEditorForm key={id ?? "new"} data={data} id={id} />}
       </LearningGate>

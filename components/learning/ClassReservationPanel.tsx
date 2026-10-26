@@ -1,3 +1,5 @@
+import { useNavigation } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { StyleSheet, View, TouchableOpacity, ScrollView } from "react-native";
 import { Text } from "../Typography";
@@ -21,6 +23,8 @@ function ReservationSelect({ label, options, value, onChange }: { label:string; 
   </View>;
 }
 export default function ClassReservationPanel({ source }: { source: ReservationSource }) {
+  const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
   const timezone = source.timezone ?? RESERVATION_TIMEZONE;
   const months = reservationMonths(Date.now(), timezone);
   const [mode, setMode] = useState("single");
@@ -48,13 +52,19 @@ export default function ClassReservationPanel({ source }: { source: ReservationS
       </View>
     </> : <ReservationSelect label="Elegí una fecha" options={dates.map(iso => ({id:iso,label:reservationDateLabel(iso,timezone)}))} value={single || null} onChange={value => setSingle(value ?? "")} />}
     {!dates.length && <Text style={ui.muted}>No hay fechas disponibles para este mes.</Text>}
-    <Text style={s.hint}>Sin cobros. La solicitud no se envía al organizador: contactalo para confirmar tu cupo.</Text>
+    <Text style={s.hint}>Sin cobros. La solicitud no se envía al organizador: contactalo para confirmar tu cupo. Tendrás acceso al chat de la clase.</Text>
     <Button label={action.pending ? "Guardando…" : mode === "monthly" ? "Solicitar reserva del mes" : "Solicitar reserva de clase"} disabled={!selected.length || action.pending || requests.isLoading || requests.isError} onPress={() => action.confirm({
       name: "request_reservation", args: { p_source: source.id, p_mode: mode, p_month: month, p_days: mode === "single" ? [reservationWeekday(single,timezone)] : selectedDays, p_single: mode === "single" ? single : null },
       text: `Vas a guardar una solicitud por ${selected.length} ${selected.length === 1 ? "clase" : "clases"}. Queda pendiente de confirmación con el organizador. No se realiza ningún cobro.`,
       success: "Solicitud guardada en Mis clases. Contactá al organizador para confirmar disponibilidad y cupo.",
     })} />
     {requests.isError && <Button secondary label="Reintentar cargar mis solicitudes" onPress={() => void requests.refetch()} />}
+    {existing.length > 0 && <Button secondary label="Ver chat de la clase" disabled={action.pending} onPress={() => {
+      void action.run("class_chat", {p_source:source.id}, "Chat de la clase disponible.", groupId => {
+        void queryClient.invalidateQueries({queryKey:["communityGroups"]});
+        navigation.navigate("CommunityGroupChat",{groupId:String(groupId),name:existing[0].title,description:"Solicitudes pendientes: el chat no confirma cupo."});
+      });
+    }} />}
     {existing.map(request => <View key={request.id} style={s.summary}>
       <Text style={s.summaryTitle}>Solicitud pendiente de confirmación</Text>
       <Text style={ui.body}>{request.mode === "monthly" ? "Plan mensual" : "Clase suelta"} · {request.starts_at.length} {request.starts_at.length === 1 ? "fecha" : "fechas"}</Text>

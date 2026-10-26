@@ -252,3 +252,9 @@ En el detalle de clase con mapa, omitir la fila “Presencial”; conservar la m
 Por el momento, el listado de clases oculta propuestas sin fechas ni horarios publicados: las clases propias requieren encuentros y las referencias externas requieren horario semanal o próxima fecha confirmada.
 
 El detalle de clase permite “Invitar a alguien” usando EventInviteSheet: conexiones, invitación por chat y compartir por enlace. La invitación recibida en chat incluye “Ver clase”, que abre su detalle dentro de Vibes.
+
+Los filtros de Clases ofrecen únicamente prácticas, modalidades, lugares y fechas presentes en propuestas disponibles, sin usar perfiles ficticios ni clases sin horarios. Al guardar una solicitud activa se incorpora a la persona al chat de esa clase (grupo compartido por propuesta), accesible desde “Ver chat de la clase”. Cancelar la última solicitud activa revoca su membresía. Estar en el chat no confirma reserva ni cupo.
+
+El botón + de Clases lleva directamente a Crear clase (LearningActivityEditor). Si un responsable autorizado aún no tiene perfil, primero crea su perfil y luego continúa al formulario. Guardar una clase nueva abre Mi espacio para revisar y publicar el borrador. Conservar las autorizaciones del servidor.
+
+El + de Clases permanece visible para todas las cuentas. Al tocarlo, comprobar la autorización: si falta habilitación de responsable, explicarlo sin ocultar el control ni permitir escrituras no autorizadas. Si falla la consulta, ofrecer Reintentar.
