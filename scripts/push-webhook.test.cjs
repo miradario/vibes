@@ -18,6 +18,14 @@ test('a new like or a changed decision notifies; repeated likes and passes do no
  assert.equal(api.isConnectionRequest({...row,direction:'nope'}),false);
  assert.equal(api.isConnectionRequest({...row,target_id:'sender'}),false);
 });
+test('only the first acceptance of a challenge invitation notifies the creator',()=>{
+ const row={id:'inv',challenge_id:'challenge',invitee_id:'invitee',invited_by:'creator',status:'accepted'};
+ assert.equal(api.isChallengeInvitationAccepted(row,{status:'pending'}),true);
+ assert.equal(api.isChallengeInvitationAccepted(row,{status:'rejected'}),true);
+ assert.equal(api.isChallengeInvitationAccepted(row,{status:'accepted'}),false);
+ assert.equal(api.isChallengeInvitationAccepted({...row,status:'rejected'},{status:'pending'}),false);
+ assert.equal(api.isChallengeInvitationAccepted({...row,invited_by:'invitee'},{status:'pending'}),false);
+});
 
 const prefsApi={};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('supabase/functions/send-push/preferences.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports:prefsApi});
