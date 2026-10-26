@@ -12,3 +12,11 @@ export function isConnectionRequest(record: Record<string, unknown>, old?: Recor
     typeof record.swiper_id === "string" && typeof record.target_id === "string" &&
     !!record.swiper_id && !!record.target_id && record.swiper_id !== record.target_id;
 }
+
+// Only the transition to 'accepted' notifies (accepted is final), so retries never duplicate.
+export function isChallengeInvitationAccepted(record: Record<string, unknown>, old?: Record<string, unknown> | null) {
+  return record.status === "accepted" && old?.status !== "accepted" &&
+    typeof record.invitee_id === "string" && typeof record.invited_by === "string" &&
+    typeof record.challenge_id === "string" && !!record.invitee_id && !!record.invited_by &&
+    !!record.challenge_id && record.invitee_id !== record.invited_by;
+}
