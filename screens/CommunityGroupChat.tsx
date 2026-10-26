@@ -1,3 +1,4 @@
+import KeyboardViewport from "../components/KeyboardViewport";
 import {chatComposerBottomPadding} from "../src/lib/chatComposerLayout";
 import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import BackButton from "../components/BackButton";
@@ -24,7 +25,7 @@ import {
   type ReplyTarget,
 } from "../components/MessageReply";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, FlatList, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, Keyboard, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import {
   useNavigation,
@@ -209,12 +210,8 @@ export default function CommunityGroupChat() {
   };
   return (
     <ScreenContainer edges={["top", "left", "right"]} style={s.screen}>
-      <KeyboardAvoidingView
+      <KeyboardViewport
         style={{ flex: 1 }}
-        behavior={
-          Platform.OS === "ios" ? "padding" : undefined
-        }
-        keyboardVerticalOffset={0}
       >
         <View style={s.header}>
           <BackButton accessibilityLabel="Volver"
@@ -523,7 +520,7 @@ export default function CommunityGroupChat() {
             )}
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardViewport>
     </ScreenContainer>
   );
 }

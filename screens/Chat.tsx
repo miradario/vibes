@@ -1,3 +1,4 @@
+import KeyboardViewport from "../components/KeyboardViewport";
 import {chatComposerBottomPadding} from "../src/lib/chatComposerLayout";
 import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import { messagePreview } from "../src/lib/chatPhotos";
@@ -17,7 +18,7 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  KeyboardAvoidingView,
+
   Keyboard,
   Platform,
   Alert,
@@ -445,12 +446,8 @@ const Chat = () => {
 
   return (
     <ScreenContainer edges={["top", "left", "right"]}>
-      <KeyboardAvoidingView
+      <KeyboardViewport
         style={styles.bg}
-        behavior={
-          Platform.OS === "ios" ? "padding" : undefined
-        }
-        keyboardVerticalOffset={0}
       >
         <AppHeader
           showBack
@@ -760,7 +757,7 @@ const Chat = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardViewport>
     </ScreenContainer>
   );
 };
