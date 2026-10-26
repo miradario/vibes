@@ -40,6 +40,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeftToLine, ArrowRightToLine, Link, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
+import PhotoViewer from "./PhotoViewer";
 import Icon from "./Icon";
 import VibesLoader from "./VibesLoader";
 import ProfileMediaImage from "./ProfileMediaImage";
@@ -284,6 +285,7 @@ const UserProfileSheet = ({
   onNextActionPress,
   secondaryActionPanelOnly = false,
   secondaryActionDestructive = false,
+  onImagePress,
 }: Props) => {
   const insets = useSafeAreaInsets();
   const { width, height: windowHeight } = useWindowDimensions();
@@ -625,8 +627,9 @@ const UserProfileSheet = ({
             commitSwipe(action);
           } else {
             resetSwipe();
+            // Single tap (no real movement) opens the full-screen viewer.
             if (Math.abs(g.dx) < 8 && Math.abs(g.dy) < 8) {
-              setGalleryIndex(activeIndex + (g.x0 < width / 2 ? -1 : 1));
+              openZoomRef.current();
             }
           }
         },
@@ -755,6 +758,27 @@ const UserProfileSheet = ({
     panelDragY.setValue(0);
     setDetailsVisible(true);
   };
+
+  // Full-screen viewer (pinch / double-tap zoom) for the photo on screen.
+  const canZoomPhotos = Boolean(onImagePress) && canViewPhotos && profileImages.length > 0;
+  // The viewer is rendered inside this sheet's own Modal tree: on iOS a sibling
+  // Modal declared by the screen can't present on top of an open sheet Modal.
+  const [zoomIndex, setZoomIndex] = useState<number | null>(null);
+  const openZoom = (index = safeActiveIndex) => {
+    if (swipingRef.current || !canZoomPhotos) return;
+    setZoomIndex(index);
+  };
+  const renderPhotoViewer = (forDetails: boolean) => (
+    <PhotoViewer
+      visible={zoomIndex !== null && visible && detailsVisible === forDetails}
+      images={profileImages}
+      initialIndex={zoomIndex ?? 0}
+      onClose={() => setZoomIndex(null)}
+    />
+  );
+  const openZoomRef = useRef(openZoom);
+  openZoomRef.current = openZoom;
+  const zoomAccessibilityActions = canZoomPhotos ? [{ name: "magicTap" as const }, { name: "zoom", label: "Ampliar foto" }] : [];
 
   const setGalleryIndex = (nextIndex: number) => {
     if (!hasMultipleImages) return;
@@ -1042,15 +1066,20 @@ const UserProfileSheet = ({
 
           <View
             style={{ position: "absolute", left: 0, right: 0, top: "12%", height: "53%" }}
-            accessible={hasMultipleImages}
+            accessible={hasMultipleImages || canZoomPhotos}
             accessibilityLabel={`Foto ${safeActiveIndex + 1} de ${profileImages.length}`}
+            accessibilityHint={canZoomPhotos ? "Tocá para ver en pantalla completa" : undefined}
             accessibilityActions={[
-              { name: "increment", label: "Foto siguiente" },
-              { name: "decrement", label: "Foto anterior" },
+              ...(hasMultipleImages ? [
+                { name: "increment", label: "Foto siguiente" },
+                { name: "decrement", label: "Foto anterior" },
+              ] : []),
+              ...zoomAccessibilityActions,
             ]}
-            onAccessibilityAction={({ nativeEvent }) =>
-              setGalleryIndex(safeActiveIndex + (nativeEvent.actionName === "increment" ? 1 : -1))
-            }
+            onAccessibilityAction={({ nativeEvent }) => {
+              if (nativeEvent.actionName === "zoom" || nativeEvent.actionName === "magicTap") return openZoom();
+              setGalleryIndex(safeActiveIndex + (nativeEvent.actionName === "increment" ? 1 : -1));
+            }}
           />
           <LinearGradient
             pointerEvents="none"
@@ -1271,17 +1300,11 @@ const UserProfileSheet = ({
                           contentFit="contain" blurBackground={!isIOS} showLoading={!isIOS} transition={0}
                           previewSource={isIOS && canPreviewPhotos && profile.hasPhotos !== false ? item : undefined}
                           fallbackBackgroundColor={PROFILE_PHOTO_BACKGROUND} />
-                        {hasMultipleImages ? (
-                          <View style={[StyleSheet.absoluteFillObject, { flexDirection: "row" }]}>
-                            <TouchableOpacity style={{ flex: 1 }} activeOpacity={1}
-                              accessibilityRole="button" accessibilityLabel="Foto anterior"
-                              disabled={index === 0}
-                              onPress={() => setGalleryIndex(index - 1)} />
-                            <TouchableOpacity style={{ flex: 1 }} activeOpacity={1}
-                              accessibilityRole="button" accessibilityLabel="Foto siguiente"
-                              disabled={index === profileImages.length - 1}
-                              onPress={() => setGalleryIndex(index + 1)} />
-                          </View>
+                        {canZoomPhotos ? (
+                          <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1}
+                            accessibilityRole="imagebutton"
+                            accessibilityLabel={`Ampliar foto ${index + 1} de ${profileImages.length}`}
+                            onPress={() => openZoom(index)} />
                         ) : null}
                       </View>
                     )}
@@ -1382,8 +1405,10 @@ const UserProfileSheet = ({
               </View>
             ) : null}
           </View>
+          {renderPhotoViewer(true)}
         </AnimatedSheetModal>
         </Animated.View>
+        {renderPhotoViewer(false)}
       </AnimatedSheetModal>
     </>
   );
@@ -1477,14 +1502,27 @@ const localStyles = StyleSheet.create({
     gap: 7,
     zIndex: 10,
   },
+  // Photo position bars: thicker, higher-contrast and with a soft shadow so
+  // the current photo reads clearly over bright pictures while swiping.
   indicator: {
     flex: 1,
-    height: 5,
+    height: 6,
     minWidth: 12,
     borderRadius: 3,
-    backgroundColor: "rgba(254, 254, 253, 0.4)",
+    backgroundColor: "rgba(254, 254, 253, 0.5)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(0, 0, 0, 0.18)",
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
-  indicatorActive: { backgroundColor: vibesTheme.colors.accentMustard },
+  indicatorActive: {
+    backgroundColor: vibesTheme.colors.accentMustard,
+    borderColor: "rgba(0, 0, 0, 0.28)",
+    transform: [{ scaleY: 1.35 }],
+  },
   profileOverlay: {
     position: "absolute",
     left: 0,
