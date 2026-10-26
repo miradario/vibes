@@ -6,6 +6,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ScreenContainer from "../components/ScreenContainer";
 import { Text } from "../components/Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { pillTabStyles } from "../components/PillTabStyles";
 import { useI18n } from "../src/i18n";
 import Events from "./Events";
 import { LearningExplore, LearningCreateAction } from "./Learning";
@@ -21,11 +22,11 @@ export default function Activities() {
     <ScreenContainer style={s.screen}>
       <View style={s.header}>
         <View style={s.titleRow}><Text accessibilityRole="header" style={s.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{english ? "Activities" : "Actividades"}</Text>{activeSection === "classes" ? <LearningCreateAction /> : <View style={s.actions}>{([["add", "Crear evento", "CreateEvent"], ["archive-outline", "Ver eventos pasados", "PastEvents"]] as const).map(([icon, label, route]) => <TouchableOpacity key={route} accessibilityRole="button" accessibilityLabel={label} style={s.action} onPress={() => navigation.navigate(route as never)}><Icon name={icon} size={23} color={c.primaryText} /></TouchableOpacity>)}</View>}</View>
-        {clasesEnabled ? <View accessibilityRole="tablist" style={s.selector}>
+        {clasesEnabled ? <View accessibilityRole="tablist" style={pillTabStyles.selector}>
           {(["events", "classes"] as const).map(value => (
             <TouchableOpacity key={value} accessibilityRole="tab" accessibilityState={{ selected: activeSection === value }}
-              onPress={() => setSection(value)} style={[s.tab, activeSection === value && s.selected]}>
-              <Text style={[s.label, activeSection === value && s.selectedLabel]}>{value === "events" ? english ? "Events" : "Eventos" : english ? "Classes" : "Clases"}</Text>
+              onPress={() => setSection(value)} style={[pillTabStyles.tab, activeSection === value && pillTabStyles.selected]}>
+              <Text style={[pillTabStyles.label, activeSection === value && pillTabStyles.selectedLabel]}>{value === "events" ? english ? "Events" : "Eventos" : english ? "Classes" : "Clases"}</Text>
             </TouchableOpacity>
           ))}
         </View> : null}
@@ -37,14 +38,9 @@ export default function Activities() {
 const c = vibesTheme.colors;
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.background },
-  header: { paddingHorizontal: 24, paddingTop: 12, gap: 16 },
+  header: { paddingHorizontal: 20, paddingTop: 12, gap: 16 },
   titleRow: {flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},
   actions: { flexDirection: "row", gap: 6 },
   action: { width: 44, height: 44, borderRadius: 14, backgroundColor: `${c.secondaryText}0C`, alignItems: "center", justifyContent: "center" },
   title: { flex: 1, fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42, color: c.primaryText },
-  selector: { flexDirection: "row", padding: 4, borderRadius: 999, backgroundColor: `${c.secondaryText}0C` },
-  tab: { flex: 1, minHeight: 44, borderRadius: 999, alignItems: "center", justifyContent: "center" },
-  selected: { backgroundColor: c.primaryText },
-  label: { fontFamily: vibesTheme.fonts.semibold, fontSize: 16, lineHeight: 22, color: c.secondaryText },
-  selectedLabel: { color: c.surface },
 });

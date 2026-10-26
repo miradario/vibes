@@ -1,6 +1,6 @@
 import { useReducedMotion } from "react-native-reanimated";
 import DiscoverPathCards from "../components/DiscoverPathCards";
-import { sectionTabStyles } from "../components/SectionTabStyles";
+import { pillTabStyles } from "../components/PillTabStyles";
 import BackButton from "../components/BackButton";
 import ChallengeFeedCard from "../components/ChallengeFeedCard";
 import ForYouTag from "../components/ForYouTag";
@@ -589,8 +589,8 @@ const Events = ({
   );
 
   return (
-    <ScreenContainer edges={pastOnly ? ["top", "left", "right"] : []} style={styles.bg}>
-      <View style={[styles.eventsContainer, localStyles.eventsContainer, (pastOnly || embedded) && { paddingTop: 12 }]}>
+    <ScreenContainer edges={pastOnly || (section === "challenge" && !embedded) ? ["top", "left", "right"] : []} style={styles.bg}>
+      <View style={[styles.eventsContainer, localStyles.eventsContainer, (pastOnly || embedded || section === "challenge") && { paddingTop: 12 }]}>
         {!embedded && <View style={[localStyles.headerRow, section === "challenge" && !pastOnly && localStyles.challengeHeaderRow]}>
           {pastOnly && section !== "challenge" ? (
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
@@ -599,7 +599,7 @@ const Events = ({
             {!embedded && <Text style={[pastOnly && styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
 
           </View>
-          <View style={localStyles.headerActions}>
+          <View style={[localStyles.headerActions, section === "challenge" && !pastOnly && localStyles.challengeHeaderActions]}>
           {!pastOnly ? <TouchableOpacity
             accessibilityRole="button"
             activeOpacity={0.78}
@@ -644,8 +644,8 @@ const Events = ({
           </View>
         </View>}
         {section === "challenge" && !pastOnly ? <>
-          <View style={sectionTabStyles.tabs} accessibilityRole="tablist">
-            {([ ["public", "Público"], ["private", "Privado"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[sectionTabStyles.tab, challengeTab === mode && sectionTabStyles.active]}><Text style={[sectionTabStyles.text, challengeTab === mode && sectionTabStyles.activeText]}>{label}</Text></TouchableOpacity>)}
+          <View style={[pillTabStyles.selector, localStyles.challengeTabs]} accessibilityRole="tablist">
+            {([ ["public", "Público"], ["private", "Privado"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[pillTabStyles.tab, challengeTab === mode && pillTabStyles.selected]}><Text style={[pillTabStyles.label, challengeTab === mode && pillTabStyles.selectedLabel]}>{label}</Text></TouchableOpacity>)}
           </View>
         </> : null}
         <View style={{ flex: 1, overflow: "hidden" }}>
@@ -1170,7 +1170,9 @@ eventViewText: {
 eventsContainer: {
     paddingTop: 68,
   },
-challengeHeaderRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
+challengeHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+challengeHeaderActions: { alignSelf: "center" },
+challengeTabs: { marginBottom: 12 },
 challengeTitleRow: { flex: 1, minWidth: 0 },
 headerActions: { flexDirection: "row", alignItems: "center", alignSelf: "flex-end", gap: 6 },
 headerRow: {
