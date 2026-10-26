@@ -93,8 +93,9 @@ const styles = StyleSheet.create({
   },
   startButtonDisabled: {
     backgroundColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.08,
-    elevation: 1,
+    opacity: 0.42,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   startText: {
     color: vibesTheme.colors.surface,
