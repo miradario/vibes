@@ -485,6 +485,7 @@ const Events = ({
 
   // "Para ti": one public, not-joined, still-open item picked with the Home
   // scoring, shown first in the default list (not in past/private/started views).
+  // For events it goes first inside "Más eventos", below "Tus eventos".
   const preferences = useUserPreferencesQuery(viewerId).data;
   const featuredItem = useMemo(() => {
     if (pastOnly || startedOnly || (section === "challenge" && challengeTab === "private")) return null;
@@ -499,6 +500,20 @@ const Events = ({
 
   const listItems = useMemo<FeedListItem[]>(() => {
     if (!featuredItem) return baseListItems;
+    const featuredRow = { kind: "feed" as const, item: featuredItem, featured: true, keyPrefix: "featured" };
+    if (section === "event") {
+      // Events: "Tus eventos" stays first; "Para ti" goes first inside "Más eventos".
+      const rest = baseListItems.filter(
+        (row) => !(row.kind === "feed" && row.item.id === featuredItem.id),
+      );
+      const yourIndex = rest.findIndex((row) => row.kind === "section" && row.id === "your-events");
+      if (yourIndex === -1) return [featuredRow, ...rest];
+      const discoverIndex = rest.findIndex((row) => row.kind === "section" && row.id === "discover-events");
+      if (discoverIndex !== -1) {
+        return [...rest.slice(0, discoverIndex + 1), featuredRow, ...rest.slice(discoverIndex + 1)];
+      }
+      return [...rest, { kind: "section" as const, id: "discover-events", title: "Más eventos" }, featuredRow];
+    }
     const rest = baseListItems.filter(
       (row) => !(row.kind === "feed" && row.item.id === featuredItem.id),
     );
@@ -507,7 +522,7 @@ const Events = ({
       (row, index) => row.kind !== "section" || rest[index + 1]?.kind === "feed",
     );
     return [{ kind: "feed" as const, item: featuredItem, featured: true, keyPrefix: "featured" }, ...cleaned];
-  }, [baseListItems, featuredItem]);
+  }, [baseListItems, featuredItem, section]);
 
   const listIsLoading =
     isLoading ||
