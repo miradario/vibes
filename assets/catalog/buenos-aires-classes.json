@@ -1,0 +1,485 @@
+{
+  "version": "2.0",
+  "datos_ficticios": false,
+  "alcance_geografico": "Buenos Aires, Argentina",
+  "fecha_consulta_fuentes": "2026-10-20",
+  "zona_horaria": "America/Argentina/Buenos_Aires",
+  "descripcion": "Ofertas reales encontradas en fuentes oficiales. Existencia de la oferta publicada no equivale a cupos, agenda vigente o afiliación a Vibes confirmados.",
+  "criterios": {
+    "valores_desconocidos": null,
+    "horarios": "Se transcriben horarios recurrentes publicados; no se generan próximas fechas ni cupos.",
+    "descripciones": "Resúmenes editoriales; no se reproducen promesas terapéuticas.",
+    "reservas": "Referencias externas, sin reservas habilitadas en Vibes."
+  },
+  "lugares": [
+    {
+      "id": "lugar_001",
+      "nombre": "Escuela Yoga · sede CABA",
+      "ubicacion": {
+        "ciudad": "Buenos Aires",
+        "pais": "Argentina",
+        "barrio": null,
+        "direccion": null,
+        "latitud": null,
+        "longitud": null
+      },
+      "imagen_url": null,
+      "servicios": null,
+      "fuentes": [
+        {
+          "url": "https://www.eyoga.com.ar/index.php/clases",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "Dirección de la sede pendiente de confirmar con la escuela."
+    },
+    {
+      "id": "lugar_002",
+      "nombre": "FUEL PALERMO",
+      "ubicacion": {
+        "ciudad": "Buenos Aires",
+        "pais": "Argentina",
+        "barrio": "Palermo",
+        "direccion": "Cnel. Niceto Vega 5390",
+        "latitud": null,
+        "longitud": null
+      },
+      "imagen_url": null,
+      "servicios": null,
+      "fuentes": [
+        {
+          "url": "https://www.5rhythms.com/classes/ELMOVIMIENTOABRECAMINOS-298020",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "La ficha de Pablo Gumina indica primer piso en esta dirección."
+    },
+    {
+      "id": "lugar_003",
+      "nombre": "DeROSE Method Palermo",
+      "ubicacion": {
+        "ciudad": "Buenos Aires",
+        "pais": "Argentina",
+        "barrio": "Palermo",
+        "direccion": "FJSM de Oro 1702",
+        "latitud": null,
+        "longitud": null
+      },
+      "imagen_url": "https://www.derosepalermo.com/img/hero-clase-grupal.jpg",
+      "servicios": null,
+      "fuentes": [
+        {
+          "url": "https://www.derosepalermo.com/",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": null,
+      "imagen_fuente_url": "https://www.derosepalermo.com/"
+    },
+    {
+      "id": "lugar_004",
+      "nombre": "Escuela Argentina de Tantra · Villa del Parque",
+      "ubicacion": {
+        "ciudad": "Buenos Aires",
+        "pais": "Argentina",
+        "barrio": "Villa del Parque",
+        "direccion": null,
+        "latitud": null,
+        "longitud": null
+      },
+      "imagen_url": null,
+      "servicios": null,
+      "fuentes": [
+        {
+          "url": "https://tantra.com.ar/",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "El sitio identifica una Casa de Retiros en Villa del Parque, sin confirmar aquí su dirección. Av. San Martín 5058 figura como retiro de material, no como sede confirmada del curso."
+    },
+    {
+      "id": "lugar_005",
+      "nombre": "Centro Sri Chinmoy · Buenos Aires",
+      "ubicacion": {
+        "ciudad": "Buenos Aires",
+        "pais": "Argentina",
+        "barrio": null,
+        "direccion": null,
+        "latitud": null,
+        "longitud": null
+      },
+      "imagen_url": null,
+      "servicios": null,
+      "fuentes": [
+        {
+          "url": "https://ar.srichinmoycentre.org/meditacion-clases-gratuitas-en-buenos-aires",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "Organizador real. Sede concreta del curso a consultar; no hay un lugar de encuentro confirmado en la fuente."
+    }
+  ],
+  "clases": [
+    {
+      "id": "clase_001",
+      "titulo": "Hatha Yoga Dinámico · mañana",
+      "categoria": "Yoga",
+      "tipo": "clase",
+      "descripcion": "Práctica de posturas y respiración según el método de la escuela.",
+      "lugar_id": "lugar_001",
+      "docente": {
+        "nombre": "Elianne Chavarria"
+      },
+      "modalidad": "Presencial",
+      "nivel": null,
+      "duracion_minutos": null,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": 45000,
+        "moneda": "ARS",
+        "unidad": "Por clase",
+        "estado": "Publicado; confirmar antes de reservar"
+      },
+      "horarios_semanales": [
+        {
+          "dia": "Lunes",
+          "hora_inicio": "09:00",
+          "hora_fin": null
+        },
+        {
+          "dia": "Miércoles",
+          "hora_inicio": "09:00",
+          "hora_fin": null
+        }
+      ],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://www.eyoga.com.ar/images/institucional/finales/YogaDinamico.png",
+      "fuentes": [
+        {
+          "url": "https://www.eyoga.com.ar/index.php/clases",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "Horarios publicados para 2026.",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://www.eyoga.com.ar/index.php/clases"
+    },
+    {
+      "id": "clase_002",
+      "titulo": "Hatha Yoga Dinámico · noche",
+      "categoria": "Yoga",
+      "tipo": "clase",
+      "descripcion": "Clase presencial de Hatha Yoga Dinámico.",
+      "lugar_id": "lugar_001",
+      "docente": {
+        "nombre": "Carla Corsini"
+      },
+      "modalidad": "Presencial",
+      "nivel": null,
+      "duracion_minutos": null,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": 45000,
+        "moneda": "ARS",
+        "unidad": "Por clase",
+        "estado": "Publicado; confirmar antes de reservar"
+      },
+      "horarios_semanales": [
+        {
+          "dia": "Lunes",
+          "hora_inicio": "19:00",
+          "hora_fin": null
+        },
+        {
+          "dia": "Miércoles",
+          "hora_inicio": "19:00",
+          "hora_fin": null
+        }
+      ],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://www.eyoga.com.ar/images/institucional/finales/YogaDinamico.png",
+      "fuentes": [
+        {
+          "url": "https://www.eyoga.com.ar/index.php/clases",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "Horarios publicados para 2026.",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://www.eyoga.com.ar/index.php/clases"
+    },
+    {
+      "id": "clase_003",
+      "titulo": "El movimiento abre caminos",
+      "categoria": "5 Ritmos",
+      "tipo": "clase",
+      "descripcion": "Práctica de movimiento libre y exploración corporal.",
+      "lugar_id": "lugar_002",
+      "docente": {
+        "nombre": "Maria Luz Pilheu"
+      },
+      "modalidad": "Presencial",
+      "nivel": "Sin requisitos previos",
+      "duracion_minutos": 120,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": null,
+        "moneda": null,
+        "unidad": null,
+        "estado": "Consultar"
+      },
+      "horarios_semanales": [
+        {
+          "dia": "Lunes",
+          "hora_inicio": "19:30",
+          "hora_fin": "21:30"
+        }
+      ],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://teachers.5rhythms.com/files/photo/EL_MOVIMIENTO_ABRE_CAMINOS_29597.jpg",
+      "fuentes": [
+        {
+          "url": "https://www.5rhythms.com/classes/ELMOVIMIENTOABRECAMINOS-298020",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "La ficha consultada muestra como próxima clase el 19/10/2026, fecha ya pasada. No se infiere una nueva fecha.",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://www.5rhythms.com/classes/ELMOVIMIENTOABRECAMINOS-298020"
+    },
+    {
+      "id": "clase_004",
+      "titulo": "5 Ritmos en Palermo",
+      "categoria": "5 Ritmos",
+      "tipo": "clase",
+      "descripcion": "Encuentro de danza libre guiada por Pablo Gumina.",
+      "lugar_id": "lugar_002",
+      "docente": {
+        "nombre": "Pablo Gumina"
+      },
+      "modalidad": "Presencial",
+      "nivel": "Sin requisitos previos",
+      "duracion_minutos": 120,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": null,
+        "moneda": null,
+        "unidad": null,
+        "estado": "Consultar"
+      },
+      "horarios_semanales": [
+        {
+          "dia": "Viernes",
+          "hora_inicio": "19:30",
+          "hora_fin": "21:30"
+        }
+      ],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://teachers.5rhythms.com/files/photo/5_Ritmos_en_Palermo_Buenos_Aires__Viernes_1930_hs__22796.jpg",
+      "fuentes": [
+        {
+          "url": "https://www.5rhythms.com/classes/RitmosenPalermoBuenosAiresVierneshs-293765",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "La ficha describe una práctica semanal, pero muestra como próxima clase el 19/06/2026. Confirmar continuidad. Reserva externa publicada: https://pablogumina.tiendup.com/e/5ritmos-waves-con-pablo-gumina",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://www.5rhythms.com/classes/RitmosenPalermoBuenosAiresVierneshs-293765"
+    },
+    {
+      "id": "clase_005",
+      "titulo": "5 Ritmos · Alejandra Duhalde",
+      "categoria": "5 Ritmos",
+      "tipo": "clase",
+      "descripcion": "Práctica de 5 Ritmos anunciada en el directorio oficial.",
+      "lugar_id": "lugar_002",
+      "docente": {
+        "nombre": "Alejandra Duhalde"
+      },
+      "modalidad": "Presencial",
+      "nivel": "Sin requisitos previos",
+      "duracion_minutos": 120,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": null,
+        "moneda": null,
+        "unidad": null,
+        "estado": "Consultar"
+      },
+      "horarios_semanales": [
+        {
+          "dia": "Miércoles",
+          "hora_inicio": "07:15",
+          "hora_fin": "09:15"
+        }
+      ],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://teachers.5rhythms.com/files/photo/Alejandra_Duhalde_75749.jpg",
+      "fuentes": [
+        {
+          "url": "https://www.5rhythms.com/classes/RITMOS-297411",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "Horario tal como figura en la fuente. La próxima fecha mostrada, 26/08/2026, está pasada; verificar también el horario con la docente.",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://www.5rhythms.com/classes/RITMOS-297411"
+    },
+    {
+      "id": "clase_006",
+      "titulo": "Yôga · DeROSE Method Palermo",
+      "categoria": "Yoga",
+      "tipo": "clase",
+      "descripcion": "Clases grupales de Yôga en la sede Palermo y en vivo por Zoom.",
+      "lugar_id": "lugar_003",
+      "docente": null,
+      "modalidad": "Presencial y online",
+      "nivel": null,
+      "duracion_minutos": null,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": null,
+        "moneda": null,
+        "unidad": null,
+        "estado": "Consultar"
+      },
+      "horarios_semanales": [],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://www.derosepalermo.com/img/hero-clase-grupal.jpg",
+      "fuentes": [
+        {
+          "url": "https://www.derosepalermo.com/",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "Consultar el horario y la modalidad de la clase elegida con la sede.",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://www.derosepalermo.com/"
+    },
+    {
+      "id": "clase_007",
+      "titulo": "Meditación · DeROSE Method Palermo",
+      "categoria": "Meditación",
+      "tipo": "clase",
+      "descripcion": "La sede anuncia clases de meditación y cursos relacionados.",
+      "lugar_id": "lugar_003",
+      "docente": null,
+      "modalidad": "A confirmar con la sede",
+      "nivel": null,
+      "duracion_minutos": null,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": null,
+        "moneda": null,
+        "unidad": null,
+        "estado": "Consultar"
+      },
+      "horarios_semanales": [],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://www.derosepalermo.com/img/clase-filosofia.jpg",
+      "fuentes": [
+        {
+          "url": "https://www.derosepalermo.com/",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "Actividad publicada; frecuencia, docente y formato concreto a confirmar.",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://www.derosepalermo.com/"
+    },
+    {
+      "id": "clase_008",
+      "titulo": "Curso Certificado de Tantra para Occidentales",
+      "categoria": "Tantra",
+      "tipo": "curso",
+      "descripcion": "Curso de formación teórica y práctica en tantra, anunciado por la escuela en modalidad presencial y a distancia.",
+      "lugar_id": "lugar_004",
+      "docente": null,
+      "modalidad": "Presencial y a distancia",
+      "nivel": null,
+      "duracion_minutos": null,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": null,
+        "moneda": null,
+        "unidad": null,
+        "estado": "Consultar"
+      },
+      "horarios_semanales": [],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://tantra.com.ar/imagenes/foto.jpg",
+      "fuentes": [
+        {
+          "url": "https://tantra.com.ar/",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "Se anuncia un formato de doce clases o intensivo de fin de semana. Fechas, sede exacta, equipo docente y arancel a consultar. Oscar R. Gómez figura como director de la institución; no se lo asigna como docente de una edición concreta.",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://tantra.com.ar/"
+    },
+    {
+      "id": "clase_009",
+      "titulo": "Curso-taller de meditación · Sri Chinmoy",
+      "categoria": "Meditación",
+      "tipo": "curso-taller",
+      "descripcion": "Curso con ejercicios de concentración, visualización, música y respiración.",
+      "lugar_id": "lugar_005",
+      "docente": null,
+      "modalidad": "A confirmar con el organizador",
+      "nivel": null,
+      "duracion_minutos": null,
+      "cupo_maximo": null,
+      "precio": {
+        "importe": 0,
+        "moneda": "ARS",
+        "unidad": "Curso o taller",
+        "estado": "Gratuito según el sitio oficial"
+      },
+      "horarios_semanales": [],
+      "proxima_fecha_confirmada": null,
+      "estado_agenda": "Confirmar disponibilidad y vigencia con el organizador",
+      "imagen_url": "https://ar.srichinmoycentre.org/files/styles/galleryformatter_slide/public/pr/newsimages/20160728meditationattheprstatue005.jpg?itok=ilFLCHKF",
+      "fuentes": [
+        {
+          "url": "https://ar.srichinmoycentre.org/meditacion-clases-gratuitas-en-buenos-aires",
+          "consultada_el": "2026-10-20",
+          "tipo": "Sitio oficial del organizador o directorio oficial de la disciplina"
+        }
+      ],
+      "nota": "La fuente solicita contactar al centro para fechas y detalles. Inscripción enlazada por el centro: https://www.buenosairesmeditacion.com",
+      "estado": "referencia_externa",
+      "reserva_en_vibes_habilitada": false,
+      "imagen_fuente_url": "https://ar.srichinmoycentre.org/meditacion-clases-gratuitas-en-buenos-aires"
+    }
+  ]
+}

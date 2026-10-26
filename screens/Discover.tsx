@@ -1,3 +1,4 @@
+import {useLearningEnabled} from "../src/featureFlags/useLearningEnabled";
 import { useMeetPeople } from "../src/queries/meetPeople.queries";
 import { useDiscoveryRefresh } from "../src/hooks/useDiscoveryRefresh";
 import RangeSlider from "../components/RangeSlider";
@@ -259,6 +260,7 @@ export const DiscoverContent = forwardRef<
   DiscoverContentHandle,
   DiscoverContentProps
 >(({ showHeader = true, onFilterCountChange }, ref) => {
+  const learningEnabled = useLearningEnabled();
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const route = useRoute();
@@ -1065,6 +1067,12 @@ export const DiscoverContent = forwardRef<
           </View>
         ) : null}
 
+        {learningEnabled ? (
+          <TouchableOpacity accessibilityRole="button" style={localStyles.filtersButton} onPress={() => navigation.navigate("LearningExplore" as never)}>
+            <Icon name="school-outline" size={20} color={vibesTheme.colors.accentBlue} />
+            <Text style={localStyles.filtersButtonText}>Clases y espacios →</Text>
+          </TouchableOpacity>
+        ) : null}
         {appliedFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>
           {appliedFilterChips.map(chip => <TouchableOpacity key={chip.id} accessibilityRole="button" accessibilityLabel={`Quitar filtro: ${chip.label}`} onPress={chip.remove} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 40, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14` }}>
             <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 13 }}>{chip.label}</Text><Icon name="close" size={17} color={vibesTheme.colors.accentBlue} />
@@ -1084,7 +1092,7 @@ export const DiscoverContent = forwardRef<
             <Icon name="mail-outline" size={18} color={vibesTheme.colors.primaryText} />
             <Text style={localStyles.filtersButtonText}>Solicitudes</Text>
           </TouchableOpacity>
-                  
+
 
           <TouchableOpacity
             accessibilityRole="button"

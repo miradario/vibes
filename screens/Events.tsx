@@ -197,9 +197,11 @@ const ParticipantStack = ({
 
 const Events = ({
   pastOnly = false,
+  embedded = false,
   section: requestedSection,
 }: {
   pastOnly?: boolean;
+  embedded?: boolean;
   section?: "event" | "challenge";
 }) => {
   const navigation = useNavigation();
@@ -543,13 +545,13 @@ const Events = ({
 
   return (
     <ScreenContainer edges={pastOnly ? ["top", "left", "right"] : []} style={styles.bg}>
-      <View style={[styles.eventsContainer, localStyles.eventsContainer, pastOnly && { paddingTop: 12 }]}>
+      <View style={[styles.eventsContainer, localStyles.eventsContainer, (pastOnly || embedded) && { paddingTop: 12 }]}>
         <View style={localStyles.headerRow}>
           {pastOnly ? (
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
           <View style={localStyles.titleRow}>
-            <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]}>{title}</Text>
+            {!embedded && <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]}>{title}</Text>}
 
           </View>
           {!pastOnly ? <TouchableOpacity

@@ -1,4 +1,4 @@
-export function createVibiFlagStore() {
+export function createBooleanFlagStore() {
   let enabled = false;
   const listeners = new Set<() => void>();
   return {
@@ -16,4 +16,6 @@ export function createVibiFlagStore() {
     },
   };
 }
-export const vibiFlagStore = createVibiFlagStore();
+export const createVibiFlagStore = createBooleanFlagStore;
+export const vibiFlagStore = createBooleanFlagStore();
+export const clasesFlagStore = createBooleanFlagStore();

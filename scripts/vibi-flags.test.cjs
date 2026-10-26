@@ -26,16 +26,18 @@ function load(file, imports = {}, dev = false) {
   return exports;
 }
 const settle = () => new Promise((resolve) => setImmediate(resolve));
-function fixture({ cached = false, fail = false } = {}) {
-  const store = load("src/featureFlags/store.ts").vibiFlagStore;
+function fixture({ cached = false, cachedClases = false, fail = false } = {}) {
+  const stores = load("src/featureFlags/store.ts");
+  const store = stores.vibiFlagStore;
   let remote = cached,
+    remoteClases = cachedClases,
     observer,
     foreground,
     removed = 0;
   const config = {};
   const sdk = {
     getRemoteConfig: () => config,
-    getValue: () => ({ asBoolean: () => remote }),
+    getValue: (_, key) => ({ asBoolean: () => key === "clases" ? remoteClases : remote }),
     fetchAndActivate: async () => {
       if (fail) throw Error("offline");
     },
@@ -48,7 +50,7 @@ function fixture({ cached = false, fail = false } = {}) {
     },
   };
   const module = load("src/featureFlags/remoteConfig.native.ts", {
-    "./store": { vibiFlagStore: store },
+    "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore },
     "@react-native-firebase/remote-config": sdk,
     "react-native": {
       TurboModuleRegistry: { get: () => ({}) },
@@ -66,12 +68,14 @@ function fixture({ cached = false, fail = false } = {}) {
   });
   return {
     store,
+    clasesStore: stores.clasesFlagStore,
     config,
     start: module.startRemoteConfig,
     update: (value) => {
       remote = value;
       observer.next();
     },
+    updateClases: value => { remoteClases = value; observer.next(); },
     foreground: () => foreground("active"),
     removed: () => removed,
   };
@@ -111,10 +115,11 @@ test("offline retains activated value and foreground retries do not reset it", a
 });
 for (const missing of ["NativeRNFBTurboApp", "NativeRNFBTurboConfig"]) {
   test(`Expo Go development enables Vibi without ${missing}`, () => {
-    const store = load("src/featureFlags/store.ts").vibiFlagStore;
+    const stores = load("src/featureFlags/store.ts");
+  const store = stores.vibiFlagStore;
     let sdkImports = 0;
     const module = load("src/featureFlags/remoteConfig.native.ts", {
-      "./store": { vibiFlagStore: store },
+      "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore },
       "react-native": {
         TurboModuleRegistry: { get: (name) => name === missing ? null : {} },
       },
@@ -125,15 +130,17 @@ for (const missing of ["NativeRNFBTurboApp", "NativeRNFBTurboConfig"]) {
     }, true);
     const stop = module.startRemoteConfig();
     assert.equal(store.getSnapshot(), true);
+    assert.equal(stores.clasesFlagStore.getSnapshot(), false);
     assert.equal(sdkImports, 0);
     stop();
   });
   test(`older native build missing ${missing} never imports Firebase`, () => {
-    const store = load("src/featureFlags/store.ts").vibiFlagStore;
+    const stores = load("src/featureFlags/store.ts");
+  const store = stores.vibiFlagStore;
     store.update(true);
     let sdkImports = 0;
     const module = load("src/featureFlags/remoteConfig.native.ts", {
-      "./store": { vibiFlagStore: store },
+      "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore },
       "react-native": {
         TurboModuleRegistry: { get: (name) => name === missing ? null : {} },
       },
@@ -144,7 +151,41 @@ for (const missing of ["NativeRNFBTurboApp", "NativeRNFBTurboConfig"]) {
     });
     const stop = module.startRemoteConfig();
     assert.equal(store.getSnapshot(), false);
+    assert.equal(stores.clasesFlagStore.getSnapshot(), false);
     assert.equal(sdkImports, 0);
     stop();
 });
 }
+
+test("clases defaults off and updates independently of Vibi", async () => {
+  const f = fixture();
+  const stop = f.start();
+  await settle();
+  assert.equal(f.config.defaultConfig.clases, false);
+  assert.equal(f.clasesStore.getSnapshot(), false);
+  f.updateClases(true);
+  await settle();
+  assert.equal(f.clasesStore.getSnapshot(), true);
+  assert.equal(f.store.getSnapshot(), false);
+  f.update(true);
+  await settle();
+  f.updateClases(false);
+  await settle();
+  assert.equal(f.clasesStore.getSnapshot(), false);
+  assert.equal(f.store.getSnapshot(), true);
+  stop();
+  f.updateClases(true);
+  await settle();
+  assert.equal(f.clasesStore.getSnapshot(), false);
+});
+
+test("clases retains its activated value offline", async () => {
+  const f = fixture({ cachedClases: true, fail: true });
+  const stop = f.start();
+  await settle();
+  f.foreground();
+  await settle();
+  assert.equal(f.clasesStore.getSnapshot(), true);
+  assert.equal(f.store.getSnapshot(), false);
+  stop();
+});

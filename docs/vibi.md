@@ -107,3 +107,10 @@ El backoffice ofrece `/vibi`: versiones inmutables, conversación de prueba con 
 `vibi-chat` lee `vibi_prompt_config.published_id` por respuesta, con respaldo `builtin-v1`, y guarda la procedencia en `vibi_exchanges.prompt_version`. Los borradores no afectan a los usuarios. Las reglas de seguridad y validación permanecen en `provider.ts` y `core.ts`.
 
 Pruebas: `node --test scripts/vibi.test.cjs`; después de la migración, `scripts/vibi-prompts-rls.test.sql` verifica permisos, bloqueo de publicaciones sin probar, conflictos y restauración dentro de una transacción revertida.
+
+
+### Flag de clases
+
+El parámetro booleano de Remote Config se llama exactamente `clases` y su valor predeterminado local es `false`. Para crearlo en el proyecto `vibes-d05e4`, agregar un parámetro de tipo Boolean con valor predeterminado `false` y publicar los cambios. Usar `useClasesEnabled` de `src/featureFlags/useClasesEnabled.ts` para condicionar los accesos y pantallas de clases.
+
+Comparte la carga inicial, caché, actualización al volver a primer plano y suscripción en tiempo real de Vibi, pero sus valores son independientes. Sin módulos nativos Firebase, `clases` permanece apagado también en desarrollo. La versión web permanece apagada. Actividades, los accesos de Descubrir, las pantallas de clases y las consultas de aprendizaje consumen este flag. Al apagarlo se oculta Clases y Actividades vuelve a Eventos.

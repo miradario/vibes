@@ -209,3 +209,6 @@ Onboarding y Configuración comparten `MeetPeopleChoice`: switch “Conocer gent
 La exclusión del servidor se aplica a `get_discovery_candidates`. Las versiones antiguas que consultan `profiles` directamente requieren reglas adicionales de lectura; esas reglas globales no forman parte de la migración aplicada.
 
 Al entrar a Descubrir, cambiar entre perfiles e historial o reintentar, ocultar el resultado anterior hasta que termine la recarga activa. “Reintentar” renueva los perfiles y las URLs de fotos, y reinicia las vistas de imagen. No mostrar la acción “Volver a iniciar” en estos errores. Las respuestas tardías de intentos anteriores no deben liberar el estado de carga del intento actual.
+
+
+La pestaña Actividades reúne Eventos y Clases con un selector de dos opciones. La selección activa usa fondo primaryText y texto surface; cada opción tiene área táctil mínima de 44. Clases y sus accesos se muestran únicamente cuando el flag Firebase `clases` está activo.

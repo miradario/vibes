@@ -1,5 +1,5 @@
 import { AppState, TurboModuleRegistry } from "react-native";
-import { vibiFlagStore } from "./store";
+import { clasesFlagStore, vibiFlagStore } from "./store";
 
 export function startRemoteConfig(): () => void {
   // Check before importing: Metro reports SDK evaluation errors even if caught.
@@ -9,6 +9,7 @@ export function startRemoteConfig(): () => void {
   ) {
     // Expo Go has no native Firebase modules. Allow local development previews.
     vibiFlagStore.update(__DEV__);
+    clasesFlagStore.update(false);
     return () => {};
   }
   let disposed = false;
@@ -19,19 +20,21 @@ export function startRemoteConfig(): () => void {
   try {
     const sdk: typeof import("@react-native-firebase/remote-config") = require("@react-native-firebase/remote-config");
     const config = sdk.getRemoteConfig();
-    config.defaultConfig = { vibi_enabled: false };
+    config.defaultConfig = { vibi_enabled: false, clases: false };
     config.settings = {
       minimumFetchIntervalMillis: __DEV__ ? 0 : 300000,
       fetchTimeoutMillis: 10000,
     };
     const publish = () => {
-      if (!disposed)
+      if (!disposed) {
         vibiFlagStore.update(sdk.getValue(config, "vibi_enabled").asBoolean());
+        clasesFlagStore.update(sdk.getValue(config, "clases").asBoolean());
+      }
     };
     const report = () => {
       if (__DEV__ && !disposed)
         console.warn(
-          "[Remote Config] No se pudo actualizar Vibi; se conserva el último valor disponible."
+          "[Remote Config] No se pudieron actualizar los flags; se conservan los últimos valores disponibles."
         );
     };
     let fetching = false;
@@ -62,6 +65,7 @@ export function startRemoteConfig(): () => void {
     removeAppState = () => subscription.remove();
   } catch {
     vibiFlagStore.update(false);
+    clasesFlagStore.update(false);
     if (__DEV__)
       console.warn(
         "[Remote Config] Firebase no está disponible en este build. Vibi permanece deshabilitado."
