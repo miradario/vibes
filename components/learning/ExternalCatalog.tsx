@@ -1,3 +1,5 @@
+import EventInviteSheet from "../EventInviteSheet";
+import { shareClassInvite } from "../../src/lib/socialShare";
 import ClassLocationMap from "./ClassLocationMap";
 import ClassReservationPanel from "./ClassReservationPanel";
 import { WEEKDAYS } from "../../src/learning/reservations";
@@ -5,7 +7,7 @@ import { useClasesEnabled } from "../../src/featureFlags/useClasesEnabled";
 import {Image} from "expo-image";
 import {externalCatalogImages} from "../../src/learning/externalCatalogImages";
 import React, { useState } from "react";
-import { Alert, Linking, Share, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { Alert, Linking, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { Text } from "../Typography";
 import Icon from "../Icon";
 import ScreenContainer from "../ScreenContainer";
@@ -29,7 +31,8 @@ export function ExternalPlaceCard({item,onPress}:{item:ExternalPlace;onPress:()=
   </TouchableOpacity>;
 }
 export function ExternalCatalogDetailScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const [inviteVisible, setInviteVisible] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const {params} = useRoute<any>();
   const clasesEnabled = useClasesEnabled();
@@ -45,7 +48,7 @@ export function ExternalCatalogDetailScreen() {
   };
   if (!clasesEnabled) return <ScreenContainer><BackButton accessibilityLabel="Volver" onPress={() => navigation.goBack()} /><Text style={s.body}>Clases y espacios no está disponible por el momento.</Text></ScreenContainer>;
   return <ScreenContainer scroll edges={["top","left","right","bottom"]} contentContainerStyle={s.detail}>
-      <View style={s.detailHeader}><BackButton accessibilityLabel="Volver a clases" onPress={() => navigation.goBack()} /><Text accessibilityRole="header" style={s.headerTitle}>{activity?.titulo ?? "Detalle del lugar"}</Text>{item && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Compartir propuesta" style={s.close} onPress={() => { const url = item.fuentes[0]?.url; if (url) void Share.share({message:`${activity?.titulo ?? place?.nombre} · ${url}`}).catch(() => {}); }}><Icon name="share-outline" size={24} color={c.primaryText} /></TouchableOpacity>}</View>
+      <View style={s.detailHeader}><BackButton accessibilityLabel="Volver a clases" onPress={() => navigation.goBack()} /><Text accessibilityRole="header" style={s.headerTitle}>{activity?.titulo ?? "Detalle del lugar"}</Text>{item && <TouchableOpacity accessibilityRole="button" accessibilityLabel={activity ? "Compartir clase" : "Compartir lugar"} style={s.close} onPress={() => { const url = item.fuentes[0]?.url; void shareClassInvite(activity?.titulo ?? place?.nombre ?? "Vibes", url?.startsWith("https://") ? url : null).catch(() => Alert.alert("No se pudo compartir", "Intentá nuevamente más tarde.")); }}><Icon name="share-outline" size={24} color={c.primaryText} /></TouchableOpacity>}</View>
       {item && externalCatalogImages[item.id] && <Image source={externalCatalogImages[item.id]} contentFit="contain" style={s.cover} />}
       {!activity && <Text accessibilityRole="header" style={s.detailTitle}>{place?.nombre ?? "No encontramos esta propuesta"}</Text>}
       {activity && <>
@@ -58,12 +61,16 @@ export function ExternalCatalogDetailScreen() {
       {item && <Text style={s.body}>{externalLocation(place ?? undefined)}</Text>}
       {place?.ubicacion.direccion?.trim() && <ClassLocationMap key={place.id} address={[externalLocation(place),place.ubicacion.pais].filter(Boolean).join(", ")} />}
       {(descriptionOpen || !activity) && !!item?.nota && <Text style={s.meta}>{item.nota}</Text>}
+      {activity && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Invitar personas a la clase" onPress={() => setInviteVisible(true)} style={s.invite}><Icon name="person-add-outline" size={20} color={c.primaryText}/><Text style={s.inviteLabel}>Invitar a alguien</Text></TouchableOpacity>}
       {activity && activity.horarios_semanales.length > 0 && <ClassReservationPanel key={activity.id} source={{id:activity.id,weekly:activity.horarios_semanales.flatMap(slot => { const day = WEEKDAYS.indexOf(slot.dia); return day < 0 ? [] : [{day,time:slot.hora_inicio}]; })}} />}
       {item && (descriptionOpen || !activity) && <Text style={s.meta}>Fuente consultada: {item.fuentes[0]?.consultada_el}</Text>}
       {item && <TouchableOpacity accessibilityRole="link" onPress={openSource} style={s.primary}><Text style={s.primaryLabel}>Contactar al organizador</Text><Icon name="open-outline" size={20} color={c.surface}/></TouchableOpacity>}
+      {activity && <EventInviteSheet classInvite={{id:activity.id,title:activity.titulo,date:externalSchedule(activity),url:activity.fuentes[0]?.url ?? null}} visible={inviteVisible} onClose={()=>setInviteVisible(false)} onDiscover={()=>navigation.navigate("Tab",{screen:"Discover"})} />}
   </ScreenContainer>;
 }
 const s=StyleSheet.create({
+  invite:{minHeight:48,paddingHorizontal:16,borderRadius:16,borderWidth:1,borderColor:c.borderSoft,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:8},
+  inviteLabel:{fontSize:16,lineHeight:22,fontFamily:vibesTheme.fonts.semibold,color:c.primaryText},
   detailHeader:{flexDirection:"row",alignItems:"center",gap:12},
   headerTitle:{flex:1,fontSize:18,lineHeight:24,fontFamily:vibesTheme.fonts.semibold,color:c.primaryText,textAlign:"center"},
   accordion:{flexDirection:"row",alignItems:"center",gap:8,minHeight:48,padding:10,borderRadius:16,borderWidth:1,borderColor:c.borderSoft},

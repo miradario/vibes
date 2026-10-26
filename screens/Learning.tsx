@@ -75,7 +75,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
             new Set([...data.profiles.flatMap((p) => p.specialties), ...externalClasses.map(item => item.categoria)])
           ).sort();
           const activities = data.activities.filter((a) =>
-            matchesActivity(a, data, {
+            sessionsFor(data, a.id).length > 0 && matchesActivity(a, data, {
               query,
               specialty,
               modality,
@@ -83,7 +83,9 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               date,
             })
           );
-          const listedExternalClasses = externalClasses.filter(item => matchesExternalClass(item, {query,specialty,location,modality,date}));
+          const listedExternalClasses = externalClasses.filter(item =>
+            (item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada)) &&
+            matchesExternalClass(item, {query,specialty,location,modality,date}));
           const listedExternalPlaces = externalPlaces.filter(item => matchesExternalPlace(item,query,specialty));
           const enrolledIds = new Set(data.enrollments.filter(enrollment => enrollment.status === "confirmed").map(enrollment => enrollment.activity_id));
           const myClasses = activities.filter(activity => enrolledIds.has(activity.id));

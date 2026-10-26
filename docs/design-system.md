@@ -248,3 +248,7 @@ En el detalle externo de clase, la cabecera muestra el nombre de la clase sobre 
 Los sheets compartidos de Clases (ui.sheet) deben declarar fondo surface opaco y radios superiores 24. La confirmación de solicitudes respeta el safe area inferior con padding mínimo 24 para que el contenido y las acciones no se superpongan al fondo ni al área de gestos.
 
 En el detalle de clase con mapa, omitir la fila “Presencial”; conservar la modalidad si es online o mixta.
+
+Por el momento, el listado de clases oculta propuestas sin fechas ni horarios publicados: las clases propias requieren encuentros y las referencias externas requieren horario semanal o próxima fecha confirmada.
+
+El detalle de clase permite “Invitar a alguien” usando EventInviteSheet: conexiones, invitación por chat y compartir por enlace. La invitación recibida en chat incluye “Ver clase”, que abre su detalle dentro de Vibes.

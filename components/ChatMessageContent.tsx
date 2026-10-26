@@ -4,7 +4,7 @@ import VibesLoader from "./VibesLoader";
 import React, { useState } from "react";
 import { View, StyleSheet, TouchableOpacity, type StyleProp, type TextStyle } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { getInvitationDisplayText, getInvitedChallengeId, getInvitedEventId } from "../src/lib/eventInvites";
+import { getInvitedClassId, getInvitationDisplayText, getInvitedChallengeId, getInvitedEventId } from "../src/lib/eventInvites";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "./Typography";
 import PhotoViewer from "./PhotoViewer";
@@ -25,6 +25,7 @@ export default function ChatMessageContent({
   onPhotoPress?: (open: () => void) => void;
 }) {
   const navigation = useNavigation<any>();
+  const invitedClassId = getInvitedClassId(body);
   const invitedEventId = getInvitedEventId(body);
   const invitedChallengeId = getInvitedChallengeId(body);
   const path = photoPath(body);
@@ -49,19 +50,21 @@ export default function ChatMessageContent({
     return (
       <View style={s.textContent}>
         {getInvitationDisplayText(body) ? <Text style={textStyle}>{getInvitationDisplayText(body)}</Text> : null}
-        {invitedEventId || invitedChallengeId ? (
+        {invitedClassId || invitedEventId || invitedChallengeId ? (
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel={invitedChallengeId ? "Ver desafío invitado" : "Ver evento invitado"}
+            accessibilityLabel={invitedClassId ? "Ver clase invitada" : invitedChallengeId ? "Ver desafío invitado" : "Ver evento invitado"}
             onLongPress={onLongPress}
             onPress={() =>
-              invitedChallengeId
+              invitedClassId
+                ? navigation.navigate(invitedClassId.startsWith("clase_") ? "ExternalCatalogDetail" : "LearningActivity", {id:invitedClassId})
+                : invitedChallengeId
                 ? navigation.navigate("ChallengeDetailScreen", { challengeId: invitedChallengeId })
                 : navigation.navigate("EventDetail", { eventId: invitedEventId })
             }
             style={s.eventLink}
           >
-            <Text style={s.eventLinkText}>{invitedChallengeId ? "Ver desafío" : "Ver evento"}</Text>
+            <Text style={s.eventLinkText}>{invitedClassId ? "Ver clase" : invitedChallengeId ? "Ver desafío" : "Ver evento"}</Text>
           </TouchableOpacity>
         ) : null}
       </View>
