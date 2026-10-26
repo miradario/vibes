@@ -212,3 +212,7 @@ Al entrar a Descubrir, cambiar entre perfiles e historial o reintentar, ocultar 
 
 
 La pestaña Actividades reúne Eventos y Clases con un selector de dos opciones. La selección activa usa fondo primaryText y texto surface; cada opción tiene área táctil mínima de 44. Clases y sus accesos se muestran únicamente cuando el flag Firebase `clases` está activo.
+
+## Imagen para compartir un desafío completado
+
+`ChallengeCompletionShareCard` genera una pieza vertical de 1080 × 1350 con `VibesWordmark` (V mayúscula, punto coral, i mostaza y e azul semillena), círculos de la paleta con opacidad, imagen y título del desafío, “DESAFÍO COMPLETADO”, “¡Lo logré!” y “Un día a la vez. Un cambio para mí.”. No agregar una firma promocional al pie. Usar la imagen original sin regenerarla; si no carga, usar la ilustración de desafío incluida en la app. El lienzo de exportación tiene tipografía fija; la interfaz que lo presenta conserva escalado de accesibilidad. Esperar a que la imagen se muestre antes de capturar y al cierre completo del sheet antes de abrir Compartir.
