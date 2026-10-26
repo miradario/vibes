@@ -19,7 +19,9 @@ export type SignupEventName =
   | "onboarding_step_completed"
   | "onboarding_completed"
   | "onboarding_failed"
-  | "first_home_viewed";
+  | "first_home_viewed"
+  | "onboarding_skipped"
+  | "app_backgrounded";
 
 export type SignupMethod = "email" | "google" | "apple";
 
@@ -81,9 +83,35 @@ export const trackSignupEvent = (event: SignupEventName, input: SignupEventInput
   void send(event, input);
 };
 
-// Links the anonymous install to the new account (one row, no updates).
+const accountCreatedKey = (userId: string) => `vibes.analytics.accountCreated.${userId}`;
+const NEW_ACCOUNT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+// Links the anonymous install to the new account. At most one row per user on
+// this install (remembered in AsyncStorage), always with the install_id.
+const sendAccountCreatedOnce = async (userId: string, method: string, source: string) => {
+  try {
+    if (await AsyncStorage.getItem(accountCreatedKey(userId))) return;
+    await AsyncStorage.setItem(accountCreatedKey(userId), "1");
+  } catch {
+    // If storage fails we still send; a rare duplicate is better than no link.
+  }
+  await send("account_created", { props: { method, source } }, userId);
+};
+
 export const trackAccountCreated = (userId: string, method: SignupMethod) => {
-  void send("account_created", { props: { method } }, userId);
+  void sendAccountCreatedOnce(userId, method, "signup");
+};
+
+// Safety net for accounts created outside the Signup screen (e.g. Google/Apple
+// from Login, or email confirmed later): when a brand-new account reaches the
+// onboarding without an account_created on this install, record it there.
+export const ensureAccountCreatedTracked = (
+  user: { id: string; created_at?: string; app_metadata?: { provider?: string } } | null | undefined
+) => {
+  if (!user?.id || !user.created_at) return;
+  const createdAt = Date.parse(user.created_at);
+  if (!Number.isFinite(createdAt) || Date.now() - createdAt > NEW_ACCOUNT_WINDOW_MS) return;
+  void sendAccountCreatedOnce(user.id, user.app_metadata?.provider ?? "email", "onboarding");
 };
 
 // Short, PII-free error code (never the raw message, which may contain an email).

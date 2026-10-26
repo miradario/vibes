@@ -1,6 +1,7 @@
 import { hasRegisteredProfile, isAccountAlreadyRegistered } from "../src/auth/signupRouting";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { signupErrorCode, trackAccountCreated, trackSignupEvent } from "../src/lib/signupEvents";
+import { useSignupBackgroundTracking } from "../src/lib/useSignupBackgroundTracking";
 /** @format */
 
 import React, { useRef, useState } from "react";
@@ -44,6 +45,7 @@ import {
 type SocialProvider = "google" | "apple";
 
 const Signup = () => {
+  useSignupBackgroundTracking("signup");
   const { t } = useI18n();
   const navigation = useNavigation();
   const route = useRoute();

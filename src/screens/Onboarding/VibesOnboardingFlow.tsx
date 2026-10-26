@@ -66,7 +66,8 @@ import {
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
 import { ONBOARDING_COLORS, onboardingStyles } from "./vibesOnboardingStyles";
-import { signupErrorCode, trackSignupEvent } from "../../lib/signupEvents";
+import { ensureAccountCreatedTracked, signupErrorCode, trackSignupEvent } from "../../lib/signupEvents";
+import { useSignupBackgroundTracking } from "../../lib/useSignupBackgroundTracking";
 import { useI18n } from "../../i18n";
 import VibesLoader from "../../../components/VibesLoader";
 import { useProfileQuery } from "../../queries/profile.queries";
@@ -245,6 +246,10 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
   useEffect(() => {
     trackSignupEvent("onboarding_step_viewed", { step, stepIndex });
   }, [stepIndex]);
+  useEffect(() => {
+    if (!draft.editingExistingProfile) ensureAccountCreatedTracked(session?.user);
+  }, [session?.user?.id]);
+  useSignupBackgroundTracking(step, stepIndex, !draft.editingExistingProfile);
   useEffect(() => {
     focusedProfileInput.current = null;
     Keyboard.dismiss();
@@ -1034,6 +1039,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
                 <TouchableOpacity
                   onPress={() => {
                     updateDraft(currentDraft);
+                    trackSignupEvent("onboarding_skipped", { step, stepIndex });
                     setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("completion"));
                   }}
                   accessibilityRole="button"

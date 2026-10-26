@@ -8,6 +8,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { VIBES_LOGO } from "../src/constants/brandAssets";
 import { useNavigation } from "@react-navigation/native";
 import { trackSignupEvent } from "../src/lib/signupEvents";
+import { useSignupBackgroundTracking } from "../src/lib/useSignupBackgroundTracking";
 import ScreenContainer from "../components/ScreenContainer";
 import VibesActionButton from "../components/VibesActionButton";
 import AppHeader from "../components/AppHeader";
@@ -26,6 +27,7 @@ const AgeAssurance = () => {
   const { t, locale } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
+  useSignupBackgroundTracking("age");
   const [birthDate, setBirthDate] = useState<Date | null>(() =>
     parseBirthDate(draft.birthDate)
   );
