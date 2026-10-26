@@ -37,7 +37,7 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeftToLine, ArrowRightToLine, Link, X } from "lucide-react-native";
+import { ArrowLeftToLine, ArrowRightToLine, Link, Maximize2, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
@@ -284,6 +284,7 @@ const UserProfileSheet = ({
   onNextActionPress,
   secondaryActionPanelOnly = false,
   secondaryActionDestructive = false,
+  onImagePress,
 }: Props) => {
   const insets = useSafeAreaInsets();
   const { width, height: windowHeight } = useWindowDimensions();
@@ -756,6 +757,13 @@ const UserProfileSheet = ({
     setDetailsVisible(true);
   };
 
+  // Full-screen viewer (pinch / double-tap zoom) for the photo on screen.
+  const canZoomPhotos = Boolean(onImagePress) && canViewPhotos && profileImages.length > 0;
+  const openZoom = () => {
+    if (swipingRef.current || !canZoomPhotos) return;
+    onImagePress?.(profileImages[safeActiveIndex], safeActiveIndex);
+  };
+
   const setGalleryIndex = (nextIndex: number) => {
     if (!hasMultipleImages) return;
     const boundedIndex = Math.max(
@@ -1094,6 +1102,18 @@ const UserProfileSheet = ({
                   />
                 ))}
               </View>
+              {canZoomPhotos ? (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ampliar foto ${safeActiveIndex + 1} de ${profileImages.length}`}
+                  activeOpacity={0.82}
+                  onPress={openZoom}
+                  hitSlop={8}
+                  style={[localStyles.zoomButton, { top: insets.top + 44 }]}
+                >
+                  <Maximize2 size={20} color={vibesTheme.colors.background} strokeWidth={2.4} />
+                </TouchableOpacity>
+              ) : null}
             </>
           ) : null}
 
@@ -1290,6 +1310,18 @@ const UserProfileSheet = ({
                   <ProfileMediaImage source={VIBES_FALLBACK_ILLUSTRATION}
                     style={StyleSheet.absoluteFillObject} contentFit="contain" />
                 )}
+                {canZoomPhotos ? (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ampliar foto ${safeActiveIndex + 1} de ${profileImages.length}`}
+                    activeOpacity={0.82}
+                    onPress={openZoom}
+                    hitSlop={8}
+                    style={[localStyles.zoomButton, { top: 12 }]}
+                  >
+                    <Maximize2 size={20} color={vibesTheme.colors.background} strokeWidth={2.4} />
+                  </TouchableOpacity>
+                ) : null}
                 {hasMultipleImages ? (
                   <View style={localStyles.detailsPhotoIndicators}>
                     {profileImages.map((_, index) => (
@@ -1477,14 +1509,38 @@ const localStyles = StyleSheet.create({
     gap: 7,
     zIndex: 10,
   },
+  // Photo position bars: thicker, higher-contrast and with a soft shadow so
+  // the current photo reads clearly over bright pictures while swiping.
   indicator: {
     flex: 1,
-    height: 5,
+    height: 6,
     minWidth: 12,
     borderRadius: 3,
-    backgroundColor: "rgba(254, 254, 253, 0.4)",
+    backgroundColor: "rgba(254, 254, 253, 0.5)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(0, 0, 0, 0.18)",
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
-  indicatorActive: { backgroundColor: vibesTheme.colors.accentMustard },
+  indicatorActive: {
+    backgroundColor: vibesTheme.colors.accentMustard,
+    borderColor: "rgba(0, 0, 0, 0.28)",
+    transform: [{ scaleY: 1.35 }],
+  },
+  zoomButton: {
+    position: "absolute",
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    zIndex: 10,
+  },
   profileOverlay: {
     position: "absolute",
     left: 0,
