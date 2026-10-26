@@ -52,7 +52,7 @@ La siguiente escala define roles reutilizables. Algunos valores ya existen en pa
 
 | Rol | Tamaño / interlineado | Familia / peso | Color | Uso |
 | --- | --- | --- | --- | --- |
-| Título de pantalla principal | **34 / 42** | `extraBold` / 800 | `primaryText` | Eventos, Desafíos, Descubrir, Chats; mismo estilo en las cuatro |
+| Título de pantalla principal | **34 / 42** | `extraBold` / 800 | `primaryText` | Actividades, Eventos, Desafíos, Descubrir, Chats; mismo estilo en todas |
 | Título de onboarding | 36 / 43 | `extraBold` / 800 | `primaryText` | Pregunta principal; en ancho <360: 30 / 36 |
 | Título de pantalla secundaria | 26 / 32 | `semibold` / 600 | `primaryText` | Historial y vistas subordinadas |
 | Título de sección | 25 / 29 | `semibold` / 600 | `primaryText` | Agrupaciones principales de un feed |

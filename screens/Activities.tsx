@@ -20,7 +20,7 @@ export default function Activities() {
   return (
     <ScreenContainer style={s.screen}>
       <View style={s.header}>
-        <View style={s.titleRow}><Text accessibilityRole="header" style={s.title}>{english ? "Activities" : "Actividades"}</Text>{activeSection === "classes" ? <LearningCreateAction /> : <View style={s.actions}>{([["add", "Crear evento", "CreateEvent"], ["archive-outline", "Ver eventos pasados", "PastEvents"]] as const).map(([icon, label, route]) => <TouchableOpacity key={route} accessibilityRole="button" accessibilityLabel={label} style={s.action} onPress={() => navigation.navigate(route as never)}><Icon name={icon} size={23} color={c.primaryText} /></TouchableOpacity>)}</View>}</View>
+        <View style={s.titleRow}><Text accessibilityRole="header" style={s.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{english ? "Activities" : "Actividades"}</Text>{activeSection === "classes" ? <LearningCreateAction /> : <View style={s.actions}>{([["add", "Crear evento", "CreateEvent"], ["archive-outline", "Ver eventos pasados", "PastEvents"]] as const).map(([icon, label, route]) => <TouchableOpacity key={route} accessibilityRole="button" accessibilityLabel={label} style={s.action} onPress={() => navigation.navigate(route as never)}><Icon name={icon} size={23} color={c.primaryText} /></TouchableOpacity>)}</View>}</View>
         {clasesEnabled ? <View accessibilityRole="tablist" style={s.selector}>
           {(["events", "classes"] as const).map(value => (
             <TouchableOpacity key={value} accessibilityRole="tab" accessibilityState={{ selected: activeSection === value }}
@@ -41,7 +41,7 @@ const s = StyleSheet.create({
   titleRow: {flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},
   actions: { flexDirection: "row", gap: 6 },
   action: { width: 44, height: 44, borderRadius: 14, backgroundColor: `${c.secondaryText}0C`, alignItems: "center", justifyContent: "center" },
-  title: { flex: 1, fontFamily: vibesTheme.fonts.semibold, fontSize: 26, lineHeight: 32, color: c.primaryText },
+  title: { flex: 1, fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42, color: c.primaryText },
   selector: { flexDirection: "row", padding: 4, borderRadius: 999, backgroundColor: `${c.secondaryText}0C` },
   tab: { flex: 1, minHeight: 44, borderRadius: 999, alignItems: "center", justifyContent: "center" },
   selected: { backgroundColor: c.primaryText },
