@@ -3,6 +3,9 @@ import { supabase } from "../lib/supabase";
 
 export const EMAIL_VERIFICATION_REDIRECT =
   "com.gurudevelopers.vibes://verify-email";
+const isAppleRelayEmail = (email?: string | null) =>
+  /@privaterelay\.appleid\.com$/i.test(email?.trim() ?? "");
+
 // email_confirmed_at can be auto-confirmed by Supabase without proving ownership.
 export const isEmailOwnershipVerified = (
   user?: Pick<User, "email" | "app_metadata" | "identities"> | null
@@ -12,8 +15,12 @@ export const isEmailOwnershipVerified = (
       ((user.app_metadata?.vibes_verified_email === user.email &&
         user.app_metadata?.vibes_email_verified_at) ||
         user.identities?.some((identity) =>
-          identity.provider === "google" &&
-          identity.identity_data?.email_verified === true &&
+          // Social sign-in with a shared email needs no extra validation. Apple's
+          // hidden relay addresses must go through the in-app email validation.
+          (identity.provider === "google" ||
+            (identity.provider === "apple" && !isAppleRelayEmail(user.email))) &&
+          (identity.identity_data?.email_verified === true ||
+            identity.identity_data?.email_verified === "true") &&
           typeof identity.identity_data?.email === "string" &&
           identity.identity_data.email.toLowerCase() === user.email?.toLowerCase()
         ))
