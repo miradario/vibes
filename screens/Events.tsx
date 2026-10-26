@@ -1,6 +1,6 @@
 import { useReducedMotion } from "react-native-reanimated";
 import DiscoverPathCards from "../components/DiscoverPathCards";
-import { sectionTabStyles } from "../components/SectionTabStyles";
+import { pillTabStyles } from "../components/PillTabStyles";
 import BackButton from "../components/BackButton";
 import ChallengeFeedCard from "../components/ChallengeFeedCard";
 import ForYouTag from "../components/ForYouTag";
@@ -589,17 +589,17 @@ const Events = ({
   );
 
   return (
-    <ScreenContainer edges={pastOnly ? ["top", "left", "right"] : []} style={styles.bg}>
-      <View style={[styles.eventsContainer, localStyles.eventsContainer, (pastOnly || embedded) && { paddingTop: 12 }]}>
+    <ScreenContainer edges={pastOnly || (section === "challenge" && !embedded) ? ["top", "left", "right"] : []} style={styles.bg}>
+      <View style={[styles.eventsContainer, localStyles.eventsContainer, (pastOnly || embedded || section === "challenge") && { paddingTop: 12 }]}>
         {!embedded && <View style={[localStyles.headerRow, section === "challenge" && !pastOnly && localStyles.challengeHeaderRow]}>
           {pastOnly && section !== "challenge" ? (
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
           <View style={[localStyles.titleRow, section === "challenge" && !pastOnly && localStyles.challengeTitleRow]}>
-            {!embedded && <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }, section === "challenge" && !pastOnly && localStyles.compactChallengeTitle]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
+            {!embedded && <Text style={[pastOnly && styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
 
           </View>
-          <View style={localStyles.headerActions}>
+          <View style={[localStyles.headerActions, section === "challenge" && !pastOnly && localStyles.challengeHeaderActions]}>
           {!pastOnly ? <TouchableOpacity
             accessibilityRole="button"
             activeOpacity={0.78}
@@ -643,10 +643,9 @@ const Events = ({
             ) : null}
           </View>
         </View>}
-        {section === "event" && !pastOnly && !embedded ? <Text style={localStyles.eventSubtitle}>Encontrá tu próximo plan.</Text> : null}
         {section === "challenge" && !pastOnly ? <>
-          <View style={sectionTabStyles.tabs} accessibilityRole="tablist">
-            {([ ["public", "Público"], ["private", "Privado"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[sectionTabStyles.tab, challengeTab === mode && sectionTabStyles.active]}><Text style={[sectionTabStyles.text, challengeTab === mode && sectionTabStyles.activeText]}>{label}</Text></TouchableOpacity>)}
+          <View style={[pillTabStyles.selector, localStyles.challengeTabs]} accessibilityRole="tablist">
+            {([ ["public", "Público"], ["private", "Privado"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[pillTabStyles.tab, challengeTab === mode && pillTabStyles.selected]}><Text style={[pillTabStyles.label, challengeTab === mode && pillTabStyles.selectedLabel]}>{label}</Text></TouchableOpacity>)}
           </View>
         </> : null}
         <View style={{ flex: 1, overflow: "hidden" }}>
@@ -1171,9 +1170,10 @@ eventViewText: {
 eventsContainer: {
     paddingTop: 68,
   },
-challengeHeaderRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
+challengeHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+challengeHeaderActions: { alignSelf: "center" },
+challengeTabs: { marginBottom: 12 },
 challengeTitleRow: { flex: 1, minWidth: 0 },
-compactChallengeTitle: { fontFamily: vibesTheme.fonts.semibold, fontSize: 22, lineHeight: 28 },
 headerActions: { flexDirection: "row", alignItems: "center", alignSelf: "flex-end", gap: 6 },
 headerRow: {
     minHeight: 48,
@@ -1473,7 +1473,6 @@ emptyText: {
     fontFamily: vibesTheme.fonts.medium,
     textAlign: "center",
   },
-eventSubtitle: { fontSize: 15, lineHeight: 22, color: vibesTheme.colors.secondaryText, marginTop: -12, marginBottom: 16 },
 eventFilterRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
 eventFilterChip: { flex: 1, minHeight: 44, borderRadius: 13, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}40`, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 8, gap: 6 },
 eventFilterLabel: { flexShrink: 1, fontSize: 13, fontFamily: vibesTheme.fonts.medium, color: vibesTheme.colors.primaryText },
@@ -1482,7 +1481,6 @@ eventCategories: { gap: 8, paddingBottom: 12 },
 eventCategory: { borderRadius: 24, paddingHorizontal: 18, minHeight: 44, justifyContent: "center", backgroundColor: `${vibesTheme.colors.secondaryText}12` },
 eventCategoryLabel: { fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.secondaryText },
 challengeSearch: { minHeight: 48, borderRadius: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C`, borderWidth: 1, borderColor: vibesTheme.colors.borderSoft },
-challengeSubtitle: { color: vibesTheme.colors.secondaryText, fontSize: 15, lineHeight: 22, marginBottom: 20 },
 challengeCount: { color: vibesTheme.colors.accentBlue, fontSize: 16 },
 challengeExploreButton: { backgroundColor: vibesTheme.colors.primaryText, padding: 16, borderRadius: 24, marginTop: 16 },
 footerToggleGroup: {

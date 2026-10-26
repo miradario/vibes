@@ -52,7 +52,7 @@ La siguiente escala define roles reutilizables. Algunos valores ya existen en pa
 
 | Rol | Tamaño / interlineado | Familia / peso | Color | Uso |
 | --- | --- | --- | --- | --- |
-| Título de pantalla principal | **34 / 42** | `extraBold` / 800 | `primaryText` | Eventos, Desafíos, Descubrir, Chats; mismo estilo en las cuatro |
+| Título de pantalla principal | **34 / 42** | `extraBold` / 800 | `primaryText` | Actividades, Eventos, Desafíos, Descubrir, Chats; mismo estilo en todas |
 | Título de onboarding | 36 / 43 | `extraBold` / 800 | `primaryText` | Pregunta principal; en ancho <360: 30 / 36 |
 | Título de pantalla secundaria | 26 / 32 | `semibold` / 600 | `primaryText` | Historial y vistas subordinadas |
 | Título de sección | 25 / 29 | `semibold` / 600 | `primaryText` | Agrupaciones principales de un feed |
@@ -70,7 +70,9 @@ La siguiente escala define roles reutilizables. Algunos valores ya existen en pa
 | Contador / badge | 12 / 16 | `bold` / 700 | `primaryText` | Cantidades, nunca información principal |
 | Enlace / acción textual | 16 / 22 | `semibold` / 600 | `primaryText` | Acción con contexto, subrayado o icono identificable |
 
-Alinear títulos a la izquierda salvo pasos de onboarding explícitamente centrados. Resolver falta de espacio redistribuyendo acciones o permitiendo líneas; no reducir arbitrariamente el tamaño de una pantalla hermana. Mantener el escalado de texto y comprobar títulos largos, castellano/inglés y ancho compacto. Limitar líneas únicamente cuando el contenido completo sea accesible en el detalle.
+Alinear títulos a la izquierda salvo pasos de onboarding explícitamente centrados.
+
+El título de pantalla principal es idéntico en todas las pantallas que lo usan: 34 / 42, `extraBold`, `primaryText`, sin overrides de tamaño, peso ni interlineado por pantalla. Está prohibido definir una variante "compacta" o más chica para una de ellas. Si el título no entra en una línea, la única excepción permitida es que se achique automáticamente (`numberOfLines={1}`, `adjustsFontSizeToFit`, `minimumFontScale={0.75}`), aplicada igual en todas. Resolver el resto de la falta de espacio redistribuyendo acciones de la cabecera. Mantener el escalado de texto y comprobar títulos largos, castellano/inglés y ancho compacto. Limitar líneas únicamente cuando el contenido completo sea accesible en el detalle.
 
 Fuentes actuales: [`Events.tsx`](../screens/Events.tsx), [`Discover.tsx`](../screens/Discover.tsx), [`vibesOnboardingStyles.ts`](../src/screens/Onboarding/vibesOnboardingStyles.ts).
 

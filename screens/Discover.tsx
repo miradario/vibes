@@ -1051,7 +1051,7 @@ export const DiscoverContent = forwardRef<
 
         {showHeader ? (
           <View style={localStyles.header}>
-            <Text style={localStyles.title}>{t("discover.title")}</Text>
+            <Text style={localStyles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{t("discover.title")}</Text>
             <DiscoverFiltersGuide userId={session?.user?.id} opened={isFiltersVisible}>
               <TouchableOpacity
                 accessibilityRole="button"
