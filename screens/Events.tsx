@@ -596,7 +596,7 @@ const Events = ({
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
           <View style={[localStyles.titleRow, section === "challenge" && !pastOnly && localStyles.challengeTitleRow]}>
-            {!embedded && <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
+            {!embedded && <Text style={[pastOnly && styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
 
           </View>
           <View style={localStyles.headerActions}>
