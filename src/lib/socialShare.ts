@@ -29,4 +29,14 @@ export const shareChallengeProgress = async (
   return shareContent(challenge);
 };
 
+// Shared from the "challenge completed" modal: a celebratory line plus the
+// public link of the challenge (or the Vibes landing when it has no id).
+export const shareChallengeCompletion = async (
+  challenge: Pick<EventFeedItem, "id" | "type">,
+  message: string,
+) =>
+  Share.share({
+    message: buildShareMessage(message, buildPublicContentUrl(challenge) ?? VIBES_PUBLIC_ORIGIN),
+  });
+
 export const shareEventInvite = async (event: EventFeedItem) => shareContent(event);

@@ -646,6 +646,14 @@ const baseTranslations = {
       men: "Hombres",
       everyone: "Todos",
     },
+    challengeShare: {
+      title: "¡Completaste el desafío!",
+      body: "Sostuviste el proceso hasta el final. ¿Querés compartirlo e invitar a otros a sumarse a Vibes?",
+      share: "Compartir",
+      notNow: "Ahora no",
+      message: "Completé el desafío \"{{title}}\" en Vibes ✨",
+      error: "No pudimos compartir este desafío.",
+    },
     challengeRestart: {
       tabPublic: "Públicos",
       tabPrivate: "Privados",
@@ -1393,6 +1401,14 @@ const baseTranslations = {
       women: "Women",
       men: "Men",
       everyone: "Everyone",
+    },
+    challengeShare: {
+      title: "You completed the challenge!",
+      body: "You stuck with it until the end. Want to share it and invite others to join Vibes?",
+      share: "Share",
+      notNow: "Not now",
+      message: "I completed the \"{{title}}\" challenge on Vibes ✨",
+      error: "We couldn't share this challenge.",
     },
     challengeRestart: {
       tabPublic: "Public",

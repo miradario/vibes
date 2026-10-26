@@ -73,6 +73,7 @@ import {
 import {
   shareChallengeInvite,
   shareChallengeProgress,
+  shareChallengeCompletion,
 } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { WHITE } from "../assets/styles";
@@ -991,6 +992,11 @@ const ChallengeDetailScreen = () => {
   useEffect(() => { setInviteVisible(false); }, [event?.id, userId]);
   const pendingParticipants = useRef(false);
   const pendingShare = useRef(false);
+  const [completionShareVisible, setCompletionShareVisible] = useState(false);
+  const completionShareTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (completionShareTimer.current) clearTimeout(completionShareTimer.current);
+  }, []);
   const participantsQuery = useChallengeParticipantsQuery(
     userId ? event?.id : undefined,
   );
@@ -1125,6 +1131,12 @@ const ChallengeDetailScreen = () => {
     setCelebrationVisible(true);
     if (reachedFinalCheckIn) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      // Invite to share once the celebration toast (~2.5s) has faded out.
+      if (completionShareTimer.current) clearTimeout(completionShareTimer.current);
+      completionShareTimer.current = setTimeout(() => {
+        completionShareTimer.current = null;
+        setCompletionShareVisible(true);
+      }, 2600);
     }
     triggerHaptic();
   };
@@ -1146,6 +1158,22 @@ const ChallengeDetailScreen = () => {
       await shareChallengeInvite(event);
     } catch {
       Alert.alert("Compartir", "No pudimos compartir este desafío.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleCompletionShare = async () => {
+    if (!event || isSharing) return;
+    setCompletionShareVisible(false);
+    setIsSharing(true);
+    try {
+      await shareChallengeCompletion(
+        event,
+        t("challengeShare.message", { title: event.title ?? challenge.title }),
+      );
+    } catch {
+      Alert.alert(t("challengeShare.share"), t("challengeShare.error"));
     } finally {
       setIsSharing(false);
     }
@@ -1746,6 +1774,35 @@ const ChallengeDetailScreen = () => {
           </Text>
         </Reanimated.View>
       ) : null}
+
+      <AnimatedSheetModal
+        visible={completionShareVisible}
+        onClose={() => setCompletionShareVisible(false)}
+        sheetStyle={localStyles.menuSheet}
+      >
+        <View style={localStyles.menuHandle} />
+        <View style={localStyles.completionShareBadge}>
+          <Icon name="trophy-outline" size={26} color={vibesTheme.colors.background} />
+        </View>
+        <Text style={localStyles.completionShareTitle}>{t("challengeShare.title")}</Text>
+        <Text style={localStyles.completionShareBody}>{t("challengeShare.body")}</Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={localStyles.completionSharePrimary}
+          onPress={() => void handleCompletionShare()}
+          disabled={isSharing}
+        >
+          <Icon name="share-outline" size={20} color={vibesTheme.colors.background} />
+          <Text style={localStyles.completionSharePrimaryText}>{t("challengeShare.share")}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={localStyles.completionShareSecondary}
+          onPress={() => setCompletionShareVisible(false)}
+        >
+          <Text style={localStyles.completionShareSecondaryText}>{t("challengeShare.notNow")}</Text>
+        </TouchableOpacity>
+      </AnimatedSheetModal>
 
       <AnimatedSheetModal
         visible={descriptionVisible}
@@ -3092,6 +3149,57 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 12,
     paddingBottom: 28,
+  },
+  completionShareBadge: {
+    alignSelf: "center",
+    width: 56,
+    height: 56,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: vibesTheme.colors.accentMustard,
+    marginBottom: 14,
+  },
+  completionShareTitle: {
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 24,
+    lineHeight: 30,
+    textAlign: "center",
+  },
+  completionShareBody: {
+    color: vibesTheme.colors.secondaryText,
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: "center",
+    marginTop: 8,
+    marginBottom: 22,
+  },
+  completionSharePrimary: {
+    minHeight: 54,
+    borderRadius: vibesTheme.radii.pill,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: vibesTheme.colors.primaryText,
+  },
+  completionSharePrimaryText: {
+    color: vibesTheme.colors.background,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 16,
+  },
+  completionShareSecondary: {
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
+  },
+  completionShareSecondaryText: {
+    color: vibesTheme.colors.secondaryText,
+    fontFamily: vibesTheme.fonts.medium,
+    fontSize: 16,
   },
   menuHandle: {
     alignSelf: "center",
