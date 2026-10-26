@@ -1,4 +1,5 @@
-import { Share } from "react-native";
+import { Platform, Share } from "react-native";
+import * as Sharing from "expo-sharing";
 import type { EventFeedItem } from "../queries/events.queries";
 
 export const VIBES_PUBLIC_ORIGIN = "https://vibes.gurudevelopers.dev";
@@ -34,9 +35,16 @@ export const shareChallengeProgress = async (
 export const shareChallengeCompletion = async (
   challenge: Pick<EventFeedItem, "id" | "type">,
   message: string,
-) =>
-  Share.share({
-    message: buildShareMessage(message, buildPublicContentUrl(challenge) ?? VIBES_PUBLIC_ORIGIN),
-  });
+  imageUri: string,
+) => {
+  if (Platform.OS === "ios") {
+    return Share.share({
+      message: buildShareMessage(message, buildPublicContentUrl(challenge) ?? VIBES_PUBLIC_ORIGIN),
+      url: imageUri,
+    });
+  }
+  if (!(await Sharing.isAvailableAsync())) throw new Error("Image sharing unavailable");
+  return Sharing.shareAsync(imageUri, { mimeType: "image/png", UTI: "public.png", dialogTitle: message });
+};
 
 export const shareEventInvite = async (event: EventFeedItem) => shareContent(event);

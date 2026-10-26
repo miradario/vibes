@@ -1,5 +1,8 @@
 import EventInviteSheet from "../components/EventInviteSheet";
 import AppHeader from "../components/AppHeader";
+import ChallengeCompletionShareCard from "../components/ChallengeCompletionShareCard";
+import { captureRef, releaseCapture } from "react-native-view-shot";
+import ChallengeCompletionConfetti from "../components/ChallengeCompletionConfetti";
 import ChallengeJourneyPath from "../components/ChallengeJourneyPath";
 import BackButton from "../components/BackButton";
 import { useLocalDay } from "../src/hooks/useLocalDay";
@@ -34,6 +37,7 @@ import Reanimated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
+  useReducedMotion,
   withRepeat,
   withSequence,
   withTiming,
@@ -974,6 +978,8 @@ const ChallengeDetailScreen = () => {
   useEffect(() => { setLocalCompletedDays([]); }, [challengeId, userId, localDay]);
   const [footerSliderWidth, setFooterSliderWidth] = useState(0);
   const [footerSliderOffset, setFooterSliderOffset] = useState(0);
+  const [finalCelebration, setFinalCelebration] = useState(false);
+  const reducedMotion = useReducedMotion();
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [celebrationTitle, setCelebrationTitle] = useState("Día completado");
   const [celebrationBody, setCelebrationBody] = useState(
@@ -992,10 +998,17 @@ const ChallengeDetailScreen = () => {
   useEffect(() => { setInviteVisible(false); }, [event?.id, userId]);
   const pendingParticipants = useRef(false);
   const pendingShare = useRef(false);
+  const pendingCompletionShare = useRef(false);
+  const completionCardRef = useRef<View>(null);
+  const completionImageUri = useRef<string | null>(null);
+  const [completionImageReady, setCompletionImageReady] = useState(false);
+  const [completionImageFailed, setCompletionImageFailed] = useState(false);
+  const [completionImageAttempt, setCompletionImageAttempt] = useState(0);
   const [completionShareVisible, setCompletionShareVisible] = useState(false);
   const completionShareTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => {
     if (completionShareTimer.current) clearTimeout(completionShareTimer.current);
+    if (completionImageUri.current) releaseCapture(completionImageUri.current);
   }, []);
   const participantsQuery = useChallengeParticipantsQuery(
     userId ? event?.id : undefined,
@@ -1128,15 +1141,18 @@ const ChallengeDetailScreen = () => {
         ? "Sostuviste el proceso hasta el final. Tu energía cambió."
         : "Gracias por volver a vos y sostener tu ritmo hoy."
     );
+    setFinalCelebration(reachedFinalCheckIn);
     setCelebrationVisible(true);
     if (reachedFinalCheckIn) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      // Invite to share once the celebration toast (~2.5s) has faded out.
+      // Wait until the final celebration and confetti have finished.
       if (completionShareTimer.current) clearTimeout(completionShareTimer.current);
       completionShareTimer.current = setTimeout(() => {
         completionShareTimer.current = null;
+        setCompletionImageReady(false);
+        setCompletionImageFailed(false);
         setCompletionShareVisible(true);
-      }, 2600);
+      }, 3400);
     }
     triggerHaptic();
   };
@@ -1164,17 +1180,37 @@ const ChallengeDetailScreen = () => {
   };
 
   const handleCompletionShare = async () => {
-    if (!event || isSharing) return;
-    setCompletionShareVisible(false);
+    if (!event || isSharing || pendingCompletionShare.current || !completionImageReady) return;
+    pendingCompletionShare.current = true;
     setIsSharing(true);
     try {
+      completionImageUri.current = await captureRef(completionCardRef, {
+        format: "png", result: "tmpfile", width: 1080, height: 1350,
+      });
+      setCompletionShareVisible(false);
+    } catch {
+      pendingCompletionShare.current = false;
+      setIsSharing(false);
+      Alert.alert(t("challengeShare.share"), t("challengeShare.error"));
+    }
+  };
+
+  const handleCompletionShareClosed = async () => {
+    if (!pendingCompletionShare.current) return;
+    pendingCompletionShare.current = false;
+    const imageUri = completionImageUri.current;
+    completionImageUri.current = null;
+    try {
+      if (!event || !imageUri) return;
       await shareChallengeCompletion(
         event,
         t("challengeShare.message", { title: event.title ?? challenge.title }),
+        imageUri,
       );
     } catch {
       Alert.alert(t("challengeShare.share"), t("challengeShare.error"));
     } finally {
+      if (imageUri) releaseCapture(imageUri);
       setIsSharing(false);
     }
   };
@@ -1314,19 +1350,21 @@ const ChallengeDetailScreen = () => {
       setTimeout(() => {
         setCelebrationVisible(false);
       }, 240);
-    }, 2200);
+    }, finalCelebration ? 3000 : 2200);
 
     return () => clearTimeout(hideTimer);
-  }, [celebrationProgress, celebrationVisible]);
+  }, [celebrationProgress, celebrationVisible, finalCelebration]);
 
   const celebrationAnimatedStyle = useAnimatedStyle(() => ({
     opacity: celebrationProgress.value,
     transform: [
       {
-        translateY: interpolate(celebrationProgress.value, [0, 1], [20, 0]),
+        translateY: reducedMotion ? 0 : interpolate(celebrationProgress.value, [0, 1], [finalCelebration ? 70 : 20, 0]),
       },
       {
-        scale: interpolate(celebrationProgress.value, [0, 1], [0.96, 1]),
+        scale: reducedMotion ? 1 : finalCelebration
+          ? interpolate(celebrationProgress.value, [0, 0.7, 1], [0.65, 1.08, 1])
+          : interpolate(celebrationProgress.value, [0, 1], [0.96, 1]),
       },
     ],
   }));
@@ -1748,6 +1786,8 @@ const ChallengeDetailScreen = () => {
         </View>
       </View>
 
+      {celebrationVisible && finalCelebration ? <ChallengeCompletionConfetti /> : null}
+
       {celebrationVisible ? (
         <Reanimated.View
           pointerEvents="none"
@@ -1757,13 +1797,13 @@ const ChallengeDetailScreen = () => {
             celebrationAnimatedStyle,
           ]}
         >
-          <View style={localStyles.completionCelebrationBadge}>
+          <View style={[localStyles.completionCelebrationBadge, finalCelebration && { width: 64, height: 64, borderRadius: 32 }]}>
             <Icon
               name={
-                isChallengeCompleted ? "trophy-outline" : "sparkles-outline"
+                finalCelebration ? "trophy-outline" : "sparkles-outline"
               }
-              size={20}
-              color={vibesTheme.colors.background}
+              size={finalCelebration ? 30 : 20}
+              color={vibesTheme.colors.primaryText}
             />
           </View>
           <Text style={localStyles.completionCelebrationTitle}>
@@ -1777,7 +1817,9 @@ const ChallengeDetailScreen = () => {
 
       <AnimatedSheetModal
         visible={completionShareVisible}
-        onClose={() => setCompletionShareVisible(false)}
+        onClose={() => { if (!isSharing) setCompletionShareVisible(false); }}
+        closeOnBackdropPress={!isSharing}
+        onClosed={() => void handleCompletionShareClosed()}
         sheetStyle={localStyles.menuSheet}
       >
         <View style={localStyles.menuHandle} />
@@ -1786,18 +1828,45 @@ const ChallengeDetailScreen = () => {
         </View>
         <Text style={localStyles.completionShareTitle}>{t("challengeShare.title")}</Text>
         <Text style={localStyles.completionShareBody}>{t("challengeShare.body")}</Text>
+        <ScrollView style={{ maxHeight: height * 0.42 }} contentContainerStyle={{ alignItems: "center", paddingVertical: 8 }}>
+          {completionShareVisible ? (
+            <ChallengeCompletionShareCard
+              key={`${event?.id}-${completionImageAttempt}`}
+              ref={completionCardRef}
+              title={event?.title ?? challenge.title}
+              source={collapsedCoverImageSource ?? require("../assets/images/challenges/challengetree.png")}
+              label={t("challengeShare.cardLabel")}
+              headline={t("challengeShare.cardHeadline")}
+              caption={t("challengeShare.cardCaption")}
+              onLoading={() => setCompletionImageReady(false)}
+              onReady={() => setCompletionImageReady(true)}
+              onError={() => setCompletionImageFailed(true)}
+            />
+          ) : null}
+        </ScrollView>
+        {completionImageFailed ? (
+          <TouchableOpacity accessibilityRole="button" onPress={() => {
+            setCompletionImageFailed(false);
+            setCompletionImageReady(false);
+            setCompletionImageAttempt(value => value + 1);
+          }} style={localStyles.completionShareSecondary}>
+            <Text style={localStyles.completionShareSecondaryText}>{t("challengeShare.retryImage")}</Text>
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           accessibilityRole="button"
           style={localStyles.completionSharePrimary}
           onPress={() => void handleCompletionShare()}
-          disabled={isSharing}
+          disabled={isSharing || !completionImageReady}
+          accessibilityState={{ disabled: isSharing || !completionImageReady, busy: isSharing }}
         >
           <Icon name="share-outline" size={20} color={vibesTheme.colors.background} />
-          <Text style={localStyles.completionSharePrimaryText}>{t("challengeShare.share")}</Text>
+          <Text style={localStyles.completionSharePrimaryText}>{isSharing || (!completionImageReady && !completionImageFailed) ? t("challengeShare.preparingImage") : t("challengeShare.share")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           accessibilityRole="button"
           style={localStyles.completionShareSecondary}
+          disabled={isSharing}
           onPress={() => setCompletionShareVisible(false)}
         >
           <Text style={localStyles.completionShareSecondaryText}>{t("challengeShare.notNow")}</Text>

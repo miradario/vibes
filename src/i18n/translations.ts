@@ -647,6 +647,11 @@ const baseTranslations = {
       everyone: "Todos",
     },
     challengeShare: {
+      cardLabel: "DESAFÍO COMPLETADO",
+      cardHeadline: "¡Lo logré!",
+      cardCaption: "Un día a la vez. Un cambio para mí.",
+      preparingImage: "Preparando imagen…",
+      retryImage: "Reintentar cargar imagen",
       title: "¡Completaste el desafío!",
       body: "Sostuviste el proceso hasta el final. ¿Querés compartirlo e invitar a otros a sumarse a Vibes?",
       share: "Compartir",
@@ -1403,6 +1408,11 @@ const baseTranslations = {
       everyone: "Everyone",
     },
     challengeShare: {
+      cardLabel: "CHALLENGE COMPLETED",
+      cardHeadline: "I did it!",
+      cardCaption: "One day at a time. A change for me.",
+      preparingImage: "Preparing image…",
+      retryImage: "Retry loading image",
       title: "You completed the challenge!",
       body: "You stuck with it until the end. Want to share it and invite others to join Vibes?",
       share: "Share",
