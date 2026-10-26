@@ -63,6 +63,8 @@ const VibesActionButton = ({
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
       style={[styles.startButton, style, disabled && styles.startButtonDisabled]}
       onPress={onPress}
       activeOpacity={0.9}
@@ -89,8 +91,9 @@ const styles = StyleSheet.create({
   },
   startButtonDisabled: {
     backgroundColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.08,
-    elevation: 1,
+    opacity: 0.42,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   startText: {
     color: vibesTheme.colors.surface,

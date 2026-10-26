@@ -54,7 +54,14 @@ const RestartChallenge = () => {
   const [title, setTitle] = useState(source?.title ?? "");
   const [description, setDescription] = useState(source?.description ?? "");
   const [imageUri, setImageUri] = useState<string | null>(source?.imageUrl ?? null);
-  const [startDate, setStartDate] = useState<Date | null>(null);
+  // Default start date: today. If the original challenge also started today
+  // (not allowed for a restart), default to tomorrow instead.
+  const [startDate, setStartDate] = useState<Date | null>(() => {
+    const value = new Date();
+    value.setHours(0, 0, 0, 0);
+    if (originalStart && sameCalendarDay(value, originalStart)) value.setDate(value.getDate() + 1);
+    return value;
+  });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [coverSheet, setCoverSheet] = useState(false);
   const [friendsVisible, setFriendsVisible] = useState(false);
