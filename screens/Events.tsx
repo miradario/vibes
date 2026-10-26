@@ -596,7 +596,7 @@ const Events = ({
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
           <View style={[localStyles.titleRow, section === "challenge" && !pastOnly && localStyles.challengeTitleRow]}>
-            {!embedded && <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }, section === "challenge" && !pastOnly && localStyles.compactChallengeTitle]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
+            {!embedded && <Text style={[styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
 
           </View>
           <View style={localStyles.headerActions}>
@@ -1173,7 +1173,6 @@ eventsContainer: {
   },
 challengeHeaderRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
 challengeTitleRow: { flex: 1, minWidth: 0 },
-compactChallengeTitle: { fontFamily: vibesTheme.fonts.semibold, fontSize: 22, lineHeight: 28 },
 headerActions: { flexDirection: "row", alignItems: "center", alignSelf: "flex-end", gap: 6 },
 headerRow: {
     minHeight: 48,

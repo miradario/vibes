@@ -730,7 +730,7 @@ export const MessagesContent = ({
         ]}
       >
         <View style={localStyles.communityHeader}>
-          <Text style={localStyles.communityTitle}>
+          <Text style={localStyles.communityTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             {t("messages.connections")}
           </Text>
           <CommunityGroups
