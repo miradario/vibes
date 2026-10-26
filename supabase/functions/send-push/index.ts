@@ -809,19 +809,19 @@ const buildReminderNotification = async (supabase: SupabaseClient, record: Recor
   if (!job || job.processed_at) return [];
   const now = Date.now();
   if (new Date(job.due_at).getTime() > now || new Date(job.expires_at).getTime() <= now) return [];
+  // The grouped lookup already returns [] unless this job's challenge is still
+  // pending, so challenges skip the per-reminder candidate check (one view query).
+  if (job.kind === "challenge_reminder") return buildGroupedChallengeReminder(supabase, job);
   const { data: candidate, error: candidateError } = await supabase.from("notification_reminder_candidates")
     .select("title").eq("user_id", job.user_id).eq("event_id", job.event_id)
     .eq("kind", job.kind).eq("lead_hours", job.lead_hours).eq("target_at", job.target_at).eq("due_at", job.due_at).maybeSingle();
   if (candidateError) throw candidateError;
   if (!candidate) return [];
-  const challenge = job.kind === "challenge_reminder";
-  if (challenge) return buildGroupedChallengeReminder(supabase, job);
   return [{
     recipientId: job.user_id,
-    title: challenge ? "Tu desafío de hoy te espera" : "Tenés un evento próximo",
-    body: challenge ? `Todavía estás a tiempo de completar ${candidate.title} hoy.`
-      : `${candidate.title} empieza en ${job.lead_hours === 1 ? "1 hora" : "24 horas"}.`,
-    data: { type: job.kind, eventId: job.event_id, eventType: challenge ? "challenge" : "event", reminderId: job.id },
+    title: "Tenés un evento próximo",
+    body: `${candidate.title} empieza en ${job.lead_hours === 1 ? "1 hora" : "24 horas"}.`,
+    data: { type: job.kind, eventId: job.event_id, eventType: "event", reminderId: job.id },
   }] satisfies OutgoingNotification[];
 };
 
