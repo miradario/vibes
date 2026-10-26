@@ -501,27 +501,24 @@ const Events = ({
   const listItems = useMemo<FeedListItem[]>(() => {
     if (!featuredItem) return baseListItems;
     const featuredRow = { kind: "feed" as const, item: featuredItem, featured: true, keyPrefix: "featured" };
-    if (section === "event") {
-      // Events: "Tus eventos" stays first; "Para ti" goes first inside "Más eventos".
-      const rest = baseListItems.filter(
-        (row) => !(row.kind === "feed" && row.item.id === featuredItem.id),
-      );
-      const yourIndex = rest.findIndex((row) => row.kind === "section" && row.id === "your-events");
-      if (yourIndex === -1) return [featuredRow, ...rest];
-      const discoverIndex = rest.findIndex((row) => row.kind === "section" && row.id === "discover-events");
-      if (discoverIndex !== -1) {
-        return [...rest.slice(0, discoverIndex + 1), featuredRow, ...rest.slice(discoverIndex + 1)];
-      }
-      return [...rest, { kind: "section" as const, id: "discover-events", title: "Más eventos" }, featuredRow];
-    }
+    // "Tus eventos" / joined "En curso" challenges stay first; "Para ti" goes
+    // first inside the next section ("Más eventos" / "Empieza pronto").
+    const mineId = section === "event" ? "your-events" : "active-challenges";
+    const nextId = section === "event" ? "discover-events" : "upcoming-challenges";
+    const nextTitle = section === "event" ? "Más eventos" : "Empieza pronto";
     const rest = baseListItems.filter(
       (row) => !(row.kind === "feed" && row.item.id === featuredItem.id),
     );
-    // Drop section headers left without rows after moving the featured item.
-    const cleaned = rest.filter(
-      (row, index) => row.kind !== "section" || rest[index + 1]?.kind === "feed",
-    );
-    return [{ kind: "feed" as const, item: featuredItem, featured: true, keyPrefix: "featured" }, ...cleaned];
+    const mineIndex = rest.findIndex((row) => row.kind === "section" && row.id === mineId);
+    if (mineIndex === -1) {
+      const cleaned = rest.filter((row, index) => row.kind !== "section" || rest[index + 1]?.kind === "feed");
+      return [featuredRow, ...cleaned];
+    }
+    const nextIndex = rest.findIndex((row) => row.kind === "section" && row.id === nextId);
+    if (nextIndex !== -1) {
+      return [...rest.slice(0, nextIndex + 1), featuredRow, ...rest.slice(nextIndex + 1)];
+    }
+    return [...rest, { kind: "section" as const, id: nextId, title: nextTitle }, featuredRow];
   }, [baseListItems, featuredItem, section]);
 
   const listIsLoading =
