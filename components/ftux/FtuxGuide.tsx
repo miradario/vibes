@@ -74,6 +74,9 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
   const state = useFtuxState(userId, session?.user?.created_at);
   const involved = Boolean(state && state.status !== "ineligible");
   const completion = useFtuxProfileCompletion(involved ? userId : undefined);
+  // A profile that already reached 100% once counts as complete, so a slow or
+  // failed fetch never sends someone with a full profile to the profile step.
+  const profileComplete = completion.complete || Boolean(state?.actions?.profileCompleted);
   const vibiEnabled = useVibiEnabled();
   const onHome = routeName === "Home" && hasBottomBar;
 
@@ -137,13 +140,20 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
   }, [involved, completion.complete, userId]);
 
   const active = state?.status === "active";
+  // The profile step was entered before the completion loaded (or the profile
+  // got completed meanwhile): skip straight to the closing instead of asking.
+  const onCompletedProfileStep = active && state?.step === "profile" && profileComplete;
+  useEffect(() => {
+    if (onCompletedProfileStep) dispatchFtux(userId, { type: "PROFILE_LATER" });
+  }, [onCompletedProfileStep, userId]);
+
   const sheetStep: SheetStep | null = !state || !userId
     ? null
     : pending && welcomeReady && onHome
       ? "welcome"
       : active && state.step === "alt" && onHome
         ? "alt"
-        : active && state.step === "profile" && hasBottomBar && routeName === "Aura"
+        : active && state.step === "profile" && completion.ready && !profileComplete && hasBottomBar && routeName === "Aura"
           ? "profile"
           : active && state.step === "closing" && hasBottomBar && !closingAfterRouteChange.current
             ? "closing"
@@ -302,13 +312,13 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
           exploreLabel={t(`ftux.${coachStep}.explore`)}
           nextLabel={
             coachStep === "events"
-              ? completion.complete
+              ? profileComplete
                 ? t("ftux.finishTour")
                 : t("ftux.lastStep")
               : t("ftux.next")
           }
           onExplore={() => send({ type: "EXPLORE" })}
-          onNext={() => goToStep(send({ type: "NEXT", profileComplete: completion.complete })?.step)}
+          onNext={() => goToStep(send({ type: "NEXT", profileComplete })?.step)}
         />
       ) : null}
     </>

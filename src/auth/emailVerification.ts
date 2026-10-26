@@ -12,8 +12,10 @@ export const isEmailOwnershipVerified = (
       ((user.app_metadata?.vibes_verified_email === user.email &&
         user.app_metadata?.vibes_email_verified_at) ||
         user.identities?.some((identity) =>
-          identity.provider === "google" &&
-          identity.identity_data?.email_verified === true &&
+          // Google and Apple only issue sign-ins for emails they verified.
+          (identity.provider === "google" || identity.provider === "apple") &&
+          (identity.identity_data?.email_verified === true ||
+            identity.identity_data?.email_verified === "true") &&
           typeof identity.identity_data?.email === "string" &&
           identity.identity_data.email.toLowerCase() === user.email?.toLowerCase()
         ))

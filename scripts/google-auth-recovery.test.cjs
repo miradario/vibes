@@ -73,3 +73,10 @@ test('invalid requests and rate limiting do not expose account information', asy
   assert.equal(calls.length, 0);
   assert.equal((await handler(new Request('https://test.invalid', { method: 'POST', body: JSON.stringify({ email: 'user@example.com' }) }))).status, 429);
 });
+test('Apple verifies the matching provider-confirmed email', () => {
+  const appleUser = (email, verified) => ({ email: 'user@privaterelay.appleid.com', app_metadata: {}, identities: [{ provider: 'apple', identity_data: { email, email_verified: verified } }] });
+  assert.equal(isEmailOwnershipVerified(appleUser('user@privaterelay.appleid.com', true)), true);
+  assert.equal(isEmailOwnershipVerified(appleUser('user@privaterelay.appleid.com', 'true')), true);
+  assert.equal(isEmailOwnershipVerified(appleUser('other@example.com', true)), false);
+  assert.equal(isEmailOwnershipVerified(appleUser('user@privaterelay.appleid.com', false)), false);
+});
