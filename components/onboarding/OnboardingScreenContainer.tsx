@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
+import KeyboardViewport from "../KeyboardViewport";
 import {
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,8 +12,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { onboardingStyles } from "../../src/screens/Onboarding/vibesOnboardingStyles";
 
-// Android uses native adjustResize or the measured overlap fallback below.
-// Keeping an idle KeyboardAvoidingView there adds a second IME layout listener.
 const KeyboardContainer = Platform.OS === "ios" ? KeyboardAvoidingView : View;
 
 type OnboardingScreenContainerProps = {
@@ -33,37 +31,11 @@ const OnboardingScreenContainer = ({
   onViewportChange,
   onScroll,
 }: OnboardingScreenContainerProps) => {
-  const root = useRef<View>(null);
-  const keyboardTop = useRef<number | null>(null);
-  const [keyboardOverlap, setKeyboardOverlap] = useState(0);
-  const updateOverlap = () => {
-    if (Platform.OS !== "android") return;
-    root.current?.measureInWindow((_x, y, _width, height) => {
-      const overlap = keyboardTop.current === null ? 0 : Math.max(0, y + height - keyboardTop.current);
-      setKeyboardOverlap(previous => Math.abs(previous - overlap) > 1 ? overlap : previous);
-    });
-  };
-  useEffect(() => {
-    if (Platform.OS !== "android") return;
-    const shown = Keyboard.addListener("keyboardDidShow", event => {
-      keyboardTop.current = event.endCoordinates.screenY;
-      requestAnimationFrame(updateOverlap);
-    });
-    const hidden = Keyboard.addListener("keyboardDidHide", () => {
-      keyboardTop.current = null;
-      setKeyboardOverlap(0);
-    });
-    return () => { shown.remove(); hidden.remove(); };
-  }, []);
   return (
-  <View ref={root} style={onboardingStyles.screen} onLayout={updateOverlap}>
+  <KeyboardViewport style={onboardingStyles.screen} iosAvoiding={false}>
     <SafeAreaView style={onboardingStyles.safeArea}>
-      <KeyboardContainer
-        style={[onboardingStyles.keyboard, keyboardOverlap > 0 && { paddingBottom: keyboardOverlap }]}
-        // Android already resizes the activity via windowSoftInputMode=adjustResize.
-        // Applying a second height adjustment can clip and blur the focused input.
-        {...(Platform.OS === "ios" ? { behavior: "padding" as const, keyboardVerticalOffset: 0 } : {})}
-      >
+      <KeyboardContainer style={onboardingStyles.keyboard}
+        {...(Platform.OS === "ios" ? { behavior: "padding" as const, keyboardVerticalOffset: 0 } : {})}>
         <View style={[onboardingStyles.content, contentStyle]}>
           <View style={onboardingStyles.card}>
             <ScrollView
@@ -88,7 +60,7 @@ const OnboardingScreenContainer = ({
         </View>
       </KeyboardContainer>
     </SafeAreaView>
-  </View>
+  </KeyboardViewport>
   );
 };
 

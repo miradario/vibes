@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { notificationAllowed } from "./preferences.ts";
-import { authorizedWebhook, isConnectionRequest } from "./webhook.ts";
+import { authorizedWebhook, isChallengeInvitationAccepted, isConnectionRequest } from "./webhook.ts";
 import { buildReengagementNotification } from "./reengagement.ts";
 
 type SupabaseClient = ReturnType<typeof createAdminClient>;
@@ -776,6 +776,30 @@ const buildConnectionNotification = async (supabase: SupabaseClient, record: Rec
   }] satisfies OutgoingNotification[];
 };
 
+// Private challenge invitations: the creator hears when an invitee joins. The
+// tap reuses the challenge_reminder route (opens the challenge) so app versions
+// already in the stores handle it; joinKind tells the two apart.
+const buildChallengeJoinedNotification = async (supabase: SupabaseClient, record: Record<string, unknown>) => {
+  const challengeId = String(record.challenge_id);
+  const inviteeId = String(record.invitee_id);
+  const creatorId = String(record.invited_by);
+  const { data: challenge, error } = await supabase.from("challenges")
+    .select("title, created_by, visibility").eq("id", challengeId).maybeSingle();
+  if (error) throw error;
+  if (!challenge || challenge.created_by !== creatorId || challenge.visibility !== "private") return [];
+  const { data: blocked, error: blockError } = await supabase.from("user_blocks")
+    .select("blocker_id").or(`and(blocker_id.eq.${creatorId},blocked_user_id.eq.${inviteeId}),and(blocker_id.eq.${inviteeId},blocked_user_id.eq.${creatorId})`).limit(1);
+  if (blockError) throw blockError;
+  if (blocked?.length) return [];
+  const names = await fetchDisplayNames(supabase, [inviteeId]);
+  const title = String(challenge.title ?? "").trim() || "tu desafío";
+  return [{ recipientId: creatorId, title: "Vibes",
+    body: `${names.get(inviteeId) ?? "Alguien"} se unió a tu desafío "${title}"`,
+    data: { type: "challenge_reminder", eventId: challengeId, eventType: "challenge",
+      joinKind: "challenge_joined", inviteeId, invitationId: String(record.id ?? "") },
+  }] satisfies OutgoingNotification[];
+};
+
 // Every pending challenge of the day is due at the user's reminder time, so
 // they are grouped into one push: the reminder with the lowest challenge id
 // sends it ("X y N más") and the others return nothing (marked processed).
@@ -809,19 +833,19 @@ const buildReminderNotification = async (supabase: SupabaseClient, record: Recor
   if (!job || job.processed_at) return [];
   const now = Date.now();
   if (new Date(job.due_at).getTime() > now || new Date(job.expires_at).getTime() <= now) return [];
+  // The grouped lookup already returns [] unless this job's challenge is still
+  // pending, so challenges skip the per-reminder candidate check (one view query).
+  if (job.kind === "challenge_reminder") return buildGroupedChallengeReminder(supabase, job);
   const { data: candidate, error: candidateError } = await supabase.from("notification_reminder_candidates")
     .select("title").eq("user_id", job.user_id).eq("event_id", job.event_id)
     .eq("kind", job.kind).eq("lead_hours", job.lead_hours).eq("target_at", job.target_at).eq("due_at", job.due_at).maybeSingle();
   if (candidateError) throw candidateError;
   if (!candidate) return [];
-  const challenge = job.kind === "challenge_reminder";
-  if (challenge) return buildGroupedChallengeReminder(supabase, job);
   return [{
     recipientId: job.user_id,
-    title: challenge ? "Tu desafío de hoy te espera" : "Tenés un evento próximo",
-    body: challenge ? `Todavía estás a tiempo de completar ${candidate.title} hoy.`
-      : `${candidate.title} empieza en ${job.lead_hours === 1 ? "1 hora" : "24 horas"}.`,
-    data: { type: job.kind, eventId: job.event_id, eventType: challenge ? "challenge" : "event", reminderId: job.id },
+    title: "Tenés un evento próximo",
+    body: `${candidate.title} empieza en ${job.lead_hours === 1 ? "1 hora" : "24 horas"}.`,
+    data: { type: job.kind, eventId: job.event_id, eventType: "event", reminderId: job.id },
   }] satisfies OutgoingNotification[];
 };
 
@@ -873,6 +897,10 @@ const buildNotifications = async (
     return buildConnectionNotification(supabase, record);
   }
 
+  if (table === "challenge_invitations" && isChallengeInvitationAccepted(record, payload.old_record)) {
+    return buildChallengeJoinedNotification(supabase, record);
+  }
+
   if (table === "event_messages") {
     return buildEventMessageNotifications(supabase, record);
   }
@@ -897,7 +925,7 @@ serve(async (req: Request) => {
 
   try {
     const payload = (await req.json()) as WebhookPayload;
-    if (payload.type && payload.type !== "INSERT" && !(payload.type === "UPDATE" && payload.table === "swipes")) {
+    if (payload.type && payload.type !== "INSERT" && !(payload.type === "UPDATE" && (payload.table === "swipes" || payload.table === "challenge_invitations"))) {
       return new Response(
         JSON.stringify({ ignored: true, reason: "unsupported event type" }),
         {

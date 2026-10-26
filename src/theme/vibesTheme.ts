@@ -1,3 +1,5 @@
+// Logo oficial (desde 25/10/2026): wordmark de texto "Vibes", no el lobo.
+// Colores por letra y formas: assets/branding/OFFICIAL_LOGO.md
 export const vibesTheme = {
   fonts: {
     subtitle: "Inter-Medium",

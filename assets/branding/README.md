@@ -1,5 +1,7 @@
 # Vibes logo
 
+**Logo oficial:** el wordmark de texto "Vibes", ver [OFFICIAL_LOGO.md](OFFICIAL_LOGO.md).
+
 `vibes-logo-palette.svg` is the source of the current flat logo: mustard `#F4A340`, blue `#3978B8`, dark strokes `#2B2B2B`, coral upper sphere `#D88C7A`. `vibes-logo-palette.png` is its transparent export. The reference image from generation is a draft, not an app asset.
 
 Generate the launcher icons and splash resources with `scripts/generate-flat-app-icons.cjs`. Supply Sharp using `VIBES_ICON_SHARP_MODULE` if it is not installed in the project. Generate the compatible GLB with `node scripts/generate-flat-vibi-glb.cjs`.

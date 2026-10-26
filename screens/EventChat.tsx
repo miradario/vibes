@@ -1,3 +1,4 @@
+import KeyboardViewport from "../components/KeyboardViewport";
 import {chatComposerBottomPadding} from "../src/lib/chatComposerLayout";
 import ChatVisibleDate, { useChatVisibleDate } from "../components/ChatVisibleDate";
 import ChatPhotoButton from "../components/ChatPhotoButton";
@@ -19,7 +20,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Keyboard,
-  KeyboardAvoidingView,
+
   Platform,
   StyleSheet,
   Alert,
@@ -647,12 +648,8 @@ const EventChat = () => {
   );
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardViewport
       style={localStyles.keyboardAvoidingRoot}
-      behavior={
-        Platform.OS === "ios" ? "padding" : undefined
-      }
-      keyboardVerticalOffset={0}
     >
       <View style={styles.eventChatBackground}>
         <AppHeader
@@ -1054,7 +1051,7 @@ const EventChat = () => {
         secondaryActionDestructive
         showPhotoCounter={false}
       />
-    </KeyboardAvoidingView>
+    </KeyboardViewport>
   );
 };
 

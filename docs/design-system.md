@@ -182,7 +182,7 @@ Los filtros de personas comparten las opciones de las preguntas de perfil y los 
 
 Crear/editar eventos y desafíos comparten `src/theme/creationFormStyles.ts`: título secundario 26/32, labels 14/20, campos 16/24 con borde suave y radio 16, botón principal oscuro de 56 y radio pill. El pie forma parte del layout y no se superpone al formulario. Usar ScreenContainer con top/left/right y aplicar el inset inferior una sola vez en el pie. En Android el teclado usa adjustResize; no agregar una segunda compensación de altura mediante KeyboardAvoidingView.
 
-Los compositores de chats directos, eventos y grupos comparten `chatComposerBottomPadding`: safe area inferior una sola vez con teclado cerrado; 8 con teclado abierto.
+Los compositores de chats directos, eventos y grupos comparten `chatComposerBottomPadding`: safe area inferior una sola vez con teclado cerrado; 8 con teclado abierto. Chats y onboarding usan `KeyboardViewport`: en Android mide el solapamiento real del teclado sobre un contenedor independiente y compensa únicamente el espacio que no resolvió `adjustResize`. Descarta mediciones anteriores al último cambio de layout o cierre del teclado. En iOS se conserva `KeyboardAvoidingView` con padding.
 
 La barra de navegación inferior se apoya en el borde inferior, sin margen externo debajo. Su superficie incluye el safe area inferior una sola vez; los botones quedan por encima del área de gestos. Conservar la geometría compartida en `src/lib/tabBarLayout.ts` para los espacios de contenido y la guía FTUX.
 
