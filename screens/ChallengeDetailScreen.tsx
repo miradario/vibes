@@ -416,16 +416,18 @@ const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
   );
 });
 
-const ChallengeIntroMetaRow = memo(({ challenge, checkedInTodayCount }: { challenge: ChallengeDetailData; checkedInTodayCount: number }) => (
+const ChallengeIntroMetaRow = memo(({ challenge, checkedInTodayCount, curated = false }: { challenge: ChallengeDetailData; checkedInTodayCount: number; curated?: boolean }) => (
   <View style={{ gap: 16, paddingVertical: 8 }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
       <Icon name="calendar-outline" size={25} color={vibesTheme.colors.accentBlue} />
-      <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 }}>{challenge.currentDay > 0 ? `Día ${challenge.currentDay} de ${challenge.totalDays}` : `${challenge.totalDays} días de actividades`}</Text></View>
+      <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 }}>{!curated && challenge.currentDay > 0 ? `Día ${challenge.currentDay} de ${challenge.totalDays}` : `${challenge.totalDays} días de actividades`}</Text></View>
     </View>
+    {curated ? null : (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
       <Icon name="people-outline" size={25} color={vibesTheme.colors.accentBlue} />
       <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 }}>{challenge.participantsCount} participantes</Text><Text style={{ color: vibesTheme.colors.secondaryText, fontSize: 14 }}>{checkedInTodayCount} {checkedInTodayCount === 1 ? "completó" : "completaron"} hoy</Text></View>
     </View>
+    )}
   </View>
 ));
 
@@ -1083,6 +1085,7 @@ const ChallengeDetailScreen = () => {
     challenge.totalDays
   );
   const isChallengeUpcoming = challengeTimeline.status === "upcoming";
+  const isCurated = Boolean(event && isCuratedChallenge(event));
   // Curated "Por Vibes" challenges can be restarted at any time (catalog).
   const canRestart = Boolean(userId && event && (challengeTimeline.status === "finished" || isCuratedChallenge(event)));
   const todayKey = localDay;
@@ -1589,11 +1592,11 @@ const ChallengeDetailScreen = () => {
         >
           <View style={localStyles.referenceBadges}>
             <Text style={localStyles.referenceBadge}>{challenge.totalDays} días</Text>
-            {isChallengeUpcoming ? <Text style={localStyles.referenceBadge}>{getChallengeStartsInLabel(challengeTimeline.startsInDays)}</Text> : null}
+            {isChallengeUpcoming && !isCurated ? <Text style={localStyles.referenceBadge}>{getChallengeStartsInLabel(challengeTimeline.startsInDays)}</Text> : null}
           </View>
           <Text style={localStyles.referenceTitle}>{challenge.title}</Text>
           <View style={localStyles.challengeIntroBlock}>
-            <ChallengeIntroMetaRow challenge={challenge} checkedInTodayCount={checkedInTodayCount} />
+            <ChallengeIntroMetaRow challenge={challenge} checkedInTodayCount={checkedInTodayCount} curated={isCurated} />
           </View>
           <View style={localStyles.content}>
             {challenge.subtitle ? <View style={localStyles.descriptionSection}>
@@ -1933,7 +1936,7 @@ const ChallengeDetailScreen = () => {
             }}
           >
             <Icon name="refresh-outline" size={20} color={palette.text} />
-            <Text style={localStyles.menuItemText}>{t("challengeRestart.restart")}</Text>
+            <Text style={localStyles.menuItemText}>{t(event && isCuratedChallenge(event) ? "challengeRestart.start" : "challengeRestart.restart")}</Text>
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity
@@ -2007,6 +2010,7 @@ const ChallengeDetailScreen = () => {
       </AnimatedSheetModal>
       <RestartChallengeConfirmSheet
         visible={restartConfirmVisible}
+        curated={Boolean(event && isCuratedChallenge(event))}
         onClose={() => setRestartConfirmVisible(false)}
         onConfirm={() => {
           setRestartConfirmVisible(false);

@@ -73,6 +73,7 @@ const RestartChallenge = () => {
     value.setHours(0, 0, 0, 0);
     return value;
   }, []);
+  const isCurated = Boolean(source && isCuratedChallenge(source));
   // Curated "Por Vibes" challenges are a catalog: any start date is fine.
   const sameAsOriginal = Boolean(source && !isCuratedChallenge(source) && startDate && originalStart && sameCalendarDay(startDate, originalStart));
   const canSubmit =
@@ -127,7 +128,7 @@ const RestartChallenge = () => {
         StackActions.replace("ChallengeDetailScreen", { challengeId: result.challengeId }),
       );
     } catch (error) {
-      Alert.alert(t("challengeRestart.errorTitle"), errorMessage(error));
+      Alert.alert(t(isCurated ? "challengeRestart.startErrorTitle" : "challengeRestart.errorTitle"), errorMessage(error));
     }
   };
 
@@ -147,7 +148,7 @@ const RestartChallenge = () => {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.screenTitle} numberOfLines={2}>
-            {t("challengeRestart.screenTitle")}
+            {t(isCurated ? "challengeRestart.startScreenTitle" : "challengeRestart.screenTitle")}
           </Text>
           <Text style={styles.screenSubtitle}>
             {t("challengeRestart.screenSubtitle")}

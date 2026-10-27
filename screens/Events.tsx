@@ -941,7 +941,7 @@ const Events = ({
                         onPress={() => setRestartTarget(item)}
                       >
                         <Icon name="refresh-outline" size={16} color={vibesTheme.colors.accentBlue} />
-                        <Text style={restartStyles.pillText}>{t("challengeRestart.restart")}</Text>
+                        <Text style={restartStyles.pillText}>{t(isCuratedChallenge(item) ? "challengeRestart.start" : "challengeRestart.restart")}</Text>
                       </TouchableOpacity>
                     </View>
                   ) : null}
@@ -1092,6 +1092,7 @@ const Events = ({
       </KeyboardSheetModal>
       <RestartChallengeConfirmSheet
         visible={Boolean(restartTarget)}
+        curated={Boolean(restartTarget && isCuratedChallenge(restartTarget))}
         onClose={() => setRestartTarget(null)}
         onConfirm={() => {
           const source = restartTarget;
