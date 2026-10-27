@@ -816,10 +816,10 @@ const CreateEvent = () => {
           <EventScheduleEditor value={recurrenceDraft.frequency === "none" ? scheduleDrafts : scheduleDrafts.slice(0, 1)} onChange={setScheduleDrafts} allowMultiple={recurrenceDraft.frequency === "none"} />
           <EventRecurrenceEditor value={recurrenceDraft} onChange={setRecurrenceDraft} defaultWeekday={defaultWeekday} schedule={schedule} />
           <Text style={localStyles.label}>Camino espiritual</Text>
-          <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} />
+          <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} style={localStyles.pathCards} />
 
-          <EventClassificationPicker label="Categoría · qué actividad es" options={EVENT_CATEGORIES} value={category} onChange={setCategory} />
-          <EventClassificationPicker label="Tipo · cómo se participa" options={EVENT_PARTICIPATION_TYPES} value={participationType} onChange={setParticipationType} />
+          <EventClassificationPicker label="Categoría · qué actividad es" options={EVENT_CATEGORIES} value={category} onChange={setCategory} style={localStyles.pickerSection} labelStyle={localStyles.pickerLabel} />
+          <EventClassificationPicker label="Tipo · cómo se participa" options={EVENT_PARTICIPATION_TYPES} value={participationType} onChange={setParticipationType} style={localStyles.pickerSection} labelStyle={localStyles.pickerLabel} />
           <Text style={localStyles.label}>Modalidad</Text>
           <View style={localStyles.choiceRow}>
             <TouchableOpacity

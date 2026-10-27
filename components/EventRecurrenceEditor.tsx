@@ -49,11 +49,11 @@ export default function EventRecurrenceEditor({ value, onChange, defaultWeekday,
 }
 const c = vibesTheme.colors;
 const s = StyleSheet.create({
-  group: { gap: 8, marginVertical: 16 },
+  group: { gap: 8, marginTop: 20 },
   label: { fontSize: 14, lineHeight: 20, color: c.primaryText, fontFamily: vibesTheme.fonts.semibold },
   options: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  option: { minHeight: 44, justifyContent: "center", paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 16, backgroundColor: c.surface },
-  day: { flexGrow: 1, minWidth: 36, minHeight: 44, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 12, backgroundColor: c.surface },
+  option: { minHeight: 40, justifyContent: "center", paddingHorizontal: 14, paddingVertical: 0, borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 16, backgroundColor: c.surface },
+  day: { flexGrow: 1, minWidth: 36, minHeight: 40, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 12, backgroundColor: c.surface },
   selected: { borderColor: c.accentMustard, backgroundColor: `${c.accentMustard}24` },
   optionText: { fontSize: 14, lineHeight: 20, color: c.primaryText, fontFamily: vibesTheme.fonts.semibold },
   hint: { fontSize: 14, lineHeight: 20, color: c.secondaryText, fontFamily: vibesTheme.fonts.regular },
