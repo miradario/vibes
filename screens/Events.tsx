@@ -58,13 +58,6 @@ type FeedListItem =
       subtitle?: string;
     }
   | {
-      kind: "accordion";
-      id: ChallengeBlock;
-      title: string;
-      count: number;
-      open: boolean;
-    }
-  | {
       kind: "feed";
       item: EventFeedItem;
       restartable?: boolean;
@@ -74,9 +67,6 @@ type FeedListItem =
       featured?: boolean;
     };
 
-type PrivateBlock = "mine" | "invitations" | "participating";
-type PublicBlock = "joined" | "active" | "upcoming";
-type ChallengeBlock = PrivateBlock | PublicBlock;
 type ChallengeTab = "public" | "private" | "vibes";
 
 const AccordionReveal = ({ children }: { children: React.ReactNode }) => {
@@ -328,14 +318,6 @@ const Events = ({
   const loadMoreFeed = useCallback(() => {
     if (feedHasNextPage && !feedIsFetchingNextPage) void fetchNextFeedPage();
   }, [feedHasNextPage, feedIsFetchingNextPage, fetchNextFeedPage]);
-  const [openBlocks, setOpenBlocks] = useState<Record<ChallengeBlock, boolean>>({
-    mine: true,
-    invitations: false,
-    participating: false,
-    joined: true,
-    active: true,
-    upcoming: false,
-  });
   const [restartTarget, setRestartTarget] = useState<EventFeedItem | null>(null);
   const viewerId = session?.user?.id;
   const invitationsQuery = useReceivedChallengeInvitationsQuery(section === "challenge" ? viewerId : undefined);
@@ -358,7 +340,10 @@ const Events = ({
   );
 
   const isMyChallenge = useCallback(
-    (item: EventFeedItem) => joinedChallengeIds.has(item.id) || (Boolean(viewerId) && item.createdBy === viewerId),
+    // Joined challenges, plus private ones the viewer created (so they never
+    // disappear). Public ones created but not joined stay in Público.
+    (item: EventFeedItem) =>
+      joinedChallengeIds.has(item.id) || (Boolean(viewerId) && item.createdBy === viewerId && item.visibility === "private"),
     [joinedChallengeIds, viewerId],
   );
   const normalizedSearch = normalizeSearchText(search);
@@ -580,12 +565,14 @@ const Events = ({
     if (!viewerId) { challengeTabDecided.current = true; return; }
     if (myEventGroupsLoading || invitationsQuery.isLoading) return;
     challengeTabDecided.current = true;
-    const hasOwn = myEventGroups.some(
-      (group) => group.eventType === "challenge" && group.event && !isFinishedChallenge(group.event) && !isCuratedChallenge(group.event),
-    );
+    const hasOwn =
+      myEventGroups.some(
+        (group) => group.eventType === "challenge" && group.event && !isFinishedChallenge(group.event) && !isCuratedChallenge(group.event),
+      ) ||
+      items.some((item) => item.type === "challenge" && isMyChallenge(item) && !isFinishedChallenge(item) && !isCuratedChallenge(item));
     const hasInvitation = (invitationsQuery.data ?? []).some((invitation) => invitation.status !== "accepted");
     if (hasOwn || hasInvitation) setChallengeTabState("private");
-  }, [invitationsQuery.data, invitationsQuery.isLoading, myEventGroups, myEventGroupsLoading, pastOnly, section, viewerId]);
+  }, [invitationsQuery.data, invitationsQuery.isLoading, isMyChallenge, items, myEventGroups, myEventGroupsLoading, pastOnly, section, viewerId]);
 
   const listIsLoading =
     isLoading ||
@@ -827,32 +814,6 @@ const Events = ({
             </View>
           }
           renderItem={({ item: listItem }) => {
-            if (listItem.kind === "accordion") {
-              return (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: listItem.open }}
-                  style={[localStyles.feedSectionHeader, localStyles.accordionSectionHeader]}
-                  activeOpacity={0.85}
-                  onPress={() =>
-                    setOpenBlocks((previous) => ({
-                      ...previous,
-                      [listItem.id]: !previous[listItem.id],
-                    }))
-                  }
-                >
-                  <Text style={[localStyles.feedSectionTitle, localStyles.accordionSectionTitle]}>
-                    {listItem.title}{" "}
-                    <Text style={localStyles.accordionSectionCount}>({listItem.count})</Text>
-                  </Text>
-                  <Icon
-                    name={listItem.open ? "chevron-up" : "chevron-down"}
-                    size={22}
-                    color={vibesTheme.colors.accentBlue}
-                  />
-                </TouchableOpacity>
-              );
-            }
             if (listItem.kind === "section") {
               return (
                 <View style={[localStyles.feedSectionHeader, section === "event" && { marginTop: 16 }]}>
@@ -1263,21 +1224,6 @@ feedSectionHeader: {
     marginTop: 4,
     marginBottom: 10,
     paddingHorizontal: 4,
-  },
-accordionSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-accordionSectionTitle: {
-    flex: 1,
-  },
-accordionSectionCount: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 18,
-    lineHeight: 29,
-    fontFamily: vibesTheme.fonts.regular,
   },
 feedSectionTitle: {
     color: vibesTheme.colors.primaryText,
