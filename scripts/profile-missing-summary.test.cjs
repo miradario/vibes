@@ -53,3 +53,9 @@ test('FTUX mode: email excluded from percent but kept in summary', () => {
   assert.equal(noPhoto.missingSummary, '1 foto y validar email');
   assert.equal(noPhoto.percent, 60);
 });
+test('sobre mí and the first question group are a single "sobre vos" item', () => {
+  const both = getProfileCompletion(profile, { ...prefs, aboutMe: '' }, true, { ...allAnswers, gender: '' });
+  assert.equal(both.missingSummary, 'completar sobre vos');
+  assert.equal(getProfileCompletion(profile, { ...prefs, openTo: [] }, true, allAnswers).missingSummary, 'completar sobre vos');
+  assert.equal(summarizeMissing(['plans', 'interests', 'aboutYou', 'basics'].map(group => ({ group }))), 'completar datos básicos, completar sobre vos, completar intereses y más');
+});

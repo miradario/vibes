@@ -8,16 +8,15 @@ const filled = (value: unknown): boolean =>
 
 const PHOTO_SLOTS = 1;
 
-export type ProfileMissingGroup = "photos" | "email" | "basics" | "aboutMe" | "identity" | "interests" | "plans";
+export type ProfileMissingGroup = "photos" | "email" | "basics" | "aboutYou" | "interests" | "plans";
 
 /** Display order of the short "what's missing" summary. */
-const GROUP_ORDER: ProfileMissingGroup[] = ["photos", "email", "basics", "aboutMe", "identity", "interests", "plans"];
-const QUESTION_GROUP_KEYS: ProfileMissingGroup[] = ["identity", "interests", "plans"];
+const GROUP_ORDER: ProfileMissingGroup[] = ["photos", "email", "basics", "aboutYou", "interests", "plans"];
+const QUESTION_GROUP_KEYS: ProfileMissingGroup[] = ["aboutYou", "interests", "plans"];
 const GROUP_COPY: Record<Exclude<ProfileMissingGroup, "photos">, string> = {
   email: "validar email",
   basics: "completar datos básicos",
-  aboutMe: "completar sobre mí",
-  identity: "completar sobre vos",
+  aboutYou: "completar sobre vos",
   interests: "completar intereses",
   plans: "completar planes",
 };
@@ -84,19 +83,19 @@ export const getProfileCompletion = (
       label: "Sobre mí",
       value: preferences?.aboutMe ?? preferences?.about_me,
       screen: "ProfileQuestions",
-      group: "aboutMe",
+      group: "aboutYou",
     },
     {
       label: "Me trae a Vibes",
       value: preferences?.openTo ?? preferences?.open_to,
       screen: "ProfileQuestions",
-      group: "aboutMe",
+      group: "aboutYou",
     },
     {
       label: "Prácticas",
       value: preferences?.spiritualPath ?? preferences?.spiritual_path,
       screen: "ProfileQuestions",
-      group: "aboutMe",
+      group: "aboutYou",
     },
     {
       label: "Fecha de nacimiento",
