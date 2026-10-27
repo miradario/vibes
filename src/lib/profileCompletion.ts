@@ -41,12 +41,26 @@ export const summarizeMissing = (missing: { group: ProfileMissingGroup }[]) => {
 const PHOTO_WEIGHT = 40;
 
 /** Photos contribute 40%; all other onboarding fields share the remaining 60%. */
-export const getProfileCompletion = (profile: Data, preferences: Data, emailVerified = false, answers?: ProfileAnswers) => {
+export type ProfileCompletionOptions = {
+  /**
+   * When false, email validation is left out of `percent`/`completed`/`total`
+   * (and `nextLabel`/`nextScreen`) but still listed in `missingSummary`.
+   */
+  emailCountsInPercent?: boolean;
+};
+
+export const getProfileCompletion = (
+  profile: Data,
+  preferences: Data,
+  emailVerified = false,
+  answers?: ProfileAnswers,
+  { emailCountsInPercent = true }: ProfileCompletionOptions = {}
+) => {
   const photos = [...new Set<string>((profile?.photos ?? [])
     .map((photo: any) => typeof photo === "string" ? photo : photo?.url)
     .filter((url: unknown): url is string => typeof url === "string" && !!url.trim())
     .map((url: string) => url.trim()))].slice(0, PHOTO_SLOTS);
-  const fields: { label: string; value: unknown; screen: string; group: ProfileMissingGroup }[] = [
+  const allFields: { label: string; value: unknown; screen: string; group: ProfileMissingGroup }[] = [
     { label: "Validar email", value: emailVerified ? "verified" : "", screen: "EditProfile", group: "email" },
     {
       label: "Nombre",
@@ -101,6 +115,8 @@ export const getProfileCompletion = (profile: Data, preferences: Data, emailVeri
       return { label: field.label, value, screen: "ProfileQuestions", group: QUESTION_GROUP_KEYS[groupIndex] ?? "plans" };
     })),
   ];
+  const fields = emailCountsInPercent ? allFields : allFields.filter((field) => field.group !== "email");
+  const allMissing = allFields.filter((field) => !filled(field.value));
   const missing = fields.filter((field) => !filled(field.value));
   const completed = fields.length - missing.length;
   const otherTotal = fields.length - PHOTO_SLOTS;
@@ -113,8 +129,8 @@ export const getProfileCompletion = (profile: Data, preferences: Data, emailVeri
       (otherCompleted / otherTotal) * (100 - PHOTO_WEIGHT)
     ),
     nextLabel: missing[0]?.label,
-    /** Same fields that drive `percent`; empty string at 100%. */
-    missingSummary: summarizeMissing(missing),
+    /** Same fields that drive `percent` (plus email when excluded from it); empty only when nothing is missing. */
+    missingSummary: summarizeMissing(allMissing),
     nextScreen: missing[0]?.screen ?? "ProfileQuestions",
   };
 };

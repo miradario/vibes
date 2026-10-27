@@ -39,3 +39,17 @@ test('summary comes from the same fields as the percent', () => {
   const plans = getProfileCompletion(profile, prefs, true, { ...allAnswers, idealPlan: '' });
   assert.equal(plans.missingSummary, 'completar planes');
 });
+test('FTUX mode: email excluded from percent but kept in summary', () => {
+  const ftux = getProfileCompletion(profile, prefs, false, allAnswers, { emailCountsInPercent: false });
+  assert.equal(ftux.percent, 100);
+  assert.equal(ftux.nextLabel, undefined);
+  assert.equal(ftux.missingSummary, 'validar email');
+  const counted = getProfileCompletion(profile, prefs, false, allAnswers);
+  assert.ok(counted.percent < 100);
+  assert.equal(counted.total, ftux.total + 1);
+  const verified = getProfileCompletion(profile, prefs, true, allAnswers, { emailCountsInPercent: false });
+  assert.equal(verified.missingSummary, '');
+  const noPhoto = getProfileCompletion({ ...profile, photos: [] }, prefs, false, allAnswers, { emailCountsInPercent: false });
+  assert.equal(noPhoto.missingSummary, '1 foto y validar email');
+  assert.equal(noPhoto.percent, 60);
+});
