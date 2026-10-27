@@ -38,6 +38,8 @@ import styles, {
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import VibesLoader from "../components/VibesLoader";
+import LocationSuggestionsList, { useLocationSuggestions } from "../components/LocationSuggestions";
+import type { LocationSuggestion } from "../src/lib/locationSuggestions";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -258,6 +260,12 @@ const CreateEvent = () => {
   const capacityInputRef = useRef<TextInput>(null);
   const googleMapsConfig = getGoogleMapsClientConfig();
   const googleMapsApiKey = googleMapsConfig.apiKey;
+  const [isLocationFocused, setIsLocationFocused] = useState(false);
+  const locationSuggestions = useLocationSuggestions(
+    location,
+    modality === "in_person" && isLocationFocused && !validatedLocation,
+    googleMapsConfig,
+  );
   // iOS: preview vía la función map-preview (Android sigue igual).
   const iosMapPreviewSource =
     typeof validatedLocation?.lat === "number" &&
@@ -359,6 +367,24 @@ const CreateEvent = () => {
     }
   };
 
+  const handleSelectLocationSuggestion = async (suggestion: LocationSuggestion) => {
+    Keyboard.dismiss();
+    try {
+      const resolved = await locationSuggestions.resolve(suggestion);
+      setValidatedLocation(resolved);
+      setLocation(resolved.address);
+      setMapPreviewFailed(false);
+      locationSuggestions.clear();
+      setIsLocationFocused(false);
+    } catch (error) {
+      console.error("Error resolving location suggestion", error);
+      showAlertAfterKeyboard(
+        "No pudimos ubicar ese lugar",
+        "Probá con otra sugerencia o tocá \"Validar ubicación\".",
+      );
+    }
+  };
+
   const handleValidateLocation = async () => {
     const trimmedLocation = location.trim();
     if (!trimmedLocation) {
@@ -431,10 +457,6 @@ const CreateEvent = () => {
         { headers },
       );
       const data = await response.json();
-      console.log("googleMaps:geocode:request", {
-        address: trimmedLocation,
-      });
-      console.log("googleMaps:geocode:response", data);
 
       if (
         data?.status === "REQUEST_DENIED" ||
@@ -831,6 +853,13 @@ const CreateEvent = () => {
                   setValidatedLocation(null);
                   setMapPreviewFailed(false);
                 }}
+                onFocus={() => setIsLocationFocused(true)}
+                onBlur={() => {
+                  // Deja terminar el toque sobre una sugerencia antes de ocultarlas.
+                  setTimeout(() => setIsLocationFocused(false), 250);
+                }}
+                autoCorrect={false}
+                textContentType="fullStreetAddress"
                 returnKeyType="next"
                 blurOnSubmit={false}
                 onSubmitEditing={() => {
@@ -841,6 +870,17 @@ const CreateEvent = () => {
                   capacityInputRef.current?.focus();
                 }}
               />
+              <LocationSuggestionsList
+                status={locationSuggestions.status}
+                suggestions={locationSuggestions.suggestions}
+                isResolving={locationSuggestions.isResolving}
+                onSelect={handleSelectLocationSuggestion}
+              />
+              {location.trim() && !validatedLocation ? (
+                <Text style={localStyles.locationHint}>
+                  Elegí una sugerencia para ubicarlo en el mapa.
+                </Text>
+              ) : null}
               <TouchableOpacity
                 style={localStyles.validateButton}
                 onPress={handleValidateLocation}
@@ -1282,6 +1322,12 @@ const legacyStyles = StyleSheet.create({
   validateButtonText: {
     color: DARK_GRAY,
     fontWeight: "400",
+  },
+  locationHint: {
+    marginTop: 8,
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 13,
+    lineHeight: 18,
   },
   validatedText: {
     marginTop: 8,
