@@ -284,7 +284,7 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
                       onPress: () => {
                         closingAfterRouteChange.current = true;
                         send({ type: "PROFILE_START" });
-                        navigate(completion.nextScreen || "EditProfile");
+                        navigate(completion.nextScreen || "EditProfile", completion.nextParams());
                       },
                     },
                     { label: t("ftux.profile.later"), variant: "skip", onPress: () => send({ type: "PROFILE_LATER" }) },

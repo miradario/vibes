@@ -48,6 +48,10 @@ export type ProfileCompletionOptions = {
   emailCountsInPercent?: boolean;
 };
 
+/** Navigation params for the first missing item; `now` makes the photo request unique. */
+export const nextProfileParams = (completion: { nextOpensPhotoPicker: boolean }, now = Date.now()) =>
+  completion.nextOpensPhotoPicker ? { photoRequestId: now } : undefined;
+
 export const getProfileCompletion = (
   profile: Data,
   preferences: Data,
@@ -117,6 +121,9 @@ export const getProfileCompletion = (
   const fields = emailCountsInPercent ? allFields : allFields.filter((field) => field.group !== "email");
   const allMissing = allFields.filter((field) => !filled(field.value));
   const missing = fields.filter((field) => !filled(field.value));
+  const nextTarget = [...allMissing].sort(
+    (a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group)
+  )[0];
   const completed = fields.length - missing.length;
   const otherTotal = fields.length - PHOTO_SLOTS;
   const otherCompleted = completed - photos.length;
@@ -130,6 +137,9 @@ export const getProfileCompletion = (
     nextLabel: missing[0]?.label,
     /** Same fields that drive `percent` (plus email when excluded from it); empty only when nothing is missing. */
     missingSummary: summarizeMissing(allMissing),
-    nextScreen: missing[0]?.screen ?? "ProfileQuestions",
+    /** Screen for the first missing item in summary order (email included even when excluded from the %). */
+    nextScreen: nextTarget?.screen ?? "ProfileQuestions",
+    /** True when the first missing item is a photo: open EditProfile's photo picker via `photoRequestId`. */
+    nextOpensPhotoPicker: nextTarget?.group === "photos",
   };
 };

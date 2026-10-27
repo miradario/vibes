@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getProfileCompletion } from "../../src/lib/profileCompletion";
+import { getProfileCompletion, nextProfileParams } from "../../src/lib/profileCompletion";
 import { isEmailOwnershipVerified } from "../../src/auth/emailVerification";
 import { useEmailOwnershipQuery } from "../../src/queries/emailOwnership.queries";
 import { readProfileAnswers } from "../../src/lib/profileQuestions";
@@ -25,7 +25,7 @@ export function useFtuxProfileCompletion(userId?: string | null) {
   });
   const { data: emailOwner } = useEmailOwnershipQuery(id);
   const ready = Boolean(id) && profileReady && preferencesReady && answersReady;
-  if (!ready) return { ready: false, percent: 0, complete: false, nextScreen: "EditProfile", missingSummary: "", profile };
+  if (!ready) return { ready: false, percent: 0, complete: false, nextScreen: "EditProfile", nextParams: () => undefined, missingSummary: "", profile };
   const completion = getProfileCompletion(
     profile,
     preferences,
@@ -39,6 +39,7 @@ export function useFtuxProfileCompletion(userId?: string | null) {
     percent: completion.percent,
     complete: completion.percent >= 100,
     nextScreen: completion.nextScreen,
+    nextParams: () => nextProfileParams(completion),
     missingSummary: completion.missingSummary,
     profile,
   };

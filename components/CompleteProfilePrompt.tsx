@@ -11,7 +11,7 @@ import {
   hasMissingProfileAnswers,
   readProfileAnswers,
 } from "../src/lib/profileQuestions";
-import { getProfileCompletion } from "../src/lib/profileCompletion";
+import { getProfileCompletion, nextProfileParams } from "../src/lib/profileCompletion";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -110,7 +110,7 @@ export default function CompleteProfilePrompt({
   return (
     <TouchableOpacity
       accessibilityRole="button"
-      onPress={() => navigation.navigate("VibesOnboardingFlow" as never, {resume:true, skipContinueChoice:true} as never)}
+      onPress={() => navigation.navigate(completion.nextScreen as never, nextProfileParams(completion) as never)}
       style={[styles.card, compact && styles.compactCard]}
       activeOpacity={0.84}
     >

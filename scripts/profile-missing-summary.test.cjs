@@ -10,7 +10,7 @@ function load(file, dependencies = {}) {
   return exports;
 }
 const q = load('src/lib/profileQuestionOptions.ts');
-const { getProfileCompletion, summarizeMissing } = load('src/lib/profileCompletion.ts', { './profileQuestions': q });
+const { getProfileCompletion, summarizeMissing, nextProfileParams } = load('src/lib/profileCompletion.ts', { './profileQuestions': q });
 const allAnswers = Object.fromEntries(q.QUESTION_GROUPS.flatMap(g => g.fields.map(f => [f.key, 'x'])));
 const profile = { photos: ['a.jpg'], displayName: 'Ana', locationLabel: 'BA', birthDate: '1990-01-01' };
 const prefs = { aboutMe: 'Bio', openTo: ['Eventos'], spiritualPath: ['Yoga'] };
@@ -58,4 +58,20 @@ test('sobre mí and the first question group are a single "sobre vos" item', () 
   assert.equal(both.missingSummary, 'completar sobre vos');
   assert.equal(getProfileCompletion(profile, { ...prefs, openTo: [] }, true, allAnswers).missingSummary, 'completar sobre vos');
   assert.equal(summarizeMissing(['plans', 'interests', 'aboutYou', 'basics'].map(group => ({ group }))), 'completar datos básicos, completar sobre vos, completar intereses y más');
+});
+test('next screen follows summary order, including email outside the percent', () => {
+  const photo = getProfileCompletion({ ...profile, photos: [] }, { ...prefs, aboutMe: '' }, false, allAnswers);
+  assert.equal(photo.nextScreen, 'EditProfile');
+  assert.equal(photo.nextOpensPhotoPicker, true);
+  assert.deepEqual({ ...nextProfileParams(photo, 5) }, { photoRequestId: 5 });
+  const email = getProfileCompletion(profile, prefs, false, { ...allAnswers, hobbies: [] }, { emailCountsInPercent: false });
+  assert.equal(email.nextScreen, 'EditProfile');
+  assert.equal(email.nextOpensPhotoPicker, false);
+  assert.equal(nextProfileParams(email), undefined);
+  const onlyEmail = getProfileCompletion(profile, prefs, false, allAnswers, { emailCountsInPercent: false });
+  assert.equal(onlyEmail.percent, 100);
+  assert.equal(onlyEmail.nextScreen, 'EditProfile');
+  assert.equal(getProfileCompletion({ ...profile, birthDate: '' }, { ...prefs, aboutMe: '' }, true, allAnswers).nextScreen, 'EditProfile');
+  assert.equal(getProfileCompletion(profile, { ...prefs, aboutMe: '' }, true, allAnswers).nextScreen, 'ProfileQuestions');
+  assert.equal(getProfileCompletion(profile, prefs, true, { ...allAnswers, idealPlan: '' }).nextScreen, 'ProfileQuestions');
 });

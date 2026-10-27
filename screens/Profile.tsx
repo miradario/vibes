@@ -25,7 +25,7 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
 import { useI18n } from "../src/i18n";
-import { getProfileCompletion } from "../src/lib/profileCompletion";
+import { getProfileCompletion, nextProfileParams } from "../src/lib/profileCompletion";
 import VibesLoader from "../components/VibesLoader";
 import { getInstalledAppVersion, getInstalledAppBuildNumber } from "../src/lib/appUpdateGate";
 import appConfig from "../app.json";
@@ -121,6 +121,12 @@ const Profile = () => {
     });
   };
 
+  const completionReady = Boolean(profile) && !loadingPreferences && !preferencesError && !loadingAnswers && !answersError;
+  const openCompletion = () =>
+    completionReady && completion.missingSummary
+      ? navigation.navigate(completion.nextScreen as never, nextProfileParams(completion) as never)
+      : navigation.navigate("VibesOnboardingFlow" as never, {resume:true} as never);
+
   return (
     <ScreenContainer scroll edges={["top", "left", "right"]}
       contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: getBottomTabContentPadding(insets.bottom, 48) }}
@@ -140,7 +146,7 @@ const Profile = () => {
                 ? completion.percent
                 : null
             }
-            onPress={() => navigation.navigate("VibesOnboardingFlow" as never, {resume:true} as never)}
+            onPress={openCompletion}
           /></View>
           <View style={localStyles.profileInfo}>
             <View style={localStyles.nameRow}>
@@ -156,7 +162,7 @@ const Profile = () => {
             </View>
             <Text style={localStyles.profileLocation}>{location}</Text>
             {profile && !loadingPreferences && !preferencesError && !loadingAnswers && !answersError && completion.missingSummary ? (
-              <Text style={localStyles.missingSummary} numberOfLines={1}>
+              <Text style={localStyles.missingSummary} numberOfLines={1} onPress={openCompletion} accessibilityRole="button">
                 {`Falta: ${completion.missingSummary}`}
               </Text>
             ) : null}
