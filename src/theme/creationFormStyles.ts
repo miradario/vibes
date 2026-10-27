@@ -14,7 +14,7 @@ export const creationFormStyles = StyleSheet.create({
   createButtonDisabled:{opacity:0.42},
   fixedFooter:{position:"relative",paddingHorizontal:24,paddingTop:12,backgroundColor:c.surface,borderTopWidth:1,borderTopColor:`${c.primaryText}0F`,shadowOpacity:0,elevation:0},
   // Full definition (the spread over each screen's legacy styles replaces the whole key): centered text, no extra space below.
-  choiceChip:{minHeight:48,borderRadius:16,paddingHorizontal:12,paddingVertical:0,borderWidth:1,borderColor:`${c.primaryText}1F`,alignItems:"center",justifyContent:"center"},
+  choiceChip:{minHeight:40,borderRadius:16,paddingHorizontal:12,paddingVertical:0,borderWidth:1,borderColor:`${c.primaryText}1F`,alignItems:"center",justifyContent:"center"},
   choiceChipActive:{backgroundColor:`${c.accentBlue}14`,borderColor:c.accentBlue},
   choiceChipText:{fontSize:14,lineHeight:20,fontFamily:vibesTheme.fonts.semibold,color:c.primaryText},
   choiceChipTextActive:{color:c.primaryText},
