@@ -11,6 +11,7 @@ import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Icon from "../components/Icon";
 import { Text, TextInput } from "../components/Typography";
 import { launchAppCamera } from "../components/AppCamera";
+import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import FriendsPickerSheet from "../components/challengeRestart/FriendsPickerSheet";
 import { restartStyles } from "../components/challengeRestart/styles";
 import { useI18n } from "../src/i18n";
@@ -72,7 +73,8 @@ const RestartChallenge = () => {
     value.setHours(0, 0, 0, 0);
     return value;
   }, []);
-  const sameAsOriginal = Boolean(startDate && originalStart && sameCalendarDay(startDate, originalStart));
+  // Curated "Por Vibes" challenges are a catalog: any start date is fine.
+  const sameAsOriginal = Boolean(source && !isCuratedChallenge(source) && startDate && originalStart && sameCalendarDay(startDate, originalStart));
   const canSubmit =
     Boolean(source && userId && title.trim() && startDate && !sameAsOriginal) && !restart.isPending;
   const coverSource = imageUri

@@ -84,6 +84,7 @@ import { WHITE } from "../assets/styles";
 import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
 import { useI18n } from "../src/i18n";
 import { useReceivedChallengeInvitationsQuery } from "../src/queries/challengeRestart.queries";
+import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import RestartChallengeConfirmSheet from "../components/challengeRestart/RestartChallengeConfirmSheet";
 import ChallengeInviteesSection from "../components/challengeRestart/ChallengeInviteesSection";
 import ChallengeInvitationActions from "../components/challengeRestart/ChallengeInvitationActions";
@@ -1082,7 +1083,8 @@ const ChallengeDetailScreen = () => {
     challenge.totalDays
   );
   const isChallengeUpcoming = challengeTimeline.status === "upcoming";
-  const canRestart = Boolean(userId && event && challengeTimeline.status === "finished");
+  // Curated "Por Vibes" challenges can be restarted at any time (catalog).
+  const canRestart = Boolean(userId && event && (challengeTimeline.status === "finished" || isCuratedChallenge(event)));
   const todayKey = localDay;
   const hasRemoteTodayCheckin =
     participant?.checkedInToday || remoteCheckins.includes(todayKey);
