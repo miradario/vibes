@@ -272,3 +272,5 @@ La navegación inferior ocupa todo el ancho de la pantalla, sin márgenes latera
 Inicio es el primer acceso de la barra inferior, a la izquierda, seguido de Desafíos, Eventos, Clases, Descubrir y Chats. Distribuir los accesos visibles con el mismo ancho y conservar su orden en la guía FTUX.
 
 Los indicadores seleccionados de la barra inferior alternan los acentos por acceso: Inicio coral, Desafíos azul, Eventos coral, Clases mostaza, Descubrir azul y Chats coral. Los iconos sobre estos fondos conservan `primaryText` para legibilidad.
+
+Descubrir no muestra el acceso “Clases y espacios”. Las clases se consultan desde su acceso propio en la navegación inferior.
