@@ -1,12 +1,18 @@
 import type { EventFeedItem } from "../queries/events.queries";
 import { buildPublicContentUrl } from "./socialShare";
+import { remainingUpcomingSessions } from "./eventSchedule";
+
+function moreDates(event: EventFeedItem) {
+  const more = remainingUpcomingSessions(event.schedule, event.startsAt);
+  return more === 1 ? " (y 1 fecha más)" : more > 1 ? ` (y ${more} fechas más)` : "";
+}
 
 export function buildEventInvitation(event: EventFeedItem) {
   if (event.type !== "event" || !event.id)
     throw new Error("Evento no disponible");
   return [
     `Te invito a "${event.title}" en Vibes.`,
-    event.date || null,
+    event.date ? `${event.date}${moreDates(event)}` : null,
     buildPublicContentUrl(event),
   ]
     .filter(Boolean)

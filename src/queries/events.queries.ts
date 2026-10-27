@@ -1,4 +1,4 @@
-import { normalizeSchedule, formatAttendees, type EventSession } from "../lib/eventSchedule";
+import { normalizeSchedule, formatAttendees, displayEventSession, type EventSession } from "../lib/eventSchedule";
 import { localDayKey, calendarDayNumber } from "../lib/challengeProgress";
 import { useLocalDay } from "../hooks/useLocalDay";
 import { parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../constants/eventClassification";
@@ -187,7 +187,8 @@ const formatEventDateTime = (value: Date) =>
 const mapEventRow = (row: EventRow): EventFeedItem => {
   const type = row.type === "challenge" ? "challenge" : "event";
   const startsAt = typeof row.starts_at === "string" ? row.starts_at : null;
-  const parsedStartsAt = startsAt ? new Date(startsAt) : null;
+  const displaySession = displayEventSession(row.schedule, startsAt);
+  const parsedStartsAt = displaySession ? new Date(displaySession.startsAt) : startsAt ? new Date(startsAt) : null;
   const capacity =
     typeof row.capacity === "number"
       ? row.capacity

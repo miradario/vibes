@@ -144,3 +144,35 @@ export function formatEventRecurrence(schedule: unknown): string | null {
   const days = [...recurrence.weekdays].sort((a, b) => (a || 7) - (b || 7)).map(day => names[day]);
   return `Todos los ${days.join(" y ")} · ${time}`;
 }
+
+/** Session to display for an event: the next upcoming one, or the last one if all already passed. */
+export function displayEventSession(schedule: unknown, startsAt?: string | null, now = Date.now()): EventSession | null {
+  const sessions = normalizeSchedule(schedule, startsAt);
+  return nextEventSession(sessions, null, now) ?? sessions[sessions.length - 1] ?? null;
+}
+
+/** How many sessions are still upcoming after the displayed one. */
+export function remainingUpcomingSessions(schedule: unknown, startsAt?: string | null, now = Date.now()): number {
+  const upcoming = normalizeSchedule(schedule, startsAt).filter((entry) => Date.parse(entry.endsAt ?? entry.startsAt) > now);
+  return Math.max(upcoming.length - 1, 0);
+}
+
+export type ScheduleDraftIssue = { error?: string; warning?: string };
+
+/**
+ * Inline validation per draft. Blocks new or changed starts in the past; sessions that
+ * were already saved (same start as before) are allowed so old events stay editable.
+ * Warns when the end is more than a day after the start.
+ */
+export function validateScheduleDrafts(drafts: EventScheduleDraft[], savedStarts: string[] = [], now = Date.now()): ScheduleDraftIssue[] {
+  const saved = new Set(savedStarts.flatMap((value) => Number.isFinite(Date.parse(value)) ? [new Date(value).toISOString()] : []));
+  return drafts.map((draft) => {
+    const start = parseSession(draft);
+    if (!start) return {};
+    const issue: ScheduleDraftIssue = {};
+    if (start.getTime() < now && !saved.has(start.toISOString())) issue.error = "La fecha de inicio ya pasó";
+    const end = draft.endDate || draft.endTime ? parseSession({ date: draft.endDate ?? "", time: draft.endTime ?? "" }) : null;
+    if (end && end.getTime() - start.getTime() > 24 * 60 * 60 * 1000) issue.warning = "El fin es más de un día después del inicio, ¿es correcto?";
+    return issue;
+  });
+}

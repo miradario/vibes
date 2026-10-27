@@ -4,7 +4,7 @@ import DiscoverPathCards from "../components/DiscoverPathCards";
 import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
 import EventRecurrenceEditor, { type EventRecurrenceDraft } from "../components/EventRecurrenceEditor";
 import EventScheduleEditor from "../components/EventScheduleEditor";
-import { normalizeSchedule, serializeSchedule, sessionDraft, getEventRecurrence, buildRecurringSchedule } from "../src/lib/eventSchedule";
+import { normalizeSchedule, serializeSchedule, sessionDraft, getEventRecurrence, buildRecurringSchedule, validateScheduleDrafts } from "../src/lib/eventSchedule";
 import EventClassificationPicker from "../components/EventClassificationPicker";
 import { EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../src/constants/eventClassification";
 import { launchAppCamera } from "../components/AppCamera";
@@ -208,6 +208,9 @@ const CreateEvent = () => {
     count: Number(recurrenceDraft.count),
     weekdays: recurrenceDraft.weekdays.length ? recurrenceDraft.weekdays : [defaultWeekday],
   });
+  const visibleDrafts = recurrenceDraft.frequency === "none" ? scheduleDrafts : scheduleDrafts.slice(0, 1);
+  const scheduleIssues = validateScheduleDrafts(visibleDrafts, isEditing ? normalizeSchedule(editingEvent?.schedule, editingEvent?.startsAt).map((entry) => entry.startsAt) : []);
+  const hasPastStart = scheduleIssues.some((issue) => issue.error);
   const eventDateTime = schedule?.length ? new Date(schedule[0].startsAt) : null;
   const [unlimitedCapacity, setUnlimitedCapacity] = useState(editingEvent?.capacity === 0);
   const [category, setCategory] = useState<EventCategory | null>(parseEventCategory(editingEvent?.category));
@@ -525,6 +528,11 @@ const CreateEvent = () => {
       return;
     }
 
+    if (hasPastStart) {
+      Alert.alert("Revisá las fechas", "La fecha de inicio ya pasó. Elegí una fecha futura.");
+      return;
+    }
+
     if (invalidLinks.length > 0) {
       Alert.alert(
         "Links inválidos",
@@ -813,7 +821,7 @@ const CreateEvent = () => {
           ) : null}
 
           <Text style={localStyles.label}>{recurrenceDraft.frequency === "none" ? "Fechas y horarios" : "Primer encuentro de la serie"}</Text>
-          <EventScheduleEditor value={recurrenceDraft.frequency === "none" ? scheduleDrafts : scheduleDrafts.slice(0, 1)} onChange={setScheduleDrafts} allowMultiple={recurrenceDraft.frequency === "none"} />
+          <EventScheduleEditor value={visibleDrafts} issues={scheduleIssues} onChange={setScheduleDrafts} allowMultiple={recurrenceDraft.frequency === "none"} />
           <EventRecurrenceEditor value={recurrenceDraft} onChange={setRecurrenceDraft} defaultWeekday={defaultWeekday} schedule={schedule} />
           <Text style={localStyles.label}>Camino espiritual</Text>
           <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} style={localStyles.pathCards} />
