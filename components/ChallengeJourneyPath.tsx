@@ -69,7 +69,7 @@ export default function ChallengeJourneyPath({ totalDays, currentDay, completedD
           <View style={[s.node, (done || isToday) && s.nodeActive, isToday && s.current]}>
             {done ? <Icon name="checkmark" size={25} color={c.surface} /> : <Text style={[s.number, isToday && { color: c.surface }]}>{day}</Text>}
           </View>
-          <Text style={[s.dayLabel, { maxWidth: width - x(i) - 36 }, isToday && s.currentLabel]}>{isToday ? "Tu actividad de hoy" : `Día ${day}`}</Text>
+          <Text numberOfLines={isToday ? 2 : 1} style={[s.dayLabel, { maxWidth: width - x(i) - 36 }, isToday && s.currentLabel]}>{isToday ? (done ? "¡Completaste el desafío hoy!" : "Aún debes completar el desafío hoy") : `Día ${day}`}</Text>
         </View>;
       })}
       <Animated.View pointerEvents="none" style={[s.mascot, { transform: [
