@@ -54,3 +54,26 @@ test('formats native geocoder addresses', () => {
   assert.equal(label.primaryText, 'Honduras 4800');
   assert.equal(label.secondaryText, 'Palermo, Buenos Aires, Argentina');
 });
+
+test('suggestion country: profile, then device region, then AR', () => {
+  const r = lib.resolveSuggestionCountry;
+  assert.equal(r({ profileCountry: 'Uruguay', deviceLocale: 'es-AR' }).regionCode, 'uy');
+  assert.equal(r({ profileCountry: 'Uruguay' }).source, 'profile');
+  assert.equal(r({ profileCountry: 'España' }).regionCode, 'es');
+  assert.equal(r({ profileLocationLabel: 'Providencia, Santiago, Chile' }).regionCode, 'cl');
+  assert.equal(r({ profileCountry: 'MX' }).regionCode, 'mx');
+  const device = r({ profileCountry: 'Atlantis', deviceLocale: 'pt-BR' });
+  assert.equal(device.regionCode, 'br');
+  assert.equal(device.source, 'device');
+  assert.equal(r({ deviceLocale: 'es_419' }).source, 'default');
+  const fallback = r({});
+  assert.equal(fallback.regionCode, 'ar');
+  assert.equal(fallback.source, 'default');
+});
+
+test('autocomplete restricts to the resolved country and can skip bias', () => {
+  const body = lib.buildAutocompleteBody('Pocitos', 'tok', null, 'uy');
+  assert.equal(body.includedRegionCodes[0], 'uy');
+  assert.equal(body.regionCode, 'uy');
+  assert.equal(body.locationBias, undefined);
+});

@@ -24,19 +24,19 @@ type Status = "idle" | "loading" | "ready" | "empty" | "error";
 
 type Client = { apiKey: string | undefined; headers: Record<string, string> };
 
-const loadBias = async (): Promise<LocationBias> => {
+const loadBias = async (fallback: LocationBias | null): Promise<LocationBias | null> => {
   try {
     const permission = await ExpoLocation.getForegroundPermissionsAsync();
-    if (permission.status !== "granted") return ARGENTINA_BIAS;
+    if (permission.status !== "granted") return fallback;
     const position = await ExpoLocation.getLastKnownPositionAsync();
-    if (!position) return ARGENTINA_BIAS;
+    if (!position) return fallback;
     return {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
       radiusMeters: 30000,
     };
   } catch {
-    return ARGENTINA_BIAS;
+    return fallback;
   }
 };
 
@@ -66,12 +66,24 @@ const fetchNativeSuggestions = async (query: string): Promise<LocationSuggestion
   return results.slice(0, LOCATION_SUGGESTION_LIMIT);
 };
 
-export const useLocationSuggestions = (query: string, enabled: boolean, client: Client) => {
+type SuggestionOptions = {
+  regionCode: string;
+  // Coordenadas guardadas en el perfil, si existen.
+  profileBias?: LocationBias | null;
+};
+
+export const useLocationSuggestions = (
+  query: string,
+  enabled: boolean,
+  client: Client,
+  options: SuggestionOptions,
+) => {
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [isResolving, setIsResolving] = useState(false);
   const sessionTokenRef = useRef(createPlacesSessionToken());
-  const biasRef = useRef<LocationBias | null>(null);
+  const biasRef = useRef<LocationBias | null | undefined>(undefined);
+  const { regionCode, profileBias } = options;
   const requestIdRef = useRef(0);
   const { apiKey, headers } = client;
   const headersKey = JSON.stringify(headers);
@@ -89,12 +101,16 @@ export const useLocationSuggestions = (query: string, enabled: boolean, client: 
     setStatus("loading");
     const timer = setTimeout(async () => {
       try {
-        if (!biasRef.current) biasRef.current = await loadBias();
+        if (biasRef.current === undefined) {
+          const fallback = profileBias ?? (regionCode === "ar" ? ARGENTINA_BIAS : null);
+          biasRef.current = await loadBias(fallback);
+        }
         const next = apiKey
           ? await fetchLocationSuggestions({
               query: normalized,
               client: { apiKey, headers },
               bias: biasRef.current,
+              regionCode,
               sessionToken: sessionTokenRef.current,
               signal: controller?.signal,
             })
@@ -113,7 +129,7 @@ export const useLocationSuggestions = (query: string, enabled: boolean, client: 
       controller?.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, enabled, apiKey, headersKey]);
+  }, [query, enabled, apiKey, headersKey, regionCode]);
 
   const resolve = async (suggestion: LocationSuggestion): Promise<ResolvedLocation> => {
     setIsResolving(true);
