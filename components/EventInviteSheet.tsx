@@ -28,7 +28,6 @@ export default function EventInviteSheet({
   classInvite,
   visible,
   onClose,
-  onDiscover,
 }: {
   event?: EventFeedItem;
   classInvite?: ClassInvitation;
@@ -49,7 +48,6 @@ export default function EventInviteSheet({
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const sending = useRef(false);
-  const discoverAfterClose = useRef(false);
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const invitation = useMemo(() => classInvite ? buildClassInvitation(classInvite) : isChallenge ? buildChallengeInvitation(event!) : buildEventInvitation(event!), [event, classInvite, isChallenge]);
@@ -84,12 +82,6 @@ export default function EventInviteSheet({
       visible={visible}
       onClose={close}
       closeOnBackdropPress={!sendingId}
-      onClosed={() => {
-        if (discoverAfterClose.current) {
-          discoverAfterClose.current = false;
-          onDiscover();
-        }
-      }}
       sheetStyle={[
         s.sheet,
         {
@@ -121,30 +113,6 @@ export default function EventInviteSheet({
         <Text style={s.previewTitle}>{content.title}</Text>
         <Text style={s.copy}>{isClass ? "Te invito a esta clase en Vibes." : isChallenge ? "Te invito a este desafío en Vibes." : "Te invito a este evento en Vibes."}</Text>
       </View>
-      <TouchableOpacity
-        accessibilityRole="button"
-        disabled={!!sendingId}
-        style={s.discover}
-        onPress={() => {
-          discoverAfterClose.current = true;
-          onClose();
-        }}
-      >
-        <Ionicons
-          name="compass-outline"
-          size={24}
-          color={vibesTheme.colors.primaryText}
-        />
-        <View style={s.discoverCopy}>
-          <Text style={s.name}>Ir a Discover</Text>
-          <Text style={s.copy}>Buscá nuevas personas para conectar.</Text>
-        </View>
-        <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={vibesTheme.colors.primaryText}
-        />
-      </TouchableOpacity>
       <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel="Invitar por WhatsApp o enlace"
@@ -207,7 +175,7 @@ export default function EventInviteSheet({
                 ? "No encontramos conexiones con ese nombre."
                 : matches.data?.some(match => match.isActive)
                   ? "Todas tus conexiones ya participan. No hay personas nuevas para invitar."
-                  : "Todavía no tenés conexiones. Encontrá personas en Discover."}
+                  : "Todavía no tenés conexiones para invitar."}
             </Text>
           }
           renderItem={({ item }) => {

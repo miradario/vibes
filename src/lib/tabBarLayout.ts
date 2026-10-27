@@ -22,7 +22,7 @@ export const getBottomTabContentPadding = (
 
 /**
  * Geometry of components/CustomTabBar.tsx (keep both in sync): the floating
- * bar is centered, at most 620 wide, with 18 of side margin, 12 of top space
+ * bar spans the full window width, with 12 of top space
  * for the raised selected icon and a surface extending to the bottom edge.
  * The safe area is inside the bar, below its interactive content.
  */
@@ -31,7 +31,7 @@ export const getTabBarFrame = (
   insetBottom: number,
   fontScale = PixelRatio.getFontScale()
 ) => {
-  const barWidth = Math.min(windowWidth - 36, 620);
+  const barWidth = windowWidth;
   const barLeft = (windowWidth - barWidth) / 2;
   const bottomPadding = getTabBarBottomPadding(insetBottom);
   return {
@@ -46,8 +46,22 @@ export const getTabBarFrame = (
 export const getTabSlotCenterX = (
   index: number,
   count: number,
-  windowWidth: number
+  windowWidth: number,
+  homeIndex?: number
 ) => {
   const { barWidth, barLeft } = getTabBarFrame(windowWidth, 0);
-  return barLeft + 10 + ((index + 0.5) / Math.max(count, 1)) * (barWidth - 20);
+  let center = (index + 0.5) / Math.max(count, 1);
+  if (homeIndex !== undefined) {
+    center = getTabSlotWeight(index, count, homeIndex) / 2;
+    for (let slot = 0; slot < index; slot++) center += getTabSlotWeight(slot, count, homeIndex);
+  }
+  return barLeft + 10 + center * (barWidth - 20);
+};
+
+/** Reserve a central slot for Home; share each remaining half among its tabs. */
+export const getTabSlotWeight = (index: number, count: number, homeIndex: number) => {
+  if (homeIndex < 1 || homeIndex >= count - 1) return 1 / Math.max(count, 1);
+  const homeWidth = 1 / (count % 2 === 0 ? count + 1 : count);
+  if (index === homeIndex) return homeWidth;
+  return (1 - homeWidth) / 2 / (index < homeIndex ? homeIndex : count - homeIndex - 1);
 };

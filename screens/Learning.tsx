@@ -4,7 +4,7 @@ import ClassReservationPanel from "../components/learning/ClassReservationPanel"
 import { useReservationRequests } from "../src/learning/reservationQueries";
 import { reservationDateLabel } from "../src/learning/reservations";
 import {ExternalClassCard, ExternalPlaceCard} from "../components/learning/ExternalCatalog";
-import {externalClasses, externalPlaces, matchesExternalClass, matchesExternalPlace} from "../src/learning/externalCatalog";
+import {externalClasses, unimportedCatalogClasses, externalPlaces, matchesExternalClass, matchesExternalPlace} from "../src/learning/externalCatalog";
 import React, { useState } from "react";
 import { Alert, View, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -83,7 +83,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
       <LearningGate query={q}>
         {(data) => {
           const availableClasses = data.activities.filter(activity => activity.status === "published" && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
-          const availableExternalClasses = externalClasses.filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
+          const availableExternalClasses = unimportedCatalogClasses(data.activities).filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
           const teacherIds = new Set(availableClasses.flatMap(activity => activity.teacher_ids));
           const specs = Array.from(new Set([
             ...data.profiles.filter(profile => teacherIds.has(profile.id)).flatMap(profile => profile.specialties),

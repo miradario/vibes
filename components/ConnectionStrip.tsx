@@ -40,7 +40,7 @@ export default function ConnectionStrip({ incomingLikes, newConnections, onReque
                         <Avatar uri={canViewPhotos || blurHiddenPhotos ? like.likerUserPhoto ?? null : null} blurRadius={!canViewPhotos && blurHiddenPhotos ? 24 : 0} size={avatarSize} />
                       </View>
                     ))}
-                    <View style={s.requestBadge}><Text style={s.requestCount}>{incomingLikes.length > 99 ? "99+" : incomingLikes.length}</Text></View>
+                    <View pointerEvents="none" style={s.requestBadge}><Text style={s.requestCount}>{incomingLikes.length > 99 ? "99+" : incomingLikes.length}</Text></View>
                   </View>
                   <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.stripName, { fontFamily: vibesTheme.fonts.bold }]}>Solicitudes</Text>
                 </TouchableOpacity>
@@ -65,7 +65,7 @@ const s = StyleSheet.create({
   stripAvatar: { width: 66, height: 66, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, borderRadius: 33, padding: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.surface, overflow: "hidden" },
   requestStack: { position: "relative" },
   stackedAvatar: { position: "absolute", top: 0, borderColor: vibesTheme.colors.accentMustard },
-  requestBadge: { position: "absolute", top: -4, right: -4, minWidth: 24, height: 24, paddingHorizontal: 5, borderRadius: 12, borderWidth: 2, borderColor: vibesTheme.colors.surface, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
+  requestBadge: { zIndex: MAX_STACKED_REQUESTS + 1, position: "absolute", top: -4, right: -4, minWidth: 24, height: 24, paddingHorizontal: 5, borderRadius: 12, borderWidth: 2, borderColor: vibesTheme.colors.surface, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
   requestCount: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 12 },
   stripName: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, lineHeight: 16, textAlign: "center" },
   stripDivider: { width: 1, height: 90, backgroundColor: `${vibesTheme.colors.secondaryText}30`, marginHorizontal: 2 },

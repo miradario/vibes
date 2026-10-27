@@ -16,6 +16,8 @@ import {
   TAB_FLOATING_BUTTON_SIZE,
   TAB_FLOATING_TOP,
   getBottomTabBarHeight,
+  getTabSlotCenterX,
+  getTabSlotWeight,
   getTabBarBottomPadding,
 } from "../src/lib/tabBarLayout";
 import { useFtuxHighlightedTab } from "../src/ftux/ftuxStore";
@@ -34,6 +36,7 @@ import Animated, {
 } from "react-native-reanimated";
 import {
   CalendarDays,
+  GraduationCap,
   Compass,
   Home,
   MessageCircle,
@@ -46,7 +49,6 @@ import {
 
 const TAB_BAR_HEIGHT = 64;
 const FLOATING_BUTTON_SIZE = TAB_FLOATING_BUTTON_SIZE;
-const HORIZONTAL_MARGIN = 18;
 const FLOATING_TOP = TAB_FLOATING_TOP;
 const SELECTED_RISE = -18;
 const ANIMATION_CONFIG = { duration: 520, reduceMotion: ReduceMotion.System };
@@ -55,6 +57,7 @@ const iconByRoute: Record<string, LucideIcon> = {
   Discover: Compass,
   Flow: Trophy,
   EventsTab: CalendarDays,
+  ClassesTab: GraduationCap,
   Home,
   Calendar: UsersRound,
   Aura: UserRound,
@@ -67,52 +70,28 @@ const fallbackIconByRoute: Record<string, LucideIcon> = {
   Calendar: CalendarDays,
 };
 
-const routeAccent: Record<
-  string,
-  { text: ColorValue; gradient: [string, string]; shadow: string; glow: string }
-> = {
-  Discover: {
-    text: vibesTheme.colors.accentBlue,
-    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
-    shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(57, 120, 184, 0.20)",
-  },
-  Flow: {
-    text: vibesTheme.colors.accentBlue,
-    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
-    shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(57, 120, 184, 0.20)",
-  },
-  EventsTab: {
-    text: vibesTheme.colors.accentBlue,
-    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
-    shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(57, 120, 184, 0.20)",
-  },
-  Home: {
-    text: vibesTheme.colors.accentMustard,
-    gradient: [vibesTheme.colors.accentMustard, vibesTheme.colors.accentMustard],
-    shadow: vibesTheme.colors.accentMustard,
-    glow: "rgba(244, 163, 64, 0.18)",
-  },
-  Calendar: {
-    text: vibesTheme.colors.accentBlue,
-    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
-    shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(57, 120, 184, 0.20)",
-  },
-  Aura: {
-    text: vibesTheme.colors.accentBlue,
-    gradient: [vibesTheme.colors.accentBlue, vibesTheme.colors.accentBlue],
-    shadow: vibesTheme.colors.accentBlue,
-    glow: "rgba(57, 120, 184, 0.20)",
-  },
+const makeTabAccent = (color: string) => ({
+  text: color as ColorValue,
+  gradient: [color, color] as [string, string],
+  shadow: color,
+  glow: `${color}33`,
+});
+
+const routeAccent: Record<string, ReturnType<typeof makeTabAccent>> = {
+  Home: makeTabAccent(vibesTheme.colors.accentCoral),
+  Flow: makeTabAccent(vibesTheme.colors.accentBlue),
+  EventsTab: makeTabAccent(vibesTheme.colors.accentCoral),
+  ClassesTab: makeTabAccent(vibesTheme.colors.accentMustard),
+  Discover: makeTabAccent(vibesTheme.colors.accentBlue),
+  Calendar: makeTabAccent(vibesTheme.colors.accentCoral),
+  Aura: makeTabAccent(vibesTheme.colors.accentBlue),
 };
 
 const labelByRoute: Record<string, string> = {
   Discover: "Descubrir",
   Flow: "Desafíos",
-  EventsTab: "Actividades",
+  EventsTab: "Eventos",
+  ClassesTab: "Clases",
   Home: "Inicio",
   Calendar: "Chats",
   Aura: "Perfil",
@@ -139,6 +118,7 @@ type TabButtonProps = {
   onPress: () => void;
   onLongPress: () => void;
   height: number;
+  weight: number;
   accessibilityLabel: string;
   accentColor: ColorValue;
   unreadCount?: number;
@@ -154,6 +134,7 @@ const TabButton = memo(
     onPress,
     onLongPress,
     height,
+    weight,
     accessibilityLabel,
     accentColor,
     unreadCount = 0,
@@ -199,7 +180,7 @@ const TabButton = memo(
         activeOpacity={0.78}
         onPress={onPress}
         onLongPress={onLongPress}
-        style={[localStyles.tabItem, { height }]}
+        style={[localStyles.tabItem, { height, flex: weight }]}
       >
         <Animated.View style={[localStyles.tabContent, contentStyle]}>
           <View style={localStyles.iconWrap}>
@@ -249,7 +230,9 @@ const CustomTabBar = ({
     visibleRoutes.findIndex((route) => route.name === selectedVisualRouteName),
     0
   );
-  const selectedIndex = useSharedValue(selectedVisualIndex);
+  const homeIndex = visibleRoutes.findIndex(route => route.name === "Home");
+  const selectedCenter = getTabSlotCenterX(selectedVisualIndex, visibleRoutes.length, width, homeIndex);
+  const selectedIndex = useSharedValue(selectedCenter);
   const selectedIconProgress = useSharedValue(1);
   const selectedVisualRoute =
     visibleRoutes[selectedVisualIndex] ?? selectedRoute ?? visibleRoutes[0];
@@ -259,40 +242,23 @@ const CustomTabBar = ({
     0
   );
   const tabCount = Math.max(visibleRoutes.length, 1);
-  const barWidth = Math.min(width - HORIZONTAL_MARGIN * 2, 620);
+  const barWidth = width;
   const barLeft = (width - barWidth) / 2;
   const selectedAccent =
-    routeAccent[selectedVisualRoute?.name ?? "Home"] ?? routeAccent.Home;
+    routeAccent[selectedVisualRoute?.name ?? "Home"] ?? routeAccent.EventsTab;
 
   useEffect(() => {
-    selectedIndex.value = withTiming(selectedVisualIndex, ANIMATION_CONFIG);
+    selectedIndex.value = withTiming(selectedCenter, ANIMATION_CONFIG);
     selectedIconProgress.value = 0;
     selectedIconProgress.value = withTiming(1, {
       duration: 360,
       reduceMotion: ReduceMotion.System,
     });
-  }, [selectedIconProgress, selectedIndex, selectedVisualIndex]);
+  }, [selectedIconProgress, selectedIndex, selectedCenter]);
 
   const bubbleStyle = useAnimatedStyle(() => {
-    const slotCenter =
-      10 + ((selectedIndex.value + 0.5) / tabCount) * (barWidth - 20);
-
     return {
-      transform: [
-        { translateX: slotCenter - FLOATING_BUTTON_SIZE / 2 },
-        {
-          translateY: interpolate(
-            selectedIndex.value,
-            [
-              selectedVisualIndex - 0.5,
-              selectedVisualIndex,
-              selectedVisualIndex + 0.5,
-            ],
-            [5, 0, 5],
-            Extrapolation.CLAMP
-          ),
-        },
-      ],
+      transform: [{ translateX: selectedIndex.value - FLOATING_BUTTON_SIZE / 2 }],
     };
   });
 
@@ -347,11 +313,11 @@ const CustomTabBar = ({
     >
       <View style={[localStyles.barShadow, { width: barWidth, paddingBottom: getTabBarBottomPadding(insets.bottom) }]}>
         <View style={[localStyles.bar, { height: barHeight }]}>
-          {visibleRoutes.map((route) => {
+          {visibleRoutes.map((route, index) => {
             const { options } = descriptors[route.key];
             const isFocused = selectedRoute?.name === route.name;
             const Icon = getRouteIcon(route.name);
-            const routeColor = routeAccent[route.name] ?? routeAccent.Home;
+            const routeColor = routeAccent[route.name] ?? routeAccent.EventsTab;
             const label = getRouteLabel(
               route.name,
               options.tabBarLabel,
@@ -364,6 +330,7 @@ const CustomTabBar = ({
               <TabButton
                 key={route.key}
                 height={barHeight}
+                weight={getTabSlotWeight(index, tabCount, homeIndex)}
                 onLongPress={() =>
                   navigation.emit({ type: "tabLongPress", target: route.key })
                 }
@@ -459,9 +426,7 @@ const localStyles = StyleSheet.create({
     paddingTop: TAB_BAR_TOP_SPACE,
   },
   barShadow: {
-    maxWidth: 620,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+
     backgroundColor: localColors.surface,
     shadowColor: vibesTheme.colors.primaryText,
     shadowOpacity: 0.07,
@@ -471,7 +436,6 @@ const localStyles = StyleSheet.create({
   },
   bar: {
     height: TAB_BAR_HEIGHT,
-    borderRadius: 28,
     backgroundColor: localColors.surface,
     flexDirection: "row",
     alignItems: "center",

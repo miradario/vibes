@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const ts = require('typescript');
 
-test('clases hides its selector and returns to Events when disabled while viewing classes', () => {
+test('events and classes render independent screens without a shared selector', () => {
   let enabled = false, section = 'events';
   const React = {
     createElement: (type, props, ...children) => ({ type, props: { ...props, children } }),
@@ -33,20 +33,15 @@ test('clases hides its selector and returns to Events when disabled while viewin
     if (Array.isArray(tree)) return tree.flatMap(nodes);
     return [tree, ...nodes(tree.props.children)];
   }
-  const render = () => nodes(module.exports.default());
+  const render = () => nodes(module.exports.default({}));
   let tree = render();
   assert.ok(tree.some(node => node.type === 'Events'));
   assert.equal(tree.filter(node => node.props.accessibilityRole === 'tab').length, 0);
-  enabled = true;
-  tree = render();
-  const tabs = tree.filter(node => node.props.accessibilityRole === 'tab');
-  assert.equal(tabs.length, 2);
-  tabs[1].props.onPress();
-  tree = render();
+  tree = nodes(module.exports.default({ section: 'classes' }));
   assert.ok(tree.some(node => node.type === 'Classes'));
   assert.ok(tree.some(node => node.type === 'CreateClass'));
-  enabled = false;
-  tree = render();
-  assert.ok(tree.some(node => node.type === 'Events'));
-  assert.ok(!tree.some(node => ['Classes', 'CreateClass'].includes(node.type)));
+  assert.ok(!tree.some(node => node.type === 'Events'));
+  assert.equal(tree.filter(node => node.props.accessibilityRole === 'tab').length, 0);
+  const app = fs.readFileSync('App.tsx', 'utf8');
+  assert.match(app, /clasesEnabled \? \([\s\S]*?name="ClassesTab" component=\{ClassesTab\}/);
 });

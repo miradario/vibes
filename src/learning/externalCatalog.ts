@@ -21,3 +21,9 @@ export function matchesExternalPlace(place: ExternalPlace, query: string, specia
   return normalize([place.nombre,externalLocation(place)].join(" ")).includes(normalize(query)) &&
     (!specialty || externalClasses.some(item=>item.lugar_id === place.id && normalize(item.categoria) === normalize(specialty)));
 }
+
+/** A published database class replaces its original reference in discovery. */
+export function unimportedCatalogClasses(activities: { status: string; catalog_source_id?: string | null }[]) {
+  const imported = new Set(activities.filter(item => item.status === "published" && item.catalog_source_id).map(item => item.catalog_source_id));
+  return externalClasses.filter(item => !imported.has(item.id));
+}

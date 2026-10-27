@@ -1,3 +1,4 @@
+import { useClasesEnabled } from "../../src/featureFlags/useClasesEnabled";
 import { useMeetPeople } from "../../src/queries/meetPeople.queries";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -46,7 +47,7 @@ import { getFtuxEntrySnapshot } from "../../src/ftux/entrySignals";
 import { useFtuxProfileCompletion } from "./useFtuxProfileCompletion";
 
 /** Visible tabs, in CustomTabBar order ("Aura" is hidden). */
-const VISIBLE_TABS = ["Flow", "EventsTab", "Home", "Discover", "Calendar"];
+const VISIBLE_TABS = ["Home", "Flow", "EventsTab", "ClassesTab", "Discover", "Calendar"];
 const TOTAL_STEPS = TOUR_ORDER.length;
 /** Each new step shows its screen first; Vibi's card/panel appears after this. */
 export const STEP_REVEAL_DELAY_MS = 1000;
@@ -571,8 +572,9 @@ export function CoachCard({
   const cardWidth = Math.min(width - 32, 520);
   const cardLeft = (width - cardWidth) / 2;
   const { enabled: meetPeopleEnabled } = useMeetPeople();
-  const visibleTabs = VISIBLE_TABS.filter(route => meetPeopleEnabled || route !== "Discover");
-  const slotX = getTabSlotCenterX(visibleTabs.indexOf(STEP_ROUTE[step]), visibleTabs.length, width);
+  const clasesEnabled = useClasesEnabled();
+  const visibleTabs = VISIBLE_TABS.filter(route => (meetPeopleEnabled || route !== "Discover") && (clasesEnabled || route !== "ClassesTab"));
+  const slotX = getTabSlotCenterX(visibleTabs.indexOf(STEP_ROUTE[step]), visibleTabs.length, width, visibleTabs.indexOf("Home"));
   const arrowLeft = Math.min(Math.max(slotX - cardLeft - 9, 24), cardWidth - 42);
   // Measure the real overlay (mounted at the app root, same box the tab bar sits
   // in) instead of trusting the window size, which differs on Android.

@@ -1,35 +1,28 @@
 import Icon from "../components/Icon";
 import { useNavigation } from "@react-navigation/native";
-import { useClasesEnabled } from "../src/featureFlags/useClasesEnabled";
-import React, { useState } from "react";
+import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ScreenContainer from "../components/ScreenContainer";
 import { Text } from "../components/Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import { pillTabStyles } from "../components/PillTabStyles";
 import { useI18n } from "../src/i18n";
 import Events from "./Events";
 import { LearningExplore, LearningCreateAction } from "./Learning";
 
-export default function Activities() {
+export function ClassesTab() {
+  return <Activities section="classes" />;
+}
+
+export default function Activities({ section = "events" }: { section?: "events" | "classes" }) {
   const navigation = useNavigation();
-  const [section, setSection] = useState<"events" | "classes">("events");
-  const clasesEnabled = useClasesEnabled();
-  const activeSection = clasesEnabled ? section : "events";
+  const activeSection = section;
   const { locale } = useI18n();
   const english = locale.startsWith("en");
   return (
     <ScreenContainer style={s.screen}>
       <View style={s.header}>
-        <View style={s.titleRow}><Text accessibilityRole="header" style={s.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{english ? "Activities" : "Actividades"}</Text>{activeSection === "classes" ? <LearningCreateAction /> : <View style={s.actions}>{([["add", "Crear evento", "CreateEvent"], ["archive-outline", "Ver eventos pasados", "PastEvents"]] as const).map(([icon, label, route]) => <TouchableOpacity key={route} accessibilityRole="button" accessibilityLabel={label} style={s.action} onPress={() => navigation.navigate(route as never)}><Icon name={icon} size={23} color={c.primaryText} /></TouchableOpacity>)}</View>}</View>
-        {clasesEnabled ? <View accessibilityRole="tablist" style={pillTabStyles.selector}>
-          {(["events", "classes"] as const).map(value => (
-            <TouchableOpacity key={value} accessibilityRole="tab" accessibilityState={{ selected: activeSection === value }}
-              onPress={() => setSection(value)} style={[pillTabStyles.tab, activeSection === value && pillTabStyles.selected]}>
-              <Text style={[pillTabStyles.label, activeSection === value && pillTabStyles.selectedLabel]}>{value === "events" ? english ? "Events" : "Eventos" : english ? "Classes" : "Clases"}</Text>
-            </TouchableOpacity>
-          ))}
-        </View> : null}
+        <View style={s.titleRow}><Text accessibilityRole="header" style={s.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{activeSection === "classes" ? (english ? "Classes" : "Clases") : (english ? "Events" : "Eventos")}</Text>{activeSection === "classes" ? <LearningCreateAction /> : <View style={s.actions}>{([["add", "Crear evento", "CreateEvent"], ["archive-outline", "Ver eventos pasados", "PastEvents"]] as const).map(([icon, label, route]) => <TouchableOpacity key={route} accessibilityRole="button" accessibilityLabel={label} style={s.action} onPress={() => navigation.navigate(route as never)}><Icon name={icon} size={23} color={c.primaryText} /></TouchableOpacity>)}</View>}</View>
+
       </View>
       {activeSection === "events" ? <Events section="event" embedded /> : <LearningExplore embedded />}
     </ScreenContainer>

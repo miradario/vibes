@@ -1,5 +1,6 @@
 import {ExternalCatalogDetailScreen} from "./components/learning/ExternalCatalog";
-import Activities from "./screens/Activities";
+import Activities, { ClassesTab } from "./screens/Activities";
+import { useClasesEnabled } from "./src/featureFlags/useClasesEnabled";
 import {LearningExplore, LearningProfileDetail, LearningActivityDetail, LearningMine, LearningManage, LearningRoster, LearningProfileEditor, LearningActivityEditor} from "./screens/Learning";
 import { useMeetPeople } from "./src/queries/meetPeople.queries";
 import PastChallenges from "./screens/PastChallenges";
@@ -186,6 +187,7 @@ const CommunityRuntime = () => {
 };
 const AppNavigator = () => {
   const { enabled: meetPeopleEnabled } = useMeetPeople();
+  const clasesEnabled = useClasesEnabled();
   React.useEffect(() => startRemoteConfig(), []);
   React.useEffect(() => startAppOpenTracking(), []);
   React.useEffect(() => {
@@ -491,6 +493,16 @@ const AppNavigator = () => {
                   tabBar={(props) => <CustomTabBar {...props} />}
                 >
                   <Tab.Screen
+                    name="Home"
+                    component={Home}
+                    options={{
+                      tabBarLabel: t("tabs.home"),
+                      tabBarIcon: ({ focused }) => (
+                        <TabBarIcon focused={focused} iconName="home" />
+                      ),
+                    }}
+                  />
+                  <Tab.Screen
                     name="Flow"
                     component={Events}
                     initialParams={{ section: "challenge" }}
@@ -509,7 +521,7 @@ const AppNavigator = () => {
                     component={Activities}
                     initialParams={{ section: "event" }}
                     options={{
-                      tabBarLabel: t("tabs.events"),
+                      tabBarLabel: "Eventos",
                       tabBarIcon: ({ focused }) => (
                         <TabBarIcon
                           focused={focused}
@@ -518,16 +530,9 @@ const AppNavigator = () => {
                       ),
                     }}
                   />
-                  <Tab.Screen
-                    name="Home"
-                    component={Home}
-                    options={{
-                      tabBarLabel: t("tabs.home"),
-                      tabBarIcon: ({ focused }) => (
-                        <TabBarIcon focused={focused} iconName="home" />
-                      ),
-                    }}
-                  />
+                  {clasesEnabled ? (
+                    <Tab.Screen name="ClassesTab" component={ClassesTab} options={{ tabBarLabel: "Clases" }} />
+                  ) : null}
                   {meetPeopleEnabled ? (
                   <Tab.Screen
                     name="Discover"

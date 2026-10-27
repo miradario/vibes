@@ -262,3 +262,13 @@ Los filtros de Clases ofrecen únicamente prácticas, modalidades, lugares y fec
 El botón + de Clases lleva directamente a Crear clase (LearningActivityEditor). Si un responsable autorizado aún no tiene perfil, primero crea su perfil y luego continúa al formulario. Guardar una clase nueva abre Mi espacio para revisar y publicar el borrador. Conservar las autorizaciones del servidor.
 
 El + de Clases permanece visible para todas las cuentas. Al tocarlo, comprobar la autorización: si falta habilitación de responsable, explicarlo sin ocultar el control ni permitir escrituras no autorizadas. Si falla la consulta, ofrecer Reintentar.
+
+Por el momento, el modal compartido “Invitar a alguien” oculta el acceso “Ir a Discover”. Conserva invitaciones a conexiones y compartir por WhatsApp o enlace; el estado sin conexiones no indica navegar a Discover.
+
+En Nuevas conexiones, el contador de solicitudes se dibuja por encima de todas las fotos apiladas: su zIndex supera el máximo de la pila. Conservar el margen superior y lateral que evita cortar el badge; no bloquear con él el acceso táctil a Solicitudes.
+
+La navegación inferior ocupa todo el ancho de la pantalla, sin márgenes laterales ni ancho máximo. Eventos y Clases tienen accesos independientes; Clases respeta su feature flag. Cada pantalla mantiene su título y acciones propios, sin selector compartido de Actividades. La guía FTUX calcula sus posiciones con los mismos accesos visibles.
+
+Inicio es el primer acceso de la barra inferior, a la izquierda, seguido de Desafíos, Eventos, Clases, Descubrir y Chats. Distribuir los accesos visibles con el mismo ancho y conservar su orden en la guía FTUX.
+
+Los indicadores seleccionados de la barra inferior alternan los acentos por acceso: Inicio coral, Desafíos azul, Eventos coral, Clases mostaza, Descubrir azul y Chats coral. Los iconos sobre estos fondos conservan `primaryText` para legibilidad.

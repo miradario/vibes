@@ -19,6 +19,7 @@ export type LearningSession = {
   ends_at: string;
 };
 export type LearningActivity = {
+  catalog_source_id?: string | null;
   id: string;
   organizer_id: string;
   kind: "class" | "course";
