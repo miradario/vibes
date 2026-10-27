@@ -8,15 +8,16 @@ const filled = (value: unknown): boolean =>
 
 const PHOTO_SLOTS = 1;
 
-export type ProfileMissingGroup = "photos" | "email" | "basics" | "aboutYou" | "interests" | "plans";
+export type ProfileMissingGroup = "photos" | "email" | "basics" | "identity" | "interests" | "plans";
 
 /** Display order of the short "what's missing" summary. */
-const GROUP_ORDER: ProfileMissingGroup[] = ["photos", "email", "basics", "aboutYou", "interests", "plans"];
-const QUESTION_GROUP_KEYS: ProfileMissingGroup[] = ["aboutYou", "interests", "plans"];
+const GROUP_ORDER: ProfileMissingGroup[] = ["photos", "email", "basics", "identity", "interests", "plans"];
+/** The three steps of the "Sobre mí" screen (ProfileQuestions tabs: Identidad, Intereses, Planes), in tab order. */
+const QUESTION_GROUP_KEYS: ProfileMissingGroup[] = ["identity", "interests", "plans"];
 const GROUP_COPY: Record<Exclude<ProfileMissingGroup, "photos">, string> = {
   email: "validar email",
   basics: "datos básicos",
-  aboutYou: "sobre vos",
+  identity: "identidad",
   interests: "intereses",
   plans: "planes",
 };
@@ -27,7 +28,7 @@ const HIDDEN_PROFILE_QUESTION_KEYS: string[] = ["interestedIn", "lookingFor", "h
 const joinSpanish = (items: string[]) =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
 
-/** Short Spanish summary, e.g. "sobre vos, validar email y más" (shown after "Falta: "). */
+/** Short Spanish summary, e.g. "identidad, intereses y más" (shown after "Falta: "). */
 export const summarizeMissing = (missing: { group: ProfileMissingGroup }[]) => {
   const counts = new Map<ProfileMissingGroup, number>();
   missing.forEach(({ group }) => counts.set(group, (counts.get(group) ?? 0) + 1));
@@ -51,8 +52,15 @@ export type ProfileCompletionOptions = {
 };
 
 /** Navigation params for the first missing item; `now` makes the photo request unique. */
-export const nextProfileParams = (completion: { nextOpensPhotoPicker: boolean }, now = Date.now()) =>
-  completion.nextOpensPhotoPicker ? { photoRequestId: now } : undefined;
+export const nextProfileParams = (
+  completion: { nextOpensPhotoPicker: boolean; nextQuestionGroup?: number },
+  now = Date.now()
+) =>
+  completion.nextOpensPhotoPicker
+    ? { photoRequestId: now }
+    : typeof completion.nextQuestionGroup === "number"
+      ? { initialGroup: completion.nextQuestionGroup }
+      : undefined;
 
 export const getProfileCompletion = (
   profile: Data,
@@ -89,19 +97,19 @@ export const getProfileCompletion = (
       label: "Sobre mí",
       value: preferences?.aboutMe ?? preferences?.about_me,
       screen: "ProfileQuestions",
-      group: "aboutYou",
+      group: "identity",
     },
     {
       label: "Me trae a Vibes",
       value: preferences?.openTo ?? preferences?.open_to,
       screen: "ProfileQuestions",
-      group: "aboutYou",
+      group: "plans",
     },
     {
       label: "Prácticas",
       value: preferences?.spiritualPath ?? preferences?.spiritual_path,
       screen: "ProfileQuestions",
-      group: "aboutYou",
+      group: "interests",
     },
     {
       label: "Fecha de nacimiento",
@@ -145,5 +153,9 @@ export const getProfileCompletion = (
     nextScreen: nextTarget?.screen ?? "ProfileQuestions",
     /** True when the first missing item is a photo: open EditProfile's photo picker via `photoRequestId`. */
     nextOpensPhotoPicker: nextTarget?.group === "photos",
+    /** ProfileQuestions tab (0 Identidad, 1 Intereses, 2 Planes) of the first missing item, when it lives there. */
+    nextQuestionGroup: nextTarget && QUESTION_GROUP_KEYS.includes(nextTarget.group)
+      ? QUESTION_GROUP_KEYS.indexOf(nextTarget.group)
+      : undefined,
   };
 };

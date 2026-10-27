@@ -54,11 +54,12 @@ test('FTUX mode: email excluded from percent but kept in summary', () => {
   assert.equal(noPhoto.missingSummary, '1 foto y validar email');
   assert.equal(noPhoto.percent, 60);
 });
-test('sobre mí and the first question group are a single "sobre vos" item', () => {
-  const both = getProfileCompletion(profile, { ...prefs, aboutMe: '' }, true, { ...allAnswers, gender: '' });
-  assert.equal(both.missingSummary, 'sobre vos');
-  assert.equal(getProfileCompletion(profile, { ...prefs, openTo: [] }, true, allAnswers).missingSummary, 'sobre vos');
-  assert.equal(summarizeMissing(['plans', 'interests', 'aboutYou', 'basics'].map(group => ({ group }))), 'datos básicos, sobre vos y más');
+test('the three Sobre mí steps are separate items: identidad, intereses, planes', () => {
+  assert.equal(getProfileCompletion(profile, { ...prefs, aboutMe: '' }, true, { ...allAnswers, gender: '' }).missingSummary, 'identidad');
+  assert.equal(getProfileCompletion(profile, { ...prefs, spiritualPath: [] }, true, allAnswers).missingSummary, 'intereses');
+  assert.equal(getProfileCompletion(profile, { ...prefs, openTo: [] }, true, allAnswers).missingSummary, 'planes');
+  assert.equal(getProfileCompletion(profile, prefs, true, { ...allAnswers, diet: '', languages: [], favoritePlans: [] }).missingSummary, 'identidad, intereses y más');
+  assert.equal(summarizeMissing(['plans', 'interests', 'identity', 'basics'].map(group => ({ group }))), 'datos básicos, identidad y más');
 });
 test('next screen follows summary order, including email outside the percent', () => {
   const photo = getProfileCompletion({ ...profile, photos: [] }, { ...prefs, aboutMe: '' }, false, allAnswers);
@@ -73,8 +74,14 @@ test('next screen follows summary order, including email outside the percent', (
   assert.equal(onlyEmail.percent, 100);
   assert.equal(onlyEmail.nextScreen, 'EditProfile');
   assert.equal(getProfileCompletion({ ...profile, birthDate: '' }, { ...prefs, aboutMe: '' }, true, allAnswers).nextScreen, 'EditProfile');
-  assert.equal(getProfileCompletion(profile, { ...prefs, aboutMe: '' }, true, allAnswers).nextScreen, 'ProfileQuestions');
-  assert.equal(getProfileCompletion(profile, prefs, true, { ...allAnswers, favoritePlans: [] }).nextScreen, 'ProfileQuestions');
+  const identity = getProfileCompletion(profile, { ...prefs, aboutMe: '' }, true, allAnswers);
+  assert.equal(identity.nextScreen, 'ProfileQuestions');
+  assert.deepEqual({ ...nextProfileParams(identity) }, { initialGroup: 0 });
+  const interests = getProfileCompletion(profile, prefs, true, { ...allAnswers, pets: '', favoritePlans: [] });
+  assert.deepEqual({ ...nextProfileParams(interests) }, { initialGroup: 1 });
+  const plans = getProfileCompletion(profile, prefs, true, { ...allAnswers, favoritePlans: [] });
+  assert.equal(plans.nextScreen, 'ProfileQuestions');
+  assert.deepEqual({ ...nextProfileParams(plans) }, { initialGroup: 2 });
 });
 test('questions hidden in ProfileQuestions never count as missing', () => {
   const hidden = getProfileCompletion(profile, prefs, true, { ...allAnswers, idealPlan: '', talkAbout: '', trySomething: '', habits: '', lookingFor: [] });
