@@ -36,7 +36,8 @@ test('summary comes from the same fields as the percent', () => {
   const hobbies = getProfileCompletion(profile, prefs, true, { ...allAnswers, hobbies: [] });
   assert.ok(hobbies.percent < 100);
   assert.equal(hobbies.missingSummary, 'intereses');
-  const plans = getProfileCompletion(profile, prefs, true, { ...allAnswers, idealPlan: '' });
+  const plans = getProfileCompletion(profile, prefs, true, { ...allAnswers, favoritePlans: [] });
+  assert.ok(plans.percent < 100);
   assert.equal(plans.missingSummary, 'planes');
 });
 test('FTUX mode: email excluded from percent but kept in summary', () => {
@@ -73,5 +74,10 @@ test('next screen follows summary order, including email outside the percent', (
   assert.equal(onlyEmail.nextScreen, 'EditProfile');
   assert.equal(getProfileCompletion({ ...profile, birthDate: '' }, { ...prefs, aboutMe: '' }, true, allAnswers).nextScreen, 'EditProfile');
   assert.equal(getProfileCompletion(profile, { ...prefs, aboutMe: '' }, true, allAnswers).nextScreen, 'ProfileQuestions');
-  assert.equal(getProfileCompletion(profile, prefs, true, { ...allAnswers, idealPlan: '' }).nextScreen, 'ProfileQuestions');
+  assert.equal(getProfileCompletion(profile, prefs, true, { ...allAnswers, favoritePlans: [] }).nextScreen, 'ProfileQuestions');
+});
+test('questions hidden in ProfileQuestions never count as missing', () => {
+  const hidden = getProfileCompletion(profile, prefs, true, { ...allAnswers, idealPlan: '', talkAbout: '', trySomething: '', habits: '', lookingFor: [] });
+  assert.equal(hidden.percent, 100);
+  assert.equal(hidden.missingSummary, '');
 });

@@ -21,6 +21,8 @@ const GROUP_COPY: Record<Exclude<ProfileMissingGroup, "photos">, string> = {
   plans: "planes",
 };
 const MAX_SUMMARY_ITEMS = 2;
+/** Questions the profile screens don't let users answer (kept in sync with ProfileQuestions' hiddenFields). */
+const HIDDEN_PROFILE_QUESTION_KEYS: string[] = ["interestedIn", "lookingFor", "habits", "idealPlan", "talkAbout", "trySomething"];
 
 const joinSpanish = (items: string[]) =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
@@ -107,7 +109,7 @@ export const getProfileCompletion = (
       screen: "EditProfile",
       group: "basics",
     },
-    ...QUESTION_GROUPS.flatMap((group, groupIndex) => group.fields.filter(field => !["interestedIn", "lookingFor", "habits"].includes(field.key)).map((field) => {
+    ...QUESTION_GROUPS.flatMap((group, groupIndex) => group.fields.filter(field => !HIDDEN_PROFILE_QUESTION_KEYS.includes(field.key)).map((field) => {
       const stored = preferences?.profileAnswers ?? preferences?.profile_answers;
       const snakeKey = field.key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
       // Canonical columns take precedence over legacy JSON, including cleared values.
@@ -115,7 +117,9 @@ export const getProfileCompletion = (
       const value = canonical && preferences && (field.key in preferences || snakeKey in preferences)
         ? preferences[field.key] ?? preferences[snakeKey] ?? ""
         : answers?.[field.key] ?? stored?.[field.key];
-      return { label: field.label, value, screen: "ProfileQuestions", group: QUESTION_GROUP_KEYS[groupIndex] ?? "plans" };
+      // ProfileQuestions shows "Planes favoritos" inside the Planes step (favoritePlansInPlans).
+      const missingGroup = field.key === "favoritePlans" ? "plans" : QUESTION_GROUP_KEYS[groupIndex] ?? "plans";
+      return { label: field.label, value, screen: "ProfileQuestions", group: missingGroup };
     })),
   ];
   const fields = emailCountsInPercent ? allFields : allFields.filter((field) => field.group !== "email");
