@@ -20,7 +20,7 @@ export function useFtuxProfileCompletion(userId?: string | null) {
     enabled: !!id,
   });
   const ready = Boolean(id) && profileReady && preferencesReady && answersReady;
-  if (!ready) return { ready: false, percent: 0, complete: false, nextScreen: "EditProfile", profile };
+  if (!ready) return { ready: false, percent: 0, complete: false, nextScreen: "EditProfile", missingSummary: "", profile };
   const completion = getProfileCompletion(
     profile,
     preferences,
@@ -32,6 +32,7 @@ export function useFtuxProfileCompletion(userId?: string | null) {
     percent: completion.percent,
     complete: completion.percent >= 100,
     nextScreen: completion.nextScreen,
+    missingSummary: completion.missingSummary,
     profile,
   };
 }

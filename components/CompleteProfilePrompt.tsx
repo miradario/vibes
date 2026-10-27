@@ -150,6 +150,11 @@ export default function CompleteProfilePrompt({
             <Text style={styles.percent}>{completion.percent}%</Text>
           ) : null}
         </View>
+        {completion.missingSummary ? (
+          <Text style={styles.missingSummary} numberOfLines={1}>
+            {`Falta: ${completion.missingSummary}`}
+          </Text>
+        ) : null}
       </View>
       {compact ? (
         <View style={styles.completeAction}>
@@ -222,6 +227,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   copy: { flex: 1, minWidth: 0 },
+  missingSummary: {
+    marginTop: 4,
+    color: vibesTheme.colors.secondaryText,
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   title: {
     color: vibesTheme.colors.primaryText,
     fontSize: 16,

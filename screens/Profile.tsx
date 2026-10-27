@@ -155,6 +155,11 @@ const Profile = () => {
           </TouchableOpacity>
             </View>
             <Text style={localStyles.profileLocation}>{location}</Text>
+            {profile && !loadingPreferences && !preferencesError && !loadingAnswers && !answersError && completion.missingSummary ? (
+              <Text style={localStyles.missingSummary} numberOfLines={1}>
+                {`Falta: ${completion.missingSummary}`}
+              </Text>
+            ) : null}
             {ownProfile.zodiac ? (
               <Text style={[localStyles.profileLocation, localStyles.zodiac]}>
                 {ownProfile.zodiac}
@@ -216,6 +221,13 @@ const Profile = () => {
 
 const colors = vibesTheme.colors;
 const localStyles = StyleSheet.create({
+  missingSummary: {
+    marginTop: 4,
+    color: vibesTheme.colors.secondaryText,
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4, marginBottom: 16 },
   footer: { alignItems: "center", gap: 8, paddingTop: 24, paddingBottom: 16 },
   title: { color: colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 25, lineHeight: 32, marginTop: 0, marginBottom: 0 },
