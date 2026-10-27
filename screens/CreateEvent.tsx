@@ -38,6 +38,13 @@ import styles, {
 import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import VibesLoader from "../components/VibesLoader";
+import DraggableMapPreview from "../components/DraggableMapPreview";
+import LocationSuggestionsList, { useLocationSuggestions } from "../components/LocationSuggestions";
+import {
+  getDeviceLocale,
+  resolveSuggestionCountry,
+  type LocationSuggestion,
+} from "../src/lib/locationSuggestions";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
@@ -58,6 +65,10 @@ const IMAGE_MEDIA_TYPE =
 const PLACEHOLDER_COLOR = "rgba(43, 43, 43, 0.34)";
 
 const normalizeCapacityInput = (value: string) => value.replace(/\D+/g, "");
+
+// Tamaños pedidos a Static Maps (en píxeles de mapa); se usan para mover el pin.
+const ANDROID_MAP_PREVIEW_SIZE = { width: 800, height: 360 };
+const IOS_MAP_PREVIEW_SIZE = { width: 640, height: 288 };
 
 const getStaticMapPreviewUrl = (
   lat: number,
@@ -258,6 +269,23 @@ const CreateEvent = () => {
   const capacityInputRef = useRef<TextInput>(null);
   const googleMapsConfig = getGoogleMapsClientConfig();
   const googleMapsApiKey = googleMapsConfig.apiKey;
+  const [isLocationFocused, setIsLocationFocused] = useState(false);
+  const [isDraggingPin, setIsDraggingPin] = useState(false);
+  const suggestionCountry = resolveSuggestionCountry({
+    profileCountry: profile?.country,
+    profileLocationLabel: profile?.location_label,
+    deviceLocale: getDeviceLocale(),
+  });
+  const profileBias =
+    typeof profile?.latitude === "number" && typeof profile?.longitude === "number"
+      ? { latitude: profile.latitude, longitude: profile.longitude, radiusMeters: 30000 }
+      : null;
+  const locationSuggestions = useLocationSuggestions(
+    location,
+    modality === "in_person" && isLocationFocused && !validatedLocation,
+    googleMapsConfig,
+    { regionCode: suggestionCountry.regionCode, profileBias },
+  );
   // iOS: preview vía la función map-preview (Android sigue igual).
   const iosMapPreviewSource =
     typeof validatedLocation?.lat === "number" &&
@@ -265,7 +293,7 @@ const CreateEvent = () => {
       ? getIosMapPreviewSource(
           { latitude: validatedLocation.lat, longitude: validatedLocation.lng },
           session?.access_token,
-          { width: 640, height: 288 },
+          IOS_MAP_PREVIEW_SIZE,
         )
       : null;
   const existingCoverImageUri = editingEvent?.imagePresetId
@@ -359,6 +387,24 @@ const CreateEvent = () => {
     }
   };
 
+  const handleSelectLocationSuggestion = async (suggestion: LocationSuggestion) => {
+    Keyboard.dismiss();
+    try {
+      const resolved = await locationSuggestions.resolve(suggestion);
+      setValidatedLocation(resolved);
+      setLocation(resolved.address);
+      setMapPreviewFailed(false);
+      locationSuggestions.clear();
+      setIsLocationFocused(false);
+    } catch (error) {
+      console.error("Error resolving location suggestion", error);
+      showAlertAfterKeyboard(
+        "No pudimos ubicar ese lugar",
+        "Probá con otra sugerencia o tocá \"Validar ubicación\".",
+      );
+    }
+  };
+
   const handleValidateLocation = async () => {
     const trimmedLocation = location.trim();
     if (!trimmedLocation) {
@@ -431,10 +477,6 @@ const CreateEvent = () => {
         { headers },
       );
       const data = await response.json();
-      console.log("googleMaps:geocode:request", {
-        address: trimmedLocation,
-      });
-      console.log("googleMaps:geocode:response", data);
 
       if (
         data?.status === "REQUEST_DENIED" ||
@@ -656,6 +698,7 @@ const CreateEvent = () => {
         contentContainerStyle={localStyles.content}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
+        scrollEnabled={!isDraggingPin}
       >
         <View style={localStyles.formCard}>
           <Text style={localStyles.label}>Título</Text>
@@ -831,6 +874,13 @@ const CreateEvent = () => {
                   setValidatedLocation(null);
                   setMapPreviewFailed(false);
                 }}
+                onFocus={() => setIsLocationFocused(true)}
+                onBlur={() => {
+                  // Deja terminar el toque sobre una sugerencia antes de ocultarlas.
+                  setTimeout(() => setIsLocationFocused(false), 250);
+                }}
+                autoCorrect={false}
+                textContentType="fullStreetAddress"
                 returnKeyType="next"
                 blurOnSubmit={false}
                 onSubmitEditing={() => {
@@ -841,6 +891,17 @@ const CreateEvent = () => {
                   capacityInputRef.current?.focus();
                 }}
               />
+              <LocationSuggestionsList
+                status={locationSuggestions.status}
+                suggestions={locationSuggestions.suggestions}
+                isResolving={locationSuggestions.isResolving}
+                onSelect={handleSelectLocationSuggestion}
+              />
+              {location.trim() && !validatedLocation ? (
+                <Text style={localStyles.locationHint}>
+                  Elegí una sugerencia para ubicarlo en el mapa.
+                </Text>
+              ) : null}
               <TouchableOpacity
                 style={localStyles.validateButton}
                 onPress={handleValidateLocation}
@@ -862,16 +923,12 @@ const CreateEvent = () => {
                       Ubicación sin validar (sin mapa)
                     </Text>
                   ) : null}
-                  <TouchableOpacity
-                    activeOpacity={0.9}
-                    style={localStyles.mapPreviewCard}
-                    onPress={handleOpenValidatedLocation}
-                  >
+                  <View style={localStyles.mapPreviewCard}>
                     {typeof validatedLocation.lat === "number" &&
                     typeof validatedLocation.lng === "number" &&
                     (iosMapPreviewSource || googleMapsApiKey) &&
                     !mapPreviewFailed ? (
-                      <Image
+                      <DraggableMapPreview
                         source={
                           iosMapPreviewSource ?? {
                             uri: getStaticMapPreviewUrl(
@@ -882,7 +939,20 @@ const CreateEvent = () => {
                             headers: googleMapsConfig.headers,
                           }
                         }
-                        style={localStyles.mapPreviewImage}
+                        center={{ lat: validatedLocation.lat, lng: validatedLocation.lng }}
+                        imageSize={
+                          iosMapPreviewSource
+                            ? IOS_MAP_PREVIEW_SIZE
+                            : ANDROID_MAP_PREVIEW_SIZE
+                        }
+                        onDragStateChange={setIsDraggingPin}
+                        onMove={(next) => {
+                          // Se mantiene el texto elegido; solo se ajustan las coordenadas.
+                          setValidatedLocation((current) =>
+                            current ? { ...current, lat: next.lat, lng: next.lng } : current,
+                          );
+                          setMapPreviewFailed(false);
+                        }}
                         onError={() => setMapPreviewFailed(true)}
                       />
                     ) : (
@@ -905,15 +975,27 @@ const CreateEvent = () => {
                         ) : null}
                       </View>
                     )}
-                    <View style={localStyles.mapPreviewOverlay}>
+                    <TouchableOpacity
+                      style={localStyles.mapPreviewOverlay}
+                      onPress={handleOpenValidatedLocation}
+                      accessibilityRole="button"
+                    >
                       <View style={localStyles.mapPreviewBadge}>
                         <Icon name="navigate" size={14} color={WHITE} />
                         <Text style={localStyles.mapPreviewBadgeText}>
                           Ver mapa
                         </Text>
                       </View>
-                    </View>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                  </View>
+                  {typeof validatedLocation.lat === "number" &&
+                  typeof validatedLocation.lng === "number" &&
+                  (iosMapPreviewSource || googleMapsApiKey) &&
+                  !mapPreviewFailed ? (
+                    <Text style={localStyles.locationHint}>
+                      Podés mover el pin para ajustar el punto.
+                    </Text>
+                  ) : null}
                 </View>
               ) : null}
             </>
@@ -1282,6 +1364,12 @@ const legacyStyles = StyleSheet.create({
   validateButtonText: {
     color: DARK_GRAY,
     fontWeight: "400",
+  },
+  locationHint: {
+    marginTop: 8,
+    color: vibesTheme.colors.secondaryText,
+    fontSize: 13,
+    lineHeight: 18,
   },
   validatedText: {
     marginTop: 8,
