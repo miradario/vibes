@@ -248,7 +248,11 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
         }
         progress={
           shownSheet === "profile" && completion.ready
-            ? { percent: completion.percent, label: t("ftux.profile.progress", { percent: completion.percent }) }
+            ? {
+                percent: completion.percent,
+                label: t("ftux.profile.progress", { percent: completion.percent }),
+                missing: completion.missingSummary ? `Falta: ${completion.missingSummary}` : null,
+              }
             : null
         }
         vibiLabel={t("ftux.vibi")}
@@ -280,7 +284,7 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
                       onPress: () => {
                         closingAfterRouteChange.current = true;
                         send({ type: "PROFILE_START" });
-                        navigate(completion.nextScreen || "EditProfile");
+                        navigate(completion.nextScreen || "EditProfile", completion.nextParams());
                       },
                     },
                     { label: t("ftux.profile.later"), variant: "skip", onPress: () => send({ type: "PROFILE_LATER" }) },
@@ -417,7 +421,7 @@ export function FtuxSheet({
   title: string;
   body: string;
   stepLabel: string | null;
-  progress: { percent: number; label: string } | null;
+  progress: { percent: number; label: string; missing?: string | null } | null;
   vibiLabel: string;
   bubble: string;
   actions: SheetAction[];
@@ -498,6 +502,9 @@ export function FtuxSheet({
               </View>
               <Text style={styles.progressText}>{progress.label}</Text>
             </View>
+          ) : null}
+          {progress?.missing ? (
+            <Text style={styles.missingText} numberOfLines={1}>{progress.missing}</Text>
           ) : null}
         </View>
         <View style={styles.sheetActions} key={step}>
@@ -815,6 +822,13 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 4,
     backgroundColor: colors.accentMustard,
+  },
+  missingText: {
+    marginTop: 6,
+    color: colors.secondaryText,
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 13,
+    lineHeight: 18,
   },
   progressText: {
     color: colors.primaryText,

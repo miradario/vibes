@@ -11,7 +11,7 @@ import {
   hasMissingProfileAnswers,
   readProfileAnswers,
 } from "../src/lib/profileQuestions";
-import { getProfileCompletion } from "../src/lib/profileCompletion";
+import { getProfileCompletion, nextProfileParams } from "../src/lib/profileCompletion";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -110,7 +110,7 @@ export default function CompleteProfilePrompt({
   return (
     <TouchableOpacity
       accessibilityRole="button"
-      onPress={() => navigation.navigate("VibesOnboardingFlow" as never, {resume:true, skipContinueChoice:true} as never)}
+      onPress={() => navigation.navigate(completion.nextScreen as never, nextProfileParams(completion) as never)}
       style={[styles.card, compact && styles.compactCard]}
       activeOpacity={0.84}
     >
@@ -150,6 +150,11 @@ export default function CompleteProfilePrompt({
             <Text style={styles.percent}>{completion.percent}%</Text>
           ) : null}
         </View>
+        {completion.missingSummary ? (
+          <Text style={styles.missingSummary} numberOfLines={1}>
+            {`Falta: ${completion.missingSummary}`}
+          </Text>
+        ) : null}
       </View>
       {compact ? (
         <View style={styles.completeAction}>
@@ -222,6 +227,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   copy: { flex: 1, minWidth: 0 },
+  missingSummary: {
+    marginTop: 4,
+    color: vibesTheme.colors.secondaryText,
+    fontFamily: vibesTheme.fonts.regular,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   title: {
     color: vibesTheme.colors.primaryText,
     fontSize: 16,

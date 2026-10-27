@@ -11,7 +11,7 @@ import AppHeader from "../components/AppHeader";
 import ProfileSectionTabs from "../components/ProfileSectionTabs";
 import VibesLoader from "../components/VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -54,7 +54,18 @@ export default function ProfileQuestions() {
     enabled: !!userId,
   });
   const [draft, setDraft] = useState<ProfileAnswers | null>(null);
-  const [group, setGroup] = useState(0);
+  const requestedGroup = Number(route.params?.initialGroup);
+  const [group, setGroup] = useState(
+    Number.isInteger(requestedGroup) && requestedGroup >= 0 && requestedGroup < SECTION_COUNT
+      ? requestedGroup
+      : 0
+  );
+  // Re-entering with a new tab (e.g. from the profile-completion line) jumps to it.
+  useEffect(() => {
+    if (Number.isInteger(requestedGroup) && requestedGroup >= 0 && requestedGroup < SECTION_COUNT) {
+      setGroup(requestedGroup);
+    }
+  }, [requestedGroup]);
   const [saving, setSaving] = useState(false);
   const value = draft ?? query.data ?? {};
   const ready = query.isSuccess && preferences.isSuccess;
