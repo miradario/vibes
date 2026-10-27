@@ -12,10 +12,13 @@ export default function RestartChallengeConfirmSheet({
   visible,
   onClose,
   onConfirm,
+  curated = false,
 }: {
   visible: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  /** Curated "Por Vibes" challenges are always started fresh: say "Empezar". */
+  curated?: boolean;
 }) {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
@@ -27,10 +30,10 @@ export default function RestartChallengeConfirmSheet({
     >
       <View style={s.handle} />
       <Text accessibilityRole="header" style={s.sheetTitle}>
-        {t("challengeRestart.confirmTitle")}
+        {t(curated ? "challengeRestart.startConfirmTitle" : "challengeRestart.confirmTitle")}
       </Text>
       <Text style={s.body}>{t("challengeRestart.confirmBody")}</Text>
-      <VibesActionButton label={t("challengeRestart.confirmCta")} onPress={onConfirm} />
+      <VibesActionButton label={t(curated ? "challengeRestart.startConfirmCta" : "challengeRestart.confirmCta")} onPress={onConfirm} />
       <VibesActionButton variant="skip" label={t("challengeRestart.cancel")} onPress={onClose} />
     </AnimatedSheetModal>
   );

@@ -1,5 +1,6 @@
 import { useReducedMotion } from "react-native-reanimated";
 import DiscoverPathCards from "../components/DiscoverPathCards";
+import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import { pillTabStyles } from "../components/PillTabStyles";
 import BackButton from "../components/BackButton";
 import ChallengeFeedCard from "../components/ChallengeFeedCard";
@@ -57,13 +58,6 @@ type FeedListItem =
       subtitle?: string;
     }
   | {
-      kind: "accordion";
-      id: ChallengeBlock;
-      title: string;
-      count: number;
-      open: boolean;
-    }
-  | {
       kind: "feed";
       item: EventFeedItem;
       restartable?: boolean;
@@ -73,9 +67,7 @@ type FeedListItem =
       featured?: boolean;
     };
 
-type PrivateBlock = "mine" | "invitations" | "participating";
-type PublicBlock = "joined" | "active" | "upcoming";
-type ChallengeBlock = PrivateBlock | PublicBlock;
+type ChallengeTab = "public" | "private" | "vibes";
 
 const AccordionReveal = ({ children }: { children: React.ReactNode }) => {
   const progress = useRef(new Animated.Value(0)).current;
@@ -261,14 +253,32 @@ const Events = ({
 
   const [search, setSearch] = useState("");
   const [startedOnly, setStartedOnly] = useState(false);
-  const [challengeTab, setChallengeTab] = useState<"public" | "private">(route.params?.challengeTab === "private" ? "private" : "public");
+  // "private" is the internal key of "Mis desafíos" ("mine" is accepted too).
+  const routeChallengeTab: ChallengeTab | null =
+    route.params?.challengeTab === "private" || route.params?.challengeTab === "mine"
+      ? "private"
+      : route.params?.challengeTab === "vibes"
+        ? "vibes"
+        : route.params?.challengeTab === "public"
+          ? "public"
+          : null;
+  const [challengeTab, setChallengeTabState] = useState<ChallengeTab>(routeChallengeTab ?? "public");
+  // Once the user taps a tab (or a route param picked one) the initial-tab
+  // logic below must not change it again.
+  const challengeTabDecided = useRef(routeChallengeTab !== null);
+  const setChallengeTab = (tab: ChallengeTab) => {
+    challengeTabDecided.current = true;
+    setChallengeTabState(tab);
+    // "Ya comenzados" only exists in Público.
+    if (tab !== "public") setStartedOnly(false);
+  };
   // Lazy loading: the feed loads page by page while scrolling. Search,
   // filters and the views that group or sort the whole set (past, already
   // started, private) need every row, so they load the remaining pages.
   const needsFullFeed =
     pastOnly ||
     startedOnly ||
-    (section === "challenge" && challengeTab === "private") ||
+    (section === "challenge" && challengeTab !== "public") ||
     normalizeSearchText(search).length > 0 ||
     activeFilterCount > 0 ||
     pricingType !== null;
@@ -308,14 +318,6 @@ const Events = ({
   const loadMoreFeed = useCallback(() => {
     if (feedHasNextPage && !feedIsFetchingNextPage) void fetchNextFeedPage();
   }, [feedHasNextPage, feedIsFetchingNextPage, fetchNextFeedPage]);
-  const [openBlocks, setOpenBlocks] = useState<Record<ChallengeBlock, boolean>>({
-    mine: true,
-    invitations: false,
-    participating: false,
-    joined: true,
-    active: true,
-    upcoming: false,
-  });
   const [restartTarget, setRestartTarget] = useState<EventFeedItem | null>(null);
   const viewerId = session?.user?.id;
   const invitationsQuery = useReceivedChallengeInvitationsQuery(section === "challenge" ? viewerId : undefined);
@@ -327,12 +329,37 @@ const Events = ({
       : section === "challenge"
         ? "No se pudieron cargar los desafíos."
         : "No se pudieron cargar los eventos.";
+  const joinedChallengeIds = useMemo(
+    () =>
+      new Set(
+        myEventGroups
+          .filter((group) => group.eventType === "challenge")
+          .map((group) => group.eventId),
+      ),
+    [myEventGroups],
+  );
+
+  const isMyChallenge = useCallback(
+    // Joined challenges, plus private ones the viewer created (so they never
+    // disappear). Public ones created but not joined stay in Público.
+    (item: EventFeedItem) =>
+      joinedChallengeIds.has(item.id) || (Boolean(viewerId) && item.createdBy === viewerId && item.visibility === "private"),
+    [joinedChallengeIds, viewerId],
+  );
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      // Private challenges (restarted copies and other private ones) live only in the "Privada" tab.
-      if (section === "challenge" && !pastOnly && startedOnly && (isUpcomingChallenge(item) || isFinishedChallenge(item))) return false;
-      if (section === "challenge" && (item.visibility === "private") !== (challengeTab === "private")) return false;
+      if (section === "challenge" && !pastOnly && startedOnly && challengeTab === "public" && (isUpcomingChallenge(item) || isFinishedChallenge(item))) return false;
+      if (section === "challenge") {
+        const curated = isCuratedChallenge(item);
+        // Curated challenges live only in "Por Vibes", as a catalog to restart.
+        if (challengeTab === "vibes") { if (!curated) return false; }
+        // "Mis desafíos": everything the viewer created or joined, public or private
+        // (restarted copies of curated challenges are private, so they land here).
+        else if (challengeTab === "private") { if (curated || !isMyChallenge(item)) return false; }
+        // "Público": public challenges the viewer is not in yet.
+        else if (curated || item.visibility === "private" || isMyChallenge(item)) return false;
+      }
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
       if (section === "event" && spiritualPaths.length > 0 && !spiritualPaths.some((path) => item.tags?.includes(path))) return false;
@@ -358,7 +385,7 @@ const Events = ({
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, spiritualPaths, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
+  }, [items, isMyChallenge, spiritualPaths, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
@@ -388,16 +415,6 @@ const Events = ({
       (item) => item.type === "challenge" && !isFinishedChallenge(item) && !isUpcomingChallenge(item),
     );
   }, [filteredItems, section]);
-
-  const joinedChallengeIds = useMemo(
-    () =>
-      new Set(
-        myEventGroups
-          .filter((group) => group.eventType === "challenge")
-          .map((group) => group.eventId),
-      ),
-    [myEventGroups],
-  );
 
   const joinedChallengeItems = useMemo(() => {
     if (section !== "challenge") return [];
@@ -436,68 +453,53 @@ const Events = ({
       return finishedChallengeItems.map((item) => ({ kind: "feed" as const, item, restartable: true }));
     }
 
+    if (challengeTab === "vibes") {
+      return [...filteredItems]
+        .sort((a, b) => a.title.localeCompare(b.title, "es"))
+        .map((item) => ({ kind: "feed" as const, item, restartable: true, keyPrefix: "vibes" }));
+    }
+
     if (challengeTab === "private") {
-      const mine = sortChallengesByStartsAt(
-        filteredItems.filter((item) => item.createdBy === viewerId && !isFinishedChallenge(item)),
-      );
-      const participating = sortChallengesByStartsAt(
-        filteredItems.filter(
-          (item) => item.createdBy !== viewerId && joinedChallengeIds.has(item.id) && !isFinishedChallenge(item),
-        ),
-      );
       const invitations = (invitationsQuery.data ?? []).filter(
         (invitation) =>
           invitation.status !== "accepted" &&
           (!normalizedSearch || normalizeSearchText(invitation.challenge.title).includes(normalizedSearch)),
       );
-      const blocks: Array<[PrivateBlock, FeedListItem[]]> = [
-        ["mine", mine.map((item) => ({ kind: "feed" as const, item, keyPrefix: "mine", reveal: true }))],
-        ["invitations", invitations.map((invitation) => ({
+      const active = sortChallengesByStartsAt(activeChallengeItems);
+      const sections: Array<[string, string, FeedListItem[]]> = [
+        ["my-invitations", t("challengeRestart.blockInvitations"), invitations.map((invitation) => ({
           kind: "feed" as const,
           item: invitation.challenge,
           invitation,
           keyPrefix: "invitation",
           reveal: true,
         }))],
-        ["participating", participating.map((item) => ({ kind: "feed" as const, item, keyPrefix: "participating", reveal: true }))],
+        ["my-active", "En curso", active.map((item) => ({ kind: "feed" as const, item, keyPrefix: "mine", reveal: true }))],
+        ["my-upcoming", "Empiezan pronto", upcomingChallengeItems.map((item) => ({ kind: "feed" as const, item, keyPrefix: "mine", reveal: true }))],
       ];
-      const titles: Record<PrivateBlock, string> = {
-        mine: t("challengeRestart.blockMine"),
-        invitations: t("challengeRestart.blockInvitations"),
-        participating: t("challengeRestart.blockParticipating"),
-      };
-      return blocks
-        .filter(([, rows]) => rows.length > 0)
-        .flatMap(([id, rows]) => [
-          { kind: "accordion" as const, id, title: titles[id], count: rows.length, open: openBlocks[id] },
-          ...(openBlocks[id] ? rows : []),
-        ]);
+      return sections
+        .filter(([, , rows]) => rows.length > 0)
+        .flatMap(([id, title, rows]) => [{ kind: "section" as const, id, title }, ...rows]);
     }
 
-    const upcoming = sortChallengesByStartsAt([...joinedUpcomingChallengeItems, ...upcomingGeneralChallengeItems]);
-    if (startedOnly) return sortChallengesByStartsAt([...joinedChallengeItems, ...generalChallengeItems]).map(item => ({ kind: "feed" as const, item }));
-    return [
-      ...(joinedChallengeItems.length ? [{ kind: "section" as const, id: "active-challenges", title: "En curso" }, ...joinedChallengeItems.map(item => ({ kind: "feed" as const, item }))] : []),
-      ...(upcoming.length ? [{ kind: "section" as const, id: "upcoming-challenges", title: "Empieza pronto" }, ...upcoming.map(item => ({ kind: "feed" as const, item }))] : []),
-    ];
+    if (startedOnly) return sortChallengesByStartsAt(activeChallengeItems).map(item => ({ kind: "feed" as const, item }));
+    return upcomingChallengeItems.length
+      ? [{ kind: "section" as const, id: "upcoming-challenges", title: "Empieza pronto" }, ...upcomingChallengeItems.map(item => ({ kind: "feed" as const, item }))]
+      : [];
   }, [
     myEventGroups,
     expiredEventItems,
     finishedChallengeItems,
-    generalChallengeItems,
-    joinedChallengeItems,
-    joinedUpcomingChallengeItems,
+    activeChallengeItems,
+    upcomingChallengeItems,
     section,
     pastOnly,
-    upcomingGeneralChallengeItems,
     visibleItems,
     challengeTab,
     startedOnly,
     filteredItems,
     invitationsQuery.data,
-    joinedChallengeIds,
     normalizedSearch,
-    openBlocks,
     t,
     viewerId,
   ]);
@@ -507,7 +509,7 @@ const Events = ({
   // For events it gets its own "Para vos" section, below "Tus eventos".
   const preferences = useUserPreferencesQuery(viewerId).data;
   const featuredItem = useMemo(() => {
-    if (pastOnly || startedOnly || (section === "challenge" && challengeTab === "private")) return null;
+    if (pastOnly || startedOnly || (section === "challenge" && challengeTab !== "public")) return null;
     const joined = myEventGroups.map((group) => group.event).filter(Boolean);
     return pickFeaturedItem(
       filteredItems.filter((item) => item.type === section),
@@ -553,6 +555,24 @@ const Events = ({
     }
     return [...rest, { kind: "section" as const, id: nextId, title: nextTitle }, featuredRow];
   }, [baseListItems, featuredItem, section]);
+
+  // Initial tab: without a route param, open "Mis desafíos" when the viewer has
+  // something there (in progress, upcoming or a pending invitation), else
+  // "Público". Decided once, after groups and invitations load, and never
+  // after the user has tapped a tab.
+  useEffect(() => {
+    if (section !== "challenge" || pastOnly || challengeTabDecided.current) return;
+    if (!viewerId) { challengeTabDecided.current = true; return; }
+    if (myEventGroupsLoading || invitationsQuery.isLoading) return;
+    challengeTabDecided.current = true;
+    const hasOwn =
+      myEventGroups.some(
+        (group) => group.eventType === "challenge" && group.event && !isFinishedChallenge(group.event) && !isCuratedChallenge(group.event),
+      ) ||
+      items.some((item) => item.type === "challenge" && isMyChallenge(item) && !isFinishedChallenge(item) && !isCuratedChallenge(item));
+    const hasInvitation = (invitationsQuery.data ?? []).some((invitation) => invitation.status !== "accepted");
+    if (hasOwn || hasInvitation) setChallengeTabState("private");
+  }, [invitationsQuery.data, invitationsQuery.isLoading, isMyChallenge, items, myEventGroups, myEventGroupsLoading, pastOnly, section, viewerId]);
 
   const listIsLoading =
     isLoading ||
@@ -624,7 +644,7 @@ const Events = ({
             }}
             style={[localStyles.filterButton, localStyles.headerAction]}
           ><Icon name={pastOnly ? "arrow-back" : "home-outline"} size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
-          {!pastOnly && section === "challenge" ? <TouchableOpacity
+          {!pastOnly && section === "challenge" && challengeTab === "public" ? <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Ya comenzados"
             accessibilityState={{ selected: startedOnly }}
@@ -645,7 +665,7 @@ const Events = ({
         </View>}
         {section === "challenge" && !pastOnly ? <>
           <View style={[pillTabStyles.selector, localStyles.challengeTabs]} accessibilityRole="tablist">
-            {([ ["public", "Público"], ["private", "Privado"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[pillTabStyles.tab, challengeTab === mode && pillTabStyles.selected]}><Text style={[pillTabStyles.label, challengeTab === mode && pillTabStyles.selectedLabel]}>{label}</Text></TouchableOpacity>)}
+            {([ ["public", "Público"], ["private", "Mis desafíos"], ["vibes", "Por Vibes"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[pillTabStyles.tab, challengeTab === mode && pillTabStyles.selected]}><Text style={[pillTabStyles.label, challengeTab === mode && pillTabStyles.selectedLabel]}>{label}</Text></TouchableOpacity>)}
           </View>
         </> : null}
         <View style={{ flex: 1, overflow: "hidden" }}>
@@ -746,6 +766,8 @@ const Events = ({
                       ? "No encontramos eventos frecuentes"
                     : section === "event" && expiredEventItems.length > 0
                       ? "No hay eventos vigentes"
+                    : section === "challenge" && challengeTab === "vibes"
+                      ? "Todavía no hay desafíos de Vibes"
                     : section === "challenge" && !startedOnly && challengeTab === "public" && generalChallengeItems.length > 0
                       ? "No hay desafíos próximos"
                     : section === "challenge" && startedOnly
@@ -753,7 +775,7 @@ const Events = ({
                     : section === "challenge" && (upcomingGeneralChallengeItems.length > 0 || finishedChallengeItems.length > 0)
                       ? "No hay desafíos vigentes"
                     : section === "challenge"
-                      ? challengeTab === "private" ? "Todavía no tenés desafíos privados" : "Todavía no hay desafíos públicos"
+                      ? challengeTab === "private" ? "Todavía no estás en ningún desafío" : "Todavía no hay desafíos públicos"
                       : t("events.noEventsYet")}
               </Text> : null}
               {!listIsLoading ? <Text style={localStyles.emptyText}>
@@ -767,6 +789,8 @@ const Events = ({
                       ? "Probá con otros filtros o desactivá Frecuentes para ver todos los eventos."
                     : section === "event" && expiredEventItems.length > 0
                       ? pastOnly ? "Probá con otros filtros." : "Podés consultar el historial en Eventos pasados."
+                    : section === "challenge" && challengeTab === "vibes"
+                      ? "Pronto vas a encontrar acá desafíos pensados por Vibes para hacer cuando quieras."
                     : section === "challenge" && !startedOnly && challengeTab === "public" && generalChallengeItems.length > 0
                       ? "Encontrá los desafíos vigentes en Ya comenzados, junto al botón Crear."
                     : section === "challenge" && startedOnly
@@ -790,32 +814,6 @@ const Events = ({
             </View>
           }
           renderItem={({ item: listItem }) => {
-            if (listItem.kind === "accordion") {
-              return (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: listItem.open }}
-                  style={[localStyles.feedSectionHeader, localStyles.accordionSectionHeader]}
-                  activeOpacity={0.85}
-                  onPress={() =>
-                    setOpenBlocks((previous) => ({
-                      ...previous,
-                      [listItem.id]: !previous[listItem.id],
-                    }))
-                  }
-                >
-                  <Text style={[localStyles.feedSectionTitle, localStyles.accordionSectionTitle]}>
-                    {listItem.title}{" "}
-                    <Text style={localStyles.accordionSectionCount}>({listItem.count})</Text>
-                  </Text>
-                  <Icon
-                    name={listItem.open ? "chevron-up" : "chevron-down"}
-                    size={22}
-                    color={vibesTheme.colors.accentBlue}
-                  />
-                </TouchableOpacity>
-              );
-            }
             if (listItem.kind === "section") {
               return (
                 <View style={[localStyles.feedSectionHeader, section === "event" && { marginTop: 16 }]}>
@@ -927,7 +925,7 @@ const Events = ({
                         onPress={() => setRestartTarget(item)}
                       >
                         <Icon name="refresh-outline" size={16} color={vibesTheme.colors.accentBlue} />
-                        <Text style={restartStyles.pillText}>{t("challengeRestart.restart")}</Text>
+                        <Text style={restartStyles.pillText}>{t(isCuratedChallenge(item) ? "challengeRestart.start" : "challengeRestart.restart")}</Text>
                       </TouchableOpacity>
                     </View>
                   ) : null}
@@ -1078,6 +1076,7 @@ const Events = ({
       </KeyboardSheetModal>
       <RestartChallengeConfirmSheet
         visible={Boolean(restartTarget)}
+        curated={Boolean(restartTarget && isCuratedChallenge(restartTarget))}
         onClose={() => setRestartTarget(null)}
         onConfirm={() => {
           const source = restartTarget;
@@ -1225,21 +1224,6 @@ feedSectionHeader: {
     marginTop: 4,
     marginBottom: 10,
     paddingHorizontal: 4,
-  },
-accordionSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-accordionSectionTitle: {
-    flex: 1,
-  },
-accordionSectionCount: {
-    color: vibesTheme.colors.secondaryText,
-    fontSize: 18,
-    lineHeight: 29,
-    fontFamily: vibesTheme.fonts.regular,
   },
 feedSectionTitle: {
     color: vibesTheme.colors.primaryText,

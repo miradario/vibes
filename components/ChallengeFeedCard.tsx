@@ -6,6 +6,7 @@ import MediaImage from "./MediaImage";
 import { getChallengeTimeline } from "../src/lib/challengeTimeline";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import ForYouTag from "./ForYouTag";
+import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 export default function ChallengeFeedCard({ item, joined, onPress, footer, featured = false }: {
@@ -16,14 +17,16 @@ export default function ChallengeFeedCard({ item, joined, onPress, footer, featu
   const percent = Math.round(completed / timeline.totalDays * 100);
   const count = item.participantCount ?? (Number.parseInt(item.attendees, 10) || 0);
   const upcoming = timeline.status === "upcoming";
+  // Curated "Por Vibes" challenges are a catalog: no participant count or status.
+  const curated = isCuratedChallenge(item);
   return <View style={s.card}><TouchableOpacity style={{ gap: 12 }} onPress={onPress} accessibilityRole="button" accessibilityLabel={`Ver ${item.title}${joined ? `, ${completed} de ${timeline.totalDays} días completados` : ""}`} activeOpacity={0.85}>
     <View style={s.row}>
       <MediaImage source={typeof item.image === "string" ? { uri: item.image } : item.image} style={s.photo} />
       <View style={s.copy}>
         {featured ? <ForYouTag /> : null}
         <Text style={s.title}>{item.title}</Text>
-        <View style={s.metaRow}><Icon name="people" size={15} color={c.secondaryText} /><Text style={s.meta}>{count} {count === 1 ? "participante" : "participantes"}</Text><Icon name="time-outline" size={15} color={c.secondaryText} /><Text style={s.meta}>{timeline.totalDays} días</Text></View>
-        {upcoming ? <View style={s.pending}><Text style={s.pendingText}>{timeline.startsInDays === 1 ? "Empieza mañana" : `Empieza en ${timeline.startsInDays} días`}</Text></View> : !joined ? <Text style={s.caption}>{timeline.status === "finished" ? "Finalizado" : `Día del grupo: ${timeline.currentDay} de ${timeline.totalDays}`}</Text> : null}
+        <View style={s.metaRow}>{curated ? null : <><Icon name="people" size={15} color={c.secondaryText} /><Text style={s.meta}>{count} {count === 1 ? "participante" : "participantes"}</Text></>}<Icon name="time-outline" size={15} color={c.secondaryText} /><Text style={s.meta}>{timeline.totalDays} días</Text></View>
+        {curated ? null : upcoming ? <View style={s.pending}><Text style={s.pendingText}>{timeline.startsInDays === 1 ? "Empieza mañana" : `Empieza en ${timeline.startsInDays} días`}</Text></View> : !joined ? <Text style={s.caption}>{timeline.status === "finished" ? "Finalizado" : `Día del grupo: ${timeline.currentDay} de ${timeline.totalDays}`}</Text> : null}
       </View>
       <Icon name="chevron-forward" size={22} color={c.secondaryText} />
     </View>

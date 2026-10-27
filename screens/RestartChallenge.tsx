@@ -11,6 +11,7 @@ import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import Icon from "../components/Icon";
 import { Text, TextInput } from "../components/Typography";
 import { launchAppCamera } from "../components/AppCamera";
+import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import FriendsPickerSheet from "../components/challengeRestart/FriendsPickerSheet";
 import { restartStyles } from "../components/challengeRestart/styles";
 import { useI18n } from "../src/i18n";
@@ -72,7 +73,9 @@ const RestartChallenge = () => {
     value.setHours(0, 0, 0, 0);
     return value;
   }, []);
-  const sameAsOriginal = Boolean(startDate && originalStart && sameCalendarDay(startDate, originalStart));
+  const isCurated = Boolean(source && isCuratedChallenge(source));
+  // Curated "Por Vibes" challenges are a catalog: any start date is fine.
+  const sameAsOriginal = Boolean(source && !isCuratedChallenge(source) && startDate && originalStart && sameCalendarDay(startDate, originalStart));
   const canSubmit =
     Boolean(source && userId && title.trim() && startDate && !sameAsOriginal) && !restart.isPending;
   const coverSource = imageUri
@@ -125,7 +128,7 @@ const RestartChallenge = () => {
         StackActions.replace("ChallengeDetailScreen", { challengeId: result.challengeId }),
       );
     } catch (error) {
-      Alert.alert(t("challengeRestart.errorTitle"), errorMessage(error));
+      Alert.alert(t(isCurated ? "challengeRestart.startErrorTitle" : "challengeRestart.errorTitle"), errorMessage(error));
     }
   };
 
@@ -145,7 +148,7 @@ const RestartChallenge = () => {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.screenTitle} numberOfLines={2}>
-            {t("challengeRestart.screenTitle")}
+            {t(isCurated ? "challengeRestart.startScreenTitle" : "challengeRestart.screenTitle")}
           </Text>
           <Text style={styles.screenSubtitle}>
             {t("challengeRestart.screenSubtitle")}
