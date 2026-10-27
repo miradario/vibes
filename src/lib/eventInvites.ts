@@ -44,6 +44,8 @@ export function getInvitedChallengeId(body: string) {
 export function getInvitationDisplayText(body: string) {
   const classId = getInvitedClassId(body);
   if (classId) return body.replace(`com.gurudevelopers.vibes://class/${classId}`, "").trim();
+  const eventId = getInvitedEventId(body);
+  if (eventId) return body.replace(new RegExp(`https://vibes\\.gurudevelopers\\.dev/event/${eventId}`, "gi"), "").trim();
   const challengeId = getInvitedChallengeId(body);
   if (!challengeId) return body;
   return body.replace(new RegExp(`https://vibes\\.gurudevelopers\\.dev/challenge/${challengeId}`, "gi"), "").trim();

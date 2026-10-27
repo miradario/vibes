@@ -78,3 +78,13 @@ test('invitation mentions how many more upcoming dates there are', () => {
  const single = api.buildEventInvitation({id, type: 'event', title: 'Uno', date: 'Mañana', schedule: schedule.slice(0, 2)});
  assert.ok(single.includes('Mañana\n'));
 });
+
+
+test('internal event sharing hides the URL while retaining the event destination', () => {
+ const body = api.buildEventInvitation({id, type: 'event', title: 'Encuentro', date: 'Domingo a las 10'});
+ const display = api.getInvitationDisplayText(body);
+ assert.equal(display, 'Te invito a "Encuentro" en Vibes.\nDomingo a las 10');
+ assert.equal(api.getInvitedEventId(body), id);
+ assert.equal(api.getInvitationDisplayText(`https://vibes.gurudevelopers.dev/event/${id}`), '');
+ assert.equal(api.getInvitationDisplayText('Hola https://another.example'), 'Hola https://another.example');
+});
