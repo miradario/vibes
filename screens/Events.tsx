@@ -880,22 +880,6 @@ const Events = ({
                 </TouchableOpacity>
               );
             }
-            // Por Vibes catalog: compact card with "Empezar" on the meta row.
-            if (listItem.keyPrefix === "vibes" && isCuratedChallenge(item)) {
-              return (
-                <ChallengeFeedCard item={item} compact joined={joinedChallengeIds.has(item.id)} onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)} metaAction={viewerId ? (
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    style={[restartStyles.pill, localStyles.compactPill]}
-                    hitSlop={{ top: 6, bottom: 6 }}
-                    onPress={() => setRestartTarget(item)}
-                  >
-                    <Icon name="refresh-outline" size={15} color={vibesTheme.colors.accentBlue} />
-                    <Text style={restartStyles.pillText}>{t("challengeRestart.start")}</Text>
-                  </TouchableOpacity>
-                ) : undefined} />
-              );
-            }
             const challengeRow = (
               <ChallengeFeedCard item={item} featured={listItem.featured} joined={joinedChallengeIds.has(item.id)} onPress={() => navigation.navigate("ChallengeDetailScreen" as never, { event: item } as never)} footer={listItem.invitation || (listItem.restartable && viewerId) ? <>
                   {listItem.invitation ? (
@@ -1129,7 +1113,6 @@ tabSelected: {
   },
 tabText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 16 },
 tabTextSelected: { color: vibesTheme.colors.primaryText },
-compactPill: { minHeight: 32, paddingHorizontal: 12 },
 cardActions: {
     flexDirection: "row",
     flexWrap: "wrap",

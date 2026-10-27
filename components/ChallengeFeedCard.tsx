@@ -9,11 +9,8 @@ import ForYouTag from "./ForYouTag";
 import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-export default function ChallengeFeedCard({ item, joined, onPress, footer, featured = false, compact = false, metaAction }: {
+export default function ChallengeFeedCard({ item, joined, onPress, footer, featured = false }: {
   item: EventFeedItem; joined: boolean; onPress: () => void; footer?: React.ReactNode; featured?: boolean;
-  // Compact layout (Por Vibes catalog): smaller cover, tighter spacing and an
-  // optional action right-aligned on the meta row.
-  compact?: boolean; metaAction?: React.ReactNode;
 }) {
   const timeline = getChallengeTimeline(item.startsAt, item.durationDays);
   const completed = Math.min(timeline.totalDays, Math.max(0, Number(item.viewerCompletedDaysCount) || 0));
@@ -22,16 +19,16 @@ export default function ChallengeFeedCard({ item, joined, onPress, footer, featu
   const upcoming = timeline.status === "upcoming";
   // Curated "Por Vibes" challenges are a catalog: no participant count or status.
   const curated = isCuratedChallenge(item);
-  return <View style={[s.card, compact && s.cardCompact]}><TouchableOpacity style={{ gap: compact ? 8 : 12 }} onPress={onPress} accessibilityRole="button" accessibilityLabel={`Ver ${item.title}${joined ? `, ${completed} de ${timeline.totalDays} días completados` : ""}`} activeOpacity={0.85}>
-    <View style={[s.row, compact && s.rowCompact]}>
-      <MediaImage source={typeof item.image === "string" ? { uri: item.image } : item.image} style={[s.photo, compact && s.photoCompact]} />
-      <View style={[s.copy, compact && s.copyCompact]}>
+  return <View style={s.card}><TouchableOpacity style={{ gap: 12 }} onPress={onPress} accessibilityRole="button" accessibilityLabel={`Ver ${item.title}${joined ? `, ${completed} de ${timeline.totalDays} días completados` : ""}`} activeOpacity={0.85}>
+    <View style={s.row}>
+      <MediaImage source={typeof item.image === "string" ? { uri: item.image } : item.image} style={s.photo} />
+      <View style={s.copy}>
         {featured ? <ForYouTag /> : null}
-        <Text style={s.title} numberOfLines={compact ? 2 : undefined}>{item.title}</Text>
-        {compact && metaAction ? <View style={s.metaActionRow}><View style={s.metaRow}>{curated ? null : <><Icon name="people" size={15} color={c.secondaryText} /><Text style={s.meta}>{count} {count === 1 ? "participante" : "participantes"}</Text></>}<Icon name="time-outline" size={15} color={c.secondaryText} /><Text style={s.meta}>{timeline.totalDays} días</Text></View>{metaAction}</View> : <View style={s.metaRow}>{curated ? null : <><Icon name="people" size={15} color={c.secondaryText} /><Text style={s.meta}>{count} {count === 1 ? "participante" : "participantes"}</Text></>}<Icon name="time-outline" size={15} color={c.secondaryText} /><Text style={s.meta}>{timeline.totalDays} días</Text></View>}
+        <Text style={s.title}>{item.title}</Text>
+        <View style={s.metaRow}>{curated ? null : <><Icon name="people" size={15} color={c.secondaryText} /><Text style={s.meta}>{count} {count === 1 ? "participante" : "participantes"}</Text></>}<Icon name="time-outline" size={15} color={c.secondaryText} /><Text style={s.meta}>{timeline.totalDays} días</Text></View>
         {curated ? null : upcoming ? <View style={s.pending}><Text style={s.pendingText}>{timeline.startsInDays === 1 ? "Empieza mañana" : `Empieza en ${timeline.startsInDays} días`}</Text></View> : !joined ? <Text style={s.caption}>{timeline.status === "finished" ? "Finalizado" : `Día del grupo: ${timeline.currentDay} de ${timeline.totalDays}`}</Text> : null}
       </View>
-      {compact && metaAction ? null : <Icon name="chevron-forward" size={22} color={c.secondaryText} />}
+      <Icon name="chevron-forward" size={22} color={c.secondaryText} />
     </View>
     {joined && !upcoming ? <View style={s.progressRow}>
       <Text style={s.caption}>{completed} de {timeline.totalDays} días</Text>
@@ -57,10 +54,5 @@ const s = StyleSheet.create({
   track: { flex: 1, height: 7, borderRadius: 5, overflow: "hidden", backgroundColor: `${c.accentBlue}14` },
   fill: { height: "100%", backgroundColor: c.accentBlue, borderRadius: 5 },
   pending: { flexDirection: "row", gap: 6, padding: 8, borderRadius: 8, alignSelf: "flex-start", backgroundColor: `${c.accentMustard}20` },
-  cardCompact: { padding: 12, marginBottom: 10, gap: 8 },
-  rowCompact: { gap: 12 },
-  photoCompact: { width: 48, height: 48, borderRadius: 10 },
-  copyCompact: { gap: 6 },
-  metaActionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   pendingText: { color: c.primaryText, fontSize: 13, flexShrink: 1, fontFamily: vibesTheme.fonts.medium },
 });
