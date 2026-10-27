@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View, type StyleProp, type ViewStyle } from "react-native";
 import { Text } from "./Typography";
 import Icon from "./Icon";
 import { PRACTICE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingContent";
@@ -18,11 +18,13 @@ export default function DiscoverPathCards({
   selected,
   onToggle,
   onClear,
+  style,
 }: {
   leading?: React.ReactNode;
   selected: string[];
   onToggle: (path: string) => void;
   onClear: () => void;
+  style?: StyleProp<ViewStyle>;
 }) {
   const { locale } = useI18n();
   const english = locale === "en";
@@ -34,7 +36,7 @@ export default function DiscoverPathCards({
     })),
   ];
   return (
-    <View style={s.section}>
+    <View style={[s.section, style]}>
       {leading}
       <ScrollView
         horizontal

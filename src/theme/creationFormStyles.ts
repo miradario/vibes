@@ -17,4 +17,8 @@ export const creationFormStyles = StyleSheet.create({
   choiceChipActive:{backgroundColor:`${c.accentBlue}14`,borderColor:c.accentBlue},
   choiceChipText:{fontSize:14,lineHeight:20,fontFamily:vibesTheme.fonts.semibold,color:c.primaryText},
   choiceChipTextActive:{color:c.primaryText},
+  // Section blocks drawn by shared components (pickers, path cards) follow the same rhythm as `label`: 20 above, 8 between title and content.
+  pickerSection:{marginTop:20,marginBottom:0,gap:8},
+  pickerLabel:{fontSize:14,lineHeight:20,fontFamily:vibesTheme.fonts.semibold,color:c.primaryText},
+  pathCards:{paddingLeft:0,paddingTop:0,paddingBottom:0},
 });

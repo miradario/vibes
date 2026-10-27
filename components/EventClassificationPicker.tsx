@@ -1,16 +1,19 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { Text, TextInput } from "./Typography";
 import { normalizeEventSearch } from "../src/lib/eventFilters";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-export default function EventClassificationPicker<T extends string>({ label, options, value, onChange, filter = false, searchable = false }: {
+export default function EventClassificationPicker<T extends string>({ label, options, value, onChange, filter = false, searchable = false, style, labelStyle }: {
   label: string;
   options: readonly { id: T; label: string; description?: string }[];
   value: T | null;
   onChange: (value: T | null) => void;
   filter?: boolean;
   searchable?: boolean;
+  /** Overrides so a form can match its own section rhythm (filters keep the defaults). */
+  style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
 }) {
   const [search, setSearch] = useState("");
   const visibleOptions = searchable
@@ -22,8 +25,8 @@ export default function EventClassificationPicker<T extends string>({ label, opt
   };
   const selected = options.find((item) => item.id === value);
   return (
-    <View style={s.group}>
-      <Text style={s.label}>{label}</Text>
+    <View style={[s.group, style]}>
+      <Text style={[s.label, labelStyle]}>{label}</Text>
       {searchable ? (
         <TextInput
           accessibilityLabel="Buscar ubicación"
