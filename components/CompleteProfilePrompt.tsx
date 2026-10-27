@@ -152,7 +152,7 @@ export default function CompleteProfilePrompt({
         </View>
         {completion.missingSummary ? (
           <Text style={styles.missingSummary} numberOfLines={1}>
-            {completion.missingSummary}
+            {`Falta: ${completion.missingSummary}`}
           </Text>
         ) : null}
       </View>

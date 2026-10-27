@@ -251,7 +251,7 @@ export default function FtuxGuide({ routeName, hasBottomBar, navigate }: FtuxGui
             ? {
                 percent: completion.percent,
                 label: t("ftux.profile.progress", { percent: completion.percent }),
-                missing: completion.missingSummary || null,
+                missing: completion.missingSummary ? `Falta: ${completion.missingSummary}` : null,
               }
             : null
         }

@@ -25,9 +25,7 @@ const MAX_SUMMARY_ITEMS = 2;
 const joinSpanish = (items: string[]) =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
 
-const capitalize = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
-
-/** Short Spanish summary, e.g. "Sobre vos, validar email y más". */
+/** Short Spanish summary, e.g. "sobre vos, validar email y más" (shown after "Falta: "). */
 export const summarizeMissing = (missing: { group: ProfileMissingGroup }[]) => {
   const counts = new Map<ProfileMissingGroup, number>();
   missing.forEach(({ group }) => counts.set(group, (counts.get(group) ?? 0) + 1));
@@ -36,8 +34,8 @@ export const summarizeMissing = (missing: { group: ProfileMissingGroup }[]) => {
     const count = counts.get(group)!;
     return `${count} ${count === 1 ? "foto" : "fotos"}`;
   });
-  if (items.length > MAX_SUMMARY_ITEMS) return capitalize(`${items.slice(0, MAX_SUMMARY_ITEMS).join(", ")} y más`);
-  return capitalize(joinSpanish(items));
+  if (items.length > MAX_SUMMARY_ITEMS) return `${items.slice(0, MAX_SUMMARY_ITEMS).join(", ")} y más`;
+  return joinSpanish(items);
 };
 const PHOTO_WEIGHT = 40;
 
