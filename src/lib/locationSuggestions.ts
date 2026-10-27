@@ -173,7 +173,8 @@ export const resolveLocationSuggestion = async (params: {
       headers: {
         ...client.headers,
         "X-Goog-Api-Key": client.apiKey,
-        "X-Goog-FieldMask": "location,formattedAddress,displayName",
+        // Solo campos "Essentials" (más barato): el nombre del lugar sale de la sugerencia, no de displayName (Pro).
+        "X-Goog-FieldMask": "location,formattedAddress",
       },
     },
   );
@@ -183,7 +184,7 @@ export const resolveLocationSuggestion = async (params: {
   if (!response.ok || typeof lat !== "number" || typeof lng !== "number") {
     throw new Error("place_details_error");
   }
-  const name = data?.displayName?.text;
+  const name = suggestion.primaryText;
   const formatted = data?.formattedAddress || suggestion.address || suggestion.primaryText;
   const address = name && !String(formatted).startsWith(name) ? `${name}, ${formatted}` : formatted;
   return { address, lat, lng };
