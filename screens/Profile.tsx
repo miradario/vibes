@@ -163,7 +163,7 @@ const Profile = () => {
             <Text style={localStyles.profileLocation}>{location}</Text>
             {profile && !loadingPreferences && !preferencesError && !loadingAnswers && !answersError && completion.missingSummary ? (
               <Text style={localStyles.missingSummary} numberOfLines={1} onPress={openCompletion} accessibilityRole="button">
-                {`Falta: ${completion.missingSummary}`}
+                {completion.missingSummary}
               </Text>
             ) : null}
             {ownProfile.zodiac ? (

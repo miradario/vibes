@@ -15,17 +15,19 @@ const GROUP_ORDER: ProfileMissingGroup[] = ["photos", "email", "basics", "aboutY
 const QUESTION_GROUP_KEYS: ProfileMissingGroup[] = ["aboutYou", "interests", "plans"];
 const GROUP_COPY: Record<Exclude<ProfileMissingGroup, "photos">, string> = {
   email: "validar email",
-  basics: "completar datos básicos",
-  aboutYou: "completar sobre vos",
-  interests: "completar intereses",
-  plans: "completar planes",
+  basics: "datos básicos",
+  aboutYou: "sobre vos",
+  interests: "intereses",
+  plans: "planes",
 };
-const MAX_SUMMARY_ITEMS = 3;
+const MAX_SUMMARY_ITEMS = 2;
 
 const joinSpanish = (items: string[]) =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
 
-/** Short Spanish summary, e.g. "2 fotos, validar email y completar intereses". */
+const capitalize = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
+
+/** Short Spanish summary, e.g. "Sobre vos, validar email y más". */
 export const summarizeMissing = (missing: { group: ProfileMissingGroup }[]) => {
   const counts = new Map<ProfileMissingGroup, number>();
   missing.forEach(({ group }) => counts.set(group, (counts.get(group) ?? 0) + 1));
@@ -34,8 +36,8 @@ export const summarizeMissing = (missing: { group: ProfileMissingGroup }[]) => {
     const count = counts.get(group)!;
     return `${count} ${count === 1 ? "foto" : "fotos"}`;
   });
-  if (items.length > MAX_SUMMARY_ITEMS) return `${items.slice(0, MAX_SUMMARY_ITEMS).join(", ")} y más`;
-  return joinSpanish(items);
+  if (items.length > MAX_SUMMARY_ITEMS) return capitalize(`${items.slice(0, MAX_SUMMARY_ITEMS).join(", ")} y más`);
+  return capitalize(joinSpanish(items));
 };
 const PHOTO_WEIGHT = 40;
 
