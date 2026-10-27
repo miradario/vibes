@@ -5,10 +5,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Text, TextInput } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import { sessionDraft, type EventScheduleDraft } from "../src/lib/eventSchedule";
+import { sessionDraft, type EventScheduleDraft, type ScheduleDraftIssue } from "../src/lib/eventSchedule";
 
-export default function EventScheduleEditor({ value, onChange, allowMultiple = true }: {
+export default function EventScheduleEditor({ value, onChange, allowMultiple = true, issues = [] }: {
   value: EventScheduleDraft[];
+  issues?: ScheduleDraftIssue[];
   allowMultiple?: boolean;
   onChange: (value: EventScheduleDraft[]) => void;
 }) {
@@ -57,6 +58,8 @@ export default function EventScheduleEditor({ value, onChange, allowMultiple = t
           <TouchableOpacity style={styles.remove} accessibilityRole="button" accessibilityLabel="Quitar fecha de fin" onPress={() => update(index, { endDate: undefined, endTime: undefined })}><Text style={styles.text}>Sin fin</Text></TouchableOpacity>
         </> : null}
       </View>
+      {issues[index]?.error ? <Text accessibilityRole="alert" style={[styles.hint, styles.issueError]}>{issues[index].error}</Text> : null}
+      {issues[index]?.warning ? <Text style={[styles.hint, styles.issueText]}>{issues[index].warning}</Text> : null}
       {value.length > 1 ? <TouchableOpacity accessibilityRole="button"
         accessibilityLabel={`Quitar horario ${index + 1}`} style={styles.remove}
         onPress={() => { setDateIndex(null); onChange(value.filter((_, i) => i !== index)); }}>
@@ -101,6 +104,8 @@ const styles = StyleSheet.create({
   cancelText: { fontSize: 18, lineHeight: 24, fontFamily: vibesTheme.fonts.regular, color: colors.secondaryText },
   container: { gap: 12 },
   hint: { color: colors.secondaryText, fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.regular },
+  issueText: { width: "100%" },
+  issueError: { width: "100%", color: colors.accentBlue },
   row: { flexDirection: "row", gap: 8, alignItems: "center", flexWrap: "wrap" },
   date: { flexGrow: 1, padding: 14, borderWidth: 1, borderColor: `${colors.primaryText}1F`, borderRadius: 16, backgroundColor: colors.surface },
   time: { width: 100, padding: 14, borderWidth: 1, borderColor: `${colors.primaryText}1F`, borderRadius: 16, color: colors.primaryText, fontSize: 16, backgroundColor: colors.surface },

@@ -67,6 +67,7 @@ import {
   type EventMessage,
 } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { displayEventSession } from "../src/lib/eventSchedule";
 
 const parseEventDate = (value?: string | null) => {
   if (!value) return null;
@@ -110,7 +111,7 @@ const EventChat = () => {
   const eventId = event?.id as string | undefined;
   const eventType = (event?.type ?? "event") as EventType;
   const createdBy = event?.createdBy as string | undefined;
-  const eventStartsAt = parseEventDate(event?.startsAt);
+  const eventStartsAt = parseEventDate(eventType === "event" ? displayEventSession(event?.schedule, event?.startsAt)?.startsAt ?? event?.startsAt : event?.startsAt);
   const eventLocation =
     typeof event?.location === "string" && event.location.trim()
       ? event.location.trim()

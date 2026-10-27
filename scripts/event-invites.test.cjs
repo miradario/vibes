@@ -5,8 +5,10 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const socialShare = {};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/socialShare.ts', 'utf8'), {compilerOptions: {module: ts.ModuleKind.CommonJS}}).outputText, {exports: socialShare, require: () => ({Share: {share: async (payload) => payload}})});
+const eventSchedule = {};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/eventSchedule.ts', 'utf8'), {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020}}).outputText, {exports: eventSchedule, Date});
 const api = {};
-vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/eventInvites.ts', 'utf8'), {compilerOptions: {module: ts.ModuleKind.CommonJS}}).outputText, {exports: api, require: () => socialShare});
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/eventInvites.ts', 'utf8'), {compilerOptions: {module: ts.ModuleKind.CommonJS}}).outputText, {exports: api, require: (name) => name === './eventSchedule' ? eventSchedule : socialShare});
 const id = '1278758f-8641-4c36-b2d2-6c7d5bb47ae9';
 
 test('event invitation includes title, date and a link that opens the same event', () => {
@@ -66,4 +68,13 @@ test('class invitation opens the same class and hides its internal destination i
 test('class invitation parser rejects another scheme and oversized ids',()=>{
  assert.equal(api.getInvitedClassId('https://evil.example/class/clase_001'),null);
  assert.equal(api.getInvitedClassId('com.gurudevelopers.vibes://class/'+ 'a'.repeat(81)),null);
+});
+
+test('invitation mentions how many more upcoming dates there are', () => {
+ const day = 86_400_000, now = Date.now();
+ const schedule = [now - day, now + day, now + 2 * day, now + 3 * day].map(t => ({startsAt: new Date(t).toISOString()}));
+ const body = api.buildEventInvitation({id, type: 'event', title: 'Serie', date: 'Mañana', schedule});
+ assert.ok(body.includes('Mañana (y 2 fechas más)'), body);
+ const single = api.buildEventInvitation({id, type: 'event', title: 'Uno', date: 'Mañana', schedule: schedule.slice(0, 2)});
+ assert.ok(single.includes('Mañana\n'));
 });
