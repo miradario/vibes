@@ -4,6 +4,7 @@ export const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "
 export type ReservationSource = {
   id: string;
   timezone?: string;
+  bookingModes?: string[];
   weekly?: { day: number; time: string }[];
   sessions?: { starts_at: string }[];
 };

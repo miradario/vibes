@@ -1,3 +1,9 @@
+import PlaceLocationPicker from "../components/learning/PlaceLocationPicker";
+import { validPlacePoint, type PlacePoint } from "../src/learning/placeMap";
+import ClassMeetingSummary from "../components/learning/ClassMeetingSummary";
+import ClassEditorForm from "../components/learning/ClassEditorForm";
+import TeacherLinkRequests from "../components/learning/TeacherLinkRequests";
+import { useMatchesQuery } from "../src/queries/matches.queries";
 import EventInviteSheet from "../components/EventInviteSheet";
 import ClassLocationMap from "../components/learning/ClassLocationMap";
 import ClassReservationPanel from "../components/learning/ClassReservationPanel";
@@ -5,7 +11,9 @@ import { useReservationRequests } from "../src/learning/reservationQueries";
 import { reservationDateLabel } from "../src/learning/reservations";
 import {ExternalClassCard, ExternalPlaceCard} from "../components/learning/ExternalCatalog";
 import {externalClasses, externalPlaces, matchesExternalClass, matchesExternalPlace} from "../src/learning/externalCatalog";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useAuthSession } from "../src/auth/auth.queries";
+import { useProfileQuery } from "../src/queries/profile.queries";
 import { Alert, View, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text, TextInput } from "../components/Typography";
@@ -53,7 +61,9 @@ const useId = () => (useRoute().params as { id?: string } | undefined)?.id;
 export function LearningCreateAction() {
   const nav = useNav();
   const { data, isLoading, isError, refetch } = useLearningData();
-  return <TouchableOpacity accessibilityRole="button" accessibilityLabel="Crear clase" accessibilityState={{busy:isLoading}} onPress={() => {
+  return <View style={{flexDirection:"row",gap:6}}>
+    {<TouchableOpacity accessibilityRole="button" accessibilityLabel="Administrar mis clases" onPress={()=>nav.navigate("LearningManage")} style={explore.iconButton}><Icon name="folder-outline" size={22} color={vibesTheme.colors.primaryText}/></TouchableOpacity>}
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel="Crear clase" accessibilityState={{busy:isLoading}} onPress={() => {
     if (isLoading) return;
     if (isError || !data) {
       Alert.alert("No pudimos comprobar tus permisos", "Volvé a intentar cargar la información.", [{text:"Cerrar",style:"cancel"},{text:"Reintentar",onPress:()=>{void refetch();}}]);
@@ -64,7 +74,7 @@ export function LearningCreateAction() {
       return;
     }
     nav.navigate(data.access.managed_ids.length ? "LearningActivityEditor" : "LearningProfileEditor", data.access.managed_ids.length ? undefined : { continueToClass: true });
-  }} style={explore.iconButton}><Icon name="add" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>;
+  }} style={explore.iconButton}><Icon name="add" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity></View>;
 }
 
 export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
@@ -92,6 +102,12 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           const availableModalities = modalityOptions.filter(option => availableClasses.some(activity => activity.modality === option.value || activity.modality === "mixed") || availableExternalClasses.some(item => option.value === "in_person" ? /presencial/i.test(item.modalidad) : option.value === "online" ? /online|distancia/i.test(item.modalidad) : /presencial/i.test(item.modalidad) && /online|distancia/i.test(item.modalidad)));
           const availableLocations = Array.from(new Set([...availableClasses.map(activity => activity.location), ...availableExternalClasses.map(item => {const place = externalPlaces.find(place => place.id === item.lugar_id); return place?.ubicacion.barrio || place?.ubicacion.ciudad || "";})].filter(Boolean))).sort();
           const availableDates = Array.from(new Set([...availableClasses.flatMap(activity => sessionsFor(data, activity.id).filter(session => Date.parse(session.starts_at) > Date.now()).map(session => wallDate(session.starts_at,activity.timezone).slice(0,10))), ...availableExternalClasses.flatMap(item => { const confirmed = item.proxima_fecha_confirmada as string | null; return confirmed ? [confirmed] : []; })])).sort();
+          const activeFilters = [
+            { key: "specialty", value: specialty, label: specialty, clear: () => setSpecialty("") },
+            { key: "modality", value: modality, label: modalityLabels[modality as keyof typeof modalityLabels] ?? modality, clear: () => setModality("") },
+            { key: "location", value: location, label: location, clear: () => setLocation("") },
+            { key: "date", value: date, label: date ? new Date(`${date}T12:00:00Z`).toLocaleDateString("es-AR", { day: "numeric", month: "short", timeZone: "UTC" }) : "", clear: () => setDate("") },
+          ].filter(filter => Boolean(filter.value));
           const activities = availableClasses.filter((a) =>
             sessionsFor(data, a.id).length > 0 && matchesActivity(a, data, {
               query,
@@ -145,6 +161,13 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
                 {value:"activity",label:"Clases y cursos"}, {value:"place",label:"Lugares"}
               ]} />
               <Chips value={specialty} onChange={setSpecialty} options={[{value:"",label:"Todas las prácticas"},...specs.map(value=>({value,label:value}))]} />
+              {!!activeFilters.length && <View accessibilityLabel="Filtros seleccionados" style={{flexDirection:"row",flexWrap:"wrap",gap:8}}>
+                {activeFilters.map(filter => <TouchableOpacity key={filter.key} accessibilityRole="button" accessibilityLabel={`Quitar filtro ${filter.label}`} onPress={filter.clear} style={[explore.action, explore.activeFilter]}>
+                  <Text style={[explore.actionLabel,{flexShrink:1}]}>{filter.label}</Text>
+                  <Icon name="close" size={16} color={vibesTheme.colors.primaryText} />
+                </TouchableOpacity>)}
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar filtros seleccionados" style={explore.action} onPress={() => {setSpecialty("");setModality("");setLocation("");setDate("");}}><Text style={explore.actionLabel}>Limpiar filtros</Text></TouchableOpacity>
+              </View>}
               {tab === "activity" ? <>
                 {myClasses.length + myRequestedClasses.length + myRequestedActivities.length > 0 ? <>
                 <Text accessibilityRole="header" style={explore.sectionTitle}>Mis clases</Text>
@@ -256,6 +279,8 @@ export function LearningProfileDetail() {
                 {modalityLabels[p.modality]}
                 {p.location ? ` · ${p.location}` : ""}
               </Text>
+              {!!p.location_details && <Text style={ui.muted}>{p.location_details}</Text>}
+              {p.kind === "place" && (validPlacePoint(p) || /\d/.test(p.location)) && <ClassLocationMap key={p.location} address={p.location} point={validPlacePoint(p) ? p : null}/>}
               {data.access.managed_ids.includes(p.id) && (
                 <Link
                   label="Editar perfil"
@@ -312,7 +337,7 @@ export function LearningActivityDetail() {
     q = useLearningData(),
     action = useLearningAction();
   return (
-    <Page title="Detalle de la actividad">
+    <Page title={q.data?.activities.find(activity => activity.id === id)?.title ?? "Clase"}>
       <LearningGate query={q}>
         {(data) => {
           const a = data.activities.find((a) => a.id === id);
@@ -326,7 +351,6 @@ export function LearningActivityDetail() {
           return (
             <>
               <Photo key={a.image_url} url={a.image_url} cover />
-              <Text style={ui.heading}>{a.title}</Text>
               <Text style={ui.muted}>
                 {a.kind === "course" ? "Curso completo" : "Clase"} ·{" "}
                 {statusLabels[a.status]}
@@ -354,13 +378,14 @@ export function LearningActivityDetail() {
                 />
               )}
               <Text style={ui.body}>
-                {modalityLabels[a.modality]}
-                {a.location ? ` · ${a.location}` : ""}
+                {a.modality === "in_person" && (validPlacePoint(data.profiles.find(profile=>profile.id===a.place_id)) || /\d/.test(a.location)) ? a.location : [modalityLabels[a.modality],a.location].filter(Boolean).join(" · ")}
               </Text>
-              {a.modality !== "online" && /\d/.test(a.location) && <ClassLocationMap key={a.location} address={a.location} />}
-              <Button secondary label="Invitar a alguien" onPress={() => setInviteVisible(true)} />
+              {a.modality !== "online" && (validPlacePoint(data.profiles.find(profile=>profile.id===a.place_id)) || /\d/.test(a.location)) && <ClassLocationMap key={a.location} address={a.location} point={validPlacePoint(data.profiles.find(profile=>profile.id===a.place_id)) ? data.profiles.find(profile=>profile.id===a.place_id) as PlacePoint : null} />}
+              {!!data.profiles.find(profile=>profile.id===a.place_id)?.location_details && <Text style={ui.muted}>{data.profiles.find(profile=>profile.id===a.place_id)?.location_details}</Text>}
+              {a.status === "published" && <Button secondary label="Invitar a alguien" onPress={() => setInviteVisible(true)} />}
               <EventInviteSheet classInvite={{id:a.id,title:a.title,date:sessions[0] ? formatSession(sessions[0],a.timezone) : undefined,url:`com.gurudevelopers.vibes://learning/${a.id}`}} visible={inviteVisible} onClose={()=>setInviteVisible(false)} onDiscover={()=>nav.navigate("Tab",{screen:"Discover"})} />
               <Text style={ui.body}>{a.description}</Text>
+              {a.kind === "class" ? <ClassMeetingSummary sessions={sessions} timezone={a.timezone}/> : <>
               <Text style={ui.title}>Programa y encuentros</Text>
               {sessions.map((s, index) => (
                 <View key={s.id} style={ui.card}>
@@ -376,6 +401,7 @@ export function LearningActivityDetail() {
                   </Text>
                 </View>
               ))}
+              </>}
               <View style={ui.notice}>
                 <Text style={ui.title}>
                   {priceLabel(a)}
@@ -415,7 +441,7 @@ export function LearningActivityDetail() {
                   }
                 />
               ) : a.kind === "class" ? (
-                <ClassReservationPanel key={a.id} source={{id:a.id,timezone:a.timezone,sessions}} />
+                a.status === "published" ? <ClassReservationPanel key={a.id} source={{id:a.id,timezone:a.timezone,sessions,bookingModes:a.booking_modes}} /> : <Text style={ui.muted}>Esta clase no está abierta para solicitudes.</Text>
               ) : (
                 <Button
                   label={
@@ -520,7 +546,7 @@ export function LearningMine() {
                 <Text style={ui.title}>{request.title}</Text>
                 <Text style={ui.body}>{request.status === "cancelled" ? "Solicitud cancelada" : "Pendiente de confirmación con el organizador"}</Text>
                 <Text style={ui.muted}>{request.mode === "monthly" ? "Plan mensual" : "Clase suelta"} · {request.starts_at.length} fechas</Text>
-                {request.starts_at.map(iso => <Text key={iso} style={ui.muted}>{reservationDateLabel(iso)}</Text>)}
+                {request.starts_at.map(iso => <Text key={iso} style={ui.muted}>{reservationDateLabel(iso,data.activities.find(activity=>activity.id===request.source_id)?.timezone)}</Text>)}
               </TouchableOpacity>)}
               {shown.length ? (
                 shown.map(({ a, e }) => (
@@ -598,6 +624,7 @@ export function LearningManage() {
                   onPress={() => nav.navigate("LearningProfileEditor")}
                 />
               )}
+              <TeacherLinkRequests />
               {mine.map((p) => (
                 <View key={p.id} style={ui.card}>
                   <Text style={ui.title}>{p.name}</Text>
@@ -703,7 +730,7 @@ export function LearningManage() {
                         disabled={action.pending}
                         onPress={() =>
                           action.confirm({
-                            text: "La actividad estará visible para los alumnos.",
+                            text: "La clase aparecerá en el listado. El perfil del responsable, los profesores y el lugar deben estar publicados.",
                             name: "set_status",
                             args: { p_id: a.id, p_status: "published" },
                             success: "Actividad publicada.",
@@ -889,26 +916,41 @@ export function LearningRoster() {
   );
 }
 
-function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
+function ProfileEditorForm({ data, id, onKindChange }: { data: LearningData; id?: string; onKindChange: (kind:string)=>void }) {
+  const { data: session } = useAuthSession();
+  const ownProfile = useProfileQuery(session?.user.id);
+  const profileParams=useRoute().params as {initialKind?:"teacher"|"place";publishByDefault?:boolean}|undefined;
+  const [identity, setIdentity] = useState<"self" | "managed" | "user">("self");
+  const contacts = useMatchesQuery();
+  const [contactQuery, setContactQuery] = useState("");
+  const [target, setTarget] = useState("");
+  const [specialtyOpen, setSpecialtyOpen] = useState(false);
+  const [newSpecialty, setNewSpecialty] = useState("");
   const continueToClass = Boolean((useRoute().params as { continueToClass?: boolean } | undefined)?.continueToClass);
   const nav = useNav(),
     action = useLearningAction(),
     existing = data.profiles.find((p) => p.id === id);
   const [imageBusy, setImageBusy] = useState(false),
     [coverBusy, setCoverBusy] = useState(false);
-  const [kind, setKind] = useState(existing?.kind ?? "teacher"),
-    [name, setName] = useState(existing?.name ?? ""),
+  const [kind, setKind] = useState(existing?.kind ?? (profileParams?.initialKind ?? "teacher")),
+    [name, setName] = useState(existing?.name ?? (profileParams?.initialKind === "place" ? "" : String(ownProfile.data?.displayName ?? ""))),
     [description, setDescription] = useState(existing?.description ?? ""),
     [specialties, setSpecialties] = useState(
       existing?.specialties.join(", ") ?? ""
     ),
     [location, setLocation] = useState(existing?.location ?? ""),
+    [locationDetails,setLocationDetails] = useState(existing?.location_details ?? ""),
+    [placePoint,setPlacePoint] = useState<PlacePoint|null>(validPlacePoint(existing) ? {latitude:existing!.latitude!,longitude:existing!.longitude!} : null),
     [modality, setModality] = useState<Modality>(
-      existing?.modality ?? "online"
+      existing?.modality ?? (profileParams?.initialKind === "place" ? "in_person" : "online")
     ),
     [image, setImage] = useState(existing?.image_url ?? ""),
     [cover, setCover] = useState(existing?.cover_url ?? ""),
-    [published, setPublished] = useState(existing?.published ?? false);
+    [published, setPublished] = useState(existing?.published ?? (continueToClass || Boolean(profileParams?.publishByDefault)));
+  const ownName=String(ownProfile.data?.displayName ?? session?.user.user_metadata?.display_name ?? session?.user.user_metadata?.full_name ?? session?.user.user_metadata?.name ?? "").trim();
+  useEffect(()=>{
+    if(!id && kind === "teacher" && identity === "self" && ownName) setName(ownName);
+  },[id,kind,identity,ownName]);
   if (
     id
       ? !existing || !data.access.managed_ids.includes(id)
@@ -917,58 +959,55 @@ function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
     return <Empty text="No tenés permiso para editar este perfil." />;
   return (
     <>
-      <Text style={ui.muted}>
-        El perfil se vincula con tu cuenta actual de Vibes.
-      </Text>
-      {!id && (
-        <Chips
-          value={kind}
-          onChange={(v) => setKind(v as "teacher" | "place")}
-          options={[
-            { value: "teacher", label: "Profesor" },
-            { value: "place", label: "Lugar" },
-          ]}
-        />
-      )}
-      <Field label="Nombre" value={name} onChange={setName} />
-      <Field
-        label="Descripción"
-        value={description}
-        onChange={setDescription}
-        multiline
-      />
-      <Field
-        label="Especialidades"
-        value={specialties}
-        onChange={setSpecialties}
-        hint="Separalas con comas: Yoga, Meditación, Respiración."
-      />
-      <Chips
-        value={modality}
-        onChange={(v) => setModality(v as Modality)}
-        options={modalityOptions}
-      />
-      <Field
-        label="Ubicación"
-        value={location}
-        onChange={setLocation}
-        hint="Ciudad, barrio y dirección para actividades presenciales."
-      />
-      <ImageField
-        label="Foto o logo"
-        value={image}
-        onChange={setImage}
-        onBusy={setImageBusy}
-      />
-      <Photo key={image} url={image} />
-      <ImageField
-        label="Portada"
-        value={cover}
-        onChange={setCover}
-        onBusy={setCoverBusy}
-      />
-      {!!cover && <Photo key={cover} url={cover} cover />}
-      <Chips
+      {!id && <Chips value={kind} onChange={value => {setKind(value as "teacher" | "place"); onKindChange(value); setName(value === "place" ? "" : identity === "self" ? String(ownProfile.data?.displayName ?? "") : ""); if (value === "place") setModality("in_person");}} options={[{value:"teacher",label:"Agregar profesor"},{value:"place",label:"Agregar lugar"}]} />}
+      {kind === "teacher" && !id && <>
+        <Text style={ui.muted}>Elegí a quién querés agregar.</Text>
+        {([
+          {value:"self" as const,title:"Soy yo",hint:"Usar mi cuenta de Vibes"},
+          {value:"user" as const,title:"Otro usuario de Vibes",hint:"Buscar y solicitar vinculación"},
+          {value:"managed" as const,title:"Persona sin cuenta",hint:"Crear una ficha administrada por vos"},
+        ]).map(option => <TouchableOpacity key={option.value} accessibilityRole="radio" accessibilityState={{checked:identity === option.value}} onPress={() => {
+          setIdentity(option.value);
+          setName(option.value === "self" ? ownName : "");
+        }} style={[profileForm.choice, identity === option.value && profileForm.chosen]}>
+          <Icon name={identity === option.value ? "radio-button-on" : "radio-button-off"} size={24} color={identity === option.value ? vibesTheme.colors.accentBlue : vibesTheme.colors.secondaryText} />
+          <View style={{flex:1,gap:2}}><Text style={profileForm.choiceTitle}>{option.title}</Text><Text style={profileForm.hint}>{option.hint}</Text></View>
+        </TouchableOpacity>)}
+      </>}
+      {kind === "teacher" && !id && identity === "user" ? <>
+        <Field label="Buscar entre tus conexiones" value={contactQuery} onChange={setContactQuery}/>
+        {contacts.isLoading && <Text style={ui.muted}>Cargando conexiones…</Text>}
+        {contacts.isError && <Button secondary label="Reintentar cargar conexiones" onPress={()=>void contacts.refetch()}/>}
+        {(contacts.data ?? []).filter(contact=>contact.otherUserName.toLocaleLowerCase().includes(contactQuery.trim().toLocaleLowerCase())).map(contact=><TouchableOpacity key={contact.otherUserId} accessibilityRole="radio" accessibilityState={{checked:target===contact.otherUserId}} style={[profileForm.choice,target===contact.otherUserId && profileForm.chosen]} onPress={()=>{setTarget(contact.otherUserId);setName(contact.otherUserName);}}><Icon name={target===contact.otherUserId ? "radio-button-on" : "radio-button-off"} size={22} color={vibesTheme.colors.accentBlue}/><Text style={profileForm.choiceTitle}>{contact.otherUserName}</Text></TouchableOpacity>)}
+        {!contacts.isLoading && !contacts.isError && !(contacts.data ?? []).filter(contact=>contact.otherUserName.toLocaleLowerCase().includes(contactQuery.trim().toLocaleLowerCase())).length && <Text style={ui.muted}>No hay conexiones que coincidan. Podés conectar con esa persona desde Descubrir.</Text>}
+        <Text style={profileForm.hint}>La ficha queda como borrador hasta que la persona acepte en Mi espacio. La solicitud no crea una cuenta nueva.</Text>
+      </> : <Field label={kind === "place" ? "Nombre del lugar *" : "Nombre y apellido *"} value={name} onChange={setName} />}
+      {kind === "place" && <>
+        <PlaceLocationPicker address={location} point={placePoint} onAddressChange={setLocation} onPointChange={setPlacePoint}/>
+        <Field label="Piso, unidad o indicaciones (opcional)" value={locationDetails} onChange={value=>setLocationDetails(value.slice(0,300))} hint="Ej.: 1.er piso, timbre B."/>
+        <View style={ui.notice}><Icon name="information-circle-outline" size={22} color={vibesTheme.colors.accentBlue}/><Text style={profileForm.hint}>La ubicación del lugar se usa en las clases presenciales.</Text></View>
+      </>}
+      <Text style={profileForm.label}>Especialidades</Text>
+      <View style={profileForm.specialties}>
+        {specialties.split(",").map(value => value.trim()).filter(Boolean).map(value => <TouchableOpacity key={value} accessibilityRole="button" accessibilityLabel={`Quitar especialidad ${value}`} onPress={() => setSpecialties(specialties.split(",").map(item=>item.trim()).filter(item=>item!==value).join(", "))} style={[explore.action,explore.activeFilter]}><Text style={explore.actionLabel}>{value}</Text><Icon name="close" size={16} color={vibesTheme.colors.primaryText}/></TouchableOpacity>)}
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Agregar especialidad" style={explore.iconButton} onPress={()=>setSpecialtyOpen(true)}><Icon name="add" size={22} color={vibesTheme.colors.accentBlue}/></TouchableOpacity>
+      </View>
+      <AnimatedSheetModal visible={specialtyOpen} onClose={()=>setSpecialtyOpen(false)} placement="center" sheetStyle={[ui.sheet,{borderRadius:24}]}>
+        <Text style={ui.title}>Agregar especialidad</Text>
+        <Field label="Especialidad" value={newSpecialty} onChange={setNewSpecialty}/>
+        <Button label="Agregar" disabled={!newSpecialty.trim() || specialties.split(",").filter(Boolean).length >= 20} onPress={()=>{setSpecialties([...new Set([...specialties.split(","),...newSpecialty.split(",")].map(value=>value.trim()).filter(Boolean))].slice(0,20).join(", "));setNewSpecialty("");setSpecialtyOpen(false);}}/>
+        <Button secondary label="Volver" onPress={()=>setSpecialtyOpen(false)}/>
+      </AnimatedSheetModal>
+      <Field label="Descripción" value={description} onChange={setDescription} multiline />
+      {kind === "teacher" && <>
+        <Text style={profileForm.label}>Modalidad</Text>
+        <Chips value={modality} onChange={value=>setModality(value as Modality)} options={modalityOptions}/>
+        {modality !== "online" && <Field label="Ubicación *" value={location} onChange={setLocation} hint="Ciudad, barrio y dirección para actividades presenciales."/>}
+      </>}
+      <ImageField compact label={kind === "teacher" ? "Foto del profesor" : "Foto del lugar"} value={image} onChange={setImage} onBusy={setImageBusy}/>
+      {!!cover && <><ImageField label="Portada" value={cover} onChange={setCover} onBusy={setCoverBusy}/><Photo key={cover} url={cover} cover/></>}
+      {kind === "teacher" && !id && identity === "managed" && <View style={ui.notice}><Text style={profileForm.choiceTitle}>Esta ficha no crea una cuenta ni acceso para esa persona.</Text><Text style={profileForm.hint}>Vos administrás la información del profesor.</Text></View>}
+      {!(kind === "teacher" && !id && identity === "user") && <Chips
         value={published ? "published" : "draft"}
         onChange={(v) => setPublished(v === "published")}
         options={[
@@ -976,20 +1015,22 @@ function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
           { value: "published", label: "Publicado" },
         ]}
       />
+      }
       <Button
-        label={action.pending ? "Guardando…" : "Guardar perfil"}
+        label={action.pending ? "Guardando…" : !id && kind === "teacher" && identity === "user" ? "Solicitar vinculación" : kind === "place" ? "Guardar lugar" : "Guardar profesor"}
         disabled={
           action.pending ||
           imageBusy ||
           coverBusy ||
           !name.trim() ||
+          (!id && kind === "teacher" && identity === "user" && !target) ||
           (modality !== "online" && !location.trim())
         }
         onPress={() =>
           void action.run(
-            "save_profile",
+            !id && kind === "teacher" ? "save_teacher" : kind === "place" ? "save_place" : "save_profile",
             {
-              p_id: id ?? null,
+              ...(!id && kind === "teacher" ? {p_mode:identity,p_target:identity === "user" ? target : null} : {p_id:id ?? null}),
               p_data: {
                 kind,
                 name: name.trim(),
@@ -999,14 +1040,16 @@ function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
                   .map((s) => s.trim())
                   .filter(Boolean),
                 location,
+                location_details: locationDetails,
+                ...(kind === "place" ? {latitude:placePoint?.latitude ?? null,longitude:placePoint?.longitude ?? null} : {}),
                 modality,
                 image_url: image.trim(),
                 cover_url: cover.trim(),
                 published,
               },
             },
-            "Perfil guardado.",
-            () => continueToClass ? nav.replace("LearningActivityEditor") : nav.goBack()
+            !id && kind === "teacher" && identity === "user" ? "Solicitud pendiente de aceptación en Mi espacio." : "Perfil guardado.",
+            () => !id && kind === "teacher" && identity === "user" ? nav.replace("LearningManage") : continueToClass ? nav.replace("LearningActivityEditor") : nav.goBack()
           )
         }
       />
@@ -1015,12 +1058,14 @@ function ProfileEditorForm({ data, id }: { data: LearningData; id?: string }) {
   );
 }
 export function LearningProfileEditor() {
+  const profileParams=useRoute().params as {initialKind?:string}|undefined;
+  const [kind,setKind] = useState(profileParams?.initialKind ?? "teacher");
   const id = useId(),
     q = useLearningData();
   return (
-    <Page title={id ? "Editar perfil" : "Nuevo perfil"}>
+    <Page title={id ? "Editar perfil" : kind === "place" ? "Agregar lugar" : "Agregar profesor"}>
       <LearningGate query={q}>
-        {(data) => <ProfileEditorForm key={id ?? "new"} data={data} id={id} />}
+        {(data) => <ProfileEditorForm key={id ?? "new"} data={data} id={id} onKindChange={setKind} />}
       </LearningGate>
     </Page>
   );
@@ -1049,7 +1094,7 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
     [title, setTitle] = useState(existing?.title ?? ""),
     [description, setDescription] = useState(existing?.description ?? ""),
     [image, setImage] = useState(existing?.image_url ?? ""),
-    [teachers, setTeachers] = useState(existing?.teacher_ids ?? []),
+    [teachers, setTeachers] = useState(existing?.teacher_ids ?? mine.filter(profile => profile.kind === "teacher").slice(0, 1).map(profile => profile.id)),
     [place, setPlace] = useState(existing?.place_id ?? ""),
     [modality, setModality] = useState<Modality>(
       existing?.modality ?? "online"
@@ -1075,7 +1120,7 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
       : [newMeeting()]
   );
   const [error, setError] = useState("");
-  // Server also enforces this after any enrollment, including cancelled enrollments.
+  // Keep requested/enrolled dates stable, including their history.
   const locked = !!existing?.schedule_locked;
   if (
     !mine.length ||
@@ -1108,7 +1153,7 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
         Number(price) < 0 ||
         !/^[A-Z]{3}$/.test(currency)
       )
-        throw Error("Revisá título, profesores, cupos, precio y moneda.");
+        throw Error("Revisá el título, el profesor y los cupos de la clase.");
       const sessions = locked
         ? initialSessions.map((s) => ({
             title: s.title,
@@ -1120,7 +1165,7 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
               const starts_at = zonedDateToISO(m.date, timezone),
                 duration = Number(m.duration);
               if (
-                !m.title.trim() ||
+                (kind === "course" && !m.title.trim()) ||
                 !Number.isFinite(duration) ||
                 duration <= 0 ||
                 duration > 1440
@@ -1129,7 +1174,7 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
                   "Completá el título y una duración entre 1 y 1440 minutos para cada encuentro."
                 );
               return {
-                title: m.title.trim(),
+                title: m.title.trim() || title.trim(),
                 starts_at,
                 ends_at: new Date(
                   Date.parse(starts_at) + duration * 60000
@@ -1137,6 +1182,9 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
               };
             })
             .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
+      if (!locked && sessions.some(session => Date.parse(session.starts_at) <= Date.now())) throw Error("Elegí una fecha y hora futura.");
+      if (sessions.some((session,index) => index > 0 && Date.parse(session.starts_at) < Date.parse(sessions[index-1].ends_at))) throw Error("Los encuentros no pueden superponerse.");
+      if (modality !== "online" && !location.trim()) throw Error("Completá la dirección de la clase presencial.");
       const input: ActivityInput = {
         organizer_id: organizer,
         kind,
@@ -1170,8 +1218,8 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
       </Text>
       {locked && (
         <Text style={ui.muted}>
-          Con inscripciones, el servidor conserva programa, profesores, lugar y
-          precio. Podés editar título, descripción, imagen y cupos.
+          Con solicitudes o inscripciones, se conservan horarios, profesores, lugar y
+          modalidad. Podés editar título, descripción, imagen y cupos.
         </Text>
       )}
       <Text style={ui.body}>Perfil responsable</Text>
@@ -1215,7 +1263,11 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
       <Chips
         value={place}
         onChange={(v) => {
-          if (!locked) setPlace(v);
+          if (!locked) {
+            setPlace(v);
+            const selectedPlace=data.profiles.find(profile=>profile.id===v);
+            if(selectedPlace?.location) {setLocation(selectedPlace.location);setModality("in_person");}
+          }
         }}
         options={[
           { value: "", label: "Sin lugar" },
@@ -1258,11 +1310,10 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
           </TouchableOpacity>
         ))}
       </View>
-      {!teacherOptions.length && (
-        <Text style={ui.muted}>
-          Creá un perfil de profesor o vinculalo con el lugar responsable.
-        </Text>
-      )}
+      {!teacherOptions.length && <>
+        <Text style={ui.muted}>Para publicar una clase necesitás un perfil de profesor.</Text>
+        <Button secondary label="Crear perfil de profesor y continuar" onPress={()=>nav.navigate("LearningProfileEditor",{continueToClass:true})} />
+      </>}
       <Chips
         value={modality}
         onChange={(v) => {
@@ -1289,29 +1340,13 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
         onChange={setCapacity}
         keyboardType="numeric"
       />
-      <Field
-        label={
-          kind === "course" ? "Precio total del curso" : "Precio de la clase"
-        }
-        value={price}
-        onChange={setPrice}
-        keyboardType="decimal-pad"
-        editable={!locked}
-        hint="0 = gratis. Las inscripciones pagas están bloqueadas hasta integrar Mercado Pago."
-      />
-      <Field
-        label="Moneda"
-        value={currency}
-        onChange={(v) => setCurrency(v.toUpperCase())}
-        editable={!locked}
-        hint="ARS, USD, EUR…"
-      />
+      {existing && Number(existing.price) > 0 && <Text style={ui.muted}>Se conserva el precio de esta actividad existente. En este flujo no se realizan cobros.</Text>}
       <Text style={ui.title}>Encuentros</Text>
       {meetings.map((m, index) => (
         <View key={m.key} style={ui.card}>
           <Text style={ui.title}>Encuentro {index + 1}</Text>
           <Field
-            label={`Título del encuentro ${index + 1}`}
+            label={kind === "class" ? "Nombre del encuentro (opcional)" : `Título del encuentro ${index + 1}`}
             value={m.title}
             onChange={(title) => updateMeeting(m.key, { title })}
             editable={!locked}
@@ -1362,15 +1397,8 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
   );
 }
 export function LearningActivityEditor() {
-  const id = useId(),
-    q = useLearningData();
-  return (
-    <Page title={id ? "Editar actividad" : "Crear clase"}>
-      <LearningGate query={q}>
-        {(data) => <ActivityEditorForm key={id ?? "new"} data={data} id={id} />}
-      </LearningGate>
-    </Page>
-  );
+  const id=useId(),q=useLearningData();
+  return <LearningGate query={q}>{data=>data.activities.find(activity=>activity.id===id)?.kind === "course" ? <Page title="Editar curso"><ActivityEditorForm key={id} data={data} id={id}/></Page> : <ClassEditorForm key={id ?? "new"} data={data} id={id}/>}</LearningGate>;
 }
 
 const explore = StyleSheet.create({
@@ -1392,4 +1420,13 @@ const explore = StyleSheet.create({
   emptyIcon: {width:64,height:64,borderRadius:32,backgroundColor:`${vibesTheme.colors.accentBlue}14`,alignItems:"center",justifyContent:"center"},
   emptyTitle: {fontFamily:vibesTheme.fonts.bold,fontSize:20,lineHeight:26,color:vibesTheme.colors.primaryText,textAlign:"center"},
   emptyBody: {fontSize:15,lineHeight:22,color:vibesTheme.colors.secondaryText,textAlign:"center",maxWidth:300},
+});
+
+const profileForm = StyleSheet.create({
+  choice: {flexDirection:"row",alignItems:"center",gap:12,padding:14,borderRadius:16,borderWidth:1,borderColor:`${vibesTheme.colors.primaryText}1F`,minHeight:72},
+  chosen: {backgroundColor:`${vibesTheme.colors.accentBlue}14`,borderColor:vibesTheme.colors.accentBlue},
+  choiceTitle: {fontFamily:vibesTheme.fonts.semibold,fontSize:16,lineHeight:22,color:vibesTheme.colors.primaryText},
+  hint: {fontFamily:vibesTheme.fonts.regular,fontSize:14,lineHeight:20,color:vibesTheme.colors.secondaryText},
+  label: {fontFamily:vibesTheme.fonts.semibold,fontSize:14,lineHeight:20,color:vibesTheme.colors.primaryText},
+  specialties: {flexDirection:"row",flexWrap:"wrap",gap:8,alignItems:"center"},
 });

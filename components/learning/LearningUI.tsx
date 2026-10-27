@@ -14,6 +14,7 @@ import { BookOpen, ChevronLeft, ChevronRight, MapPin } from "lucide-react-native
 import { Text, TextInput } from "../Typography";
 import ScreenContainer from "../ScreenContainer";
 import VibesActionButton from "../VibesActionButton";
+import Icon from "../Icon";
 import AnimatedSheetModal from "../AnimatedSheetModal";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import { useLearningEnabled } from "../../src/featureFlags/useLearningEnabled";
@@ -168,11 +169,15 @@ export function ImageField({
   value,
   onChange,
   onBusy,
+  compact = false,
+  rectangular = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   onBusy: (value: boolean) => void;
+  compact?: boolean;
+  rectangular?: boolean;
 }) {
   const { data: session } = useAuthSession();
   const [busy, setBusy] = useState(false),
@@ -203,6 +208,14 @@ export function ImageField({
       onBusy(false);
     }
   };
+  if (compact) return <View style={{gap:8}}>
+    <Text style={ui.chipText}>{label}</Text>
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel={value ? `Cambiar ${label.toLocaleLowerCase()}` : `Agregar ${label.toLocaleLowerCase()}`} disabled={busy} onPress={()=>void choose()} style={{flexDirection:"row",alignItems:"center",gap:12,minHeight:64}}>
+      {value ? <Image source={{uri:value}} style={{width:rectangular ? 120 : 64,height:72,borderRadius:rectangular ? 16 : 36}}/> : <View style={{width:rectangular ? 120 : 64,height:72,borderRadius:rectangular ? 16 : 36,alignItems:"center",justifyContent:"center",backgroundColor:`${c.secondaryText}14`}}><Icon name="camera-outline" size={26} color={c.secondaryText}/></View>}
+      <Text style={[ui.chipText,{color:c.accentBlue}]}>{busy ? "Subiendo imagen…" : value ? "Cambiar imagen" : "Agregar imagen"}</Text>
+    </TouchableOpacity>
+    {!!error && <Text accessibilityRole="alert" style={ui.body}>{error}</Text>}
+  </View>;
   return (
     <View style={{ gap: 10 }}>
       <Field
@@ -462,7 +475,7 @@ export function ActivityCard({
         <Text style={exploreCard.title} numberOfLines={1}>{activity.title}</Text>
         {first && <Text style={exploreCard.date} numberOfLines={1}>{formatSession(first, activity.timezone)}</Text>}
         <Text style={exploreCard.meta} numberOfLines={1}>{teachers.map(p => p.name).join(" · ") || modalityLabels[activity.modality]}</Text>
-        <Text style={exploreCard.meta} numberOfLines={1}>{[activity.location, priceLabel(activity)].filter(Boolean).join(" · ")}</Text>
+        <Text style={exploreCard.meta} numberOfLines={1}>{status ?? activity.location}</Text>
       </View>
       <ChevronRight size={20} color={c.secondaryText} />
     </TouchableOpacity>

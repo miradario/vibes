@@ -167,6 +167,15 @@ const messages: Record<string, string> = {
     "No podés cambiar encuentros que ya tienen inscripciones.",
   CAPACITY_BELOW_ENROLLED:
     "Los cupos no pueden ser menores a las inscripciones confirmadas.",
+  INVALID_RECIPIENT: "Elegí una conexión activa de Vibes para solicitar la vinculación.",
+  REQUEST_ALREADY_PENDING: "Ya hay una solicitud pendiente para esa persona. Revisá Mi espacio.",
+  REQUEST_LIMIT: "Alcanzaste el límite de solicitudes por hoy.",
+  REQUEST_CLOSED: "Esta solicitud ya fue respondida. Actualizá Mi espacio.",
+  TEACHER_ACCEPTANCE_REQUIRED: "La persona debe aceptar la vinculación antes de publicar la ficha.",
+  INVALID_IDENTITY: "Elegí a quién querés agregar como profesor.",
+  INVALID_BOOKING_MODES: "Elegí clase suelta, plan mensual o ambas opciones.",
+  BOOKING_MODE_UNAVAILABLE: "Esa opción de inscripción no está disponible para esta clase.",
+  INVALID_PLACE_COORDINATES: "Elegí un punto válido para el lugar en el mapa.",
   LOCATION_REQUIRED: "Agregá una ubicación para actividades presenciales.",
   INVALID_TIMEZONE: "Ingresá una zona horaria IANA válida.",
   INVALID_SESSIONS:

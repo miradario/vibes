@@ -7,12 +7,13 @@ import { getIosMapPreviewSource } from "../../src/config/mapPreview";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import { Text } from "../Typography";
 import Icon from "../Icon";
+import { validPlacePoint, type PlacePoint } from "../../src/learning/placeMap";
 const c = vibesTheme.colors;
-export default function ClassLocationMap({ address }: { address: string }) {
+export default function ClassLocationMap({ address, point }: { address: string; point?: PlacePoint|null }) {
   const { data: session } = useAuthSession();
   const [failed, setFailed] = useState(false);
   const config = getGoogleMapsClientConfig();
-  const query = address.trim();
+  const query = validPlacePoint(point) ? `${point.latitude},${point.longitude}` : address.trim();
   const source = getIosMapPreviewSource({query}, session?.access_token, {width:640,height:240}) ?? (config.apiKey ? {
     uri: `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(query)}&zoom=15&size=640x240&scale=2&maptype=roadmap&markers=color:0x${c.accentBlue.slice(1)}%7C${encodeURIComponent(query)}&key=${config.apiKey}`,
     headers: config.headers,

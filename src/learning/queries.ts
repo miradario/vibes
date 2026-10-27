@@ -14,6 +14,18 @@ export async function learningRpc<T = unknown>(
   if (error) throw error;
   return data as T;
 }
+// Stable pagination prevents later classes or meetings being silently dropped.
+async function allLearningRows(table: string, order: string, ascending = true, tieBreaker = "id") {
+  const rows: any[] = [];
+  const pageSize = 500;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase.from(table).select("*")
+      .order(order, { ascending }).order(tieBreaker, { ascending: true }).range(offset, offset + pageSize - 1);
+    if (error) return { data: rows, error };
+    rows.push(...(data ?? []));
+    if (!data || data.length < pageSize) return { data: rows, error: null };
+  }
+}
 export async function loadLearning(): Promise<LearningData> {
   const access = await learningRpc<LearningData["access"]>("access");
   if (!access.enabled)
@@ -26,23 +38,11 @@ export async function loadLearning(): Promise<LearningData> {
       enrollments: [],
     };
   const requests = await Promise.all([
-    supabase.from("learning_profiles").select("*").order("name").limit(500),
-    supabase
-      .from("learning_activities")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500),
-    supabase
-      .from("learning_sessions")
-      .select("*")
-      .order("starts_at")
-      .limit(5000),
-    supabase.from("learning_teacher_places").select("*").limit(2000),
-    supabase
-      .from("learning_enrollments")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500),
+    allLearningRows("learning_profiles", "name"),
+    allLearningRows("learning_activities", "created_at", false),
+    allLearningRows("learning_sessions", "starts_at"),
+    allLearningRows("learning_teacher_places", "teacher_id", true, "place_id"),
+    allLearningRows("learning_enrollments", "created_at", false),
   ]);
   for (const r of requests) if (r.error) throw r.error;
   return {

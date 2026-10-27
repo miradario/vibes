@@ -188,7 +188,7 @@ const AnimatedSheetModal = ({
       pointerEvents={hiddenButMounted ? "none" : undefined}
       accessibilityElementsHidden={hiddenButMounted || undefined}
       importantForAccessibility={hiddenButMounted ? "no-hide-descendants" : undefined}
-      enabled={placement === "center"}
+      enabled={placement === "center" && Platform.OS === "ios"}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={[
         styles.root,

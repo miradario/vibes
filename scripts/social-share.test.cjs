@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 const ts = require("typescript");
 
-const loadSocialShare = (platform = "ios") => {
+const loadSocialShare = (platform = "ios", missingImageSharing = false) => {
   const calls = [];
   const source = ts.transpileModule(
     fs.readFileSync("src/lib/socialShare.ts", "utf8"),
@@ -15,6 +15,7 @@ const loadSocialShare = (platform = "ios") => {
   vm.runInNewContext(source, {
     exports: output,
     require(name) {
+      if (name === "expo-sharing" && missingImageSharing) throw Error("Missing native ExpoSharing");
       if (name === "expo-sharing") return {
         isAvailableAsync: async () => true,
         shareAsync: async (uri, options) => { calls.push({ uri, ...options }); },
@@ -89,4 +90,11 @@ test("Android completion sends the PNG as an image attachment", async () => {
   await socialShare.shareChallengeCompletion({ id: "one", type: "challenge" }, "Lo logré", "file:///completion.png");
   assert.equal(calls[0].uri, "file:///completion.png");
   assert.equal(calls[0].mimeType, "image/png");
+});
+
+test("class text invitations do not load optional native image sharing", async () => {
+  const { socialShare, calls } = loadSocialShare("android", true);
+  await socialShare.shareClassInvite("Yoga", "https://example.org/clase");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].message, "Yoga\nhttps://example.org/clase");
 });

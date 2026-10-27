@@ -8,6 +8,10 @@ export type LearningProfile = {
   image_url: string | null;
   cover_url: string | null;
   location: string;
+  location_details?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  account_user_id?: string | null;
   modality: Modality;
   published: boolean;
 };
@@ -33,6 +37,7 @@ export type LearningActivity = {
   capacity: number;
   reserved_count: number;
   schedule_locked: boolean;
+  booking_modes?: string[];
   price: number;
   currency: string;
   status: "draft" | "published" | "cancelled" | "completed";

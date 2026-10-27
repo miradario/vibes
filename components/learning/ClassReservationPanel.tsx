@@ -9,16 +9,18 @@ import { useReservationRequests } from "../../src/learning/reservationQueries";
 import { Button, Chips, useLearningAction, ui } from "./LearningUI";
 import Icon from "../Icon";
 import AnimatedSheetModal from "../AnimatedSheetModal";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 const c = vibesTheme.colors;
 function ReservationSelect({ label, options, value, onChange }: { label:string; options:{id:string;label:string}[];value:string|null;onChange:(value:string)=>void }) {
   const [open,setOpen]=useState(false);
+  const insets = useSafeAreaInsets();
   return <View style={{gap:4}}><Text style={s.label}>{label}</Text>
     <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${label}: ${options.find(option=>option.id===value)?.label ?? "Seleccionar"}`} accessibilityState={{expanded:open}} onPress={()=>setOpen(true)} style={s.select}>
       <Text style={[ui.body,{flex:1}]}>{options.find(option=>option.id===value)?.label ?? "Seleccionar"}</Text><Icon name="chevron-down" size={20} color={c.primaryText}/>
     </TouchableOpacity>
-    <AnimatedSheetModal visible={open} onClose={()=>setOpen(false)} sheetStyle={{backgroundColor:c.surface,borderTopLeftRadius:24,borderTopRightRadius:24,padding:24,maxHeight:"75%"}}>
+    <AnimatedSheetModal visible={open} onClose={()=>setOpen(false)} sheetStyle={{backgroundColor:c.surface,borderTopLeftRadius:24,borderTopRightRadius:24,padding:24,paddingBottom:24 + insets.bottom,maxHeight:"75%"}}>
       <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}><Text style={ui.title}>{label}</Text><TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar selector" onPress={()=>setOpen(false)} style={{padding:12}}><Icon name="close" size={22} color={c.primaryText}/></TouchableOpacity></View>
-      <ScrollView>{options.map(option=><TouchableOpacity key={option.id} accessibilityRole="radio" accessibilityState={{checked:value===option.id}} onPress={()=>{onChange(option.id);setOpen(false);}} style={s.select}><Text style={[ui.body,{flex:1}]}>{option.label}</Text>{value===option.id && <Icon name="checkmark" size={20} color={c.primaryText}/>}</TouchableOpacity>)}</ScrollView>
+      <ScrollView style={{flexGrow:0,flexShrink:1}} contentContainerStyle={{gap:8,paddingTop:8}} keyboardShouldPersistTaps="handled">{options.map(option=><TouchableOpacity key={option.id} accessibilityRole="radio" accessibilityState={{checked:value===option.id}} onPress={()=>{onChange(option.id);setOpen(false);}} style={s.select}><Text style={[ui.body,{flex:1}]}>{option.label}</Text>{value===option.id && <Icon name="checkmark" size={20} color={c.primaryText}/>}</TouchableOpacity>)}</ScrollView>
     </AnimatedSheetModal>
   </View>;
 }
@@ -27,7 +29,8 @@ export default function ClassReservationPanel({ source }: { source: ReservationS
   const queryClient = useQueryClient();
   const timezone = source.timezone ?? RESERVATION_TIMEZONE;
   const months = reservationMonths(Date.now(), timezone);
-  const [mode, setMode] = useState("single");
+  const allowedModes=source.bookingModes ?? ["single","monthly"];
+  const [mode, setMode] = useState(allowedModes[0] ?? "single");
   const [month, setMonth] = useState(months[0]);
   const [days, setDays] = useState<number[]>([]);
   const [single, setSingle] = useState("");
@@ -40,7 +43,7 @@ export default function ClassReservationPanel({ source }: { source: ReservationS
   const existing = (requests.data ?? []).filter(request => request.source_id === source.id && request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now()));
   return <View style={s.section}>
     <Text accessibilityRole="header" style={s.heading}>¿Cómo querés participar?</Text>
-    <Chips value={mode} onChange={setMode} options={[{value:"single",label:"Clase suelta"},{value:"monthly",label:"Plan mensual"}]} />
+    <Chips value={mode} onChange={setMode} options={[{value:"single",label:"Clase suelta"},{value:"monthly",label:"Plan mensual"}].filter(option=>allowedModes.includes(option.value))} />
     <ReservationSelect label="Mes" options={months.map(value => ({ id: value, label: new Date(value+"T12:00:00Z").toLocaleDateString("es-AR", {month:"long",year:"numeric",timeZone:"UTC"}) }))} value={month} onChange={value => { if(value) { setMonth(value); setSingle(""); setDays([]); } }} />
     {mode === "monthly" ? <>
       <View style={{gap:4}}><Text style={s.label}>Frecuencia</Text>

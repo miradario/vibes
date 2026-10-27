@@ -249,6 +249,8 @@ En el detalle externo de clase, la cabecera muestra el nombre de la clase sobre 
 
 Los sheets compartidos de Clases (ui.sheet) deben declarar fondo surface opaco y radios superiores 24. La confirmación de solicitudes respeta el safe area inferior con padding mínimo 24 para que el contenido y las acciones no se superpongan al fondo ni al área de gestos.
 
+Los selectores de fecha y mes de reservas conservan la altura intrínseca de sus opciones: el ScrollView no crece para ocupar espacio sobrante y solo se contrae cuando alcanza el máximo del sheet. Reservar 24 más el inset inferior debajo de la lista para mantener la última opción visible sobre la navegación de Android.
+
 En el detalle de clase con mapa, omitir la fila “Presencial”; conservar la modalidad si es online o mixta.
 
 Por el momento, el listado de clases oculta propuestas sin fechas ni horarios publicados: las clases propias requieren encuentros y las referencias externas requieren horario semanal o próxima fecha confirmada.
@@ -257,6 +259,40 @@ El detalle de clase permite “Invitar a alguien” usando EventInviteSheet: con
 
 Los filtros de Clases ofrecen únicamente prácticas, modalidades, lugares y fechas presentes en propuestas disponibles, sin usar perfiles ficticios ni clases sin horarios. Al guardar una solicitud activa se incorpora a la persona al chat de esa clase (grupo compartido por propuesta), accesible desde “Ver chat de la clase”. Cancelar la última solicitud activa revoca su membresía. Estar en el chat no confirma reserva ni cupo.
 
+El listado de Clases muestra los filtros seleccionados debajo de las prácticas, en chips que se acomodan en varias líneas. Cada chip permite quitar ese filtro y la acción Limpiar filtros restablece todas las selecciones. Mantener los valores visibles al cerrar el modal de filtros.
+
 El botón + de Clases lleva directamente a Crear clase (LearningActivityEditor). Si un responsable autorizado aún no tiene perfil, primero crea su perfil y luego continúa al formulario. Guardar una clase nueva abre Mi espacio para revisar y publicar el borrador. Conservar las autorizaciones del servidor.
 
 El + de Clases permanece visible para todas las cuentas. Al tocarlo, comprobar la autorización: si falta habilitación de responsable, explicarlo sin ocultar el control ni permitir escrituras no autorizadas. Si falla la consulta, ofrecer Reintentar.
+
+## Creación autogestionada de clases
+
+Cualquier cuenta activa puede crear su propio perfil de profesor o lugar y sus propias clases; esto no otorga permisos sobre perfiles ajenos. El flujo + crea primero un perfil publicado por defecto (la persona puede elegir Borrador) si hace falta, luego permite guardar la clase como borrador y revisarla/publicarla en Mi espacio. La carpeta junto al + permite volver a Administrar mis clases para recuperar borradores. No pedir precios ni moneda en creaciones nuevas, ya que no se manejan cobros. Proponer el profesor propio por defecto y usar el título de clase como nombre del encuentro si no se escribe otro.
+
+Los horarios de una clase quedan bloqueados cuando existe una solicitud, para preservar las fechas compartidas. Cancelar la clase cancela sus solicitudes pendientes y revoca el acceso al chat de quienes ya no tengan solicitudes activas. El catálogo se pagina hasta completar todas las filas para no omitir clases ni encuentros por límites de consulta.
+
+La creación de una clase queda comprobada con el recorrido Perfil → Borrador de clase → Publicar → listado y detalle. Los borradores permanecen en Mi espacio y no aparecen en el catálogo público. Las pruebas de integración usan PostgreSQL temporal y perfiles ficticios, sin publicar clases de prueba en producción.
+
+## Alta de profesores y lugares
+
+El alta usa cabecera “Agregar profesor” o “Agregar lugar”, con selección entre ambas fichas. Profesor ofrece tres opciones con radio y descripción: Soy yo (asocia la ficha a la cuenta actual), Otro usuario de Vibes (buscar entre conexiones activas y solicitar vinculación) y Persona sin cuenta (ficha administrada por quien la crea, sin crear una cuenta ni conceder acceso). Las especialidades se muestran como chips que se pueden quitar y se agregan con +. Conservar nombre obligatorio, descripción y foto.
+
+Otro usuario requiere aceptación en Mi espacio: quien recibe puede aceptar o rechazar y quien envía puede cancelar. Antes de aceptar, la ficha es borrador y el servidor impide publicarla. Al aceptar, ambas personas administran la ficha; la confirmación lo explica y la ficha sigue en borrador hasta su publicación explícita. La carpeta de Mi espacio permanece disponible para todas las cuentas activas, incluso sin fichas, para revisar solicitudes recibidas.
+
+Lugar requiere nombre y dirección, muestra un mapa de la dirección al terminar de editar y conserva piso, unidad o indicaciones por separado. La dirección se utiliza en clases presenciales. No prometer arrastrar el mapa: la vista actual es una previsualización con acceso al mapa externo. Los botones usan “Guardar profesor”, “Guardar lugar” o “Solicitar vinculación”, según el flujo, sin precios ni cobros.
+
+## Nueva clase recurrente
+
+Nueva clase usa ScreenContainer, formulario compacto con padding 16 y pie fijo separado del ScrollView que aplica el inset inferior una sola vez. Orden: nombre, foto rectangular, profesores en tarjetas, Agregar profesor, modalidad (Presencial / Online / Mixta), lugar con dirección y mapa, Agregar lugar, días semanales, horario Desde/Hasta, inicio y cupo por clase, fecha final visible, opciones de inscripción y acordeón Descripción y más opciones. Los selectores de profesor/lugar y la revisión usan AnimatedSheetModal con listas de altura intrínseca y safe area inferior.
+
+Las fechas se generan entre Inicio y Fechas hasta en la zona horaria de la clase; no se generan encuentros indefinidamente. El período inicial alcanza aproximadamente tres meses y es editable. Admitir como máximo 100 encuentros y un año de rango; rechazar horarios invertidos, fechas pasadas y rangos sin encuentros. La revisión enumera todas las fechas antes de publicar y permite volver a editar o guardar borrador. La publicación requiere perfiles publicados y conserva los bloqueos de horarios y opciones cuando hay solicitudes.
+
+Clase suelta y Plan mensual son opciones persistidas de la clase y el servidor impide solicitar una modalidad deshabilitada. No mostrar precios, totales ni pagos. Agregar profesor/lugar abre el alta correspondiente y conserva el formulario de clase al volver. Los cursos ya existentes conservan su editor de programa por encuentros.
+
+En Android, AnimatedSheetModal no aplica una segunda compensación de teclado con KeyboardAvoidingView: el diálogo ya ajusta su altura nativamente. En iOS los modales centrados conservan padding de teclado. Esto evita oscilaciones al enfocar el campo de especialidad.
+
+Al elegir Soy yo en el alta de profesor, completar el nombre desde el perfil de Vibes y actualizarlo si el perfil termina de cargar después de abrir el formulario. Cambiar a Lugar inicia su nombre vacío; no copiarle el nombre de la cuenta.
+
+El alta de Lugar usa PlaceLocationPicker: búsqueda explícita de dirección, mapa interactivo que se puede mover o tocar y botón para usar la ubicación actual previa autorización del sistema. Guardar latitud y longitud del punto elegido junto con dirección e indicaciones. Conservar la dirección manual si no está disponible el mapa. La vista del lugar y las clases usan el punto guardado en su previsualización y enlace externo. El mapa conserva su documento entre renders para que escribir, moverlo o recibir una dirección no lo recargue. Mostrar atribución de OpenStreetMap, conservar caché de teselas y usar la identidad Vibes en el WebView.
+
+Los acentos de controles nativos Android se generan desde los tokens de vibesTheme mediante withAndroidVibesControls, incluyendo selectores de fecha/hora y cursor de campos.

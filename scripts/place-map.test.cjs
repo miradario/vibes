@@ -1,0 +1,24 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const ts=require('typescript');
+const exportsMap={};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/learning/placeMap.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:exportsMap,require:()=>({vibesTheme:{colors:{surface:'#FEFEFD',primaryText:'#2B2B2B',secondaryText:'#6E6E6E',accentBlue:'#3978B8'}}}),Number,Math});
+const {validPlacePoint,placeMapHtml}=exportsMap;
+test('place coordinates accept only finite numbers in geographic ranges',()=>{assert.equal(validPlacePoint({latitude:0,longitude:0}),true);assert.equal(validPlacePoint({latitude:-34.58,longitude:-58.44}),true);for(const point of [null,{}, {latitude:91,longitude:0},{latitude:0,longitude:181},{latitude:NaN,longitude:0},{latitude:0,longitude:Infinity},{latitude:'-34.58',longitude:-58.44}])assert.equal(validPlacePoint(point),false);});
+test('map bridge reports user movement while controlled updates preserve the chosen center',()=>{
+ const html=placeMapHtml({latitude:-34.58,longitude:-58.44});
+ const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+ const events={},messages=[];let center={lat:0,lng:0};let moves=0;
+ const map={setView:(point)=>{center={lat:point[0],lng:point[1]};moves++;return map;},getCenter:()=>center,on:(event,handler)=>{events[event]=handler;},panTo:(point)=>{center={...point};}};
+ const window={ReactNativeWebView:{postMessage:message=>messages.push(JSON.parse(message))}};
+ vm.runInNewContext(script,{window,document:{getElementById:()=>({remove(){}})},L:{map:()=>map,tileLayer:()=>({addTo(){}})},JSON,Math});
+ assert.equal(messages[0].type,'ready');
+ events.click({latlng:{lat:-34.59,lng:-58.45}});
+ assert.equal(messages.at(-1).latitude,-34.59);
+ assert.equal(messages.at(-1).longitude,-58.45);
+ const previous=moves;window.moveToPlacePoint(-34.59,-58.45);assert.equal(moves,previous);
+ window.moveToPlacePoint(-34.57,-58.43);assert.equal(moves,previous+1);
+ events.dragend();assert.equal(messages.at(-1).latitude,-34.57);
+});

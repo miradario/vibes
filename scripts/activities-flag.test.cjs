@@ -14,6 +14,7 @@ test('clases hides its selector and returns to Events when disabled while viewin
     react: React,
     '@react-navigation/native': { useNavigation: () => ({ navigate: () => {} }) },
     '../components/Icon': { default: 'Icon' },
+    '../components/PillTabStyles': { pillTabStyles: {} },
     'react-native': { View: 'View', TouchableOpacity: 'Button', StyleSheet: { create: x => x } },
     '../src/featureFlags/useClasesEnabled': { useClasesEnabled: () => enabled },
     '../src/i18n': { useI18n: () => ({ locale: 'es' }) },

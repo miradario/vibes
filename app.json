@@ -141,7 +141,8 @@
       "./plugins/withIosDeploymentTarget",
       "./plugins/withSceneLifecycle",
       "./plugins/withAndroidReleaseOptimization",
-      "./plugins/withAndroidWindowCompatibility"
+      "./plugins/withAndroidWindowCompatibility",
+      "./plugins/withAndroidVibesControls"
     ],
     "extra": {
       "eas": {
