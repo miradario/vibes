@@ -661,7 +661,7 @@ const baseTranslations = {
     },
     challengeRestart: {
       tabPublic: "Públicos",
-      tabPrivate: "Privados",
+      tabPrivate: "Mis desafíos",
       blockMine: "Mis desafíos",
       blockInvitations: "Invitaciones",
       blockParticipating: "Participando",
@@ -1427,7 +1427,7 @@ const baseTranslations = {
     },
     challengeRestart: {
       tabPublic: "Public",
-      tabPrivate: "Private",
+      tabPrivate: "My challenges",
       blockMine: "My challenges",
       blockInvitations: "Invitations",
       blockParticipating: "Participating",
