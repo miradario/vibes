@@ -25,7 +25,7 @@ import VibiDailyTip from "./VibiDailyTip";
 import {
   ENERGY_SOURCES,
   getVibiDailyPrompt,
-  claimVibiDailyGreeting,
+  claimVibiDailyGreetingForDay,
 } from "../src/lib/vibiDailyPrompts";
 
 export default function DailyMoodCard({
@@ -147,10 +147,16 @@ export default function DailyMoodCard({
       return;
     }
     if (!enabled || !userId) return;
+    let cancelled = false;
     const timer = setTimeout(() => {
-      if (claimVibiDailyGreeting(userId)) setOpen(true);
+      void claimVibiDailyGreetingForDay(userId, day).then((claimed) => {
+        if (claimed && !cancelled) setOpen(true);
+      });
     }, 350);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [visible, enabled, userId, day]);
 
   const dismiss = () => {
