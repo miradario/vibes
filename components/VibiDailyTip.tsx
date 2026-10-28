@@ -20,6 +20,22 @@ const validGuide = (value: unknown): value is Guide => {
   );
 };
 
+const HISTORY_KEY = (userId: string) => `vibiDailyTipHistory:${userId}`;
+const HISTORY_SIZE = 14;
+const readHistory = async (userId: string): Promise<string[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(HISTORY_KEY(userId));
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
+};
+const summarize = (guide: Guide) =>
+  [guide.detail.slice(0, 200), ...guide.actions].join(" | ");
+
 export default function VibiDailyTip({
   userId,
   day,
@@ -68,7 +84,7 @@ export default function VibiDailyTip({
       const { data, error: requestError } = await supabase.functions.invoke(
         "daily-guide",
         {
-          body: { locale: "es" },
+          body: { locale: "es", recent: await readHistory(userId) },
           timeout: 60000,
         }
       );
@@ -79,6 +95,11 @@ export default function VibiDailyTip({
       await AsyncStorage.setItem(cacheKey, JSON.stringify(data)).catch(
         () => {}
       );
+      const history = await readHistory(userId);
+      await AsyncStorage.setItem(
+        HISTORY_KEY(userId),
+        JSON.stringify([summarize(data), ...history].slice(0, HISTORY_SIZE))
+      ).catch(() => {});
     } catch {
       if (current === generation.current)
         setError("No pude generar tu consejo. Podés intentar de nuevo.");

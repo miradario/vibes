@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export const ENERGY_SOURCES = [
   "Dormir",
   "Comida",
@@ -32,6 +34,24 @@ const greetedUsers = new Set<string>();
 export function claimVibiDailyGreeting(userId: string) {
   if (greetedUsers.has(userId)) return false;
   greetedUsers.add(userId);
+  return true;
+}
+
+// Once Vibi's daily card was shown (seen or dismissed) it stays hidden for the
+// rest of that local day, also across app restarts.
+const seenKey = (userId: string, day: string) =>
+  `vibiDailySeen:${userId}:${day}`;
+export async function claimVibiDailyGreetingForDay(
+  userId: string,
+  day: string
+) {
+  if (!claimVibiDailyGreeting(userId)) return false;
+  try {
+    if (await AsyncStorage.getItem(seenKey(userId, day))) return false;
+    await AsyncStorage.setItem(seenKey(userId, day), "1");
+  } catch {
+    /* Storage failure: fall back to once per session. */
+  }
   return true;
 }
 
