@@ -34,14 +34,14 @@ export default function EventInviteSheet({
   event?: EventFeedItem;
   classInvite?: ClassInvitation;
   /** Private challenge: invites go through challenge invitations (no chat message, no public link). */
-  privateChallenge?: { id: string; title: string; excludeUserIds: string[] };
+  privateChallenge?: { event: EventFeedItem; excludeUserIds: string[] };
   visible: boolean;
   onClose: () => void;
   onDiscover: () => void;
 }) {
   const isPrivateChallenge = Boolean(privateChallenge);
   const isClass = Boolean(classInvite);
-  const content = privateChallenge ?? classInvite ?? event!;
+  const content = privateChallenge?.event ?? classInvite ?? event!;
   const isChallenge = isPrivateChallenge || event?.type === "challenge";
   const matches = useMatchesQuery();
   const eventParticipants = useEventParticipantsQuery(visible && !isClass && !isPrivateChallenge && !isChallenge ? event?.id : undefined);
@@ -79,7 +79,7 @@ export default function EventInviteSheet({
     setError("");
     try {
       if (privateChallenge) {
-        await inviteToChallenge.mutateAsync({ challengeId: privateChallenge.id, inviteeIds: [match.otherUserId] });
+        await inviteToChallenge.mutateAsync({ challengeId: privateChallenge.event.id, inviteeIds: [match.otherUserId] });
       } else {
         await send.mutateAsync({ matchId: match.id, body: invitation });
       }
@@ -128,25 +128,25 @@ export default function EventInviteSheet({
       </Text>
       <View style={s.preview}>
         <Text style={s.previewTitle}>{content.title}</Text>
-        <Text style={s.copy}>{isPrivateChallenge ? "Desafío privado: solo pueden unirse las personas que invites." : isClass ? "Te invito a esta clase en Vibes." : isChallenge ? "Te invito a este desafío en Vibes." : "Te invito a este evento en Vibes."}</Text>
+        <Text style={s.copy}>{isPrivateChallenge ? "Te invito a este desafío privado en Vibes." : isClass ? "Te invito a esta clase en Vibes." : isChallenge ? "Te invito a este desafío en Vibes." : "Te invito a este evento en Vibes."}</Text>
       </View>
-      {isPrivateChallenge ? null : <TouchableOpacity
+      <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel="Invitar por WhatsApp o enlace"
         disabled={!!sendingId}
         style={s.discover}
         onPress={async () => {
           setError("");
-          try { await (classInvite ? shareClassInvite(classInvite.title, classInvite.url) : isChallenge ? shareChallengeInvite(event!) : shareEventInvite(event!)); }
+          try { await (classInvite ? shareClassInvite(classInvite.title, classInvite.url) : isChallenge ? shareChallengeInvite(privateChallenge?.event ?? event!) : shareEventInvite(event!)); }
           catch { setError("No pudimos abrir las opciones para compartir. Intentá de nuevo."); }
         }}
       >
         <Ionicons name="share-outline" size={24} color={vibesTheme.colors.primaryText} />
         <View style={s.discoverCopy}>
           <Text style={s.name}>Invitar por WhatsApp o enlace</Text>
-          <Text style={s.copy}>Elegí personas que no estén en tus contactos de Vibes.</Text>
+          <Text style={s.copy}>{isPrivateChallenge ? "El link solo abre el desafío para quienes ya tengan acceso." : "Elegí personas que no estén en tus contactos de Vibes."}</Text>
         </View>
-      </TouchableOpacity>}
+      </TouchableOpacity>
       <TextInput
         value={search}
         onChangeText={setSearch}

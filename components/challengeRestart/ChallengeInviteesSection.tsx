@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View, type StyleProp, type ViewStyle } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import Avatar from "../Avatar";
 import Icon from "../Icon";
@@ -14,6 +14,7 @@ import {
   type ChallengeInvitationStatus,
 } from "../../src/queries/challengeRestart.queries";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import type { EventFeedItem } from "../../src/queries/events.queries";
 
 const STATUS_KEY: Record<ChallengeInvitationStatus, string> = {
   pending: "challengeRestart.statusPending",
@@ -22,7 +23,8 @@ const STATUS_KEY: Record<ChallengeInvitationStatus, string> = {
 };
 
 /** Owner view of a private challenge: who was invited, their answer, and "invite more". */
-export default function ChallengeInviteesSection({ challengeId, challengeTitle }: { challengeId: string; challengeTitle: string }) {
+export default function ChallengeInviteesSection({ challenge, inviteButtonStyle }: { challenge: EventFeedItem; inviteButtonStyle?: StyleProp<ViewStyle> }) {
+  const challengeId = challenge.id;
   const { t } = useI18n();
   const { data: session } = useAuthSession();
   const userId = session?.user?.id;
@@ -50,12 +52,12 @@ export default function ChallengeInviteesSection({ challengeId, challengeTitle }
           </View>
         );
       })}
-      <TouchableOpacity accessibilityRole="button" style={[restartStyles.pill, { alignSelf: "flex-start" }]} onPress={() => setPickerVisible(true)}>
-        <Icon name="person-add-outline" size={18} color={vibesTheme.colors.accentBlue} />
-        <Text style={restartStyles.pillText}>{t("challengeRestart.inviteFriends")}</Text>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Invitar personas al desafío" style={inviteButtonStyle} onPress={() => setPickerVisible(true)}>
+        <Icon name="person-add-outline" size={22} color={vibesTheme.colors.primaryText} />
+        <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.medium, fontSize: 16 }}>Invitar a alguien</Text>
       </TouchableOpacity>
       <EventInviteSheet
-        privateChallenge={{ id: challengeId, title: challengeTitle, excludeUserIds: excludeIds }}
+        privateChallenge={{ event: challenge, excludeUserIds: excludeIds }}
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
         onDiscover={() => setPickerVisible(false)}
