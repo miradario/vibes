@@ -1683,7 +1683,7 @@ const ChallengeDetailScreen = () => {
               <StreakCelebrationCard streak={challenge.streak} />
             ) : null}
             {isAdmin && event?.id && event.visibility === "private" ? (
-              <ChallengeInviteesSection challengeId={event.id} />
+              <ChallengeInviteesSection challenge={event} inviteButtonStyle={[localStyles.inviteAction, { marginBottom: 0 }]} />
             ) : null}
           </View>
         </View>
