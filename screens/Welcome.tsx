@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   scrollContent: { flexGrow: 1 },
   content: { flex: 1, paddingHorizontal: 24, paddingTop: 0, paddingBottom: 12 },
   brand: { alignItems: "center", paddingTop: 8, marginBottom: "auto" },
-  smallLogo: { width: 64, height: 64 },
+  smallLogo: { width: 125, height: 125 },
   hero: { width: "100%", aspectRatio: 1.5, flexShrink: 1, minHeight: 0, maxHeight: 300, marginTop: 8, marginBottom: 4, justifyContent: "center", alignItems: "center" },
   sun: { position: "absolute", height: "42%", aspectRatio: 1, borderRadius: vibesTheme.radii.pill, backgroundColor: colors.accentMustard, opacity: 0.24 },
   sphere: { position: "absolute", height: "38%", aspectRatio: 1, borderRadius: vibesTheme.radii.pill, opacity: 0.24 },
