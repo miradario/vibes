@@ -964,8 +964,7 @@ const Home = () => {
               <Text
                 style={localStyles.heroTitle}
                 numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.68}
+                ellipsizeMode="tail"
               >
                 Hola, {firstName}
               </Text>
