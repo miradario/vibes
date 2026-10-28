@@ -34,13 +34,13 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
             <View style={s.stripHeadingRow}>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver nuevas conexiones" onPress={onViewAll} style={s.stripHeading}>
                 <Text style={s.stripTitle}>Nuevas conexiones</Text>
-                <Icon name="chevron-forward" size={22} color={vibesTheme.colors.secondaryText} />
               </TouchableOpacity>
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ocultar nuevas conexiones" hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} onPress={visibility.dismiss} style={s.stripDismiss}>
-                <Text style={s.stripDismissText}>Ocultar</Text>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ocultar nuevas conexiones" hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} onPress={visibility.dismiss} style={s.stripDismiss}>
+                <Icon name="close" size={16} color={vibesTheme.colors.secondaryText} style={s.stripDismissIcon} />
               </TouchableOpacity>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripPeople}>
+            <View style={s.stripRow}>
+            <ScrollView style={s.stripScroll} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripPeople}>
               {incomingLikes.length > 0 && <>
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver ${incomingLikes.length} solicitudes de conexión`} onPress={onRequests} style={[s.stripPerson, { width: stackWidth }]}>
                   <View style={[s.requestStack, { width: stackWidth, height: avatarBox }]}>
@@ -60,6 +60,10 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
                 <Text numberOfLines={1} style={s.stripName}>{item.otherUserName?.trim().split(/\s+/)[0] || "Vibes"}</Text>
               </TouchableOpacity>)}
             </ScrollView>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver nuevas conexiones" onPress={onViewAll} style={s.stripChevron}>
+              <Icon name="chevron-forward" size={22} color={vibesTheme.colors.secondaryText} />
+            </TouchableOpacity>
+            </View>
           </View>
         ) : null}
 
@@ -68,9 +72,12 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
 const s = StyleSheet.create({
   connectionsStrip: { marginBottom: 20 },
   stripHeadingRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-  stripHeading: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 },
-  stripDismiss: { marginLeft: 12, justifyContent: "center" },
-  stripDismissText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 14, lineHeight: 20 },
+  stripHeading: { flex: 1, flexDirection: "row", alignItems: "center", minHeight: 44 },
+  stripDismiss: { width: 16, height: 16, marginLeft: 12, alignItems: "center", justifyContent: "center" },
+  stripDismissIcon: { opacity: 0.6 },
+  stripRow: { flexDirection: "row", alignItems: "center" },
+  stripScroll: { flex: 1 },
+  stripChevron: { width: 32, minHeight: 44, alignItems: "flex-end", justifyContent: "center" },
   stripTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 19, lineHeight: 25 },
   stripPeople: { alignItems: "flex-start", gap: 12, paddingTop: 6, paddingBottom: 4, paddingRight: 8 },
   stripPerson: { width: 74, alignItems: "center", gap: 8 },
