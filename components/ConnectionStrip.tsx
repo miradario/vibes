@@ -36,8 +36,8 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
                 <Text style={s.stripTitle}>Nuevas conexiones</Text>
                 <Icon name="chevron-forward" size={22} color={vibesTheme.colors.secondaryText} />
               </TouchableOpacity>
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ocultar nuevas conexiones" hitSlop={8} onPress={visibility.dismiss} style={s.stripDismiss}>
-                <Icon name="close" size={22} color={vibesTheme.colors.secondaryText} />
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ocultar nuevas conexiones" hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} onPress={visibility.dismiss} style={s.stripDismiss}>
+                <Text style={s.stripDismissText}>Ocultar</Text>
               </TouchableOpacity>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripPeople}>
@@ -69,7 +69,8 @@ const s = StyleSheet.create({
   connectionsStrip: { marginBottom: 20 },
   stripHeadingRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   stripHeading: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 },
-  stripDismiss: { minWidth: 44, minHeight: 44, alignItems: "flex-end", justifyContent: "center" },
+  stripDismiss: { marginLeft: 12, justifyContent: "center" },
+  stripDismissText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 14, lineHeight: 20 },
   stripTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 19, lineHeight: 25 },
   stripPeople: { alignItems: "flex-start", gap: 12, paddingTop: 6, paddingBottom: 4, paddingRight: 8 },
   stripPerson: { width: 74, alignItems: "center", gap: 8 },
