@@ -1,7 +1,7 @@
+import { readCommunities, canonicalCommunity } from "../src/lib/communities";
 import ScreenContainer from "../components/ScreenContainer";
 import {creationFormStyles} from "../src/theme/creationFormStyles";
 import DiscoverPathCards from "../components/DiscoverPathCards";
-import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
 import EventRecurrenceEditor, { type EventRecurrenceDraft } from "../components/EventRecurrenceEditor";
 import EventScheduleEditor from "../components/EventScheduleEditor";
 import { normalizeSchedule, serializeSchedule, sessionDraft, getEventRecurrence, buildRecurringSchedule, validateScheduleDrafts } from "../src/lib/eventSchedule";
@@ -243,7 +243,7 @@ const CreateEvent = () => {
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const pendingPhotoAction = useRef<null | "camera" | "gallery">(null);
-  const [spiritualPaths, setSpiritualPaths] = useState<string[]>(() => (editingEvent?.tags ?? []).filter((tag: string) => SPIRITUAL_PATH_OPTIONS.includes(tag as any)));
+  const [spiritualPaths, setSpiritualPaths] = useState<string[]>(() => readCommunities(editingEvent?.tags));
   const [validatedLocation, setValidatedLocation] = useState<{
     address: string;
     lat: number | null;
@@ -606,7 +606,7 @@ const CreateEvent = () => {
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt,
           schedule: schedule ?? [],
-          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !SPIRITUAL_PATH_OPTIONS.includes(tag as any)), ...spiritualPaths],
+          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !canonicalCommunity(tag)), ...spiritualPaths],
           location: resolvedLocation,
           locationLatitude:
             modality === "in_person" && validatedLocation
@@ -635,7 +635,7 @@ const CreateEvent = () => {
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt!,
           schedule: schedule ?? [],
-          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !SPIRITUAL_PATH_OPTIONS.includes(tag as any)), ...spiritualPaths],
+          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !canonicalCommunity(tag)), ...spiritualPaths],
           location: resolvedLocation,
           locationLatitude:
             modality === "in_person" && validatedLocation
@@ -823,7 +823,7 @@ const CreateEvent = () => {
           <Text style={localStyles.label}>{recurrenceDraft.frequency === "none" ? "Fechas y horarios" : "Primer encuentro de la serie"}</Text>
           <EventScheduleEditor value={visibleDrafts} issues={scheduleIssues} onChange={setScheduleDrafts} allowMultiple={recurrenceDraft.frequency === "none"} />
           <EventRecurrenceEditor value={recurrenceDraft} onChange={setRecurrenceDraft} defaultWeekday={defaultWeekday} schedule={schedule} />
-          <Text style={localStyles.label}>Camino espiritual</Text>
+          <Text style={localStyles.label}>Comunidad</Text>
           <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} style={localStyles.pathCards} />
 
           <EventClassificationPicker label="Categoría · qué actividad es" options={EVENT_CATEGORIES} value={category} onChange={setCategory} style={localStyles.pickerSection} labelStyle={localStyles.pickerLabel} />

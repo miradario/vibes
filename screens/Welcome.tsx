@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { Text } from "../components/Typography";
@@ -9,9 +10,16 @@ import VibesActionButton from "../components/VibesActionButton";
 import ScreenContainer from "../components/ScreenContainer";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { trackSignupEvent } from "../src/lib/signupEvents";
+import Animated from "react-native-reanimated";
+import useWanderingSphere from "../src/hooks/useWanderingSphere";
+import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 
 const Welcome = () => {
   const navigation = useNavigation();
+  const { height, width, fontScale } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const compact = height - insets.top - insets.bottom < 700;
+  const largeText = fontScale > 1.3;
   const { data: session, isLoading } = useAuthSession();
   const focused = useIsFocused();
   // On a cold start the root boot intro moves its live logo into this slot and keeps animating,
@@ -38,6 +46,14 @@ const Welcome = () => {
       if (width > 0 && height > 0) setWelcomeSlot({ x, y, width, height });
     });
   };
+
+  const { active, reducedMotion, motionReady } = useVibiRuntime();
+  const [illustrationReady, setIllustrationReady] = useState(false);
+  const animateSpheres = focused && active && motionReady && !reducedMotion && illustrationReady;
+  const maxTravel = Math.min(90, width * 0.2);
+  const sunMotion = useWanderingSphere(animateSpheres, reducedMotion, maxTravel);
+  const coralMotion = useWanderingSphere(animateSpheres, reducedMotion, maxTravel);
+  const blueMotion = useWanderingSphere(animateSpheres, reducedMotion, maxTravel);
   useEffect(() => {
     if (!isLoading && focused && !session?.user?.id) trackSignupEvent("welcome_viewed");
   }, [focused, isLoading, session?.user?.id]);
@@ -50,22 +66,51 @@ const Welcome = () => {
     <ScreenContainer
       style={styles.screen}
       edges={["top", "bottom", "left", "right"]}
+      scroll={largeText}
+      contentContainerStyle={styles.scrollContent}
     >
-      <View
-        style={styles.content}
-      >
-        <View
-          collapsable={false}
-          pointerEvents="none"
-          style={StyleSheet.absoluteFill}
-        >
-          <View style={styles.fallbackLogoWrap}>
-            {bootIntroOwnsLogo ? (
-              <View ref={logoSlotRef} collapsable={false} onLayout={measureLogoSlot} style={styles.fallbackLogo} />
-            ) : (
-              <AnimatedBrandLogo direction="logo-to-word" loop style={styles.fallbackLogo} />
-            )}
+      <View style={[styles.content, largeText && { minHeight: height - insets.top - insets.bottom }]}>
+        <View style={styles.brand}>
+          {bootIntroOwnsLogo ? (
+            <View ref={logoSlotRef} collapsable={false} onLayout={measureLogoSlot} style={styles.smallLogo} />
+          ) : (
+            <AnimatedBrandLogo loop direction="word-to-logo" style={styles.smallLogo} />
+          )}
+        </View>
+        <View style={styles.hero} pointerEvents="none">
+          <Animated.View style={[styles.sun, sunMotion]} />
+          <Animated.View style={[styles.sphere, styles.coralSphere, coralMotion]} />
+          <Animated.View style={[styles.sphere, styles.blueSphere, blueMotion]} />
+          <Image
+            source={require("../assets/images/welcome-community.png")}
+            onLoadEnd={() => setIllustrationReady(true)}
+            style={styles.illustration}
+            resizeMode="contain"
+            accessible={false}
+          />
+        </View>
+        <View style={styles.copy}>
+          <View style={styles.headline}>
+            <Text
+              style={[styles.title, compact && { fontSize: 23, lineHeight: 29 }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              Encontrá tu comunidad.
+            </Text>
+            <Text
+              style={[styles.title, compact && { fontSize: 23, lineHeight: 29 }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              Conectá con tu bienestar.
+            </Text>
           </View>
+          <Text style={[styles.tagline, compact && { fontSize: 14, lineHeight: 20 }]}>
+            Compartí clases, experiencias y nuevos hábitos con personas en tu misma sintonía.
+          </Text>
         </View>
         <View style={styles.actions}>
           <VibesActionButton
@@ -75,20 +120,14 @@ const Welcome = () => {
               navigation.navigate("AgeAssurance" as never);
             }}
             style={styles.primaryButton}
+            textStyle={styles.primaryButtonText}
           />
-          <Pressable
-            accessibilityRole="button"
+          <VibesActionButton
+            label="Iniciar sesión"
+            variant="outline"
             onPress={() => navigation.navigate("Login" as never)}
-            style={({ pressed }) => [
-              styles.button,
-              styles.secondary,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={[styles.buttonText, styles.secondaryText]}>
-              Iniciar sesión
-            </Text>
-          </Pressable>
+            style={styles.secondaryButton}
+          />
         </View>
       </View>
     </ScreenContainer>
@@ -98,49 +137,22 @@ export default Welcome;
 const colors = vibesTheme.colors;
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { flex: 1, backgroundColor: colors.background },
-  fallbackLogoWrap: {
-    flex: 1,
-    marginBottom: 220,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fallbackLogo: { width: "90%", height: "100%" },
-  titleWrap: { position: "absolute", width: "100%", alignItems: "center" },
-  title: {
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 44,
-    lineHeight: 54,
-    color: colors.primaryText,
-  },
-  tagline: { color: colors.secondaryText, fontSize: 18, lineHeight: 26, marginTop: 12, textAlign: "center", paddingHorizontal: 24 },
-  actions: {
-    position: "absolute",
-    bottom: 36,
-    left: 24,
-    right: 24,
-    gap: 12,
-    alignItems: "center",
-  },
-  button: {
-    width: "100%",
-    maxWidth: 480,
-    height: 58,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  primaryButton: { maxWidth: 480, shadowOpacity: 0, elevation: 0 },
-  secondary: {
-    backgroundColor: colors.background,
-    borderColor: colors.accentBlue,
-  },
-  buttonText: {
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 19,
-    color: colors.primaryText,
-  },
-  secondaryText: { color: colors.accentBlue },
-  pressed: { opacity: 0.8 },
+  scrollContent: { flexGrow: 1 },
+  content: { flex: 1, paddingHorizontal: 24, paddingTop: 0, paddingBottom: 12 },
+  brand: { alignItems: "center", paddingTop: 8, marginBottom: "auto" },
+  smallLogo: { width: 64, height: 64 },
+  hero: { width: "100%", aspectRatio: 1.5, flexShrink: 1, minHeight: 0, maxHeight: 300, marginTop: 8, marginBottom: 4, justifyContent: "center", alignItems: "center" },
+  sun: { position: "absolute", height: "42%", aspectRatio: 1, borderRadius: vibesTheme.radii.pill, backgroundColor: colors.accentMustard, opacity: 0.24 },
+  sphere: { position: "absolute", height: "38%", aspectRatio: 1, borderRadius: vibesTheme.radii.pill, opacity: 0.24 },
+  coralSphere: { backgroundColor: colors.accentCoral, right: "12%", top: "10%" },
+  blueSphere: { backgroundColor: colors.accentBlue, left: "8%", bottom: "12%" },
+  illustration: { width: "100%", height: "100%" },
+  copy: { alignItems: "center", gap: 8, marginBottom: 14 },
+  headline: { width: "100%", alignItems: "stretch" },
+  title: { fontFamily: vibesTheme.fonts.bold, fontSize: 27, lineHeight: 34, color: colors.primaryText, textAlign: "center" },
+  tagline: { color: colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 16, lineHeight: 23, textAlign: "center", maxWidth: 400 },
+  actions: { width: "100%", maxWidth: 480, alignSelf: "center", gap: 12, marginTop: "auto", paddingTop: 16 },
+  primaryButton: { backgroundColor: colors.primaryText, shadowOpacity: 0, elevation: 0 },
+  primaryButtonText: { color: colors.surface },
+  secondaryButton: { minHeight: 58 },
 });

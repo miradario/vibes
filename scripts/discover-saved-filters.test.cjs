@@ -18,13 +18,13 @@ const { matchesSavedDiscoverExtras: matches } = load('src/lib/discoverSavedFilte
 test('Home applies persisted multiple genders, diet, spiritual path and nationality together', () => {
   const preferences = {
     discover_genders: ['male', 'female'], discover_diets: ['vegetarian'],
-    discover_spiritual_paths: ['Yoga'], discover_answer_filters: { nationalityCode: ['AR'] },
+    discover_spiritual_paths: ['Hatha'], discover_answer_filters: { nationalityCode: ['AR'] },
   };
-  const profile = { vegetarian: 'Sí', spiritual_path: ['Yoga'], nationality_code: 'AR' };
+  const profile = { vegetarian: 'Sí', spiritual_path: ['Hatha Yoga'], nationality_code: 'AR' };
   assert.equal(matches(profile, preferences, 'female'), true);
   assert.equal(matches(profile, preferences, 'unknown'), false);
   assert.equal(matches({ ...profile, vegetarian: 'No' }, preferences, 'female'), false);
-  assert.equal(matches({ ...profile, spiritual_path: ['Reiki'] }, preferences, 'female'), false);
+  assert.equal(matches({ ...profile, spiritual_path: ['Ashtanga'] }, preferences, 'female'), false);
   assert.equal(matches({ ...profile, nationality_code: 'UY' }, preferences, 'female'), false);
 });
 test('empty saved filters allow profiles with incomplete answers', () => {
@@ -58,5 +58,5 @@ test('every named onboarding practice can be selected and matched',()=>{
   assert.equal(readDiscoverSpiritualPaths([practice]).length,1);
   assert.equal(matchesDiscoverSpiritualPaths({spiritual_path:[practice]},[practice]),true);
  }
- assert.equal(readDiscoverSpiritualPaths(['El Arte de Vivir'])[0],'Art of Living');
+ assert.equal(readDiscoverSpiritualPaths(['Art of Living'])[0],'El Arte de Vivir');
 });

@@ -462,9 +462,9 @@ const localStyles = StyleSheet.create({
   tabLabel: {
     width: "100%",
     color: localColors.muted,
-    fontSize: 12,
-    fontWeight: "400",
-    lineHeight: 15,
+    fontSize: 11,
+    fontFamily: vibesTheme.fonts.regular,
+    lineHeight: 14,
     textAlign: "center",
   },
   floatingWrap: {

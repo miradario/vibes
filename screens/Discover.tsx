@@ -1,3 +1,5 @@
+import ActiveCommunityFilters from "../components/ActiveCommunityFilters";
+import { defaultCommunities } from "../src/lib/communities";
 import { useMeetPeople } from "../src/queries/meetPeople.queries";
 import { useDiscoveryRefresh } from "../src/hooks/useDiscoveryRefresh";
 import RangeSlider from "../components/RangeSlider";
@@ -243,7 +245,7 @@ const readStoredFiltersRaw = (
     return storedGender === "unknown" ? [] : [storedGender];
   })(),
   spiritualPaths: readDiscoverSpiritualPaths(
-    preferences?.discoverSpiritualPaths ?? preferences?.discover_spiritual_paths
+    preferences?.discoverSpiritualPaths ?? preferences?.discover_spiritual_paths ?? defaultCommunities(preferences)
   ),
 
 });
@@ -605,7 +607,6 @@ export const DiscoverContent = forwardRef<
   if (discoverFilters.ageMin !== null || discoverFilters.ageMax !== null) appliedFilterChips.push({ id: "age", label: discoverFilters.ageMin !== null && discoverFilters.ageMax !== null ? `${discoverFilters.ageMin}–${discoverFilters.ageMax} años` : discoverFilters.ageMin !== null ? `Desde ${discoverFilters.ageMin} años` : `Hasta ${discoverFilters.ageMax} años`, remove: () => setDiscoverFilters(p => ({ ...p, ageMin: null, ageMax: null })) });
   if (hasLocation && (discoverFilters.distanceMinKm !== null || discoverFilters.maxDistanceKm !== null)) appliedFilterChips.push({ id: "distance", label: discoverFilters.distanceMinKm !== null && discoverFilters.maxDistanceKm !== null ? `${discoverFilters.distanceMinKm}–${discoverFilters.maxDistanceKm} km` : discoverFilters.maxDistanceKm !== null ? `Hasta ${discoverFilters.maxDistanceKm} km` : `Desde ${discoverFilters.distanceMinKm} km`, remove: () => setDiscoverFilters(p => ({ ...p, distanceMinKm: null, maxDistanceKm: null })) });
   if (discoverFilters.genders.length) appliedFilterChips.push({ id: "genders", label: discoverFilters.genders.map(g => t(g === "man" ? "discover.genderMan" : g === "woman" ? "discover.genderWoman" : "discover.genderOther")).join(" · "), remove: () => setDiscoverFilters(p => ({ ...p, genders: [] })) });
-  if (discoverFilters.spiritualPaths.length) appliedFilterChips.push({ id: "paths", label: discoverFilters.spiritualPaths.join(" · "), remove: () => setDiscoverFilters(p => ({ ...p, spiritualPaths: [] })) });
   for (const [key, values] of Object.entries(answerFilters)) {
     if (!values.length) continue;
     const label = ANSWER_FILTER_FIELDS.find(field => field.key === key)?.label ?? ({ nationalityCode: "Nacionalidad" }[key] ?? key);
@@ -1065,6 +1066,7 @@ export const DiscoverContent = forwardRef<
           </View>
         ) : null}
 
+        <ActiveCommunityFilters selected={discoverFilters.spiritualPaths} onRemove={value=>setDiscoverFilters(previous=>({...previous,spiritualPaths:previous.spiritualPaths.filter(item=>item!==value)}))} onClear={()=>setDiscoverFilters(previous=>({...previous,spiritualPaths:[]}))} style={{paddingHorizontal:16}} />
         {appliedFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>
           {appliedFilterChips.map(chip => <TouchableOpacity key={chip.id} accessibilityRole="button" accessibilityLabel={`Quitar filtro: ${chip.label}`} onPress={chip.remove} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 40, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14` }}>
             <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 13 }}>{chip.label}</Text><Icon name="close" size={17} color={vibesTheme.colors.accentBlue} />
@@ -1100,7 +1102,7 @@ export const DiscoverContent = forwardRef<
             }}
           >
             <Icon name="leaf-outline" size={18} color={vibesTheme.colors.primaryText} />
-            <Text style={localStyles.filtersButtonText}>Camino espiritual</Text>
+            <Text style={localStyles.filtersButtonText}>Comunidad</Text>
           </TouchableOpacity>
         </ScrollView>
 

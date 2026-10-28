@@ -1,3 +1,7 @@
+import ActiveCommunityFilters from "../components/ActiveCommunityFilters";
+import { useCommunityFilter } from "../src/hooks/useCommunityFilter";
+import { matchesCommunities } from "../src/lib/communities";
+import DiscoverPathCards from "../components/DiscoverPathCards";
 import EventInviteSheet from "../components/EventInviteSheet";
 import ClassLocationMap from "../components/learning/ClassLocationMap";
 import ClassReservationPanel from "../components/learning/ClassReservationPanel";
@@ -68,6 +72,7 @@ export function LearningCreateAction() {
 }
 
 export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
+  const [communities, setCommunities] = useCommunityFilter();
   const requests = useReservationRequests();
   const nav = useNav(),
     q = useLearningData();
@@ -82,8 +87,9 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
     <Page title="Clases y espacios" embedded={embedded}>
       <LearningGate query={q}>
         {(data) => {
-          const availableClasses = data.activities.filter(activity => activity.status === "published" && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
-          const availableExternalClasses = unimportedCatalogClasses(data.activities).filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
+          const personalClassIds = new Set([...data.enrollments.filter(enrollment=>enrollment.status === "confirmed").map(enrollment=>enrollment.activity_id), ...(requests.data ?? []).filter(request=>request.status === "pending_confirmation").map(request=>request.source_id)]);
+          const availableClasses = data.activities.filter(activity => activity.status === "published" && (matchesCommunities({specialties:data.profiles.filter(profile=>activity.teacher_ids.includes(profile.id)).flatMap(profile=>profile.specialties)}, communities) || personalClassIds.has(activity.id)) && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
+          const availableExternalClasses = unimportedCatalogClasses(data.activities).filter(item => matchesCommunities(item, communities) || personalClassIds.has(item.id)).filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
           const teacherIds = new Set(availableClasses.flatMap(activity => activity.teacher_ids));
           const specs = Array.from(new Set([
             ...data.profiles.filter(profile => teacherIds.has(profile.id)).flatMap(profile => profile.specialties),
@@ -104,7 +110,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           const listedExternalClasses = availableExternalClasses.filter(item =>
             (item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada)) &&
             matchesExternalClass(item, {query,specialty,location,modality,date}));
-          const listedExternalPlaces = externalPlaces.filter(item => matchesExternalPlace(item,query,specialty));
+          const listedExternalPlaces = externalPlaces.filter(item => matchesCommunities(item, communities) && matchesExternalPlace(item,query,specialty));
           const enrolledIds = new Set(data.enrollments.filter(enrollment => enrollment.status === "confirmed").map(enrollment => enrollment.activity_id));
           const myClasses = activities.filter(activity => enrolledIds.has(activity.id));
           const requestedIds = new Set((requests.data ?? []).filter(request => request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now())).map(request => request.source_id));
@@ -113,6 +119,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           const otherClasses = activities.filter(activity => !enrolledIds.has(activity.id) && !requestedIds.has(activity.id));
           const profiles = data.profiles.filter(
             (p) =>
+              matchesCommunities(p, communities) &&
               p.kind === tab &&
               p.published &&
               `${p.name} ${p.description} ${p.specialties.join(" ")}`
@@ -134,6 +141,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           );
           return (
             <>
+              <ActiveCommunityFilters selected={communities} onRemove={value=>setCommunities(previous=>previous.filter(item=>item!==value))} onClear={()=>setCommunities([])} />
               {!embedded && <View style={explore.toolbar}><LearningCreateAction /></View>}
               <View style={explore.search}>
                 <Icon name="search" size={20} color={vibesTheme.colors.secondaryText} />
@@ -144,6 +152,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               <Chips value={tab} onChange={setTab} options={[
                 {value:"activity",label:"Clases y cursos"}, {value:"place",label:"Lugares"}
               ]} />
+              <DiscoverPathCards selected={communities} onToggle={value=>setCommunities(previous=>previous.includes(value)?previous.filter(item=>item!==value):[...previous,value])} onClear={()=>setCommunities([])} />
               <Chips value={specialty} onChange={setSpecialty} options={[{value:"",label:"Todas las prácticas"},...specs.map(value=>({value,label:value}))]} />
               {tab === "activity" ? <>
                 {myClasses.length + myRequestedClasses.length + myRequestedActivities.length > 0 ? <>

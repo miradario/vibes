@@ -135,6 +135,7 @@ type CreateChallengeInput = {
   hostName?: string | null;
   hostImage?: string | null;
   visibility?: ChallengeVisibility;
+  tags?: string[];
 };
 
 export type ChallengeJoinRequest = {
@@ -1422,6 +1423,8 @@ export const useCheckInChallengeMutation = () => {
       if (error) throw error;
     },
     onSuccess: (_data, { challengeId, userId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["vibesSummary", userId] });
+      void queryClient.invalidateQueries({ queryKey: ["vibesHistory", userId] });
       queryClient.invalidateQueries({
         queryKey: challengeParticipantKeys.participant(challengeId, userId),
       });
@@ -1589,6 +1592,7 @@ export const useUpdateChallengeMutation = () => {
           original.startsAt ?? null
         ),
         visibility: input.visibility ?? original.visibility,
+        ...(input.tags ? { tags: input.tags } : {}),
         image_url: imageUrl,
       }).eq("id", input.id).eq("created_by", auth.user.id).select("*").single();
       if (error) throw error;
@@ -1620,6 +1624,7 @@ export const useCreateChallengeMutation = () => {
         title: input.title,
         subtitle: input.subtitle,
         duration_days: input.durationDays,
+        ...(input.tags ? { tags: input.tags } : {}),
         visibility: input.visibility ?? "public",
         image_url: imageUrl,
       };

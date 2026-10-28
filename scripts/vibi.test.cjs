@@ -1,3 +1,4 @@
+const pureTs = require('./helpers/load-pure-ts.cjs');
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -14,7 +15,7 @@ const load = (file, exports, imports = {}) =>
     }).outputText,
     {
       exports,
-      require: (name) => imports[name],
+      require: (name) => imports[name] ?? pureTs.dependency(file,name),
       Date,
       Set,
       Map,

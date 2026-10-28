@@ -7,11 +7,7 @@ import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
-const featuredPaths = ["Art of Living", "Tantra"];
-const paths = [
-  ...featuredPaths,
-  ...PRACTICE_OPTIONS.filter((path) => path !== "Otras" && !featuredPaths.includes(path)),
-];
+const paths = PRACTICE_OPTIONS;
 
 export default function DiscoverPathCards({
   leading,
@@ -59,25 +55,10 @@ export default function DiscoverPathCards({
               onPress={() => (value ? onToggle(value) : onClear())}
               style={[s.card, active && s.selected]}
             >
-              <Icon
-                name={
-                  value === "El Arte de Vivir"
-                    ? "sunny-outline"
-                    : value === "Tantra"
-                    ? "flower-outline"
-                    : value
-                    ? "leaf-outline"
-                    : "grid-outline"
-                }
-                size={18}
-                color={active ? vibesTheme.colors.primaryText : vibesTheme.colors.secondaryText}
-              />
-              <Text style={[s.label, active && s.selectedLabel]}>{label}</Text>
-              <Icon
-                name={active ? "checkmark-circle" : "ellipse-outline"}
-                size={18}
-                color={active ? vibesTheme.colors.primaryText : vibesTheme.colors.secondaryText}
-              />
+              <Text numberOfLines={1} style={[s.label, active && s.selectedLabel]}>{label}</Text>
+              {active ? (
+                <Icon name="checkmark" size={15} color={vibesTheme.colors.primaryText} />
+              ) : null}
             </TouchableOpacity>
           );
         })}
@@ -102,25 +83,24 @@ const s = StyleSheet.create({
     alignItems: "stretch",
   },
   card: {
-    maxWidth: 280,
-    minHeight: 48,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 15,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: vibesTheme.radii.pill,
     borderWidth: 1,
     borderColor: "rgba(110, 110, 110, 0.30)",
     backgroundColor: "transparent",
   },
-  selected: { backgroundColor: "rgba(244, 163, 64, 0.43)", borderColor: vibesTheme.colors.accentMustard },
+  selected: { backgroundColor: `${vibesTheme.colors.accentMustard}24`, borderColor: vibesTheme.colors.accentMustard },
   label: {
     flexShrink: 1,
-    color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 14,
-    lineHeight: 20,
+    color: vibesTheme.colors.primaryText,
+    fontFamily: vibesTheme.fonts.semibold,
+    fontSize: 13,
+    lineHeight: 18,
   },
   selectedLabel: { color: vibesTheme.colors.primaryText },
 });

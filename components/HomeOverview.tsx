@@ -277,7 +277,7 @@ export default function HomeOverview({
   const joinedEventIds = new Set(events.map((event) => event.id));
   const suggestedEvents = upcoming.length
     ? []
-    : getUpcomingHomeEvents(eventsFeed.data ?? [], now)
+    : getUpcomingHomeEvents((eventsFeed.data ?? []), now)
         .filter((event) => !joinedEventIds.has(event.id))
         .slice(0, 2);
   const preferences = useUserPreferencesQuery(userId).data;

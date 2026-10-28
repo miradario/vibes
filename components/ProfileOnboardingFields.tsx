@@ -37,12 +37,8 @@ export default function ProfileOnboardingFields({
   const [customPractice, setCustomPractice] = useState("");
   const patch = (next: Partial<AboutMePreferences>) =>
     onChange({ ...value, ...next });
-  const practiceOptions = Array.from(
-    new Set([
-      ...PRACTICE_OPTIONS.filter((practice) => practice !== "Otras"),
-      ...value.spiritualPath,
-    ])
-  );
+  const practiceOptions = PRACTICE_OPTIONS;
+
   const changePractice = (practice: string) =>
     patch({
       spiritualPath: value.spiritualPath.includes(practice)
@@ -71,7 +67,7 @@ export default function ProfileOnboardingFields({
       ) : null}
       {group === 1 ? (
         <View style={s.section}>
-          <Text style={s.heading}>Tus prácticas</Text>
+          <Text style={s.heading}>Tus comunidades</Text>
           <View style={s.chips}>
             {practiceOptions.map((practice) => (
               <SelectablePill
@@ -81,15 +77,10 @@ export default function ProfileOnboardingFields({
                 onPress={() => changePractice(practice)}
               />
             ))}
-            <SelectablePill
-              label="Otras"
-              selected={false}
-              isAddOption
-              onPress={() => setAddingPractice(true)}
-            />
+
           </View>
           {value.spiritualPath.length ? (
-            <Text style={s.hint}>Contanos más de tu experiencia</Text>
+            <Text style={s.hint}>Contanos más de tus comunidades</Text>
           ) : null}
           {value.spiritualPath.map((practice) => {
             const hasDetails = Object.values(

@@ -1,3 +1,4 @@
+import VibesPoints from "./screens/VibesPoints";
 import {ExternalCatalogDetailScreen} from "./components/learning/ExternalCatalog";
 import Activities, { ClassesTab } from "./screens/Activities";
 import { useClasesEnabled } from "./src/featureFlags/useClasesEnabled";
@@ -588,6 +589,7 @@ const AppNavigator = () => {
               )}
             </Stack.Screen>
             <Stack.Screen name="ExternalCatalogDetail" component={ExternalCatalogDetailScreen} options={{headerShown:false}} />
+            <Stack.Screen name="VibesPoints" component={VibesPoints} options={{headerShown:false}} />
             <Stack.Screen name="LearningExplore" component={LearningExplore} options={{headerShown:false}} />
             <Stack.Screen name="LearningProfile" component={LearningProfileDetail} options={{headerShown:false}} />
             <Stack.Screen name="LearningActivity" component={LearningActivityDetail} options={{headerShown:false}} />

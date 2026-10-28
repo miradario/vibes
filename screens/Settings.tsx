@@ -1,3 +1,4 @@
+import { defaultCommunities, readCommunities } from "../src/lib/communities";
 import SelectablePill from "../components/onboarding/SelectablePill";
 import ProfileSectionTabs from "../components/ProfileSectionTabs";
 import { PROFILE_PREFERENCE_OPTIONS } from "../src/lib/profilePreferenceOptions";
@@ -242,6 +243,7 @@ const Settings = () => {
       await upsertUserPreferences(userId, {
         hide_age: hideAge,
         spiritual_path: spiritualPath,
+        ...(JSON.stringify(defaultCommunities(prefs)) === JSON.stringify(readCommunities(spiritualPath)) ? {} : { discover_spiritual_paths: readCommunities(spiritualPath) }),
         spiritual_path_details: spiritualPathDetails,
         vegetarian: vegetarian || null,
         about_me: aboutMe,

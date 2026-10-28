@@ -107,12 +107,16 @@ const baseTranslations = {
       switchPrompt: "¿No tenés cuenta?",
       switchAction: "Crear cuenta",
       header: "Login",
-      title: "Bienvenida otra vez",
-      subtitle: "Iniciá sesión para continuar",
+      title: "Qué bueno verte de nuevo",
+      subtitle: "Volvé a conectar con tu comunidad.",
+      emailDivider: "o ingresá con tu email",
+      passwordPlaceholder: "Ingresá tu contraseña",
+      showPassword: "Mostrar contraseña",
+      hidePassword: "Ocultar contraseña",
       emailPlaceholder: "tu@email.com",
       submit: "Iniciar sesión",
       submitting: "Ingresando...",
-      google: "Conectar con Google",
+      google: "Continuar con Google",
       googleSubmitting: "Conectando...",
       googleFailed: "No se pudo conectar con Google.",
       appleFailed: "No se pudo conectar con Apple.",
@@ -164,7 +168,7 @@ const baseTranslations = {
       emailPlaceholder: "tu@email.com",
       submit: "Crear cuenta",
       submitting: "Creando cuenta...",
-      google: "Conectar con Google",
+      google: "Continuar con Google",
       googleSubmitting: "Conectando...",
       googleFailed: "No se pudo conectar con Google.",
       appleFailed: "No se pudo conectar con Apple.",
@@ -232,9 +236,9 @@ const baseTranslations = {
         "Permití acceso a tu cámara para continuar.",
       galleryOpenError: "No se pudo abrir la galería.",
       cameraOpenError: "No se pudo abrir la cámara.",
-      spiritualTitle: "Tu camino espiritual",
+      spiritualTitle: "Tus comunidades",
       spiritualSubtitle:
-        "Elegí lo que resuena con vos. Cada camino puede tener detalles opcionales.",
+        "Elegí una o varias comunidades. Podés agregar detalles opcionales.",
       spiritualEditOptional: "Editar datos opcionales",
       spiritualAddOptional: "Agregar datos opcionales",
       orientationTitle: "¿Cuál es tu orientación sexual?",
@@ -286,8 +290,8 @@ const baseTranslations = {
         button: "Siguiente",
       },
       practices: {
-        title: "Prácticas que te inspiran",
-        subtitle: "Selecciona las que forman parte de tu camino",
+        title: "Tus comunidades",
+        subtitle: "Elegí una o varias. Serán tus filtros por defecto en la app",
         button: "Siguiente",
         customPracticeTitle: "Nombre de la práctica",
         customPracticePlaceholder: "Ej. Qi Gong",
@@ -375,9 +379,9 @@ const baseTranslations = {
       hideAge: "No mostrar mi edad",
       hideAgeHint: "Ocultá tu edad en las tarjetas y en tu perfil público.",
       subtitle: "Comentá sobre vos y compartí tus elecciones conscientes.",
-      spiritualPath: "Camino espiritual",
+      spiritualPath: "Comunidad",
       spiritualPathHint:
-        "Tocá un camino para seleccionarlo y sumar datos opcionales.",
+        "Elegí tus comunidades y agregá detalles opcionales.",
       vegetarian: "Vegetarianismo",
       location: "Ubicación",
       currentLocation: "Ubicación actual",
@@ -450,13 +454,13 @@ const baseTranslations = {
       missingSession: "No se encontró sesión activa.",
     },
     spiritual: {
-      defaultTitle: "Camino espiritual",
+      defaultTitle: "Comunidad",
       sharedData: "Datos compartidos para este camino.",
       optionalData: "Completá sólo lo que quieras sumar. Todo es opcional.",
       noExtraData: "No agregó datos adicionales para este camino.",
       removePath: "Quitar camino",
       role: "Rol",
-      years: "Años de práctica",
+      years: "Años en la comunidad",
       notes: "Dato relevante",
       optional: "Opcional",
       yearsPlaceholder: "Ej. 5",
@@ -878,7 +882,11 @@ const baseTranslations = {
       switchAction: "Create your account",
       header: "Login",
       title: "Welcome back",
-      subtitle: "Sign in to continue",
+      subtitle: "Reconnect with your community.",
+      emailDivider: "or sign in with your email",
+      passwordPlaceholder: "Enter your password",
+      showPassword: "Show password",
+      hidePassword: "Hide password",
       emailPlaceholder: "your@email.com",
       submit: "Sign in",
       submitting: "Signing in...",
@@ -998,7 +1006,7 @@ const baseTranslations = {
       photoPermissionCameraMessage: "Allow access to your camera to continue.",
       galleryOpenError: "Could not open the gallery.",
       cameraOpenError: "Could not open the camera.",
-      spiritualTitle: "Your spiritual path",
+      spiritualTitle: "Your communities",
       spiritualSubtitle:
         "Select what resonates. Every path can include optional details.",
       spiritualEditOptional: "Edit optional details",
@@ -1052,8 +1060,8 @@ const baseTranslations = {
         button: "Next",
       },
       practices: {
-        title: "Practices that inspire you",
-        subtitle: "Select the ones that are part of your path",
+        title: "Your communities",
+        subtitle: "Choose one or more. They will be your default filters in the app",
         button: "Next",
         customPracticeTitle: "Practice name",
         customPracticePlaceholder: "E.g. Qi Gong",
@@ -1141,7 +1149,7 @@ const baseTranslations = {
       hideAge: "Hide my age",
       hideAgeHint: "Hide your age on cards and your public profile.",
       subtitle: "Share about yourself and your conscious choices.",
-      spiritualPath: "Spiritual path",
+      spiritualPath: "Community",
       spiritualPathHint: "Tap a path to select it and add optional details.",
       vegetarian: "Vegetarian",
       location: "Location",
@@ -1215,14 +1223,14 @@ const baseTranslations = {
       missingSession: "No active session was found.",
     },
     spiritual: {
-      defaultTitle: "Spiritual path",
+      defaultTitle: "Community",
       sharedData: "Shared details for this path.",
       optionalData:
         "Only fill in what you want to add. Everything is optional.",
       noExtraData: "No additional details were added for this path.",
       removePath: "Remove path",
       role: "Role",
-      years: "Years of practice",
+      years: "Years in the community",
       notes: "Relevant note",
       optional: "Optional",
       yearsPlaceholder: "e.g. 5",
@@ -1651,6 +1659,7 @@ const spiritualFieldMap: Record<
 > = {
   Rol: "role",
   "Años de práctica": "years",
+  "Años en la comunidad": "years",
   "Dato relevante": "notes",
 };
 
@@ -1672,6 +1681,8 @@ const spiritualOptionMap: Record<
 };
 
 export const translateSpiritualPathLabel = (locale: Locale, value: string) => {
+  const communityEnglish: Record<string,string> = {"El Arte de Vivir":"Art of Living","Danzantes":"Dancers","Hatha":"Hatha","Meditación trascendental":"Transcendental Meditation","Músicos":"Musicians","Artistas":"Artists","Servicio":"Service"};
+  if (locale.startsWith("en") && communityEnglish[value]) return communityEnglish[value];
   const key = spiritualPathMap[value];
   return key ? translate(locale, `spiritual.${key}`) : value;
 };

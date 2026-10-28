@@ -29,6 +29,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 const SHOW_DISCOVER_DEBUG = false;
 const DISCOVER_PREFERENCE_EXCLUDED_PREFIXES = [
   "camino espiritual:",
+  "comunidad:",
   "vegetarianismo:",
   "fuma:",
   "mascotas:",
@@ -383,7 +384,7 @@ const CardItem = ({
 
           {discoverSpiritualPaths.length > 0 ? (
             <View style={styles.discoverInfoSection}>
-              <Text style={styles.discoverSectionTitle}>Camino espiritual</Text>
+              <Text style={styles.discoverSectionTitle}>Comunidad</Text>
               <View style={styles.discoverTagRowLeft}>
                 {discoverSpiritualPaths.map((path, index) => (
                   <TouchableOpacity

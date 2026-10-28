@@ -87,7 +87,7 @@ export default function ProfileQuestions() {
       ]);
       await upsertUserPreferences(
         userId,
-        aboutMePreferencesPayload(preferencesValue)
+        aboutMePreferencesPayload(preferencesValue, aboutMePreferencesFromSaved(preferences.data))
       );
       await saveProfileAnswers(userId, value);
       await Promise.all([

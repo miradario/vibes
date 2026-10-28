@@ -1,3 +1,4 @@
+import { defaultCommunities } from "../../lib/communities";
 import MeetPeopleChoice from "../../../components/MeetPeopleChoice";
 import VibesWordmark from "../../../components/VibesWordmark";
 import { useQuery } from "@tanstack/react-query";
@@ -204,7 +205,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
     }
   };
   const [selectedPractices, setSelectedPractices] = useState<string[]>(
-    draft.spiritualPath ?? []
+    defaultCommunities(draft)
   );
   const [practiceDetails, setPracticeDetails] = useState<SpiritualPathDetails>(
     normalizeSpiritualPathDetails(draft.spiritualPathDetails)
@@ -353,16 +354,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
     step === "practices" ||
     ["identity", "interests", "completion"].includes(step);
 
-  const practiceOptions = useMemo(() => {
-    const baseOptions = PRACTICE_OPTIONS.filter(
-      (practice) => practice !== "Otras"
-    );
-    const customOptions = selectedPractices.filter(
-      (practice) => !PRACTICE_OPTIONS.includes(practice as never)
-    );
-
-    return [...baseOptions, ...customOptions, "Otras"];
-  }, [selectedPractices]);
+  const practiceOptions = PRACTICE_OPTIONS;
 
   const goBack = () => {
     const previous = availableStepIndices.filter(index => index < stepIndex).pop();
@@ -945,7 +937,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
           />
         ))}
       </View>
-      {selectedPractices.length ? <Text style={localStyles.experienceHint}>{locale.startsWith("en") ? "Tell us more about your experience" : "Contanos más de tu experiencia"}</Text> : null}
+      {selectedPractices.length ? <Text style={localStyles.experienceHint}>{locale.startsWith("en") ? "Tell us more about your communities" : "Contanos más de tus comunidades"}</Text> : null}
       {selectedPractices.map((practice) => {
         const hasDetails = Object.values(practiceDetails[practice] ?? {}).some(value => Boolean(value?.trim()));
         return (

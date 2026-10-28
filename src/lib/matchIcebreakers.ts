@@ -5,7 +5,7 @@ const interests = (profile: InterestProfile): string[] => [
   ...(profile?.spiritualPath ?? []),
   ...(profile?.preferences ?? []).flatMap(value => {
     const separator = value.indexOf(":");
-    if (separator < 0 || !["intereses", "planes", "actividad fisica", "camino espiritual"].includes(normalize(value.slice(0, separator)))) return [];
+    if (separator < 0 || !["intereses", "planes", "actividad fisica", "camino espiritual", "comunidad"].includes(normalize(value.slice(0, separator)))) return [];
     return value.slice(separator + 1).split(",");
   }),
 ].map(value => value.trim()).filter(Boolean);

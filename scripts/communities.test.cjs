@@ -1,0 +1,26 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');
+const {load}=require('./helpers/load-pure-ts.cjs');
+const api=load('supabase/functions/_shared/communities.ts');
+const onboarding=load('src/screens/Onboarding/vibesOnboardingContent.ts');
+test('onboarding and every shared filter offer the nine requested communities',()=>{
+ assert.deepEqual(Array.from(api.COMMUNITY_OPTIONS),['El Arte de Vivir','Danzantes','Ashtanga','Hatha','Meditación trascendental','Bikram','Músicos','Artistas','Servicio']);
+ assert.deepEqual(Array.from(onboarding.PRACTICE_OPTIONS),Array.from(api.COMMUNITY_OPTIONS));
+});
+test('legacy labels normalize without inventing a community from generic Yoga or meditation',()=>{
+ assert.deepEqual(Array.from(api.readCommunities(['Art of Living','Hatha Yoga','Música','Contact','Meditacion trasendental','Yoga','Meditación'])),['El Arte de Vivir','Danzantes','Hatha','Meditación trascendental','Músicos']);
+});
+test('several selected communities use OR and always include unassigned content',()=>{
+ const selected=['Hatha','Músicos'];
+ assert.equal(api.matchesCommunities({tags:['Hatha Yoga']},selected),true);
+ assert.equal(api.matchesCommunities({communities:['Músicos','Servicio']},selected),true);
+ assert.equal(api.matchesCommunities({tags:['Ashtanga']},selected),false);
+ assert.equal(api.matchesCommunities({tags:['gratis']},selected),true);
+ assert.equal(api.matchesCommunities({},selected),true);
+ assert.equal(api.matchesCommunities({tags:['Servicio']},[]),true);
+});
+test('preferences drive defaults and community descriptions are not guessed',()=>{
+ assert.deepEqual(Array.from(api.defaultCommunities({spiritual_path:['Art of Living','Hatha Yoga']})),['El Arte de Vivir','Hatha']);
+ assert.deepEqual(Array.from(api.defaultCommunities({communities:[],spiritual_path:['Hatha']})),[]);
+ assert.equal(api.matchesCommunities({description:'Un encuentro con músicos de Ashtanga'},['Servicio']),true);
+ assert.equal(api.matchesCommunities({communities:['Ashtanga'],tags:['Servicio']},['Servicio']),false);
+});

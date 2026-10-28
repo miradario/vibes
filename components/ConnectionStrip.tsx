@@ -35,7 +35,7 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
   return (<>
         {(incomingLikes.length > 0 || newConnections.length > 0) ? (
           <View style={[s.connectionsStrip, compact && { marginBottom: 12 }]}>
-            <View style={s.stripHeadingRow}>
+            <View style={[s.stripHeadingRow, compact && { marginBottom: 4 }]}>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver nuevas conexiones" onPress={onViewAll} style={s.stripHeading}>
                 <Text style={s.stripTitle}>Nuevas conexiones</Text>
                 {/* Same chevron as Home's SectionHeader ("Tus desafíos", "Eventos para vos"). */}

@@ -1,3 +1,4 @@
+import VibesPointsBadge from "../components/VibesPointsBadge";
 import { useMeetPeople } from "../src/queries/meetPeople.queries";
 import { hasProfilePhotos } from "../src/lib/profilePhotos";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -414,7 +415,7 @@ const Home = () => {
           return false;
         }
 
-        return matchesSavedDiscoverExtras(candidateRecord, userPreferences, candidateGender);
+        return matchesSavedDiscoverExtras(candidateRecord, { ...userPreferences, discoverSpiritualPaths: [] }, candidateGender);
       });
     return rankHomeSuggestions(eligible, {
       ...ownProfileRecord, ...userPreferences,
@@ -966,11 +967,8 @@ const Home = () => {
               >
                 Hola, {firstName}
               </Text>
-              <Text style={localStyles.heroSubtitle}>Qué bueno tenerte por acá</Text>
             </View>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Configuración" style={localStyles.headerAction} onPress={() => navigation.navigate("Configuration" as never)}>
-              <Icon name="settings-outline" size={25} color={vibesTheme.colors.primaryText} />
-            </TouchableOpacity>
+            <VibesPointsBadge />
           </View>
 
           {ownsHomePrompts(ftuxState) ? null : (
@@ -1033,7 +1031,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 18,
+    marginBottom: 8,
   },
   heroAvatarButton: {
     width: 58,
@@ -1048,7 +1046,6 @@ const localStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
   },
-  headerAction: { width: 40, height: 44, alignItems: "center", justifyContent: "center" },
   heroCopy: {
     flex: 1,
   },
@@ -1057,17 +1054,6 @@ const localStyles = StyleSheet.create({
     fontSize: 25,
     lineHeight: 31,
     fontFamily: vibesTheme.fonts.bold,
-  },
-  heroSubtitle: {
-    marginTop: 6,
-    color: "rgba(43, 43, 43, 0.54)",
-    fontSize: 15,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.regular,
-  },
-  heroSubtitleStrong: {
-    color: "rgba(43, 43, 43, 0.68)",
-    fontFamily: vibesTheme.fonts.medium,
   },
   peopleSection: {
     marginBottom: 24,

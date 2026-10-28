@@ -92,16 +92,15 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   startButtonDisabled: {
-    backgroundColor: vibesTheme.colors.accentMustard,
     opacity: 0.42,
     shadowOpacity: 0,
     elevation: 0,
   },
   startText: {
-    color: vibesTheme.colors.surface,
-    fontSize: 21,
+    color: vibesTheme.colors.primaryText,
+    fontSize: 18,
     lineHeight: 24,
-    fontFamily: vibesTheme.fonts.regular,
+    fontFamily: vibesTheme.fonts.bold,
   },
   outlineButton: {
     width: "100%",

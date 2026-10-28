@@ -218,6 +218,7 @@ const isCategorizedPreference = (item: string) => {
     "fuma",
     "mascotas",
     "camino espiritual",
+    "comunidad",
   ].includes(label);
 };
 
@@ -1345,7 +1346,7 @@ const UserProfileSheet = ({
               ) : null}
               {profile.spiritualPath?.length || habitGroups.length || lifestyleGroups.length ? (
                 <DetailSection label="Estilos de vida" emphasized>
-                  {profile.spiritualPath?.length ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Camino espiritual</Text><PillList items={profile.spiritualPath} /></View> : null}
+                  {profile.spiritualPath?.length ? <View style={localStyles.detailItem}><Text style={localStyles.detailValue}>Comunidad</Text><PillList items={profile.spiritualPath} /></View> : null}
                   {habitGroups.length || lifestyleGroups.length ? <GroupedPillList groups={mergeDetailChipGroups([...habitGroups, ...lifestyleGroups])} /> : null}
                 </DetailSection>
               ) : null}

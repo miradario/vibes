@@ -1,3 +1,4 @@
+import { matchesCommunities, defaultCommunities, readCommunities } from "../_shared/communities.ts";
 import { matchesDatingPreferences, matchesInterestedInFilter } from "./dating.ts";
 export const CATEGORIES = ["challenge", "event", "person"] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -177,17 +178,8 @@ export function matchesPerson(
   const diets = strings(filters.discover_diets);
   if (diets.length && !diets.includes(diet(preferences.vegetarian)))
     return false;
-  const paths = [
-    ...strings(preferences.spiritual_path),
-    ...Object.keys(preferences.spiritual_path_details ?? {}),
-  ].map(spiritual);
-  if (
-    strings(filters.discover_spiritual_paths).length &&
-    !strings(filters.discover_spiritual_paths).some((v) =>
-      paths.includes(spiritual(v))
-    )
-  )
-    return false;
+  const selectedCommunities = filters.discover_spiritual_paths === undefined ? defaultCommunities(filters) : readCommunities(filters.discover_spiritual_paths);
+  if (!matchesCommunities(preferences, selectedCommunities)) return false;
   const answerFilters = filters.discover_answer_filters ?? {};
   if (
     !answerFilters ||

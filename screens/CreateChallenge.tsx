@@ -1,3 +1,5 @@
+import DiscoverPathCards from "../components/DiscoverPathCards";
+import { readCommunities, canonicalCommunity } from "../src/lib/communities";
 import ScreenContainer from "../components/ScreenContainer";
 import {creationFormStyles} from "../src/theme/creationFormStyles";
 import { launchAppCamera } from "../components/AppCamera";
@@ -87,6 +89,7 @@ const CreateChallenge = () => {
   const { data: profile } = useProfileQuery(session?.user?.id);
   const createChallengeMutation = useCreateChallengeMutation();
   const updateChallengeMutation = useUpdateChallengeMutation();
+  const [communities, setCommunities] = useState<string[]>(()=>readCommunities(editing?.tags));
   const [title, setTitle] = useState(editing?.title ?? "");
   const [subtitle, setSubtitle] = useState(editing?.description?.trim() ? editing.description : editing?.subtitle ?? "");
   const [days, setDays] = useState(editing?.durationDays ? String(editing.durationDays) : "");
@@ -234,6 +237,7 @@ const CreateChallenge = () => {
         subtitle: subtitle.trim() || "Desafío creado por la comunidad",
         description: subtitle.trim() || null,
         durationDays: parsedDays,
+        tags: [...(editing?.tags ?? []).filter(tag=>!canonicalCommunity(tag)), ...communities],
         startsAt: challengeStartDate?.toISOString() ?? null,
         imageUri: challengeImageUri,
         imagePresetId: null,
@@ -460,6 +464,8 @@ const CreateChallenge = () => {
               </View>
             ) : null}
 
+            <Text style={localStyles.label}>Comunidad</Text>
+            <DiscoverPathCards selected={communities} onToggle={value=>setCommunities(previous=>previous.includes(value)?previous.filter(item=>item!==value):[...previous,value])} onClear={()=>setCommunities([])} />
             <Text style={localStyles.label}>Quién puede verlo</Text>
             <Text style={localStyles.helperText}>
               Elegí si querés abrirlo a la comunidad, compartirlo con tus

@@ -385,6 +385,7 @@ export const useCompleteOnboardingMutation = () => {
       await runOnboardingStep("Preferencias", () =>
         upsertUserPreferences(userId, {
           spiritual_path: draft.spiritualPath ?? [],
+          discover_spiritual_paths: draft.spiritualPath ?? [],
           spiritual_path_details: draft.spiritualPathDetails ?? {},
           vegetarian: draft.vegetarian || "No",
           about_me: draft.aboutMe?.trim() ?? "",

@@ -80,6 +80,7 @@ const Profile = () => {
     : appVersion;
 
   const menuItems = [
+    { icon: "pulse-outline", label: "Tus Vibes", screen: "VibesPoints" },
     {
       icon: "create-outline",
       label: "Sobre mí",

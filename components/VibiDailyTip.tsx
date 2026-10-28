@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../src/lib/supabase";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { Text } from "./Typography";
+import Icon from "./Icon";
 
 type Guide = { detail: string; actions: string[] };
 const validGuide = (value: unknown): value is Guide => {
@@ -168,8 +169,9 @@ export default function VibiDailyTip({
         <TouchableOpacity
           accessibilityRole="button"
           onPress={onClose}
-          style={s.button}
+          style={[s.button, s.doneButton]}
         >
+          <Icon name="heart-outline" size={23} color={vibesTheme.colors.primaryText} />
           <Text style={s.buttonText}>Listo</Text>
         </TouchableOpacity>
       ) : null}
@@ -221,6 +223,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
   },
+  doneButton: { flexDirection: "row", gap: 8 },
   buttonText: {
     color: vibesTheme.colors.primaryText,
     fontSize: 18,

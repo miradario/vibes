@@ -93,7 +93,7 @@ const Configuration = () => {
       <View style={localStyles.fixedHeader}>
         <AppHeader
           title={t("configuration.title")}
-          titleNumberOfLines={2}
+          titleNumberOfLines={1}
           showBack
           onBack={() => navigation.goBack()}
           style={localStyles.appHeader}

@@ -96,7 +96,7 @@ Componentes: [`PrimaryButton`](../components/onboarding/PrimaryButton.tsx) para 
 
 ### Cabeceras de Eventos y Desafíos
 
-Las tabs de Desafíos son Público, Privado y Por Vibes, con el mismo estilo pill. Por Vibes es un catálogo de desafíos curados: cada tarjeta usa `ChallengeFeedCard` con la acción Reiniciar, igual que los finalizados.
+Las tabs de Desafíos son Público, Mis desafíos y Por Vibes, con el mismo estilo pill. Cada opción conserva padding horizontal 10 y vertical 8; ajustar el texto a una línea para que Mis desafíos no toque los bordes. Por Vibes es un catálogo de desafíos curados: cada tarjeta usa `ChallengeFeedCard` con la acción Reiniciar, igual que los finalizados.
 
 En los acordeones de Desafíos privados, mantener el título de sección en 25 / 29 SemiBold y mostrar la cantidad a continuación entre paréntesis, en 18 / 29 Regular y `secondaryText`.
 
@@ -162,7 +162,6 @@ Los estados de arranque Boot y Startup muestran la animación de marca en Androi
 
 Esta documentación no modifica la UI ni afirma una migración completa:
 
-- `VibesActionButton.startText` usa actualmente 21 / 24 Regular y `surface` sobre mostaza. Contradice la norma de contraste; al intervenir ese botón, migrar a texto oscuro y al rol de primario de acento.
 - `VibesActionButton.skipButton` tiene padding vertical 6 y no fija un mínimo táctil de 44 en el layout; desde el FTUX tiene `hitSlop` de 8 por lado (área táctil ≈ 50) sin cambiar su tamaño visual. Revisar el layout al modificarlo.
 - El título del modal de filtros de Descubrir usa 38 / Bold. Es una variante existente, no el estándar para nuevos sheets simples.
 - Eventos y Desafíos usan overrides para el título principal; el estilo base 26 / 32 SemiBold sigue atendiendo vistas históricas. No eliminarlo sin revisar `pastOnly`.
@@ -192,7 +191,7 @@ La barra de navegación inferior se apoya en el borde inferior, sin margen exter
 
 La barra inferior compacta usa 64 de alto base (adaptable al tamaño de texto), 12 de espacio superior y botón seleccionado de 48 que sobresale 6 sobre la superficie. El contenido reserva su altura real más 20 de separación, sin espacio extra específico de iOS.
 
-El padding inferior de la barra descuenta 12 del inset (mínimo 0), considerando el espacio interno bajo los labels. Esto baja toda la barra 12 en iPhone con indicador de inicio; usar `getTabBarBottomPadding` también en la geometría del contenido y FTUX.
+El padding inferior de la barra respeta el inset completo, con un mínimo de 12, para separar iconos y labels del borde y del área de gestos. Usar `getTabBarBottomPadding` también en la geometría del contenido y FTUX.
 
 ## Eventos frecuentes
 
@@ -233,7 +232,7 @@ La barra de filtros se anima con translateY sobre el listado, sin modificar la a
 
 El detalle de clases externas muestra foto, docente, horario, lugar y acordeón “Sobre esta clase”. ClassReservationPanel permite clase suelta o plan mensual, mes y frecuencia; los selectores abren AnimatedSheetModal. El resumen usa fechas calculadas en la zona horaria de la clase, excluyendo las pasadas. Las referencias externas son solicitudes personales pendientes, no se envían al organizador ni confirman cupo. Indicar que la persona debe contactar al organizador. No mostrar checkout ni total mensual. Guardar y cancelar persiste en el servidor; Mis clases incluye las solicitudes pendientes y el historial conserva las canceladas. Las clases propias usan sus encuentros reales; los cursos conservan su inscripción completa.
 
-La cabecera de Actividades usa título compacto 26/32 SemiBold, a pedido del usuario. En Desafíos el título usa 22/28 SemiBold y comparte una sola fila con los cuatro botones de 44, con separación 6. Permitir ajuste del título en ancho compacto sin partir la palabra. No mostrar el subtítulo “Pequeños pasos, en buena compañía”. Los labels de la barra inferior conservan una sola línea.
+La cabecera de Actividades usa título compacto 26/32 SemiBold, a pedido del usuario. En Desafíos el título usa 22/28 SemiBold y comparte una sola fila con los cuatro botones de 44, con separación 6. Permitir ajuste del título en ancho compacto sin partir la palabra. No mostrar el subtítulo “Pequeños pasos, en buena compañía”. Los labels de la barra inferior usan 11/14 Regular y conservan una sola línea.
 
 El detalle externo de clase usa layout compacto: padding 16, separación 10, foto de 168 de alto y título 22/28. Notas y fecha de consulta se despliegan con “Sobre esta clase”. El formulario de solicitud usa separación 10, resumen con padding 12 y fechas en grilla; mantiene controles de al menos 44–48 de alto y un único aviso breve sobre contacto y ausencia de cobros.
 
@@ -241,7 +240,7 @@ En el archivo de Desafíos, el control de la derecha pasa a “Volver a desafío
 
 Las tarjetas compactas de clases mantienen título y horario en una línea y separación 3, para que el cuerpo no supere el alto de la imagen. Omitir el precio cuando no está publicado; no mostrar “Precio a consultar” en el listado. En las referencias externas la imagen acompaña el escalado de fuente.
 
-“Tipo de evento” (categoría) se elige dentro de Más filtros, con opciones presentes en los eventos cargados. Se guarda al Aplicar y se restablece con Limpiar. No mostrar categorías en la barra horizontal; conservar allí Todos y Frecuentes.
+“Tipo de evento” (categoría) se elige dentro de Más filtros, con opciones presentes en los eventos cargados. Se guarda al Aplicar y se restablece con Limpiar. No mostrar categorías en la barra horizontal; no mostrar los accesos Todos ni Frecuentes.
 
 Camino espiritual se elige únicamente en la barra principal de Eventos. Más filtros no lo duplica ni modifica su selección al aplicar o limpiar.
 
@@ -274,3 +273,51 @@ Inicio es el primer acceso de la barra inferior, a la izquierda, seguido de Desa
 Los indicadores seleccionados de la barra inferior alternan los acentos por acceso: Inicio coral, Desafíos azul, Eventos coral, Clases mostaza, Descubrir azul y Chats coral. Los iconos sobre estos fondos conservan `primaryText` para legibilidad.
 
 Descubrir no muestra el acceso “Clases y espacios”. Las clases se consultan desde su acceso propio en la navegación inferior.
+
+## Tus Vibes
+
+Inicio muestra el puntaje Vibes alineado a la derecha en la misma fila de la cabecera, como acceso al total y al historial propio. La cabecera conserva avatar y saludo, sin botón de Configuración ni subtítulo de bienvenida, para subir el contenido. Usar cápsula mostaza suave con borde, icono de pulso en círculo mostaza y total destacado, sin chevron ni la palabra “Vibes” visible (conservarla en el label accesible), 17/23 Bold en primaryText; conservar área táctil mínima de 44. Tus Vibes usa ScreenContainer, superficies suaves mostaza/coral, iconos azules y puntajes en primaryText. No usar verde para los incrementos. Mostrar total, aportes y acumulado del mes; estados de carga, error con Reintentar, historial paginado y estado vacío. Cómo funciona abre AnimatedSheetModal. Los Vibes no tienen valor monetario. Los valores se calculan en base de datos a partir de meditación registrada (+10 por día), invitación por chat (+5 por actividad, máximo tres al día UTC), asistencia confirmada a clase (+50 por sesión) y desafío completo (+100). Incluir actividad anterior registrada, sin inventar asistencias a partir de reservas.
+
+El registro de meditación es una declaración de la persona, no una verificación automática de reproducción. Se guarda privado por defecto y el servidor elige el día UTC. El sheet permite 5, 10 o 20 minutos, guiada o en silencio; muestra confirmación, duplicado y error, sin multiplicar el puntaje por duración.
+
+## Comunidades y filtro inicial
+
+El onboarding pregunta “Tus comunidades” y permite elegir varias: El Arte de Vivir, Danzantes, Ashtanga, Hatha, Meditación trascendental, Bikram, Músicos, Artistas y Servicio. Reemplaza la denominación Camino espiritual en perfil y filtros. La selección guardada sirve de filtro inicial en Eventos, Desafíos, Clases, Descubrir y recomendaciones de Vibi. Usar la misma normalización y coincidencia OR en todas las superficies, incluyendo siempre contenido sin comunidad asignada. No inferir pertenencia a partir de descripciones. Conservar el acceso al contenido personal ya adquirido o iniciado. Los filtros de exploración permiten cambiar la selección o elegir Todos; no modificar el perfil al hacerlo. La creación de eventos y desafíos permite asignar comunidades mediante los mismos chips.
+
+En Eventos y Desafíos, mostrar la comunidad seleccionada únicamente en DiscoverPathCards, sin duplicarla con chips de filtros activos. Los filtros activos de comunidad se muestran en Clases y Descubrir mediante ActiveCommunityFilters: un chip por comunidad con “×” y una acción Limpiar. Quitar un chip actualiza inmediatamente los resultados de esa pantalla; Limpiar muestra todas las comunidades. No cambiar las comunidades del perfil al quitar filtros. La fila se oculta cuando no hay selecciones y comparte el comportamiento de la barra de filtros del listado.
+
+En Android, KeyboardViewport calcula el solapamiento con la posición absoluta `pageY` de `measure`, sumada a la altura del viewport. No usar `measureInWindow` para este cálculo: en Fabric puede devolver y=0 dentro del SafeAreaView y dejar el compositor debajo del teclado. Conservar la compensación única de adjustResize y descartar mediciones tardías al cerrar el teclado.
+
+## Bienvenida
+
+Welcome muestra AnimatedBrandLogo de 64 × 64, animado en loop y centrado arriba de todo, sin un wordmark estático adicional, una ilustración de comunidad y el mensaje “Encontrá tu comunidad. Conectá con tu bienestar.”. Crear cuenta e Iniciar sesión reutilizan VibesActionButton, con primario oscuro primaryText y texto surface para Crear cuenta, y secundario de contorno azul para Iniciar sesión. El primario compartido usa texto primaryText 18/24 Bold. Mantener las acciones en el flujo y toda la bienvenida en una pantalla: ilustración flexible sin altura mínima, marca y tipografía más compactas cuando el alto útil es menor a 700. Permitir scroll únicamente como alternativa con escalado de accesibilidad mayor a 1,3.
+
+Inicio no muestra filtros de comunidad ni filtra sus recomendaciones de personas, eventos o desafíos por comunidad. La coincidencia de comunidad tampoco suma prioridad al ordenar personas sugeridas en Inicio; conservar los demás criterios de edad, proximidad y propósitos.
+
+El título Configuracion se mantiene sin acento por pedido del usuario y en una sola línea con ajuste automático al ancho disponible, sin dejar la última letra en un segundo renglón.
+
+Tus Vibes presenta un tablero compacto (total 38/46, ilustración de 64 y estadísticas de 20/26), seguido de Tu actividad. Seguí sumando se ubica al final, debajo del historial y de Ver más actividad, y abre AnimatedSheetModal con las reglas y los puntajes. El botón Registrar mi meditación y la opción de meditación +10 permanecen ocultos por el momento; conservar los registros históricos y las reglas del servidor. Esperar onClosed del sheet antes de abrir el registro. Omitir los bloques promocionales de cabecera y pie en la pantalla principal.
+
+En Inicio, Nuevas conexiones queda cerca de la cabecera: margen inferior del saludo 8 y separación entre título y fotos 4 en ConnectionStrip compacto. Conservar el área táctil del título y el espacio del badge sobre las fotos.
+
+La ilustración de bienvenida lleva tres esferas suaves con opacidad 0,24: mostaza de 42% del alto, coral y azul de 38%. No mostrar aro azul. Cada esfera elige destinos y escalas aleatorios independientes, con transiciones suaves de 3,2 a 5,8 segundos. Al terminar una transición elige otra, sin recorrido fijo ni ida y vuelta repetida. Limitar desplazamiento horizontal al 20% del ancho (máximo 90) y vertical entre -110 y 20. Esperar la carga de la ilustración; cancelar animaciones y temporizadores fuera de foco, en segundo plano o al desmontar. Con reducción de movimiento se muestran estáticas. La ilustración y los botones permanecen estables.
+
+En la bienvenida, “Encontrá tu comunidad.” ocupa una sola línea con ajuste automático de fuente al ancho disponible, y “Conectá con tu bienestar.” ocupa otra línea debajo, también con ajuste automático.
+
+La bienvenida alinea el contenido hacia arriba: sin padding superior extra, ilustración con proporción 1,5 y altura máxima 300 (sin crecer para rellenar la pantalla), margen superior 8 e inferior 4 antes del título. Mantener foto, mensaje y acciones próximos.
+
+DiscoverPathCards usa chips compactos de comunidad: alto mínimo táctil 44, padding horizontal 10 y vertical 6, texto oscuro 13/18 SemiBold en una línea, sin iconos decorativos ni radios de selección vacíos. La selección muestra tilde y borde mostaza sobre fondo mostaza suave. El ancho acompaña el nombre completo y la fila permite desplazamiento horizontal.
+
+Eventos no muestra la fila Todos/Frecuentes en pantalla. La opción Frecuencia (Todos/Frecuentes) se elige dentro de Más filtros, se confirma con Aplicar y se restablece con Limpiar. Mantener búsqueda, Fecha, Ubicación, Más filtros y comunidades.
+
+En la bienvenida, Crear cuenta e Iniciar sesión se apoyan al pie del alto útil mediante marginTop auto, con separación mínima superior 16 y respetando el safe area inferior; la ilustración y el mensaje quedan arriba.
+
+La bienvenida reparte el espacio libre entre logo e ilustración y entre mensaje y botones mediante márgenes automáticos; mantiene foto y título próximos y el logo con padding superior 8.
+
+Inicio de sesión muestra Volver, símbolo centrado, ilustración de dos personas sobre círculo mostaza suave y el título Qué bueno verte de nuevo en 23/29 Bold, sin el subtítulo Volvé a conectar con tu comunidad. Google y Apple conservan sus componentes y comportamiento. Campos con labels Email/Contraseña en caja normal, bordes secundarios suaves, mostrar contraseña accesible, recuperación y crear cuenta en azul. Iniciar sesión usa botón oscuro primaryText con texto surface. Usar KeyboardViewport y scroll para teclado y pantallas pequeñas.
+
+Login mide el alto visible y el formulario real para ajustar la ilustración entre 0 y 170 de alto: priorizar que campos y acciones entren completos, incluso con Apple o un error visible. Cabecera de 56 y logo de 54; conservar scroll como respaldo para teclado y accesibilidad cuando los controles superen el alto útil.
+
+El contenedor de la ilustración de Login permite overflow visible para no cortar la esfera al acercarse al logo; la cabecera permanece por encima con zIndex 1. El círculo de Login comparte useWanderingSphere con la bienvenida: destinos y escalas aleatorios continuos, sin repetir un recorrido fijo, tras cargar la ilustración. Limitar el desplazamiento a 45 horizontal y 30% del alto de imagen (máximo 45) hacia arriba. Respetar reducción de movimiento, foco y segundo plano.
+
+En Login, Iniciar sesión y ¿No tenés cuenta? Crear cuenta forman un pie independiente del formulario, alineado al fondo mediante marginTop auto, dentro del safe area. Medir también el alto del pie al calcular el tamaño de la ilustración.

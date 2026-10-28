@@ -1,9 +1,9 @@
 import { PixelRatio } from "react-native";
 
 export const TAB_BAR_TOP_SPACE = 12;
-// The row already leaves space below its labels; avoid counting it twice.
+// Keep labels clear of the gesture area, including devices without a bottom inset.
 export const getTabBarBottomPadding = (insetBottom: number) =>
-  Math.max(0, insetBottom - 12);
+  Math.max(12, insetBottom);
 /** Raised selected-tab bubble in CustomTabBar (size and top offset in the bar root). */
 export const TAB_FLOATING_BUTTON_SIZE = 48;
 export const TAB_FLOATING_TOP = 6;

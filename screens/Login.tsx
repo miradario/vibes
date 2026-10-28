@@ -9,7 +9,7 @@ import {
 } from "../src/auth/auth.queries";
 import {
   View,
-  KeyboardAvoidingView,
+  Image,
   Platform,
   StyleSheet,
   ScrollView,
@@ -17,18 +17,22 @@ import {
 } from "react-native";
 import { Text, TextInput } from "../components/Typography";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
+import { CommonActions, useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
 import styles from "../assets/styles";
 import VibesActionButton from "../components/VibesActionButton";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import AppleAuthButton from "../components/AppleAuthButton";
-import QuietBrandHeader from "../components/QuietBrandHeader";
+import KeyboardViewport from "../components/KeyboardViewport";
+import BackButton from "../components/BackButton";
 import ScreenContainer from "../components/ScreenContainer";
 import Icon from "../components/Icon";
 import CustomDialog from "../components/CustomDialog";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getPostAuthRoute } from "../src/lib/onboardingFlow";
+import Animated from "react-native-reanimated";
+import useWanderingSphere from "../src/hooks/useWanderingSphere";
+import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 
 const isBannedUserError = (error: unknown) => {
   if (!error || typeof error !== "object") return false;
@@ -54,7 +58,22 @@ const isInvalidCredentialsError = (error: unknown) => {
 
 const Login = () => {
   const { t } = useI18n();
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const [formHeight, setFormHeight] = useState(0);
+  const [actionsHeight, setActionsHeight] = useState(0);
+  const heroHeight = viewportHeight && formHeight
+    ? Math.max(0, Math.min(170, viewportHeight - formHeight - actionsHeight - 88))
+    : 80;
   const navigation = useNavigation();
+  const focused = useIsFocused();
+  const { active, reducedMotion, motionReady } = useVibiRuntime();
+  const [illustrationReady, setIllustrationReady] = useState(false);
+  const circleMotion = useWanderingSphere(
+    focused && active && motionReady && !reducedMotion && illustrationReady && heroHeight > 0,
+    reducedMotion,
+    45,
+    Math.min(45, heroHeight * 0.3),
+  );
   const route = useRoute();
   const loginParams = route.params as { email?: string; accountExists?: boolean } | undefined;
   const [email, setEmail] = useState(loginParams?.email ?? "");
@@ -204,22 +223,24 @@ const Login = () => {
     resetPasswordLoading;
   return (
     <ScreenContainer style={styles.bg} edges={["top", "bottom", "left", "right"]}>
-      <KeyboardAvoidingView
-        style={[
-          styles.loginContainer,
-          localStyles.loginContainer,
-          { paddingTop: 12 },
-        ]}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={24}
-      >
+      <KeyboardViewport style={localStyles.loginContainer}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          onLayout={event => setViewportHeight(event.nativeEvent.layout.height)}
           contentContainerStyle={localStyles.formScrollContent}
         >
-          <View style={[styles.loginCard, localStyles.loginCard]}>
-            <QuietBrandHeader title={t("login.title")} subtitle={t("login.subtitle")} />
+          <View style={localStyles.loginCard}>
+            <View style={localStyles.brandHeader}>
+              <BackButton onPress={() => navigation.goBack()} style={localStyles.backButton} />
+              <Image source={require("../assets/branding/vibes-logo-palette.png")} style={localStyles.logo} resizeMode="contain" accessible accessibilityLabel="Vibes" />
+            </View>
+            <View style={[localStyles.hero, { height: heroHeight, marginVertical: heroHeight > 0 ? 6 : 0 }]}>
+              <Animated.View style={[localStyles.sun, circleMotion]} />
+              <Image source={require("../assets/images/login-community.png")} onLoadEnd={() => setIllustrationReady(true)} style={localStyles.heroImage} resizeMode="contain" accessible={false} />
+            </View>
+            <View onLayout={event => setFormHeight(event.nativeEvent.layout.height)}>
+            <Text style={localStyles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{t("login.title")}</Text>
 
             <GoogleAuthButton
               label={
@@ -243,16 +264,16 @@ const Login = () => {
 
             <View style={localStyles.divider}>
               <View style={localStyles.dividerLine} />
-              <Text style={localStyles.dividerText}>{t("common.or")}</Text>
+              <Text style={localStyles.dividerText}>{t("login.emailDivider")}</Text>
               <View style={localStyles.dividerLine} />
             </View>
 
-            <View style={styles.loginField}>
-              <Text style={styles.loginLabel}>{t("common.email")}</Text>
+            <View style={localStyles.field}>
+              <Text style={localStyles.label}>{t("common.email")}</Text>
               <TextInput
-                style={styles.loginInput}
+                style={localStyles.input}
                 placeholder={t("login.emailPlaceholder")}
-                placeholderTextColor="rgba(110, 110, 110, 0.45)"
+                placeholderTextColor={vibesTheme.colors.secondaryText}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 returnKeyType="next"
@@ -263,13 +284,13 @@ const Login = () => {
               />
             </View>
 
-            <View style={styles.loginField}>
-              <Text style={styles.loginLabel}>{t("common.password")}</Text>
+            <View style={localStyles.field}>
+              <Text style={localStyles.label}>{t("common.password")}</Text>
               <View style={localStyles.passwordField}>
                 <TextInput
                   ref={passwordInputRef}
-                  style={[styles.loginInput, localStyles.passwordInput]}
-                  placeholder=""
+                  style={[localStyles.input, localStyles.passwordInput]}
+                  placeholder={t("login.passwordPlaceholder")}
                   placeholderTextColor={vibesTheme.colors.secondaryText}
                   secureTextEntry={!showPassword}
                   returnKeyType="done"
@@ -278,6 +299,8 @@ const Login = () => {
                   onSubmitEditing={() => void handleLogin()}
                 />
                 <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? t("login.hidePassword") : t("login.showPassword")}
                   style={localStyles.passwordToggle}
                   onPress={() => setShowPassword((prev) => !prev)}
                   activeOpacity={0.7}
@@ -309,10 +332,13 @@ const Login = () => {
               </View>
             ) : null}
 
-            <View style={[localStyles.actions]}>
+            </View>
+            <View style={localStyles.actions} onLayout={event => setActionsHeight(event.nativeEvent.layout.height)}>
               <VibesActionButton
                 label={loading ? t("login.submitting") : t("login.submit")}
                 variant="start"
+                style={localStyles.loginButton}
+                textStyle={localStyles.loginButtonText}
                 onPress={handleLogin}
                 disabled={isDisabled}
               />
@@ -341,7 +367,7 @@ const Login = () => {
                   accessibilityRole="link"
                   onPress={() => navigation.navigate("AgeAssurance" as never)}
                   style={{
-                    color: vibesTheme.colors.primaryText,
+                    color: vibesTheme.colors.accentBlue,
                     textDecorationLine: "underline",
                     fontFamily: vibesTheme.fonts.medium,
                   }}
@@ -352,7 +378,7 @@ const Login = () => {
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardViewport>
       <CustomDialog
         visible={showGoogleLoginDialog}
         title={t("login.googleRecoveryTitle")}
@@ -376,16 +402,30 @@ const Login = () => {
 export default Login;
 
 const localStyles = StyleSheet.create({
+  loginButton: { backgroundColor: vibesTheme.colors.primaryText, shadowOpacity: 0, elevation: 0 },
+  loginButtonText: { color: vibesTheme.colors.surface },
+  brandHeader: { height: 56, alignItems: "center", justifyContent: "center", zIndex: 1 },
+  logo: { width: 54, height: 54 },
+  hero: { alignItems: "center", justifyContent: "center", overflow: "visible" },
+  sun: { position: "absolute", height: "95%", aspectRatio: 1, borderRadius: 999, backgroundColor: `${vibesTheme.colors.accentMustard}40` },
+  heroImage: { width: "100%", height: "100%" },
+  title: { fontFamily: vibesTheme.fonts.bold, fontSize: 23, lineHeight: 29, textAlign: "center", color: vibesTheme.colors.primaryText },
+  subtitle: { fontFamily: vibesTheme.fonts.regular, fontSize: 16, lineHeight: 23, textAlign: "center", color: vibesTheme.colors.secondaryText, marginTop: 6 },
+  field: { marginTop: 10 },
+  label: { fontFamily: vibesTheme.fonts.semibold, fontSize: 16, lineHeight: 22, color: vibesTheme.colors.primaryText, marginBottom: 6 },
+  input: { minHeight: 52, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}55`, borderRadius: 14, backgroundColor: vibesTheme.colors.surface, paddingHorizontal: 14, paddingVertical: 12, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 16, lineHeight: 24 },
   actions: {
     marginTop: "auto",
-    paddingTop: 22,
+    paddingTop: 14,
   },
   backButton: {
-    marginTop: 18,
+    position: "absolute",
+    left: 0,
+    top: 0,
   },
   divider: {
-    marginTop: 18,
-    marginBottom: 2,
+    marginTop: 12,
+    marginBottom: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -397,22 +437,25 @@ const localStyles = StyleSheet.create({
   },
   dividerText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
+    fontSize: 14,
+    lineHeight: 20,
   },
   googleButton: {
-    marginTop: 18,
+    marginTop: 12,
+    borderColor: `${vibesTheme.colors.secondaryText}55`,
+    borderRadius: 18,
   },
   appleButton: {
     marginTop: 12,
   },
   forgotPasswordButton: {
-    marginTop: 10,
+    marginTop: 2,
+    minHeight: 44,
+    justifyContent: "center",
     alignSelf: "flex-end",
   },
   forgotPasswordText: {
-    color: vibesTheme.colors.secondaryText,
+    color: vibesTheme.colors.accentBlue,
     fontSize: 13,
     fontFamily: vibesTheme.fonts.semibold,
   },
@@ -420,7 +463,8 @@ const localStyles = StyleSheet.create({
     marginBottom: 10,
   },
   loginContainer: {
-    marginTop: 0,
+    flex: 1,
+    paddingHorizontal: 24,
   },
   loginCard: {
     shadowOpacity: 0,
@@ -430,10 +474,11 @@ const localStyles = StyleSheet.create({
     maxWidth: 480,
     alignSelf: "center",
     flexGrow: 1,
+    paddingTop: 8,
   },
   formScrollContent: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: 8,
   },
   passwordField: {
     position: "relative",
@@ -444,7 +489,9 @@ const localStyles = StyleSheet.create({
   },
   passwordToggle: {
     position: "absolute",
-    right: 14,
+    right: 4,
+    width: 44,
+    alignItems: "center",
     height: "100%",
     justifyContent: "center",
   },
