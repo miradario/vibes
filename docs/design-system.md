@@ -321,3 +321,5 @@ Login mide el alto visible y el formulario real para ajustar la ilustración ent
 El contenedor de la ilustración de Login permite overflow visible para no cortar la esfera al acercarse al logo; la cabecera permanece por encima con zIndex 1. El círculo de Login comparte useWanderingSphere con la bienvenida: destinos y escalas aleatorios continuos, sin repetir un recorrido fijo, tras cargar la ilustración. Limitar el desplazamiento a 45 horizontal y 30% del alto de imagen (máximo 45) hacia arriba. Respetar reducción de movimiento, foco y segundo plano.
 
 En Login, Iniciar sesión y ¿No tenés cuenta? Crear cuenta forman un pie independiente del formulario, alineado al fondo mediante marginTop auto, dentro del safe area. Medir también el alto del pie al calcular el tamaño de la ilustración.
+
+En Welcome, Crear cuenta e Iniciar sesión tienen idéntico ancho, alto 58, radio pill y texto 18/24 Bold; solo difieren los colores de sus variantes.

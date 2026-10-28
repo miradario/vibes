@@ -120,13 +120,14 @@ const Welcome = () => {
               navigation.navigate("AgeAssurance" as never);
             }}
             style={styles.primaryButton}
-            textStyle={styles.primaryButtonText}
+            textStyle={[styles.actionText, styles.primaryButtonText]}
           />
           <VibesActionButton
             label="Iniciar sesión"
             variant="outline"
             onPress={() => navigation.navigate("Login" as never)}
             style={styles.secondaryButton}
+            textStyle={styles.actionText}
           />
         </View>
       </View>
@@ -153,6 +154,7 @@ const styles = StyleSheet.create({
   tagline: { color: colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 16, lineHeight: 23, textAlign: "center", maxWidth: 400 },
   actions: { width: "100%", maxWidth: 480, alignSelf: "center", gap: 12, marginTop: "auto", paddingTop: 16 },
   primaryButton: { backgroundColor: colors.primaryText, shadowOpacity: 0, elevation: 0 },
+  actionText: { fontFamily: vibesTheme.fonts.bold, fontSize: 18, lineHeight: 24 },
   primaryButtonText: { color: colors.surface },
-  secondaryButton: { minHeight: 58 },
+  secondaryButton: { height: 58, minHeight: 58 },
 });
