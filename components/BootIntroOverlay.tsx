@@ -26,7 +26,9 @@ const HOLD_MS = 300;
 const CROSSFADE_MS = 150;
 const FADE_OUT_MS = 250;
 const FIRST_FRAME_FALLBACK_MS = 1500;
-const ATTACH_MS = 450;
+// Duration of the move/scale into Welcome's logo slot; tune here.
+const ATTACH_MS = 1200;
+const ATTACH_EASING = Easing.bezier(0.45, 0, 0.25, 1);
 const WELCOME_SLOT_WAIT_MS = 800;
 const DETACH_MS = 150;
 
@@ -152,8 +154,8 @@ export default function BootIntroOverlay({ onFirstFrameReady }: { onFirstFrameRe
         setMode("attached");
         setWelcomeAttachment("attached");
         startLoop();
-        move.value = withTiming(1, { duration: ATTACH_MS, easing: Easing.inOut(Easing.cubic) });
-        backgroundOpacity.value = withTiming(0, { duration: ATTACH_MS });
+        move.value = withTiming(1, { duration: ATTACH_MS, easing: ATTACH_EASING });
+        backgroundOpacity.value = withTiming(0, { duration: ATTACH_MS, easing: ATTACH_EASING });
         return;
       }
       if (toWelcome && !slotWaitExpired) return;
