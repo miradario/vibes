@@ -1,5 +1,6 @@
 import { normalizeSchedule, formatAttendees, displayEventSession, type EventSession } from "../lib/eventSchedule";
 import { localDayKey, calendarDayNumber } from "../lib/challengeProgress";
+import { parseChallengeMetric, type ChallengeMetricType } from "../lib/stepChallenge";
 import { useLocalDay } from "../hooks/useLocalDay";
 import { parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../constants/eventClassification";
 import { useEffect, useMemo, useRef } from "react";
@@ -70,6 +71,9 @@ export type EventFeedItem = {
   createdAt?: string | null;
   createdBy?: string | null;
   sourceChallengeId?: string | null;
+  /** Desafíos de Salud: métrica y meta diaria fija definida por el desafío. */
+  metricType?: ChallengeMetricType;
+  dailyGoal?: number | null;
 };
 
 type EventRow = Record<string, any>;
@@ -385,6 +389,7 @@ export const mapChallengeRow = (row: EventRow): EventFeedItem => {
       typeof row.source_challenge_id === "string" && row.source_challenge_id.trim()
         ? row.source_challenge_id
         : null,
+    ...parseChallengeMetric(row),
   };
 };
 

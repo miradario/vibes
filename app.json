@@ -34,7 +34,8 @@
         "NSLocationWhenInUseUsageDescription": "Vibes uses your location while the app is open to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
-        "NSMicrophoneUsageDescription": "Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío."
+        "NSMicrophoneUsageDescription": "Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío.",
+        "NSHealthShareUsageDescription": "Vibes lee tus pasos de Apple Salud para marcar solo el día en los desafíos de pasos cuando llegás a la meta, por ejemplo 1000 pasos por día. Tus pasos no salen del celular."
       },
       "googleServicesFile": "./config/firebase/GoogleService-Info.plist"
     },
@@ -46,7 +47,9 @@
       },
       "versionCode": 65,
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
       ],
       "blockedPermissions": [
         "com.google.android.gms.permission.AD_ID"
@@ -100,7 +103,8 @@
           "android": {
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRules": "# JNA references desktop AWT APIs that are unavailable and unused on Android.\n-dontwarn java.awt.Component\n-dontwarn java.awt.GraphicsEnvironment\n-dontwarn java.awt.HeadlessException\n-dontwarn java.awt.Window\n\n# Expo creates GLView through reflection; it does not extend ExpoView.\n-keep class expo.modules.gl.GLView {\n    public <init>(android.content.Context, expo.modules.kotlin.AppContext);\n}\n\n# Worklets reads this React Native field reflectively during teardown.\n-keepclassmembers class com.facebook.react.bridge.queue.MessageQueueThreadImpl {\n    boolean mIsFinished;\n}\n\n# expo-gl JNI resolves this method by its original name.\n-keepclassmembers class expo.modules.gl.GLContext {\n    public void flush();\n}\n\n# Preserve Expo option annotations used by Kotlin reflection in release builds.\n-keep @interface expo.modules.kotlin.records.Field { *; }\n"
+            "extraProguardRules": "# JNA references desktop AWT APIs that are unavailable and unused on Android.\n-dontwarn java.awt.Component\n-dontwarn java.awt.GraphicsEnvironment\n-dontwarn java.awt.HeadlessException\n-dontwarn java.awt.Window\n\n# Expo creates GLView through reflection; it does not extend ExpoView.\n-keep class expo.modules.gl.GLView {\n    public <init>(android.content.Context, expo.modules.kotlin.AppContext);\n}\n\n# Worklets reads this React Native field reflectively during teardown.\n-keepclassmembers class com.facebook.react.bridge.queue.MessageQueueThreadImpl {\n    boolean mIsFinished;\n}\n\n# expo-gl JNI resolves this method by its original name.\n-keepclassmembers class expo.modules.gl.GLContext {\n    public void flush();\n}\n\n# Preserve Expo option annotations used by Kotlin reflection in release builds.\n-keep @interface expo.modules.kotlin.records.Field { *; }\n",
+            "minSdkVersion": 26
           },
           "ios": {
             "deploymentTarget": "15.4",
@@ -141,7 +145,17 @@
       "./plugins/withIosDeploymentTarget",
       "./plugins/withSceneLifecycle",
       "./plugins/withAndroidReleaseOptimization",
-      "./plugins/withAndroidWindowCompatibility"
+      "./plugins/withAndroidWindowCompatibility",
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Vibes lee tus pasos de Apple Salud para marcar solo el día en los desafíos de pasos cuando llegás a la meta, por ejemplo 1000 pasos por día. Tus pasos no salen del celular.",
+          "NSHealthUpdateUsageDescription": false,
+          "background": true
+        }
+      ],
+      "react-native-health-connect",
+      "expo-background-task"
     ],
     "extra": {
       "eas": {
