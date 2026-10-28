@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AppState } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuthSession } from "../auth/auth.queries";
 import {
@@ -16,6 +17,19 @@ const storageKey = (userId: string) => `connectionStrip:v1:${userId}`;
 // Shared across Home and Mensajes so both strips agree.
 const cache = new Map<string, ConnectionStripState>();
 const listeners = new Set<() => void>();
+// A "session" = one app open: cold start, or coming back to the foreground from background.
+// Each connection adds at most one view per session, however many screens show it.
+let countedThisSession = new Set<string>();
+let sessionId = 0;
+let lastAppState = AppState.currentState;
+AppState.addEventListener("change", (next) => {
+  if (lastAppState === "background" && next === "active") {
+    countedThisSession = new Set();
+    sessionId += 1;
+    listeners.forEach((listener) => listener());
+  }
+  lastAppState = next;
+});
 
 const save = (userId: string, state: ConnectionStripState) => {
   cache.set(userId, state);
@@ -33,11 +47,14 @@ export function useConnectionStripVisibility<C extends { id: string; createdAt?:
   const userId = session?.user.id;
   const [state, setState] = useState<ConnectionStripState | null>(() => (userId ? cache.get(userId) ?? null : null));
   const [focused, setFocused] = useState(false);
-  const countedThisFocus = useRef(new Set<string>());
+  const [, bump] = useState(0);
 
   useEffect(() => {
     if (!userId) return;
-    const sync = () => setState(cache.get(userId) ?? null);
+    const sync = () => {
+      setState(cache.get(userId) ?? null);
+      bump((n) => n + 1);
+    };
     listeners.add(sync);
     if (cache.has(userId)) sync();
     else
@@ -54,23 +71,22 @@ export function useConnectionStripVisibility<C extends { id: string; createdAt?:
 
   useFocusEffect(
     useCallback(() => {
-      countedThisFocus.current = new Set();
       setFocused(true);
       return () => setFocused(false);
     }, [])
   );
 
-  const visibleConnections = state ? filterNewConnections(connections, state, countedThisFocus.current) : [];
+  const visibleConnections = state ? filterNewConnections(connections, state, countedThisSession) : [];
   const visibleRequests = state ? filterRequestsAfterDismiss(requests, state) : [];
   const visibleIds = visibleConnections.map((item) => item.id).join(",");
 
   useEffect(() => {
     if (!userId || !state || !focused || !visibleIds) return;
-    const fresh = visibleIds.split(",").filter((id) => !countedThisFocus.current.has(id));
+    const fresh = visibleIds.split(",").filter((id) => !countedThisSession.has(id));
     if (!fresh.length) return;
-    fresh.forEach((id) => countedThisFocus.current.add(id));
+    fresh.forEach((id) => countedThisSession.add(id));
     save(userId, recordConnectionViews(cache.get(userId) ?? state, fresh));
-  }, [userId, state, focused, visibleIds]);
+  }, [userId, state, focused, visibleIds, sessionId]);
 
   const dismiss = useCallback(() => {
     if (!userId) return;

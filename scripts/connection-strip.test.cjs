@@ -14,6 +14,18 @@ test('a connection disappears after being seen twice', () => {
  assert.deepEqual(m.filterNewConnections([a, b], st, new Set(['a'])), [a, b], 'stays during the second view');
  assert.deepEqual(m.filterNewConnections([a, b], st), [b]);
 });
+test('repeated views within one session count once (hidden from the 3rd app open)', () => {
+ let st = m.emptyConnectionStripState();
+ const session = new Set();
+ const view = () => { const fresh = m.filterNewConnections([a], st, session).map(x => x.id).filter(id => !session.has(id)); fresh.forEach(id => session.add(id)); st = m.recordConnectionViews(st, fresh); };
+ view(); view(); view(); // Home, Mensajes, Home again
+ assert.equal(st.views.a, 1);
+ session.clear(); view(); view();
+ assert.equal(st.views.a, 2);
+ assert.deepEqual(m.filterNewConnections([a], st, session), [a], 'still visible in session 2');
+ session.clear();
+ assert.deepEqual(m.filterNewConnections([a], st, session), [], 'hidden in session 3');
+});
 test('dismiss hides everything until something newer appears', () => {
  const st = m.dismissConnectionStrip(m.emptyConnectionStripState(), Date.parse('2026-10-25T00:00:00Z'));
  assert.deepEqual(m.filterNewConnections([a, b], st), []);
