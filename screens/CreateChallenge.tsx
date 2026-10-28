@@ -1,5 +1,8 @@
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { readCommunities, canonicalCommunity } from "../src/lib/communities";
+
+// Hidden for now: challenges are not filtered by community. Existing tags are kept when editing.
+const SHOW_COMMUNITY_PICKER = false;
 import ScreenContainer from "../components/ScreenContainer";
 import {creationFormStyles} from "../src/theme/creationFormStyles";
 import { launchAppCamera } from "../components/AppCamera";
@@ -464,8 +467,10 @@ const CreateChallenge = () => {
               </View>
             ) : null}
 
-            <Text style={localStyles.label}>Comunidad</Text>
-            <DiscoverPathCards selected={communities} onToggle={value=>setCommunities(previous=>previous.includes(value)?previous.filter(item=>item!==value):[...previous,value])} onClear={()=>setCommunities([])} />
+            {SHOW_COMMUNITY_PICKER ? <>
+              <Text style={localStyles.label}>Comunidad</Text>
+              <DiscoverPathCards selected={communities} onToggle={value=>setCommunities(previous=>previous.includes(value)?previous.filter(item=>item!==value):[...previous,value])} onClear={()=>setCommunities([])} />
+            </> : null}
             <Text style={localStyles.label}>Quién puede verlo</Text>
             <Text style={localStyles.helperText}>
               Elegí si querés abrirlo a la comunidad, compartirlo con tus

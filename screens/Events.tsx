@@ -365,7 +365,8 @@ const Events = ({
       }
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
-      if (!matchesCommunities(item, spiritualPaths) && !(section === "challenge" && isMyChallenge(item))) return false;
+      // Challenges have no community tags, so the community filter only applies to events.
+      if (section === "event" && !matchesCommunities(item, spiritualPaths)) return false;
       if (section === "event" && frequentOnly && !getEventRecurrence(item.schedule)) return false;
       if (section === "event" && pricingType && item.pricingType !== pricingType) return false;
       if (!normalizedSearch) return true;
@@ -707,7 +708,6 @@ const Events = ({
             onToggle={path => setSpiritualPaths(current => current.includes(path) ? current.filter(value => value !== path) : [...current, path])}
             onClear={() => setSpiritualPaths([])} />
         </> : null}
-        {section === "challenge" ? <DiscoverPathCards selected={spiritualPaths} onToggle={path=>setSpiritualPaths(current=>current.includes(path)?current.filter(value=>value!==path):[...current,path])} onClear={()=>setSpiritualPaths([])} /> : null}
         </View>
         </Animated.View>
         {section === "challenge" && startedOnly && !pastOnly ? <Text style={localStyles.feedSectionTitle}>Ya comenzados</Text> : null}
