@@ -18,6 +18,8 @@ type Props = {
   blurHiddenPhotos?: boolean;
 };
 const MAX_STACKED_REQUESTS = 3;
+const STRIP_PADDING_TOP = 6;
+const DISMISS_LINE_HEIGHT = 20;
 export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newConnections: allNewConnections, onRequests, onViewAll, onConnection, compact = false, canViewPhotos = true, blurHiddenPhotos = false }: Props) {
   const visibility = useConnectionStripVisibility(allNewConnections, allIncomingLikes);
   const incomingLikes = visibility.requests;
@@ -38,7 +40,8 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
                 <Icon name="chevron-forward" size={20} color={vibesTheme.colors.accentMustard} />
               </TouchableOpacity>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripPeople}>
+            <View style={s.stripRow}>
+            <ScrollView style={s.stripScroll} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripPeople}>
               {incomingLikes.length > 0 && <>
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver ${incomingLikes.length} solicitudes de conexión`} onPress={onRequests} style={[s.stripPerson, { width: stackWidth }]}>
                   <View style={[s.requestStack, { width: stackWidth, height: avatarBox }]}>
@@ -58,9 +61,11 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
                 <Text numberOfLines={1} style={s.stripName}>{item.otherUserName?.trim().split(/\s+/)[0] || "Vibes"}</Text>
               </TouchableOpacity>)}
             </ScrollView>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ocultar nuevas conexiones" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} onPress={visibility.dismiss} style={s.stripDismiss}>
+            {/* Outside the scroll; text bottom = bottom of the avatar circles (paddingTop + avatarBox). */}
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ocultar nuevas conexiones" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} onPress={visibility.dismiss} style={[s.stripDismiss, { marginTop: STRIP_PADDING_TOP + avatarBox - DISMISS_LINE_HEIGHT }]}>
               <Text style={s.stripDismissText}>Ocultar</Text>
             </TouchableOpacity>
+            </View>
           </View>
         ) : null}
 
@@ -70,10 +75,12 @@ const s = StyleSheet.create({
   connectionsStrip: { marginBottom: 20 },
   stripHeadingRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   stripHeading: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 },
-  stripDismiss: { alignSelf: "flex-end", marginTop: 6 },
-  stripDismissText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 14, lineHeight: 20, textDecorationLine: "underline" },
+  stripRow: { flexDirection: "row", alignItems: "flex-start" },
+  stripScroll: { flex: 1 },
+  stripDismiss: { marginLeft: 8 },
+  stripDismissText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 14, lineHeight: DISMISS_LINE_HEIGHT, textDecorationLine: "underline" },
   stripTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 19, lineHeight: 25 },
-  stripPeople: { alignItems: "flex-start", gap: 12, paddingTop: 6, paddingBottom: 4, paddingRight: 8 },
+  stripPeople: { alignItems: "flex-start", gap: 12, paddingTop: STRIP_PADDING_TOP, paddingBottom: 4, paddingRight: 8 },
   stripPerson: { width: 74, alignItems: "center", gap: 8 },
   stripAvatar: { width: 66, height: 66, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, borderRadius: 33, padding: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.surface, overflow: "hidden" },
   requestStack: { position: "relative" },
