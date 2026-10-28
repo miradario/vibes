@@ -621,14 +621,20 @@ export const DiscoverContent = forwardRef<
     setProfilePage(0);
   }, [discoverFilters, answerFilters, hiddenProfileIds, showHistory, historyMode]);
 
+  const hydratedFiltersUser = useRef<string | null>(null);
   useEffect(() => {
     if (!session?.user?.id) {
+      hydratedFiltersUser.current = null;
       setDiscoverFilters(DEFAULT_FILTERS);
       setHasHydratedStoredFilters(true);
       return;
     }
 
     if (!hasFetchedUserPreferences) return;
+    // A refetch after saving must not replay an older server snapshot over
+    // a newer local choice while another save is still in flight.
+    if (hydratedFiltersUser.current === session.user.id) return;
+    hydratedFiltersUser.current = session.user.id;
 
     if (!userPreferences) {
       setDiscoverFilters(DEFAULT_FILTERS);
@@ -645,7 +651,7 @@ export const DiscoverContent = forwardRef<
 
   useEffect(() => {
     const userId = session?.user?.id;
-    if (!userId || !hasHydratedStoredFilters) return;
+    if (!userId || !hasHydratedStoredFilters || hydratedFiltersUser.current !== userId) return;
 
     const timeoutId = setTimeout(() => {
       void upsertUserPreferences(userId, {
@@ -1055,12 +1061,12 @@ export const DiscoverContent = forwardRef<
               <TouchableOpacity
                 accessibilityRole="button"
                 accessibilityLabel={`${t("discover.filters")}${activeFilterCount ? `, ${activeFilterCount} activos` : ""}`}
-                style={[localStyles.headerFiltersButton, { width: "auto", paddingHorizontal: 14, flexDirection: "row", gap: 8, borderRadius: 24, backgroundColor: `${vibesTheme.colors.accentBlue}14` }]}
+                style={localStyles.headerFiltersButton}
                 activeOpacity={0.84}
                 onPress={() => setIsFiltersVisible(true)}
               >
-                <Icon name="options-outline" size={28} color={vibesTheme.colors.accentBlue} />
-                <Text style={{ color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 14 }}>{t("discover.filters")}{activeFilterCount ? ` · ${activeFilterCount}` : ""}</Text>
+                <Icon name="options-outline" size={22} color={vibesTheme.colors.primaryText} />
+                <Text style={localStyles.filtersButtonText}>{t("discover.filters")}{activeFilterCount ? ` · ${activeFilterCount}` : ""}</Text>
               </TouchableOpacity>
             </DiscoverFiltersGuide>
           </View>
@@ -1093,9 +1099,6 @@ export const DiscoverContent = forwardRef<
             accessibilityState={{ selected: showSpiritualPaths, expanded: showSpiritualPaths }}
             style={[localStyles.filtersButton, showSpiritualPaths && localStyles.historyButtonActive]}
             onPress={() => {
-              if (!showSpiritualPaths) {
-                setDiscoverFilters((previous) => ({ ...previous, spiritualPaths: [] }));
-              }
               setShowSpiritualPaths((current) => !current);
               setShowHistory(false);
               setViewingHistory(false);
@@ -1282,8 +1285,15 @@ const localStyles = StyleSheet.create({
     paddingBottom: 8,
   },
   headerFiltersButton: {
-    width: 48,
-    height: 48,
+    minHeight: 48,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: `${vibesTheme.colors.secondaryText}4D`,
+    backgroundColor: vibesTheme.colors.surface,
+    flexDirection: "row",
+    gap: 7,
     alignItems: "center",
     justifyContent: "center",
   },

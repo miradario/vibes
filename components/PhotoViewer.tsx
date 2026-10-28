@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Platform,
   StyleSheet,
@@ -84,6 +84,7 @@ function ZoomablePhoto({ source }: { source: ImageSourcePropType }) {
       <GestureDetector gesture={Gesture.Simultaneous(pinch, pan, doubleTap)}>
         <Animated.Image
           source={source}
+          fadeDuration={0}
           resizeMode="contain"
           style={[s.image, imageStyle]}
           accessibilityLabel="Foto ampliada. Pellizcá o tocá dos veces para hacer zoom."
@@ -104,11 +105,14 @@ export default function PhotoViewer({
   initialIndex?: number;
   onClose: () => void;
 }) {
-  const [index, setIndex] = useState(initialIndex);
-  useEffect(() => {
-    if (visible) setIndex(initialIndex);
-  }, [visible, initialIndex]);
-  const current = Math.max(0, Math.min(index, images.length - 1));
+  const [selection, setSelection] = useState({ visible, initialIndex, index: initialIndex });
+  const opening = visible && (!selection.visible || initialIndex !== selection.initialIndex);
+  // Reset before painting the new entrance, rather than swapping photos in an effect.
+  if (visible !== selection.visible || initialIndex !== selection.initialIndex) {
+    setSelection({ visible, initialIndex, index: opening ? initialIndex : selection.index });
+  }
+  const setIndex = (index: number) => setSelection(previous => ({ ...previous, index }));
+  const current = Math.max(0, Math.min(opening ? initialIndex : selection.index, images.length - 1));
   // En iOS, dentro de un Modal el SafeAreaView puede recibir insets en 0
   // (notch / Dynamic Island), así que aplicamos los insets explícitamente.
   const insets = useSafeAreaInsets();
@@ -116,7 +120,15 @@ export default function PhotoViewer({
   return (
     <AnimatedSheetModal
       visible={visible}
+      inline
+      keepMounted
       fullScreen
+      offsetY={0}
+      sheetInDelay={0}
+      sheetInDuration={0}
+      sheetOutDuration={0}
+      sheetInOpacityDuration={120}
+      sheetOutOpacityDuration={100}
       onClose={onClose}
       sheetStyle={s.root}
     >
@@ -148,11 +160,11 @@ export default function PhotoViewer({
           </View>
           {images[current] ? (
             <ZoomablePhoto
-              key={`${current}:${visible}`}
+              key={`${current}`}
               source={images[current]}
             />
           ) : null}
-          <View style={[s.toolbar, isIOS && { paddingBottom: insets.bottom }]}>
+          {images.length > 1 ? <View style={[s.toolbar, s.bottomToolbar, isIOS && { paddingBottom: insets.bottom }]}>
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Foto anterior"
@@ -166,7 +178,7 @@ export default function PhotoViewer({
                 color={vibesTheme.colors.primaryText}
               />
             </TouchableOpacity>
-            <Text style={s.hint}>Pellizcá o tocá dos veces para ampliar</Text>
+            <View style={s.controlsSpacer} />
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Foto siguiente"
@@ -180,7 +192,7 @@ export default function PhotoViewer({
                 color={vibesTheme.colors.primaryText}
               />
             </TouchableOpacity>
-          </View>
+          </View> : <View style={{ height: isIOS ? insets.bottom : 0 }} />}
         </ScreenContainer>
       </GestureHandlerRootView>
     </AnimatedSheetModal>
@@ -204,10 +216,6 @@ const s = StyleSheet.create({
   },
   disabled: { opacity: 0.3 },
   label: { color: vibesTheme.colors.primaryText, fontSize: 16 },
-  hint: {
-    flex: 1,
-    color: vibesTheme.colors.secondaryText,
-    textAlign: "center",
-    fontSize: 13,
-  },
+  bottomToolbar: { paddingVertical: 4 },
+  controlsSpacer: { flex: 1 },
 });

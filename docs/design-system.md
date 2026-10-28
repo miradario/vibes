@@ -282,7 +282,7 @@ El registro de meditación es una declaración de la persona, no una verificaci�
 
 ## Comunidades y filtro inicial
 
-El onboarding pregunta “Tus comunidades” y permite elegir varias: El Arte de Vivir, Danzantes, Ashtanga, Hatha, Meditación, Bikram, Músicos, Artistas, Servicio y Otros. Reemplaza la denominación Camino espiritual en perfil y filtros. La selección guardada sirve de filtro inicial en Eventos, Desafíos, Clases, Descubrir y recomendaciones de Vibi. Usar la misma normalización y coincidencia OR en todas las superficies, incluyendo siempre contenido sin comunidad asignada. No inferir pertenencia a partir de descripciones. Conservar el acceso al contenido personal ya adquirido o iniciado. Los filtros de exploración permiten cambiar la selección o elegir Todos; no modificar el perfil al hacerlo. La creación de eventos y desafíos permite asignar comunidades mediante los mismos chips.
+El onboarding pregunta “Tus comunidades” y permite elegir varias: El Arte de Vivir, Danzantes, Ashtanga, Hatha, Meditación, Bikram, Músicos, Artistas, Servicio y Otros. Reemplaza la denominación Camino espiritual en perfil y filtros. La selección guardada sirve de filtro inicial en Eventos, Desafíos, Clases, Descubrir y recomendaciones de Vibi. Usar la misma normalización y coincidencia OR en todas las superficies, excluyendo perfiles y contenido sin comunidad asignada cuando hay una selección activa. Sin selección, incluir todos. No inferir pertenencia a partir de descripciones. Conservar el acceso al contenido personal ya adquirido o iniciado. Los filtros de exploración permiten cambiar la selección o elegir Todos; no modificar el perfil al hacerlo. La creación de eventos y desafíos permite asignar comunidades mediante los mismos chips.
 
 En Eventos y Desafíos, mostrar la comunidad seleccionada únicamente en DiscoverPathCards, sin duplicarla con chips de filtros activos. Los filtros activos de comunidad se muestran en Clases y Descubrir mediante ActiveCommunityFilters: un chip por comunidad con “×” y una acción Limpiar. Quitar un chip actualiza inmediatamente los resultados de esa pantalla; Limpiar muestra todas las comunidades. No cambiar las comunidades del perfil al quitar filtros. La fila se oculta cuando no hay selecciones y comparte el comportamiento de la barra de filtros del listado.
 
@@ -339,3 +339,23 @@ En Nuevas conexiones, el título conserva área táctil 44, sin margen inferior 
 En Inicio, las cabeceras Eventos para vos y Tus desafíos no agregan margen inferior antes de las tarjetas. Conservar el área táctil 44 y la separación entre tarjetas.
 
 La comunidad Meditación reemplaza la denominación Meditación trascendental; normalizar los nombres anteriores y la variante trasendental para conservar las selecciones y asociaciones guardadas.
+
+El botón Filtros de Descubrir comparte el diseño de Solicitudes y Comunidad: contorno secundario suave, superficie clara, radio 21, alto mínimo 48 y texto oscuro SemiBold con icono oscuro de 22. Mantener el contador de filtros activos.
+
+El visor ampliado de fotos se inicializa por perfil y foto solicitada, evitando mostrar primero el índice de una apertura anterior. Desactivar fadeDuration de Android en la imagen ampliada y no remontarla solo por cambiar visible. Mantener AnimatedSheetModal y los gestos de zoom.
+
+El visor de fotos mantiene una interfaz mínima: sin ayuda textual permanente, con cierre y contador discretos. Mostrar navegación inferior solo cuando hay más de una foto; conservar gestos y labels accesibles.
+
+El visor ampliado usa AnimatedSheetModal inline y keepMounted dentro del modal del perfil, evitando apilar otro Modal nativo. Entrada y salida sin desplazamiento ni demora, con fundido corto de 120/100 ms, para evitar destellos y cambios de barras del sistema al abrir una foto.
+
+Al abrir el perfil desde Descubrir, la foto entra a escala 1 sin zoom de 0,86 a 1. La medición inicial de altura se aplica directamente, sin animar el reajuste del viewport durante la entrada. Conservar la transición al desplegar detalles y los gestos del perfil.
+
+En ProfileMediaImage, la miniatura y la imagen final comparten contentFit y esperan las dimensiones cuando hay fondo desenfocado. Evitar mostrar primero una miniatura recortada en cover y luego la foto en contain, que produce un salto breve.
+
+Descubrir hidrata sus filtros guardados una sola vez por cuenta: los refetch posteriores al guardado no deben sobrescribir selecciones locales recientes. Abrir o cerrar Comunidad no borra la selección; únicamente cambiar una opción o Limpiar la modifica.
+
+Los modales compartidos usan hardwareAccelerated en Android para componer fotos y capas animadas. UserProfileSheet mantiene photoHeight como Animated.Value estable por instancia, sin recrearlo cuando cambia la medición del viewport al abrir el modal.
+
+Para fotos con bandas desenfocadas, ProfileMediaImage espera onDisplay del fondo antes de revelar la composición y notificar al perfil. Cargar ambas capas con la misma prioridad para evitar que el fondo llegue después de la foto horizontal. Si falla el fondo, permitir mostrar la foto sobre la superficie de respaldo.
+
+Comunidad es el nuevo nombre de Camino: los datos del perfil siguen en spiritual_path y spiritual_path_details (y sus aliases camelCase), con prioridad sobre campos alternativos communities. Conservar rol, años y notas; no crear un perfil de comunidad separado ni perder selecciones anteriores.

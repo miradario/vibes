@@ -8,6 +8,8 @@ function render(source) {
   const react = {
     createElement: (type, props, ...children) => ({ type, props, children }),
     useMemo: (fn) => fn(),
+    useRef: value => ({ current: value }),
+    useEffect: () => {},
     useState: () => [null, () => {}],
   };
   const output = { exports: {} };
@@ -19,6 +21,7 @@ function render(source) {
     require: (name) => {
       if (name === 'react') return react;
       if (name === 'react-native') return { View: 'View', StyleSheet: { create: (s) => s, absoluteFillObject: {} } };
+      if (name.includes('imageCacheSource')) return { imageCacheSource: source => source };
       if (name === 'expo-image') return { Image: 'Image' };
       if (name.includes('vibesTheme')) return { vibesTheme: { colors: { background: '#FEFEFD' } } };
       return { default: 'Placeholder', __esModule: true };

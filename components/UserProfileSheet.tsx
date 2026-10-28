@@ -307,7 +307,7 @@ const UserProfileSheet = ({
   const detailsGalleryRef = useRef<FlatList<ImageSourcePropType>>(null);
   const panelDragY = useRef(new Animated.Value(0)).current;
   const compactPhotoHeight = Math.max(insets.top + 140, height * 0.38);
-  const photoHeight = useMemo(() => new Animated.Value(height), [profile?.id, height]);
+  const photoHeight = useRef(new Animated.Value(height)).current;
   const [detailsProfileId, setDetailsProfileId] = useState<string | null>(null);
   const detailsVisible = detailsProfileId !== null && detailsProfileId === profile?.id;
   const setDetailsVisible = useCallback((open: boolean) => {
@@ -358,7 +358,6 @@ const UserProfileSheet = ({
   const [isFollowingProfile, setIsFollowingProfile] = useState(false);
   const [photoReadyId, setPhotoReadyId] = useState<string | undefined>(undefined);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const openingScale = useRef(new Animated.Value(1)).current;
   const connectBounce = useRef(new Animated.Value(0)).current;
   const profileFocused = useIsFocused();
   const { active: appActive, reducedMotion: runtimeReducedMotion, motionReady } = useVibiRuntime();
@@ -417,23 +416,6 @@ const UserProfileSheet = ({
     return () => clearTimeout(timer);
   }, [isIOS, visible, profile?.id]);
   const detailsScrollRef = useRef<ScrollView>(null);
-  useLayoutEffect(() => {
-    openingScale.stopAnimation();
-    if (!visible || reduceMotion) {
-      openingScale.setValue(1);
-      return;
-    }
-    openingScale.setValue(0.86);
-    const animation = Animated.timing(openingScale, {
-      toValue: 1,
-      duration: 380,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-      isInteraction: false,
-    });
-    animation.start();
-    return () => animation.stop();
-  }, [visible, reduceMotion, openingScale]);
   useEffect(() => {
     // iOS crossfades instead: the photo stays full height (hidden behind the
     // details), avoiding a 420ms JS-driven layout animation on every tap.
@@ -441,8 +423,12 @@ const UserProfileSheet = ({
       photoHeight.setValue(height);
       return;
     }
+    if (!detailsVisible) {
+      photoHeight.setValue(height);
+      return;
+    }
     const animation = Animated.timing(photoHeight, {
-      toValue: detailsVisible ? compactPhotoHeight : height,
+      toValue: compactPhotoHeight,
       duration: reduceMotion ? 0 : 420,
       easing: Easing.inOut(Easing.cubic),
       useNativeDriver: false,
@@ -974,7 +960,7 @@ const UserProfileSheet = ({
           ]}
           {...swipe.panHandlers}
         >
-          <Animated.View style={[StyleSheet.absoluteFillObject, { transform: [{ scale: openingScale }] }]}>
+          <Animated.View style={StyleSheet.absoluteFillObject}>
           {profileImages.length > 0 ? (
             enableSwipe ? (
               <View style={StyleSheet.absoluteFillObject}>

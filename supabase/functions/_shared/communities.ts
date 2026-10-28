@@ -20,12 +20,19 @@ export function readCommunities(value: unknown): string[] {
  return COMMUNITY_OPTIONS.filter(option=>known.has(option));
 }
 export function defaultCommunities(preferences?:Record<string,any>|null):string[]{
- if(preferences?.communities!==undefined&&preferences?.communities!==null)return readCommunities(preferences.communities);
  const paths=preferences?.spiritualPath??preferences?.spiritual_path;
- return readCommunities([...(Array.isArray(paths)?paths:[]),...Object.keys(preferences?.spiritualPathDetails??preferences?.spiritual_path_details??{})]);
+ const details=preferences?.spiritualPathDetails??preferences?.spiritual_path_details;
+ // Comunidad renames Camino; the original profile fields remain authoritative.
+ if(paths!==undefined&&paths!==null||details!==undefined&&details!==null) {
+  return readCommunities([...(Array.isArray(paths)?paths:[]),...Object.keys(details??{})]);
+ }
+ return readCommunities(preferences?.communities);
 }
 export function contentCommunities(item?:Record<string,any>|null):string[]{
  if(!item)return [];
+ const legacyPaths=item.spiritualPath??item.spiritual_path;
+ const legacyDetails=item.spiritualPathDetails??item.spiritual_path_details;
+ if(legacyPaths!==undefined&&legacyPaths!==null||legacyDetails!==undefined&&legacyDetails!==null) return defaultCommunities(item);
  const explicit=item.communities??item.community;
  if(explicit!==undefined&&explicit!==null)return readCommunities(explicit);
  return readCommunities([
@@ -36,9 +43,9 @@ export function contentCommunities(item?:Record<string,any>|null):string[]{
   item.categoria,item.category,
  ]);
 }
-/** Unassigned content is always included. Several choices are an OR filter. */
+/** A selection requires an assigned community; several choices use OR. */
 export function matchesCommunities(item:Record<string,any>,selected:readonly string[]):boolean{
  const wanted=readCommunities(selected);if(!wanted.length)return true;
  const assigned=contentCommunities(item);
- return !assigned.length||assigned.some(value=>wanted.includes(value));
+ return assigned.some(value=>wanted.includes(value));
 }

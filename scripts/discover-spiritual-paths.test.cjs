@@ -11,9 +11,9 @@ function load(file, deps = {}) {
 }
 const paths = load('src/lib/spiritualPaths.ts');
 const {readDiscoverSpiritualPaths: read, matchesDiscoverSpiritualPaths: matches} = load('src/lib/discoverSpiritualPaths.ts', {'./spiritualPaths': paths, '../screens/Onboarding/vibesOnboardingContent': load('src/screens/Onboarding/vibesOnboardingContent.ts')});
-test('unassigned profiles stay visible with or without community selection', () => {
+test('unassigned profiles only stay visible without community selection', () => {
  assert.equal(matches({}, []), true);
- assert.equal(matches({}, ['Ashtanga']), true);
+ assert.equal(matches({}, ['Ashtanga']), false);
  assert.equal(matches({spiritualPath: ['Hatha Yoga']}, ['Ashtanga']), false);
 });
 test('multiple communities use OR, including legacy aliases and stored detail keys', () => {

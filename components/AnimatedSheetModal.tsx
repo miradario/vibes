@@ -229,6 +229,7 @@ const AnimatedSheetModal = ({
   ) : (
     <Modal
       transparent
+      hardwareAccelerated={Platform.OS === "android"}
       visible={isMounted}
       onDismiss={notifyClosed}
       animationType="none"
