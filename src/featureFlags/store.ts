@@ -19,3 +19,5 @@ export function createBooleanFlagStore() {
 export const createVibiFlagStore = createBooleanFlagStore;
 export const vibiFlagStore = createBooleanFlagStore();
 export const clasesFlagStore = createBooleanFlagStore();
+
+export const vibesPointsFlagStore = createBooleanFlagStore();

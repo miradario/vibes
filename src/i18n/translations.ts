@@ -1681,7 +1681,7 @@ const spiritualOptionMap: Record<
 };
 
 export const translateSpiritualPathLabel = (locale: Locale, value: string) => {
-  const communityEnglish: Record<string,string> = {"El Arte de Vivir":"Art of Living","Danzantes":"Dancers","Hatha":"Hatha","Meditación trascendental":"Transcendental Meditation","Músicos":"Musicians","Artistas":"Artists","Servicio":"Service"};
+  const communityEnglish: Record<string,string> = {"El Arte de Vivir":"Art of Living","Danzantes":"Dancers","Hatha":"Hatha","Meditación":"Meditation","Músicos":"Musicians","Artistas":"Artists","Servicio":"Service","Otros":"Others"};
   if (locale.startsWith("en") && communityEnglish[value]) return communityEnglish[value];
   const key = spiritualPathMap[value];
   return key ? translate(locale, `spiritual.${key}`) : value;

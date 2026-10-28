@@ -58,19 +58,21 @@ const getEventDateLabel = (date: string) => {
 function SectionHeader({
   title,
   onPress,
+  compact = false,
 }: {
   title: string;
+  compact?: boolean;
   onPress?: () => void;
 }) {
   if (!onPress)
     return (
-      <View style={s.heading}>
+      <View style={[s.heading, compact && { marginBottom: 0 }]}>
         <Text style={s.section}>{title}</Text>
       </View>
     );
   return (
     <TouchableOpacity
-      style={[s.heading, { minHeight: 44 }]}
+      style={[s.heading, { minHeight: 44 }, compact && { marginBottom: 0 }]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Ver ${title}`}
@@ -357,6 +359,7 @@ export default function HomeOverview({
     <View key="events" style={s.sectionBlock}>
       <SectionHeader
         title="Eventos para vos"
+        compact
         onPress={visibleEvents.length ? () => openList() : undefined}
       />
       {visibleEvents.length ? (
@@ -396,6 +399,7 @@ export default function HomeOverview({
     <View key="challenges" style={s.sectionBlock}>
       <SectionHeader
         title={challengeSectionTitle}
+        compact
         onPress={() => openList(true)}
       />
       {isLoadingChallengeRecommendations ? (

@@ -1337,7 +1337,7 @@ const legacyStyles = StyleSheet.create({
   },
   createButtonText: {
     fontFamily: vibesTheme.fonts.semibold,
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontSize: 15,
   },
   fixedFooter: {
@@ -1584,7 +1584,7 @@ const legacyStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
   },
   modalPrimaryText: {
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontWeight: "400",
   },
   modalSecondaryButton: {

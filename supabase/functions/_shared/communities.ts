@@ -1,13 +1,13 @@
 /** Shared by the app and recommendations: match explicit communities, not prose. */
 export const COMMUNITY_OPTIONS = [
-  "El Arte de Vivir", "Danzantes", "Ashtanga", "Hatha", "Meditación trascendental",
-  "Bikram", "Músicos", "Artistas", "Servicio",
+  "El Arte de Vivir", "Danzantes", "Ashtanga", "Hatha", "Meditación",
+  "Bikram", "Músicos", "Artistas", "Servicio", "Otros",
 ] as const;
 const normalize = (value: string) => value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const aliases: Record<string,string> = {
  "art of living":"El Arte de Vivir", "arte de vivir":"El Arte de Vivir", "hatha yoga":"Hatha",
  "baile":"Danzantes", "danza":"Danzantes", "contact":"Danzantes", "5 ritmos":"Danzantes",
- "musica":"Músicos", "canto":"Músicos", "meditacion trasendental":"Meditación trascendental",
+ "musica":"Músicos", "canto":"Músicos", "meditacion trasendental":"Meditación", "meditacion trascendental":"Meditación",
 };
 export function canonicalCommunity(value: unknown): string | null {
  if(typeof value!=="string")return null;

@@ -282,7 +282,7 @@ El registro de meditación es una declaración de la persona, no una verificaci�
 
 ## Comunidades y filtro inicial
 
-El onboarding pregunta “Tus comunidades” y permite elegir varias: El Arte de Vivir, Danzantes, Ashtanga, Hatha, Meditación trascendental, Bikram, Músicos, Artistas y Servicio. Reemplaza la denominación Camino espiritual en perfil y filtros. La selección guardada sirve de filtro inicial en Eventos, Desafíos, Clases, Descubrir y recomendaciones de Vibi. Usar la misma normalización y coincidencia OR en todas las superficies, incluyendo siempre contenido sin comunidad asignada. No inferir pertenencia a partir de descripciones. Conservar el acceso al contenido personal ya adquirido o iniciado. Los filtros de exploración permiten cambiar la selección o elegir Todos; no modificar el perfil al hacerlo. La creación de eventos y desafíos permite asignar comunidades mediante los mismos chips.
+El onboarding pregunta “Tus comunidades” y permite elegir varias: El Arte de Vivir, Danzantes, Ashtanga, Hatha, Meditación, Bikram, Músicos, Artistas, Servicio y Otros. Reemplaza la denominación Camino espiritual en perfil y filtros. La selección guardada sirve de filtro inicial en Eventos, Desafíos, Clases, Descubrir y recomendaciones de Vibi. Usar la misma normalización y coincidencia OR en todas las superficies, incluyendo siempre contenido sin comunidad asignada. No inferir pertenencia a partir de descripciones. Conservar el acceso al contenido personal ya adquirido o iniciado. Los filtros de exploración permiten cambiar la selección o elegir Todos; no modificar el perfil al hacerlo. La creación de eventos y desafíos permite asignar comunidades mediante los mismos chips.
 
 En Eventos y Desafíos, mostrar la comunidad seleccionada únicamente en DiscoverPathCards, sin duplicarla con chips de filtros activos. Los filtros activos de comunidad se muestran en Clases y Descubrir mediante ActiveCommunityFilters: un chip por comunidad con “×” y una acción Limpiar. Quitar un chip actualiza inmediatamente los resultados de esa pantalla; Limpiar muestra todas las comunidades. No cambiar las comunidades del perfil al quitar filtros. La fila se oculta cuando no hay selecciones y comparte el comportamiento de la barra de filtros del listado.
 
@@ -323,3 +323,19 @@ El contenedor de la ilustración de Login permite overflow visible para no corta
 En Login, Iniciar sesión y ¿No tenés cuenta? Crear cuenta forman un pie independiente del formulario, alineado al fondo mediante marginTop auto, dentro del safe area. Medir también el alto del pie al calcular el tamaño de la ilustración.
 
 En Welcome, Crear cuenta e Iniciar sesión tienen idéntico ancho, alto 58, radio pill y texto 18/24 Bold; solo difieren los colores de sus variantes.
+
+Los botones mostaza siempre usan texto e iconos primaryText, también en diálogos, filtros, recuperación, fotos, reportes y confirmaciones. No usar texto surface/blanco sobre mostaza. Mantener texto surface únicamente sobre botones oscuros.
+
+El feature flag Firebase vibes_points_enabled controla la visibilidad del puntaje en Inicio, el acceso Tus Vibes del perfil y la ruta de detalle. Valor local predeterminado false, con actualización en tiempo real igual que Clases. Ocultarlo no elimina el historial ni detiene los créditos del servidor.
+
+Nuevas conexiones no muestra por ahora el botón ni el texto Ocultar. Conservar el resto de accesos y la fila de fotos.
+
+En Chats, ConnectionStrip usa persistent: las nuevas conexiones no caducan por cantidad de sesiones ni por un ocultamiento local previo, y mostrarlas no aumenta el contador de Inicio. Conserva el criterio de conexiones nuevas (activas y cuyo chat aún no se abrió). Inicio mantiene su límite de dos sesiones.
+
+Nuevas conexiones usa presentación comprimida: avatar exterior 54 (48 en Inicio compacto), imagen 48 (42 compacto), separación horizontal 8, nombre a 4 de la foto y margen inferior 12 (8 compacto). Mantener área táctil mínima 44 y no recortar el contador.
+
+En Nuevas conexiones, el título conserva área táctil 44, sin margen inferior de fila y con compensación visual de -8 antes de las fotos. Mantener padding superior 4 para no cortar el badge.
+
+En Inicio, las cabeceras Eventos para vos y Tus desafíos no agregan margen inferior antes de las tarjetas. Conservar el área táctil 44 y la separación entre tarjetas.
+
+La comunidad Meditación reemplaza la denominación Meditación trascendental; normalizar los nombres anteriores y la variante trasendental para conservar las selecciones y asociaciones guardadas.

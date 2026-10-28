@@ -740,7 +740,7 @@ export const MessagesContent = ({
             invitations={communityInvitations}
           />
         </View>
-        {meetPeopleEnabled ? <ConnectionStrip incomingLikes={incomingLikes} newConnections={newConnections}
+        {meetPeopleEnabled ? <ConnectionStrip persistent incomingLikes={incomingLikes} newConnections={newConnections}
           onRequests={() => setConnectionsSheet("incoming")}
           onViewAll={() => setConnectionsSheet("new")}
           onConnection={openNewConnectionChat} /> : null}

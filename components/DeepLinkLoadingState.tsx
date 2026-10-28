@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   primaryButtonText: {
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.bold,
     fontSize: 16,
   },

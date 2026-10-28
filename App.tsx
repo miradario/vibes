@@ -1,3 +1,4 @@
+import { useVibesPointsEnabled } from "./src/featureFlags/useVibesPointsEnabled";
 import VibesPoints from "./screens/VibesPoints";
 import {ExternalCatalogDetailScreen} from "./components/learning/ExternalCatalog";
 import Activities, { ClassesTab } from "./screens/Activities";
@@ -193,6 +194,7 @@ const CommunityRuntime = () => {
 const AppNavigator = () => {
   const { enabled: meetPeopleEnabled } = useMeetPeople();
   const clasesEnabled = useClasesEnabled();
+  const vibesPointsEnabled = useVibesPointsEnabled();
   React.useEffect(() => startRemoteConfig(), []);
   React.useEffect(() => startAppOpenTracking(), []);
   React.useEffect(() => {
@@ -589,7 +591,7 @@ const AppNavigator = () => {
               )}
             </Stack.Screen>
             <Stack.Screen name="ExternalCatalogDetail" component={ExternalCatalogDetailScreen} options={{headerShown:false}} />
-            <Stack.Screen name="VibesPoints" component={VibesPoints} options={{headerShown:false}} />
+            {vibesPointsEnabled ? <Stack.Screen name="VibesPoints" component={VibesPoints} options={{headerShown:false}} /> : null}
             <Stack.Screen name="LearningExplore" component={LearningExplore} options={{headerShown:false}} />
             <Stack.Screen name="LearningProfile" component={LearningProfileDetail} options={{headerShown:false}} />
             <Stack.Screen name="LearningActivity" component={LearningActivityDetail} options={{headerShown:false}} />

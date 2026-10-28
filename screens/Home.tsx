@@ -1,3 +1,4 @@
+import { useVibesPointsEnabled } from "../src/featureFlags/useVibesPointsEnabled";
 import VibesPointsBadge from "../components/VibesPointsBadge";
 import { useMeetPeople } from "../src/queries/meetPeople.queries";
 import { hasProfilePhotos } from "../src/lib/profilePhotos";
@@ -309,6 +310,7 @@ const readStoredFilters = (
 });
 
 const Home = () => {
+  const vibesPointsEnabled = useVibesPointsEnabled();
   // Any way of landing on Home (tab press, back, another tab, programmatic
   // navigation) must show it from the top. useScrollToTop covers tapping the
   // Home tab while already on Home; the focus effect covers every return.
@@ -968,7 +970,7 @@ const Home = () => {
                 Hola, {firstName}
               </Text>
             </View>
-            <VibesPointsBadge />
+            {vibesPointsEnabled ? <VibesPointsBadge /> : null}
           </View>
 
           {ownsHomePrompts(ftuxState) ? null : (

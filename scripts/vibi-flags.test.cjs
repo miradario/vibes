@@ -26,18 +26,19 @@ function load(file, imports = {}, dev = false) {
   return exports;
 }
 const settle = () => new Promise((resolve) => setImmediate(resolve));
-function fixture({ cached = false, cachedClases = false, fail = false } = {}) {
+function fixture({ cached = false, cachedClases = false, cachedPoints = false, fail = false } = {}) {
   const stores = load("src/featureFlags/store.ts");
   const store = stores.vibiFlagStore;
   let remote = cached,
     remoteClases = cachedClases,
+    remotePoints = cachedPoints,
     observer,
     foreground,
     removed = 0;
   const config = {};
   const sdk = {
     getRemoteConfig: () => config,
-    getValue: (_, key) => ({ asBoolean: () => key === "clases" ? remoteClases : remote }),
+    getValue: (_, key) => ({ asBoolean: () => key === "clases" ? remoteClases : key === "vibes_points_enabled" ? remotePoints : remote }),
     fetchAndActivate: async () => {
       if (fail) throw Error("offline");
     },
@@ -50,7 +51,7 @@ function fixture({ cached = false, cachedClases = false, fail = false } = {}) {
     },
   };
   const module = load("src/featureFlags/remoteConfig.native.ts", {
-    "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore },
+    "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore, vibesPointsFlagStore: stores.vibesPointsFlagStore },
     "@react-native-firebase/remote-config": sdk,
     "react-native": {
       TurboModuleRegistry: { get: () => ({}) },
@@ -69,6 +70,8 @@ function fixture({ cached = false, cachedClases = false, fail = false } = {}) {
   return {
     store,
     clasesStore: stores.clasesFlagStore,
+    pointsStore: stores.vibesPointsFlagStore,
+    updatePoints: value => { remotePoints = value; observer.next(); },
     config,
     start: module.startRemoteConfig,
     update: (value) => {
@@ -119,7 +122,7 @@ for (const missing of ["NativeRNFBTurboApp", "NativeRNFBTurboConfig"]) {
   const store = stores.vibiFlagStore;
     let sdkImports = 0;
     const module = load("src/featureFlags/remoteConfig.native.ts", {
-      "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore },
+      "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore, vibesPointsFlagStore: stores.vibesPointsFlagStore },
       "react-native": {
         TurboModuleRegistry: { get: (name) => name === missing ? null : {} },
       },
@@ -140,7 +143,7 @@ for (const missing of ["NativeRNFBTurboApp", "NativeRNFBTurboConfig"]) {
     store.update(true);
     let sdkImports = 0;
     const module = load("src/featureFlags/remoteConfig.native.ts", {
-      "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore },
+      "./store": { vibiFlagStore: store, clasesFlagStore: stores.clasesFlagStore, vibesPointsFlagStore: stores.vibesPointsFlagStore },
       "react-native": {
         TurboModuleRegistry: { get: (name) => name === missing ? null : {} },
       },
@@ -188,4 +191,22 @@ test("clases retains its activated value offline", async () => {
   assert.equal(f.clasesStore.getSnapshot(), true);
   assert.equal(f.store.getSnapshot(), false);
   stop();
+});
+
+test("Vibes points default off, react to remote changes and retain cached value offline", async () => {
+  const f = fixture();
+  const stop = f.start();
+  assert.equal(f.config.defaultConfig.vibes_points_enabled, false);
+  assert.equal(f.pointsStore.getSnapshot(), false);
+  f.updatePoints(true); await settle();
+  assert.equal(f.pointsStore.getSnapshot(), true);
+  f.updatePoints(false); await settle();
+  assert.equal(f.pointsStore.getSnapshot(), false);
+  stop();
+  f.updatePoints(true); await settle();
+  assert.equal(f.pointsStore.getSnapshot(), false);
+  const offline = fixture({ cachedPoints: true, fail: true });
+  const close = offline.start(); await settle();
+  assert.equal(offline.pointsStore.getSnapshot(), true);
+  close();
 });

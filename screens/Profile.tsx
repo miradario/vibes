@@ -1,3 +1,4 @@
+import { useVibesPointsEnabled } from "../src/featureFlags/useVibesPointsEnabled";
 import ScreenContainer from "../components/ScreenContainer";
 import { useQuery } from "@tanstack/react-query";
 import { readProfileAnswers } from "../src/lib/profileQuestions";
@@ -79,8 +80,9 @@ const Profile = () => {
     ? `${appVersion} (${buildNumber})`
     : appVersion;
 
+  const vibesPointsEnabled = useVibesPointsEnabled();
   const menuItems = [
-    { icon: "pulse-outline", label: "Tus Vibes", screen: "VibesPoints" },
+    ...(vibesPointsEnabled ? [{ icon: "pulse-outline", label: "Tus Vibes", screen: "VibesPoints" }] : []),
     {
       icon: "create-outline",
       label: "Sobre mí",

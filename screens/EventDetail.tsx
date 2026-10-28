@@ -2138,7 +2138,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
   },
   publicStateButtonText: {
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.bold,
     fontSize: 16,
   },
@@ -2931,7 +2931,7 @@ const localStyles = StyleSheet.create({
     elevation: 4,
   },
   modalConfirmText: {
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.bold,
     fontSize: 16,
   },

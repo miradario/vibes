@@ -1118,7 +1118,7 @@ const localStyles = StyleSheet.create({
     paddingVertical: 9,
   },
   eventMapButtonText: {
-    color: vibesTheme.colors.surface,
+    color: vibesTheme.colors.primaryText,
     fontSize: 13,
     fontWeight: "400",
   },

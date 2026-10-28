@@ -41,7 +41,8 @@ const save = (userId: string, state: ConnectionStripState) => {
 
 export function useConnectionStripVisibility<C extends { id: string; createdAt?: string }, R extends { createdAt?: string }>(
   connections: C[],
-  requests: R[]
+  requests: R[],
+  persistent = false
 ) {
   const { data: session } = useAuthSession();
   const userId = session?.user.id;
@@ -76,17 +77,17 @@ export function useConnectionStripVisibility<C extends { id: string; createdAt?:
     }, [])
   );
 
-  const visibleConnections = state ? filterNewConnections(connections, state, countedThisSession) : [];
-  const visibleRequests = state ? filterRequestsAfterDismiss(requests, state) : [];
+  const visibleConnections = persistent ? connections : state ? filterNewConnections(connections, state, countedThisSession) : [];
+  const visibleRequests = persistent ? requests : state ? filterRequestsAfterDismiss(requests, state) : [];
   const visibleIds = visibleConnections.map((item) => item.id).join(",");
 
   useEffect(() => {
-    if (!userId || !state || !focused || !visibleIds) return;
+    if (persistent || !userId || !state || !focused || !visibleIds) return;
     const fresh = visibleIds.split(",").filter((id) => !countedThisSession.has(id));
     if (!fresh.length) return;
     fresh.forEach((id) => countedThisSession.add(id));
     save(userId, recordConnectionViews(cache.get(userId) ?? state, fresh));
-  }, [userId, state, focused, visibleIds, sessionId]);
+  }, [persistent, userId, state, focused, visibleIds, sessionId]);
 
   const dismiss = useCallback(() => {
     if (!userId) return;
