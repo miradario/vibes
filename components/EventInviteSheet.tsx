@@ -20,43 +20,55 @@ import {
 import { useEventParticipantsQuery, useChallengeParticipantsQuery, type EventFeedItem } from "../src/queries/events.queries";
 import { eligibleInviteContacts } from "../src/lib/eventInviteContacts";
 import { buildClassInvitation, type ClassInvitation, buildChallengeInvitation, buildEventInvitation } from "../src/lib/eventInvites";
+import { useInviteToChallengeMutation } from "../src/queries/challengeRestart.queries";
 import { shareClassInvite, shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 export default function EventInviteSheet({
   event,
   classInvite,
+  privateChallenge,
   visible,
   onClose,
 }: {
   event?: EventFeedItem;
   classInvite?: ClassInvitation;
+  /** Private challenge: invites go through challenge invitations (no chat message, no public link). */
+  privateChallenge?: { id: string; title: string; excludeUserIds: string[] };
   visible: boolean;
   onClose: () => void;
   onDiscover: () => void;
 }) {
+  const isPrivateChallenge = Boolean(privateChallenge);
   const isClass = Boolean(classInvite);
-  const content = classInvite ?? event!;
-  const isChallenge = event?.type === "challenge";
+  const content = privateChallenge ?? classInvite ?? event!;
+  const isChallenge = isPrivateChallenge || event?.type === "challenge";
   const matches = useMatchesQuery();
-  const eventParticipants = useEventParticipantsQuery(visible && !isClass && !isChallenge ? event?.id : undefined);
-  const challengeParticipants = useChallengeParticipantsQuery(visible && !isClass && isChallenge ? event?.id : undefined);
-  const participants = isClass ? {data: [], isLoading:false, isError:false, refetch:async()=>{}} : isChallenge ? challengeParticipants : eventParticipants;
+  const eventParticipants = useEventParticipantsQuery(visible && !isClass && !isPrivateChallenge && !isChallenge ? event?.id : undefined);
+  const challengeParticipants = useChallengeParticipantsQuery(visible && !isClass && !isPrivateChallenge && isChallenge ? event?.id : undefined);
+  const participants = isClass || isPrivateChallenge ? {data: [], isLoading:false, isError:false, refetch:async()=>{}} : isChallenge ? challengeParticipants : eventParticipants;
   const send = useSendDirectMessageMutation();
+  const inviteToChallenge = useInviteToChallengeMutation();
   const [search, setSearch] = useState("");
   const [sent, setSent] = useState<Set<string>>(new Set());
+  const [sentUserIds, setSentUserIds] = useState<Set<string>>(new Set());
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const sending = useRef(false);
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const invitation = useMemo(() => classInvite ? buildClassInvitation(classInvite) : isChallenge ? buildChallengeInvitation(event!) : buildEventInvitation(event!), [event, classInvite, isChallenge]);
+  const invitation = useMemo(() => privateChallenge ? "" : classInvite ? buildClassInvitation(classInvite) : isChallenge ? buildChallengeInvitation(event!) : buildEventInvitation(event!), [event, classInvite, privateChallenge, isChallenge]);
   useEffect(() => {
     setSent(new Set());
+    setSentUserIds(new Set());
     setError("");
     setSearch("");
   }, [content.id]);
-  const contacts = eligibleInviteContacts(matches.data ?? [], (participants.data ?? []).map(person => person.userId), event?.createdBy, search);
+  // Private challenge: hide pending/accepted invitees, but keep the ones invited in this session visible as "Enviada".
+  const excludedIds = privateChallenge
+    ? privateChallenge.excludeUserIds.filter(id => !sentUserIds.has(String(id)))
+    : (participants.data ?? []).map(person => person.userId);
+  const contacts = eligibleInviteContacts(matches.data ?? [], excludedIds, event?.createdBy, search);
   const close = () => {
     if (!sending.current) onClose();
   };
@@ -66,8 +78,13 @@ export default function EventInviteSheet({
     setSendingId(match.id);
     setError("");
     try {
-      await send.mutateAsync({ matchId: match.id, body: invitation });
+      if (privateChallenge) {
+        await inviteToChallenge.mutateAsync({ challengeId: privateChallenge.id, inviteeIds: [match.otherUserId] });
+      } else {
+        await send.mutateAsync({ matchId: match.id, body: invitation });
+      }
       setSent((current) => new Set([...current, match.id]));
+      setSentUserIds((current) => new Set([...current, String(match.otherUserId)]));
     } catch {
       setError(
         `No pudimos enviar la invitación a ${match.otherUserName}. Intentá de nuevo.`
@@ -107,13 +124,13 @@ export default function EventInviteSheet({
         </TouchableOpacity>
       </View>
       <Text style={s.copy}>
-        Invitá a gente con la que ya conectaste. Recibirá la invitación en su chat.
+        {isPrivateChallenge ? "Invitá a gente con la que ya conectaste. Recibirá la invitación para unirse al desafío." : "Invitá a gente con la que ya conectaste. Recibirá la invitación en su chat."}
       </Text>
       <View style={s.preview}>
         <Text style={s.previewTitle}>{content.title}</Text>
-        <Text style={s.copy}>{isClass ? "Te invito a esta clase en Vibes." : isChallenge ? "Te invito a este desafío en Vibes." : "Te invito a este evento en Vibes."}</Text>
+        <Text style={s.copy}>{isPrivateChallenge ? "Desafío privado: solo pueden unirse las personas que invites." : isClass ? "Te invito a esta clase en Vibes." : isChallenge ? "Te invito a este desafío en Vibes." : "Te invito a este evento en Vibes."}</Text>
       </View>
-      <TouchableOpacity
+      {isPrivateChallenge ? null : <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel="Invitar por WhatsApp o enlace"
         disabled={!!sendingId}
@@ -129,7 +146,7 @@ export default function EventInviteSheet({
           <Text style={s.name}>Invitar por WhatsApp o enlace</Text>
           <Text style={s.copy}>Elegí personas que no estén en tus contactos de Vibes.</Text>
         </View>
-      </TouchableOpacity>
+      </TouchableOpacity>}
       <TextInput
         value={search}
         onChangeText={setSearch}
