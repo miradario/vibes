@@ -5,7 +5,7 @@ import Animated, { cancelAnimation, runOnJS, Easing, useAnimatedProps, useAnimat
 import { NavigationContext } from "@react-navigation/native";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
-import { INHALE_MS, EXHALE_MS } from "../src/lib/calmPause";
+import { INHALE_MS, EXHALE_MS, HOLD_ICON_MS, HOLD_WORD_MS } from "../src/lib/calmPause";
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 function MorphPart({ shape, progress }: { shape: LogoMorphShape; progress: SharedValue<number> }) {
   const props = useAnimatedProps(() => ({ d: logoMorphPath(shape, progress.value) }));
@@ -58,8 +58,9 @@ export default function AnimatedBrandLogo({ style, onComplete, direction = "word
       started.current = true;
       const easing = Easing.inOut(Easing.sin);
       progress.value = withRepeat(withSequence(
-        withTiming(target, { duration: INHALE_MS, easing }),
-        withTiming(1 - target, { duration: EXHALE_MS, easing }),
+        // Hold on the state being left (1 = mark, 0 = word) before each morph.
+        withDelay(target === 0 ? HOLD_ICON_MS : HOLD_WORD_MS, withTiming(target, { duration: INHALE_MS, easing })),
+        withDelay(target === 0 ? HOLD_WORD_MS : HOLD_ICON_MS, withTiming(1 - target, { duration: EXHALE_MS, easing })),
       ), -1, false);
       return () => cancelAnimation(progress);
     }

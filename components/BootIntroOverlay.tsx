@@ -3,6 +3,7 @@ import { AccessibilityInfo, StyleSheet, View, useWindowDimensions } from "react-
 import Svg, { Path } from "react-native-svg";
 import Animated, { Easing, cancelAnimation, runOnJS, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
+import { HOLD_ICON_MS, HOLD_WORD_MS } from "../src/lib/calmPause";
 import { getBootIntroState, setBootIntroInactive, setWelcomeAttachment, subscribeBootIntro } from "../src/lib/bootIntro";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
@@ -113,13 +114,13 @@ export default function BootIntroOverlay({ onFirstFrameReady }: { onFirstFrameRe
   const startLoop = React.useCallback(() => {
     if (looping.current) return;
     looping.current = true;
-    // Continue from wherever the morph is, so there is never a restart.
+    // Called right after the first icon -> word cycle, so the loop starts on the word:
+    // hold word, morph to mark, hold mark, morph back to word, without restarting.
     const easing = Easing.inOut(Easing.sin);
-    const toMark = withTiming(1, { duration: LOGO_MORPH_DURATION * (1 - progress.value), easing });
-    progress.value = withSequence(toMark, withRepeat(withSequence(
-      withTiming(0, { duration: LOGO_MORPH_DURATION, easing }),
-      withTiming(1, { duration: LOGO_MORPH_DURATION, easing }),
-    ), -1, false));
+    progress.value = withRepeat(withSequence(
+      withDelay(HOLD_WORD_MS, withTiming(1, { duration: LOGO_MORPH_DURATION, easing })),
+      withDelay(HOLD_ICON_MS, withTiming(0, { duration: LOGO_MORPH_DURATION, easing })),
+    ), -1, false);
   }, [progress]);
 
   const fadeOut = React.useCallback((duration: number) => {
