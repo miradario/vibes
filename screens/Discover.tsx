@@ -1,5 +1,5 @@
 import ActiveCommunityFilters from "../components/ActiveCommunityFilters";
-import { defaultCommunities } from "../src/lib/communities";
+import { defaultCommunities, contentCommunities } from "../src/lib/communities";
 import { useMeetPeople } from "../src/queries/meetPeople.queries";
 import { useDiscoveryRefresh } from "../src/hooks/useDiscoveryRefresh";
 import RangeSlider from "../components/RangeSlider";
@@ -408,7 +408,7 @@ export const DiscoverContent = forwardRef<
   > | null;
   const hasLocation = Boolean(ownProfileRecord?.hasLocation);
 
-  const profiles = useMemo<DataT[]>(() => {
+  const eligibleCommunityCandidates = useMemo(() => {
     return candidates
       .filter(
         (candidate) =>
@@ -481,11 +481,15 @@ export const DiscoverContent = forwardRef<
         if (!matchesDiscoverAnswers(candidateRecord, answerFilters))
           return false;
 
-        return matchesDiscoverSpiritualPaths(
-          candidate,
-          discoverFilters.spiritualPaths
-        );
-      })
+        return true;
+      });
+  }, [candidates, session?.user?.id, userPreferences, discoverFilters.ageMin, discoverFilters.ageMax, discoverFilters.distanceMinKm, discoverFilters.maxDistanceKm, discoverFilters.genders, answerFilters, hiddenProfileIds]);
+  const availableCommunities = useMemo(() => Array.from(new Set(
+    eligibleCommunityCandidates.flatMap(candidate => contentCommunities(candidate))
+  )), [eligibleCommunityCandidates]);
+  const profiles = useMemo<DataT[]>(() => {
+    return eligibleCommunityCandidates
+      .filter(candidate => matchesDiscoverSpiritualPaths(candidate, discoverFilters.spiritualPaths))
       .sort((left, right) =>
         comparePhotoPriority(left, right) || compareDiscoveryProfiles(userPreferences ?? {}, left, right)
       )
@@ -502,16 +506,7 @@ export const DiscoverContent = forwardRef<
           match: profile.match ?? "0",
         } as DataT;
       });
-  }, [
-    candidates,
-    session?.user?.id,
-    userPreferences,
-    discoverFilters,
-    answerFilters,
-    hiddenProfileIds,
-    hasLocation,
-    canViewProfilePhotos,
-  ]);
+  }, [eligibleCommunityCandidates, userPreferences, discoverFilters.spiritualPaths]);
 
   const distanceSummary = formatRangeSummary(
     discoverFilters.distanceMinKm,
@@ -1113,6 +1108,7 @@ export const DiscoverContent = forwardRef<
 
         {showSpiritualPaths ? (
           <DiscoverPathCards
+            available={availableCommunities}
             selected={discoverFilters.spiritualPaths}
             onToggle={toggleSpiritualPath}
             onClear={() => setDiscoverFilters((previous) => ({ ...previous, spiritualPaths: [] }))}

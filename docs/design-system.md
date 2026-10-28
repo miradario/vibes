@@ -359,3 +359,5 @@ Los modales compartidos usan hardwareAccelerated en Android para componer fotos 
 Para fotos con bandas desenfocadas, ProfileMediaImage espera onDisplay del fondo antes de revelar la composición y notificar al perfil. Cargar ambas capas con la misma prioridad para evitar que el fondo llegue después de la foto horizontal. Si falla el fondo, permitir mostrar la foto sobre la superficie de respaldo.
 
 Comunidad es el nuevo nombre de Camino: los datos del perfil siguen en spiritual_path y spiritual_path_details (y sus aliases camelCase), con prioridad sobre campos alternativos communities. Conservar rol, años y notas; no crear un perfil de comunidad separado ni perder selecciones anteriores.
+
+En Descubrir, las opciones de comunidad se derivan de las personas disponibles tras aplicar los demás filtros y ocultamientos, antes de aplicar la comunidad seleccionada. No mostrar comunidades sin personas ni reducir las opciones a la comunidad ya elegida. Conservar Todos y los chips activos para poder quitar una selección que dejó de tener resultados.

@@ -11,12 +11,14 @@ const paths = PRACTICE_OPTIONS;
 
 export default function DiscoverPathCards({
   leading,
+  available,
   selected,
   onToggle,
   onClear,
   style,
 }: {
   leading?: React.ReactNode;
+  available?: readonly string[];
   selected: string[];
   onToggle: (path: string) => void;
   onClear: () => void;
@@ -26,7 +28,7 @@ export default function DiscoverPathCards({
   const english = locale === "en";
   const options = [
     { value: "", label: english ? "All" : "Todos" },
-    ...paths.map((path) => ({
+    ...paths.filter(path => !available || available.includes(path)).map((path) => ({
       value: path,
       label: translateSpiritualPathLabel(locale, path),
     })),
