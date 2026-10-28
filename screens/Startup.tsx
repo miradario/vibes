@@ -9,7 +9,7 @@ import {
 } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import ScreenContainer from "../components/ScreenContainer";
-import AnimatedBrandLogo from "../components/AnimatedBrandLogo";
+import { markBootIntroReady } from "../src/lib/bootIntro";
 import VibesActionButton from "../components/VibesActionButton";
 import { Text } from "../components/Typography";
 import { getStartupDestination } from "../src/lib/calmPause";
@@ -55,6 +55,10 @@ const Startup = () => {
     useState<AppUpdateGateState | null>(null);
 
   const userId = session?.user?.id;
+  useEffect(() => {
+    // Let the boot intro overlay fade so the retry UI is visible.
+    if (bootFailed) markBootIntroReady();
+  }, [bootFailed]);
   useEffect(() => {
     if (isReadyToExit) return;
     const timer = setTimeout(() => setBootFailed(true), 20000);
@@ -283,7 +287,6 @@ const Startup = () => {
     <ScreenContainer edges={["top", "bottom", "left", "right"]}
       style={{ backgroundColor: vibesTheme.colors.background }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <AnimatedBrandLogo direction="logo-to-word" loop style={{ width: 240, height: 240 }} />
         {bootFailed ? (
           <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: 24, gap: 16, marginTop: 24 }}>
             <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 18 }}>

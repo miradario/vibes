@@ -14,7 +14,8 @@ import {
   markFtuxExternalEntry,
   setFtuxPendingExternalProbe,
 } from "./src/ftux/entrySignals";
-import AnimatedBrandLogo from "./components/AnimatedBrandLogo";
+import BootIntroOverlay from "./components/BootIntroOverlay";
+import { markBootIntroReady } from "./src/lib/bootIntro";
 import { useAuthSession } from "./src/auth/auth.queries";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { startRemoteConfig } from "./src/featureFlags/remoteConfig";
@@ -92,10 +93,9 @@ import {
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+// Plain background: the logo lives in the single BootIntroOverlay mounted at the root.
 const BootLoading = () => (
-  <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.background }}>
-    <AnimatedBrandLogo direction="logo-to-word" loop style={{ width: 240, height: 240 }} />
-  </View>
+  <View style={{ flex: 1, backgroundColor: vibesTheme.colors.background }} />
 );
 const EntryStack = ({ children, ...props }: React.ComponentProps<typeof Stack.Navigator>) => {
   const { data: session, isLoading } = useAuthSession();
@@ -128,6 +128,10 @@ const linking = {
   },
 };
 let isNavigationReady = false;
+function markBootIntroReadyIfPastStartup() {
+  const name = navigationRef.current?.getCurrentRoute()?.name;
+  if (name && name !== "Startup") markBootIntroReady();
+}
 let pendingNotificationData: Record<string, unknown> | null = null;
 // Deferred deep link (fresh install from a shared link), opened once Startup finishes.
 let pendingDeferredDestination: DeferredDestination | null = null;
@@ -245,8 +249,12 @@ const AppNavigator = () => {
     };
   }, [fontError, fontsLoaded]);
 
+  const [introFrameReady, setIntroFrameReady] = React.useState(false);
+  const handleIntroFirstFrame = React.useCallback(() => setIntroFrameReady(true), []);
   React.useEffect(() => {
     if (hasHiddenNativeSplash) return;
+    // Hide only once the overlay shows the exact splash image, so the handoff is invisible.
+    if (!introFrameReady) return;
     if (!fontsLoaded && !fontError && !fontLoadTimedOut) return;
 
     const elapsedMs = Date.now() - nativeSplashShownAt;
@@ -273,11 +281,9 @@ const AppNavigator = () => {
     }
 
     hideSplash();
-  }, [fontError, fontLoadTimedOut, fontsLoaded]);
+  }, [fontError, fontLoadTimedOut, fontsLoaded, introFrameReady]);
 
-  if (!fontsLoaded && !fontError && !fontLoadTimedOut) {
-    return <BootLoading />;
-  }
+  const fontsReady = Boolean(fontsLoaded || fontError || fontLoadTimedOut);
 
   const navigateToMessages = () => {
     if (!isNavigationReady || !navigationRef.current) {
@@ -363,7 +369,10 @@ const AppNavigator = () => {
     navigateToMessages();
   };
 
+  // The overlay keeps the same position in the tree across boot phases so it never remounts.
   return (
+    <View style={{ flex: 1, backgroundColor: vibesTheme.colors.background }}>
+    {fontsReady ? (
     <GestureHandlerRootView style={{ flex: 1 }}>
         <CommunityRuntime />
         <StatusBar style="dark" />
@@ -371,6 +380,7 @@ const AppNavigator = () => {
           ref={navigationRef}
           linking={linking}
           onStateChange={() => {
+            markBootIntroReadyIfPastStartup();
             syncVibiRoute();
             flushDeferredDestination();
             if (!pendingNotificationData || shouldDeferReminder(navigationRef.current?.getCurrentRoute()?.name)) return;
@@ -380,6 +390,7 @@ const AppNavigator = () => {
           }}
           onReady={() => {
             isNavigationReady = true;
+            markBootIntroReadyIfPastStartup();
             syncVibiRoute();
             flushDeferredDestination();
             if (!pendingNotificationData) return;
@@ -783,6 +794,9 @@ const AppNavigator = () => {
         <AppCamera />
         <Toast />
     </GestureHandlerRootView>
+    ) : null}
+    <BootIntroOverlay onFirstFrameReady={handleIntroFirstFrame} />
+    </View>
   );
 };
 

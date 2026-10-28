@@ -53,7 +53,9 @@ export default function AnimatedBrandLogo({ style, onComplete, direction = "word
       return;
     }
     if (loop) {
-      progress.value = 1 - target;
+      // Resume from the current value on focus/AppState changes instead of restarting the cycle.
+      if (!started.current) progress.value = 1 - target;
+      started.current = true;
       const easing = Easing.inOut(Easing.sin);
       progress.value = withRepeat(withSequence(
         withTiming(target, { duration: INHALE_MS, easing }),
