@@ -3,7 +3,7 @@ import { AccessibilityInfo, StyleSheet, View, useWindowDimensions } from "react-
 import Svg, { Path } from "react-native-svg";
 import Animated, { Easing, cancelAnimation, runOnJS, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMorphShape } from "../src/illustrations/logoMorph";
-import { isBootIntroReady, subscribeBootIntroReady } from "../src/lib/bootIntro";
+import { getBootIntroState, setBootIntroInactive, setWelcomeAttachment, subscribeBootIntro } from "../src/lib/bootIntro";
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 /*
@@ -26,6 +26,13 @@ const HOLD_MS = 300;
 const CROSSFADE_MS = 150;
 const FADE_OUT_MS = 250;
 const FIRST_FRAME_FALLBACK_MS = 1500;
+const ATTACH_MS = 450;
+const WELCOME_SLOT_WAIT_MS = 800;
+const DETACH_MS = 150;
+
+function svgTopFor(windowHeight: number) {
+  return windowHeight / 2 + PNG_LOGO_CENTER_OFFSET_PT - SVG_LOGO_CENTER_OFFSET_PT - SVG_BOX_PT / 2;
+}
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 function MorphPart({ shape, progress }: { shape: LogoMorphShape; progress: SharedValue<number> }) {
@@ -42,7 +49,10 @@ function MorphPart({ shape, progress }: { shape: LogoMorphShape; progress: Share
 export default function BootIntroOverlay({ onFirstFrameReady }: { onFirstFrameReady: () => void }) {
   const { width, height } = useWindowDimensions();
   const [visible, setVisible] = useState(true);
-  const [appReady, setAppReady] = useState(isBootIntroReady);
+  const [intro, setIntro] = useState(() => ({ ...getBootIntroState() }));
+  const appReady = intro.ready;
+  const [mode, setMode] = useState<"intro" | "attached" | "leaving">("intro");
+  const [slotWaitExpired, setSlotWaitExpired] = useState(false);
   const [cycleDone, setCycleDone] = useState(false);
   const [reducedMotion, setReducedMotion] = useState<boolean | null>(null);
   const [firstFrameShown, setFirstFrameShown] = useState(false);
@@ -55,8 +65,12 @@ export default function BootIntroOverlay({ onFirstFrameReady }: { onFirstFrameRe
   const progress = useSharedValue(1); // 1 = brand mark, 0 = word
   const svgOpacity = useSharedValue(0);
   const overlayOpacity = useSharedValue(1);
+  const backgroundOpacity = useSharedValue(1);
+  const move = useSharedValue(0); // 0 = splash box, 1 = Welcome logo slot
+  const target = useSharedValue({ dx: 0, dy: 0, scale: 1 });
+  const looping = useRef(false);
 
-  useEffect(() => subscribeBootIntroReady(() => setAppReady(true)), []);
+  useEffect(() => subscribeBootIntro(() => setIntro({ ...getBootIntroState() })), []);
   useEffect(() => {
     let mounted = true;
     AccessibilityInfo.isReduceMotionEnabled()
@@ -94,38 +108,102 @@ export default function BootIntroOverlay({ onFirstFrameReady }: { onFirstFrameRe
     }, (finished) => { if (finished) runOnJS(setCycleDone)(true); }));
   }, [firstFrameShown, reducedMotion, progress, svgOpacity]);
 
+  const startLoop = React.useCallback(() => {
+    if (looping.current) return;
+    looping.current = true;
+    // Continue from wherever the morph is, so there is never a restart.
+    const easing = Easing.inOut(Easing.sin);
+    const toMark = withTiming(1, { duration: LOGO_MORPH_DURATION * (1 - progress.value), easing });
+    progress.value = withSequence(toMark, withRepeat(withSequence(
+      withTiming(0, { duration: LOGO_MORPH_DURATION, easing }),
+      withTiming(1, { duration: LOGO_MORPH_DURATION, easing }),
+    ), -1, false));
+  }, [progress]);
+
+  const fadeOut = React.useCallback((duration: number) => {
+    setMode("leaving");
+    overlayOpacity.value = withTiming(0, { duration }, (finished) => {
+      if (finished) runOnJS(setVisible)(false);
+    });
+  }, [overlayOpacity]);
+  useEffect(() => { if (!visible) setBootIntroInactive(); }, [visible]);
+
+  const toWelcome = intro.readyRoute === "Welcome" && !reducedMotion;
   useEffect(() => {
-    if (!visible || !cycleDone) return;
+    if (!toWelcome || !appReady || mode !== "intro" || intro.welcomeSlot) return;
+    const timeout = setTimeout(() => setSlotWaitExpired(true), WELCOME_SLOT_WAIT_MS);
+    return () => clearTimeout(timeout);
+  }, [toWelcome, appReady, mode, intro.welcomeSlot]);
+
+  useEffect(() => {
+    if (!visible || !cycleDone || mode !== "intro") return;
     if (appReady) {
+      if (toWelcome && intro.welcomeSlot) {
+        // Logged out: move the live logo into Welcome's slot and keep animating there.
+        const slot = intro.welcomeSlot;
+        const side = Math.min(slot.width, slot.height);
+        const fromCx = width / 2;
+        const fromCy = svgTopFor(height) + SVG_BOX_PT / 2;
+        target.value = {
+          dx: slot.x + slot.width / 2 - fromCx,
+          dy: slot.y + slot.height / 2 - fromCy,
+          scale: side / SVG_BOX_PT,
+        };
+        setMode("attached");
+        setWelcomeAttachment("attached");
+        startLoop();
+        move.value = withTiming(1, { duration: ATTACH_MS, easing: Easing.inOut(Easing.cubic) });
+        backgroundOpacity.value = withTiming(0, { duration: ATTACH_MS });
+        return;
+      }
+      if (toWelcome && !slotWaitExpired) return;
+      if (intro.readyRoute === "Welcome") setWelcomeAttachment("declined");
       cancelAnimation(progress);
-      overlayOpacity.value = withTiming(0, { duration: FADE_OUT_MS }, (finished) => {
-        if (finished) runOnJS(setVisible)(false);
-      });
+      fadeOut(FADE_OUT_MS);
       return;
     }
     if (reducedMotion) return;
-    // Still loading: keep breathing word -> mark -> word until the app is ready.
-    const easing = Easing.inOut(Easing.sin);
-    progress.value = withRepeat(withSequence(
-      withTiming(1, { duration: LOGO_MORPH_DURATION, easing }),
-      withTiming(0, { duration: LOGO_MORPH_DURATION, easing }),
-    ), -1, false);
-  }, [appReady, cycleDone, visible, reducedMotion, progress, overlayOpacity]);
+    // Still loading: keep morphing until the app is ready.
+    startLoop();
+  }, [appReady, cycleDone, visible, reducedMotion, mode, toWelcome, slotWaitExpired, intro.welcomeSlot, width, height, progress, move, target, backgroundOpacity, startLoop, fadeOut]);
+
+  // Once attached, the overlay logo lives only while Welcome is on screen; Welcome takes over after that.
+  const wasFocused = useRef(false);
+  useEffect(() => {
+    if (mode !== "attached") return;
+    if (intro.welcomeFocused) { wasFocused.current = true; return; }
+    if (wasFocused.current) fadeOut(DETACH_MS);
+  }, [mode, intro.welcomeFocused, fadeOut]);
 
   const overlayStyle = useAnimatedStyle(() => ({ opacity: overlayOpacity.value }));
-  const svgStyle = useAnimatedStyle(() => ({ opacity: svgOpacity.value }));
+  const backgroundStyle = useAnimatedStyle(() => ({ opacity: backgroundOpacity.value }));
+  const svgStyle = useAnimatedStyle(() => {
+    const t = target.value;
+    // Welcome's AnimatedBrandLogo breathes up to 4% toward the word; blend that in while moving there.
+    const breathing = 1 + 0.04 * (1 - progress.value) * move.value;
+    return {
+      opacity: svgOpacity.value,
+      transform: [
+        { translateX: t.dx * move.value },
+        { translateY: t.dy * move.value },
+        { scale: (1 + (t.scale - 1) * move.value) * breathing },
+      ],
+    };
+  });
   const imageStyle = useAnimatedStyle(() => ({ opacity: 1 - svgOpacity.value }));
 
   if (!visible) return null;
   const centerY = height / 2;
-  const svgTop = centerY + PNG_LOGO_CENTER_OFFSET_PT - SVG_LOGO_CENTER_OFFSET_PT - SVG_BOX_PT / 2;
+  const svgTop = svgTopFor(height);
+  const passThrough = mode !== "intro" || (appReady && cycleDone);
   return (
     <Animated.View
       style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}
-      pointerEvents={appReady && cycleDone ? "none" : "auto"}
-      accessible
+      pointerEvents={passThrough ? "none" : "auto"}
+      accessible={!passThrough}
       accessibilityLabel="Vibes"
     >
+      <Animated.View style={[StyleSheet.absoluteFill, styles.background, backgroundStyle]} />
       <Animated.Image
         source={SPLASH_IMAGE}
         resizeMode="contain"
@@ -156,6 +234,7 @@ export default function BootIntroOverlay({ onFirstFrameReady }: { onFirstFrameRe
 }
 
 const styles = StyleSheet.create({
-  overlay: { backgroundColor: vibesTheme.colors.background, zIndex: 1000, elevation: 1000 },
+  overlay: { zIndex: 1000, elevation: 1000 },
+  background: { backgroundColor: vibesTheme.colors.background },
   abs: { position: "absolute" },
 });

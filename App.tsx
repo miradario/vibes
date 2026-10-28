@@ -130,7 +130,7 @@ const linking = {
 let isNavigationReady = false;
 function markBootIntroReadyIfPastStartup() {
   const name = navigationRef.current?.getCurrentRoute()?.name;
-  if (name && name !== "Startup") markBootIntroReady();
+  if (name && name !== "Startup") markBootIntroReady(name);
 }
 let pendingNotificationData: Record<string, unknown> | null = null;
 // Deferred deep link (fresh install from a shared link), opened once Startup finishes.
