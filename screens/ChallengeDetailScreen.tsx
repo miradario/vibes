@@ -4,6 +4,9 @@ import ChallengeCompletionShareCard from "../components/ChallengeCompletionShare
 import { captureRef, releaseCapture } from "react-native-view-shot";
 import ChallengeCompletionConfetti from "../components/ChallengeCompletionConfetti";
 import ChallengeJourneyPath from "../components/ChallengeJourneyPath";
+import StepChallengeCard from "../components/StepChallengeCard";
+import { isStepChallenge } from "../src/lib/stepChallenge";
+import { useStepChallenge } from "../src/health/useStepChallenge";
 import BackButton from "../components/BackButton";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
@@ -1097,6 +1100,12 @@ const ChallengeDetailScreen = () => {
       (challenge.checkInStatus === "completed" && !hasRemoteTodayCheckin
         ? 1
         : 0);
+  const stepGoal = isStepChallenge(event) ? event.dailyGoal : null;
+  const stepChallenge = useStepChallenge({
+    challengeId: event?.id,
+    userId,
+    enabled: Boolean(stepGoal && isJoined && challengeTimeline.status === "active"),
+  });
   const contentMaxWidth = width >= 700 ? 620 : undefined;
   const isChallengeCompleted =
     challenge.checkInStatus === "completed" &&
@@ -1629,6 +1638,17 @@ const ChallengeDetailScreen = () => {
               <Icon name="person-add-outline" size={22} color={vibesTheme.colors.primaryText} />
               <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.medium, fontSize: 16 }}>Invitar a alguien</Text>
             </TouchableOpacity> : null}
+            {stepGoal && isJoined && challengeTimeline.status === "active" ? (
+              <StepChallengeCard
+                dailyGoal={stepGoal}
+                steps={stepChallenge.steps}
+                availability={stepChallenge.availability}
+                connected={stepChallenge.connected}
+                connecting={stepChallenge.connecting}
+                checkedInToday={challenge.checkInStatus === "completed"}
+                onConnect={() => void stepChallenge.connect()}
+              />
+            ) : null}
             <ChallengeJourneyCard challenge={challenge} percent={percent} />
             {event?.id && (isJoined || isAdmin) ? (
               <ChallengeDaysSection
