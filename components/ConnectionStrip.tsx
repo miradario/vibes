@@ -20,6 +20,8 @@ type Props = {
 const MAX_STACKED_REQUESTS = 3;
 const STRIP_PADDING_TOP = 6;
 const DISMISS_LINE_HEIGHT = 20;
+const NAME_GAP = 8;
+const NAME_LINE_HEIGHT = 16;
 export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newConnections: allNewConnections, onRequests, onViewAll, onConnection, compact = false, canViewPhotos = true, blurHiddenPhotos = false }: Props) {
   const visibility = useConnectionStripVisibility(allNewConnections, allIncomingLikes);
   const incomingLikes = visibility.requests;
@@ -61,8 +63,8 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
                 <Text numberOfLines={1} style={s.stripName}>{item.otherUserName?.trim().split(/\s+/)[0] || "Vibes"}</Text>
               </TouchableOpacity>)}
             </ScrollView>
-            {/* Outside the scroll; text bottom = bottom of the avatar circles (paddingTop + avatarBox). */}
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ocultar nuevas conexiones" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} onPress={visibility.dismiss} style={[s.stripDismiss, { marginTop: STRIP_PADDING_TOP + avatarBox - DISMISS_LINE_HEIGHT }]}>
+            {/* Outside the scroll; text centered on the name labels under the avatars. */}
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ocultar nuevas conexiones" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} onPress={visibility.dismiss} style={[s.stripDismiss, { marginTop: STRIP_PADDING_TOP + avatarBox + NAME_GAP + (NAME_LINE_HEIGHT - DISMISS_LINE_HEIGHT) / 2 }]}>
               <Text style={s.stripDismissText}>Ocultar</Text>
             </TouchableOpacity>
             </View>
@@ -81,12 +83,12 @@ const s = StyleSheet.create({
   stripDismissText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 14, lineHeight: DISMISS_LINE_HEIGHT, textDecorationLine: "underline" },
   stripTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 19, lineHeight: 25 },
   stripPeople: { alignItems: "flex-start", gap: 12, paddingTop: STRIP_PADDING_TOP, paddingBottom: 4, paddingRight: 8 },
-  stripPerson: { width: 74, alignItems: "center", gap: 8 },
+  stripPerson: { width: 74, alignItems: "center", gap: NAME_GAP },
   stripAvatar: { width: 66, height: 66, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, borderRadius: 33, padding: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.surface, overflow: "hidden" },
   requestStack: { position: "relative" },
   stackedAvatar: { position: "absolute", top: 0, borderColor: vibesTheme.colors.accentMustard },
   requestBadge: { zIndex: MAX_STACKED_REQUESTS + 1, position: "absolute", top: -4, right: -4, minWidth: 24, height: 24, paddingHorizontal: 5, borderRadius: 12, borderWidth: 2, borderColor: vibesTheme.colors.surface, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
   requestCount: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 12 },
-  stripName: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, lineHeight: 16, textAlign: "center" },
+  stripName: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, lineHeight: NAME_LINE_HEIGHT, textAlign: "center" },
   stripDivider: { width: 1, height: 90, backgroundColor: `${vibesTheme.colors.secondaryText}30`, marginHorizontal: 2 },
 });
