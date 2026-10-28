@@ -1,9 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { Text } from "../components/Typography";
 import AnimatedBrandLogo from "../components/AnimatedBrandLogo";
+import { getBootIntroState, setWelcomeFocused, setWelcomeSlot, subscribeBootIntro } from "../src/lib/bootIntro";
 import VibesActionButton from "../components/VibesActionButton";
 import ScreenContainer from "../components/ScreenContainer";
 import { vibesTheme } from "../src/theme/vibesTheme";
@@ -13,6 +14,30 @@ const Welcome = () => {
   const navigation = useNavigation();
   const { data: session, isLoading } = useAuthSession();
   const focused = useIsFocused();
+  // On a cold start the root boot intro moves its live logo into this slot and keeps animating,
+  // so we render an empty placeholder instead of starting a second animation.
+  const [bootIntroOwnsLogo, setBootIntroOwnsLogo] = useState(() => getBootIntroState().active);
+  const logoSlotRef = useRef<View>(null);
+  useEffect(() => {
+    if (!bootIntroOwnsLogo) return;
+    const sync = () => {
+      const intro = getBootIntroState();
+      if (!intro.active || intro.attachment === "declined") setBootIntroOwnsLogo(false);
+    };
+    sync();
+    return subscribeBootIntro(sync);
+  }, [bootIntroOwnsLogo]);
+  useEffect(() => {
+    if (!bootIntroOwnsLogo) return;
+    setWelcomeFocused(focused);
+  }, [bootIntroOwnsLogo, focused]);
+  useEffect(() => () => { setWelcomeFocused(false); setWelcomeSlot(null); }, []);
+  const measureLogoSlot = () => {
+    if (!bootIntroOwnsLogo) return;
+    logoSlotRef.current?.measureInWindow((x, y, width, height) => {
+      if (width > 0 && height > 0) setWelcomeSlot({ x, y, width, height });
+    });
+  };
   useEffect(() => {
     if (!isLoading && focused && !session?.user?.id) trackSignupEvent("welcome_viewed");
   }, [focused, isLoading, session?.user?.id]);
@@ -35,7 +60,11 @@ const Welcome = () => {
           style={StyleSheet.absoluteFill}
         >
           <View style={styles.fallbackLogoWrap}>
-            <AnimatedBrandLogo direction="logo-to-word" loop style={styles.fallbackLogo} />
+            {bootIntroOwnsLogo ? (
+              <View ref={logoSlotRef} collapsable={false} onLayout={measureLogoSlot} style={styles.fallbackLogo} />
+            ) : (
+              <AnimatedBrandLogo direction="logo-to-word" loop style={styles.fallbackLogo} />
+            )}
           </View>
         </View>
         <View style={styles.actions}>
