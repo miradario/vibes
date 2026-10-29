@@ -87,6 +87,7 @@ import VibesMinimalOnboarding from "./src/screens/Onboarding/VibesMinimalOnboard
 import { I18nProvider, useI18n } from "./src/i18n";
 import { PushNotificationsBootstrap } from "./src/notifications/pushNotifications";
 import { startAppOpenTracking } from "./src/lib/appOpens";
+import { startStoreReviewUsageTracking } from "./src/lib/storeReview";
 import { vibesTheme } from "./src/theme/vibesTheme";
 import {
   fetchEventFeedItemById,
@@ -197,6 +198,7 @@ const AppNavigator = () => {
   const vibesPointsEnabled = useVibesPointsEnabled();
   React.useEffect(() => startRemoteConfig(), []);
   React.useEffect(() => startAppOpenTracking(), []);
+  React.useEffect(() => startStoreReviewUsageTracking(), []);
   React.useEffect(() => {
     // Opened from a universal link: the onboarding waits until it is done.
     void Linking.getInitialURL()

@@ -13,6 +13,7 @@ import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { uploadImageToSupabase } from "../lib/supabaseStorage";
 import { assertAcceptableContent } from "../lib/moderation";
+import { maybeRequestStoreReview } from "../lib/storeReview";
 import {
   encodeChallengeDescriptionWithPreset,
   extractChallengePresetFromDescription,
@@ -2007,6 +2008,7 @@ export const useJoinEventMutation = () => {
       queryClient.invalidateQueries({
         queryKey: eventType === "event" ? eventsKeys.all : challengesKeys.all,
       });
+      if (eventType === "event") void maybeRequestStoreReview();
     },
   });
 };

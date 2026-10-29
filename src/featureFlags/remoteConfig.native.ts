@@ -1,5 +1,5 @@
 import { AppState, TurboModuleRegistry } from "react-native";
-import { clasesFlagStore, vibiFlagStore, vibesPointsFlagStore } from "./store";
+import { clasesFlagStore, storeReviewFlagStore, vibiFlagStore, vibesPointsFlagStore } from "./store";
 
 export function startRemoteConfig(): () => void {
   // Check before importing: Metro reports SDK evaluation errors even if caught.
@@ -11,6 +11,7 @@ export function startRemoteConfig(): () => void {
     vibiFlagStore.update(__DEV__);
     clasesFlagStore.update(false);
     vibesPointsFlagStore.update(false);
+    storeReviewFlagStore.update(false);
     return () => {};
   }
   let disposed = false;
@@ -21,7 +22,7 @@ export function startRemoteConfig(): () => void {
   try {
     const sdk: typeof import("@react-native-firebase/remote-config") = require("@react-native-firebase/remote-config");
     const config = sdk.getRemoteConfig();
-    config.defaultConfig = { vibi_enabled: false, clases: false, vibes_points_enabled: false };
+    config.defaultConfig = { vibi_enabled: false, clases: false, vibes_points_enabled: false, store_review_enabled: false };
     config.settings = {
       minimumFetchIntervalMillis: __DEV__ ? 0 : 300000,
       fetchTimeoutMillis: 10000,
@@ -31,6 +32,7 @@ export function startRemoteConfig(): () => void {
         vibiFlagStore.update(sdk.getValue(config, "vibi_enabled").asBoolean());
         clasesFlagStore.update(sdk.getValue(config, "clases").asBoolean());
         vibesPointsFlagStore.update(sdk.getValue(config, "vibes_points_enabled").asBoolean());
+        storeReviewFlagStore.update(sdk.getValue(config, "store_review_enabled").asBoolean());
       }
     };
     const report = () => {
@@ -69,6 +71,7 @@ export function startRemoteConfig(): () => void {
     vibiFlagStore.update(false);
     clasesFlagStore.update(false);
     vibesPointsFlagStore.update(false);
+    storeReviewFlagStore.update(false);
     if (__DEV__)
       console.warn(
         "[Remote Config] Firebase no está disponible en este build. Vibi permanece deshabilitado."

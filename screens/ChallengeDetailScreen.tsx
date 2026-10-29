@@ -8,6 +8,7 @@ import BackButton from "../components/BackButton";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
 import { resolvePublicContentRoute } from "../src/lib/publicContentRoute";
+import { maybeRequestStoreReview } from "../src/lib/storeReview";
 import { getChallengeDay, completedChallengeDays, getChallengeStreaks } from "../src/lib/challengeProgress";
 import MediaImage from "../components/MediaImage";
 import { playAnimation } from "../src/vibi/controller";
@@ -1167,6 +1168,9 @@ const ChallengeDetailScreen = () => {
         setCompletionImageFailed(false);
         setCompletionShareVisible(true);
       }, 3400);
+    } else {
+      // Positive moment: ask for a store rating once the celebration is gone.
+      void maybeRequestStoreReview();
     }
     triggerHaptic();
   };
