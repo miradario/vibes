@@ -431,9 +431,9 @@ const ChallengeIntroMetaRow = memo(({ challenge, checkedInTodayCount, curated = 
   </View>
 ));
 
-const ChallengeJourneyCard = memo(({ challenge }: { challenge: ChallengeDetailData; percent: number }) => {
-  return (<View style={localStyles.journeyCard}>
-    <ChallengeJourneyPath totalDays={challenge.totalDays} currentDay={challenge.currentDay} completedDays={challenge.completedDays} />
+const ChallengeJourneyCard = memo(React.forwardRef<View, { challenge: ChallengeDetailData; percent: number; playPath?: boolean; onLayout?: () => void }>(({ challenge, playPath = true, onLayout }, ref) => {
+  return (<View ref={ref} onLayout={onLayout} collapsable={false} style={localStyles.journeyCard}>
+    <ChallengeJourneyPath totalDays={challenge.totalDays} currentDay={challenge.currentDay} completedDays={challenge.completedDays} play={playPath} />
         <View style={localStyles.journeyStatsRow}>
           <View style={localStyles.journeyStatItem}>
             <Icon name="flame-outline" size={24} color={vibesTheme.colors.accentCoral} />
@@ -457,7 +457,7 @@ const ChallengeJourneyCard = memo(({ challenge }: { challenge: ChallengeDetailDa
       </View>
     );
   }
-);
+));
 
 type DayState = "completed" | "active" | "future" | "missed";
 
@@ -932,6 +932,15 @@ const ChallengeDetailScreen = () => {
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  // Path animation starts only once the journey card first becomes visible.
+  const journeyCardRef = useRef<View>(null);
+  const [journeyInView, setJourneyInView] = useState(false);
+  const checkJourneyInView = React.useCallback(() => {
+    if (journeyInView) return;
+    journeyCardRef.current?.measureInWindow((_x, y, _w, h) => {
+      if (h > 0 && y < height - Math.min(h * 0.25, 120) && y + h > 0) setJourneyInView(true);
+    });
+  }, [height, journeyInView]);
   const routeEvent = route.params?.event as EventFeedItem | undefined;
   const { id: challengeId, inlineEvent } = resolvePublicContentRoute(route.params?.challengeId, routeEvent);
   const {
@@ -1577,7 +1586,8 @@ const ChallengeDetailScreen = () => {
         ]}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
-
+        onScroll={journeyInView ? undefined : checkJourneyInView}
+        onContentSizeChange={journeyInView ? undefined : checkJourneyInView}
       >
         {coverImageSource ? <MediaImage source={coverImageSource} resizeMode="cover" style={localStyles.referenceCover} /> : null}
         <View
@@ -1629,7 +1639,7 @@ const ChallengeDetailScreen = () => {
               <Icon name="person-add-outline" size={22} color={vibesTheme.colors.primaryText} />
               <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.medium, fontSize: 16 }}>Invitar a alguien</Text>
             </TouchableOpacity> : null}
-            <ChallengeJourneyCard challenge={challenge} percent={percent} />
+            <ChallengeJourneyCard ref={journeyCardRef} challenge={challenge} percent={percent} playPath={journeyInView} onLayout={checkJourneyInView} />
             {event?.id && (isJoined || isAdmin) ? (
               <ChallengeDaysSection
                 challengeId={event.id}
