@@ -10,7 +10,7 @@ import * as StoreReview from "expo-store-review";
 /** Distinct local days with an app open before we may ask. */
 export const MIN_DAYS_OF_USE = 3;
 /** Minimum time between two prompts. */
-export const PROMPT_COOLDOWN_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
+export const PROMPT_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 /** Max prompts ever per install (Apple caps at 3 per 365 days anyway). */
 export const MAX_LIFETIME_PROMPTS = 3;
 /** Delay after the positive moment so it doesn't collide with animations. */

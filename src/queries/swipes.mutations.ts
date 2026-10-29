@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 import { candidatesKeys } from "./candidates.queries";
 import { matchKeys } from "./matches.queries";
 import { supabase } from "../lib/supabase";
+import { maybeRequestStoreReview } from "../lib/storeReview";
 import { useAuthSession } from "../auth/auth.queries";
 import type { GetCandidatesResponse } from "../api/modules/candidates/candidates.types";
 
@@ -246,6 +247,9 @@ export const useSwipeMutation = () => {
       });
 
       return { previous };
+    },
+    onSuccess: (result) => {
+      if (result.match) void maybeRequestStoreReview();
     },
     onError: (_error, _payload, context) => {
       context?.previous.forEach(([key, data]) => {
