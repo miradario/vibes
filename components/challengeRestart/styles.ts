@@ -6,11 +6,11 @@ const { colors, fonts, radii, spacing } = vibesTheme;
 export const restartStyles = StyleSheet.create({
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    gap: spacing.md,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[4],
+    gap: spacing[4],
   },
   handle: {
     alignSelf: "center",
@@ -34,8 +34,8 @@ export const restartStyles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
+    gap: spacing[4],
+    paddingVertical: spacing[2],
   },
   rowTitle: {
     flex: 1,
@@ -46,8 +46,8 @@ export const restartStyles = StyleSheet.create({
   pill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
+    gap: spacing[1],
+    paddingHorizontal: spacing[4],
     minHeight: 40,
     borderRadius: radii.pill,
     borderWidth: 1,

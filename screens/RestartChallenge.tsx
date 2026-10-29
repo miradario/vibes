@@ -250,7 +250,7 @@ const RestartChallenge = () => {
       </TouchableOpacity>
 
       <VibesActionButton
-        style={{ marginTop: vibesTheme.spacing.lg }}
+        style={{ marginTop: vibesTheme.spacing[6] }}
         label={restart.isPending ? t("challengeRestart.submitting") : t("challengeRestart.submit")}
         onPress={() => void submit()}
         disabled={!canSubmit}
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: spacing.sm,
+    gap: spacing[2],
   },
   headerContent: {
     flex: 1,
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   screenSubtitle: {
-    marginTop: spacing.xs,
+    marginTop: spacing[1],
     color: colors.secondaryText,
     fontFamily: fonts.subtitle,
     fontSize: 16,
@@ -314,13 +314,13 @@ const styles = StyleSheet.create({
   inviteButton: {
     alignSelf: "flex-start",
     maxWidth: "100%",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginTop: spacing.md,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    marginTop: spacing[4],
   },
-  content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm },
+  content: { paddingHorizontal: spacing[6], paddingBottom: spacing[12], gap: spacing[2] },
   label: {
-    marginTop: spacing.md,
+    marginTop: spacing[4],
     color: colors.primaryText,
     fontFamily: fonts.bold,
     fontSize: 16,
@@ -328,9 +328,9 @@ const styles = StyleSheet.create({
   input: {
     minHeight: 52,
     justifyContent: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.md,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: "rgba(110, 110, 110, 0.35)",
     backgroundColor: colors.surface,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   error: { color: colors.accentCoral },
   cover: {
     height: 180,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     overflow: "hidden",
     backgroundColor: "rgba(244, 163, 64, 0.12)",
     justifyContent: "flex-end",
@@ -354,20 +354,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    gap: spacing.xs,
-    margin: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    gap: spacing[1],
+    margin: spacing[4],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
     borderRadius: radii.pill,
     backgroundColor: colors.surface,
   },
   coverBadgeText: { color: colors.primaryText, fontFamily: fonts.bold, fontSize: 15 },
   privacyCard: {
     flexDirection: "row",
-    gap: spacing.md,
-    marginTop: spacing.md,
-    padding: spacing.md,
-    borderRadius: radii.md,
+    gap: spacing[4],
+    marginTop: spacing[4],
+    padding: spacing[4],
+    borderRadius: radii.lg,
     backgroundColor: "rgba(57, 120, 184, 0.08)",
   },
   privacyText: { color: colors.primaryText, fontFamily: fonts.primary, fontSize: 16, lineHeight: 22 },

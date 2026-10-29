@@ -59,7 +59,7 @@ export default function FriendsPickerSheet({
         {t("challengeRestart.friendsTitle")}
       </Text>
       {friends.length === 0 ? <Text style={s.body}>{t("challengeRestart.noFriends")}</Text> : null}
-      <ScrollView style={{ flexGrow: 0 }} contentContainerStyle={{ paddingBottom: vibesTheme.spacing.sm }}>
+      <ScrollView style={{ flexGrow: 0 }} contentContainerStyle={{ paddingBottom: vibesTheme.spacing[2] }}>
         {friends.map((friend) => {
           const checked = selected.includes(friend.otherUserId);
           return (

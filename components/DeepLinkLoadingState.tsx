@@ -107,11 +107,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: vibesTheme.spacing.md,
+    gap: vibesTheme.spacing[4],
     paddingHorizontal: 28,
   },
   title: {
-    marginTop: vibesTheme.spacing.xs,
+    marginTop: vibesTheme.spacing[1],
     color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.semibold,
     fontSize: 20,
@@ -128,8 +128,8 @@ const styles = StyleSheet.create({
   },
   actions: {
     alignItems: "center",
-    gap: vibesTheme.spacing.sm,
-    marginTop: vibesTheme.spacing.sm,
+    gap: vibesTheme.spacing[2],
+    marginTop: vibesTheme.spacing[2],
   },
   primaryButton: {
     minWidth: 200,

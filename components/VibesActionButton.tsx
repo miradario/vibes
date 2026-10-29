@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.surface,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: vibesTheme.spacing.md,
+    paddingHorizontal: vibesTheme.spacing[4],
     paddingVertical: 10,
   },
   outlineDisabled: {
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   },
   skipWrap: {
     width: "100%",
-    marginTop: vibesTheme.spacing.sm,
+    marginTop: vibesTheme.spacing[2],
     alignItems: "center",
   },
   skipDivider: {

@@ -22,7 +22,7 @@ import { setVisible } from "../src/vibi/controller";
 
 const OVERLAY_SCALE = 0.8;
 const SIZE = 64 * OVERLAY_SCALE;
-const BUTTON_PADDING = vibesTheme.spacing.sm * OVERLAY_SCALE;
+const BUTTON_PADDING = vibesTheme.spacing[2] * OVERLAY_SCALE;
 const BUTTON_BORDER = 2 * OVERLAY_SCALE;
 const BUTTON_SIZE = SIZE + (BUTTON_PADDING + BUTTON_BORDER) * 2;
 const CLOSE_SPACE = 36 * OVERLAY_SCALE;

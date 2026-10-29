@@ -201,17 +201,17 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: vibesTheme.spacing.lg,
-    paddingTop: vibesTheme.spacing.md,
+    paddingHorizontal: vibesTheme.spacing[6],
+    paddingTop: vibesTheme.spacing[4],
   },
   video: {
     width: "100%",
     height: "100%",
   },
   textBlock: {
-    marginTop: vibesTheme.spacing.md,
+    marginTop: vibesTheme.spacing[4],
     alignItems: "center",
-    paddingHorizontal: vibesTheme.spacing.xl,
+    paddingHorizontal: vibesTheme.spacing[8],
   },
   title: {
     fontSize: 36,
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     fontFamily: vibesTheme.fonts.regular,
   },
   body: {
-    marginTop: vibesTheme.spacing.lg,
+    marginTop: vibesTheme.spacing[6],
     fontSize: 24,
     lineHeight: 34,
     textAlign: "center",

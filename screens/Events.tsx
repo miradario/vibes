@@ -1089,8 +1089,8 @@ const localStyles = StyleSheet.create({
   headerAction: { borderRadius: 14, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
 tabRow: {
     flexDirection: "row",
-    gap: vibesTheme.spacing.sm,
-    marginBottom: vibesTheme.spacing.lg,
+    gap: vibesTheme.spacing[2],
+    marginBottom: vibesTheme.spacing[6],
   },
 tab: {
     flex: 1,
@@ -1112,8 +1112,8 @@ cardActions: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-    gap: vibesTheme.spacing.sm,
-    marginTop: vibesTheme.spacing.sm,
+    gap: vibesTheme.spacing[2],
+    marginTop: vibesTheme.spacing[2],
   },
 filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
 filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },

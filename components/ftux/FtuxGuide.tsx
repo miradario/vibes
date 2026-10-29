@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingHorizontal: vibesTheme.spacing.lg,
+    paddingHorizontal: vibesTheme.spacing[6],
     paddingTop: 10,
   },
   handle: {
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   sheetContent: {
-    gap: vibesTheme.spacing.lg,
+    gap: vibesTheme.spacing[6],
   },
   sheetHeader: {
     flexDirection: "row",
@@ -844,7 +844,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: undefined,
     minHeight: 54,
-    paddingHorizontal: vibesTheme.spacing.md,
+    paddingHorizontal: vibesTheme.spacing[4],
     paddingVertical: 10,
   },
   primaryText: {
@@ -884,7 +884,7 @@ const styles = StyleSheet.create({
   coachCard: {
     position: "absolute",
     backgroundColor: colors.surface,
-    borderRadius: vibesTheme.radii.lg,
+    borderRadius: vibesTheme.radii.xl,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 14,

@@ -68,10 +68,10 @@ export default function ChallengeInviteesSection({ challenge, inviteButtonStyle 
 
 const styles = StyleSheet.create({
   card: {
-    gap: vibesTheme.spacing.sm,
-    padding: vibesTheme.spacing.md,
-    marginTop: vibesTheme.spacing.md,
-    borderRadius: vibesTheme.radii.md,
+    gap: vibesTheme.spacing[2],
+    padding: vibesTheme.spacing[4],
+    marginTop: vibesTheme.spacing[4],
+    borderRadius: vibesTheme.radii.lg,
     borderWidth: 1,
     borderColor: "rgba(57, 120, 184, 0.3)",
     backgroundColor: vibesTheme.colors.surface,
