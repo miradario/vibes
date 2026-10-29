@@ -23,6 +23,7 @@ import { supabase } from "../src/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { authKeys } from "../src/auth/auth.queries";
 import { resetVibiDailyGreeting } from "../src/lib/vibiDailyPrompts";
+import * as ds from "../src/theme/tokens";
 
 const Configuration = () => {
   const navigation = useNavigation();
@@ -115,13 +116,13 @@ const Configuration = () => {
           disabled={isDeletingAccount}
           style={[
             localStyles.card,
-            { marginTop: 28 },
+            { marginTop: ds.spacing[8] },
             isDeletingAccount && { opacity: 0.6 },
           ]}
           onPress={handleDeleteAccount}
         >
-          <Icon name="trash-outline" size={22} color={TEXT_SECONDARY} />
-          <Text style={[localStyles.cardText, { flex: 1, marginLeft: 12 }]}>
+          <Icon name="trash-outline" size={ds.iconSize.lg} color={TEXT_SECONDARY} />
+          <Text style={[localStyles.cardText, { flex: 1, marginLeft: ds.spacing[3] }]}>
             {isDeletingAccount
               ? t("profile.deletingAccount")
               : t("profile.deleteAccount")}
@@ -129,7 +130,7 @@ const Configuration = () => {
           {isDeletingAccount ? (
             <ActivityIndicator size="small" color={TEXT_SECONDARY} />
           ) : (
-            <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+            <Icon name="chevron-forward" size={ds.iconSize.md} color={TEXT_SECONDARY} />
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -140,11 +141,11 @@ const Configuration = () => {
 const localStyles = StyleSheet.create({
   fixedHeader: {
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 24,
-    paddingTop: 6,
-    paddingBottom: 14,
+    paddingHorizontal: ds.spacing[6],
+    paddingTop: ds.spacing[2],
+    paddingBottom: ds.spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(43, 43, 43, 0.06)",
+    borderBottomColor: ds.colors.border.subtle,
     zIndex: 10,
   },
   appHeader: {
@@ -157,36 +158,33 @@ const localStyles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontFamily: vibesTheme.fonts.semibold,
     color: vibesTheme.colors.primaryText,
-    fontSize: 30,
-    lineHeight: 38,
+    ...ds.textStyles.display,
     includeFontPadding: true,
   },
 
   scrollView: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: ds.spacing[6],
   },
   scrollContent: {
-    paddingTop: 12,
-    paddingBottom: 150,
+    paddingTop: ds.spacing[3],
+    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 150 fuera de escala (>48), parece layout */ 150,
   },
   card: {
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.06)",
+    borderColor: ds.colors.border.subtle,
     backgroundColor: vibesTheme.colors.background,
-    padding: 18,
+    padding: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 16,
+    gap: ds.spacing[4],
   },
   cardText: {
     color: GRAY,
-    fontSize: 14,
-    lineHeight: 20,
+    ...ds.textStyles.bodySmall,
   },
 });
 

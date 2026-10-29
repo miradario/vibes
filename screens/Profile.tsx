@@ -31,6 +31,7 @@ import VibesLoader from "../components/VibesLoader";
 import { getInstalledAppVersion, getInstalledAppBuildNumber } from "../src/lib/appUpdateGate";
 import appConfig from "../app.json";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const Profile = () => {
   const { t, locale } = useI18n();
@@ -132,7 +133,7 @@ const Profile = () => {
 
   return (
     <ScreenContainer scroll edges={["top", "left", "right"]}
-      contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: getBottomTabContentPadding(insets.bottom, 48) }}
+      contentContainerStyle={{ paddingHorizontal: ds.spacing[6], paddingBottom: getBottomTabContentPadding(insets.bottom, 48) }}
       scrollViewProps={{ showsVerticalScrollIndicator: false }}>
 
         <View style={localStyles.header}>
@@ -159,7 +160,7 @@ const Profile = () => {
             accessibilityRole="button" accessibilityLabel="Editar perfil"
             onPress={() => navigation.navigate("EditProfile" as never)}
           >
-            <Icon name="create-outline" size={20} color={vibesTheme.colors.accentBlue} />
+            <Icon name="create-outline" size={ds.iconSize.md} color={vibesTheme.colors.accentBlue} />
             <Text style={localStyles.editText}>{t("common.edit")}</Text>
           </TouchableOpacity>
             </View>
@@ -191,11 +192,11 @@ const Profile = () => {
                 item.screen && navigation.navigate(item.screen as never)
               }
             >
-              <View style={[localStyles.menuIcon, { backgroundColor: `${[vibesTheme.colors.accentBlue, vibesTheme.colors.accentMustard, vibesTheme.colors.accentCoral][index % 3]}24` }]}>
-                <Icon name={item.icon} size={19} color={vibesTheme.colors.primaryText} />
+              <View style={[localStyles.menuIcon, { backgroundColor: ds.withAlpha([vibesTheme.colors.accentBlue, vibesTheme.colors.accentMustard, vibesTheme.colors.accentCoral][index % 3], ds.opacity.soft) }]}>
+                <Icon name={item.icon} size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
               </View>
               <Text style={localStyles.menuLabel}>{item.label}</Text>
-              <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+              <Icon name="chevron-forward" size={ds.iconSize.md} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           ))}
 
@@ -205,7 +206,7 @@ const Profile = () => {
             disabled={isLoggingOut}
           >
             <View style={localStyles.menuIcon}>
-              <Icon name="power" size={19} color={TEXT_SECONDARY} />
+              <Icon name="power" size={ds.iconSize.md} color={TEXT_SECONDARY} />
             </View>
             <Text style={localStyles.menuLabel}>
               {isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
@@ -213,7 +214,7 @@ const Profile = () => {
             {isLoggingOut ? (
               <VibesLoader />
             ) : (
-              <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+              <Icon name="chevron-forward" size={ds.iconSize.md} color={TEXT_SECONDARY} />
             )}
           </TouchableOpacity>
         </View>
@@ -231,30 +232,28 @@ const Profile = () => {
 const colors = vibesTheme.colors;
 const localStyles = StyleSheet.create({
   missingSummary: {
-    marginTop: 4,
+    marginTop: ds.spacing[1],
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4, marginBottom: 16 },
-  footer: { alignItems: "center", gap: 8, paddingTop: 24, paddingBottom: 16 },
-  title: { color: colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 25, lineHeight: 32, marginTop: 0, marginBottom: 0 },
-  profileCard: { marginBottom: 20 },
-  profileRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: ds.spacing[1], marginBottom: ds.spacing[4] },
+  footer: { alignItems: "center", gap: ds.spacing[2], paddingTop: ds.spacing[6], paddingBottom: ds.spacing[4] },
+  title: { color: colors.primaryText, ...ds.textStyles.title, marginTop: 0, marginBottom: 0 },
+  profileCard: { marginBottom: ds.spacing[5] },
+  profileRow: { flexDirection: "row", alignItems: "center", marginBottom: ds.spacing[4] },
   avatarWrap: { alignSelf: "flex-start" },
-  profileInfo: { flex: 1, minWidth: 0, gap: 4 },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 10, justifyContent: "space-between" },
-  profileName: { flex: 1, minWidth: 0, fontFamily: vibesTheme.fonts.bold, fontSize: 20, lineHeight: 26, color: colors.primaryText },
-  profileLocation: { fontFamily: vibesTheme.fonts.regular, fontSize: 13, lineHeight: 18, color: colors.secondaryText },
+  profileInfo: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], justifyContent: "space-between" },
+  profileName: { flex: 1, minWidth: 0, ...ds.textStyles.heading, color: colors.primaryText },
+  profileLocation: { ...ds.textStyles.bodySmall, color: colors.secondaryText },
   zodiac: { color: colors.accentBlue },
-  editButton: { minHeight: 44, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: `${colors.accentBlue}18`, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  editText: { fontFamily: vibesTheme.fonts.semibold, fontSize: 14, color: colors.accentBlue, flexShrink: 1 },
-  menuList: { gap: 8, marginBottom: 12 },
-  menuItem: { minHeight: 56, flexDirection: "row", alignItems: "center", padding: 10, borderRadius: 14, borderWidth: 1, borderColor: `${colors.primaryText}20`, backgroundColor: `${colors.primaryText}03`, gap: 10 },
+  editButton: { minHeight: 44, borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.colors.feedback.infoBg, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: ds.spacing[2] },
+  editText: { ...ds.textStyles.label, color: colors.accentBlue, flexShrink: 1 },
+  menuList: { gap: ds.spacing[2], marginBottom: ds.spacing[3] },
+  menuItem: { minHeight: 56, flexDirection: "row", alignItems: "center", padding: ds.spacing[3], borderRadius: ds.radii.lg, borderWidth: 1, borderColor: ds.colors.border.default, backgroundColor: ds.colors.bg.subtle, gap: ds.spacing[3] },
   menuItemLast: { marginBottom: 0 },
-  menuIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: `${colors.accentCoral}24` },
-  menuLabel: { flex: 1, fontFamily: vibesTheme.fonts.semibold, fontSize: 14, lineHeight: 20, color: colors.primaryText },
+  menuIcon: { width: 34, height: 34, borderRadius: ds.radii.md, alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.feedback.errorBg },
+  menuLabel: { flex: 1, ...ds.textStyles.label, color: colors.primaryText },
 });
 
 export default Profile;

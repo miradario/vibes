@@ -48,6 +48,7 @@ import { profileKeys, useProfileQuery } from "../src/queries/profile.queries";
 
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const PROFILE_SINGLE_PHOTO_KEYS = [
   "photo_url",
@@ -533,7 +534,7 @@ const EditProfile = () => {
           </View>
           {savingPhotos ? (
             <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              style={{ flexDirection: "row", alignItems: "center", gap: ds.spacing[2] }}
             >
               <VibesLoader size={24} />
               <Text>
@@ -716,7 +717,7 @@ const EditProfile = () => {
               <Icon
                 name="checkmark"
                 color={vibesTheme.colors.surface}
-                size={22}
+                size={ds.iconSize.lg}
               />
             )}
             <Text style={localStyles.saveButtonLabel}>
@@ -732,100 +733,96 @@ const EditProfile = () => {
 export default EditProfile;
 
 const localStyles = StyleSheet.create({
-  saveFooter: { marginHorizontal: 20, marginTop: 24 },
+  saveFooter: { marginHorizontal: ds.spacing[5], marginTop: ds.spacing[6] },
   saveButton: {
     width: "100%",
     minHeight: 56,
-    paddingHorizontal: 20,
+    paddingHorizontal: ds.spacing[5],
     borderRadius: vibesTheme.radii.pill,
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.primaryText,
   },
   saveButtonLabel: {
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 18,
-    lineHeight: 24,
+    ...ds.textStyles.subtitle,
     color: vibesTheme.colors.surface,
   },
   header: {
     paddingHorizontal: 0,
-    marginBottom: 4,
+    marginBottom: ds.spacing[1],
   },
   scrollContent: {
-    paddingBottom: 104,
+    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 104 fuera de escala (>48), parece layout */ 104,
   },
   primaryBadge: {
     position: "absolute",
     left: 6,
     top: 6,
     backgroundColor: PRIMARY_COLOR,
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderRadius: ds.radii.sm,
+    paddingHorizontal: ds.spacing[2],
+    paddingVertical: ds.spacing[1],
   },
   primaryBadgeText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 10,
-    fontWeight: "400",
+    fontSize: /* ds-lint-allow DS-TODO: fontSize 10 (peso 400) sin mapeo claro en §3.5.1 */ 10,
+    fontFamily: ds.fontFamilies.regular,
   },
   nameInput: {
-    backgroundColor: "rgba(254, 254, 253, 0.6)",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
+    backgroundColor: /* ds-lint-allow DS-TODO: paper al 60%: no hay opacidad cercana (más cercana 0.45) */ "rgba(254, 254, 253, 0.6)",
+    borderRadius: ds.radii.md,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[4],
+    ...ds.textStyles.body,
     color: DARK_GRAY,
     borderWidth: 1,
-    borderColor: "rgba(216, 140, 122, 0.25)",
+    borderColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
   },
   readOnlyField: {
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: ds.radii.md,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[4],
     borderWidth: 1,
-    borderColor: "rgba(57, 120, 184, 0.8)",
+    borderColor: /* ds-lint-allow DS-TODO: blue al 80%: no hay opacidad cercana (más cercana 1) */ "rgba(57, 120, 184, 0.8)",
   },
   readOnlyValue: {
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   helperText: {
     color: GRAY,
-    fontSize: 14,
-    marginTop: 10,
+    ...ds.textStyles.bodySmall,
+    marginTop: ds.spacing[3],
   },
   locationFields: {
-    gap: 10,
+    gap: ds.spacing[3],
   },
   currentLocationButton: {
     alignSelf: "flex-start",
-    marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
+    marginTop: ds.spacing[3],
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[2],
+    borderRadius: ds.radii.pill,
     backgroundColor: PRIMARY_COLOR,
   },
   currentLocationButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
   languageRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   languageChip: {
     minHeight: 44,
-    borderRadius: 999,
+    borderRadius: ds.radii.pill,
     borderWidth: 1,
-    borderColor: "rgba(216, 140, 122, 0.35)",
+    borderColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.scrim),
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 16,
+    paddingHorizontal: ds.spacing[4],
     alignItems: "center",
     justifyContent: "center",
   },
@@ -835,8 +832,7 @@ const localStyles = StyleSheet.create({
   },
   languageChipText: {
     color: DARK_GRAY,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   languageChipTextActive: {
     color: vibesTheme.colors.primaryText,

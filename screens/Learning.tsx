@@ -51,6 +51,7 @@ import {
   ui,
   useLearningAction,
 } from "../components/learning/LearningUI";
+import * as ds from "../src/theme/tokens";
 const useNav = () => useNavigation<any>();
 const useId = () => (useRoute().params as { id?: string } | undefined)?.id;
 
@@ -68,7 +69,7 @@ export function LearningCreateAction() {
       return;
     }
     nav.navigate(data.access.managed_ids.length ? "LearningActivityEditor" : "LearningProfileEditor", data.access.managed_ids.length ? undefined : { continueToClass: true });
-  }} style={explore.iconButton}><Icon name="add" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>;
+  }} style={explore.iconButton}><Icon name="add" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} /></TouchableOpacity>;
 }
 
 export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
@@ -144,10 +145,10 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               <ActiveCommunityFilters selected={communities} onRemove={value=>setCommunities(previous=>previous.filter(item=>item!==value))} onClear={()=>setCommunities([])} />
               {!embedded && <View style={explore.toolbar}><LearningCreateAction /></View>}
               <View style={explore.search}>
-                <Icon name="search" size={20} color={vibesTheme.colors.secondaryText} />
+                <Icon name="search" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} />
                 <TextInput accessibilityLabel="Buscar clases o lugares" placeholder="¿Qué te gustaría practicar?" placeholderTextColor={vibesTheme.colors.secondaryText} value={query} onChangeText={setQuery} style={explore.searchInput} returnKeyType="search" />
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Filtrar clases" onPress={() => setFilters(true)} style={explore.clear}><Icon name="options-outline" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
-                {!!query && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setQuery("")} style={explore.clear}><Icon name="close" size={20} color={vibesTheme.colors.secondaryText} /></TouchableOpacity>}
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Filtrar clases" onPress={() => setFilters(true)} style={explore.clear}><Icon name="options-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
+                {!!query && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setQuery("")} style={explore.clear}><Icon name="close" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} /></TouchableOpacity>}
               </View>
               <Chips value={tab} onChange={setTab} options={[
                 {value:"activity",label:"Clases y cursos"}, {value:"place",label:"Lugares"}
@@ -161,7 +162,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
                 {myRequestedActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} status="Solicitud pendiente" onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
                 {myRequestedClasses.map(item => <View key={item.id}><ExternalClassCard item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} /><Text style={explore.sectionHint}>Pendiente de confirmación con el organizador</Text></View>)}
                 {myClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver todas mis clases y cursos" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Ver mis clases y cursos</Text><Icon name="chevron-forward" size={18} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver todas mis clases y cursos" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Ver mis clases y cursos</Text><Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
                 </> : null}
                 {!!(otherClasses.length + listedExternalClasses.length) && <Text accessibilityRole="header" style={explore.sectionTitle}>Más clases</Text>}
                 {otherClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
@@ -173,7 +174,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               </>}
               {(tab === "activity" ? activities.length + listedExternalClasses.length : profiles.length + listedExternalPlaces.length) === 0 && (
                 <View style={explore.empty}>
-                  <View style={explore.emptyIcon}><Icon name="school-outline" size={30} color={vibesTheme.colors.accentBlue} /></View>
+                  <View style={explore.emptyIcon}><Icon name="school-outline" size={ds.iconSize.xl} color={vibesTheme.colors.accentBlue} /></View>
                   <Text style={explore.emptyTitle}>{query || specialty || modality || location || date ? "No encontramos coincidencias" : tab === "activity" ? "Pronto, nuevas clases" : "Pronto, más propuestas"}</Text>
                   <Text style={explore.emptyBody}>{query || specialty || modality || location || date ? "Probá con otra búsqueda o ajustá los filtros." : "Volvé a explorar para descubrir nuevas prácticas y personas."}</Text>
                   <TouchableOpacity accessibilityRole="button" style={explore.action} onPress={() => {if(query || specialty || modality || location || date){setQuery("");setSpecialty("");setModality("");setLocation("");setDate("");}else void q.refetch();}}><Text style={explore.actionLabel}>{query || specialty || modality || location || date ? "Limpiar filtros" : "Actualizar"}</Text></TouchableOpacity>
@@ -186,7 +187,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               >
                 <ScrollView
                   keyboardShouldPersistTaps="handled"
-                  contentContainerStyle={{ gap: 16 }}
+                  contentContainerStyle={{ gap: ds.spacing[4] }}
                 >
                   <Text style={ui.title}>Filtrar clases y perfiles</Text>
                   <Chips
@@ -1383,22 +1384,22 @@ export function LearningActivityEditor() {
 }
 
 const explore = StyleSheet.create({
-  toolbar: {flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},
-  subtitle: {flex:1,fontSize:15,lineHeight:22,color:vibesTheme.colors.secondaryText},
-  iconButton: {width:44,height:44,borderRadius:14,alignItems:"center",justifyContent:"center",backgroundColor:`${vibesTheme.colors.secondaryText}0C`},
-  search: {flexDirection:"row",alignItems:"center",gap:10,minHeight:48,paddingHorizontal:14,borderRadius:16,backgroundColor:`${vibesTheme.colors.secondaryText}0C`},
-  searchInput: {flex:1,minHeight:48,fontSize:16,color:vibesTheme.colors.primaryText},
+  toolbar: {flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:ds.spacing[2]},
+  subtitle: {flex:1,...ds.textStyles.body,color:vibesTheme.colors.secondaryText},
+  iconButton: {width:44,height:44,borderRadius:ds.radii.lg,alignItems:"center",justifyContent:"center",backgroundColor:ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle)},
+  search: {flexDirection:"row",alignItems:"center",gap:ds.spacing[3],minHeight:48,paddingHorizontal:ds.spacing[4],borderRadius:ds.radii.lg,backgroundColor:ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle)},
+  searchInput: {flex:1,minHeight:48,...ds.textStyles.body,color:vibesTheme.colors.primaryText},
   clear: {minWidth:44,minHeight:44,alignItems:"center",justifyContent:"center"},
-  actions: {flexDirection:"row",gap:10},
-  action: {flexDirection:"row",gap:8,minHeight:44,paddingHorizontal:16,paddingVertical:10,borderRadius:999,alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:`${vibesTheme.colors.primaryText}1F`},
-  actionLabel: {fontFamily:vibesTheme.fonts.semibold,fontSize:14,lineHeight:20,color:vibesTheme.colors.primaryText},
-  filterLabel: {fontFamily:vibesTheme.fonts.semibold,fontSize:14,lineHeight:20,color:vibesTheme.colors.accentBlue},
-  activeFilter: {backgroundColor:`${vibesTheme.colors.accentBlue}14`,borderColor:vibesTheme.colors.accentBlue},
-  sectionHint: {fontSize:15,lineHeight:22,color:vibesTheme.colors.secondaryText},
+  actions: {flexDirection:"row",gap:ds.spacing[3]},
+  action: {flexDirection:"row",gap:ds.spacing[2],minHeight:44,paddingHorizontal:ds.spacing[4],paddingVertical:ds.spacing[3],borderRadius:ds.radii.pill,alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:ds.colors.border.default},
+  actionLabel: {...ds.textStyles.label,color:vibesTheme.colors.primaryText},
+  filterLabel: {...ds.textStyles.label,color:vibesTheme.colors.accentBlue},
+  activeFilter: {backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),borderColor:vibesTheme.colors.accentBlue},
+  sectionHint: {...ds.textStyles.body,color:vibesTheme.colors.secondaryText},
   mineLink: {flexDirection:"row",alignItems:"center",justifyContent:"space-between",minHeight:44},
-  sectionTitle: {fontFamily:vibesTheme.fonts.semibold,fontSize:25,lineHeight:29,color:vibesTheme.colors.primaryText,marginTop:8},
-  empty: {paddingVertical:28,paddingHorizontal:16,alignItems:"center",gap:12},
-  emptyIcon: {width:64,height:64,borderRadius:32,backgroundColor:`${vibesTheme.colors.accentBlue}14`,alignItems:"center",justifyContent:"center"},
-  emptyTitle: {fontFamily:vibesTheme.fonts.bold,fontSize:20,lineHeight:26,color:vibesTheme.colors.primaryText,textAlign:"center"},
-  emptyBody: {fontSize:15,lineHeight:22,color:vibesTheme.colors.secondaryText,textAlign:"center",maxWidth:300},
+  sectionTitle: {...ds.textStyles.title,color:vibesTheme.colors.primaryText,marginTop:ds.spacing[2]},
+  empty: {paddingVertical:ds.spacing[8],paddingHorizontal:ds.spacing[4],alignItems:"center",gap:ds.spacing[3]},
+  emptyIcon: {width:64,height:64,borderRadius:ds.radii.pill,backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),alignItems:"center",justifyContent:"center"},
+  emptyTitle: {...ds.textStyles.heading,color:vibesTheme.colors.primaryText,textAlign:"center"},
+  emptyBody: {...ds.textStyles.body,color:vibesTheme.colors.secondaryText,textAlign:"center",maxWidth:300},
 });

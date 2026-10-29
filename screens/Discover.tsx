@@ -77,6 +77,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import VibesLoader from "../components/VibesLoader";
 import { showToast } from "../src/utils/toast";
+import * as ds from "../src/theme/tokens";
 
 type DiscoverGender = "woman" | "man" | "other";
 
@@ -808,7 +809,7 @@ export const DiscoverContent = forwardRef<
           backdropInDuration={100}
           sheetStyle={[
             localStyles.filtersSheet,
-            { paddingBottom: Math.max(filterInsets.bottom, 16) },
+            { paddingBottom: Math.max(filterInsets.bottom, ds.spacing[4]) },
           ]}
         >
           <>
@@ -832,7 +833,7 @@ export const DiscoverContent = forwardRef<
                 }
                 style={localStyles.filtersCloseButton}
               >
-                <Icon name="close" size={24} color={vibesTheme.colors.primaryText} />
+                <Icon name="close" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
             </View>
 
@@ -858,7 +859,7 @@ export const DiscoverContent = forwardRef<
                       key={option.value}
                       style={[
                         localStyles.filterPill,
-                        { minHeight: 44, paddingHorizontal: 14 },
+                        { minHeight: 44, paddingHorizontal: ds.spacing[4] },
                         (option.value === "all" ? discoverFilters.genders.length === 0 : discoverFilters.genders.includes(option.value)) &&
                           { backgroundColor: vibesTheme.colors.primaryText },
                       ]}
@@ -964,7 +965,7 @@ export const DiscoverContent = forwardRef<
                           {selected && (
                             <Icon
                               name="checkmark-circle"
-                              size={20}
+                              size={ds.iconSize.md}
                               color={vibesTheme.colors.surface}
                             />
                           )}
@@ -996,7 +997,7 @@ export const DiscoverContent = forwardRef<
                 <Text style={localStyles.filtersPrimaryButtonText}>
                   {locale === "en" ? "See profiles" : "Ver perfiles"}
                 </Text>
-                <Icon name="arrow-forward" size={24} color={vibesTheme.colors.surface} />
+                <Icon name="arrow-forward" size={ds.iconSize.lg} color={vibesTheme.colors.surface} />
               </TouchableOpacity>
             </View>
           </>
@@ -1060,17 +1061,17 @@ export const DiscoverContent = forwardRef<
                 activeOpacity={0.84}
                 onPress={() => setIsFiltersVisible(true)}
               >
-                <Icon name="options-outline" size={22} color={vibesTheme.colors.primaryText} />
+                <Icon name="options-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
                 <Text style={localStyles.filtersButtonText}>{t("discover.filters")}{activeFilterCount ? ` · ${activeFilterCount}` : ""}</Text>
               </TouchableOpacity>
             </DiscoverFiltersGuide>
           </View>
         ) : null}
 
-        <ActiveCommunityFilters selected={discoverFilters.spiritualPaths} onRemove={value=>setDiscoverFilters(previous=>({...previous,spiritualPaths:previous.spiritualPaths.filter(item=>item!==value)}))} onClear={()=>setDiscoverFilters(previous=>({...previous,spiritualPaths:[]}))} style={{paddingHorizontal:16}} />
+        <ActiveCommunityFilters selected={discoverFilters.spiritualPaths} onRemove={value=>setDiscoverFilters(previous=>({...previous,spiritualPaths:previous.spiritualPaths.filter(item=>item!==value)}))} onClear={()=>setDiscoverFilters(previous=>({...previous,spiritualPaths:[]}))} style={{paddingHorizontal:ds.spacing[4]}} />
         {appliedFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>
-          {appliedFilterChips.map(chip => <TouchableOpacity key={chip.id} accessibilityRole="button" accessibilityLabel={`Quitar filtro: ${chip.label}`} onPress={chip.remove} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 40, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14` }}>
-            <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 13 }}>{chip.label}</Text><Icon name="close" size={17} color={vibesTheme.colors.accentBlue} />
+          {appliedFilterChips.map(chip => <TouchableOpacity key={chip.id} accessibilityRole="button" accessibilityLabel={`Quitar filtro: ${chip.label}`} onPress={chip.remove} style={{ flexDirection: "row", alignItems: "center", gap: ds.spacing[2], minHeight: 40, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[2], borderRadius: ds.radii.xl, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) }}>
+            <Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.label }}>{chip.label}</Text><Icon name="close" size={ds.iconSize.sm} color={vibesTheme.colors.accentBlue} />
           </TouchableOpacity>)}
         </ScrollView> : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>
@@ -1084,7 +1085,7 @@ export const DiscoverContent = forwardRef<
               setViewingHistory(false);
             }}
           >
-            <Icon name="mail-outline" size={18} color={vibesTheme.colors.primaryText} />
+            <Icon name="mail-outline" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
             <Text style={localStyles.filtersButtonText}>Solicitudes</Text>
           </TouchableOpacity>
 
@@ -1099,7 +1100,7 @@ export const DiscoverContent = forwardRef<
               setViewingHistory(false);
             }}
           >
-            <Icon name="leaf-outline" size={18} color={vibesTheme.colors.primaryText} />
+            <Icon name="leaf-outline" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
             <Text style={localStyles.filtersButtonText}>Comunidad</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -1129,7 +1130,7 @@ export const DiscoverContent = forwardRef<
                 style={[localStyles.historyModeButton, { flexGrow: label.length }, historyMode === mode && localStyles.historyModeButtonActive]}
                 onPress={() => setHistoryMode(mode)}
               >
-                <Icon name={icon} size={16} color={vibesTheme.colors.primaryText} />
+                <Icon name={icon} size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} />
                 <Text style={localStyles.historyModeText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{label}</Text>
               </TouchableOpacity>
             ))}
@@ -1141,8 +1142,8 @@ export const DiscoverContent = forwardRef<
             <View style={localStyles.emptyState}>
               <Text style={localStyles.emptyTitle}>{showHistory ? "No pudimos cargar las solicitudes" : "No pudimos cargar los perfiles"}</Text>
               <Text style={localStyles.emptyText}>{profileRefresh.error instanceof Error ? profileRefresh.error.message : "Tocá Reintentar para volver a cargar."}</Text>
-              <TouchableOpacity accessibilityRole="button" onPress={retryProfiles} style={{ padding: 16 }}>
-                <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text>
+              <TouchableOpacity accessibilityRole="button" onPress={retryProfiles} style={{ padding: ds.spacing[4] }}>
+                <Text style={{ color: vibesTheme.colors.accentBlue, ...ds.textStyles.heading }}>Reintentar</Text>
               </TouchableOpacity>
             </View>
           ) : waitingForProfiles ? (
@@ -1152,7 +1153,7 @@ export const DiscoverContent = forwardRef<
           ) : !isLoading && visibleProfiles.length === 0 ? (
             <View style={localStyles.emptyState}>
               <View style={localStyles.emptyIconCircle}>
-                <Icon name="compass-outline" size={34} color={vibesTheme.colors.primaryText} />
+                <Icon name="compass-outline" size={ds.iconSize.xl} color={vibesTheme.colors.primaryText} />
               </View>
               <Text style={localStyles.emptyTitle}>
                 No hay perfiles para mostrar
@@ -1248,7 +1249,7 @@ const Discover = () => {
         // iOS: sin el +48 de scroll screens; deja ~16pt sobre el tab bar.
         paddingBottom:
           Platform.OS === "ios"
-            ? getBottomTabBarHeight() + Math.max(insets.bottom + 8, 18) + 16
+            ? getBottomTabBarHeight() + Math.max(insets.bottom + ds.spacing[2], ds.spacing[4]) + ds.spacing[4]
             : getBottomTabContentPadding(insets.bottom, 118),
       }}
     >
@@ -1269,93 +1270,84 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingHorizontal: ds.spacing[5],
+    paddingTop: ds.spacing[2],
+    paddingBottom: ds.spacing[3],
   },
   discoverySections: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
+    gap: ds.spacing[2],
+    paddingHorizontal: ds.spacing[4],
+    paddingBottom: ds.spacing[2],
   },
   headerFiltersButton: {
     minHeight: 48,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 21,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[2],
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.secondaryText}4D`,
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     backgroundColor: vibesTheme.colors.surface,
     flexDirection: "row",
-    gap: 7,
+    gap: ds.spacing[2],
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
     color: TEXT_PRIMARY,
-    fontSize: 34,
-    lineHeight: 42,
-    fontFamily: vibesTheme.fonts.extraBold,
+    ...ds.textStyles.display,
     textAlign: "left",
   },
   filtersButton: {
     flexShrink: 0,
     minHeight: 48,
-    paddingVertical: 8,
-    borderRadius: 21,
+    paddingVertical: ds.spacing[2],
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     backgroundColor: "transparent",
-    paddingHorizontal: 17,
+    paddingHorizontal: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
+    gap: ds.spacing[2],
   },
   filtersButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   filtersCountBadge: {
     minWidth: 22,
     height: 22,
-    borderRadius: 11,
-    paddingHorizontal: 6,
+    borderRadius: ds.radii.pill,
+    paddingHorizontal: ds.spacing[2],
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   filtersCountText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 12,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.caption,
   },
   orbitWrap: {
     flex: 1,
   },
   showMoreButton: {
     alignSelf: "center",
-    marginVertical: 8,
+    marginVertical: ds.spacing[2],
     minHeight: 48,
-    borderRadius: 23,
-    paddingHorizontal: 22,
+    borderRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[6],
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.94)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.38)",
-    shadowColor: vibesTheme.colors.secondaryText,
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
+    ...ds.shadows.md,
   },
   showMoreButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   orbitHint: {
     position: "absolute",
@@ -1368,186 +1360,172 @@ const localStyles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: ds.spacing[8],
   },
   emptyIconCircle: {
     width: 68,
     height: 68,
-    borderRadius: 34,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 18,
-    backgroundColor: "rgba(110, 110, 110, 0.10)",
+    marginBottom: ds.spacing[4],
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
   },
   emptyTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 24,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
   emptyText: {
-    marginTop: 10,
-    color: "rgba(43, 43, 43, 0.7)",
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    marginTop: ds.spacing[3],
+    color: /* ds-lint-allow DS-TODO: ink al 70%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.7)",
+    ...ds.textStyles.subtitleMedium,
     textAlign: "center",
   },
   emptyActionButton: {
-    marginTop: 22,
+    marginTop: ds.spacing[6],
     minHeight: 44,
-    borderRadius: 22,
+    borderRadius: ds.radii.xl,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 22,
+    paddingHorizontal: ds.spacing[6],
     backgroundColor: vibesTheme.colors.primaryText,
   },
   emptyActionText: {
     color: vibesTheme.colors.surface,
-    fontSize: 15,
-    lineHeight: 19,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   filtersSheet: {
     backgroundColor: vibesTheme.colors.background,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[5],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[4],
     height: "92%",
     maxHeight: "92%",
   },
   filtersHandle: {
     width: 52,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.18)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
     alignSelf: "center",
-    marginBottom: 18,
+    marginBottom: ds.spacing[4],
   },
   filtersHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 20,
+    gap: ds.spacing[3],
+    marginBottom: ds.spacing[5],
   },
   filtersHeaderText: {
     flex: 1,
   },
   filtersTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 38,
-    lineHeight: 46,
+    fontSize: /* ds-lint-allow DS-TODO: fontSize 38 (peso 700) sin mapeo claro en §3.5.1 */ 38,
+    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 46,
     fontFamily: vibesTheme.fonts.bold,
   },
   filtersSubtitle: {
-    marginTop: 4,
+    marginTop: ds.spacing[1],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 17,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.subtitleMedium,
   },
   filtersCloseButton: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(110, 110, 110, 0.13)",
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
   },
   filtersContent: {
-    paddingTop: 8,
-    paddingBottom: 24,
-    gap: 24,
+    paddingTop: ds.spacing[2],
+    paddingBottom: ds.spacing[6],
+    gap: ds.spacing[6],
   },
   filtersSection: {
-    gap: 14,
-    paddingBottom: 24,
+    gap: ds.spacing[4],
+    paddingBottom: ds.spacing[6],
     borderBottomWidth: 1,
-    borderBottomColor: `${vibesTheme.colors.secondaryText}26`,
+    borderBottomColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
   },
   rangeHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   rangeSummary: {
-    color: "rgba(43, 43, 43, 0.78)",
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.semibold,
+    color: /* ds-lint-allow DS-TODO: ink al 78%: no hay opacidad cercana (más cercana 1) */ "rgba(43, 43, 43, 0.78)",
+    ...ds.textStyles.subtitle,
   },
   rangeReset: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.label,
   },
   rangeRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   rangeCard: {
     flex: 1,
-    borderRadius: 20,
-    backgroundColor: `${vibesTheme.colors.secondaryText}14`,
+    borderRadius: ds.radii.xl,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
     minHeight: 80,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 2,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
+    gap: ds.spacing[1],
   },
   rangeLabel: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   rangeControls: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   rangeValue: {
     flex: 1,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   rangeInput: {
     minHeight: 48,
-    borderRadius: 12,
-    backgroundColor: `${vibesTheme.colors.background}00`,
+    borderRadius: ds.radii.md,
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.subtle),
     color: vibesTheme.colors.primaryText,
-    fontSize: 21,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
     textAlign: "left",
     paddingHorizontal: 0,
-    paddingVertical: 8,
+    paddingVertical: ds.spacing[2],
   },
   filtersSectionTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 26,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.title,
   },
   filtersPillRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   filterPill: {
     minHeight: 50,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    borderRadius: 999,
+    gap: ds.spacing[2],
+    borderRadius: ds.radii.pill,
     borderWidth: 0,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    backgroundColor: `${vibesTheme.colors.secondaryText}14`,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
   },
   filterPillActive: {
     backgroundColor: vibesTheme.colors.accentBlue,
@@ -1555,83 +1533,79 @@ const localStyles = StyleSheet.create({
   },
   filterPillText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   filterPillTextActive: {
     color: vibesTheme.colors.surface,
   },
   filtersFooter: {
     flexDirection: "row",
-    gap: 12,
-    paddingTop: 14,
+    gap: ds.spacing[3],
+    paddingTop: ds.spacing[4],
     borderTopWidth: 1,
-    borderTopColor: "rgba(110, 110, 110, 0.30)",
+    borderTopColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   filtersSecondaryButton: {
     flex: 1,
     minHeight: 52,
-    paddingVertical: 12,
-    borderRadius: 26,
+    paddingVertical: ds.spacing[3],
+    borderRadius: ds.radii.xl,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.background,
   },
   filtersSecondaryButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   filtersPrimaryButton: {
     flex: 1.6,
     minHeight: 60,
     flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 24,
+    gap: ds.spacing[3],
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
+    borderRadius: ds.radii.xl,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   filtersPrimaryButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 20,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.heading,
   },
   historyButtonActive: {
-    backgroundColor: "rgba(244, 163, 64, 0.36)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
     borderColor: vibesTheme.colors.accentMustard,
   },
   historyModeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
+    gap: ds.spacing[3],
+    paddingHorizontal: ds.spacing[4],
+    paddingBottom: ds.spacing[2],
   },
   historyModeButton: {
     flex: 1,
     minHeight: 48,
-    paddingHorizontal: 6,
-    borderRadius: 18,
+    paddingHorizontal: ds.spacing[2],
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: ds.spacing[1],
   },
   historyModeButtonActive: {
-    backgroundColor: "rgba(244, 163, 64, 0.43)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
     borderColor: vibesTheme.colors.accentMustard,
   },
   historyModeText: {
     flexShrink: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
 });
 
