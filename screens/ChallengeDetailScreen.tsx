@@ -89,6 +89,7 @@ import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import RestartChallengeConfirmSheet from "../components/challengeRestart/RestartChallengeConfirmSheet";
 import ChallengeInviteesSection from "../components/challengeRestart/ChallengeInviteesSection";
 import ChallengeInvitationActions from "../components/challengeRestart/ChallengeInvitationActions";
+import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
 type ProgressMode = "path" | "compact" | "calendar";
@@ -124,17 +125,17 @@ const FALLBACK_CHALLENGE: ChallengeDetailData = {
 const palette = {
   bg: vibesTheme.colors.background,
   surface: vibesTheme.colors.background,
-  surfaceAlt: "rgba(244, 163, 64, 0.13)",
+  surfaceAlt: ds.colors.bg.selected,
   text: vibesTheme.colors.primaryText,
   muted: vibesTheme.colors.secondaryText,
-  faint: "rgba(216, 140, 122, 0.31)",
+  faint: ds.withAlpha(ds.colors.base.coral, ds.opacity.scrim),
   gold: vibesTheme.colors.accentMustard,
   goldDeep: vibesTheme.colors.accentMustard,
   accentBlue: vibesTheme.colors.accentBlue,
   accentBlueDeep: vibesTheme.colors.secondaryText,
-  accentBlueSoft: "rgba(57, 120, 184, 0.18)",
+  accentBlueSoft: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
   red: vibesTheme.colors.accentCoral,
-  redSoft: "rgba(216, 140, 122, 0.17)",
+  redSoft: ds.colors.feedback.errorBg,
 };
 
 const FOOTER_SLIDER_HANDLE_SIZE = 50;
@@ -407,7 +408,7 @@ const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
     <View style={localStyles.celebrationCard}>
       <Reanimated.View style={[localStyles.celebrationGlow, animatedStyle]} />
       <View style={localStyles.celebrationBadge}>
-        <Icon name="sparkles-outline" size={17} color={palette.goldDeep} />
+        <Icon name="sparkles-outline" size={ds.iconSize.sm} color={palette.goldDeep} />
       </View>
       <View style={localStyles.celebrationCopy}>
         <Text style={localStyles.celebrationTitle}>{copy.title}</Text>
@@ -418,15 +419,15 @@ const StreakCelebrationCard = memo(({ streak }: { streak: number }) => {
 });
 
 const ChallengeIntroMetaRow = memo(({ challenge, checkedInTodayCount, curated = false }: { challenge: ChallengeDetailData; checkedInTodayCount: number; curated?: boolean }) => (
-  <View style={{ gap: 16, paddingVertical: 8 }}>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
-      <Icon name="calendar-outline" size={25} color={vibesTheme.colors.accentBlue} />
-      <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 }}>{!curated && challenge.currentDay > 0 ? `Día ${challenge.currentDay} de ${challenge.totalDays}` : `${challenge.totalDays} días de actividades`}</Text></View>
+  <View style={{ gap: ds.spacing[4], paddingVertical: ds.spacing[2] }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: ds.spacing[4] }}>
+      <Icon name="calendar-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentBlue} />
+      <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle }}>{!curated && challenge.currentDay > 0 ? `Día ${challenge.currentDay} de ${challenge.totalDays}` : `${challenge.totalDays} días de actividades`}</Text></View>
     </View>
     {curated ? null : (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
-      <Icon name="people-outline" size={25} color={vibesTheme.colors.accentBlue} />
-      <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 }}>{challenge.participantsCount} participantes</Text><Text style={{ color: vibesTheme.colors.secondaryText, fontSize: 14 }}>{checkedInTodayCount} {checkedInTodayCount === 1 ? "completó" : "completaron"} hoy</Text></View>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: ds.spacing[4] }}>
+      <Icon name="people-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentBlue} />
+      <View style={{ flex: 1 }}><Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle }}>{challenge.participantsCount} participantes</Text><Text style={{ color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall }}>{checkedInTodayCount} {checkedInTodayCount === 1 ? "completó" : "completaron"} hoy</Text></View>
     </View>
     )}
   </View>
@@ -437,7 +438,7 @@ const ChallengeJourneyCard = memo(React.forwardRef<View, { challenge: ChallengeD
     <ChallengeJourneyPath totalDays={challenge.totalDays} currentDay={challenge.currentDay} completedDays={challenge.completedDays} play={playPath} />
         <View style={localStyles.journeyStatsRow}>
           <View style={localStyles.journeyStatItem}>
-            <Icon name="flame-outline" size={24} color={vibesTheme.colors.accentCoral} />
+            <Icon name="flame-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentCoral} />
             <Text style={localStyles.journeyStatText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               Racha actual:{" "}
               <Text style={localStyles.journeyStatValue}>
@@ -446,7 +447,7 @@ const ChallengeJourneyCard = memo(React.forwardRef<View, { challenge: ChallengeD
             </Text>
           </View>
           <View style={localStyles.journeyStatItem}>
-            <Icon name="trophy-outline" size={24} color={vibesTheme.colors.accentMustard} />
+            <Icon name="trophy-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentMustard} />
             <Text style={localStyles.journeyStatText}>
               Mejor racha:{" "}
               <Text style={localStyles.journeyStatValue}>
@@ -526,7 +527,7 @@ const DayCircle = memo(
         {state === "completed" ? (
           <Icon
             name="checkmark"
-            size={Math.max(14, size * 0.42)}
+            size={Math.max(ds.iconSize.sm, size * 0.42)}
             color={vibesTheme.colors.primaryText}
           />
         ) : (
@@ -602,7 +603,7 @@ export const PathProgress = memo(
       <View style={localStyles.progressCard}>
         <View style={localStyles.pathHeader}>
           <View style={localStyles.pathIconWrap}>
-            <Icon name="flag-outline" size={26} color={vibesTheme.colors.accentCoral} />
+            <Icon name="flag-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentCoral} />
           </View>
           <View style={localStyles.pathHeaderCopy}>
             <Text
@@ -617,7 +618,7 @@ export const PathProgress = memo(
             </Text>
           </View>
           <View style={localStyles.pathPill}>
-            <Icon name="trending-up-outline" size={15} color={vibesTheme.colors.accentCoral} />
+            <Icon name="trending-up-outline" size={ds.iconSize.sm} color={vibesTheme.colors.accentCoral} />
             <Text style={localStyles.pathPillText}>Progreso</Text>
           </View>
         </View>
@@ -648,7 +649,7 @@ export const PathProgress = memo(
 
         <View style={localStyles.pathMantraRow}>
           <View style={localStyles.pathMantraIcon}>
-            <Icon name="leaf-outline" size={20} color={vibesTheme.colors.secondaryText} />
+            <Icon name="leaf-outline" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} />
           </View>
           <Text style={localStyles.pathMantraText}>
             Cada paso te acerca a tu mejor versión.
@@ -664,7 +665,7 @@ export const PathProgress = memo(
                   localStyles.pathStatDotCompleted,
                 ]}
               >
-                <Icon name="checkmark" size={16} color={vibesTheme.colors.primaryText} />
+                <Icon name="checkmark" size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} />
               </View>
               <Text style={localStyles.pathStatValue}>{completedCount}</Text>
             </View>
@@ -866,7 +867,7 @@ export const CheckInButton = memo(
           <VibesLoader />
         ) : (
           <>
-            <Icon name={icon} size={21} color={vibesTheme.colors.background} />
+            <Icon name={icon} size={ds.iconSize.md} color={vibesTheme.colors.background} />
             <Text style={[localStyles.checkInText, isCompleted && { color: vibesTheme.colors.surface }]}>{label}</Text>
           </>
         )}
@@ -887,7 +888,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
     onPress={onPress}
     activeOpacity={0.9}
   >
-    <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.surface} />
+    <Icon name="chatbubble-outline" size={ds.iconSize.xl} color={vibesTheme.colors.surface} />
   </TouchableOpacity>
 ));
 
@@ -1424,7 +1425,7 @@ const ChallengeDetailScreen = () => {
     if (isChallengeUpcoming) {
       return (
         <View style={[localStyles.chatLockedRow, localStyles.upcomingChallengeNotice]}>
-          <Icon name="time-outline" size={18} color={palette.goldDeep} />
+          <Icon name="time-outline" size={ds.iconSize.md} color={palette.goldDeep} />
           <Text style={localStyles.chatLockedText}>
             {getChallengeStartsInLabel(challengeTimeline.startsInDays)}. El
             check-in se habilita cuando empiece el desafío.
@@ -1447,7 +1448,7 @@ const ChallengeDetailScreen = () => {
               localStyles.footerSliderHandleCompleted,
             ]}
           >
-            <Icon name="checkmark" size={22} color={vibesTheme.colors.primaryText} />
+            <Icon name="checkmark" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
           </View>
           <View style={localStyles.footerSliderCopy}>
             <Text style={localStyles.footerSliderTitle}>
@@ -1480,11 +1481,11 @@ const ChallengeDetailScreen = () => {
             pointerEvents="none"
           />
           <View style={localStyles.footerSliderChevrons} pointerEvents="none">
-            <Icon name="chevron-forward" size={19} color={vibesTheme.colors.accentBlue} />
-            <Icon name="chevron-forward" size={19} color={vibesTheme.colors.accentBlue} />
+            <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.accentBlue} />
+            <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.accentBlue} />
           </View>
           <View style={localStyles.footerSliderCopy}>
-            <Text style={[localStyles.footerSliderTitle, { textAlign: "center", fontSize: 14 }]}>
+            <Text style={[localStyles.footerSliderTitle, { textAlign: "center", ...ds.textStyles.bodySmall }]}>
               {checkInMutation.isPending ? "Guardando…" : "Deslizá para completar tu día"}
             </Text>
           </View>
@@ -1499,7 +1500,7 @@ const ChallengeDetailScreen = () => {
           {checkInMutation.isPending ? (
             <VibesLoader />
           ) : (
-            <Icon name="arrow-forward" size={27} color={vibesTheme.colors.surface} />
+            <Icon name="arrow-forward" size={ds.iconSize.lg} color={vibesTheme.colors.surface} />
           )}
         </View>
       </View>
@@ -1520,7 +1521,7 @@ const ChallengeDetailScreen = () => {
   if (!event && challengeId && isRestrictedChallenge) {
     return (
       <ScreenContainer style={localStyles.loadingScreen}>
-        <Icon name="lock-closed-outline" size={30} color={palette.gold} />
+        <Icon name="lock-closed-outline" size={ds.iconSize.xl} color={palette.gold} />
         <Text style={localStyles.loadingTitle}>Este desafío es privado</Text>
         <Text style={localStyles.privateBody}>
           {userId
@@ -1572,12 +1573,12 @@ const ChallengeDetailScreen = () => {
     <ScreenContainer style={localStyles.screen} edges={["left", "right"]}>
       <View style={{ paddingTop: insets.top, backgroundColor: vibesTheme.colors.surface }}>
         <AppHeader title="Desafío" showBack onBack={handleBack}
-          titleStyle={{ fontSize: 18, fontFamily: vibesTheme.fonts.semibold }}
+          titleStyle={{ ...ds.textStyles.heading }}
           right={<View style={{ flexDirection: "row", alignItems: "center" }}>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Compartir desafío" onPress={handleDirectShare} disabled={isPreparingShare || isSharing} style={localStyles.referenceAction}>
-              {isPreparingShare ? <VibesLoader /> : <Icon name="share-outline" size={25} color={vibesTheme.colors.primaryText} />}
+              {isPreparingShare ? <VibesLoader /> : <Icon name="share-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />}
             </TouchableOpacity>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Opciones del desafío" onPress={() => setMenuVisible(true)} style={localStyles.referenceAction}><Icon name="ellipsis-horizontal" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Opciones del desafío" onPress={() => setMenuVisible(true)} style={localStyles.referenceAction}><Icon name="ellipsis-horizontal" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
           </View>} />
       </View>
 
@@ -1585,7 +1586,7 @@ const ChallengeDetailScreen = () => {
         contentContainerStyle={[
           localStyles.scrollContent,
           {
-            paddingBottom: insets.bottom + 188,
+            paddingBottom: insets.bottom + /* ds-lint-allow DS-TODO: paddingBottom 188 fuera de escala (>48), parece layout */ 188,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -1640,8 +1641,8 @@ const ChallengeDetailScreen = () => {
               </View>
             </View> : null}
             {event?.id && (!event.visibility || event.visibility === "public") ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Invitar personas al desafío" onPress={() => { if (!userId) { navigation.navigate("Login" as never); return; } setInviteVisible(true); }} style={localStyles.inviteAction}>
-              <Icon name="person-add-outline" size={22} color={vibesTheme.colors.primaryText} />
-              <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.medium, fontSize: 16 }}>Invitar a alguien</Text>
+              <Icon name="person-add-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
+              <Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitleMedium }}>Invitar a alguien</Text>
             </TouchableOpacity> : null}
             <ChallengeJourneyCard ref={journeyCardRef} challenge={challenge} percent={percent} playPath={journeyInView} onLayout={checkJourneyInView} />
             {event?.id && (isJoined || isAdmin) ? (
@@ -1668,7 +1669,7 @@ const ChallengeDetailScreen = () => {
                       <Avatar
                         uri={request.requesterAvatar}
                         size={38}
-                        fallbackBackgroundColor={"rgba(216, 140, 122, 0.25)"}
+                        fallbackBackgroundColor={ds.withAlpha(ds.colors.base.coral, ds.opacity.medium)}
                         fallbackIconColor={palette.muted}
                       />
                       <Text style={localStyles.requestName} numberOfLines={1}>
@@ -1756,7 +1757,7 @@ const ChallengeDetailScreen = () => {
                 )}
               </TouchableOpacity>
               <View style={localStyles.chatLockedRow}>
-                <Icon name="trophy-outline" size={18} color={palette.muted} />
+                <Icon name="trophy-outline" size={ds.iconSize.md} color={palette.muted} />
                 <Text style={localStyles.chatLockedText}>
                   Cuando lo actives, también aparece tu progreso diario.
                 </Text>
@@ -1816,12 +1817,12 @@ const ChallengeDetailScreen = () => {
             celebrationAnimatedStyle,
           ]}
         >
-          <View style={[localStyles.completionCelebrationBadge, finalCelebration && { width: 64, height: 64, borderRadius: 32 }]}>
+          <View style={[localStyles.completionCelebrationBadge, finalCelebration && { width: 64, height: 64, borderRadius: ds.radii.pill }]}>
             <Icon
               name={
                 finalCelebration ? "trophy-outline" : "sparkles-outline"
               }
-              size={finalCelebration ? 30 : 20}
+              size={finalCelebration ? ds.iconSize.xl : ds.iconSize.md}
               color={vibesTheme.colors.primaryText}
             />
           </View>
@@ -1843,11 +1844,11 @@ const ChallengeDetailScreen = () => {
       >
         <View style={localStyles.menuHandle} />
         <View style={localStyles.completionShareBadge}>
-          <Icon name="trophy-outline" size={26} color={vibesTheme.colors.background} />
+          <Icon name="trophy-outline" size={ds.iconSize.lg} color={vibesTheme.colors.background} />
         </View>
         <Text style={localStyles.completionShareTitle}>{t("challengeShare.title")}</Text>
         <Text style={localStyles.completionShareBody}>{t("challengeShare.body")}</Text>
-        <ScrollView style={{ maxHeight: height * 0.42 }} contentContainerStyle={{ alignItems: "center", paddingVertical: 8 }}>
+        <ScrollView style={{ maxHeight: height * 0.42 }} contentContainerStyle={{ alignItems: "center", paddingVertical: ds.spacing[2] }}>
           {completionShareVisible ? (
             <ChallengeCompletionShareCard
               key={`${event?.id}-${completionImageAttempt}`}
@@ -1879,7 +1880,7 @@ const ChallengeDetailScreen = () => {
           disabled={isSharing || !completionImageReady}
           accessibilityState={{ disabled: isSharing || !completionImageReady, busy: isSharing }}
         >
-          <Icon name="share-outline" size={20} color={vibesTheme.colors.background} />
+          <Icon name="share-outline" size={ds.iconSize.md} color={vibesTheme.colors.background} />
           <Text style={localStyles.completionSharePrimaryText}>{isSharing || (!completionImageReady && !completionImageFailed) ? t("challengeShare.preparingImage") : t("challengeShare.share")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -1936,7 +1937,7 @@ const ChallengeDetailScreen = () => {
             setMenuVisible(false);
             navigation.dispatch(StackActions.push("CreateChallenge", { event }));
           }}>
-            <Icon name="create-outline" size={20} color={palette.text} />
+            <Icon name="create-outline" size={ds.iconSize.md} color={palette.text} />
             <Text style={localStyles.menuItemText}>Editar desafío</Text>
           </TouchableOpacity>
         ) : null}
@@ -1949,7 +1950,7 @@ const ChallengeDetailScreen = () => {
               setTimeout(() => setRestartConfirmVisible(true), 320);
             }}
           >
-            <Icon name="refresh-outline" size={20} color={palette.text} />
+            <Icon name="refresh-outline" size={ds.iconSize.md} color={palette.text} />
             <Text style={localStyles.menuItemText}>{t(event && isCuratedChallenge(event) ? "challengeRestart.start" : "challengeRestart.restart")}</Text>
           </TouchableOpacity>
         ) : null}
@@ -1960,7 +1961,7 @@ const ChallengeDetailScreen = () => {
             setMenuVisible(false);
           }}
         >
-          <Icon name="people-outline" size={20} color={palette.text} />
+          <Icon name="people-outline" size={ds.iconSize.md} color={palette.text} />
           <Text style={localStyles.menuItemText}>
             Participantes (
             {challenge.participantsCount})
@@ -1979,7 +1980,7 @@ const ChallengeDetailScreen = () => {
           {isPreparingShare ? (
             <VibesLoader />
           ) : (
-            <Icon name="share-social-outline" size={20} color={palette.text} />
+            <Icon name="share-social-outline" size={ds.iconSize.md} color={palette.text} />
           )}
           <Text style={localStyles.menuItemText}>
             {isPreparingShare
@@ -1995,7 +1996,7 @@ const ChallengeDetailScreen = () => {
             onPress={handleDeleteChallenge}
             disabled={deleteChallengeMutation.isPending}
           >
-            <Icon name="trash-outline" size={20} color={palette.red} />
+            <Icon name="trash-outline" size={ds.iconSize.md} color={palette.red} />
             <Text
               style={[localStyles.menuItemText, localStyles.menuItemTextDanger]}
             >
@@ -2011,7 +2012,7 @@ const ChallengeDetailScreen = () => {
             onPress={handleLeaveChallenge}
             disabled={leaveChallengeMutation.isPending}
           >
-            <Icon name="exit-outline" size={20} color={palette.red} />
+            <Icon name="exit-outline" size={ds.iconSize.md} color={palette.red} />
             <Text
               style={[localStyles.menuItemText, localStyles.menuItemTextDanger]}
             >
@@ -2059,54 +2060,50 @@ const ChallengeDetailScreen = () => {
 };
 
 const localStyles = StyleSheet.create({
-  inviteAction: { minHeight: 50, marginBottom: 18, flexDirection: "row", gap: 10, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
+  inviteAction: { minHeight: 50, marginBottom: ds.spacing[4], flexDirection: "row", gap: ds.spacing[3], alignItems: "center", justifyContent: "center", borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
   referenceAction: { width: 40, height: 44, justifyContent: "center", alignItems: "center" },
-  referenceCover: { width: "auto", height: 190, marginHorizontal: 18, marginTop: 6, marginBottom: 16, borderRadius: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
-  referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
-  referenceBadge: { overflow: "hidden", borderRadius: 18, paddingHorizontal: 12, paddingVertical: 5, color: vibesTheme.colors.accentBlue, backgroundColor: `${vibesTheme.colors.accentBlue}14`, fontSize: 13, fontFamily: vibesTheme.fonts.medium },
-  referenceTitle: { fontSize: 32, lineHeight: 39, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, marginBottom: 12 },
+  referenceCover: { width: "auto", height: 190, marginHorizontal: ds.spacing[4], marginTop: ds.spacing[2], marginBottom: ds.spacing[4], borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
+  referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2], marginBottom: ds.spacing[3] },
+  referenceBadge: { overflow: "hidden", borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[3], paddingVertical: ds.spacing[1], color: vibesTheme.colors.accentBlue, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle), ...ds.textStyles.labelMedium },
+  referenceTitle: { ...ds.textStyles.display, color: vibesTheme.colors.primaryText, marginBottom: ds.spacing[3] },
 
-  descriptionSection: { paddingVertical: 20, gap: 10 },
-  descriptionHeading: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 },
-  fullDescription: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 17, lineHeight: 26 },
+  descriptionSection: { paddingVertical: ds.spacing[5], gap: ds.spacing[3] },
+  descriptionHeading: { color: vibesTheme.colors.primaryText, ...ds.textStyles.heading },
+  fullDescription: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.body },
   descriptionPreviewRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 4,
+    gap: ds.spacing[1],
   },
   descriptionPreviewText: {
     flex: 1,
   },
   descriptionMoreButton: {
-    paddingVertical: 2,
+    paddingVertical: ds.spacing[1],
   },
   descriptionMoreText: {
     color: vibesTheme.colors.accentBlue,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
-    lineHeight: 26,
+    ...ds.textStyles.subtitle,
     textDecorationLine: "underline",
   },
   descriptionSheet: {
     backgroundColor: vibesTheme.colors.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 22,
-    paddingTop: 12,
-    paddingBottom: 28,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[6],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[8],
   },
   descriptionSheetTitle: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 24,
-    lineHeight: 30,
-    marginBottom: 14,
+    ...ds.textStyles.title,
+    marginBottom: ds.spacing[4],
   },
   descriptionSheetScroll: {
     maxHeight: 420,
   },
   descriptionSheetContent: {
-    paddingBottom: 12,
+    paddingBottom: ds.spacing[3],
   },
   screen: {
     flex: 1,
@@ -2116,131 +2113,117 @@ const localStyles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 18,
+    gap: ds.spacing[4],
     backgroundColor: palette.bg,
-    paddingHorizontal: 24,
+    paddingHorizontal: ds.spacing[6],
   },
   loadingTitle: {
     color: palette.text,
-    fontSize: 22,
-    lineHeight: 27,
+    ...ds.textStyles.title,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
   },
   privateBody: {
     color: vibesTheme.colors.muted,
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.body,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.regular,
     maxWidth: 320,
   },
   loadingBackButton: {
-    borderRadius: 22,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    borderRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[5],
+    paddingVertical: ds.spacing[3],
     backgroundColor: palette.gold,
   },
   loadingBackText: {
     color: vibesTheme.colors.surface,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   scrollContent: {
-    paddingBottom: 188,
+    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 188 fuera de escala (>48), parece layout */ 188,
   },
   contentShell: {
-    marginTop: 2,
-    paddingHorizontal: 20,
+    marginTop: ds.spacing[1],
+    paddingHorizontal: ds.spacing[5],
     zIndex: 2,
   },
   challengeIntroBlock: {
-    paddingHorizontal: 4,
-    paddingTop: 10,
-    paddingBottom: 14,
+    paddingHorizontal: ds.spacing[1],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[4],
   },
   challengeTypePill: {
     alignSelf: "flex-start",
   },
   challengeTypePillText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 16,
+    ...ds.textStyles.label,
     letterSpacing: 2,
     textTransform: "uppercase",
-    fontFamily: vibesTheme.fonts.bold,
   },
   challengeIntroTitle: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: palette.text,
-    fontSize: 34,
-    lineHeight: 39,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.display,
   },
   challengeIntroMetaRow: {
-    marginTop: 14,
+    marginTop: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   challengeIntroMetaItem: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   challengeIntroMetaText: {
     flex: 1,
     color: palette.text,
-    fontSize: 19,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
   challengeParticipantText: {
     color: palette.text,
-    fontSize: 19,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
   challengeTodayText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
   challengeIntroDivider: {
     width: 1,
     height: 42,
-    backgroundColor: "rgba(43, 43, 43, 0.12)",
+    backgroundColor: ds.colors.border.default,
   },
   heroInfoStack: {
-    marginBottom: 16,
+    marginBottom: ds.spacing[4],
   },
   content: {
     paddingTop: 0,
-    gap: 16,
+    gap: ds.spacing[4],
   },
   stickyFooter: {
     position: "absolute",
     left: 20,
     right: 20,
     zIndex: 40,
-    elevation: 16,
+    elevation: ds.shadows.lg.elevation,
   },
   stickyFooterCard: {
     backgroundColor: "transparent",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   expandedChallengeHeader: {
     position: "absolute",
     left: 0,
     right: 0,
     zIndex: 63,
-    elevation: 21,
-    paddingLeft: 20,
-    paddingRight: 20,
+    elevation: ds.shadows.lg.elevation,
+    paddingLeft: ds.spacing[5],
+    paddingRight: ds.spacing[5],
     flexDirection: "column",
     alignItems: "stretch",
-    gap: 14,
+    gap: ds.spacing[4],
   },
   expandedChallengeHeaderTopRow: {
     flexDirection: "row",
@@ -2252,39 +2235,35 @@ const localStyles = StyleSheet.create({
   expandedChallengeHeaderActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   expandedChallengeHeaderIconButton: {
     width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(43, 43, 43, 0.24)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.28)",
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.scrim),
   },
   expandedChallengeHeaderCopy: {
     width: "100%",
-    paddingHorizontal: 10,
+    paddingHorizontal: ds.spacing[3],
   },
   expandedChallengeHeaderTitle: {
     color: WHITE,
-    fontSize: 28,
-    lineHeight: 33,
+    ...ds.textStyles.title,
     textAlign: "left",
-    fontFamily: vibesTheme.fonts.bold,
-    textShadowColor: "rgba(43, 43, 43, 0.5)",
+    textShadowColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.strong),
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
   expandedChallengeHeaderSubtitle: {
-    marginTop: 10,
-    color: "rgba(254, 254, 253, 0.9)",
-    fontSize: 17,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
-    textShadowColor: "rgba(43, 43, 43, 0.42)",
+    marginTop: ds.spacing[3],
+    color: ds.colors.bg.surfaceTranslucent,
+    ...ds.textStyles.subtitleMedium,
+    textShadowColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.strong),
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
@@ -2293,148 +2272,132 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     minHeight: 84,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingHorizontal: ds.spacing[5],
+    paddingBottom: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
     backgroundColor: WHITE,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(43, 43, 43, 0.08)",
+    borderBottomColor: ds.colors.border.subtle,
     shadowColor: palette.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: ds.shadows.md.shadowOpacity,
+    shadowRadius: ds.shadows.md.shadowRadius,
+    shadowOffset: ds.shadows.md.shadowOffset,
     zIndex: 61,
-    elevation: 19,
+    elevation: ds.shadows.md.elevation,
   },
   collapsedChallengeHeaderBackButton: {
     width: 48,
     height: 48,
-    borderRadius: 20,
+    borderRadius: ds.radii.xl,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.82)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.06)",
+    borderColor: ds.colors.border.subtle,
   },
   collapsedChallengeHeaderThumbnail: {
     width: 38,
     height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(244, 163, 64, 0.32)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
   },
   collapsedChallengeHeaderTitle: {
     flex: 1,
     color: palette.text,
-    fontSize: 21,
-    lineHeight: 24,
+    ...ds.textStyles.heading,
     textAlign: "left",
-    fontFamily: vibesTheme.fonts.medium,
   },
   headerIconPlaceholder: {
     width: 40,
     height: 40,
   },
   joinRequestButton: {
-    borderRadius: 20,
+    borderRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.primaryText,
     borderWidth: 2,
-    borderColor: "rgba(254, 254, 253, 0.18)",
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.medium),
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: palette.accentBlueDeep,
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: ds.shadows.md.shadowOpacity,
+    shadowRadius: ds.shadows.md.shadowRadius,
+    shadowOffset: ds.shadows.md.shadowOffset,
   },
   joinRequestButtonDisabled: {
     opacity: 0.6,
   },
   joinRequestButtonTitle: {
     color: vibesTheme.colors.background,
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   joinRequestButtonSubtitle: {
-    marginTop: 4,
+    marginTop: ds.spacing[1],
     color: vibesTheme.colors.surface,
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.labelMedium,
   },
   chatLockedRow: {
-    borderRadius: 18,
-    backgroundColor: "rgba(254, 254, 253, 0.82)",
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 2,
-    borderColor: "rgba(254, 254, 253, 0.84)",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: ds.colors.bg.surfaceTranslucent,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   upcomingChallengeNotice: {
-    backgroundColor: "rgba(244, 163, 64, 0.20)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.48)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
   },
   chatLockedText: {
     flex: 1,
     color: palette.muted,
-    fontSize: 14,
-    lineHeight: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
   completionCelebration: {
     position: "absolute",
     left: 24,
     right: 24,
     zIndex: 90,
-    borderRadius: 24,
-    backgroundColor: "rgba(254, 254, 253, 0.98)",
+    borderRadius: ds.radii.xl,
+    backgroundColor: ds.colors.bg.surface,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.22)",
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
+    paddingHorizontal: ds.spacing[5],
+    paddingVertical: ds.spacing[4],
     alignItems: "center",
-    shadowColor: vibesTheme.colors.secondaryText,
-    shadowOpacity: 0.18,
-    shadowRadius: 26,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 30,
+    ...ds.shadows.lg,
   },
   completionCelebrationBadge: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: ds.radii.pill,
     backgroundColor: palette.gold,
     alignItems: "center",
     justifyContent: "center",
   },
   completionCelebrationTitle: {
-    marginTop: 12,
+    marginTop: ds.spacing[3],
     color: palette.text,
-    fontSize: 24,
-    lineHeight: 28,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
   completionCelebrationBody: {
-    marginTop: 6,
+    marginTop: ds.spacing[2],
     color: palette.muted,
-    fontSize: 16,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
     textAlign: "center",
   },
   heroMedia: {
     minHeight: 195,
-    backgroundColor: "rgba(244, 163, 64, 0.32)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
     justifyContent: "flex-end",
   },
   heroImage: {
@@ -2448,7 +2411,7 @@ const localStyles = StyleSheet.create({
   },
   heroScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(43, 43, 43, 0.62)",
+    backgroundColor: /* ds-lint-allow DS-TODO: ink al 62%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.62)",
   },
   heroTopBar: {
     position: "absolute",
@@ -2458,84 +2421,78 @@ const localStyles = StyleSheet.create({
     zIndex: 3,
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: ds.spacing[5],
   },
   heroIconButton: {
     width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(43, 43, 43, 0.28)",
+    backgroundColor: ds.colors.scrim,
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.16)",
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.soft),
   },
   heroMetaPillsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginTop: 14,
+    gap: ds.spacing[2],
+    marginTop: ds.spacing[4],
   },
   heroMetaPill: {
     minHeight: 34,
-    borderRadius: 999,
-    paddingHorizontal: 12,
+    borderRadius: ds.radii.pill,
+    paddingHorizontal: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(254, 254, 253, 0.16)",
+    gap: ds.spacing[2],
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.soft),
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.12)",
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.soft),
   },
   heroMetaPillText: {
     color: WHITE,
-    fontSize: 13,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
   infoRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   infoCard: {
     flex: 1,
     minHeight: 92,
-    borderRadius: 20,
+    borderRadius: ds.radii.xl,
     backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.07)",
-    padding: 14,
+    borderColor: ds.colors.border.subtle,
+    padding: ds.spacing[4],
     justifyContent: "center",
   },
   infoValue: {
     color: palette.text,
-    fontSize: 30,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.display,
   },
   infoValueRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    gap: 2,
+    gap: ds.spacing[1],
   },
   infoValueSuffix: {
     color: palette.text,
-    fontSize: 20,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
   },
   infoLabel: {
-    marginTop: 4,
+    marginTop: ds.spacing[1],
     color: palette.muted,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
   requestCard: {
-    borderRadius: 22,
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
+    borderRadius: ds.radii.xl,
+    backgroundColor: ds.colors.bg.selected,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.18)",
-    padding: 16,
-    gap: 12,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
+    padding: ds.spacing[4],
+    gap: ds.spacing[3],
   },
   requestCardHeader: {
     flexDirection: "row",
@@ -2544,63 +2501,55 @@ const localStyles = StyleSheet.create({
   },
   requestCardTitle: {
     color: palette.text,
-    fontSize: 20,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.heading,
   },
   requestCardCount: {
     color: palette.goldDeep,
-    fontSize: 20,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
   },
   requestRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   requestProfile: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   requestAvatar: {
     width: 38,
     height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(244, 163, 64, 0.22)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   requestName: {
     flex: 1,
     color: palette.text,
-    fontSize: 16,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   requestApproveButton: {
-    borderRadius: 999,
-    backgroundColor: "rgba(57, 120, 184, 0.22)",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[2],
   },
   requestApproveText: {
     color: palette.text,
-    fontSize: 14,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.label,
   },
   celebrationCard: {
     overflow: "hidden",
-    borderRadius: 24,
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
+    borderRadius: ds.radii.xl,
+    backgroundColor: ds.colors.bg.selected,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.18)",
-    padding: 18,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
+    padding: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: ds.spacing[4],
   },
   celebrationGlow: {
     position: "absolute",
@@ -2608,110 +2557,94 @@ const localStyles = StyleSheet.create({
     top: -20,
     width: 180,
     height: 180,
-    borderRadius: 90,
-    backgroundColor: "rgba(244, 163, 64, 0.24)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   celebrationBadge: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.23)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.82)",
+    borderColor: ds.colors.bg.surfaceTranslucent,
   },
   celebrationCopy: {
     flex: 1,
   },
   celebrationTitle: {
     color: palette.text,
-    fontSize: 22,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
   },
   celebrationBody: {
-    marginTop: 4,
+    marginTop: ds.spacing[1],
     color: palette.muted,
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   streakCard: {
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     backgroundColor: palette.surfaceAlt,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.18)",
-    padding: 18,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
+    padding: ds.spacing[4],
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 16,
+    gap: ds.spacing[4],
   },
   cardTitle: {
     color: palette.text,
-    fontSize: 24,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
   },
   cardSubtitle: {
-    marginTop: 4,
+    marginTop: ds.spacing[1],
     color: palette.muted,
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.subtitleMedium,
   },
   streakMetrics: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: ds.spacing[4],
   },
   streakValue: {
     color: palette.goldDeep,
-    fontSize: 32,
-    lineHeight: 34,
+    ...ds.textStyles.display,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.bold,
   },
   streakLabel: {
     color: palette.muted,
-    fontSize: 13,
+    ...ds.textStyles.label,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.semibold,
   },
   metricDivider: {
     width: 1,
     height: 42,
-    backgroundColor: "rgba(43, 43, 43, 0.1)",
+    backgroundColor: ds.colors.border.default,
   },
   progressCard: {
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.07)",
-    paddingHorizontal: 18,
-    paddingVertical: 20,
-    shadowColor: vibesTheme.colors.secondaryText,
-    shadowOpacity: 0.07,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
+    borderColor: ds.colors.border.subtle,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[5],
+    ...ds.shadows.md,
   },
   journeyCard: {
-    borderRadius: 24,
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
+    borderRadius: ds.radii.xl,
+    backgroundColor: ds.colors.bg.surface,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    paddingHorizontal: 18,
-    paddingTop: 22,
-    paddingBottom: 18,
-    shadowColor: vibesTheme.colors.secondaryText,
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    borderColor: ds.colors.border.subtle,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[6],
+    paddingBottom: ds.spacing[4],
+    ...ds.shadows.md,
   },
   journeyHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 14,
+    gap: ds.spacing[4],
   },
   journeyHeaderCopy: {
     flex: 1,
@@ -2719,39 +2652,35 @@ const localStyles = StyleSheet.create({
   },
   journeyTitle: {
     color: palette.text,
-    fontSize: 32,
-    lineHeight: 36,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.display,
   },
   journeySubtitle: {
-    marginTop: 6,
+    marginTop: ds.spacing[2],
     color: palette.muted,
-    fontSize: 17,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   journeyPercent: {
     color: vibesTheme.colors.accentBlue,
-    fontSize: 46,
-    lineHeight: 50,
+    fontSize: /* ds-lint-allow DS-TODO: fontSize 46 (peso 700) sin mapeo claro en §3.5.1 */ 46,
+    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 50,
     fontFamily: vibesTheme.fonts.bold,
   },
   journeyTrack: {
-    marginTop: 20,
+    marginTop: ds.spacing[5],
     height: 8,
-    borderRadius: 999,
+    borderRadius: ds.radii.pill,
     overflow: "hidden",
-    backgroundColor: "rgba(110, 110, 110, 0.18)",
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
   },
   journeyTrackFill: {
     height: "100%",
-    borderRadius: 999,
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.accentBlue,
   },
   journeyDaysRow: {
-    paddingTop: 26,
-    paddingBottom: 22,
-    paddingHorizontal: 2,
+    paddingTop: ds.spacing[6],
+    paddingBottom: ds.spacing[6],
+    paddingHorizontal: ds.spacing[1],
     flexDirection: "row",
     alignItems: "flex-start",
   },
@@ -2767,42 +2696,38 @@ const localStyles = StyleSheet.create({
     left: -2,
     width: 44,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 18,
+    ...ds.textStyles.subtitle,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.bold,
   },
   journeyConnector: {
     width: 26,
     height: 4,
-    borderRadius: 2,
-    marginTop: 18,
-    marginHorizontal: -1,
-    backgroundColor: "rgba(110, 110, 110, 0.16)",
+    borderRadius: ds.radii.pill,
+    marginTop: ds.spacing[4],
+    marginHorizontal: -ds.spacing[0],
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
   },
   journeyConnectorMissed: {
-    backgroundColor: "rgba(216, 140, 122, 0.45)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.strong),
   },
   journeyConnectorDone: {
-    backgroundColor: "rgba(57, 120, 184, 0.45)",
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.strong),
   },
   journeyStatsRow: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(43, 43, 43, 0.1)",
-    paddingTop: 16,
-    gap: 12,
+    borderTopColor: ds.colors.border.default,
+    paddingTop: ds.spacing[4],
+    gap: ds.spacing[3],
   },
   journeyStatItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   journeyStatText: {
     flex: 1,
     color: palette.muted,
-    fontSize: 16,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   journeyStatValue: {
     color: palette.text,
@@ -2811,20 +2736,20 @@ const localStyles = StyleSheet.create({
   journeyStatDivider: {
     width: 1,
     height: 42,
-    backgroundColor: "rgba(43, 43, 43, 0.12)",
+    backgroundColor: ds.colors.border.default,
   },
   pathHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   pathIconWrap: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(216, 140, 122, 0.12)",
+    backgroundColor: ds.colors.feedback.errorBg,
   },
   pathHeaderCopy: {
     flex: 1,
@@ -2832,35 +2757,30 @@ const localStyles = StyleSheet.create({
   },
   sectionTitle: {
     color: palette.text,
-    fontSize: 27,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
   },
   pathSubtitle: {
-    marginTop: 2,
-    color: "rgba(43, 43, 43, 0.58)",
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.subtitle,
+    marginTop: ds.spacing[1],
+    color: /* ds-lint-allow DS-TODO: ink al 58%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.58)",
+    ...ds.textStyles.subtitleMedium,
   },
   pathPill: {
     minHeight: 36,
-    borderRadius: 18,
-    paddingHorizontal: 12,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
+    gap: ds.spacing[2],
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
   },
   pathPillText: {
     color: vibesTheme.colors.accentBlue,
-    fontSize: 13,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.label,
   },
   pathScrollContent: {
-    paddingTop: 28,
-    paddingBottom: 26,
-    paddingHorizontal: 2,
+    paddingTop: ds.spacing[8],
+    paddingBottom: ds.spacing[6],
+    paddingHorizontal: ds.spacing[1],
     flexDirection: "row",
     alignItems: "center",
   },
@@ -2871,15 +2791,15 @@ const localStyles = StyleSheet.create({
   pathConnector: {
     width: 20,
     height: 4,
-    borderRadius: 2,
-    marginHorizontal: -1,
-    backgroundColor: "rgba(110, 110, 110, 0.16)",
+    borderRadius: ds.radii.pill,
+    marginHorizontal: -ds.spacing[0],
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
   },
   pathConnectorDone: {
-    backgroundColor: "rgba(57, 120, 184, 0.34)",
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
   },
   pathConnectorMissed: {
-    backgroundColor: "rgba(216, 140, 122, 0.34)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.scrim),
   },
   dayCircle: {
     alignItems: "center",
@@ -2888,32 +2808,30 @@ const localStyles = StyleSheet.create({
     shadowColor: palette.gold,
   },
   dayCompleted: {
-    backgroundColor: "rgba(57, 120, 184, 0.32)",
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
     borderColor: vibesTheme.colors.accentBlue,
   },
   dayActive: {
     backgroundColor: vibesTheme.colors.accentMustard,
-    borderColor: "rgba(244, 163, 64, 0.52)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
     shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.3,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 4 },
   },
   dayFuture: {
-    backgroundColor: "rgba(110, 110, 110, 0.12)",
-    borderColor: "rgba(110, 110, 110, 0.20)",
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
   },
   dayMissed: {
-    backgroundColor: "rgba(216, 140, 122, 0.22)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
     borderColor: vibesTheme.colors.accentCoral,
   },
   dayText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    lineHeight: 20,
+    ...ds.textStyles.subtitle,
     includeFontPadding: false,
     fontVariant: ["tabular-nums"],
-    fontFamily: vibesTheme.fonts.bold,
   },
   dayTextActive: {
     color: vibesTheme.colors.primaryText,
@@ -2927,32 +2845,30 @@ const localStyles = StyleSheet.create({
   pathMantraRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 20,
+    gap: ds.spacing[3],
+    marginBottom: ds.spacing[5],
   },
   pathMantraIcon: {
     width: 38,
     height: 38,
-    borderRadius: 19,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(110, 110, 110, 0.12)",
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
   },
   pathMantraText: {
     flex: 1,
-    color: "rgba(43, 43, 43, 0.68)",
-    fontSize: 17,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    color: /* ds-lint-allow DS-TODO: ink al 68%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.68)",
+    ...ds.textStyles.subtitleMedium,
   },
   pathStatsCard: {
     minHeight: 76,
-    borderRadius: 18,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    backgroundColor: "rgba(254, 254, 253, 0.72)",
-    paddingHorizontal: 8,
-    paddingVertical: 12,
+    borderColor: ds.colors.border.subtle,
+    backgroundColor: /* ds-lint-allow DS-TODO: paper al 72%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.72)",
+    paddingHorizontal: ds.spacing[2],
+    paddingVertical: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
   },
@@ -2962,90 +2878,85 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   pathStatItemIndented: {
-    paddingLeft: 10,
+    paddingLeft: ds.spacing[3],
   },
   pathStatTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
     minHeight: 28,
   },
   pathStatDot: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
   },
   pathStatDotCompleted: {
-    backgroundColor: "rgba(216, 140, 122, 0.24)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
   },
   pathStatDotCurrent: {
     backgroundColor: palette.accentBlue,
   },
   pathStatDotFuture: {
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
+    backgroundColor: ds.colors.bg.surface,
   },
   pathStatValue: {
     color: palette.text,
-    fontSize: 18,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
   },
   pathStatLabel: {
-    marginTop: 6,
-    color: "rgba(43, 43, 43, 0.62)",
-    fontSize: 11,
-    lineHeight: 13,
-    fontFamily: vibesTheme.fonts.medium,
+    marginTop: ds.spacing[2],
+    color: /* ds-lint-allow DS-TODO: ink al 62%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.62)",
+    ...ds.textStyles.micro,
   },
   pathStatDivider: {
     width: 1,
     height: 42,
-    backgroundColor: "rgba(43, 43, 43, 0.08)",
+    backgroundColor: ds.colors.bg.subtle,
   },
   compactTrack: {
     height: 12,
-    borderRadius: 6,
+    borderRadius: ds.radii.pill,
     backgroundColor: palette.faint,
     overflow: "hidden",
   },
   compactFill: {
     height: "100%",
-    borderRadius: 6,
+    borderRadius: ds.radii.sm,
     backgroundColor: palette.gold,
   },
   milestonesRow: {
-    marginTop: 18,
+    marginTop: ds.spacing[4],
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   milestoneItem: {
     alignItems: "center",
     flex: 1,
-    gap: 6,
+    gap: ds.spacing[2],
   },
   milestoneText: {
     color: palette.muted,
-    fontSize: 12,
+    ...ds.textStyles.caption,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.semibold,
   },
   calendarRow: {
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: ds.spacing[3],
   },
   calendarCell: {
     width: `${100 / 7}%`,
     alignItems: "center",
   },
   summaryCard: {
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.07)",
-    padding: 18,
+    borderColor: ds.colors.border.subtle,
+    padding: ds.spacing[4],
   },
   summaryHeader: {
     flexDirection: "row",
@@ -3054,47 +2965,42 @@ const localStyles = StyleSheet.create({
   },
   percentText: {
     color: palette.goldDeep,
-    fontSize: 25,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.title,
   },
   summaryTrack: {
-    marginTop: 14,
+    marginTop: ds.spacing[4],
     height: 10,
-    borderRadius: 5,
+    borderRadius: ds.radii.pill,
     backgroundColor: palette.faint,
     overflow: "hidden",
   },
   summaryFill: {
     height: "100%",
-    borderRadius: 5,
+    borderRadius: ds.radii.xs,
     backgroundColor: palette.accentBlue,
   },
   summaryCopy: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: palette.muted,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   checkInButton: {
     minHeight: 58,
-    borderRadius: 29,
+    borderRadius: ds.radii.xl,
     backgroundColor: palette.gold,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 9,
-    paddingHorizontal: 18,
+    gap: ds.spacing[2],
+    paddingHorizontal: ds.spacing[4],
     shadowColor: palette.goldDeep,
-    shadowOpacity: 0.24,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (palette.goldDeep): ¿glow de marca o ds.shadows? */ 0.24,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 15,
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 8 },
   },
   checkInCompleted: {
     backgroundColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 0,
+    ...ds.shadows.none,
   },
   checkInBroken: {
     backgroundColor: palette.red,
@@ -3105,30 +3011,30 @@ const localStyles = StyleSheet.create({
   },
   footerSliderTrack: {
     minHeight: 68,
-    borderRadius: 34,
-    backgroundColor: `${vibesTheme.colors.surface}D9`,
+    borderRadius: /* ds-lint-allow DS-TODO: borderRadius 34 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 34,
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1.5,
-    borderColor: `${vibesTheme.colors.accentBlue}A6`,
+    borderColor: /* ds-lint-allow DS-TODO: blue al 65% sin opacidad cercana */ `${vibesTheme.colors.accentBlue}A6`,
     overflow: "hidden",
     justifyContent: "center",
-    paddingLeft: 70,
-    paddingRight: 36,
+    paddingLeft: /* ds-lint-allow DS-TODO: paddingLeft 70 fuera de escala (>48), parece layout */ 70,
+    paddingRight: ds.spacing[8],
   },
   footerSliderTrackCompleted: {
     backgroundColor: vibesTheme.colors.surface,
-    borderColor: `${vibesTheme.colors.accentBlue}A6`,
+    borderColor: /* ds-lint-allow DS-TODO: blue al 65% sin opacidad cercana */ `${vibesTheme.colors.accentBlue}A6`,
   },
   footerSliderTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: `${vibesTheme.colors.accentBlue}24`,
+    backgroundColor: ds.colors.feedback.infoBg,
   },
   footerSliderFill: {
     position: "absolute",
     left: FOOTER_SLIDER_FILL_LEFT,
     top: 0,
     bottom: 0,
-    borderRadius: 34,
-    backgroundColor: `${vibesTheme.colors.accentBlue}2E`,
+    borderRadius: /* ds-lint-allow DS-TODO: borderRadius 34 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 34,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
   },
   footerSliderHandle: {
     position: "absolute",
@@ -3141,32 +3047,28 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentBlue,
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.82)",
+    borderColor: ds.colors.bg.surfaceTranslucent,
     shadowColor: vibesTheme.colors.accentCoral,
-    shadowOpacity: 0,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentCoral): ¿glow de marca o ds.shadows? */ 0,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
   },
   footerSliderHandleCompleted: {
     backgroundColor: vibesTheme.colors.accentBlue,
-    shadowOpacity: 0,
+    shadowOpacity: ds.shadows.none.shadowOpacity,
   },
   footerSliderCopy: {
     justifyContent: "center",
-    gap: 2,
+    gap: ds.spacing[1],
     zIndex: 1,
   },
   footerSliderTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 17,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   footerSliderSubtitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.labelMedium,
   },
   footerSliderChevrons: {
     position: "absolute",
@@ -3175,95 +3077,83 @@ const localStyles = StyleSheet.create({
     bottom: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
+    gap: ds.spacing[1],
     opacity: 0.4,
   },
   checkInText: {
     color: vibesTheme.colors.surface,
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
     textAlign: "center",
   },
   floatingChatButton: {
     alignSelf: "flex-end",
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.primaryText,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.16,
-    shadowRadius: 6,
-    elevation: 5,
+    ...ds.shadows.sm,
   },
   chatRow: {
-    borderRadius: 22,
-    backgroundColor: "rgba(110, 110, 110, 0.9)",
+    borderRadius: ds.radii.xl,
+    backgroundColor: ds.colors.base.inkSoft,
     borderWidth: 2,
-    borderColor: "rgba(254, 254, 253, 0.18)",
-    padding: 14,
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.medium),
+    padding: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   chatIconWrap: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.16)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.soft),
   },
   chatCopy: {
     flex: 1,
   },
   chatTitle: {
     color: vibesTheme.colors.background,
-    fontSize: 19,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
   },
   chatSubtitle: {
-    marginTop: 2,
-    color: "rgba(254, 254, 253, 0.76)",
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.subtitle,
+    marginTop: ds.spacing[1],
+    color: /* ds-lint-allow DS-TODO: paper al 76%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.76)",
+    ...ds.textStyles.labelMedium,
   },
   menuSheet: {
     backgroundColor: palette.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 22,
-    paddingTop: 12,
-    paddingBottom: 28,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[6],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[8],
   },
   completionShareBadge: {
     alignSelf: "center",
     width: 56,
     height: 56,
-    borderRadius: 999,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
-    marginBottom: 14,
+    marginBottom: ds.spacing[4],
   },
   completionShareTitle: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 24,
-    lineHeight: 30,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
   completionShareBody: {
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.body,
     textAlign: "center",
-    marginTop: 8,
-    marginBottom: 22,
+    marginTop: ds.spacing[2],
+    marginBottom: ds.spacing[6],
   },
   completionSharePrimary: {
     minHeight: 54,
@@ -3271,58 +3161,52 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: ds.spacing[3],
     backgroundColor: vibesTheme.colors.primaryText,
   },
   completionSharePrimaryText: {
     color: vibesTheme.colors.background,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
+    ...ds.textStyles.subtitle,
   },
   completionShareSecondary: {
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 6,
+    marginTop: ds.spacing[2],
   },
   completionShareSecondaryText: {
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 16,
+    ...ds.textStyles.subtitleMedium,
   },
   menuHandle: {
     alignSelf: "center",
     width: 44,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.16)",
-    marginBottom: 16,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.border.default,
+    marginBottom: ds.spacing[4],
   },
   menuTitle: {
     color: palette.text,
-    fontSize: 22,
-    lineHeight: 26,
-    fontFamily: vibesTheme.fonts.regular,
-    marginBottom: 10,
+    ...ds.textStyles.title,
+    marginBottom: ds.spacing[3],
   },
   menuItem: {
     minHeight: 54,
-    borderRadius: 18,
-    paddingHorizontal: 14,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: "rgba(254, 254, 253, 0.72)",
-    marginTop: 10,
+    gap: ds.spacing[3],
+    backgroundColor: /* ds-lint-allow DS-TODO: paper al 72%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.72)",
+    marginTop: ds.spacing[3],
   },
   menuItemDanger: {
     backgroundColor: palette.redSoft,
   },
   menuItemText: {
     color: palette.text,
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   menuItemTextDanger: {
     color: palette.red,
@@ -3330,33 +3214,28 @@ const localStyles = StyleSheet.create({
   sharePreparingOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
-    elevation: 30,
+    elevation: ds.shadows.lg.elevation,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(43, 43, 43, 0.08)",
+    backgroundColor: ds.colors.bg.subtle,
   },
   sharePreparingCard: {
     minWidth: 230,
     minHeight: 78,
-    borderRadius: 24,
-    paddingHorizontal: 20,
+    borderRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[5],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: ds.spacing[3],
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.14,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    borderColor: ds.colors.border.subtle,
+    ...ds.shadows.md,
   },
   sharePreparingText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
 });
 
