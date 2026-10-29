@@ -5,6 +5,8 @@ export const opacity = {
   medium: 0.24,
   scrim: 0.28,
   strong: 0.45,
+  high: 0.64,
+  higher: 0.8,
   /** Solo para `bg/surface-translucent` (paper-92). */
   translucent: 0.92,
   /** D3: estado pressed de todo control. */

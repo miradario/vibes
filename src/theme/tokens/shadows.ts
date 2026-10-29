@@ -33,3 +33,21 @@ export const shadows = {
 } as const;
 
 export type ShadowToken = keyof typeof shadows;
+
+const glowBase = {
+  shadowOpacity: 0.18,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 6 },
+} as const;
+
+/**
+ * `glow/accent` (+ variantes coral y azul): sombra de color de marca para CTAs y
+ * elementos destacados. Solo iOS: en Android se combina con `shadows.*.elevation`.
+ */
+export const glow = {
+  accent: { shadowColor: palette.mustard, ...glowBase },
+  coral: { shadowColor: palette.coral, ...glowBase },
+  blue: { shadowColor: palette.blue, ...glowBase },
+} as const;
+
+export type GlowToken = keyof typeof glow;
