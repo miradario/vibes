@@ -932,13 +932,13 @@ const ChallengeDetailScreen = () => {
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  // Path animation starts only once the journey card first becomes visible.
+  // Path animation starts only once half the journey card (capped at 40% of the screen) is visible.
   const journeyCardRef = useRef<View>(null);
   const [journeyInView, setJourneyInView] = useState(false);
   const checkJourneyInView = React.useCallback(() => {
     if (journeyInView) return;
     journeyCardRef.current?.measureInWindow((_x, y, _w, h) => {
-      if (h > 0 && y < height - Math.min(h * 0.25, 120) && y + h > 0) setJourneyInView(true);
+      if (h > 0 && y < height - Math.min(h * 0.5, height * 0.4) && y + h > 0) setJourneyInView(true);
     });
   }, [height, journeyInView]);
   const routeEvent = route.params?.event as EventFeedItem | undefined;
