@@ -35,6 +35,7 @@ import {
   AUTH_VALIDATION_TIMEOUT_MS,
   withBootTimeout as withTimeout,
 } from "../src/lib/startupBoot";
+import * as ds from "../src/theme/tokens";
 
 const SESSION_BOOT_TIMEOUT_MS = 5000;
 const STARTUP_PREFETCH_TIMEOUT_MS = 8000;
@@ -288,8 +289,8 @@ const Startup = () => {
       style={{ backgroundColor: vibesTheme.colors.background }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         {bootFailed ? (
-          <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: 24, gap: 16, marginTop: 24 }}>
-            <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 18 }}>
+          <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: ds.spacing[6], gap: ds.spacing[4], marginTop: ds.spacing[6] }}>
+            <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", ...ds.textStyles.heading }}>
               La carga está demorando. Revisá tu conexión y volvé a intentar.
             </Text>
             <VibesActionButton label="Reintentar" onPress={retryBoot} textStyle={{ color: vibesTheme.colors.primaryText }} />

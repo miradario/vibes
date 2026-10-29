@@ -16,6 +16,7 @@ import {
 } from "../src/queries/onboarding.queries";
 import { getIntentLabel, INTENTS } from "../src/constants/lookups";
 import { useI18n } from "../src/i18n";
+import * as ds from "../src/theme/tokens";
 
 const OnboardingInterested = () => {
   const { locale, t } = useI18n();
@@ -117,7 +118,7 @@ const localStyles = StyleSheet.create({
   videoWrap: {
     flex: 1,
     minHeight: 320,
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
 });

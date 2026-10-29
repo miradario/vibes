@@ -73,6 +73,7 @@ import { useI18n } from "../../i18n";
 import VibesLoader from "../../../components/VibesLoader";
 import { useProfileQuery } from "../../queries/profile.queries";
 import { vibesTheme } from "../../theme/vibesTheme";
+import * as ds from "../../theme/tokens";
 
 const ANIMATION_DURATION = 240;
 const MIN_AGE = 18;
@@ -578,7 +579,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
         style={[
           onboardingStyles.title,
           targetStep === "completion" && onboardingStyles.centeredTitle,
-          ["profile", "profileText"].includes(targetStep) && { fontSize: 28, lineHeight: 34, marginTop: 16 },
+          ["profile", "profileText"].includes(targetStep) && { ...ds.textStyles.title, marginTop: ds.spacing[4] },
         ]}
         maxFontSizeMultiplier={1}
       >
@@ -600,9 +601,9 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
       <View style={localStyles.purposeHero}>
         <View style={localStyles.introCopy}>
           <View accessible accessibilityRole="header" accessibilityLabel={copy.title} style={localStyles.purposeHeading}>
-            <Text style={[localStyles.purposeTitle, {marginBottom:0,flexShrink:1,fontSize:26}]} numberOfLines={1} adjustsFontSizeToFit>{locale.startsWith("en") ? "What brings you to" : "¿Qué te trae a"}</Text>
+            <Text style={[localStyles.purposeTitle, {marginBottom:0,flexShrink:1,...ds.textStyles.title}]} numberOfLines={1} adjustsFontSizeToFit>{locale.startsWith("en") ? "What brings you to" : "¿Qué te trae a"}</Text>
             <VibesWordmark fontSize={30} style={{ transform: [{ translateY: -4 }] }} />
-            <Text style={[localStyles.purposeTitle, {marginBottom:0,fontSize:26}]}>?</Text>
+            <Text style={[localStyles.purposeTitle, {marginBottom:0,...ds.textStyles.title}]}>?</Text>
           </View>
           <Text style={localStyles.aboutHint}>{copy.subtitle}</Text>
         </View>
@@ -644,7 +645,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
         <ProfilePhotoPicker uris={photoUris} originalUris={photoOriginalUris} onChange={handlePhotoChange} />
         {photoUris.length === 0 ? (
           <View style={localStyles.photoExperienceNotice}>
-            <Icon name="information-circle-outline" size={22} color={vibesTheme.colors.accentBlue} />
+            <Icon name="information-circle-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentBlue} />
             <Text accessibilityLiveRegion="polite" style={localStyles.photoExperienceNoticeText}>
               {locale === "en" ? "Improve your experience by adding a photo of yourself." : "Mejorá tu experiencia subiendo una foto de vos."}
             </Text>
@@ -664,14 +665,14 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
                   accessibilityRole="button"
                   onPress={() => { Keyboard.dismiss(); setPendingBirthDate(birthDate ?? birthDateLimits.maximumDate); setShowBirthDatePicker(true); }}
                 >
-                  <Icon name="calendar-outline" size={20} color={ONBOARDING_COLORS.mustard} />
-                  <Text style={[onboardingStyles.ageValue, !birthDate && { color: "rgba(110, 110, 110, 0.55)" }]}>
+                  <Icon name="calendar-outline" size={ds.iconSize.md} color={ONBOARDING_COLORS.mustard} />
+                  <Text style={[onboardingStyles.ageValue, !birthDate && { color: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.strong) }]}>
                     {birthDate
                       ? birthDate.toLocaleDateString(locale === "en" ? "en-US" : "es-AR")
                       : t("vibesOnboarding.profile.birthDatePlaceholder")}
                   </Text>
                   {age ? (
-                    <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: 8 }]}>
+                    <Text style={[onboardingStyles.ageValue, { flex: 0, marginLeft: ds.spacing[2] }]}>
                       {age} {t("vibesOnboarding.profile.years")}
                     </Text>
                   ) : null}
@@ -790,7 +791,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
         >
           <Icon
             name="location"
-            size={18}
+            size={ds.iconSize.md}
             color={ONBOARDING_COLORS.text}
           />
           <Text style={onboardingStyles.locationButtonText}>
@@ -803,14 +804,14 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
           <View style={onboardingStyles.inputRow}>
             <Icon
               name="earth-outline"
-              size={20}
+              size={ds.iconSize.md}
               color={ONBOARDING_COLORS.mustard}
             />
             <TextInput
               ref={countryInputRef}
               style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={t("onboarding.countryPlaceholder")}
-              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              placeholderTextColor={ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.strong)}
               value={country}
               onChangeText={(value) => {
                 setCountry(value);
@@ -830,14 +831,14 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
           <View style={onboardingStyles.inputRow}>
             <Icon
               name="business-outline"
-              size={20}
+              size={ds.iconSize.md}
               color={ONBOARDING_COLORS.mustard}
             />
             <TextInput
               ref={cityInputRef}
               style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={t("onboarding.cityPlaceholder")}
-              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              placeholderTextColor={ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.strong)}
               value={city}
               onChangeText={(value) => {
                 setCity(value);
@@ -855,13 +856,13 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
             />
           </View>
           <View style={onboardingStyles.inputRow}>
-            <Icon name="location-outline" size={20} color={ONBOARDING_COLORS.mustard} />
+            <Icon name="location-outline" size={ds.iconSize.md} color={ONBOARDING_COLORS.mustard} />
             <TextInput
               ref={neighborhoodInputRef}
               style={[onboardingStyles.input, localStyles.locationInput]}
               placeholder={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
               accessibilityLabel={locale === "en" ? "Neighborhood (optional)" : "Barrio (opcional)"}
-              placeholderTextColor="rgba(110, 110, 110, 0.55)"
+              placeholderTextColor={ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.strong)}
               value={neighborhood}
               onChangeText={setNeighborhood}
               maxLength={100}
@@ -883,7 +884,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
               setLatitude(suggestion.latitude); setLongitude(suggestion.longitude);
               setCitySuggestions([]);
             }}>
-            <Icon name="location-outline" size={20} color={ONBOARDING_COLORS.mustard} />
+            <Icon name="location-outline" size={ds.iconSize.md} color={ONBOARDING_COLORS.mustard} />
             <Text style={onboardingStyles.input}>{suggestion.city}, {suggestion.country}</Text>
           </TouchableOpacity>
         ))}
@@ -895,12 +896,12 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
     <>
       <View style={[localStyles.purposeHero, { marginTop: 0 }]}>
         <View style={localStyles.introCopy}>
-          <Text accessibilityRole="header" style={[localStyles.purposeTitle, { fontSize: 22, lineHeight: 28, marginBottom: 4 }]}>{t("vibesOnboarding.practices.title")}</Text>
+          <Text accessibilityRole="header" style={[localStyles.purposeTitle, { ...ds.textStyles.title, marginBottom: ds.spacing[1] }]}>{t("vibesOnboarding.practices.title")}</Text>
           <Text style={localStyles.aboutHint}>{t("vibesOnboarding.practices.subtitle")}</Text>
         </View>
         <OnboardingPlayfulShapes kind="practices" style={{ width: 44, height: 48 }} />
       </View>
-      <View style={[onboardingStyles.pillGrid, { marginTop: 6, gap: 8 }]}>
+      <View style={[onboardingStyles.pillGrid, { marginTop: ds.spacing[2], gap: ds.spacing[2] }]}>
         {practiceOptions.map((practice) => (
           <SelectablePill
             key={practice}
@@ -925,7 +926,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
           >
             <View style={[localStyles.practiceDot, hasDetails && {backgroundColor:vibesTheme.colors.accentBlue}]} />
             <Text style={onboardingStyles.practiceDetailsButtonText}>{getPracticeLabel(practice)}</Text>
-            <Icon name={hasDetails ? "checkmark-circle" : "add"} size={24}
+            <Icon name={hasDetails ? "checkmark-circle" : "add"} size={ds.iconSize.lg}
               color={hasDetails ? vibesTheme.colors.accentBlue : vibesTheme.colors.accentMustard} />
           </TouchableOpacity>
         );
@@ -1155,7 +1156,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
               placeholder={t(
                 "vibesOnboarding.practices.customPracticePlaceholder"
               )}
-              placeholderTextColor="rgba(110, 110, 110, 0.48)"
+              placeholderTextColor={ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.strong)}
               value={customPracticeName}
               onChangeText={setCustomPracticeName}
               autoCapitalize="words"
@@ -1208,7 +1209,7 @@ const VibesOnboardingFlow = () => {
     setDraft(buildResumeOnboardingDraft(profile.data, preferences.data, answers.data));
     setReady(true);
   }, [resume,ready,profile.data,preferences.isSuccess,preferences.data,answers.isSuccess,answers.data]);
-  if (!ready) return <ScreenContainer><View style={{flex:1,justifyContent:"center",alignItems:"center",padding:24}}>
+  if (!ready) return <ScreenContainer><View style={{flex:1,justifyContent:"center",alignItems:"center",padding:ds.spacing[6]}}>
     {profile.isError || preferences.isError || answers.isError || (profile.isSuccess && !profile.data)
       ? <PrimaryButton label="Reintentar cargar tu perfil" onPress={()=>{void profile.refetch();void preferences.refetch();void answers.refetch();}} />
       : <VibesLoader size={48} accessibilityLabel="Cargando tu perfil" />}
@@ -1225,60 +1226,58 @@ const localStyles = StyleSheet.create({
     includeFontPadding: false,
     textAlignVertical: "center",
   },
-  experienceHint: {marginTop:12,marginBottom:2,fontSize:14,lineHeight:20,color:vibesTheme.colors.secondaryText},
-  practiceWithDetails: {borderColor:vibesTheme.colors.accentBlue,backgroundColor:`${vibesTheme.colors.accentBlue}0C`},
-  practiceDot: {width:10,height:10,borderRadius:5,backgroundColor:vibesTheme.colors.accentMustard},
-  purposeGrid: {width:"100%",maxWidth:280,alignSelf:"center",flexDirection:"row",flexWrap:"wrap",justifyContent:"space-between",gap:0,rowGap:10,marginTop:16},
-  purposeHeading: {flexDirection:"row",alignItems:"center",gap:5,marginBottom:10},
-  purposeHero: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
-  purposeTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 26, lineHeight: 32, marginBottom: 6 },
-  choiceTitle: { marginTop: 8, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 34 },
-  choiceSubtitle: { marginTop: 8, color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 15, lineHeight: 22 },
-  photoHero: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 0, marginBottom: 8 },
-  photoTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 26, lineHeight: 32, marginBottom: 6 },
-  photoMascot: { width: 100, alignItems: "center", gap: 3 },
-  photoGreeting: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 16, backgroundColor: `${vibesTheme.colors.accentBlue}14`, maxWidth: "100%" },
-  photoGreetingText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold, fontSize: 12, lineHeight: 16, textAlign: "center" },
-  photoLaterText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 13, lineHeight: 18 },
-  introHero: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4, marginBottom: 10 },
+  experienceHint: {marginTop:ds.spacing[3],marginBottom:ds.spacing[1],...ds.textStyles.bodySmall,color:vibesTheme.colors.secondaryText},
+  practiceWithDetails: {borderColor:vibesTheme.colors.accentBlue,backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle)},
+  practiceDot: {width:10,height:10,borderRadius:ds.radii.pill,backgroundColor:vibesTheme.colors.accentMustard},
+  purposeGrid: {width:"100%",maxWidth:280,alignSelf:"center",flexDirection:"row",flexWrap:"wrap",justifyContent:"space-between",gap:0,rowGap:ds.spacing[3],marginTop:ds.spacing[4]},
+  purposeHeading: {flexDirection:"row",alignItems:"center",gap:ds.spacing[1],marginBottom:ds.spacing[3]},
+  purposeHero: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], marginTop: ds.spacing[1] },
+  purposeTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title, marginBottom: ds.spacing[2] },
+  choiceTitle: { marginTop: ds.spacing[2], color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
+  choiceSubtitle: { marginTop: ds.spacing[2], color: vibesTheme.colors.secondaryText, ...ds.textStyles.body },
+  photoHero: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], marginTop: 0, marginBottom: ds.spacing[2] },
+  photoTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title, marginBottom: ds.spacing[2] },
+  photoMascot: { width: 100, alignItems: "center", gap: ds.spacing[1] },
+  photoGreeting: { paddingHorizontal: ds.spacing[2], paddingVertical: ds.spacing[2], borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle), maxWidth: "100%" },
+  photoGreetingText: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.caption, textAlign: "center" },
+  photoLaterText: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall },
+  introHero: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], marginTop: ds.spacing[1], marginBottom: ds.spacing[3] },
   introCopy: { flex: 1, minWidth: 0 },
   introConfetti: { position: "absolute", top: -12, left: -6, width: 36, height: 30 },
-  introTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 32 },
-  introSubtitle: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16, lineHeight: 22, marginTop: 6 },
-  introMascot: { width: 80, alignItems: "center", gap: 6 },
+  introTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
+  introSubtitle: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.subtitle, marginTop: ds.spacing[2] },
+  introMascot: { width: 80, alignItems: "center", gap: ds.spacing[2] },
   introLogo: { width: 72, height: 82 },
-  greetingBubble: { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14`, maxWidth: "100%" },
-  greetingText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold, fontSize: 14, lineHeight: 19, textAlign: "center" },
-  introFields: { gap: 12 },
-  introField: { gap: 7 },
-  introLabel: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 14, lineHeight: 20 },
-  optionalLabel: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, lineHeight: 18 },
-  introInput: { minHeight: 52, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}30`, borderRadius: 14, backgroundColor: `${vibesTheme.colors.secondaryText}05`, paddingHorizontal: 16, paddingVertical: 12, fontFamily: vibesTheme.fonts.regular, fontSize: 17, lineHeight: 23, color: vibesTheme.colors.primaryText },
-  aboutSection: { gap: 8, marginTop: 6 },
-  aboutHeading: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 24, lineHeight: 31 },
-  aboutHint: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 13, lineHeight: 19 },
+  greetingBubble: { paddingHorizontal: ds.spacing[2], paddingVertical: ds.spacing[1], borderRadius: ds.radii.xl, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle), maxWidth: "100%" },
+  greetingText: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.label, textAlign: "center" },
+  introFields: { gap: ds.spacing[3] },
+  introField: { gap: ds.spacing[2] },
+  introLabel: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.label },
+  optionalLabel: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.caption },
+  introInput: { minHeight: 52, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium), borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle), paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], ...ds.textStyles.body, color: vibesTheme.colors.primaryText },
+  aboutSection: { gap: ds.spacing[2], marginTop: ds.spacing[2] },
+  aboutHeading: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
+  aboutHint: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall },
   introDescription: { minHeight: 96 },
-  ideaChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  ideaChip: { minHeight: 44, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 24, backgroundColor: `${vibesTheme.colors.accentBlue}14`, justifyContent: "center" },
-  ideaText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.medium, fontSize: 13, lineHeight: 19 },
-  photoExperienceNotice: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 16, marginTop: 16, marginBottom: 8, alignSelf: "stretch", borderRadius: 16, backgroundColor: `${vibesTheme.colors.accentBlue}14` },
-  photoExperienceNoticeText: { flex: 1, color: vibesTheme.colors.primaryText, fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.regular },
-  birthDateSheet: { padding: 20, borderRadius: 24, backgroundColor: vibesTheme.colors.surface },
-  birthDateTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 20, lineHeight: 26, textAlign: "center" },
+  ideaChips: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
+  ideaChip: { minHeight: 44, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], borderRadius: ds.radii.xl, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle), justifyContent: "center" },
+  ideaText: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.labelMedium },
+  photoExperienceNotice: { flexDirection: "row", alignItems: "flex-start", gap: ds.spacing[2], padding: ds.spacing[4], marginTop: ds.spacing[4], marginBottom: ds.spacing[2], alignSelf: "stretch", borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },
+  photoExperienceNoticeText: { flex: 1, color: vibesTheme.colors.primaryText, ...ds.textStyles.bodySmall },
+  birthDateSheet: { padding: ds.spacing[5], borderRadius: ds.radii.xl, backgroundColor: vibesTheme.colors.surface },
+  birthDateTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.heading, textAlign: "center" },
   completeLaterButton: {
     minHeight: 44,
-    marginTop: 4,
-    borderRadius: 999,
+    marginTop: ds.spacing[1],
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[5],
+    paddingVertical: ds.spacing[3],
   },
   completeLaterText: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.subtitle,
   },
   completionLoadingScreen: {
     flex: 1,

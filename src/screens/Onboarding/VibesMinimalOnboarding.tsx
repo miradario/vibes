@@ -18,6 +18,7 @@ import * as Haptics from "expo-haptics";
 import { vibesTheme } from "../../theme/vibesTheme";
 import Icon from "../../../components/Icon";
 import VibesLoader from "../../../components/VibesLoader";
+import * as ds from "../../theme/tokens";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -163,7 +164,7 @@ const VibesMinimalOnboarding = ({
           ) : (
             <Icon
               name="chevron-forward"
-              size={26}
+              size={ds.iconSize.lg}
               color={vibesTheme.colors.primaryText}
             />
           )}
@@ -214,20 +215,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: vibesTheme.spacing[8],
   },
   title: {
-    fontSize: 36,
-    lineHeight: 48,
+    ...ds.textStyles.display,
     letterSpacing: 0.3,
     textAlign: "center",
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.regular,
   },
   body: {
     marginTop: vibesTheme.spacing[6],
-    fontSize: 24,
-    lineHeight: 34,
+    ...ds.textStyles.title,
     textAlign: "center",
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
     maxWidth: 380,
   },
   bodyWithoutTitle: {
@@ -235,10 +232,10 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     marginTop: "auto",
-    marginBottom: 40,
+    marginBottom: ds.spacing[12],
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: ds.radii.pill,
     borderWidth: 1,
     borderColor: vibesTheme.colors.primaryText,
     alignItems: "center",
@@ -247,27 +244,26 @@ const styles = StyleSheet.create({
   },
   ctaPillButton: {
     marginTop: "auto",
-    marginBottom: 40,
+    marginBottom: ds.spacing[12],
     minWidth: 220,
     height: 58,
-    borderRadius: 22,
+    borderRadius: ds.radii.xl,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
     shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.24,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.24,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 14,
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 8 },
+    elevation: /* ds-lint-allow DS-TODO: misma sombra de color */ 3,
   },
   ctaPillText: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 16,
+    ...ds.textStyles.subtitleMedium,
   },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     zIndex: 10,
   },
   loaderOverlay: {
@@ -275,7 +271,7 @@ const styles = StyleSheet.create({
     zIndex: 11,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.42)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.strong),
   },
 });
 

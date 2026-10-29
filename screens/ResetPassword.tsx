@@ -27,6 +27,7 @@ import {
   useUpdatePasswordMutation,
 } from "../src/auth/auth.queries";
 import { useI18n } from "../src/i18n";
+import * as ds from "../src/theme/tokens";
 
 const getResetCode = (params: Record<string, unknown> | undefined) => {
   const code = params?.code;
@@ -136,7 +137,7 @@ const ResetPassword = () => {
                 >
                   <Icon
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={20}
+                    size={ds.iconSize.md}
                     color={vibesTheme.colors.secondaryText}
                   />
                 </TouchableOpacity>
@@ -199,23 +200,23 @@ export default ResetPassword;
 
 const localStyles = StyleSheet.create({
   actions: {
-    marginTop: 28,
+    marginTop: ds.spacing[8],
   },
   container: {
-    marginTop: 48,
+    marginTop: ds.spacing[12],
   },
   content: {
-    paddingBottom: 32,
+    paddingBottom: ds.spacing[8],
   },
   header: {
-    marginBottom: 14,
+    marginBottom: ds.spacing[4],
   },
   passwordField: {
     position: "relative",
     justifyContent: "center",
   },
   passwordInput: {
-    paddingRight: 48,
+    paddingRight: ds.spacing[12],
   },
   passwordToggle: {
     position: "absolute",

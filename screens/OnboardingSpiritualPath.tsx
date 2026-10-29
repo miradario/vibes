@@ -27,6 +27,7 @@ import {
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const ONBOARDING_OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
 
@@ -333,40 +334,39 @@ const localStyles = StyleSheet.create({
   videoWrap: {
     width: "100%",
     height: 220,
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
   selectedPathHint: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    marginTop: 2,
+    ...ds.textStyles.bodySmall,
+    marginTop: ds.spacing[1],
   },
   extraSection: {
-    marginTop: 18,
+    marginTop: ds.spacing[4],
   },
   extraSectionTitle: {
     color: DARK_GRAY,
-    fontSize: 18,
-    marginBottom: 10,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.heading,
+    marginBottom: ds.spacing[3],
   },
   aboutInput: {
     minHeight: 104,
-    paddingTop: 14,
-    paddingBottom: 14,
+    paddingTop: ds.spacing[4],
+    paddingBottom: ds.spacing[4],
   },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   choiceChip: {
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentMustard,
     backgroundColor: WHITE,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    borderRadius: ds.radii.pill,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   choiceChipActive: {
     backgroundColor: vibesTheme.colors.accentMustard,
@@ -374,33 +374,32 @@ const localStyles = StyleSheet.create({
   },
   choiceChipText: {
     color: DARK_GRAY,
-    fontSize: 14,
+    ...ds.textStyles.bodySmall,
   },
   choiceChipTextActive: {
     color: vibesTheme.colors.primaryText,
   },
   otherInputRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
     alignItems: "center",
-    marginTop: 12,
+    marginTop: ds.spacing[3],
   },
   otherInput: {
     flex: 1,
   },
   addButton: {
-    borderRadius: 18,
+    borderRadius: ds.radii.lg,
     backgroundColor: vibesTheme.colors.accentMustard,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   addButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 13,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
   skipButton: {
     alignItems: "center",
-    marginTop: 10,
+    marginTop: ds.spacing[3],
   },
 });

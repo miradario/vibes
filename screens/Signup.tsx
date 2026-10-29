@@ -41,6 +41,7 @@ import {
   formatBirthDate,
   parseBirthDate,
 } from "../src/lib/birthDate";
+import * as ds from "../src/theme/tokens";
 
 type SocialProvider = "google" | "apple";
 
@@ -308,7 +309,7 @@ const Signup = () => {
               <TextInput
                 style={styles.loginInput}
                 placeholder={t("signup.emailPlaceholder")}
-                placeholderTextColor="rgba(110, 110, 110, 0.45)"
+                placeholderTextColor={ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.strong)}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 returnKeyType="next"
@@ -340,21 +341,21 @@ const Signup = () => {
                 >
                   <Icon
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={20}
+                    size={ds.iconSize.md}
                     color={vibesTheme.colors.secondaryText}
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
-            <Text style={[localStyles.termsText, { flex: 0, marginTop: 8 }]}>
+            <Text style={[localStyles.termsText, { flex: 0, marginTop: ds.spacing[2] }]}>
               {t("signup.passwordLength")}
             </Text>
 
             <View
               style={[
                 localStyles.bottomBlock,
-                { paddingBottom: 22 },
+                { paddingBottom: ds.spacing[6] },
               ]}
             >
               <TouchableOpacity
@@ -369,7 +370,7 @@ const Signup = () => {
                   ]}
                 >
                   {acceptedTerms ? (
-                    <Icon name="checkmark" size={14} color={vibesTheme.colors.background} />
+                    <Icon name="checkmark" size={ds.iconSize.sm} color={vibesTheme.colors.background} />
                   ) : null}
                 </View>
                 <Text style={localStyles.termsText}>
@@ -445,25 +446,23 @@ export default Signup;
 const localStyles = StyleSheet.create({
   bottomBlock: {
     marginTop: "auto",
-    paddingTop: 24,
+    paddingTop: ds.spacing[6],
   },
   accountDivider: {
     width: "100%",
     height: 1,
-    marginTop: 12,
-    backgroundColor: "rgba(43, 43, 43, 0.12)",
+    marginTop: ds.spacing[3],
+    backgroundColor: ds.colors.border.default,
   },
   accountSwitch: {
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: ds.spacing[3],
   },
   accountSwitchText: {
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
     textAlign: "center",
   },
   accountSwitchLink: {
@@ -472,50 +471,50 @@ const localStyles = StyleSheet.create({
     textDecorationLine: "underline",
   },
   backButton: {
-    marginTop: 18,
+    marginTop: ds.spacing[4],
   },
   divider: {
-    marginTop: 18,
-    marginBottom: 2,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[1],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.1)",
+    backgroundColor: ds.colors.border.default,
   },
   dividerText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 12,
+    ...ds.textStyles.caption,
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
   googleButton: {
     minHeight: 44,
     height: 44,
-    borderRadius: 18,
-    marginTop: 14,
+    borderRadius: ds.radii.lg,
+    marginTop: ds.spacing[4],
   },
   appleButton: {
-    marginTop: 12,
+    marginTop: ds.spacing[3],
   },
   termsRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
-    marginBottom: 14,
+    gap: ds.spacing[3],
+    marginBottom: ds.spacing[4],
   },
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 6,
+    borderRadius: ds.radii.sm,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.5)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.strong),
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 1,
+    marginTop: ds.spacing[0],
   },
   checkboxChecked: {
     backgroundColor: vibesTheme.colors.secondaryText,
@@ -524,8 +523,7 @@ const localStyles = StyleSheet.create({
   termsText: {
     flex: 1,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
   termsLink: {
     color: vibesTheme.colors.secondaryText,
@@ -533,17 +531,16 @@ const localStyles = StyleSheet.create({
   },
   signupError: {
     color: vibesTheme.colors.accentBlue,
-    marginBottom: 18,
+    marginBottom: ds.spacing[4],
   },
   header: {
-    marginBottom: 8,
+    marginBottom: ds.spacing[2],
   },
   loginContainer: {
     marginTop: 0,
   },
   loginCard: {
-    shadowOpacity: 0,
-    elevation: 0,
+    ...ds.shadows.none,
     backgroundColor: vibesTheme.colors.background,
     width: "100%",
     maxWidth: 480,
@@ -552,14 +549,14 @@ const localStyles = StyleSheet.create({
   },
   formScrollContent: {
     flexGrow: 1,
-    paddingBottom: 32,
+    paddingBottom: ds.spacing[8],
   },
   passwordField: {
     position: "relative",
     justifyContent: "center",
   },
   passwordInput: {
-    paddingRight: 48,
+    paddingRight: ds.spacing[12],
   },
   passwordToggle: {
     position: "absolute",

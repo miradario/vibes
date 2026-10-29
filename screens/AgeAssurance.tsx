@@ -20,6 +20,7 @@ import {
   parseBirthDate,
 } from "../src/lib/birthDate";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const MIN_AGE = 18;
 
@@ -118,56 +119,51 @@ export default AgeAssurance;
 const localStyles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingBottom: 16,
+    paddingBottom: ds.spacing[4],
   },
   scroll: { flex: 1 },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: ds.spacing[6],
     justifyContent: "center",
-    gap: 16,
+    gap: ds.spacing[4],
   },
   logo: { width: 100, height: 100, alignSelf: "center" },
   copyBlock: {
     alignItems: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   kicker: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 12,
+    ...ds.textStyles.caption,
     letterSpacing: 1.8,
     textTransform: "uppercase",
   },
   title: {
     color: vibesTheme.colors.accentBlue,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 24,
-    lineHeight: 30,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
   subtitle: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.body,
     textAlign: "center",
   },
-  card: { width: "100%", marginTop: -8, flexShrink: 0 },
+  card: { width: "100%", marginTop: -ds.spacing[2], flexShrink: 0 },
   nativeDatePicker: { alignSelf: "center", width: "100%", height: 216, minHeight: 216, flexShrink: 0 },
   error: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: vibesTheme.colors.accentBlue,
-    fontSize: 14,
-    lineHeight: 19,
+    ...ds.textStyles.bodySmall,
   },
   footer: {
     flexShrink: 0,
-    paddingHorizontal: 24,
-    paddingTop: 18,
+    paddingHorizontal: ds.spacing[6],
+    paddingTop: ds.spacing[4],
   },
   headerBackButton: {
     backgroundColor: "transparent",
     borderWidth: 0,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...ds.shadows.none,
   },
 });
