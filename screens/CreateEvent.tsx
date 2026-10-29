@@ -57,12 +57,13 @@ import {
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
 import { getIosMapPreviewSource } from "../src/config/mapPreview";
+import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE =
   (ImagePicker as any).MediaType?.Images
     ? [(ImagePicker as any).MediaType.Images]
     : ["images"];
-const PLACEHOLDER_COLOR = "rgba(43, 43, 43, 0.34)";
+const PLACEHOLDER_COLOR = ds.colors.scrim;
 
 const normalizeCapacityInput = (value: string) => value.replace(/\D+/g, "");
 
@@ -700,7 +701,7 @@ const CreateEvent = () => {
       keyboardVerticalOffset={0}
     >
       <View style={styles.bg}>
-        <AppHeader title={isEditing ? "Editar evento" : "Crear evento"} showBack onBack={() => navigation.goBack()} style={{paddingHorizontal:24,marginBottom:8}} titleStyle={localStyles.screenTitle} />
+        <AppHeader title={isEditing ? "Editar evento" : "Crear evento"} showBack onBack={() => navigation.goBack()} style={{paddingHorizontal:ds.spacing[6],marginBottom:ds.spacing[2]}} titleStyle={localStyles.screenTitle} />
       <ScrollView
         style={{flex:1}}
         contentContainerStyle={localStyles.content}
@@ -736,14 +737,14 @@ const CreateEvent = () => {
                 />
                 <View style={localStyles.coverScrim} />
                 <View style={localStyles.coverChangeBadge}>
-                  <Icon name="camera-outline" size={17} color={WHITE} />
+                  <Icon name="camera-outline" size={ds.iconSize.sm} color={WHITE} />
                   <Text style={localStyles.coverChangeText}>Cambiar portada</Text>
                 </View>
               </>
             ) : (
               <View style={localStyles.coverEmptyState}>
                 <View style={localStyles.coverIconCircle}>
-                  <Icon name="image-outline" size={28} color={PRIMARY_COLOR} />
+                  <Icon name="image-outline" size={ds.iconSize.xl} color={PRIMARY_COLOR} />
                 </View>
                 <Text style={localStyles.uploadImageTitle}>Subir foto de portada</Text>
                 <Text style={localStyles.uploadImageHint}>
@@ -802,7 +803,7 @@ const CreateEvent = () => {
             <View style={localStyles.linkValidationRow}>
               <Icon
                 name={isEventLinkValid ? "checkmark-circle" : "alert-circle"}
-                size={16}
+                size={ds.iconSize.sm}
                 color={isEventLinkValid ? vibesTheme.colors.secondaryText : vibesTheme.colors.accentCoral}
               />
               <Text
@@ -966,7 +967,7 @@ const CreateEvent = () => {
                     ) : (
                       <View style={localStyles.mapPreviewFallback}>
                         <View style={localStyles.mapPreviewFallbackPin}>
-                          <Icon name="location" size={26} color={PRIMARY_COLOR} />
+                          <Icon name="location" size={ds.iconSize.lg} color={PRIMARY_COLOR} />
                         </View>
                         <Text style={localStyles.mapPreviewFallbackTitle}>
                           Ubicación lista para abrir
@@ -989,7 +990,7 @@ const CreateEvent = () => {
                       accessibilityRole="button"
                     >
                       <View style={localStyles.mapPreviewBadge}>
-                        <Icon name="navigate" size={14} color={WHITE} />
+                        <Icon name="navigate" size={ds.iconSize.sm} color={WHITE} />
                         <Text style={localStyles.mapPreviewBadgeText}>
                           Ver mapa
                         </Text>
@@ -1116,7 +1117,7 @@ const CreateEvent = () => {
       <View
         style={[
           localStyles.fixedFooter,
-          { paddingBottom: Math.max(insets.bottom + 12, 18) },
+          { paddingBottom: Math.max(insets.bottom + ds.spacing[3], ds.spacing[4]) },
         ]}
       >
         <TouchableOpacity
@@ -1184,68 +1185,62 @@ const CreateEvent = () => {
 const legacyStyles = StyleSheet.create({
   header: {
     paddingHorizontal: 0,
-    marginBottom: 4,
+    marginBottom: ds.spacing[1],
   },
   screenTitle: {
     color: DARK_GRAY,
-    fontSize: 28,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.title,
   },
   content: {
-    paddingBottom: 128,
+    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 128 fuera de escala (>48), parece layout */ 128,
   },
   formCard: {
     backgroundColor: WHITE,
-    marginTop: 18,
-    borderRadius: 18,
-    padding: 18,
+    marginTop: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
     shadowColor: BLACK,
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOpacity: ds.shadows.sm.shadowOpacity,
+    shadowRadius: ds.shadows.sm.shadowRadius,
+    shadowOffset: ds.shadows.sm.shadowOffset,
+    elevation: ds.shadows.sm.elevation,
   },
   label: {
     color: DARK_GRAY,
-    fontSize: 14,
-    fontWeight: "400",
-    marginBottom: 8,
-    marginTop: 12,
+    ...ds.textStyles.bodySmall,
+    marginBottom: ds.spacing[2],
+    marginTop: ds.spacing[3],
   },
   input: {
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     borderWidth: 1,
     borderColor: "transparent",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     color: DARK_GRAY,
   },
   inputInvalid: {
-    borderColor: "rgba(216, 140, 122, 0.72)",
-    backgroundColor: "rgba(216, 140, 122, 0.05)",
+    borderColor: /* ds-lint-allow DS-TODO: coral al 72%: no hay opacidad cercana (más cercana 0.45) */ "rgba(216, 140, 122, 0.72)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.subtle),
   },
   descriptionInput: {
     minHeight: 160,
-    fontSize: 17,
-    lineHeight: 25,
-    borderColor: `${vibesTheme.colors.secondaryText}40`,
+    ...ds.textStyles.body,
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
   },
   inputValid: {
-    borderColor: "rgba(110, 110, 110, 0.58)",
+    borderColor: /* ds-lint-allow DS-TODO: inkSoft al 58%: no hay opacidad cercana (más cercana 0.45) */ "rgba(110, 110, 110, 0.58)",
   },
   linkValidationRow: {
-    marginTop: 7,
+    marginTop: ds.spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: ds.spacing[2],
   },
   linkValidationText: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.caption,
   },
   linkValidationTextValid: {
     color: vibesTheme.colors.secondaryText,
@@ -1255,20 +1250,20 @@ const legacyStyles = StyleSheet.create({
   },
   dateTimeRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   choiceRow: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 2,
+    gap: ds.spacing[3],
+    marginTop: ds.spacing[1],
   },
   choiceChip: {
     flex: 1,
-    borderRadius: 999,
+    borderRadius: ds.radii.pill,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.1)",
+    borderColor: ds.colors.border.default,
     backgroundColor: vibesTheme.colors.background,
-    paddingVertical: 12,
+    paddingVertical: ds.spacing[3],
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1278,8 +1273,7 @@ const legacyStyles = StyleSheet.create({
   },
   choiceChipText: {
     color: DARK_GRAY,
-    fontSize: 14,
-    fontWeight: "400",
+    ...ds.textStyles.bodySmall,
   },
   choiceChipTextActive: {
     color: vibesTheme.colors.surface,
@@ -1287,115 +1281,111 @@ const legacyStyles = StyleSheet.create({
   dateTimeButton: {
     flex: 1,
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    borderRadius: ds.radii.md,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   dateTimeButtonText: {
     color: DARK_GRAY,
-    fontSize: 14,
+    ...ds.textStyles.bodySmall,
   },
   dateTimePlaceholder: {
     color: TEXT_SECONDARY,
   },
   selectedDateTimeText: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     color: vibesTheme.colors.accentBlue,
-    fontSize: 13,
-    fontWeight: "400",
+    ...ds.textStyles.bodySmall,
   },
   pickerWrap: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     overflow: "hidden",
   },
   pickerDoneButton: {
     alignSelf: "flex-end",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   pickerDoneText: {
     color: vibesTheme.colors.accentBlue,
-    fontWeight: "400",
+    fontFamily: ds.fontFamilies.regular,
   },
   createButton: {
     backgroundColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 14,
+    borderRadius: ds.radii.xl,
+    paddingVertical: ds.spacing[4],
     alignItems: "center",
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.2,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
     shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
   },
   createButtonDisabled: {
     opacity: 0.72,
   },
   createButtonText: {
-    fontFamily: vibesTheme.fonts.semibold,
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
+    ...ds.textStyles.subtitle,
   },
   fixedFooter: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    paddingTop: 12,
-    paddingHorizontal: 20,
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
+    paddingTop: ds.spacing[3],
+    paddingHorizontal: ds.spacing[5],
+    backgroundColor: ds.colors.bg.surface,
     borderTopWidth: 1,
-    borderTopColor: "rgba(43, 43, 43, 0.06)",
+    borderTopColor: ds.colors.border.subtle,
     shadowColor: BLACK,
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: -5 },
-    elevation: 10,
+    shadowOpacity: ds.shadows.md.shadowOpacity,
+    shadowRadius: ds.shadows.md.shadowRadius,
+    shadowOffset: ds.shadows.md.shadowOffset,
+    elevation: ds.shadows.md.elevation,
   },
   validateButton: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentMustard,
-    paddingVertical: 10,
+    paddingVertical: ds.spacing[3],
     alignItems: "center",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.12,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 8,
     shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 3 },
   },
   validateButtonText: {
     color: DARK_GRAY,
-    fontWeight: "400",
+    fontFamily: ds.fontFamilies.regular,
   },
   locationHint: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
   validatedText: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     color: vibesTheme.colors.accentBlue,
-    fontSize: 13,
-    fontWeight: "400",
+    ...ds.textStyles.bodySmall,
   },
   validatedLocationBlock: {
-    marginTop: 8,
-    gap: 10,
+    marginTop: ds.spacing[2],
+    gap: ds.spacing[3],
   },
   mapPreviewCard: {
     height: 168,
-    borderRadius: 16,
+    borderRadius: ds.radii.lg,
     overflow: "hidden",
-    backgroundColor: "rgba(216, 140, 122, 0.25)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.32)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
   },
   mapPreviewImage: {
     width: "100%",
@@ -1416,50 +1406,47 @@ const legacyStyles = StyleSheet.create({
     top: "50%",
     width: 44,
     height: 44,
-    marginLeft: -22,
-    marginTop: -34,
-    borderRadius: 22,
+    marginLeft: -ds.spacing[6],
+    marginTop: -ds.spacing[8],
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     shadowColor: BLACK,
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    shadowOpacity: ds.shadows.sm.shadowOpacity,
+    shadowRadius: ds.shadows.sm.shadowRadius,
+    shadowOffset: ds.shadows.sm.shadowOffset,
+    elevation: ds.shadows.sm.elevation,
   },
   mapPreviewFallback: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    paddingHorizontal: 22,
-    backgroundColor: "rgba(244, 163, 64, 0.13)",
+    gap: ds.spacing[3],
+    paddingHorizontal: ds.spacing[6],
+    backgroundColor: ds.colors.bg.selected,
   },
   mapPreviewFallbackPin: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
+    backgroundColor: ds.colors.bg.selected,
   },
   mapPreviewFallbackTitle: {
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
     textAlign: "center",
   },
   mapPreviewFallbackText: {
     color: DARK_GRAY,
-    fontSize: 14,
-    fontWeight: "400",
+    ...ds.textStyles.bodySmall,
     textAlign: "center",
   },
   mapPreviewFallbackMeta: {
     color: TEXT_SECONDARY,
-    fontSize: 12,
-    fontWeight: "400",
+    ...ds.textStyles.caption,
     textAlign: "center",
   },
   mapPreviewOverlay: {
@@ -1470,24 +1457,23 @@ const legacyStyles = StyleSheet.create({
   mapPreviewBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(43, 43, 43, 0.72)",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: ds.spacing[2],
+    backgroundColor: /* ds-lint-allow DS-TODO: ink al 72%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.72)",
+    borderRadius: ds.radii.pill,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[2],
   },
   mapPreviewBadgeText: {
     color: WHITE,
-    fontSize: 12,
-    fontWeight: "400",
+    ...ds.textStyles.caption,
   },
   coverPicker: {
     width: "100%",
     aspectRatio: 16 / 9,
-    borderRadius: 16,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.42)",
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
+    backgroundColor: ds.colors.bg.selected,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
@@ -1500,117 +1486,112 @@ const legacyStyles = StyleSheet.create({
   },
   coverScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(43, 43, 43, 0.22)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
   },
   coverChangeBadge: {
     position: "absolute",
     right: 12,
     bottom: 12,
     minHeight: 38,
-    borderRadius: 19,
+    borderRadius: ds.radii.lg,
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 14,
-    backgroundColor: "rgba(43, 43, 43, 0.78)",
+    gap: ds.spacing[2],
+    paddingHorizontal: ds.spacing[4],
+    backgroundColor: /* ds-lint-allow DS-TODO: ink al 78%: no hay opacidad cercana (más cercana 1) */ "rgba(43, 43, 43, 0.78)",
   },
   coverChangeText: {
     color: WHITE,
-    fontSize: 13,
-    lineHeight: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
   coverEmptyState: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 28,
+    paddingHorizontal: ds.spacing[8],
   },
   coverIconCircle: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
-    backgroundColor: "rgba(244, 163, 64, 0.16)",
+    marginBottom: ds.spacing[3],
+    backgroundColor: ds.colors.bg.selected,
   },
   uploadImageTitle: {
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   uploadImageHint: {
-    marginTop: 5,
-    color: "rgba(43, 43, 43, 0.52)",
-    fontSize: 13,
-    lineHeight: 17,
+    marginTop: ds.spacing[1],
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.strong),
+    ...ds.textStyles.bodySmall,
     textAlign: "center",
   },
   photoSheet: {
     backgroundColor: WHITE,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 30,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[6],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[8],
     shadowColor: BLACK,
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    shadowOpacity: ds.shadows.md.shadowOpacity,
+    shadowRadius: ds.shadows.md.shadowRadius,
+    shadowOffset: ds.shadows.md.shadowOffset,
+    elevation: ds.shadows.md.elevation,
   },
   sheetHandle: {
     alignSelf: "center",
     width: 44,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.16)",
-    marginBottom: 16,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.border.default,
+    marginBottom: ds.spacing[4],
   },
   modalTitle: {
-    fontSize: 18,
+    ...ds.textStyles.heading,
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.regular,
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
   },
   modalPrimaryButton: {
     backgroundColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 12,
+    borderRadius: ds.radii.xl,
+    paddingVertical: ds.spacing[3],
     alignItems: "center",
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.18,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 10,
     shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 5 },
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 5 },
   },
   modalPrimaryText: {
     color: vibesTheme.colors.primaryText,
-    fontWeight: "400",
+    fontFamily: ds.fontFamilies.regular,
   },
   modalSecondaryButton: {
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentMustard,
-    paddingVertical: 12,
+    paddingVertical: ds.spacing[3],
     alignItems: "center",
-    marginTop: 10,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    marginTop: ds.spacing[3],
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.12,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 8,
     shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 3 },
   },
   modalSecondaryText: {
     color: DARK_GRAY,
-    fontWeight: "400",
+    fontFamily: ds.fontFamilies.regular,
   },
   modalCancelButton: {
-    marginTop: 14,
+    marginTop: ds.spacing[4],
     alignItems: "center",
   },
   modalCancelText: {
     color: TEXT_SECONDARY,
-    fontWeight: "400",
+    fontFamily: ds.fontFamilies.regular,
   },
 });
 
