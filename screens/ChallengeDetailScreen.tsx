@@ -1586,7 +1586,7 @@ const ChallengeDetailScreen = () => {
         contentContainerStyle={[
           localStyles.scrollContent,
           {
-            paddingBottom: insets.bottom + /* ds-lint-allow DS-TODO: paddingBottom 188 fuera de escala (>48), parece layout */ 188,
+            paddingBottom: insets.bottom + /* ds-lint-allow layout: paddingBottom 188 (medida de layout fuera de la escala) */ 188,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -2139,7 +2139,7 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.subtitle,
   },
   scrollContent: {
-    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 188 fuera de escala (>48), parece layout */ 188,
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 188 (medida de layout fuera de la escala) */ 188,
   },
   contentShell: {
     marginTop: ds.spacing[1],
@@ -2411,7 +2411,7 @@ const localStyles = StyleSheet.create({
   },
   heroScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: /* ds-lint-allow DS-TODO: ink al 62%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.62)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
   },
   heroTopBar: {
     position: "absolute",
@@ -2661,9 +2661,7 @@ const localStyles = StyleSheet.create({
   },
   journeyPercent: {
     color: vibesTheme.colors.accentBlue,
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 46 (peso 700) sin mapeo claro en §3.5.1 */ 46,
-    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 50,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.display,
   },
   journeyTrack: {
     marginTop: ds.spacing[5],
@@ -2761,7 +2759,7 @@ const localStyles = StyleSheet.create({
   },
   pathSubtitle: {
     marginTop: ds.spacing[1],
-    color: /* ds-lint-allow DS-TODO: ink al 58%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.58)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.subtitleMedium,
   },
   pathPill: {
@@ -2814,10 +2812,7 @@ const localStyles = StyleSheet.create({
   dayActive: {
     backgroundColor: vibesTheme.colors.accentMustard,
     borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.3,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 4 },
+    ...ds.glow.accent,
   },
   dayFuture: {
     backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
@@ -2858,7 +2853,7 @@ const localStyles = StyleSheet.create({
   },
   pathMantraText: {
     flex: 1,
-    color: /* ds-lint-allow DS-TODO: ink al 68%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.68)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.subtitleMedium,
   },
   pathStatsCard: {
@@ -2866,7 +2861,7 @@ const localStyles = StyleSheet.create({
     borderRadius: ds.radii.lg,
     borderWidth: 1,
     borderColor: ds.colors.border.subtle,
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 72%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.72)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
     paddingHorizontal: ds.spacing[2],
     paddingVertical: ds.spacing[3],
     flexDirection: "row",
@@ -2908,7 +2903,7 @@ const localStyles = StyleSheet.create({
   },
   pathStatLabel: {
     marginTop: ds.spacing[2],
-    color: /* ds-lint-allow DS-TODO: ink al 62%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.62)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.micro,
   },
   pathStatDivider: {
@@ -2993,10 +2988,7 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     gap: ds.spacing[2],
     paddingHorizontal: ds.spacing[4],
-    shadowColor: palette.goldDeep,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (palette.goldDeep): ¿glow de marca o ds.shadows? */ 0.24,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 15,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 8 },
+    ...ds.glow.accent,
   },
   checkInCompleted: {
     backgroundColor: vibesTheme.colors.primaryText,
@@ -3011,18 +3003,18 @@ const localStyles = StyleSheet.create({
   },
   footerSliderTrack: {
     minHeight: 68,
-    borderRadius: /* ds-lint-allow DS-TODO: borderRadius 34 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 34,
+    borderRadius: ds.radii.pill,
     backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1.5,
-    borderColor: /* ds-lint-allow DS-TODO: blue al 65% sin opacidad cercana */ `${vibesTheme.colors.accentBlue}A6`,
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.high),
     overflow: "hidden",
     justifyContent: "center",
-    paddingLeft: /* ds-lint-allow DS-TODO: paddingLeft 70 fuera de escala (>48), parece layout */ 70,
+    paddingLeft: /* ds-lint-allow layout: paddingLeft 70 (medida de layout fuera de la escala) */ 70,
     paddingRight: ds.spacing[8],
   },
   footerSliderTrackCompleted: {
     backgroundColor: vibesTheme.colors.surface,
-    borderColor: /* ds-lint-allow DS-TODO: blue al 65% sin opacidad cercana */ `${vibesTheme.colors.accentBlue}A6`,
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.high),
   },
   footerSliderTint: {
     ...StyleSheet.absoluteFillObject,
@@ -3033,7 +3025,7 @@ const localStyles = StyleSheet.create({
     left: FOOTER_SLIDER_FILL_LEFT,
     top: 0,
     bottom: 0,
-    borderRadius: /* ds-lint-allow DS-TODO: borderRadius 34 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 34,
+    borderRadius: ds.radii.pill,
     backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
   },
   footerSliderHandle: {
@@ -3048,10 +3040,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.accentBlue,
     borderWidth: 1,
     borderColor: ds.colors.bg.surfaceTranslucent,
-    shadowColor: vibesTheme.colors.accentCoral,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentCoral): ¿glow de marca o ds.shadows? */ 0,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
+    ...ds.shadows.none,
   },
   footerSliderHandleCompleted: {
     backgroundColor: vibesTheme.colors.accentBlue,
@@ -3122,7 +3111,7 @@ const localStyles = StyleSheet.create({
   },
   chatSubtitle: {
     marginTop: ds.spacing[1],
-    color: /* ds-lint-allow DS-TODO: paper al 76%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.76)",
+    color: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
     ...ds.textStyles.labelMedium,
   },
   menuSheet: {
@@ -3198,7 +3187,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: ds.spacing[3],
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 72%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.72)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
     marginTop: ds.spacing[3],
   },
   menuItemDanger: {

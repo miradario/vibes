@@ -459,7 +459,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   eyebrow: {
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 10 (peso 400) sin mapeo claro en §3.5.1 */ 10,
+    ...ds.textStyles.caption,
     letterSpacing: 2,
     color: vibesTheme.colors.secondaryText,
     marginBottom: ds.spacing[3],

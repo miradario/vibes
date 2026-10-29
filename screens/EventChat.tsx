@@ -1169,10 +1169,7 @@ const localStyles = StyleSheet.create({
     borderBottomRightRadius: ds.radii.sm,
     borderWidth: 1,
     borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.14,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 10,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
+    ...ds.glow.accent,
     // Android shadows show through translucent backgrounds.
     elevation: Platform.OS === "android" ? 0 : ds.shadows.sm.elevation,
   },

@@ -176,7 +176,7 @@ export const onboardingStyles = StyleSheet.create({
   energyCircle: {
     width: isCompactOnboardingScreen ? 62 : 70,
     height: isCompactOnboardingScreen ? 62 : 70,
-    borderRadius: /* ds-lint-allow DS-TODO: borderRadius 35 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 35,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: ds.spacing[2],
@@ -200,12 +200,12 @@ export const onboardingStyles = StyleSheet.create({
   photoButton: {
     width: isCompactOnboardingScreen ? 128 : 148,
     height: isCompactOnboardingScreen ? 128 : 148,
-    borderRadius: /* ds-lint-allow DS-TODO: borderRadius 74 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 74,
+    borderRadius: ds.radii.pill,
     borderWidth: 2,
     borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 75%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.75)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
     overflow: "hidden",
   },
   photo: {
@@ -221,7 +221,7 @@ export const onboardingStyles = StyleSheet.create({
     borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: /* ds-lint-allow DS-TODO: ink al 66%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.66)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
   },
   nativeBirthDatePicker: {
     width: "100%",
@@ -305,7 +305,7 @@ export const onboardingStyles = StyleSheet.create({
     borderRadius: ds.radii.lg,
     borderWidth: 1,
     borderColor: ds.colors.border.default,
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 78%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.78)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
     paddingHorizontal: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
@@ -338,10 +338,7 @@ export const onboardingStyles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: ds.radii.pill,
     backgroundColor: ds.colors.bg.selected,
-    shadowColor: ONBOARDING_COLORS.mustard,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (ONBOARDING_COLORS.mustard): ¿glow de marca o ds.shadows? */ 0.22,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 28,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 0 },
+    ...ds.glow.accent,
   },
   completionMedia: {
     width: "100%",

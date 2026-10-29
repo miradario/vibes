@@ -31,6 +31,6 @@ export default function ChatVisibleDate({ date }: { date: string | null }) {
 }
 const s = StyleSheet.create({
   overlay: { position: "absolute", top: 8, left: 0, right: 0, alignItems: "center", zIndex: 10 },
-  badge: { backgroundColor: /* ds-lint-allow DS-TODO: paper al 80% sin opacidad cercana */ `${vibesTheme.colors.surface}CC`, borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[2] },
+  badge: { backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher), borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[2] },
   text: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.caption },
 });

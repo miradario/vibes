@@ -186,7 +186,7 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange, requestOpen }: 
           disabled={busy} activeOpacity={0.8}
           onPress={() => uris[0] ? void editPhoto(0) : setModalVisible(true)}>
           {uris[0] ? <Image source={{ uri: uris[0] }} style={onboardingStyles.photo} resizeMode="contain" />
-            : <Icon name="person-outline" size={/* ds-lint-allow DS-TODO: ícono de 48: fuera de icon-size (16/20/24/32) */ 48} color={vibesTheme.colors.secondaryText} />}
+            : <Icon name="person-outline" size={ds.iconSize.xxl} color={vibesTheme.colors.secondaryText} />}
         </TouchableOpacity>
         {uris[0] ? <TouchableOpacity accessibilityRole="button" accessibilityLabel={english ? "Edit main photo" : "Editar foto principal"}
           disabled={busy} style={styles.mainEdit} onPress={() => void editPhoto(0)}>

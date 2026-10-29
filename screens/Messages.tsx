@@ -726,7 +726,7 @@ export const MessagesContent = ({
               (showHeader ? Math.max(insets.top + ds.spacing[4], ds.spacing[12]) : ds.spacing[2]),
             paddingBottom:
               contentBottomPadding ??
-              getBottomTabContentPadding(insets.bottom, 118),
+              getBottomTabContentPadding(insets.bottom),
           },
         ]}
       >
@@ -1001,7 +1001,7 @@ const localStyles = StyleSheet.create({
   },
   conversationHint: {
     alignItems: "center",
-    marginTop: /* ds-lint-allow DS-TODO: marginTop 70 fuera de escala (>48), parece layout */ 70,
+    marginTop: /* ds-lint-allow layout: marginTop 70 (medida de layout fuera de la escala) */ 70,
     marginBottom: ds.spacing[6],
     gap: ds.spacing[3],
   },

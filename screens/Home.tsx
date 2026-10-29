@@ -53,7 +53,7 @@ import { useI18n } from "../src/i18n";
 import { supabase } from "../src/lib/supabase";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
-import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
+import { getBottomTabContentPadding, TAB_BAR_CONTENT_CLEARANCE } from "../src/lib/tabBarLayout";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
@@ -77,6 +77,8 @@ const DEFAULT_FILTERS: DiscoverFiltersState = {
   smoking: "all",
 };
 const HOME_BOTTOM_PADDING_REDUCTION = 72;
+/** Piso del aire inferior de Home sobre la barra (112 = TAB_BAR_CONTENT_CLEARANCE − 6). */
+const HOME_MIN_BOTTOM_CLEARANCE = TAB_BAR_CONTENT_CLEARANCE - 6;
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -935,9 +937,9 @@ const Home = () => {
             localStyles.homeContent,
             {
               paddingBottom: Math.max(
-                getBottomTabContentPadding(insets.bottom, 118) -
+                getBottomTabContentPadding(insets.bottom) -
                   HOME_BOTTOM_PADDING_REDUCTION,
-                /* ds-lint-allow DS-TODO: paddingBottom 112 fuera de escala (>48), parece layout */ 112
+                HOME_MIN_BOTTOM_CLEARANCE
               ),
             },
           ]}
@@ -1027,7 +1029,7 @@ const localStyles = StyleSheet.create({
   homeContent: {
     paddingHorizontal: ds.spacing[5],
     paddingTop: ds.spacing[4],
-    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 118 fuera de escala (>48), parece layout */ 118,
+    paddingBottom: TAB_BAR_CONTENT_CLEARANCE,
   },
   heroHeader: {
     flexDirection: "row",
@@ -1164,11 +1166,8 @@ const localStyles = StyleSheet.create({
     backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1,
     borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.16,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 5 },
-    elevation: /* ds-lint-allow DS-TODO: misma sombra de color */ 3,
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   vibesBreathingText: {
     color: vibesTheme.colors.primaryText,
@@ -1323,9 +1322,7 @@ const localStyles = StyleSheet.create({
   },
   connectionsEyebrow: {
     color: vibesTheme.colors.primaryText,
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 10 (peso 700) sin mapeo claro en §3.5.1 */ 10,
-    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 13,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.caption,
     marginBottom: ds.spacing[1],
   },
   connectionsRow: {
@@ -1363,11 +1360,8 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: ds.spacing[4],
     paddingVertical: ds.spacing[4],
     marginBottom: ds.spacing[4],
-    shadowColor: vibesTheme.colors.accentCoral,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentCoral): ¿glow de marca o ds.shadows? */ 0.1,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 18,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 8 },
-    elevation: /* ds-lint-allow DS-TODO: misma sombra de color */ 4,
+    ...ds.glow.coral,
+    elevation: ds.shadows.md.elevation,
   },
   challengePreviewHeader: {
     flexDirection: "row",
@@ -1380,16 +1374,14 @@ const localStyles = StyleSheet.create({
     borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 72%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.72)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
   },
   challengePreviewCopy: {
     flex: 1,
   },
   challengePreviewEyebrow: {
     color: vibesTheme.colors.primaryText,
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 10 (peso 700) sin mapeo claro en §3.5.1 */ 10,
-    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 13,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.caption,
   },
   challengePreviewTitle: {
     marginTop: ds.spacing[1],
@@ -1426,7 +1418,7 @@ const localStyles = StyleSheet.create({
     borderRadius: ds.radii.lg,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 68%: no hay opacidad cercana (más cercana 0.45) */ "rgba(254, 254, 253, 0.68)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.high),
   },
   eventDateWeekday: {
     color: vibesTheme.colors.secondaryText,
@@ -1531,13 +1523,10 @@ const localStyles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
     borderWidth: 1,
-    borderColor: /* ds-lint-allow DS-TODO: paper al 74%: no hay opacidad cercana (más cercana 0.92) */ "rgba(254, 254, 253, 0.74)",
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
     marginBottom: ds.spacing[4],
     position: "relative",
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color ("rgba(57, 120, 184, 0.37)"): ¿glow de marca o ds.shadows? */ 0.08,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 18,
-    shadowColor: /* ds-lint-allow DS-TODO: misma sombra de color */ "rgba(57, 120, 184, 0.37)",
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { height: 8, width: 0 },
+    ...ds.glow.blue,
     paddingHorizontal: ds.spacing[4],
     paddingVertical: ds.spacing[3],
     justifyContent: "center",
@@ -1565,7 +1554,7 @@ const localStyles = StyleSheet.create({
     borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 64%: no hay opacidad cercana (más cercana 0.45) */ "rgba(254, 254, 253, 0.64)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.high),
     borderWidth: 1,
     borderColor: ds.colors.bg.surfaceTranslucent,
   },
@@ -1587,7 +1576,7 @@ const localStyles = StyleSheet.create({
     borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 64%: no hay opacidad cercana (más cercana 0.45) */ "rgba(254, 254, 253, 0.64)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.high),
     borderWidth: 1,
     borderColor: ds.colors.bg.surfaceTranslucent,
   },
@@ -1652,7 +1641,7 @@ const localStyles = StyleSheet.create({
   guruBreathPrompt: {
     marginTop: ds.spacing[3],
     color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.body,
   },
   guruBody: {
     marginTop: ds.spacing[2],
@@ -1827,7 +1816,7 @@ const localStyles = StyleSheet.create({
   },
   feedListTitle: {
     color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.body,
     marginBottom: ds.spacing[1],
   },
   feedListMeta: {
@@ -1924,10 +1913,8 @@ const localStyles = StyleSheet.create({
     paddingBottom: ds.spacing[2],
   },
   discoverTitle: {
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 42 (peso 400) sin mapeo claro en §3.5.1 */ 42,
-    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 46,
+    ...ds.textStyles.display,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.regular,
     letterSpacing: 0.3,
   },
   discoverOrbitWrap: {
@@ -1963,7 +1950,7 @@ const localStyles = StyleSheet.create({
   },
   emptyStateText: {
     marginTop: ds.spacing[3],
-    color: /* ds-lint-allow DS-TODO: ink al 70%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.7)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.body,
     textAlign: "center",
   },
@@ -1997,7 +1984,7 @@ const localStyles = StyleSheet.create({
   },
   filtersSubtitle: {
     marginTop: ds.spacing[1],
-    color: /* ds-lint-allow DS-TODO: ink al 64%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.64)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.subtitleMedium,
   },
   filtersCloseButton: {
@@ -2022,7 +2009,7 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   rangeSummary: {
-    color: /* ds-lint-allow DS-TODO: ink al 78%: no hay opacidad cercana (más cercana 1) */ "rgba(43, 43, 43, 0.78)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.higher),
     ...ds.textStyles.body,
   },
   rangeReset: {
@@ -2044,7 +2031,7 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   rangeLabel: {
-    color: /* ds-lint-allow DS-TODO: ink al 64%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.64)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.bodySmall,
     textTransform: "uppercase",
   },

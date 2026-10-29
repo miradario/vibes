@@ -61,13 +61,11 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: ds.spacing[8],
-    paddingTop: /* ds-lint-allow DS-TODO: paddingTop 220 fuera de escala (>48), parece layout */ 220,
+    paddingTop: /* ds-lint-allow layout: paddingTop 220 (medida de layout fuera de la escala) */ 220,
   },
   brandTitle: {
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 48 (peso 400) sin mapeo claro en §3.5.1 */ 48,
-    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 52,
+    ...ds.textStyles.display,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.regular,
   },
   title: {
     marginTop: ds.spacing[3],

@@ -754,7 +754,7 @@ const localStyles = StyleSheet.create({
     marginBottom: ds.spacing[1],
   },
   scrollContent: {
-    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 104 fuera de escala (>48), parece layout */ 104,
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 104 (medida de layout fuera de la escala) */ 104,
   },
   primaryBadge: {
     position: "absolute",
@@ -767,11 +767,10 @@ const localStyles = StyleSheet.create({
   },
   primaryBadgeText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 10 (peso 400) sin mapeo claro en §3.5.1 */ 10,
-    fontFamily: ds.fontFamilies.regular,
+    ...ds.textStyles.micro,
   },
   nameInput: {
-    backgroundColor: /* ds-lint-allow DS-TODO: paper al 60%: no hay opacidad cercana (más cercana 0.45) */ "rgba(254, 254, 253, 0.6)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.high),
     borderRadius: ds.radii.md,
     paddingHorizontal: ds.spacing[4],
     paddingVertical: ds.spacing[4],
@@ -786,7 +785,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: ds.spacing[4],
     paddingVertical: ds.spacing[4],
     borderWidth: 1,
-    borderColor: /* ds-lint-allow DS-TODO: blue al 80%: no hay opacidad cercana (más cercana 1) */ "rgba(57, 120, 184, 0.8)",
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.higher),
   },
   readOnlyValue: {
     color: DARK_GRAY,

@@ -189,7 +189,7 @@ const OnboardingPhoto = () => {
               />
             ) : (
               <View style={localStyles.emptyPrimaryPhoto}>
-                <Icon name="person" size={/* ds-lint-allow DS-TODO: ícono de 56: fuera de icon-size (16/20/24/32) */ 56} color={TEXT_SECONDARY} />
+                <Icon name="person" size={ds.iconSize.xxl} color={TEXT_SECONDARY} />
                 <Text style={localStyles.emptyPrimaryLabel}>{t("onboarding.photoEmpty")}</Text>
               </View>
             )}

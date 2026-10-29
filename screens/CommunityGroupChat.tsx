@@ -297,7 +297,7 @@ export default function CommunityGroupChat() {
               }}
               style={{ minHeight: 48, paddingVertical: ds.spacing[4] }}
             >
-              <Text style={{ ...ds.textStyles.heading, color: DARK_GRAY }}>
+              <Text style={{ ...ds.textStyles.body, color: DARK_GRAY }}>
                 Editar foto del grupo
               </Text>
             </TouchableOpacity>
@@ -309,7 +309,7 @@ export default function CommunityGroupChat() {
           >
             <Text
               style={{
-                ...ds.textStyles.heading,
+                ...ds.textStyles.body,
                 color: vibesTheme.colors.primaryText,
                 paddingVertical: ds.spacing[5],
               }}

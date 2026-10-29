@@ -169,7 +169,7 @@ const localStyles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: ds.spacing[3],
-    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 150 fuera de escala (>48), parece layout */ 150,
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 150 (medida de layout fuera de la escala) */ 150,
   },
   card: {
     borderRadius: ds.radii.xl,

@@ -93,7 +93,7 @@ export const ui = StyleSheet.create({
   selected: { backgroundColor: ds.colors.bg.selected, borderColor: c.accentMustard },
   chipText: { ...ds.textStyles.label, color: c.primaryText },
   selectedText: { color: c.primaryText },
-  link: { color: c.accentBlue, ...ds.textStyles.heading },
+  link: { color: c.accentBlue, ...ds.textStyles.body },
   photo: { width: 92, height: 100, borderRadius: ds.radii.lg },
   cover: { height: 190, width: "100%", borderRadius: ds.radii.lg },
   fallback: {

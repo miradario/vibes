@@ -251,11 +251,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.24,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 14,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 8 },
-    elevation: /* ds-lint-allow DS-TODO: misma sombra de color */ 3,
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   ctaPillText: {
     color: vibesTheme.colors.primaryText,

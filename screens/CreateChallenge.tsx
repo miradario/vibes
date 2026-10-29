@@ -598,7 +598,7 @@ const legacyStyles = StyleSheet.create({
     marginBottom: ds.spacing[1],
   },
   content: {
-    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 132 fuera de escala (>48), parece layout */ 132,
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 132 (medida de layout fuera de la escala) */ 132,
   },
   formCard: {
     backgroundColor: WHITE,
@@ -633,7 +633,7 @@ const legacyStyles = StyleSheet.create({
   },
   descriptionInput: {
     minHeight: 160,
-    lineHeight: /* ds-lint-allow DS-TODO: lineHeight 25 suelto (sin fontSize en el mismo estilo) */ 25,
+    ...ds.textStyles.body,
   },
   coverPicker: {
     marginTop: ds.spacing[2],
@@ -660,7 +660,7 @@ const legacyStyles = StyleSheet.create({
     paddingHorizontal: ds.spacing[3],
     paddingVertical: ds.spacing[2],
     borderRadius: ds.radii.pill,
-    backgroundColor: /* ds-lint-allow DS-TODO: ink al 62%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.62)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     flexDirection: "row",
     alignItems: "center",
     gap: ds.spacing[2],
@@ -806,10 +806,7 @@ const legacyStyles = StyleSheet.create({
     borderRadius: ds.radii.xl,
     paddingVertical: ds.spacing[4],
     alignItems: "center",
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.2,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
+    ...ds.glow.accent,
   },
   createButtonDisabled: {
     opacity: 0.45,

@@ -1042,7 +1042,7 @@ const UserProfileSheet = ({
             />
             )
           ) : (
-            withoutPhoto ? <ProfileWithoutPhoto active={visible && !photoChromeHidden} name={profile.name} age={profile.age} zodiac={profile.zodiac} /> : <View style={localStyles.fallbackCanvas}><Icon name="person-outline" size={/* ds-lint-allow DS-TODO: ícono de 72: fuera de icon-size (16/20/24/32) */ 72} color={vibesTheme.colors.secondaryText} /></View>
+            withoutPhoto ? <ProfileWithoutPhoto active={visible && !photoChromeHidden} name={profile.name} age={profile.age} zodiac={profile.zodiac} /> : <View style={localStyles.fallbackCanvas}><Icon name="person-outline" size={ds.iconSize.xxl} color={vibesTheme.colors.secondaryText} /></View>
           )}
 
           </Animated.View>
@@ -1563,7 +1563,7 @@ const localStyles = StyleSheet.create({
   vibeAction: { minWidth: 64, alignItems: "center", gap: ds.spacing[2] },
   bareActionIcon: { backgroundColor: "transparent", borderWidth: 0 },
   actionIconShadow: {
-    textShadowColor: /* ds-lint-allow DS-TODO: ink al 65%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.65)",
+    textShadowColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
@@ -1574,7 +1574,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: /* ds-lint-allow DS-TODO: paper al 60%: no hay opacidad cercana (más cercana 0.45) */ "rgba(254, 254, 253, 0.6)",
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.high),
   },
   vibeActionLabel: {
     color: vibesTheme.colors.background,
@@ -1585,11 +1585,8 @@ const localStyles = StyleSheet.create({
     minHeight: 56,
     borderRadius: ds.radii.xl,
     overflow: "hidden",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.2,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
-    elevation: /* ds-lint-allow DS-TODO: misma sombra de color */ 4,
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   primaryAction: {
     minHeight: 56,

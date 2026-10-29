@@ -216,7 +216,7 @@ const localStyles = StyleSheet.create({
   hero: { width: "100%", marginTop: ds.spacing[12], paddingTop: ds.spacing[12], paddingBottom: ds.spacing[8] },
   peopleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   person: { alignItems: "center", maxWidth: "49%" },
-  avatar: { borderWidth: 2, borderColor: vibesTheme.colors.primaryText, borderRadius: /* ds-lint-allow DS-TODO: borderRadius 180 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 180, overflow: "hidden" },
+  avatar: { borderWidth: 2, borderColor: vibesTheme.colors.primaryText, borderRadius: ds.radii.pill, overflow: "hidden" },
   personName: { marginTop: ds.spacing[2], ...ds.textStyles.heading, color: vibesTheme.colors.primaryText },
   questionCard: { width: "100%", borderRadius: ds.radii.xl, padding: ds.spacing[4], flexDirection: "row", alignItems: "center", gap: ds.spacing[4], backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },
   messageIcon: { width: 46, height: 46, borderRadius: ds.radii.pill, alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.feedback.infoBg },

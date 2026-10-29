@@ -290,7 +290,7 @@ const Startup = () => {
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         {bootFailed ? (
           <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: ds.spacing[6], gap: ds.spacing[4], marginTop: ds.spacing[6] }}>
-            <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", ...ds.textStyles.heading }}>
+            <Text accessibilityLiveRegion="polite" style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", ...ds.textStyles.body }}>
               La carga está demorando. Revisá tu conexión y volvé a intentar.
             </Text>
             <VibesActionButton label="Reintentar" onPress={retryBoot} textStyle={{ color: vibesTheme.colors.primaryText }} />

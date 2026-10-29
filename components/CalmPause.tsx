@@ -136,7 +136,7 @@ const s = StyleSheet.create({
     gap: ds.spacing[1],
   },
   primary: { paddingVertical: ds.spacing[4] },
-  primaryLabel: { lineHeight: /* ds-lint-allow DS-TODO: lineHeight 24 suelto (sin fontSize en el mismo estilo) */ 24, textAlign: "center" },
+  primaryLabel: { ...ds.textStyles.subtitle, textAlign: "center" },
   loading: {
     color: vibesTheme.colors.secondaryText,
     textAlign: "center",

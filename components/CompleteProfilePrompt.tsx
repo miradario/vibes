@@ -189,7 +189,7 @@ export default function CompleteProfilePrompt({
 
 const styles = StyleSheet.create({
   compactCard: {
-    borderRadius: /* ds-lint-allow DS-TODO: borderRadius 40 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 40,
+    borderRadius: ds.radii.pill,
     paddingRight: ds.spacing[4],
     gap: ds.spacing[3],
     borderColor: ds.colors.border.default,

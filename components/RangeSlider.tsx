@@ -33,7 +33,7 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
   const x = (value: number) => (value - minimum) / (maximum - minimum) * track;
   return <View style={{ gap: ds.spacing[3], opacity: disabled ? 0.5 : 1 }}>
     <View style={s.heading}>
-      <Text style={[s.title, single && { ...ds.textStyles.heading }, { flex: 1 }]}>{label}</Text>
+      <Text style={[s.title, single && { ...ds.textStyles.body }, { flex: 1 }]}>{label}</Text>
       {single ? (upper === null ? null : <View style={s.clear}><Text style={s.clearText}>{`${high}/10`}</Text></View>) : <TouchableOpacity accessibilityRole="button" onPress={onClear} style={s.clear}>
         <Text style={s.clearText}>{noLimitLabel}</Text>
       </TouchableOpacity>}

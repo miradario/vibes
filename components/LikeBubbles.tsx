@@ -41,7 +41,7 @@ export default function LikeBubbles({ trigger, showConfirmation = false }: { tri
         borderWidth: 2, borderColor: vibesTheme.colors.accentMustard,
         opacity: progress.interpolate({ inputRange: [0, 0.15, 0.65, 1], outputRange: [0, 1, 1, 0] }),
         transform: [{ scale: progress.interpolate({ inputRange: [0, 0.22, 0.4, 1], outputRange: [0.6, 1.12, 1, 0.95] }) }],
-      }}><Text style={{ color: vibesTheme.colors.accentBlue, fontSize: /* ds-lint-allow DS-TODO: fontSize 40 (peso 400) sin mapeo claro en §3.5.1 */ 40 }}>✓</Text></Animated.View> : null}
+      }}><Text style={{ color: vibesTheme.colors.accentBlue, fontSize: /* ds-lint-allow glifo ilustrativo: ✓ de la animación de confirmación */ 40 }}>✓</Text></Animated.View> : null}
       {Array.from({ length: 9 }, (_, i) => {
         const angle = (i * Math.PI * 2) / 9;
         return (

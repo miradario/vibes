@@ -86,11 +86,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.22,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 14,
-    elevation: /* ds-lint-allow DS-TODO: misma sombra de color */ 3,
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   startButtonDisabled: {
     opacity: 0.42,
@@ -143,7 +140,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   skipTextDisabled: {
-    color: /* ds-lint-allow DS-TODO: inkSoft al 78%: no hay opacidad cercana (más cercana 1) */ "rgba(110, 110, 110, 0.78)",
+    color: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.higher),
   },
 });
 

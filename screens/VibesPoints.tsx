@@ -484,9 +484,7 @@ const s = StyleSheet.create({
     color: c.primaryText,
   },
   total: {
-    fontFamily: vibesTheme.fonts.extraBold,
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 38 (peso 800) sin mapeo claro en §3.5.1 */ 38,
-    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 46,
+    ...ds.textStyles.display,
     color: c.primaryText,
   },
   body: {

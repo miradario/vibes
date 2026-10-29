@@ -211,7 +211,7 @@ const s = StyleSheet.create({
   },
   copy: {
     color: vibesTheme.colors.secondaryText,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.body,
   },
   button: {
     minHeight: 48,

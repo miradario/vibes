@@ -139,7 +139,7 @@ const CardItem = ({
 
   const imageStyle = [
     {
-      borderRadius: hasVariant ? /* ds-lint-allow DS-TODO: borderRadius 85 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 85 : isDiscover ? /* ds-lint-allow DS-TODO: borderRadius 90 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 90 : ds.radii.sm,
+      borderRadius: hasVariant ? ds.radii.pill : isDiscover ? ds.radii.pill : ds.radii.sm,
       width: hasVariant
         ? fullWidth / 2 - 30
         : isDiscover

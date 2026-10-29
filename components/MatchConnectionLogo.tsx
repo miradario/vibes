@@ -93,7 +93,7 @@ export default function MatchConnectionLogo({ split, top, animate, photoSize }: 
 
 export function MatchConnectionSymbol({ drift, top }: { drift: Animated.Value; top: number }) {
   return (
-    <Animated.View pointerEvents="none" accessible={false} style={[styles.body, { top, left: "50%", marginLeft: /* ds-lint-allow DS-TODO: marginLeft -60 fuera de escala (>48), parece layout */ -60, transform: [
+    <Animated.View pointerEvents="none" accessible={false} style={[styles.body, { top, left: "50%", marginLeft: /* ds-lint-allow layout: marginLeft -60 (medida de layout fuera de la escala) */ -60, transform: [
       { rotate: drift.interpolate({ inputRange: [0, 1], outputRange: ["-3deg", "3deg"] }) },
     ] }]}>
       <Svg width="120" height="116" viewBox="0 0 150 145">

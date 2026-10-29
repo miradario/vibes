@@ -699,7 +699,7 @@ const s = StyleSheet.create({
   chatCharacter: { alignItems: "flex-end", paddingRight: ds.spacing[3] },
   speechTail: {
     alignSelf: "flex-end",
-    marginRight: /* ds-lint-allow DS-TODO: marginRight 62 fuera de escala (>48), parece layout */ 62,
+    marginRight: /* ds-lint-allow layout: marginRight 62 (medida de layout fuera de la escala) */ 62,
     marginTop: -ds.spacing[2],
     width: 16,
     height: 16,
@@ -780,7 +780,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.accentMustard,
   },
   cardCopy: { flex: 1, gap: ds.spacing[1] },
-  eyebrow: { fontSize: /* ds-lint-allow DS-TODO: fontSize 10 (peso 400) sin mapeo claro en §3.5.1 */ 10, letterSpacing: 1.4, color: colors.secondaryText },
+  eyebrow: { ...ds.textStyles.caption, letterSpacing: 1.4, color: colors.secondaryText },
   cardTitle: {
     ...ds.textStyles.heading,
     color: colors.primaryText,

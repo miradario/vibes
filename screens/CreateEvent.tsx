@@ -1192,7 +1192,7 @@ const legacyStyles = StyleSheet.create({
     ...ds.textStyles.title,
   },
   content: {
-    paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 128 fuera de escala (>48), parece layout */ 128,
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 128 (medida de layout fuera de la escala) */ 128,
   },
   formCard: {
     backgroundColor: WHITE,
@@ -1221,7 +1221,7 @@ const legacyStyles = StyleSheet.create({
     color: DARK_GRAY,
   },
   inputInvalid: {
-    borderColor: /* ds-lint-allow DS-TODO: coral al 72%: no hay opacidad cercana (más cercana 0.45) */ "rgba(216, 140, 122, 0.72)",
+    borderColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.higher),
     backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.subtle),
   },
   descriptionInput: {
@@ -1230,7 +1230,7 @@ const legacyStyles = StyleSheet.create({
     borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
   },
   inputValid: {
-    borderColor: /* ds-lint-allow DS-TODO: inkSoft al 58%: no hay opacidad cercana (más cercana 0.45) */ "rgba(110, 110, 110, 0.58)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.high),
   },
   linkValidationRow: {
     marginTop: ds.spacing[2],
@@ -1320,10 +1320,7 @@ const legacyStyles = StyleSheet.create({
     borderRadius: ds.radii.xl,
     paddingVertical: ds.spacing[4],
     alignItems: "center",
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.2,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 12,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
+    ...ds.glow.accent,
   },
   createButtonDisabled: {
     opacity: 0.72,
@@ -1356,10 +1353,7 @@ const legacyStyles = StyleSheet.create({
     borderColor: vibesTheme.colors.accentMustard,
     paddingVertical: ds.spacing[3],
     alignItems: "center",
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.12,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 3 },
+    ...ds.glow.accent,
   },
   validateButtonText: {
     color: DARK_GRAY,
@@ -1458,7 +1452,7 @@ const legacyStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: ds.spacing[2],
-    backgroundColor: /* ds-lint-allow DS-TODO: ink al 72%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.72)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.higher),
     borderRadius: ds.radii.pill,
     paddingHorizontal: ds.spacing[3],
     paddingVertical: ds.spacing[2],
@@ -1498,7 +1492,7 @@ const legacyStyles = StyleSheet.create({
     alignItems: "center",
     gap: ds.spacing[2],
     paddingHorizontal: ds.spacing[4],
-    backgroundColor: /* ds-lint-allow DS-TODO: ink al 78%: no hay opacidad cercana (más cercana 1) */ "rgba(43, 43, 43, 0.78)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.higher),
   },
   coverChangeText: {
     color: WHITE,
@@ -1550,7 +1544,7 @@ const legacyStyles = StyleSheet.create({
     marginBottom: ds.spacing[4],
   },
   modalTitle: {
-    ...ds.textStyles.heading,
+    ...ds.textStyles.body,
     color: DARK_GRAY,
     marginBottom: ds.spacing[3],
   },
@@ -1559,10 +1553,7 @@ const legacyStyles = StyleSheet.create({
     borderRadius: ds.radii.xl,
     paddingVertical: ds.spacing[3],
     alignItems: "center",
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.18,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 10,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 5 },
+    ...ds.glow.accent,
   },
   modalPrimaryText: {
     color: vibesTheme.colors.primaryText,
@@ -1576,10 +1567,7 @@ const legacyStyles = StyleSheet.create({
     paddingVertical: ds.spacing[3],
     alignItems: "center",
     marginTop: ds.spacing[3],
-    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.12,
-    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 3 },
+    ...ds.glow.accent,
   },
   modalSecondaryText: {
     color: DARK_GRAY,

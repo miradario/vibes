@@ -1143,7 +1143,7 @@ export const DiscoverContent = forwardRef<
               <Text style={localStyles.emptyTitle}>{showHistory ? "No pudimos cargar las solicitudes" : "No pudimos cargar los perfiles"}</Text>
               <Text style={localStyles.emptyText}>{profileRefresh.error instanceof Error ? profileRefresh.error.message : "Tocá Reintentar para volver a cargar."}</Text>
               <TouchableOpacity accessibilityRole="button" onPress={retryProfiles} style={{ padding: ds.spacing[4] }}>
-                <Text style={{ color: vibesTheme.colors.accentBlue, ...ds.textStyles.heading }}>Reintentar</Text>
+                <Text style={{ color: vibesTheme.colors.accentBlue, ...ds.textStyles.body }}>Reintentar</Text>
               </TouchableOpacity>
             </View>
           ) : waitingForProfiles ? (
@@ -1250,7 +1250,7 @@ const Discover = () => {
         paddingBottom:
           Platform.OS === "ios"
             ? getBottomTabBarHeight() + Math.max(insets.bottom + ds.spacing[2], ds.spacing[4]) + ds.spacing[4]
-            : getBottomTabContentPadding(insets.bottom, 118),
+            : getBottomTabContentPadding(insets.bottom),
       }}
     >
       <DiscoverContent />
@@ -1378,7 +1378,7 @@ const localStyles = StyleSheet.create({
   },
   emptyText: {
     marginTop: ds.spacing[3],
-    color: /* ds-lint-allow DS-TODO: ink al 70%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.7)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.subtitleMedium,
     textAlign: "center",
   },
@@ -1425,9 +1425,7 @@ const localStyles = StyleSheet.create({
   },
   filtersTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 38 (peso 700) sin mapeo claro en §3.5.1 */ 38,
-    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 46,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.display,
   },
   filtersSubtitle: {
     marginTop: ds.spacing[1],
@@ -1460,7 +1458,7 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   rangeSummary: {
-    color: /* ds-lint-allow DS-TODO: ink al 78%: no hay opacidad cercana (más cercana 1) */ "rgba(43, 43, 43, 0.78)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.higher),
     ...ds.textStyles.subtitle,
   },
   rangeReset: {

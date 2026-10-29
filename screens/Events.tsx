@@ -40,7 +40,10 @@ import {
 import type { EventFeedItem, EventModality } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { getChallengeTimeline } from "../src/lib/challengeTimeline";
-import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
+import { getBottomTabContentPadding, TAB_BAR_CONTENT_CLEARANCE } from "../src/lib/tabBarLayout";
+
+/** Aire extra que la lista de Eventos ya tenía sobre la barra (140 = 118 + 22). */
+const EVENTS_LIST_EXTRA_CLEARANCE = 22;
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
 import {
@@ -740,7 +743,7 @@ const Events = ({
           contentContainerStyle={[
             styles.eventsListContent,
             localStyles.eventsListContent,
-            { paddingBottom: pastOnly ? insets.bottom + ds.spacing[6] : getBottomTabContentPadding(insets.bottom, 140) },
+            { paddingBottom: pastOnly ? insets.bottom + ds.spacing[6] : getBottomTabContentPadding(insets.bottom, TAB_BAR_CONTENT_CLEARANCE + EVENTS_LIST_EXTRA_CLEARANCE) },
           ]}
           ListFooterComponentStyle={[
             localStyles.listFooter,
@@ -803,7 +806,7 @@ const Events = ({
                   void (section === "challenge" ? challengesQuery : eventsQuery).refetch();
                   if (section === "challenge") void groupsQuery.refetch();
                 }} style={{ padding: ds.spacing[4] }}>
-                  <Text style={{ color: vibesTheme.colors.accentBlue, ...ds.textStyles.heading }}>Reintentar</Text>
+                  <Text style={{ color: vibesTheme.colors.accentBlue, ...ds.textStyles.body }}>Reintentar</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -1163,7 +1166,7 @@ eventViewText: {
     ...ds.textStyles.label, color: vibesTheme.colors.primaryText,
   },
 eventsContainer: {
-    paddingTop: /* ds-lint-allow DS-TODO: paddingTop 68 fuera de escala (>48), parece layout */ 68,
+    paddingTop: /* ds-lint-allow layout: paddingTop 68 (medida de layout fuera de la escala) */ 68,
   },
 challengeHeaderRow: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], marginBottom: ds.spacing[4] },
 challengeHeaderActions: { alignSelf: "center" },
@@ -1205,7 +1208,7 @@ bottomAlignedListFooter: {
 eventsListContent: {
     flexGrow: 1,
   },
-createIcon: { lineHeight: /* ds-lint-allow DS-TODO: lineHeight 20 suelto (sin fontSize en el mismo estilo) */ 20, includeFontPadding: false },
+createIcon: { lineHeight: ds.iconSize.md, includeFontPadding: false },
 searchBar: {
     height: 40,
     paddingVertical: 0,
@@ -1234,7 +1237,7 @@ joinedChallengesTitle: {
   },
 feedSectionSubtitle: {
     marginTop: ds.spacing[1],
-    color: /* ds-lint-allow DS-TODO: ink al 58%: no hay opacidad cercana (más cercana 0.45) */ "rgba(43, 43, 43, 0.58)",
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.subtitleMedium,
   },
 feedRowCard: {
@@ -1323,7 +1326,7 @@ feedThumbProgressPill: {
   },
 feedThumbProgressPillPending: {
     backgroundColor: ds.colors.bg.surfaceTranslucent,
-    borderColor: /* ds-lint-allow DS-TODO: mustard al 82%: no hay opacidad cercana (más cercana 1) */ "rgba(244, 163, 64, 0.82)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.higher),
   },
 feedThumbProgressText: {
     color: vibesTheme.colors.background,

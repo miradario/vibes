@@ -79,9 +79,8 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: ds.spacing[6],
-    fontSize: /* ds-lint-allow DS-TODO: fontSize 54 (peso 400) sin mapeo claro en §3.5.1 */ 54,
+    ...ds.textStyles.display,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.regular,
     letterSpacing: 0.3,
     textAlign: "center",
   },

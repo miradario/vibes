@@ -347,7 +347,7 @@ const localStyles = StyleSheet.create({
   },
   extraSectionTitle: {
     color: DARK_GRAY,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.body,
     marginBottom: ds.spacing[3],
   },
   aboutInput: {

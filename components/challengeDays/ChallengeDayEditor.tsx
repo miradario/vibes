@@ -485,7 +485,7 @@ export default function ChallengeDayEditor({
         edges={["left", "right"]}
         style={[
           s.sheet,
-          { paddingTop: Math.max(insets.top, Platform.OS === "ios" ? /* ds-lint-allow DS-TODO: paddingTop 60 fuera de escala (>48), parece layout */ 60 : ds.spacing[8]) },
+          { paddingTop: Math.max(insets.top, Platform.OS === "ios" ? /* ds-lint-allow layout: paddingTop 60 (medida de layout fuera de la escala) */ 60 : ds.spacing[8]) },
         ]}
       >
         <KeyboardAvoidingView

@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   sheet: { flex: 1, backgroundColor: vibesTheme.colors.primaryText },
   preview: { flex: 1, marginTop: ds.spacing[12] },
   cameraMessage: { color: vibesTheme.colors.background, ...ds.textStyles.heading, textAlign: "center", paddingHorizontal: ds.spacing[6], paddingTop: ds.spacing[5] },
-  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", paddingTop: ds.spacing[4], paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 56 fuera de escala (>48), parece layout */ 56 },
+  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", paddingTop: ds.spacing[4], paddingBottom: /* ds-lint-allow layout: paddingBottom 56 (medida de layout fuera de la escala) */ 56 },
   button: { minWidth: 60, minHeight: 60, alignItems: "center", justifyContent: "center" },
   capture: { width: 72, height: 72, borderRadius: ds.radii.pill, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
   label: { color: vibesTheme.colors.background, ...ds.textStyles.body },
