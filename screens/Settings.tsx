@@ -863,7 +863,7 @@ const localStyles = StyleSheet.create({
   heightInput: {
     flex: 1,
     color: DARK_GRAY,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.body,
     paddingVertical: ds.spacing[3],
   },
   heightUnit: {

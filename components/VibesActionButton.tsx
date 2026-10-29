@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   startText: {
     color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.subtitle,
   },
   outlineButton: {
     width: "100%",
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     color: vibesTheme.colors.secondaryText,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.subtitle,
   },
   skipButtonDisabled: {
     opacity: 0.7,

@@ -224,6 +224,6 @@ const s = StyleSheet.create({
   doneButton: { flexDirection: "row", gap: ds.spacing[2] },
   buttonText: {
     color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.subtitle,
   },
 });

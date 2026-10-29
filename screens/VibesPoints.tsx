@@ -427,7 +427,7 @@ const s = StyleSheet.create({
     backgroundColor: c.accentMustard,
   },
   registerText: {
-    ...ds.textStyles.heading,
+    ...ds.textStyles.subtitle,
     color: c.primaryText,
   },
   choices: { flexDirection: "row", gap: ds.spacing[2] },

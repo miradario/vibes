@@ -146,5 +146,5 @@ const s = StyleSheet.create({
   fields: { flexDirection: "row", gap: ds.spacing[3] },
   input: { borderWidth: 1, borderColor: vibesTheme.colors.accentBlue, borderRadius: ds.radii.md, padding: ds.spacing[3], textAlign: "center", color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
   apply: { backgroundColor: vibesTheme.colors.accentMustard, minHeight: 50, borderRadius: ds.radii.lg, alignItems: "center", justifyContent: "center" },
-  applyText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.heading },
+  applyText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle },
 });

@@ -629,7 +629,7 @@ const legacyStyles = StyleSheet.create({
     paddingHorizontal: ds.spacing[4],
     paddingVertical: ds.spacing[3],
     color: DARK_GRAY,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.body,
   },
   descriptionInput: {
     minHeight: 160,

@@ -858,7 +858,7 @@ export default StyleSheet.create({
     paddingVertical: ds.spacing[3],
     paddingHorizontal: ds.spacing[4],
     color: DARK_GRAY,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.body,
     shadowColor: PRIMARY_COLOR,
     shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (PRIMARY_COLOR): ¿glow de marca o ds.shadows? */ 0.08,
     shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 8,

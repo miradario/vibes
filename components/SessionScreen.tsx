@@ -94,7 +94,7 @@ const localStyles = StyleSheet.create({
   },
   ctaText: {
     color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.heading,
+    ...ds.textStyles.subtitle,
   },
 });
 
