@@ -19,6 +19,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useFindMatchQuery } from "../src/queries/matches.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const getFirstName = (value?: string | null) =>
   value?.trim()?.split(" ")?.[0] || "Vibes";
@@ -154,9 +155,9 @@ const Match = () => {
     <View style={localStyles.screen}>
     <ScreenContainer style={localStyles.screen} scroll
       scrollViewProps={{ showsVerticalScrollIndicator: false, onScroll: measureLogoAnchor, scrollEventThrottle: 32 }}
-      contentContainerStyle={[localStyles.content, { paddingBottom: Math.max(insets.bottom + 18, 30) }]}>
+      contentContainerStyle={[localStyles.content, { paddingBottom: Math.max(insets.bottom + ds.spacing[4], ds.spacing[8]) }]}>
       <Pressable accessibilityRole="button" accessibilityLabel="Cerrar nueva conexión" onPress={() => navigation.goBack()} style={localStyles.close}>
-        <Icon name="close" size={28} color={vibesTheme.colors.secondaryText} />
+        <Icon name="close" size={ds.iconSize.xl} color={vibesTheme.colors.secondaryText} />
       </Pressable>
       <Text style={localStyles.eyebrow}>¡HAY BUENA VIBE!</Text>
       <Animated.View style={{ opacity: titleReveal, transform: [
@@ -182,7 +183,7 @@ const Match = () => {
       </View>
       <View style={{ width: "100%" }}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Intereses en común: ${sharedInterests.join(", ") || "Todavía no encontramos coincidencias"}. ${currentQuestion}. Abrir en el chat`} accessibilityHint="Abre el chat con esta pregunta lista para enviar" onPress={() => openChat(currentQuestion)} style={localStyles.questionCard}>
-          <View style={localStyles.messageIcon}><Icon name="chatbubble-outline" size={27} color={vibesTheme.colors.accentBlue} /></View>
+          <View style={localStyles.messageIcon}><Icon name="chatbubble-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentBlue} /></View>
           <View style={{ flex: 1 }}>
             <Text style={localStyles.interestsLabel}>Intereses en común</Text>
             <Text style={localStyles.sharedInterests}>{sharedInterests.join(" · ") || "Descubran qué les gusta a los dos"}</Text>
@@ -192,7 +193,7 @@ const Match = () => {
       </View>
       <View style={localStyles.actions}>
         <Pressable accessibilityRole="button" accessibilityState={{ disabled: (!profile || !matchData) }} disabled={(!profile || !matchData)} onPress={() => openChat()} style={[localStyles.primary, (!profile || !matchData) && { opacity: 0.5 }]}>
-          <Icon name="chatbubble-outline" size={24} color={vibesTheme.colors.surface} />
+          <Icon name="chatbubble-outline" size={ds.iconSize.lg} color={vibesTheme.colors.surface} />
           <Text style={localStyles.primaryText}>Conversar</Text>
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={localStyles.secondary}>
@@ -208,25 +209,25 @@ const Match = () => {
 
 const localStyles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: vibesTheme.colors.background },
-  content: { flexGrow: 1, paddingHorizontal: 20, alignItems: "center", paddingTop: 12 },
-  close: { alignSelf: "flex-end", width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: `${vibesTheme.colors.secondaryText}12`, marginBottom: 12 },
-  eyebrow: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 12, letterSpacing: 2, textAlign: "center" },
-  title: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, textAlign: "center", marginTop: 10 },
-  hero: { width: "100%", marginTop: 46, paddingTop: 40, paddingBottom: 36 },
+  content: { flexGrow: 1, paddingHorizontal: ds.spacing[5], alignItems: "center", paddingTop: ds.spacing[3] },
+  close: { alignSelf: "flex-end", width: 44, height: 44, borderRadius: ds.radii.pill, alignItems: "center", justifyContent: "center", backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle), marginBottom: ds.spacing[3] },
+  eyebrow: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.caption, letterSpacing: 2, textAlign: "center" },
+  title: { color: vibesTheme.colors.primaryText, ...ds.textStyles.display, textAlign: "center", marginTop: ds.spacing[3] },
+  hero: { width: "100%", marginTop: ds.spacing[12], paddingTop: ds.spacing[12], paddingBottom: ds.spacing[8] },
   peopleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   person: { alignItems: "center", maxWidth: "49%" },
-  avatar: { borderWidth: 2, borderColor: vibesTheme.colors.primaryText, borderRadius: 180, overflow: "hidden" },
-  personName: { marginTop: 8, fontFamily: vibesTheme.fonts.bold, fontSize: 18, color: vibesTheme.colors.primaryText },
-  questionCard: { width: "100%", borderRadius: 20, padding: 18, flexDirection: "row", alignItems: "center", gap: 16, backgroundColor: `${vibesTheme.colors.accentBlue}0D` },
-  messageIcon: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: `${vibesTheme.colors.accentBlue}18` },
-  interestsLabel: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 12, marginBottom: 4 },
-  sharedInterests: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, marginBottom: 8 },
-  question: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 18, lineHeight: 25 },
-  actions: { width: "100%", marginTop: "auto", paddingTop: 28 },
-  primary: { minHeight: 56, padding: 14, borderRadius: 18, backgroundColor: vibesTheme.colors.primaryText, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
-  primaryText: { color: vibesTheme.colors.surface, fontFamily: vibesTheme.fonts.bold, fontSize: 18, flexShrink: 1, textAlign: "center" },
-  secondary: { minHeight: 52, alignItems: "center", justifyContent: "center", marginTop: 8 },
-  secondaryText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 },
+  avatar: { borderWidth: 2, borderColor: vibesTheme.colors.primaryText, borderRadius: /* ds-lint-allow DS-TODO: borderRadius 180 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 180, overflow: "hidden" },
+  personName: { marginTop: ds.spacing[2], ...ds.textStyles.heading, color: vibesTheme.colors.primaryText },
+  questionCard: { width: "100%", borderRadius: ds.radii.xl, padding: ds.spacing[4], flexDirection: "row", alignItems: "center", gap: ds.spacing[4], backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },
+  messageIcon: { width: 46, height: 46, borderRadius: ds.radii.pill, alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.feedback.infoBg },
+  interestsLabel: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.caption, marginBottom: ds.spacing[1] },
+  sharedInterests: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.caption, marginBottom: ds.spacing[2] },
+  question: { color: vibesTheme.colors.primaryText, ...ds.textStyles.heading },
+  actions: { width: "100%", marginTop: "auto", paddingTop: ds.spacing[8] },
+  primary: { minHeight: 56, padding: ds.spacing[4], borderRadius: ds.radii.lg, backgroundColor: vibesTheme.colors.primaryText, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: ds.spacing[3] },
+  primaryText: { color: vibesTheme.colors.surface, ...ds.textStyles.heading, flexShrink: 1, textAlign: "center" },
+  secondary: { minHeight: 52, alignItems: "center", justifyContent: "center", marginTop: ds.spacing[2] },
+  secondaryText: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.subtitle },
 });
 
 export default Match;

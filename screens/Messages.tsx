@@ -43,6 +43,7 @@ import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
+import * as ds from "../src/theme/tokens";
 
 type ArchivedChatItem =
   | { kind: "group"; item: EventGroupSummary }
@@ -108,7 +109,7 @@ const GroupKindIcon = ({ kind }: { kind: GroupKind }) => (
   >
     <Icon
       name={GROUP_KIND_ICON[kind].name}
-      size={14}
+      size={ds.iconSize.sm}
       color={vibesTheme.colors.secondaryText}
     />
   </View>
@@ -435,7 +436,7 @@ export const MessagesContent = ({
   ) => (
     <View style={localStyles.sectionHeader}>
       <View style={localStyles.sectionTitleWrap}>
-        <Icon name={icon as any} color={DARK_GRAY} size={19} />
+        <Icon name={icon as any} color={DARK_GRAY} size={ds.iconSize.md} />
         <Text style={localStyles.sectionTitle} numberOfLines={1}>
           {title}
         </Text>
@@ -458,7 +459,7 @@ export const MessagesContent = ({
               : "chevron-forward"
           }
           color={vibesTheme.colors.secondaryText}
-          size={17}
+          size={ds.iconSize.sm}
         />
       </TouchableOpacity>
     </View>
@@ -498,7 +499,7 @@ export const MessagesContent = ({
           {item.likerUserName}
         </Text>
       </View>
-      <Icon name="chevron-forward" color={vibesTheme.colors.secondaryText} size={18} />
+      <Icon name="chevron-forward" color={vibesTheme.colors.secondaryText} size={ds.iconSize.md} />
     </TouchableOpacity>
   );
 
@@ -524,7 +525,7 @@ export const MessagesContent = ({
           {t("messages.newConnectionHint")}
         </Text>
       </View>
-      <Icon name="chatbubble-ellipses-outline" color={vibesTheme.colors.secondaryText} size={18} />
+      <Icon name="chatbubble-ellipses-outline" color={vibesTheme.colors.secondaryText} size={ds.iconSize.md} />
     </TouchableOpacity>
   );
 
@@ -656,7 +657,7 @@ export const MessagesContent = ({
         <View style={[localStyles.groupAvatar, localStyles.groupAvatarEmpty]}>
           <Icon
             name="people-outline"
-            size={26}
+            size={ds.iconSize.lg}
             color={vibesTheme.colors.accentMustard}
           />
         </View>
@@ -722,7 +723,7 @@ export const MessagesContent = ({
           {
             paddingTop:
               contentTopPadding ??
-              (showHeader ? Math.max(insets.top + 18, 46) : 8),
+              (showHeader ? Math.max(insets.top + ds.spacing[4], ds.spacing[12]) : ds.spacing[2]),
             paddingBottom:
               contentBottomPadding ??
               getBottomTabContentPadding(insets.bottom, 118),
@@ -780,7 +781,7 @@ export const MessagesContent = ({
               >
                 <Icon
                   name={tab.icon}
-                  size={22}
+                  size={ds.iconSize.lg}
                   color={selected ? vibesTheme.colors.accentMustard : vibesTheme.colors.secondaryText}
                 />
                 <Text
@@ -802,7 +803,7 @@ export const MessagesContent = ({
         </View>
         <Text style={localStyles.searchLabel}>Buscar conversaciones</Text>
         <View style={[localStyles.searchField, searchFocused && { borderColor: vibesTheme.colors.accentBlue }]}>
-          <Icon name="search-outline" size={22} color={vibesTheme.colors.secondaryText} />
+          <Icon name="search-outline" size={ds.iconSize.lg} color={vibesTheme.colors.secondaryText} />
           <TextInput
             accessibilityLabel="Buscar conversaciones"
             placeholder={activeTab === "messages" ? "Nombre o último mensaje" : "Nombre del grupo"}
@@ -817,7 +818,7 @@ export const MessagesContent = ({
             style={localStyles.searchInput}
           />
           {conversationSearch ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setConversationSearch("")} style={localStyles.clearSearch}>
-            <Icon name="close" size={22} color={vibesTheme.colors.primaryText} />
+            <Icon name="close" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity> : null}
         </View>
         {activeTab === "messages" ? (
@@ -832,7 +833,7 @@ export const MessagesContent = ({
                 <View style={localStyles.conversationIcon}>
                   <Icon
                     name="chatbubble-ellipses-outline"
-                    size={30}
+                    size={ds.iconSize.xl}
                     color={vibesTheme.colors.secondaryText}
                   />
                 </View>
@@ -893,14 +894,14 @@ export const MessagesContent = ({
         offsetY={360}
         sheetStyle={[
           localStyles.connectionsSheet,
-          { paddingBottom: Math.max(insets.bottom + 18, 28) },
+          { paddingBottom: Math.max(insets.bottom + ds.spacing[4], ds.spacing[8]) },
         ]}
       >
         <View style={localStyles.connectionsSheetHandle} />
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: ds.spacing[3] }}>
           <Text style={localStyles.connectionsSheetTitle}>{connectionsSheet === "incoming" ? "Quieren conectar" : "Conexiones nuevas"}</Text>
           <View style={localStyles.sheetCount}><Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold }}>{connectionsSheet === "incoming" ? incomingLikes.length : newConnections.length}</Text></View>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar conexiones" onPress={() => setConnectionsSheet(null)} style={{ marginLeft: "auto", padding: 10 }}><Icon name="close" size={24} color={vibesTheme.colors.secondaryText} /></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar conexiones" onPress={() => setConnectionsSheet(null)} style={{ marginLeft: "auto", padding: ds.spacing[3] }}><Icon name="close" size={ds.iconSize.lg} color={vibesTheme.colors.secondaryText} /></TouchableOpacity>
         </View>
         <ScrollView
           style={localStyles.connectionsSheetList}
@@ -949,32 +950,30 @@ const Messages = () => <MessagesContent />;
 export default Messages;
 
 const localStyles = StyleSheet.create({
-  searchLabel: { color: vibesTheme.colors.primaryText, fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.semibold, marginBottom: 6 },
-  searchField: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 48, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: `${vibesTheme.colors.primaryText}1F`, backgroundColor: vibesTheme.colors.surface, marginBottom: 12 },
-  searchInput: { flex: 1, minWidth: 0, paddingVertical: 12, color: vibesTheme.colors.primaryText, fontSize: 16, lineHeight: 24, fontFamily: vibesTheme.fonts.regular },
+  searchLabel: { color: vibesTheme.colors.primaryText, ...ds.textStyles.label, marginBottom: ds.spacing[2] },
+  searchField: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], minHeight: 48, paddingHorizontal: ds.spacing[4], borderRadius: ds.radii.lg, borderWidth: 1, borderColor: ds.colors.border.default, backgroundColor: vibesTheme.colors.surface, marginBottom: ds.spacing[3] },
+  searchInput: { flex: 1, minWidth: 0, paddingVertical: ds.spacing[3], color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
   clearSearch: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   communityHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    gap: ds.spacing[2],
     marginTop: 0,
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
   },
   communityTitle: {
     flexShrink: 1,
     color: TEXT_PRIMARY,
-    fontSize: 34,
-    lineHeight: 42,
-    fontFamily: vibesTheme.fonts.extraBold,
+    ...ds.textStyles.display,
     textAlign: "left",
   },
   chatTabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
-    marginTop: 4,
-    marginBottom: 10,
+    borderBottomColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
+    marginTop: ds.spacing[1],
+    marginBottom: ds.spacing[3],
   },
   chatTab: {
     flex: 1,
@@ -982,8 +981,8 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 48,
-    paddingVertical: 10,
-    gap: 6,
+    paddingVertical: ds.spacing[3],
+    gap: ds.spacing[2],
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
@@ -991,140 +990,128 @@ const localStyles = StyleSheet.create({
   chatTabText: {
     flexShrink: 1,
     color: vibesTheme.colors.secondaryText,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   chatTabTextActive: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold },
   groupSectionLabel: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    marginTop: 12,
-    marginBottom: 4,
+    ...ds.textStyles.bodySmall,
+    marginTop: ds.spacing[3],
+    marginBottom: ds.spacing[1],
   },
   conversationHint: {
     alignItems: "center",
-    marginTop: 70,
-    marginBottom: 24,
-    gap: 12,
+    marginTop: /* ds-lint-allow DS-TODO: marginTop 70 fuera de escala (>48), parece layout */ 70,
+    marginBottom: ds.spacing[6],
+    gap: ds.spacing[3],
   },
   conversationIcon: {
     width: 64,
     height: 64,
-    borderRadius: 32,
-    backgroundColor: "rgba(110, 110, 110, 0.10)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
     alignItems: "center",
     justifyContent: "center",
   },
-  conversationHintText: { color: vibesTheme.colors.secondaryText, fontSize: 15, textAlign: "center" },
+  conversationHintText: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.body, textAlign: "center" },
   screenBackground: {
     backgroundColor: vibesTheme.colors.background,
   },
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: ds.spacing[5],
   },
   appHeader: {
     paddingHorizontal: 0,
     paddingTop: 0,
-    marginBottom: 8,
+    marginBottom: ds.spacing[2],
   },
   appHeaderTitle: {
     color: TEXT_PRIMARY,
-    fontSize: 32,
-    lineHeight: 38,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.display,
     textAlign: "center",
   },
   connectionsHeader: {
-    marginBottom: 10,
+    marginBottom: ds.spacing[3],
   },
   connectionsTitle: {
     color: TEXT_PRIMARY,
-    fontSize: 32,
-    lineHeight: 38,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.display,
     textAlign: "left",
   },
   connectionsSheet: {
     maxHeight: "76%",
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 18,
-    paddingTop: 12,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[3],
   },
   connectionsSheetHandle: {
     alignSelf: "center",
     width: 44,
     height: 4,
-    borderRadius: 2,
-    marginBottom: 16,
-    backgroundColor: "rgba(110, 110, 110, 0.24)",
+    borderRadius: ds.radii.pill,
+    marginBottom: ds.spacing[4],
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
   },
-  incomingCard: { backgroundColor: `${vibesTheme.colors.secondaryText}08`, borderRadius: 18, padding: 14, marginBottom: 10, minHeight: 90 },
-  sheetCount: { backgroundColor: `${vibesTheme.colors.accentMustard}40`, padding: 8, minWidth: 30, alignItems: "center", borderRadius: 18 },
+  incomingCard: { backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle), borderRadius: ds.radii.lg, padding: ds.spacing[4], marginBottom: ds.spacing[3], minHeight: 90 },
+  sheetCount: { backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium), padding: ds.spacing[2], minWidth: 30, alignItems: "center", borderRadius: ds.radii.lg },
   connectionsSheetTitle: {
     color: DARK_GRAY,
-    fontSize: 24,
-    lineHeight: 30,
+    ...ds.textStyles.title,
     flexShrink: 1,
-    fontFamily: vibesTheme.fonts.bold,
   },
   connectionsSheetList: {
-    marginTop: 12,
+    marginTop: ds.spacing[3],
   },
   connectionSheetRow: {
     minHeight: 70,
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: ds.spacing[3],
   },
   connectionSheetRowWithDivider: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(110, 110, 110, 0.12)",
+    borderTopColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
   },
   connectionSheetBody: {
     flex: 1,
     minWidth: 0,
-    marginLeft: 12,
-    marginRight: 8,
+    marginLeft: ds.spacing[3],
+    marginRight: ds.spacing[2],
   },
   connectionSheetName: {
     color: DARK_GRAY,
-    fontSize: 19,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
   },
   connectionSheetHint: {
-    marginTop: 2,
+    marginTop: ds.spacing[1],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
   connectionSheetEmpty: {
-    paddingVertical: 22,
+    paddingVertical: ds.spacing[6],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   emptyState: {
     minHeight: 280,
-    paddingHorizontal: 24,
+    paddingHorizontal: ds.spacing[6],
     alignItems: "center",
     justifyContent: "center",
   },
   emptyStateText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 20,
-    lineHeight: 27,
+    ...ds.textStyles.heading,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
   },
   sectionHeader: {
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: ds.spacing[2],
+    marginBottom: ds.spacing[2],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   sectionTitleWrap: {
     flexDirection: "row",
@@ -1134,69 +1121,66 @@ const localStyles = StyleSheet.create({
     minWidth: 0,
   },
   sectionTitle: {
-    marginLeft: 8,
+    marginLeft: ds.spacing[2],
     color: DARK_GRAY,
-    fontSize: 16,
+    ...ds.textStyles.subtitle,
     letterSpacing: 0,
-    fontFamily: vibesTheme.fonts.semibold,
     flexShrink: 1,
     minWidth: 0,
   },
   countBadge: {
     minWidth: 24,
     minHeight: 24,
-    paddingVertical: 2,
-    borderRadius: 14,
-    paddingHorizontal: 8,
+    paddingVertical: ds.spacing[1],
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[2],
     marginLeft: 0,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.22)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   countText: {
     color: DARK_GRAY,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   seeAllButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingLeft: 10,
+    paddingLeft: ds.spacing[3],
     flexShrink: 0,
   },
   seeAllText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
-  rowsCard: { marginBottom: 4 },
+  rowsCard: { marginBottom: ds.spacing[1] },
   cardRow: {
     minHeight: 76,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 0,
-    paddingVertical: 12,
+    paddingVertical: ds.spacing[3],
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+    borderBottomColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   groupAvatar: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     backgroundColor: BG_MAIN,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.38)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
   },
   directAvatar: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   rowBody: {
     flex: 1,
     minWidth: 0,
-    marginLeft: 12,
+    marginLeft: ds.spacing[3],
   },
   rowTitleLine: {
     flexDirection: "row",
@@ -1204,15 +1188,13 @@ const localStyles = StyleSheet.create({
   },
   kindIcon: {
     flexShrink: 0,
-    marginRight: 5,
+    marginRight: ds.spacing[1],
   },
   finishedTag: {
     flexShrink: 0,
-    marginLeft: 6,
+    marginLeft: ds.spacing[2],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 12,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.caption,
   },
   groupAvatarEmpty: {
     alignItems: "center",
@@ -1221,48 +1203,42 @@ const localStyles = StyleSheet.create({
   rowTitle: {
     flexShrink: 1,
     color: DARK_GRAY,
-    fontSize: 17,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   lastMessage: {
-    marginTop: 3,
+    marginTop: ds.spacing[1],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 19,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   rowMeta: {
     minWidth: 42,
     maxWidth: "26%",
     minHeight: 44,
-    gap: 6,
+    gap: ds.spacing[2],
     alignItems: "flex-end",
     justifyContent: "space-between",
-    marginLeft: 8,
+    marginLeft: ds.spacing[2],
   },
   rowTime: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.labelMedium,
     includeFontPadding: true,
-    fontFamily: vibesTheme.fonts.medium,
   },
   archiveButton: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(110, 110, 110, 0.08)",
-    marginTop: 4,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
+    marginTop: ds.spacing[1],
   },
   unreadDot: {
     width: 7,
     height: 7,
-    borderRadius: 3.5,
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.accentMustard,
-    marginBottom: 6,
+    marginBottom: ds.spacing[2],
   },
   loadingWrap: {
     height: 82,

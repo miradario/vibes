@@ -62,6 +62,7 @@ import {
   ReplyPreviewBar,
   type ReplyTarget,
 } from "../components/MessageReply";
+import * as ds from "../src/theme/tokens";
 
 const REPORT_REASONS: ReportReason[] = [
   "Spam o contenido irrelevante",
@@ -455,7 +456,7 @@ const Chat = () => {
           style={styles.chatHeader}
           right={
             <TouchableOpacity onPress={() => setShowActionsModal(true)}>
-              <Icon name="ellipsis-horizontal" size={20} color={DARK_GRAY} />
+              <Icon name="ellipsis-horizontal" size={ds.iconSize.md} color={DARK_GRAY} />
             </TouchableOpacity>
           }
         >
@@ -496,7 +497,7 @@ const Chat = () => {
             <Pressable
               style={[
                 localStyles.actionsSheet,
-                { marginBottom: insets.bottom + 24 },
+                { marginBottom: insets.bottom + ds.spacing[6] },
               ]}
               onPress={() => undefined}
             >
@@ -508,7 +509,7 @@ const Chat = () => {
               >
                 <Icon
                   name="close-circle-outline"
-                  size={21}
+                  size={ds.iconSize.md}
                   color={vibesTheme.colors.accentCoral}
                 />
                 <Text style={[localStyles.actionText, localStyles.dangerText]}>
@@ -519,7 +520,7 @@ const Chat = () => {
                 style={localStyles.actionRow}
                 onPress={openReportModal}
               >
-                <Icon name="flag-outline" size={21} color={DARK_GRAY} />
+                <Icon name="flag-outline" size={ds.iconSize.md} color={DARK_GRAY} />
                 <Text style={localStyles.actionText}>Reportar</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -529,7 +530,7 @@ const Chat = () => {
               >
                 <Icon
                   name="ban-outline"
-                  size={21}
+                  size={ds.iconSize.md}
                   color={vibesTheme.colors.accentCoral}
                 />
                 <Text style={[localStyles.actionText, localStyles.dangerText]}>
@@ -546,7 +547,7 @@ const Chat = () => {
           offsetY={320}
           sheetStyle={[
             localStyles.reportSheet,
-            { paddingBottom: Math.max(insets.bottom + 20, 30) },
+            { paddingBottom: Math.max(insets.bottom + ds.spacing[5], ds.spacing[8]) },
           ]}
         >
           <Pressable onPress={() => undefined}>
@@ -652,7 +653,7 @@ const Chat = () => {
               contentContainerStyle={[
                 localStyles.messageList,
                 {
-                  paddingBottom: 16,
+                  paddingBottom: ds.spacing[4],
                 },
               ]}
               ListHeaderComponent={
@@ -753,7 +754,7 @@ const Chat = () => {
               onPress={handleSend}
               disabled={!text.trim() || sendMutation.isPending}
             >
-              <Icon name="send" size={20} color={WHITE} />
+              <Icon name="send" size={ds.iconSize.md} color={WHITE} />
             </TouchableOpacity>
           </View>
         </View>
@@ -769,42 +770,38 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   messageList: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[2],
     flexGrow: 1,
   },
   incomingMessageRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 8,
-    gap: 8,
+    marginBottom: ds.spacing[2],
+    gap: ds.spacing[2],
   },
   ownMessageRow: {
     alignItems: "flex-end",
-    marginBottom: 8,
+    marginBottom: ds.spacing[2],
   },
   messageBubble: {
     marginBottom: 0,
     maxWidth: "72%",
-    borderRadius: 18,
-    paddingHorizontal: 15,
-    paddingVertical: 11,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
+    ...ds.shadows.sm,
   },
   msgTime: {
-    fontSize: 11,
+    ...ds.textStyles.micro,
     color: TEXT_SECONDARY,
   },
   messageMetaRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    gap: 4,
-    marginTop: 4,
+    gap: ds.spacing[1],
+    marginTop: ds.spacing[1],
   },
   msgTimeRight: {
     textAlign: "right",
@@ -812,9 +809,9 @@ const localStyles = StyleSheet.create({
   msgTimeLeft: {},
   inputContainer: {
     flexShrink: 0,
-    backgroundColor: "rgba(254, 254, 253, 0.95)",
-    borderTopColor: "rgba(57, 120, 184, 0.3)",
-    paddingTop: 10,
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
+    borderTopColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
+    paddingTop: ds.spacing[3],
     alignItems: "flex-end",
   },
   composerInput: {
@@ -832,97 +829,83 @@ const localStyles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "flex-start",
-    paddingTop: 180,
+    paddingTop: /* ds-lint-allow DS-TODO: paddingTop 180 fuera de escala (>48), parece layout */ 180,
   },
   emptyText: {
     color: TEXT_SECONDARY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   modalBackdrop: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(43, 43, 43, 0.34)",
+    backgroundColor: ds.colors.scrim,
   },
   actionsSheet: {
-    marginHorizontal: 16,
-    borderRadius: 22,
+    marginHorizontal: ds.spacing[4],
+    borderRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 12,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[4],
+    paddingBottom: ds.spacing[3],
+    ...ds.shadows.md,
   },
   reportSheet: {
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 20,
-    paddingTop: 22,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.16,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: -8 },
-    elevation: 10,
+    paddingHorizontal: ds.spacing[5],
+    paddingTop: ds.spacing[6],
+    ...ds.shadows.lg,
   },
   modalTitle: {
     color: DARK_GRAY,
-    fontSize: 22,
-    lineHeight: 27,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
   },
   modalSubtitle: {
-    marginTop: 4,
-    marginBottom: 14,
+    marginTop: ds.spacing[1],
+    marginBottom: ds.spacing[4],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.subtitleMedium,
   },
   actionRow: {
     minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
     borderTopWidth: 1,
-    borderTopColor: "rgba(43, 43, 43, 0.08)",
+    borderTopColor: ds.colors.border.subtle,
   },
   actionText: {
     color: DARK_GRAY,
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   dangerText: {
     color: vibesTheme.colors.accentBlue,
   },
   reasonRow: {
     minHeight: 48,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    marginBottom: 8,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[3],
+    marginBottom: ds.spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.52)",
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.strong),
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.07)",
+    borderColor: ds.colors.border.subtle,
   },
   reasonRowSelected: {
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
-    borderColor: "rgba(244, 163, 64, 0.52)",
+    backgroundColor: ds.colors.bg.selected,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
   },
   radio: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: ds.radii.pill,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.24)",
+    borderColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
+    marginRight: ds.spacing[3],
   },
   radioSelected: {
     borderColor: vibesTheme.colors.accentMustard,
@@ -930,35 +913,31 @@ const localStyles = StyleSheet.create({
   radioDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   reasonText: {
     flex: 1,
     color: DARK_GRAY,
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   reportInput: {
     minHeight: 96,
     maxHeight: 140,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginTop: 4,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
+    marginTop: ds.spacing[1],
     color: DARK_GRAY,
-    fontSize: 15,
-    lineHeight: 20,
-    backgroundColor: "rgba(254, 254, 253, 0.58)",
+    ...ds.textStyles.subtitleMedium,
+    backgroundColor: /* ds-lint-allow DS-TODO: paper al 58%: no hay opacidad cercana (más cercana 0.45) */ "rgba(254, 254, 253, 0.58)",
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    fontFamily: vibesTheme.fonts.medium,
+    borderColor: ds.colors.border.subtle,
   },
   reportButton: {
     minHeight: 54,
-    borderRadius: 27,
-    marginTop: 16,
+    borderRadius: ds.radii.xl,
+    marginTop: ds.spacing[4],
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
@@ -968,37 +947,32 @@ const localStyles = StyleSheet.create({
   },
   reportButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   messageBubbleLeft: {
     alignSelf: "flex-start",
     backgroundColor: WHITE,
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: ds.radii.xs,
   },
   messageBubbleRight: {
     alignSelf: "flex-end",
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
-    borderBottomRightRadius: 6,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
+    borderBottomRightRadius: ds.radii.sm,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
     shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.14,
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 10,
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
     // Android shadows show through translucent backgrounds.
-    elevation: Platform.OS === "android" ? 0 : 2,
+    elevation: Platform.OS === "android" ? 0 : ds.shadows.sm.elevation,
   },
   messageTextLeft: {
     color: DARK_GRAY,
-    fontSize: 16,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
   },
   messageTextRight: {
     color: DARK_GRAY,
-    fontSize: 16,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
   },
 });

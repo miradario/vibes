@@ -14,6 +14,7 @@ import {
 } from "../src/queries/matches.queries";
 import VibesLoader from "../components/VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 
 
@@ -76,7 +77,7 @@ const Matches = () => {
             data={matches}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: ds.spacing[5] }}
           />
         )}
 
@@ -93,55 +94,50 @@ export default Matches;
 const localStyles = {
   header: {
     paddingHorizontal: 0,
-    marginBottom: 4,
+    marginBottom: ds.spacing[1],
   },
   matchRow: {
     flexDirection: "row" as const,
     alignItems: "center" as const,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(57, 120, 184, 0.3)",
+    borderBottomColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
   },
   avatar: {
     width: 50,
     height: 50,
-    borderRadius: 25,
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   info: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: ds.spacing[3],
   },
   name: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   subtitle: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.subtitle,
-    marginTop: 2,
+    ...ds.textStyles.labelMedium,
+    marginTop: ds.spacing[1],
   },
   emptyState: {
     flex: 1,
     alignItems: "center" as const,
     justifyContent: "center" as const,
-    paddingHorizontal: 28,
+    paddingHorizontal: ds.spacing[8],
   },
   emptyTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 24,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
     textAlign: "center" as const,
   },
   emptyText: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
     textAlign: "center" as const,
   },
 };
