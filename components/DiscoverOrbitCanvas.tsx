@@ -475,7 +475,8 @@ const localStyles = {
     height: 5,
     borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.background,
-    ...ds.glow.accent,
+    ...ds.glow.halo,
+    shadowColor: ds.colors.base.mustard,
   },
   sparkleTwo: {
     position: "absolute" as const,
@@ -485,7 +486,8 @@ const localStyles = {
     height: 4,
     borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.background,
-    ...ds.glow.blue,
+    ...ds.glow.halo,
+    shadowColor: ds.colors.base.blue,
   },
   dismissedDot: {
     overflow: "hidden" as const,

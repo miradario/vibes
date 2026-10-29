@@ -48,6 +48,15 @@ export const glow = {
   accent: { shadowColor: palette.mustard, ...glowBase },
   coral: { shadowColor: palette.coral, ...glowBase },
   blue: { shadowColor: palette.blue, ...glowBase },
+  /**
+   * `glow/halo`: brillo fuerte y centrado para los halos de Descubrir. Sin color:
+   * se combina con `shadowColor` de un token (mostaza o azul).
+   */
+  halo: {
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
 } as const;
 
 export type GlowToken = keyof typeof glow;
