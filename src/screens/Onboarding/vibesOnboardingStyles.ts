@@ -59,7 +59,7 @@ export const onboardingStyles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: isCompactOnboardingScreen ? 18 : 24,
-    paddingTop: 12,
+    paddingTop: 4,
     paddingBottom: 0,
   },
   card: {
@@ -69,7 +69,7 @@ export const onboardingStyles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
     paddingHorizontal: 0,
-    paddingTop: 16,
+    paddingTop: 4,
     paddingBottom: 12,
   },
   body: {
@@ -82,10 +82,10 @@ export const onboardingStyles = StyleSheet.create({
   title: {
     color: ONBOARDING_COLORS.text,
     fontFamily: vibesTheme.fonts.extraBold,
-    fontSize: isCompactOnboardingScreen ? 30 : 36,
-    lineHeight: isCompactOnboardingScreen ? 36 : 43,
+    fontSize: isCompactOnboardingScreen ? 26 : 28,
+    lineHeight: isCompactOnboardingScreen ? 32 : 34,
     textAlign: "left",
-    marginTop: 24,
+    marginTop: 12,
   },
   subtitle: {
     color: ONBOARDING_COLORS.muted,
@@ -107,7 +107,7 @@ export const onboardingStyles = StyleSheet.create({
     marginTop: 12,
     marginHorizontal: isCompactOnboardingScreen ? 18 : 22,
     paddingTop: 10,
-    paddingBottom: 20,
+    paddingBottom: 10,
     backgroundColor: vibesTheme.colors.background,
   },
   birthDateLabel: {
@@ -141,10 +141,10 @@ export const onboardingStyles = StyleSheet.create({
   },
   optionList: {
     gap: 12,
-    marginTop: 26,
+    marginTop: 12,
   },
   optionCard: {
-    minHeight: 64,
+    minHeight: 52,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(244, 163, 64, 0.22)",
@@ -172,7 +172,7 @@ export const onboardingStyles = StyleSheet.create({
     fontSize: 16,
   },
   energyGrid: {
-    marginTop: 36,
+    marginTop: 16,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
@@ -199,7 +199,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   profileWrap: {
     alignItems: "center",
-    marginTop: 26,
+    marginTop: 12,
   },
   photoPickerWrap: {
     position: "relative",
@@ -243,7 +243,7 @@ export const onboardingStyles = StyleSheet.create({
   },
   fieldGroup: {
     width: "100%",
-    marginTop: 30,
+    marginTop: 14,
     gap: 14,
   },
   inputRow: {
@@ -286,7 +286,7 @@ export const onboardingStyles = StyleSheet.create({
     marginLeft: 12,
   },
   locationWrap: {
-    marginTop: 28,
+    marginTop: 14,
   },
   locationButton: {
     minHeight: 48,
@@ -310,7 +310,7 @@ export const onboardingStyles = StyleSheet.create({
     lineHeight: 22,
   },
   pillGrid: {
-    marginTop: 28,
+    marginTop: 14,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,

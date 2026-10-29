@@ -31,3 +31,8 @@ test('the decision to continue comes immediately after basics, before every opti
     assert.ok(steps.indexOf(name) > steps.indexOf('continueChoice'));
   assert.equal(steps[steps.length - 1], 'completion');
 });
+
+test('the later about-you step keeps its original position before identity', () => {
+  const { VIBES_ONBOARDING_STEPS: steps } = load('src/screens/Onboarding/vibesOnboardingContent.ts');
+  assert.equal(steps.indexOf('practices') + 1, steps.indexOf('identity'));
+});

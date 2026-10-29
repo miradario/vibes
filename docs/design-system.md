@@ -53,7 +53,7 @@ La siguiente escala define roles reutilizables. Algunos valores ya existen en pa
 | Rol | Tamaño / interlineado | Familia / peso | Color | Uso |
 | --- | --- | --- | --- | --- |
 | Título de pantalla principal | **34 / 42** | `extraBold` / 800 | `primaryText` | Actividades, Eventos, Desafíos, Descubrir, Chats; mismo estilo en todas |
-| Título de onboarding | 36 / 43 | `extraBold` / 800 | `primaryText` | Pregunta principal; en ancho <360: 30 / 36 |
+| Título de onboarding | 28 / 34 | `extraBold` / 800 | `primaryText` | Pregunta principal; en ancho <360: 26 / 32 |
 | Título de pantalla secundaria | 26 / 32 | `semibold` / 600 | `primaryText` | Historial y vistas subordinadas |
 | Título de sección | 25 / 29 | `semibold` / 600 | `primaryText` | Agrupaciones principales de un feed |
 | Título de modal estándar | 24 / 30 | `bold` / 700 | `primaryText` | Confirmaciones y sheets simples |
@@ -361,3 +361,9 @@ Para fotos con bandas desenfocadas, ProfileMediaImage espera onDisplay del fondo
 Comunidad es el nuevo nombre de Camino: los datos del perfil siguen en spiritual_path y spiritual_path_details (y sus aliases camelCase), con prioridad sobre campos alternativos communities. Conservar rol, años y notas; no crear un perfil de comunidad separado ni perder selecciones anteriores.
 
 En Descubrir, las opciones de comunidad se derivan de las personas disponibles tras aplicar los demás filtros y ocultamientos, antes de aplicar la comunidad seleccionada. No mostrar comunidades sin personas ni reducir las opciones a la comunidad ya elegida. Conservar Todos y los chips activos para poder quitar una selección que dejó de tener resultados.
+
+En onboarding, la elección de comunidades aparece en el primer formulario, en el lugar que ocupaba Algo muy vos. El campo Algo muy vos, con descripción e ideas, ocupa el paso posterior que antes mostraba comunidades (practices), antes de identity. No intercambiar los pasos de identidad por esta modificación.
+
+El onboarding usa cabeceras compactas en todos sus pasos: progreso de 44, padding superior 4, títulos 26–28/32–34 y decoraciones de 64–82 de alto. Empecemos por vos usa 28/32, logo 72×82 y saludo compacto. Reducir márgenes entre bloques a 8–14; opciones de al menos 52 y acciones secundarias de al menos 44, conservando inputs legibles y escalado accesible.
+
+Tus comunidades usa título 22/28, decoración 44×48 y opciones a 6 de la cabecera, con separación 8 entre opciones. Sin margen superior adicional en el bloque.

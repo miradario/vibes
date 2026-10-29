@@ -691,8 +691,6 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
 
   const renderProfileText = () => {
     const english = locale === "en";
-    const ideas = english ? ["I’m excited about…", "My ideal plan…", "I could talk for hours about…"]
-      : ["Me entusiasma…", "Mi plan ideal…", "Podría hablar horas de…"];
     return (
       <>
         <View style={localStyles.introHero}>
@@ -748,7 +746,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
               onFocus={() => scrollInputIntoView(lastNameInputRef.current)}
               onBlur={() => { if (focusedProfileInput.current === lastNameInputRef.current) focusedProfileInput.current = null; }}
               autoCorrect={false} autoComplete="family-name" autoCapitalize="words" maxLength={50}
-              returnKeyType="next" onSubmitEditing={() => descriptionInputRef.current?.focus()}
+              returnKeyType="done" onSubmitEditing={() => Keyboard.dismiss()}
             />
           </View>
           <View style={localStyles.introField}>
@@ -764,31 +762,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
               ))}
             </View>
           </View>
-          <View style={localStyles.aboutSection}>
-            <Text accessibilityRole="header" style={localStyles.aboutHeading}>{english ? "Something about you" : "Algo muy vos"} <Text style={localStyles.optionalLabel}>{english ? "Optional" : "Opcional"}</Text></Text>
-            <Text style={localStyles.aboutHint}>{english ? "A passion, a favorite activity or a plan you’re always up for…" : "Un gusto, una pasión o ese plan al que siempre te sumás…"}</Text>
-            <TextInput
-              ref={descriptionInputRef} style={[localStyles.introInput, localStyles.introDescription]}
-              accessibilityLabel={english ? "About you, optional" : "Algo muy vos, opcional"}
-              placeholder={english ? "Tell us a little about yourself" : "Contanos un poquito de vos"}
-              placeholderTextColor={vibesTheme.colors.secondaryText}
-              value={briefDescription} onChangeText={setBriefDescription}
-              onFocus={() => scrollInputIntoView(descriptionInputRef.current)}
-              onBlur={() => { if (focusedProfileInput.current === descriptionInputRef.current) focusedProfileInput.current = null; }}
-              multiline maxLength={1000} textAlignVertical="top"
-            />
-            <Text style={localStyles.aboutHint}>{english ? "Need an idea?" : "¿Necesitás una idea?"}</Text>
-            <View style={localStyles.ideaChips}>
-              {ideas.map(idea => <TouchableOpacity key={idea} accessibilityRole="button" style={localStyles.ideaChip}
-                onPress={() => {
-                  const prefix = idea.replace(/…$/, "");
-                  setBriefDescription(previous => `${previous.trim() ? `${previous.trim()}\n` : ""}${prefix} `.slice(0, 1000));
-                  requestAnimationFrame(() => descriptionInputRef.current?.focus());
-                }}>
-                <Text style={localStyles.ideaText}>{idea}</Text>
-              </TouchableOpacity>)}
-            </View>
-          </View>
+          {renderCommunities()}
         </View>
       </>
     );
@@ -801,7 +775,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
           <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
           <Text style={localStyles.aboutHint}>{copy.subtitle}</Text>
         </View>
-        <OnboardingGlobe style={{ width: 92, height: 100 }} />
+        <OnboardingGlobe style={{ width: 66, height: 72 }} />
       </View>
       <View style={onboardingStyles.locationWrap}>
         <TouchableOpacity
@@ -917,16 +891,16 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
     </>
   );
 
-  const renderPractices = () => (
+  const renderCommunities = () => (
     <>
-      <View style={localStyles.purposeHero}>
+      <View style={[localStyles.purposeHero, { marginTop: 0 }]}>
         <View style={localStyles.introCopy}>
-          <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
-          <Text style={localStyles.aboutHint}>{copy.subtitle}</Text>
+          <Text accessibilityRole="header" style={[localStyles.purposeTitle, { fontSize: 22, lineHeight: 28, marginBottom: 4 }]}>{t("vibesOnboarding.practices.title")}</Text>
+          <Text style={localStyles.aboutHint}>{t("vibesOnboarding.practices.subtitle")}</Text>
         </View>
-        <OnboardingPlayfulShapes kind="practices" style={{ width: 88, height: 96 }} />
+        <OnboardingPlayfulShapes kind="practices" style={{ width: 44, height: 48 }} />
       </View>
-      <View style={onboardingStyles.pillGrid}>
+      <View style={[onboardingStyles.pillGrid, { marginTop: 6, gap: 8 }]}>
         {practiceOptions.map((practice) => (
           <SelectablePill
             key={practice}
@@ -959,6 +933,41 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
     </>
   );
 
+  const renderPractices = () => {
+    const english = locale === "en";
+    const ideas = english ? ["I’m excited about…", "My ideal plan…", "I could talk for hours about…"]
+      : ["Me entusiasma…", "Mi plan ideal…", "Podría hablar horas de…"];
+    return (
+      <>
+          <View style={localStyles.aboutSection}>
+            <Text accessibilityRole="header" style={localStyles.aboutHeading}>{english ? "Something about you" : "Algo muy vos"} <Text style={localStyles.optionalLabel}>{english ? "Optional" : "Opcional"}</Text></Text>
+            <Text style={localStyles.aboutHint}>{english ? "A passion, a favorite activity or a plan you’re always up for…" : "Un gusto, una pasión o ese plan al que siempre te sumás…"}</Text>
+            <TextInput
+              ref={descriptionInputRef} style={[localStyles.introInput, localStyles.introDescription]}
+              accessibilityLabel={english ? "About you, optional" : "Algo muy vos, opcional"}
+              placeholder={english ? "Tell us a little about yourself" : "Contanos un poquito de vos"}
+              placeholderTextColor={vibesTheme.colors.secondaryText}
+              value={briefDescription} onChangeText={setBriefDescription}
+              onFocus={() => scrollInputIntoView(descriptionInputRef.current)}
+              onBlur={() => { if (focusedProfileInput.current === descriptionInputRef.current) focusedProfileInput.current = null; }}
+              multiline maxLength={1000} textAlignVertical="top"
+            />
+            <Text style={localStyles.aboutHint}>{english ? "Need an idea?" : "¿Necesitás una idea?"}</Text>
+            <View style={localStyles.ideaChips}>
+              {ideas.map(idea => <TouchableOpacity key={idea} accessibilityRole="button" style={localStyles.ideaChip}
+                onPress={() => {
+                  const prefix = idea.replace(/…$/, "");
+                  setBriefDescription(previous => `${previous.trim() ? `${previous.trim()}\n` : ""}${prefix} `.slice(0, 1000));
+                  requestAnimationFrame(() => descriptionInputRef.current?.focus());
+                }}>
+                <Text style={localStyles.ideaText}>{idea}</Text>
+              </TouchableOpacity>)}
+            </View>
+          </View>
+      </>
+    );
+  };
+
   const renderStep = () => {
     if (step === "continueChoice") return (
       <>
@@ -977,7 +986,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
               <Text accessibilityRole="header" style={localStyles.purposeTitle}>{copy.title}</Text>
               <Text style={localStyles.aboutHint}>{locale === "en" ? "Everything is optional. Share only what you want." : "Todo es opcional. Compartí solo lo que quieras."}</Text>
             </View>
-            <OnboardingPlayfulShapes kind={step === "identity" ? "identity" : "interests"} style={{ width: 88, height: 96 }} />
+            <OnboardingPlayfulShapes kind={step === "identity" ? "identity" : "interests"} style={{ width: 64, height: 70 }} />
           </View>
           <ProfileQuestionsForm
             hiddenFields={["gender", "lookingFor", "habits"]}
@@ -1216,39 +1225,39 @@ const localStyles = StyleSheet.create({
     includeFontPadding: false,
     textAlignVertical: "center",
   },
-  experienceHint: {marginTop:20,marginBottom:2,fontSize:14,lineHeight:20,color:vibesTheme.colors.secondaryText},
+  experienceHint: {marginTop:12,marginBottom:2,fontSize:14,lineHeight:20,color:vibesTheme.colors.secondaryText},
   practiceWithDetails: {borderColor:vibesTheme.colors.accentBlue,backgroundColor:`${vibesTheme.colors.accentBlue}0C`},
   practiceDot: {width:10,height:10,borderRadius:5,backgroundColor:vibesTheme.colors.accentMustard},
   purposeGrid: {width:"100%",maxWidth:280,alignSelf:"center",flexDirection:"row",flexWrap:"wrap",justifyContent:"space-between",gap:0,rowGap:10,marginTop:16},
   purposeHeading: {flexDirection:"row",alignItems:"center",gap:5,marginBottom:10},
-  purposeHero: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 },
-  purposeTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 34, marginBottom: 10 },
-  choiceTitle: { marginTop: 20, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 32, lineHeight: 39 },
-  choiceSubtitle: { marginTop: 14, color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 15, lineHeight: 22 },
+  purposeHero: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
+  purposeTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 26, lineHeight: 32, marginBottom: 6 },
+  choiceTitle: { marginTop: 8, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 34 },
+  choiceSubtitle: { marginTop: 8, color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 15, lineHeight: 22 },
   photoHero: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 0, marginBottom: 8 },
   photoTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 26, lineHeight: 32, marginBottom: 6 },
   photoMascot: { width: 100, alignItems: "center", gap: 3 },
   photoGreeting: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 16, backgroundColor: `${vibesTheme.colors.accentBlue}14`, maxWidth: "100%" },
   photoGreetingText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold, fontSize: 12, lineHeight: 16, textAlign: "center" },
   photoLaterText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 13, lineHeight: 18 },
-  introHero: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 18 },
+  introHero: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4, marginBottom: 10 },
   introCopy: { flex: 1, minWidth: 0 },
-  introConfetti: { position: "absolute", top: -28, left: -6, width: 36, height: 30 },
-  introTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 39 },
-  introSubtitle: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 19, lineHeight: 25, marginTop: 10 },
-  introMascot: { width: 112, alignItems: "center", gap: 6 },
-  introLogo: { width: 106, height: 128 },
-  greetingBubble: { paddingHorizontal: 10, paddingVertical: 10, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14`, maxWidth: "100%" },
+  introConfetti: { position: "absolute", top: -12, left: -6, width: 36, height: 30 },
+  introTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.extraBold, fontSize: 28, lineHeight: 32 },
+  introSubtitle: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 16, lineHeight: 22, marginTop: 6 },
+  introMascot: { width: 80, alignItems: "center", gap: 6 },
+  introLogo: { width: 72, height: 82 },
+  greetingBubble: { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 22, backgroundColor: `${vibesTheme.colors.accentBlue}14`, maxWidth: "100%" },
   greetingText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold, fontSize: 14, lineHeight: 19, textAlign: "center" },
-  introFields: { gap: 16 },
+  introFields: { gap: 12 },
   introField: { gap: 7 },
   introLabel: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 14, lineHeight: 20 },
   optionalLabel: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, lineHeight: 18 },
   introInput: { minHeight: 52, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}30`, borderRadius: 14, backgroundColor: `${vibesTheme.colors.secondaryText}05`, paddingHorizontal: 16, paddingVertical: 12, fontFamily: vibesTheme.fonts.regular, fontSize: 17, lineHeight: 23, color: vibesTheme.colors.primaryText },
-  aboutSection: { gap: 12, marginTop: 10 },
+  aboutSection: { gap: 8, marginTop: 6 },
   aboutHeading: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 24, lineHeight: 31 },
   aboutHint: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 13, lineHeight: 19 },
-  introDescription: { minHeight: 112 },
+  introDescription: { minHeight: 96 },
   ideaChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   ideaChip: { minHeight: 44, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 24, backgroundColor: `${vibesTheme.colors.accentBlue}14`, justifyContent: "center" },
   ideaText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.medium, fontSize: 13, lineHeight: 19 },
@@ -1257,8 +1266,8 @@ const localStyles = StyleSheet.create({
   birthDateSheet: { padding: 20, borderRadius: 24, backgroundColor: vibesTheme.colors.surface },
   birthDateTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 20, lineHeight: 26, textAlign: "center" },
   completeLaterButton: {
-    minHeight: 56,
-    marginTop: 10,
+    minHeight: 44,
+    marginTop: 4,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",

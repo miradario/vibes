@@ -52,7 +52,7 @@ const ProgressHeader = ({
 
 const styles = StyleSheet.create({
   wrap: {
-    minHeight: 56,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
   },
