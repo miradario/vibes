@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppState, type AppStateStatus } from "react-native";
 import * as StoreReview from "expo-store-review";
+import { storeReviewFlagStore } from "../featureFlags/store";
 
 // Native in-store rating prompt (App Store / Google Play In-App Review).
 // Shown only after a positive moment, to users who already came back to the
@@ -84,12 +85,14 @@ export const maybeRequestStoreReview = async (): Promise<void> => {
   if (pending) return;
   pending = true;
   try {
+    // Remote Config kill switch (store_review_enabled, off by default).
+    if (!storeReviewFlagStore.getSnapshot()) return;
     const state = await readState();
     if (!isEligibleForReviewPrompt(state)) return;
     if (!(await StoreReview.isAvailableAsync())) return;
     if (!(await StoreReview.hasAction())) return;
     await new Promise(resolve => setTimeout(resolve, PROMPT_DELAY_MS));
-    if (AppState.currentState !== "active") return;
+    if (AppState.currentState !== "active" || !storeReviewFlagStore.getSnapshot()) return;
     await writeState({ ...state, promptCount: state.promptCount + 1, lastPromptAt: Date.now() });
     await StoreReview.requestReview();
   } catch {
