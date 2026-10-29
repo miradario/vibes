@@ -2,6 +2,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import React, { useEffect, useRef } from "react";
 import { AccessibilityInfo, Animated, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Text } from "./Typography";
+import * as ds from "../src/theme/tokens";
 
 export default function LikeBubbles({ trigger, showConfirmation = false }: { trigger: number; showConfirmation?: boolean }) {
   const { width } = useWindowDimensions();
@@ -34,13 +35,13 @@ export default function LikeBubbles({ trigger, showConfirmation = false }: { tri
       ]}
     >
       {showConfirmation ? <Animated.View style={{
-        width: 80, height: 80, borderRadius: 40,
+        width: 80, height: 80, borderRadius: ds.radii.pill,
         alignItems: "center", justifyContent: "center",
         backgroundColor: vibesTheme.colors.background,
         borderWidth: 2, borderColor: vibesTheme.colors.accentMustard,
         opacity: progress.interpolate({ inputRange: [0, 0.15, 0.65, 1], outputRange: [0, 1, 1, 0] }),
         transform: [{ scale: progress.interpolate({ inputRange: [0, 0.22, 0.4, 1], outputRange: [0.6, 1.12, 1, 0.95] }) }],
-      }}><Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 40 }}>✓</Text></Animated.View> : null}
+      }}><Text style={{ color: vibesTheme.colors.accentBlue, fontSize: /* ds-lint-allow DS-TODO: fontSize 40 (peso 400) sin mapeo claro en §3.5.1 */ 40 }}>✓</Text></Animated.View> : null}
       {Array.from({ length: 9 }, (_, i) => {
         const angle = (i * Math.PI * 2) / 9;
         return (
@@ -50,10 +51,10 @@ export default function LikeBubbles({ trigger, showConfirmation = false }: { tri
               position: "absolute",
               width: 24 + (i % 3) * 8,
               height: 24 + (i % 3) * 8,
-              borderRadius: 30,
+              borderRadius: ds.radii.xl,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: i % 2 ? vibesTheme.colors.accentMustard : "rgba(57, 120, 184, 0.24)",
+              backgroundColor: i % 2 ? vibesTheme.colors.accentMustard : ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
               opacity: progress.interpolate({
                 inputRange: [0, 0.65, 1],
                 outputRange: [0, 1, 0],
@@ -83,7 +84,7 @@ export default function LikeBubbles({ trigger, showConfirmation = false }: { tri
             <Text
               style={{
                 color: i % 2 ? vibesTheme.colors.primaryText : vibesTheme.colors.primaryText,
-                fontSize: 14,
+                ...ds.textStyles.bodySmall,
               }}
             >
               {i % 3 === 0 ? "✓" : i % 3 === 1 ? "✦" : "♡"}

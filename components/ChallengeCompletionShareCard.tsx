@@ -1,3 +1,4 @@
+/* ds-lint-disable-file DS-TODO: lienzo de exportación 1080×1350 con tipografía y medidas fijas (imagen para compartir); ¿queda exento del DS? */
 import React, { forwardRef, useState } from "react";
 import { View, StyleSheet, type ImageSourcePropType } from "react-native";
 import { Image } from "expo-image";

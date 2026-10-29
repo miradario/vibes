@@ -5,6 +5,7 @@ import { supabase } from "../src/lib/supabase";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { Text } from "./Typography";
 import Icon from "./Icon";
+import * as ds from "../src/theme/tokens";
 
 type Guide = { detail: string; actions: string[] };
 const validGuide = (value: unknown): value is Guide => {
@@ -171,7 +172,7 @@ export default function VibiDailyTip({
           onPress={onClose}
           style={[s.button, s.doneButton]}
         >
-          <Icon name="heart-outline" size={23} color={vibesTheme.colors.primaryText} />
+          <Icon name="heart-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
           <Text style={s.buttonText}>Listo</Text>
         </TouchableOpacity>
       ) : null}
@@ -185,11 +186,11 @@ export default function VibiDailyTip({
 }
 const s = StyleSheet.create({
   card: {
-    marginTop: 24,
-    padding: 16,
-    gap: 12,
-    borderRadius: 18,
-    backgroundColor: "rgba(244, 163, 64, 0.16)",
+    marginTop: ds.spacing[6],
+    padding: ds.spacing[4],
+    gap: ds.spacing[3],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.colors.bg.selected,
   },
   // Sí/No step: the buttons sit directly on the sheet, without the tinted card.
   cardBare: {
@@ -197,7 +198,7 @@ const s = StyleSheet.create({
     borderRadius: 0,
     backgroundColor: "transparent",
   },
-  choices: { flexDirection: "row", gap: 12 },
+  choices: { flexDirection: "row", gap: ds.spacing[3] },
   choice: { flex: 1 },
   secondary: {
     backgroundColor: vibesTheme.colors.background,
@@ -206,28 +207,23 @@ const s = StyleSheet.create({
   },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 20,
-    lineHeight: 26,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
   copy: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 18,
-    lineHeight: 27,
+    ...ds.textStyles.heading,
   },
   button: {
     minHeight: 48,
-    padding: 12,
-    borderRadius: 14,
+    padding: ds.spacing[3],
+    borderRadius: ds.radii.lg,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
   },
-  doneButton: { flexDirection: "row", gap: 8 },
+  doneButton: { flexDirection: "row", gap: ds.spacing[2] },
   buttonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
 });

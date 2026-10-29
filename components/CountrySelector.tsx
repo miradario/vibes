@@ -6,6 +6,7 @@ import AnimatedSheetModal from "./AnimatedSheetModal";
 import { getCountryName, searchCountries } from "../src/constants/countries";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type Props = {
   selected: string[];
@@ -40,7 +41,7 @@ export default function CountrySelector({ selected, onChange, multiple = false, 
         style={[styles.trigger, disabled && styles.disabled]}
       >
         <Text style={[styles.value, showingPlaceholder && styles.placeholder]}>{summary}</Text>
-        <Icon name={expanded ? "chevron-up" : "chevron-down"} size={20} color={vibesTheme.colors.primaryText} />
+        <Icon name={expanded ? "chevron-up" : "chevron-down"} size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
       </Pressable>
       <AnimatedSheetModal
         visible={expanded}
@@ -53,7 +54,7 @@ export default function CountrySelector({ selected, onChange, multiple = false, 
             <Text style={styles.title}>{heading}</Text>
             <Pressable accessibilityRole="button" accessibilityLabel={english ? "Close" : "Cerrar"}
               onPress={() => setExpanded(false)} style={styles.close}>
-              <Icon name="close" size={24} color={vibesTheme.colors.primaryText} />
+              <Icon name="close" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
             </Pressable>
           </View>
           <TextInput
@@ -78,7 +79,7 @@ export default function CountrySelector({ selected, onChange, multiple = false, 
                     if (!multiple) setExpanded(false);
                   }}>
                   <Text style={styles.optionText}>{country.label}</Text>
-                  {checked ? <Icon name="checkmark" size={20} color={vibesTheme.colors.primaryText} /> : null}
+                  {checked ? <Icon name="checkmark" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} /> : null}
                 </Pressable>
               );
             })}
@@ -94,21 +95,21 @@ export default function CountrySelector({ selected, onChange, multiple = false, 
   );
 }
 const styles = StyleSheet.create({
-  container: { gap: 8 },
-  trigger: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, backgroundColor: vibesTheme.colors.surface, padding: 14, minHeight: 48 },
-  value: { flex: 1, fontSize: 16, color: vibesTheme.colors.primaryText },
+  container: { gap: ds.spacing[2] },
+  trigger: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], borderRadius: ds.radii.lg, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, backgroundColor: vibesTheme.colors.surface, padding: ds.spacing[4], minHeight: 48 },
+  value: { flex: 1, ...ds.textStyles.body, color: vibesTheme.colors.primaryText },
   placeholder: { color: vibesTheme.colors.secondaryText },
   disabled: { opacity: 0.5 },
-  dropdown: { maxWidth: 480, maxHeight: "85%", borderRadius: 24, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, padding: 16, backgroundColor: vibesTheme.colors.surface },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  title: { flex: 1, fontSize: 24, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.primaryText },
+  dropdown: { maxWidth: 480, maxHeight: "85%", borderRadius: ds.radii.xl, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, padding: ds.spacing[4], backgroundColor: vibesTheme.colors.surface },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: ds.spacing[3] },
+  title: { flex: 1, ...ds.textStyles.title, color: vibesTheme.colors.primaryText },
   close: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
-  done: { marginTop: 12, padding: 12, minHeight: 44, borderRadius: 14, alignItems: "center", backgroundColor: vibesTheme.colors.accentMustard },
-  doneText: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 16 },
-  search: { padding: 12, fontSize: 16, color: vibesTheme.colors.primaryText, borderBottomWidth: 1, borderBottomColor: vibesTheme.colors.borderSoft },
+  done: { marginTop: ds.spacing[3], padding: ds.spacing[3], minHeight: 44, borderRadius: ds.radii.lg, alignItems: "center", backgroundColor: vibesTheme.colors.accentMustard },
+  doneText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle },
+  search: { padding: ds.spacing[3], ...ds.textStyles.body, color: vibesTheme.colors.primaryText, borderBottomWidth: 1, borderBottomColor: vibesTheme.colors.borderSoft },
   list: { maxHeight: 320, flexShrink: 1 },
-  option: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, padding: 12, borderRadius: 10 },
-  optionText: { flex: 1, color: vibesTheme.colors.primaryText, fontSize: 16 },
-  selected: { backgroundColor: "rgba(244, 163, 64, 0.2)" },
-  empty: { padding: 12, color: vibesTheme.colors.secondaryText },
+  option: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], minHeight: 44, padding: ds.spacing[3], borderRadius: ds.radii.md },
+  optionText: { flex: 1, color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
+  selected: { backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium) },
+  empty: { padding: ds.spacing[3], color: vibesTheme.colors.secondaryText },
 });

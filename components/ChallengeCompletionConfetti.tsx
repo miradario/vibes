@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const colors = [vibesTheme.colors.accentMustard, vibesTheme.colors.accentBlue, vibesTheme.colors.accentCoral];
 const pieces = Array.from({ length: 36 }, (_, index) => ({
@@ -34,7 +35,7 @@ function Piece({ piece, progress, width, height }: {
   });
   return <Animated.View style={[styles.piece, {
     backgroundColor: colors[piece.index % colors.length],
-    borderRadius: piece.index % 3 === 0 ? 5 : 1,
+    borderRadius: piece.index % 3 === 0 ? ds.radii.xs : ds.radii.xs,
   }, style]} />;
 }
 

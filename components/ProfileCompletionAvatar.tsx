@@ -4,6 +4,7 @@ import { Text } from "./Typography";
 import Svg, { Circle } from "react-native-svg";
 import Avatar from "./Avatar";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const SIZE = 84;
 const RADIUS = 39;
@@ -75,7 +76,7 @@ export default function ProfileCompletionAvatar({
 const s = StyleSheet.create({
   container: {
     alignItems: "center",
-    marginRight: 12,
+    marginRight: ds.spacing[3],
     minWidth: SIZE,
     minHeight: SIZE,
   },
@@ -87,9 +88,7 @@ const s = StyleSheet.create({
   },
   percent: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "600",
-    marginTop: 4,
+    ...ds.textStyles.label,
+    marginTop: ds.spacing[1],
   },
 });

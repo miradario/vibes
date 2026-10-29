@@ -24,7 +24,7 @@ import {
   getSelectedSpiritualPaths,
   normalizeSpiritualPathDetails,
 } from "../src/lib/spiritualPaths";
-import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const SHOW_DISCOVER_DEBUG = false;
 const DISCOVER_PREFERENCE_EXCLUDED_PREFIXES = [
@@ -139,24 +139,23 @@ const CardItem = ({
 
   const imageStyle = [
     {
-      borderRadius: hasVariant ? 85 : isDiscover ? 90 : 8,
+      borderRadius: hasVariant ? /* ds-lint-allow DS-TODO: borderRadius 85 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 85 : isDiscover ? /* ds-lint-allow DS-TODO: borderRadius 90 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 90 : ds.radii.sm,
       width: hasVariant
         ? fullWidth / 2 - 30
         : isDiscover
         ? 180
         : fullWidth - 80,
       height: hasVariant ? 170 : isDiscover ? 180 : 350,
-      margin: hasVariant ? 0 : isDiscover ? 0 : 20,
+      margin: hasVariant ? 0 : isDiscover ? 0 : ds.spacing[5],
     },
   ];
 
   const nameStyle = {
-    paddingTop: hasVariant ? 10 : isDiscover ? 8 : 15,
-    paddingBottom: hasVariant ? 5 : isDiscover ? 4 : 7,
+    paddingTop: hasVariant ? ds.spacing[3] : isDiscover ? ds.spacing[2] : ds.spacing[4],
+    paddingBottom: hasVariant ? ds.spacing[1] : isDiscover ? ds.spacing[1] : ds.spacing[2],
     color: DARK_GRAY,
-    fontSize: hasVariant ? 15 : isDiscover ? 22 : 30,
+    ...(hasVariant ? ds.textStyles.subtitleMedium : isDiscover ? ds.textStyles.title : ds.textStyles.display),
     textAlign: isDiscover ? ("center" as const) : ("left" as const),
-    fontFamily: vibesTheme.fonts.medium,
   };
 
   const discoverLocationLine =
@@ -423,7 +422,7 @@ const CardItem = ({
                 {sharedEventsList.map((eventTitle, index) => (
                   <View key={`shared-event-${eventTitle}-${index}`} style={styles.discoverSharedItem}>
                     <View style={styles.discoverSharedIconWrap}>
-                      <Icon name="calendar-outline" size={16} color={TEXT_PRIMARY} />
+                      <Icon name="calendar-outline" size={ds.iconSize.sm} color={TEXT_PRIMARY} />
                     </View>
                     <View style={styles.discoverSharedTextWrap}>
                       <Text style={styles.discoverSharedLabel}>Evento</Text>
@@ -437,7 +436,7 @@ const CardItem = ({
                     style={styles.discoverSharedItem}
                   >
                     <View style={styles.discoverSharedIconWrap}>
-                      <Icon name="sparkles-outline" size={16} color={TEXT_PRIMARY} />
+                      <Icon name="sparkles-outline" size={ds.iconSize.sm} color={TEXT_PRIMARY} />
                     </View>
                     <View style={styles.discoverSharedTextWrap}>
                       <Text style={styles.discoverSharedLabel}>Desafío</Text>
@@ -509,7 +508,7 @@ const CardItem = ({
           <View style={styles.matchesCardOverlay}>
             <View style={styles.matchesCardItem}>
               <Text style={styles.matchesTextCardItem}>
-                <Icon name="star" color={WHITE} size={13} /> {matches}% Sync
+                <Icon name="star" color={WHITE} size={ds.iconSize.sm} /> {matches}% Sync
               </Text>
             </View>
           </View>
@@ -577,7 +576,7 @@ const CardItem = ({
           onPress={onContactPress}
           disabled={!onContactPress}
         >
-          <Icon name="library" size={14} color={contactTextColor} />
+          <Icon name="library" size={ds.iconSize.sm} color={contactTextColor} />
           <Text style={[styles.contactButtonText, { color: contactTextColor }]}>
             Assets shared
           </Text>
@@ -596,19 +595,19 @@ const CardItem = ({
       {hasActions && (
         <View style={styles.actionsCardItem}>
           <TouchableOpacity style={styles.miniButton}>
-            <Icon name="star" color={STAR_ACTIONS} size={14} />
+            <Icon name="star" color={STAR_ACTIONS} size={ds.iconSize.sm} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.button}>
-            <Icon name="heart" color={LIKE_ACTIONS} size={25} />
+            <Icon name="heart" color={LIKE_ACTIONS} size={ds.iconSize.lg} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.button}>
-            <Icon name="close" color={DISLIKE_ACTIONS} size={25} />
+            <Icon name="close" color={DISLIKE_ACTIONS} size={ds.iconSize.lg} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.miniButton}>
-            <Icon name="moon" color={FLASH_ACTIONS} size={14} />
+            <Icon name="moon" color={FLASH_ACTIONS} size={ds.iconSize.sm} />
           </TouchableOpacity>
         </View>
       )}

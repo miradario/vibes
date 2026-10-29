@@ -27,6 +27,7 @@ import {
   notificationCategories,
   reminderTimingLabel,
 } from "../src/notifications/preferences";
+import * as ds from "../src/theme/tokens";
 
 const colors = vibesTheme.colors;
 
@@ -184,7 +185,7 @@ export default function NotificationPreferencesSection() {
       <View style={s.heading}>
         <Icon
           name="notifications-outline"
-          size={18}
+          size={ds.iconSize.md}
           color={colors.secondaryText}
         />
         <Text style={s.sectionTitle}>{t("configuration.notifications")}</Text>
@@ -243,7 +244,7 @@ export default function NotificationPreferencesSection() {
             </View>
             <Icon
               name={expanded ? "chevron-up" : "chevron-down"}
-              size={20}
+              size={ds.iconSize.md}
               color={colors.secondaryText}
             />
           </Pressable>
@@ -286,7 +287,7 @@ export default function NotificationPreferencesSection() {
                       </View>
                       <Icon
                         name="chevron-forward"
-                        size={18}
+                        size={ds.iconSize.md}
                         color={colors.primaryText}
                       />
                     </Pressable>
@@ -309,7 +310,7 @@ export default function NotificationPreferencesSection() {
                       </View>
                       <Icon
                         name="chevron-forward"
-                        size={18}
+                        size={ds.iconSize.md}
                         color={colors.primaryText}
                       />
                     </Pressable>
@@ -359,7 +360,7 @@ export default function NotificationPreferencesSection() {
       <AnimatedSheetModal
         visible={timingVisible}
         onClose={() => setTimingVisible(false)}
-        sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, 20) }]}
+        sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[5]) }]}
       >
         <View style={s.row}>
           <Text accessibilityRole="header" style={[s.sheetTitle, s.flex]}>
@@ -371,7 +372,7 @@ export default function NotificationPreferencesSection() {
             onPress={() => setTimingVisible(false)}
             style={s.close}
           >
-            <Icon name="close" size={24} color={colors.primaryText} />
+            <Icon name="close" size={ds.iconSize.lg} color={colors.primaryText} />
           </Pressable>
         </View>
         {eventReminderTimings.map((option) => (
@@ -395,7 +396,7 @@ export default function NotificationPreferencesSection() {
               {t(`configuration.${reminderTimingLabel[option]}`)}
             </Text>
             {timing === option ? (
-              <Icon name="checkmark" size={22} color={colors.surface} />
+              <Icon name="checkmark" size={ds.iconSize.lg} color={colors.surface} />
             ) : null}
           </Pressable>
         ))}
@@ -415,7 +416,7 @@ export default function NotificationPreferencesSection() {
       <AnimatedSheetModal
         visible={challengeTimeVisible && Platform.OS !== "android"}
         onClose={() => setChallengeTimeVisible(false)}
-        sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, 20) }]}
+        sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[5]) }]}
       >
         <View style={s.row}>
           <Text accessibilityRole="header" style={[s.sheetTitle, s.flex]}>
@@ -427,7 +428,7 @@ export default function NotificationPreferencesSection() {
             onPress={() => setChallengeTimeVisible(false)}
             style={s.close}
           >
-            <Icon name="close" size={24} color={colors.primaryText} />
+            <Icon name="close" size={ds.iconSize.lg} color={colors.primaryText} />
           </Pressable>
         </View>
         {Platform.OS === "web" ? (
@@ -478,9 +479,9 @@ const s = StyleSheet.create({
     minHeight: 52,
     borderWidth: 1,
     borderColor: colors.secondaryText,
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 22,
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
+    ...ds.textStyles.title,
     color: colors.primaryText,
   },
   confirmTime: {
@@ -488,72 +489,70 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.accentMustard,
-    borderRadius: 16,
+    borderRadius: ds.radii.lg,
   },
   disabled: { opacity: 0.5 },
-  section: { marginTop: 18, gap: 12 },
-  heading: { flexDirection: "row", alignItems: "center", gap: 8 },
+  section: { marginTop: ds.spacing[4], gap: ds.spacing[3] },
+  heading: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2] },
   sectionTitle: {
-    fontSize: 18,
+    ...ds.textStyles.heading,
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.subtitle,
   },
   card: {
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
-    padding: 18,
+    padding: ds.spacing[4],
   },
-  row: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 48 },
+  row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], minHeight: 48 },
   flex: { flex: 1 },
-  label: { fontSize: 16, lineHeight: 22, color: colors.primaryText },
+  label: { ...ds.textStyles.body, color: colors.primaryText },
   description: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...ds.textStyles.bodySmall,
     color: colors.secondaryText,
-    marginTop: 4,
+    marginTop: ds.spacing[1],
   },
   divider: {
     height: 1,
     backgroundColor: colors.primaryText,
     opacity: 0.08,
-    marginVertical: 14,
+    marginVertical: ds.spacing[4],
   },
   category: {
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft,
-    paddingTop: 12,
-    marginTop: 12,
+    paddingTop: ds.spacing[3],
+    marginTop: ds.spacing[3],
   },
   timing: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(57, 120, 184, 0.12)",
-    borderRadius: 16,
-    padding: 12,
-    marginTop: 10,
+    backgroundColor: ds.colors.feedback.infoBg,
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[3],
+    marginTop: ds.spacing[3],
   },
-  status: { fontSize: 12, color: colors.secondaryText, minHeight: 16 },
+  status: { ...ds.textStyles.caption, color: colors.secondaryText, minHeight: 16 },
   permission: {
-    backgroundColor: "rgba(244, 163, 64, 0.16)",
-    padding: 16,
-    borderRadius: 16,
+    backgroundColor: ds.colors.bg.selected,
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.lg,
   },
   action: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   link: {
-    fontSize: 14,
+    ...ds.textStyles.bodySmall,
     color: colors.primaryText,
     textDecorationLine: "underline",
   },
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    gap: 12,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    padding: ds.spacing[6],
+    gap: ds.spacing[3],
   },
-  sheetTitle: { fontSize: 22, color: colors.primaryText },
+  sheetTitle: { ...ds.textStyles.title, color: colors.primaryText },
   close: {
     minWidth: 44,
     minHeight: 44,
@@ -564,8 +563,8 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     minHeight: 56,
-    padding: 16,
-    borderRadius: 16,
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
     borderColor: colors.secondaryText,
   },

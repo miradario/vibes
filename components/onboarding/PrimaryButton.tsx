@@ -5,6 +5,7 @@ import { TouchableOpacity, View } from "react-native";
 import { Text } from "../Typography";
 import { onboardingStyles } from "../../src/screens/Onboarding/vibesOnboardingStyles";
 import VibesLoader from "../VibesLoader";
+import * as ds from "../../src/theme/tokens";
 
 type PrimaryButtonProps = {
   label: string;
@@ -34,7 +35,7 @@ const PrimaryButton = ({
       {loading ? (
         <VibesLoader />
       ) : (
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 }}><Text style={onboardingStyles.primaryButtonText}>{label}</Text><Icon name="arrow-forward" size={22} color={vibesTheme.colors.surface} /></View>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: ds.spacing[3] }}><Text style={onboardingStyles.primaryButtonText}>{label}</Text><Icon name="arrow-forward" size={ds.iconSize.lg} color={vibesTheme.colors.surface} /></View>
       )}
     </TouchableOpacity>
   );

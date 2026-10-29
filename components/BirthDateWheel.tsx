@@ -6,6 +6,7 @@ import AnimatedSheetModal from "./AnimatedSheetModal";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { parseBirthDate } from "../src/lib/birthDate";
 import { selectBirthDateParts } from "../src/lib/birthDateSelection";
+import * as ds from "../src/theme/tokens";
 
 const MONTH_NAMES = {
   es: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
@@ -108,12 +109,12 @@ export default function BirthDateWheel({ value, onChange, minimumDate, maximumDa
     </View>
     <TouchableOpacity accessibilityRole="button" accessibilityLabel={english ? "Edit birth date" : "Editar fecha de nacimiento"} onPress={openManualEntry} style={s.manualLink}>
       {value ? <Text style={s.date}>{`${String(value.getDate()).padStart(2, "0")}/${String(value.getMonth() + 1).padStart(2, "0")}/${value.getFullYear()}`}</Text> : null}
-      <Ionicons name="pencil-outline" size={18} color={vibesTheme.colors.accentBlue} />
+      <Ionicons name="pencil-outline" size={ds.iconSize.md} color={vibesTheme.colors.accentBlue} />
     </TouchableOpacity>
     <AnimatedSheetModal visible={editing} placement="center" onClose={() => setEditing(false)} sheetStyle={s.sheet}>
       <Text style={s.title}>{english ? "Your birth date" : "Tu fecha de nacimiento"}</Text>
       <View style={s.fields}>
-        {labels.map((label, i) => <View key={label} style={{ flex: 1, gap: 8 }}>
+        {labels.map((label, i) => <View key={label} style={{ flex: 1, gap: ds.spacing[2] }}>
           <Text style={s.label}>{label}</Text>
           <TextInput accessibilityLabel={label} keyboardType="number-pad" value={fields[i]}
             maxLength={i === 2 ? 4 : 2} style={s.input} selectTextOnFocus
@@ -129,21 +130,21 @@ export default function BirthDateWheel({ value, onChange, minimumDate, maximumDa
 }
 
 const s = StyleSheet.create({
-  container: { width: "100%", gap: 10 },
+  container: { width: "100%", gap: ds.spacing[3] },
   labels: { flexDirection: "row", alignItems: "center" },
-  label: { color: vibesTheme.colors.secondaryText, textAlign: "center", fontSize: 16, lineHeight: 22, includeFontPadding: false },
+  label: { color: vibesTheme.colors.secondaryText, textAlign: "center", ...ds.textStyles.body, includeFontPadding: false },
   wheels: { position: "relative", flexDirection: "row", alignItems: "flex-start" },
-  selectionBand: { position: "absolute", left: 0, right: 0, borderRadius: 16, backgroundColor: `${vibesTheme.colors.accentBlue}14` },
-  option: { textAlign: "center", paddingHorizontal: 3, fontSize: Platform.OS === "android" ? 17 : 23, lineHeight: Platform.OS === "android" ? 24 : 32, includeFontPadding: false },
-  selected: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: Platform.OS === "android" ? 19 : 26 },
+  selectionBand: { position: "absolute", left: 0, right: 0, borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },
+  option: { textAlign: "center", paddingHorizontal: ds.spacing[1], ...(Platform.OS === "android" ? ds.textStyles.body : ds.textStyles.title), includeFontPadding: false },
+  selected: { color: vibesTheme.colors.accentBlue, ...(Platform.OS === "android" ? ds.textStyles.heading : ds.textStyles.title) },
   unselected: { color: vibesTheme.colors.secondaryText },
-  manualLink: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8 },
-  hint: { color: vibesTheme.colors.secondaryText, fontSize: 14, textAlign: "center", lineHeight: 20 },
-  date: { color: vibesTheme.colors.accentBlue, fontSize: 16 },
-  sheet: { padding: 24, gap: 20, borderRadius: 24, backgroundColor: vibesTheme.colors.surface },
-  title: { color: vibesTheme.colors.primaryText, fontSize: 24, textAlign: "center" },
-  fields: { flexDirection: "row", gap: 12 },
-  input: { borderWidth: 1, borderColor: vibesTheme.colors.accentBlue, borderRadius: 12, padding: 12, textAlign: "center", color: vibesTheme.colors.primaryText, fontSize: 22 },
-  apply: { backgroundColor: vibesTheme.colors.accentMustard, minHeight: 50, borderRadius: 18, alignItems: "center", justifyContent: "center" },
-  applyText: { color: vibesTheme.colors.primaryText, fontSize: 18 },
+  manualLink: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: ds.spacing[2], marginTop: ds.spacing[2] },
+  hint: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall, textAlign: "center" },
+  date: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.body },
+  sheet: { padding: ds.spacing[6], gap: ds.spacing[5], borderRadius: ds.radii.xl, backgroundColor: vibesTheme.colors.surface },
+  title: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title, textAlign: "center" },
+  fields: { flexDirection: "row", gap: ds.spacing[3] },
+  input: { borderWidth: 1, borderColor: vibesTheme.colors.accentBlue, borderRadius: ds.radii.md, padding: ds.spacing[3], textAlign: "center", color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
+  apply: { backgroundColor: vibesTheme.colors.accentMustard, minHeight: 50, borderRadius: ds.radii.lg, alignItems: "center", justifyContent: "center" },
+  applyText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.heading },
 });

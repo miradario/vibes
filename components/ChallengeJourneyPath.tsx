@@ -6,6 +6,7 @@ import { Text } from "./Typography";
 import Icon from "./Icon";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
+import * as ds from "../src/theme/tokens";
 
 const c = vibesTheme.colors;
 const PITCH = 94;
@@ -69,7 +70,7 @@ export default function ChallengeJourneyPath({ totalDays, currentDay, completedD
         return <View key={day} style={[s.dayRow, { top: y(i) - 22, left: x(i) - 22 }]}>
           {isToday ? <Text style={s.today}>HOY</Text> : null}
           <View style={[s.node, done && s.nodeActive, isToday && s.current, isToday && !done && s.currentPending]}>
-            {done ? <Icon name="checkmark" size={25} color={c.surface} /> : <Text style={[s.number, isToday && { color: c.accentBlue }]}>{day}</Text>}
+            {done ? <Icon name="checkmark" size={ds.iconSize.lg} color={c.surface} /> : <Text style={[s.number, isToday && { color: c.accentBlue }]}>{day}</Text>}
           </View>
           <Text numberOfLines={isToday ? 2 : 1} style={[s.dayLabel, { maxWidth: width - x(i) - 36 }, isToday && s.currentLabel]}>{isToday ? (done ? "¡Completaste el desafío hoy!" : "Aún debes completarlo") : `Día ${day}`}</Text>
         </View>;
@@ -87,16 +88,16 @@ export default function ChallengeJourneyPath({ totalDays, currentDay, completedD
   </View>;
 }
 const s = StyleSheet.create({
-  count: { color: c.secondaryText, fontSize: 16, fontFamily: vibesTheme.fonts.semibold, marginBottom: 20 },
-  dayRow: { position: "absolute", flexDirection: "row", alignItems: "center", gap: 14 },
-  node: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface, borderWidth: 2, borderColor: `${c.secondaryText}40`, alignItems: "center", justifyContent: "center" },
+  count: { color: c.secondaryText, ...ds.textStyles.subtitle, marginBottom: ds.spacing[5] },
+  dayRow: { position: "absolute", flexDirection: "row", alignItems: "center", gap: ds.spacing[4] },
+  node: { width: 44, height: 44, borderRadius: ds.radii.pill, backgroundColor: c.surface, borderWidth: 2, borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium), alignItems: "center", justifyContent: "center" },
   nodeActive: { backgroundColor: c.accentBlue, borderColor: c.accentBlue },
   currentPending: { backgroundColor: c.surface, borderColor: c.accentBlue, borderWidth: 3 },
-  current: { transform: [{ scale: 1.15 }], borderWidth: 5, borderColor: `${c.accentBlue}40` },
-  number: { fontFamily: vibesTheme.fonts.bold, fontSize: 20, color: c.secondaryText },
-  today: { position: "absolute", top: -28, left: 0, color: c.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 13 },
-  dayLabel: { fontSize: 15, color: c.secondaryText, fontFamily: vibesTheme.fonts.medium },
+  current: { transform: [{ scale: 1.15 }], borderWidth: 5, borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium) },
+  number: { ...ds.textStyles.heading, color: c.secondaryText },
+  today: { position: "absolute", top: -28, left: 0, color: c.accentBlue, ...ds.textStyles.label },
+  dayLabel: { ...ds.textStyles.subtitleMedium, color: c.secondaryText },
   currentLabel: { color: c.primaryText, fontFamily: vibesTheme.fonts.bold },
   mascot: { position: "absolute", left: 0, top: 0 },
-  more: { color: c.secondaryText, fontSize: 12, textAlign: "center", marginBottom: 12 },
+  more: { color: c.secondaryText, ...ds.textStyles.caption, textAlign: "center", marginBottom: ds.spacing[3] },
 });

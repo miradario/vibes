@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, type ViewToken } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export function useChatVisibleDate(conversationId: string | undefined, inverted = false, onViewable?: (info: { viewableItems: ViewToken[]; changed: ViewToken[] }) => void) {
   const [date, setDate] = useState<string | null>(null);
@@ -30,6 +31,6 @@ export default function ChatVisibleDate({ date }: { date: string | null }) {
 }
 const s = StyleSheet.create({
   overlay: { position: "absolute", top: 8, left: 0, right: 0, alignItems: "center", zIndex: 10 },
-  badge: { backgroundColor: `${vibesTheme.colors.surface}CC`, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6 },
-  text: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.medium, fontSize: 12, lineHeight: 18 },
+  badge: { backgroundColor: /* ds-lint-allow DS-TODO: paper al 80% sin opacidad cercana */ `${vibesTheme.colors.surface}CC`, borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[2] },
+  text: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.caption },
 });

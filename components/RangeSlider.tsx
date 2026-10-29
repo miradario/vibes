@@ -3,6 +3,7 @@ import { PanResponder, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { moveRangeThumb } from "../src/lib/rangeSlider";
+import * as ds from "../src/theme/tokens";
 
 const HIT = 44;
 export default function RangeSlider({ label, minimum, maximum, lower, upper, unit, onChange, onClear, noLimitLabel = "Sin límite", single = false, disabled = false }: {
@@ -30,9 +31,9 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
     },
   })), []);
   const x = (value: number) => (value - minimum) / (maximum - minimum) * track;
-  return <View style={{ gap: 10, opacity: disabled ? 0.5 : 1 }}>
+  return <View style={{ gap: ds.spacing[3], opacity: disabled ? 0.5 : 1 }}>
     <View style={s.heading}>
-      <Text style={[s.title, single && { fontSize: 18, lineHeight: 24 }, { flex: 1 }]}>{label}</Text>
+      <Text style={[s.title, single && { ...ds.textStyles.heading }, { flex: 1 }]}>{label}</Text>
       {single ? (upper === null ? null : <View style={s.clear}><Text style={s.clearText}>{`${high}/10`}</Text></View>) : <TouchableOpacity accessibilityRole="button" onPress={onClear} style={s.clear}>
         <Text style={s.clearText}>{noLimitLabel}</Text>
       </TouchableOpacity>}
@@ -54,12 +55,12 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
   </View>;
 }
 const s = StyleSheet.create({
-  heading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  title: { color: vibesTheme.colors.primaryText, fontSize: 26, lineHeight: 32, fontFamily: vibesTheme.fonts.bold },
-  clear: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: `${vibesTheme.colors.secondaryText}14` },
-  clearText: { color: vibesTheme.colors.primaryText, fontSize: 14, fontFamily: vibesTheme.fonts.bold },
-  track: { position: "absolute", top: 19, height: 6, borderRadius: 3, backgroundColor: `${vibesTheme.colors.secondaryText}26` },
+  heading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: ds.spacing[3] },
+  title: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
+  clear: { borderRadius: ds.radii.xl, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
+  clearText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.label },
+  track: { position: "absolute", top: 19, height: 6, borderRadius: ds.radii.pill, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft) },
   hit: { position: "absolute", top: 0, width: HIT, height: HIT, alignItems: "center", justifyContent: "center" },
-  thumb: { width: 26, height: 26, borderRadius: 13, backgroundColor: vibesTheme.colors.accentMustard, borderWidth: 2, borderColor: vibesTheme.colors.background },
-  value: { color: vibesTheme.colors.secondaryText, fontSize: 16 },
+  thumb: { width: 26, height: 26, borderRadius: ds.radii.pill, backgroundColor: vibesTheme.colors.accentMustard, borderWidth: 2, borderColor: vibesTheme.colors.background },
+  value: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.body },
 });

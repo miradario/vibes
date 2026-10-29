@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View, type StyleProp, type Te
 import { Text, TextInput } from "./Typography";
 import { normalizeEventSearch } from "../src/lib/eventFilters";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function EventClassificationPicker<T extends string>({ label, options, value, onChange, filter = false, searchable = false, style, labelStyle }: {
   label: string;
@@ -51,13 +52,13 @@ export default function EventClassificationPicker<T extends string>({ label, opt
   );
 }
 const s = StyleSheet.create({
-  searchInput: { minHeight: 48, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: vibesTheme.colors.accentBlue, backgroundColor: vibesTheme.colors.surface, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 16 },
-  group: { marginVertical: 8, gap: 8 },
-  label: { fontSize: 16, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold },
-  options: { gap: 8, paddingRight: 8 },
-  chip: { minHeight: 44, justifyContent: "center", paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, borderColor: "rgba(43,43,43,0.18)", backgroundColor: vibesTheme.colors.surface },
+  searchInput: { minHeight: 48, paddingHorizontal: ds.spacing[4], borderRadius: ds.radii.md, borderWidth: 1, borderColor: vibesTheme.colors.accentBlue, backgroundColor: vibesTheme.colors.surface, color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
+  group: { marginVertical: ds.spacing[2], gap: ds.spacing[2] },
+  label: { ...ds.textStyles.subtitle, color: vibesTheme.colors.primaryText },
+  options: { gap: ds.spacing[2], paddingRight: ds.spacing[2] },
+  chip: { minHeight: 44, justifyContent: "center", paddingHorizontal: ds.spacing[4], borderRadius: ds.radii.xl, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium), backgroundColor: vibesTheme.colors.surface },
   selected: { backgroundColor: vibesTheme.colors.primaryText, borderColor: vibesTheme.colors.primaryText },
-  text: { color: vibesTheme.colors.primaryText, fontSize: 15 },
+  text: { color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
   selectedText: { color: vibesTheme.colors.surface },
-  hint: { color: vibesTheme.colors.secondaryText, fontSize: 14, lineHeight: 20 },
+  hint: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall },
 });

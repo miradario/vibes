@@ -27,6 +27,7 @@ import {
   getVibiDailyPrompt,
   claimVibiDailyGreetingForDay,
 } from "../src/lib/vibiDailyPrompts";
+import * as ds from "../src/theme/tokens";
 
 export default function DailyMoodCard({
   userId,
@@ -223,7 +224,7 @@ export default function DailyMoodCard({
         s.sheet,
         {
           maxHeight: height - insets.top - 16,
-          paddingBottom: Math.max(insets.bottom, 16),
+          paddingBottom: Math.max(insets.bottom, ds.spacing[4]),
         },
       ]}
     >
@@ -246,12 +247,12 @@ export default function DailyMoodCard({
           >
             <Ionicons
               name="close"
-              size={23}
+              size={ds.iconSize.lg}
               color={vibesTheme.colors.secondaryText}
             />
           </TouchableOpacity>
         </View>
-        <Text accessibilityRole="header" style={[s.title, prompt.kind === "energy" && { fontSize: 32, lineHeight: 39 }]}>
+        <Text accessibilityRole="header" style={[s.title, prompt.kind === "energy" && { ...ds.textStyles.display }]}>
           {prompt.title}
         </Text>
         {prompt.kind === "mood" ? (
@@ -283,7 +284,7 @@ export default function DailyMoodCard({
                   </Text>
                   <Ionicons
                     name={selected ? "checkmark-circle" : "ellipse-outline"}
-                    size={18}
+                    size={ds.iconSize.md}
                     color={
                       selected
                         ? vibesTheme.colors.primaryText
@@ -295,7 +296,7 @@ export default function DailyMoodCard({
             })}
           </View>
         ) : prompt.kind === "energy" ? (
-          <View style={{ gap: 8 }}>
+          <View style={{ gap: ds.spacing[2] }}>
             <Text style={s.privacyText}>
               Del 1 (muy bajo) al 10 (muy alto).
             </Text>
@@ -414,41 +415,40 @@ export default function DailyMoodCard({
 const s = StyleSheet.create({
   sheet: {
     backgroundColor: vibesTheme.colors.background,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
     maxWidth: 540,
     alignSelf: "center",
   },
   handle: {
     width: 38,
     height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(216, 140, 122, 0.39)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.strong),
     alignSelf: "center",
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: ds.spacing[3],
+    marginBottom: ds.spacing[1],
   },
-  content: { paddingHorizontal: 24, paddingBottom: 10 },
+  content: { paddingHorizontal: ds.spacing[6], paddingBottom: ds.spacing[3] },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
   },
-  author: { flexDirection: "row", alignItems: "center", gap: 8 },
+  author: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2] },
   authorText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
-  energySources: { gap: 20 },
-  energySource: { gap: 8 },
-  scoreText: { color: vibesTheme.colors.primaryText, fontSize: 16 },
+  energySources: { gap: ds.spacing[5] },
+  energySource: { gap: ds.spacing[2] },
+  scoreText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
   heroIcon: {
     width: 54,
     height: 54,
-    borderRadius: 27,
-    backgroundColor: "rgba(244, 163, 64, 0.32)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -459,87 +459,80 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   eyebrow: {
-    fontSize: 10,
+    fontSize: /* ds-lint-allow DS-TODO: fontSize 10 (peso 400) sin mapeo claro en §3.5.1 */ 10,
     letterSpacing: 2,
     color: vibesTheme.colors.secondaryText,
-    marginBottom: 10,
+    marginBottom: ds.spacing[3],
   },
   title: {
-    marginBottom: 14,
-    fontSize: 27,
-    lineHeight: 33,
+    marginBottom: ds.spacing[4],
+    ...ds.textStyles.title,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.medium,
   },
   subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
+    ...ds.textStyles.body,
     color: vibesTheme.colors.secondaryText,
-    marginTop: 8,
-    marginBottom: 20,
+    marginTop: ds.spacing[2],
+    marginBottom: ds.spacing[5],
   },
-  options: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  options: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
   option: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: ds.spacing[2],
     minHeight: 48,
-    paddingVertical: 10,
-    paddingHorizontal: 13,
-    borderRadius: 17,
+    paddingVertical: ds.spacing[3],
+    paddingHorizontal: ds.spacing[3],
+    borderRadius: ds.radii.lg,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   selected: {
-    backgroundColor: "rgba(244, 163, 64, 0.39)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
     borderColor: vibesTheme.colors.accentMustard,
   },
   optionText: {
-    fontSize: 14,
+    ...ds.textStyles.labelMedium,
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
     flexShrink: 1,
   },
   selectedText: { color: vibesTheme.colors.primaryText },
   privacy: {
     flexDirection: "row",
-    gap: 6,
+    gap: ds.spacing[2],
     alignItems: "center",
-    marginTop: 18,
+    marginTop: ds.spacing[4],
   },
   privacyText: {
-    fontSize: 12,
-    lineHeight: 18,
+    ...ds.textStyles.caption,
     color: vibesTheme.colors.secondaryText,
     flexShrink: 1,
   },
   error: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 10,
+    ...ds.textStyles.bodySmall,
+    marginTop: ds.spacing[3],
   },
-  footer: { paddingHorizontal: 24, paddingTop: 10 },
+  footer: { paddingHorizontal: ds.spacing[6], paddingTop: ds.spacing[3] },
   save: {
     minHeight: 52,
-    padding: 14,
+    padding: ds.spacing[4],
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
-    borderRadius: 20,
+    borderRadius: ds.radii.xl,
   },
   saveText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   skip: {
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
+    padding: ds.spacing[3],
   },
-  skipText: { color: vibesTheme.colors.secondaryText, fontSize: 15 },
+  skipText: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.body },
 });

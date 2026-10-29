@@ -8,6 +8,7 @@ import {
   ONBOARDING_COLORS,
   isCompactOnboardingScreen,
 } from "../../src/screens/Onboarding/vibesOnboardingStyles";
+import * as ds from "../../src/theme/tokens";
 
 type ProgressHeaderProps = {
   progress: number;
@@ -59,27 +60,27 @@ const styles = StyleSheet.create({
   backButton: {
     width: 34,
     height: 34,
-    borderRadius: 17,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: isCompactOnboardingScreen ? 8 : 14,
+    marginRight: isCompactOnboardingScreen ? ds.spacing[2] : ds.spacing[4],
   },
   backSpacer: {
     width: 34,
     height: 34,
-    marginRight: isCompactOnboardingScreen ? 8 : 14,
+    marginRight: isCompactOnboardingScreen ? ds.spacing[2] : ds.spacing[4],
   },
-  endSpacer: { width: 34, marginLeft: isCompactOnboardingScreen ? 8 : 14 },
+  endSpacer: { width: 34, marginLeft: isCompactOnboardingScreen ? ds.spacing[2] : ds.spacing[4] },
   track: {
     flex: 1,
     height: 3,
-    borderRadius: 999,
+    borderRadius: ds.radii.pill,
     overflow: "hidden",
-    backgroundColor: "rgba(43, 43, 43, 0.08)",
+    backgroundColor: ds.colors.bg.subtle,
   },
   fill: {
     height: "100%",
-    borderRadius: 999,
+    borderRadius: ds.radii.pill,
     backgroundColor: ONBOARDING_COLORS.mustard,
   },
 });

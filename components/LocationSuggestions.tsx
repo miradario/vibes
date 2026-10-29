@@ -19,6 +19,7 @@ import {
   type LocationSuggestion,
   type ResolvedLocation,
 } from "../src/lib/locationSuggestions";
+import * as ds from "../src/theme/tokens";
 
 type Status = "idle" | "loading" | "ready" | "empty" | "error";
 
@@ -178,7 +179,7 @@ export default function LocationSuggestionsList({ status, suggestions, isResolvi
       ) : null}
       {status === "empty" && !isResolving ? (
         <View style={styles.stateRow}>
-          <Icon name="search" size={16} color={vibesTheme.colors.secondaryText} />
+          <Icon name="search" size={ds.iconSize.sm} color={vibesTheme.colors.secondaryText} />
           <Text style={styles.stateText}>
             No encontramos ese lugar. Probá con calle y altura, o el nombre del lugar.
           </Text>
@@ -186,7 +187,7 @@ export default function LocationSuggestionsList({ status, suggestions, isResolvi
       ) : null}
       {status === "error" && !isResolving ? (
         <View style={[styles.stateRow, styles.errorRow]}>
-          <Icon name="alert-circle" size={16} color={vibesTheme.colors.primaryText} />
+          <Icon name="alert-circle" size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} />
           <Text style={styles.errorText}>
             No pudimos buscar sugerencias. Revisá tu conexión o tocá "Validar ubicación".
           </Text>
@@ -201,7 +202,7 @@ export default function LocationSuggestionsList({ status, suggestions, isResolvi
               accessibilityRole="button"
               accessibilityLabel={[suggestion.primaryText, suggestion.secondaryText].filter(Boolean).join(", ")}
             >
-              <Icon name="location" size={18} color={vibesTheme.colors.accentBlue} />
+              <Icon name="location" size={ds.iconSize.md} color={vibesTheme.colors.accentBlue} />
               <View style={styles.rowBody}>
                 <Text style={styles.primaryText} numberOfLines={1}>
                   {suggestion.primaryText}
@@ -221,20 +222,20 @@ export default function LocationSuggestionsList({ status, suggestions, isResolvi
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     backgroundColor: vibesTheme.colors.surface,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.12)",
+    borderColor: ds.colors.border.default,
     overflow: "hidden",
   },
   row: {
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    gap: ds.spacing[3],
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   rowDivider: {
     borderTopWidth: 1,
@@ -242,35 +243,30 @@ const styles = StyleSheet.create({
   },
   rowBody: { flex: 1 },
   primaryText: {
-    fontSize: 15,
-    lineHeight: 20,
+    ...ds.textStyles.subtitleMedium,
     color: vibesTheme.colors.primaryText,
-    fontWeight: "500",
   },
   secondaryText: {
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
     color: vibesTheme.colors.secondaryText,
   },
   stateRow: {
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    gap: ds.spacing[3],
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   stateText: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
     color: vibesTheme.colors.secondaryText,
   },
-  errorRow: { backgroundColor: "rgba(216, 140, 122, 0.12)" },
+  errorRow: { backgroundColor: ds.colors.feedback.errorBg },
   errorText: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
     color: vibesTheme.colors.primaryText,
   },
 });

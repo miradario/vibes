@@ -15,6 +15,7 @@ import { getProfileCompletion, nextProfileParams } from "../src/lib/profileCompl
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const DISMISS_DAYS = 30;
 const DISMISS_MS = DISMISS_DAYS * 24 * 60 * 60 * 1000;
@@ -117,7 +118,7 @@ export default function CompleteProfilePrompt({
       <View style={[styles.iconWrap, compact && styles.compactIcon]}>
         <Icon
           name="person-outline"
-          size={25}
+          size={ds.iconSize.lg}
           color={
             compact
               ? vibesTheme.colors.primaryText
@@ -161,7 +162,7 @@ export default function CompleteProfilePrompt({
           <Text style={styles.completeText}>Completar</Text>
           <Icon
             name="arrow-forward"
-            size={18}
+            size={ds.iconSize.md}
             color={vibesTheme.colors.primaryText}
           />
         </View>
@@ -177,7 +178,7 @@ export default function CompleteProfilePrompt({
         >
           <Icon
             name="close"
-            size={17}
+            size={ds.iconSize.sm}
             color={vibesTheme.colors.secondaryText}
           />
         </TouchableOpacity>
@@ -188,57 +189,52 @@ export default function CompleteProfilePrompt({
 
 const styles = StyleSheet.create({
   compactCard: {
-    borderRadius: 40,
-    paddingRight: 14,
-    gap: 10,
-    borderColor: "rgba(43,43,43,0.1)",
+    borderRadius: /* ds-lint-allow DS-TODO: borderRadius 40 sin ancho/alto conocido: ¿círculo (pill) o xl? */ 40,
+    paddingRight: ds.spacing[4],
+    gap: ds.spacing[3],
+    borderColor: ds.colors.border.default,
   },
   compactIcon: {
     backgroundColor: vibesTheme.colors.accentBlue,
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: ds.radii.pill,
   },
-  completeAction: { flexDirection: "row", alignItems: "center", gap: 4 },
+  completeAction: { flexDirection: "row", alignItems: "center", gap: ds.spacing[1] },
   completeText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 13,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.label,
   },
   card: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingLeft: 12,
-    paddingRight: 34,
-    paddingVertical: 10,
+    gap: ds.spacing[3],
+    paddingLeft: ds.spacing[3],
+    paddingRight: ds.spacing[8],
+    paddingVertical: ds.spacing[3],
     backgroundColor: vibesTheme.colors.background,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     borderWidth: 1,
-    borderRadius: 18,
-    marginBottom: 16,
+    borderRadius: ds.radii.lg,
+    marginBottom: ds.spacing[4],
   },
   iconWrap: {
     width: 46,
     height: 46,
-    borderRadius: 23,
-    backgroundColor: "rgba(57, 120, 184, 0.21)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
     alignItems: "center",
     justifyContent: "center",
   },
   copy: { flex: 1, minWidth: 0 },
   missingSummary: {
-    marginTop: 4,
+    marginTop: ds.spacing[1],
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   closeButton: {
     position: "absolute",
@@ -252,25 +248,23 @@ const styles = StyleSheet.create({
   progressRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginTop: 7,
+    gap: ds.spacing[3],
+    marginTop: ds.spacing[2],
   },
   track: {
     flex: 1,
     height: 6,
-    borderRadius: 3,
-    backgroundColor: "rgba(57, 120, 184, 0.34)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
     overflow: "hidden",
   },
   fill: {
     height: "100%",
-    borderRadius: 3,
+    borderRadius: ds.radii.xs,
     backgroundColor: vibesTheme.colors.accentBlue,
   },
   percent: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
 });

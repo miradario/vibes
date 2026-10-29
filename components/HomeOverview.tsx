@@ -33,6 +33,7 @@ import {
   orderHomeSections,
   type HomeSection,
 } from "../src/lib/homePersonalization";
+import * as ds from "../src/theme/tokens";
 
 const ACCENT = vibesTheme.colors.accentMustard;
 
@@ -79,7 +80,7 @@ function SectionHeader({
       activeOpacity={0.72}
     >
       <Text style={s.section}>{title}</Text>
-      <Icon name="chevron-forward" size={20} color={ACCENT} />
+      <Icon name="chevron-forward" size={ds.iconSize.md} color={ACCENT} />
     </TouchableOpacity>
   );
 }
@@ -186,7 +187,7 @@ function ChallengeCard({
       </View>
       <Icon
         name="chevron-forward"
-        size={20}
+        size={ds.iconSize.md}
         color={vibesTheme.colors.secondaryText}
       />
     </TouchableOpacity>
@@ -232,7 +233,7 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
       </View>
       <Icon
         name="chevron-forward"
-        size={20}
+        size={ds.iconSize.md}
         color={vibesTheme.colors.secondaryText}
       />
     </TouchableOpacity>
@@ -375,7 +376,7 @@ export default function HomeOverview({
       ) : (
         <View style={s.emptyEventCard}>
           <View style={s.emptyIcon}>
-            <Icon name="calendar-outline" size={28} color={ACCENT} />
+            <Icon name="calendar-outline" size={ds.iconSize.xl} color={ACCENT} />
           </View>
           <View style={s.emptyCopy}>
             <Text style={s.emptyTitle}>No tenés eventos próximos</Text>
@@ -415,7 +416,7 @@ export default function HomeOverview({
           activeOpacity={0.82}
         >
           <View style={s.emptyIcon}>
-            <Icon name="trophy-outline" size={26} color={ACCENT} />
+            <Icon name="trophy-outline" size={ds.iconSize.lg} color={ACCENT} />
           </View>
           <View style={s.emptyCopy}>
             <Text style={s.meta}>
@@ -447,110 +448,99 @@ export default function HomeOverview({
 }
 const s = StyleSheet.create({
   sectionBlock: {
-    marginBottom: 24,
+    marginBottom: ds.spacing[6],
   },
   card: {
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
+    marginBottom: ds.spacing[4],
   },
   heading: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
+    gap: ds.spacing[2],
+    marginBottom: ds.spacing[3],
   },
   section: {
     flex: 1,
-    fontSize: 19,
-    lineHeight: 25,
+    ...ds.textStyles.heading,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
   },
   link: {
     minHeight: 34,
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
-    paddingLeft: 10,
+    gap: ds.spacing[1],
+    paddingLeft: ds.spacing[3],
   },
   carousel: {
-    gap: 10,
-    paddingRight: 24,
+    gap: ds.spacing[3],
+    paddingRight: ds.spacing[6],
   },
   placeholderCarousel: {
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
     overflow: "hidden",
   },
   challengeSkeletonCard: {
     width: 174,
     minHeight: 170,
-    borderRadius: 14,
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   eventSkeletonCard: {
     width: 174,
     minHeight: 170,
-    borderRadius: 14,
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
-  compactList: { gap: 10 },
+  compactList: { gap: ds.spacing[3] },
   compactCard: {
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 10,
-    borderRadius: 16,
+    gap: ds.spacing[3],
+    padding: ds.spacing[3],
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.secondaryText}24`,
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
     backgroundColor: vibesTheme.colors.background,
   },
-  compactCopy: { flex: 1, minWidth: 0, gap: 4 },
+  compactCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
   challengePhoto: {
     width: 76,
     height: 76,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     overflow: "hidden",
   },
-  eventPhoto: { width: 112, height: 76, borderRadius: 12, overflow: "hidden" },
+  eventPhoto: { width: 112, height: 76, borderRadius: ds.radii.md, overflow: "hidden" },
   eventDate: {
     color: vibesTheme.colors.accentBlue,
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
   cardTitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.subtitle,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
   },
   meta: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...ds.textStyles.bodySmall,
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
   },
   action: {
-    fontSize: 12,
-    lineHeight: 18,
+    ...ds.textStyles.caption,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.medium,
   },
   progressLine: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 4,
+    gap: ds.spacing[2],
+    marginTop: ds.spacing[1],
   },
   progressCaption: {
-    fontSize: 12,
-    lineHeight: 18,
+    ...ds.textStyles.caption,
     color: vibesTheme.colors.secondaryText,
     flexShrink: 1,
   },
@@ -558,14 +548,14 @@ const s = StyleSheet.create({
     flex: 1,
     minWidth: 30,
     height: 6,
-    borderRadius: 3,
-    backgroundColor: `${vibesTheme.colors.secondaryText}1F`,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
     overflow: "hidden",
   },
   fill: {
     height: "100%",
     backgroundColor: vibesTheme.colors.accentBlue,
-    borderRadius: 3,
+    borderRadius: ds.radii.xs,
   },
   eventSuggestionsLoader: {
     minHeight: 112,
@@ -577,54 +567,50 @@ const s = StyleSheet.create({
     minHeight: 92,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: ds.spacing[4],
     backgroundColor: vibesTheme.colors.background,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
   },
   emptyEventCard: {
     minHeight: 142,
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: ds.spacing[4],
     backgroundColor: vibesTheme.colors.background,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     borderWidth: 1,
-    borderRadius: 16,
-    padding: 18,
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
   },
   emptyIcon: {
     width: 62,
     height: 62,
-    borderRadius: 31,
-    backgroundColor: "rgba(216, 140, 122, 0.21)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
     alignItems: "center",
     justifyContent: "center",
   },
   emptyCopy: { flex: 1, minWidth: 0 },
   emptyTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
-    marginBottom: 3,
+    ...ds.textStyles.heading,
+    marginBottom: ds.spacing[1],
   },
   ctaButton: {
     alignSelf: "flex-start",
-    marginTop: 12,
+    marginTop: ds.spacing[3],
     minHeight: 44,
-    borderRadius: 12,
-    paddingHorizontal: 18,
+    borderRadius: ds.radii.md,
+    paddingHorizontal: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: ACCENT,
   },
   ctaText: {
     color: vibesTheme.colors.surface,
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
 });

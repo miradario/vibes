@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Text, TextInput } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { formatSession, type EventSession } from "../src/lib/eventSchedule";
+import * as ds from "../src/theme/tokens";
 
 export type EventRecurrenceDraft = { frequency: "none" | "weekly" | "monthly"; count: string; weekdays: number[] };
 const days = [[1, "L", "Lunes"], [2, "M", "Martes"], [3, "M", "Miércoles"], [4, "J", "Jueves"], [5, "V", "Viernes"], [6, "S", "Sábado"], [0, "D", "Domingo"]] as const;
@@ -49,14 +50,14 @@ export default function EventRecurrenceEditor({ value, onChange, defaultWeekday,
 }
 const c = vibesTheme.colors;
 const s = StyleSheet.create({
-  group: { gap: 8, marginTop: 20 },
-  label: { fontSize: 14, lineHeight: 20, color: c.primaryText, fontFamily: vibesTheme.fonts.semibold },
-  options: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  option: { minHeight: 40, justifyContent: "center", paddingHorizontal: 14, paddingVertical: 0, borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 16, backgroundColor: c.surface },
-  day: { flexGrow: 1, minWidth: 36, minHeight: 40, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 12, backgroundColor: c.surface },
-  selected: { borderColor: c.accentMustard, backgroundColor: `${c.accentMustard}24` },
-  optionText: { fontSize: 14, lineHeight: 20, color: c.primaryText, fontFamily: vibesTheme.fonts.semibold },
-  hint: { fontSize: 14, lineHeight: 20, color: c.secondaryText, fontFamily: vibesTheme.fonts.regular },
-  input: { minHeight: 48, borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 16, padding: 12, color: c.primaryText, backgroundColor: c.surface, fontSize: 16, fontFamily: vibesTheme.fonts.regular },
-  preview: { gap: 6, padding: 16, borderRadius: 16, backgroundColor: `${c.accentBlue}14` },
+  group: { gap: ds.spacing[2], marginTop: ds.spacing[5] },
+  label: { ...ds.textStyles.label, color: c.primaryText },
+  options: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
+  option: { minHeight: 40, justifyContent: "center", paddingHorizontal: ds.spacing[4], paddingVertical: 0, borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.lg, backgroundColor: c.surface },
+  day: { flexGrow: 1, minWidth: 36, minHeight: 40, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.md, backgroundColor: c.surface },
+  selected: { borderColor: c.accentMustard, backgroundColor: ds.colors.bg.selected },
+  optionText: { ...ds.textStyles.label, color: c.primaryText },
+  hint: { ...ds.textStyles.bodySmall, color: c.secondaryText },
+  input: { minHeight: 48, borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.lg, padding: ds.spacing[3], color: c.primaryText, backgroundColor: c.surface, ...ds.textStyles.body },
+  preview: { gap: ds.spacing[2], padding: ds.spacing[4], borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },
 });

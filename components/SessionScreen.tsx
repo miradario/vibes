@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Gradient from "./Gradient";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type SessionScreenProps = {
   title?: string;
@@ -59,47 +60,41 @@ const localStyles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 28,
-    paddingTop: 220,
+    paddingHorizontal: ds.spacing[8],
+    paddingTop: /* ds-lint-allow DS-TODO: paddingTop 220 fuera de escala (>48), parece layout */ 220,
   },
   brandTitle: {
-    fontSize: 48,
-    lineHeight: 52,
+    fontSize: /* ds-lint-allow DS-TODO: fontSize 48 (peso 400) sin mapeo claro en §3.5.1 */ 48,
+    lineHeight: /* ds-lint-allow DS-TODO: lineHeight del mismo estilo sin mapear */ 52,
     color: vibesTheme.colors.primaryText,
     fontFamily: vibesTheme.fonts.regular,
   },
   title: {
-    marginTop: 10,
-    fontSize: 26,
-    lineHeight: 30,
+    marginTop: ds.spacing[3],
+    ...ds.textStyles.title,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.regular,
     textAlign: "center",
   },
   subtitle: {
-    marginTop: 14,
-    fontSize: 16,
-    lineHeight: 22,
+    marginTop: ds.spacing[4],
+    ...ds.textStyles.subtitleMedium,
     color: vibesTheme.colors.secondaryText,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.subtitle,
   },
   cta: {
-    marginTop: 36,
+    marginTop: ds.spacing[8],
     minWidth: 220,
-    borderRadius: 28,
-    paddingVertical: 16,
-    paddingHorizontal: 28,
+    borderRadius: ds.radii.xl,
+    paddingVertical: ds.spacing[4],
+    paddingHorizontal: ds.spacing[8],
     alignItems: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.9)",
+    borderColor: ds.colors.base.mustard,
   },
   ctaText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
 });
 

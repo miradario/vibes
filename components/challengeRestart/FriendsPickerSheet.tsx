@@ -12,6 +12,7 @@ import { matchesQueryOptions } from "../../src/queries/matches.queries";
 import { useAuthSession } from "../../src/auth/auth.queries";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import { restartStyles as s } from "./styles";
+import * as ds from "../../src/theme/tokens";
 
 /** Lists the user's Vibes connections (matches) to pick who to invite. */
 export default function FriendsPickerSheet({
@@ -52,7 +53,7 @@ export default function FriendsPickerSheet({
     <AnimatedSheetModal
       visible={visible}
       onClose={onClose}
-      sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, 20), maxHeight: "85%" }]}
+      sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[5]), maxHeight: "85%" }]}
     >
       <View style={s.handle} />
       <Text accessibilityRole="header" style={s.sheetTitle}>
@@ -74,7 +75,7 @@ export default function FriendsPickerSheet({
               <Text style={s.rowTitle} numberOfLines={1}>{friend.otherUserName}</Text>
               <Icon
                 name={checked ? "checkbox" : "square-outline"}
-                size={24}
+                size={ds.iconSize.lg}
                 color={vibesTheme.colors.accentMustard}
               />
             </TouchableOpacity>

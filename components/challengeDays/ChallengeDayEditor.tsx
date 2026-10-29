@@ -39,6 +39,7 @@ import { DayButton } from "./DayButton";
 import DayAudioPlayer from "./DayAudioPlayer";
 import { dayStyles as s } from "./styles";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import * as ds from "../../src/theme/tokens";
 type EditorDraft = DayDraft & {
   removed?: DraftAttachment[];
   pendingLink?: string;
@@ -484,7 +485,7 @@ export default function ChallengeDayEditor({
         edges={["left", "right"]}
         style={[
           s.sheet,
-          { paddingTop: Math.max(insets.top, Platform.OS === "ios" ? 60 : 28) },
+          { paddingTop: Math.max(insets.top, Platform.OS === "ios" ? /* ds-lint-allow DS-TODO: paddingTop 60 fuera de escala (>48), parece layout */ 60 : ds.spacing[8]) },
         ]}
       >
         <KeyboardAvoidingView
@@ -495,7 +496,7 @@ export default function ChallengeDayEditor({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[
               s.content,
-              { paddingBottom: insets.bottom + 24 },
+              { paddingBottom: insets.bottom + ds.spacing[6] },
             ]}
           >
             <View style={s.between}>

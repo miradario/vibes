@@ -3,6 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Text } from "./Typography";
 import Avatar from "./Avatar";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type AvatarGroupItem = {
   id: string | number;
@@ -66,16 +67,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   more: {
-    backgroundColor: "rgba(216, 140, 122, 0.23)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.18)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
     alignItems: "center",
     justifyContent: "center",
   },
   moreText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 11,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.micro,
   },
 });
 

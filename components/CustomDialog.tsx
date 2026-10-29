@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "./Typography";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type CustomDialogProps = {
   visible: boolean;
@@ -61,70 +62,60 @@ const CustomDialog = ({
 
 const styles = StyleSheet.create({
   sheet: {
-    paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingHorizontal: ds.spacing[4],
+    paddingBottom: ds.spacing[4],
   },
   content: {
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.32)",
-    paddingHorizontal: 22,
-    paddingTop: 12,
-    paddingBottom: 22,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
+    paddingHorizontal: ds.spacing[6],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[6],
+    ...ds.shadows.md,
   },
   handle: {
     alignSelf: "center",
     width: 44,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.14)",
-    marginBottom: 18,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.border.default,
+    marginBottom: ds.spacing[4],
   },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 22,
-    lineHeight: 28,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
   message: {
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.subtitleMedium,
     textAlign: "center",
-    marginTop: 10,
+    marginTop: ds.spacing[3],
   },
   primaryButton: {
-    marginTop: 22,
+    marginTop: ds.spacing[6],
     minHeight: 56,
     borderRadius: vibesTheme.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
-    paddingHorizontal: 20,
+    paddingHorizontal: ds.spacing[5],
   },
   primaryButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 18,
+    ...ds.textStyles.subtitle,
   },
   secondaryButton: {
     minHeight: 46,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
+    marginTop: ds.spacing[2],
   },
   secondaryButtonText: {
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 16,
+    ...ds.textStyles.subtitleMedium,
   },
 });
 

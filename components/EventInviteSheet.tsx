@@ -23,6 +23,7 @@ import { buildClassInvitation, type ClassInvitation, buildChallengeInvitation, b
 import { useInviteToChallengeMutation } from "../src/queries/challengeRestart.queries";
 import { shareClassInvite, shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function EventInviteSheet({
   event,
@@ -103,7 +104,7 @@ export default function EventInviteSheet({
         s.sheet,
         {
           maxHeight: height - insets.top - 20,
-          paddingBottom: Math.max(insets.bottom, 16),
+          paddingBottom: Math.max(insets.bottom, ds.spacing[4]),
         },
       ]}
     >
@@ -118,7 +119,7 @@ export default function EventInviteSheet({
         >
           <Ionicons
             name="close"
-            size={24}
+            size={ds.iconSize.lg}
             color={vibesTheme.colors.primaryText}
           />
         </TouchableOpacity>
@@ -141,7 +142,7 @@ export default function EventInviteSheet({
           catch { setError("No pudimos abrir las opciones para compartir. Intentá de nuevo."); }
         }}
       >
-        <Ionicons name="share-outline" size={24} color={vibesTheme.colors.primaryText} />
+        <Ionicons name="share-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
         <View style={s.discoverCopy}>
           <Text style={s.name}>Invitar por WhatsApp o enlace</Text>
           <Text style={s.copy}>{isPrivateChallenge ? "El link solo abre el desafío para quienes ya tengan acceso." : "Elegí personas que no estén en tus contactos de Vibes."}</Text>
@@ -242,23 +243,22 @@ const c = vibesTheme.colors;
 const s = StyleSheet.create({
   sheet: {
     backgroundColor: c.background,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    gap: 12,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[5],
+    paddingTop: ds.spacing[4],
+    gap: ds.spacing[3],
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   title: {
     flex: 1,
-    fontSize: 24,
+    ...ds.textStyles.title,
     color: c.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
   },
   close: {
     minWidth: 48,
@@ -266,75 +266,71 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  copy: { color: c.secondaryText, fontSize: 14, lineHeight: 20 },
+  copy: { color: c.secondaryText, ...ds.textStyles.bodySmall },
   preview: {
-    padding: 14,
-    borderRadius: 16,
-    backgroundColor: "rgba(244, 163, 64, 0.16)",
-    gap: 4,
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.colors.bg.selected,
+    gap: ds.spacing[1],
   },
   previewTitle: {
     color: c.primaryText,
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   discover: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 14,
+    gap: ds.spacing[3],
+    padding: ds.spacing[4],
     minHeight: 64,
-    borderRadius: 16,
-    backgroundColor: "rgba(57, 120, 184, 0.12)",
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.colors.feedback.infoBg,
   },
   discoverCopy: { flex: 1 },
   name: {
     color: c.primaryText,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   search: {
     minHeight: 48,
     borderWidth: 1,
     borderColor: c.secondaryText,
-    borderRadius: 14,
-    paddingHorizontal: 14,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
     color: c.primaryText,
-    fontSize: 16,
+    ...ds.textStyles.body,
   },
   list: { flexGrow: 0, flexShrink: 1 },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 10,
+    gap: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
   },
   contactName: { flex: 1 },
   invite: {
     minHeight: 48,
     minWidth: 82,
-    paddingHorizontal: 12,
-    borderRadius: 14,
+    paddingHorizontal: ds.spacing[3],
+    borderRadius: ds.radii.lg,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: c.accentMustard,
   },
   sent: {
-    backgroundColor: "rgba(57, 120, 184, 0.16)",
+    backgroundColor: ds.colors.feedback.infoBg,
     borderWidth: 1,
     borderColor: c.accentBlue,
   },
   buttonText: {
     color: c.primaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
   empty: {
-    paddingVertical: 20,
+    paddingVertical: ds.spacing[5],
     color: c.secondaryText,
-    fontSize: 15,
-    lineHeight: 22,
-    gap: 12,
+    ...ds.textStyles.body,
+    gap: ds.spacing[3],
   },
-  error: { color: c.primaryText, fontSize: 14, lineHeight: 20 },
+  error: { color: c.primaryText, ...ds.textStyles.bodySmall },
 });

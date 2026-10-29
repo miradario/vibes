@@ -4,6 +4,7 @@ import { Animated, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type Props = { split: Animated.Value; top: number; animate: boolean; photoSize: number };
 
@@ -92,7 +93,7 @@ export default function MatchConnectionLogo({ split, top, animate, photoSize }: 
 
 export function MatchConnectionSymbol({ drift, top }: { drift: Animated.Value; top: number }) {
   return (
-    <Animated.View pointerEvents="none" accessible={false} style={[styles.body, { top, left: "50%", marginLeft: -60, transform: [
+    <Animated.View pointerEvents="none" accessible={false} style={[styles.body, { top, left: "50%", marginLeft: /* ds-lint-allow DS-TODO: marginLeft -60 fuera de escala (>48), parece layout */ -60, transform: [
       { rotate: drift.interpolate({ inputRange: [0, 1], outputRange: ["-3deg", "3deg"] }) },
     ] }]}>
       <Svg width="120" height="116" viewBox="0 0 150 145">
@@ -104,6 +105,6 @@ export function MatchConnectionSymbol({ drift, top }: { drift: Animated.Value; t
 
 const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, overflow: "visible" },
-  circle: { position: "absolute", width: 26, height: 26, borderRadius: 13, overflow: "hidden", opacity: 0.82 },
+  circle: { position: "absolute", width: 26, height: 26, borderRadius: ds.radii.pill, overflow: "hidden", opacity: 0.82 },
   body: { position: "absolute", width: 120, height: 116 },
 });

@@ -6,6 +6,7 @@ import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type Request = {
   options: ImagePicker.ImagePickerOptions;
@@ -96,7 +97,7 @@ export default function AppCamera() {
         <View style={styles.controls}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar cámara" style={styles.button}
             onPress={() => close({ canceled: true, assets: null })}>
-            <Icon name="close" size={30} color={vibesTheme.colors.background} />
+            <Icon name="close" size={ds.iconSize.xl} color={vibesTheme.colors.background} />
           </TouchableOpacity>
           {photo ? <>
             <TouchableOpacity style={styles.button} onPress={() => { setReady(false); setPhoto(null); }}>
@@ -108,11 +109,11 @@ export default function AppCamera() {
           </> : <>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Tomar foto" style={styles.capture}
               disabled={!ready || busy} onPress={() => void capture()}>
-              <Icon name="camera" size={32} color={vibesTheme.colors.primaryText} />
+              <Icon name="camera" size={ds.iconSize.xl} color={vibesTheme.colors.primaryText} />
             </TouchableOpacity>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cambiar cámara" style={styles.button}
               disabled={busy} onPress={() => { setReady(false); setFacing(current => current === "front" ? "back" : "front"); }}>
-              <Icon name="camera-reverse-outline" size={30} color={vibesTheme.colors.background} />
+              <Icon name="camera-reverse-outline" size={ds.iconSize.xl} color={vibesTheme.colors.background} />
             </TouchableOpacity>
           </>}
         </View>
@@ -122,10 +123,10 @@ export default function AppCamera() {
 }
 const styles = StyleSheet.create({
   sheet: { flex: 1, backgroundColor: vibesTheme.colors.primaryText },
-  preview: { flex: 1, marginTop: 40 },
-  cameraMessage: { color: vibesTheme.colors.background, fontSize: 20, textAlign: "center", paddingHorizontal: 24, paddingTop: 20 },
-  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", paddingTop: 16, paddingBottom: 56 },
+  preview: { flex: 1, marginTop: ds.spacing[12] },
+  cameraMessage: { color: vibesTheme.colors.background, ...ds.textStyles.heading, textAlign: "center", paddingHorizontal: ds.spacing[6], paddingTop: ds.spacing[5] },
+  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", paddingTop: ds.spacing[4], paddingBottom: /* ds-lint-allow DS-TODO: paddingBottom 56 fuera de escala (>48), parece layout */ 56 },
   button: { minWidth: 60, minHeight: 60, alignItems: "center", justifyContent: "center" },
-  capture: { width: 72, height: 72, borderRadius: 36, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
-  label: { color: vibesTheme.colors.background, fontSize: 16 },
+  capture: { width: 72, height: 72, borderRadius: ds.radii.pill, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
+  label: { color: vibesTheme.colors.background, ...ds.textStyles.body },
 });

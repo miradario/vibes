@@ -19,6 +19,7 @@ import {
   translateSpiritualPathLabel,
   translateSpiritualPlaceholder,
 } from "../src/i18n/translations";
+import * as ds from "../src/theme/tokens";
 
 type SpiritualPathDetailsModalProps = {
   visible: boolean;
@@ -91,7 +92,7 @@ const SpiritualPathDetailsModal = ({
           >
             <Icon
               name="close-outline"
-              size={24}
+              size={ds.iconSize.lg}
               color={vibesTheme.colors.primaryText}
             />
           </TouchableOpacity>
@@ -168,7 +169,7 @@ const SpiritualPathDetailsModal = ({
                             name={
                               active ? "checkmark-circle" : "ellipse-outline"
                             }
-                            size={18}
+                            size={ds.iconSize.md}
                             color={
                               active
                                 ? vibesTheme.colors.accentBlue
@@ -262,123 +263,108 @@ const localStyles = StyleSheet.create({
     maxHeight: "100%",
     borderRadius: vibesTheme.radii.xl,
     backgroundColor: c.surface,
-    padding: 20,
+    padding: ds.spacing[5],
   },
-  header: { flexDirection: "row", alignItems: "center", gap: 12 },
+  header: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3] },
   closeButton: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: ds.radii.lg,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: `${c.secondaryText}0C`,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
   },
   title: {
     flex: 1,
     color: c.primaryText,
-    fontSize: 24,
-    lineHeight: 30,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.title,
   },
   subtitle: {
     color: c.secondaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.regular,
-    marginBottom: 20,
+    ...ds.textStyles.bodySmall,
+    marginBottom: ds.spacing[5],
   },
-  content: { marginTop: 16, flexGrow: 0, flexShrink: 1 },
-  contentInner: { paddingBottom: 4 },
-  fieldWrap: { marginBottom: 20 },
+  content: { marginTop: ds.spacing[4], flexGrow: 0, flexShrink: 1 },
+  contentInner: { paddingBottom: ds.spacing[1] },
+  fieldWrap: { marginBottom: ds.spacing[5] },
   fieldLabel: {
     color: c.primaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
-  optionRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
+  optionRow: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[3], marginTop: ds.spacing[2] },
   optionChip: {
     minHeight: 44,
     borderRadius: vibesTheme.radii.pill,
     borderWidth: 1,
-    borderColor: `${c.primaryText}20`,
+    borderColor: ds.colors.border.default,
     backgroundColor: c.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
     alignItems: "center",
     justifyContent: "center",
   },
   optionChipActive: {
-    backgroundColor: `${c.accentBlue}14`,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),
     borderColor: c.accentBlue,
   },
   optionChipText: {
     color: c.primaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
   optionChipTextActive: { color: c.primaryText },
   input: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     minHeight: 48,
     borderWidth: 1,
     borderRadius: vibesTheme.radii.lg,
-    borderColor: `${c.primaryText}20`,
+    borderColor: ds.colors.border.default,
     backgroundColor: c.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     color: c.primaryText,
-    fontSize: 16,
-    lineHeight: 24,
+    ...ds.textStyles.body,
     includeFontPadding: true,
-    fontFamily: vibesTheme.fonts.regular,
   },
   inputFocused: { borderColor: c.accentBlue },
   inputError: { borderColor: c.accentCoral },
   notesInput: { minHeight: 104 },
   errorText: {
     color: c.primaryText,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 6,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
+    marginTop: ds.spacing[2],
   },
   readOnlyItem: {
     borderWidth: 1,
-    borderColor: `${c.primaryText}20`,
+    borderColor: ds.colors.border.default,
     borderRadius: vibesTheme.radii.lg,
-    padding: 14,
-    marginBottom: 10,
+    padding: ds.spacing[4],
+    marginBottom: ds.spacing[3],
     backgroundColor: c.surface,
   },
   readOnlyLabel: {
     color: c.secondaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
   readOnlyValue: {
     color: c.primaryText,
-    fontSize: 16,
-    lineHeight: 24,
-    marginTop: 4,
+    ...ds.textStyles.body,
+    marginTop: ds.spacing[1],
   },
   emptyState: {
     borderRadius: vibesTheme.radii.lg,
-    padding: 16,
-    backgroundColor: `${c.secondaryText}0C`,
+    padding: ds.spacing[4],
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
   },
-  emptyStateText: { color: c.secondaryText, fontSize: 14, lineHeight: 20 },
+  emptyStateText: { color: c.secondaryText, ...ds.textStyles.bodySmall },
   footer: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 12,
-    paddingTop: 16,
+    gap: ds.spacing[3],
+    marginTop: ds.spacing[3],
+    paddingTop: ds.spacing[4],
     borderTopWidth: 1,
-    borderTopColor: `${c.primaryText}14`,
+    borderTopColor: ds.colors.bg.subtle,
   },
   footerAction: { flex: 1 },
 });

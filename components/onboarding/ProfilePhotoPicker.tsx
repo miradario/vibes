@@ -22,6 +22,7 @@ import {
   onboardingStyles,
 } from "../../src/screens/Onboarding/vibesOnboardingStyles";
 import { useI18n } from "../../src/i18n";
+import * as ds from "../../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -185,11 +186,11 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange, requestOpen }: 
           disabled={busy} activeOpacity={0.8}
           onPress={() => uris[0] ? void editPhoto(0) : setModalVisible(true)}>
           {uris[0] ? <Image source={{ uri: uris[0] }} style={onboardingStyles.photo} resizeMode="contain" />
-            : <Icon name="person-outline" size={48} color={vibesTheme.colors.secondaryText} />}
+            : <Icon name="person-outline" size={/* ds-lint-allow DS-TODO: ícono de 48: fuera de icon-size (16/20/24/32) */ 48} color={vibesTheme.colors.secondaryText} />}
         </TouchableOpacity>
         {uris[0] ? <TouchableOpacity accessibilityRole="button" accessibilityLabel={english ? "Edit main photo" : "Editar foto principal"}
           disabled={busy} style={styles.mainEdit} onPress={() => void editPhoto(0)}>
-          <Icon name="create-outline" size={20} color={vibesTheme.colors.primaryText} />
+          <Icon name="create-outline" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
         </TouchableOpacity> : null}
       </View>
       {uris[0] ? <View style={styles.mainLabel}><Text style={styles.mainLabelText}>{english ? "Main photo" : "Foto principal"}</Text></View> : null}
@@ -206,14 +207,14 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange, requestOpen }: 
               accessibilityLabel={uri ? (english ? `Make photo ${index + 1} primary` : `Hacer principal la foto ${index + 1}`) : (english ? "Add photo" : "Agregar foto")}
               onPress={() => uri ? onChange([uri, ...uris.filter(photo => photo !== uri)]) : setModalVisible(true)}>
               {uri ? <Image source={{ uri }} style={onboardingStyles.photo} resizeMode="contain" />
-                : <View style={styles.addCircle}><Icon name="add" size={25} color={vibesTheme.colors.primaryText} /></View>}
+                : <View style={styles.addCircle}><Icon name="add" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} /></View>}
             </TouchableOpacity>
             {uri ? <>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={english ? `Photo ${index + 1} options` : `Opciones de foto ${index + 1}`}
                 disabled={busy} style={styles.photoMenu} onPress={() => setPhotoMenuIndex(index)}>
-                <Icon name="ellipsis-vertical" size={19} color={vibesTheme.colors.primaryText} />
+                <Icon name="ellipsis-vertical" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
-              {index === 0 ? <View pointerEvents="none" style={styles.selectedBadge}><Icon name="checkmark" size={16} color={vibesTheme.colors.primaryText} /></View> : null}
+              {index === 0 ? <View pointerEvents="none" style={styles.selectedBadge}><Icon name="checkmark" size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} /></View> : null}
             </> : null}
           </View>;
         })}
@@ -221,7 +222,7 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange, requestOpen }: 
       <Text style={styles.hint}>{english ? "Tap a photo to make it primary. Photos are optional." : "Tocá una foto para hacerla principal. Son opcionales."}</Text>
       {remaining > 0 ? <TouchableOpacity accessibilityRole="button" disabled={busy} style={styles.add}
         onPress={() => setModalVisible(true)} activeOpacity={0.8}>
-        <Icon name="images-outline" size={22} color={vibesTheme.colors.primaryText} />
+        <Icon name="images-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
         <Text style={styles.addText}>{english ? "Add photos" : "Agregar fotos"}</Text>
       </TouchableOpacity> : null}
       <AnimatedSheetModal visible={photoMenuIndex !== null} onClose={() => setPhotoMenuIndex(null)} sheetStyle={styles.sheet}
@@ -283,48 +284,45 @@ const ProfilePhotoPicker = ({ uris, originalUris = {}, onChange, requestOpen }: 
 const styles = StyleSheet.create({
   container: { width: "100%", alignItems: "center" },
   mainPhotoWrap: { width: 156, height: 156, position: "relative" },
-  mainPhoto: { width: 156, height: 156, borderRadius: 78, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, backgroundColor: `${vibesTheme.colors.secondaryText}08`, alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  mainEdit: { position: "absolute", right: -2, bottom: -2, width: 44, height: 44, borderRadius: 22, backgroundColor: vibesTheme.colors.surface, borderWidth: 1, borderColor: `${vibesTheme.colors.accentBlue}60`, alignItems: "center", justifyContent: "center" },
-  mainLabel: { backgroundColor: `${vibesTheme.colors.accentBlue}14`, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 6, marginTop: 6 },
-  mainLabelText: { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.medium, fontSize: 13, lineHeight: 18 },
-  gridHeading: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 14, marginBottom: 10 },
-  gridTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 18, lineHeight: 24 },
-  gridCount: { color: vibesTheme.colors.secondaryText, fontSize: 14 },
-  grid: { width: "100%", flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  tile: { aspectRatio: 1, borderRadius: 14, borderWidth: 2, borderColor: "transparent", backgroundColor: `${vibesTheme.colors.secondaryText}0C`, position: "relative" },
+  mainPhoto: { width: 156, height: 156, borderRadius: ds.radii.pill, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle), alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  mainEdit: { position: "absolute", right: -2, bottom: -2, width: 44, height: 44, borderRadius: ds.radii.pill, backgroundColor: vibesTheme.colors.surface, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.strong), alignItems: "center", justifyContent: "center" },
+  mainLabel: { backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle), borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[2], marginTop: ds.spacing[2] },
+  mainLabelText: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.labelMedium },
+  gridHeading: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: ds.spacing[4], marginBottom: ds.spacing[3] },
+  gridTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.heading },
+  gridCount: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall },
+  grid: { width: "100%", flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
+  tile: { aspectRatio: 1, borderRadius: ds.radii.lg, borderWidth: 2, borderColor: "transparent", backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle), position: "relative" },
   selectedTile: { borderColor: vibesTheme.colors.accentBlue },
-  tileTouch: { flex: 1, borderRadius: 12, overflow: "hidden", alignItems: "center", justifyContent: "center" },
-  addCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: `${vibesTheme.colors.secondaryText}24`, alignItems: "center", justifyContent: "center" },
-  photoMenu: { position: "absolute", top: 0, right: 0, width: 44, height: 44, borderRadius: 22, backgroundColor: `${vibesTheme.colors.surface}E6`, alignItems: "center", justifyContent: "center" },
-  selectedBadge: { position: "absolute", bottom: 3, right: 3, width: 25, height: 25, borderRadius: 13, backgroundColor: vibesTheme.colors.accentBlue, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: vibesTheme.colors.surface },
+  tileTouch: { flex: 1, borderRadius: ds.radii.md, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  addCircle: { width: 34, height: 34, borderRadius: ds.radii.pill, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft), alignItems: "center", justifyContent: "center" },
+  photoMenu: { position: "absolute", top: 0, right: 0, width: 44, height: 44, borderRadius: ds.radii.pill, backgroundColor: ds.colors.bg.surfaceTranslucent, alignItems: "center", justifyContent: "center" },
+  selectedBadge: { position: "absolute", bottom: 3, right: 3, width: 25, height: 25, borderRadius: ds.radii.pill, backgroundColor: vibesTheme.colors.accentBlue, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: vibesTheme.colors.surface },
   hint: {
     color: ONBOARDING_COLORS.muted,
     textAlign: "center",
-    fontSize: 13,
-    lineHeight: 19,
-    marginVertical: 8,
+    ...ds.textStyles.bodySmall,
+    marginVertical: ds.spacing[2],
   },
   add: {
     width: "100%",
     justifyContent: "center",
     minHeight: 48,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 16,
-    backgroundColor: `${vibesTheme.colors.secondaryText}0C`,
+    paddingHorizontal: ds.spacing[5],
+    paddingVertical: ds.spacing[3],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   addText: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.subtitle,
     flexShrink: 1,
   },
   sheet: {
-    borderRadius: 22,
+    borderRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.background,
     overflow: "hidden",
   },
@@ -337,7 +335,7 @@ const styles = StyleSheet.create({
   },
   rowText: {
     color: ONBOARDING_COLORS.text,
-    fontSize: 16,
+    ...ds.textStyles.body,
   },
   cancel: {
     minHeight: 56,
@@ -346,7 +344,7 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: ONBOARDING_COLORS.coral,
-    fontSize: 16,
+    ...ds.textStyles.body,
   },
 });
 

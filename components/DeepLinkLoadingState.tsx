@@ -7,6 +7,7 @@ import { Text } from "./Typography";
 import ScreenContainer from "./ScreenContainer";
 import VibesLoader from "./VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export type DeepLinkTarget = "challenge" | "event";
 
@@ -108,22 +109,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: vibesTheme.spacing[4],
-    paddingHorizontal: 28,
+    paddingHorizontal: ds.spacing[8],
   },
   title: {
     marginTop: vibesTheme.spacing[1],
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 20,
-    lineHeight: 26,
+    ...ds.textStyles.heading,
     textAlign: "center",
   },
   body: {
     maxWidth: 300,
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 15,
-    lineHeight: 21,
+    ...ds.textStyles.body,
     textAlign: "center",
   },
   actions: {
@@ -135,23 +132,21 @@ const styles = StyleSheet.create({
     minWidth: 200,
     alignItems: "center",
     borderRadius: vibesTheme.radii.pill,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[6],
+    paddingVertical: ds.spacing[3],
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   primaryButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 16,
+    ...ds.textStyles.subtitle,
   },
   secondaryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   secondaryButtonText: {
     color: vibesTheme.colors.accentBlue,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 15,
+    ...ds.textStyles.subtitle,
   },
 });
 

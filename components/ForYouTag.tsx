@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 // "Para ti" pill for the item picked by pickFeaturedItem (src/lib/homePersonalization).
 export default function ForYouTag() {
@@ -15,15 +16,13 @@ export default function ForYouTag() {
 const s = StyleSheet.create({
   tag: {
     alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
+    paddingHorizontal: ds.spacing[2],
+    paddingVertical: ds.spacing[1],
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   text: {
-    fontSize: 12,
-    lineHeight: 16,
+    ...ds.textStyles.caption,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
   },
 });

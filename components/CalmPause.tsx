@@ -17,6 +17,7 @@ import { useCalmMotion } from "../src/hooks/useCalmMotion";
 import {
   getCalmIllustrationSize,
 } from "../src/lib/calmPause";
+import * as ds from "../src/theme/tokens";
 
 export default function CalmPause({
   onContinue,
@@ -114,34 +115,32 @@ const s = StyleSheet.create({
     flexGrow: 1,
     alignItems: "center",
     justifyContent: "space-evenly",
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingHorizontal: ds.spacing[5],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[3],
   },
-  scene: { alignItems: "center", justifyContent: "center", marginVertical: 12 },
+  scene: { alignItems: "center", justifyContent: "center", marginVertical: ds.spacing[3] },
   help: {
-    fontSize: 15,
-    lineHeight: 22,
+    ...ds.textStyles.body,
     color: vibesTheme.colors.secondaryText,
     textAlign: "center",
-    marginTop: 8,
+    marginTop: ds.spacing[2],
   },
   footer: {
     width: "100%",
     maxWidth: 520,
     alignSelf: "center",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 4,
-    gap: 4,
+    paddingHorizontal: ds.spacing[5],
+    paddingTop: ds.spacing[2],
+    paddingBottom: ds.spacing[1],
+    gap: ds.spacing[1],
   },
-  primary: { paddingVertical: 14 },
-  primaryLabel: { lineHeight: 24, textAlign: "center" },
+  primary: { paddingVertical: ds.spacing[4] },
+  primaryLabel: { lineHeight: /* ds-lint-allow DS-TODO: lineHeight 24 suelto (sin fontSize en el mismo estilo) */ 24, textAlign: "center" },
   loading: {
     color: vibesTheme.colors.secondaryText,
     textAlign: "center",
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 6,
+    ...ds.textStyles.bodySmall,
+    marginBottom: ds.spacing[2],
   },
 });

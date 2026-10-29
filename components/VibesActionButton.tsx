@@ -4,6 +4,7 @@ import React from "react";
 import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle, TextStyle } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type VibesActionButtonProps = {
   label: string;
@@ -86,42 +87,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
     shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.22,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
-    elevation: 3,
+    shadowOpacity: /* ds-lint-allow DS-TODO: sombra de color (vibesTheme.colors.accentMustard): ¿glow de marca o ds.shadows? */ 0.22,
+    shadowOffset: /* ds-lint-allow DS-TODO: misma sombra de color */ { width: 0, height: 6 },
+    shadowRadius: /* ds-lint-allow DS-TODO: misma sombra de color */ 14,
+    elevation: /* ds-lint-allow DS-TODO: misma sombra de color */ 3,
   },
   startButtonDisabled: {
     opacity: 0.42,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...ds.shadows.none,
   },
   startText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
   },
   outlineButton: {
     width: "100%",
     minHeight: 52,
     borderRadius: vibesTheme.radii.pill,
     borderWidth: 1.5,
-    borderColor: "rgba(57, 120, 184, 0.45)",
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.strong),
     backgroundColor: vibesTheme.colors.surface,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: vibesTheme.spacing[4],
-    paddingVertical: 10,
+    paddingVertical: ds.spacing[3],
   },
   outlineDisabled: {
     opacity: 0.42,
   },
   outlineText: {
     color: vibesTheme.colors.accentBlue,
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
     textAlign: "center",
   },
   skipWrap: {
@@ -132,23 +128,22 @@ const styles = StyleSheet.create({
   skipDivider: {
     width: "100%",
     height: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.12)",
-    marginBottom: 14,
+    backgroundColor: ds.colors.border.default,
+    marginBottom: ds.spacing[4],
   },
   skipButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: ds.spacing[2],
+    paddingHorizontal: ds.spacing[3],
   },
   skipText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.heading,
   },
   skipButtonDisabled: {
     opacity: 0.7,
   },
   skipTextDisabled: {
-    color: "rgba(110, 110, 110, 0.78)",
+    color: /* ds-lint-allow DS-TODO: inkSoft al 78%: no hay opacidad cercana (más cercana 1) */ "rgba(110, 110, 110, 0.78)",
   },
 });
 
