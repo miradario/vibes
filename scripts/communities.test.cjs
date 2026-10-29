@@ -3,7 +3,7 @@ const {load}=require('./helpers/load-pure-ts.cjs');
 const api=load('supabase/functions/_shared/communities.ts');
 const onboarding=load('src/screens/Onboarding/vibesOnboardingContent.ts');
 test('onboarding and every shared filter offer the requested communities including Otros',()=>{
- assert.deepEqual(Array.from(api.COMMUNITY_OPTIONS),['El Arte de Vivir','Danzantes','Ashtanga','Hatha','Meditación','Bikram','Músicos','Artistas','Servicio','Otros']);
+ assert.deepEqual(Array.from(api.COMMUNITY_OPTIONS),['El Arte de Vivir','Danzantes','Ashtanga','Hatha','Meditación','Bikram','Tantra','Músicos','Artistas','Servicio','Otros']);
  assert.deepEqual(Array.from(onboarding.PRACTICE_OPTIONS),Array.from(api.COMMUNITY_OPTIONS));
 });
 test('legacy labels normalize and meditation normalize while generic Yoga stays unassigned',()=>{
@@ -40,4 +40,9 @@ test('no selection still includes profiles without Camino, selected community ex
  const michelle={spiritual_path:[],spiritual_path_details:{}};
  assert.equal(api.matchesCommunities(michelle,[]),true);
  assert.equal(api.matchesCommunities(michelle,['El Arte de Vivir']),false);
+});
+
+test('Tantra is available and matches existing Camino values',()=>{
+ assert.deepEqual(Array.from(api.defaultCommunities({spiritual_path:['Tantra']})),['Tantra']);
+ assert.equal(api.matchesCommunities({spiritual_path:['Tantra']},['Tantra']),true);
 });

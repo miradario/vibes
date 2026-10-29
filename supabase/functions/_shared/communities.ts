@@ -1,7 +1,7 @@
 /** Shared by the app and recommendations: match explicit communities, not prose. */
 export const COMMUNITY_OPTIONS = [
   "El Arte de Vivir", "Danzantes", "Ashtanga", "Hatha", "Meditación",
-  "Bikram", "Músicos", "Artistas", "Servicio", "Otros",
+  "Bikram", "Tantra", "Músicos", "Artistas", "Servicio", "Otros",
 ] as const;
 const normalize = (value: string) => value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const aliases: Record<string,string> = {
