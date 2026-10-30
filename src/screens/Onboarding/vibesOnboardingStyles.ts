@@ -272,7 +272,7 @@ export const onboardingStyles = StyleSheet.create({
     marginLeft: ds.spacing[3],
   },
   locationWrap: {
-    marginTop: ds.spacing[4],
+    marginTop: ds.spacing[6],
   },
   locationButton: {
     minHeight: 48,

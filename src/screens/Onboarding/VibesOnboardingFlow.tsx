@@ -1001,6 +1001,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false, preview = false }:
             </View>
             <OnboardingPlayfulShapes kind={step === "identity" ? "identity" : "interests"} style={{ width: 64, height: 70 }} />
           </View>
+          <View style={localStyles.questionsSection}>
           <ProfileQuestionsForm
             hiddenFields={["gender", "lookingFor", "habits"]}
             showHeader={false}
@@ -1009,6 +1010,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false, preview = false }:
             value={answers}
             onChange={setAnswers}
           />
+          </View>
         </>
       );
     if (step === "profile") return renderProfile();
@@ -1255,7 +1257,7 @@ const localStyles = StyleSheet.create({
   experienceHint: {marginTop:ds.spacing[3],marginBottom:ds.spacing[1],...ds.textStyles.bodySmall,color:vibesTheme.colors.secondaryText},
   practiceWithDetails: {borderColor:vibesTheme.colors.accentBlue,backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle)},
   practiceDot: {width:10,height:10,borderRadius:ds.radii.pill,backgroundColor:vibesTheme.colors.accentMustard},
-  purposeGrid: {width:"100%",maxWidth:280,alignSelf:"center",flexDirection:"row",flexWrap:"wrap",justifyContent:"space-between",gap:0,rowGap:ds.spacing[3],marginTop:ds.spacing[4]},
+  purposeGrid: {width:"100%",maxWidth:280,alignSelf:"center",flexDirection:"row",flexWrap:"wrap",justifyContent:"space-between",gap:0,rowGap:ds.spacing[3],marginTop:ds.spacing[6]},
   purposeHeading: {flexDirection:"row",alignItems:"center",gap:ds.spacing[1],marginBottom:ds.spacing[3]},
   purposeHero: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], marginTop: ds.spacing[1] },
   purposeTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title, marginBottom: ds.spacing[2] },
@@ -1269,6 +1271,8 @@ const localStyles = StyleSheet.create({
   photoLaterText: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall },
   introHero: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], marginTop: ds.spacing[1], marginBottom: ds.spacing[3] },
   introCopy: { flex: 1, minWidth: 0 },
+  /** Header → primera sección = gap entre secciones de ProfileQuestionsForm (spacing/8, 32). */
+  questionsSection: { marginTop: ds.spacing[8] },
   introConfetti: { position: "absolute", top: -12, left: -6, width: 36, height: 30 },
   introTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
   introSubtitle: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.subtitle, marginTop: ds.spacing[2] },
