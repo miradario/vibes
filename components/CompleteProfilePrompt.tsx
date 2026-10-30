@@ -16,6 +16,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import ProgressBar from "./ui/ProgressBar";
+import { iconCircleStyle } from "./ui/IconCircle";
 import * as ds from "../src/theme/tokens";
 
 const DISMISS_DAYS = 30;
@@ -188,10 +189,7 @@ const styles = StyleSheet.create({
     borderColor: ds.colors.border.default,
   },
   compactIcon: {
-    backgroundColor: vibesTheme.colors.accentBlue,
-    width: 40,
-    height: 40,
-    borderRadius: ds.radii.pill,
+    ...iconCircleStyle("sm", "info"),
   },
   completeAction: { flexDirection: "row", alignItems: "center", gap: ds.spacing[1] },
   completeText: {

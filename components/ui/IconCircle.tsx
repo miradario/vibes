@@ -23,3 +23,10 @@ export default function IconCircle({ size = "sm", tone = "neutral", children, st
 }
 
 const styles = StyleSheet.create({ circle: { borderRadius: ds.radii.pill, alignItems: "center", justifyContent: "center" } });
+
+/** Estilo del IconCircle para Views existentes (mismo resultado que `<IconCircle>`). */
+export function iconCircleStyle(size: "sm" | "md" | "lg", tone: "neutral" | "accent" | "info" = "neutral") {
+  const dim = ds.componentSize.iconCircle[size];
+  const backgroundColor = tone === "accent" ? ds.colors.bg.selected : tone === "info" ? ds.colors.feedback.infoBg : ds.colors.bg.subtle;
+  return { width: dim, height: dim, borderRadius: ds.radii.pill, alignItems: "center", justifyContent: "center", backgroundColor } as const;
+}

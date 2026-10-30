@@ -79,6 +79,7 @@ import VibesLoader from "../components/VibesLoader";
 import { showToast } from "../src/utils/toast";
 import { chipHitSlop, chipRemoveIcon, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
+import { iconCircleStyle } from "../components/ui/IconCircle";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverGender = "woman" | "man" | "other";
@@ -1365,13 +1366,8 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: ds.spacing[8],
   },
   emptyIconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
+    ...iconCircleStyle("lg", "neutral"),
     marginBottom: ds.spacing[4],
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
   },
   emptyTitle: {
     color: vibesTheme.colors.primaryText,

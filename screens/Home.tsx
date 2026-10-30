@@ -59,6 +59,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
+import { iconCircleStyle } from "../components/ui/IconCircle";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverFiltersState = {
@@ -1183,12 +1184,7 @@ const localStyles = StyleSheet.create({
     marginBottom: ds.spacing[3],
   },
   guruFeatureBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
+    ...iconCircleStyle("sm", "accent"),
   },
   featureEyebrow: {
     color: vibesTheme.colors.accentBlue,
@@ -1333,12 +1329,7 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   connectionIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
+    ...iconCircleStyle("md", "neutral"),
     flexShrink: 0,
   },
   connectionsCopy: {
@@ -1593,12 +1584,7 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   guruBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
+    ...iconCircleStyle("sm", "accent"),
   },
   guruCopy: {
     flex: 1,
@@ -1661,12 +1647,7 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.labelMedium,
   },
   presenceBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ds.colors.bg.selected,
+    ...iconCircleStyle("sm", "accent"),
   },
   presenceRow: {
     gap: ds.spacing[4],

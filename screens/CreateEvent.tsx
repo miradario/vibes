@@ -60,6 +60,7 @@ import { getIosMapPreviewSource } from "../src/config/mapPreview";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
+import { iconCircleStyle } from "../components/ui/IconCircle";
 import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE =
@@ -1455,13 +1456,8 @@ const legacyStyles = StyleSheet.create({
     paddingHorizontal: ds.spacing[8],
   },
   coverIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
+    ...iconCircleStyle("lg", "accent"),
     marginBottom: ds.spacing[3],
-    backgroundColor: ds.colors.bg.selected,
   },
   uploadImageTitle: {
     color: DARK_GRAY,

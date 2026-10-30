@@ -95,6 +95,7 @@ import DayPill, { dayPillColors } from "../components/ui/DayPill";
 import StatRow from "../components/ui/StatRow";
 import Divider from "../components/ui/Divider";
 import { bannerStyles } from "../components/ui/surfaceStyles";
+import { iconCircleStyle } from "../components/ui/IconCircle";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -2356,12 +2357,7 @@ const localStyles = StyleSheet.create({
     ...ds.shadows.lg,
   },
   completionCelebrationBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: ds.radii.pill,
-    backgroundColor: palette.gold,
-    alignItems: "center",
-    justifyContent: "center",
+    ...iconCircleStyle("md", "accent"),
   },
   completionCelebrationTitle: {
     marginTop: ds.spacing[3],
@@ -2541,14 +2537,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   celebrationBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
-    borderWidth: 1,
-    borderColor: ds.colors.bg.surfaceTranslucent,
+    ...iconCircleStyle("md", "accent"),
   },
   celebrationCopy: {
     flex: 1,

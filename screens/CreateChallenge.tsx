@@ -1,6 +1,7 @@
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { readCommunities, canonicalCommunity } from "../src/lib/communities";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
+import { iconCircleStyle } from "../components/ui/IconCircle";
 import * as ds from "../src/theme/tokens";
 
 // Hidden for now: challenges are not filtered by community. Existing tags are kept when editing.
@@ -660,12 +661,7 @@ const legacyStyles = StyleSheet.create({
     paddingHorizontal: ds.spacing[8],
   },
   coverIconCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: ds.radii.pill,
-    backgroundColor: ds.colors.bg.selected,
-    alignItems: "center",
-    justifyContent: "center",
+    ...iconCircleStyle("lg", "accent"),
     marginBottom: ds.spacing[4],
   },
   uploadImageTitle: {

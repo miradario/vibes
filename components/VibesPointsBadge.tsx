@@ -5,6 +5,7 @@ import { Text } from "./Typography";
 import Icon from "./Icon";
 import { useVibesSummary } from "../src/queries/vibesPoints.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { iconCircleStyle } from "./ui/IconCircle";
 import * as ds from "../src/theme/tokens";
 export default function VibesPointsBadge() {
   const navigation = useNavigation();
@@ -41,12 +42,7 @@ const s = StyleSheet.create({
     backgroundColor: ds.colors.bg.selected,
   },
   symbol: {
-    width: 32,
-    height: 32,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
+    ...iconCircleStyle("sm", "accent"),
   },
   value: {
     ...ds.textStyles.subtitle,
