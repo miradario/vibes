@@ -36,3 +36,21 @@ export const iconButtonFloating = {
   ...ds.shadows.md,
 } as const;
 export const iconButtonFloatingIconColor = ds.colors.text.onDark;
+
+/** Badge (§5.8) `count`: 18, pill, padding X `spacing/1`, `action/accent`, `text/micro` primary. */
+export const badgeStyles = {
+  count: { minWidth: ds.componentSize.badge, height: ds.componentSize.badge, borderRadius: ds.radii.pill, paddingHorizontal: ds.spacing[1], alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.action.accent },
+  countText: { ...ds.textStyles.micro, color: ds.colors.text.primary },
+  /** `outlined` (components-spec §3): anillo de 2 px en `bg/screen`, para badges sobre íconos o avatares. */
+  outlined: { borderWidth: 2, borderColor: ds.colors.bg.screen },
+} as const;
+
+/** Input password (components-spec §3): toggle de 44×44 en el borde derecho. */
+export const passwordToggleStyle = {
+  position: "absolute",
+  right: ds.spacing[1],
+  width: ds.touchTarget,
+  height: "100%",
+  alignItems: "center",
+  justifyContent: "center",
+} as const;

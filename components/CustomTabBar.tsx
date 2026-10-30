@@ -46,6 +46,7 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react-native";
+import { badgeStyles } from "./ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const TAB_BAR_HEIGHT = 64;
@@ -515,18 +516,11 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   unreadBadge: {
+    ...badgeStyles.count,
+    ...badgeStyles.outlined,
     position: "absolute",
     top: -7,
     right: -13,
-    minWidth: 18,
-    height: 18,
-    borderRadius: ds.radii.pill,
-    paddingHorizontal: ds.spacing[1],
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderWidth: 1.5,
-    borderColor: vibesTheme.colors.background,
   },
   unreadBadgeText: {
     color: vibesTheme.colors.primaryText,

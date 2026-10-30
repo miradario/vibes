@@ -43,6 +43,7 @@ import { handleApiError } from "../src/utils/handleApiError";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
+import { badgeStyles } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 type ArchivedChatItem =
@@ -1128,21 +1129,8 @@ const localStyles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
   },
-  countBadge: {
-    minWidth: 24,
-    minHeight: 24,
-    paddingVertical: ds.spacing[1],
-    borderRadius: ds.radii.lg,
-    paddingHorizontal: ds.spacing[2],
-    marginLeft: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
-  },
-  countText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.subtitle,
-  },
+  countBadge: { ...badgeStyles.count },
+  countText: { ...badgeStyles.countText },
   seeAllButton: {
     flexDirection: "row",
     alignItems: "center",
