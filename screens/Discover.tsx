@@ -77,7 +77,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import VibesLoader from "../components/VibesLoader";
 import { showToast } from "../src/utils/toast";
-import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import { chipHitSlop, chipRemoveIcon, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
@@ -1072,8 +1072,8 @@ export const DiscoverContent = forwardRef<
 
         <ActiveCommunityFilters selected={discoverFilters.spiritualPaths} onRemove={value=>setDiscoverFilters(previous=>({...previous,spiritualPaths:previous.spiritualPaths.filter(item=>item!==value)}))} onClear={()=>setDiscoverFilters(previous=>({...previous,spiritualPaths:[]}))} style={{paddingHorizontal:ds.spacing[4]}} />
         {appliedFilterChips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>
-          {appliedFilterChips.map(chip => <TouchableOpacity key={chip.id} accessibilityRole="button" accessibilityLabel={`Quitar filtro: ${chip.label}`} onPress={chip.remove} style={{ flexDirection: "row", alignItems: "center", gap: ds.spacing[2], minHeight: 40, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[2], borderRadius: ds.radii.xl, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) }}>
-            <Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.label }}>{chip.label}</Text><Icon name="close" size={ds.iconSize.sm} color={vibesTheme.colors.accentBlue} />
+          {appliedFilterChips.map(chip => <TouchableOpacity key={chip.id} accessibilityRole="button" accessibilityLabel={`Quitar filtro: ${chip.label}`} onPress={chip.remove} hitSlop={chipHitSlop} style={[chipStyles.base, chipStyles.selected]}>
+            <Text style={chipStyles.label}>{chip.label}</Text><Icon name="close" size={chipRemoveIcon.size} color={chipRemoveIcon.color} />
           </TouchableOpacity>)}
         </ScrollView> : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={localStyles.discoverySections}>

@@ -31,3 +31,6 @@ export const chipStyles = {
   label: { ...ds.textStyles.label, color: ds.colors.text.primary },
   labelSelected: { color: ds.colors.text.primary },
 } as const;
+
+/** Chip removable (components-spec §3): × de `iconSize.sm` en `icon/default`; fondo de filtro aplicado. */
+export const chipRemoveIcon = { size: ds.iconSize.sm, color: ds.colors.icon.default } as const;
