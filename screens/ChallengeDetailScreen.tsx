@@ -96,6 +96,7 @@ import StatRow from "../components/ui/StatRow";
 import Divider from "../components/ui/Divider";
 import { bannerStyles } from "../components/ui/surfaceStyles";
 import IconCircle, { iconCircleIconSize, iconCircleStyle } from "../components/ui/IconCircle";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -855,7 +856,7 @@ export const CheckInButton = memo(
           <VibesLoader />
         ) : (
           <>
-            <Icon name={icon} size={ds.iconSize.md} color={vibesTheme.colors.background} />
+            <Icon name={icon} size={ds.iconSize.md} color={buttonContentColor["accent"]} />
             <Text style={[localStyles.checkInText, isCompleted && { color: vibesTheme.colors.surface }]}>{label}</Text>
           </>
         )}
@@ -1868,7 +1869,7 @@ const ChallengeDetailScreen = () => {
           disabled={isSharing || !completionImageReady}
           accessibilityState={{ disabled: isSharing || !completionImageReady, busy: isSharing }}
         >
-          <Icon name="share-outline" size={ds.iconSize.md} color={vibesTheme.colors.background} />
+          <Icon name="share-outline" size={ds.iconSize.md} color={buttonContentColor["primary"]} />
           <Text style={localStyles.completionSharePrimaryText}>{isSharing || (!completionImageReady && !completionImageFailed) ? t("challengeShare.preparingImage") : t("challengeShare.share")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2116,14 +2117,10 @@ const localStyles = StyleSheet.create({
     maxWidth: 320,
   },
   loadingBackButton: {
-    borderRadius: ds.radii.xl,
-    paddingHorizontal: ds.spacing[5],
-    paddingVertical: ds.spacing[3],
-    backgroundColor: palette.gold,
+    ...buttonStyle("accent", "md"),
   },
   loadingBackText: {
-    color: vibesTheme.colors.surface,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("md", "accent"),
   },
   scrollContent: {
     paddingBottom: /* ds-lint-allow layout: paddingBottom 188 (medida de layout fuera de la escala) */ 188,
@@ -2296,30 +2293,16 @@ const localStyles = StyleSheet.create({
     height: 40,
   },
   joinRequestButton: {
-    borderRadius: ds.radii.xl,
-    backgroundColor: vibesTheme.colors.primaryText,
-    borderWidth: 2,
-    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.medium),
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: palette.accentBlueDeep,
-    shadowOpacity: ds.shadows.md.shadowOpacity,
-    shadowRadius: ds.shadows.md.shadowRadius,
-    shadowOffset: ds.shadows.md.shadowOffset,
+    ...buttonStyle("primary", "md"),
   },
   joinRequestButtonDisabled: {
     opacity: 0.6,
   },
   joinRequestButtonTitle: {
-    color: vibesTheme.colors.background,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("md", "primary"),
   },
   joinRequestButtonSubtitle: {
-    marginTop: ds.spacing[1],
-    color: vibesTheme.colors.surface,
+    color: buttonContentColor.primary,
     ...ds.textStyles.labelMedium,
   },
   chatLockedRow: {
@@ -2887,15 +2870,7 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.subtitleMedium,
   },
   checkInButton: {
-    minHeight: 58,
-    borderRadius: ds.radii.xl,
-    backgroundColor: palette.gold,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[2],
-    paddingHorizontal: ds.spacing[4],
-    ...ds.glow.accent,
+    ...buttonStyle("accent", "lg"),
   },
   checkInCompleted: {
     backgroundColor: vibesTheme.colors.primaryText,
@@ -2968,8 +2943,7 @@ const localStyles = StyleSheet.create({
     opacity: 0.4,
   },
   checkInText: {
-    color: vibesTheme.colors.surface,
-    ...ds.textStyles.heading,
+    ...buttonLabel("lg", "accent"),
     textAlign: "center",
   },
   floatingChatButton: {
@@ -3037,17 +3011,10 @@ const localStyles = StyleSheet.create({
     marginBottom: ds.spacing[6],
   },
   completionSharePrimary: {
-    minHeight: 54,
-    borderRadius: vibesTheme.radii.pill,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[3],
-    backgroundColor: vibesTheme.colors.primaryText,
+    ...buttonStyle("primary", "lg"),
   },
   completionSharePrimaryText: {
-    color: vibesTheme.colors.background,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("lg", "primary"),
   },
   completionShareSecondary: {
     minHeight: 48,

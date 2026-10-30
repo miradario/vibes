@@ -88,7 +88,7 @@ import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/u
 import DayPill from "../components/ui/DayPill";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import { cardStyles, iconButtonFloating, iconButtonFloatingIconColor } from "../components/ui/surfaceStyles";
-import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle, buttonVariant } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -703,7 +703,7 @@ const EventDetail = () => {
                     navigation.navigate("EventChat" as never, { event } as never)
                   }
                 >
-                  <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={DARK_GRAY} />
+                  <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={buttonContentColor["secondary"]} />
                   <Text style={localStyles.challengeChatButtonText}>
                     Entrar al chat del desafío
                   </Text>
@@ -712,7 +712,7 @@ const EventDetail = () => {
                   style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
                   disabled
                 >
-                  <Icon name="checkmark-circle" size={ds.iconSize.md} color={WHITE} />
+                  <Icon name="checkmark-circle" size={ds.iconSize.md} color={buttonContentColor["accent"]} />
                   <Text style={localStyles.checkInButtonText}>
                     Desafío finalizado
                   </Text>
@@ -737,11 +737,10 @@ const EventDetail = () => {
                 ]}
                 disabled
               >
-                <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} />
+                <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={buttonContentColor["secondary"]} />
                 <Text
                   style={[
                     localStyles.challengeChatButtonText,
-                    localStyles.challengeChatButtonTextDisabled,
                   ]}
                 >
                   Chat del desafío
@@ -751,7 +750,7 @@ const EventDetail = () => {
                 style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
                 disabled
               >
-                <Icon name="checkmark-circle" size={ds.iconSize.md} color={WHITE} />
+                <Icon name="checkmark-circle" size={ds.iconSize.md} color={buttonContentColor["accent"]} />
                 <Text style={localStyles.checkInButtonText}>
                   Desafío finalizado
                 </Text>
@@ -798,7 +797,7 @@ const EventDetail = () => {
                   navigation.navigate("EventChat" as never, { event } as never)
                 }
               >
-                <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={DARK_GRAY} />
+                <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={buttonContentColor["secondary"]} />
                 <Text style={localStyles.challengeChatButtonText}>
                   Entrar al chat del desafío
                 </Text>
@@ -811,8 +810,8 @@ const EventDetail = () => {
                   ]}
                   disabled
                 >
-                  <Icon name="checkmark-circle" size={ds.iconSize.md} color={WHITE} />
-                  <Text style={localStyles.checkInButtonText}>
+                  <Icon name="checkmark-circle" size={ds.iconSize.md} color={buttonContentColor.primary} />
+                  <Text style={[localStyles.checkInButtonText, localStyles.checkInButtonTextDone]}>
                     Desafío hecho hoy
                   </Text>
                 </TouchableOpacity>
@@ -834,11 +833,10 @@ const EventDetail = () => {
               ]}
               disabled
             >
-              <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} />
+              <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={buttonContentColor["secondary"]} />
               <Text
                 style={[
                   localStyles.challengeChatButtonText,
-                  localStyles.challengeChatButtonTextDisabled,
                 ]}
               >
                 Uníte para entrar al chat
@@ -2114,14 +2112,10 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   publicStateButton: {
-    borderRadius: ds.radii.xl,
-    backgroundColor: vibesTheme.colors.accentMustard,
-    paddingHorizontal: ds.spacing[6],
-    paddingVertical: ds.spacing[3],
+    ...buttonStyle("accent", "md"),
   },
   publicStateButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("md", "accent"),
   },
   challengeWhiteBackground: {
     backgroundColor: WHITE,
@@ -2582,55 +2576,24 @@ const localStyles = StyleSheet.create({
     elevation: ds.shadows.md.elevation,
   },
   checkInButton: {
+    ...buttonStyle("accent", "lg"),
     flex: 1,
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[2],
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[4],
-    ...ds.glow.accent,
-    elevation: ds.shadows.md.elevation,
-    paddingHorizontal: ds.spacing[3],
   },
-  checkInButtonDone: {
-    backgroundColor: vibesTheme.colors.primaryText,
-  },
-  checkInButtonDisabled: {
-    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.strong),
-  },
+  checkInButtonTextDone: { color: buttonContentColor.primary },
+  checkInButtonDone: { ...buttonVariant.primary },
+  checkInButtonDisabled: { ...buttonDisabled },
   challengeChatButton: {
+    ...buttonStyle("secondary", "lg"),
     flex: 1,
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[2],
-    backgroundColor: WHITE,
-    borderRadius: ds.radii.xl,
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    paddingVertical: ds.spacing[3],
-    paddingHorizontal: ds.spacing[3],
   },
-  challengeChatButtonDisabled: {
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
-    borderColor: ds.colors.border.subtle,
-  },
+  challengeChatButtonDisabled: { ...buttonDisabled },
   challengeChatButtonText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.label,
+    ...buttonLabel("lg", "secondary"),
     textAlign: "center",
     flexShrink: 1,
   },
-  challengeChatButtonTextDisabled: {
-    color: vibesTheme.colors.secondaryText,
-  },
   checkInButtonText: {
-    color: vibesTheme.colors.surface,
-    ...ds.textStyles.label,
+    ...buttonLabel("lg", "accent"),
     textAlign: "center",
     flexShrink: 1,
   },

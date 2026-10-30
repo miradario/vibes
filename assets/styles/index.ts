@@ -1,5 +1,6 @@
 import { StyleSheet, Dimensions, Platform } from "react-native";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../../components/ui/buttonStyles";
 import * as ds from "../../src/theme/tokens";
 
 export const PRIMARY_COLOR = vibesTheme.colors.accentMustard;
@@ -3250,17 +3251,11 @@ export default StyleSheet.create({
     ...ds.textStyles.subtitleMedium,
   },
   eventDetailJoinButton: {
-    backgroundColor: CTA_PRIMARY,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
+    ...buttonStyle("accent", "lg"),
     marginBottom: ds.spacing[3],
-    ...ds.glow.accent,
   },
   eventDetailJoinButtonText: {
-    ...ds.textStyles.subtitle,
-    letterSpacing: 0.3,
-    color: vibesTheme.colors.primaryText,
+    ...buttonLabel("lg", "accent"),
   },
   eventDetailJoinNote: {
     ...ds.textStyles.bodySmall,
