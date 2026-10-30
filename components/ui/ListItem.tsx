@@ -64,11 +64,11 @@ export default function ListItem({
       style={({ pressed }) => [
         styles.row,
         { minHeight: ds.componentSize.listItem[size] },
+        style,
         selected && styles.selected,
         pressed && styles.pressed,
         divider && styles.divider,
         disabled && styles.disabled,
-        style,
       ]}
     >
       {leadingNode}
