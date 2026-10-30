@@ -1,3 +1,4 @@
+import { eventPlaces } from "../src/lib/eventPlaces";
 import { readCommunities, canonicalCommunity } from "../src/lib/communities";
 import ScreenContainer from "../components/ScreenContainer";
 import {creationFormStyles} from "../src/theme/creationFormStyles";
@@ -10,7 +11,7 @@ import { EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, parseEventCategory, parseE
 import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   View,
@@ -49,6 +50,7 @@ import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import {
+  useEventsFeedQuery,
   useCreateEventMutation,
   type EventModality,
   type EventPricingType,
@@ -239,6 +241,10 @@ const CreateEvent = () => {
   const [location, setLocation] = useState(
     typeof editingEvent?.location === "string" ? editingEvent.location : "",
   );
+  const [placesVisible, setPlacesVisible] = useState(false);
+  const [placeSearch, setPlaceSearch] = useState("");
+  const placesFeed = useEventsFeedQuery({ loadAll: true });
+  const availablePlaces = useMemo(() => eventPlaces(placesFeed.data ?? [], placeSearch), [placesFeed.data, placeSearch]);
   const [isValidatingLocation, setIsValidatingLocation] = useState(false);
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
@@ -870,7 +876,13 @@ const CreateEvent = () => {
 
           {modality === "in_person" ? (
             <>
-              <Text style={localStyles.label}>Ubicación</Text>
+              <Text style={localStyles.label}>Lugar</Text>
+              <TouchableOpacity accessibilityRole="button" style={placeStyles.row} onPress={() => { Keyboard.dismiss(); setPlaceSearch(""); setPlacesVisible(true); }}>
+                <Icon name="location-outline" size={22} color={vibesTheme.colors.primaryText} />
+                <Text style={placeStyles.text}>{location || "Elegir un lugar existente"}</Text>
+                <Icon name="chevron-down" size={20} color={vibesTheme.colors.primaryText} />
+              </TouchableOpacity>
+              <Text style={localStyles.locationHint}>O ingresá una dirección nueva</Text>
               <TextInput
                 ref={locationInputRef}
                 style={localStyles.input}
@@ -1177,6 +1189,24 @@ const CreateEvent = () => {
       </AnimatedSheetModal>
       </View>
     </KeyboardAvoidingView>
+      <AnimatedSheetModal visible={placesVisible} onClose={() => setPlacesVisible(false)} sheetStyle={[placeStyles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
+        <View style={placeStyles.heading}>
+          <Text style={placeStyles.title}>Elegir lugar</Text>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar lugares" style={placeStyles.close} onPress={() => setPlacesVisible(false)}><Icon name="close" size={24} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
+        </View>
+        <TextInput accessibilityLabel="Buscar lugar" style={localStyles.input} placeholder="Buscar dirección" placeholderTextColor={vibesTheme.colors.secondaryText} value={placeSearch} onChangeText={setPlaceSearch} autoCorrect={false} />
+        <ScrollView keyboardShouldPersistTaps="handled" style={{ flexGrow: 0 }}>
+          {placesFeed.isLoading ? <VibesLoader /> : placesFeed.isError ? <TouchableOpacity accessibilityRole="button" style={placeStyles.row} onPress={() => void placesFeed.refetch()}><Text style={placeStyles.text}>No pudimos cargar los lugares. Reintentar</Text></TouchableOpacity> : availablePlaces.length ? availablePlaces.map(place => (
+            <TouchableOpacity key={place.address} accessibilityRole="button" accessibilityState={{ selected: place.address === location }} style={placeStyles.row} onPress={() => {
+              setLocation(place.address); setValidatedLocation(place); setMapPreviewFailed(false); setIsLocationFocused(false); locationSuggestions.clear(); setPlacesVisible(false);
+            }}>
+              <Icon name="location-outline" size={20} color={vibesTheme.colors.primaryText} />
+              <Text style={placeStyles.text}>{place.address}</Text>
+              {place.address === location ? <Icon name="checkmark" size={20} color={vibesTheme.colors.primaryText} /> : null}
+            </TouchableOpacity>
+          )) : <Text style={localStyles.locationHint}>No hay lugares que coincidan. Podés ingresar una dirección nueva en el formulario.</Text>}
+        </ScrollView>
+      </AnimatedSheetModal>
     </ScreenContainer>
   );
 };
@@ -1617,3 +1647,12 @@ const legacyStyles = StyleSheet.create({
 export default CreateEvent;
 
 const localStyles = {...legacyStyles, ...creationFormStyles};
+
+const placeStyles = StyleSheet.create({
+ row: { minHeight: 48, padding: 12, gap: 10, marginBottom: 8, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: `${vibesTheme.colors.primaryText}20`, borderRadius: 16, backgroundColor: vibesTheme.colors.surface },
+ text: { flex: 1, fontFamily: vibesTheme.fonts.regular, fontSize: 16, lineHeight: 22, color: vibesTheme.colors.primaryText },
+ sheet: { maxHeight: "80%", padding: 20, gap: 12, backgroundColor: vibesTheme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
+ heading: { flexDirection: "row", alignItems: "center", gap: 12 },
+ close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+ title: { flex: 1, fontFamily: vibesTheme.fonts.bold, fontSize: 24, lineHeight: 30, color: vibesTheme.colors.primaryText },
+});

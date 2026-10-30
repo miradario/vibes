@@ -367,3 +367,5 @@ En onboarding, la elección de comunidades aparece en el primer formulario, en e
 El onboarding usa cabeceras compactas en todos sus pasos: progreso de 44, padding superior 4, títulos 26–28/32–34 y decoraciones de 64–82 de alto. Empecemos por vos usa 28/32, logo 72×82 y saludo compacto. Reducir márgenes entre bloques a 8–14; opciones de al menos 52 y acciones secundarias de al menos 44, conservando inputs legibles y escalado accesible.
 
 Tus comunidades usa título 22/28, decoración 44×48 y opciones a 6 de la cabecera, con separación 8 entre opciones. Sin margen superior adicional en el bloque.
+
+Crear/editar evento permite elegir entre direcciones publicadas mediante AnimatedSheetModal con búsqueda, carga, error y vacío. Deduplicar direcciones, reutilizar coordenadas existentes y mantener entrada manual y validación de direcciones nuevas.
