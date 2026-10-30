@@ -37,6 +37,8 @@ export const colors = {
     errorBg: withAlpha(palette.coral, opacity.soft),
     infoBg: withAlpha(palette.blue, opacity.soft),
     successBg: withAlpha(palette.mustard, opacity.soft),
+    /** Banner warning (spec 29/10, DUDA 15): mustard 24% + borde `border/selected`; success es 12% sin borde. */
+    warningBg: withAlpha(palette.mustard, opacity.medium),
   },
   scrim: withAlpha(palette.ink, opacity.scrim),
   icon: {
