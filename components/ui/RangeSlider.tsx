@@ -64,7 +64,7 @@ const s = StyleSheet.create({
   heading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: ds.spacing[3] },
   title: { color: ds.colors.text.primary, ...ds.textStyles.title },
   /** Pastilla de valor del slider simple (sin cambio visual). */
-  valuePill: { borderRadius: ds.radii.xl, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
+  valuePill: { borderRadius: ds.radii.xl, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.colors.bg.subtle },
   clearText: { color: ds.colors.text.primary, ...ds.textStyles.label },
   clearGhost: { minHeight: HIT, justifyContent: "center", paddingHorizontal: ds.spacing[3], borderRadius: ds.radii.pill },
   track: { position: "absolute", top: (HIT - TRACK) / 2, height: TRACK, borderRadius: ds.radii.pill, backgroundColor: ds.colors.border.default },
