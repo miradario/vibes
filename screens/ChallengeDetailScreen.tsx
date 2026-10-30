@@ -96,7 +96,7 @@ import StatRow from "../components/ui/StatRow";
 import Divider from "../components/ui/Divider";
 import { bannerStyles, iconButtonFloating, iconButtonFloatingIconColor } from "../components/ui/surfaceStyles";
 import IconCircle, { iconCircleIconSize, iconCircleStyle } from "../components/ui/IconCircle";
-import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -922,6 +922,7 @@ const ChallengeDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
+  const [footerHeight, setFooterHeight] = useState(0);
   const { width, height } = useWindowDimensions();
   // Path animation starts only once half the journey card (capped at 40% of the screen) is visible.
   const journeyCardRef = useRef<View>(null);
@@ -1575,7 +1576,7 @@ const ChallengeDetailScreen = () => {
         contentContainerStyle={[
           localStyles.scrollContent,
           {
-            paddingBottom: insets.bottom + /* ds-lint-allow layout: paddingBottom 188 (medida de layout fuera de la escala) */ 188,
+            paddingBottom: footerHeight + Math.max(insets.bottom + ds.spacing[1], ds.spacing[3]) + ds.spacing[5],
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -1696,6 +1697,7 @@ const ChallengeDetailScreen = () => {
       {event?.id && userId && (!event.visibility || event.visibility === "public") ? <EventInviteSheet event={event} visible={inviteVisible} onClose={() => setInviteVisible(false)} onDiscover={() => navigation.navigate("Tab" as never, { screen: "Discover" } as never)} /> : null}
 
       <View
+        onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
         style={[
           localStyles.stickyFooter,
           {
@@ -1736,12 +1738,10 @@ const ChallengeDetailScreen = () => {
                   <VibesLoader />
                 ) : (
                   <>
-                    <Text style={localStyles.joinRequestButtonTitle}>
+                    <Text style={localStyles.joinRequestButtonTitle} numberOfLines={1}>
                       Sumarme al desafío
                     </Text>
-                    <Text style={localStyles.joinRequestButtonSubtitle}>
-                      Activá tu propio espacio y entrá al chat del desafío
-                    </Text>
+                    <Icon name="arrow-forward" size={ds.iconSize.md} color={buttonContentColor.primary} />
                   </>
                 )}
               </TouchableOpacity>
@@ -1770,7 +1770,7 @@ const ChallengeDetailScreen = () => {
                   <VibesLoader />
                 ) : (
                   <>
-                    <Text style={localStyles.joinRequestButtonTitle}>
+                    <Text style={localStyles.joinRequestButtonTitle} numberOfLines={1}>
                       {(event?.visibility ?? "public") === "public"
                         ? userId
                           ? "Sumarme al desafío"
@@ -1781,14 +1781,14 @@ const ChallengeDetailScreen = () => {
                           ? "Solicitar acceso"
                           : "Registrarme para solicitar acceso"}
                     </Text>
-                    {(event?.visibility ?? "public") !== "public" ? (
-                      <Text style={localStyles.joinRequestButtonSubtitle}>
-                        El creador lo puede aprobar cuando quiera
-                      </Text>
-                    ) : null}
                   </>
                 )}
               </TouchableOpacity>
+              {(event?.visibility ?? "public") !== "public" ? (
+                <Text style={localStyles.joinRequestHelper}>
+                  El creador lo puede aprobar cuando quiera
+                </Text>
+              ) : null}
 
             </>
           )}
@@ -2293,17 +2293,18 @@ const localStyles = StyleSheet.create({
     height: 40,
   },
   joinRequestButton: {
-    ...buttonStyle("primary", "md"),
+    ...buttonStyle("primary", "lg"),
   },
   joinRequestButtonDisabled: {
-    opacity: 0.6,
+    ...buttonDisabled,
   },
   joinRequestButtonTitle: {
-    ...buttonLabel("md", "primary"),
+    ...buttonLabel("lg", "primary"),
   },
-  joinRequestButtonSubtitle: {
-    color: buttonContentColor.primary,
-    ...ds.textStyles.labelMedium,
+  joinRequestHelper: {
+    ...ds.textStyles.bodySmall,
+    color: ds.colors.text.secondary,
+    textAlign: "center",
   },
   chatLockedRow: {
     borderRadius: ds.radii.lg,

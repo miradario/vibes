@@ -45,7 +45,7 @@ export const buttonContentColor: Record<ButtonVariant, string> = {
 export const buttonLabel = (size: ButtonSize, variant: ButtonVariant) => {
   const blue = variant === "secondary-blue";
   const type = size === "sm" ? (blue ? ds.textStyles.labelMedium : ds.textStyles.label) : blue ? ds.textStyles.subtitleMedium : ds.textStyles.subtitle;
-  return { ...type, color: buttonContentColor[variant], textAlign: "center" } as const;
+  return { ...type, color: buttonContentColor[variant], textAlign: "center", flexShrink: 1 } as const;
 };
 
 export const buttonStyle = (variant: ButtonVariant, size: ButtonSize = "md") => ({ ...buttonBase, ...buttonSize[size], ...buttonVariant[variant] });
