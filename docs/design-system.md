@@ -336,7 +336,7 @@ Nuevas conexiones usa presentación comprimida: avatar exterior 54 (48 en Inicio
 
 En Nuevas conexiones, el título conserva área táctil 44, sin margen inferior de fila y con compensación visual de -8 antes de las fotos. Mantener padding superior 4 para no cortar el badge.
 
-En Inicio, las cabeceras Eventos para vos y Tus desafíos no agregan margen inferior antes de las tarjetas. Conservar el área táctil 44 y la separación entre tarjetas.
+En Inicio, la cabecera de eventos muestra “Tus eventos” cuando hay eventos propios vigentes y “Eventos para vos” cuando no los hay y se muestran sugerencias o el estado vacío. Las cabeceras de eventos y Tus desafíos no agregan margen inferior antes de las tarjetas. Conservar el área táctil 44 y la separación entre tarjetas.
 
 La comunidad Meditación reemplaza la denominación Meditación trascendental; normalizar los nombres anteriores y la variante trasendental para conservar las selecciones y asociaciones guardadas.
 
