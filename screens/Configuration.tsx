@@ -24,6 +24,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { authKeys } from "../src/auth/auth.queries";
 import { resetVibiDailyGreeting } from "../src/lib/vibiDailyPrompts";
 import { cardStyles } from "../components/ui/surfaceStyles";
+import ListItem from "../components/ui/ListItem"; // TEMP preview onboarding: remove before merge
 import * as ds from "../src/theme/tokens";
 
 const Configuration = () => {
@@ -134,6 +135,17 @@ const Configuration = () => {
             <Icon name="chevron-forward" size={ds.iconSize.md} color={TEXT_SECONDARY} />
           )}
         </TouchableOpacity>
+        {/* TEMP preview onboarding: remove before merge. Solo __DEV__; no escribe nada. */}
+        {__DEV__ ? (
+          <ListItem
+            title="🛠 Preview onboarding (dev)"
+            subtitle="Recorre todo el onboarding sin guardar"
+            leadingIcon="construct-outline"
+            trailing={{ type: "chevron" }}
+            onPress={() => navigation.navigate("VibesOnboardingFlow" as never, { preview: true } as never)}
+            style={{ marginTop: ds.spacing[4] }}
+          />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
