@@ -1055,7 +1055,7 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.title,
   },
   peopleSection: {
-    marginBottom: ds.spacing[8],
+    marginBottom: ds.spacing[6],
   },
   peopleHeading: { marginBottom: ds.spacing[3] },
   peopleCarousel: {

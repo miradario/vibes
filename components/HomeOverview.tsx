@@ -421,7 +421,7 @@ export default function HomeOverview({
 }
 const s = StyleSheet.create({
   sectionBlock: {
-    marginBottom: ds.spacing[8],
+    marginBottom: ds.spacing[6],
   },
   card: { ...cardStyles.base, padding: ds.spacing[4], marginBottom: ds.spacing[4] },
   heading: { marginBottom: ds.spacing[3] },

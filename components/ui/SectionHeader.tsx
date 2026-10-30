@@ -15,7 +15,7 @@ type SectionHeaderProps = {
 
 /**
  * SectionHeader (30/10, t914s3491): título `textStyles.heading` + link de sección opcional.
- * Link: chevron 20 (`iconSize.md`) en `icon/accent` (mustard), touch target 44, role link.
+ * Link: chevron 20 (`iconSize.md`) en `icon/accent` (mustard), touch target 44 (hitSlop), role link.
  * Los chevrons dentro de cards siguen en `icon/muted`.
  */
 export default function SectionHeader({ title, onPress, accessibilityLabel, disabled, style }: SectionHeaderProps) {
@@ -27,7 +27,8 @@ export default function SectionHeader({ title, onPress, accessibilityLabel, disa
     );
   return (
     <TouchableOpacity
-      style={[styles.row, styles.link, style]}
+      style={[styles.row, style]}
+      hitSlop={LINK_HIT_SLOP}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="link"
@@ -41,8 +42,11 @@ export default function SectionHeader({ title, onPress, accessibilityLabel, disa
   );
 }
 
+// Touch target 44 vía hitSlop, sin inflar la fila: el espacio visible entre secciones queda en el token.
+const LINK_SLOP_Y = Math.max(0, (ds.touchTarget - ds.textStyles.heading.lineHeight) / 2);
+const LINK_HIT_SLOP = { top: LINK_SLOP_Y, bottom: LINK_SLOP_Y };
+
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2] },
-  link: { minHeight: ds.touchTarget },
   title: { flex: 1, ...ds.textStyles.heading, color: ds.colors.text.primary },
 });

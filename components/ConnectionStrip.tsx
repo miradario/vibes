@@ -69,7 +69,7 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
 const s = StyleSheet.create({
   connectionsStrip: { marginBottom: ds.spacing[3] },
   stripHeadingRow: { flexDirection: "row", alignItems: "center", marginBottom: 0 },
-  stripHeading: { flex: 1, marginBottom: -ds.spacing[2] },
+  stripHeading: { flex: 1 },
   stripRow: { flexDirection: "row", alignItems: "flex-start" },
   stripScroll: { flex: 1 },
   stripPeople: { alignItems: "flex-start", gap: ds.spacing[2], paddingTop: STRIP_PADDING_TOP, paddingBottom: ds.spacing[1], paddingRight: ds.spacing[2] },
