@@ -2200,11 +2200,6 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     ...ds.textStyles.heading,
   },
-  eventIntroDivider: {
-    width: 1,
-    height: 42,
-    backgroundColor: ds.colors.border.default,
-  },
   eventDetailWarmBackground: {
     backgroundColor: vibesTheme.colors.background,
   },

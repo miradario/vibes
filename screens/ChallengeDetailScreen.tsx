@@ -92,6 +92,8 @@ import ChallengeInviteesSection from "../components/challengeRestart/ChallengeIn
 import ChallengeInvitationActions from "../components/challengeRestart/ChallengeInvitationActions";
 import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/ui/SwipeToConfirm";
 import DayPill, { dayPillColors } from "../components/ui/DayPill";
+import StatRow from "../components/ui/StatRow";
+import Divider from "../components/ui/Divider";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -348,17 +350,12 @@ export const StreakSummaryCard = memo(
           {daysLeft === 0 ? "Desafío completo" : `${daysLeft} días por delante`}
         </Text>
       </View>
-      <View style={localStyles.streakMetrics}>
-        <View>
-          <Text style={localStyles.streakValue}>{streak}</Text>
-          <Text style={localStyles.streakLabel}>actual</Text>
-        </View>
-        <View style={localStyles.metricDivider} />
-        <View>
-          <Text style={localStyles.streakValue}>{bestStreak}</Text>
-          <Text style={localStyles.streakLabel}>mejor</Text>
-        </View>
-      </View>
+      <StatRow
+        items={[
+          { key: "current", value: streak, label: "actual" },
+          { key: "best", value: bestStreak, label: "mejor" },
+        ]}
+      />
     </View>
   )
 );
@@ -677,7 +674,7 @@ export const PathProgress = memo(
               Completados
             </Text>
           </View>
-          <View style={localStyles.pathStatDivider} />
+          <Divider orientation="vertical" tone="default" />
           <View
             style={[localStyles.pathStatItem, localStyles.pathStatItemIndented]}
           >
@@ -694,7 +691,7 @@ export const PathProgress = memo(
               Actual
             </Text>
           </View>
-          <View style={localStyles.pathStatDivider} />
+          <Divider orientation="vertical" tone="default" />
           <View
             style={[localStyles.pathStatItem, localStyles.pathStatItemIndented]}
           >
@@ -2181,11 +2178,6 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.secondaryText,
     ...ds.textStyles.bodySmall,
   },
-  challengeIntroDivider: {
-    width: 1,
-    height: 42,
-    backgroundColor: ds.colors.border.default,
-  },
   heroInfoStack: {
     marginBottom: ds.spacing[4],
   },
@@ -2592,26 +2584,6 @@ const localStyles = StyleSheet.create({
     color: palette.muted,
     ...ds.textStyles.subtitleMedium,
   },
-  streakMetrics: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[4],
-  },
-  streakValue: {
-    color: palette.goldDeep,
-    ...ds.textStyles.display,
-    textAlign: "center",
-  },
-  streakLabel: {
-    color: palette.muted,
-    ...ds.textStyles.label,
-    textAlign: "center",
-  },
-  metricDivider: {
-    width: 1,
-    height: 42,
-    backgroundColor: ds.colors.border.default,
-  },
   progressCard: {
     borderRadius: ds.radii.xl,
     backgroundColor: palette.surface,
@@ -2721,11 +2693,6 @@ const localStyles = StyleSheet.create({
   journeyStatValue: {
     color: palette.text,
     fontFamily: vibesTheme.fonts.bold,
-  },
-  journeyStatDivider: {
-    width: 1,
-    height: 42,
-    backgroundColor: ds.colors.border.default,
   },
   pathHeader: {
     flexDirection: "row",
@@ -2880,11 +2847,6 @@ const localStyles = StyleSheet.create({
     marginTop: ds.spacing[2],
     color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.micro,
-  },
-  pathStatDivider: {
-    width: 1,
-    height: 42,
-    backgroundColor: ds.colors.bg.subtle,
   },
   compactTrack: {
     height: ds.componentSize.progressBar.md,
