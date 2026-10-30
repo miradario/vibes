@@ -8,6 +8,10 @@
  *  - tamaños numéricos en <Icon size> / <Ionicons size>.
  * 0 está permitido en spacing/radios. Medidas de layout (width, height, top, hitSlop, flex,
  * animaciones) no se revisan.
+ *  - en components/ui/**: `vibesTheme.*` (usá ds.*) y números en width/height/minWidth/minHeight/maxWidth
+ *    (usá ds.componentSize / ds.touchTarget / ds.avatarSize / ds.iconSize);
+ *  - en todo el código: número suelto como 2º argumento de withAlpha (usá ds.opacity.*).
+ * Fuera de components/ui, `vibesTheme.*` es solo aviso (no falla) mientras dura la migración.
  * Excepciones documentadas: comentario `/* ds-lint-allow <motivo> *\/` justo antes del valor,
  * o `/* ds-lint-disable-file <motivo> *\/` en el archivo. El motivo es obligatorio.
  * Uso: node scripts/lint-design-tokens.cjs [archivos...]
@@ -23,6 +27,8 @@ const SPACING_PROP = /^(padding|margin)(Horizontal|Vertical|Top|Bottom|Left|Righ
 const RADIUS_PROP = /^border(Top|Bottom)?(Left|Right|Start|End)?Radius$|^border(TopStart|TopEnd|BottomStart|BottomEnd)Radius$/;
 const NUMERIC_TEXT = new Set(["fontSize", "lineHeight"]);
 const SHADOW_NUM = new Set(["shadowOpacity", "shadowRadius", "elevation"]);
+const SIZE_PROP = new Set(["width", "height", "minWidth", "minHeight", "maxWidth"]);
+const warnings = [];
 const COLOR_RE = /^\s*(#[0-9a-fA-F]{3,8}|(rgba?|hsla?)\(.*\))\s*$/;
 
 function walk(dir, out) {
@@ -72,7 +78,17 @@ function lintFile(file) {
     const { line, character } = sf.getLineAndCharacterOfPosition(n.getStart(sf));
     problems.push(`${rel}:${line + 1}:${character + 1}  ${msg}`);
   };
+  const isUi = rel.startsWith("components/ui/");
   function visit(n) {
+    if (ts.isPropertyAccessExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === "vibesTheme") {
+      if (isUi) report(n, `${n.getText(sf)} en components/ui: usá ds.*`);
+      else if (!allowed(n)) {
+        const { line, character } = sf.getLineAndCharacterOfPosition(n.getStart(sf));
+        warnings.push(`${rel}:${line + 1}:${character + 1}  ${n.getText(sf)}: migrar a ds.*`);
+      }
+    }
+    if (ts.isCallExpression(n) && /(^|\.)withAlpha$/.test(n.expression.getText(sf)) && n.arguments[1] &&
+        numericSlots(n.arguments[1]).length) report(n.arguments[1], `withAlpha(…, ${n.arguments[1].getText(sf)}): usá ds.opacity.*`);
     if ((ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) && COLOR_RE.test(n.text) &&
         !(n.parent && ts.isImportDeclaration(n.parent))) report(n, `color literal ${n.text}: usá ds.colors.*`);
     if (ts.isTemplateExpression(n) && n.templateSpans.some((s) => /^[0-9A-Fa-f]{2}(?![0-9A-Za-z])/.test(s.literal.text)))
@@ -85,6 +101,8 @@ function lintFile(file) {
           report(s, `${k}: ${s.getText(sf)} hardcodeado; usá ${NUMERIC_TEXT.has(k) ? "ds.textStyles.*" : SPACING_PROP.test(k) ? "ds.spacing[*]" : RADIUS_PROP.test(k) ? "ds.radii.*" : "ds.shadows.*"}`);
         }
       }
+      if (isUi && k && SIZE_PROP.has(k))
+        for (const s of numericSlots(n.initializer)) report(s, `${k}: ${s.getText(sf)} hardcodeado en components/ui; usá ds.componentSize / ds.touchTarget`);
       if (k === "fontWeight" && (ts.isStringLiteral(n.initializer) || ts.isNumericLiteral(n.initializer)))
         report(n.initializer, "fontWeight prohibido: el peso lo da la familia (ds.textStyles / ds.fontFamilies)");
       if (k === "fontFamily" && ts.isStringLiteral(n.initializer)) report(n.initializer, "fontFamily literal: usá ds.fontFamilies.*");
@@ -108,6 +126,8 @@ let files = process.argv.slice(2).map((f) => path.resolve(f));
 if (!files.length) { DIRS.forEach((d) => walk(path.join(ROOT, d), files)); files.push(path.join(ROOT, "App.tsx")); }
 files = files.filter((f) => !IGNORE.some((r) => r.test(path.relative(ROOT, f).split(path.sep).join("/"))));
 const problems = files.flatMap(lintFile);
+if (warnings.length) console.warn(`⚠ ${warnings.length} usos de vibesTheme.* fuera de components/ui (aviso, no falla). Detalle: DS_LINT_VERBOSE=1.`);
+if (warnings.length && process.env.DS_LINT_VERBOSE) console.warn(warnings.join("\n"));
 if (problems.length) {
   console.error(problems.join("\n"));
   console.error(`\n✖ ${problems.length} valores hardcodeados (DESIGN_SYSTEM.md §1). Usá tokens de src/theme/tokens o documentá la excepción con /* ds-lint-allow <motivo> */.`);
