@@ -23,6 +23,7 @@ import {
 import { vibesTheme } from "../src/theme/vibesTheme";
 import Tag from "../components/ui/Tag";
 import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import SegmentedControl from "../components/ui/SegmentedControl";
 import * as ds from "../src/theme/tokens";
 const c = vibesTheme.colors;
 const rules = [
@@ -282,37 +283,24 @@ export default function VibesPoints() {
             día (UTC), sin importar su duración.
           </Text>
           <Text style={s.rowTitle}>Duración</Text>
-          <View style={s.choices}>
-            {[5, 10, 20].map((value) => (
-              <TouchableOpacity
-                key={value}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: duration === value }}
-                disabled={meditation.isPending}
-                style={[s.choice, duration === value && s.selected]}
-                onPress={() => setDuration(value)}
-              >
-                <Text style={s.body}>{value} min</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <SegmentedControl
+            options={[5, 10, 20].map((value) => ({ key: String(value), label: `${value} min` }))}
+            selected={String(duration)}
+            onChange={(key) => setDuration(Number(key))}
+            disabled={meditation.isPending}
+            optionRole="radio"
+          />
           <Text style={s.rowTitle}>Tipo de meditación</Text>
-          <View style={s.choices}>
-            {(["silent", "guided"] as const).map((value) => (
-              <TouchableOpacity
-                key={value}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: kind === value }}
-                disabled={meditation.isPending}
-                style={[s.choice, kind === value && s.selected]}
-                onPress={() => setKind(value)}
-              >
-                <Text style={s.body}>
-                  {value === "silent" ? "En silencio" : "Guiada"}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <SegmentedControl
+            options={[
+              { key: "silent", label: "En silencio" },
+              { key: "guided", label: "Guiada" },
+            ] as const}
+            selected={kind}
+            onChange={setKind}
+            disabled={meditation.isPending}
+            optionRole="radio"
+          />
           <Text style={s.hint}>El registro es privado.</Text>
           {meditation.isError ? (
             <Text accessibilityRole="alert" style={s.body}>
@@ -423,18 +411,6 @@ const s = StyleSheet.create({
   registerText: {
     ...buttonLabel("lg", "accent"),
   },
-  choices: { flexDirection: "row", gap: ds.spacing[2] },
-  choice: {
-    flex: 1,
-    minHeight: 48,
-    padding: ds.spacing[3],
-    borderRadius: ds.radii.lg,
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  selected: { backgroundColor: ds.colors.feedback.infoBg, borderColor: c.accentBlue },
   screen: { flex: 1, backgroundColor: c.background },
   header: {
     flexDirection: "row",

@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Text, TextInput } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { formatSession, type EventSession } from "../src/lib/eventSchedule";
+import SegmentedControl from "./ui/SegmentedControl";
 import * as ds from "../src/theme/tokens";
 
 export type EventRecurrenceDraft = { frequency: "none" | "weekly" | "monthly"; count: string; weekdays: number[] };
@@ -18,13 +19,9 @@ export default function EventRecurrenceEditor({ value, onChange, defaultWeekday,
   const countValid = /^\d+$/.test(value.count) && Number(value.count) >= 2 && Number(value.count) <= 52;
   return <View style={s.group}>
     <Text style={s.label}>Repetir evento</Text>
-    <View style={s.options}>
-      {([["none", "No repetir"], ["weekly", "Semanal"], ["monthly", "Mensual"]] as const).map(([frequency, label]) => <TouchableOpacity
-        key={frequency} accessibilityRole="button" accessibilityState={{ selected: value.frequency === frequency }}
-        style={[s.option, value.frequency === frequency && s.selected]} onPress={() => onChange({ ...value, frequency })}>
-        <Text style={s.optionText}>{label}</Text>
-      </TouchableOpacity>)}
-    </View>
+    <SegmentedControl
+      options={[{ key: "none", label: "No repetir" }, { key: "weekly", label: "Semanal" }, { key: "monthly", label: "Mensual" }] as const}
+      selected={value.frequency} onChange={(frequency) => onChange({ ...value, frequency })} />
     {value.frequency !== "none" ? <>
       {value.frequency === "weekly" ? <>
         <Text style={s.label}>Días de la semana</Text>
@@ -53,7 +50,6 @@ const s = StyleSheet.create({
   group: { gap: ds.spacing[2], marginTop: ds.spacing[5] },
   label: { ...ds.textStyles.label, color: c.primaryText },
   options: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
-  option: { minHeight: 40, justifyContent: "center", paddingHorizontal: ds.spacing[4], paddingVertical: 0, borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.lg, backgroundColor: c.surface },
   day: { flexGrow: 1, minWidth: 36, minHeight: 40, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.md, backgroundColor: c.surface },
   selected: { borderColor: c.accentMustard, backgroundColor: ds.colors.bg.selected },
   optionText: { ...ds.textStyles.label, color: c.primaryText },
