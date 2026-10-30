@@ -34,3 +34,7 @@ export const chipStyles = {
 
 /** Chip removable (components-spec §3): × de `iconSize.sm` en `icon/default`; fondo de filtro aplicado. */
 export const chipRemoveIcon = { size: ds.iconSize.sm, color: ds.colors.icon.default } as const;
+
+/** Chip con ícono opcional (Agus 29/10, SelectablePill): ícono `iconSize.sm`; `icon/muted` sin
+ * seleccionar y `border/selected` (mostaza) seleccionado. Va después del label con el gap del chip. */
+export const chipIcon = { size: ds.iconSize.sm, color: ds.colors.icon.muted, selectedColor: ds.colors.border.selected } as const;
