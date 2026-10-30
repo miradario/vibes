@@ -1,5 +1,6 @@
 import EventOccurrenceList from "../components/EventOccurrenceList";
 import BackButton from "../components/BackButton";
+import Tag from "../components/ui/Tag";
 import { normalizeSchedule } from "../src/lib/eventSchedule";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
@@ -1423,7 +1424,7 @@ const EventDetail = () => {
             {eventHeroImageSource ? <MediaImage source={eventHeroImageSource} style={localStyles.referenceCover} resizeMode="cover" /> : null}
             <View style={localStyles.referenceIntro}>
               <View style={localStyles.referenceBadges}>
-                {[getEventCategoryLabel(event.category), getEventParticipationLabel(event.participationType)].filter(Boolean).map(label => <View key={label} style={localStyles.referenceBadge}><Text style={localStyles.referenceBadgeText}>{label}</Text></View>)}
+                {[getEventCategoryLabel(event.category), getEventParticipationLabel(event.participationType)].filter(Boolean).map(label => <Tag key={label} label={label} />)}
               </View>
               <Text style={localStyles.referenceTitle}>{event.title}</Text>
               <EventOccurrenceList key={event.id} schedule={event.schedule} startsAt={event.startsAt} onCalendar={handleOpenCalendar} />
@@ -2110,8 +2111,6 @@ const localStyles = StyleSheet.create({
   referenceCover: { width: "auto", height: 190, borderRadius: ds.radii.lg, marginHorizontal: ds.spacing[4], marginTop: ds.spacing[2], marginBottom: ds.spacing[4], backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
   referenceIntro: { paddingHorizontal: ds.spacing[6] },
   referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2], marginBottom: ds.spacing[3] },
-  referenceBadge: { paddingHorizontal: ds.spacing[3], paddingVertical: ds.spacing[1], borderRadius: ds.radii.xl, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },
-  referenceBadgeText: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.labelMedium },
   referenceTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.display, marginBottom: ds.spacing[4] },
   referenceMetaRow: { flexDirection: "row", alignItems: "center", gap: ds.spacing[4], minHeight: 60, paddingVertical: ds.spacing[3] },
   referenceMetaTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle },

@@ -1,5 +1,6 @@
 import EventInviteSheet from "../components/EventInviteSheet";
 import AppHeader from "../components/AppHeader";
+import Tag from "../components/ui/Tag";
 import ChallengeCompletionShareCard from "../components/ChallengeCompletionShareCard";
 import { captureRef, releaseCapture } from "react-native-view-shot";
 import ChallengeCompletionConfetti from "../components/ChallengeCompletionConfetti";
@@ -1606,8 +1607,8 @@ const ChallengeDetailScreen = () => {
           ]}
         >
           <View style={localStyles.referenceBadges}>
-            <Text style={localStyles.referenceBadge}>{challenge.totalDays} días</Text>
-            {isChallengeUpcoming && !isCurated ? <Text style={localStyles.referenceBadge}>{getChallengeStartsInLabel(challengeTimeline.startsInDays)}</Text> : null}
+            <Tag label={`${challenge.totalDays} días`} />
+            {isChallengeUpcoming && !isCurated ? <Tag label={getChallengeStartsInLabel(challengeTimeline.startsInDays)} /> : null}
           </View>
           <Text style={localStyles.referenceTitle}>{challenge.title}</Text>
           <View style={localStyles.challengeIntroBlock}>
@@ -2064,7 +2065,6 @@ const localStyles = StyleSheet.create({
   referenceAction: { width: 40, height: 44, justifyContent: "center", alignItems: "center" },
   referenceCover: { width: "auto", height: 190, marginHorizontal: ds.spacing[4], marginTop: ds.spacing[2], marginBottom: ds.spacing[4], borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
   referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2], marginBottom: ds.spacing[3] },
-  referenceBadge: { overflow: "hidden", borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[3], paddingVertical: ds.spacing[1], color: vibesTheme.colors.accentBlue, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle), ...ds.textStyles.labelMedium },
   referenceTitle: { ...ds.textStyles.display, color: vibesTheme.colors.primaryText, marginBottom: ds.spacing[3] },
 
   descriptionSection: { paddingVertical: ds.spacing[5], gap: ds.spacing[3] },
