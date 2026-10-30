@@ -385,3 +385,6 @@ Tab activo: pill `componentSize.tabIndicator` (48×28, `radius/pill`) con el ace
 
 ### PersonCard (`components/ui/PersonCard.tsx`, 30/10)
 Card chica de persona para carruseles: ancho y foto `componentSize.personCard` (96), `radii.lg`, borde 1 `border/default`, fondo `bg/surface`, padding `spacing/2`. Nombre `textStyles.subtitle` (1 línea), tag opcional `textStyles.micro` `text/secondary` (2 líneas). Toda la card es tocable (>44), role button con label `Ver perfil de <nombre>`, pressed `opacity.pressed`. `blurred` desenfoca la foto (`componentSize.personCardBlur`). Uso: Home "Personas con tu vibe".
+
+### Card compacta (`cardStyles.paddingCompact`, 30/10)
+Para cards-fila con miniatura (Home: desafíos y eventos): padding vertical `spacing/3` (12) y horizontal `spacing/4` (16). El resto de las cards usa `cardStyles.padding` (16).

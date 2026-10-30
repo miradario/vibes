@@ -14,6 +14,8 @@ export const cardStyles = {
   /** `tone="accent"`: bg/selected + borde mostaza 24%. Sin glow (DUDA 17 ★). */
   accent: { borderRadius: ds.radii.lg, backgroundColor: ds.colors.bg.selected, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium) },
   padding: { padding: ds.spacing[4] },
+  /** Card compacta (filas con miniatura, 30/10): vertical `spacing/3`, horizontal `spacing/4`. */
+  paddingCompact: { paddingVertical: ds.spacing[3], paddingHorizontal: ds.spacing[4] },
   /** Vista previa de mapa (DUDA 19 ★): alto 168, sin padding. */
   mapPreview: { height: ds.componentSize.mapPreview, borderRadius: ds.radii.lg, overflow: "hidden", backgroundColor: ds.colors.bg.subtle, borderWidth: 1, borderColor: ds.colors.border.subtle },
 } as const;

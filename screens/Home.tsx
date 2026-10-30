@@ -1023,7 +1023,7 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: ds.spacing[3],
-    marginBottom: ds.spacing[2],
+    marginBottom: ds.spacing[8],
   },
   heroAvatarButton: {
     width: ds.avatarSize.md,

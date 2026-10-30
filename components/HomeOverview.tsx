@@ -447,7 +447,7 @@ const s = StyleSheet.create({
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   compactList: { gap: ds.spacing[3] },
-  compactCard: { ...cardStyles.base, width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3], ...cardStyles.padding },
+  compactCard: { ...cardStyles.base, width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3], ...cardStyles.paddingCompact },
   compactCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
   challengePhoto: {
     width: ds.componentSize.cardThumb,
