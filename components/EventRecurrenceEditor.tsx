@@ -1,9 +1,10 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Text, TextInput } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { formatSession, type EventSession } from "../src/lib/eventSchedule";
 import SegmentedControl from "./ui/SegmentedControl";
+import DayPill from "./ui/DayPill";
 import * as ds from "../src/theme/tokens";
 
 export type EventRecurrenceDraft = { frequency: "none" | "weekly" | "monthly"; count: string; weekdays: number[] };
@@ -25,12 +26,12 @@ export default function EventRecurrenceEditor({ value, onChange, defaultWeekday,
     {value.frequency !== "none" ? <>
       {value.frequency === "weekly" ? <>
         <Text style={s.label}>Días de la semana</Text>
-        <View style={s.options}>{days.map(([day, letter, label]) => <TouchableOpacity key={day} accessibilityRole="button" accessibilityLabel={label}
-          accessibilityState={{ selected: weekdays.includes(day) }} style={[s.day, weekdays.includes(day) && s.selected]}
+        <View style={s.options}>{days.map(([day, letter, label]) => <DayPill key={day} variant="selectable" label={letter} accessibilityLabel={label}
+          selected={weekdays.includes(day)}
           onPress={() => {
             const next = weekdays.includes(day) ? weekdays.filter(item => item !== day) : [...weekdays, day];
             if (next.length) onChange({ ...value, weekdays: next });
-          }}><Text style={s.optionText}>{letter}</Text></TouchableOpacity>)}</View>
+          }} />)}</View>
       </> : <Text style={s.hint}>Se repite el mismo día de cada mes. Si ese día no existe, se usa el último día del mes.</Text>}
       <Text style={s.label}>Cantidad de encuentros</Text>
       <TextInput value={value.count} onChangeText={count => onChange({ ...value, count: count.replace(/\D/g, "") })}
@@ -50,9 +51,6 @@ const s = StyleSheet.create({
   group: { gap: ds.spacing[2], marginTop: ds.spacing[5] },
   label: { ...ds.textStyles.label, color: c.primaryText },
   options: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
-  day: { flexGrow: 1, minWidth: 36, minHeight: 40, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.md, backgroundColor: c.surface },
-  selected: { borderColor: c.accentMustard, backgroundColor: ds.colors.bg.selected },
-  optionText: { ...ds.textStyles.label, color: c.primaryText },
   hint: { ...ds.textStyles.bodySmall, color: c.secondaryText },
   input: { minHeight: 48, borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.lg, padding: ds.spacing[3], color: c.primaryText, backgroundColor: c.surface, ...ds.textStyles.body },
   preview: { gap: ds.spacing[2], padding: ds.spacing[4], borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },

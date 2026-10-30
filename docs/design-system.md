@@ -89,6 +89,7 @@ Norma: una acción principal por bloque de decisión. Texto en forma de verbo co
 | Acción de cabecera | Alto mínimo 48, radio 14, padding horizontal 18, gap 8 | 16 / 20, `semibold`, 600 | `primaryText` | `secondaryText` al 4,7% (`0C`) |
 | Solo icono | Área mínima 44 × 44; icono 20–24 | Sin texto visual; label accesible obligatorio | `primaryText` | `surface` o superficie suave |
 | Solo icono lleno (`iconButtonFilled`) | 44 × 44 (`touchTarget`), radio `pill`; icono `iconSize.md` (20) | Sin texto visual; label accesible obligatorio | `text/on-dark` | `action/primary`, sin borde ni sombra; deshabilitado con `buttonDisabled` (44%). Uso: enviar en Chat, EventChat, CommunityGroupChat y Vibi |
+| Selector de día (`DayPill variant="selectable"`) | Círculo 40 (`componentSize.dayPill.md`), hitSlop a 44 | `text/label` | `text/primary` | default `bg/surface` + `border/default`; selected `bg/selected` + `border/selected` (igual que Chip selected); disabled `buttonDisabled`. Multiselección, rol checkbox. Uso: días de la semana en EventRecurrenceEditor |
 | Volver | 44 × 44, radio 13; chevron 27 | Label accesible “Volver” | `primaryText` | `surface` con `secondaryText` al 4,7% |
 | Terciario / omitir | Área táctil mínima 44 de alto | 18 / 24, `regular`, 400 | `secondaryText` | Transparente |
 | Autenticación Google | Alto mínimo 54, radio 22, borde 1 | 16 / 22, `medium`, 500 | `primaryText` | `surface` al 92%; borde mostaza al 28% |
