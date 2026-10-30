@@ -2,9 +2,6 @@ import React from "react";
 import { StyleSheet, TouchableOpacity, type StyleProp, type ViewStyle } from "react-native";
 import { Text } from "../Typography";
 import Icon from "../Icon";
-import {
-  onboardingStyles,
-} from "../../src/screens/Onboarding/vibesOnboardingStyles";
 import { chipHitSlop, chipIcon, chipStyles } from "../ui/chipStyles";
 import * as ds from "../../src/theme/tokens";
 
@@ -32,8 +29,7 @@ const SelectablePill = ({
     hitSlop={chipHitSlop}
     style={[
       chipStyles.base,
-      isAddOption && onboardingStyles.pillAdd,
-      selected && chipStyles.selected,
+      selected && !isAddOption && chipStyles.selected,
       compact && chipStyles.fullWidth,
       compact && compactStyles.pill,
       style,
@@ -47,7 +43,7 @@ const SelectablePill = ({
         isAddOption ? "add" : selected ? "checkmark-circle" : "ellipse-outline"
       }
       size={chipIcon.size}
-      color={selected || isAddOption ? chipIcon.selectedColor : chipIcon.color}
+      color={selected && !isAddOption ? chipIcon.selectedColor : chipIcon.color}
     />
   </TouchableOpacity>
 );

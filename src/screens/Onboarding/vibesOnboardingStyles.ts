@@ -300,33 +300,6 @@ export const onboardingStyles = StyleSheet.create({
     flexWrap: "wrap",
     gap: ds.spacing[3],
   },
-  pill: {
-    minHeight: 50,
-    borderRadius: ds.radii.lg,
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
-    paddingHorizontal: ds.spacing[4],
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pillActive: {
-    borderColor: ONBOARDING_COLORS.mustard,
-    backgroundColor: ds.colors.bg.selected,
-  },
-  pillAdd: {
-    borderWidth: 1.4,
-    borderColor: ds.colors.scrim,
-    backgroundColor: ds.colors.bg.surfaceTranslucent,
-  },
-  pillText: {
-    color: ONBOARDING_COLORS.text,
-    ...ds.textStyles.labelMedium,
-  },
-  pillIcon: {
-    marginLeft: ds.spacing[2],
-  },
   completionWrap: {
     flex: 1,
     justifyContent: "center",
