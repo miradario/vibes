@@ -88,6 +88,7 @@ import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/u
 import DayPill from "../components/ui/DayPill";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import { cardStyles, iconButtonFloating, iconButtonFloatingIconColor } from "../components/ui/surfaceStyles";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -892,7 +893,10 @@ const EventDetail = () => {
         ]}
       >
         <TouchableOpacity
-          style={[styles.eventDetailJoinButton, localStyles.footerActionButton]}
+          style={[
+            localStyles.joinEventButton,
+            joinEventMutation.isPending && buttonDisabled,
+          ]}
           onPress={async () => {
             if (!event) return;
             if (!userId) {
@@ -920,14 +924,14 @@ const EventDetail = () => {
           ) : (
             <>
               <Text
-                style={[styles.eventDetailJoinButtonText, localStyles.footerActionText, localStyles.joinEventText]}
+                style={[localStyles.joinEventText, localStyles.footerActionText]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.85}
               >
                 {userId ? "Unirse al evento" : "Registrarme para unirme"}
               </Text>
-              <Icon name="arrow-forward" size={ds.iconSize.lg} color={WHITE} />
+              <Icon name="arrow-forward" size={ds.iconSize.lg} color={buttonContentColor.accent} />
             </>
           )}
         </TouchableOpacity>
@@ -2440,17 +2444,12 @@ const localStyles = StyleSheet.create({
   fixedFooterNote: {
     marginBottom: ds.spacing[2],
   },
-  footerActionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[3],
-    paddingHorizontal: ds.spacing[4],
+  // Button del DS: accent lg (pill 56, sin glow). Mantiene el margen inferior del footer.
+  joinEventButton: {
+    ...buttonStyle("accent", "lg"),
+    marginBottom: ds.spacing[3],
   },
-  joinEventText: {
-    color: vibesTheme.colors.background,
-    ...ds.textStyles.body,
-  },
+  joinEventText: buttonLabel("lg", "accent"),
   footerActionText: {
     flexShrink: 1,
     textAlign: "center",
