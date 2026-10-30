@@ -1,7 +1,7 @@
 import { useMeetPeople } from "../src/queries/meetPeople.queries";
 import { matchesConversationSearch } from "../src/lib/conversationSearch";
 import ConnectionStrip from "../components/ConnectionStrip";
-import { sectionTabStyles } from "../components/SectionTabStyles";
+import SegmentedControl from "../components/ui/SegmentedControl";
 import { messagePreview } from "../src/lib/chatPhotos";
 import { useConnectionViewsQuery } from "../src/queries/homeActivity.queries";
 import { getNewConnections } from "../src/lib/homeActivity";
@@ -747,61 +747,29 @@ export const MessagesContent = ({
           onViewAll={() => setConnectionsSheet("new")}
           onConnection={openNewConnectionChat} /> : null}
 
-        <View style={sectionTabStyles.tabs}>
-          {(
-            [
-              {
-                key: "messages",
-                label: "Mensajes",
-                icon: "chatbubble-ellipses-outline",
-                count: unread
-                  .filter((r) => r.kind === "direct")
-                  .reduce((n, r) => n + Number(r.unread_count), 0),
-              },
-              {
-                key: "groups",
-                label: "Grupos",
-                icon: "people",
-                count: (communityInvitations.data?.length ?? 0) + unread
-                  .filter((r) => r.kind !== "direct")
-                  .reduce((n, r) => n + Number(r.unread_count), 0),
-              },
-            ] as const
-          ).map((tab) => {
-            const selected = activeTab === tab.key;
-            return (
-              <TouchableOpacity
-                key={tab.key}
-                accessibilityRole="tab"
-                accessibilityState={{ selected }}
-                onPress={() => setActiveTab(tab.key)}
-                style={[
-                  sectionTabStyles.tab,
-                  selected && sectionTabStyles.active,
-                ]}
-              >
-                <Icon
-                  name={tab.icon}
-                  size={ds.iconSize.lg}
-                  color={selected ? vibesTheme.colors.accentMustard : vibesTheme.colors.secondaryText}
-                />
-                <Text
-                  style={[
-                    sectionTabStyles.text,
-                    selected && sectionTabStyles.activeText,
-                  ]}
-                >
-                  {tab.label}
-                </Text>
-                {tab.count > 0 ? (
-                  <View style={localStyles.countBadge}>
-                    <Text style={localStyles.countText}>{tab.count}</Text>
-                  </View>
-                ) : null}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        <SegmentedControl
+          style={localStyles.segmentedTabs}
+          selected={activeTab}
+          onChange={setActiveTab}
+          options={[
+            {
+              key: "messages",
+              label: "Mensajes",
+              icon: "chatbubble-ellipses-outline",
+              count: unread
+                .filter((r) => r.kind === "direct")
+                .reduce((n, r) => n + Number(r.unread_count), 0),
+            },
+            {
+              key: "groups",
+              label: "Grupos",
+              icon: "people",
+              count: (communityInvitations.data?.length ?? 0) + unread
+                .filter((r) => r.kind !== "direct")
+                .reduce((n, r) => n + Number(r.unread_count), 0),
+            },
+          ] as const}
+        />
         <Text style={localStyles.searchLabel}>Buscar conversaciones</Text>
         <View style={[localStyles.searchField, searchFocused && { borderColor: vibesTheme.colors.accentBlue }]}>
           <Icon name="search-outline" size={ds.iconSize.lg} color={vibesTheme.colors.secondaryText} />
@@ -951,6 +919,7 @@ const Messages = () => <MessagesContent />;
 export default Messages;
 
 const localStyles = StyleSheet.create({
+  segmentedTabs: { marginTop: ds.spacing[1], marginBottom: ds.spacing[3] },
   searchLabel: { color: vibesTheme.colors.primaryText, ...ds.textStyles.label, marginBottom: ds.spacing[2] },
   searchField: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], minHeight: 48, paddingHorizontal: ds.spacing[4], borderRadius: ds.radii.lg, borderWidth: 1, borderColor: ds.colors.border.default, backgroundColor: vibesTheme.colors.surface, marginBottom: ds.spacing[3] },
   searchInput: { flex: 1, minWidth: 0, paddingVertical: ds.spacing[3], color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
