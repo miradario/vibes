@@ -14,7 +14,8 @@ export const swipeToConfirmMetrics = (size: SwipeSize) => {
   const height = ds.componentSize.swipeToConfirm[size];
   const inset = ds.spacing[1];
   const thumb = height - inset * 2;
-  return { height, inset, thumb, labelInset: thumb + inset + ds.spacing[3] };
+  const chevronsLeft = inset + thumb + ds.spacing[2];
+  return { height, inset, thumb, chevronsLeft, labelInset: chevronsLeft + ds.iconSize.xl + ds.spacing[2] };
 };
 
 const accentColors = {

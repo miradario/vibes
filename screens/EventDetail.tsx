@@ -84,13 +84,16 @@ import { shareEventInvite } from "../src/lib/socialShare";
 import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
 import { markFtuxAction } from "../src/ftux/ftuxStore";
 import ProgressBar from "../components/ui/ProgressBar";
+import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/ui/SwipeToConfirm";
 import * as ds from "../src/theme/tokens";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
-const CHECKIN_SLIDER_HANDLE_SIZE = 72;
-const CHECKIN_SLIDER_HORIZONTAL_PADDING = 12;
-const FOOTER_CHECKIN_SLIDER_HANDLE_SIZE = 36;
-const FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING = 8;
+const CHECKIN_SWIPE = swipeToConfirmMetrics("lg");
+const FOOTER_CHECKIN_SWIPE = swipeToConfirmMetrics("md");
+const CHECKIN_SLIDER_HANDLE_SIZE = CHECKIN_SWIPE.thumb;
+const CHECKIN_SLIDER_HORIZONTAL_PADDING = CHECKIN_SWIPE.inset;
+const FOOTER_CHECKIN_SLIDER_HANDLE_SIZE = FOOTER_CHECKIN_SWIPE.thumb;
+const FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING = FOOTER_CHECKIN_SWIPE.inset;
 
 const getStreakEmoji = (streak: number) => {
   if (streak >= 30) return "🔥🔥🔥";
@@ -2626,20 +2629,10 @@ const localStyles = StyleSheet.create({
   },
   footerCheckInSliderWrap: {
     flex: 1,
-    minHeight: 52,
+    minHeight: FOOTER_CHECKIN_SWIPE.height,
     justifyContent: "center",
   },
-  footerCheckInSliderTrack: {
-    minHeight: 52,
-    borderRadius: ds.radii.xl,
-    backgroundColor: ds.colors.bg.selected,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
-    overflow: "hidden",
-    justifyContent: "center",
-    paddingLeft: /* ds-lint-allow layout: paddingLeft 84 (medida de layout fuera de la escala) */ 84,
-    paddingRight: ds.spacing[4],
-  },
+  footerCheckInSliderTrack: swipeToConfirmTrackStyle("md", "accent"),
   footerCheckInSliderGlow: {
     position: "absolute",
     left: 0,
@@ -2661,17 +2654,17 @@ const localStyles = StyleSheet.create({
   },
   footerCheckInSliderChevrons: {
     position: "absolute",
-    left: 58,
+    left: FOOTER_CHECKIN_SWIPE.chevronsLeft,
     flexDirection: "row",
     alignItems: "center",
     gap: 0,
   },
   footerCheckInSliderHandle: {
     position: "absolute",
-    left: 8,
-    top: 8,
-    width: 36,
-    height: 36,
+    left: FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING,
+    top: FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING,
+    width: FOOTER_CHECKIN_SLIDER_HANDLE_SIZE,
+    height: FOOTER_CHECKIN_SLIDER_HANDLE_SIZE,
     borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
@@ -2767,22 +2760,10 @@ const localStyles = StyleSheet.create({
   },
   checkInSliderWrap: {
     marginTop: ds.spacing[1],
-    minHeight: 88,
+    minHeight: CHECKIN_SWIPE.height,
     justifyContent: "center",
   },
-  checkInSliderTrack: {
-    minHeight: 88,
-    borderRadius: ds.radii.pill,
-    backgroundColor: ds.colors.bg.selected,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
-    overflow: "hidden",
-    justifyContent: "center",
-    paddingLeft: /* ds-lint-allow layout: paddingLeft 114 (medida de layout fuera de la escala) */ 114,
-    paddingRight: ds.spacing[6],
-    ...ds.glow.accent,
-    elevation: ds.shadows.md.elevation,
-  },
+  checkInSliderTrack: swipeToConfirmTrackStyle("lg", "accent"),
   checkInSliderGlow: {
     position: "absolute",
     left: 0,
@@ -2804,7 +2785,7 @@ const localStyles = StyleSheet.create({
   },
   checkInSliderChevrons: {
     position: "absolute",
-    left: 84,
+    left: CHECKIN_SWIPE.chevronsLeft,
     flexDirection: "row",
     alignItems: "center",
     gap: ds.spacing[1],
@@ -2812,10 +2793,10 @@ const localStyles = StyleSheet.create({
   checkInSliderHandle: {
     position: "absolute",
     left: CHECKIN_SLIDER_HORIZONTAL_PADDING,
-    top: 8,
+    top: CHECKIN_SLIDER_HORIZONTAL_PADDING,
     width: CHECKIN_SLIDER_HANDLE_SIZE,
     height: CHECKIN_SLIDER_HANDLE_SIZE,
-    borderRadius: CHECKIN_SLIDER_HANDLE_SIZE / 2,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: ds.colors.bg.selected,

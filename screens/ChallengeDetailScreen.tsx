@@ -90,6 +90,7 @@ import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import RestartChallengeConfirmSheet from "../components/challengeRestart/RestartChallengeConfirmSheet";
 import ChallengeInviteesSection from "../components/challengeRestart/ChallengeInviteesSection";
 import ChallengeInvitationActions from "../components/challengeRestart/ChallengeInvitationActions";
+import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/ui/SwipeToConfirm";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -139,9 +140,10 @@ const palette = {
   redSoft: ds.colors.feedback.errorBg,
 };
 
-const FOOTER_SLIDER_HANDLE_SIZE = 50;
-const FOOTER_SLIDER_HORIZONTAL_PADDING = 8;
-const FOOTER_SLIDER_TRACK_HEIGHT = 68;
+const FOOTER_SWIPE = swipeToConfirmMetrics("md");
+const FOOTER_SLIDER_HANDLE_SIZE = FOOTER_SWIPE.thumb;
+const FOOTER_SLIDER_HORIZONTAL_PADDING = FOOTER_SWIPE.inset;
+const FOOTER_SLIDER_TRACK_HEIGHT = FOOTER_SWIPE.height;
 const FOOTER_SLIDER_FILL_LEFT =
   FOOTER_SLIDER_HORIZONTAL_PADDING +
   FOOTER_SLIDER_HANDLE_SIZE / 2 -
@@ -2998,20 +3000,11 @@ const localStyles = StyleSheet.create({
     backgroundColor: palette.red,
   },
   footerSliderWrap: {
-    minHeight: 68,
+    minHeight: FOOTER_SWIPE.height,
     justifyContent: "center",
   },
-  footerSliderTrack: {
-    minHeight: 68,
-    borderRadius: ds.radii.pill,
-    backgroundColor: ds.colors.bg.surfaceTranslucent,
-    borderWidth: 1.5,
-    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.high),
-    overflow: "hidden",
-    justifyContent: "center",
-    paddingLeft: /* ds-lint-allow layout: paddingLeft 70 (medida de layout fuera de la escala) */ 70,
-    paddingRight: ds.spacing[8],
-  },
+  // Chevrons a la derecha: el copy arranca después del thumb.
+  footerSliderTrack: { ...swipeToConfirmTrackStyle("md", "info"), paddingLeft: FOOTER_SWIPE.chevronsLeft, paddingRight: ds.spacing[8] },
   footerSliderTrackCompleted: {
     backgroundColor: vibesTheme.colors.surface,
     borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.high),
@@ -3030,11 +3023,11 @@ const localStyles = StyleSheet.create({
   },
   footerSliderHandle: {
     position: "absolute",
-    left: FOOTER_SLIDER_HORIZONTAL_PADDING + 2,
-    top: 9,
+    left: FOOTER_SLIDER_HORIZONTAL_PADDING,
+    top: FOOTER_SLIDER_HORIZONTAL_PADDING,
     width: FOOTER_SLIDER_HANDLE_SIZE,
     height: FOOTER_SLIDER_HANDLE_SIZE,
-    borderRadius: FOOTER_SLIDER_HANDLE_SIZE / 2,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentBlue,
