@@ -16,6 +16,7 @@ import {useNavigation, useRoute} from "@react-navigation/native";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import { externalClasses, externalPlaces, externalLocation, externalPrice, externalSchedule, placeForClass, type ExternalClass, type ExternalPlace } from "../../src/learning/externalCatalog";
 import { buttonContentColor, buttonLabel, buttonStyle } from "../ui/buttonStyles";
+import { cardStyles } from "../ui/surfaceStyles";
 import * as ds from "../../src/theme/tokens";
 const c = vibesTheme.colors;
 export function ExternalClassCard({item,onPress}:{item:ExternalClass;onPress:()=>void}) {
@@ -77,7 +78,7 @@ const s=StyleSheet.create({
   headerTitle:{flex:1,...ds.textStyles.heading,color:c.primaryText,textAlign:"center"},
   accordion:{flexDirection:"row",alignItems:"center",gap:ds.spacing[2],minHeight:48,padding:ds.spacing[3],borderRadius:ds.radii.lg,borderWidth:1,borderColor:c.borderSoft},
   cover:{width:"100%",height:168,borderRadius:ds.radii.lg,backgroundColor:ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle)},
-  card:{flexDirection:"row",alignItems:"center",gap:ds.spacing[3],padding:ds.spacing[3],borderRadius:ds.radii.xl,borderWidth:1,borderColor:ds.colors.bg.subtle,backgroundColor:c.surface},
+  card: { ...cardStyles.base, flexDirection:"row", alignItems:"center", gap:ds.spacing[3], padding:ds.spacing[3] },
   art:{width:80,height:92,borderRadius:ds.radii.lg,alignItems:"center",justifyContent:"center",backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle)},
   copy:{flex:1,minWidth:0,gap:ds.spacing[1]}, title:{...ds.textStyles.subtitle,color:c.primaryText},
   schedule:{...ds.textStyles.bodySmall,color:c.accentBlue},meta:{...ds.textStyles.bodySmall,color:c.secondaryText},

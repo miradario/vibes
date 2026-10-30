@@ -37,6 +37,7 @@ import type {
 import * as ImagePicker from "expo-image-picker";
 import { uploadImageToSupabase } from "../../src/lib/supabaseStorage";
 import { useAuthSession } from "../../src/auth/auth.queries";
+import { cardStyles } from "../ui/surfaceStyles";
 import * as ds from "../../src/theme/tokens";
 const c = vibesTheme.colors;
 export const ui = StyleSheet.create({
@@ -63,14 +64,7 @@ export const ui = StyleSheet.create({
   title: { ...ds.textStyles.title, color: c.primaryText },
   body: { ...ds.textStyles.body, color: c.primaryText },
   muted: { ...ds.textStyles.body, color: c.secondaryText },
-  card: {
-    borderWidth: 1,
-    borderColor: c.borderSoft,
-    borderRadius: ds.radii.xl,
-    padding: ds.spacing[4],
-    gap: ds.spacing[3],
-    backgroundColor: c.surface,
-  },
+  card: { ...cardStyles.base, padding: ds.spacing[4], gap: ds.spacing[3] },
   input: {
     borderWidth: 1,
     borderColor: ds.colors.border.default,

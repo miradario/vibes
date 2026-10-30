@@ -34,6 +34,7 @@ import {
   type HomeSection,
 } from "../src/lib/homePersonalization";
 import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
+import { cardStyles } from "./ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const ACCENT = vibesTheme.colors.accentMustard;
@@ -451,14 +452,7 @@ const s = StyleSheet.create({
   sectionBlock: {
     marginBottom: ds.spacing[6],
   },
-  card: {
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
-    borderRadius: ds.radii.lg,
-    padding: ds.spacing[4],
-    marginBottom: ds.spacing[4],
-  },
+  card: { ...cardStyles.base, padding: ds.spacing[4], marginBottom: ds.spacing[4] },
   heading: {
     flexDirection: "row",
     alignItems: "center",
@@ -499,17 +493,7 @@ const s = StyleSheet.create({
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   compactList: { gap: ds.spacing[3] },
-  compactCard: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[3],
-    padding: ds.spacing[3],
-    borderRadius: ds.radii.lg,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
-    backgroundColor: vibesTheme.colors.background,
-  },
+  compactCard: { ...cardStyles.base, width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3], padding: ds.spacing[3] },
   compactCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
   challengePhoto: {
     width: 76,
@@ -563,18 +547,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyCard: {
-    width: "100%",
-    minHeight: 92,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[4],
-    backgroundColor: vibesTheme.colors.background,
-    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
-    borderWidth: 1,
-    borderRadius: ds.radii.lg,
-    padding: ds.spacing[4],
-  },
+  emptyCard: { ...cardStyles.base, width: "100%", minHeight: 92, flexDirection: "row", alignItems: "center", gap: ds.spacing[4], padding: ds.spacing[4] },
   emptyEventCard: {
     minHeight: 142,
     flexDirection: "row",

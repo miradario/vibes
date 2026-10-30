@@ -8,6 +8,7 @@ import type { EventFeedItem } from "../src/queries/events.queries";
 import ForYouTag from "./ForYouTag";
 import { isCuratedChallenge } from "../src/lib/curatedChallenges";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { cardStyles } from "./ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 export default function ChallengeFeedCard({ item, joined, onPress, footer, featured = false }: {
@@ -42,7 +43,7 @@ export default function ChallengeFeedCard({ item, joined, onPress, footer, featu
 }
 const c = vibesTheme.colors;
 const s = StyleSheet.create({
-  card: { padding: ds.spacing[4], borderRadius: ds.radii.xl, borderWidth: 1, borderColor: ds.colors.border.default, backgroundColor: c.surface, marginBottom: ds.spacing[3], gap: ds.spacing[3] },
+  card: { ...cardStyles.base, padding: ds.spacing[4], marginBottom: ds.spacing[3], gap: ds.spacing[3] },
   row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[4] },
   photo: { width: 76, height: 76, borderRadius: ds.radii.md, alignSelf: "flex-start" },
   copy: { flex: 1, minWidth: 0, gap: ds.spacing[2] },

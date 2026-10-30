@@ -23,6 +23,7 @@ import { supabase } from "../src/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { authKeys } from "../src/auth/auth.queries";
 import { resetVibiDailyGreeting } from "../src/lib/vibiDailyPrompts";
+import { cardStyles } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const Configuration = () => {
@@ -171,17 +172,7 @@ const localStyles = StyleSheet.create({
     paddingTop: ds.spacing[3],
     paddingBottom: /* ds-lint-allow layout: paddingBottom 150 (medida de layout fuera de la escala) */ 150,
   },
-  card: {
-    borderRadius: ds.radii.xl,
-    borderWidth: 1,
-    borderColor: ds.colors.border.subtle,
-    backgroundColor: vibesTheme.colors.background,
-    padding: ds.spacing[4],
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: ds.spacing[4],
-  },
+  card: { ...cardStyles.base, padding: ds.spacing[4], flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: ds.spacing[4] },
   cardText: {
     color: GRAY,
     ...ds.textStyles.bodySmall,
