@@ -664,7 +664,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false, preview = false }:
           </View>
         ) : null}
         <View style={onboardingStyles.fieldGroup}>
-          {!hasAgeAssuranceBirthDate && (preview || !savedProfile.isLoading) ? ( // TEMP preview onboarding: remove before merge
+          {!hasAgeAssuranceBirthDate && !savedProfile.isLoading ? (
             <>
             <Text accessibilityRole="header" style={onboardingStyles.birthDateLabel}>
               {t("vibesOnboarding.profile.birthDatePlaceholder")}
