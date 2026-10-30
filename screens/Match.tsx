@@ -19,6 +19,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import { mapOwnProfileToConnectionProfile } from "../src/lib/connectionProfiles";
 import { useFindMatchQuery } from "../src/queries/matches.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { cardStyles } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const getFirstName = (value?: string | null) =>
@@ -218,7 +219,7 @@ const localStyles = StyleSheet.create({
   person: { alignItems: "center", maxWidth: "49%" },
   avatar: { borderWidth: 2, borderColor: vibesTheme.colors.primaryText, borderRadius: ds.radii.pill, overflow: "hidden" },
   personName: { marginTop: ds.spacing[2], ...ds.textStyles.heading, color: vibesTheme.colors.primaryText },
-  questionCard: { width: "100%", borderRadius: ds.radii.xl, padding: ds.spacing[4], flexDirection: "row", alignItems: "center", gap: ds.spacing[4], backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },
+  questionCard: { ...cardStyles.info, width: "100%", padding: ds.spacing[4], flexDirection: "row", alignItems: "center", gap: ds.spacing[4] },
   messageIcon: { width: 46, height: 46, borderRadius: ds.radii.pill, alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.feedback.infoBg },
   interestsLabel: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.caption, marginBottom: ds.spacing[1] },
   sharedInterests: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.caption, marginBottom: ds.spacing[2] },

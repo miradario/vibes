@@ -58,6 +58,7 @@ import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import { cardStyles } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverFiltersState = {
@@ -1354,15 +1355,9 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.heading,
   },
   challengePreviewCard: {
-    borderRadius: ds.radii.lg,
-    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[4],
+    ...cardStyles.accent,
+    ...cardStyles.padding,
     marginBottom: ds.spacing[4],
-    ...ds.glow.coral,
-    elevation: ds.shadows.md.elevation,
   },
   challengePreviewHeader: {
     flexDirection: "row",
@@ -1395,13 +1390,8 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.caption,
   },
   eventPreviewCard: {
-    borderRadius: ds.radii.xl,
-    backgroundColor: ds.colors.bg.selected,
-    borderWidth: 1,
-    borderColor: ds.colors.bg.selected,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[4],
-    ...ds.shadows.md,
+    ...cardStyles.accent,
+    ...cardStyles.padding,
   },
   eventPreviewEyebrow: {
     color: vibesTheme.colors.accentBlue,
@@ -1519,15 +1509,11 @@ const localStyles = StyleSheet.create({
     flexShrink: 1,
   },
   meditationCard: {
+    ...cardStyles.info,
     minHeight: 102,
-    borderRadius: ds.radii.xl,
     overflow: "hidden",
-    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
     marginBottom: ds.spacing[4],
     position: "relative",
-    ...ds.glow.blue,
     paddingHorizontal: ds.spacing[4],
     paddingVertical: ds.spacing[3],
     justifyContent: "center",
@@ -2022,11 +2008,8 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   rangeCard: {
+    ...cardStyles.base,
     flex: 1,
-    borderRadius: ds.radii.xl,
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: ds.colors.border.subtle,
     paddingHorizontal: ds.spacing[3],
     paddingVertical: ds.spacing[4],
     gap: ds.spacing[3],

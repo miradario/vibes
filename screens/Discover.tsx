@@ -78,6 +78,7 @@ import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import VibesLoader from "../components/VibesLoader";
 import { showToast } from "../src/utils/toast";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import { cardStyles } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverGender = "woman" | "man" | "other";
@@ -1471,9 +1472,8 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   rangeCard: {
+    ...cardStyles.base,
     flex: 1,
-    borderRadius: ds.radii.xl,
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
     minHeight: 80,
     paddingHorizontal: ds.spacing[4],
     paddingVertical: ds.spacing[3],

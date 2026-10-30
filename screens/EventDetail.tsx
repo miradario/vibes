@@ -87,6 +87,7 @@ import ProgressBar from "../components/ui/ProgressBar";
 import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/ui/SwipeToConfirm";
 import DayPill from "../components/ui/DayPill";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
+import { cardStyles, iconButtonFloating, iconButtonFloatingIconColor } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -875,9 +876,9 @@ const EventDetail = () => {
             onPress={() =>
               navigation.navigate("EventChat" as never, { event } as never)
             }
-            activeOpacity={0.9}
+            activeOpacity={ds.opacity.pressed}
           >
-            <Icon name="chatbubble-outline" size={ds.iconSize.xl} color={vibesTheme.colors.surface} />
+            <Icon name="chatbubble-outline" size={ds.iconSize.lg} color={iconButtonFloatingIconColor} />
           </TouchableOpacity>
         </View>
       );
@@ -2246,12 +2247,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: ds.colors.border.subtle,
   },
   eventMiniMapCard: {
-    height: 190,
-    borderRadius: ds.radii.xl,
-    overflow: "hidden",
-    backgroundColor: ds.colors.bg.selected,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
+    ...cardStyles.mapPreview,
     marginTop: ds.spacing[3],
     marginBottom: ds.spacing[2],
   },
@@ -2428,14 +2424,8 @@ const localStyles = StyleSheet.create({
     alignItems: "flex-end",
   },
   eventFloatingChatButton: {
+    ...iconButtonFloating,
     alignSelf: "flex-end",
-    width: 60,
-    height: 60,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.primaryText,
-    ...ds.shadows.sm,
   },
   challengeFooterButtonGroup: {
     flexDirection: "row",
@@ -2512,14 +2502,11 @@ const localStyles = StyleSheet.create({
     marginTop: ds.spacing[1],
   },
   totalBadge: {
+    ...cardStyles.accent,
     alignItems: "center",
-    backgroundColor: ds.colors.bg.selected,
-    borderRadius: ds.radii.md,
     minWidth: 76,
     paddingHorizontal: ds.spacing[3],
     paddingVertical: ds.spacing[2],
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
   },
   totalBadgeNumber: {
     ...ds.textStyles.heading,
@@ -2537,15 +2524,12 @@ const localStyles = StyleSheet.create({
     color: TEXT_SECONDARY,
   },
   checkedInBadge: {
+    ...cardStyles.accent,
     flexDirection: "row",
     alignItems: "center",
     gap: ds.spacing[2],
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: ds.radii.md,
     paddingHorizontal: ds.spacing[4],
     paddingVertical: ds.spacing[3],
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   checkedInText: {
     color: vibesTheme.colors.secondaryText,

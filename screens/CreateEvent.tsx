@@ -59,6 +59,7 @@ import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
 import { getIosMapPreviewSource } from "../src/config/mapPreview";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import { cardStyles } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE =
@@ -1359,14 +1360,7 @@ const legacyStyles = StyleSheet.create({
     marginTop: ds.spacing[2],
     gap: ds.spacing[3],
   },
-  mapPreviewCard: {
-    height: 168,
-    borderRadius: ds.radii.lg,
-    overflow: "hidden",
-    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
-  },
+  mapPreviewCard: { ...cardStyles.mapPreview },
   mapPreviewImage: {
     width: "100%",
     height: "100%",
