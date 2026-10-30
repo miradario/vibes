@@ -21,6 +21,7 @@ import {
   type VibesEntry,
 } from "../src/queries/vibesPoints.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import Tag from "../components/ui/Tag";
 import * as ds from "../src/theme/tokens";
 const c = vibesTheme.colors;
 const rules = [
@@ -385,9 +386,7 @@ export default function VibesPoints() {
               <Text style={s.rowTitle}>{rule.title}</Text>
               <Text style={s.hint}>{rule.hint}</Text>
             </View>
-            <View style={s.pointsBadge}>
-              <Text style={s.points}>+{rule.points}</Text>
-            </View>
+            <Tag label={`+${rule.points}`} style={s.pointsBadge} />
           </View>
         ))}
           <Text style={s.body}>
@@ -527,12 +526,7 @@ const s = StyleSheet.create({
     ...ds.textStyles.subtitle,
     color: c.primaryText,
   },
-  pointsBadge: {
-    paddingHorizontal: ds.spacing[3],
-    paddingVertical: ds.spacing[2],
-    borderRadius: ds.radii.xl,
-    backgroundColor: ds.colors.bg.selected,
-  },
+  pointsBadge: { alignSelf: "center" },
   points: {
     ...ds.textStyles.heading,
     color: c.primaryText,
