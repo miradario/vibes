@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View, type StyleProp, type Te
 import { Text, TextInput } from "./Typography";
 import { normalizeEventSearch } from "../src/lib/eventFilters";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { chipHitSlop, chipStyles } from "./ui/chipStyles";
 import * as ds from "../src/theme/tokens";
 
 export default function EventClassificationPicker<T extends string>({ label, options, value, onChange, filter = false, searchable = false, style, labelStyle }: {
@@ -43,8 +44,8 @@ export default function EventClassificationPicker<T extends string>({ label, opt
         />
       ) : null}
       <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.options}>
-        {filter ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: !value }} onPress={() => select(null)} style={[s.chip, !value && s.selected]}><Text style={[s.text, !value && s.selectedText]}>Todos</Text></TouchableOpacity> : null}
-        {visibleOptions.map((option) => <TouchableOpacity key={option.id} accessibilityRole="button" accessibilityLabel={`${label}: ${option.label}`} accessibilityState={{ selected: value === option.id }} onPress={() => select(option.id)} style={[s.chip, value === option.id && s.selected]}><Text style={[s.text, value === option.id && s.selectedText]}>{option.label}</Text></TouchableOpacity>)}
+        {filter ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: !value }} onPress={() => select(null)} hitSlop={chipHitSlop} style={[chipStyles.base, !value && chipStyles.selected]}><Text style={[chipStyles.label, !value && chipStyles.labelSelected]}>Todos</Text></TouchableOpacity> : null}
+        {visibleOptions.map((option) => <TouchableOpacity key={option.id} accessibilityRole="button" accessibilityLabel={`${label}: ${option.label}`} accessibilityState={{ selected: value === option.id }} onPress={() => select(option.id)} hitSlop={chipHitSlop} style={[chipStyles.base, value === option.id && chipStyles.selected]}><Text style={[chipStyles.label, value === option.id && chipStyles.labelSelected]}>{option.label}</Text></TouchableOpacity>)}
       </ScrollView>
       {searchable && visibleOptions.length === 0 ? <Text style={s.hint}>No hay ubicaciones que coincidan con tu búsqueda.</Text> : null}
       {!filter && selected?.description ? <Text style={s.hint}>{selected.description}</Text> : null}
@@ -56,9 +57,6 @@ const s = StyleSheet.create({
   group: { marginVertical: ds.spacing[2], gap: ds.spacing[2] },
   label: { ...ds.textStyles.subtitle, color: vibesTheme.colors.primaryText },
   options: { gap: ds.spacing[2], paddingRight: ds.spacing[2] },
-  chip: { minHeight: 44, justifyContent: "center", paddingHorizontal: ds.spacing[4], borderRadius: ds.radii.xl, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium), backgroundColor: vibesTheme.colors.surface },
   selected: { backgroundColor: vibesTheme.colors.primaryText, borderColor: vibesTheme.colors.primaryText },
-  text: { color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
-  selectedText: { color: vibesTheme.colors.surface },
   hint: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall },
 });

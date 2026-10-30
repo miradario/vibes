@@ -28,6 +28,8 @@ import {
   claimVibiDailyGreetingForDay,
 } from "../src/lib/vibiDailyPrompts";
 import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "./ui/buttonStyles";
+import { chipHitSlop, chipIcon, chipStyles } from "./ui/chipStyles";
+import SegmentedControl from "./ui/SegmentedControl";
 import * as ds from "../src/theme/tokens";
 
 export default function DailyMoodCard({
@@ -277,20 +279,17 @@ export default function DailyMoodCard({
                         : [...current, mood]
                     )
                   }
-                  style={[s.option, selected && s.selected]}
-                  activeOpacity={0.75}
+                  hitSlop={chipHitSlop}
+                  style={[chipStyles.base, selected && chipStyles.selected, (loading || saving) && chipStyles.disabled]}
+                  activeOpacity={ds.opacity.pressed}
                 >
-                  <Text style={[s.optionText, selected && s.selectedText]}>
+                  <Text style={[chipStyles.label, selected && chipStyles.labelSelected]}>
                     {mood}
                   </Text>
                   <Ionicons
                     name={selected ? "checkmark-circle" : "ellipse-outline"}
-                    size={ds.iconSize.md}
-                    color={
-                      selected
-                        ? vibesTheme.colors.primaryText
-                        : vibesTheme.colors.accentBlue
-                    }
+                    size={chipIcon.size}
+                    color={selected ? chipIcon.selectedColor : chipIcon.color}
                   />
                 </TouchableOpacity>
               );
@@ -318,23 +317,16 @@ export default function DailyMoodCard({
             <Text style={s.subtitle}>
               Dar servicio cambia tu vida. Puede ser un pequeño gesto de ayuda.
             </Text>
-            <View style={s.options}>
-              {[true, false].map((value) => (
-                <TouchableOpacity
-                  key={String(value)}
-                  accessibilityRole="radio"
-                  accessibilityState={{
-                    selected: service === value,
-                    disabled: loading || saving,
-                  }}
-                  disabled={loading || saving}
-                  onPress={() => setService(value)}
-                  style={[s.option, service === value && s.selected]}
-                >
-                  <Text style={s.scoreText}>{value ? "Sí" : "Todavía no"}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <SegmentedControl
+              options={[
+                { key: "yes", label: "Sí" },
+                { key: "no", label: "Todavía no" },
+              ]}
+              selected={service === null ? null : service ? "yes" : "no"}
+              onChange={(key) => setService(key === "yes")}
+              disabled={loading || saving}
+              optionRole="radio"
+            />
           </View>
         ) : prompt.kind === "person" ? (
           <View style={s.energySource}>
@@ -358,10 +350,10 @@ export default function DailyMoodCard({
               </TouchableOpacity>
               <TouchableOpacity
                 accessibilityRole="button"
-                style={s.option}
+                style={s.no}
                 onPress={dismiss}
               >
-                <Text style={s.scoreText}>No</Text>
+                <Text style={s.noText}>No</Text>
               </TouchableOpacity>
             </View>
             {!vibiEnabled ? (
@@ -444,7 +436,6 @@ const s = StyleSheet.create({
   },
   energySources: { gap: ds.spacing[5] },
   energySource: { gap: ds.spacing[2] },
-  scoreText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
   heroIcon: {
     width: 54,
     height: 54,
@@ -477,29 +468,8 @@ const s = StyleSheet.create({
     marginBottom: ds.spacing[5],
   },
   options: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[2],
-    minHeight: 48,
-    paddingVertical: ds.spacing[3],
-    paddingHorizontal: ds.spacing[3],
-    borderRadius: ds.radii.lg,
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
-  },
-  selected: {
-    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  optionText: {
-    ...ds.textStyles.labelMedium,
-    color: vibesTheme.colors.secondaryText,
-    flexShrink: 1,
-  },
-  selectedText: { color: vibesTheme.colors.primaryText },
+  no: { ...buttonStyle("secondary", "lg") },
+  noText: { ...buttonLabel("lg", "secondary") },
   privacy: {
     flexDirection: "row",
     gap: ds.spacing[2],

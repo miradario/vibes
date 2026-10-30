@@ -51,6 +51,7 @@ import {
   ui,
   useLearningAction,
 } from "../components/learning/LearningUI";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import * as ds from "../src/theme/tokens";
 const useNav = () => useNavigation<any>();
 const useId = () => (useRoute().params as { id?: string } | undefined)?.id;
@@ -1253,7 +1254,8 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
               disabled: locked,
             }}
             disabled={locked}
-            style={[ui.chip, teachers.includes(p.id) && ui.selected]}
+            hitSlop={chipHitSlop}
+            style={[chipStyles.base, teachers.includes(p.id) && chipStyles.selected, locked && chipStyles.disabled]}
             onPress={() =>
               setTeachers((t) =>
                 t.includes(p.id) ? t.filter((id) => id !== p.id) : [...t, p.id]
@@ -1261,7 +1263,7 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
             }
           >
             <Text
-              style={[ui.chipText, teachers.includes(p.id) && ui.selectedText]}
+              style={[chipStyles.label, teachers.includes(p.id) && chipStyles.labelSelected]}
             >
               {p.name}
             </Text>

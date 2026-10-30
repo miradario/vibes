@@ -38,6 +38,7 @@ import * as ImagePicker from "expo-image-picker";
 import { uploadImageToSupabase } from "../../src/lib/supabaseStorage";
 import { useAuthSession } from "../../src/auth/auth.queries";
 import { cardStyles } from "../ui/surfaceStyles";
+import { chipHitSlop, chipStyles } from "../ui/chipStyles";
 import * as ds from "../../src/theme/tokens";
 const c = vibesTheme.colors;
 export const ui = StyleSheet.create({
@@ -75,18 +76,6 @@ export const ui = StyleSheet.create({
     ...ds.textStyles.body,
     backgroundColor: c.surface,
   },
-  chip: {
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    borderRadius: ds.radii.xl,
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-  },
-  selected: { backgroundColor: ds.colors.bg.selected, borderColor: c.accentMustard },
-  chipText: { ...ds.textStyles.label, color: c.primaryText },
-  selectedText: { color: c.primaryText },
   link: { color: c.accentBlue, ...ds.textStyles.body },
   photo: { width: 92, height: 100, borderRadius: ds.radii.lg },
   cover: { height: 190, width: "100%", borderRadius: ds.radii.lg },
@@ -238,9 +227,10 @@ export function Chips({
           accessibilityRole="button"
           accessibilityState={{ selected: o.value === value }}
           onPress={() => onChange(o.value)}
-          style={[ui.chip, o.value === value && ui.selected]}
+          hitSlop={chipHitSlop}
+          style={[chipStyles.base, o.value === value && chipStyles.selected]}
         >
-          <Text style={[ui.chipText, o.value === value && ui.selectedText]}>
+          <Text style={[chipStyles.label, o.value === value && chipStyles.labelSelected]}>
             {o.label}
           </Text>
         </TouchableOpacity>

@@ -784,30 +784,6 @@ const localStyles = StyleSheet.create({
     flexWrap: "wrap",
     gap: ds.spacing[3],
   },
-  chip: {
-    minHeight: 44,
-    borderRadius: ds.radii.lg,
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[2],
-  },
-  chipActive: {
-    backgroundColor: vibesTheme.colors.primaryText,
-    borderColor: vibesTheme.colors.primaryText,
-  },
-  chipText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.labelMedium,
-  },
-  chipTextActive: {
-    color: vibesTheme.colors.surface,
-    fontFamily: vibesTheme.fonts.semibold,
-  },
   detailList: {
     marginTop: ds.spacing[3],
     gap: ds.spacing[3],
