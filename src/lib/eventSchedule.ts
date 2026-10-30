@@ -71,14 +71,17 @@ export function serializeSchedule(drafts: EventScheduleDraft[]): EventSession[] 
   return normalizeSchedule(sessions);
 }
 
+/** A session without an end time stays current until 23:59 local on its day. */
+export function sessionEndTime(session: EventSession): number {
+  const end = new Date(session.endsAt ?? session.startsAt);
+  if (!session.endsAt) end.setHours(23, 59, 59, 999);
+  return end.getTime();
+}
+
 export function eventHasExpired(schedule: unknown, startsAt?: string | null, now = Date.now()): boolean {
   const sessions = normalizeSchedule(schedule, startsAt);
   if (!sessions.length) return false;
-  return sessions.every((session) => {
-    const end = new Date(session.endsAt ?? session.startsAt);
-    if (!session.endsAt) end.setHours(23, 59, 59, 999);
-    return end.getTime() < now;
-  });
+  return sessions.every((session) => sessionEndTime(session) < now);
 }
 
 export function formatSession(startsAt: string): string {
@@ -92,7 +95,7 @@ export const formatAttendees = (count: number, capacity?: number | null) =>
   capacity && capacity > 0 ? `${count}/${capacity}` : `${count} · sin límite`;
 
 export function nextEventSession(schedule: unknown, startsAt?: string | null, now = Date.now()): EventSession | null {
-  return normalizeSchedule(schedule, startsAt).find((entry) => Date.parse(entry.endsAt ?? entry.startsAt) > now) ?? null;
+  return normalizeSchedule(schedule, startsAt).find((entry) => sessionEndTime(entry) >= now) ?? null;
 }
 
 export function sortEventsByDate<T extends { schedule?: unknown; startsAt?: string | null }>(items: T[], now = Date.now()): T[] {
