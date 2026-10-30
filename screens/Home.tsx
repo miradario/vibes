@@ -60,6 +60,7 @@ import VibesLoader from "../components/VibesLoader";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
 import SectionHeader from "../components/ui/SectionHeader";
+import PersonCard from "../components/ui/PersonCard";
 import { iconCircleStyle } from "../components/ui/IconCircle";
 import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
@@ -247,28 +248,15 @@ function HomePeopleSuggestions({
         contentContainerStyle={localStyles.peopleCarousel}
       >
         {suggestions.map((profile) => (
-          <TouchableOpacity
+          <PersonCard
             key={String(profile.id)}
-            accessibilityRole="button"
+            name={`${profile.name.split(" ")[0]}${profile.age ? `, ${profile.age}` : ""}`}
             accessibilityLabel={`Ver perfil de ${profile.name}`}
-            activeOpacity={ds.opacity.pressed}
-            style={localStyles.personCard}
+            tag={getSuggestionHint(profile)}
+            source={profile.avatarUri ? { uri: profile.avatarUri } : profile.image}
+            blurred={!canViewPhotos}
             onPress={() => onOpenProfile(profile)}
-          >
-            <ProfileMediaImage
-              source={profile.avatarUri ? { uri: profile.avatarUri } : profile.image}
-              style={localStyles.personPhoto}
-              blurRadius={canViewPhotos ? 0 : 24}
-            />
-            <View style={localStyles.personInfo}>
-            <Text style={localStyles.personName} numberOfLines={1}>
-              {profile.name.split(" ")[0]}{profile.age ? `, ${profile.age}` : ""}
-            </Text>
-            <Text style={localStyles.personHint} numberOfLines={2}>
-              {getSuggestionHint(profile)}
-            </Text>
-            </View>
-          </TouchableOpacity>
+          />
         ))}
       </ScrollView>}
     </View>
@@ -1068,16 +1056,6 @@ const localStyles = StyleSheet.create({
     borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
   },
   skeletonText: { opacity: 0 },
-  personCard: {
-    width: 96,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
-    borderRadius: ds.radii.lg,
-    backgroundColor: vibesTheme.colors.background,
-  },
-  personPhoto: { width: "100%", height: 96 },
-  personInfo: { paddingHorizontal: ds.spacing[2], paddingVertical: ds.spacing[2] },
   personAddIcon: {
     backgroundColor: vibesTheme.colors.background,
     borderRadius: ds.radii.lg,
@@ -1086,17 +1064,6 @@ const localStyles = StyleSheet.create({
     top: 12,
     right: 12,
     zIndex: 1,
-  },
-  personName: {
-    alignSelf: "stretch",
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
-  },
-  personHint: {
-    alignSelf: "stretch",
-    marginTop: ds.spacing[1],
-    color: vibesTheme.colors.secondaryText,
-    ...ds.textStyles.micro,
   },
   featureImage: {
     ...StyleSheet.absoluteFillObject,

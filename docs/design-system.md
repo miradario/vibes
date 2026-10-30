@@ -382,3 +382,6 @@ Tab activo: pill `componentSize.tabIndicator` (48×28, `radius/pill`) con el ace
 
 ### Miniaturas de cards (`componentSize.cardThumb*`, 30/10)
 `componentSize.cardThumb` = 76 (cuadrada, desafíos) y `componentSize.cardThumbWide` = 112×76 (eventos), con `radii.md` (12) para la media interna. Uso: HomeOverview (cards de desafío y evento), placeholders de Home y ChallengeFeedCard.
+
+### PersonCard (`components/ui/PersonCard.tsx`, 30/10)
+Card chica de persona para carruseles: ancho y foto `componentSize.personCard` (96), `radii.lg`, borde 1 `border/default`, fondo `bg/surface`, padding `spacing/2`. Nombre `textStyles.subtitle` (1 línea), tag opcional `textStyles.micro` `text/secondary` (2 líneas). Toda la card es tocable (>44), role button con label `Ver perfil de <nombre>`, pressed `opacity.pressed`. `blurred` desenfoca la foto (`componentSize.personCardBlur`). Uso: Home "Personas con tu vibe".
