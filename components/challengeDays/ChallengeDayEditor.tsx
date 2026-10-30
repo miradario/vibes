@@ -560,7 +560,7 @@ export default function ChallengeDayEditor({
                       busy || recording || draft.attachments.length >= 20
                     }
                     style={s.mediaButton}
-                    textStyle={s.mediaButtonText}
+                    textStyle={[s.mediaButtonText, recording ? s.destructiveButtonText : undefined]}
                   />
                   <DayButton
                     label="Galería"
@@ -695,6 +695,7 @@ export default function ChallengeDayEditor({
                         label={`Eliminar contenido ${index + 1}`}
                         disabled={busy || recording}
                         style={s.danger}
+                        textStyle={s.destructiveButtonText}
                         onPress={() =>
                           void persist({
                             ...current.current,
@@ -750,6 +751,7 @@ export default function ChallengeDayEditor({
                     onPress={save}
                     disabled={busy || recording || Boolean(conflict)}
                     style={s.primary}
+                    textStyle={s.accentButtonText}
                   />
                   <DayButton
                     label="Descartar borrador"

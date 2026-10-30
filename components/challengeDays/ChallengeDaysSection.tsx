@@ -122,7 +122,7 @@ export default function ChallengeDaysSection({
               <Text
                 style={[
                   s.buttonText,
-                  value === day ? null : s.secondaryButtonText,
+                  value === day ? s.accentButtonText : s.secondaryButtonText,
                 ]}
               >
                 {getChallengeContentLabel(value)}
@@ -187,6 +187,7 @@ export default function ChallengeDaysSection({
                   : "Personalizar día"
               }
               style={s.primary}
+              textStyle={s.accentButtonText}
               onPress={() => setEditing(true)}
             />
           ) : null}

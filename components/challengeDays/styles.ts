@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle, buttonVariant } from "../ui/buttonStyles";
 import * as ds from "../../src/theme/tokens";
 const c = vibesTheme.colors;
 export const dayStyles = StyleSheet.create({
@@ -41,8 +42,6 @@ export const dayStyles = StyleSheet.create({
     flexGrow: 0,
     flexShrink: 1,
     width: "48%",
-    borderRadius: ds.radii.lg,
-    minHeight: 58,
     paddingHorizontal: ds.spacing[2],
   },
   mediaButtonText: {
@@ -68,10 +67,7 @@ export const dayStyles = StyleSheet.create({
     ...ds.textStyles.body,
     minHeight: 50,
   },
-  linkButton: {
-    borderRadius: ds.radii.lg,
-    minHeight: 52,
-  },
+  linkButton: {},
   footerActions: {
     gap: ds.spacing[3],
     marginTop: ds.spacing[1],
@@ -82,31 +78,15 @@ export const dayStyles = StyleSheet.create({
     justifyContent: "space-between",
     gap: ds.spacing[2],
   },
-  button: {
-    minHeight: 44,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-    borderRadius: ds.radii.lg,
-    backgroundColor: c.primaryText,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primary: { backgroundColor: c.accentMustard },
-  secondary: {
-    backgroundColor: c.surface,
-    borderWidth: 1,
-    borderColor: c.secondaryText,
-  },
-  danger: { backgroundColor: c.accentCoral },
-  buttonText: {
-    color: c.background,
-    ...ds.textStyles.body,
-    textAlign: "center",
-  },
-  secondaryButtonText: {
-    color: c.primaryText,
-  },
-  disabled: { opacity: 0.4 },
+  button: buttonStyle("primary", "md"),
+  primary: { ...buttonVariant.accent },
+  secondary: { ...buttonVariant.secondary },
+  danger: { ...buttonVariant.destructive },
+  buttonText: buttonLabel("md", "primary"),
+  accentButtonText: { color: buttonContentColor.accent },
+  destructiveButtonText: { color: buttonContentColor.destructive },
+  secondaryButtonText: { color: buttonContentColor.secondary },
+  disabled: { ...buttonDisabled },
   input: {
     color: c.primaryText,
     backgroundColor: c.surface,
