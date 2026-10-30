@@ -774,19 +774,11 @@ export default StyleSheet.create({
     ...ds.textStyles.heading,
   },
   welcomeSecondary: {
-    backgroundColor: BUTTON_CREAM,
-    paddingVertical: ds.spacing[4],
-    borderRadius: ds.radii.xl,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: BUTTON_BORDER,
-    ...ds.glow.accent,
-    elevation: ds.shadows.sm.elevation,
+    ...buttonStyle("secondary", "lg"),
     marginBottom: ds.spacing[12],
   },
   welcomeSecondaryText: {
-    color: TEXT_PRIMARY,
-    ...ds.textStyles.heading,
+    ...buttonLabel("lg", "secondary"),
   },
   loginContainer: {
     flex: 1,
@@ -1574,20 +1566,14 @@ export default StyleSheet.create({
     ...ds.textStyles.bodySmall,
   },
   soulmateFooterButton: {
+    ...buttonStyle("accent", "lg"),
     position: "absolute",
     left: 20,
     right: 20,
     bottom: 22,
-    backgroundColor: CTA_PRIMARY,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
-    ...ds.glow.accent,
-    elevation: ds.shadows.md.elevation,
   },
   soulmateFooterText: {
-    color: WHITE,
-    ...ds.textStyles.body,
+    ...buttonLabel("lg", "accent"),
   },
   matchItem: {
     alignItems: "center",
@@ -2487,19 +2473,13 @@ export default StyleSheet.create({
     marginBottom: ds.spacing[4],
   },
   onboardNext: {
-    backgroundColor: CTA_PRIMARY,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
-    ...ds.glow.accent,
-    elevation: ds.shadows.sm.elevation,
+    ...buttonStyle("accent", "lg"),
   },
   onboardNextDisabled: {
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.higher),
   },
   onboardNextText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.body,
+    ...buttonLabel("lg", "accent"),
   },
   meditationList: {
     paddingBottom: /* ds-lint-allow layout: paddingBottom 110 (medida de layout fuera de la escala) */ 110,
@@ -2758,17 +2738,11 @@ export default StyleSheet.create({
     marginBottom: ds.spacing[2],
   },
   premiumCta: {
+    ...buttonStyle("accent", "lg"),
     marginTop: ds.spacing[4],
-    backgroundColor: CTA_PRIMARY,
-    paddingVertical: ds.spacing[4],
-    borderRadius: ds.radii.xl,
-    alignItems: "center",
-    ...ds.glow.accent,
-    elevation: ds.shadows.md.elevation,
   },
   premiumCtaText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.body,
+    ...buttonLabel("lg", "accent"),
   },
 
   // EDIT PROFILE
@@ -2833,17 +2807,11 @@ export default StyleSheet.create({
     justifyContent: "center",
   },
   editPrimaryButton: {
+    ...buttonStyle("accent", "lg"),
     marginTop: ds.spacing[2],
-    backgroundColor: CTA_PRIMARY,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
-    ...ds.glow.accent,
-    elevation: ds.shadows.md.elevation,
   },
   editPrimaryText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.body,
+    ...buttonLabel("lg", "accent"),
   },
   editRow: {
     backgroundColor: WHITE,

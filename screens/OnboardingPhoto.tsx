@@ -23,6 +23,7 @@ import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
@@ -218,7 +219,7 @@ const OnboardingPhoto = () => {
               <Icon
                 name="images"
                 size={ds.iconSize.md}
-                color={vibesTheme.colors.accentCoral}
+                color={buttonContentColor["secondary"]}
                 style={localStyles.buttonIcon}
               />
               <Text style={styles.welcomeSecondaryText}>{t("onboarding.uploadPhoto")}</Text>
@@ -232,7 +233,7 @@ const OnboardingPhoto = () => {
                 <Icon
                   name="add"
                   size={ds.iconSize.md}
-                  color={vibesTheme.colors.accentCoral}
+                  color={buttonContentColor["secondary"]}
                   style={localStyles.buttonIcon}
                 />
                 <Text style={styles.welcomeSecondaryText}>{t("onboarding.uploadAnother")}</Text>

@@ -28,6 +28,7 @@ import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const ONBOARDING_OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
@@ -375,14 +376,10 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   addButton: {
-    borderRadius: ds.radii.lg,
-    backgroundColor: vibesTheme.colors.accentMustard,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
+    ...buttonStyle("accent", "md"),
   },
   addButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.label,
+    ...buttonLabel("md", "accent"),
   },
   skipButton: {
     alignItems: "center",
