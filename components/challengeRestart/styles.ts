@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import { buttonLabel, buttonStyle } from "../ui/buttonStyles";
 import * as ds from "../../src/theme/tokens";
 
 const { colors, fonts, radii, spacing } = vibesTheme;
@@ -39,21 +40,8 @@ export const restartStyles = StyleSheet.create({
     color: colors.primaryText,
     ...ds.textStyles.body,
   },
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[1],
-    paddingHorizontal: spacing[4],
-    minHeight: 40,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: colors.accentBlue,
-    backgroundColor: colors.surface,
-  },
-  pillText: {
-    color: colors.accentBlue,
-    ...ds.textStyles.subtitle,
-  },
+  pill: buttonStyle("secondary-blue", "md"),
+  pillText: buttonLabel("md", "secondary-blue"),
   statusText: {
     color: colors.secondaryText,
     ...ds.textStyles.labelMedium,
