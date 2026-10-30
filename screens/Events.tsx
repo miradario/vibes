@@ -349,6 +349,16 @@ const Events = ({
       joinedChallengeIds.has(item.id) || (Boolean(viewerId) && item.createdBy === viewerId && item.visibility === "private"),
     [joinedChallengeIds, viewerId],
   );
+  // Joined events always stay in "Tus eventos", whatever the community filter.
+  const joinedEventIds = useMemo(
+    () =>
+      new Set(
+        myEventGroups
+          .filter((group) => group.eventType === "event")
+          .map((group) => group.eventId),
+      ),
+    [myEventGroups],
+  );
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -366,7 +376,7 @@ const Events = ({
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
       // Challenges have no community tags, so the community filter only applies to events.
-      if (section === "event" && !matchesCommunities(item, spiritualPaths)) return false;
+      if (section === "event" && !joinedEventIds.has(item.id) && !matchesCommunities(item, spiritualPaths)) return false;
       if (section === "event" && frequentOnly && !getEventRecurrence(item.schedule)) return false;
       if (section === "event" && pricingType && item.pricingType !== pricingType) return false;
       if (!normalizedSearch) return true;
@@ -389,7 +399,7 @@ const Events = ({
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, isMyChallenge, spiritualPaths, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
+  }, [items, isMyChallenge, joinedEventIds, spiritualPaths, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
