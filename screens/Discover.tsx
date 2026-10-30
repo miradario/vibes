@@ -862,11 +862,11 @@ export const DiscoverContent = forwardRef<
                       accessibilityLabel={`${t("discover.gender")}: ${option.label}`}
                       accessibilityState={{ selected: option.value === "all" ? discoverFilters.genders.length === 0 : discoverFilters.genders.includes(option.value) }}
                       key={option.value}
+                      activeOpacity={ds.opacity.pressed}
                       style={[
                         localStyles.filterPill,
-                        { minHeight: 44, paddingHorizontal: ds.spacing[4] },
                         (option.value === "all" ? discoverFilters.genders.length === 0 : discoverFilters.genders.includes(option.value)) &&
-                          { backgroundColor: vibesTheme.colors.primaryText },
+                          localStyles.filterPillActive,
                       ]}
                       onPress={() =>
                         setDiscoverFilters((prev) => {
@@ -943,7 +943,7 @@ export const DiscoverContent = forwardRef<
                           key={option}
                           accessibilityRole="checkbox"
                           accessibilityState={{ checked: selected }}
-                          activeOpacity={0.8}
+                          activeOpacity={ds.opacity.pressed}
                           style={[
                             localStyles.filterPill,
                             selected && localStyles.filterPillActive,

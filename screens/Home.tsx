@@ -804,6 +804,7 @@ const Home = () => {
                     ] as const
                   ).map((option) => (
                     <TouchableOpacity hitSlop={chipHitSlop}
+                      activeOpacity={ds.opacity.pressed}
                       key={option.value}
                       style={[
                         localStyles.filterPill,
@@ -843,6 +844,7 @@ const Home = () => {
                     ] as const
                   ).map((option) => (
                     <TouchableOpacity hitSlop={chipHitSlop}
+                      activeOpacity={ds.opacity.pressed}
                       key={option.value}
                       style={[
                         localStyles.filterPill,
