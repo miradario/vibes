@@ -37,6 +37,19 @@ export const iconButtonFloating = {
 } as const;
 export const iconButtonFloatingIconColor = ds.colors.text.onDark;
 
+/** IconButton `type="filled"` (aprobado 30/10): círculo de `touchTarget` (44), pill, `action/primary`, sin sombra;
+ *  ícono `iconSize.md` (20) en `text/on-dark`. Deshabilitado: sumar `buttonDisabled`. Uso: enviar en chats. */
+export const iconButtonFilled = {
+  width: ds.touchTarget,
+  height: ds.touchTarget,
+  borderRadius: ds.radii.pill,
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: ds.colors.action.primary,
+} as const;
+export const iconButtonFilledIconColor = ds.colors.text.onDark;
+export const iconButtonFilledIconSize = ds.iconSize.md;
+
 /** Badge (§5.8) `count`: 18, pill, padding X `spacing/1`, `action/accent`, `text/micro` primary. */
 export const badgeStyles = {
   count: { minWidth: ds.componentSize.badge, height: ds.componentSize.badge, borderRadius: ds.radii.pill, paddingHorizontal: ds.spacing[1], alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.action.accent },

@@ -44,6 +44,8 @@ import {
   type CommunityMessage,
 } from "../src/queries/communityGroups.queries";
 import { handleApiError } from "../src/utils/handleApiError";
+import { buttonDisabled } from "../components/ui/buttonStyles";
+import { iconButtonFilled, iconButtonFilledIconColor, iconButtonFilledIconSize } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const COMPOSER_LINE_HEIGHT = 20;
@@ -508,16 +510,15 @@ export default function CommunityGroupChat() {
             accessibilityLabel="Enviar mensaje"
             disabled={!body.trim() || send.isPending}
             style={[
-              chatStyles.eventChatSendButton,
-              s.send,
-              (!body.trim() || send.isPending) && { opacity: 0.4 },
+              iconButtonFilled,
+              (!body.trim() || send.isPending) && buttonDisabled,
             ]}
             onPress={() => void submit()}
           >
             {send.isPending ? (
               <VibesLoader />
             ) : (
-              <Icon name="send" size={ds.iconSize.lg} color={WHITE} />
+              <Icon name="send" size={iconButtonFilledIconSize} color={iconButtonFilledIconColor} />
             )}
           </TouchableOpacity>
         </View>
@@ -592,5 +593,4 @@ const s = StyleSheet.create({
     borderRadius: ds.radii.xl,
     ...ds.textStyles.body, lineHeight: Platform.OS === "ios" ? undefined : COMPOSER_LINE_HEIGHT,
   },
-  send: { width: 48, height: 48, borderRadius: ds.radii.pill },
 });

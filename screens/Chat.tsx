@@ -62,7 +62,8 @@ import {
   ReplyPreviewBar,
   type ReplyTarget,
 } from "../components/MessageReply";
-import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { iconButtonFilled, iconButtonFilledIconColor, iconButtonFilledIconSize } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const REPORT_REASONS: ReportReason[] = [
@@ -749,13 +750,13 @@ const Chat = () => {
             />
             <TouchableOpacity
               style={[
-                styles.eventChatSendButton,
-                (!text.trim() || sendMutation.isPending) && { opacity: 0.4 },
+                iconButtonFilled,
+                (!text.trim() || sendMutation.isPending) && buttonDisabled,
               ]}
               onPress={handleSend}
               disabled={!text.trim() || sendMutation.isPending}
             >
-              <Icon name="send" size={ds.iconSize.md} color={WHITE} />
+              <Icon name="send" size={iconButtonFilledIconSize} color={iconButtonFilledIconColor} />
             </TouchableOpacity>
           </View>
         </View>

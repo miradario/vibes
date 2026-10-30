@@ -46,7 +46,8 @@ import {
   type VibiCategory,
   type VibiExchange,
 } from "../src/lib/vibi";
-import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { iconButtonFilled, iconButtonFilledIconColor, iconButtonFilledIconSize } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const colors = vibesTheme.colors;
@@ -597,8 +598,8 @@ function VibiConversation({ userId }: { userId: string }) {
                 />
                 <Pressable
                   style={[
-                    s.send,
-                    (!draft.trim() || disabled || !!pending) && s.dimmed,
+                    iconButtonFilled,
+                    (!draft.trim() || disabled || !!pending) && buttonDisabled,
                   ]}
                   disabled={
                     !draft.trim() || disabled || !!pending || !conversationId
@@ -609,8 +610,8 @@ function VibiConversation({ userId }: { userId: string }) {
                 >
                   <Ionicons
                     name="arrow-up"
-                    size={ds.iconSize.lg}
-                    color={colors.primaryText}
+                    size={iconButtonFilledIconSize}
+                    color={iconButtonFilledIconColor}
                   />
                 </Pressable>
               </View>
@@ -827,15 +828,6 @@ const s = StyleSheet.create({
     ...ds.textStyles.body,
     color: colors.primaryText,
   },
-  send: {
-    width: 46,
-    height: 46,
-    borderRadius: ds.radii.pill,
-    backgroundColor: colors.accentMustard,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dimmed: { opacity: 0.45 },
   counter: { ...ds.textStyles.caption, color: colors.secondaryText, textAlign: "right" },
   loading: { flex: 1, justifyContent: "center", alignItems: "center", gap: ds.spacing[3] },
   status: {

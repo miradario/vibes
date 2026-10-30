@@ -3367,12 +3367,4 @@ export default StyleSheet.create({
     color: TEXT_PRIMARY,
     marginHorizontal: ds.spacing[2],
   },
-  eventChatSendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: ds.radii.pill,
-    backgroundColor: vibesTheme.colors.primaryText,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 });
