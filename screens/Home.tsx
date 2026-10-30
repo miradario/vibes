@@ -7,7 +7,6 @@ import { showToast } from "../src/utils/toast";
 import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
 import { matchesSavedDiscoverExtras } from "../src/lib/discoverSavedFilters";
 import PhotoViewer from "../components/PhotoViewer";
-import ProfileMediaImage from "../components/ProfileMediaImage";
 import HomeOverview from "../components/HomeOverview";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
 import DailyMoodCard from "../components/DailyMoodCard";
