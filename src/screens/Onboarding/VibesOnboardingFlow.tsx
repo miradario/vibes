@@ -67,7 +67,7 @@ import {
   type VibesOnboardingStep,
 } from "./vibesOnboardingContent";
 import { ONBOARDING_COLORS, onboardingStyles } from "./vibesOnboardingStyles";
-import { ensureAccountCreatedTracked, signupErrorCode, trackSignupEvent as trackSignupEventReal } from "../../lib/signupEvents";
+import { ensureAccountCreatedTracked, signupErrorCode, trackSignupEvent } from "../../lib/signupEvents";
 import { useSignupBackgroundTracking } from "../../lib/useSignupBackgroundTracking";
 import { useI18n } from "../../i18n";
 import VibesLoader from "../../../components/VibesLoader";
@@ -106,16 +106,12 @@ const getSelectedLabels = (
     .filter((option) => selectedIds.includes(option.id))
     .map((option) => option.label);
 
-// TEMP preview onboarding: remove before merge. `preview` (solo __DEV__) recorre todo el flow sin escribir nada.
-const VibesOnboardingContent = ({ skipContinueChoice = false, preview = false }: { skipContinueChoice?: boolean; preview?: boolean }) => {
+const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueChoice?: boolean }) => {
   const navigation = useNavigation();
-  // TEMP preview onboarding: remove before merge. Sin analytics (signup_events) en preview.
-  const trackSignupEvent: typeof trackSignupEventReal = (...args) => { if (!preview) trackSignupEventReal(...args); };
   const { locale, t } = useI18n();
   const { data: session } = useAuthSession();
   const { draft, updateDraft, resetDraft } = useOnboardingDraft();
-  // TEMP preview onboarding: remove before merge. En preview no se precarga el perfil guardado.
-  const savedProfile = useProfileQuery(preview ? undefined : session?.user?.id);
+  const savedProfile = useProfileQuery(session?.user?.id);
   const [hadBirthDateOnEntry] = useState(() => Boolean(parseBirthDate(draft.birthDate)));
   const completeMutation = useCompleteOnboardingMutation();
   const transition = useRef(new Animated.Value(1)).current;
@@ -253,9 +249,9 @@ const VibesOnboardingContent = ({ skipContinueChoice = false, preview = false }:
     trackSignupEvent("onboarding_step_viewed", { step, stepIndex });
   }, [stepIndex]);
   useEffect(() => {
-    if (!draft.editingExistingProfile && !preview) ensureAccountCreatedTracked(session?.user); // TEMP preview onboarding: remove before merge
+    if (!draft.editingExistingProfile) ensureAccountCreatedTracked(session?.user);
   }, [session?.user?.id]);
-  useSignupBackgroundTracking(step, stepIndex, !draft.editingExistingProfile && !preview); // TEMP preview onboarding: remove before merge
+  useSignupBackgroundTracking(step, stepIndex, !draft.editingExistingProfile);
   useEffect(() => {
     focusedProfileInput.current = null;
     Keyboard.dismiss();
@@ -384,14 +380,6 @@ const VibesOnboardingContent = ({ skipContinueChoice = false, preview = false }:
         t("vibesOnboarding.missingSessionMessage")
       );
       return false;
-    }
-
-    // TEMP preview onboarding: remove before merge. Sin mutation ni Storage: limpia el draft y vuelve a Ajustes.
-    if (preview) {
-      await wait(COMPLETION_MIN_LOADING_MS);
-      resetDraft();
-      navigation.goBack();
-      return true;
     }
 
     const navigateHome = () => {
@@ -1073,10 +1061,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false, preview = false }:
           <ProgressHeader
             intro={["profileText", "continueChoice"].includes(step)}
             cancelDisabled={completeMutation.isPending}
-            onCancel={preview ? () => { // TEMP preview onboarding: remove before merge
-              resetDraft();
-              navigation.goBack();
-            } : draft.editingExistingProfile ? () => {
+            onCancel={draft.editingExistingProfile ? () => {
               resetDraft();
               navigation.dispatch(CommonActions.reset({
                 index: 0,
@@ -1212,9 +1197,7 @@ const VibesOnboardingContent = ({ skipContinueChoice = false, preview = false }:
 
 const VibesOnboardingFlow = () => {
   const route = useRoute();
-  // TEMP preview onboarding: remove before merge. Solo __DEV__; fuerza draft vacío y sin resume.
-  const preview = __DEV__ && Boolean((route.params as {preview?: boolean} | undefined)?.preview);
-  const resume = !preview && Boolean((route.params as {resume?: boolean} | undefined)?.resume);
+  const resume = Boolean((route.params as {resume?: boolean} | undefined)?.resume);
   const {data:session} = useAuthSession();
   const profile = useProfileQuery(session?.user?.id);
   const preferences = useUserPreferencesQuery(resume ? session?.user?.id : undefined);
@@ -1222,27 +1205,18 @@ const VibesOnboardingFlow = () => {
     queryFn:()=>readProfileAnswers(session!.user.id), enabled:resume && Boolean(session?.user?.id)});
   const {setDraft,resetDraft} = useOnboardingDraft();
   useEffect(() => () => { if (resume) resetDraft(); }, [resume]);
-  // TEMP preview onboarding: remove before merge. Draft vacío al entrar y al salir (solo memoria, react-query no persistido).
-  const [previewReady, setPreviewReady] = useState(!preview);
-  useEffect(() => {
-    if (!preview) return;
-    resetDraft();
-    setPreviewReady(true);
-    return () => resetDraft();
-  }, [preview]);
   const [ready, setReady] = useState(!resume);
   useEffect(() => {
     if (!resume || ready || !profile.data || !preferences.isSuccess || !answers.isSuccess) return;
     setDraft(buildResumeOnboardingDraft(profile.data, preferences.data, answers.data));
     setReady(true);
   }, [resume,ready,profile.data,preferences.isSuccess,preferences.data,answers.isSuccess,answers.data]);
-  if (!previewReady) return null; // TEMP preview onboarding: remove before merge
   if (!ready) return <ScreenContainer><View style={{flex:1,justifyContent:"center",alignItems:"center",padding:ds.spacing[6]}}>
     {profile.isError || preferences.isError || answers.isError || (profile.isSuccess && !profile.data)
       ? <PrimaryButton label="Reintentar cargar tu perfil" onPress={()=>{void profile.refetch();void preferences.refetch();void answers.refetch();}} />
       : <VibesLoader size={48} accessibilityLabel="Cargando tu perfil" />}
   </View></ScreenContainer>;
-  return <VibesOnboardingContent preview={preview} skipContinueChoice={!preview && Boolean((route.params as {skipContinueChoice?:boolean} | undefined)?.skipContinueChoice)} />;
+  return <VibesOnboardingContent skipContinueChoice={Boolean((route.params as {skipContinueChoice?:boolean} | undefined)?.skipContinueChoice)} />;
 };
 export default VibesOnboardingFlow;
 
