@@ -1,3 +1,4 @@
+import { iconCircleIconSize, iconCircleStyle } from "./IconCircle";
 import * as ds from "../../src/theme/tokens";
 
 /**
@@ -29,3 +30,7 @@ export const optionCardStyles = {
 } as const;
 
 export const optionCardCheck = { name: "checkmark-circle", size: ds.iconSize.md, color: ds.colors.border.selected } as const;
+
+/** Leading icon de OptionCard: IconCircle sm (32, `bg/subtle`; `bg/selected` si está elegida) con ícono 16 en `icon/default`. */
+export const optionCardLeading = (selected = false) => iconCircleStyle("sm", selected ? "accent" : "neutral");
+export const optionCardLeadingIcon = { size: iconCircleIconSize.sm, color: ds.colors.icon.default } as const;

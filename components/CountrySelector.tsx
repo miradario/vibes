@@ -7,6 +7,7 @@ import { getCountryName, searchCountries } from "../src/constants/countries";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import ListItem from "./ui/ListItem";
+import { buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 type Props = {
@@ -100,8 +101,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: ds.spacing[3] },
   title: { flex: 1, ...ds.textStyles.title, color: vibesTheme.colors.primaryText },
   close: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
-  done: { marginTop: ds.spacing[3], padding: ds.spacing[3], minHeight: 44, borderRadius: ds.radii.lg, alignItems: "center", backgroundColor: vibesTheme.colors.accentMustard },
-  doneText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle },
+  done: { ...buttonStyle("accent", "md"), marginTop: ds.spacing[3] },
+  doneText: { ...buttonLabel("md", "accent") },
   search: { padding: ds.spacing[3], ...ds.textStyles.body, color: vibesTheme.colors.primaryText, borderBottomWidth: 1, borderBottomColor: vibesTheme.colors.borderSoft },
   list: { maxHeight: 320, flexShrink: 1 },
   empty: { padding: ds.spacing[3], color: vibesTheme.colors.secondaryText },

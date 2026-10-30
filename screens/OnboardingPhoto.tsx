@@ -24,6 +24,7 @@ import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { optionCardLeading, optionCardLeadingIcon, optionCardStyles } from "../components/ui/optionCardStyles";
 import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
@@ -268,23 +269,27 @@ const OnboardingPhoto = () => {
 
             <View style={localStyles.modalButtons}>
               <TouchableOpacity
-                style={localStyles.modalOption}
+                accessibilityRole="button"
+                activeOpacity={ds.opacity.pressed}
+                style={optionCardStyles.base}
                 onPress={() => choosePhotoSource("camera")}
               >
-                <View style={localStyles.modalIconWrap}>
-                  <Icon name="camera" size={ds.iconSize.lg} color={vibesTheme.colors.accentCoral} />
+                <View style={optionCardLeading()}>
+                  <Icon name="camera" size={optionCardLeadingIcon.size} color={optionCardLeadingIcon.color} />
                 </View>
-                <Text style={localStyles.modalOptionText}>{t("onboarding.camera")}</Text>
+                <Text style={[optionCardStyles.label, optionCardStyles.copy]}>{t("onboarding.camera")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={localStyles.modalOption}
+                accessibilityRole="button"
+                activeOpacity={ds.opacity.pressed}
+                style={optionCardStyles.base}
                 onPress={() => choosePhotoSource("gallery")}
               >
-                <View style={localStyles.modalIconWrap}>
-                  <Icon name="images" size={ds.iconSize.lg} color={vibesTheme.colors.accentCoral} />
+                <View style={optionCardLeading()}>
+                  <Icon name="images" size={optionCardLeadingIcon.size} color={optionCardLeadingIcon.color} />
                 </View>
-                <Text style={localStyles.modalOptionText}>{t("onboarding.gallery")}</Text>
+                <Text style={[optionCardStyles.label, optionCardStyles.copy]}>{t("onboarding.gallery")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -411,30 +416,8 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   modalButtons: {
-    flexDirection: "row",
-    gap: ds.spacing[6],
+    gap: ds.spacing[3],
     marginBottom: ds.spacing[6],
-  },
-  modalOption: {
-    alignItems: "center",
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: ds.radii.lg,
-    paddingVertical: ds.spacing[5],
-    paddingHorizontal: ds.spacing[8],
-    ...ds.shadows.sm,
-  },
-  modalIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: ds.radii.pill,
-    backgroundColor: ds.colors.feedback.errorBg,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: ds.spacing[3],
-  },
-  modalOptionText: {
-    ...ds.textStyles.subtitle,
-    color: vibesTheme.colors.primaryText,
   },
   modalCancel: {
     paddingVertical: ds.spacing[2],
