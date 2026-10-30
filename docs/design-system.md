@@ -114,6 +114,10 @@ Usar botones de solo icono de 44 × 44, radio 14, fondo `secondaryText` al 4,7% 
 
 En Editar perfil, “Guardar” mantiene sus dimensiones y su texto durante el envío: el tilde se reemplaza por `VibesLoader`. La pantalla permanece abierta si falla el guardado.
 
+### ListItem (`components/ui/ListItem.tsx`, 30/10)
+
+Fila única de listas, menús y ajustes (DS §5.18). Props: `title`, `subtitle?`, `leadingIcon?` (caja 36, `radius/md`, `bg/subtle`, ícono 20) o `leading?` (avatar o nodo), `trailing?` (`chevron` 20 `icon/muted`, `check` 20 `border/selected`, `text` en `text/caption` secondary, `switch`, `custom`), `tone` (`default` | `destructive`: caja `feedback/error-bg` e ícono `action/destructive`), `selected`/`selectable`/`multiple`, `disabled`, `divider`, `size` (`md` 56 | `lg` 72 con avatar; `componentSize.listItem`). Padding X `spacing/4`, Y `spacing/3`, gap `spacing/3`. Título `text/subtitle` 1 línea; subtítulo `text/body-small` secondary 1 línea. Estados: pressed `bg/subtle`, selected `bg/selected`, disabled `opacity/disabled`. Divider 1 px `border/subtle` abajo (no en el último). Accesibilidad: `button`; `radio` si es seleccionable (`checkbox` con `multiple`).
+
 ## Campos, búsqueda y selección
 
 - Label persistente sobre el campo; placeholder como ejemplo o ayuda, no como único nombre accesible.
