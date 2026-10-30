@@ -10,6 +10,7 @@ export const componentSize = {
   dayPill: { sm: 28, md: 40 },
   overlayBadge: 32,
   chip: 32,
+  segmentedOption: 36,
   badge: 18,
   fab: 56,
   iconCircle: { sm: 32, md: 48, lg: 64 },
