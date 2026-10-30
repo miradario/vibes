@@ -35,6 +35,7 @@ import {
 } from "../src/lib/homePersonalization";
 import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import { cardStyles } from "./ui/surfaceStyles";
+import ProgressBar from "./ui/ProgressBar";
 import * as ds from "../src/theme/tokens";
 
 const ACCENT = vibesTheme.colors.accentMustard;
@@ -79,7 +80,7 @@ function SectionHeader({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Ver ${title}`}
-      activeOpacity={0.72}
+      activeOpacity={ds.opacity.pressed}
     >
       <Text style={s.section}>{title}</Text>
       <Icon name="chevron-forward" size={ds.iconSize.md} color={ACCENT} />
@@ -147,7 +148,7 @@ function ChallengeCard({
       accessibilityLabel={`Ver desafío ${event.title}`}
       onPress={() => navigation.navigate("ChallengeDetailScreen", { event })}
       style={s.compactCard}
-      activeOpacity={0.8}
+      activeOpacity={ds.opacity.pressed}
     >
       <ProfileMediaImage
         source={
@@ -176,13 +177,12 @@ function ChallengeCard({
               <Text style={s.progressCaption}>
                 Tu avance: {progress.completed} de {progress.total}
               </Text>
-              <View
-                accessibilityRole="progressbar"
-                accessibilityValue={{ min: 0, max: 100, now: progress.percent }}
+              <ProgressBar
+                value={progress.percent / 100}
+                size="sm"
+                tone="info"
                 style={s.track}
-              >
-                <View style={[s.fill, { width: `${progress.percent}%` }]} />
-              </View>
+              />
             </View>
           ) : null
         ) : null}
@@ -207,7 +207,7 @@ function HomeEventCard({ event }: { event: EventFeedItem }) {
       accessibilityRole="button"
       accessibilityLabel={`Ver evento ${event.title}`}
       style={s.compactCard}
-      activeOpacity={0.8}
+      activeOpacity={ds.opacity.pressed}
       onPress={() => navigation.navigate("EventDetail", { event })}
     >
       <ProfileMediaImage
@@ -389,7 +389,7 @@ export default function HomeOverview({
               accessibilityRole="button"
               onPress={createEvent}
               style={s.ctaButton}
-              activeOpacity={0.84}
+              activeOpacity={ds.opacity.pressed}
             >
               <Text style={s.ctaText}>Crear evento</Text>
             </TouchableOpacity>
@@ -415,7 +415,7 @@ export default function HomeOverview({
           style={s.emptyCard}
           accessibilityRole="button"
           onPress={() => openList(true)}
-          activeOpacity={0.82}
+          activeOpacity={ds.opacity.pressed}
         >
           <View style={s.emptyIcon}>
             <Icon name="trophy-outline" size={ds.iconSize.lg} color={ACCENT} />
@@ -450,7 +450,7 @@ export default function HomeOverview({
 }
 const s = StyleSheet.create({
   sectionBlock: {
-    marginBottom: ds.spacing[6],
+    marginBottom: ds.spacing[8],
   },
   card: { ...cardStyles.base, padding: ds.spacing[4], marginBottom: ds.spacing[4] },
   heading: {
@@ -493,7 +493,7 @@ const s = StyleSheet.create({
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   compactList: { gap: ds.spacing[3] },
-  compactCard: { ...cardStyles.base, width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3], padding: ds.spacing[3] },
+  compactCard: { ...cardStyles.base, width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3], ...cardStyles.padding },
   compactCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
   challengePhoto: {
     width: 76,
@@ -503,7 +503,7 @@ const s = StyleSheet.create({
   },
   eventPhoto: { width: 112, height: 76, borderRadius: ds.radii.md, overflow: "hidden" },
   eventDate: {
-    color: vibesTheme.colors.accentBlue,
+    color: ds.colors.action.secondaryBlueText,
     ...ds.textStyles.labelMedium,
   },
   cardTitle: {
@@ -529,19 +529,7 @@ const s = StyleSheet.create({
     color: vibesTheme.colors.secondaryText,
     flexShrink: 1,
   },
-  track: {
-    flex: 1,
-    minWidth: 30,
-    height: 6,
-    borderRadius: ds.radii.pill,
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
-    overflow: "hidden",
-  },
-  fill: {
-    height: "100%",
-    backgroundColor: vibesTheme.colors.accentBlue,
-    borderRadius: ds.radii.xs,
-  },
+  track: { flex: 1 },
   eventSuggestionsLoader: {
     minHeight: 112,
     alignItems: "center",

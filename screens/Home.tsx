@@ -240,7 +240,7 @@ function HomePeopleSuggestions({
     <View style={localStyles.peopleSection}>
       <TouchableOpacity style={[localStyles.peopleHeading, { minHeight: 44 }]}
         accessibilityRole="button" accessibilityLabel="Ver personas con tu vibe"
-        disabled={loading} accessibilityState={{ disabled: loading }} onPress={onSeeAll} activeOpacity={0.72}>
+        disabled={loading} accessibilityState={{ disabled: loading }} onPress={onSeeAll} activeOpacity={ds.opacity.pressed}>
         <Text style={localStyles.peopleTitle}>Personas con tu vibe</Text>
         <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} />
       </TouchableOpacity>
@@ -254,7 +254,7 @@ function HomePeopleSuggestions({
             key={String(profile.id)}
             accessibilityRole="button"
             accessibilityLabel={`Ver perfil de ${profile.name}`}
-            activeOpacity={0.82}
+            activeOpacity={ds.opacity.pressed}
             style={localStyles.personCard}
             onPress={() => onOpenProfile(profile)}
           >
@@ -953,15 +953,15 @@ const Home = () => {
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Ir a tu perfil"
-              activeOpacity={0.84}
+              activeOpacity={ds.opacity.pressed}
               onPress={() => navigation.navigate("Aura" as never)}
-              style={{ alignItems: "center", gap: ds.spacing[2], minWidth: 58 }}
+              style={{ alignItems: "center", gap: ds.spacing[2], minWidth: ds.avatarSize.md }}
             >
               <View style={localStyles.heroAvatarButton}>
               <Avatar
                 uri={centerProfile.avatarUri ?? null}
-                size={58}
-                iconSize={30}
+                size={ds.avatarSize.md}
+                iconSize={ds.iconSize.lg}
                 fallbackBackgroundColor={vibesTheme.colors.background}
                 fallbackIconColor={vibesTheme.colors.primaryText}
               />
@@ -1042,8 +1042,8 @@ const localStyles = StyleSheet.create({
     marginBottom: ds.spacing[2],
   },
   heroAvatarButton: {
-    width: 58,
-    height: 58,
+    width: ds.avatarSize.md,
+    height: ds.avatarSize.md,
     borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
@@ -1058,7 +1058,7 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.title,
   },
   peopleSection: {
-    marginBottom: ds.spacing[6],
+    marginBottom: ds.spacing[8],
   },
   peopleHeading: {
     flexDirection: "row",
