@@ -6,6 +6,7 @@ import AnimatedSheetModal from "./AnimatedSheetModal";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { parseBirthDate } from "../src/lib/birthDate";
 import { selectBirthDateParts } from "../src/lib/birthDateSelection";
+import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const MONTH_NAMES = {
@@ -145,6 +146,10 @@ const s = StyleSheet.create({
   title: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title, textAlign: "center" },
   fields: { flexDirection: "row", gap: ds.spacing[3] },
   input: { borderWidth: 1, borderColor: vibesTheme.colors.accentBlue, borderRadius: ds.radii.md, padding: ds.spacing[3], textAlign: "center", color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
-  apply: { backgroundColor: vibesTheme.colors.accentMustard, minHeight: 50, borderRadius: ds.radii.lg, alignItems: "center", justifyContent: "center" },
-  applyText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle },
+  apply: {
+    ...buttonStyle("accent", "md"),
+  },
+  applyText: {
+    ...buttonLabel("md", "accent"),
+  },
 });

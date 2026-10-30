@@ -5,6 +5,7 @@ import { supabase } from "../src/lib/supabase";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { Text } from "./Typography";
 import Icon from "./Icon";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle, buttonVariant } from "./ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 type Guide = { detail: string; actions: string[] };
@@ -154,7 +155,7 @@ export default function VibiDailyTip({
             disabled={busy}
             accessibilityState={{ disabled: busy, busy }}
             onPress={() => void generate()}
-            style={[s.button, busy && { opacity: 0.5 }]}
+            style={[s.button, busy && buttonDisabled]}
           >
             <Text style={s.buttonText}>
               {busy
@@ -172,7 +173,7 @@ export default function VibiDailyTip({
           onPress={onClose}
           style={[s.button, s.doneButton]}
         >
-          <Icon name="heart-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
+          <Icon name="heart-outline" size={ds.iconSize.lg} color={buttonContentColor["accent"]} />
           <Text style={s.buttonText}>Listo</Text>
         </TouchableOpacity>
       ) : null}
@@ -200,11 +201,7 @@ const s = StyleSheet.create({
   },
   choices: { flexDirection: "row", gap: ds.spacing[3] },
   choice: { flex: 1 },
-  secondary: {
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.secondaryText,
-  },
+  secondary: { ...buttonVariant.secondary },
   title: {
     color: vibesTheme.colors.primaryText,
     ...ds.textStyles.heading,
@@ -214,16 +211,10 @@ const s = StyleSheet.create({
     ...ds.textStyles.body,
   },
   button: {
-    minHeight: 48,
-    padding: ds.spacing[3],
-    borderRadius: ds.radii.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
+    ...buttonStyle("accent", "md"),
   },
   doneButton: { flexDirection: "row", gap: ds.spacing[2] },
   buttonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("md", "accent"),
   },
 });

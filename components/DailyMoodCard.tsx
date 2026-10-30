@@ -27,6 +27,7 @@ import {
   getVibiDailyPrompt,
   claimVibiDailyGreetingForDay,
 } from "../src/lib/vibiDailyPrompts";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 export default function DailyMoodCard({
@@ -345,7 +346,7 @@ export default function DailyMoodCard({
                 accessibilityRole="button"
                 disabled={!vibiEnabled}
                 accessibilityState={{ disabled: !vibiEnabled }}
-                style={[s.save, !vibiEnabled && { opacity: 0.5 }]}
+                style={[s.save, !vibiEnabled && buttonDisabled]}
                 onPress={() => {
                   dismiss();
                   navigation.navigate("Vibi", {
@@ -393,7 +394,7 @@ export default function DailyMoodCard({
             accessibilityState={{ disabled: saveDisabled, busy: saving }}
             disabled={saveDisabled}
             onPress={() => void (loadFailed ? load() : save())}
-            style={[s.save, saveDisabled && { opacity: 0.5 }]}
+            style={[s.save, saveDisabled && buttonDisabled]}
           >
             <Text style={s.saveText}>
               {saving ? "Guardando…" : loadFailed ? "Reintentar" : "Guardar"}
@@ -517,16 +518,10 @@ const s = StyleSheet.create({
   },
   footer: { paddingHorizontal: ds.spacing[6], paddingTop: ds.spacing[3] },
   save: {
-    minHeight: 52,
-    padding: ds.spacing[4],
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderRadius: ds.radii.xl,
+    ...buttonStyle("accent", "lg"),
   },
   saveText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitleMedium,
+    ...buttonLabel("lg", "accent"),
   },
   skip: {
     minHeight: 48,

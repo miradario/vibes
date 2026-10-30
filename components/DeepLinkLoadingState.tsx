@@ -7,6 +7,7 @@ import { Text } from "./Typography";
 import ScreenContainer from "./ScreenContainer";
 import VibesLoader from "./VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 export type DeepLinkTarget = "challenge" | "event";
@@ -129,16 +130,11 @@ const styles = StyleSheet.create({
     marginTop: vibesTheme.spacing[2],
   },
   primaryButton: {
+    ...buttonStyle("accent", "md"),
     minWidth: 200,
-    alignItems: "center",
-    borderRadius: vibesTheme.radii.pill,
-    paddingHorizontal: ds.spacing[6],
-    paddingVertical: ds.spacing[3],
-    backgroundColor: vibesTheme.colors.accentMustard,
   },
   primaryButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("md", "accent"),
   },
   secondaryButton: {
     paddingHorizontal: ds.spacing[4],

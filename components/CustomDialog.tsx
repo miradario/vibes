@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "./Typography";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 type CustomDialogProps = {
@@ -95,17 +96,11 @@ const styles = StyleSheet.create({
     marginTop: ds.spacing[3],
   },
   primaryButton: {
+    ...buttonStyle("accent", "lg"),
     marginTop: ds.spacing[6],
-    minHeight: 56,
-    borderRadius: vibesTheme.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-    paddingHorizontal: ds.spacing[5],
   },
   primaryButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("lg", "accent"),
   },
   secondaryButton: {
     minHeight: 46,

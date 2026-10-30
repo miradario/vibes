@@ -33,6 +33,7 @@ import {
   orderHomeSections,
   type HomeSection,
 } from "../src/lib/homePersonalization";
+import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const ACCENT = vibesTheme.colors.accentMustard;
@@ -600,17 +601,11 @@ const s = StyleSheet.create({
     marginBottom: ds.spacing[1],
   },
   ctaButton: {
+    ...buttonStyle("accent", "md"),
     alignSelf: "flex-start",
     marginTop: ds.spacing[3],
-    minHeight: 44,
-    borderRadius: ds.radii.md,
-    paddingHorizontal: ds.spacing[4],
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: ACCENT,
   },
   ctaText: {
-    color: vibesTheme.colors.surface,
-    ...ds.textStyles.subtitleMedium,
+    ...buttonLabel("md", "accent"),
   },
 });

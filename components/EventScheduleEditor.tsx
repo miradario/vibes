@@ -6,6 +6,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Text, TextInput } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { sessionDraft, type EventScheduleDraft, type ScheduleDraftIssue } from "../src/lib/eventSchedule";
+import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 export default function EventScheduleEditor({ value, onChange, allowMultiple = true, issues = [] }: {
@@ -99,8 +100,12 @@ const colors = vibesTheme.colors;
 const styles = StyleSheet.create({
   dateSheet: { backgroundColor: colors.surface, borderTopLeftRadius: ds.radii.xl, borderTopRightRadius: ds.radii.xl, padding: ds.spacing[6], gap: ds.spacing[3] },
   sheetTitle: { ...ds.textStyles.title, color: colors.primaryText },
-  confirm: { minHeight: 56, borderRadius: ds.radii.pill, backgroundColor: colors.primaryText, alignItems: "center", justifyContent: "center", paddingHorizontal: ds.spacing[5] },
-  confirmText: { ...ds.textStyles.subtitle, color: colors.surface },
+  confirm: {
+    ...buttonStyle("primary", "lg"),
+  },
+  confirmText: {
+    ...buttonLabel("lg", "primary"),
+  },
   cancel: { minHeight: 44, alignItems: "center", justifyContent: "center" },
   cancelText: { ...ds.textStyles.subtitle, color: colors.secondaryText },
   container: { gap: ds.spacing[3] },

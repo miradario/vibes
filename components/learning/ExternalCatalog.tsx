@@ -15,6 +15,7 @@ import BackButton from "../BackButton";
 import {useNavigation, useRoute} from "@react-navigation/native";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import { externalClasses, externalPlaces, externalLocation, externalPrice, externalSchedule, placeForClass, type ExternalClass, type ExternalPlace } from "../../src/learning/externalCatalog";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../ui/buttonStyles";
 import * as ds from "../../src/theme/tokens";
 const c = vibesTheme.colors;
 export function ExternalClassCard({item,onPress}:{item:ExternalClass;onPress:()=>void}) {
@@ -65,7 +66,7 @@ export function ExternalCatalogDetailScreen() {
       {activity && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Invitar personas a la clase" onPress={() => setInviteVisible(true)} style={s.invite}><Icon name="person-add-outline" size={ds.iconSize.md} color={c.primaryText}/><Text style={s.inviteLabel}>Invitar a alguien</Text></TouchableOpacity>}
       {activity && activity.horarios_semanales.length > 0 && <ClassReservationPanel key={activity.id} source={{id:activity.id,weekly:activity.horarios_semanales.flatMap(slot => { const day = WEEKDAYS.indexOf(slot.dia); return day < 0 ? [] : [{day,time:slot.hora_inicio}]; })}} />}
       {item && (descriptionOpen || !activity) && <Text style={s.meta}>Fuente consultada: {item.fuentes[0]?.consultada_el}</Text>}
-      {item && <TouchableOpacity accessibilityRole="link" onPress={openSource} style={s.primary}><Text style={s.primaryLabel}>Contactar al organizador</Text><Icon name="open-outline" size={ds.iconSize.md} color={c.surface}/></TouchableOpacity>}
+      {item && <TouchableOpacity accessibilityRole="link" onPress={openSource} style={s.primary}><Text style={s.primaryLabel}>Contactar al organizador</Text><Icon name="open-outline" size={ds.iconSize.md} color={buttonContentColor["primary"]}/></TouchableOpacity>}
       {activity && <EventInviteSheet classInvite={{id:activity.id,title:activity.titulo,date:externalSchedule(activity),url:activity.fuentes[0]?.url ?? null}} visible={inviteVisible} onClose={()=>setInviteVisible(false)} onDiscover={()=>navigation.navigate("Tab",{screen:"Discover"})} />}
   </ScreenContainer>;
 }
@@ -83,5 +84,7 @@ const s=StyleSheet.create({
   detail:{gap:ds.spacing[3],padding:ds.spacing[4],paddingBottom:ds.spacing[6]},
   detailTitle:{...ds.textStyles.title,color:c.primaryText},
   close:{width:44,height:44,alignItems:"center",justifyContent:"center"},body:{...ds.textStyles.body,color:c.primaryText},notice:{padding:ds.spacing[3],gap:ds.spacing[2],borderRadius:ds.radii.lg,backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle)},
-  primary:{minHeight:56,borderRadius:ds.radii.pill,backgroundColor:c.primaryText,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:ds.spacing[3],paddingHorizontal:ds.spacing[5]},primaryLabel:{...ds.textStyles.subtitle,color:c.surface},
+  primary: {
+    ...buttonStyle("primary", "lg"),
+  },primaryLabel:{...buttonLabel("lg", "primary")},
 });

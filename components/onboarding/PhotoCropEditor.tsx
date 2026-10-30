@@ -6,6 +6,7 @@ import AnimatedSheetModal from "../AnimatedSheetModal";
 import { Text } from "../Typography";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import { constrainPhotoCrop, photoCropRect, type CropTransform } from "../../src/lib/photoCrop";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../ui/buttonStyles";
 import * as ds from "../../src/theme/tokens";
 
 export type CropPhoto = { uri: string; width: number; height: number };
@@ -171,7 +172,12 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", width: "100%", gap: ds.spacing[3] },
   secondary: { minHeight: 48, minWidth: 48, padding: ds.spacing[3], borderRadius: ds.radii.lg, alignItems: "center", justifyContent: "center", backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
   text: { color: colors.primaryText, ...ds.textStyles.subtitle },
-  primary: { flex: 1, minHeight: 48, borderRadius: ds.radii.xl, backgroundColor: colors.primaryText, alignItems: "center", justifyContent: "center", paddingHorizontal: ds.spacing[3] },
-  primaryText: { color: colors.background, ...ds.textStyles.subtitle },
+  primary: {
+    ...buttonStyle("primary", "md"),
+    flex: 1,
+  },
+  primaryText: {
+    ...buttonLabel("md", "primary"),
+  },
   disabled: { opacity: 0.5 },
 });
