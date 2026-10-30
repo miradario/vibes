@@ -77,6 +77,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import { calculateAgeFromBirthDate } from "../src/lib/birthDate";
 import VibesLoader from "../components/VibesLoader";
 import { showToast } from "../src/utils/toast";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverGender = "woman" | "man" | "other";
@@ -852,7 +853,7 @@ export const DiscoverContent = forwardRef<
                       { value: "other", label: t("discover.genderOther") },
                     ] as const
                   ).map((option) => (
-                    <TouchableOpacity
+                    <TouchableOpacity hitSlop={chipHitSlop}
                       accessibilityRole="button"
                       accessibilityLabel={`${t("discover.gender")}: ${option.label}`}
                       accessibilityState={{ selected: option.value === "all" ? discoverFilters.genders.length === 0 : discoverFilters.genders.includes(option.value) }}
@@ -934,7 +935,7 @@ export const DiscoverContent = forwardRef<
                       const selected =
                         answerFilters[field.key]?.includes(option) ?? false;
                       return (
-                        <TouchableOpacity
+                        <TouchableOpacity hitSlop={chipHitSlop}
                           key={option}
                           accessibilityRole="checkbox"
                           accessibilityState={{ checked: selected }}
@@ -1513,29 +1514,10 @@ const localStyles = StyleSheet.create({
     flexWrap: "wrap",
     gap: ds.spacing[3],
   },
-  filterPill: {
-    minHeight: 50,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[2],
-    borderRadius: ds.radii.pill,
-    borderWidth: 0,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
-  },
-  filterPillActive: {
-    backgroundColor: vibesTheme.colors.accentBlue,
-    borderColor: vibesTheme.colors.accentBlue,
-  },
-  filterPillText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
-  },
-  filterPillTextActive: {
-    color: vibesTheme.colors.surface,
-  },
+  filterPill: { ...chipStyles.base },
+  filterPillActive: { ...chipStyles.selected },
+  filterPillText: { ...chipStyles.label },
+  filterPillTextActive: { ...chipStyles.labelSelected },
   filtersFooter: {
     flexDirection: "row",
     gap: ds.spacing[3],

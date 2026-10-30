@@ -48,6 +48,7 @@ import { profileKeys, useProfileQuery } from "../src/queries/profile.queries";
 
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import * as ds from "../src/theme/tokens";
 
 const PROFILE_SINGLE_PHOTO_KEYS = [
@@ -815,25 +816,8 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     gap: ds.spacing[3],
   },
-  languageChip: {
-    minHeight: 44,
-    borderRadius: ds.radii.pill,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.scrim),
-    backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: ds.spacing[4],
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  languageChipActive: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
-  },
-  languageChipText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.subtitle,
-  },
-  languageChipTextActive: {
-    color: vibesTheme.colors.primaryText,
-  },
+  languageChip: { ...chipStyles.base },
+  languageChipActive: { ...chipStyles.selected },
+  languageChipText: { ...chipStyles.label },
+  languageChipTextActive: { ...chipStyles.labelSelected },
 });

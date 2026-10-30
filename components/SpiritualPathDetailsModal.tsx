@@ -19,6 +19,7 @@ import {
   translateSpiritualPathLabel,
   translateSpiritualPlaceholder,
 } from "../src/i18n/translations";
+import { chipHitSlop, chipStyles } from "./ui/chipStyles";
 import * as ds from "../src/theme/tokens";
 
 type SpiritualPathDetailsModalProps = {
@@ -137,7 +138,7 @@ const SpiritualPathDetailsModal = ({
                     {field.options.map((option) => {
                       const active = detail[field.key] === option;
                       return (
-                        <TouchableOpacity
+                        <TouchableOpacity hitSlop={chipHitSlop}
                           key={`${field.key}-${option}`}
                           style={[
                             localStyles.optionChip,
@@ -292,27 +293,9 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.label,
   },
   optionRow: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[3], marginTop: ds.spacing[2] },
-  optionChip: {
-    minHeight: 44,
-    borderRadius: vibesTheme.radii.pill,
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    backgroundColor: c.surface,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-    flexDirection: "row",
-    gap: ds.spacing[3],
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  optionChipActive: {
-    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),
-    borderColor: c.accentBlue,
-  },
-  optionChipText: {
-    color: c.primaryText,
-    ...ds.textStyles.label,
-  },
+  optionChip: { ...chipStyles.base },
+  optionChipActive: { ...chipStyles.selected },
+  optionChipText: { ...chipStyles.label },
   optionChipTextActive: { color: c.primaryText },
   input: {
     marginTop: ds.spacing[2],

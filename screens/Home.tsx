@@ -57,6 +57,7 @@ import { getBottomTabContentPadding, TAB_BAR_CONTENT_CLEARANCE } from "../src/li
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverFiltersState = {
@@ -815,7 +816,7 @@ const Home = () => {
                       { value: "other", label: "Otro" },
                     ] as const
                   ).map((option) => (
-                    <TouchableOpacity
+                    <TouchableOpacity hitSlop={chipHitSlop}
                       key={option.value}
                       style={[
                         localStyles.filterPill,
@@ -854,7 +855,7 @@ const Home = () => {
                       { value: "yes", label: "Sí fuma" },
                     ] as const
                   ).map((option) => (
-                    <TouchableOpacity
+                    <TouchableOpacity hitSlop={chipHitSlop}
                       key={option.value}
                       style={[
                         localStyles.filterPill,
@@ -2056,25 +2057,10 @@ const localStyles = StyleSheet.create({
     flexWrap: "wrap",
     gap: ds.spacing[3],
   },
-  filterPill: {
-    borderRadius: ds.radii.pill,
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-    backgroundColor: vibesTheme.colors.background,
-  },
-  filterPillActive: {
-    backgroundColor: vibesTheme.colors.accentBlue,
-    borderColor: vibesTheme.colors.accentBlue,
-  },
-  filterPillText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.bodySmall,
-  },
-  filterPillTextActive: {
-    color: vibesTheme.colors.surface,
-  },
+  filterPill: { ...chipStyles.base },
+  filterPillActive: { ...chipStyles.selected },
+  filterPillText: { ...chipStyles.label },
+  filterPillTextActive: { ...chipStyles.labelSelected },
   filtersFooter: {
     flexDirection: "row",
     gap: ds.spacing[3],

@@ -58,6 +58,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
 import { getIosMapPreviewSource } from "../src/config/mapPreview";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE =
@@ -834,7 +835,7 @@ const CreateEvent = () => {
           <EventClassificationPicker label="Tipo · cómo se participa" options={EVENT_PARTICIPATION_TYPES} value={participationType} onChange={setParticipationType} style={localStyles.pickerSection} labelStyle={localStyles.pickerLabel} />
           <Text style={localStyles.label}>Modalidad</Text>
           <View style={localStyles.choiceRow}>
-            <TouchableOpacity
+            <TouchableOpacity hitSlop={chipHitSlop}
               style={[
                 localStyles.choiceChip,
                 modality === "in_person" && localStyles.choiceChipActive,
@@ -850,7 +851,7 @@ const CreateEvent = () => {
                 Presencial
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity hitSlop={chipHitSlop}
               style={[
                 localStyles.choiceChip,
                 modality === "online" && localStyles.choiceChipActive,
@@ -1038,7 +1039,7 @@ const CreateEvent = () => {
 
           <Text style={localStyles.label}>Acceso</Text>
           <View style={localStyles.choiceRow}>
-            <TouchableOpacity
+            <TouchableOpacity hitSlop={chipHitSlop}
               style={[
                 localStyles.choiceChip,
                 pricingType === "free" && localStyles.choiceChipActive,
@@ -1054,7 +1055,7 @@ const CreateEvent = () => {
                 Gratis
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity hitSlop={chipHitSlop}
               style={[
                 localStyles.choiceChip,
                 pricingType === "paid" && localStyles.choiceChipActive,
@@ -1259,27 +1260,10 @@ const legacyStyles = StyleSheet.create({
     gap: ds.spacing[3],
     marginTop: ds.spacing[1],
   },
-  choiceChip: {
-    flex: 1,
-    borderRadius: ds.radii.pill,
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    backgroundColor: vibesTheme.colors.background,
-    paddingVertical: ds.spacing[3],
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  choiceChipActive: {
-    backgroundColor: vibesTheme.colors.accentBlue,
-    borderColor: vibesTheme.colors.accentBlue,
-  },
-  choiceChipText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.bodySmall,
-  },
-  choiceChipTextActive: {
-    color: vibesTheme.colors.surface,
-  },
+  choiceChip: { ...chipStyles.base, ...chipStyles.fullWidth },
+  choiceChipActive: { ...chipStyles.selected },
+  choiceChipText: { ...chipStyles.label },
+  choiceChipTextActive: { ...chipStyles.labelSelected },
   dateTimeButton: {
     flex: 1,
     backgroundColor: vibesTheme.colors.background,

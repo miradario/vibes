@@ -27,6 +27,7 @@ import {
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import * as ds from "../src/theme/tokens";
 
 const ONBOARDING_OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
@@ -205,7 +206,7 @@ const OnboardingSpiritualPath = () => {
           <View style={localStyles.extraSection}>
             <Text style={localStyles.extraSectionTitle}>{t("settings.vegetarian")}</Text>
             <View style={localStyles.chipRow}>
-              <TouchableOpacity
+              <TouchableOpacity hitSlop={chipHitSlop}
                 style={[
                   localStyles.choiceChip,
                   vegetarian === "Sí" && localStyles.choiceChipActive,
@@ -221,7 +222,7 @@ const OnboardingSpiritualPath = () => {
                   {t("common.yes")}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity hitSlop={chipHitSlop}
                 style={[
                   localStyles.choiceChip,
                   vegetarian === "No" && localStyles.choiceChipActive,
@@ -246,7 +247,7 @@ const OnboardingSpiritualPath = () => {
               {otherOptions.map((item) => {
                 const active = selectedOtherTags.includes(item);
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity hitSlop={chipHitSlop}
                     key={item}
                     style={[
                       localStyles.choiceChip,
@@ -360,25 +361,10 @@ const localStyles = StyleSheet.create({
     flexWrap: "wrap",
     gap: ds.spacing[3],
   },
-  choiceChip: {
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    backgroundColor: WHITE,
-    borderRadius: ds.radii.pill,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-  },
-  choiceChipActive: {
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  choiceChipText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.bodySmall,
-  },
-  choiceChipTextActive: {
-    color: vibesTheme.colors.primaryText,
-  },
+  choiceChip: { ...chipStyles.base },
+  choiceChipActive: { ...chipStyles.selected },
+  choiceChipText: { ...chipStyles.label },
+  choiceChipTextActive: { ...chipStyles.labelSelected },
   otherInputRow: {
     flexDirection: "row",
     gap: ds.spacing[3],
