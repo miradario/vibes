@@ -28,6 +28,8 @@ type Props<K extends string> = {
 
 const OPTION_HEIGHT = ds.componentSize.segmentedOption;
 const HIT = (ds.touchTarget - OPTION_HEIGHT) / 2;
+/** Shrink del label (`text/label`) cuando no entra en una línea: hasta 85% (14 → ~12). */
+const LABEL_MIN_SCALE = 0.85;
 
 /**
  * SegmentedControl (DS §5.19 + Agus 29/10: ícono y contador opcionales). Pista `bg/subtle`
@@ -53,7 +55,7 @@ export default function SegmentedControl<K extends string>({ options, selected, 
             style={[styles.option, isSelected && styles.optionSelected]}
           >
             {option.icon ? <Icon name={option.icon} size={ds.iconSize.md} color={color} /> : null}
-            <Text style={[styles.label, isSelected && styles.labelSelected]} numberOfLines={1}>
+            <Text style={[styles.label, isSelected && styles.labelSelected]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={LABEL_MIN_SCALE}>
               {option.label}
             </Text>
             {option.count && option.count > 0 ? (

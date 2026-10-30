@@ -81,6 +81,7 @@ import { chipHitSlop, chipRemoveIcon, chipStyles } from "../components/ui/chipSt
 import { cardStyles } from "../components/ui/surfaceStyles";
 import { iconCircleStyle } from "../components/ui/IconCircle";
 import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import SegmentedControl from "../components/ui/SegmentedControl";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverGender = "woman" | "man" | "other";
@@ -1121,24 +1122,17 @@ export const DiscoverContent = forwardRef<
         ) : null}
 
         {showHistory ? (
-          <View style={localStyles.historyModeRow}>
-            {([
-              { mode: "liked", label: "Enviadas", icon: "paper-plane-outline" },
-              { mode: "incoming", label: "Recibidos", icon: "mail-open-outline" },
-              { mode: "dismissed", label: "Descartados", icon: "close" },
-            ] as const).map(({ mode, label, icon }) => (
-              <TouchableOpacity
-                key={mode}
-                accessibilityRole="button"
-                accessibilityState={{ selected: historyMode === mode }}
-                style={[localStyles.historyModeButton, { flexGrow: label.length }, historyMode === mode && localStyles.historyModeButtonActive]}
-                onPress={() => setHistoryMode(mode)}
-              >
-                <Icon name={icon} size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} />
-                <Text style={localStyles.historyModeText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <SegmentedControl
+            style={localStyles.historyModeRow}
+            options={[
+              { key: "liked", label: "Enviadas" },
+              { key: "incoming", label: "Recibidos" },
+              { key: "dismissed", label: "Descartados" },
+            ] as const}
+            selected={historyMode}
+            onChange={setHistoryMode}
+            optionRole="radio"
+          />
         ) : null}
 
         <View style={localStyles.orbitWrap}>
@@ -1526,33 +1520,8 @@ const localStyles = StyleSheet.create({
     borderColor: vibesTheme.colors.accentMustard,
   },
   historyModeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[3],
-    paddingHorizontal: ds.spacing[4],
-    paddingBottom: ds.spacing[2],
-  },
-  historyModeButton: {
-    flex: 1,
-    minHeight: 48,
-    paddingHorizontal: ds.spacing[2],
-    borderRadius: ds.radii.lg,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
-    backgroundColor: "transparent",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[1],
-  },
-  historyModeButtonActive: {
-    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  historyModeText: {
-    flexShrink: 1,
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.label,
+    marginHorizontal: ds.spacing[4],
+    marginBottom: ds.spacing[2],
   },
 });
 
