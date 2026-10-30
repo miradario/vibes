@@ -95,7 +95,7 @@ import DayPill, { dayPillColors } from "../components/ui/DayPill";
 import StatRow from "../components/ui/StatRow";
 import Divider from "../components/ui/Divider";
 import { bannerStyles } from "../components/ui/surfaceStyles";
-import { iconCircleStyle } from "../components/ui/IconCircle";
+import IconCircle, { iconCircleIconSize, iconCircleStyle } from "../components/ui/IconCircle";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -620,10 +620,7 @@ export const PathProgress = memo(
               {totalDays} días para conectar con vos
             </Text>
           </View>
-          <View style={localStyles.pathPill}>
-            <Icon name="trending-up-outline" size={ds.iconSize.sm} color={vibesTheme.colors.accentCoral} />
-            <Text style={localStyles.pathPillText}>Progreso</Text>
-          </View>
+          <Tag icon="trending-up-outline" label="Progreso" />
         </View>
 
         <ScrollView
@@ -1834,9 +1831,9 @@ const ChallengeDetailScreen = () => {
         sheetStyle={localStyles.menuSheet}
       >
         <View style={localStyles.menuHandle} />
-        <View style={localStyles.completionShareBadge}>
-          <Icon name="trophy-outline" size={ds.iconSize.lg} color={vibesTheme.colors.background} />
-        </View>
+        <IconCircle size="lg" tone="accent" style={localStyles.completionShareBadge}>
+          <Icon name="trophy-outline" size={iconCircleIconSize.lg} color={ds.colors.icon.default} />
+        </IconCircle>
         <Text style={localStyles.completionShareTitle}>{t("challengeShare.title")}</Text>
         <Text style={localStyles.completionShareBody}>{t("challengeShare.body")}</Text>
         <ScrollView style={{ maxHeight: height * 0.42 }} contentContainerStyle={{ alignItems: "center", paddingVertical: ds.spacing[2] }}>
@@ -2706,19 +2703,6 @@ const localStyles = StyleSheet.create({
     color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     ...ds.textStyles.subtitleMedium,
   },
-  pathPill: {
-    minHeight: 36,
-    borderRadius: ds.radii.lg,
-    paddingHorizontal: ds.spacing[3],
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[2],
-    backgroundColor: ds.colors.bg.surfaceTranslucent,
-  },
-  pathPillText: {
-    color: vibesTheme.colors.accentBlue,
-    ...ds.textStyles.label,
-  },
   pathScrollContent: {
     paddingTop: ds.spacing[8],
     paddingBottom: ds.spacing[6],
@@ -3038,12 +3022,6 @@ const localStyles = StyleSheet.create({
   },
   completionShareBadge: {
     alignSelf: "center",
-    width: 56,
-    height: 56,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
     marginBottom: ds.spacing[4],
   },
   completionShareTitle: {
