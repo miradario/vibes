@@ -94,7 +94,7 @@ import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/u
 import DayPill, { dayPillColors } from "../components/ui/DayPill";
 import StatRow from "../components/ui/StatRow";
 import Divider from "../components/ui/Divider";
-import { bannerStyles } from "../components/ui/surfaceStyles";
+import { bannerStyles, iconButtonFloating, iconButtonFloatingIconColor } from "../components/ui/surfaceStyles";
 import IconCircle, { iconCircleIconSize, iconCircleStyle } from "../components/ui/IconCircle";
 import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
@@ -877,7 +877,7 @@ export const ChatEntryRow = memo(({ onPress }: ChatEntryRowProps) => (
     onPress={onPress}
     activeOpacity={0.9}
   >
-    <Icon name="chatbubble-outline" size={ds.iconSize.xl} color={vibesTheme.colors.surface} />
+    <Icon name="chatbubble-outline" size={ds.iconSize.xl} color={iconButtonFloatingIconColor} />
   </TouchableOpacity>
 ));
 
@@ -2947,14 +2947,8 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   floatingChatButton: {
+    ...iconButtonFloating,
     alignSelf: "flex-end",
-    width: 60,
-    height: 60,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.primaryText,
-    ...ds.shadows.sm,
   },
   chatRow: {
     borderRadius: ds.radii.xl,
