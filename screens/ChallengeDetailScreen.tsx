@@ -2665,15 +2665,15 @@ const localStyles = StyleSheet.create({
   },
   journeyTrack: {
     marginTop: ds.spacing[5],
-    height: 8,
+    height: ds.componentSize.progressBar.md,
     borderRadius: ds.radii.pill,
     overflow: "hidden",
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
+    backgroundColor: ds.colors.border.default,
   },
   journeyTrackFill: {
     height: "100%",
     borderRadius: ds.radii.pill,
-    backgroundColor: vibesTheme.colors.accentBlue,
+    backgroundColor: ds.colors.action.secondaryBlueText,
   },
   journeyDaysRow: {
     paddingTop: ds.spacing[6],
@@ -2912,15 +2912,15 @@ const localStyles = StyleSheet.create({
     backgroundColor: ds.colors.bg.subtle,
   },
   compactTrack: {
-    height: 12,
+    height: ds.componentSize.progressBar.md,
     borderRadius: ds.radii.pill,
-    backgroundColor: palette.faint,
+    backgroundColor: ds.colors.border.default,
     overflow: "hidden",
   },
   compactFill: {
     height: "100%",
-    borderRadius: ds.radii.sm,
-    backgroundColor: palette.gold,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.action.accent,
   },
   milestonesRow: {
     marginTop: ds.spacing[4],
@@ -2964,15 +2964,15 @@ const localStyles = StyleSheet.create({
   },
   summaryTrack: {
     marginTop: ds.spacing[4],
-    height: 10,
+    height: ds.componentSize.progressBar.md,
     borderRadius: ds.radii.pill,
-    backgroundColor: palette.faint,
+    backgroundColor: ds.colors.border.default,
     overflow: "hidden",
   },
   summaryFill: {
     height: "100%",
-    borderRadius: ds.radii.xs,
-    backgroundColor: palette.accentBlue,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.action.secondaryBlueText,
   },
   summaryCopy: {
     marginTop: ds.spacing[3],

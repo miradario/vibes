@@ -83,6 +83,7 @@ import { getIosMapPreviewSource } from "../src/config/mapPreview";
 import { shareEventInvite } from "../src/lib/socialShare";
 import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
 import { markFtuxAction } from "../src/ftux/ftuxStore";
+import ProgressBar from "../components/ui/ProgressBar";
 import * as ds from "../src/theme/tokens";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -1781,19 +1782,7 @@ const EventDetail = () => {
 
                 {!isChallengeFinished && milestone ? (
                   <View style={localStyles.milestoneWrap}>
-                    <View style={localStyles.milestoneBarBg}>
-                      <View
-                        style={[
-                          localStyles.milestoneBarFill,
-                          {
-                            width: `${Math.min(
-                              (streak / milestone) * 100,
-                              100,
-                            )}%`,
-                          },
-                        ]}
-                      />
-                    </View>
+                    <ProgressBar value={Math.min(streak / milestone, 1)} size="md" tone="accent" />
                     <Text style={localStyles.milestoneLabel}>
                       {getMilestoneMessage(streak, milestone)}
                     </Text>
@@ -2615,17 +2604,6 @@ const localStyles = StyleSheet.create({
   },
   milestoneWrap: {
     gap: ds.spacing[2],
-  },
-  milestoneBarBg: {
-    height: 6,
-    borderRadius: ds.radii.pill,
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
-    overflow: "hidden",
-  },
-  milestoneBarFill: {
-    height: 6,
-    borderRadius: ds.radii.pill,
-    backgroundColor: PRIMARY_COLOR,
   },
   milestoneLabel: {
     ...ds.textStyles.caption,

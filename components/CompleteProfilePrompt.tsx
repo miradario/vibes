@@ -15,6 +15,7 @@ import { getProfileCompletion, nextProfileParams } from "../src/lib/profileCompl
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import ProgressBar from "./ui/ProgressBar";
 import * as ds from "../src/theme/tokens";
 
 const DISMISS_DAYS = 30;
@@ -133,20 +134,12 @@ export default function CompleteProfilePrompt({
             : "Completá tu perfil"}
         </Text>
         <View style={styles.progressRow}>
-          <View
-            accessibilityRole="progressbar"
-            accessibilityValue={{ min: 0, max: 100, now: completion.percent }}
+          <ProgressBar
+            value={completion.percent / 100}
+            size="sm"
+            tone="info"
             style={styles.track}
-          >
-            <View
-              style={[
-                styles.fill,
-                {
-                  width: `${Math.max(0, Math.min(completion.percent, 100))}%`,
-                },
-              ]}
-            />
-          </View>
+          />
           {!compact ? (
             <Text style={styles.percent}>{completion.percent}%</Text>
           ) : null}
@@ -253,15 +246,7 @@ const styles = StyleSheet.create({
   },
   track: {
     flex: 1,
-    height: 6,
-    borderRadius: ds.radii.pill,
-    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
-    overflow: "hidden",
-  },
-  fill: {
-    height: "100%",
-    borderRadius: ds.radii.xs,
-    backgroundColor: vibesTheme.colors.accentBlue,
+    width: undefined,
   },
   percent: {
     color: vibesTheme.colors.secondaryText,
