@@ -1,11 +1,18 @@
 import React, { useMemo, useRef, useState } from "react";
 import { PanResponder, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Text } from "./Typography";
-import { vibesTheme } from "../src/theme/vibesTheme";
-import { moveRangeThumb } from "../src/lib/rangeSlider";
-import * as ds from "../src/theme/tokens";
+import { Text } from "../Typography";
+import { vibesTheme } from "../../src/theme/vibesTheme";
+import { moveRangeThumb } from "../../src/lib/rangeSlider";
+import * as ds from "../../src/theme/tokens";
 
-const HIT = 44;
+/**
+ * RangeSlider / Slider (components-spec §1.7, DUDA 12 ★): área táctil 44, thumb 24 en
+ * `action/accent` con borde 2 `bg/surface` + `shadows.sm`, pista 4 pill `border/default`,
+ * rango activo `action/accent`. "Sin límite" como botón ghost.
+ */
+const HIT = ds.touchTarget;
+const TRACK = ds.componentSize.slider.track;
+const THUMB = ds.componentSize.slider.thumb;
 export default function RangeSlider({ label, minimum, maximum, lower, upper, unit, onChange, onClear, noLimitLabel = "Sin límite", single = false, disabled = false }: {
   label: string; minimum: number; maximum: number; lower: number | null; upper: number | null;
   unit: string; onChange: (lower: number, upper: number) => void; onClear?: () => void; noLimitLabel?: string; single?: boolean; disabled?: boolean;
@@ -31,16 +38,16 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
     },
   })), []);
   const x = (value: number) => (value - minimum) / (maximum - minimum) * track;
-  return <View style={{ gap: ds.spacing[3], opacity: disabled ? 0.5 : 1 }}>
+  return <View style={{ gap: ds.spacing[3], opacity: disabled ? ds.opacity.disabled : 1 }}>
     <View style={s.heading}>
       <Text style={[s.title, single && { ...ds.textStyles.body }, { flex: 1 }]}>{label}</Text>
-      {single ? (upper === null ? null : <View style={s.clear}><Text style={s.clearText}>{`${high}/10`}</Text></View>) : <TouchableOpacity accessibilityRole="button" onPress={onClear} style={s.clear}>
+      {single ? (upper === null ? null : <View style={s.clear}><Text style={s.clearText}>{`${high}/10`}</Text></View>) : <TouchableOpacity accessibilityRole="button" onPress={onClear} style={s.clearGhost}>
         <Text style={s.clearText}>{noLimitLabel}</Text>
       </TouchableOpacity>}
     </View>
     <View onLayout={event => setWidth(event.nativeEvent.layout.width)} style={{ height: HIT }}>
       <View style={[s.track, { left: HIT / 2, right: HIT / 2 }]} />
-      <View style={[s.track, { left: HIT / 2 + x(low), width: x(high) - x(low), backgroundColor: vibesTheme.colors.accentMustard }]} />
+      <View style={[s.track, { left: HIT / 2 + x(low), width: x(high) - x(low), backgroundColor: ds.colors.action.accent }]} />
       {([low, high] as const).map((value, index) => single && index === 0 ? null : <View key={index}
         accessible accessibilityRole="adjustable" accessibilityLabel={single ? label : `${label}, ${index === 0 ? "desde" : "hasta"}`}
         accessibilityState={{ disabled }}
@@ -59,8 +66,9 @@ const s = StyleSheet.create({
   title: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
   clear: { borderRadius: ds.radii.xl, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
   clearText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.label },
-  track: { position: "absolute", top: 19, height: 6, borderRadius: ds.radii.pill, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft) },
+  clearGhost: { minHeight: HIT, justifyContent: "center", paddingHorizontal: ds.spacing[3], borderRadius: ds.radii.pill },
+  track: { position: "absolute", top: (HIT - TRACK) / 2, height: TRACK, borderRadius: ds.radii.pill, backgroundColor: ds.colors.border.default },
   hit: { position: "absolute", top: 0, width: HIT, height: HIT, alignItems: "center", justifyContent: "center" },
-  thumb: { width: 26, height: 26, borderRadius: ds.radii.pill, backgroundColor: vibesTheme.colors.accentMustard, borderWidth: 2, borderColor: vibesTheme.colors.background },
+  thumb: { width: THUMB, height: THUMB, borderRadius: ds.radii.pill, backgroundColor: ds.colors.action.accent, borderWidth: 2, borderColor: ds.colors.bg.surface, ...ds.shadows.sm },
   value: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.body },
 });
