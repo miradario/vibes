@@ -1,5 +1,7 @@
 /** Opacidades (DESIGN_SYSTEM.md §3.7). */
 export const opacity = {
+  /** Transparente (inicio de degradés con el mismo tono). Decisión Agus 29/10. */
+  none: 0,
   subtle: 0.06,
   soft: 0.12,
   medium: 0.24,

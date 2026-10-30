@@ -77,7 +77,7 @@ type Props = {
 
 // Explicit full-screen photo treatment: black is scoped to this viewer.
 const PROFILE_PHOTO_BACKGROUND = ds.colors.exception.photoViewerBlack;
-const PROFILE_PHOTO_GRADIENT = [ds.withAlpha(ds.colors.exception.photoViewerBlack, /* ds-lint-allow alfa 0 (inicio transparente del degradé, mismo tono); DUDA: token opacity.none */ 0), ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.strong), ds.colors.exception.photoViewerBlack] as const;
+const PROFILE_PHOTO_GRADIENT = [ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.none), ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.strong), ds.colors.exception.photoViewerBlack] as const;
 
 const DetailSection = ({
   label,
@@ -1078,7 +1078,7 @@ const UserProfileSheet = ({
 
           <LinearGradient
             pointerEvents="none"
-            colors={[ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.strong), ds.withAlpha(ds.colors.exception.photoViewerBlack, /* ds-lint-allow alfa 0 (inicio transparente del degradé, mismo tono); DUDA: token opacity.none */ 0)]}
+            colors={[ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.strong), ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.none)]}
             style={[localStyles.topGradient, { height: insets.top + 120, opacity: withoutPhoto ? 0 : 1 }]}
           />
 

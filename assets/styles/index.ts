@@ -726,7 +726,7 @@ export default StyleSheet.create({
     maxWidth: 280,
   },
   welcomeCard: {
-    backgroundColor: ds.withAlpha(ds.colors.base.paper, /* ds-lint-allow alfa 0 (inicio transparente del degradé, mismo tono); DUDA: token opacity.none */ 0),
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.none),
     borderRadius: ds.radii.xl,
     paddingVertical: ds.spacing[6],
     paddingHorizontal: ds.spacing[5],
