@@ -28,6 +28,7 @@ import {
   reminderTimingLabel,
 } from "../src/notifications/preferences";
 import { optionCardCheck, optionCardStyles } from "./ui/optionCardStyles";
+import ListItem from "./ui/ListItem";
 import * as ds from "../src/theme/tokens";
 
 const colors = vibesTheme.colors;
@@ -272,49 +273,25 @@ export default function NotificationPreferencesSection() {
                   </View>
                   {category.label === "challenges" &&
                   prefs.notificationChallenges !== false ? (
-                    <Pressable
-                      accessibilityRole="button"
+                    <ListItem
+                      title={t("configuration.dailyReminder")}
+                      subtitle={t("configuration.dailyAt", { time: challengeTime })}
+                      trailing={{ type: "chevron" }}
                       disabled={busy}
                       onPress={openChallengeTime}
                       style={s.timing}
-                    >
-                      <View style={s.flex}>
-                        <Text style={s.description}>
-                          {t("configuration.dailyReminder")}
-                        </Text>
-                        <Text style={s.label}>
-                          {t("configuration.dailyAt", { time: challengeTime })}
-                        </Text>
-                      </View>
-                      <Icon
-                        name="chevron-forward"
-                        size={ds.iconSize.md}
-                        color={colors.primaryText}
-                      />
-                    </Pressable>
+                    />
                   ) : null}
                   {category.label === "events" &&
                   prefs.notificationEvents !== false ? (
-                    <Pressable
-                      accessibilityRole="button"
+                    <ListItem
+                      title={t("configuration.remindMe")}
+                      subtitle={t(`configuration.${reminderTimingLabel[timing]}`)}
+                      trailing={{ type: "chevron" }}
                       disabled={busy}
                       onPress={() => setTimingVisible(true)}
                       style={s.timing}
-                    >
-                      <View style={s.flex}>
-                        <Text style={s.description}>
-                          {t("configuration.remindMe")}
-                        </Text>
-                        <Text style={s.label}>
-                          {t(`configuration.${reminderTimingLabel[timing]}`)}
-                        </Text>
-                      </View>
-                      <Icon
-                        name="chevron-forward"
-                        size={ds.iconSize.md}
-                        color={colors.primaryText}
-                      />
-                    </Pressable>
+                    />
                   ) : null}
                 </View>
               ))}
@@ -526,14 +503,7 @@ const s = StyleSheet.create({
     paddingTop: ds.spacing[3],
     marginTop: ds.spacing[3],
   },
-  timing: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: ds.colors.feedback.infoBg,
-    borderRadius: ds.radii.lg,
-    padding: ds.spacing[3],
-    marginTop: ds.spacing[3],
-  },
+  timing: { marginTop: ds.spacing[3] },
   status: { ...ds.textStyles.caption, color: colors.secondaryText, minHeight: 16 },
   permission: {
     backgroundColor: ds.colors.bg.selected,

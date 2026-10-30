@@ -97,6 +97,7 @@ import Divider from "../components/ui/Divider";
 import { bannerStyles, iconButtonFloating, iconButtonFloatingIconColor } from "../components/ui/surfaceStyles";
 import IconCircle, { iconCircleIconSize, iconCircleStyle } from "../components/ui/IconCircle";
 import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import ListItem from "../components/ui/ListItem";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -1922,42 +1923,42 @@ const ChallengeDetailScreen = () => {
         <View style={localStyles.menuHandle} />
         <Text style={localStyles.menuTitle}>Opciones del desafío</Text>
         {isAdmin && event ? (
-          <TouchableOpacity style={localStyles.menuItem} onPress={() => {
+          <ListItem title="Editar desafío" leadingIcon="create-outline" divider onPress={() => {
             setMenuVisible(false);
             navigation.dispatch(StackActions.push("CreateChallenge", { event }));
-          }}>
-            <Icon name="create-outline" size={ds.iconSize.md} color={palette.text} />
-            <Text style={localStyles.menuItemText}>Editar desafío</Text>
-          </TouchableOpacity>
+          }} />
         ) : null}
         {canRestart ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            style={localStyles.menuItem}
+          <ListItem
+            title={t(event && isCuratedChallenge(event) ? "challengeRestart.start" : "challengeRestart.restart")}
+            leadingIcon="refresh-outline"
+            divider
             onPress={() => {
               setMenuVisible(false);
               setTimeout(() => setRestartConfirmVisible(true), 320);
             }}
-          >
-            <Icon name="refresh-outline" size={ds.iconSize.md} color={palette.text} />
-            <Text style={localStyles.menuItemText}>{t(event && isCuratedChallenge(event) ? "challengeRestart.start" : "challengeRestart.restart")}</Text>
-          </TouchableOpacity>
+          />
         ) : null}
-        <TouchableOpacity
-          style={localStyles.menuItem}
+        <ListItem
+          title={`Participantes (${challenge.participantsCount})`}
+          leadingIcon="people-outline"
+          divider
           onPress={() => {
             pendingParticipants.current = true;
             setMenuVisible(false);
           }}
-        >
-          <Icon name="people-outline" size={ds.iconSize.md} color={palette.text} />
-          <Text style={localStyles.menuItemText}>
-            Participantes (
-            {challenge.participantsCount})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={localStyles.menuItem}
+        />
+        <ListItem
+          title={
+            isPreparingShare
+              ? "Preparando..."
+              : isSharing
+                ? "Compartiendo..."
+                : "Compartir desafío"
+          }
+          leadingIcon="share-social-outline"
+          leading={isPreparingShare ? <VibesLoader /> : undefined}
+          divider={isAdmin || isJoined}
           onPress={() => {
             if (pendingShare.current || isPreparingShare || isSharing) return;
             pendingShare.current = true;
@@ -1965,51 +1966,33 @@ const ChallengeDetailScreen = () => {
             setMenuVisible(false);
           }}
           disabled={isPreparingShare || isSharing}
-        >
-          {isPreparingShare ? (
-            <VibesLoader />
-          ) : (
-            <Icon name="share-social-outline" size={ds.iconSize.md} color={palette.text} />
-          )}
-          <Text style={localStyles.menuItemText}>
-            {isPreparingShare
-              ? "Preparando..."
-              : isSharing
-                ? "Compartiendo..."
-                : "Compartir desafío"}
-          </Text>
-        </TouchableOpacity>
+        />
         {isAdmin ? (
-          <TouchableOpacity
-            style={[localStyles.menuItem, localStyles.menuItemDanger]}
+          <ListItem
+            title={
+              deleteChallengeMutation.isPending
+                ? "Eliminando..."
+                : "Eliminar desafío"
+            }
+            leadingIcon="trash-outline"
+            tone="destructive"
+            divider={isJoined}
             onPress={handleDeleteChallenge}
             disabled={deleteChallengeMutation.isPending}
-          >
-            <Icon name="trash-outline" size={ds.iconSize.md} color={palette.red} />
-            <Text
-              style={[localStyles.menuItemText, localStyles.menuItemTextDanger]}
-            >
-              {deleteChallengeMutation.isPending
-                ? "Eliminando..."
-                : "Eliminar desafío"}
-            </Text>
-          </TouchableOpacity>
+          />
         ) : null}
         {isJoined ? (
-          <TouchableOpacity
-            style={[localStyles.menuItem, localStyles.menuItemDanger]}
+          <ListItem
+            title={
+              leaveChallengeMutation.isPending
+                ? "Abandonando..."
+                : "Abandonar desafío"
+            }
+            leadingIcon="exit-outline"
+            tone="destructive"
             onPress={handleLeaveChallenge}
             disabled={leaveChallengeMutation.isPending}
-          >
-            <Icon name="exit-outline" size={ds.iconSize.md} color={palette.red} />
-            <Text
-              style={[localStyles.menuItemText, localStyles.menuItemTextDanger]}
-            >
-              {leaveChallengeMutation.isPending
-                ? "Abandonando..."
-                : "Abandonar desafío"}
-            </Text>
-          </TouchableOpacity>
+          />
         ) : null}
       </AnimatedSheetModal>
       <RestartChallengeConfirmSheet
@@ -3033,26 +3016,6 @@ const localStyles = StyleSheet.create({
     color: palette.text,
     ...ds.textStyles.title,
     marginBottom: ds.spacing[3],
-  },
-  menuItem: {
-    minHeight: 54,
-    borderRadius: ds.radii.lg,
-    paddingHorizontal: ds.spacing[4],
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[3],
-    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
-    marginTop: ds.spacing[3],
-  },
-  menuItemDanger: {
-    backgroundColor: palette.redSoft,
-  },
-  menuItemText: {
-    color: palette.text,
-    ...ds.textStyles.subtitleMedium,
-  },
-  menuItemTextDanger: {
-    color: palette.red,
   },
   sharePreparingOverlay: {
     ...StyleSheet.absoluteFillObject,

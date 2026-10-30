@@ -63,7 +63,8 @@ import {
   type ReplyTarget,
 } from "../components/MessageReply";
 import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
-import { iconButtonFilled, iconButtonFilledIconColor, iconButtonFilledIconSize } from "../components/ui/surfaceStyles";
+import { cardStyles, iconButtonFilled, iconButtonFilledIconColor, iconButtonFilledIconSize } from "../components/ui/surfaceStyles";
+import ListItem from "../components/ui/ListItem";
 import * as ds from "../src/theme/tokens";
 
 const REPORT_REASONS: ReportReason[] = [
@@ -504,41 +505,27 @@ const Chat = () => {
               onPress={() => undefined}
             >
               <Text style={localStyles.modalTitle}>Opciones de conexión</Text>
-              <TouchableOpacity
-                style={localStyles.actionRow}
+              <ListItem
+                title="Abandonar conexión"
+                leadingIcon="close-circle-outline"
+                tone="destructive"
+                divider
                 onPress={handleAbandonConnection}
                 disabled={unmatchMutation.isPending}
-              >
-                <Icon
-                  name="close-circle-outline"
-                  size={ds.iconSize.md}
-                  color={vibesTheme.colors.accentCoral}
-                />
-                <Text style={[localStyles.actionText, localStyles.dangerText]}>
-                  Abandonar conexión
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={localStyles.actionRow}
+              />
+              <ListItem
+                title="Reportar"
+                leadingIcon="flag-outline"
+                divider
                 onPress={openReportModal}
-              >
-                <Icon name="flag-outline" size={ds.iconSize.md} color={DARK_GRAY} />
-                <Text style={localStyles.actionText}>Reportar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={localStyles.actionRow}
+              />
+              <ListItem
+                title="Bloquear"
+                leadingIcon="ban-outline"
+                tone="destructive"
                 onPress={handleBlockUser}
                 disabled={blockMutation.isPending}
-              >
-                <Icon
-                  name="ban-outline"
-                  size={ds.iconSize.md}
-                  color={vibesTheme.colors.accentCoral}
-                />
-                <Text style={[localStyles.actionText, localStyles.dangerText]}>
-                  Bloquear
-                </Text>
-              </TouchableOpacity>
+              />
             </Pressable>
           </Pressable>
         </Modal>
@@ -564,25 +551,15 @@ const Chat = () => {
             {REPORT_REASONS.map((reason) => {
               const selected = selectedReportReason === reason;
               return (
-                <TouchableOpacity
+                <ListItem
                   key={reason}
-                  style={[
-                    localStyles.reasonRow,
-                    selected && localStyles.reasonRowSelected,
-                  ]}
+                  title={reason}
+                  selectable
+                  selected={selected}
+                  trailing={{ type: "check" }}
                   onPress={() => setSelectedReportReason(reason)}
-                  activeOpacity={0.85}
-                >
-                  <View
-                    style={[
-                      localStyles.radio,
-                      selected && localStyles.radioSelected,
-                    ]}
-                  >
-                    {selected ? <View style={localStyles.radioDot} /> : null}
-                  </View>
-                  <Text style={localStyles.reasonText}>{reason}</Text>
-                </TouchableOpacity>
+                  style={localStyles.reasonRow}
+                />
               );
             })}
 
@@ -869,60 +846,7 @@ const localStyles = StyleSheet.create({
     color: vibesTheme.colors.secondaryText,
     ...ds.textStyles.subtitleMedium,
   },
-  actionRow: {
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[3],
-    borderTopWidth: 1,
-    borderTopColor: ds.colors.border.subtle,
-  },
-  actionText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.subtitle,
-  },
-  dangerText: {
-    color: vibesTheme.colors.accentBlue,
-  },
-  reasonRow: {
-    minHeight: 48,
-    borderRadius: ds.radii.lg,
-    paddingHorizontal: ds.spacing[3],
-    marginBottom: ds.spacing[2],
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.strong),
-    borderWidth: 1,
-    borderColor: ds.colors.border.subtle,
-  },
-  reasonRowSelected: {
-    backgroundColor: ds.colors.bg.selected,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
-  },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: ds.radii.pill,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: ds.spacing[3],
-  },
-  radioSelected: {
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: ds.radii.pill,
-    backgroundColor: vibesTheme.colors.accentMustard,
-  },
-  reasonText: {
-    flex: 1,
-    color: DARK_GRAY,
-    ...ds.textStyles.subtitleMedium,
-  },
+  reasonRow: { ...cardStyles.base, marginBottom: ds.spacing[2] },
   reportInput: {
     minHeight: 96,
     maxHeight: 140,

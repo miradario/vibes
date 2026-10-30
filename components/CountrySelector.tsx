@@ -6,6 +6,7 @@ import AnimatedSheetModal from "./AnimatedSheetModal";
 import { getCountryName, searchCountries } from "../src/constants/countries";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import ListItem from "./ui/ListItem";
 import * as ds from "../src/theme/tokens";
 
 type Props = {
@@ -64,23 +65,18 @@ export default function CountrySelector({ selected, onChange, multiple = false, 
             value={search} onChangeText={setSearch} style={styles.search}
             autoCorrect={false}
           />
-          <Pressable disabled={disabled} onPress={() => { onChange([]); if (!multiple) setExpanded(false); }} style={styles.option}>
-            <Text style={styles.optionText}>{multiple ? (english ? "All nationalities" : "Todas las nacionalidades") : (english ? "Not specified" : "Sin especificar")}</Text>
-          </Pressable>
+          <ListItem disabled={disabled} onPress={() => { onChange([]); if (!multiple) setExpanded(false); }}
+            title={multiple ? (english ? "All nationalities" : "Todas las nacionalidades") : (english ? "Not specified" : "Sin especificar")} />
           <ScrollView style={styles.list} nestedScrollEnabled keyboardShouldPersistTaps="handled">
             {countries.map(country => {
               const checked = selected.includes(country.code);
               return (
-                <Pressable key={country.code} accessibilityRole={multiple ? "checkbox" : "radio"}
-                  accessibilityState={{ checked, disabled }} disabled={disabled}
-                  style={[styles.option, checked && styles.selected]}
+                <ListItem key={country.code} selectable multiple={multiple} selected={checked} disabled={disabled}
+                  title={country.label} trailing={{ type: "check" }}
                   onPress={() => {
                     onChange(multiple ? (checked ? selected.filter(code => code !== country.code) : [...selected, country.code]) : [country.code]);
                     if (!multiple) setExpanded(false);
-                  }}>
-                  <Text style={styles.optionText}>{country.label}</Text>
-                  {checked ? <Icon name="checkmark" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} /> : null}
-                </Pressable>
+                  }} />
               );
             })}
             {!countries.length ? <Text style={styles.empty}>{english ? "No countries found" : "No se encontraron países"}</Text> : null}
@@ -108,8 +104,5 @@ const styles = StyleSheet.create({
   doneText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle },
   search: { padding: ds.spacing[3], ...ds.textStyles.body, color: vibesTheme.colors.primaryText, borderBottomWidth: 1, borderBottomColor: vibesTheme.colors.borderSoft },
   list: { maxHeight: 320, flexShrink: 1 },
-  option: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], minHeight: 44, padding: ds.spacing[3], borderRadius: ds.radii.md },
-  optionText: { flex: 1, color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
-  selected: { backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium) },
   empty: { padding: ds.spacing[3], color: vibesTheme.colors.secondaryText },
 });

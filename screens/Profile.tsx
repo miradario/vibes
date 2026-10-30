@@ -31,6 +31,8 @@ import VibesLoader from "../components/VibesLoader";
 import { getInstalledAppVersion, getInstalledAppBuildNumber } from "../src/lib/appUpdateGate";
 import appConfig from "../app.json";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { cardStyles } from "../components/ui/surfaceStyles";
+import ListItem from "../components/ui/ListItem";
 import * as ds from "../src/theme/tokens";
 
 const Profile = () => {
@@ -181,42 +183,26 @@ const Profile = () => {
         </View>
 
         <View style={localStyles.menuList}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity
+          {menuItems.map((item) => (
+            <ListItem
               key={item.label}
-              style={[
-                localStyles.menuItem,
-                index === menuItems.length - 1 && localStyles.menuItemLast,
-              ]}
+              title={item.label}
+              leadingIcon={item.icon}
+              trailing={{ type: "chevron" }}
+              divider
               onPress={() =>
                 item.screen && navigation.navigate(item.screen as never)
               }
-            >
-              <View style={[localStyles.menuIcon, { backgroundColor: ds.withAlpha([vibesTheme.colors.accentBlue, vibesTheme.colors.accentMustard, vibesTheme.colors.accentCoral][index % 3], ds.opacity.soft) }]}>
-                <Icon name={item.icon} size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
-              </View>
-              <Text style={localStyles.menuLabel}>{item.label}</Text>
-              <Icon name="chevron-forward" size={ds.iconSize.md} color={TEXT_SECONDARY} />
-            </TouchableOpacity>
+            />
           ))}
 
-          <TouchableOpacity
-            style={[localStyles.menuItem, localStyles.menuItemLast]}
-            onPress={handleLogout}
+          <ListItem
+            title={isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
+            leadingIcon="power"
+            trailing={isLoggingOut ? { type: "custom", node: <VibesLoader /> } : { type: "chevron" }}
             disabled={isLoggingOut}
-          >
-            <View style={localStyles.menuIcon}>
-              <Icon name="power" size={ds.iconSize.md} color={TEXT_SECONDARY} />
-            </View>
-            <Text style={localStyles.menuLabel}>
-              {isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
-            </Text>
-            {isLoggingOut ? (
-              <VibesLoader />
-            ) : (
-              <Icon name="chevron-forward" size={ds.iconSize.md} color={TEXT_SECONDARY} />
-            )}
-          </TouchableOpacity>
+            onPress={handleLogout}
+          />
         </View>
 
         <View style={localStyles.footer}>
@@ -249,11 +235,7 @@ const localStyles = StyleSheet.create({
   zodiac: { color: colors.accentBlue },
   editButton: { minHeight: 44, borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.colors.feedback.infoBg, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: ds.spacing[2] },
   editText: { ...ds.textStyles.label, color: colors.accentBlue, flexShrink: 1 },
-  menuList: { gap: ds.spacing[2], marginBottom: ds.spacing[3] },
-  menuItem: { minHeight: 56, flexDirection: "row", alignItems: "center", padding: ds.spacing[3], borderRadius: ds.radii.lg, borderWidth: 1, borderColor: ds.colors.border.default, backgroundColor: ds.colors.bg.subtle, gap: ds.spacing[3] },
-  menuItemLast: { marginBottom: 0 },
-  menuIcon: { width: 34, height: 34, borderRadius: ds.radii.md, alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.feedback.errorBg },
-  menuLabel: { flex: 1, ...ds.textStyles.label, color: colors.primaryText },
+  menuList: { ...cardStyles.base, overflow: "hidden", marginBottom: ds.spacing[3] },
 });
 
 export default Profile;
