@@ -41,6 +41,7 @@ import {
   formatBirthDate,
   parseBirthDate,
 } from "../src/lib/birthDate";
+import { passwordToggleStyle } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 type SocialProvider = "google" | "apple";
@@ -558,10 +559,5 @@ const localStyles = StyleSheet.create({
   passwordInput: {
     paddingRight: ds.spacing[12],
   },
-  passwordToggle: {
-    position: "absolute",
-    right: 14,
-    height: "100%",
-    justifyContent: "center",
-  },
+  passwordToggle: { ...passwordToggleStyle },
 });

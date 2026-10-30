@@ -33,6 +33,7 @@ import { getPostAuthRoute } from "../src/lib/onboardingFlow";
 import Animated from "react-native-reanimated";
 import useWanderingSphere from "../src/hooks/useWanderingSphere";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
+import { passwordToggleStyle } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const isBannedUserError = (error: unknown) => {
@@ -483,12 +484,5 @@ const localStyles = StyleSheet.create({
   passwordInput: {
     paddingRight: ds.spacing[12],
   },
-  passwordToggle: {
-    position: "absolute",
-    right: 4,
-    width: 44,
-    alignItems: "center",
-    height: "100%",
-    justifyContent: "center",
-  },
+  passwordToggle: { ...passwordToggleStyle },
 });

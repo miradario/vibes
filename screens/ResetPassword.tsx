@@ -27,6 +27,7 @@ import {
   useUpdatePasswordMutation,
 } from "../src/auth/auth.queries";
 import { useI18n } from "../src/i18n";
+import { passwordToggleStyle } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 const getResetCode = (params: Record<string, unknown> | undefined) => {
@@ -218,10 +219,5 @@ const localStyles = StyleSheet.create({
   passwordInput: {
     paddingRight: ds.spacing[12],
   },
-  passwordToggle: {
-    position: "absolute",
-    right: 14,
-    height: "100%",
-    justifyContent: "center",
-  },
+  passwordToggle: { ...passwordToggleStyle },
 });
