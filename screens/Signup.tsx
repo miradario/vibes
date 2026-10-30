@@ -450,9 +450,9 @@ const localStyles = StyleSheet.create({
   },
   accountDivider: {
     width: "100%",
-    height: 1,
+    height: ds.componentSize.divider,
     marginTop: ds.spacing[3],
-    backgroundColor: ds.colors.border.default,
+    backgroundColor: ds.colors.border.subtle,
   },
   accountSwitch: {
     minHeight: 48,

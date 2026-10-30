@@ -1071,8 +1071,8 @@ const localStyles = StyleSheet.create({
     paddingVertical: ds.spacing[3],
   },
   connectionSheetRowWithDivider: {
-    borderTopWidth: 1,
-    borderTopColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
+    borderTopWidth: ds.componentSize.divider,
+    borderTopColor: ds.colors.border.subtle,
   },
   connectionSheetBody: {
     flex: 1,

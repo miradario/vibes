@@ -2236,14 +2236,14 @@ const localStyles = StyleSheet.create({
     marginBottom: ds.spacing[4],
   },
   eventMetaDivider: {
-    height: 1,
+    height: ds.componentSize.divider,
     marginTop: ds.spacing[3],
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
+    backgroundColor: ds.colors.border.subtle,
   },
   mapLinkDivider: {
-    height: 1,
+    height: ds.componentSize.divider,
     marginTop: ds.spacing[3],
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
+    backgroundColor: ds.colors.border.subtle,
   },
   eventMiniMapCard: {
     height: 190,
@@ -2808,8 +2808,8 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
   },
   menuDivider: {
-    height: 1,
-    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
+    height: ds.componentSize.divider,
+    backgroundColor: ds.colors.border.subtle,
     marginVertical: ds.spacing[2],
   },
   menuSectionLabel: {

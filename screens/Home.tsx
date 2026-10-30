@@ -1492,8 +1492,8 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     top: -3,
-    height: 1,
-    backgroundColor: ds.colors.bg.subtle,
+    height: ds.componentSize.divider,
+    backgroundColor: ds.colors.border.subtle,
   },
   statLead: {
     flexDirection: "row",

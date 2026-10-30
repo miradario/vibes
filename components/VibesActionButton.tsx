@@ -124,8 +124,8 @@ const styles = StyleSheet.create({
   },
   skipDivider: {
     width: "100%",
-    height: 1,
-    backgroundColor: ds.colors.border.default,
+    height: ds.componentSize.divider,
+    backgroundColor: ds.colors.border.subtle,
     marginBottom: ds.spacing[4],
   },
   skipButton: {

@@ -238,8 +238,8 @@ const styles = StyleSheet.create({
     paddingVertical: ds.spacing[3],
   },
   rowDivider: {
-    borderTopWidth: 1,
-    borderTopColor: vibesTheme.colors.borderSoft,
+    borderTopWidth: ds.componentSize.divider,
+    borderTopColor: ds.colors.border.subtle,
   },
   rowBody: { flex: 1 },
   primaryText: {

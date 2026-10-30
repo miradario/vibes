@@ -1674,9 +1674,9 @@ const localStyles = StyleSheet.create({
     borderColor: ds.colors.border.subtle,
   },
   detailsDivider: {
-    height: StyleSheet.hairlineWidth,
+    height: ds.componentSize.divider,
     marginHorizontal: ds.spacing[6],
-    backgroundColor: ds.colors.border.default,
+    backgroundColor: ds.colors.border.subtle,
   },
   detailsContent: { paddingHorizontal: ds.spacing[6], paddingTop: ds.spacing[4] },
   detailSection: {
