@@ -27,6 +27,7 @@ import {
   notificationCategories,
   reminderTimingLabel,
 } from "../src/notifications/preferences";
+import { optionCardCheck, optionCardStyles } from "./ui/optionCardStyles";
 import * as ds from "../src/theme/tokens";
 
 const colors = vibesTheme.colors;
@@ -390,13 +391,13 @@ export default function NotificationPreferencesSection() {
                   option
                 );
             }}
-            style={[s.option, timing === option && s.selected]}
+            style={[optionCardStyles.base, s.option, timing === option && optionCardStyles.selected, busy && optionCardStyles.disabled]}
           >
-            <Text style={[s.label, s.flex, timing === option && { color: colors.surface }]}>
+            <Text style={[optionCardStyles.label, optionCardStyles.copy]}>
               {t(`configuration.${reminderTimingLabel[option]}`)}
             </Text>
             {timing === option ? (
-              <Icon name="checkmark" size={ds.iconSize.lg} color={colors.surface} />
+              <Icon name={optionCardCheck.name} size={optionCardCheck.size} color={optionCardCheck.color} />
             ) : null}
           </Pressable>
         ))}
@@ -559,17 +560,5 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    minHeight: 56,
-    padding: ds.spacing[4],
-    borderRadius: ds.radii.lg,
-    borderWidth: 1,
-    borderColor: colors.secondaryText,
-  },
-  selected: {
-    backgroundColor: colors.accentBlue,
-    borderColor: colors.primaryText,
-  },
+  option: { marginBottom: ds.spacing[3] },
 });

@@ -2421,27 +2421,6 @@ export default StyleSheet.create({
   onboardOptions: {
     marginTop: ds.spacing[2],
   },
-  onboardOption: {
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[3],
-    paddingHorizontal: ds.spacing[4],
-    marginBottom: ds.spacing[3],
-    backgroundColor: WHITE,
-  },
-  onboardOptionActive: {
-    borderColor: PRIMARY_COLOR,
-    backgroundColor: vibesTheme.colors.accentMustard,
-  },
-  onboardOptionText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.bodySmall,
-    textAlign: "center",
-  },
-  onboardOptionTextActive: {
-    color: vibesTheme.colors.accentBlue,
-  },
   onboardList: {
     marginTop: ds.spacing[2],
   },

@@ -1,8 +1,9 @@
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { readCommunities, canonicalCommunity } from "../src/lib/communities";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
-import { iconCircleStyle } from "../components/ui/IconCircle";
-import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { iconCircleIconSize, iconCircleStyle } from "../components/ui/IconCircle";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { optionCardCheck, optionCardStyles } from "../components/ui/optionCardStyles";
 import * as ds from "../src/theme/tokens";
 
 // Hidden for now: challenges are not filtered by community. Existing tags are kept when editing.
@@ -487,32 +488,32 @@ const CreateChallenge = () => {
                   <TouchableOpacity
                     key={option.value}
                     style={[
-                      localStyles.visibilityCard,
-                      isSelected && localStyles.visibilityCardSelected,
+                      optionCardStyles.base,
+                      isSelected && optionCardStyles.selected,
                     ]}
                     onPress={() => setVisibility(option.value)}
-                    activeOpacity={0.9}
+                    activeOpacity={ds.opacity.pressed}
                   >
-                    <View style={localStyles.visibilityIconWrap}>
+                    <View style={iconCircleStyle("sm", isSelected ? "accent" : "neutral")}>
                       <Icon
                         name={option.icon as any}
-                        size={ds.iconSize.md}
-                        color={isSelected ? PRIMARY_COLOR : DARK_GRAY}
+                        size={iconCircleIconSize.sm}
+                        color={ds.colors.icon.default}
                       />
                     </View>
-                    <View style={localStyles.visibilityCopy}>
-                      <Text style={localStyles.visibilityTitle}>
+                    <View style={optionCardStyles.copy}>
+                      <Text style={optionCardStyles.label}>
                         {option.title}
                       </Text>
-                      <Text style={localStyles.visibilitySubtitle}>
+                      <Text style={optionCardStyles.description}>
                         {option.subtitle}
                       </Text>
                     </View>
                     {isSelected ? (
                       <Icon
-                        name="checkmark-circle"
-                        size={ds.iconSize.md}
-                        color={PRIMARY_COLOR}
+                        name={optionCardCheck.name}
+                        size={optionCardCheck.size}
+                        color={optionCardCheck.color}
                       />
                     ) : null}
                   </TouchableOpacity>
@@ -703,41 +704,6 @@ const legacyStyles = StyleSheet.create({
     gap: ds.spacing[3],
     marginTop: ds.spacing[1],
   },
-  visibilityCard: {
-    borderRadius: ds.radii.lg,
-    borderWidth: 1,
-    borderColor: ds.colors.border.subtle,
-    backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[4],
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[3],
-  },
-  visibilityCardSelected: {
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
-    backgroundColor: ds.colors.bg.selected,
-  },
-  visibilityIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ds.colors.bg.selected,
-  },
-  visibilityCopy: {
-    flex: 1,
-  },
-  visibilityTitle: {
-    color: DARK_GRAY,
-    ...ds.textStyles.subtitle,
-  },
-  visibilitySubtitle: {
-    color: TEXT_SECONDARY,
-    ...ds.textStyles.caption,
-    marginTop: ds.spacing[1],
-  },
   dayContentCard: {
     marginTop: ds.spacing[4],
     borderRadius: ds.radii.lg,
@@ -767,18 +733,10 @@ const legacyStyles = StyleSheet.create({
     ...ds.textStyles.labelMedium,
   },
   dayContentButton: {
-    minHeight: 46,
-    borderRadius: ds.radii.lg,
-    backgroundColor: PRIMARY_COLOR,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
+    ...buttonStyle("accent", "md"),
   },
   dayContentButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.label,
-    textAlign: "center",
+    ...buttonLabel("md", "accent"),
   },
   dayContentEditor: {
     marginTop: ds.spacing[4],
@@ -787,7 +745,7 @@ const legacyStyles = StyleSheet.create({
     ...buttonStyle("accent", "lg"),
   },
   createButtonDisabled: {
-    opacity: 0.45,
+    ...buttonDisabled,
   },
   createButtonText: {
     ...buttonLabel("lg", "accent"),
