@@ -6,6 +6,8 @@ export const avatarSize = { sm: 32, md: 48, lg: 88 } as const;
 /** Medidas de componentes (components-spec 29/10). Solo las usan components/ui/*. */
 export const componentSize = {
   progressBar: { sm: 4, md: 8 },
+  /** TabBarItem (DS §5.22): indicador pill del tab activo. */
+  tabIndicator: { width: 48, height: 28 },
   swipeToConfirm: { md: 56, lg: 72 },
   dayPill: { sm: 28, md: 40 },
   overlayBadge: 32,

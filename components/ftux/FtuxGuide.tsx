@@ -22,9 +22,9 @@ import { useVibiRuntime } from "../../src/vibi/useMotionPreference";
 import { localDayKey } from "../../src/lib/profileQuestions";
 import Svg, { Path } from "react-native-svg";
 import {
-  TAB_FLOATING_BUTTON_SIZE,
-  TAB_FLOATING_TOP,
+  TAB_INDICATOR,
   getTabBarFrame,
+  getTabIndicatorCenterY,
   getTabSlotCenterX,
 } from "../../src/lib/tabBarLayout";
 import {
@@ -583,10 +583,10 @@ export function CoachCard({
   const rootWidth = box?.width ?? width;
   const rootHeight = box?.height ?? height;
   const dimHeight = Math.max(0, rootHeight - frame.totalHeight);
-  // Spotlight hole around the raised tab bubble (CustomTabBar: floatingWrap + ftuxRing).
+  // Spotlight hole around the active tab pill (CustomTabBar: indicator + ftuxRing).
   const holeX = slotX + (rootWidth - width) / 2;
-  const holeY = dimHeight + TAB_FLOATING_TOP + TAB_FLOATING_BUTTON_SIZE / 2;
-  const holeR = (TAB_FLOATING_BUTTON_SIZE + 18) / 2 + 6;
+  const holeY = dimHeight + getTabIndicatorCenterY(fontScale);
+  const holeR = TAB_INDICATOR.width / 2 + ds.spacing[3];
   const dimPath =
     `M0 0H${rootWidth}V${rootHeight}H0Z` +
     `M${holeX - holeR} ${holeY}a${holeR} ${holeR} 0 1 0 ${holeR * 2} 0a${holeR} ${holeR} 0 1 0 ${-holeR * 2} 0Z`;

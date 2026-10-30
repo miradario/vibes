@@ -1,12 +1,14 @@
 import { PixelRatio } from "react-native";
+import { componentSize, spacing, textStyles } from "../theme/tokens";
 
 export const TAB_BAR_TOP_SPACE = 12;
 // Keep labels clear of the gesture area, including devices without a bottom inset.
 export const getTabBarBottomPadding = (insetBottom: number) =>
   Math.max(12, insetBottom);
-/** Raised selected-tab bubble in CustomTabBar (size and top offset in the bar root). */
-export const TAB_FLOATING_BUTTON_SIZE = 48;
-export const TAB_FLOATING_TOP = 6;
+/** TabBarItem (DS §5.22): pill 48×28 behind the 20 icon, label always visible below. */
+export const TAB_INDICATOR = componentSize.tabIndicator;
+export const TAB_ITEM_GAP = spacing[1];
+export const TAB_LABEL_LINE_HEIGHT = textStyles.caption.lineHeight;
 
 export const getBottomTabBarHeight = (fontScale = PixelRatio.getFontScale()) =>
   Math.max(64, 36 + 28 * fontScale);
@@ -27,10 +29,16 @@ export const getBottomTabContentPadding = (
   return Math.max(barAndGap, minimumPadding);
 };
 
+/** Vertical center of the active pill measured from the top of the tab bar root (FTUX spotlight). */
+export const getTabIndicatorCenterY = (fontScale = PixelRatio.getFontScale()) => {
+  const content = TAB_INDICATOR.height + TAB_ITEM_GAP + TAB_LABEL_LINE_HEIGHT * fontScale;
+  return TAB_BAR_TOP_SPACE + (getBottomTabBarHeight(fontScale) - content) / 2 + TAB_INDICATOR.height / 2;
+};
+
 /**
  * Geometry of components/CustomTabBar.tsx (keep both in sync): the floating
  * bar spans the full window width, with 12 of top space
- * for the raised selected icon and a surface extending to the bottom edge.
+ * above the bar and a surface extending to the bottom edge.
  * The safe area is inside the bar, below its interactive content.
  */
 export const getTabBarFrame = (
@@ -49,7 +57,7 @@ export const getTabBarFrame = (
   };
 };
 
-/** Horizontal center of a visible tab slot, same formula as the tab bar bubble. */
+/** Horizontal center of a visible tab slot, same formula as the tab bar slots. */
 export const getTabSlotCenterX = (
   index: number,
   count: number,
