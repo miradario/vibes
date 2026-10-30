@@ -379,3 +379,6 @@ Título de sección en `textStyles.heading` (`text/primary`). Con `onPress` se v
 
 ### TabBarItem (`components/CustomTabBar.tsx`, DS §5.22, 30/10)
 Tab activo: pill `componentSize.tabIndicator` (48×28, `radius/pill`) con el acento de la pestaña (Inicio/Eventos/Chats coral, Desafíos/Descubrir azul, Clases mostaza) detrás del ícono de 20 (`iconSize.md`, `icon/default`), sin salto de tamaño. Label siempre visible en `textStyles.caption`, `text/secondary` sin seleccionar y `text/primary` seleccionado. Reemplaza la burbuja elevada coral. Touch target = alto de la barra (≥44), role `tab` con `selected`. Geometría en `src/lib/tabBarLayout.ts` (`TAB_INDICATOR`, `getTabIndicatorCenterY`, que usa el spotlight del FTUX).
+
+### Miniaturas de cards (`componentSize.cardThumb*`, 30/10)
+`componentSize.cardThumb` = 76 (cuadrada, desafíos) y `componentSize.cardThumbWide` = 112×76 (eventos), con `radii.md` (12) para la media interna. Uso: HomeOverview (cards de desafío y evento), placeholders de Home y ChallengeFeedCard.

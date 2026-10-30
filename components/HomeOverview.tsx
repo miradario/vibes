@@ -450,12 +450,12 @@ const s = StyleSheet.create({
   compactCard: { ...cardStyles.base, width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3], ...cardStyles.padding },
   compactCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
   challengePhoto: {
-    width: 76,
-    height: 76,
+    width: ds.componentSize.cardThumb,
+    height: ds.componentSize.cardThumb,
     borderRadius: ds.radii.md,
     overflow: "hidden",
   },
-  eventPhoto: { width: 112, height: 76, borderRadius: ds.radii.md, overflow: "hidden" },
+  eventPhoto: { ...ds.componentSize.cardThumbWide, borderRadius: ds.radii.md, overflow: "hidden" },
   eventDate: {
     color: ds.colors.action.secondaryBlueText,
     ...ds.textStyles.labelMedium,

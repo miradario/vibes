@@ -1719,14 +1719,14 @@ const localStyles = StyleSheet.create({
     backgroundColor: ds.colors.bg.surface,
   },
   eventThumb: {
-    width: 76,
-    height: 76,
+    width: ds.componentSize.cardThumb,
+    height: ds.componentSize.cardThumb,
     borderRadius: ds.radii.lg,
     backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
   },
   challengeThumb: {
-    width: 76,
-    height: 76,
+    width: ds.componentSize.cardThumb,
+    height: ds.componentSize.cardThumb,
     borderRadius: ds.radii.pill,
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
   },

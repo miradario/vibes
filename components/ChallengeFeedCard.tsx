@@ -45,7 +45,7 @@ const c = vibesTheme.colors;
 const s = StyleSheet.create({
   card: { ...cardStyles.base, padding: ds.spacing[4], marginBottom: ds.spacing[3], gap: ds.spacing[3] },
   row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[4] },
-  photo: { width: 76, height: 76, borderRadius: ds.radii.md, alignSelf: "flex-start" },
+  photo: { width: ds.componentSize.cardThumb, height: ds.componentSize.cardThumb, borderRadius: ds.radii.md, alignSelf: "flex-start" },
   copy: { flex: 1, minWidth: 0, gap: ds.spacing[2] },
   title: { ...ds.textStyles.subtitle, color: c.primaryText },
   metaRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", columnGap: ds.spacing[1], rowGap: ds.spacing[1] },

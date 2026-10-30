@@ -8,6 +8,9 @@ export const componentSize = {
   progressBar: { sm: 4, md: 8 },
   /** TabBarItem (DS §5.22): indicador pill del tab activo. */
   tabIndicator: { width: 48, height: 28 },
+  /** Miniaturas de cards (30/10): desafío cuadrada, evento apaisada. Radio `radii.md`. */
+  cardThumb: 76,
+  cardThumbWide: { width: 112, height: 76 },
   swipeToConfirm: { md: 56, lg: 72 },
   dayPill: { sm: 28, md: 40 },
   overlayBadge: 32,
