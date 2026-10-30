@@ -6,6 +6,7 @@ import { Text } from "./Typography";
 import Svg, { Path } from "react-native-svg";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "./VibesLoader";
+import * as ds from "../src/theme/tokens";
 
 type GoogleAuthButtonProps = {
   label: string;
@@ -68,19 +69,15 @@ const styles = StyleSheet.create({
   button: {
     width: "100%",
     minHeight: 54,
-    borderRadius: 22,
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.28)",
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
-    paddingHorizontal: 18,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
+    paddingHorizontal: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: vibesTheme.colors.secondaryText,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 1,
+    ...ds.shadows.sm,
   },
   disabled: {
     opacity: 0.5,
@@ -90,15 +87,14 @@ const styles = StyleSheet.create({
     left: 18,
     width: 30,
     height: 30,
-    borderRadius: 15,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.82)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
   },
   label: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 16,
+    ...ds.textStyles.subtitleMedium,
   },
 });
 

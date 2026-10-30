@@ -2,6 +2,7 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "colors:check": "python3 scripts/check_vibes_palette.py",
+    "lint:ds": "node scripts/lint-design-tokens.cjs",
     "postinstall": "node scripts/android-modal-transparency.cjs && node scripts/navigation-web-compat.cjs",
     "start": "expo start",
     "android": "expo run:android",

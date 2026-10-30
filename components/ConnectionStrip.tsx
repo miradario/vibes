@@ -6,6 +6,7 @@ import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useConnectionStripVisibility } from "../src/hooks/useConnectionStripVisibility";
 import type { IncomingLike, MatchWithProfile } from "../src/queries/matches.queries";
+import * as ds from "../src/theme/tokens";
 
 type Props = {
   incomingLikes: IncomingLike[];
@@ -34,12 +35,12 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
   const stackWidth = avatarBox + Math.max(0, stackedLikes.length - 1) * stackStep;
   return (<>
         {(incomingLikes.length > 0 || newConnections.length > 0) ? (
-          <View style={[s.connectionsStrip, compact && { marginBottom: 8 }]}>
+          <View style={[s.connectionsStrip, compact && { marginBottom: ds.spacing[2] }]}>
             <View style={[s.stripHeadingRow, compact && { marginBottom: 0 }]}>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver nuevas conexiones" onPress={onViewAll} style={s.stripHeading}>
                 <Text style={s.stripTitle}>Nuevas conexiones</Text>
                 {/* Same chevron as Home's SectionHeader ("Tus desafíos", "Eventos para vos"). */}
-                <Icon name="chevron-forward" size={20} color={vibesTheme.colors.accentMustard} />
+                <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.accentMustard} />
               </TouchableOpacity>
             </View>
             <View style={s.stripRow}>
@@ -59,7 +60,7 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
                 {newConnections.length > 0 && <View style={[s.stripDivider, compact && { height: 64 }]} />}
               </>}
               {newConnections.map(item => <TouchableOpacity key={item.id} accessibilityRole="button" accessibilityLabel={`Conversar con ${item.otherUserName}`} onPress={() => onConnection(item)} style={[s.stripPerson, compact && { width: 54 }]}>
-                <View style={[s.stripAvatar, compact && { width: 48, height: 48, borderRadius: 24 }]}><Avatar uri={canViewPhotos || blurHiddenPhotos ? item.otherUserPhoto : null} blurRadius={!canViewPhotos && blurHiddenPhotos ? 24 : 0} size={avatarSize} /></View>
+                <View style={[s.stripAvatar, compact && { width: 48, height: 48, borderRadius: ds.radii.pill }]}><Avatar uri={canViewPhotos || blurHiddenPhotos ? item.otherUserPhoto : null} blurRadius={!canViewPhotos && blurHiddenPhotos ? 24 : 0} size={avatarSize} /></View>
                 <Text numberOfLines={1} style={s.stripName}>{item.otherUserName?.trim().split(/\s+/)[0] || "Vibes"}</Text>
               </TouchableOpacity>)}
             </ScrollView>
@@ -70,19 +71,19 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
   </>);
 }
 const s = StyleSheet.create({
-  connectionsStrip: { marginBottom: 12 },
+  connectionsStrip: { marginBottom: ds.spacing[3] },
   stripHeadingRow: { flexDirection: "row", alignItems: "center", marginBottom: 0 },
-  stripHeading: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44, marginBottom: -8 },
+  stripHeading: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44, marginBottom: -ds.spacing[2] },
   stripRow: { flexDirection: "row", alignItems: "flex-start" },
   stripScroll: { flex: 1 },
-  stripTitle: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 19, lineHeight: 25 },
-  stripPeople: { alignItems: "flex-start", gap: 8, paddingTop: STRIP_PADDING_TOP, paddingBottom: 4, paddingRight: 8 },
+  stripTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.heading },
+  stripPeople: { alignItems: "flex-start", gap: ds.spacing[2], paddingTop: STRIP_PADDING_TOP, paddingBottom: ds.spacing[1], paddingRight: ds.spacing[2] },
   stripPerson: { width: 62, alignItems: "center", gap: NAME_GAP },
-  stripAvatar: { width: 54, height: 54, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, borderRadius: 27, padding: 1, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.surface, overflow: "hidden" },
+  stripAvatar: { width: 54, height: 54, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, borderRadius: ds.radii.pill, padding: ds.spacing[0], alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.surface, overflow: "hidden" },
   requestStack: { position: "relative" },
   stackedAvatar: { position: "absolute", top: 0, borderColor: vibesTheme.colors.accentMustard },
-  requestBadge: { zIndex: MAX_STACKED_REQUESTS + 1, position: "absolute", top: -4, right: -4, minWidth: 24, height: 24, paddingHorizontal: 5, borderRadius: 12, borderWidth: 2, borderColor: vibesTheme.colors.surface, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
-  requestCount: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 12 },
-  stripName: { color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 12, lineHeight: NAME_LINE_HEIGHT, textAlign: "center" },
-  stripDivider: { width: 1, height: 72, backgroundColor: `${vibesTheme.colors.secondaryText}30`, marginHorizontal: 2 },
+  requestBadge: { zIndex: MAX_STACKED_REQUESTS + 1, position: "absolute", top: -4, right: -4, minWidth: 24, height: 24, paddingHorizontal: ds.spacing[1], borderRadius: ds.radii.pill, borderWidth: 2, borderColor: vibesTheme.colors.surface, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
+  requestCount: { color: vibesTheme.colors.primaryText, ...ds.textStyles.caption },
+  stripName: { color: vibesTheme.colors.primaryText, ...ds.textStyles.caption, lineHeight: NAME_LINE_HEIGHT, textAlign: "center" },
+  stripDivider: { width: 1, height: 72, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium), marginHorizontal: ds.spacing[1] },
 });

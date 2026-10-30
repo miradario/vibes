@@ -6,6 +6,8 @@ import AnimatedSheetModal from "../AnimatedSheetModal";
 import { Text } from "../Typography";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import { constrainPhotoCrop, photoCropRect, type CropTransform } from "../../src/lib/photoCrop";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../ui/buttonStyles";
+import * as ds from "../../src/theme/tokens";
 
 export type CropPhoto = { uri: string; width: number; height: number };
 
@@ -117,12 +119,12 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
   return <AnimatedSheetModal visible={Boolean(photo) && !closing} fullScreen closeOnBackdropPress={false}
     onClose={() => { if (!busyRef.current) close(null); }} onClosed={() => onDone(result.current)}
     sheetStyle={styles.sheet}>
-    <View style={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
+    <View style={[styles.content, { paddingTop: insets.top + ds.spacing[5], paddingBottom: insets.bottom + ds.spacing[5] }]}>
       <Text accessibilityRole="header" style={styles.title}>{english ? "Adjust your photo" : "Ajustá tu foto"}</Text>
       <Text style={styles.hint}>{original
         ? (english ? "Original photo · No crop" : "Foto original · Sin recorte")
         : (english ? "Drag to move · Pinch to zoom" : "Mové la foto · Pellizcá para hacer zoom")}</Text>
-      <View style={[styles.frame, { width: size, height: size, borderRadius: original ? 16 : size / 2 }]} {...pan.panHandlers}>
+      <View style={[styles.frame, { width: size, height: size, borderRadius: original ? ds.radii.lg : size / 2 }]} {...pan.panHandlers}>
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         {photo ? <Image source={{ uri: photo.uri }} resizeMode="stretch"
           onLoad={() => setReady(true)} onError={() => setReady(false)}
@@ -161,16 +163,21 @@ export default function PhotoCropEditor({ photo, english, onDone }: {
 const colors = vibesTheme.colors;
 const styles = StyleSheet.create({
   sheet: { height: "100%", backgroundColor: colors.background },
-  content: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24, gap: 16 },
-  title: { color: colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 24, textAlign: "center" },
-  hint: { color: colors.secondaryText, fontSize: 14, textAlign: "center" },
-  frame: { overflow: "hidden", backgroundColor: `${colors.secondaryText}14`, borderRadius: 16 },
+  content: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: ds.spacing[6], gap: ds.spacing[4] },
+  title: { color: colors.primaryText, ...ds.textStyles.title, textAlign: "center" },
+  hint: { color: colors.secondaryText, ...ds.textStyles.bodySmall, textAlign: "center" },
+  frame: { overflow: "hidden", backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle), borderRadius: ds.radii.lg },
   guide: { ...StyleSheet.absoluteFillObject, borderWidth: 1, borderColor: colors.background },
-  tools: { flexDirection: "row", gap: 12 },
-  actions: { flexDirection: "row", width: "100%", gap: 12 },
-  secondary: { minHeight: 48, minWidth: 48, padding: 12, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: `${colors.secondaryText}0C` },
-  text: { color: colors.primaryText, fontFamily: vibesTheme.fonts.semibold, fontSize: 15 },
-  primary: { flex: 1, minHeight: 48, borderRadius: 24, backgroundColor: colors.primaryText, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
-  primaryText: { color: colors.background, fontFamily: vibesTheme.fonts.semibold, fontSize: 16 },
+  tools: { flexDirection: "row", gap: ds.spacing[3] },
+  actions: { flexDirection: "row", width: "100%", gap: ds.spacing[3] },
+  secondary: { minHeight: 48, minWidth: 48, padding: ds.spacing[3], borderRadius: ds.radii.lg, alignItems: "center", justifyContent: "center", backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
+  text: { color: colors.primaryText, ...ds.textStyles.subtitle },
+  primary: {
+    ...buttonStyle("primary", "md"),
+    flex: 1,
+  },
+  primaryText: {
+    ...buttonLabel("md", "primary"),
+  },
   disabled: { opacity: 0.5 },
 });

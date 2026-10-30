@@ -15,6 +15,7 @@ import {
 } from "../../src/queries/challengeRestart.queries";
 import { vibesTheme } from "../../src/theme/vibesTheme";
 import type { EventFeedItem } from "../../src/queries/events.queries";
+import * as ds from "../../src/theme/tokens";
 
 const STATUS_KEY: Record<ChallengeInvitationStatus, string> = {
   pending: "challengeRestart.statusPending",
@@ -53,8 +54,8 @@ export default function ChallengeInviteesSection({ challenge, inviteButtonStyle 
         );
       })}
       <TouchableOpacity accessibilityRole="button" accessibilityLabel="Invitar personas al desafío" style={inviteButtonStyle} onPress={() => setPickerVisible(true)}>
-        <Icon name="person-add-outline" size={22} color={vibesTheme.colors.primaryText} />
-        <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.medium, fontSize: 16 }}>Invitar a alguien</Text>
+        <Icon name="person-add-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
+        <Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitleMedium }}>Invitar a alguien</Text>
       </TouchableOpacity>
       <EventInviteSheet
         privateChallenge={{ event: challenge, excludeUserIds: excludeIds }}
@@ -68,17 +69,16 @@ export default function ChallengeInviteesSection({ challenge, inviteButtonStyle 
 
 const styles = StyleSheet.create({
   card: {
-    gap: vibesTheme.spacing.sm,
-    padding: vibesTheme.spacing.md,
-    marginTop: vibesTheme.spacing.md,
-    borderRadius: vibesTheme.radii.md,
+    gap: vibesTheme.spacing[2],
+    padding: vibesTheme.spacing[4],
+    marginTop: vibesTheme.spacing[4],
+    borderRadius: vibesTheme.radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(57, 120, 184, 0.3)",
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
     backgroundColor: vibesTheme.colors.surface,
   },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 18,
+    ...ds.textStyles.heading,
   },
 });

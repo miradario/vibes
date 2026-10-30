@@ -1,5 +1,6 @@
 import EventOccurrenceList from "../components/EventOccurrenceList";
 import BackButton from "../components/BackButton";
+import Tag from "../components/ui/Tag";
 import { normalizeSchedule } from "../src/lib/eventSchedule";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
@@ -82,12 +83,21 @@ import { getIosMapPreviewSource } from "../src/config/mapPreview";
 import { shareEventInvite } from "../src/lib/socialShare";
 import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
 import { markFtuxAction } from "../src/ftux/ftuxStore";
+import ProgressBar from "../components/ui/ProgressBar";
+import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/ui/SwipeToConfirm";
+import DayPill from "../components/ui/DayPill";
+import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
+import { cardStyles, iconButtonFloating, iconButtonFloatingIconColor } from "../components/ui/surfaceStyles";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle, buttonVariant } from "../components/ui/buttonStyles";
+import * as ds from "../src/theme/tokens";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
-const CHECKIN_SLIDER_HANDLE_SIZE = 72;
-const CHECKIN_SLIDER_HORIZONTAL_PADDING = 12;
-const FOOTER_CHECKIN_SLIDER_HANDLE_SIZE = 36;
-const FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING = 8;
+const CHECKIN_SWIPE = swipeToConfirmMetrics("lg");
+const FOOTER_CHECKIN_SWIPE = swipeToConfirmMetrics("md");
+const CHECKIN_SLIDER_HANDLE_SIZE = CHECKIN_SWIPE.thumb;
+const CHECKIN_SLIDER_HORIZONTAL_PADDING = CHECKIN_SWIPE.inset;
+const FOOTER_CHECKIN_SLIDER_HANDLE_SIZE = FOOTER_CHECKIN_SWIPE.thumb;
+const FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING = FOOTER_CHECKIN_SWIPE.inset;
 
 const getStreakEmoji = (streak: number) => {
   if (streak >= 30) return "🔥🔥🔥";
@@ -654,9 +664,9 @@ const EventDetail = () => {
           style={localStyles.footerCheckInSliderChevrons}
           pointerEvents="none"
         >
-          <Icon name="chevron-forward" size={16} color={vibesTheme.colors.accentMustard} />
-          <Icon name="chevron-forward" size={16} color={vibesTheme.colors.accentMustard} />
-          <Icon name="chevron-forward" size={16} color={vibesTheme.colors.accentMustard} />
+          <Icon name="chevron-forward" size={ds.iconSize.sm} color={vibesTheme.colors.accentMustard} />
+          <Icon name="chevron-forward" size={ds.iconSize.sm} color={vibesTheme.colors.accentMustard} />
+          <Icon name="chevron-forward" size={ds.iconSize.sm} color={vibesTheme.colors.accentMustard} />
         </View>
       </View>
 
@@ -674,7 +684,7 @@ const EventDetail = () => {
         {checkInMutation.isPending ? (
           <VibesLoader />
         ) : (
-          <Icon name="sunny-outline" size={22} color={vibesTheme.colors.accentCoral} />
+          <Icon name="sunny-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentCoral} />
         )}
       </Animated.View>
     </View>
@@ -693,7 +703,7 @@ const EventDetail = () => {
                     navigation.navigate("EventChat" as never, { event } as never)
                   }
                 >
-                  <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
+                  <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={buttonContentColor["secondary"]} />
                   <Text style={localStyles.challengeChatButtonText}>
                     Entrar al chat del desafío
                   </Text>
@@ -702,7 +712,7 @@ const EventDetail = () => {
                   style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
                   disabled
                 >
-                  <Icon name="checkmark-circle" size={18} color={WHITE} />
+                  <Icon name="checkmark-circle" size={ds.iconSize.md} color={buttonContentColor["accent"]} />
                   <Text style={localStyles.checkInButtonText}>
                     Desafío finalizado
                   </Text>
@@ -727,11 +737,10 @@ const EventDetail = () => {
                 ]}
                 disabled
               >
-                <Icon name="chatbubbles-outline" size={19} color={vibesTheme.colors.secondaryText} />
+                <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={buttonContentColor["secondary"]} />
                 <Text
                   style={[
                     localStyles.challengeChatButtonText,
-                    localStyles.challengeChatButtonTextDisabled,
                   ]}
                 >
                   Chat del desafío
@@ -741,7 +750,7 @@ const EventDetail = () => {
                 style={[localStyles.checkInButton, localStyles.checkInButtonDisabled]}
                 disabled
               >
-                <Icon name="checkmark-circle" size={18} color={WHITE} />
+                <Icon name="checkmark-circle" size={ds.iconSize.md} color={buttonContentColor["accent"]} />
                 <Text style={localStyles.checkInButtonText}>
                   Desafío finalizado
                 </Text>
@@ -788,7 +797,7 @@ const EventDetail = () => {
                   navigation.navigate("EventChat" as never, { event } as never)
                 }
               >
-                <Icon name="chatbubbles-outline" size={19} color={DARK_GRAY} />
+                <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={buttonContentColor["secondary"]} />
                 <Text style={localStyles.challengeChatButtonText}>
                   Entrar al chat del desafío
                 </Text>
@@ -801,8 +810,8 @@ const EventDetail = () => {
                   ]}
                   disabled
                 >
-                  <Icon name="checkmark-circle" size={18} color={WHITE} />
-                  <Text style={localStyles.checkInButtonText}>
+                  <Icon name="checkmark-circle" size={ds.iconSize.md} color={buttonContentColor.primary} />
+                  <Text style={[localStyles.checkInButtonText, localStyles.checkInButtonTextDone]}>
                     Desafío hecho hoy
                   </Text>
                 </TouchableOpacity>
@@ -824,11 +833,10 @@ const EventDetail = () => {
               ]}
               disabled
             >
-              <Icon name="chatbubbles-outline" size={19} color={vibesTheme.colors.secondaryText} />
+              <Icon name="chatbubbles-outline" size={ds.iconSize.md} color={buttonContentColor["secondary"]} />
               <Text
                 style={[
                   localStyles.challengeChatButtonText,
-                  localStyles.challengeChatButtonTextDisabled,
                 ]}
               >
                 Uníte para entrar al chat
@@ -867,9 +875,9 @@ const EventDetail = () => {
             onPress={() =>
               navigation.navigate("EventChat" as never, { event } as never)
             }
-            activeOpacity={0.9}
+            activeOpacity={ds.opacity.pressed}
           >
-            <Icon name="chatbubble-outline" size={28} color={vibesTheme.colors.surface} />
+            <Icon name="chatbubble-outline" size={ds.iconSize.lg} color={iconButtonFloatingIconColor} />
           </TouchableOpacity>
         </View>
       );
@@ -883,7 +891,10 @@ const EventDetail = () => {
         ]}
       >
         <TouchableOpacity
-          style={[styles.eventDetailJoinButton, localStyles.footerActionButton]}
+          style={[
+            localStyles.joinEventButton,
+            joinEventMutation.isPending && buttonDisabled,
+          ]}
           onPress={async () => {
             if (!event) return;
             if (!userId) {
@@ -911,14 +922,14 @@ const EventDetail = () => {
           ) : (
             <>
               <Text
-                style={[styles.eventDetailJoinButtonText, localStyles.footerActionText, localStyles.joinEventText]}
+                style={[localStyles.joinEventText, localStyles.footerActionText]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.85}
               >
                 {userId ? "Unirse al evento" : "Registrarme para unirme"}
               </Text>
-              <Icon name="arrow-forward" size={24} color={WHITE} />
+              <Icon name="arrow-forward" size={ds.iconSize.lg} color={buttonContentColor.accent} />
             </>
           )}
         </TouchableOpacity>
@@ -1371,12 +1382,12 @@ const EventDetail = () => {
       {!isChallenge ? (
         <View style={{ paddingTop: insets.top, backgroundColor: vibesTheme.colors.surface }}>
           <AppHeader title="Evento" showBack onBack={handleBack}
-            titleStyle={{ fontSize: 18, fontFamily: vibesTheme.fonts.semibold }}
+            titleStyle={{ ...ds.textStyles.heading }}
             right={<View style={localStyles.headerActions}>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel="Compartir evento" onPress={() => void handleShareEvent()} style={localStyles.referenceHeaderAction}>
-                <Icon name="share-outline" size={25} color={vibesTheme.colors.primaryText} />
+                <Icon name="share-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
-              {isAdmin ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Opciones del evento" onPress={() => setMenuVisible(true)} style={localStyles.referenceHeaderAction}><Icon name="ellipsis-horizontal" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
+              {isAdmin ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Opciones del evento" onPress={() => setMenuVisible(true)} style={localStyles.referenceHeaderAction}><Icon name="ellipsis-horizontal" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
             </View>} />
         </View>
       ) : (
@@ -1395,7 +1406,7 @@ const EventDetail = () => {
                 style={styles.eventDetailMenuButton}
                 onPress={() => setMenuVisible(true)}
               >
-                <Icon name="ellipsis-horizontal" size={24} color={DARK_GRAY} />
+                <Icon name="ellipsis-horizontal" size={ds.iconSize.lg} color={DARK_GRAY} />
               </TouchableOpacity>
             </View>
           ) : undefined}
@@ -1422,30 +1433,30 @@ const EventDetail = () => {
             {eventHeroImageSource ? <MediaImage source={eventHeroImageSource} style={localStyles.referenceCover} resizeMode="cover" /> : null}
             <View style={localStyles.referenceIntro}>
               <View style={localStyles.referenceBadges}>
-                {[getEventCategoryLabel(event.category), getEventParticipationLabel(event.participationType)].filter(Boolean).map(label => <View key={label} style={localStyles.referenceBadge}><Text style={localStyles.referenceBadgeText}>{label}</Text></View>)}
+                {[getEventCategoryLabel(event.category), getEventParticipationLabel(event.participationType)].filter(Boolean).map(label => <Tag key={label} label={label} />)}
               </View>
               <Text style={localStyles.referenceTitle}>{event.title}</Text>
               <EventOccurrenceList key={event.id} schedule={event.schedule} startsAt={event.startsAt} onCalendar={handleOpenCalendar} />
               <TouchableOpacity accessibilityRole="button" disabled={modality !== "in_person" || !eventLocation} onPress={handleOpenMap} style={localStyles.referenceMetaRow}>
-                <Icon name={modality === "online" ? "videocam-outline" : "location-outline"} size={25} color={vibesTheme.colors.accentBlue} />
+                <Icon name={modality === "online" ? "videocam-outline" : "location-outline"} size={ds.iconSize.lg} color={vibesTheme.colors.accentBlue} />
                 <View style={{ flex: 1 }}><Text style={localStyles.referenceMetaTitle}>{eventLocation || modalityLabel}</Text><Text style={localStyles.referenceMetaHint}>{modalityLabel}</Text></View>
               </TouchableOpacity>
               <View style={localStyles.referenceMetaRow}>
-                <Icon name="ticket-outline" size={25} color={vibesTheme.colors.accentBlue} />
+                <Icon name="ticket-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentBlue} />
                 <View style={{ flex: 1 }}><Text style={localStyles.referenceMetaTitle}>{pricingLabel}</Text><Text style={localStyles.referenceMetaHint}>{event.capacity && event.capacity > 0 ? `Cupos: ${event.capacity}` : "Cupos ilimitados"}</Text></View>
               </View>
             </View>
             <View style={localStyles.eventDetailPanel}>
-              {eventDescription ? <View style={{ paddingTop: 20, gap: 10 }}>
-                <Text style={{ color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 20 }}>Sobre el evento</Text>
+              {eventDescription ? <View style={{ paddingTop: ds.spacing[5], gap: ds.spacing[3] }}>
+                <Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.heading }}>Sobre el evento</Text>
                 <Text selectable style={localStyles.eventPanelDescription}>{eventDescription}</Text>
               </View> : null}
               <View style={localStyles.eventMetaDivider} />
               <View style={styles.eventDetailInfoSection}>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver participantes" activeOpacity={0.85} onPress={() => setParticipantsVisible(true)} style={[localStyles.referenceMetaRow, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: `${vibesTheme.colors.secondaryText}40`, paddingVertical: 16 }]}>
-                  {visibleParticipants.length ? <AvatarGroup size={38} max={3} overlap={7} items={visibleParticipants.map(item => ({ id: item.id, uri: item.avatarUrl }))} /> : <Icon name="people-outline" size={25} color={vibesTheme.colors.secondaryText} />}
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver participantes" activeOpacity={0.85} onPress={() => setParticipantsVisible(true)} style={[localStyles.referenceMetaRow, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium), paddingVertical: ds.spacing[4] }]}>
+                  {visibleParticipants.length ? <AvatarGroup size={38} max={3} overlap={7} items={visibleParticipants.map(item => ({ id: item.id, uri: item.avatarUrl }))} /> : <Icon name="people-outline" size={ds.iconSize.lg} color={vibesTheme.colors.secondaryText} />}
                   <Text style={[localStyles.referenceMetaTitle, { flex: 1 }]}>{visibleParticipantCount} {visibleParticipantCount === 1 ? "participante" : "participantes"}</Text>
-                  <Icon name="chevron-forward" size={22} color={vibesTheme.colors.secondaryText} />
+                  <Icon name="chevron-forward" size={ds.iconSize.lg} color={vibesTheme.colors.secondaryText} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -1454,12 +1465,12 @@ const EventDetail = () => {
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: 12,
-                    padding: 16,
-                    borderRadius: 18,
+                    gap: ds.spacing[3],
+                    padding: ds.spacing[4],
+                    borderRadius: ds.radii.lg,
                     minHeight: 56,
-                    marginBottom: 14,
-                    backgroundColor: `${vibesTheme.colors.secondaryText}0C`,
+                    marginBottom: ds.spacing[4],
+                    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
                   }}
                   onPress={() => {
                     if (!userId) {
@@ -1471,22 +1482,21 @@ const EventDetail = () => {
                 >
                   <Icon
                     name="person-add-outline"
-                    size={22}
+                    size={ds.iconSize.lg}
                     color={vibesTheme.colors.primaryText}
                   />
                   <Text
                     style={{
                       flex: 1,
                       color: vibesTheme.colors.primaryText,
-                      fontSize: 16,
-                      fontFamily: vibesTheme.fonts.medium,
+                      ...ds.textStyles.subtitleMedium,
                     }}
                   >
                     Invitar a alguien
                   </Text>
                   <Icon
                     name="chevron-forward"
-                    size={20}
+                    size={ds.iconSize.md}
                     color={vibesTheme.colors.primaryText}
                   />
                 </TouchableOpacity>
@@ -1508,7 +1518,7 @@ const EventDetail = () => {
                     ) : (
                       <View style={localStyles.eventMiniMapFallback}>
                         <View style={localStyles.eventMiniMapPin}>
-                          <Icon name="location" size={22} color={PRIMARY_COLOR} />
+                          <Icon name="location" size={ds.iconSize.lg} color={PRIMARY_COLOR} />
                         </View>
                         <View style={localStyles.eventMiniMapCopy}>
                           <Text style={localStyles.eventMiniMapTitle}>Ver ubicación</Text>
@@ -1516,10 +1526,12 @@ const EventDetail = () => {
                         </View>
                       </View>
                     )}
-                    <View style={localStyles.eventMiniMapBadge}>
-                      <Icon name="navigate" size={18} color={DARK_GRAY} />
-                      <Text style={localStyles.eventMiniMapBadgeText}>Abrir mapa</Text>
-                    </View>
+                    <OverlayBadge
+                      tone="light"
+                      position="bottom-right"
+                      icon={<Icon name="navigate" size={ds.iconSize.sm} color={overlayBadgeContentColor("light")} />}
+                      label="Abrir mapa"
+                    />
                   </TouchableOpacity>
                   {eventLink || (pricingType === "paid" && paymentLink) ? (
                     <View style={localStyles.mapLinkDivider} />
@@ -1542,7 +1554,7 @@ const EventDetail = () => {
                     <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                       <Icon
                         name="open-outline"
-                        size={18}
+                        size={ds.iconSize.md}
                         color={PRIMARY_COLOR}
                       />
                     </View>
@@ -1554,7 +1566,7 @@ const EventDetail = () => {
                         Abrir link del evento
                       </Text>
                     </View>
-                    <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                    <Icon name="chevron-forward" size={ds.iconSize.lg} color={TEXT_SECONDARY} />
                   </TouchableOpacity>
                 ) : null}
 
@@ -1573,7 +1585,7 @@ const EventDetail = () => {
                     <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                       <Icon
                         name="videocam-outline"
-                        size={18}
+                        size={ds.iconSize.md}
                         color={PRIMARY_COLOR}
                       />
                     </View>
@@ -1585,7 +1597,7 @@ const EventDetail = () => {
                         Entrar al evento online
                       </Text>
                     </View>
-                    <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                    <Icon name="chevron-forward" size={ds.iconSize.lg} color={TEXT_SECONDARY} />
                   </TouchableOpacity>
                 ) : null}
 
@@ -1604,7 +1616,7 @@ const EventDetail = () => {
                     <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
                       <Icon
                         name="card-outline"
-                        size={18}
+                        size={ds.iconSize.md}
                         color={PRIMARY_COLOR}
                       />
                     </View>
@@ -1613,7 +1625,7 @@ const EventDetail = () => {
                         {getExternalUrlLabel(paymentLink, "Evento pago")}
                       </Text>
                     </View>
-                    <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                    <Icon name="chevron-forward" size={ds.iconSize.lg} color={TEXT_SECONDARY} />
                   </TouchableOpacity>
                 ) : null}
               </View>
@@ -1633,7 +1645,7 @@ const EventDetail = () => {
                 onPress={() => handleOpenCalendar()}
               >
                 <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
-                  <Icon name="calendar" size={18} color={PRIMARY_COLOR} />
+                  <Icon name="calendar" size={ds.iconSize.md} color={PRIMARY_COLOR} />
                 </View>
                 <View style={styles.eventDetailInfoCopy}>
                   <Text style={styles.eventDetailInfoText}>{challengeStartDate}</Text>
@@ -1641,7 +1653,7 @@ const EventDetail = () => {
                     Agregar a mi calendario
                   </Text>
                 </View>
-                <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                <Icon name="chevron-forward" size={ds.iconSize.lg} color={TEXT_SECONDARY} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1650,7 +1662,7 @@ const EventDetail = () => {
                 onPress={() => setParticipantsVisible(true)}
               >
                 <View style={[styles.eventDetailInfoIconWrap, { backgroundColor: "transparent" }]}>
-                  <Icon name="people" size={18} color={PRIMARY_COLOR} />
+                  <Icon name="people" size={ds.iconSize.md} color={PRIMARY_COLOR} />
                 </View>
                 <View style={styles.eventDetailInfoCopy}>
                   <Text style={styles.eventDetailInfoText}>
@@ -1684,7 +1696,7 @@ const EventDetail = () => {
                     </View>
                   ) : null}
                 </View>
-                <Icon name="chevron-forward" size={24} color={TEXT_SECONDARY} />
+                <Icon name="chevron-forward" size={ds.iconSize.lg} color={TEXT_SECONDARY} />
               </TouchableOpacity>
             </View>
           </>
@@ -1694,7 +1706,7 @@ const EventDetail = () => {
         {isChallenge ? (
           <>
             {participantLoading ? (
-              <VibesLoader  style={{ marginVertical: 24 }} />
+              <VibesLoader  style={{ marginVertical: ds.spacing[6] }} />
             ) : isJoined ? (
               <View style={localStyles.trackingCard}>
                 <View style={localStyles.daysPanel}>
@@ -1720,29 +1732,13 @@ const EventDetail = () => {
                       const isSelected = selectedProgressDay === selectionKey;
 
                       return (
-                        <TouchableOpacity
+                        <DayPill
                           key={`day-${day}`}
-                          activeOpacity={0.85}
+                          label={day}
+                          state={isDone ? "done" : isMissed ? "missed" : isCurrent ? "current" : "future"}
+                          selected={isSelected}
                           onPress={() => setSelectedProgressDay(selectionKey)}
-                          style={[
-                            localStyles.dayPill,
-                            isDone && localStyles.dayPillDone,
-                            isMissed && localStyles.dayPillMissed,
-                            isCurrent && localStyles.dayPillCurrent,
-                            isSelected && localStyles.dayPillSelected,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              localStyles.dayPillText,
-                              isDone && localStyles.dayPillTextDone,
-                              isMissed && localStyles.dayPillTextMissed,
-                              isCurrent && localStyles.dayPillTextCurrent,
-                            ]}
-                          >
-                            {day}
-                          </Text>
-                        </TouchableOpacity>
+                        />
                       );
                     })}
                   </View>
@@ -1780,19 +1776,7 @@ const EventDetail = () => {
 
                 {!isChallengeFinished && milestone ? (
                   <View style={localStyles.milestoneWrap}>
-                    <View style={localStyles.milestoneBarBg}>
-                      <View
-                        style={[
-                          localStyles.milestoneBarFill,
-                          {
-                            width: `${Math.min(
-                              (streak / milestone) * 100,
-                              100,
-                            )}%`,
-                          },
-                        ]}
-                      />
-                    </View>
+                    <ProgressBar value={Math.min(streak / milestone, 1)} size="md" tone="accent" />
                     <Text style={localStyles.milestoneLabel}>
                       {getMilestoneMessage(streak, milestone)}
                     </Text>
@@ -1845,7 +1829,7 @@ const EventDetail = () => {
           <View
             style={[
               localStyles.modalCard,
-              { paddingBottom: Math.max(insets.bottom + 18, 24) },
+              { paddingBottom: Math.max(insets.bottom + ds.spacing[4], ds.spacing[6]) },
             ]}
           >
             <Text style={localStyles.modalTitle}>
@@ -1880,9 +1864,9 @@ const EventDetail = () => {
                   </Text>
                 </View>
                 <View style={localStyles.checkInSliderChevrons} pointerEvents="none">
-                  <Icon name="chevron-forward" size={18} color={vibesTheme.colors.accentMustard} />
-                  <Icon name="chevron-forward" size={18} color={vibesTheme.colors.accentMustard} />
-                  <Icon name="chevron-forward" size={18} color={vibesTheme.colors.accentMustard} />
+                  <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.accentMustard} />
+                  <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.accentMustard} />
+                  <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.accentMustard} />
                 </View>
               </View>
 
@@ -1902,7 +1886,7 @@ const EventDetail = () => {
                 ) : (
                   <Icon
                     name={checkedInToday ? "checkmark" : "sunny-outline"}
-                    size={28}
+                    size={ds.iconSize.xl}
                     color={vibesTheme.colors.accentCoral}
                   />
                 )}
@@ -1947,11 +1931,11 @@ const EventDetail = () => {
               setParticipantsVisible(true);
             }}
           >
-            <Icon name="people" size={20} color={DARK_GRAY} />
+            <Icon name="people" size={ds.iconSize.md} color={DARK_GRAY} />
             <Text style={localStyles.menuItemText}>
               Participantes ({visibleParticipantCount})
             </Text>
-            <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
+            <Icon name="chevron-forward" size={ds.iconSize.sm} color={TEXT_SECONDARY} />
           </TouchableOpacity>
 
           {isChallenge && isJoined ? (
@@ -1962,9 +1946,9 @@ const EventDetail = () => {
                 navigation.navigate("EventChat" as never, { event } as never);
               }}
             >
-              <Icon name="chatbubbles" size={20} color={DARK_GRAY} />
+              <Icon name="chatbubbles" size={ds.iconSize.md} color={DARK_GRAY} />
               <Text style={localStyles.menuItemText}>Chat del desafío</Text>
-              <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
+              <Icon name="chevron-forward" size={ds.iconSize.sm} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           ) : null}
 
@@ -1976,16 +1960,16 @@ const EventDetail = () => {
                 style={localStyles.menuItem}
                 onPress={handleEditEvent}
               >
-                <Icon name="create-outline" size={20} color={DARK_GRAY} />
+                <Icon name="create-outline" size={ds.iconSize.md} color={DARK_GRAY} />
                 <Text style={localStyles.menuItemText}>Editar evento</Text>
-                <Icon name="chevron-forward" size={16} color={TEXT_SECONDARY} />
+                <Icon name="chevron-forward" size={ds.iconSize.sm} color={TEXT_SECONDARY} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[localStyles.menuItem, localStyles.menuItemDanger]}
                 onPress={handleDeleteEvent}
                 disabled={deleteEventMutation.isPending}
               >
-                <Icon name="trash" size={20} color={vibesTheme.colors.accentCoral} />
+                <Icon name="trash" size={ds.iconSize.md} color={vibesTheme.colors.accentCoral} />
                 <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentBlue }]}>
                   Eliminar evento
                 </Text>
@@ -1998,7 +1982,7 @@ const EventDetail = () => {
               style={[localStyles.menuItem, localStyles.menuItemDanger]}
               onPress={handleLeave}
             >
-              <Icon name="exit" size={20} color={vibesTheme.colors.accentCoral} />
+              <Icon name="exit" size={ds.iconSize.md} color={vibesTheme.colors.accentCoral} />
               <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentBlue }]}>
                 Salir del desafío
               </Text>
@@ -2013,7 +1997,7 @@ const EventDetail = () => {
                 style={[localStyles.menuItem, localStyles.menuItemDanger]}
                 onPress={handleLeave}
               >
-                <Icon name="exit" size={20} color={vibesTheme.colors.accentCoral} />
+                <Icon name="exit" size={ds.iconSize.md} color={vibesTheme.colors.accentCoral} />
                 <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentBlue }]}>
                   Abandonar desafío
                 </Text>
@@ -2022,7 +2006,7 @@ const EventDetail = () => {
                 style={[localStyles.menuItem, localStyles.menuItemDanger]}
                 onPress={handleDelete}
               >
-                <Icon name="trash" size={20} color={vibesTheme.colors.accentCoral} />
+                <Icon name="trash" size={ds.iconSize.md} color={vibesTheme.colors.accentCoral} />
                 <Text style={[localStyles.menuItemText, { color: vibesTheme.colors.accentBlue }]}>
                   Eliminar desafío
                 </Text>
@@ -2050,7 +2034,7 @@ const EventDetail = () => {
         <View style={localStyles.participantsModalHeader}>
           <Text style={localStyles.participantsModalTitle}>Participantes</Text>
           <TouchableOpacity onPress={() => setParticipantsVisible(false)}>
-            <Icon name="close" size={24} color={DARK_GRAY} />
+            <Icon name="close" size={ds.iconSize.lg} color={DARK_GRAY} />
           </TouchableOpacity>
         </View>
           <FlatList
@@ -2107,70 +2091,58 @@ const EventDetail = () => {
 
 const localStyles = StyleSheet.create({
   referenceHeaderAction: { width: 40, height: 44, alignItems: "center", justifyContent: "center" },
-  referenceCover: { width: "auto", height: 190, borderRadius: 16, marginHorizontal: 18, marginTop: 6, marginBottom: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
-  referenceIntro: { paddingHorizontal: 24 },
-  referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
-  referenceBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, backgroundColor: `${vibesTheme.colors.accentBlue}14` },
-  referenceBadgeText: { color: vibesTheme.colors.accentBlue, fontSize: 13, fontFamily: vibesTheme.fonts.medium },
-  referenceTitle: { color: vibesTheme.colors.primaryText, fontSize: 32, lineHeight: 39, fontFamily: vibesTheme.fonts.extraBold, marginBottom: 18 },
-  referenceMetaRow: { flexDirection: "row", alignItems: "center", gap: 18, minHeight: 60, paddingVertical: 10 },
-  referenceMetaTitle: { color: vibesTheme.colors.primaryText, fontSize: 16, lineHeight: 22, fontFamily: vibesTheme.fonts.semibold },
-  referenceMetaHint: { color: vibesTheme.colors.secondaryText, fontSize: 14, lineHeight: 20 },
+  referenceCover: { width: "auto", height: 190, borderRadius: ds.radii.lg, marginHorizontal: ds.spacing[4], marginTop: ds.spacing[2], marginBottom: ds.spacing[4], backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
+  referenceIntro: { paddingHorizontal: ds.spacing[6] },
+  referenceBadges: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2], marginBottom: ds.spacing[3] },
+  referenceTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.display, marginBottom: ds.spacing[4] },
+  referenceMetaRow: { flexDirection: "row", alignItems: "center", gap: ds.spacing[4], minHeight: 60, paddingVertical: ds.spacing[3] },
+  referenceMetaTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle },
+  referenceMetaHint: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall },
 
   publicStateScreen: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 20,
-    paddingHorizontal: 28,
+    gap: ds.spacing[5],
+    paddingHorizontal: ds.spacing[8],
     backgroundColor: vibesTheme.colors.background,
   },
   publicStateTitle: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 22,
-    lineHeight: 28,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
   publicStateButton: {
-    borderRadius: 24,
-    backgroundColor: vibesTheme.colors.accentMustard,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    ...buttonStyle("accent", "md"),
   },
   publicStateButtonText: {
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 16,
+    ...buttonLabel("md", "accent"),
   },
   challengeWhiteBackground: {
     backgroundColor: WHITE,
   },
   trackingCard: {
-    backgroundColor: "rgba(254, 254, 253, 0.94)",
-    borderRadius: 20,
-    padding: 18,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
+    borderRadius: ds.radii.xl,
+    padding: ds.spacing[4],
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
     alignItems: "stretch",
-    gap: 14,
+    gap: ds.spacing[4],
   },
   daysPanel: {
-    backgroundColor: "rgba(244, 163, 64, 0.13)",
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    backgroundColor: ds.colors.bg.selected,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   eventHeroMedia: {
     borderRadius: 0,
     overflow: "hidden",
     marginBottom: 0,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(244, 163, 64, 0.32)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
   },
   eventHeroImage: {
     position: "absolute",
@@ -2187,7 +2159,7 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "rgba(43, 43, 43, 0.34)",
+    backgroundColor: ds.colors.scrim,
   },
   eventHeroContent: {
     position: "absolute",
@@ -2195,48 +2167,37 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 2,
-    paddingHorizontal: 30,
+    paddingHorizontal: ds.spacing[8],
   },
   eventHeroTitle: {
     color: WHITE,
-    fontSize: 28,
-    lineHeight: 33,
-    fontFamily: vibesTheme.fonts.bold,
-    textShadowColor: "rgba(43, 43, 43, 0.5)",
+    ...ds.textStyles.title,
+    textShadowColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.strong),
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
   eventHeroSubtitle: {
-    marginTop: 10,
-    color: "rgba(254, 254, 253, 0.9)",
-    fontSize: 17,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
+    marginTop: ds.spacing[3],
+    color: ds.colors.bg.surfaceTranslucent,
+    ...ds.textStyles.subtitleMedium,
   },
   eventIntroMetaRow: {
-    marginTop: 14,
-    marginHorizontal: 24,
+    marginTop: ds.spacing[4],
+    marginHorizontal: ds.spacing[6],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   eventIntroMetaItem: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   eventIntroMetaText: {
     flex: 1,
     color: DARK_GRAY,
-    fontSize: 19,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  eventIntroDivider: {
-    width: 1,
-    height: 42,
-    backgroundColor: "rgba(43, 43, 43, 0.12)",
+    ...ds.textStyles.heading,
   },
   eventDetailWarmBackground: {
     backgroundColor: vibesTheme.colors.background,
@@ -2246,56 +2207,47 @@ const localStyles = StyleSheet.create({
     paddingTop: 0,
   },
   eventDetailScrollablePanel: {
-    marginTop: -36,
+    marginTop: -ds.spacing[8],
     zIndex: 3,
   },
   eventScrollContent: {
     paddingTop: 0,
-    paddingBottom: 178,
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 178 (medida de layout fuera de la escala) */ 178,
   },
   eventDetailPanel: {
     marginTop: 0,
     width: "100%",
     minHeight: 0,
     paddingTop: 0,
-    paddingHorizontal: 24,
-    paddingBottom: 34,
+    paddingHorizontal: ds.spacing[6],
+    paddingBottom: ds.spacing[8],
     backgroundColor: vibesTheme.colors.background,
   },
   eventPanelTitle: {
     color: DARK_GRAY,
-    fontSize: 34,
-    lineHeight: 39,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.display,
     textAlign: "left",
-    marginBottom: 8,
+    marginBottom: ds.spacing[2],
   },
   eventPanelDescription: {
     color: TEXT_SECONDARY,
-    fontSize: 16,
-    lineHeight: 23,
-    fontFamily: vibesTheme.fonts.medium,
-    marginBottom: 18,
+    ...ds.textStyles.subtitleMedium,
+    marginBottom: ds.spacing[4],
   },
   eventMetaDivider: {
-    height: 1,
-    marginTop: 12,
-    backgroundColor: "rgba(110, 110, 110, 0.30)",
+    height: ds.componentSize.divider,
+    marginTop: ds.spacing[3],
+    backgroundColor: ds.colors.border.subtle,
   },
   mapLinkDivider: {
-    height: 1,
-    marginTop: 10,
-    backgroundColor: "rgba(110, 110, 110, 0.30)",
+    height: ds.componentSize.divider,
+    marginTop: ds.spacing[3],
+    backgroundColor: ds.colors.border.subtle,
   },
   eventMiniMapCard: {
-    height: 190,
-    borderRadius: 24,
-    overflow: "hidden",
-    backgroundColor: "rgba(244, 163, 64, 0.13)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.24)",
-    marginTop: 12,
-    marginBottom: 6,
+    ...cardStyles.mapPreview,
+    marginTop: ds.spacing[3],
+    marginBottom: ds.spacing[2],
   },
   eventMiniMapImage: {
     width: "100%",
@@ -2314,111 +2266,42 @@ const localStyles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    backgroundColor: "rgba(244, 163, 64, 0.13)",
+    gap: ds.spacing[3],
+    paddingHorizontal: ds.spacing[4],
+    backgroundColor: ds.colors.bg.selected,
   },
   eventMiniMapPin: {
     width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.16)",
+    backgroundColor: ds.colors.bg.selected,
   },
   eventMiniMapCopy: {
     flex: 1,
   },
   eventMiniMapTitle: {
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
   },
   eventMiniMapText: {
     color: TEXT_SECONDARY,
-    fontSize: 13,
-    fontFamily: vibesTheme.fonts.medium,
-    marginTop: 2,
-  },
-  eventMiniMapBadge: {
-    position: "absolute",
-    right: 16,
-    bottom: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
-  },
-  eventMiniMapBadgeText: {
-    color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.labelMedium,
+    marginTop: ds.spacing[1],
   },
   daysWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: ds.spacing[3],
     alignSelf: "flex-start",
   },
-  dayPill: {
-    minWidth: 40,
-    height: 40,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(216, 140, 122, 0.16)",
-    borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
-  },
-  dayPillDone: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
-  },
-  dayPillMissed: {
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  dayPillCurrent: {
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
-    borderColor: PRIMARY_COLOR,
-  },
-  dayPillSelected: {
-    transform: [{ scale: 1.06 }],
-    shadowColor: PRIMARY_COLOR,
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  dayPillText: {
-    fontSize: 15,
-    color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  dayPillTextDone: {
-    color: vibesTheme.colors.primaryText,
-  },
-  dayPillTextMissed: {
-    color: vibesTheme.colors.accentBlue,
-  },
-  dayPillTextCurrent: {
-    color: vibesTheme.colors.accentBlue,
-  },
   scrollContent: {
-    paddingTop: 12,
-    paddingBottom: 186,
+    paddingTop: ds.spacing[3],
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 186 (medida de layout fuera de la escala) */ 186,
   },
   scrollContentChallenge: {
-    paddingTop: 84,
+    paddingTop: /* ds-lint-allow layout: paddingTop 84 (medida de layout fuera de la escala) */ 84,
   },
   joinSpacer: {
     height: 12,
@@ -2429,40 +2312,38 @@ const localStyles = StyleSheet.create({
     right: 24,
     bottom: 22,
     zIndex: 40,
-    elevation: 20,
+    elevation: ds.shadows.lg.elevation,
   },
   persistentHeader: {
     zIndex: 60,
-    elevation: 24,
+    elevation: ds.shadows.lg.elevation,
   },
   expandedEventHeader: {
     position: "absolute",
     left: 20,
     right: 20,
     zIndex: 63,
-    elevation: 27,
+    elevation: ds.shadows.lg.elevation,
     flexDirection: "row",
     alignItems: "center",
-    gap: 18,
+    gap: ds.spacing[4],
   },
   eventHeaderIconButton: {
     width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(43, 43, 43, 0.24)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.28)",
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.scrim),
   },
   expandedEventHeaderTitle: {
     flex: 1,
     color: WHITE,
-    fontSize: 23,
-    lineHeight: 27,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.title,
     textAlign: "left",
-    textShadowColor: "rgba(43, 43, 43, 0.42)",
+    textShadowColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.strong),
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
@@ -2478,115 +2359,91 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     minHeight: 84,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingHorizontal: ds.spacing[5],
+    paddingBottom: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
     backgroundColor: WHITE,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(43, 43, 43, 0.08)",
+    borderBottomColor: ds.colors.border.subtle,
     shadowColor: DARK_GRAY,
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: ds.shadows.md.shadowOpacity,
+    shadowRadius: ds.shadows.md.shadowRadius,
+    shadowOffset: ds.shadows.md.shadowOffset,
     zIndex: 61,
-    elevation: 25,
+    elevation: ds.shadows.md.elevation,
   },
   collapsedHeaderBackButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.82)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.06)",
+    borderColor: ds.colors.border.subtle,
   },
   collapsedEventHeaderThumbnail: {
     width: 38,
     height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(244, 163, 64, 0.32)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
   },
   collapsedEventHeaderTitle: {
     flex: 1,
     color: DARK_GRAY,
-    fontSize: 21,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
     textAlign: "left",
   },
   persistentFooter: {
     zIndex: 60,
-    elevation: 24,
+    elevation: ds.shadows.lg.elevation,
   },
   fixedFooterContent: {
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
-    borderRadius: 24,
-    paddingTop: 14,
-    paddingHorizontal: 14,
-    paddingBottom: 8,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    backgroundColor: ds.colors.bg.surface,
+    borderRadius: ds.radii.xl,
+    paddingTop: ds.spacing[4],
+    paddingHorizontal: ds.spacing[4],
+    paddingBottom: ds.spacing[2],
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   eventFixedFooterContent: {
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
-    borderRadius: 30,
-    paddingTop: 14,
-    paddingHorizontal: 14,
-    paddingBottom: 10,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    backgroundColor: ds.colors.bg.surface,
+    borderRadius: ds.radii.xl,
+    paddingTop: ds.spacing[4],
+    paddingHorizontal: ds.spacing[4],
+    paddingBottom: ds.spacing[3],
+    ...ds.glow.accent,
+    elevation: ds.shadows.lg.elevation,
   },
   eventChatFooterContent: {
     alignItems: "flex-end",
   },
   eventFloatingChatButton: {
+    ...iconButtonFloating,
     alignSelf: "flex-end",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.primaryText,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.16,
-    shadowRadius: 6,
-    elevation: 5,
   },
   challengeFooterButtonGroup: {
     flexDirection: "row",
     alignItems: "stretch",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   fixedFooterNote: {
-    marginBottom: 8,
+    marginBottom: ds.spacing[2],
   },
-  footerActionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingHorizontal: 18,
+  // Button del DS: accent lg (pill 56, sin glow). Mantiene el margen inferior del footer.
+  joinEventButton: {
+    ...buttonStyle("accent", "lg"),
+    marginBottom: ds.spacing[3],
   },
-  joinEventText: {
-    color: vibesTheme.colors.background,
-    fontSize: 16,
-    lineHeight: 21,
-  },
+  joinEventText: buttonLabel("lg", "accent"),
   footerActionText: {
     flexShrink: 1,
     textAlign: "center",
@@ -2594,19 +2451,19 @@ const localStyles = StyleSheet.create({
   participantsPreviewRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
-    paddingLeft: 2,
+    marginTop: ds.spacing[3],
+    paddingLeft: ds.spacing[1],
   },
   participantPreviewAvatar: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: ds.radii.pill,
     borderWidth: 2,
     borderColor: WHITE,
     backgroundColor: vibesTheme.colors.background,
   },
   participantPreviewAvatarOverlap: {
-    marginLeft: -8,
+    marginLeft: -ds.spacing[2],
   },
   participantPreviewMore: {
     alignItems: "center",
@@ -2615,350 +2472,243 @@ const localStyles = StyleSheet.create({
   },
   participantPreviewMoreText: {
     color: WHITE,
-    fontSize: 10,
-    fontWeight: "400",
+    ...ds.textStyles.caption,
   },
   streakRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   streakEmoji: {
-    fontSize: 36,
+    ...ds.textStyles.display,
   },
   streakTextWrap: {
     flex: 1,
   },
   streakCount: {
-    fontSize: 24,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.title,
     color: DARK_GRAY,
   },
   streakLabel: {
-    fontSize: 13,
+    ...ds.textStyles.labelMedium,
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
-    marginTop: 2,
+    marginTop: ds.spacing[1],
   },
   totalBadge: {
+    ...cardStyles.accent,
     alignItems: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.12)",
-    borderRadius: 12,
     minWidth: 76,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[2],
   },
   totalBadgeNumber: {
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
     color: vibesTheme.colors.accentBlue,
   },
   totalBadgeLabel: {
-    fontSize: 10,
+    ...ds.textStyles.micro,
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
   },
   milestoneWrap: {
-    gap: 6,
-  },
-  milestoneBarBg: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "rgba(110, 110, 110, 0.12)",
-    overflow: "hidden",
-  },
-  milestoneBarFill: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: PRIMARY_COLOR,
+    gap: ds.spacing[2],
   },
   milestoneLabel: {
-    fontSize: 12,
+    ...ds.textStyles.caption,
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
   },
   checkedInBadge: {
+    ...cardStyles.accent,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    gap: ds.spacing[2],
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   checkedInText: {
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 14,
+    ...ds.textStyles.label,
   },
   footerCheckInSliderWrap: {
     flex: 1,
-    minHeight: 52,
+    minHeight: FOOTER_CHECKIN_SWIPE.height,
     justifyContent: "center",
   },
-  footerCheckInSliderTrack: {
-    minHeight: 52,
-    borderRadius: 26,
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.22)",
-    overflow: "hidden",
-    justifyContent: "center",
-    paddingLeft: 84,
-    paddingRight: 16,
-  },
+  footerCheckInSliderTrack: swipeToConfirmTrackStyle("md", "accent"),
   footerCheckInSliderGlow: {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
     width: "42%",
-    backgroundColor: "rgba(244, 163, 64, 0.46)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
   },
   footerCheckInSliderCopy: {
-    gap: 1,
+    gap: ds.spacing[0],
   },
   footerCheckInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 13,
-    lineHeight: 15,
+    ...ds.textStyles.bodySmall,
   },
   footerCheckInSliderSubtitle: {
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.subtitle,
-    fontSize: 11,
-    lineHeight: 13,
+    ...ds.textStyles.micro,
   },
   footerCheckInSliderChevrons: {
     position: "absolute",
-    left: 58,
+    left: FOOTER_CHECKIN_SWIPE.chevronsLeft,
     flexDirection: "row",
     alignItems: "center",
     gap: 0,
   },
   footerCheckInSliderHandle: {
     position: "absolute",
-    left: 8,
-    top: 8,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    left: FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING,
+    top: FOOTER_CHECKIN_SLIDER_HORIZONTAL_PADDING,
+    width: FOOTER_CHECKIN_SLIDER_HANDLE_SIZE,
+    height: FOOTER_CHECKIN_SLIDER_HANDLE_SIZE,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
+    backgroundColor: ds.colors.bg.selected,
     borderWidth: 2,
-    borderColor: "rgba(254, 254, 253, 0.92)",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    borderColor: ds.colors.bg.surfaceTranslucent,
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   checkInButton: {
+    ...buttonStyle("accent", "lg"),
     flex: 1,
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 14,
-    shadowColor: PRIMARY_COLOR,
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
-    paddingHorizontal: 12,
   },
-  checkInButtonDone: {
-    backgroundColor: vibesTheme.colors.primaryText,
-  },
-  checkInButtonDisabled: {
-    backgroundColor: "rgba(216, 140, 122, 0.55)",
-  },
+  checkInButtonTextDone: { color: buttonContentColor.primary },
+  checkInButtonDone: { ...buttonVariant.primary },
+  checkInButtonDisabled: { ...buttonDisabled },
   challengeChatButton: {
+    ...buttonStyle("secondary", "lg"),
     flex: 1,
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: WHITE,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.14)",
-    paddingVertical: 13,
-    paddingHorizontal: 12,
   },
-  challengeChatButtonDisabled: {
-    backgroundColor: "rgba(110, 110, 110, 0.11)",
-    borderColor: "rgba(43, 43, 43, 0.08)",
-  },
+  challengeChatButtonDisabled: { ...buttonDisabled },
   challengeChatButtonText: {
-    color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 14,
+    ...buttonLabel("lg", "secondary"),
     textAlign: "center",
     flexShrink: 1,
   },
-  challengeChatButtonTextDisabled: {
-    color: vibesTheme.colors.secondaryText,
-  },
   checkInButtonText: {
-    color: vibesTheme.colors.surface,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 14,
+    ...buttonLabel("lg", "accent"),
     textAlign: "center",
     flexShrink: 1,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.5)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.strong),
     justifyContent: "flex-end",
   },
   modalCard: {
     backgroundColor: WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    gap: 12,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    padding: ds.spacing[6],
+    gap: ds.spacing[3],
   },
   modalTitle: {
-    fontSize: 22,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
     color: DARK_GRAY,
     textAlign: "center",
   },
   modalSubtitle: {
-    fontSize: 14,
+    ...ds.textStyles.labelMedium,
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.subtitle,
     textAlign: "center",
   },
   noteInput: {
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: ds.radii.md,
+    padding: ds.spacing[4],
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 15,
+    ...ds.textStyles.subtitleMedium,
     minHeight: 72,
     textAlignVertical: "top",
   },
   checkInSliderWrap: {
-    marginTop: 4,
-    minHeight: 88,
+    marginTop: ds.spacing[1],
+    minHeight: CHECKIN_SWIPE.height,
     justifyContent: "center",
   },
-  checkInSliderTrack: {
-    minHeight: 88,
-    borderRadius: 44,
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.22)",
-    overflow: "hidden",
-    justifyContent: "center",
-    paddingLeft: 114,
-    paddingRight: 24,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
-  },
+  checkInSliderTrack: swipeToConfirmTrackStyle("lg", "accent"),
   checkInSliderGlow: {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
     width: "54%",
-    backgroundColor: "rgba(244, 163, 64, 0.58)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.high),
   },
   checkInSliderCopy: {
-    gap: 3,
+    gap: ds.spacing[1],
   },
   checkInSliderTitle: {
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 18,
+    ...ds.textStyles.body,
   },
   checkInSliderSubtitle: {
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.subtitle,
-    fontSize: 14,
-    lineHeight: 18,
+    ...ds.textStyles.labelMedium,
   },
   checkInSliderChevrons: {
     position: "absolute",
-    left: 84,
+    left: CHECKIN_SWIPE.chevronsLeft,
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
+    gap: ds.spacing[1],
   },
   checkInSliderHandle: {
     position: "absolute",
     left: CHECKIN_SLIDER_HORIZONTAL_PADDING,
-    top: 8,
+    top: CHECKIN_SLIDER_HORIZONTAL_PADDING,
     width: CHECKIN_SLIDER_HANDLE_SIZE,
     height: CHECKIN_SLIDER_HANDLE_SIZE,
-    borderRadius: CHECKIN_SLIDER_HANDLE_SIZE / 2,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
+    backgroundColor: ds.colors.bg.selected,
     borderWidth: 2,
-    borderColor: "rgba(254, 254, 253, 0.92)",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
+    borderColor: ds.colors.bg.surfaceTranslucent,
+    ...ds.glow.accent,
+    elevation: ds.shadows.lg.elevation,
   },
   modalConfirmButton: {
     backgroundColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 14,
+    borderRadius: ds.radii.xl,
+    paddingVertical: ds.spacing[4],
     alignItems: "center",
-    shadowColor: PRIMARY_COLOR,
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   modalConfirmText: {
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 16,
+    ...ds.textStyles.subtitle,
   },
   modalCancelButton: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: ds.spacing[2],
   },
   modalCancelText: {
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 14,
+    ...ds.textStyles.label,
   },
   chatButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: ds.spacing[2],
     borderWidth: 1.5,
     borderColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 12,
-    marginTop: 4,
+    borderRadius: ds.radii.xl,
+    paddingVertical: ds.spacing[3],
+    marginTop: ds.spacing[1],
   },
   chatButtonText: {
     color: vibesTheme.colors.accentBlue,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 15,
+    ...ds.textStyles.subtitle,
   },
   // ── Menú hamburguesa ──
   menuSheet: {
@@ -2967,110 +2717,103 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 40,
-    gap: 4,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[5],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[12],
+    gap: ds.spacing[1],
   },
   menuHandle: {
     width: 40,
     height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(110, 110, 110, 0.23)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
     alignSelf: "center",
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
   },
   menuTitle: {
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
     color: DARK_GRAY,
-    marginBottom: 8,
+    marginBottom: ds.spacing[2],
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 14,
+    gap: ds.spacing[3],
+    paddingVertical: ds.spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+    borderBottomColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   menuItemDanger: {
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+    borderBottomColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   menuItemText: {
     flex: 1,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
     color: DARK_GRAY,
   },
   menuDivider: {
-    height: 1,
-    backgroundColor: "rgba(110, 110, 110, 0.12)",
-    marginVertical: 8,
+    height: ds.componentSize.divider,
+    backgroundColor: ds.colors.border.subtle,
+    marginVertical: ds.spacing[2],
   },
   menuSectionLabel: {
-    fontSize: 12,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.caption,
     color: TEXT_SECONDARY,
     textTransform: "uppercase",
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: ds.spacing[1],
   },
   menuCancel: {
     alignItems: "center",
-    paddingVertical: 14,
-    marginTop: 4,
+    paddingVertical: ds.spacing[4],
+    marginTop: ds.spacing[1],
   },
   menuCancelText: {
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
     color: TEXT_SECONDARY,
   },
   // ── Participantes ──
   participantsModalCard: {
     backgroundColor: WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 40,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    padding: ds.spacing[5],
+    paddingBottom: ds.spacing[12],
   },
   participantsModalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: ds.spacing[4],
   },
   participantsModalTitle: {
-    fontSize: 20,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.heading,
     color: DARK_GRAY,
   },
   memberRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
+    gap: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+    borderBottomColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   memberAvatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: ds.radii.pill,
   },
   memberName: {
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
     color: DARK_GRAY,
   },
   emptyParticipants: {
     textAlign: "center",
-    paddingVertical: 24,
+    paddingVertical: ds.spacing[6],
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 15,
+    ...ds.textStyles.subtitleMedium,
   },
 });
 

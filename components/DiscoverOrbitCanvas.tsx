@@ -27,6 +27,7 @@ import Avatar from "./Avatar";
 import VibesLoader from "./VibesLoader";
 import { discoverPhotoReadiness } from "../src/lib/discoverPhotoReadiness";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const getImageUri = (value: unknown): string | null => {
   if (typeof value === "string") return value.trim() || null;
@@ -306,8 +307,8 @@ const DiscoverOrbitCanvas = ({
       {loading ? <View style={[StyleSheet.absoluteFill, { zIndex: 10, backgroundColor: vibesTheme.colors.background, alignItems: "center", justifyContent: "center" }]}>
         <VibesLoader size={48} accessibilityLabel="Cargando perfiles" />
       </View> : null}
-      {!loading && photoFailed ? <View style={{ position: "absolute", zIndex: 10, bottom: 0, alignSelf: "center", borderRadius: 18, backgroundColor: vibesTheme.colors.background }}>
-        <TouchableOpacity accessibilityRole="button" onPress={() => { if (onRetryPhotos) onRetryPhotos(); else { setPhotoStatus({}); setPhotoAttempt(value => value + 1); } }} style={{ padding: 12 }}>
+      {!loading && photoFailed ? <View style={{ position: "absolute", zIndex: 10, bottom: 0, alignSelf: "center", borderRadius: ds.radii.lg, backgroundColor: vibesTheme.colors.background }}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => { if (onRetryPhotos) onRetryPhotos(); else { setPhotoStatus({}); setPhotoAttempt(value => value + 1); } }} style={{ padding: ds.spacing[3] }}>
           <Text style={{ color: vibesTheme.colors.accentBlue }}>Reintentar fotos</Text>
         </TouchableOpacity>
       </View> : null}
@@ -316,7 +317,7 @@ const DiscoverOrbitCanvas = ({
           pointerEvents="none"
           colors={[
             vibesTheme.colors.background,
-            "rgba(110, 110, 110, 0.10)",
+            ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
             vibesTheme.colors.background,
           ]}
           locations={[0, 0.55, 1]}
@@ -347,9 +348,9 @@ const DiscoverOrbitCanvas = ({
               <LinearGradient
                 pointerEvents="none"
                 colors={[
-                  "rgba(254, 254, 253, 0.92)",
-                  "rgba(244, 163, 64, 0.18)",
-                  "rgba(57, 120, 184, 0.2)",
+                  ds.colors.bg.surfaceTranslucent,
+                  ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
+                  ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
                 ]}
                 style={StyleSheet.absoluteFill}
               />
@@ -472,12 +473,10 @@ const localStyles = {
     top: "24%" as const,
     width: 5,
     height: 5,
-    borderRadius: 3,
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.background,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
+    ...ds.glow.halo,
+    shadowColor: ds.colors.base.mustard,
   },
   sparkleTwo: {
     position: "absolute" as const,
@@ -485,25 +484,20 @@ const localStyles = {
     bottom: "27%" as const,
     width: 4,
     height: 4,
-    borderRadius: 2,
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.background,
-    shadowColor: vibesTheme.colors.accentBlue,
-    shadowOpacity: 0.9,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
+    ...ds.glow.halo,
+    shadowColor: ds.colors.base.blue,
   },
   dismissedDot: {
     overflow: "hidden" as const,
     alignItems: "center" as const,
     justifyContent: "center" as const,
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.55)",
-    shadowColor: vibesTheme.colors.accentCoral,
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
+    ...ds.glow.coral,
+    elevation: ds.shadows.sm.elevation,
   },
   dismissedAvatar: {
     opacity: 1,
@@ -512,8 +506,8 @@ const localStyles = {
     position: "absolute" as const,
     width: "118%" as const,
     height: "118%" as const,
-    borderRadius: 999,
-    backgroundColor: "rgba(244, 163, 64, 0.12)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.bg.selected,
   },
   userBubbleHighlight: {
     position: "absolute" as const,
@@ -521,28 +515,23 @@ const localStyles = {
     top: 5,
     width: "52%" as const,
     height: "22%" as const,
-    borderRadius: 999,
-    backgroundColor: "rgba(254, 254, 253, 0.5)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.strong),
     transform: [{ rotate: "-18deg" }],
   },
   distancePill: {
-    marginTop: 6,
+    marginTop: ds.spacing[2],
     maxWidth: 158,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.24)",
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[1],
+    borderRadius: ds.radii.pill,
+    // OverlayBadge light (components-spec §1.4, DUDA 9 ★: sin borde mostaza)
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
+    ...ds.shadows.sm,
   },
   distancePillText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 11,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.micro,
     letterSpacing: 0,
     textAlign: "center" as const,
   },

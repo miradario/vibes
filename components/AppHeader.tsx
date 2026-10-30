@@ -15,7 +15,7 @@ import { Text } from "./Typography";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "./Icon";
 import { DARK_GRAY, TEXT_SECONDARY } from "../assets/styles";
-import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type AppHeaderProps = {
   children?: React.ReactNode;
@@ -128,8 +128,8 @@ const styles = StyleSheet.create({
     minHeight: 54,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: ds.spacing[5],
+    paddingVertical: ds.spacing[2],
   },
   side: {
     minWidth: 46,
@@ -139,17 +139,13 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.9)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
+    borderColor: ds.colors.border.subtle,
+    ...ds.shadows.sm,
   },
   iconPlaceholder: {
     width: 42,
@@ -159,21 +155,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 8,
+    paddingHorizontal: ds.spacing[2],
   },
   title: {
     color: DARK_GRAY,
-    fontSize: 28,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
   subtitle: {
-    marginTop: 2,
+    marginTop: ds.spacing[1],
     color: TEXT_SECONDARY,
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.labelMedium,
     textAlign: "center",
   },
 });

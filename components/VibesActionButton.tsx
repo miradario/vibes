@@ -4,6 +4,7 @@ import React from "react";
 import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle, TextStyle } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type VibesActionButtonProps = {
   label: string;
@@ -85,70 +86,61 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.22,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
-    elevation: 3,
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   startButtonDisabled: {
     opacity: 0.42,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...ds.shadows.none,
   },
   startText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle,
   },
   outlineButton: {
     width: "100%",
     minHeight: 52,
     borderRadius: vibesTheme.radii.pill,
     borderWidth: 1.5,
-    borderColor: "rgba(57, 120, 184, 0.45)",
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.strong),
     backgroundColor: vibesTheme.colors.surface,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: vibesTheme.spacing.md,
-    paddingVertical: 10,
+    paddingHorizontal: vibesTheme.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   outlineDisabled: {
     opacity: 0.42,
   },
   outlineText: {
     color: vibesTheme.colors.accentBlue,
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
     textAlign: "center",
   },
   skipWrap: {
     width: "100%",
-    marginTop: vibesTheme.spacing.sm,
+    marginTop: vibesTheme.spacing[2],
     alignItems: "center",
   },
   skipDivider: {
     width: "100%",
-    height: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.12)",
-    marginBottom: 14,
+    height: ds.componentSize.divider,
+    backgroundColor: ds.colors.border.subtle,
+    marginBottom: ds.spacing[4],
   },
   skipButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: ds.spacing[2],
+    paddingHorizontal: ds.spacing[3],
   },
   skipText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.subtitle,
   },
   skipButtonDisabled: {
     opacity: 0.7,
   },
   skipTextDisabled: {
-    color: "rgba(110, 110, 110, 0.78)",
+    color: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.higher),
   },
 });
 

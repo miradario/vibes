@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, type ViewToken } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import Tag from "./ui/Tag";
+import * as ds from "../src/theme/tokens";
 
 export function useChatVisibleDate(conversationId: string | undefined, inverted = false, onViewable?: (info: { viewableItems: ViewToken[]; changed: ViewToken[] }) => void) {
   const [date, setDate] = useState<string | null>(null);
@@ -26,10 +28,9 @@ export default function ChatVisibleDate({ date }: { date: string | null }) {
   const now = new Date();
   const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
   const label = value.toDateString() === now.toDateString() ? "Hoy" : value.toDateString() === yesterday.toDateString() ? "Ayer" : value.toLocaleDateString("es-AR", { day: "numeric", month: "long", ...(value.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}) });
-  return <View pointerEvents="none" style={s.overlay}><View style={s.badge}><Text style={s.text}>{label}</Text></View></View>;
+  return <View pointerEvents="none" style={s.overlay}><Tag label={label} style={s.badge} /></View>;
 }
 const s = StyleSheet.create({
   overlay: { position: "absolute", top: 8, left: 0, right: 0, alignItems: "center", zIndex: 10 },
-  badge: { backgroundColor: `${vibesTheme.colors.surface}CC`, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6 },
-  text: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.medium, fontSize: 12, lineHeight: 18 },
+  badge: { alignSelf: "center" },
 });

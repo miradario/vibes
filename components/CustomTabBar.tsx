@@ -46,6 +46,8 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react-native";
+import { badgeStyles } from "./ui/surfaceStyles";
+import * as ds from "../src/theme/tokens";
 
 const TAB_BAR_HEIGHT = 64;
 const FLOATING_BUTTON_SIZE = TAB_FLOATING_BUTTON_SIZE;
@@ -74,7 +76,7 @@ const makeTabAccent = (color: string) => ({
   text: color as ColorValue,
   gradient: [color, color] as [string, string],
   shadow: color,
-  glow: `${color}33`,
+  glow: ds.withAlpha(color, ds.opacity.medium),
 });
 
 const routeAccent: Record<string, ReturnType<typeof makeTabAccent>> = {
@@ -185,7 +187,7 @@ const TabButton = memo(
         <Animated.View style={[localStyles.tabContent, contentStyle]}>
           <View style={localStyles.iconWrap}>
             <Icon
-              size={27}
+              size={ds.iconSize.lg}
               color={vibesTheme.colors.primaryText}
               strokeWidth={2.05}
             />
@@ -428,11 +430,7 @@ const localStyles = StyleSheet.create({
   barShadow: {
 
     backgroundColor: localColors.surface,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.07,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 7,
+    ...ds.shadows.md,
   },
   bar: {
     height: TAB_BAR_HEIGHT,
@@ -441,7 +439,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-around",
     overflow: "visible",
-    paddingHorizontal: 10,
+    paddingHorizontal: ds.spacing[3],
   },
   tabItem: {
     flex: 1,
@@ -454,7 +452,7 @@ const localStyles = StyleSheet.create({
     minWidth: 48,
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: ds.spacing[2],
   },
   iconWrap: {
     position: "relative",
@@ -462,9 +460,7 @@ const localStyles = StyleSheet.create({
   tabLabel: {
     width: "100%",
     color: localColors.muted,
-    fontSize: 11,
-    fontFamily: vibesTheme.fonts.regular,
-    lineHeight: 14,
+    ...ds.textStyles.micro,
     textAlign: "center",
   },
   floatingWrap: {
@@ -483,16 +479,14 @@ const localStyles = StyleSheet.create({
     position: "absolute",
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: ds.radii.pill,
     opacity: 0.34,
     ...Platform.select({
       ios: {
-        shadowOpacity: 0.22,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 5 },
+        ...ds.shadows.md,
       },
       android: {
-        elevation: 4,
+        elevation: ds.shadows.md.elevation,
       },
     }),
   },
@@ -512,11 +506,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 7,
+    ...ds.shadows.sm,
   },
   floatingButton: {
     width: FLOATING_BUTTON_SIZE,
@@ -526,24 +516,15 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
   },
   unreadBadge: {
+    ...badgeStyles.count,
+    ...badgeStyles.outlined,
     position: "absolute",
     top: -7,
     right: -13,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderWidth: 1.5,
-    borderColor: vibesTheme.colors.background,
   },
   unreadBadgeText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 10,
-    fontWeight: "400",
-    lineHeight: 12,
+    ...ds.textStyles.micro,
   },
 });
 

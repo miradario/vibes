@@ -18,6 +18,7 @@ import {
   formatBirthDate,
   parseBirthDate,
 } from "../src/lib/birthDate";
+import * as ds from "../src/theme/tokens";
 
 const OnboardingAge = () => {
   const { t, locale } = useI18n();
@@ -91,12 +92,12 @@ const localStyles = StyleSheet.create({
   videoWrap: {
     flex: 1,
     minHeight: 320,
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
   ageError: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: vibesTheme.colors.accentBlue,
-    fontSize: 14,
+    ...ds.textStyles.bodySmall,
   },
 });

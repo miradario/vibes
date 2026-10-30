@@ -15,6 +15,7 @@ import DayAttachmentView from "./DayAttachmentView";
 import { DayButton } from "./DayButton";
 import { dayStyles as s } from "./styles";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import * as ds from "../../src/theme/tokens";
 
 export default function ChallengeDaysSection({
   challengeId,
@@ -99,7 +100,7 @@ export default function ChallengeDaysSection({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8 }}
+          contentContainerStyle={{ gap: ds.spacing[2] }}
         >
           {[
             ALL_CHALLENGE_DAYS,
@@ -121,7 +122,7 @@ export default function ChallengeDaysSection({
               <Text
                 style={[
                   s.buttonText,
-                  value === day ? null : s.secondaryButtonText,
+                  value === day ? s.accentButtonText : s.secondaryButtonText,
                 ]}
               >
                 {getChallengeContentLabel(value)}
@@ -147,7 +148,7 @@ export default function ChallengeDaysSection({
             </Text>
           ) : null}
           {(mode === "creator" ? [selected] : visibleContent).map((content) => (
-            <View key={content.day} style={{ gap: 10 }}>
+            <View key={content.day} style={{ gap: ds.spacing[3] }}>
               {content.day === ALL_CHALLENGE_DAYS &&
               content.title !== getChallengeContentLabel(content.day) ? (
                 <Text style={s.hint}>Todos los días</Text>
@@ -186,6 +187,7 @@ export default function ChallengeDaysSection({
                   : "Personalizar día"
               }
               style={s.primary}
+              textStyle={s.accentButtonText}
               onPress={() => setEditing(true)}
             />
           ) : null}

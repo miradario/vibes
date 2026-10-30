@@ -7,6 +7,7 @@ import Avatar from "./Avatar";
 import Icon from "./Icon";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type Participant = {
   userId: string;
@@ -37,14 +38,14 @@ export default function ParticipantsSheet({
     <View
       style={{
         flexDirection: "row",
-        gap: 12,
+        gap: ds.spacing[3],
         alignItems: "center",
         minHeight: 60,
-        paddingVertical: 8,
+        paddingVertical: ds.spacing[2],
       }}
     >
       <Avatar uri={person.avatarUrl} size={42} />
-      <Text style={{ flex: 1, fontSize: 17 }}>
+      <Text style={{ flex: 1, ...ds.textStyles.body }}>
         {person.displayName || "Participante"}
         {person.userId === userId ? " (vos)" : ""}
       </Text>
@@ -56,10 +57,10 @@ export default function ParticipantsSheet({
       onClose={onClose}
       sheetStyle={{
         backgroundColor: vibesTheme.colors.background,
-        borderTopLeftRadius: 26,
-        borderTopRightRadius: 26,
-        padding: 20,
-        paddingBottom: Math.max(insets.bottom, 20),
+        borderTopLeftRadius: ds.radii.xl,
+        borderTopRightRadius: ds.radii.xl,
+        padding: ds.spacing[5],
+        paddingBottom: Math.max(insets.bottom, ds.spacing[5]),
         maxHeight: "80%",
       }}
     >
@@ -70,7 +71,7 @@ export default function ParticipantsSheet({
           justifyContent: "space-between",
         }}
       >
-        <Text style={{ fontSize: 22, fontFamily: vibesTheme.fonts.semibold }}>
+        <Text style={{ ...ds.textStyles.title }}>
           Participantes ({participants.length})
         </Text>
         <TouchableOpacity
@@ -83,7 +84,7 @@ export default function ParticipantsSheet({
             justifyContent: "center",
           }}
         >
-          <Icon name="close" size={24} color={vibesTheme.colors.primaryText} />
+          <Icon name="close" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
         </TouchableOpacity>
       </View>
       {loading ? (
@@ -100,13 +101,13 @@ export default function ParticipantsSheet({
           ListHeaderComponent={
             <>
               {self ? row(self) : null}
-              <Text style={{ marginVertical: 12, color: vibesTheme.colors.secondaryText }}>
+              <Text style={{ marginVertical: ds.spacing[3], color: vibesTheme.colors.secondaryText }}>
                 Otros participantes ({others.length})
               </Text>
             </>
           }
           ListEmptyComponent={
-            <Text style={{ paddingVertical: 16 }}>
+            <Text style={{ paddingVertical: ds.spacing[4] }}>
               Todavía no hay otros participantes.
             </Text>
           }

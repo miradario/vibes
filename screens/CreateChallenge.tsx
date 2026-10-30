@@ -1,5 +1,10 @@
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { readCommunities, canonicalCommunity } from "../src/lib/communities";
+import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
+import { iconCircleIconSize, iconCircleStyle } from "../components/ui/IconCircle";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { optionCardCheck, optionCardStyles } from "../components/ui/optionCardStyles";
+import * as ds from "../src/theme/tokens";
 
 // Hidden for now: challenges are not filtered by community. Existing tags are kept when editing.
 const SHOW_COMMUNITY_PICKER = false;
@@ -292,7 +297,7 @@ const CreateChallenge = () => {
           title={editing ? "Editar desafío" : "Crear desafío"}
           showBack
           onBack={() => navigation.goBack()}
-          style={[localStyles.fixedHeader,{paddingHorizontal:24,marginHorizontal:0}]}
+          style={[localStyles.fixedHeader,{paddingHorizontal:ds.spacing[6],marginHorizontal:0}]}
           titleStyle={localStyles.screenTitle}
         />
 
@@ -300,7 +305,7 @@ const CreateChallenge = () => {
           style={{flex:1}}
           contentContainerStyle={[
             localStyles.content,
-            { paddingBottom: 24 },
+            { paddingBottom: ds.spacing[6] },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
@@ -335,19 +340,19 @@ const CreateChallenge = () => {
                     style={localStyles.coverImage}
                   />
                   <View style={localStyles.coverScrim} />
-                  <View style={localStyles.coverChangeBadge}>
-                    <Icon name="camera-outline" size={17} color={WHITE} />
-                    <Text style={localStyles.coverChangeText}>
-                      Cambiar portada
-                    </Text>
-                  </View>
+                  <OverlayBadge
+                    tone="dark"
+                    position="bottom-right"
+                    icon={<Icon name="camera-outline" size={ds.iconSize.sm} color={overlayBadgeContentColor("dark")} />}
+                    label="Cambiar portada"
+                  />
                 </>
               ) : (
                 <View style={localStyles.coverEmptyState}>
                   <View style={localStyles.coverIconCircle}>
                     <Icon
                       name="image-outline"
-                      size={28}
+                      size={ds.iconSize.xl}
                       color={PRIMARY_COLOR}
                     />
                   </View>
@@ -368,7 +373,7 @@ const CreateChallenge = () => {
               onPress={openDatePicker}
               disabled={Boolean(editing)}
             >
-              <Icon name="calendar" size={18} color={DARK_GRAY} />
+              <Icon name="calendar" size={ds.iconSize.md} color={DARK_GRAY} />
               <Text style={localStyles.dateButtonText}>
                 {challengeStartDate
                   ? formatChallengeDate(challengeStartDate)
@@ -422,7 +427,7 @@ const CreateChallenge = () => {
               <View style={localStyles.dayContentIcon}>
                 <Icon
                   name="calendar-outline"
-                  size={22}
+                  size={ds.iconSize.lg}
                   color={PRIMARY_COLOR}
                 />
               </View>
@@ -483,32 +488,32 @@ const CreateChallenge = () => {
                   <TouchableOpacity
                     key={option.value}
                     style={[
-                      localStyles.visibilityCard,
-                      isSelected && localStyles.visibilityCardSelected,
+                      optionCardStyles.base,
+                      isSelected && optionCardStyles.selected,
                     ]}
                     onPress={() => setVisibility(option.value)}
-                    activeOpacity={0.9}
+                    activeOpacity={ds.opacity.pressed}
                   >
-                    <View style={localStyles.visibilityIconWrap}>
+                    <View style={iconCircleStyle("sm", isSelected ? "accent" : "neutral")}>
                       <Icon
                         name={option.icon as any}
-                        size={18}
-                        color={isSelected ? PRIMARY_COLOR : DARK_GRAY}
+                        size={iconCircleIconSize.sm}
+                        color={ds.colors.icon.default}
                       />
                     </View>
-                    <View style={localStyles.visibilityCopy}>
-                      <Text style={localStyles.visibilityTitle}>
+                    <View style={optionCardStyles.copy}>
+                      <Text style={optionCardStyles.label}>
                         {option.title}
                       </Text>
-                      <Text style={localStyles.visibilitySubtitle}>
+                      <Text style={optionCardStyles.description}>
                         {option.subtitle}
                       </Text>
                     </View>
                     {isSelected ? (
                       <Icon
-                        name="checkmark-circle"
-                        size={20}
-                        color={PRIMARY_COLOR}
+                        name={optionCardCheck.name}
+                        size={optionCardCheck.size}
+                        color={optionCardCheck.color}
                       />
                     ) : null}
                   </TouchableOpacity>
@@ -521,7 +526,7 @@ const CreateChallenge = () => {
         <View
           style={[
             localStyles.fixedFooter,
-            { paddingBottom: Math.max(insets.bottom + 12, 28) },
+            { paddingBottom: Math.max(insets.bottom + ds.spacing[3], ds.spacing[8]) },
           ]}
         >
           <TouchableOpacity
@@ -589,67 +594,59 @@ const legacyStyles = StyleSheet.create({
   },
   screenTitle: {
     color: DARK_GRAY,
-    fontSize: 28,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.title,
   },
   fixedHeader: {
     paddingHorizontal: 0,
-    marginHorizontal: 10,
-    marginBottom: 4,
+    marginHorizontal: ds.spacing[3],
+    marginBottom: ds.spacing[1],
   },
   content: {
-    paddingBottom: 132,
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 132 (medida de layout fuera de la escala) */ 132,
   },
   formCard: {
     backgroundColor: WHITE,
-    marginTop: 18,
-    borderRadius: 18,
-    padding: 18,
+    marginTop: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
     shadowColor: BLACK,
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOpacity: ds.shadows.sm.shadowOpacity,
+    shadowRadius: ds.shadows.sm.shadowRadius,
+    shadowOffset: ds.shadows.sm.shadowOffset,
+    elevation: ds.shadows.sm.elevation,
   },
   label: {
     color: DARK_GRAY,
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.semibold,
-    marginBottom: 8,
-    marginTop: 12,
+    ...ds.textStyles.subtitle,
+    marginBottom: ds.spacing[2],
+    marginTop: ds.spacing[3],
   },
   helperText: {
     color: TEXT_SECONDARY,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: -2,
-    marginBottom: 10,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
+    marginTop: -ds.spacing[1],
+    marginBottom: ds.spacing[3],
   },
   input: {
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: ds.radii.md,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     color: DARK_GRAY,
-    fontSize: 18,
-    lineHeight: 23,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
   },
   descriptionInput: {
     minHeight: 160,
-    lineHeight: 25,
+    ...ds.textStyles.body,
   },
   coverPicker: {
-    marginTop: 6,
+    marginTop: ds.spacing[2],
     height: 190,
-    borderRadius: 18,
+    borderRadius: ds.radii.lg,
     overflow: "hidden",
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
+    borderColor: ds.colors.border.subtle,
     justifyContent: "center",
   },
   coverImage: {
@@ -658,254 +655,158 @@ const legacyStyles = StyleSheet.create({
   },
   coverScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(43, 43, 43, 0.18)",
-  },
-  coverChangeBadge: {
-    position: "absolute",
-    right: 14,
-    bottom: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.62)",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  coverChangeText: {
-    color: WHITE,
-    fontSize: 13,
-    fontFamily: vibesTheme.fonts.medium,
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
   },
   coverEmptyState: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 28,
+    paddingHorizontal: ds.spacing[8],
   },
   coverIconCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 14,
+    ...iconCircleStyle("lg", "accent"),
+    marginBottom: ds.spacing[4],
   },
   uploadImageTitle: {
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   uploadImageHint: {
-    marginTop: 6,
+    marginTop: ds.spacing[2],
     color: TEXT_SECONDARY,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.labelMedium,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
   },
   dateButton: {
-    marginTop: 6,
+    marginTop: ds.spacing[2],
     backgroundColor: WHITE,
-    borderRadius: 14,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    borderColor: ds.colors.border.subtle,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   dateButtonText: {
     color: DARK_GRAY,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   datePickerWrap: {
-    marginTop: 10,
-    borderRadius: 16,
+    marginTop: ds.spacing[3],
+    borderRadius: ds.radii.lg,
     overflow: "hidden",
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.28)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
   },
   visibilityStack: {
-    gap: 10,
-    marginTop: 4,
-  },
-  visibilityCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  visibilityCardSelected: {
-    borderColor: "rgba(244, 163, 64, 0.42)",
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
-  },
-  visibilityIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.12)",
-  },
-  visibilityCopy: {
-    flex: 1,
-  },
-  visibilityTitle: {
-    color: DARK_GRAY,
-    fontSize: 17,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.bold,
-  },
-  visibilitySubtitle: {
-    color: TEXT_SECONDARY,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 2,
-    fontFamily: vibesTheme.fonts.subtitle,
+    gap: ds.spacing[3],
+    marginTop: ds.spacing[1],
   },
   dayContentCard: {
-    marginTop: 18,
-    borderRadius: 16,
+    marginTop: ds.spacing[4],
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(57, 120, 184, 0.42)",
-    backgroundColor: "rgba(57, 120, 184, 0.12)",
-    padding: 14,
-    gap: 12,
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.strong),
+    backgroundColor: ds.colors.feedback.infoBg,
+    padding: ds.spacing[4],
+    gap: ds.spacing[3],
   },
   dayContentIcon: {
     width: 42,
     height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
     alignItems: "center",
     justifyContent: "center",
   },
   dayContentCopy: {
-    gap: 4,
+    gap: ds.spacing[1],
   },
   dayContentTitle: {
     color: DARK_GRAY,
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.heading,
   },
   dayContentText: {
     color: TEXT_SECONDARY,
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
   dayContentButton: {
-    minHeight: 46,
-    borderRadius: 18,
-    backgroundColor: PRIMARY_COLOR,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    ...buttonStyle("accent", "md"),
   },
   dayContentButtonText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.semibold,
-    textAlign: "center",
+    ...buttonLabel("md", "accent"),
   },
   dayContentEditor: {
-    marginTop: 14,
+    marginTop: ds.spacing[4],
   },
   createButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 6 },
+    ...buttonStyle("accent", "lg"),
   },
   createButtonDisabled: {
-    opacity: 0.45,
+    ...buttonDisabled,
   },
   createButtonText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...buttonLabel("lg", "accent"),
   },
   fixedFooter: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 28,
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[8],
+    backgroundColor: ds.colors.bg.surface,
     borderTopWidth: 1,
-    borderTopColor: "rgba(43, 43, 43, 0.08)",
+    borderTopColor: ds.colors.border.subtle,
   },
   photoSheet: {
     backgroundColor: WHITE,
-    paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 18,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[4],
   },
   sheetHandle: {
     alignSelf: "center",
     width: 42,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.14)",
-    marginBottom: 14,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.border.default,
+    marginBottom: ds.spacing[4],
   },
   modalTitle: {
     color: DARK_GRAY,
-    fontSize: 20,
+    ...ds.textStyles.heading,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.medium,
-    marginBottom: 18,
+    marginBottom: ds.spacing[4],
   },
   modalPrimaryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: "center",
+    ...buttonStyle("accent", "lg"),
   },
   modalPrimaryText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
+    ...buttonLabel("lg", "accent"),
   },
   modalSecondaryButton: {
-    marginTop: 10,
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
-    borderRadius: 16,
-    paddingVertical: 14,
+    marginTop: ds.spacing[3],
+    backgroundColor: ds.colors.bg.selected,
+    borderRadius: ds.radii.lg,
+    paddingVertical: ds.spacing[4],
     alignItems: "center",
   },
   modalSecondaryText: {
     color: DARK_GRAY,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   modalCancelButton: {
-    marginTop: 10,
-    paddingVertical: 12,
+    marginTop: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
     alignItems: "center",
   },
   modalCancelText: {
     color: TEXT_SECONDARY,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
   },
 });
 

@@ -45,6 +45,7 @@ import {
 } from "../../src/ftux/ftuxStore";
 import { getFtuxEntrySnapshot } from "../../src/ftux/entrySignals";
 import { useFtuxProfileCompletion } from "./useFtuxProfileCompletion";
+import * as ds from "../../src/theme/tokens";
 
 /** Visible tabs, in CustomTabBar order ("Aura" is hidden). */
 const VISIBLE_TABS = ["Home", "Flow", "EventsTab", "ClassesTab", "Discover", "Calendar"];
@@ -52,7 +53,7 @@ const TOTAL_STEPS = TOUR_ORDER.length;
 /** Each new step shows its screen first; Vibi's card/panel appears after this. */
 export const STEP_REVEAL_DELAY_MS = 1000;
 const colors = vibesTheme.colors;
-const DIM_COLOR = "rgba(43, 43, 43, 0.42)";
+const DIM_COLOR = ds.withAlpha(ds.colors.base.ink, ds.opacity.strong);
 
 type SheetStep = "welcome" | "alt" | "profile" | "closing";
 export type FtuxGuideProps = {
@@ -458,7 +459,7 @@ export function FtuxSheet({
       sheetOutDuration={reducedMotion ? 0 : 180}
       sheetStyle={[
         styles.sheet,
-        { maxHeight: height - insets.top - 16, paddingBottom: Math.max(insets.bottom, 16) + 8 },
+        { maxHeight: height - insets.top - 16, paddingBottom: Math.max(insets.bottom, ds.spacing[4]) + ds.spacing[2] },
       ]}
     >
       <View style={styles.handle} />
@@ -728,144 +729,127 @@ export function CoachCard({
 const styles = StyleSheet.create({
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: vibesTheme.spacing.lg,
-    paddingTop: 10,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingHorizontal: vibesTheme.spacing[6],
+    paddingTop: ds.spacing[3],
   },
   handle: {
     alignSelf: "center",
     width: 40,
     height: 5,
-    borderRadius: 3,
-    backgroundColor: "rgba(110, 110, 110, 0.22)",
-    marginBottom: 14,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
+    marginBottom: ds.spacing[4],
   },
   sheetContent: {
-    gap: vibesTheme.spacing.lg,
+    gap: vibesTheme.spacing[6],
   },
   sheetHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   sheetCopy: {
     flex: 1,
-    gap: 6,
+    gap: ds.spacing[2],
   },
   sheetBody: {
-    gap: 6,
-    marginTop: -8,
+    gap: ds.spacing[2],
+    marginTop: -ds.spacing[2],
   },
   mascot: {
     alignItems: "center",
-    gap: 4,
+    gap: ds.spacing[1],
   },
   // Same bubble as the signup onboarding greeting ("¡Hola, {nombre}!").
   greetingBubble: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 18,
-    backgroundColor: `${colors.accentBlue}14`,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[2],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),
     maxWidth: 120,
   },
   greetingText: {
     color: colors.accentBlue,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 12,
-    lineHeight: 16,
+    ...ds.textStyles.caption,
     textAlign: "center",
   },
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   vibiLabel: {
     color: colors.accentCoral,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 14,
-    lineHeight: 18,
+    ...ds.textStyles.label,
   },
   stepLabel: {
     color: colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 14,
-    lineHeight: 18,
+    ...ds.textStyles.labelMedium,
   },
   sheetTitle: {
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.extraBold,
-    fontSize: 27,
-    lineHeight: 33,
+    ...ds.textStyles.title,
   },
   sheetTitleCompact: {
-    fontSize: 23,
-    lineHeight: 29,
+    ...ds.textStyles.title,
   },
   body: {
     color: colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 15,
-    lineHeight: 22,
+    ...ds.textStyles.body,
   },
   progressRow: {
-    marginTop: 6,
-    gap: 6,
+    marginTop: ds.spacing[2],
+    gap: ds.spacing[2],
   },
   track: {
     height: 8,
-    borderRadius: 4,
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
     overflow: "hidden",
   },
   fill: {
     height: "100%",
-    borderRadius: 4,
+    borderRadius: ds.radii.xs,
     backgroundColor: colors.accentMustard,
   },
   missingText: {
-    marginTop: 6,
+    marginTop: ds.spacing[2],
     color: colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
   progressText: {
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 14,
-    lineHeight: 20,
+    ...ds.textStyles.label,
   },
   sheetActions: {
-    gap: 12,
+    gap: ds.spacing[3],
   },
   primaryButton: {
     height: undefined,
     minHeight: 54,
-    paddingHorizontal: vibesTheme.spacing.md,
-    paddingVertical: 10,
+    paddingHorizontal: vibesTheme.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   primaryText: {
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 17,
-    lineHeight: 22,
+    ...ds.textStyles.subtitle,
     textAlign: "center",
   },
   dots: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 6,
-    marginTop: 4,
+    gap: ds.spacing[2],
+    marginTop: ds.spacing[1],
   },
   dot: {
     width: 7,
     height: 7,
-    borderRadius: 4,
-    backgroundColor: "rgba(110, 110, 110, 0.28)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   dotActive: {
     width: 20,
@@ -873,7 +857,7 @@ const styles = StyleSheet.create({
   },
   coachRoot: {
     zIndex: 60,
-    elevation: 60,
+    elevation: ds.shadows.lg.elevation,
   },
   touchBlocker: {
     position: "absolute",
@@ -884,39 +868,32 @@ const styles = StyleSheet.create({
   coachCard: {
     position: "absolute",
     backgroundColor: colors.surface,
-    borderRadius: vibesTheme.radii.lg,
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 14,
-    shadowColor: colors.primaryText,
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12,
+    borderRadius: vibesTheme.radii.xl,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[4],
+    paddingBottom: ds.spacing[4],
+    ...ds.shadows.md,
   },
   coachHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   coachTitle: {
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.extraBold,
-    fontSize: 23,
-    lineHeight: 29,
+    ...ds.textStyles.title,
   },
   coachTitleCompact: {
-    fontSize: 20,
-    lineHeight: 25,
+    ...ds.textStyles.heading,
   },
   coachBody: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
   },
   coachActions: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 16,
-    marginBottom: 12,
+    gap: ds.spacing[3],
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
   coachButton: {
     flex: 1,
@@ -929,6 +906,6 @@ const styles = StyleSheet.create({
     height: 18,
     backgroundColor: colors.surface,
     transform: [{ rotate: "45deg" }],
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: ds.radii.xs,
   },
 });

@@ -19,6 +19,7 @@ import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useI18n } from "../src/i18n";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { onboardingStyles } from "../src/screens/Onboarding/vibesOnboardingStyles";
+import * as ds from "../src/theme/tokens";
 
 const getUniqueLocationParts = (...parts: Array<string | null | undefined>) => {
   const seen = new Set<string>();
@@ -142,7 +143,7 @@ const OnboardingCountry = () => {
         >
           <Icon
             name="location"
-            size={18}
+            size={ds.iconSize.md}
             color={vibesTheme.colors.accentBlue}
           />
           <Text style={onboardingStyles.locationButtonText}>
@@ -174,7 +175,7 @@ const localStyles = StyleSheet.create({
   videoWrap: {
     flex: 1,
     minHeight: 320,
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
 });

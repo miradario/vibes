@@ -20,6 +20,7 @@ import {
 } from "../src/screens/Onboarding/vibesOnboardingContent";
 
 import { type AboutMePreferences } from "../src/lib/aboutMeProfile";
+import * as ds from "../src/theme/tokens";
 
 type Props = {
   group: number;
@@ -109,7 +110,7 @@ export default function ProfileOnboardingFields({
                 <Text style={s.practiceName}>{practice}</Text>
                 <Icon
                   name={hasDetails ? "checkmark-circle" : "add"}
-                  size={24}
+                  size={ds.iconSize.lg}
                   color={
                     hasDetails
                       ? vibesTheme.colors.accentBlue
@@ -233,88 +234,81 @@ export default function ProfileOnboardingFields({
 const c = vibesTheme.colors;
 const s = StyleSheet.create({
   summary: {
-    padding: 16,
+    padding: ds.spacing[4],
     borderWidth: 1,
-    borderColor: `${c.primaryText}20`,
-    borderRadius: 16,
-    marginBottom: 24,
+    borderColor: ds.colors.border.default,
+    borderRadius: ds.radii.lg,
+    marginBottom: ds.spacing[6],
   },
   headingRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   heading: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.heading,
     color: c.primaryText,
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
   },
   editButton: {
     minHeight: 44,
-    paddingHorizontal: 12,
+    paddingHorizontal: ds.spacing[3],
     justifyContent: "center",
   },
   editText: {
     color: c.accentBlue,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 14,
+    ...ds.textStyles.label,
   },
-  photos: { gap: 10, paddingBottom: 16 },
+  photos: { gap: ds.spacing[3], paddingBottom: ds.spacing[4] },
   dataRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12,
-    paddingVertical: 5,
+    gap: ds.spacing[3],
+    paddingVertical: ds.spacing[1],
   },
-  dataLabel: { fontSize: 14, lineHeight: 20, color: c.secondaryText, flex: 1 },
+  dataLabel: { ...ds.textStyles.bodySmall, color: c.secondaryText, flex: 1 },
   dataValue: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...ds.textStyles.bodySmall,
     color: c.primaryText,
     flex: 1,
     textAlign: "right",
   },
-  section: { marginBottom: 24 },
+  section: { marginBottom: ds.spacing[6] },
   input: {
     minHeight: 48,
     borderWidth: 1,
-    borderColor: `${c.primaryText}20`,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    lineHeight: 24,
+    borderColor: ds.colors.border.default,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
+    ...ds.textStyles.body,
     color: c.primaryText,
-    marginBottom: 16,
+    marginBottom: ds.spacing[4],
   },
   description: { minHeight: 104 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  hint: { fontSize: 14, lineHeight: 20, color: c.secondaryText, marginTop: 16 },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[3] },
+  hint: { ...ds.textStyles.bodySmall, color: c.secondaryText, marginTop: ds.spacing[4] },
   practiceRow: {
     minHeight: 56,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 14,
-    marginTop: 10,
+    gap: ds.spacing[3],
+    padding: ds.spacing[4],
+    marginTop: ds.spacing[3],
     borderWidth: 1,
-    borderColor: `${c.primaryText}20`,
-    borderRadius: 16,
+    borderColor: ds.colors.border.default,
+    borderRadius: ds.radii.lg,
   },
   practiceComplete: {
     borderColor: c.accentBlue,
-    backgroundColor: `${c.accentBlue}0C`,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),
   },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  dot: { width: 10, height: 10, borderRadius: ds.radii.pill },
   practiceName: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
     color: c.primaryText,
   },
-  customCard: { padding: 20, borderRadius: 24, backgroundColor: c.surface },
+  customCard: { padding: ds.spacing[5], borderRadius: ds.radii.xl, backgroundColor: c.surface },
 });

@@ -23,6 +23,9 @@ import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { optionCardLeading, optionCardLeadingIcon, optionCardStyles } from "../components/ui/optionCardStyles";
+import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -188,7 +191,7 @@ const OnboardingPhoto = () => {
               />
             ) : (
               <View style={localStyles.emptyPrimaryPhoto}>
-                <Icon name="person" size={56} color={TEXT_SECONDARY} />
+                <Icon name="person" size={ds.iconSize.xxl} color={TEXT_SECONDARY} />
                 <Text style={localStyles.emptyPrimaryLabel}>{t("onboarding.photoEmpty")}</Text>
               </View>
             )}
@@ -216,8 +219,8 @@ const OnboardingPhoto = () => {
             >
               <Icon
                 name="images"
-                size={18}
-                color={vibesTheme.colors.accentCoral}
+                size={ds.iconSize.md}
+                color={buttonContentColor["secondary"]}
                 style={localStyles.buttonIcon}
               />
               <Text style={styles.welcomeSecondaryText}>{t("onboarding.uploadPhoto")}</Text>
@@ -230,8 +233,8 @@ const OnboardingPhoto = () => {
               >
                 <Icon
                   name="add"
-                  size={18}
-                  color={vibesTheme.colors.accentCoral}
+                  size={ds.iconSize.md}
+                  color={buttonContentColor["secondary"]}
                   style={localStyles.buttonIcon}
                 />
                 <Text style={styles.welcomeSecondaryText}>{t("onboarding.uploadAnother")}</Text>
@@ -266,23 +269,27 @@ const OnboardingPhoto = () => {
 
             <View style={localStyles.modalButtons}>
               <TouchableOpacity
-                style={localStyles.modalOption}
+                accessibilityRole="button"
+                activeOpacity={ds.opacity.pressed}
+                style={optionCardStyles.base}
                 onPress={() => choosePhotoSource("camera")}
               >
-                <View style={localStyles.modalIconWrap}>
-                  <Icon name="camera" size={26} color={vibesTheme.colors.accentCoral} />
+                <View style={optionCardLeading()}>
+                  <Icon name="camera" size={optionCardLeadingIcon.size} color={optionCardLeadingIcon.color} />
                 </View>
-                <Text style={localStyles.modalOptionText}>{t("onboarding.camera")}</Text>
+                <Text style={[optionCardStyles.label, optionCardStyles.copy]}>{t("onboarding.camera")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={localStyles.modalOption}
+                accessibilityRole="button"
+                activeOpacity={ds.opacity.pressed}
+                style={optionCardStyles.base}
                 onPress={() => choosePhotoSource("gallery")}
               >
-                <View style={localStyles.modalIconWrap}>
-                  <Icon name="images" size={26} color={vibesTheme.colors.accentCoral} />
+                <View style={optionCardLeading()}>
+                  <Icon name="images" size={optionCardLeadingIcon.size} color={optionCardLeadingIcon.color} />
                 </View>
-                <Text style={localStyles.modalOptionText}>{t("onboarding.gallery")}</Text>
+                <Text style={[optionCardStyles.label, optionCardStyles.copy]}>{t("onboarding.gallery")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -303,31 +310,30 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: ds.spacing[5],
   },
   previewSection: {
     alignItems: "center",
-    marginTop: 18,
-    marginBottom: 14,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[4],
   },
   locationText: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     textAlign: "center",
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 14,
+    ...ds.textStyles.labelMedium,
   },
   primaryPhoto: {
     width: 190,
     height: 190,
-    borderRadius: 95,
+    borderRadius: ds.radii.pill,
     borderWidth: 2,
     borderColor: vibesTheme.colors.accentCoral,
   },
   emptyPrimaryPhoto: {
     width: 190,
     height: 190,
-    borderRadius: 95,
+    borderRadius: ds.radii.pill,
     borderWidth: 2,
     borderColor: vibesTheme.colors.accentCoral,
     borderStyle: "dashed",
@@ -336,28 +342,26 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   emptyPrimaryLabel: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: TEXT_SECONDARY,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 15,
+    ...ds.textStyles.subtitleMedium,
   },
   primaryBadge: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: vibesTheme.colors.accentBlue,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
+    ...ds.textStyles.subtitle,
   },
   thumbsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 10,
-    marginBottom: 10,
+    gap: ds.spacing[3],
+    marginBottom: ds.spacing[3],
     minHeight: 60,
   },
   thumbWrap: {
-    borderRadius: 24,
-    padding: 2,
+    borderRadius: ds.radii.xl,
+    padding: ds.spacing[1],
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentCoral,
     backgroundColor: vibesTheme.colors.background,
@@ -365,92 +369,62 @@ const localStyles = StyleSheet.create({
   thumbPhoto: {
     width: 46,
     height: 46,
-    borderRadius: 23,
+    borderRadius: ds.radii.pill,
   },
   buttonIcon: {
-    marginRight: 8,
+    marginRight: ds.spacing[2],
   },
   videoWrap: {
     height: 140,
-    marginTop: 10,
-    marginBottom: 4,
+    marginTop: ds.spacing[3],
+    marginBottom: ds.spacing[1],
   },
   footer: {
-    paddingTop: 10,
-    paddingBottom: 8,
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[2],
     backgroundColor: styles.bg.backgroundColor,
   },
   skipButton: {
-    marginTop: 12,
+    marginTop: ds.spacing[3],
     alignSelf: "center",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: ds.spacing[1],
+    paddingHorizontal: ds.spacing[2],
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.45)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.strong),
     justifyContent: "flex-end",
   },
   modalCard: {
     backgroundColor: vibesTheme.colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 28,
-    paddingBottom: 36,
-    paddingHorizontal: 24,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingTop: ds.spacing[8],
+    paddingBottom: ds.spacing[8],
+    paddingHorizontal: ds.spacing[6],
     alignItems: "center",
   },
   modalTitle: {
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 22,
+    ...ds.textStyles.title,
     color: vibesTheme.colors.primaryText,
-    marginBottom: 4,
+    marginBottom: ds.spacing[1],
   },
   modalSubtitle: {
-    fontFamily: vibesTheme.fonts.subtitle,
-    fontSize: 15,
+    ...ds.textStyles.subtitleMedium,
     color: vibesTheme.colors.secondaryText,
-    marginBottom: 24,
+    marginBottom: ds.spacing[6],
     textAlign: "center",
   },
   modalButtons: {
-    flexDirection: "row",
-    gap: 24,
-    marginBottom: 24,
-  },
-  modalOption: {
-    alignItems: "center",
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 28,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  modalIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "rgba(216, 140, 122, 0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  modalOptionText: {
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
-    color: vibesTheme.colors.primaryText,
+    gap: ds.spacing[3],
+    marginBottom: ds.spacing[6],
   },
   modalCancel: {
-    paddingVertical: 8,
-    paddingHorizontal: 24,
+    paddingVertical: ds.spacing[2],
+    paddingHorizontal: ds.spacing[6],
   },
   modalCancelText: {
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 16,
+    ...ds.textStyles.subtitleMedium,
     color: vibesTheme.colors.secondaryText,
   },
 });

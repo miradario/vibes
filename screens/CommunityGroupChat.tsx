@@ -44,6 +44,9 @@ import {
   type CommunityMessage,
 } from "../src/queries/communityGroups.queries";
 import { handleApiError } from "../src/utils/handleApiError";
+import { buttonDisabled } from "../components/ui/buttonStyles";
+import { iconButtonFilled, iconButtonFilledIconColor, iconButtonFilledIconSize } from "../components/ui/surfaceStyles";
+import * as ds from "../src/theme/tokens";
 
 const COMPOSER_LINE_HEIGHT = 20;
 const COMPOSER_VERTICAL_PADDING = 8;
@@ -227,7 +230,7 @@ export default function CommunityGroupChat() {
               minHeight: 48,
               alignItems: "center",
               justifyContent: "center",
-              marginRight: 8,
+              marginRight: ds.spacing[2],
             }}
           >
             {updatePhoto.isPending ? (
@@ -237,7 +240,7 @@ export default function CommunityGroupChat() {
             ) : (
               <Icon
                 name="people-outline"
-                size={30}
+                size={ds.iconSize.xl}
                 color={vibesTheme.colors.accentMustard}
               />
             )}
@@ -261,11 +264,11 @@ export default function CommunityGroupChat() {
             accessibilityLabel="Opciones del grupo"
             onPress={() => setActions(true)}
             disabled={leaving}
-            style={{ padding: 12 }}
+            style={{ padding: ds.spacing[3] }}
           >
             <Icon
               name="ellipsis-horizontal"
-              size={22}
+              size={ds.iconSize.lg}
               color={vibesTheme.colors.primaryText}
             />
           </TouchableOpacity>
@@ -281,9 +284,9 @@ export default function CommunityGroupChat() {
           }}
           sheetStyle={{
             backgroundColor: vibesTheme.colors.background,
-            padding: 28,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
+            padding: ds.spacing[8],
+            borderTopLeftRadius: ds.radii.xl,
+            borderTopRightRadius: ds.radii.xl,
           }}
         >
           {canEditPhoto && (
@@ -294,9 +297,9 @@ export default function CommunityGroupChat() {
                 pendingPhoto.current = true;
                 setActions(false);
               }}
-              style={{ minHeight: 48, paddingVertical: 16 }}
+              style={{ minHeight: 48, paddingVertical: ds.spacing[4] }}
             >
-              <Text style={{ fontSize: 18, color: DARK_GRAY }}>
+              <Text style={{ ...ds.textStyles.body, color: DARK_GRAY }}>
                 Editar foto del grupo
               </Text>
             </TouchableOpacity>
@@ -308,9 +311,9 @@ export default function CommunityGroupChat() {
           >
             <Text
               style={{
-                fontSize: 18,
+                ...ds.textStyles.body,
                 color: vibesTheme.colors.primaryText,
-                paddingVertical: 20,
+                paddingVertical: ds.spacing[5],
               }}
             >
               Abandonar grupo
@@ -356,15 +359,15 @@ export default function CommunityGroupChat() {
           inverted
           data={messages.data ?? []}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ padding: ds.spacing[4] }}
           renderItem={({ item }) =>
             item.message_kind === "system" ? (
               <Text
                 style={{
                   textAlign: "center",
-                  padding: 12,
+                  padding: ds.spacing[3],
                   color: vibesTheme.colors.secondaryText,
-                  fontSize: 13,
+                  ...ds.textStyles.bodySmall,
                 }}
               >
                 {item.body}
@@ -507,16 +510,15 @@ export default function CommunityGroupChat() {
             accessibilityLabel="Enviar mensaje"
             disabled={!body.trim() || send.isPending}
             style={[
-              chatStyles.eventChatSendButton,
-              s.send,
-              (!body.trim() || send.isPending) && { opacity: 0.4 },
+              iconButtonFilled,
+              (!body.trim() || send.isPending) && buttonDisabled,
             ]}
             onPress={() => void submit()}
           >
             {send.isPending ? (
               <VibesLoader />
             ) : (
-              <Icon name="send" size={22} color={WHITE} />
+              <Icon name="send" size={iconButtonFilledIconSize} color={iconButtonFilledIconColor} />
             )}
           </TouchableOpacity>
         </View>
@@ -529,73 +531,66 @@ const s = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    gap: 10,
+    padding: ds.spacing[4],
+    gap: ds.spacing[3],
     flexShrink: 0,
   },
   messages: { flex: 1, minHeight: 0 },
-  back: { padding: 8 },
-  title: { fontSize: 21, color: DARK_GRAY, fontWeight: "600" },
-  description: { color: TEXT_SECONDARY, marginTop: 4 },
-  empty: { textAlign: "center", color: TEXT_SECONDARY, padding: 24 },
+  back: { padding: ds.spacing[2] },
+  title: { ...ds.textStyles.heading, color: DARK_GRAY },
+  description: { color: TEXT_SECONDARY, marginTop: ds.spacing[1] },
+  empty: { textAlign: "center", color: TEXT_SECONDARY, padding: ds.spacing[6] },
   messageRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 8,
-    marginBottom: 10,
+    gap: ds.spacing[2],
+    marginBottom: ds.spacing[3],
   },
   meta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    gap: 4,
-    marginTop: 6,
+    gap: ds.spacing[1],
+    marginTop: ds.spacing[2],
   },
   bubble: {
     alignSelf: "flex-start",
     maxWidth: "78%",
     backgroundColor: WHITE,
-    padding: 12,
-    borderRadius: 16,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    padding: ds.spacing[3],
+    borderRadius: ds.radii.lg,
+    ...ds.shadows.sm,
   },
   own: {
     // Android shadows show through translucent backgrounds.
-    elevation: Platform.OS === "android" ? 0 : 1,
+    elevation: Platform.OS === "android" ? 0 : ds.shadows.sm.elevation,
     alignSelf: "flex-end",
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
   },
   sender: {
-    fontSize: 12,
-    fontWeight: "600",
+    ...ds.textStyles.caption,
     color: vibesTheme.colors.primaryText,
-    marginBottom: 4,
+    marginBottom: ds.spacing[1],
   },
-  body: { color: DARK_GRAY, fontSize: 16 },
-  time: { color: TEXT_SECONDARY, fontSize: 11 },
+  body: { color: DARK_GRAY, ...ds.textStyles.body },
+  time: { color: TEXT_SECONDARY, ...ds.textStyles.micro },
   composer: {
     flexShrink: 0,
     flexDirection: "row",
     alignItems: "flex-end",
-    paddingHorizontal: 12,
-    paddingTop: 6,
-    gap: 10,
+    paddingHorizontal: ds.spacing[3],
+    paddingTop: ds.spacing[2],
+    gap: ds.spacing[3],
   },
   input: {
     flex: 1,
     maxHeight: COMPOSER_MAX_HEIGHT,
     minHeight: COMPOSER_MIN_HEIGHT,
-    lineHeight: Platform.OS === "ios" ? undefined : COMPOSER_LINE_HEIGHT,
-    paddingHorizontal: 14,
+    paddingHorizontal: ds.spacing[4],
     paddingVertical: COMPOSER_VERTICAL_PADDING,
-    borderRadius: 20,
-    fontSize: 16,
+    borderRadius: ds.radii.xl,
+    ...ds.textStyles.body, lineHeight: Platform.OS === "ios" ? undefined : COMPOSER_LINE_HEIGHT,
   },
-  send: { width: 48, height: 48, borderRadius: 24 },
 });

@@ -88,6 +88,8 @@ Norma: una acción principal por bloque de decisión. Texto en forma de verbo co
 | Secundario de acento (contorno azul) | Alto mínimo 52, radio `pill`, padding horizontal 16 | 16 / 22, `semibold`, 600, centrado | `accentBlue` | `surface`, borde 1,5 de `accentBlue` al 45% |
 | Acción de cabecera | Alto mínimo 48, radio 14, padding horizontal 18, gap 8 | 16 / 20, `semibold`, 600 | `primaryText` | `secondaryText` al 4,7% (`0C`) |
 | Solo icono | Área mínima 44 × 44; icono 20–24 | Sin texto visual; label accesible obligatorio | `primaryText` | `surface` o superficie suave |
+| Solo icono lleno (`iconButtonFilled`) | 44 × 44 (`touchTarget`), radio `pill`; icono `iconSize.md` (20) | Sin texto visual; label accesible obligatorio | `text/on-dark` | `action/primary`, sin borde ni sombra; deshabilitado con `buttonDisabled` (44%). Uso: enviar en Chat, EventChat, CommunityGroupChat y Vibi |
+| Selector de día (`DayPill variant="selectable"`) | Círculo 40 (`componentSize.dayPill.md`), hitSlop a 44 | `text/label` | `text/primary` | default `bg/surface` + `border/default`; selected `bg/selected` + `border/selected` (igual que Chip selected); disabled `buttonDisabled`. Multiselección, rol checkbox. Uso: días de la semana en EventRecurrenceEditor |
 | Volver | 44 × 44, radio 13; chevron 27 | Label accesible “Volver” | `primaryText` | `surface` con `secondaryText` al 4,7% |
 | Terciario / omitir | Área táctil mínima 44 de alto | 18 / 24, `regular`, 400 | `secondaryText` | Transparente |
 | Autenticación Google | Alto mínimo 54, radio 22, borde 1 | 16 / 22, `medium`, 500 | `primaryText` | `surface` al 92%; borde mostaza al 28% |
@@ -111,6 +113,10 @@ Usar botones de solo icono de 44 × 44, radio 14, fondo `secondaryText` al 4,7% 
 - **Destructivo:** acción explícita y confirmación proporcional a la pérdida de datos; usar paleta autorizada, no rojo agregado.
 
 En Editar perfil, “Guardar” mantiene sus dimensiones y su texto durante el envío: el tilde se reemplaza por `VibesLoader`. La pantalla permanece abierta si falla el guardado.
+
+### ListItem (`components/ui/ListItem.tsx`, 30/10)
+
+Fila única de listas, menús y ajustes (DS §5.18). Props: `title`, `subtitle?`, `leadingIcon?` (caja 36, `radius/md`, `bg/subtle`, ícono 20) o `leading?` (avatar o nodo), `trailing?` (`chevron` 20 `icon/muted`, `check` 20 `border/selected`, `text` en `text/caption` secondary, `switch`, `custom`), `tone` (`default` | `destructive`: caja `feedback/error-bg` e ícono `action/destructive`), `selected`/`selectable`/`multiple`, `disabled`, `divider`, `size` (`md` 56 | `lg` 72 con avatar; `componentSize.listItem`). Padding X `spacing/4`, Y `spacing/3`, gap `spacing/3`. Título `text/subtitle` 1 línea; subtítulo `text/body-small` secondary 1 línea. Estados: pressed `bg/subtle`, selected `bg/selected`, disabled `opacity/disabled`. Divider 1 px `border/subtle` abajo (no en el último). Accesibilidad: `button`; `radio` si es seleccionable (`checkbox` con `multiple`).
 
 ## Campos, búsqueda y selección
 

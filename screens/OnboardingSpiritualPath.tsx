@@ -27,6 +27,9 @@ import {
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import * as ds from "../src/theme/tokens";
 
 const ONBOARDING_OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
 
@@ -204,7 +207,7 @@ const OnboardingSpiritualPath = () => {
           <View style={localStyles.extraSection}>
             <Text style={localStyles.extraSectionTitle}>{t("settings.vegetarian")}</Text>
             <View style={localStyles.chipRow}>
-              <TouchableOpacity
+              <TouchableOpacity hitSlop={chipHitSlop}
                 style={[
                   localStyles.choiceChip,
                   vegetarian === "Sí" && localStyles.choiceChipActive,
@@ -220,7 +223,7 @@ const OnboardingSpiritualPath = () => {
                   {t("common.yes")}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity hitSlop={chipHitSlop}
                 style={[
                   localStyles.choiceChip,
                   vegetarian === "No" && localStyles.choiceChipActive,
@@ -245,7 +248,7 @@ const OnboardingSpiritualPath = () => {
               {otherOptions.map((item) => {
                 const active = selectedOtherTags.includes(item);
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity hitSlop={chipHitSlop}
                     key={item}
                     style={[
                       localStyles.choiceChip,
@@ -333,74 +336,53 @@ const localStyles = StyleSheet.create({
   videoWrap: {
     width: "100%",
     height: 220,
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
   selectedPathHint: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    marginTop: 2,
+    ...ds.textStyles.bodySmall,
+    marginTop: ds.spacing[1],
   },
   extraSection: {
-    marginTop: 18,
+    marginTop: ds.spacing[4],
   },
   extraSectionTitle: {
     color: DARK_GRAY,
-    fontSize: 18,
-    marginBottom: 10,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
+    marginBottom: ds.spacing[3],
   },
   aboutInput: {
     minHeight: 104,
-    paddingTop: 14,
-    paddingBottom: 14,
+    paddingTop: ds.spacing[4],
+    paddingBottom: ds.spacing[4],
   },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: ds.spacing[3],
   },
-  choiceChip: {
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    backgroundColor: WHITE,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  choiceChipActive: {
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  choiceChipText: {
-    color: DARK_GRAY,
-    fontSize: 14,
-  },
-  choiceChipTextActive: {
-    color: vibesTheme.colors.primaryText,
-  },
+  choiceChip: { ...chipStyles.base },
+  choiceChipActive: { ...chipStyles.selected },
+  choiceChipText: { ...chipStyles.label },
+  choiceChipTextActive: { ...chipStyles.labelSelected },
   otherInputRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
     alignItems: "center",
-    marginTop: 12,
+    marginTop: ds.spacing[3],
   },
   otherInput: {
     flex: 1,
   },
   addButton: {
-    borderRadius: 18,
-    backgroundColor: vibesTheme.colors.accentMustard,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    ...buttonStyle("accent", "md"),
   },
   addButtonText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 13,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...buttonLabel("md", "accent"),
   },
   skipButton: {
     alignItems: "center",
-    marginTop: 10,
+    marginTop: ds.spacing[3],
   },
 });

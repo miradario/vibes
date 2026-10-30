@@ -13,6 +13,7 @@ import PrimaryButton from "../components/onboarding/PrimaryButton";
 import { verifyEmailOwnership } from "../src/auth/emailVerification";
 import { supabase } from "../src/lib/supabase";
 import { getPostAuthRoute } from "../src/lib/onboardingFlow";
+import * as ds from "../src/theme/tokens";
 
 export default function VerifyEmail() {
   const navigation = useNavigation();
@@ -71,11 +72,11 @@ export default function VerifyEmail() {
       contentContainerStyle={{
         flexGrow: 1,
         justifyContent: "center",
-        padding: 28,
-        gap: 24,
+        padding: ds.spacing[8],
+        gap: ds.spacing[6],
       }}
     >
-      <Text style={{ fontSize: 30 }}>
+      <Text style={{ ...ds.textStyles.display }}>
         {state === "success"
           ? "Email verificado"
           : state === "error"
@@ -86,7 +87,7 @@ export default function VerifyEmail() {
         <VibesLoader />
       ) : (
         <>
-          <Text style={{ fontSize: 17, lineHeight: 25 }}>
+          <Text style={{ ...ds.textStyles.body }}>
             {state === "success"
               ? "Tu correo ya está verificado. Podés seguir disfrutando de Vibes."
               : message}

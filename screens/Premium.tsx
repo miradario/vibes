@@ -3,12 +3,13 @@ import { View, TouchableOpacity } from "react-native";
 import { Text } from "../components/Typography";
 import styles, { DARK_GRAY, PRIMARY_COLOR } from "../assets/styles";
 import Icon from "../components/Icon";
+import * as ds from "../src/theme/tokens";
 
 const Premium = () => (
   <View style={styles.bg}>
     <View style={styles.premiumContainer}>
       <View style={styles.premiumHeader}>
-        <Icon name="flame" size={20} color={PRIMARY_COLOR} />
+        <Icon name="flame" size={ds.iconSize.md} color={PRIMARY_COLOR} />
         <Text style={styles.premiumBrand}>Vibe Gold</Text>
       </View>
 
@@ -24,7 +25,7 @@ const Premium = () => (
           </Text>
           <Text style={styles.premiumPlanPrice}>$19.99 / mes</Text>
           <View style={styles.premiumPlanCheck}>
-            <Icon name="checkmark" size={12} color={PRIMARY_COLOR} />
+            <Icon name="checkmark" size={ds.iconSize.sm} color={PRIMARY_COLOR} />
           </View>
         </View>
         <View style={styles.premiumPlanCard}>

@@ -11,9 +11,16 @@ export const TAB_FLOATING_TOP = 6;
 export const getBottomTabBarHeight = (fontScale = PixelRatio.getFontScale()) =>
   Math.max(64, 36 + 28 * fontScale);
 
+/**
+ * Espacio mínimo debajo del contenido scrolleable de las pestañas para que el último
+ * ítem no quede tapado por la barra flotante (barra + safe area + aire), en equipos sin
+ * inset inferior. Con inset, manda el cálculo real de la barra.
+ */
+export const TAB_BAR_CONTENT_CLEARANCE = 118;
+
 export const getBottomTabContentPadding = (
   insetBottom: number,
-  minimumPadding: number
+  minimumPadding: number = TAB_BAR_CONTENT_CLEARANCE
 ) => {
   const barAndGap =
     getBottomTabBarHeight() + getTabBarBottomPadding(insetBottom) + TAB_BAR_TOP_SPACE + 20;

@@ -9,6 +9,7 @@ import Icon from "../components/Icon";
 import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const Faq = () => {
   const { t } = useI18n();
@@ -44,7 +45,7 @@ const Faq = () => {
               onPress={() => Alert.alert(item.question, item.answer)}
             >
               <Text style={localStyles.rowText}>{item.question}</Text>
-              <Icon name="chevron-forward" size={18} color={TEXT_SECONDARY} />
+              <Icon name="chevron-forward" size={ds.iconSize.md} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           ))}
         </View>
@@ -56,40 +57,39 @@ const Faq = () => {
 const localStyles = StyleSheet.create({
   header: {
     paddingHorizontal: 0,
-    marginBottom: 6,
+    marginBottom: ds.spacing[2],
   },
   hero: {
     width: 160,
     height: 160,
     alignSelf: "center",
     resizeMode: "contain",
-    marginTop: 8,
+    marginTop: ds.spacing[2],
   },
   subtitle: {
     textAlign: "center",
     color: DARK_GRAY,
-    fontSize: 16,
-    marginTop: 8,
-    marginBottom: 18,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.subtitleMedium,
+    marginTop: ds.spacing[2],
+    marginBottom: ds.spacing[4],
   },
   card: {
     backgroundColor: WHITE,
-    borderRadius: 18,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentBlue,
     overflow: "hidden",
   },
   row: {
     minHeight: 64,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     borderBottomWidth: 1,
     borderBottomColor: vibesTheme.colors.accentBlue,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   rowLast: {
     borderBottomWidth: 0,
@@ -97,8 +97,7 @@ const localStyles = StyleSheet.create({
   rowText: {
     flex: 1,
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
 });
 

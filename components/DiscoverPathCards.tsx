@@ -6,6 +6,7 @@ import { PRACTICE_OPTIONS } from "../src/screens/Onboarding/vibesOnboardingConte
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const paths = PRACTICE_OPTIONS;
 
@@ -59,7 +60,7 @@ export default function DiscoverPathCards({
             >
               <Text numberOfLines={1} style={[s.label, active && s.selectedLabel]}>{label}</Text>
               {active ? (
-                <Icon name="checkmark" size={15} color={vibesTheme.colors.primaryText} />
+                <Icon name="checkmark" size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} />
               ) : null}
             </TouchableOpacity>
           );
@@ -73,36 +74,34 @@ const s = StyleSheet.create({
   section: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingLeft: 16,
-    paddingTop: 4,
-    paddingBottom: 8,
+    gap: ds.spacing[2],
+    paddingLeft: ds.spacing[4],
+    paddingTop: ds.spacing[1],
+    paddingBottom: ds.spacing[2],
   },
   scroll: { flex: 1, minWidth: 0 },
   cards: {
-    paddingRight: 16,
-    gap: 8,
+    paddingRight: ds.spacing[4],
+    gap: ds.spacing[2],
     alignItems: "stretch",
   },
   card: {
     minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    gap: ds.spacing[2],
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[2],
     borderRadius: vibesTheme.radii.pill,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     backgroundColor: "transparent",
   },
-  selected: { backgroundColor: `${vibesTheme.colors.accentMustard}24`, borderColor: vibesTheme.colors.accentMustard },
+  selected: { backgroundColor: ds.colors.bg.selected, borderColor: vibesTheme.colors.accentMustard },
   label: {
     flexShrink: 1,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.label,
   },
   selectedLabel: { color: vibesTheme.colors.primaryText },
 });

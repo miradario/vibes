@@ -20,6 +20,8 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { useRestartChallengeMutation } from "../src/queries/challengeRestart.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
+import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
   ? [(ImagePicker as any).MediaType.Images]
@@ -144,7 +146,7 @@ const RestartChallenge = () => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Icon name="chevron-back" size={27} color={colors.primaryText} />
+          <Icon name="chevron-back" size={ds.iconSize.lg} color={colors.primaryText} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.screenTitle} numberOfLines={2}>
@@ -165,10 +167,12 @@ const RestartChallenge = () => {
         activeOpacity={0.88}
       >
         {coverSource ? <Image source={coverSource} style={styles.coverImage} /> : null}
-        <View style={styles.coverBadge}>
-          <Icon name="camera-outline" size={17} color={vibesTheme.colors.primaryText} />
-          <Text style={styles.coverBadgeText}>{t("challengeRestart.changeCover")}</Text>
-        </View>
+        <OverlayBadge
+          tone="light"
+          style={styles.coverBadge}
+          icon={<Icon name="camera-outline" size={ds.iconSize.sm} color={overlayBadgeContentColor("light")} />}
+          label={t("challengeRestart.changeCover")}
+        />
       </TouchableOpacity>
 
       <Text style={styles.label}>{t("challengeRestart.titleLabel")}</Text>
@@ -191,7 +195,7 @@ const RestartChallenge = () => {
         onPress={() => setShowDatePicker(true)}
       >
         <View style={restartStyles.row}>
-          <Icon name="calendar-outline" size={18} color={vibesTheme.colors.accentMustard} />
+          <Icon name="calendar-outline" size={ds.iconSize.md} color={vibesTheme.colors.accentMustard} />
           <Text style={[styles.inputText, !startDate && { color: vibesTheme.colors.secondaryText }]}>
             {startDate
               ? startDate.toLocaleDateString(dateLocale, { day: "numeric", month: "long", year: "numeric" })
@@ -229,8 +233,8 @@ const RestartChallenge = () => {
       </Text>
 
       <View style={styles.privacyCard}>
-        <Icon name="lock-closed-outline" size={20} color={vibesTheme.colors.accentBlue} />
-        <View style={{ flex: 1, gap: 4 }}>
+        <Icon name="lock-closed-outline" size={ds.iconSize.md} color={vibesTheme.colors.accentBlue} />
+        <View style={{ flex: 1, gap: ds.spacing[1] }}>
           <Text style={styles.privacyText}>{t("challengeRestart.privacyNote")}</Text>
           <Text style={styles.hint}>{t("challengeRestart.youParticipate")}</Text>
         </View>
@@ -241,7 +245,7 @@ const RestartChallenge = () => {
         style={[restartStyles.pill, styles.inviteButton]}
         onPress={() => setFriendsVisible(true)}
       >
-        <Icon name="people-outline" size={18} color={vibesTheme.colors.accentBlue} />
+        <Icon name="people-outline" size={ds.iconSize.md} color={vibesTheme.colors.accentBlue} />
         <Text style={restartStyles.pillText}>
           {inviteeIds.length
             ? t("challengeRestart.invitedCount", { count: inviteeIds.length })
@@ -250,7 +254,7 @@ const RestartChallenge = () => {
       </TouchableOpacity>
 
       <VibesActionButton
-        style={{ marginTop: vibesTheme.spacing.lg }}
+        style={{ marginTop: vibesTheme.spacing[6] }}
         label={restart.isPending ? t("challengeRestart.submitting") : t("challengeRestart.submit")}
         onPress={() => void submit()}
         disabled={!canSubmit}
@@ -266,7 +270,7 @@ const RestartChallenge = () => {
       <AnimatedSheetModal
         visible={coverSheet}
         onClose={() => setCoverSheet(false)}
-        sheetStyle={[restartStyles.sheet, { paddingBottom: 32 }]}
+        sheetStyle={[restartStyles.sheet, { paddingBottom: ds.spacing[8] }]}
       >
         <View style={restartStyles.handle} />
         <Text style={restartStyles.sheetTitle}>{t("challengeRestart.coverLabel")}</Text>
@@ -282,12 +286,12 @@ export default RestartChallenge;
 const { colors, fonts, radii, spacing } = vibesTheme;
 const styles = StyleSheet.create({
   backButton: {
-    marginTop: 2,
+    marginTop: ds.spacing[1],
   },
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: spacing.sm,
+    gap: spacing[2],
   },
   headerContent: {
     flex: 1,
@@ -296,79 +300,62 @@ const styles = StyleSheet.create({
   screenTitle: {
     flexShrink: 1,
     color: colors.primaryText,
-    fontFamily: fonts.semibold,
-    fontSize: 26,
-    lineHeight: 32,
+    ...ds.textStyles.title,
     marginTop: 0,
     marginBottom: 0,
     textAlign: "left",
   },
   screenSubtitle: {
-    marginTop: spacing.xs,
+    marginTop: spacing[1],
     color: colors.secondaryText,
-    fontFamily: fonts.subtitle,
-    fontSize: 16,
-    lineHeight: 21,
+    ...ds.textStyles.subtitleMedium,
     textAlign: "left",
   },
   inviteButton: {
     alignSelf: "flex-start",
     maxWidth: "100%",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginTop: spacing.md,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    marginTop: spacing[4],
   },
-  content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm },
+  content: { paddingHorizontal: spacing[6], paddingBottom: spacing[12], gap: spacing[2] },
   label: {
-    marginTop: spacing.md,
+    marginTop: spacing[4],
     color: colors.primaryText,
-    fontFamily: fonts.bold,
-    fontSize: 16,
+    ...ds.textStyles.subtitle,
   },
   input: {
     minHeight: 52,
     justifyContent: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.md,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.35)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     backgroundColor: colors.surface,
     color: colors.primaryText,
-    fontFamily: fonts.primary,
-    fontSize: 17,
+    ...ds.textStyles.body,
   },
-  inputText: { color: colors.primaryText, fontFamily: fonts.primary, fontSize: 17 },
+  inputText: { color: colors.primaryText, ...ds.textStyles.body },
   multiline: { minHeight: 110 },
-  hint: { color: colors.secondaryText, fontFamily: fonts.primary, fontSize: 15, lineHeight: 20 },
+  hint: { color: colors.secondaryText, ...ds.textStyles.body },
   error: { color: colors.accentCoral },
   cover: {
     height: 180,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     overflow: "hidden",
-    backgroundColor: "rgba(244, 163, 64, 0.12)",
+    backgroundColor: ds.colors.bg.selected,
     justifyContent: "flex-end",
   },
   coverImage: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
-  coverBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: spacing.xs,
-    margin: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-  },
-  coverBadgeText: { color: colors.primaryText, fontFamily: fonts.bold, fontSize: 15 },
+  coverBadge: { margin: spacing[4] },
   privacyCard: {
     flexDirection: "row",
-    gap: spacing.md,
-    marginTop: spacing.md,
-    padding: spacing.md,
-    borderRadius: radii.md,
-    backgroundColor: "rgba(57, 120, 184, 0.08)",
+    gap: spacing[4],
+    marginTop: spacing[4],
+    padding: spacing[4],
+    borderRadius: radii.lg,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),
   },
-  privacyText: { color: colors.primaryText, fontFamily: fonts.primary, fontSize: 16, lineHeight: 22 },
+  privacyText: { color: colors.primaryText, ...ds.textStyles.body },
 });

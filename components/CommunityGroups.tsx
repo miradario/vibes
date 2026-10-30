@@ -20,6 +20,7 @@ import {
 import type { MatchWithProfile } from "../src/queries/matches.queries";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function CommunityGroups({
   matches,
@@ -93,7 +94,7 @@ export default function CommunityGroups({
           style={s.create}
           onPress={() => setVisible(true)}
         >
-          <Icon name="add" size={21} color={vibesTheme.colors.primaryText} />
+          <Icon name="add" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
           <Text style={s.createLabel}>Crear grupo</Text>
         </TouchableOpacity>
       ) : null}
@@ -149,7 +150,7 @@ export default function CommunityGroups({
                 <Avatar uri={group.photoUrl} size={48} />
               ) : (
                 <View style={s.avatar}>
-                  <Icon name="people-outline" size={26} color={vibesTheme.colors.accentMustard} />
+                  <Icon name="people-outline" size={ds.iconSize.lg} color={vibesTheme.colors.accentMustard} />
                 </View>
               )}
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -186,7 +187,7 @@ export default function CommunityGroups({
                 disabled={create.isPending}
                 onPress={() => setVisible(false)}
               >
-                <Icon name="close" size={24} color={vibesTheme.colors.secondaryText} />
+                <Icon name="close" size={ds.iconSize.lg} color={vibesTheme.colors.secondaryText} />
               </TouchableOpacity>
             </View>
             <Text style={s.hint}>
@@ -263,7 +264,7 @@ export default function CommunityGroups({
                       ? "checkbox"
                       : "square-outline"
                   }
-                  size={24}
+                  size={ds.iconSize.lg}
                   color={vibesTheme.colors.accentMustard}
                 />
               </TouchableOpacity>
@@ -293,9 +294,9 @@ export default function CommunityGroups({
 }
 const s = StyleSheet.create({
   invitation: {
-    padding: 16,
-    marginVertical: 8,
-    borderRadius: 16,
+    padding: ds.spacing[4],
+    marginVertical: ds.spacing[2],
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentBlue,
     backgroundColor: vibesTheme.colors.surface,
@@ -303,79 +304,76 @@ const s = StyleSheet.create({
   invitationAction: {
     flex: 1,
     minHeight: 44,
-    padding: 10,
-    borderRadius: 12,
+    padding: ds.spacing[3],
+    borderRadius: ds.radii.md,
     borderWidth: 1,
     borderColor: vibesTheme.colors.primaryText,
     alignItems: "center",
     justifyContent: "center",
   },
-  section: { marginTop: 4, marginBottom: 0 },
+  section: { marginTop: ds.spacing[1], marginBottom: 0 },
   conversationRow: {
     minHeight: 76,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(110, 110, 110, 0.30)",
+    borderBottomColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   create: {
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: `${vibesTheme.colors.secondaryText}0C`,
+    gap: ds.spacing[2],
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle),
   },
   createLabel: {
     flexShrink: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    lineHeight: 20,
+    ...ds.textStyles.subtitle,
     includeFontPadding: false,
-    fontFamily: vibesTheme.fonts.semibold,
   },
   avatar: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.27)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
   },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
-  hint: { color: vibesTheme.colors.secondaryText, fontSize: 14, marginTop: 4 },
-  heading: { color: vibesTheme.colors.secondaryText, fontSize: 14, marginTop: 12, marginBottom: 4 },
+  hint: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall, marginTop: ds.spacing[1] },
+  heading: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall, marginTop: ds.spacing[3], marginBottom: ds.spacing[1] },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
+    gap: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
   },
   sheet: {
     backgroundColor: vibesTheme.colors.background,
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    padding: 20,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    padding: ds.spacing[5],
     maxHeight: "85%",
   },
   input: {
     minHeight: 52,
-    backgroundColor: "rgba(244, 163, 64, 0.13)",
+    backgroundColor: ds.colors.bg.selected,
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentCoral,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: ds.radii.md,
+    padding: ds.spacing[4],
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
+    ...ds.textStyles.body,
   },
   inputFocused: {
     borderColor: vibesTheme.colors.accentMustard,
-    backgroundColor: "rgba(244, 163, 64, 0.12)",
+    backgroundColor: ds.colors.bg.selected,
   },
   descriptionInput: {
     minHeight: 104,
@@ -383,8 +381,8 @@ const s = StyleSheet.create({
   button: {
     alignItems: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
-    padding: 16,
-    borderRadius: 14,
-    marginTop: 20,
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    marginTop: ds.spacing[5],
   },
 });

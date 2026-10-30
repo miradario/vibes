@@ -7,6 +7,7 @@ import { getNewConnections } from "../src/lib/homeActivity";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import ConnectionStrip from "./ConnectionStrip";
 import { Text } from "./Typography";
+import * as ds from "../src/theme/tokens";
 
 export default function HomeConnectionRequests({ canViewPhotos }: { canViewPhotos: boolean }) {
   const navigation = useNavigation();
@@ -17,7 +18,7 @@ export default function HomeConnectionRequests({ canViewPhotos }: { canViewPhoto
     screen: "Calendar", params: { homeEntryKey: Date.now(), homeTarget: "connections" },
   } as never);
   if (requests.isError && !requests.data?.length && !matches.data?.length) {
-    return <TouchableOpacity accessibilityRole="button" onPress={() => void requests.refetch()} style={{ paddingVertical: 12 }}>
+    return <TouchableOpacity accessibilityRole="button" onPress={() => void requests.refetch()} style={{ paddingVertical: ds.spacing[3] }}>
       <Text style={{ color: vibesTheme.colors.secondaryText }}>No pudimos cargar las conexiones. Tocá para reintentar.</Text>
     </TouchableOpacity>;
   }

@@ -1,29 +1,8 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
-import { Text } from "./Typography";
-import { vibesTheme } from "../src/theme/vibesTheme";
+import Tag from "./ui/Tag";
 
 // "Para ti" pill for the item picked by pickFeaturedItem (src/lib/homePersonalization).
+// Decisión Agus 29/10: todas las etiquetas informativas usan el Tag azul del DS.
 export default function ForYouTag() {
-  return (
-    <View style={s.tag}>
-      <Text style={s.text}>Para ti</Text>
-    </View>
-  );
+  return <Tag label="Para ti" />;
 }
-
-const s = StyleSheet.create({
-  tag: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: vibesTheme.colors.accentMustard,
-  },
-  text: {
-    fontSize: 12,
-    lineHeight: 16,
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-  },
-});

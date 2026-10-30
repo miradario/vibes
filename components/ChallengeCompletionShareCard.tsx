@@ -1,3 +1,4 @@
+/* ds-lint-disable-file lienzo de exportación 1080×1350 con tipografía y medidas fijas (imagen para compartir), exento por decisión de Agus 29/10 */
 import React, { forwardRef, useState } from "react";
 import { View, StyleSheet, type ImageSourcePropType } from "react-native";
 import { Image } from "expo-image";

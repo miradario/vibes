@@ -5,6 +5,8 @@ import { Text } from "./Typography";
 import Icon from "./Icon";
 import { useVibesSummary } from "../src/queries/vibesPoints.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { iconCircleStyle } from "./ui/IconCircle";
+import * as ds from "../src/theme/tokens";
 export default function VibesPointsBadge() {
   const navigation = useNavigation();
   const query = useVibesSummary();
@@ -18,7 +20,7 @@ export default function VibesPointsBadge() {
       style={s.badge}
     >
       <View style={s.symbol}>
-        <Icon name="pulse-outline" size={20} color={vibesTheme.colors.primaryText} />
+        <Icon name="pulse-outline" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
       </View>
       <Text style={s.value}>{value}</Text>
     </TouchableOpacity>
@@ -29,28 +31,21 @@ const s = StyleSheet.create({
     alignSelf: "flex-end",
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
     minHeight: 44,
-    paddingLeft: 6,
-    paddingRight: 12,
-    paddingVertical: 6,
+    paddingLeft: ds.spacing[2],
+    paddingRight: ds.spacing[3],
+    paddingVertical: ds.spacing[2],
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.accentMustard}66`,
-    borderRadius: 24,
-    backgroundColor: `${vibesTheme.colors.accentMustard}24`,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
+    borderRadius: ds.radii.xl,
+    backgroundColor: ds.colors.bg.selected,
   },
   symbol: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
+    ...iconCircleStyle("sm", "accent"),
   },
   value: {
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 17,
-    lineHeight: 23,
+    ...ds.textStyles.subtitle,
     color: vibesTheme.colors.primaryText,
   },
 });
