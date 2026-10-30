@@ -99,7 +99,6 @@ export const onboardingStyles = StyleSheet.create({
   footer: {
     flexShrink: 0,
     marginTop: ds.spacing[3],
-    marginHorizontal: isCompactOnboardingScreen ? ds.spacing[4] : ds.spacing[6],
     paddingTop: ds.spacing[3],
     paddingBottom: ds.spacing[3],
     backgroundColor: vibesTheme.colors.background,
