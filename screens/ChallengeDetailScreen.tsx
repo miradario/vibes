@@ -94,6 +94,7 @@ import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/u
 import DayPill, { dayPillColors } from "../components/ui/DayPill";
 import StatRow from "../components/ui/StatRow";
 import Divider from "../components/ui/Divider";
+import { bannerStyles } from "../components/ui/surfaceStyles";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -2334,11 +2335,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     gap: ds.spacing[3],
   },
-  upcomingChallengeNotice: {
-    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
-  },
+  upcomingChallengeNotice: { ...bannerStyles.base, ...bannerStyles.warning },
   chatLockedText: {
     flex: 1,
     color: palette.muted,
