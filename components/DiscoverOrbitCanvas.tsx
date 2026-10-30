@@ -525,9 +525,8 @@ const localStyles = {
     paddingHorizontal: ds.spacing[3],
     paddingVertical: ds.spacing[1],
     borderRadius: ds.radii.pill,
+    // OverlayBadge light (components-spec §1.4, DUDA 9 ★: sin borde mostaza)
     backgroundColor: ds.colors.bg.surfaceTranslucent,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
     ...ds.shadows.sm,
   },
   distancePillText: {

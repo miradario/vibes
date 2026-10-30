@@ -86,6 +86,7 @@ import { markFtuxAction } from "../src/ftux/ftuxStore";
 import ProgressBar from "../components/ui/ProgressBar";
 import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/ui/SwipeToConfirm";
 import DayPill from "../components/ui/DayPill";
+import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import * as ds from "../src/theme/tokens";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -1522,10 +1523,12 @@ const EventDetail = () => {
                         </View>
                       </View>
                     )}
-                    <View style={localStyles.eventMiniMapBadge}>
-                      <Icon name="navigate" size={ds.iconSize.md} color={DARK_GRAY} />
-                      <Text style={localStyles.eventMiniMapBadgeText}>Abrir mapa</Text>
-                    </View>
+                    <OverlayBadge
+                      tone="light"
+                      position="bottom-right"
+                      icon={<Icon name="navigate" size={ds.iconSize.sm} color={overlayBadgeContentColor("light")} />}
+                      label="Abrir mapa"
+                    />
                   </TouchableOpacity>
                   {eventLink || (pricingType === "paid" && paymentLink) ? (
                     <View style={localStyles.mapLinkDivider} />
@@ -2297,24 +2300,6 @@ const localStyles = StyleSheet.create({
     color: TEXT_SECONDARY,
     ...ds.textStyles.labelMedium,
     marginTop: ds.spacing[1],
-  },
-  eventMiniMapBadge: {
-    position: "absolute",
-    right: 16,
-    bottom: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[2],
-    backgroundColor: ds.colors.bg.surfaceTranslucent,
-    borderRadius: ds.radii.pill,
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[3],
-    ...ds.glow.accent,
-    elevation: ds.shadows.md.elevation,
-  },
-  eventMiniMapBadgeText: {
-    color: DARK_GRAY,
-    ...ds.textStyles.subtitle,
   },
   daysWrap: {
     flexDirection: "row",

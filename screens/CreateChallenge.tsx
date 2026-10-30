@@ -1,5 +1,6 @@
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { readCommunities, canonicalCommunity } from "../src/lib/communities";
+import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import * as ds from "../src/theme/tokens";
 
 // Hidden for now: challenges are not filtered by community. Existing tags are kept when editing.
@@ -336,12 +337,12 @@ const CreateChallenge = () => {
                     style={localStyles.coverImage}
                   />
                   <View style={localStyles.coverScrim} />
-                  <View style={localStyles.coverChangeBadge}>
-                    <Icon name="camera-outline" size={ds.iconSize.sm} color={WHITE} />
-                    <Text style={localStyles.coverChangeText}>
-                      Cambiar portada
-                    </Text>
-                  </View>
+                  <OverlayBadge
+                    tone="dark"
+                    position="bottom-right"
+                    icon={<Icon name="camera-outline" size={ds.iconSize.sm} color={overlayBadgeContentColor("dark")} />}
+                    label="Cambiar portada"
+                  />
                 </>
               ) : (
                 <View style={localStyles.coverEmptyState}>
@@ -652,22 +653,6 @@ const legacyStyles = StyleSheet.create({
   coverScrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
-  },
-  coverChangeBadge: {
-    position: "absolute",
-    right: 14,
-    bottom: 14,
-    paddingHorizontal: ds.spacing[3],
-    paddingVertical: ds.spacing[2],
-    borderRadius: ds.radii.pill,
-    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[2],
-  },
-  coverChangeText: {
-    color: WHITE,
-    ...ds.textStyles.labelMedium,
   },
   coverEmptyState: {
     alignItems: "center",

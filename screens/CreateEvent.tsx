@@ -57,6 +57,7 @@ import {
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
 import { getIosMapPreviewSource } from "../src/config/mapPreview";
+import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE =
@@ -736,10 +737,12 @@ const CreateEvent = () => {
                   style={localStyles.coverImage}
                 />
                 <View style={localStyles.coverScrim} />
-                <View style={localStyles.coverChangeBadge}>
-                  <Icon name="camera-outline" size={ds.iconSize.sm} color={WHITE} />
-                  <Text style={localStyles.coverChangeText}>Cambiar portada</Text>
-                </View>
+                <OverlayBadge
+                    tone="dark"
+                    position="bottom-right"
+                    icon={<Icon name="camera-outline" size={ds.iconSize.sm} color={overlayBadgeContentColor("dark")} />}
+                    label="Cambiar portada"
+                  />
               </>
             ) : (
               <View style={localStyles.coverEmptyState}>
@@ -989,12 +992,11 @@ const CreateEvent = () => {
                       onPress={handleOpenValidatedLocation}
                       accessibilityRole="button"
                     >
-                      <View style={localStyles.mapPreviewBadge}>
-                        <Icon name="navigate" size={ds.iconSize.sm} color={WHITE} />
-                        <Text style={localStyles.mapPreviewBadgeText}>
-                          Ver mapa
-                        </Text>
-                      </View>
+                      <OverlayBadge
+                        tone="dark"
+                        icon={<Icon name="navigate" size={ds.iconSize.sm} color={overlayBadgeContentColor("dark")} />}
+                        label="Ver mapa"
+                      />
                     </TouchableOpacity>
                   </View>
                   {typeof validatedLocation.lat === "number" &&
@@ -1448,19 +1450,6 @@ const legacyStyles = StyleSheet.create({
     right: 12,
     bottom: 12,
   },
-  mapPreviewBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[2],
-    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.higher),
-    borderRadius: ds.radii.pill,
-    paddingHorizontal: ds.spacing[3],
-    paddingVertical: ds.spacing[2],
-  },
-  mapPreviewBadgeText: {
-    color: WHITE,
-    ...ds.textStyles.caption,
-  },
   coverPicker: {
     width: "100%",
     aspectRatio: 16 / 9,
@@ -1481,22 +1470,6 @@ const legacyStyles = StyleSheet.create({
   coverScrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
-  },
-  coverChangeBadge: {
-    position: "absolute",
-    right: 12,
-    bottom: 12,
-    minHeight: 38,
-    borderRadius: ds.radii.lg,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[2],
-    paddingHorizontal: ds.spacing[4],
-    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.higher),
-  },
-  coverChangeText: {
-    color: WHITE,
-    ...ds.textStyles.labelMedium,
   },
   coverEmptyState: {
     alignItems: "center",

@@ -20,6 +20,7 @@ import { useProfileQuery } from "../src/queries/profile.queries";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { useRestartChallengeMutation } from "../src/queries/challengeRestart.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE = (ImagePicker as any).MediaType?.Images
@@ -166,10 +167,12 @@ const RestartChallenge = () => {
         activeOpacity={0.88}
       >
         {coverSource ? <Image source={coverSource} style={styles.coverImage} /> : null}
-        <View style={styles.coverBadge}>
-          <Icon name="camera-outline" size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} />
-          <Text style={styles.coverBadgeText}>{t("challengeRestart.changeCover")}</Text>
-        </View>
+        <OverlayBadge
+          tone="light"
+          style={styles.coverBadge}
+          icon={<Icon name="camera-outline" size={ds.iconSize.sm} color={overlayBadgeContentColor("light")} />}
+          label={t("challengeRestart.changeCover")}
+        />
       </TouchableOpacity>
 
       <Text style={styles.label}>{t("challengeRestart.titleLabel")}</Text>
@@ -345,18 +348,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   coverImage: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
-  coverBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: spacing[1],
-    margin: spacing[4],
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-  },
-  coverBadgeText: { color: colors.primaryText, ...ds.textStyles.subtitle },
+  coverBadge: { margin: spacing[4] },
   privacyCard: {
     flexDirection: "row",
     gap: spacing[4],
