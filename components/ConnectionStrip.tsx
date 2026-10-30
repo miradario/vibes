@@ -1,7 +1,7 @@
 import React from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import Avatar from "./Avatar";
-import Icon from "./Icon";
+import SectionHeader from "./ui/SectionHeader";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useConnectionStripVisibility } from "../src/hooks/useConnectionStripVisibility";
@@ -37,11 +37,7 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
         {(incomingLikes.length > 0 || newConnections.length > 0) ? (
           <View style={[s.connectionsStrip, compact && { marginBottom: ds.spacing[2] }]}>
             <View style={[s.stripHeadingRow, compact && { marginBottom: 0 }]}>
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver nuevas conexiones" onPress={onViewAll} style={s.stripHeading}>
-                <Text style={s.stripTitle}>Nuevas conexiones</Text>
-                {/* Same chevron as Home's SectionHeader ("Tus desafíos", "Eventos para vos"). */}
-                <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.accentMustard} />
-              </TouchableOpacity>
+<SectionHeader title="Nuevas conexiones" accessibilityLabel="Ver nuevas conexiones" onPress={onViewAll} style={s.stripHeading} />
             </View>
             <View style={s.stripRow}>
             <ScrollView style={s.stripScroll} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripPeople}>
@@ -73,10 +69,9 @@ export default function ConnectionStrip({ incomingLikes: allIncomingLikes, newCo
 const s = StyleSheet.create({
   connectionsStrip: { marginBottom: ds.spacing[3] },
   stripHeadingRow: { flexDirection: "row", alignItems: "center", marginBottom: 0 },
-  stripHeading: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44, marginBottom: -ds.spacing[2] },
+  stripHeading: { flex: 1, marginBottom: -ds.spacing[2] },
   stripRow: { flexDirection: "row", alignItems: "flex-start" },
   stripScroll: { flex: 1 },
-  stripTitle: { color: vibesTheme.colors.primaryText, ...ds.textStyles.heading },
   stripPeople: { alignItems: "flex-start", gap: ds.spacing[2], paddingTop: STRIP_PADDING_TOP, paddingBottom: ds.spacing[1], paddingRight: ds.spacing[2] },
   stripPerson: { width: 62, alignItems: "center", gap: NAME_GAP },
   stripAvatar: { width: 54, height: 54, borderWidth: 2, borderColor: vibesTheme.colors.accentBlue, borderRadius: ds.radii.pill, padding: ds.spacing[0], alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.surface, overflow: "hidden" },

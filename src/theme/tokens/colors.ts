@@ -44,6 +44,8 @@ export const colors = {
   icon: {
     default: palette.ink,
     muted: palette.inkSoft,
+    /** Link de sección (SectionHeader, 30/10). */
+    accent: palette.mustard,
   },
   /**
    * Colores base de cada familia, para combinar con `withAlpha(…, opacity.*)`

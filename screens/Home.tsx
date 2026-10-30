@@ -59,6 +59,7 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import VibesLoader from "../components/VibesLoader";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
+import SectionHeader from "../components/ui/SectionHeader";
 import { iconCircleStyle } from "../components/ui/IconCircle";
 import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
@@ -238,12 +239,8 @@ function HomePeopleSuggestions({
   if (!suggestions.length && !loading) return null;
   return (
     <View style={localStyles.peopleSection}>
-      <TouchableOpacity style={[localStyles.peopleHeading, { minHeight: 44 }]}
-        accessibilityRole="button" accessibilityLabel="Ver personas con tu vibe"
-        disabled={loading} accessibilityState={{ disabled: loading }} onPress={onSeeAll} activeOpacity={ds.opacity.pressed}>
-        <Text style={localStyles.peopleTitle}>Personas con tu vibe</Text>
-        <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} />
-      </TouchableOpacity>
+      <SectionHeader title="Personas con tu vibe" accessibilityLabel="Ver personas con tu vibe"
+        disabled={loading} onPress={onSeeAll} style={localStyles.peopleHeading} />
       {loading ? <PeopleSkeleton /> : <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -1060,26 +1057,7 @@ const localStyles = StyleSheet.create({
   peopleSection: {
     marginBottom: ds.spacing[8],
   },
-  peopleHeading: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[2],
-    marginBottom: ds.spacing[3],
-  },
-  peopleTitle: {
-    flex: 1, color: vibesTheme.colors.primaryText, ...ds.textStyles.heading,
-  },
-  peopleLink: {
-    minHeight: 34,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[1],
-    paddingLeft: ds.spacing[3],
-  },
-  peopleLinkText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.caption,
-  },
+  peopleHeading: { marginBottom: ds.spacing[3] },
   peopleCarousel: {
     gap: ds.spacing[3],
     paddingRight: ds.spacing[6],

@@ -36,6 +36,7 @@ import {
 import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import { cardStyles } from "./ui/surfaceStyles";
 import ProgressBar from "./ui/ProgressBar";
+import SectionHeader from "./ui/SectionHeader";
 import * as ds from "../src/theme/tokens";
 
 const ACCENT = vibesTheme.colors.accentMustard;
@@ -59,47 +60,19 @@ const getEventDateLabel = (date: string) => {
   };
 };
 
-function SectionHeader({
-  title,
-  onPress,
-  compact = false,
-}: {
-  title: string;
-  compact?: boolean;
-  onPress?: () => void;
-}) {
-  if (!onPress)
-    return (
-      <View style={[s.heading, compact && { marginBottom: 0 }]}>
-        <Text style={s.section}>{title}</Text>
-      </View>
-    );
-  return (
-    <TouchableOpacity
-      style={[s.heading, { minHeight: 44 }, compact && { marginBottom: 0 }]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Ver ${title}`}
-      activeOpacity={ds.opacity.pressed}
-    >
-      <Text style={s.section}>{title}</Text>
-      <Icon name="chevron-forward" size={ds.iconSize.md} color={ACCENT} />
-    </TouchableOpacity>
-  );
-}
 
 function OverviewLoadingPlaceholder() {
   return (
     <>
       <View style={s.sectionBlock}>
-        <SectionHeader title="Eventos para vos" />
+        <SectionHeader title="Eventos para vos" style={s.heading} />
         <View style={s.eventSuggestionsLoader}>
           <VibesLoader size={48} accessibilityLabel="Cargando eventos" />
         </View>
       </View>
 
       <View style={s.sectionBlock}>
-        <SectionHeader title="Tus desafíos" />
+        <SectionHeader title="Tus desafíos" style={s.heading} />
         <View style={s.eventSuggestionsLoader}>
           <VibesLoader size={48} accessibilityLabel="Cargando desafíos" />
         </View>
@@ -362,7 +335,6 @@ export default function HomeOverview({
     <View key="events" style={s.sectionBlock}>
       <SectionHeader
         title="Eventos para vos"
-        compact
         onPress={visibleEvents.length ? () => openList() : undefined}
       />
       {visibleEvents.length ? (
@@ -402,7 +374,6 @@ export default function HomeOverview({
     <View key="challenges" style={s.sectionBlock}>
       <SectionHeader
         title={challengeSectionTitle}
-        compact
         onPress={() => openList(true)}
       />
       {isLoadingChallengeRecommendations ? (
@@ -453,24 +424,7 @@ const s = StyleSheet.create({
     marginBottom: ds.spacing[8],
   },
   card: { ...cardStyles.base, padding: ds.spacing[4], marginBottom: ds.spacing[4] },
-  heading: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[2],
-    marginBottom: ds.spacing[3],
-  },
-  section: {
-    flex: 1,
-    ...ds.textStyles.heading,
-    color: vibesTheme.colors.primaryText,
-  },
-  link: {
-    minHeight: 34,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: ds.spacing[1],
-    paddingLeft: ds.spacing[3],
-  },
+  heading: { marginBottom: ds.spacing[3] },
   carousel: {
     gap: ds.spacing[3],
     paddingRight: ds.spacing[6],
