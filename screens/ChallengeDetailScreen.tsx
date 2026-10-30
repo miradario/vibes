@@ -91,6 +91,7 @@ import RestartChallengeConfirmSheet from "../components/challengeRestart/Restart
 import ChallengeInviteesSection from "../components/challengeRestart/ChallengeInviteesSection";
 import ChallengeInvitationActions from "../components/challengeRestart/ChallengeInvitationActions";
 import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/ui/SwipeToConfirm";
+import DayPill, { dayPillColors } from "../components/ui/DayPill";
 import * as ds from "../src/theme/tokens";
 
 type CheckInStatus = "pending" | "completed" | "broken";
@@ -662,14 +663,9 @@ export const PathProgress = memo(
         <View style={localStyles.pathStatsCard}>
           <View style={localStyles.pathStatItem}>
             <View style={localStyles.pathStatTopRow}>
-              <View
-                style={[
-                  localStyles.pathStatDot,
-                  localStyles.pathStatDotCompleted,
-                ]}
-              >
-                <Icon name="checkmark" size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} />
-              </View>
+              <DayPill state="done" size="sm">
+                <Icon name="checkmark" size={ds.iconSize.sm} color={dayPillColors.done.text} />
+              </DayPill>
               <Text style={localStyles.pathStatValue}>{completedCount}</Text>
             </View>
             <Text
@@ -686,12 +682,7 @@ export const PathProgress = memo(
             style={[localStyles.pathStatItem, localStyles.pathStatItemIndented]}
           >
             <View style={localStyles.pathStatTopRow}>
-              <View
-                style={[
-                  localStyles.pathStatDot,
-                  localStyles.pathStatDotCurrent,
-                ]}
-              />
+              <DayPill state="current" size="sm" />
               <Text style={localStyles.pathStatValue}>{safeCurrentDay}</Text>
             </View>
             <Text
@@ -708,9 +699,7 @@ export const PathProgress = memo(
             style={[localStyles.pathStatItem, localStyles.pathStatItemIndented]}
           >
             <View style={localStyles.pathStatTopRow}>
-              <View
-                style={[localStyles.pathStatDot, localStyles.pathStatDotFuture]}
-              />
+              <DayPill state="future" size="sm" />
               <Text style={localStyles.pathStatValue}>{remainingCount}</Text>
             </View>
             <Text
@@ -2882,22 +2871,6 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     gap: ds.spacing[2],
     minHeight: 28,
-  },
-  pathStatDot: {
-    width: 28,
-    height: 28,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pathStatDotCompleted: {
-    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
-  },
-  pathStatDotCurrent: {
-    backgroundColor: palette.accentBlue,
-  },
-  pathStatDotFuture: {
-    backgroundColor: ds.colors.bg.surface,
   },
   pathStatValue: {
     color: palette.text,

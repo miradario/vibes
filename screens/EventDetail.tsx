@@ -85,6 +85,7 @@ import { promptForPublicContentAuth } from "../src/lib/publicContentAuth";
 import { markFtuxAction } from "../src/ftux/ftuxStore";
 import ProgressBar from "../components/ui/ProgressBar";
 import { swipeToConfirmMetrics, swipeToConfirmTrackStyle } from "../components/ui/SwipeToConfirm";
+import DayPill from "../components/ui/DayPill";
 import * as ds from "../src/theme/tokens";
 
 const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -1725,29 +1726,13 @@ const EventDetail = () => {
                       const isSelected = selectedProgressDay === selectionKey;
 
                       return (
-                        <TouchableOpacity
+                        <DayPill
                           key={`day-${day}`}
-                          activeOpacity={0.85}
+                          label={day}
+                          state={isDone ? "done" : isMissed ? "missed" : isCurrent ? "current" : "future"}
+                          selected={isSelected}
                           onPress={() => setSelectedProgressDay(selectionKey)}
-                          style={[
-                            localStyles.dayPill,
-                            isDone && localStyles.dayPillDone,
-                            isMissed && localStyles.dayPillMissed,
-                            isCurrent && localStyles.dayPillCurrent,
-                            isSelected && localStyles.dayPillSelected,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              localStyles.dayPillText,
-                              isDone && localStyles.dayPillTextDone,
-                              isMissed && localStyles.dayPillTextMissed,
-                              isCurrent && localStyles.dayPillTextCurrent,
-                            ]}
-                          >
-                            {day}
-                          </Text>
-                        </TouchableOpacity>
+                        />
                       );
                     })}
                   </View>
@@ -2336,47 +2321,6 @@ const localStyles = StyleSheet.create({
     flexWrap: "wrap",
     gap: ds.spacing[3],
     alignSelf: "flex-start",
-  },
-  dayPill: {
-    minWidth: 40,
-    height: 40,
-    paddingHorizontal: ds.spacing[3],
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ds.colors.feedback.errorBg,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
-  },
-  dayPillDone: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
-  },
-  dayPillMissed: {
-    backgroundColor: ds.colors.bg.selected,
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  dayPillCurrent: {
-    backgroundColor: ds.colors.bg.selected,
-    borderColor: PRIMARY_COLOR,
-  },
-  dayPillSelected: {
-    transform: [{ scale: 1.06 }],
-    ...ds.glow.accent,
-    elevation: ds.shadows.md.elevation,
-  },
-  dayPillText: {
-    ...ds.textStyles.subtitle,
-    color: TEXT_SECONDARY,
-  },
-  dayPillTextDone: {
-    color: vibesTheme.colors.primaryText,
-  },
-  dayPillTextMissed: {
-    color: vibesTheme.colors.accentBlue,
-  },
-  dayPillTextCurrent: {
-    color: vibesTheme.colors.accentBlue,
   },
   scrollContent: {
     paddingTop: ds.spacing[3],
