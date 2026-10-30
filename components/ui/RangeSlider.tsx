@@ -12,9 +12,11 @@ import * as ds from "../../src/theme/tokens";
 const HIT = ds.touchTarget;
 const TRACK = ds.componentSize.slider.track;
 const THUMB = ds.componentSize.slider.thumb;
-export default function RangeSlider({ label, minimum, maximum, lower, upper, unit, onChange, onClear, noLimitLabel = "Sin límite", single = false, disabled = false }: {
+export default function RangeSlider({ label, minimum, maximum, lower, upper, unit, onChange, onClear, noLimitLabel = "Sin límite", single = false, disabled = false, labelStyle = "title" }: {
   label: string; minimum: number; maximum: number; lower: number | null; upper: number | null;
   unit: string; onChange: (lower: number, upper: number) => void; onClear?: () => void; noLimitLabel?: string; single?: boolean; disabled?: boolean;
+  /** "section": label en `textStyles.subtitle` (títulos de sección de sheets de filtros). */
+  labelStyle?: "title" | "section";
 }) {
   const [width, setWidth] = useState(0);
   const low = Math.max(minimum, Math.min(maximum, lower ?? minimum));
@@ -39,7 +41,7 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
   const x = (value: number) => (value - minimum) / (maximum - minimum) * track;
   return <View style={{ gap: ds.spacing[3], opacity: disabled ? ds.opacity.disabled : 1 }}>
     <View style={s.heading}>
-      <Text style={[s.title, single && { ...ds.textStyles.body }, { flex: 1 }]}>{label}</Text>
+      <Text style={[s.title, labelStyle === "section" && s.titleSection, single && { ...ds.textStyles.body }, { flex: 1 }]}>{label}</Text>
       {single ? (upper === null ? null : <View style={s.valuePill}><Text style={s.clearText}>{`${high}/10`}</Text></View>) : <TouchableOpacity accessibilityRole="button" onPress={onClear} style={s.clearGhost}>
         <Text style={s.clearText}>{noLimitLabel}</Text>
       </TouchableOpacity>}
@@ -63,6 +65,7 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
 const s = StyleSheet.create({
   heading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: ds.spacing[3] },
   title: { color: ds.colors.text.primary, ...ds.textStyles.title },
+  titleSection: { ...ds.textStyles.subtitle },
   /** Pastilla de valor del slider simple (sin cambio visual). */
   valuePill: { borderRadius: ds.radii.xl, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.colors.bg.subtle },
   clearText: { color: ds.colors.text.primary, ...ds.textStyles.label },

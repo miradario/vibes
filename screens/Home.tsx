@@ -1956,7 +1956,7 @@ const localStyles = StyleSheet.create({
   },
   filtersSectionTitle: {
     color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.title,
+    ...ds.textStyles.subtitle,
   },
   filtersPillRow: {
     flexDirection: "row",
