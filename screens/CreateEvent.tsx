@@ -61,6 +61,7 @@ import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/Overlay
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
 import { iconCircleStyle } from "../components/ui/IconCircle";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE =
@@ -1304,18 +1305,13 @@ const legacyStyles = StyleSheet.create({
     fontFamily: ds.fontFamilies.regular,
   },
   createButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
-    ...ds.glow.accent,
+    ...buttonStyle("accent", "lg"),
   },
   createButtonDisabled: {
     opacity: 0.72,
   },
   createButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("lg", "accent"),
   },
   fixedFooter: {
     position: "absolute",
@@ -1334,18 +1330,11 @@ const legacyStyles = StyleSheet.create({
     elevation: ds.shadows.md.elevation,
   },
   validateButton: {
+    ...buttonStyle("secondary", "md"),
     marginTop: ds.spacing[3],
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: ds.radii.xl,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    paddingVertical: ds.spacing[3],
-    alignItems: "center",
-    ...ds.glow.accent,
   },
   validateButtonText: {
-    color: DARK_GRAY,
-    fontFamily: ds.fontFamilies.regular,
+    ...buttonLabel("md", "secondary"),
   },
   locationHint: {
     marginTop: ds.spacing[2],
@@ -1496,29 +1485,17 @@ const legacyStyles = StyleSheet.create({
     marginBottom: ds.spacing[3],
   },
   modalPrimaryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[3],
-    alignItems: "center",
-    ...ds.glow.accent,
+    ...buttonStyle("accent", "md"),
   },
   modalPrimaryText: {
-    color: vibesTheme.colors.primaryText,
-    fontFamily: ds.fontFamilies.regular,
+    ...buttonLabel("md", "accent"),
   },
   modalSecondaryButton: {
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: ds.radii.xl,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    paddingVertical: ds.spacing[3],
-    alignItems: "center",
+    ...buttonStyle("secondary", "md"),
     marginTop: ds.spacing[3],
-    ...ds.glow.accent,
   },
   modalSecondaryText: {
-    color: DARK_GRAY,
-    fontFamily: ds.fontFamilies.regular,
+    ...buttonLabel("md", "secondary"),
   },
   modalCancelButton: {
     marginTop: ds.spacing[4],

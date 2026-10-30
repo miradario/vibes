@@ -60,6 +60,7 @@ import VibesLoader from "../components/VibesLoader";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
 import { iconCircleStyle } from "../components/ui/IconCircle";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverFiltersState = {
@@ -2026,30 +2027,18 @@ const localStyles = StyleSheet.create({
     marginTop: ds.spacing[4],
   },
   filtersSecondaryButton: {
+    ...buttonStyle("secondary", "md"),
     flex: 1,
-    height: 48,
-    borderRadius: ds.radii.pill,
-    borderWidth: 1,
-    borderColor: ds.colors.border.default,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.background,
   },
   filtersSecondaryButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.body,
+    ...buttonLabel("md", "secondary"),
   },
   filtersPrimaryButton: {
+    ...buttonStyle("primary", "md"),
     flex: 1,
-    height: 48,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.primaryText,
   },
   filtersPrimaryButtonText: {
-    color: vibesTheme.colors.surface,
-    ...ds.textStyles.body,
+    ...buttonLabel("md", "primary"),
   },
 });
 

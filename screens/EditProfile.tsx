@@ -49,6 +49,7 @@ import { profileKeys, useProfileQuery } from "../src/queries/profile.queries";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const PROFILE_SINGLE_PHOTO_KEYS = [
@@ -717,7 +718,7 @@ const EditProfile = () => {
             ) : (
               <Icon
                 name="checkmark"
-                color={vibesTheme.colors.surface}
+                color={buttonContentColor["primary"]}
                 size={ds.iconSize.lg}
               />
             )}
@@ -736,19 +737,11 @@ export default EditProfile;
 const localStyles = StyleSheet.create({
   saveFooter: { marginHorizontal: ds.spacing[5], marginTop: ds.spacing[6] },
   saveButton: {
+    ...buttonStyle("primary", "lg"),
     width: "100%",
-    minHeight: 56,
-    paddingHorizontal: ds.spacing[5],
-    borderRadius: vibesTheme.radii.pill,
-    flexDirection: "row",
-    gap: ds.spacing[3],
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.primaryText,
   },
   saveButtonLabel: {
-    ...ds.textStyles.subtitle,
-    color: vibesTheme.colors.surface,
+    ...buttonLabel("lg", "primary"),
   },
   header: {
     paddingHorizontal: 0,
@@ -801,16 +794,12 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   currentLocationButton: {
+    ...buttonStyle("accent", "sm"),
     alignSelf: "flex-start",
     marginTop: ds.spacing[3],
-    paddingHorizontal: ds.spacing[4],
-    paddingVertical: ds.spacing[2],
-    borderRadius: ds.radii.pill,
-    backgroundColor: PRIMARY_COLOR,
   },
   currentLocationButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.label,
+    ...buttonLabel("sm", "accent"),
   },
   languageRow: {
     flexDirection: "row",

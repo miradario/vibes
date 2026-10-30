@@ -68,6 +68,7 @@ import {
 } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { displayEventSession } from "../src/lib/eventSchedule";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const parseEventDate = (value?: string | null) => {
@@ -696,7 +697,7 @@ const EventChat = () => {
                     onPress={handleOpenMap}
                     activeOpacity={0.85}
                   >
-                    <Icon name="location" size={ds.iconSize.sm} color={WHITE} />
+                    <Icon name="location" size={ds.iconSize.sm} color={buttonContentColor["accent"]} />
                     <Text style={localStyles.eventMapButtonText}>Ver mapa</Text>
                   </TouchableOpacity>
                 ) : null}
@@ -1106,18 +1107,10 @@ const localStyles = StyleSheet.create({
     ...ds.textStyles.body,
   },
   eventMapButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: ds.spacing[2],
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: ds.radii.pill,
-    paddingHorizontal: ds.spacing[3],
-    paddingVertical: ds.spacing[2],
+    ...buttonStyle("accent", "sm"),
   },
   eventMapButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.bodySmall,
+    ...buttonLabel("sm", "accent"),
   },
   eventLocationText: {
     marginTop: ds.spacing[3],

@@ -46,6 +46,7 @@ import {
   type VibiCategory,
   type VibiExchange,
 } from "../src/lib/vibi";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const colors = vibesTheme.colors;
@@ -646,7 +647,7 @@ function VibiConversation({ userId }: { userId: string }) {
               disabled={resetting}
               onPress={() => setConfirmReset(false)}
             >
-              <Text style={s.buttonText}>Conservar conversación</Text>
+              <Text style={s.cancelButtonText}>Conservar conversación</Text>
             </Pressable>
           </AnimatedSheetModal>
           <UserProfileSheet
@@ -870,11 +871,11 @@ const s = StyleSheet.create({
     color: colors.primaryText,
   },
   deleteButton: {
-    backgroundColor: colors.accentCoral,
-    borderRadius: ds.radii.lg,
-    padding: ds.spacing[4],
-    alignItems: "center",
+    ...buttonStyle("destructive", "lg"),
   },
-  cancelButton: { padding: ds.spacing[4], alignItems: "center" },
-  buttonText: { ...ds.textStyles.body, color: colors.primaryText },
+  cancelButton: { ...buttonStyle("ghost", "lg") },
+  cancelButtonText: { ...buttonLabel("lg", "ghost") },
+  buttonText: {
+    ...buttonLabel("lg", "destructive"),
+  },
 });

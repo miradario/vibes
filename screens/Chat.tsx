@@ -62,6 +62,7 @@ import {
   ReplyPreviewBar,
   type ReplyTarget,
 } from "../components/MessageReply";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const REPORT_REASONS: ReportReason[] = [
@@ -935,19 +936,14 @@ const localStyles = StyleSheet.create({
     borderColor: ds.colors.border.subtle,
   },
   reportButton: {
-    minHeight: 54,
-    borderRadius: ds.radii.xl,
+    ...buttonStyle("accent", "lg"),
     marginTop: ds.spacing[4],
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
   },
   reportButtonDisabled: {
     opacity: 0.48,
   },
   reportButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("lg", "accent"),
   },
   messageBubbleLeft: {
     alignSelf: "flex-start",

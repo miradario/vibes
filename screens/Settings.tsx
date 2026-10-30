@@ -48,6 +48,7 @@ import { showToast } from "../src/utils/toast";
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 const OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
@@ -947,15 +948,10 @@ const localStyles = StyleSheet.create({
     zIndex: 10,
   },
   saveButton: {
-    backgroundColor: vibesTheme.colors.primaryText,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
-    justifyContent: "center",
+    ...buttonStyle("primary", "lg"),
   },
   saveButtonText: {
-    color: vibesTheme.colors.surface,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("lg", "primary"),
   },
 });
 

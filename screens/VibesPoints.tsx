@@ -22,6 +22,7 @@ import {
 } from "../src/queries/vibesPoints.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import Tag from "../components/ui/Tag";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 const c = vibesTheme.colors;
 const rules = [
@@ -417,17 +418,10 @@ export default function VibesPoints() {
 }
 const s = StyleSheet.create({
   register: {
-    minHeight: 56,
-    borderRadius: ds.radii.xl,
-    paddingHorizontal: ds.spacing[5],
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.accentMustard,
+    ...buttonStyle("accent", "lg"),
   },
   registerText: {
-    ...ds.textStyles.subtitle,
-    color: c.primaryText,
+    ...buttonLabel("lg", "accent"),
   },
   choices: { flexDirection: "row", gap: ds.spacing[2] },
   choice: {

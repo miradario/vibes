@@ -2,6 +2,7 @@ import DiscoverPathCards from "../components/DiscoverPathCards";
 import { readCommunities, canonicalCommunity } from "../src/lib/communities";
 import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
 import { iconCircleStyle } from "../components/ui/IconCircle";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 // Hidden for now: challenges are not filtered by community. Existing tags are kept when editing.
@@ -783,18 +784,13 @@ const legacyStyles = StyleSheet.create({
     marginTop: ds.spacing[4],
   },
   createButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: ds.radii.xl,
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
-    ...ds.glow.accent,
+    ...buttonStyle("accent", "lg"),
   },
   createButtonDisabled: {
     opacity: 0.45,
   },
   createButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("lg", "accent"),
   },
   fixedFooter: {
     position: "absolute",
@@ -829,14 +825,10 @@ const legacyStyles = StyleSheet.create({
     marginBottom: ds.spacing[4],
   },
   modalPrimaryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: ds.radii.lg,
-    paddingVertical: ds.spacing[4],
-    alignItems: "center",
+    ...buttonStyle("accent", "lg"),
   },
   modalPrimaryText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitleMedium,
+    ...buttonLabel("lg", "accent"),
   },
   modalSecondaryButton: {
     marginTop: ds.spacing[3],

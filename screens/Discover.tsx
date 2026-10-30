@@ -80,6 +80,7 @@ import { showToast } from "../src/utils/toast";
 import { chipHitSlop, chipRemoveIcon, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
 import { iconCircleStyle } from "../components/ui/IconCircle";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
 
 type DiscoverGender = "woman" | "man" | "other";
@@ -1000,7 +1001,7 @@ export const DiscoverContent = forwardRef<
                 <Text style={localStyles.filtersPrimaryButtonText}>
                   {locale === "en" ? "See profiles" : "Ver perfiles"}
                 </Text>
-                <Icon name="arrow-forward" size={ds.iconSize.lg} color={vibesTheme.colors.surface} />
+                <Icon name="arrow-forward" size={ds.iconSize.lg} color={buttonContentColor["accent"]} />
               </TouchableOpacity>
             </View>
           </>
@@ -1336,21 +1337,12 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   showMoreButton: {
+    ...buttonStyle("secondary", "md"),
     alignSelf: "center",
     marginVertical: ds.spacing[2],
-    minHeight: 48,
-    borderRadius: ds.radii.xl,
-    paddingHorizontal: ds.spacing[6],
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ds.colors.bg.surfaceTranslucent,
-    borderWidth: 1,
-    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
-    ...ds.shadows.md,
   },
   showMoreButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("md", "secondary"),
   },
   orbitHint: {
     position: "absolute",
@@ -1381,17 +1373,11 @@ const localStyles = StyleSheet.create({
     textAlign: "center",
   },
   emptyActionButton: {
+    ...buttonStyle("primary", "md"),
     marginTop: ds.spacing[6],
-    minHeight: 44,
-    borderRadius: ds.radii.xl,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: ds.spacing[6],
-    backgroundColor: vibesTheme.colors.primaryText,
   },
   emptyActionText: {
-    color: vibesTheme.colors.surface,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("md", "primary"),
   },
   filtersSheet: {
     backgroundColor: vibesTheme.colors.background,
@@ -1522,33 +1508,18 @@ const localStyles = StyleSheet.create({
     borderTopColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
   },
   filtersSecondaryButton: {
+    ...buttonStyle("secondary", "lg"),
     flex: 1,
-    minHeight: 52,
-    paddingVertical: ds.spacing[3],
-    borderRadius: ds.radii.xl,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.background,
   },
   filtersSecondaryButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.subtitle,
+    ...buttonLabel("lg", "secondary"),
   },
   filtersPrimaryButton: {
+    ...buttonStyle("accent", "lg"),
     flex: 1.6,
-    minHeight: 60,
-    flexDirection: "row",
-    gap: ds.spacing[3],
-    paddingHorizontal: ds.spacing[3],
-    paddingVertical: ds.spacing[3],
-    borderRadius: ds.radii.xl,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
   },
   filtersPrimaryButtonText: {
-    color: vibesTheme.colors.primaryText,
-    ...ds.textStyles.heading,
+    ...buttonLabel("lg", "accent"),
   },
   historyButtonActive: {
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
