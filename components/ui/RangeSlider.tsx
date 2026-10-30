@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { PanResponder, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "../Typography";
-import { vibesTheme } from "../../src/theme/vibesTheme";
 import { moveRangeThumb } from "../../src/lib/rangeSlider";
 import * as ds from "../../src/theme/tokens";
 
@@ -41,7 +40,7 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
   return <View style={{ gap: ds.spacing[3], opacity: disabled ? ds.opacity.disabled : 1 }}>
     <View style={s.heading}>
       <Text style={[s.title, single && { ...ds.textStyles.body }, { flex: 1 }]}>{label}</Text>
-      {single ? (upper === null ? null : <View style={s.clear}><Text style={s.clearText}>{`${high}/10`}</Text></View>) : <TouchableOpacity accessibilityRole="button" onPress={onClear} style={s.clearGhost}>
+      {single ? (upper === null ? null : <View style={s.valuePill}><Text style={s.clearText}>{`${high}/10`}</Text></View>) : <TouchableOpacity accessibilityRole="button" onPress={onClear} style={s.clearGhost}>
         <Text style={s.clearText}>{noLimitLabel}</Text>
       </TouchableOpacity>}
     </View>
@@ -63,12 +62,13 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
 }
 const s = StyleSheet.create({
   heading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: ds.spacing[3] },
-  title: { color: vibesTheme.colors.primaryText, ...ds.textStyles.title },
-  clear: { borderRadius: ds.radii.xl, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
-  clearText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.label },
+  title: { color: ds.colors.text.primary, ...ds.textStyles.title },
+  /** Pastilla de valor del slider simple (sin cambio visual). */
+  valuePill: { borderRadius: ds.radii.xl, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
+  clearText: { color: ds.colors.text.primary, ...ds.textStyles.label },
   clearGhost: { minHeight: HIT, justifyContent: "center", paddingHorizontal: ds.spacing[3], borderRadius: ds.radii.pill },
   track: { position: "absolute", top: (HIT - TRACK) / 2, height: TRACK, borderRadius: ds.radii.pill, backgroundColor: ds.colors.border.default },
   hit: { position: "absolute", top: 0, width: HIT, height: HIT, alignItems: "center", justifyContent: "center" },
   thumb: { width: THUMB, height: THUMB, borderRadius: ds.radii.pill, backgroundColor: ds.colors.action.accent, borderWidth: 2, borderColor: ds.colors.bg.surface, ...ds.shadows.sm },
-  value: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.body },
+  value: { color: ds.colors.text.secondary, ...ds.textStyles.body },
 });
