@@ -30,6 +30,8 @@ export const chipStyles = {
   fullWidth: { flex: 1 },
   label: { ...ds.textStyles.label, color: ds.colors.text.primary },
   labelSelected: { color: ds.colors.text.primary },
+  /** disabled (DS §5.7): `opacity/disabled` 0.44. */
+  disabled: { opacity: ds.opacity.disabled },
 } as const;
 
 /** Chip removable (components-spec §3): × de `iconSize.sm` en `icon/default`; fondo de filtro aplicado. */

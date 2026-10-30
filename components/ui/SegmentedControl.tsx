@@ -16,8 +16,13 @@ export type SegmentedOption<K extends string> = {
 
 type Props<K extends string> = {
   options: readonly SegmentedOption<K>[];
-  selected: K;
+  /** `null`: ninguna opción elegida todavía. */
+  selected: K | null;
   onChange: (key: K) => void;
+  /** disabled: `opacity/disabled` 0.44 en todo el control. */
+  disabled?: boolean;
+  /** Rol de accesibilidad de cada opción: "tab" (default) o "radio" para elecciones de formulario. */
+  optionRole?: "tab" | "radio";
   style?: StyleProp<ViewStyle>;
 };
 
@@ -30,17 +35,18 @@ const HIT = (ds.touchTarget - OPTION_HEIGHT) / 2;
  * `text/label`. Seleccionada: `action/primary` + `text/on-dark`. Ícono `icon/muted` sin
  * seleccionar. Contador = Badge count.
  */
-export default function SegmentedControl<K extends string>({ options, selected, onChange, style }: Props<K>) {
+export default function SegmentedControl<K extends string>({ options, selected, onChange, disabled, optionRole = "tab", style }: Props<K>) {
   return (
-    <View style={[styles.track, style]} accessibilityRole="tablist">
+    <View style={[styles.track, disabled && styles.disabled, style]} accessibilityRole={optionRole === "radio" ? "radiogroup" : "tablist"}>
       {options.map((option) => {
         const isSelected = option.key === selected;
         const color = isSelected ? ds.colors.text.onDark : ds.colors.icon.muted;
         return (
           <TouchableOpacity
             key={option.key}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: isSelected }}
+            accessibilityRole={optionRole}
+            accessibilityState={optionRole === "radio" ? { checked: isSelected, disabled: !!disabled } : { selected: isSelected, disabled: !!disabled }}
+            disabled={disabled}
             hitSlop={{ top: HIT, bottom: HIT }}
             activeOpacity={ds.opacity.pressed}
             onPress={() => onChange(option.key)}
@@ -68,4 +74,5 @@ const styles = StyleSheet.create({
   optionSelected: { backgroundColor: ds.colors.action.primary },
   label: { ...ds.textStyles.label, color: ds.colors.text.secondary, flexShrink: 1 },
   labelSelected: { color: ds.colors.text.onDark },
+  disabled: { opacity: ds.opacity.disabled },
 });

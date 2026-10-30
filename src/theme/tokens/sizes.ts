@@ -18,6 +18,7 @@ export const componentSize = {
   slider: { track: 4, thumb: 24 },
   divider: 1,
   mapPreview: 168,
+  optionCard: 64,
 } as const;
 
 export const sizes = { iconSize, touchTarget, avatarSize, componentSize } as const;
