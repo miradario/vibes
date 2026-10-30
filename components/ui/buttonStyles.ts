@@ -7,7 +7,7 @@ import * as ds from "../../src/theme/tokens";
 export type ButtonVariant = "primary" | "accent" | "secondary" | "secondary-blue" | "ghost" | "destructive";
 export type ButtonSize = "sm" | "md" | "lg";
 
-const heights = { sm: 36, md: 48, lg: 56 } as const;
+const heights = ds.componentSize.button;
 
 export const buttonSize = {
   sm: { minHeight: heights.sm, paddingHorizontal: ds.spacing[3], gap: ds.spacing[2] },

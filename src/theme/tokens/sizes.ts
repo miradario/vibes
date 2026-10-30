@@ -9,6 +9,7 @@ export const componentSize = {
   swipeToConfirm: { md: 56, lg: 72 },
   dayPill: { sm: 28, md: 40 },
   overlayBadge: 32,
+  button: { sm: 36, md: 48, lg: 56 },
   chip: 32,
   segmentedOption: 36,
   badge: 18,
