@@ -1356,12 +1356,7 @@ const localStyles = StyleSheet.create({
     gap: ds.spacing[3],
   },
   challengeIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: ds.radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.higher),
+    ...iconCircleStyle("md", "neutral"),
   },
   challengePreviewCopy: {
     flex: 1,
