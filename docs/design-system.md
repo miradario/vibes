@@ -390,4 +390,4 @@ Card chica de persona para carruseles: ancho y foto `componentSize.personCard` (
 Para cards-fila con miniatura (Home: desafíos y eventos): padding vertical `spacing/3` (12) y horizontal `spacing/4` (16). El resto de las cards usa `cardStyles.padding` (16).
 
 ### Títulos de sección en sheets de filtros (30/10)
-En los sheets de Filtros (Descubrir e Inicio) los títulos de sección (Género, Edad, Distancia, Nacionalidad…) usan `textStyles.subtitle` (16/22 semibold, `text/primary`), por debajo del título del sheet. `RangeSlider` acepta `labelStyle="section"` para usar ese estilo; por defecto sigue en `textStyles.title`.
+En los sheets de Filtros (Descubrir e Inicio) los títulos de sección (Género, Edad, Distancia, Nacionalidad…) usan `textStyles.subtitle` (16/22 semibold, `text/primary`), por debajo del título del sheet. `RangeSlider` acepta `labelStyle="section"` para usar ese estilo (por defecto `textStyles.title`) y `hideUnlimitedUpper` para no repetir "Sin límite" abajo cuando no hay máximo (el botón de arriba ya lo muestra y resetea).

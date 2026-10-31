@@ -899,7 +899,7 @@ export const DiscoverContent = forwardRef<
               </View>
 
               <View style={localStyles.filtersSection}>
-                <RangeSlider labelStyle="section" label={t("discover.age")} minimum={MIN_DISCOVER_AGE} maximum={MAX_DISCOVER_AGE}
+                <RangeSlider labelStyle="section" hideUnlimitedUpper label={t("discover.age")} minimum={MIN_DISCOVER_AGE} maximum={MAX_DISCOVER_AGE}
                   lower={discoverFilters.ageMin} upper={discoverFilters.ageMax} unit={locale === "en" ? "years" : "años"}
                   noLimitLabel={t("discover.noLimit")}
                   onChange={(lower, upper) => {
@@ -909,7 +909,7 @@ export const DiscoverContent = forwardRef<
                   onClear={() => setDiscoverFilters(previous => ({ ...previous, ageMin: null, ageMax: null }))} />
               </View>
               {hasLocation ? <View style={localStyles.filtersSection}>
-                <RangeSlider labelStyle="section" label={t("discover.distance")} minimum={0} maximum={999}
+                <RangeSlider labelStyle="section" hideUnlimitedUpper label={t("discover.distance")} minimum={0} maximum={999}
                   lower={discoverFilters.distanceMinKm} upper={discoverFilters.maxDistanceKm} unit="km"
                   noLimitLabel={t("discover.noLimit")}
                   onChange={(lower, upper) => {

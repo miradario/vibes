@@ -12,11 +12,13 @@ import * as ds from "../../src/theme/tokens";
 const HIT = ds.touchTarget;
 const TRACK = ds.componentSize.slider.track;
 const THUMB = ds.componentSize.slider.thumb;
-export default function RangeSlider({ label, minimum, maximum, lower, upper, unit, onChange, onClear, noLimitLabel = "Sin límite", single = false, disabled = false, labelStyle = "title" }: {
+export default function RangeSlider({ label, minimum, maximum, lower, upper, unit, onChange, onClear, noLimitLabel = "Sin límite", single = false, disabled = false, labelStyle = "title", hideUnlimitedUpper = false }: {
   label: string; minimum: number; maximum: number; lower: number | null; upper: number | null;
   unit: string; onChange: (lower: number, upper: number) => void; onClear?: () => void; noLimitLabel?: string; single?: boolean; disabled?: boolean;
   /** "section": label en `textStyles.subtitle` (títulos de sección de sheets de filtros). */
   labelStyle?: "title" | "section";
+  /** Sin máximo: no repetir "Sin límite" abajo (ya está el botón de arriba). */
+  hideUnlimitedUpper?: boolean;
 }) {
   const [width, setWidth] = useState(0);
   const low = Math.max(minimum, Math.min(maximum, lower ?? minimum));
@@ -59,7 +61,7 @@ export default function RangeSlider({ label, minimum, maximum, lower, upper, uni
         <View style={s.thumb} />
       </View>)}
     </View>
-    {!single && <View style={s.heading}><Text style={s.value}>{low} {unit}</Text><Text style={s.value}>{upper === null ? noLimitLabel : `${high} ${unit}`}</Text></View>}
+    {!single && <View style={s.heading}><Text style={s.value}>{low} {unit}</Text>{upper === null && hideUnlimitedUpper ? null : <Text style={s.value}>{upper === null ? noLimitLabel : `${high} ${unit}`}</Text>}</View>}
   </View>;
 }
 const s = StyleSheet.create({
