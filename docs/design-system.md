@@ -140,6 +140,7 @@ El selector de fotos de onboarding y Editar perfil es el mismo `ProfilePhotoPick
 | Tarjeta estándar nueva | Fondo `surface`, radio `md`, padding 16, separación 16; borde `borderSoft` |
 | Separación entre secciones | 24 o 32; 8 entre título y descripción |
 | Iconos de acción | 20–24; área táctil mínima 44 × 44; excepción BackButton: 27 |
+| Tamaños de icono (`iconSize`) | `xs` 12, `sm` 16, `md` 20, `lg` 24, `xl` 32, `xxl` 48. `xs` 12 solo para glifos chicos dentro de badges de 18 (p. ej. la marca de anotado del calendario en EventExplorerSheet) |
 | Sombras | Base `primaryText`, `secondaryText` o acento autorizado, con opacidad; preferir borde suave cuando alcance |
 
 Usar [`ScreenContainer`](../components/ScreenContainer.tsx) en pantallas nuevas. Sus edges por defecto son top/left/right; definir el manejo del borde inferior junto con el tab bar, footer y teclado para evitar dobles insets. Las medidas históricas como `paddingTop: 68` de Eventos no son una norma para pantallas nuevas.

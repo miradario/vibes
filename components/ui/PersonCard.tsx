@@ -57,8 +57,8 @@ export function PersonCardSkeleton() {
     <View style={styles.card} accessible accessibilityLabel="Cargando persona" accessibilityState={{ busy: true }}>
       <View style={[styles.photo, styles.skeleton]} />
       <View style={styles.info}>
-        <View style={[styles.skeleton, { height: 22, width: "85%" }]} />
-        <View style={[styles.skeleton, { marginTop: ds.spacing[1], height: 28, width: "70%" }]} />
+        <View style={[styles.skeleton, { height: ds.textStyles.subtitle.lineHeight, width: "85%" }]} />
+        <View style={[styles.skeleton, { marginTop: ds.spacing[1], height: ds.textStyles.micro.lineHeight * 2, width: "70%" }]} />
       </View>
     </View>
   );
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     backgroundColor: ds.colors.bg.surface,
   },
   photo: { width: "100%", height: ds.componentSize.personCard },
-  reservedInfo: { minHeight: 70 },
+  reservedInfo: { minHeight: ds.spacing[2] * 2 + ds.textStyles.subtitle.lineHeight + ds.spacing[1] + ds.textStyles.micro.lineHeight * 2 },
   info: { padding: ds.spacing[2] },
   name: { alignSelf: "stretch", color: ds.colors.text.primary, ...ds.textStyles.subtitle },
   tag: { alignSelf: "stretch", marginTop: ds.spacing[1], color: ds.colors.text.secondary, ...ds.textStyles.micro },
