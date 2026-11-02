@@ -1,12 +1,13 @@
 import { PixelRatio } from "react-native";
+import { componentSize } from "../theme/tokens/sizes";
 
 export const TAB_BAR_TOP_SPACE = 12;
 // Keep labels clear of the gesture area, including devices without a bottom inset.
 export const getTabBarBottomPadding = (insetBottom: number) =>
   Math.max(12, insetBottom);
 /** Raised selected-tab bubble in CustomTabBar (size and top offset in the bar root). */
-export const TAB_FLOATING_BUTTON_SIZE = 48;
-export const TAB_FLOATING_TOP = 6;
+export const TAB_FLOATING_BUTTON_SIZE = componentSize.tabBubble;
+export const TAB_FLOATING_TOP = componentSize.tabBubbleRise;
 
 export const getBottomTabBarHeight = (fontScale = PixelRatio.getFontScale()) =>
   Math.max(64, 36 + 28 * fontScale);

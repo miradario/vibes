@@ -432,7 +432,7 @@ const s = StyleSheet.create({
     borderRadius: ds.radii.lg,
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
-  skeleton: { backgroundColor: `${vibesTheme.colors.secondaryText}1F`, borderRadius: ds.radii.sm },
+  skeleton: { backgroundColor: ds.colors.bg.subtle, borderRadius: ds.radii.sm },
   compactList: { gap: ds.spacing[3] },
   compactCard: { ...cardStyles.base, width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3], ...cardStyles.paddingCompact },
   compactCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },

@@ -586,7 +586,7 @@ export function CoachCard({
   // Spotlight hole around the raised tab bubble (CustomTabBar: floatingWrap + ftuxRing).
   const holeX = slotX + (rootWidth - width) / 2;
   const holeY = dimHeight + TAB_FLOATING_TOP + TAB_FLOATING_BUTTON_SIZE / 2;
-  const holeR = (TAB_FLOATING_BUTTON_SIZE + 18) / 2 + 6;
+  const holeR = ds.componentSize.tabFtuxRing.size / 2 + 6;
   const dimPath =
     `M0 0H${rootWidth}V${rootHeight}H0Z` +
     `M${holeX - holeR} ${holeY}a${holeR} ${holeR} 0 1 0 ${holeR * 2} 0a${holeR} ${holeR} 0 1 0 ${-holeR * 2} 0Z`;

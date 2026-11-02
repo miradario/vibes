@@ -11,6 +11,8 @@ export const opacity = {
   higher: 0.8,
   /** Solo para `bg/surface-translucent` (paper-92). */
   translucent: 0.92,
+  /** Halo detrás de la burbuja del tab activo (bottom bar 2/11). */
+  halo: 0.34,
   /** D3: estado pressed de todo control. */
   pressed: 0.8,
   /** D3: estado disabled de todo control. */

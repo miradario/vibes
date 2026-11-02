@@ -1,4 +1,3 @@
-import { vibesTheme } from "../src/theme/vibesTheme";
 /** @format */
 
 import React, { memo, useEffect } from "react";
@@ -52,8 +51,8 @@ import * as ds from "../src/theme/tokens";
 const TAB_BAR_HEIGHT = 64;
 const FLOATING_BUTTON_SIZE = TAB_FLOATING_BUTTON_SIZE;
 const FLOATING_TOP = TAB_FLOATING_TOP;
-const SELECTED_RISE = -18;
-const ANIMATION_CONFIG = { duration: 520, reduceMotion: ReduceMotion.System };
+const SELECTED_RISE = ds.motion.tabBar.selectedRise;
+const ANIMATION_CONFIG = { duration: ds.motion.tabBar.bubbleDuration, reduceMotion: ReduceMotion.System };
 
 const iconByRoute: Record<string, LucideIcon> = {
   Discover: Compass,
@@ -80,13 +79,13 @@ const makeTabAccent = (color: string) => ({
 });
 
 const routeAccent: Record<string, ReturnType<typeof makeTabAccent>> = {
-  Home: makeTabAccent(vibesTheme.colors.accentCoral),
-  Flow: makeTabAccent(vibesTheme.colors.accentBlue),
-  EventsTab: makeTabAccent(vibesTheme.colors.accentCoral),
-  ClassesTab: makeTabAccent(vibesTheme.colors.accentMustard),
-  Discover: makeTabAccent(vibesTheme.colors.accentBlue),
-  Calendar: makeTabAccent(vibesTheme.colors.accentCoral),
-  Aura: makeTabAccent(vibesTheme.colors.accentBlue),
+  Home: makeTabAccent(ds.colors.base.coral),
+  Flow: makeTabAccent(ds.colors.base.blue),
+  EventsTab: makeTabAccent(ds.colors.base.coral),
+  ClassesTab: makeTabAccent(ds.colors.base.mustard),
+  Discover: makeTabAccent(ds.colors.base.blue),
+  Calendar: makeTabAccent(ds.colors.base.coral),
+  Aura: makeTabAccent(ds.colors.base.blue),
 };
 
 const labelByRoute: Record<string, string> = {
@@ -167,7 +166,7 @@ const TabButton = memo(
           scale: interpolate(
             focusProgress.value,
             [0, 1],
-            [1, 0.84],
+            [1, ds.motion.tabBar.selectedScale],
             Extrapolation.CLAMP
           ),
         },
@@ -179,7 +178,7 @@ const TabButton = memo(
         accessibilityRole="tab"
         accessibilityLabel={accessibilityLabel}
         accessibilityState={isFocused ? { selected: true } : {}}
-        activeOpacity={0.78}
+        activeOpacity={ds.opacity.pressed}
         onPress={onPress}
         onLongPress={onLongPress}
         style={[localStyles.tabItem, { height, flex: weight }]}
@@ -188,8 +187,8 @@ const TabButton = memo(
           <View style={localStyles.iconWrap}>
             <Icon
               size={ds.iconSize.lg}
-              color={vibesTheme.colors.primaryText}
-              strokeWidth={2.05}
+              color={ds.colors.text.primary}
+              strokeWidth={ds.strokeWidth.default}
             />
             {unreadCount > 0 ? (
               <View style={localStyles.unreadBadge}>
@@ -253,7 +252,7 @@ const CustomTabBar = ({
     selectedIndex.value = withTiming(selectedCenter, ANIMATION_CONFIG);
     selectedIconProgress.value = 0;
     selectedIconProgress.value = withTiming(1, {
-      duration: 360,
+      duration: ds.motion.tabBar.iconInDuration,
       reduceMotion: ReduceMotion.System,
     });
   }, [selectedIconProgress, selectedIndex, selectedCenter]);
@@ -271,7 +270,7 @@ const CustomTabBar = ({
         translateY: interpolate(
           selectedIconProgress.value,
           [0, 1],
-          [12, 0],
+          [ds.motion.tabBar.iconInOffsetY, 0],
           Extrapolation.CLAMP
         ),
       },
@@ -279,7 +278,7 @@ const CustomTabBar = ({
         scale: interpolate(
           selectedIconProgress.value,
           [0, 1],
-          [0.76, 1],
+          [ds.motion.tabBar.iconInScale, 1],
           Extrapolation.CLAMP
         ),
       },
@@ -360,14 +359,14 @@ const CustomTabBar = ({
               labelByRoute[selectedVisualRoute?.name ?? "Home"]
             }
             accessibilityState={{ selected: true }}
-            activeOpacity={0.88}
+            activeOpacity={ds.opacity.pressed}
             onPress={() => handlePress(selectedVisualRoute, true)}
             style={localStyles.floatingTouch}
           >
             {ftuxHighlightedTab === selectedVisualRoute?.name ? (
               <Animated.View
                 pointerEvents="none"
-                entering={FadeIn.duration(240).reduceMotion(ReduceMotion.System)}
+                entering={FadeIn.duration(ds.motion.tabBar.ftuxRingInDuration).reduceMotion(ReduceMotion.System)}
                 style={localStyles.ftuxRing}
               />
             ) : null}
@@ -389,9 +388,9 @@ const CustomTabBar = ({
               >
                 <Animated.View style={floatingIconStyle}>
                   <SelectedIcon
-                    size={25}
-                    color={vibesTheme.colors.primaryText}
-                    strokeWidth={2.25}
+                    size={ds.iconSize.lg}
+                    color={ds.colors.text.primary}
+                    strokeWidth={ds.strokeWidth.active}
                   />
                 </Animated.View>
               </LinearGradient>
@@ -412,10 +411,10 @@ const CustomTabBar = ({
 };
 
 const localColors = {
-  bg: vibesTheme.colors.background,
-  surface: vibesTheme.colors.background,
-  primaryText: vibesTheme.colors.primaryText as ColorValue,
-  muted: vibesTheme.colors.secondaryText as ColorValue,
+  bg: ds.colors.bg.screen,
+  surface: ds.colors.bg.screen,
+  primaryText: ds.colors.text.primary as ColorValue,
+  muted: ds.colors.text.secondary as ColorValue,
 };
 
 const localStyles = StyleSheet.create({
@@ -477,27 +476,27 @@ const localStyles = StyleSheet.create({
   },
   glow: {
     position: "absolute",
-    width: 56,
-    height: 56,
+    width: ds.componentSize.tabBubbleHalo,
+    height: ds.componentSize.tabBubbleHalo,
     borderRadius: ds.radii.pill,
-    opacity: 0.34,
+    opacity: ds.opacity.halo,
     ...Platform.select({
       ios: {
-        ...ds.shadows.md,
+        ...ds.glow.tab,
       },
       android: {
-        elevation: ds.shadows.md.elevation,
+        elevation: ds.glow.tab.elevation,
       },
     }),
   },
   ftuxRing: {
     position: "absolute",
-    width: FLOATING_BUTTON_SIZE + 18,
-    height: FLOATING_BUTTON_SIZE + 18,
-    borderRadius: (FLOATING_BUTTON_SIZE + 18) / 2,
-    borderWidth: 3,
-    borderColor: vibesTheme.colors.accentMustard,
-    backgroundColor: vibesTheme.colors.surface,
+    width: ds.componentSize.tabFtuxRing.size,
+    height: ds.componentSize.tabFtuxRing.size,
+    borderRadius: ds.radii.pill,
+    borderWidth: ds.componentSize.tabFtuxRing.border,
+    borderColor: ds.colors.base.mustard,
+    backgroundColor: ds.colors.bg.surface,
   },
   floatingRing: {
     width: FLOATING_BUTTON_SIZE,
@@ -519,11 +518,11 @@ const localStyles = StyleSheet.create({
     ...badgeStyles.count,
     ...badgeStyles.outlined,
     position: "absolute",
-    top: -7,
-    right: -13,
+    top: ds.componentSize.tabBadgeOffset.top,
+    right: ds.componentSize.tabBadgeOffset.right,
   },
   unreadBadgeText: {
-    color: vibesTheme.colors.primaryText,
+    color: ds.colors.text.primary,
     ...ds.textStyles.micro,
   },
 });
