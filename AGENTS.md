@@ -7,11 +7,11 @@
 
 ## Paleta obligatoria de Vibes
 
-- Usar exclusivamente estos colores en la interfaz: `#F4A340`, `#3978B8`, `#D88C7A`, `#FEFEFD`, `#2B2B2B` y `#6E6E6E`. No introducir otros colores ni variantes de estos tonos.
-- Referenciar los tokens de `src/theme/vibesTheme.ts`: `accentMustard`, `accentBlue`, `accentCoral`, `background`/`surface`, `primaryText` y `secondaryText`, respectivamente.
-- Aplicar esta regla a botones, iconos, textos, fondos, bordes, sombras y degradados. Para transparencias, usar únicamente estos mismos colores con opacidad; no agregar tonos nuevos.
-- Al crear o modificar estilos, reemplazar los colores fuera de la paleta en los elementos afectados.
-- Ejecutar `npm run colors:check` después de modificar colores, estilos o ilustraciones para verificar la paleta.
+- Los colores salen de `ds.colors` (tokens semánticos: `text.*`, `bg.*`, `border.*`, `icon.*`, `base.*` para los acentos), definidos en `src/theme/tokens/colors.ts` e importados con `import * as ds from "<ruta>/src/theme/tokens"`. La paleta sigue siendo `#F4A340`, `#3978B8`, `#D88C7A`, `#FEFEFD`, `#2B2B2B` y `#6E6E6E`; no introducir otros tonos.
+- `vibesTheme.colors.*` (`src/theme/vibesTheme.ts`) es legacy: no usarlo en código nuevo ni modificado. Al tocar un archivo, migrar a `ds.colors` los colores que se tocan.
+- Para transparencias, usar `ds.withAlpha` con `ds.opacity`, no sufijos alfa en hex.
+- Un color nuevo se agrega como token del DS y se documenta en `docs/design-system.md`; nunca se hardcodea.
+- Correr `npm run lint:ds` antes de commitear. Después de modificar SVGs, ilustraciones o Lottie, correr también `npm run colors:check`.
 - Priorizar la legibilidad sobre la cercanía numérica entre colores: usar texto oscuro sobre fondos mostaza, azul o coral; reservar el texto claro para fondos oscuros. No convertir bordes, iconos o estados seleccionados en el mismo color que su fondo. Para superficies suaves, usar los acentos de la paleta con opacidad.
 
 - Excepción solicitada para el visor de perfiles (`components/UserProfileSheet.tsx`): fondo negro `#000000` y degradé negro con opacidad sobre la foto full-screen. No extender esta excepción a otras pantallas.
