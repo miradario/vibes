@@ -1,6 +1,7 @@
 # AGENTS
 
 - Antes de crear o modificar pantallas, componentes visuales, tipografía, botones, campos, estados, layout, animaciones o assets de marca, leer y aplicar [el design system de Vibes](docs/design-system.md). Al cambiar una regla del sistema, actualizar ese documento junto con la implementación.
+- Reglas obligatorias del DS: no hardcodear colores, tamaños de texto, espaciados, radios, sombras, opacidades ni tamaños de ícono; usar los tokens de `src/theme/tokens` (`ds.*`). Correr `npm run lint:ds` antes de commitear (el hook `.githooks/pre-commit` y el check de CI lo hacen automáticamente). Toda excepción necesita un motivo documentado con `/* ds-lint-allow <motivo> */`; no usar `--no-verify` para saltear el lint.
 
 - When implementing a modal (especially bottom-sheet style with backdrop), use `components/AnimatedSheetModal.tsx` instead of creating a new ad-hoc `Modal` animation.
 - For new screens, use `components/ScreenContainer.tsx` as the base container unless there is a concrete reason not to.

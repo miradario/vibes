@@ -1,0 +1,5 @@
+components/ChallengeTreeProgress.tsx: TS2694
+components/ChallengeTreeProgress.tsx: TS2694
+components/ChallengeTreeProgress.tsx: TS2694
+components/DiscoverCirclesOverlay.tsx: TS2322
+components/OnboardingProgressBar.tsx: TS2345
