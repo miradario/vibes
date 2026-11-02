@@ -379,8 +379,8 @@ Crear/editar evento permite elegir entre direcciones publicadas mediante Animate
 ### SectionHeader (`components/ui/SectionHeader.tsx`, 30/10)
 Título de sección en `textStyles.heading` (`text/primary`). Con `onPress` se vuelve link de sección ("ver todo"): toda la fila es tocable (touch target 44 por hitSlop, sin inflar la fila), role `link`, label `Ver <título>` (sobrescribible) y chevron `chevron-forward` de 20 (`iconSize.md`) en el token nuevo `icon/accent` (mustard). Los chevrons dentro de cards siguen en `icon/muted`. El margen inferior lo pone la pantalla (12 al primer card). Uso: Home (Eventos para vos, Tus desafíos, Personas con tu vibe) y ConnectionStrip (Nuevas conexiones).
 
-### TabBarItem (`components/CustomTabBar.tsx`, DS §5.22, 30/10)
-Tab activo: pill `componentSize.tabIndicator` (48×28, `radius/pill`) con el acento de la pestaña (Inicio/Eventos/Chats coral, Desafíos/Descubrir azul, Clases mostaza) detrás del ícono de 20 (`iconSize.md`, `icon/default`), sin salto de tamaño. Label siempre visible en `textStyles.caption`, `text/secondary` sin seleccionar y `text/primary` seleccionado. Reemplaza la burbuja elevada coral. Touch target = alto de la barra (≥44), role `tab` con `selected`. Geometría en `src/lib/tabBarLayout.ts` (`TAB_INDICATOR`, `getTabIndicatorCenterY`, que usa el spotlight del FTUX).
+### TabBarItem (`components/CustomTabBar.tsx`, restaurado 2/11)
+La barra ocupa todo el ancho y conserva el safe area inferior. Restaurar la burbuja elevada de 48 para la pestaña seleccionada, con transición horizontal y acentos intercalados (Inicio coral). Las pestañas no seleccionadas muestran icono y label compacto. La guía FTUX sigue la geometría de la burbuja mediante TAB_FLOATING_BUTTON_SIZE y TAB_FLOATING_TOP. Se reemplaza la variante pill 48×28 por pedido del usuario.
 
 ### Miniaturas de cards (`componentSize.cardThumb*`, 30/10)
 `componentSize.cardThumb` = 76 (cuadrada, desafíos) y `componentSize.cardThumbWide` = 112×76 (eventos), con `radii.md` (12) para la media interna. Uso: HomeOverview (cards de desafío y evento), placeholders de Home y ChallengeFeedCard.
