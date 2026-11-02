@@ -393,3 +393,5 @@ Para cards-fila con miniatura (Home: desafíos y eventos): padding vertical `spa
 
 ### Títulos de sección en sheets de filtros (30/10)
 En los sheets de Filtros (Descubrir e Inicio) los títulos de sección (Género, Edad, Distancia, Nacionalidad…) usan `textStyles.subtitle` (16/22 semibold, `text/primary`), por debajo del título del sheet. `RangeSlider` acepta `labelStyle="section"` para usar ese estilo (por defecto `textStyles.title`) y `hideUnlimitedUpper` para no repetir "Sin límite" abajo cuando no hay máximo (el botón de arriba ya lo muestra y resetea).
+
+Inicio carga su contenido después de navegar: reservar dos filas compactas de eventos y tres de desafíos mediante skeletons con la geometría de las tarjetas reales y secondaryText con opacidad. Cada sección reemplaza sus placeholders al resolver su consulta; los refetch con datos conservan las tarjetas visibles. La apertura solo espera sesión, validación de cuenta, perfil para onboarding y actualización obligatoria, con comprobaciones independientes en paralelo y tiempos acotados.

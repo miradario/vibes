@@ -61,23 +61,20 @@ const getEventDateLabel = (date: string) => {
 };
 
 
-function OverviewLoadingPlaceholder() {
+function OverviewSkeleton({ challenge = false }: { challenge?: boolean }) {
   return (
-    <>
-      <View style={s.sectionBlock}>
-        <SectionHeader title="Eventos para vos" style={s.heading} />
-        <View style={s.eventSuggestionsLoader}>
-          <VibesLoader size={48} accessibilityLabel="Cargando eventos" />
+    <View style={s.compactList} accessible accessibilityLabel={challenge ? "Cargando desafíos" : "Cargando eventos"} accessibilityState={{ busy: true }}>
+      {Array.from({ length: challenge ? 3 : 2 }, (_, index) => (
+        <View key={index} style={s.compactCard}>
+          <View style={[challenge ? s.challengePhoto : s.eventPhoto, s.skeleton]} />
+          <View style={s.compactCopy}>
+            <View style={[s.skeleton, { height: 18, width: "85%" }]} />
+            <View style={[s.skeleton, { height: 14, width: "65%" }]} />
+            <View style={[s.skeleton, { height: 14, width: "50%" }]} />
+          </View>
         </View>
-      </View>
-
-      <View style={s.sectionBlock}>
-        <SectionHeader title="Tus desafíos" style={s.heading} />
-        <View style={s.eventSuggestionsLoader}>
-          <VibesLoader size={48} accessibilityLabel="Cargando desafíos" />
-        </View>
-      </View>
-    </>
+      ))}
+    </View>
   );
 }
 
@@ -260,7 +257,7 @@ export default function HomeOverview({
         .slice(0, 2);
   const preferences = useUserPreferencesQuery(userId).data;
   const matchesCount = useQuery(matchesQueryOptions(userId)).data?.length ?? 0;
-  const visibleEvents = upcoming.length ? upcoming : suggestedEvents;
+  const visibleEvents = (upcoming.length ? upcoming : suggestedEvents).slice(0, 2);
   const sectionOrder = orderHomeSections({
     preferences,
     joined: events,
@@ -304,20 +301,13 @@ export default function HomeOverview({
     ? "Tus desafíos"
     : "Desafíos para vos";
   const isLoadingChallengeRecommendations =
-    !homeChallenges.length && challengesFeed.isLoading;
+    groups.isLoading || (!homeChallenges.length && challengesFeed.isLoading);
   const openList = (challenge = false) =>
     navigation.navigate("Tab", {
       screen: challenge ? "Flow" : "EventsTab",
       params: { section: challenge ? "challenge" : "event" },
     });
   const createEvent = () => navigation.navigate("CreateEvent" as never);
-  if (groups.isLoading)
-    return (
-      <>
-        {children}
-        <OverviewLoadingPlaceholder />
-      </>
-    );
   if (groups.isError)
     return (
       <>
@@ -337,16 +327,14 @@ export default function HomeOverview({
         title={upcoming.length ? "Tus eventos" : "Eventos para vos"}
         onPress={visibleEvents.length ? () => openList() : undefined}
       />
-      {visibleEvents.length ? (
+      {groups.isLoading ? <OverviewSkeleton /> : visibleEvents.length ? (
         <View style={s.compactList}>
           {visibleEvents.map((event) => (
             <HomeEventCard key={event.id} event={event} />
           ))}
         </View>
       ) : eventsFeed.isLoading ? (
-        <View style={s.eventSuggestionsLoader}>
-          <VibesLoader size={48} />
-        </View>
+        <OverviewSkeleton />
       ) : (
         <View style={s.emptyEventCard}>
           <View style={s.emptyIcon}>
@@ -377,9 +365,7 @@ export default function HomeOverview({
         onPress={() => openList(true)}
       />
       {isLoadingChallengeRecommendations ? (
-        <View style={s.eventSuggestionsLoader}>
-          <VibesLoader size={48} accessibilityLabel="Cargando desafíos" />
-        </View>
+        <OverviewSkeleton challenge />
       ) : null}
       {!isLoadingChallengeRecommendations && !challenges.length && (
         <TouchableOpacity
@@ -446,6 +432,7 @@ const s = StyleSheet.create({
     borderRadius: ds.radii.lg,
     backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
+  skeleton: { backgroundColor: `${vibesTheme.colors.secondaryText}1F`, borderRadius: ds.radii.sm },
   compactList: { gap: ds.spacing[3] },
   compactCard: { ...cardStyles.base, width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3], ...cardStyles.paddingCompact },
   compactCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
