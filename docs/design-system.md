@@ -342,7 +342,7 @@ Nuevas conexiones usa presentación comprimida: avatar exterior 54 (48 en Inicio
 
 En Nuevas conexiones, el título conserva área táctil 44, sin margen inferior de fila y con compensación visual de -8 antes de las fotos. Mantener padding superior 4 para no cortar el badge.
 
-En Inicio, las cabeceras Eventos para vos y Tus desafíos no agregan margen inferior antes de las tarjetas. Conservar el área táctil 44 y la separación entre tarjetas.
+En Inicio, la cabecera de eventos muestra “Tus eventos” cuando hay eventos propios vigentes y “Eventos para vos” cuando no los hay y se muestran sugerencias o el estado vacío. Las cabeceras de eventos y Tus desafíos no agregan margen inferior antes de las tarjetas. Conservar el área táctil 44 y la separación entre tarjetas.
 
 La comunidad Meditación reemplaza la denominación Meditación trascendental; normalizar los nombres anteriores y la variante trasendental para conservar las selecciones y asociaciones guardadas.
 
@@ -373,6 +373,8 @@ En onboarding, la elección de comunidades aparece en el primer formulario, en e
 El onboarding usa cabeceras compactas en todos sus pasos: progreso de 44, padding superior 4, títulos 26–28/32–34 y decoraciones de 64–82 de alto. Empecemos por vos usa 28/32, logo 72×82 y saludo compacto. Reducir márgenes entre bloques a 8–14; opciones de al menos 52 y acciones secundarias de al menos 44, conservando inputs legibles y escalado accesible.
 
 Tus comunidades usa título 22/28, decoración 44×48 y opciones a 6 de la cabecera, con separación 8 entre opciones. Sin margen superior adicional en el bloque.
+
+Crear/editar evento permite elegir entre direcciones publicadas mediante AnimatedSheetModal con búsqueda, carga, error y vacío. Deduplicar direcciones, reutilizar coordenadas existentes y mantener entrada manual y validación de direcciones nuevas.
 
 ### SectionHeader (`components/ui/SectionHeader.tsx`, 30/10)
 Título de sección en `textStyles.heading` (`text/primary`). Con `onPress` se vuelve link de sección ("ver todo"): toda la fila es tocable (touch target 44 por hitSlop, sin inflar la fila), role `link`, label `Ver <título>` (sobrescribible) y chevron `chevron-forward` de 20 (`iconSize.md`) en el token nuevo `icon/accent` (mustard). Los chevrons dentro de cards siguen en `icon/muted`. El margen inferior lo pone la pantalla (12 al primer card). Uso: Home (Eventos para vos, Tus desafíos, Personas con tu vibe) y ConnectionStrip (Nuevas conexiones).

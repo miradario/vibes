@@ -334,7 +334,7 @@ export default function HomeOverview({
   const eventsSection = (
     <View key="events" style={s.sectionBlock}>
       <SectionHeader
-        title="Eventos para vos"
+        title={upcoming.length ? "Tus eventos" : "Eventos para vos"}
         onPress={visibleEvents.length ? () => openList() : undefined}
       />
       {visibleEvents.length ? (

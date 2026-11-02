@@ -18,3 +18,11 @@ test('checkin progress deduplicates days and excludes dates outside the challeng
  assert.equal(api.getHomeChallengeProgress([], '2026-09-21T12:00:00', 4).percent,0);
  assert.equal(api.getHomeChallengeProgress([], null, 4),null);
 });
+test('agenda keeps an event without end time until 23:59 local on its day', () => {
+ const start = new Date(2026, 9, 30, 10, 0);
+ const event = { id: 'today', type: 'event', startsAt: start.toISOString() };
+ assert.equal(api.getUpcomingHomeEvents([event], new Date(2026, 9, 30, 21, 0).getTime()).length, 1);
+ assert.equal(schedule.nextEventSession(null, event.startsAt, new Date(2026, 9, 30, 23, 59, 59, 999).getTime()).startsAt, event.startsAt);
+ assert.equal(api.getUpcomingHomeEvents([event], new Date(2026, 9, 31, 0, 0).getTime()).length, 0);
+ assert.equal(schedule.eventHasExpired(null, event.startsAt, new Date(2026, 9, 31, 0, 0).getTime()), true);
+});
