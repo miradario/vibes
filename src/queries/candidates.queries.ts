@@ -417,3 +417,31 @@ export const useCandidatesQuery = (
     refetchInterval: false,
   });
 };
+
+/** All outgoing connections, without the discovery RPC's recent-swipe window. */
+export const outgoingConnectionKeys = {
+  all: ["outgoing-connections"] as const,
+  user: (userId?: string) => ["outgoing-connections", userId ?? "anonymous"] as const,
+};
+
+export function useOutgoingConnectionsQuery(userId?: string, enabled = true) {
+  return useQuery<string[]>({
+    queryKey: outgoingConnectionKeys.user(userId),
+    enabled: Boolean(userId) && enabled,
+    queryFn: async () => {
+      const ids: string[] = [];
+      const pageSize = 500;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase.from("swipes")
+          .select("target_id").eq("swiper_id", userId!).eq("direction", "like")
+          .order("target_id").range(from, from + pageSize - 1);
+        if (error) throw error;
+        ids.push(...(data ?? []).map(row => String(row.target_id)));
+        if (!data || data.length < pageSize) break;
+      }
+      return ids;
+    },
+    staleTime: 30_000,
+    refetchOnMount: "always",
+  });
+}

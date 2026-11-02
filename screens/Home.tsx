@@ -45,7 +45,7 @@ import {
   mapCandidateToConnectionProfile,
   mapOwnProfileToConnectionProfile,
 } from "../src/lib/connectionProfiles";
-import { useCandidatesQuery } from "../src/queries/candidates.queries";
+import { useCandidatesQuery, useOutgoingConnectionsQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { useI18n } from "../src/i18n";
@@ -336,12 +336,15 @@ const Home = () => {
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [hasHydratedStoredFilters, setHasHydratedStoredFilters] =
     useState(false);
+  const outgoingConnections = useOutgoingConnectionsQuery(session?.user?.id, meetPeopleEnabled);
+  const connectedIds = useMemo(() => new Set(outgoingConnections.data ?? []), [outgoingConnections.data]);
   const ownProfileRecord = (ownProfileData ?? null) as Record<
     string,
     any
   > | null;
   const profiles = useMemo<DataT[]>(() => {
-    const eligible = candidates
+    const eligible = (outgoingConnections.isSuccess ? candidates : [])
+      .filter(candidate => !connectedIds.has(String(candidate.id)))
       .map((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
         // Distance is computed server-side (get_discovery_candidates).
@@ -429,6 +432,8 @@ const Home = () => {
       }) as DataT[];
   }, [
     candidates,
+    connectedIds,
+    outgoingConnections.isSuccess,
     discoverFilters,
     ownProfileRecord,
     userPreferences,
@@ -989,7 +994,7 @@ const Home = () => {
           {meetPeopleEnabled ? <HomePeopleSuggestions
             canViewPhotos={hasProfilePhotos(ownProfileData)}
             profiles={profiles}
-            loading={candidatesLoading && profiles.length === 0}
+            loading={(candidatesLoading || outgoingConnections.isLoading) && profiles.length === 0}
             onOpenProfile={openProfileSheet}
             onSeeAll={() =>
               navigation.navigate(
