@@ -62,7 +62,8 @@ const RestartChallenge = () => {
   const [startDate, setStartDate] = useState<Date | null>(() => {
     const value = new Date();
     value.setHours(0, 0, 0, 0);
-    if (originalStart && sameCalendarDay(value, originalStart)) value.setDate(value.getDate() + 1);
+    // Curated "Por Vibes" copies always start today (day 1).
+    if (source && !isCuratedChallenge(source) && originalStart && sameCalendarDay(value, originalStart)) value.setDate(value.getDate() + 1);
     return value;
   });
   const [showDatePicker, setShowDatePicker] = useState(false);

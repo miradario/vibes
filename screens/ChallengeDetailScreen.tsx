@@ -1302,6 +1302,12 @@ const ChallengeDetailScreen = () => {
       return;
     }
 
+    // "Por Vibes" originals are a catalog: never join them, start a private copy.
+    if (isCuratedChallenge(event)) {
+      setRestartConfirmVisible(true);
+      return;
+    }
+
     if ((event.visibility ?? "public") === "public") {
       await joinChallengeMutation.mutateAsync({
         challengeId: event.id,
@@ -1725,6 +1731,23 @@ const ChallengeDetailScreen = () => {
             </>
           ) : receivedInvitation && userId ? (
             <ChallengeInvitationActions invitation={receivedInvitation} userId={userId} />
+          ) : isCurated ? (
+            <TouchableOpacity
+              accessibilityRole="button"
+              style={localStyles.joinRequestButton}
+              onPress={() => {
+                if (!userId) {
+                  promptForPublicContentAuth(navigation as any, "desafío");
+                  return;
+                }
+                setRestartConfirmVisible(true);
+              }}
+            >
+              <Text style={localStyles.joinRequestButtonTitle} numberOfLines={1}>
+                {t("challengeRestart.startCta")}
+              </Text>
+              <Icon name="arrow-forward" size={ds.iconSize.md} color={buttonContentColor.primary} />
+            </TouchableOpacity>
           ) : isAdmin ? (
             <>
               <TouchableOpacity

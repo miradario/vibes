@@ -52,6 +52,16 @@ export const glow = {
    * `glow/halo`: brillo fuerte y centrado para los halos de Descubrir. Sin color:
    * se combina con `shadowColor` de un token (mostaza o azul).
    */
+  /**
+   * `glow/tab`: halo de la burbuja del tab activo. Geometría de `shadows.md`; el color
+   * lo pone el acento del tab (`shadowColor`).
+   */
+  tab: {
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
   halo: {
     shadowOpacity: 0.8,
     shadowRadius: 8,

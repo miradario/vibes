@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
-import { candidatesKeys } from "./candidates.queries";
+import { candidatesKeys, outgoingConnectionKeys } from "./candidates.queries";
 import { matchKeys } from "./matches.queries";
 import { supabase } from "../lib/supabase";
 import { maybeRequestStoreReview } from "../lib/storeReview";
@@ -248,7 +248,11 @@ export const useSwipeMutation = () => {
 
       return { previous };
     },
-    onSuccess: (result) => {
+    onSuccess: (result, payload) => {
+      if (payload.direction === "like") {
+        queryClient.setQueryData<string[]>(outgoingConnectionKeys.user(session?.user?.id), previous =>
+          Array.from(new Set([...(previous ?? []), payload.targetUserId])));
+      }
       if (result.match) void maybeRequestStoreReview();
     },
     onError: (_error, _payload, context) => {
@@ -259,6 +263,7 @@ export const useSwipeMutation = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: candidatesKeys.all });
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
+      queryClient.invalidateQueries({ queryKey: outgoingConnectionKeys.all });
     },
   });
 };

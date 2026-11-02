@@ -45,7 +45,7 @@ import {
   mapCandidateToConnectionProfile,
   mapOwnProfileToConnectionProfile,
 } from "../src/lib/connectionProfiles";
-import { useCandidatesQuery } from "../src/queries/candidates.queries";
+import { useCandidatesQuery, useOutgoingConnectionsQuery } from "../src/queries/candidates.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import { useSwipeMutation } from "../src/queries/swipes.mutations";
 import { useI18n } from "../src/i18n";
@@ -55,11 +55,10 @@ import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries"
 import { getBottomTabContentPadding, TAB_BAR_CONTENT_CLEARANCE } from "../src/lib/tabBarLayout";
 import { handleApiError } from "../src/utils/handleApiError";
 import { vibesTheme } from "../src/theme/vibesTheme";
-import VibesLoader from "../components/VibesLoader";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import { cardStyles } from "../components/ui/surfaceStyles";
 import SectionHeader from "../components/ui/SectionHeader";
-import PersonCard from "../components/ui/PersonCard";
+import PersonCard, { PersonCardSkeleton } from "../components/ui/PersonCard";
 import { iconCircleStyle } from "../components/ui/IconCircle";
 import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
 import * as ds from "../src/theme/tokens";
@@ -216,9 +215,9 @@ const getSuggestionHint = (profile: DataT) => {
 
 function PeopleSkeleton() {
   return (
-    <View style={{ minHeight: 170, alignItems: "center", justifyContent: "center" }}>
-      <VibesLoader size={48} accessibilityLabel="Cargando personas con tu vibe" />
-    </View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={localStyles.peopleCarousel}>
+      {Array.from({ length: 6 }, (_, index) => <PersonCardSkeleton key={index} />)}
+    </ScrollView>
   );
 }
 
@@ -248,6 +247,7 @@ function HomePeopleSuggestions({
       >
         {suggestions.map((profile) => (
           <PersonCard
+            progressivePhoto
             key={String(profile.id)}
             name={`${profile.name.split(" ")[0]}${profile.age ? `, ${profile.age}` : ""}`}
             accessibilityLabel={`Ver perfil de ${profile.name}`}
@@ -336,12 +336,15 @@ const Home = () => {
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [hasHydratedStoredFilters, setHasHydratedStoredFilters] =
     useState(false);
+  const outgoingConnections = useOutgoingConnectionsQuery(session?.user?.id, meetPeopleEnabled);
+  const connectedIds = useMemo(() => new Set(outgoingConnections.data ?? []), [outgoingConnections.data]);
   const ownProfileRecord = (ownProfileData ?? null) as Record<
     string,
     any
   > | null;
   const profiles = useMemo<DataT[]>(() => {
-    const eligible = candidates
+    const eligible = (outgoingConnections.isSuccess ? candidates : [])
+      .filter(candidate => !connectedIds.has(String(candidate.id)))
       .map((candidate) => {
         const candidateRecord = candidate as Record<string, any>;
         // Distance is computed server-side (get_discovery_candidates).
@@ -429,6 +432,8 @@ const Home = () => {
       }) as DataT[];
   }, [
     candidates,
+    connectedIds,
+    outgoingConnections.isSuccess,
     discoverFilters,
     ownProfileRecord,
     userPreferences,
@@ -989,7 +994,7 @@ const Home = () => {
           {meetPeopleEnabled ? <HomePeopleSuggestions
             canViewPhotos={hasProfilePhotos(ownProfileData)}
             profiles={profiles}
-            loading={candidatesLoading && profiles.length === 0}
+            loading={(candidatesLoading || outgoingConnections.isLoading) && profiles.length === 0}
             onOpenProfile={openProfileSheet}
             onSeeAll={() =>
               navigation.navigate(

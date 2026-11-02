@@ -11,7 +11,8 @@
  *  - en components/ui/**: `vibesTheme.*` (usá ds.*) y números en width/height/minWidth/minHeight/maxWidth
  *    (usá ds.componentSize / ds.touchTarget / ds.avatarSize / ds.iconSize);
  *  - en todo el código: número suelto como 2º argumento de withAlpha (usá ds.opacity.*).
- * Fuera de components/ui, `vibesTheme.*` es solo aviso (no falla) mientras dura la migración.
+ * Fuera de components/ui, `vibesTheme.*` es solo aviso (no falla) mientras dura la migración,
+ * salvo en VIBES_THEME_STRICT (archivos ya migrados: ahí falla).
  * Excepciones documentadas: comentario `/* ds-lint-allow <motivo> *\/` justo antes del valor,
  * o `/* ds-lint-disable-file <motivo> *\/` en el archivo. El motivo es obligatorio.
  * Uso: node scripts/lint-design-tokens.cjs [archivos...]
@@ -22,6 +23,8 @@ const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
 const DIRS = ["screens", "components", "src", "assets/styles"];
+/** Archivos ya migrados fuera de components/ui donde `vibesTheme.*` falla (bottom bar 2/11). */
+const VIBES_THEME_STRICT = new Set(["components/CustomTabBar.tsx", "src/lib/tabBarLayout.ts"]);
 const IGNORE = [/^src\/theme\/tokens\//, /^src\/illustrations\//, /\.d\.ts$/, /\.test\./];
 const SPACING_PROP = /^(padding|margin)(Horizontal|Vertical|Top|Bottom|Left|Right|Start|End)?$|^(gap|rowGap|columnGap)$/;
 const RADIUS_PROP = /^border(Top|Bottom)?(Left|Right|Start|End)?Radius$|^border(TopStart|TopEnd|BottomStart|BottomEnd)Radius$/;
@@ -81,7 +84,7 @@ function lintFile(file) {
   const isUi = rel.startsWith("components/ui/");
   function visit(n) {
     if (ts.isPropertyAccessExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === "vibesTheme") {
-      if (isUi) report(n, `${n.getText(sf)} en components/ui: usá ds.*`);
+      if (isUi || VIBES_THEME_STRICT.has(rel)) report(n, `${n.getText(sf)} en ${isUi ? "components/ui" : rel}: usá ds.*`);
       else if (!allowed(n)) {
         const { line, character } = sf.getLineAndCharacterOfPosition(n.getStart(sf));
         warnings.push(`${rel}:${line + 1}:${character + 1}  ${n.getText(sf)}: migrar a ds.*`);
