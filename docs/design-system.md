@@ -401,3 +401,17 @@ Inicio carga su contenido después de navegar: reservar dos filas compactas de e
 Personas con tu vibe reserva seis PersonCardSkeleton con la geometría de PersonCard durante la consulta inicial. Al llegar los perfiles muestra sus textos y reemplaza el skeleton de cada foto independientemente al terminar de cargar (o mostrar su fallback). Sin spinner global ni espera por la última imagen; conservar las tarjetas durante refetch.
 
 Las miniaturas progresivas de Personas con tu vibe usan cover sin composición de fondo desenfocado, para revelar cada foto en cuanto se muestre su propia imagen. Su identidad de caché ignora la rotación del token firmado, evitando reactivar el skeleton por una renovación de URL.
+
+Eventos ofrece accesos Calendario y Mapa sobre el listado, conservando todos los filtros activos. Ambas vistas usan AnimatedSheetModal y ScreenContainer. Calendario marca días con eventos, permite cambiar de mes y lista las ocurrencias del día, incluyendo las fechas recurrentes guardadas. Mapa permite zoom/desplazamiento y abrir eventos desde puntos; excluye online y coordenadas inválidas, informa cuántos eventos no tienen punto y conserva una lista accesible. No solicitar ubicación del usuario. Marcadores mostaza con borde y texto oscuro; atribución cartográfica visible.
+
+Las filas del día seleccionado en Calendario y del Mapa de eventos muestran una miniatura cuadrada cardThumb (76), con caché de MediaImage, junto al título, horario y lugar. Conservar fallback cuando no hay imagen y toda la fila como acceso al detalle.
+
+Calendario y Mapa de eventos muestran BackButton de 44×44 arriba a la izquierda, con label Volver a eventos; permanece fuera del contenido desplazable y cierra la vista conservando el listado y sus filtros.
+
+Calendario y Mapa se presentan como sheet de pantalla completa con safe area superior e inferior. La cabecera fija muestra flecha y texto Volver para hacer explícita la salida. Calendario usa título Tu próximo encuentro, mes/año y acción Hoy; cada día ocupa una celda de al menos 54 y un círculo de 44. Hoy tiene contorno azul, selección mostaza con texto oscuro y puntos de eventos oscuros. Conservar navegación entre meses y miniaturas del día elegido.
+
+En Calendario, los días con eventos a los que la persona ya se anotó usan superficie azul suave y tilde oscura sobre badge coral. Mantener la tilde sobre el día seleccionado mostaza y explicarla con leyenda y label accesible. Las filas correspondientes indican Ya estás anotado; derivar el estado de las membresías reales de eventos.
+
+La cabecera de Calendario y Mapa usa BackButton a la izquierda, título centrado y espacio de 44 a la derecha para centrarlo respecto a la pantalla. Mantener la cabecera fija y el safe area superior. Este formato reemplaza la cabecera con texto Volver.
+
+Mapa abre con todos los eventos vigentes sin heredar los filtros del listado. Incluye búsqueda por nombre/lugar, Mis eventos, Gratis, Próximos 7 días y tipos presentes en el feed, con selección visible y Limpiar. Los resultados sin coordenadas permanecen accesibles en la lista bajo el mapa; los online no generan marcadores.

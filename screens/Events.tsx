@@ -1,3 +1,4 @@
+import EventExplorerSheet, { type EventExplorerMode } from "../components/EventExplorerSheet";
 import { useCommunityFilter } from "../src/hooks/useCommunityFilter";
 import { matchesCommunities } from "../src/lib/communities";
 import { useReducedMotion } from "react-native-reanimated";
@@ -282,6 +283,7 @@ const Events = ({
   // Lazy loading: the feed loads page by page while scrolling. Search,
   // filters and the views that group or sort the whole set (past, already
   // started, private) need every row, so they load the remaining pages.
+  const [explorerMode, setExplorerMode] = useState<EventExplorerMode | null>(null);
   const needsFullFeed =
     pastOnly ||
     startedOnly ||
@@ -722,6 +724,11 @@ const Events = ({
             onToggle={path => setSpiritualPaths(current => current.includes(path) ? current.filter(value => value !== path) : [...current, path])}
             onClear={() => setSpiritualPaths([])} />
         </> : null}
+        {section === "event" ? <View style={{ flexDirection: "row", gap: ds.spacing[2], paddingVertical: ds.spacing[2] }}>
+          {([["calendar", "calendar-outline", "Calendario"]] as const).map(([mode, icon, label]) => <TouchableOpacity key={mode} accessibilityRole="button" accessibilityLabel={`Ver ${label.toLowerCase()} de eventos`} onPress={() => setExplorerMode(mode)} style={[localStyles.eventFilterChip, { flex: 1 }]}>
+            <Icon name={icon} size={ds.iconSize.md} color={vibesTheme.colors.primaryText} /><Text style={{ ...ds.textStyles.label, color: vibesTheme.colors.primaryText }}>{label}</Text>
+          </TouchableOpacity>)}
+        </View> : null}
         </View>
         </Animated.View>
         {section === "challenge" && startedOnly && !pastOnly ? <Text style={localStyles.feedSectionTitle}>Ya comenzados</Text> : null}
@@ -946,6 +953,10 @@ const Events = ({
         />
         </View>
       </View>
+      <EventExplorerSheet mode={explorerMode} joinedEventIds={joinedEventIds} mapEvents={items.filter(item => item.type === "event" && !isExpiredEvent(item))} events={visibleItems} loading={isLoading || eventsQuery.isFetchingNextPage} onClose={() => setExplorerMode(null)} onOpen={event => {
+        setExplorerMode(null);
+        navigation.navigate("EventDetail" as never, { event } as never);
+      }} />
       <KeyboardSheetModal visible={filtersVisible && section === "event"} onClose={() => setFiltersVisible(false)}>
         <View style={[localStyles.filtersSheet, { maxHeight: "100%" }]}>
         <View style={localStyles.filterHandle} />
