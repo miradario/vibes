@@ -4,8 +4,8 @@
     "name": "Vibes",
     "slug": "vibe",
     "scheme": "com.gurudevelopers.vibes",
-    "version": "1.4.0",
-    "runtimeVersion": "1.4.0",
+    "version": "1.4.1",
+    "runtimeVersion": "1.4.1",
     "orientation": "portrait",
     "icon": "./assets/icon-flat.png",
     "updates": {
@@ -17,7 +17,7 @@
     "ios": {
       "icon": "./assets/icon-ios-flat.png",
       "supportsTablet": false,
-      "buildNumber": "68",
+      "buildNumber": "69",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -44,7 +44,7 @@
         "foregroundImage": "./assets/adaptive-icon-flat.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 68,
+      "versionCode": 69,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
