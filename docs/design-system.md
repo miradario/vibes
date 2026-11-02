@@ -416,3 +416,17 @@ En Calendario, los días con eventos a los que la persona ya se anotó usan supe
 La cabecera de Calendario y Mapa usa BackButton a la izquierda, título centrado y espacio de 44 a la derecha para centrarlo respecto a la pantalla. Mantener la cabecera fija y el safe area superior. Este formato reemplaza la cabecera con texto Volver.
 
 Mapa abre con todos los eventos vigentes sin heredar los filtros del listado. Incluye búsqueda por nombre/lugar, Mis eventos, Gratis, Próximos 7 días y tipos presentes en el feed, con selección visible y Limpiar. Los resultados sin coordenadas permanecen accesibles en la lista bajo el mapa; los online no generan marcadores.
+
+### Clases: controles y accesibilidad (2/11)
+
+Clases usa exclusivamente tokens semánticos y presets compartidos: `buttonStyle`/`buttonLabel` para primario mostaza y secundario contorneado, `chipStyles` para filtros, `Typography` para texto. `LearningUI.Button` adapta esos presets sin añadir tamaños ni tipografías. Los enlaces Ver perfil/Ver lugar son filas con texto flexible y ChevronRight independiente (nunca flechas escritas dentro de labels). Perfil corresponde a una ficha interna; las referencias de lugar abren su detalle con Ver lugar y no inventan un perfil.
+
+Las solicitudes y la acción Alumnos y asistencia viven en `LearningActionDock`, fuera del scroll, dentro de `LearningDockHost`; reservar el safe area inferior. El contenido sigue desplazándose sin quedar cubierto. En detalles de lugares sin perfil, Contactar al organizador se alinea al final del contenido, después de dirección, mapa y descripción. Los selectores de mes usan filas de al menos 48 y separación `spacing/3`.
+
+Las invitaciones compartidas usan `KeyboardSheetModal`, que mide el solapamiento real del teclado; la lista mantiene taps y scroll para elegir resultados con el teclado visible. Clases filtra por localidades (ciudad/barrio), nunca por direcciones completas. Fecha de encuentro usa calendario con rango desde/hasta, extremos seleccionados y rango suave; los filtros combinan modalidad, localidad y fechas.
+
+El badge new de Clases usa mostaza y texto oscuro, separado del contador de chats, tanto en la pestaña inactiva como en la burbuja activa. El override `EXPO_PUBLIC_LOCAL_CLASSES=true` funciona únicamente con `__DEV__`: habilita la vista local y no cambia Firebase ni permisos del servidor.
+
+### Regla de reutilización
+
+Para cada pantalla se elige un rol existente de tipografía y un componente/preset existente. Si falta una variante, documentar su geometría, estados y alcance aquí antes de reutilizarla; no agregar overrides aislados. `AGENTS.md` referencia esta norma y `npm run lint:ds` verifica estilos fuera de tokens. Las diferencias heredadas se corrigen en los elementos afectados por cada cambio.

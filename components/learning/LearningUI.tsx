@@ -1,3 +1,5 @@
+import BackButton from "../BackButton";
+import { LearningDockHost } from "./LearningActionDock";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -10,12 +12,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getBottomTabContentPadding } from "../../src/lib/tabBarLayout";
 import { useNavigation } from "@react-navigation/native";
-import { BookOpen, ChevronLeft, ChevronRight, MapPin } from "lucide-react-native";
+import { BookOpen, ChevronRight, MapPin } from "lucide-react-native";
 import { Text, TextInput } from "../Typography";
 import ScreenContainer from "../ScreenContainer";
-import VibesActionButton from "../VibesActionButton";
+import { buttonStyle, buttonLabel, buttonDisabled } from "../ui/buttonStyles";
 import AnimatedSheetModal from "../AnimatedSheetModal";
-import { vibesTheme } from "../../src/theme/vibesTheme";
 import { useLearningEnabled } from "../../src/featureFlags/useLearningEnabled";
 import {
   learningError,
@@ -40,9 +41,8 @@ import { useAuthSession } from "../../src/auth/auth.queries";
 import { cardStyles } from "../ui/surfaceStyles";
 import { chipHitSlop, chipStyles } from "../ui/chipStyles";
 import * as ds from "../../src/theme/tokens";
-const c = vibesTheme.colors;
 export const ui = StyleSheet.create({
-  page: { flex: 1, backgroundColor: c.background },
+  page: { flex: 1, backgroundColor: ds.colors.bg.screen },
   content: {
     padding: ds.spacing[6],
     paddingBottom: ds.spacing[12],
@@ -60,11 +60,11 @@ export const ui = StyleSheet.create({
   grow: { flex: 1 },
   heading: {
     ...ds.textStyles.title,
-    color: c.primaryText,
+    color: ds.colors.text.primary,
   },
-  title: { ...ds.textStyles.title, color: c.primaryText },
-  body: { ...ds.textStyles.body, color: c.primaryText },
-  muted: { ...ds.textStyles.body, color: c.secondaryText },
+  title: { ...ds.textStyles.title, color: ds.colors.text.primary },
+  body: { ...ds.textStyles.body, color: ds.colors.text.primary },
+  muted: { ...ds.textStyles.body, color: ds.colors.text.secondary },
   card: { ...cardStyles.base, padding: ds.spacing[4], gap: ds.spacing[3] },
   input: {
     borderWidth: 1,
@@ -72,11 +72,11 @@ export const ui = StyleSheet.create({
     borderRadius: ds.radii.lg,
     minHeight: 48,
     padding: ds.spacing[4],
-    color: c.primaryText,
+    color: ds.colors.text.primary,
     ...ds.textStyles.body,
-    backgroundColor: c.surface,
+    backgroundColor: ds.colors.bg.surface,
   },
-  link: { color: c.accentBlue, ...ds.textStyles.body },
+  link: { color: ds.colors.base.blue, ...ds.textStyles.body },
   photo: { width: 92, height: 100, borderRadius: ds.radii.lg },
   cover: { height: 190, width: "100%", borderRadius: ds.radii.lg },
   fallback: {
@@ -91,16 +91,16 @@ export const ui = StyleSheet.create({
     gap: ds.spacing[2],
   },
   error: { backgroundColor: ds.colors.feedback.errorBg },
-  primaryText: { color: c.primaryText },
+  primaryText: { color: ds.colors.text.primary },
   secondaryButton: {
-    backgroundColor: c.surface,
-    borderColor: c.accentBlue,
+    backgroundColor: ds.colors.bg.surface,
+    borderColor: ds.colors.base.blue,
     borderWidth: 1,
     ...ds.shadows.none,
   },
   disabled: { opacity: 0.5 },
-  sheet: { backgroundColor: c.surface, borderTopLeftRadius: ds.radii.xl, borderTopRightRadius: ds.radii.xl, padding: ds.spacing[6], gap: ds.spacing[4], maxHeight: "85%" },
-  tiny: { ...ds.textStyles.body, color: c.secondaryText },
+  sheet: { backgroundColor: ds.colors.bg.surface, borderTopLeftRadius: ds.radii.xl, borderTopRightRadius: ds.radii.xl, padding: ds.spacing[6], gap: ds.spacing[4], maxHeight: "85%" },
+  tiny: { ...ds.textStyles.body, color: ds.colors.text.secondary },
 });
 export function Button({
   label,
@@ -114,13 +114,10 @@ export function Button({
   secondary?: boolean;
 }) {
   return (
-    <VibesActionButton
-      label={label}
-      onPress={onPress}
-      disabled={disabled}
-      textStyle={ui.primaryText}
-      style={[secondary && ui.secondaryButton, disabled && ui.disabled]}
-    />
+    <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled }} onPress={onPress} disabled={disabled} activeOpacity={ds.opacity.pressed}
+      style={[buttonStyle(secondary ? "secondary" : "accent", "lg"), disabled && buttonDisabled]}>
+      <Text style={buttonLabel("lg", secondary ? "secondary" : "accent")}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 export function Link({
@@ -138,9 +135,10 @@ export function Link({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[{ paddingVertical: ds.spacing[2] }, disabled && ui.disabled]}
+      style={[{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: ds.spacing[2], paddingVertical: ds.spacing[2] }, disabled && ui.disabled]}
     >
-      <Text style={ui.link}>{label}</Text>
+      <Text style={[ui.link, { flex: 1 }]}>{label.replace(/\s*→\s*/g, " · ")}</Text>
+      <ChevronRight size={ds.iconSize.md} color={ds.colors.icon.default} />
     </TouchableOpacity>
   );
 }
@@ -293,7 +291,7 @@ export function Photo({
     />
   ) : (
     <View style={[cover ? ui.cover : ui.photo, ui.fallback]}>
-      <BookOpen color={c.accentMustard} size={36} />
+      <BookOpen color={ds.colors.base.mustard} size={36} />
     </View>
   );
 }
@@ -309,26 +307,19 @@ export function Page({
   const nav = useNavigation();
   const insets = useSafeAreaInsets();
   return (
-    <ScreenContainer
+    <LearningDockHost><ScreenContainer
       scroll
       style={ui.page}
-      edges={embedded ? [] : ["top", "left", "right", "bottom"]}
+      edges={embedded ? [] : ["top", "left", "right"]}
       contentContainerStyle={[ui.content, embedded && {paddingBottom: getBottomTabContentPadding(insets.bottom, 48)}]}
       scrollViewProps={{ keyboardShouldPersistTaps: "handled" }}
     >
       {!embedded && <View style={ui.row}>
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          onPress={() => nav.goBack()}
-          style={{ padding: ds.spacing[2] }}
-        >
-          <ChevronLeft color={c.accentBlue} size={28} />
-        </TouchableOpacity>
+        <BackButton onPress={() => nav.goBack()} />
         <Text style={[ui.heading, ui.grow]}>{title}</Text>
       </View>}
       {children}
-    </ScreenContainer>
+    </ScreenContainer></LearningDockHost>
   );
 }
 export function LearningGate({
@@ -354,7 +345,7 @@ export function LearningGate({
   if (query.isPending)
     return (
       <View style={ui.notice}>
-        <ActivityIndicator color={c.accentBlue} />
+        <ActivityIndicator color={ds.colors.base.blue} />
         <Text style={ui.body}>Cargando clases y espacios…</Text>
       </View>
     );
@@ -409,10 +400,10 @@ export function ProfileCard({
         <Text style={ui.muted}>{modalityLabels[profile.modality]}</Text>
         {!!profile.location && (
           <Text style={ui.muted}>
-            <MapPin size={15} color={c.secondaryText} /> {profile.location}
+            <MapPin size={15} color={ds.colors.text.secondary} /> {profile.location}
           </Text>
         )}
-        <Text style={ui.link}>Ver perfil →</Text>
+        <View style={ui.row}><Text style={ui.link}>Ver perfil</Text><ChevronRight size={ds.iconSize.md} color={ds.colors.icon.default} /></View>
       </View>
     </TouchableOpacity>
   );
@@ -446,7 +437,7 @@ export function ActivityCard({
         <Text style={exploreCard.meta} numberOfLines={1}>{teachers.map(p => p.name).join(" · ") || modalityLabels[activity.modality]}</Text>
         <Text style={exploreCard.meta} numberOfLines={1}>{[activity.location, priceLabel(activity)].filter(Boolean).join(" · ")}</Text>
       </View>
-      <ChevronRight size={20} color={c.secondaryText} />
+      <ChevronRight size={20} color={ds.colors.text.secondary} />
     </TouchableOpacity>
   );
   return (
@@ -587,10 +578,10 @@ export const modalityOptions = Object.entries(modalityLabels).map(
 export { statusLabels };
 
 const exploreCard = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], padding: ds.spacing[3], borderRadius: ds.radii.xl, borderWidth: 1, borderColor: ds.colors.bg.subtle, backgroundColor: c.surface },
+  row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], padding: ds.spacing[3], borderRadius: ds.radii.xl, borderWidth: 1, borderColor: ds.colors.bg.subtle, backgroundColor: ds.colors.bg.surface },
   image: { width: 92, height: 100, borderRadius: ds.radii.lg, overflow: "hidden" },
   copy: { flex: 1, gap: ds.spacing[1] },
-  title: { ...ds.textStyles.subtitle, color: c.primaryText },
-  date: { ...ds.textStyles.labelMedium, color: c.accentBlue },
-  meta: { ...ds.textStyles.bodySmall, color: c.secondaryText },
+  title: { ...ds.textStyles.subtitle, color: ds.colors.text.primary },
+  date: { ...ds.textStyles.labelMedium, color: ds.colors.base.blue },
+  meta: { ...ds.textStyles.bodySmall, color: ds.colors.text.secondary },
 });
