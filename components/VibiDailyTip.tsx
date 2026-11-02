@@ -89,8 +89,12 @@ export default function VibiDailyTip({
           timeout: 60000,
         }
       );
-      if (requestError || !validGuide(data))
-        throw new Error("guide_unavailable");
+      if (requestError) {
+        const status = (requestError as { context?: { status?: number } })
+          .context?.status;
+        throw new Error(status === 429 ? "rate_limit" : "guide_unavailable");
+      }
+      if (!validGuide(data)) throw new Error("guide_unavailable");
       if (current !== generation.current) return;
       setGuide(data);
       await AsyncStorage.setItem(cacheKey, JSON.stringify(data)).catch(
@@ -101,9 +105,13 @@ export default function VibiDailyTip({
         HISTORY_KEY(userId),
         JSON.stringify([summarize(data), ...history].slice(0, HISTORY_SIZE))
       ).catch(() => {});
-    } catch {
+    } catch (caught) {
       if (current === generation.current)
-        setError("No pude generar tu consejo. Podés intentar de nuevo.");
+        setError(
+          caught instanceof Error && caught.message === "rate_limit"
+            ? "Ya pediste varios consejos hoy. Volvé mañana por uno nuevo."
+            : "No pude generar tu consejo. Podés intentar de nuevo."
+        );
     } finally {
       if (current === generation.current) {
         inFlight.current = false;
