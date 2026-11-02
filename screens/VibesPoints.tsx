@@ -21,6 +21,10 @@ import {
   type VibesEntry,
 } from "../src/queries/vibesPoints.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import Tag from "../components/ui/Tag";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import SegmentedControl from "../components/ui/SegmentedControl";
+import * as ds from "../src/theme/tokens";
 const c = vibesTheme.colors;
 const rules = [
   {
@@ -84,7 +88,7 @@ export default function VibesPoints() {
           style={s.iconButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="chevron-back" size={27} color={c.primaryText} />
+          <Icon name="chevron-back" size={ds.iconSize.lg} color={c.primaryText} />
         </TouchableOpacity>
         <Text style={s.title}>Tus Vibes</Text>
         <TouchableOpacity
@@ -95,7 +99,7 @@ export default function VibesPoints() {
         >
           <Icon
             name="information-circle-outline"
-            size={26}
+            size={ds.iconSize.lg}
             color={c.accentBlue}
           />
         </TouchableOpacity>
@@ -163,7 +167,7 @@ export default function VibesPoints() {
               <View style={[s.card, s.stat]}>
                 <Icon
                   name="trending-up-outline"
-                  size={25}
+                  size={ds.iconSize.lg}
                   color={c.accentMustard}
                 />
                 <View style={s.statCopy}>
@@ -174,7 +178,7 @@ export default function VibesPoints() {
                 </View>
               </View>
               <View style={[s.card, s.stat]}>
-                <Icon name="people-outline" size={25} color={c.accentCoral} />
+                <Icon name="people-outline" size={ds.iconSize.lg} color={c.accentCoral} />
                 <View style={s.statCopy}>
                   <Text style={s.statValue}>
                     {number(summary.data?.contributions)}
@@ -205,7 +209,7 @@ export default function VibesPoints() {
               <View style={s.activityIcon}>
                 <Icon
                   name={iconByKind[entry.kind]}
-                  size={23}
+                  size={ds.iconSize.lg}
                   color={c.primaryText}
                 />
               </View>
@@ -259,7 +263,7 @@ export default function VibesPoints() {
         <ScrollView
           contentContainerStyle={[
             s.sheetContent,
-            { paddingBottom: Math.max(insets.bottom, 16) + 24 },
+            { paddingBottom: Math.max(insets.bottom, ds.spacing[4]) + ds.spacing[6] },
           ]}
         >
           <View style={s.sectionHeader}>
@@ -271,7 +275,7 @@ export default function VibesPoints() {
               style={s.iconButton}
               onPress={() => setMeditating(false)}
             >
-              <Icon name="close" size={25} color={c.primaryText} />
+              <Icon name="close" size={ds.iconSize.lg} color={c.primaryText} />
             </TouchableOpacity>
           </View>
           <Text style={s.body}>
@@ -279,37 +283,24 @@ export default function VibesPoints() {
             día (UTC), sin importar su duración.
           </Text>
           <Text style={s.rowTitle}>Duración</Text>
-          <View style={s.choices}>
-            {[5, 10, 20].map((value) => (
-              <TouchableOpacity
-                key={value}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: duration === value }}
-                disabled={meditation.isPending}
-                style={[s.choice, duration === value && s.selected]}
-                onPress={() => setDuration(value)}
-              >
-                <Text style={s.body}>{value} min</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <SegmentedControl
+            options={[5, 10, 20].map((value) => ({ key: String(value), label: `${value} min` }))}
+            selected={String(duration)}
+            onChange={(key) => setDuration(Number(key))}
+            disabled={meditation.isPending}
+            optionRole="radio"
+          />
           <Text style={s.rowTitle}>Tipo de meditación</Text>
-          <View style={s.choices}>
-            {(["silent", "guided"] as const).map((value) => (
-              <TouchableOpacity
-                key={value}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: kind === value }}
-                disabled={meditation.isPending}
-                style={[s.choice, kind === value && s.selected]}
-                onPress={() => setKind(value)}
-              >
-                <Text style={s.body}>
-                  {value === "silent" ? "En silencio" : "Guiada"}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <SegmentedControl
+            options={[
+              { key: "silent", label: "En silencio" },
+              { key: "guided", label: "Guiada" },
+            ] as const}
+            selected={kind}
+            onChange={setKind}
+            disabled={meditation.isPending}
+            optionRole="radio"
+          />
           <Text style={s.hint}>El registro es privado.</Text>
           {meditation.isError ? (
             <Text accessibilityRole="alert" style={s.body}>
@@ -363,7 +354,7 @@ export default function VibesPoints() {
         <ScrollView
           contentContainerStyle={[
             s.sheetContent,
-            { paddingBottom: Math.max(insets.bottom, 16) + 24 },
+            { paddingBottom: Math.max(insets.bottom, ds.spacing[4]) + ds.spacing[6] },
           ]}
         >
           <View style={s.sectionHeader}>
@@ -374,19 +365,17 @@ export default function VibesPoints() {
               style={s.iconButton}
               onPress={() => setInfo(false)}
             >
-              <Icon name="close" size={25} color={c.primaryText} />
+              <Icon name="close" size={ds.iconSize.lg} color={c.primaryText} />
             </TouchableOpacity>
           </View>
         {rules.map((rule) => (
           <View key={rule.title} style={[s.card, s.row]}>
-            <Icon name={rule.icon} size={26} color={c.accentBlue} />
+            <Icon name={rule.icon} size={ds.iconSize.lg} color={c.accentBlue} />
             <View style={s.rowCopy}>
               <Text style={s.rowTitle}>{rule.title}</Text>
               <Text style={s.hint}>{rule.hint}</Text>
             </View>
-            <View style={s.pointsBadge}>
-              <Text style={s.points}>+{rule.points}</Text>
-            </View>
+            <Tag label={`+${rule.points}`} style={s.pointsBadge} />
           </View>
         ))}
           <Text style={s.body}>
@@ -417,39 +406,18 @@ export default function VibesPoints() {
 }
 const s = StyleSheet.create({
   register: {
-    minHeight: 56,
-    borderRadius: 28,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.accentMustard,
+    ...buttonStyle("accent", "lg"),
   },
   registerText: {
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 18,
-    lineHeight: 24,
-    color: c.primaryText,
+    ...buttonLabel("lg", "accent"),
   },
-  choices: { flexDirection: "row", gap: 8 },
-  choice: {
-    flex: 1,
-    minHeight: 48,
-    padding: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: `${c.primaryText}24`,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  selected: { backgroundColor: `${c.accentBlue}24`, borderColor: c.accentBlue },
   screen: { flex: 1, backgroundColor: c.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[2],
+    gap: ds.spacing[2],
   },
   iconButton: {
     width: 44,
@@ -460,124 +428,97 @@ const s = StyleSheet.create({
   title: {
     flex: 1,
     textAlign: "center",
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 26,
-    lineHeight: 32,
+    ...ds.textStyles.title,
     color: c.primaryText,
   },
-  content: { padding: 24, paddingTop: 8, paddingBottom: 32, gap: 16 },
+  content: { padding: ds.spacing[6], paddingTop: ds.spacing[2], paddingBottom: ds.spacing[8], gap: ds.spacing[4] },
   subtitle: {
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 15,
-    lineHeight: 22,
+    ...ds.textStyles.body,
     color: c.secondaryText,
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: ds.spacing[2],
   },
   hero: {
-    padding: 14,
-    borderRadius: 16,
-    backgroundColor: `${c.accentMustard}14`,
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.subtle),
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
-  heroCopy: { flex: 1, gap: 6 },
+  heroCopy: { flex: 1, gap: ds.spacing[2] },
   overline: {
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.label,
     letterSpacing: 1,
     color: c.primaryText,
   },
   total: {
-    fontFamily: vibesTheme.fonts.extraBold,
-    fontSize: 38,
-    lineHeight: 46,
+    ...ds.textStyles.display,
     color: c.primaryText,
   },
   body: {
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 16,
-    lineHeight: 24,
+    ...ds.textStyles.body,
     color: c.primaryText,
   },
   hint: {
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
     color: c.secondaryText,
   },
   card: {
     borderWidth: 1,
-    borderColor: `${c.primaryText}14`,
-    borderRadius: 16,
-    padding: 16,
+    borderColor: ds.colors.bg.subtle,
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
     backgroundColor: c.surface,
   },
-  stats: { flexDirection: "row", gap: 10 },
-  stat: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8, padding: 12 },
+  stats: { flexDirection: "row", gap: ds.spacing[3] },
+  stat: { flex: 1, flexDirection: "row", alignItems: "center", gap: ds.spacing[2], padding: ds.spacing[3] },
   statCopy: { flex: 1 },
   statValue: {
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 20,
-    lineHeight: 26,
+    ...ds.textStyles.heading,
     color: c.primaryText,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   sectionTitle: {
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 25,
-    lineHeight: 29,
+    ...ds.textStyles.title,
     color: c.primaryText,
     flexShrink: 1,
-    marginTop: 8,
+    marginTop: ds.spacing[2],
   },
-  row: { flexDirection: "row", alignItems: "center", gap: 12 },
-  rowCopy: { flex: 1, gap: 4 },
+  row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3] },
+  rowCopy: { flex: 1, gap: ds.spacing[1] },
   rowTitle: {
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.subtitle,
     color: c.primaryText,
   },
-  pointsBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: `${c.accentMustard}24`,
-  },
+  pointsBadge: { alignSelf: "center" },
   points: {
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 18,
-    lineHeight: 24,
+    ...ds.textStyles.heading,
     color: c.primaryText,
   },
   activity: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
+    gap: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: `${c.primaryText}14`,
+    borderBottomColor: ds.colors.bg.subtle,
   },
   activityIcon: {
     width: 42,
     height: 42,
-    borderRadius: 21,
-    backgroundColor: `${c.accentBlue}14`,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),
     alignItems: "center",
     justifyContent: "center",
   },
   link: {
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
-    lineHeight: 22,
+    ...ds.textStyles.subtitle,
     color: c.accentBlue,
   },
   retry: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
@@ -585,16 +526,16 @@ const s = StyleSheet.create({
   footer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: `${c.accentCoral}14`,
+    gap: ds.spacing[4],
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.subtle),
   },
   sheet: {
     backgroundColor: c.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
     maxHeight: "85%",
   },
-  sheetContent: { padding: 24, paddingBottom: 40, gap: 18 },
+  sheetContent: { padding: ds.spacing[6], paddingBottom: ds.spacing[12], gap: ds.spacing[4] },
 });

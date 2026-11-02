@@ -16,6 +16,9 @@ import {
 } from "../src/queries/onboarding.queries";
 import { getIntentLabel, INTENTS } from "../src/constants/lookups";
 import { useI18n } from "../src/i18n";
+import Icon from "../components/Icon";
+import { optionCardCheck, optionCardStyles } from "../components/ui/optionCardStyles";
+import * as ds from "../src/theme/tokens";
 
 const OnboardingInterested = () => {
   const { locale, t } = useI18n();
@@ -39,25 +42,26 @@ const OnboardingInterested = () => {
         </Text>
 
         <View style={styles.onboardOptions}>
-          {INTENTS.map((option) => (
-            <TouchableOpacity
-              key={option.id}
-              style={[
-                styles.onboardOption,
-                selected === option.id && styles.onboardOptionActive,
-              ]}
-              onPress={() => setSelected(option.id)}
-            >
-              <Text
-                style={[
-                  styles.onboardOptionText,
-                  selected === option.id && styles.onboardOptionTextActive,
-                ]}
+          {INTENTS.map((option) => {
+            const isSelected = selected === option.id;
+            return (
+              <TouchableOpacity
+                key={option.id}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: isSelected }}
+                activeOpacity={ds.opacity.pressed}
+                style={[localStyles.option, isSelected && optionCardStyles.selected]}
+                onPress={() => setSelected(option.id)}
               >
-                {getIntentLabel(option.id, locale)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text style={[optionCardStyles.label, optionCardStyles.copy]}>
+                  {getIntentLabel(option.id, locale)}
+                </Text>
+                {isSelected ? (
+                  <Icon name={optionCardCheck.name} size={optionCardCheck.size} color={optionCardCheck.color} />
+                ) : null}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
 
@@ -114,10 +118,11 @@ const OnboardingInterested = () => {
 export default OnboardingInterested;
 
 const localStyles = StyleSheet.create({
+  option: { ...optionCardStyles.base, marginBottom: ds.spacing[3] },
   videoWrap: {
     flex: 1,
     minHeight: 320,
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
 });

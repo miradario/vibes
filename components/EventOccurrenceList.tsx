@@ -4,6 +4,7 @@ import { Text } from "./Typography";
 import Icon from "./Icon";
 import { normalizeSchedule, formatSession, formatEventRecurrence } from "../src/lib/eventSchedule";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function EventOccurrenceList({ schedule, startsAt, onCalendar }: {
   schedule: unknown;
@@ -18,13 +19,13 @@ export default function EventOccurrenceList({ schedule, startsAt, onCalendar }: 
   const visible = frequency && !expanded ? preview.slice(0, 3) : entries;
   return <View>
     {frequency ? <View style={s.intro}>
-      <View style={s.badge}><Icon name="repeat" size={17} color={c.primaryText} /><Text style={s.badgeText}>Evento frecuente</Text></View>
+      <View style={s.badge}><Icon name="repeat" size={ds.iconSize.sm} color={c.primaryText} /><Text style={s.badgeText}>Evento frecuente</Text></View>
       <Text style={s.title}>{frequency}</Text>
       <Text style={s.hint}>{upcoming.length ? "Próximos encuentros" : "Encuentros anteriores"} · {entries.length} en la serie</Text>
       <Text style={s.hint}>La inscripción y los cupos son compartidos por todos los encuentros.</Text>
     </View> : null}
     {visible.map(entry => <TouchableOpacity key={entry.startsAt} accessibilityRole="button" accessibilityLabel={`Agregar ${formatSession(entry.startsAt)} a mi calendario`} onPress={() => onCalendar(entry.startsAt)} style={s.row}>
-      <Icon name="calendar-outline" size={25} color={c.accentBlue} />
+      <Icon name="calendar-outline" size={ds.iconSize.lg} color={c.accentBlue} />
       <View style={s.copy}><Text style={s.date}>{formatSession(entry.startsAt)}{entry.endsAt ? ` — ${formatSession(entry.endsAt)}` : ""}</Text><Text style={s.hint}>Agregar a mi calendario</Text></View>
     </TouchableOpacity>)}
     {frequency && entries.length > visible.length ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded }} style={s.more} onPress={() => setExpanded(true)}>
@@ -34,14 +35,14 @@ export default function EventOccurrenceList({ schedule, startsAt, onCalendar }: 
 }
 const c = vibesTheme.colors;
 const s = StyleSheet.create({
-  intro: { gap: 8, marginTop: 12, marginBottom: 8 },
-  badge: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: `${c.accentMustard}24`, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
-  badgeText: { color: c.primaryText, fontSize: 13, lineHeight: 18, fontFamily: vibesTheme.fonts.semibold },
-  title: { color: c.primaryText, fontSize: 16, lineHeight: 24, fontFamily: vibesTheme.fonts.semibold },
-  hint: { color: c.secondaryText, fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.regular },
-  row: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 14, minHeight: 48 },
-  copy: { flex: 1, gap: 4 },
-  date: { color: c.primaryText, fontSize: 16, lineHeight: 24, fontFamily: vibesTheme.fonts.medium },
-  more: { minHeight: 44, justifyContent: "center", paddingVertical: 10 },
-  moreText: { color: c.primaryText, fontSize: 16, lineHeight: 22, fontFamily: vibesTheme.fonts.semibold, textDecorationLine: "underline" },
+  intro: { gap: ds.spacing[2], marginTop: ds.spacing[3], marginBottom: ds.spacing[2] },
+  badge: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: ds.spacing[2], backgroundColor: ds.colors.bg.selected, borderRadius: ds.radii.pill, paddingHorizontal: ds.spacing[3], paddingVertical: ds.spacing[2] },
+  badgeText: { color: c.primaryText, ...ds.textStyles.label },
+  title: { color: c.primaryText, ...ds.textStyles.subtitle },
+  hint: { color: c.secondaryText, ...ds.textStyles.bodySmall },
+  row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[4], paddingVertical: ds.spacing[4], minHeight: 48 },
+  copy: { flex: 1, gap: ds.spacing[1] },
+  date: { color: c.primaryText, ...ds.textStyles.subtitleMedium },
+  more: { minHeight: 44, justifyContent: "center", paddingVertical: ds.spacing[3] },
+  moreText: { color: c.primaryText, ...ds.textStyles.subtitle, textDecorationLine: "underline" },
 });

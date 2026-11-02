@@ -9,6 +9,7 @@ import {
   onboardingStyles,
   toneColor,
 } from "../../src/screens/Onboarding/vibesOnboardingStyles";
+import * as ds from "../../src/theme/tokens";
 
 type OptionCardProps = {
   option: OnboardingOption;
@@ -37,27 +38,27 @@ const OptionCard = ({ option, selected, onPress, tile = false }: OptionCardProps
       style={[
         onboardingStyles.optionIcon,
         tile && tileStyles.icon,
-        { backgroundColor: `${toneColor(option.tone)}33` },
+        { backgroundColor: ds.withAlpha(toneColor(option.tone), ds.opacity.medium) },
       ]}
     >
       <Icon
         name={option.icon as never}
-        size={tile ? 23 : 20}
+        size={tile ? ds.iconSize.lg : ds.iconSize.md}
         color={ONBOARDING_COLORS.text}
       />
     </View>
     <Text style={[onboardingStyles.optionText, tile && tileStyles.label]}>{option.label}</Text>
     {selected ? (
-      <View style={tile ? tileStyles.check : undefined}><Icon name="checkmark-circle" size={20} color={vibesTheme.colors.accentBlue} /></View>
+      <View style={tile ? tileStyles.check : undefined}><Icon name="checkmark-circle" size={ds.iconSize.md} color={vibesTheme.colors.accentBlue} /></View>
     ) : null}
   </TouchableOpacity>
 );
 };
 
 const tileStyles = StyleSheet.create({
-  card: {width:"48%", minHeight:124, borderRadius:20, padding:10, flexDirection:"column", justifyContent:"center", gap:8},
-  icon: {width:38,height:38,borderRadius:19,marginRight:0},
-  label: {flex:0,textAlign:"center",fontSize:15,lineHeight:20,fontFamily:vibesTheme.fonts.bold},
+  card: {width:"48%", minHeight:124, borderRadius:ds.radii.xl, padding:ds.spacing[3], flexDirection:"column", justifyContent:"center", gap:ds.spacing[2]},
+  icon: {width:38,height:38,borderRadius:ds.radii.pill,marginRight:0},
+  label: {flex:0,textAlign:"center",...ds.textStyles.subtitle,},
   check: {position:"absolute",top:10,right:10},
 });
 

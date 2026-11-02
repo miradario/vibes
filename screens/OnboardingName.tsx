@@ -20,6 +20,7 @@ import AppHeader from "../components/AppHeader";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { useI18n } from "../src/i18n";
+import * as ds from "../src/theme/tokens";
 
 const OnboardingName = () => {
   const { t } = useI18n();
@@ -127,7 +128,7 @@ const localStyles = StyleSheet.create({
     width: "100%",
     flex: 1,
     minHeight: 320,
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
 });

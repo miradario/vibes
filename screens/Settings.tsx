@@ -48,6 +48,8 @@ import { showToast } from "../src/utils/toast";
 import { useI18n } from "../src/i18n";
 import { translateSpiritualPathLabel } from "../src/i18n/translations";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import * as ds from "../src/theme/tokens";
 
 const OTHER_DEFAULT_OPTIONS = ["Viajes", "Animales", "Arte"];
 const GENDER_OPTIONS = QUESTION_GROUPS[0].fields[0].options;
@@ -338,7 +340,7 @@ const Settings = () => {
           </View></View>
           <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
-              <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
+              <Icon name="leaf-outline" size={ds.iconSize.md} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
                 {t("settings.spiritualPath")}
               </Text>
@@ -373,7 +375,7 @@ const Settings = () => {
                         .map((entry) => `${entry.label}: ${entry.value}`)
                         .join(" · ") || "Sin datos adicionales"}
                     </Text>
-                    <Text style={{ color: vibesTheme.colors.accentBlue, marginTop: 8 }}>
+                    <Text style={{ color: vibesTheme.colors.accentBlue, marginTop: ds.spacing[2] }}>
                       Editar
                     </Text>
                   </TouchableOpacity>
@@ -384,7 +386,7 @@ const Settings = () => {
 
           <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
-              <Icon name="leaf-outline" size={18} color={TEXT_SECONDARY} />
+              <Icon name="leaf-outline" size={ds.iconSize.md} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
                 {t("settings.vegetarian")}
               </Text>
@@ -407,7 +409,7 @@ const Settings = () => {
 
           <View style={group !== 0 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
-              <Icon name="flower-outline" size={18} color={TEXT_SECONDARY} />
+              <Icon name="flower-outline" size={ds.iconSize.md} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
                 {t("settings.aboutMe")}
               </Text>
@@ -429,7 +431,7 @@ const Settings = () => {
             <View style={localStyles.sectionHeader}>
               <Icon
                 name="person-circle-outline"
-                size={18}
+                size={ds.iconSize.md}
                 color={TEXT_SECONDARY}
               />
               <Text style={localStyles.sectionTitle}>
@@ -482,7 +484,7 @@ const Settings = () => {
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  paddingVertical: 12,
+                  paddingVertical: ds.spacing[3],
                 }}
                 onPress={() =>
                   navigation.navigate(
@@ -508,7 +510,7 @@ const Settings = () => {
                       "Sin completar"}
                   </Text>
                 </View>
-                <Icon name="chevron-forward" size={20} color={TEXT_SECONDARY} />
+                <Icon name="chevron-forward" size={ds.iconSize.md} color={TEXT_SECONDARY} />
               </TouchableOpacity>
             ))}
           </View></View>
@@ -549,7 +551,7 @@ const Settings = () => {
 
           <View style={group !== 2 ? { display: "none" } : undefined}><View style={localStyles.preferencePanel}>
             <View style={localStyles.sectionHeader}>
-              <Icon name="sparkles-outline" size={18} color={TEXT_SECONDARY} />
+              <Icon name="sparkles-outline" size={ds.iconSize.md} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>Qué busco en Vibes</Text>
               <View style={localStyles.line} />
             </View>
@@ -575,7 +577,7 @@ const Settings = () => {
 
           <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.preferencePanel}>
             <View style={localStyles.sectionHeader}>
-              <Icon name="language-outline" size={18} color={TEXT_SECONDARY} />
+              <Icon name="language-outline" size={ds.iconSize.md} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
                 {t("settings.languages")}
               </Text>
@@ -592,7 +594,7 @@ const Settings = () => {
 
           <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
-              <Icon name="bonfire-outline" size={18} color={TEXT_SECONDARY} />
+              <Icon name="bonfire-outline" size={ds.iconSize.md} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
                 {t("settings.smoking")}
               </Text>
@@ -613,7 +615,7 @@ const Settings = () => {
 
           <View style={group !== 1 ? { display: "none" } : undefined}><View style={localStyles.section}>
             <View style={localStyles.sectionHeader}>
-              <Icon name="moon-outline" size={18} color={TEXT_SECONDARY} />
+              <Icon name="moon-outline" size={ds.iconSize.md} color={TEXT_SECONDARY} />
               <Text style={localStyles.sectionTitle}>
                 Intereses adicionales
               </Text>
@@ -649,7 +651,7 @@ const Settings = () => {
         </ScrollView>
 
         {/* Botón fijo abajo */}
-        <View style={{ padding: 16, backgroundColor: WHITE }}>
+        <View style={{ padding: ds.spacing[4], backgroundColor: WHITE }}>
           <TouchableOpacity
             style={[localStyles.saveButton, saving && { opacity: 0.6 }]}
             disabled={saving || isPending || isError}
@@ -687,11 +689,11 @@ const Settings = () => {
 const localStyles = StyleSheet.create({
   fixedHeader: {
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 24,
-    paddingTop: 6,
-    paddingBottom: 14,
+    paddingHorizontal: ds.spacing[6],
+    paddingTop: ds.spacing[2],
+    paddingBottom: ds.spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(43, 43, 43, 0.06)",
+    borderBottomColor: ds.colors.border.subtle,
     zIndex: 10,
   },
   appHeader: {
@@ -701,16 +703,16 @@ const localStyles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.background,
-    marginTop: 6,
+    marginTop: ds.spacing[2],
   },
   headerCopy: {
     flex: 1,
@@ -719,14 +721,10 @@ const localStyles = StyleSheet.create({
     alignItems: "flex-start",
   },
   headerTitle: {
-    fontSize: 26,
-    lineHeight: 34,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.title,
   },
   headerSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.bodySmall,
   },
   headerSpacer: {
     width: 20,
@@ -734,217 +732,179 @@ const localStyles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: ds.spacing[6],
   },
   scrollContent: {
-    paddingTop: 12,
-    paddingBottom: 24,
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[6],
   },
   section: {
-    marginTop: 18,
+    marginTop: ds.spacing[4],
   },
   preferencePanel: {
-    marginTop: 18,
-    borderRadius: 14,
+    marginTop: ds.spacing[4],
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.primaryText}20`,
-    backgroundColor: `${vibesTheme.colors.primaryText}03`,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    borderColor: ds.colors.border.default,
+    backgroundColor: ds.colors.bg.subtle,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[4],
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
+    gap: ds.spacing[2],
+    marginBottom: ds.spacing[3],
   },
   sectionTitle: {
-    fontSize: 16,
+    ...ds.textStyles.subtitle,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
   },
   line: {
     flex: 1,
     height: 1,
     backgroundColor: vibesTheme.colors.background,
-    marginLeft: 10,
+    marginLeft: ds.spacing[3],
   },
   helperText: {
     color: GRAY,
-    fontSize: 14,
-    marginBottom: 10,
-    fontFamily: vibesTheme.fonts.primary,
+    ...ds.textStyles.bodySmall,
+    marginBottom: ds.spacing[3],
   },
   fieldLabel: {
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: ds.spacing[3],
+    marginBottom: ds.spacing[2],
     color: TEXT_SECONDARY,
-    fontSize: 13,
+    ...ds.textStyles.label,
     letterSpacing: 1.1,
     textTransform: "uppercase",
-    fontFamily: vibesTheme.fonts.semibold,
   },
   chipWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-  },
-  chip: {
-    minHeight: 44,
-    borderRadius: 14,
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: `${vibesTheme.colors.primaryText}20`,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  chipActive: {
-    backgroundColor: vibesTheme.colors.primaryText,
-    borderColor: vibesTheme.colors.primaryText,
-  },
-  chipText: {
-    color: DARK_GRAY,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
-  },
-  chipTextActive: {
-    color: vibesTheme.colors.surface,
-    fontFamily: vibesTheme.fonts.semibold,
+    gap: ds.spacing[3],
   },
   detailList: {
-    marginTop: 12,
-    gap: 10,
+    marginTop: ds.spacing[3],
+    gap: ds.spacing[3],
   },
   detailItem: {
     borderWidth: 1,
-    borderColor: "rgba(216, 140, 122, 0.18)",
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     backgroundColor: vibesTheme.colors.background,
   },
   detailItemTitle: {
     color: DARK_GRAY,
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
   },
   detailItemSubtitle: {
     color: TEXT_SECONDARY,
-    fontSize: 13,
-    marginTop: 4,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.labelMedium,
+    marginTop: ds.spacing[1],
   },
   aboutInput: {
     backgroundColor: WHITE,
-    borderRadius: 16,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.primaryText}20`,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: ds.colors.border.default,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     color: DARK_GRAY,
     minHeight: 130,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.primary,
+    ...ds.textStyles.body,
   },
   textInput: {
     backgroundColor: WHITE,
-    borderRadius: 16,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.primaryText}20`,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: ds.colors.border.default,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     color: DARK_GRAY,
     minHeight: 52,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.primary,
+    ...ds.textStyles.body,
   },
   heightRow: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.primaryText}20`,
+    borderColor: ds.colors.border.default,
     backgroundColor: WHITE,
-    paddingHorizontal: 14,
+    paddingHorizontal: ds.spacing[4],
     minHeight: 54,
   },
   heightInput: {
     flex: 1,
     color: DARK_GRAY,
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.medium,
-    paddingVertical: 12,
+    ...ds.textStyles.body,
+    paddingVertical: ds.spacing[3],
   },
   heightUnit: {
     color: TEXT_SECONDARY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   currentLocationCard: {
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 16,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(216, 140, 122, 0.18)",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 10,
+    borderColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
+    marginBottom: ds.spacing[3],
   },
   currentLocationLabel: {
     color: TEXT_SECONDARY,
-    fontSize: 12,
+    ...ds.textStyles.caption,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    fontFamily: vibesTheme.fonts.semibold,
   },
   currentLocationValue: {
     color: DARK_GRAY,
-    fontSize: 16,
-    marginTop: 4,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
+    marginTop: ds.spacing[1],
   },
   currentLocationButton: {
     alignSelf: "flex-start",
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
+    marginTop: ds.spacing[3],
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[2],
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.primaryText}20`,
+    borderColor: ds.colors.border.default,
   },
   currentLocationButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
   addRow: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   addInput: {
     flex: 1,
     backgroundColor: WHITE,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.primaryText}20`,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: ds.colors.border.default,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.primary,
+    ...ds.textStyles.body,
   },
   addButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 24,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
+    borderRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.primaryText}20`,
+    borderColor: ds.colors.border.default,
   },
   addButtonText: {
     color: DARK_GRAY,
@@ -956,24 +916,18 @@ const localStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: vibesTheme.colors.background,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    paddingTop: 12,
+    paddingHorizontal: ds.spacing[6],
+    paddingBottom: ds.spacing[6],
+    paddingTop: ds.spacing[3],
     borderTopWidth: 1,
     borderTopColor: vibesTheme.colors.background,
     zIndex: 10,
   },
   saveButton: {
-    backgroundColor: vibesTheme.colors.primaryText,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
+    ...buttonStyle("primary", "lg"),
   },
   saveButtonText: {
-    color: vibesTheme.colors.surface,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...buttonLabel("lg", "primary"),
   },
 });
 

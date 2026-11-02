@@ -13,6 +13,7 @@ import { trackSignupEvent } from "../src/lib/signupEvents";
 import Animated from "react-native-reanimated";
 import useWanderingSphere from "../src/hooks/useWanderingSphere";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
+import * as ds from "../src/theme/tokens";
 
 const Welcome = () => {
   const navigation = useNavigation();
@@ -92,7 +93,7 @@ const Welcome = () => {
         <View style={styles.copy}>
           <View style={styles.headline}>
             <Text
-              style={[styles.title, compact && { fontSize: 23, lineHeight: 29 }]}
+              style={[styles.title, compact && { ...ds.textStyles.title }]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.7}
@@ -100,7 +101,7 @@ const Welcome = () => {
               Encontrá tu comunidad.
             </Text>
             <Text
-              style={[styles.title, compact && { fontSize: 23, lineHeight: 29 }]}
+              style={[styles.title, compact && { ...ds.textStyles.title }]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.7}
@@ -108,7 +109,7 @@ const Welcome = () => {
               Conectá con tu bienestar.
             </Text>
           </View>
-          <Text style={[styles.tagline, compact && { fontSize: 14, lineHeight: 20 }]}>
+          <Text style={[styles.tagline, compact && { ...ds.textStyles.bodySmall }]}>
             Compartí clases, experiencias y nuevos hábitos con personas en tu misma sintonía.
           </Text>
         </View>
@@ -139,22 +140,22 @@ const colors = vibesTheme.colors;
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   scrollContent: { flexGrow: 1 },
-  content: { flex: 1, paddingHorizontal: 24, paddingTop: 0, paddingBottom: 12 },
-  brand: { alignItems: "center", paddingTop: 8, marginBottom: "auto" },
+  content: { flex: 1, paddingHorizontal: ds.spacing[6], paddingTop: 0, paddingBottom: ds.spacing[3] },
+  brand: { alignItems: "center", paddingTop: ds.spacing[2], marginBottom: "auto" },
   smallLogo: { width: 125, height: 125 },
-  hero: { width: "100%", aspectRatio: 1.5, flexShrink: 1, minHeight: 0, maxHeight: 300, marginTop: 8, marginBottom: 4, justifyContent: "center", alignItems: "center" },
+  hero: { width: "100%", aspectRatio: 1.5, flexShrink: 1, minHeight: 0, maxHeight: 300, marginTop: ds.spacing[2], marginBottom: ds.spacing[1], justifyContent: "center", alignItems: "center" },
   sun: { position: "absolute", height: "42%", aspectRatio: 1, borderRadius: vibesTheme.radii.pill, backgroundColor: colors.accentMustard, opacity: 0.24 },
   sphere: { position: "absolute", height: "38%", aspectRatio: 1, borderRadius: vibesTheme.radii.pill, opacity: 0.24 },
   coralSphere: { backgroundColor: colors.accentCoral, right: "12%", top: "10%" },
   blueSphere: { backgroundColor: colors.accentBlue, left: "8%", bottom: "12%" },
   illustration: { width: "100%", height: "100%" },
-  copy: { alignItems: "center", gap: 8, marginBottom: 14 },
+  copy: { alignItems: "center", gap: ds.spacing[2], marginBottom: ds.spacing[4] },
   headline: { width: "100%", alignItems: "stretch" },
-  title: { fontFamily: vibesTheme.fonts.bold, fontSize: 27, lineHeight: 34, color: colors.primaryText, textAlign: "center" },
-  tagline: { color: colors.secondaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 16, lineHeight: 23, textAlign: "center", maxWidth: 400 },
-  actions: { width: "100%", maxWidth: 480, alignSelf: "center", gap: 12, marginTop: "auto", paddingTop: 16 },
-  primaryButton: { backgroundColor: colors.primaryText, shadowOpacity: 0, elevation: 0 },
-  actionText: { fontFamily: vibesTheme.fonts.bold, fontSize: 18, lineHeight: 24 },
+  title: { ...ds.textStyles.title, color: colors.primaryText, textAlign: "center" },
+  tagline: { color: colors.secondaryText, ...ds.textStyles.body, textAlign: "center", maxWidth: 400 },
+  actions: { width: "100%", maxWidth: 480, alignSelf: "center", gap: ds.spacing[3], marginTop: "auto", paddingTop: ds.spacing[4] },
+  primaryButton: { backgroundColor: colors.primaryText, ...ds.shadows.none },
+  actionText: { ...ds.textStyles.subtitle },
   primaryButtonText: { color: colors.surface },
   secondaryButton: { height: 58, minHeight: 58 },
 });

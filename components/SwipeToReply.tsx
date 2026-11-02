@@ -11,6 +11,7 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import { Icon } from ".";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const THRESHOLD = 64;
 const MAX_DRAG = 88;
@@ -72,7 +73,7 @@ export default function SwipeToReply({
         <Animated.View pointerEvents="none" style={[s.icon, iconStyle]}>
           <Icon
             name="arrow-undo"
-            size={18}
+            size={ds.iconSize.md}
             color={vibesTheme.colors.accentMustard}
           />
         </Animated.View>

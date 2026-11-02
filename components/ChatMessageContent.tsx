@@ -12,6 +12,7 @@ import { photoPath } from "../src/lib/chatPhotos";
 import { supabase } from "../src/lib/supabase";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function ChatMessageContent({
   body,
@@ -112,24 +113,23 @@ export default function ChatMessageContent({
   );
 }
 const s = StyleSheet.create({
-  textContent: { gap: 10 },
+  textContent: { gap: ds.spacing[3] },
   eventLink: {
     minHeight: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    paddingVertical: ds.spacing[3],
+    paddingHorizontal: ds.spacing[4],
+    borderRadius: ds.radii.md,
     alignItems: "center",
     backgroundColor: vibesTheme.colors.accentMustard,
   },
   eventLinkText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   thumbnail: {
     width: 200,
     height: 220,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     overflow: "hidden",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.background,
@@ -138,6 +138,6 @@ const s = StyleSheet.create({
   error: {
     color: vibesTheme.colors.primaryText,
     textAlign: "center",
-    padding: 12,
+    padding: ds.spacing[3],
   },
 });

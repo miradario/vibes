@@ -51,6 +51,7 @@ import { getPurposeDisplayLabel } from "../src/screens/Onboarding/vibesOnboardin
 import { vibesTheme } from "../src/theme/vibesTheme";
 
 import { VIBES_LOGO as VIBES_FALLBACK_ILLUSTRATION } from "../src/constants/brandAssets";
+import * as ds from "../src/theme/tokens";
 
 type Props = {
   visible: boolean;
@@ -75,8 +76,8 @@ type Props = {
 };
 
 // Explicit full-screen photo treatment: black is scoped to this viewer.
-const PROFILE_PHOTO_BACKGROUND = "#000000";
-const PROFILE_PHOTO_GRADIENT = ["#00000000", "#00000080", "#000000FF"] as const;
+const PROFILE_PHOTO_BACKGROUND = ds.colors.exception.photoViewerBlack;
+const PROFILE_PHOTO_GRADIENT = [ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.none), ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.strong), ds.colors.exception.photoViewerBlack] as const;
 
 const DetailSection = ({
   label,
@@ -923,7 +924,7 @@ const UserProfileSheet = ({
               locations={[0, 0.55, 1]}
               style={[
                 localStyles.nextProfileCopy,
-                { paddingBottom: insets.bottom + 40 },
+                { paddingBottom: insets.bottom + ds.spacing[12] },
               ]}
             >
               <Text style={localStyles.profileName} numberOfLines={2}>
@@ -1041,7 +1042,7 @@ const UserProfileSheet = ({
             />
             )
           ) : (
-            withoutPhoto ? <ProfileWithoutPhoto active={visible && !photoChromeHidden} name={profile.name} age={profile.age} zodiac={profile.zodiac} /> : <View style={localStyles.fallbackCanvas}><Icon name="person-outline" size={72} color={vibesTheme.colors.secondaryText} /></View>
+            withoutPhoto ? <ProfileWithoutPhoto active={visible && !photoChromeHidden} name={profile.name} age={profile.age} zodiac={profile.zodiac} /> : <View style={localStyles.fallbackCanvas}><Icon name="person-outline" size={ds.iconSize.xxl} color={vibesTheme.colors.secondaryText} /></View>
           )}
 
           </Animated.View>
@@ -1077,7 +1078,7 @@ const UserProfileSheet = ({
 
           <LinearGradient
             pointerEvents="none"
-            colors={["#00000080", "#00000000"]}
+            colors={[ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.strong), ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.none)]}
             style={[localStyles.topGradient, { height: insets.top + 120, opacity: withoutPhoto ? 0 : 1 }]}
           />
 
@@ -1117,7 +1118,7 @@ const UserProfileSheet = ({
             pointerEvents={detailsVisible ? "none" : undefined}
             style={[
               localStyles.profileOverlay,
-              { paddingBottom: Math.max(insets.bottom, 4) },
+              { paddingBottom: Math.max(insets.bottom, ds.spacing[1]) },
             ]}
           >
             <View style={[localStyles.nameRow, withoutPhoto && { display: "none" } ]}>
@@ -1138,8 +1139,8 @@ const UserProfileSheet = ({
               onPress={showDetails}
               style={localStyles.galleryHint}
             >
-              {withoutPhoto ? <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 15 }}>Ver perfil completo</Text> : null}
-              <Icon name="chevron-up" size={32} color={withoutPhoto ? vibesTheme.colors.accentBlue : vibesTheme.colors.background} />
+              {withoutPhoto ? <Text style={{ color: vibesTheme.colors.accentBlue, ...ds.textStyles.body }}>Ver perfil completo</Text> : null}
+              <Icon name="chevron-up" size={ds.iconSize.xl} color={withoutPhoto ? vibesTheme.colors.accentBlue : vibesTheme.colors.background} />
             </TouchableOpacity>
           </View>}
         </Animated.View>
@@ -1176,7 +1177,7 @@ const UserProfileSheet = ({
                 },
               ]}
             >
-              <Icon name="checkmark" size={36} color={vibesTheme.colors.accentBlue} />
+              <Icon name="checkmark" size={ds.iconSize.xl} color={vibesTheme.colors.accentBlue} />
             </Animated.View>
             <Animated.View
               style={[
@@ -1207,7 +1208,7 @@ const UserProfileSheet = ({
                 },
               ]}
             >
-              <Icon name="close" size={36} color={vibesTheme.colors.accentCoral} />
+              <Icon name="close" size={ds.iconSize.xl} color={vibesTheme.colors.accentCoral} />
             </Animated.View>
           </View>
         )}
@@ -1251,7 +1252,7 @@ const UserProfileSheet = ({
               }
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingTop: insets.top, paddingBottom: detailsActionsHeight + 24 }}
+              contentContainerStyle={{ paddingTop: insets.top, paddingBottom: detailsActionsHeight + ds.spacing[6] }}
             >
               <View style={localStyles.detailsHeader}>
                 <Text style={localStyles.detailsName}>{nameWithAge}</Text>
@@ -1262,7 +1263,7 @@ const UserProfileSheet = ({
                   onPress={closeDetails}
                   style={localStyles.lowerDetailsButton}
                 >
-                  <Icon name="chevron-down" size={30} color={vibesTheme.colors.accentMustard} />
+                  <Icon name="chevron-down" size={ds.iconSize.xl} color={vibesTheme.colors.accentMustard} />
                 </TouchableOpacity>
               </View>
               <View style={{ width, height: compactPhotoHeight }}>
@@ -1354,7 +1355,7 @@ const UserProfileSheet = ({
                       >
                         <Icon
                           name="calendar-outline"
-                          size={18}
+                          size={ds.iconSize.md}
                           color={vibesTheme.colors.accentMustard}
                         />
                         <Text style={localStyles.detailValueFlexible}>
@@ -1369,7 +1370,7 @@ const UserProfileSheet = ({
                       >
                         <Icon
                           name="sparkles-outline"
-                          size={18}
+                          size={ds.iconSize.md}
                           color={vibesTheme.colors.accentBlue}
                         />
                         <Text style={localStyles.detailValueFlexible}>
@@ -1386,7 +1387,7 @@ const UserProfileSheet = ({
               <View
                 pointerEvents="box-none"
                 onLayout={({ nativeEvent }) => setDetailsActionsHeight(nativeEvent.layout.height)}
-                style={[localStyles.floatingDetailsActions, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}
+                style={[localStyles.floatingDetailsActions, { paddingBottom: Math.max(insets.bottom, ds.spacing[3]) + ds.spacing[6] }]}
               >
                 {renderActions(true)}
               </View>
@@ -1409,7 +1410,7 @@ const localStyles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 28,
+    paddingHorizontal: ds.spacing[8],
     height: "45%",
     justifyContent: "flex-end",
   },
@@ -1427,10 +1428,10 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderRadius: 36,
-    backgroundColor: "rgba(254, 254, 253, 0.97)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.bg.surface,
   },
-  swipeStampText: { fontFamily: vibesTheme.fonts.subtitle, fontSize: 22 },
+  swipeStampText: { ...ds.textStyles.title },
   fullscreenSheet: { width: "100%", backgroundColor: PROFILE_PHOTO_BACKGROUND },
   screen: { flex: 1, overflow: "hidden", backgroundColor: PROFILE_PHOTO_BACKGROUND },
   fallbackCanvas: {
@@ -1444,19 +1445,19 @@ const localStyles = StyleSheet.create({
     position: "absolute",
     width: 280,
     height: 280,
-    borderRadius: 140,
+    borderRadius: ds.radii.pill,
     left: -150,
     top: "18%",
-    backgroundColor: "rgba(57, 120, 184, 0.55)",
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.strong),
   },
   fallbackCircleGold: {
     position: "absolute",
     width: 240,
     height: 240,
-    borderRadius: 120,
+    borderRadius: ds.radii.pill,
     right: -125,
     bottom: "18%",
-    backgroundColor: "rgba(244, 163, 64, 0.25)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
   fallbackIllustration: { width: "84%", height: "66%" },
   bottomGradient: {
@@ -1486,7 +1487,7 @@ const localStyles = StyleSheet.create({
     left: 78,
     right: 28,
     flexDirection: "row",
-    gap: 7,
+    gap: ds.spacing[2],
     zIndex: 10,
   },
   // Photo position bars: thicker, higher-contrast and with a soft shadow so
@@ -1495,19 +1496,15 @@ const localStyles = StyleSheet.create({
     flex: 1,
     height: 6,
     minWidth: 12,
-    borderRadius: 3,
-    backgroundColor: "rgba(254, 254, 253, 0.5)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.strong),
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(0, 0, 0, 0.18)",
-    shadowColor: "#000",
-    shadowOpacity: 0.35,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
+    borderColor: ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.medium),
+    ...ds.shadows.sm,
   },
   indicatorActive: {
     backgroundColor: vibesTheme.colors.accentMustard,
-    borderColor: "rgba(0, 0, 0, 0.28)",
+    borderColor: ds.withAlpha(ds.colors.exception.photoViewerBlack, ds.opacity.scrim),
     transform: [{ scaleY: 1.35 }],
   },
   profileOverlay: {
@@ -1515,134 +1512,118 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 24,
+    paddingHorizontal: ds.spacing[6],
     zIndex: 3,
   },
   galleryHint: { alignSelf: "center", alignItems: "center", marginTop: 0, marginBottom: 0, minHeight: 48 },
   galleryHintText: {
-    marginTop: 2,
-    color: "rgba(254, 254, 253, 0.9)",
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    marginTop: ds.spacing[1],
+    color: ds.colors.bg.surfaceTranslucent,
+    ...ds.textStyles.subtitleMedium,
   },
   nameRow: {
     transform: [{ translateY: 6 }],
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 12,
-    marginBottom: 4,
+    gap: ds.spacing[3],
+    marginBottom: ds.spacing[1],
   },
   nameCopy: { flex: 1, minWidth: 0 },
   profileName: {
     color: vibesTheme.colors.background,
-    fontSize: 30,
-    lineHeight: 36,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.display,
   },
   profileAge: {
-    marginTop: 1,
-    color: "rgba(254, 254, 253, 0.88)",
-    fontSize: 21,
-    lineHeight: 27,
-    fontFamily: vibesTheme.fonts.medium,
+    marginTop: ds.spacing[0],
+    color: ds.colors.bg.surfaceTranslucent,
+    ...ds.textStyles.heading,
   },
   moreButton: {
     minWidth: 112,
     minHeight: 48,
-    paddingHorizontal: 10,
-    borderRadius: 24,
+    paddingHorizontal: ds.spacing[3],
+    borderRadius: ds.radii.xl,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
-    backgroundColor: "rgba(254, 254, 253, 0.94)",
+    gap: ds.spacing[2],
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
   },
   moreButtonText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   vibeActions: {
     flexDirection: "row-reverse",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    gap: 16,
-    marginTop: 18,
+    gap: ds.spacing[4],
+    marginTop: ds.spacing[4],
   },
-  vibeAction: { minWidth: 64, alignItems: "center", gap: 6 },
+  vibeAction: { minWidth: 64, alignItems: "center", gap: ds.spacing[2] },
   bareActionIcon: { backgroundColor: "transparent", borderWidth: 0 },
   actionIconShadow: {
-    textShadowColor: "rgba(43, 43, 43, 0.65)",
+    textShadowColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
   vibeActionCircle: {
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.6)",
+    borderColor: ds.withAlpha(ds.colors.base.paper, ds.opacity.high),
   },
   vibeActionLabel: {
     color: vibesTheme.colors.background,
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.bodySmall,
   },
-  actions: { marginTop: 18, gap: 6 },
+  actions: { marginTop: ds.spacing[4], gap: ds.spacing[2] },
   primaryActionTouch: {
     minHeight: 56,
-    borderRadius: 28,
+    borderRadius: ds.radii.xl,
     overflow: "hidden",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    ...ds.glow.accent,
+    elevation: ds.shadows.md.elevation,
   },
   primaryAction: {
     minHeight: 56,
-    paddingHorizontal: 22,
+    paddingHorizontal: ds.spacing[6],
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 28,
+    borderRadius: ds.radii.xl,
   },
   primaryActionText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 21,
-    lineHeight: 26,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
   secondaryAction: {
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: ds.spacing[4],
   },
   nextAction: {
     minHeight: 48,
-    borderRadius: 22,
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
-    borderColor: "rgba(57, 120, 184, 0.28)",
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
     backgroundColor: vibesTheme.colors.background,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 18,
+    gap: ds.spacing[2],
+    paddingHorizontal: ds.spacing[4],
   },
   nextActionText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
   secondaryActionText: {
-    color: "rgba(254, 254, 253, 0.9)",
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    color: ds.colors.bg.surfaceTranslucent,
+    ...ds.textStyles.subtitleMedium,
   },
   panelSecondaryActionText: { color: vibesTheme.colors.secondaryText },
   destructiveSecondaryActionText: { color: vibesTheme.colors.accentBlue },
@@ -1656,115 +1637,101 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   detailsScroll: { flex: 1 },
-  detailsPhotoIndicators: { position: "absolute", top: 4, left: 16, right: 16, flexDirection: "row", gap: 5 },
+  detailsPhotoIndicators: { position: "absolute", top: 4, left: 16, right: 16, flexDirection: "row", gap: ds.spacing[1] },
   detailsPhotoIndicatorTouch: { flex: 1, minHeight: 44, justifyContent: "center" },
   lowerDetailsButton: {
-    minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 12,
+    minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: ds.spacing[2], paddingHorizontal: ds.spacing[3],
   },
   dragArea: { minHeight: 44, alignItems: "center", justifyContent: "center" },
   dragHandle: {
     width: 82,
     height: 6,
-    borderRadius: 3,
-    backgroundColor: "rgba(43, 43, 43, 0.17)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.border.default,
   },
   detailsHeader: {
     minHeight: 72,
-    paddingLeft: 24,
-    paddingRight: 16,
-    paddingBottom: 12,
+    paddingLeft: ds.spacing[6],
+    paddingRight: ds.spacing[4],
+    paddingBottom: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   detailsName: {
     flex: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 26,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.title,
   },
   detailsCloseButton: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
+    borderColor: ds.colors.border.subtle,
   },
   detailsDivider: {
-    height: StyleSheet.hairlineWidth,
-    marginHorizontal: 24,
-    backgroundColor: "rgba(43, 43, 43, 0.16)",
+    height: ds.componentSize.divider,
+    marginHorizontal: ds.spacing[6],
+    backgroundColor: ds.colors.border.subtle,
   },
-  detailsContent: { paddingHorizontal: 24, paddingTop: 18 },
+  detailsContent: { paddingHorizontal: ds.spacing[6], paddingTop: ds.spacing[4] },
   detailSection: {
-    marginBottom: 20, paddingVertical: 18, borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(110, 110, 110, 0.25)",
+    marginBottom: ds.spacing[5], paddingVertical: ds.spacing[4], borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
   },
-  detailItem: { marginTop: 20, gap: 10 },
+  detailItem: { marginTop: ds.spacing[5], gap: ds.spacing[3] },
   detailLabel: {
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 16,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   emphasizedDetailLabel: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 23,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.heading,
   },
   detailBody: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 27,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
   detailValue: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 20,
-    lineHeight: 27,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
   detailValueFlexible: {
     flex: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 17,
-    lineHeight: 23,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   inlineDetail: {
     minHeight: 30,
     flexDirection: "row",
     alignItems: "center",
-    gap: 9,
+    gap: ds.spacing[2],
   },
-  pillRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  pillRow: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
   groupedPillList: {
-    marginTop: 18,
-    gap: 22,
+    marginTop: ds.spacing[4],
+    gap: ds.spacing[6],
   },
   pillGroup: {
-    gap: 10,
+    gap: ds.spacing[3],
   },
   pillGroupLabel: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 12,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.caption,
     textTransform: "uppercase",
   },
   pill: {
     maxWidth: "100%",
     flexShrink: 1,
     minHeight: 40,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 20,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[2],
+    borderRadius: ds.radii.xl,
     justifyContent: "center",
     backgroundColor: "transparent",
     borderWidth: 1,
@@ -1776,29 +1743,23 @@ const localStyles = StyleSheet.create({
   },
   pillText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
-  sharedList: { gap: 10 },
-  panelActions: { marginTop: 0, flexDirection: "row", alignItems: "center", gap: 12 },
+  sharedList: { gap: ds.spacing[3] },
+  panelActions: { marginTop: 0, flexDirection: "row", alignItems: "center", gap: ds.spacing[3] },
   floatingActionItem: { flex: 1, minHeight: 52, alignItems: "center", justifyContent: "center" },
   floatingProfileAction: {
     backgroundColor: vibesTheme.colors.background,
     width: 76,
     height: 76,
-    borderRadius: 38,
+    borderRadius: ds.radii.pill,
     justifyContent: "center",
     gap: 0,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    ...ds.shadows.sm,
   },
   floatingDetailsActions: {
     position: "absolute", left: 0, right: 0, bottom: 0,
-    paddingTop: 12, paddingHorizontal: 24,
+    paddingTop: ds.spacing[3], paddingHorizontal: ds.spacing[6],
     backgroundColor: "transparent",
   },
 });

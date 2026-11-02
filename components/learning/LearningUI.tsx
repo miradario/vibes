@@ -37,89 +37,70 @@ import type {
 import * as ImagePicker from "expo-image-picker";
 import { uploadImageToSupabase } from "../../src/lib/supabaseStorage";
 import { useAuthSession } from "../../src/auth/auth.queries";
+import { cardStyles } from "../ui/surfaceStyles";
+import { chipHitSlop, chipStyles } from "../ui/chipStyles";
+import * as ds from "../../src/theme/tokens";
 const c = vibesTheme.colors;
 export const ui = StyleSheet.create({
   page: { flex: 1, backgroundColor: c.background },
   content: {
-    padding: 24,
-    paddingBottom: 48,
+    padding: ds.spacing[6],
+    paddingBottom: ds.spacing[12],
     width: "100%",
     maxWidth: 740,
     alignSelf: "center",
-    gap: 16,
+    gap: ds.spacing[4],
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
     flexWrap: "wrap",
   },
   grow: { flex: 1 },
   heading: {
-    fontSize: 26,
-    lineHeight: 32,
+    ...ds.textStyles.title,
     color: c.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
   },
-  title: { fontSize: 24, lineHeight: 30, fontFamily: vibesTheme.fonts.bold, color: c.primaryText },
-  body: { fontSize: 16, lineHeight: 24, fontFamily: vibesTheme.fonts.regular, color: c.primaryText },
-  muted: { fontSize: 15, lineHeight: 22, color: c.secondaryText },
-  card: {
-    borderWidth: 1,
-    borderColor: c.borderSoft,
-    borderRadius: 24,
-    padding: 16,
-    gap: 10,
-    backgroundColor: c.surface,
-  },
+  title: { ...ds.textStyles.title, color: c.primaryText },
+  body: { ...ds.textStyles.body, color: c.primaryText },
+  muted: { ...ds.textStyles.body, color: c.secondaryText },
+  card: { ...cardStyles.base, padding: ds.spacing[4], gap: ds.spacing[3] },
   input: {
     borderWidth: 1,
-    borderColor: `${c.primaryText}1F`,
-    borderRadius: 16,
+    borderColor: ds.colors.border.default,
+    borderRadius: ds.radii.lg,
     minHeight: 48,
-    padding: 14,
+    padding: ds.spacing[4],
     color: c.primaryText,
-    fontSize: 16,
+    ...ds.textStyles.body,
     backgroundColor: c.surface,
   },
-  chip: {
-    borderWidth: 1,
-    borderColor: `${c.primaryText}1F`,
-    borderRadius: 24,
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  selected: { backgroundColor: `${c.accentMustard}24`, borderColor: c.accentMustard },
-  chipText: { fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.semibold, color: c.primaryText },
-  selectedText: { color: c.primaryText },
-  link: { color: c.accentBlue, fontSize: 18 },
-  photo: { width: 92, height: 100, borderRadius: 16 },
-  cover: { height: 190, width: "100%", borderRadius: 18 },
+  link: { color: c.accentBlue, ...ds.textStyles.body },
+  photo: { width: 92, height: 100, borderRadius: ds.radii.lg },
+  cover: { height: 190, width: "100%", borderRadius: ds.radii.lg },
   fallback: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.12)",
+    backgroundColor: ds.colors.bg.selected,
   },
   notice: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: "rgba(57, 120, 184, 0.10)",
-    gap: 8,
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.colors.feedback.infoBg,
+    gap: ds.spacing[2],
   },
-  error: { backgroundColor: "rgba(216, 140, 122, 0.15)" },
+  error: { backgroundColor: ds.colors.feedback.errorBg },
   primaryText: { color: c.primaryText },
   secondaryButton: {
     backgroundColor: c.surface,
     borderColor: c.accentBlue,
     borderWidth: 1,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...ds.shadows.none,
   },
   disabled: { opacity: 0.5 },
-  sheet: { backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 18, maxHeight: "85%" },
-  tiny: { fontSize: 15, color: c.secondaryText },
+  sheet: { backgroundColor: c.surface, borderTopLeftRadius: ds.radii.xl, borderTopRightRadius: ds.radii.xl, padding: ds.spacing[6], gap: ds.spacing[4], maxHeight: "85%" },
+  tiny: { ...ds.textStyles.body, color: c.secondaryText },
 });
 export function Button({
   label,
@@ -157,7 +138,7 @@ export function Link({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[{ paddingVertical: 8 }, disabled && ui.disabled]}
+      style={[{ paddingVertical: ds.spacing[2] }, disabled && ui.disabled]}
     >
       <Text style={ui.link}>{label}</Text>
     </TouchableOpacity>
@@ -204,7 +185,7 @@ export function ImageField({
     }
   };
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: ds.spacing[3] }}>
       <Field
         label={label}
         value={value}
@@ -238,7 +219,7 @@ export function Chips({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 8 }}
+      contentContainerStyle={{ gap: ds.spacing[2] }}
     >
       {options.map((o) => (
         <TouchableOpacity
@@ -246,9 +227,10 @@ export function Chips({
           accessibilityRole="button"
           accessibilityState={{ selected: o.value === value }}
           onPress={() => onChange(o.value)}
-          style={[ui.chip, o.value === value && ui.selected]}
+          hitSlop={chipHitSlop}
+          style={[chipStyles.base, o.value === value && chipStyles.selected]}
         >
-          <Text style={[ui.chipText, o.value === value && ui.selectedText]}>
+          <Text style={[chipStyles.label, o.value === value && chipStyles.labelSelected]}>
             {o.label}
           </Text>
         </TouchableOpacity>
@@ -274,7 +256,7 @@ export function Field({
   editable?: boolean;
 }) {
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: ds.spacing[2] }}>
       <Text style={ui.body}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
@@ -339,7 +321,7 @@ export function Page({
           accessibilityRole="button"
           accessibilityLabel="Volver"
           onPress={() => nav.goBack()}
-          style={{ padding: 8 }}
+          style={{ padding: ds.spacing[2] }}
         >
           <ChevronLeft color={c.accentBlue} size={28} />
         </TouchableOpacity>
@@ -559,7 +541,7 @@ export function useLearningAction() {
             if (!mutation.isPending) setConfirmation(null);
           }}
           closeOnBackdropPress={!mutation.isPending}
-          sheetStyle={[ui.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}
+          sheetStyle={[ui.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[6]) }]}
         >
           <Text style={ui.title}>Confirmar acción</Text>
           <Text style={ui.body}>{confirmation?.text}</Text>
@@ -605,10 +587,10 @@ export const modalityOptions = Object.entries(modalityLabels).map(
 export { statusLabels };
 
 const exploreCard = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", gap: 12, padding: 10, borderRadius: 20, borderWidth: 1, borderColor: `${c.primaryText}14`, backgroundColor: c.surface },
-  image: { width: 92, height: 100, borderRadius: 14, overflow: "hidden" },
-  copy: { flex: 1, gap: 3 },
-  title: { fontFamily: vibesTheme.fonts.bold, fontSize: 17, lineHeight: 23, color: c.primaryText },
-  date: { fontFamily: vibesTheme.fonts.medium, fontSize: 14, lineHeight: 20, color: c.accentBlue },
-  meta: { fontSize: 13, lineHeight: 18, color: c.secondaryText },
+  row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], padding: ds.spacing[3], borderRadius: ds.radii.xl, borderWidth: 1, borderColor: ds.colors.bg.subtle, backgroundColor: c.surface },
+  image: { width: 92, height: 100, borderRadius: ds.radii.lg, overflow: "hidden" },
+  copy: { flex: 1, gap: ds.spacing[1] },
+  title: { ...ds.textStyles.subtitle, color: c.primaryText },
+  date: { ...ds.textStyles.labelMedium, color: c.accentBlue },
+  meta: { ...ds.textStyles.bodySmall, color: c.secondaryText },
 });

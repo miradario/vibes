@@ -6,6 +6,7 @@ import VibesActionButton from "../VibesActionButton";
 import { Text } from "../Typography";
 import { useI18n } from "../../src/i18n";
 import { restartStyles as s } from "./styles";
+import * as ds from "../../src/theme/tokens";
 
 /** Confirms a restart: the copy is only for the user and the friends they invite. */
 export default function RestartChallengeConfirmSheet({
@@ -26,7 +27,7 @@ export default function RestartChallengeConfirmSheet({
     <AnimatedSheetModal
       visible={visible}
       onClose={onClose}
-      sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, 20) }]}
+      sheetStyle={[s.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[5]) }]}
     >
       <View style={s.handle} />
       <Text accessibilityRole="header" style={s.sheetTitle}>

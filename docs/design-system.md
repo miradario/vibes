@@ -88,6 +88,8 @@ Norma: una acción principal por bloque de decisión. Texto en forma de verbo co
 | Secundario de acento (contorno azul) | Alto mínimo 52, radio `pill`, padding horizontal 16 | 16 / 22, `semibold`, 600, centrado | `accentBlue` | `surface`, borde 1,5 de `accentBlue` al 45% |
 | Acción de cabecera | Alto mínimo 48, radio 14, padding horizontal 18, gap 8 | 16 / 20, `semibold`, 600 | `primaryText` | `secondaryText` al 4,7% (`0C`) |
 | Solo icono | Área mínima 44 × 44; icono 20–24 | Sin texto visual; label accesible obligatorio | `primaryText` | `surface` o superficie suave |
+| Solo icono lleno (`iconButtonFilled`) | 44 × 44 (`touchTarget`), radio `pill`; icono `iconSize.md` (20) | Sin texto visual; label accesible obligatorio | `text/on-dark` | `action/primary`, sin borde ni sombra; deshabilitado con `buttonDisabled` (44%). Uso: enviar en Chat, EventChat, CommunityGroupChat y Vibi |
+| Selector de día (`DayPill variant="selectable"`) | Círculo 40 (`componentSize.dayPill.md`), hitSlop a 44 | `text/label` | `text/primary` | default `bg/surface` + `border/default`; selected `bg/selected` + `border/selected` (igual que Chip selected); disabled `buttonDisabled`. Multiselección, rol checkbox. Uso: días de la semana en EventRecurrenceEditor |
 | Volver | 44 × 44, radio 13; chevron 27 | Label accesible “Volver” | `primaryText` | `surface` con `secondaryText` al 4,7% |
 | Terciario / omitir | Área táctil mínima 44 de alto | 18 / 24, `regular`, 400 | `secondaryText` | Transparente |
 | Autenticación Google | Alto mínimo 54, radio 22, borde 1 | 16 / 22, `medium`, 500 | `primaryText` | `surface` al 92%; borde mostaza al 28% |
@@ -111,6 +113,10 @@ Usar botones de solo icono de 44 × 44, radio 14, fondo `secondaryText` al 4,7% 
 - **Destructivo:** acción explícita y confirmación proporcional a la pérdida de datos; usar paleta autorizada, no rojo agregado.
 
 En Editar perfil, “Guardar” mantiene sus dimensiones y su texto durante el envío: el tilde se reemplaza por `VibesLoader`. La pantalla permanece abierta si falla el guardado.
+
+### ListItem (`components/ui/ListItem.tsx`, 30/10)
+
+Fila única de listas, menús y ajustes (DS §5.18). Props: `title`, `subtitle?`, `leadingIcon?` (caja 36, `radius/md`, `bg/subtle`, ícono 20) o `leading?` (avatar o nodo), `trailing?` (`chevron` 20 `icon/muted`, `check` 20 `border/selected`, `text` en `text/caption` secondary, `switch`, `custom`), `tone` (`default` | `destructive`: caja `feedback/error-bg` e ícono `action/destructive`), `selected`/`selectable`/`multiple`, `disabled`, `divider`, `size` (`md` 56 | `lg` 72 con avatar; `componentSize.listItem`). Padding X `spacing/4`, Y `spacing/3`, gap `spacing/3`. Título `text/subtitle` 1 línea; subtítulo `text/body-small` secondary 1 línea. Estados: pressed `bg/subtle`, selected `bg/selected`, disabled `opacity/disabled`. Divider 1 px `border/subtle` abajo (no en el último). Accesibilidad: `button`; `radio` si es seleccionable (`checkbox` con `multiple`).
 
 ## Campos, búsqueda y selección
 
@@ -369,3 +375,21 @@ El onboarding usa cabeceras compactas en todos sus pasos: progreso de 44, paddin
 Tus comunidades usa título 22/28, decoración 44×48 y opciones a 6 de la cabecera, con separación 8 entre opciones. Sin margen superior adicional en el bloque.
 
 Crear/editar evento permite elegir entre direcciones publicadas mediante AnimatedSheetModal con búsqueda, carga, error y vacío. Deduplicar direcciones, reutilizar coordenadas existentes y mantener entrada manual y validación de direcciones nuevas.
+
+### SectionHeader (`components/ui/SectionHeader.tsx`, 30/10)
+Título de sección en `textStyles.heading` (`text/primary`). Con `onPress` se vuelve link de sección ("ver todo"): toda la fila es tocable (touch target 44 por hitSlop, sin inflar la fila), role `link`, label `Ver <título>` (sobrescribible) y chevron `chevron-forward` de 20 (`iconSize.md`) en el token nuevo `icon/accent` (mustard). Los chevrons dentro de cards siguen en `icon/muted`. El margen inferior lo pone la pantalla (12 al primer card). Uso: Home (Eventos para vos, Tus desafíos, Personas con tu vibe) y ConnectionStrip (Nuevas conexiones).
+
+### TabBarItem (`components/CustomTabBar.tsx`, DS §5.22, 30/10)
+Tab activo: pill `componentSize.tabIndicator` (48×28, `radius/pill`) con el acento de la pestaña (Inicio/Eventos/Chats coral, Desafíos/Descubrir azul, Clases mostaza) detrás del ícono de 20 (`iconSize.md`, `icon/default`), sin salto de tamaño. Label siempre visible en `textStyles.caption`, `text/secondary` sin seleccionar y `text/primary` seleccionado. Reemplaza la burbuja elevada coral. Touch target = alto de la barra (≥44), role `tab` con `selected`. Geometría en `src/lib/tabBarLayout.ts` (`TAB_INDICATOR`, `getTabIndicatorCenterY`, que usa el spotlight del FTUX).
+
+### Miniaturas de cards (`componentSize.cardThumb*`, 30/10)
+`componentSize.cardThumb` = 76 (cuadrada, desafíos) y `componentSize.cardThumbWide` = 112×76 (eventos), con `radii.md` (12) para la media interna. Uso: HomeOverview (cards de desafío y evento), placeholders de Home y ChallengeFeedCard.
+
+### PersonCard (`components/ui/PersonCard.tsx`, 30/10)
+Card chica de persona para carruseles: ancho y foto `componentSize.personCard` (96), `radii.lg`, borde 1 `border/default`, fondo `bg/surface`, padding `spacing/2`. Nombre `textStyles.subtitle` (1 línea), tag opcional `textStyles.micro` `text/secondary` (2 líneas). Toda la card es tocable (>44), role button con label `Ver perfil de <nombre>`, pressed `opacity.pressed`. `blurred` desenfoca la foto (`componentSize.personCardBlur`). Uso: Home "Personas con tu vibe".
+
+### Card compacta (`cardStyles.paddingCompact`, 30/10)
+Para cards-fila con miniatura (Home: desafíos y eventos): padding vertical `spacing/3` (12) y horizontal `spacing/4` (16). El resto de las cards usa `cardStyles.padding` (16).
+
+### Títulos de sección en sheets de filtros (30/10)
+En los sheets de Filtros (Descubrir e Inicio) los títulos de sección (Género, Edad, Distancia, Nacionalidad…) usan `textStyles.subtitle` (16/22 semibold, `text/primary`), por debajo del título del sheet. `RangeSlider` acepta `labelStyle="section"` para usar ese estilo (por defecto `textStyles.title`) y `hideUnlimitedUpper` para no repetir "Sin límite" abajo cuando no hay máximo (el botón de arriba ya lo muestra y resetea).

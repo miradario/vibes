@@ -5,6 +5,7 @@ import Icon from "./Icon";
 import { useLogoutMutation } from "../src/auth/auth.queries";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function CancelOnboardingButton({ disabled = false, onCancel }: { disabled?: boolean; onCancel?: () => void }) {
   const navigation = useNavigation();
@@ -27,7 +28,7 @@ export default function CancelOnboardingButton({ disabled = false, onCancel }: {
     }
   };
   return <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cancelar onboarding" disabled={disabled || logout.isPending} onPress={() => void cancel()} style={styles.button}>
-    <Icon name="close" size={24} color={vibesTheme.colors.accentMustard} />
+    <Icon name="close" size={ds.iconSize.lg} color={vibesTheme.colors.accentMustard} />
   </TouchableOpacity>;
 }
-const styles = StyleSheet.create({ button: { width: 56, height: 56, padding: 16, alignItems: "center", justifyContent: "center" } });
+const styles = StyleSheet.create({ button: { width: 56, height: 56, padding: ds.spacing[4], alignItems: "center", justifyContent: "center" } });

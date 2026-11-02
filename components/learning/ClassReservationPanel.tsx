@@ -9,16 +9,17 @@ import { useReservationRequests } from "../../src/learning/reservationQueries";
 import { Button, Chips, useLearningAction, ui } from "./LearningUI";
 import Icon from "../Icon";
 import AnimatedSheetModal from "../AnimatedSheetModal";
+import * as ds from "../../src/theme/tokens";
 const c = vibesTheme.colors;
 function ReservationSelect({ label, options, value, onChange }: { label:string; options:{id:string;label:string}[];value:string|null;onChange:(value:string)=>void }) {
   const [open,setOpen]=useState(false);
-  return <View style={{gap:4}}><Text style={s.label}>{label}</Text>
+  return <View style={{gap:ds.spacing[1]}}><Text style={s.label}>{label}</Text>
     <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${label}: ${options.find(option=>option.id===value)?.label ?? "Seleccionar"}`} accessibilityState={{expanded:open}} onPress={()=>setOpen(true)} style={s.select}>
-      <Text style={[ui.body,{flex:1}]}>{options.find(option=>option.id===value)?.label ?? "Seleccionar"}</Text><Icon name="chevron-down" size={20} color={c.primaryText}/>
+      <Text style={[ui.body,{flex:1}]}>{options.find(option=>option.id===value)?.label ?? "Seleccionar"}</Text><Icon name="chevron-down" size={ds.iconSize.md} color={c.primaryText}/>
     </TouchableOpacity>
-    <AnimatedSheetModal visible={open} onClose={()=>setOpen(false)} sheetStyle={{backgroundColor:c.surface,borderTopLeftRadius:24,borderTopRightRadius:24,padding:24,maxHeight:"75%"}}>
-      <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}><Text style={ui.title}>{label}</Text><TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar selector" onPress={()=>setOpen(false)} style={{padding:12}}><Icon name="close" size={22} color={c.primaryText}/></TouchableOpacity></View>
-      <ScrollView>{options.map(option=><TouchableOpacity key={option.id} accessibilityRole="radio" accessibilityState={{checked:value===option.id}} onPress={()=>{onChange(option.id);setOpen(false);}} style={s.select}><Text style={[ui.body,{flex:1}]}>{option.label}</Text>{value===option.id && <Icon name="checkmark" size={20} color={c.primaryText}/>}</TouchableOpacity>)}</ScrollView>
+    <AnimatedSheetModal visible={open} onClose={()=>setOpen(false)} sheetStyle={{backgroundColor:c.surface,borderTopLeftRadius:ds.radii.xl,borderTopRightRadius:ds.radii.xl,padding:ds.spacing[6],maxHeight:"75%"}}>
+      <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}><Text style={ui.title}>{label}</Text><TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar selector" onPress={()=>setOpen(false)} style={{padding:ds.spacing[3]}}><Icon name="close" size={ds.iconSize.lg} color={c.primaryText}/></TouchableOpacity></View>
+      <ScrollView>{options.map(option=><TouchableOpacity key={option.id} accessibilityRole="radio" accessibilityState={{checked:value===option.id}} onPress={()=>{onChange(option.id);setOpen(false);}} style={s.select}><Text style={[ui.body,{flex:1}]}>{option.label}</Text>{value===option.id && <Icon name="checkmark" size={ds.iconSize.md} color={c.primaryText}/>}</TouchableOpacity>)}</ScrollView>
     </AnimatedSheetModal>
   </View>;
 }
@@ -43,7 +44,7 @@ export default function ClassReservationPanel({ source }: { source: ReservationS
     <Chips value={mode} onChange={setMode} options={[{value:"single",label:"Clase suelta"},{value:"monthly",label:"Plan mensual"}]} />
     <ReservationSelect label="Mes" options={months.map(value => ({ id: value, label: new Date(value+"T12:00:00Z").toLocaleDateString("es-AR", {month:"long",year:"numeric",timeZone:"UTC"}) }))} value={month} onChange={value => { if(value) { setMonth(value); setSingle(""); setDays([]); } }} />
     {mode === "monthly" ? <>
-      <View style={{gap:4}}><Text style={s.label}>Frecuencia</Text>
+      <View style={{gap:ds.spacing[1]}}><Text style={s.label}>Frecuencia</Text>
       <Chips value={days.length ? days.join(",") : "all"} onChange={value => setDays(value === "all" ? [] : [Number(value)])} options={[...weekdays.map(day => ({value:String(day),label:`Solo ${WEEKDAYS[day].toLowerCase()}`})),{value:"all",label:weekdays.length > 2 ? "Todos los días" : "Todos"}]} /></View>
       <View style={s.summary}>
         <Text style={s.summaryTitle}>{selected.length} {selected.length === 1 ? "clase incluida" : "clases incluidas"}</Text>
@@ -75,12 +76,12 @@ export default function ClassReservationPanel({ source }: { source: ReservationS
   </View>;
 }
 const s = StyleSheet.create({
-  select:{flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:12,paddingVertical:10,minHeight:48,borderRadius:16,borderWidth:1,borderColor:`${c.primaryText}24`,marginBottom:0},
-  heading:{fontSize:20,lineHeight:26,fontFamily:vibesTheme.fonts.semibold,color:c.primaryText},
-  hint:{fontSize:13,lineHeight:18,color:c.secondaryText},
-  section: { gap:10 }, label: {fontSize:14,lineHeight:20,fontFamily:vibesTheme.fonts.semibold,color:c.primaryText},
-  summary: {padding:12,gap:8,borderRadius:16,backgroundColor:`${c.accentBlue}14`},
-  summaryTitle:{fontSize:16,lineHeight:22,fontFamily:vibesTheme.fonts.bold,color:c.primaryText},
-  dates:{flexDirection:"row",flexWrap:"wrap",gap:6},date:{minWidth:"29%",flexGrow:1,alignItems:"center",padding:6,borderRadius:10,backgroundColor:c.surface,borderWidth:1,borderColor:c.borderSoft},
-  dateLabel:{fontSize:14,lineHeight:20,color:c.primaryText},
+  select:{flexDirection:"row",alignItems:"center",gap:ds.spacing[2],paddingHorizontal:ds.spacing[3],paddingVertical:ds.spacing[3],minHeight:48,borderRadius:ds.radii.lg,borderWidth:1,borderColor:ds.colors.border.default,marginBottom:0},
+  heading:{...ds.textStyles.heading,color:c.primaryText},
+  hint:{...ds.textStyles.bodySmall,color:c.secondaryText},
+  section: { gap:ds.spacing[3] }, label: {...ds.textStyles.label,color:c.primaryText},
+  summary: {padding:ds.spacing[3],gap:ds.spacing[2],borderRadius:ds.radii.lg,backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle)},
+  summaryTitle:{...ds.textStyles.subtitle,color:c.primaryText},
+  dates:{flexDirection:"row",flexWrap:"wrap",gap:ds.spacing[2]},date:{minWidth:"29%",flexGrow:1,alignItems:"center",padding:ds.spacing[2],borderRadius:ds.radii.md,backgroundColor:c.surface,borderWidth:1,borderColor:c.borderSoft},
+  dateLabel:{...ds.textStyles.bodySmall,color:c.primaryText},
 });

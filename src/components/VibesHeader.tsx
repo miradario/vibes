@@ -12,6 +12,7 @@ import {
 import { Text } from "../../components/Typography";
 import VibesWordmark from "../../components/VibesWordmark";
 import { vibesTheme } from "../theme/vibesTheme";
+import * as ds from "../theme/tokens";
 
 export type VibesHeaderProps = {
   title?: string;
@@ -41,7 +42,7 @@ const VibesHeader = ({
       style={[styles.container, isCenter ? styles.center : styles.left, style]}
     >
       {title === "Vibes" ? (
-        <VibesWordmark fontSize={StyleSheet.flatten(titleStyle)?.fontSize ?? 54} style={{ marginTop: 22 }} />
+        <VibesWordmark fontSize={StyleSheet.flatten(titleStyle)?.fontSize ?? 54} style={{ marginTop: ds.spacing[6] }} />
       ) : (
       <Text
         style={[styles.title, !isCenter && styles.leftText, titleStyle]}
@@ -77,18 +78,16 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   title: {
-    marginTop: 22,
-    fontSize: 54,
+    marginTop: ds.spacing[6],
+    ...ds.textStyles.display,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.regular,
     letterSpacing: 0.3,
     textAlign: "center",
   },
   subtitle: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 20,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.heading,
     textAlign: "center",
   },
 });

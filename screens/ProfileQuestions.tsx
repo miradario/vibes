@@ -32,6 +32,7 @@ import {
   type ProfileAnswers,
 } from "../src/lib/profileQuestions";
 import { userPreferencesKeys } from "../src/queries/userPreferences.queries";
+import * as ds from "../src/theme/tokens";
 
 const SECTION_COUNT = 3;
 
@@ -116,9 +117,9 @@ export default function ProfileQuestions() {
       >
         <View
           style={{
-            paddingHorizontal: 24,
-            paddingTop: 6,
-            paddingBottom: 14,
+            paddingHorizontal: ds.spacing[6],
+            paddingTop: ds.spacing[2],
+            paddingBottom: ds.spacing[4],
             backgroundColor: vibesTheme.colors.background,
           }}
         >
@@ -129,14 +130,10 @@ export default function ProfileQuestions() {
             onBack={() => navigation.goBack()}
             style={{ paddingHorizontal: 0, paddingVertical: 0 }}
             titleStyle={{
-              fontSize: 26,
-              lineHeight: 34,
-              fontFamily: vibesTheme.fonts.bold,
+              ...ds.textStyles.title,
             }}
             subtitleStyle={{
-              fontSize: 14,
-              lineHeight: 20,
-              fontFamily: vibesTheme.fonts.regular,
+              ...ds.textStyles.bodySmall,
             }}
           />
           {ready && (
@@ -153,9 +150,9 @@ export default function ProfileQuestions() {
             keyboardDismissMode: "on-drag",
           }}
           contentContainerStyle={{
-            paddingHorizontal: 24,
-            paddingBottom: 24,
-            paddingTop: 8,
+            paddingHorizontal: ds.spacing[6],
+            paddingBottom: ds.spacing[6],
+            paddingTop: ds.spacing[2],
           }}
         >
           {loading ? (
@@ -168,7 +165,7 @@ export default function ProfileQuestions() {
                   void query.refetch();
                   void preferences.refetch();
                 }}
-                style={{ padding: 16 }}
+                style={{ padding: ds.spacing[4] }}
               >
                 <Text>Reintentar</Text>
               </TouchableOpacity>
@@ -194,9 +191,9 @@ export default function ProfileQuestions() {
         </ScreenContainer>
         <View
           style={{
-            paddingHorizontal: 24,
-            paddingTop: 12,
-            paddingBottom: 8,
+            paddingHorizontal: ds.spacing[6],
+            paddingTop: ds.spacing[3],
+            paddingBottom: ds.spacing[2],
             backgroundColor: vibesTheme.colors.background,
           }}
         >
@@ -212,11 +209,11 @@ export default function ProfileQuestions() {
               disabled={saving}
               onPress={() => navigation.goBack()}
               style={{
-                marginTop: 16,
+                marginTop: ds.spacing[4],
                 borderTopWidth: 1,
-                borderTopColor: "rgba(110, 110, 110, 0.30)",
+                borderTopColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
                 minHeight: 48,
-                paddingVertical: 16,
+                paddingVertical: ds.spacing[4],
                 alignItems: "center",
               }}
             >

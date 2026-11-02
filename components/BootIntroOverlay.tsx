@@ -6,6 +6,7 @@ import { LOGO_MORPH_DURATION, logoMorphPath, logoMorphRenderShapes, type LogoMor
 import { HOLD_ICON_MS, HOLD_WORD_MS } from "../src/lib/calmPause";
 import { getBootIntroState, setBootIntroInactive, setWelcomeAttachment, subscribeBootIntro } from "../src/lib/bootIntro";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 /*
  * Geometry copied from the native splash so the first frame is pixel-identical:
@@ -237,7 +238,7 @@ export default function BootIntroOverlay({ onFirstFrameReady }: { onFirstFrameRe
 }
 
 const styles = StyleSheet.create({
-  overlay: { zIndex: 1000, elevation: 1000 },
+  overlay: { zIndex: 1000, elevation: ds.shadows.lg.elevation },
   background: { backgroundColor: vibesTheme.colors.background },
   abs: { position: "absolute" },
 });

@@ -1,54 +1,37 @@
 // Logo oficial (desde 25/10/2026): wordmark de texto "Vibes", no el lobo.
 // Colores por letra y formas: assets/branding/OFFICIAL_LOGO.md
+//
+// Compatibilidad: los valores salen de `src/theme/tokens/` (fuente única de verdad,
+// DESIGN_SYSTEM.md §2). `radii` y `spacing` usan los nombres nuevos (D6):
+// radii xs/sm/md/lg/xl/pill = 4/8/12/16/24/999 y spacing[0…12] en escala de 4.
+import { palette } from "./tokens/palette";
+import { colors as semanticColors } from "./tokens/colors";
+import { fontFamilies } from "./tokens/typography";
+import { radii } from "./tokens/radii";
+import { spacing } from "./tokens/spacing";
+import { motion } from "./tokens/motion";
+
 export const vibesTheme = {
   fonts: {
-    subtitle: "Inter-Medium",
-    primary: "Inter-Regular",
-    regular: "Inter-Regular",
-    medium: "Inter-Medium",
-    semibold: "Inter-SemiBold",
-    bold: "Inter-Bold",
-    extraBold: "Inter-ExtraBold",
+    subtitle: fontFamilies.medium,
+    primary: fontFamilies.regular,
+    ...fontFamilies,
   },
   colors: {
-    background: "#FEFEFD",
-    surface: "#FEFEFD",
-    primaryText: "#2B2B2B",
-    secondaryText: "#6E6E6E",
-    muted: "#6E6E6E",
-    accentBlue: "#3978B8",
-    accentMustard: "#F4A340",
-    accentCoral: "#D88C7A",
-    lineArt: "#2B2B2B",
-    borderSoft: "rgba(43, 43, 43, 0.06)",
+    background: semanticColors.bg.screen,
+    surface: semanticColors.bg.surface,
+    primaryText: semanticColors.text.primary,
+    secondaryText: semanticColors.text.secondary,
+    muted: semanticColors.text.secondary,
+    accentBlue: palette.blue,
+    accentMustard: palette.mustard,
+    accentCoral: palette.coral,
+    lineArt: palette.ink,
+    borderSoft: semanticColors.border.subtle,
   },
-  radii: {
-    sm: 8,
-    md: 16,
-    lg: 24,
-    pill: 999,
-  },
-  spacing: {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
-    xxl: 48,
-  },
-  motion: {
-    modal: {
-      backdropColor: "rgba(43, 43, 43, 0.28)",
-      offsetY: 320,
-      backdropInDuration: 120,
-      backdropOutDuration: 110,
-      sheetInDuration: 220,
-      sheetOutDuration: 170,
-      sheetInDelay: 50,
-      sheetInOpacityDuration: 190,
-      sheetOutOpacityDuration: 130,
-    },
-  },
+  radii,
+  spacing,
+  motion,
 } as const;
 
 export type VibesTheme = typeof vibesTheme;

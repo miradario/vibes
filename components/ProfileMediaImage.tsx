@@ -6,6 +6,7 @@ import { Image as ExpoImage } from "expo-image";
 import VibesLoader from "./VibesLoader";
 import BrandImagePlaceholder from "./BrandImagePlaceholder";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type ProfileMediaImageProps = {
   source?: any;
@@ -185,11 +186,11 @@ const ProfileMediaImage = ({
         </View>
       ) : null}
       {hasError ? (
-        <View style={[styles.loading, canPreview ? { top: undefined, paddingVertical: 10, backgroundColor: `${vibesTheme.colors.background}E6` } : { backgroundColor: fallbackBackgroundColor }]}>
-          <Text style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", marginBottom: 12 }}>No se pudo cargar la foto.</Text>
+        <View style={[styles.loading, canPreview ? { top: undefined, paddingVertical: ds.spacing[3], backgroundColor: ds.colors.bg.surfaceTranslucent } : { backgroundColor: fallbackBackgroundColor }]}>
+          <Text style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", marginBottom: ds.spacing[3] }}>No se pudo cargar la foto.</Text>
           <TouchableOpacity accessibilityRole="button" onPress={() => {
             retries.current.count = 0; setErrorKey(null); setDisplayedKey(null); setAttempt(value => value + 1);
-          }} style={{ padding: 12 }}>
+          }} style={{ padding: ds.spacing[3] }}>
             <Text style={{ color: vibesTheme.colors.accentBlue }}>Reintentar</Text>
           </TouchableOpacity>
         </View>

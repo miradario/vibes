@@ -10,6 +10,7 @@ import { supabase } from "../src/lib/supabase";
 import { readUriAsArrayBuffer } from "../src/lib/supabaseStorage";
 import { ChatPhotoKind, photoMessage } from "../src/lib/chatPhotos";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function ChatPhotoButton({
   kind,
@@ -101,7 +102,7 @@ export default function ChatPhotoButton({
       >
         <Icon
           name="image-outline"
-          size={24}
+          size={ds.iconSize.lg}
           color={vibesTheme.colors.primaryText}
         />
       </TouchableOpacity>
@@ -153,22 +154,22 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  sheet: { backgroundColor: vibesTheme.colors.background, padding: 24 },
+  sheet: { backgroundColor: vibesTheme.colors.background, padding: ds.spacing[6] },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 20,
-    marginBottom: 16,
+    ...ds.textStyles.heading,
+    marginBottom: ds.spacing[4],
   },
   preview: { width: "100%", height: 300 },
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 16,
+    marginTop: ds.spacing[4],
   },
   send: {
     backgroundColor: vibesTheme.colors.accentMustard,
-    borderRadius: 24,
-    padding: 16,
+    borderRadius: ds.radii.xl,
+    padding: ds.spacing[4],
     minWidth: 120,
     alignItems: "center",
   },

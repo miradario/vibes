@@ -33,6 +33,8 @@ import { getPostAuthRoute } from "../src/lib/onboardingFlow";
 import Animated from "react-native-reanimated";
 import useWanderingSphere from "../src/hooks/useWanderingSphere";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
+import { passwordToggleStyle } from "../components/ui/surfaceStyles";
+import * as ds from "../src/theme/tokens";
 
 const isBannedUserError = (error: unknown) => {
   if (!error || typeof error !== "object") return false;
@@ -235,7 +237,7 @@ const Login = () => {
               <BackButton onPress={() => navigation.goBack()} style={localStyles.backButton} />
               <Image source={require("../assets/branding/vibes-logo-palette.png")} style={localStyles.logo} resizeMode="contain" accessible accessibilityLabel="Vibes" />
             </View>
-            <View style={[localStyles.hero, { height: heroHeight, marginVertical: heroHeight > 0 ? 6 : 0 }]}>
+            <View style={[localStyles.hero, { height: heroHeight, marginVertical: heroHeight > 0 ? ds.spacing[2] : 0 }]}>
               <Animated.View style={[localStyles.sun, circleMotion]} />
               <Image source={require("../assets/images/login-community.png")} onLoadEnd={() => setIllustrationReady(true)} style={localStyles.heroImage} resizeMode="contain" accessible={false} />
             </View>
@@ -307,7 +309,7 @@ const Login = () => {
                 >
                   <Icon
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={20}
+                    size={ds.iconSize.md}
                     color={vibesTheme.colors.secondaryText}
                   />
                 </TouchableOpacity>
@@ -347,19 +349,17 @@ const Login = () => {
                 style={{
                   width: "100%",
                   height: 1,
-                  backgroundColor: "rgba(43, 43, 43, 0.12)",
-                  marginTop: 12,
+                  backgroundColor: ds.colors.border.default,
+                  marginTop: ds.spacing[3],
                 }}
               />
               <Text
                 style={{
                   textAlign: "center",
                   color: vibesTheme.colors.secondaryText,
-                  fontFamily: vibesTheme.fonts.regular,
-                  fontSize: 13,
-                  lineHeight: 18,
-                  marginTop: 8,
-                  marginBottom: 16,
+                  ...ds.textStyles.bodySmall,
+                  marginTop: ds.spacing[2],
+                  marginBottom: ds.spacing[4],
                 }}
               >
                 {t("login.switchPrompt")}{" "}
@@ -402,21 +402,21 @@ const Login = () => {
 export default Login;
 
 const localStyles = StyleSheet.create({
-  loginButton: { backgroundColor: vibesTheme.colors.primaryText, shadowOpacity: 0, elevation: 0 },
+  loginButton: { backgroundColor: vibesTheme.colors.primaryText, ...ds.shadows.none },
   loginButtonText: { color: vibesTheme.colors.surface },
   brandHeader: { height: 56, alignItems: "center", justifyContent: "center", zIndex: 1 },
   logo: { width: 54, height: 54 },
   hero: { alignItems: "center", justifyContent: "center", overflow: "visible" },
-  sun: { position: "absolute", height: "95%", aspectRatio: 1, borderRadius: 999, backgroundColor: `${vibesTheme.colors.accentMustard}40` },
+  sun: { position: "absolute", height: "95%", aspectRatio: 1, borderRadius: ds.radii.pill, backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium) },
   heroImage: { width: "100%", height: "100%" },
-  title: { fontFamily: vibesTheme.fonts.bold, fontSize: 23, lineHeight: 29, textAlign: "center", color: vibesTheme.colors.primaryText },
-  subtitle: { fontFamily: vibesTheme.fonts.regular, fontSize: 16, lineHeight: 23, textAlign: "center", color: vibesTheme.colors.secondaryText, marginTop: 6 },
-  field: { marginTop: 10 },
-  label: { fontFamily: vibesTheme.fonts.semibold, fontSize: 16, lineHeight: 22, color: vibesTheme.colors.primaryText, marginBottom: 6 },
-  input: { minHeight: 52, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}55`, borderRadius: 14, backgroundColor: vibesTheme.colors.surface, paddingHorizontal: 14, paddingVertical: 12, color: vibesTheme.colors.primaryText, fontFamily: vibesTheme.fonts.regular, fontSize: 16, lineHeight: 24 },
+  title: { ...ds.textStyles.title, textAlign: "center", color: vibesTheme.colors.primaryText },
+  subtitle: { ...ds.textStyles.body, textAlign: "center", color: vibesTheme.colors.secondaryText, marginTop: ds.spacing[2] },
+  field: { marginTop: ds.spacing[3] },
+  label: { ...ds.textStyles.subtitle, color: vibesTheme.colors.primaryText, marginBottom: ds.spacing[2] },
+  input: { minHeight: 52, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim), borderRadius: ds.radii.lg, backgroundColor: vibesTheme.colors.surface, paddingHorizontal: ds.spacing[4], paddingVertical: ds.spacing[3], color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
   actions: {
     marginTop: "auto",
-    paddingTop: 14,
+    paddingTop: ds.spacing[4],
   },
   backButton: {
     position: "absolute",
@@ -424,75 +424,65 @@ const localStyles = StyleSheet.create({
     top: 0,
   },
   divider: {
-    marginTop: 12,
+    marginTop: ds.spacing[3],
     marginBottom: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "rgba(43, 43, 43, 0.1)",
+    backgroundColor: ds.colors.border.default,
   },
   dividerText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    lineHeight: 20,
+    ...ds.textStyles.bodySmall,
   },
   googleButton: {
-    marginTop: 12,
-    borderColor: `${vibesTheme.colors.secondaryText}55`,
-    borderRadius: 18,
+    marginTop: ds.spacing[3],
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
+    borderRadius: ds.radii.lg,
   },
   appleButton: {
-    marginTop: 12,
+    marginTop: ds.spacing[3],
   },
   forgotPasswordButton: {
-    marginTop: 2,
+    marginTop: ds.spacing[1],
     minHeight: 44,
     justifyContent: "center",
     alignSelf: "flex-end",
   },
   forgotPasswordText: {
     color: vibesTheme.colors.accentBlue,
-    fontSize: 13,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
   header: {
-    marginBottom: 10,
+    marginBottom: ds.spacing[3],
   },
   loginContainer: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: ds.spacing[6],
   },
   loginCard: {
-    shadowOpacity: 0,
-    elevation: 0,
+    ...ds.shadows.none,
     backgroundColor: vibesTheme.colors.background,
     width: "100%",
     maxWidth: 480,
     alignSelf: "center",
     flexGrow: 1,
-    paddingTop: 8,
+    paddingTop: ds.spacing[2],
   },
   formScrollContent: {
     flexGrow: 1,
-    paddingBottom: 8,
+    paddingBottom: ds.spacing[2],
   },
   passwordField: {
     position: "relative",
     justifyContent: "center",
   },
   passwordInput: {
-    paddingRight: 48,
+    paddingRight: ds.spacing[12],
   },
-  passwordToggle: {
-    position: "absolute",
-    right: 4,
-    width: 44,
-    alignItems: "center",
-    height: "100%",
-    justifyContent: "center",
-  },
+  passwordToggle: { ...passwordToggleStyle },
 });

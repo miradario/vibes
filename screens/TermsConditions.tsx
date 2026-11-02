@@ -8,6 +8,7 @@ import styles, { DARK_GRAY, GRAY, WHITE } from "../assets/styles";
 import AppHeader from "../components/AppHeader";
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 const TermsConditions = () => {
   const { t } = useI18n();
@@ -61,46 +62,43 @@ const TermsConditions = () => {
 const localStyles = StyleSheet.create({
   header: {
     paddingHorizontal: 0,
-    marginBottom: 6,
+    marginBottom: ds.spacing[2],
   },
   hero: {
     width: 160,
     height: 160,
     alignSelf: "center",
     resizeMode: "contain",
-    marginTop: 8,
+    marginTop: ds.spacing[2],
   },
   subtitle: {
     textAlign: "center",
     color: DARK_GRAY,
-    fontSize: 16,
-    marginTop: 8,
-    marginBottom: 18,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.subtitleMedium,
+    marginTop: ds.spacing[2],
+    marginBottom: ds.spacing[4],
   },
   card: {
     flex: 1,
     backgroundColor: WHITE,
-    borderRadius: 18,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
     borderColor: vibesTheme.colors.accentBlue,
   },
   cardContent: {
-    padding: 16,
-    paddingBottom: 30,
+    padding: ds.spacing[4],
+    paddingBottom: ds.spacing[8],
   },
   titleText: {
     color: DARK_GRAY,
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.regular,
-    marginTop: 8,
-    marginBottom: 6,
+    ...ds.textStyles.body,
+    marginTop: ds.spacing[2],
+    marginBottom: ds.spacing[2],
   },
   bodyText: {
     color: GRAY,
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 10,
+    ...ds.textStyles.bodySmall,
+    marginBottom: ds.spacing[3],
   },
 });
 

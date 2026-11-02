@@ -4,6 +4,7 @@ import { Text } from "./Typography";
 import Icon from "./Icon";
 import { ProfileItemT } from "../types";
 import styles, { DARK_GRAY, WHITE } from "../assets/styles";
+import * as ds from "../src/theme/tokens";
 
 const ProfileItem = ({
   age,
@@ -28,7 +29,7 @@ const ProfileItem = ({
     <View style={styles.containerProfileItem}>
       <View style={styles.matchesProfileItem}>
         <Text style={styles.matchesTextProfileItem}>
-          <Icon name="star" size={13} color={WHITE} /> {matches}% Sync
+          <Icon name="star" size={ds.iconSize.sm} color={WHITE} /> {matches}% Sync
         </Text>
       </View>
 
@@ -40,28 +41,28 @@ const ProfileItem = ({
 
       <View style={styles.info}>
         <Text style={styles.iconProfile}>
-          <Icon name="planet" size={12} color={DARK_GRAY} />
+          <Icon name="planet" size={ds.iconSize.sm} color={DARK_GRAY} />
         </Text>
         <Text style={styles.infoContent}>{info1}</Text>
       </View>
 
       <View style={styles.info}>
         <Text style={styles.iconProfile}>
-          <Icon name="leaf" size={12} color={DARK_GRAY} />
+          <Icon name="leaf" size={ds.iconSize.sm} color={DARK_GRAY} />
         </Text>
         <Text style={styles.infoContent}>{info2}</Text>
       </View>
 
       <View style={styles.info}>
         <Text style={styles.iconProfile}>
-          <Icon name="moon" size={12} color={DARK_GRAY} />
+          <Icon name="moon" size={ds.iconSize.sm} color={DARK_GRAY} />
         </Text>
         <Text style={styles.infoContent}>{info3}</Text>
       </View>
 
       <View style={styles.info}>
         <Text style={styles.iconProfile}>
-          <Icon name="star" size={12} color={DARK_GRAY} />
+          <Icon name="star" size={ds.iconSize.sm} color={DARK_GRAY} />
         </Text>
         <Text style={styles.infoContent}>{info4}</Text>
       </View>

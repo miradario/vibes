@@ -68,6 +68,9 @@ import {
 } from "../src/queries/events.queries";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { displayEventSession } from "../src/lib/eventSchedule";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { iconButtonFilled, iconButtonFilledIconColor, iconButtonFilledIconSize } from "../components/ui/surfaceStyles";
+import * as ds from "../src/theme/tokens";
 
 const parseEventDate = (value?: string | null) => {
   if (!value) return null;
@@ -665,7 +668,7 @@ const EventChat = () => {
               style={styles.eventChatMenuButton}
               onPress={openMembersModal}
             >
-              <Icon name="people" size={24} color={TEXT_SECONDARY} />
+              <Icon name="people" size={ds.iconSize.lg} color={TEXT_SECONDARY} />
             </TouchableOpacity>
           }
         />
@@ -676,13 +679,13 @@ const EventChat = () => {
               <View style={localStyles.eventMetaMain}>
                 <View style={localStyles.eventMetaDateBlock}>
                   <View style={localStyles.eventMetaLine}>
-                    <Icon name="calendar" size={15} color={PRIMARY_COLOR} />
+                    <Icon name="calendar" size={ds.iconSize.sm} color={PRIMARY_COLOR} />
                     <Text style={localStyles.eventMetaDateText}>
                       {formatEventChatDate(eventStartsAt)}
                     </Text>
                   </View>
                   <View style={localStyles.eventMetaLine}>
-                    <Icon name="time" size={15} color={PRIMARY_COLOR} />
+                    <Icon name="time" size={ds.iconSize.sm} color={PRIMARY_COLOR} />
                     <Text style={localStyles.eventMetaTimeText}>
                       {formatEventChatTime(eventStartsAt)}
                     </Text>
@@ -695,7 +698,7 @@ const EventChat = () => {
                     onPress={handleOpenMap}
                     activeOpacity={0.85}
                   >
-                    <Icon name="location" size={15} color={WHITE} />
+                    <Icon name="location" size={ds.iconSize.sm} color={buttonContentColor["accent"]} />
                     <Text style={localStyles.eventMapButtonText}>Ver mapa</Text>
                   </TouchableOpacity>
                 ) : null}
@@ -745,7 +748,7 @@ const EventChat = () => {
               </Text>
             </View>
           ) : messagesLoading && !messagesLoadingTimedOut ? (
-            <VibesLoader  style={{ marginVertical: 32 }} />
+            <VibesLoader  style={{ marginVertical: ds.spacing[8] }} />
           ) : messagesError ? (
             <View style={localStyles.emptyMessages}>
               <Text style={localStyles.emptyMessagesTitle}>
@@ -846,7 +849,7 @@ const EventChat = () => {
                                     ? "time-outline"
                                     : "checkmark"
                                 }
-                                size={12}
+                                size={ds.iconSize.sm}
                                 color={TEXT_SECONDARY}
                               />
                             ) : null}
@@ -869,7 +872,7 @@ const EventChat = () => {
           style={[
             styles.eventChatInputContainer,
             {
-              paddingTop: 10,
+              paddingTop: ds.spacing[3],
               paddingBottom:
                 chatComposerBottomPadding(insets.bottom, keyboardHeight > 0),
               alignItems: "flex-end",
@@ -932,13 +935,13 @@ const EventChat = () => {
           />
           <TouchableOpacity
             style={[
-              styles.eventChatSendButton,
-              (!message.trim() || sendMutation.isPending) && { opacity: 0.4 },
+              iconButtonFilled,
+              (!message.trim() || sendMutation.isPending) && buttonDisabled,
             ]}
             onPress={handleSend}
             disabled={!message.trim() || sendMutation.isPending}
           >
-            <Icon name="send" size={20} color={WHITE} />
+            <Icon name="send" size={iconButtonFilledIconSize} color={iconButtonFilledIconColor} />
           </TouchableOpacity>
         </View>
       </View>
@@ -978,7 +981,7 @@ const EventChat = () => {
             <View style={localStyles.modalHeader}>
               <Text style={localStyles.modalTitle}>Participantes</Text>
               <TouchableOpacity onPress={closeMembersModal}>
-                <Icon name="close" size={24} color={DARK_GRAY} />
+                <Icon name="close" size={ds.iconSize.lg} color={DARK_GRAY} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -1064,158 +1067,131 @@ const localStyles = StyleSheet.create({
     backgroundColor: vibesTheme.colors.background,
   },
   headerTitle: {
-    fontSize: 22,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
     color: vibesTheme.colors.primaryText,
     letterSpacing: 0.2,
   },
   eventMetaSection: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 6,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[1],
+    paddingBottom: ds.spacing[2],
   },
   eventMetaCard: {
-    backgroundColor: "rgba(254, 254, 253, 0.88)",
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.06)",
+    borderColor: ds.colors.border.subtle,
   },
   eventMetaMain: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
+    gap: ds.spacing[3],
   },
   eventMetaDateBlock: {
     flex: 1,
-    gap: 6,
+    gap: ds.spacing[2],
   },
   eventMetaLine: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   eventMetaDateText: {
     color: vibesTheme.colors.accentBlue,
-    fontSize: 15,
-    fontWeight: "400",
+    ...ds.textStyles.body,
   },
   eventMetaTimeText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    fontWeight: "400",
+    ...ds.textStyles.body,
   },
   eventMapButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    ...buttonStyle("accent", "sm"),
   },
   eventMapButtonText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 13,
-    fontWeight: "400",
+    ...buttonLabel("sm", "accent"),
   },
   eventLocationText: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: vibesTheme.colors.primaryText,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
   eventDescriptionText: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     color: TEXT_SECONDARY,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
   messagesContentCompact: {
-    paddingTop: 8,
+    paddingTop: ds.spacing[2],
   },
   emptyMessages: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingHorizontal: ds.spacing[6],
+    paddingVertical: ds.spacing[5],
     alignItems: "center",
   },
   emptyMessagesTitle: {
     color: DARK_GRAY,
-    fontSize: 22,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
   emptyMessagesText: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: TEXT_SECONDARY,
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
     textAlign: "center",
   },
   messageRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 8,
-    gap: 8,
+    marginBottom: ds.spacing[2],
+    gap: ds.spacing[2],
   },
   messageRowMe: {
     justifyContent: "flex-end",
   },
   messageBubble: {
     maxWidth: "72%",
-    borderRadius: 18,
-    paddingHorizontal: 15,
-    paddingVertical: 11,
+    borderRadius: ds.radii.lg,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   messageBubbleMe: {
     alignSelf: "flex-end",
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
-    borderBottomRightRadius: 6,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
+    borderBottomRightRadius: ds.radii.sm,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.30)",
-    shadowColor: vibesTheme.colors.accentMustard,
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
+    ...ds.glow.accent,
     // Android shadows show through translucent backgrounds.
-    elevation: Platform.OS === "android" ? 0 : 2,
+    elevation: Platform.OS === "android" ? 0 : ds.shadows.sm.elevation,
   },
   messageBubbleOther: {
     alignSelf: "flex-start",
     backgroundColor: WHITE,
-    borderBottomLeftRadius: 4,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    borderBottomLeftRadius: ds.radii.xs,
+    ...ds.shadows.sm,
   },
   messageSender: {
-    fontSize: 12,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.caption,
     color: vibesTheme.colors.accentBlue,
-    marginBottom: 2,
+    marginBottom: ds.spacing[1],
   },
   messageText: {
-    fontSize: 16,
-    lineHeight: 21,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
     color: DARK_GRAY,
   },
   messageTime: {
-    fontSize: 11,
+    ...ds.textStyles.micro,
     color: TEXT_SECONDARY,
   },
   messageMetaRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    gap: 4,
-    marginTop: 4,
+    gap: ds.spacing[1],
+    marginTop: ds.spacing[1],
   },
   messageTimeCoach: {
     color: vibesTheme.colors.primaryText,
@@ -1228,13 +1204,12 @@ const localStyles = StyleSheet.create({
     paddingVertical: COMPOSER_VERTICAL_PADDING,
   },
   moreAvatar: {
-    backgroundColor: "rgba(110, 110, 110, 0.12)",
+    backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.soft),
     justifyContent: "center",
     alignItems: "center",
   },
   moreAvatarText: {
-    fontSize: 11,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.micro,
     color: DARK_GRAY,
   },
   // Members modal
@@ -1242,67 +1217,60 @@ const localStyles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: ds.spacing[5],
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(43, 43, 43, 0.22)",
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
   },
   modalCard: {
     backgroundColor: WHITE,
     width: "100%",
     maxWidth: 390,
     maxHeight: "74%",
-    borderRadius: 28,
-    padding: 20,
-    paddingBottom: 24,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.14,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 18 },
-    elevation: 14,
+    borderRadius: ds.radii.xl,
+    padding: ds.spacing[5],
+    paddingBottom: ds.spacing[6],
+    ...ds.shadows.lg,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: ds.spacing[4],
   },
   modalTitle: {
-    fontSize: 20,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.heading,
     color: DARK_GRAY,
   },
   memberRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
-    gap: 12,
+    paddingVertical: ds.spacing[3],
+    gap: ds.spacing[3],
   },
   memberAvatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: ds.radii.pill,
   },
   memberName: {
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
     color: DARK_GRAY,
   },
   kickButton: {
-    backgroundColor: "rgba(216, 140, 122, 0.17)",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: ds.colors.feedback.errorBg,
+    borderRadius: ds.radii.md,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[2],
   },
   kickButtonText: {
-    fontSize: 12,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.caption,
     color: vibesTheme.colors.accentBlue,
   },
   inputAvatar: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: ds.radii.pill,
   },
 });

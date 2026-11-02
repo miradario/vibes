@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function ProfileWithoutPhoto({ name, age, zodiac, active = true }: { name: string; age?: string | number; zodiac?: string; active?: boolean }) {
   const { width, height } = useWindowDimensions();
@@ -39,9 +40,9 @@ export default function ProfileWithoutPhoto({ name, age, zodiac, active = true }
   const diameter = Math.min(width * 0.55, height * 0.3, 260);
   const initial = Array.from(name.trim())[0]?.toLocaleUpperCase("es-AR") || "?";
   return <View pointerEvents="none" style={s.canvas}>
-    <Animated.View style={[s.orb, float(0), { width: width * 0.85, height: width * 0.85, right: -width * 0.3, top: -width * 0.2, backgroundColor: `${c.accentBlue}18` }]} />
-    <Animated.View style={[s.orb, float(1), { width: width * 0.7, height: width * 0.7, left: -width * 0.38, top: height * 0.2, backgroundColor: `${c.accentMustard}14` }]} />
-    <Animated.View style={[s.orb, float(2), { width: width * 0.85, height: width * 0.85, right: -width * 0.5, bottom: -width * 0.15, borderWidth: 1, borderColor: `${c.accentBlue}30` }]} />
+    <Animated.View style={[s.orb, float(0), { width: width * 0.85, height: width * 0.85, right: -width * 0.3, top: -width * 0.2, backgroundColor: ds.colors.feedback.infoBg }]} />
+    <Animated.View style={[s.orb, float(1), { width: width * 0.7, height: width * 0.7, left: -width * 0.38, top: height * 0.2, backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.subtle) }]} />
+    <Animated.View style={[s.orb, float(2), { width: width * 0.85, height: width * 0.85, right: -width * 0.5, bottom: -width * 0.15, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium) }]} />
     <Animated.View style={[s.dot, float(3), { top: "23%", right: "15%", width: 22, height: 22 }]} />
     <Animated.View style={[s.dot, float(4), { top: "53%", left: "17%", width: 12, height: 12 }]} />
     <View style={s.identity}>
@@ -55,12 +56,12 @@ export default function ProfileWithoutPhoto({ name, age, zodiac, active = true }
 const c = vibesTheme.colors;
 const s = StyleSheet.create({
   canvas: { ...StyleSheet.absoluteFillObject, backgroundColor: c.background, overflow: "hidden", justifyContent: "center", alignItems: "center" },
-  orb: { position: "absolute", borderRadius: 999 },
-  dot: { position: "absolute", borderRadius: 30, backgroundColor: c.accentCoral },
-  identity: { alignItems: "center", paddingHorizontal: 28, width: "100%", transform: [{ translateY: -28 }] },
-  avatar: { alignItems: "center", justifyContent: "center", backgroundColor: `${c.accentBlue}20`, borderWidth: 3, borderColor: c.surface },
+  orb: { position: "absolute", borderRadius: ds.radii.pill },
+  dot: { position: "absolute", borderRadius: ds.radii.xl, backgroundColor: c.accentCoral },
+  identity: { alignItems: "center", paddingHorizontal: ds.spacing[8], width: "100%", transform: [{ translateY: -28 }] },
+  avatar: { alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.feedback.infoBg, borderWidth: 3, borderColor: c.surface },
   initial: { color: c.accentBlue, fontFamily: vibesTheme.fonts.bold },
-  caption: { color: c.secondaryText, fontSize: 13, marginTop: 10 },
-  name: { color: c.primaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 30, lineHeight: 36, textAlign: "center", marginTop: 22 },
-  zodiac: { color: c.secondaryText, fontSize: 19, marginTop: 6 },
+  caption: { color: c.secondaryText, ...ds.textStyles.bodySmall, marginTop: ds.spacing[3] },
+  name: { color: c.primaryText, ...ds.textStyles.display, textAlign: "center", marginTop: ds.spacing[6] },
+  zodiac: { color: c.secondaryText, ...ds.textStyles.heading, marginTop: ds.spacing[2] },
 });

@@ -46,6 +46,9 @@ import {
   type VibiCategory,
   type VibiExchange,
 } from "../src/lib/vibi";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import { iconButtonFilled, iconButtonFilledIconColor, iconButtonFilledIconSize } from "../components/ui/surfaceStyles";
+import * as ds from "../src/theme/tokens";
 
 const colors = vibesTheme.colors;
 const categories: {
@@ -416,7 +419,7 @@ function VibiConversation({ userId }: { userId: string }) {
                 accessibilityRole="button"
                 accessibilityLabel="Cerrar chat"
               >
-                <Ionicons name="close" size={24} color={colors.primaryText} />
+                <Ionicons name="close" size={ds.iconSize.lg} color={colors.primaryText} />
               </Pressable>
               <View style={s.avatar}>
                 {loading || sending || loadingOlder ? (
@@ -442,7 +445,7 @@ function VibiConversation({ userId }: { userId: string }) {
               >
                 <Ionicons
                   name="trash-outline"
-                  size={21}
+                  size={ds.iconSize.md}
                   color={colors.secondaryText}
                 />
               </Pressable>
@@ -573,7 +576,7 @@ function VibiConversation({ userId }: { userId: string }) {
                   >
                     <Ionicons
                       name={choice.icon}
-                      size={16}
+                      size={ds.iconSize.sm}
                       color={colors.primaryText}
                     />
                     <Text style={s.categoryText}>{choice.label}</Text>
@@ -595,8 +598,8 @@ function VibiConversation({ userId }: { userId: string }) {
                 />
                 <Pressable
                   style={[
-                    s.send,
-                    (!draft.trim() || disabled || !!pending) && s.dimmed,
+                    iconButtonFilled,
+                    (!draft.trim() || disabled || !!pending) && buttonDisabled,
                   ]}
                   disabled={
                     !draft.trim() || disabled || !!pending || !conversationId
@@ -607,8 +610,8 @@ function VibiConversation({ userId }: { userId: string }) {
                 >
                   <Ionicons
                     name="arrow-up"
-                    size={23}
-                    color={colors.primaryText}
+                    size={iconButtonFilledIconSize}
+                    color={iconButtonFilledIconColor}
                   />
                 </Pressable>
               </View>
@@ -645,7 +648,7 @@ function VibiConversation({ userId }: { userId: string }) {
               disabled={resetting}
               onPress={() => setConfirmReset(false)}
             >
-              <Text style={s.buttonText}>Conservar conversación</Text>
+              <Text style={s.cancelButtonText}>Conservar conversación</Text>
             </Pressable>
           </AnimatedSheetModal>
           <UserProfileSheet
@@ -660,7 +663,7 @@ function VibiConversation({ userId }: { userId: string }) {
         <View
           style={[
             s.chatCharacter,
-            { paddingBottom: Math.max(insets.bottom, 12) },
+            { paddingBottom: Math.max(insets.bottom, ds.spacing[3]) },
           ]}
         >
           <VibiCharacter followController size={120} paused={!chatVisible} />
@@ -695,34 +698,34 @@ const s = StyleSheet.create({
     maxWidth: 600,
     alignSelf: "center",
   },
-  chatCharacter: { alignItems: "flex-end", paddingRight: 12 },
+  chatCharacter: { alignItems: "flex-end", paddingRight: ds.spacing[3] },
   speechTail: {
     alignSelf: "flex-end",
-    marginRight: 62,
-    marginTop: -8,
+    marginRight: /* ds-lint-allow layout: marginRight 62 (medida de layout fuera de la escala) */ 62,
+    marginTop: -ds.spacing[2],
     width: 16,
     height: 16,
     backgroundColor: colors.surface,
     transform: [{ rotate: "45deg" }],
   },
   conversationSurface: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    borderBottomLeftRadius: ds.radii.xl,
+    borderBottomRightRadius: ds.radii.xl,
     overflow: "hidden",
   },
-  answerAuthor: { flexDirection: "row", alignItems: "center", gap: 8 },
+  answerAuthor: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2] },
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[3],
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSoft,
-    gap: 8,
+    gap: ds.spacing[2],
   },
   iconButton: {
     width: 42,
@@ -733,155 +736,138 @@ const s = StyleSheet.create({
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
   },
   headerCopy: { flex: 1 },
   title: {
-    fontSize: 24,
+    ...ds.textStyles.title,
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
   },
-  subtitle: { fontSize: 14, lineHeight: 20, color: colors.secondaryText },
-  messages: { padding: 20, paddingBottom: 24 },
-  welcome: { paddingTop: 16, paddingBottom: 28 },
+  subtitle: { ...ds.textStyles.bodySmall, color: colors.secondaryText },
+  messages: { padding: ds.spacing[5], paddingBottom: ds.spacing[6] },
+  welcome: { paddingTop: ds.spacing[4], paddingBottom: ds.spacing[8] },
   welcomeTitle: {
-    fontSize: 29,
-    lineHeight: 35,
+    ...ds.textStyles.display,
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
   },
-  welcomeText: { fontSize: 17, lineHeight: 24, color: colors.primaryText },
-  exchange: { gap: 18, marginBottom: 28 },
+  welcomeText: { ...ds.textStyles.body, color: colors.primaryText },
+  exchange: { gap: ds.spacing[4], marginBottom: ds.spacing[8] },
   userBubble: {
     alignSelf: "flex-end",
     maxWidth: "90%",
-    padding: 15,
-    borderRadius: 20,
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.xl,
     backgroundColor: colors.accentMustard,
   },
-  answer: { gap: 10, paddingRight: 8 },
-  author: { fontSize: 12, letterSpacing: 2, color: colors.secondaryText },
-  message: { fontSize: 17, lineHeight: 25, color: colors.primaryText },
+  answer: { gap: ds.spacing[3], paddingRight: ds.spacing[2] },
+  author: { ...ds.textStyles.caption, letterSpacing: 2, color: colors.secondaryText },
+  message: { ...ds.textStyles.body, color: colors.primaryText },
   card: {
     flexDirection: "row",
     borderWidth: 1,
     borderColor: colors.accentBlue,
-    borderRadius: 18,
-    padding: 12,
-    gap: 12,
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[3],
+    gap: ds.spacing[3],
     backgroundColor: colors.surface,
-    marginTop: 4,
+    marginTop: ds.spacing[1],
   },
   thumbnail: {
     width: 72,
     height: 88,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     backgroundColor: colors.accentMustard,
   },
-  cardCopy: { flex: 1, gap: 5 },
-  eyebrow: { fontSize: 10, letterSpacing: 1.4, color: colors.secondaryText },
+  cardCopy: { flex: 1, gap: ds.spacing[1] },
+  eyebrow: { ...ds.textStyles.caption, letterSpacing: 1.4, color: colors.secondaryText },
   cardTitle: {
-    fontSize: 18,
-    lineHeight: 22,
+    ...ds.textStyles.heading,
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
   },
-  reason: { fontSize: 14, lineHeight: 20, color: colors.secondaryText },
+  reason: { ...ds.textStyles.bodySmall, color: colors.secondaryText },
   cardLink: {
-    fontSize: 14,
+    ...ds.textStyles.bodySmall,
     color: colors.primaryText,
     textDecorationLine: "underline",
-    marginTop: 4,
+    marginTop: ds.spacing[1],
   },
   composer: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 10,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[3],
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft,
-    gap: 12,
+    gap: ds.spacing[3],
   },
-  categories: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  categories: { flexDirection: "row", gap: ds.spacing[2], flexWrap: "wrap" },
   category: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
+    gap: ds.spacing[2],
+    paddingHorizontal: ds.spacing[3],
     minHeight: 36,
-    borderRadius: 18,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
     borderColor: colors.accentBlue,
   },
-  categoryText: { fontSize: 14, color: colors.primaryText },
-  inputRow: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
+  categoryText: { ...ds.textStyles.bodySmall, color: colors.primaryText },
+  inputRow: { flexDirection: "row", alignItems: "flex-end", gap: ds.spacing[3] },
   input: {
     flex: 1,
     minHeight: 48,
     maxHeight: 120,
     borderWidth: 1,
     borderColor: colors.secondaryText,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingTop: 13,
-    paddingBottom: 13,
-    fontFamily: vibesTheme.fonts.primary,
-    fontSize: 16,
-    lineHeight: 22,
+    borderRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[4],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[3],
+    ...ds.textStyles.body,
     color: colors.primaryText,
   },
-  send: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: colors.accentMustard,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dimmed: { opacity: 0.45 },
-  counter: { fontSize: 12, color: colors.secondaryText, textAlign: "right" },
-  loading: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
+  counter: { ...ds.textStyles.caption, color: colors.secondaryText, textAlign: "right" },
+  loading: { flex: 1, justifyContent: "center", alignItems: "center", gap: ds.spacing[3] },
   status: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    fontSize: 14,
+    paddingHorizontal: ds.spacing[5],
+    paddingVertical: ds.spacing[2],
+    ...ds.textStyles.bodySmall,
     color: colors.secondaryText,
   },
   error: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    gap: 8,
+    paddingHorizontal: ds.spacing[5],
+    paddingVertical: ds.spacing[3],
+    gap: ds.spacing[2],
     borderLeftWidth: 4,
     borderLeftColor: colors.accentCoral,
   },
-  errorText: { fontSize: 14, lineHeight: 20, color: colors.primaryText },
+  errorText: { ...ds.textStyles.bodySmall, color: colors.primaryText },
   link: {
     color: colors.primaryText,
-    fontSize: 15,
+    ...ds.textStyles.body,
     textDecorationLine: "underline",
   },
-  older: { padding: 12, alignItems: "center", marginBottom: 16 },
+  older: { padding: ds.spacing[3], alignItems: "center", marginBottom: ds.spacing[4] },
   resetSheet: {
     backgroundColor: colors.surface,
-    padding: 24,
-    paddingBottom: 36,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    gap: 16,
+    padding: ds.spacing[6],
+    paddingBottom: ds.spacing[8],
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    gap: ds.spacing[4],
   },
   resetTitle: {
-    fontSize: 25,
+    ...ds.textStyles.title,
     color: colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
   },
   deleteButton: {
-    backgroundColor: colors.accentCoral,
-    borderRadius: 18,
-    padding: 16,
-    alignItems: "center",
+    ...buttonStyle("destructive", "lg"),
   },
-  cancelButton: { padding: 14, alignItems: "center" },
-  buttonText: { fontSize: 17, color: colors.primaryText },
+  cancelButton: { ...buttonStyle("ghost", "lg") },
+  cancelButtonText: { ...buttonLabel("lg", "ghost") },
+  buttonText: {
+    ...buttonLabel("lg", "destructive"),
+  },
 });

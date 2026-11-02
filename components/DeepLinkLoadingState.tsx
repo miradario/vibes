@@ -7,6 +7,8 @@ import { Text } from "./Typography";
 import ScreenContainer from "./ScreenContainer";
 import VibesLoader from "./VibesLoader";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
+import * as ds from "../src/theme/tokens";
 
 export type DeepLinkTarget = "challenge" | "event";
 
@@ -107,51 +109,40 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: vibesTheme.spacing.md,
-    paddingHorizontal: 28,
+    gap: vibesTheme.spacing[4],
+    paddingHorizontal: ds.spacing[8],
   },
   title: {
-    marginTop: vibesTheme.spacing.xs,
+    marginTop: vibesTheme.spacing[1],
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 20,
-    lineHeight: 26,
+    ...ds.textStyles.heading,
     textAlign: "center",
   },
   body: {
     maxWidth: 300,
     color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
-    fontSize: 15,
-    lineHeight: 21,
+    ...ds.textStyles.body,
     textAlign: "center",
   },
   actions: {
     alignItems: "center",
-    gap: vibesTheme.spacing.sm,
-    marginTop: vibesTheme.spacing.sm,
+    gap: vibesTheme.spacing[2],
+    marginTop: vibesTheme.spacing[2],
   },
   primaryButton: {
+    ...buttonStyle("accent", "md"),
     minWidth: 200,
-    alignItems: "center",
-    borderRadius: vibesTheme.radii.pill,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: vibesTheme.colors.accentMustard,
   },
   primaryButtonText: {
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 16,
+    ...buttonLabel("md", "accent"),
   },
   secondaryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   secondaryButtonText: {
     color: vibesTheme.colors.accentBlue,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 15,
+    ...ds.textStyles.subtitle,
   },
 });
 

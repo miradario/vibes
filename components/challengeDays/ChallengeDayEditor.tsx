@@ -39,6 +39,7 @@ import { DayButton } from "./DayButton";
 import DayAudioPlayer from "./DayAudioPlayer";
 import { dayStyles as s } from "./styles";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import * as ds from "../../src/theme/tokens";
 type EditorDraft = DayDraft & {
   removed?: DraftAttachment[];
   pendingLink?: string;
@@ -484,7 +485,7 @@ export default function ChallengeDayEditor({
         edges={["left", "right"]}
         style={[
           s.sheet,
-          { paddingTop: Math.max(insets.top, Platform.OS === "ios" ? 60 : 28) },
+          { paddingTop: Math.max(insets.top, Platform.OS === "ios" ? /* ds-lint-allow layout: paddingTop 60 (medida de layout fuera de la escala) */ 60 : ds.spacing[8]) },
         ]}
       >
         <KeyboardAvoidingView
@@ -495,7 +496,7 @@ export default function ChallengeDayEditor({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[
               s.content,
-              { paddingBottom: insets.bottom + 24 },
+              { paddingBottom: insets.bottom + ds.spacing[6] },
             ]}
           >
             <View style={s.between}>
@@ -559,7 +560,7 @@ export default function ChallengeDayEditor({
                       busy || recording || draft.attachments.length >= 20
                     }
                     style={s.mediaButton}
-                    textStyle={s.mediaButtonText}
+                    textStyle={[s.mediaButtonText, recording ? s.destructiveButtonText : undefined]}
                   />
                   <DayButton
                     label="Galería"
@@ -694,6 +695,7 @@ export default function ChallengeDayEditor({
                         label={`Eliminar contenido ${index + 1}`}
                         disabled={busy || recording}
                         style={s.danger}
+                        textStyle={s.destructiveButtonText}
                         onPress={() =>
                           void persist({
                             ...current.current,
@@ -749,6 +751,7 @@ export default function ChallengeDayEditor({
                     onPress={save}
                     disabled={busy || recording || Boolean(conflict)}
                     style={s.primary}
+                    textStyle={s.accentButtonText}
                   />
                   <DayButton
                     label="Descartar borrador"

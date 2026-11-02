@@ -7,6 +7,7 @@ import { hasProfilePhotos } from "../src/lib/profilePhotos";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { Text } from "./Typography";
 import Icon from "./Icon";
+import * as ds from "../src/theme/tokens";
 
 /**
  * Subtle, non-dismissable notice shown at the top while the viewer has no
@@ -48,7 +49,7 @@ export default function ProfilePhotoPrompt({
       onPress={onPress ?? (() => navigation.navigate("EditProfile" as never, { photoRequestId: Date.now() } as never))}
       style={s.notice}
     >
-      <Icon name="camera-outline" size={16} color={vibesTheme.colors.accentBlue} />
+      <Icon name="camera-outline" size={ds.iconSize.sm} color={vibesTheme.colors.accentBlue} />
       <Text style={s.text} numberOfLines={2}>{message}</Text>
       <Text style={s.action}>Agregar</Text>
     </TouchableOpacity>
@@ -58,15 +59,15 @@ const s = StyleSheet.create({
   notice: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
     minHeight: 36,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: `${vibesTheme.colors.surface}EB`,
+    paddingVertical: ds.spacing[2],
+    paddingHorizontal: ds.spacing[3],
+    borderRadius: ds.radii.md,
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     borderWidth: 1,
-    borderColor: `${vibesTheme.colors.accentBlue}2E`,
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
   },
-  text: { flex: 1, color: vibesTheme.colors.secondaryText, fontSize: 13, lineHeight: 17 },
-  action: { color: vibesTheme.colors.accentBlue, fontSize: 13, lineHeight: 17, fontFamily: vibesTheme.fonts.medium },
+  text: { flex: 1, color: vibesTheme.colors.secondaryText, ...ds.textStyles.bodySmall },
+  action: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.labelMedium },
 });

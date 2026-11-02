@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Keyboard, Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AnimatedSheetModal from "./AnimatedSheetModal";
+import * as ds from "../src/theme/tokens";
 
 /** Measure the modal itself: Android can resize the activity without resizing its modal window. */
 export default function KeyboardSheetModal({
@@ -59,8 +60,8 @@ export default function KeyboardSheetModal({
       sheetStyle={{ flex: 1 }}
     >
       <View ref={viewport} collapsable={false} onLayout={updateOverlap} pointerEvents="box-none" style={{ flex: 1 }}>
-        <View pointerEvents="box-none" style={{ flex: 1, justifyContent: "flex-end", paddingHorizontal: 16,
-          paddingTop: insets.top + 20, paddingBottom: Math.max(overlap, insets.bottom) + 16 }}>
+        <View pointerEvents="box-none" style={{ flex: 1, justifyContent: "flex-end", paddingHorizontal: ds.spacing[4],
+          paddingTop: insets.top + ds.spacing[5], paddingBottom: Math.max(overlap, insets.bottom) + ds.spacing[4] }}>
           {children}
         </View>
       </View>

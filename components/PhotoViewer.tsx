@@ -22,6 +22,7 @@ import ScreenContainer from "./ScreenContainer";
 import Icon from "./Icon";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 function ZoomablePhoto({ source }: { source: ImageSourcePropType }) {
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -153,7 +154,7 @@ export default function PhotoViewer({
             >
               <Icon
                 name="close"
-                size={26}
+                size={ds.iconSize.lg}
                 color={vibesTheme.colors.primaryText}
               />
             </TouchableOpacity>
@@ -174,7 +175,7 @@ export default function PhotoViewer({
             >
               <Icon
                 name="chevron-back"
-                size={26}
+                size={ds.iconSize.lg}
                 color={vibesTheme.colors.primaryText}
               />
             </TouchableOpacity>
@@ -188,7 +189,7 @@ export default function PhotoViewer({
             >
               <Icon
                 name="chevron-forward"
-                size={26}
+                size={ds.iconSize.lg}
                 color={vibesTheme.colors.primaryText}
               />
             </TouchableOpacity>
@@ -206,7 +207,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
+    paddingHorizontal: ds.spacing[3],
   },
   button: {
     minWidth: 48,
@@ -215,7 +216,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   disabled: { opacity: 0.3 },
-  label: { color: vibesTheme.colors.primaryText, fontSize: 16 },
-  bottomToolbar: { paddingVertical: 4 },
+  label: { color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
+  bottomToolbar: { paddingVertical: ds.spacing[1] },
   controlsSpacer: { flex: 1 },
 });
