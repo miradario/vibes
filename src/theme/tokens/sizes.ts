@@ -1,5 +1,5 @@
 /** Tamaños (DESIGN_SYSTEM.md §3.8). */
-export const iconSize = { sm: 16, md: 20, lg: 24, xl: 32, xxl: 48 } as const;
+export const iconSize = { xs: 12, sm: 16, md: 20, lg: 24, xl: 32, xxl: 48 } as const;
 /** Grosor de trazo de íconos lucide (bottom bar 2/11): activo en la burbuja y default. */
 export const strokeWidth = { active: 2.25, default: 2.05 } as const;
 export const touchTarget = 44;

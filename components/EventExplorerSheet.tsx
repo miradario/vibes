@@ -54,11 +54,11 @@ function EventCalendar({ events, joinedEventIds, onOpen }: { events: EventFeedIt
       <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ir a hoy" onPress={() => { const now = new Date(); setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setSelected(today); }} style={s.todayButton}><Text style={s.body}>Hoy · {new Date().getDate()}</Text></TouchableOpacity>
     </View>
     <View style={s.header}>
-      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mes anterior" onPress={() => changeMonth(-1)} style={s.control}><Icon name="chevron-back" size={24} color={c.primaryText} /></TouchableOpacity>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mes anterior" onPress={() => changeMonth(-1)} style={s.control}><Icon name="chevron-back" size={ds.iconSize.lg} color={c.primaryText} /></TouchableOpacity>
       <Text style={s.meta}>Elegí un día</Text>
-      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mes siguiente" onPress={() => changeMonth(1)} style={s.control}><Icon name="chevron-forward" size={24} color={c.primaryText} /></TouchableOpacity>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mes siguiente" onPress={() => changeMonth(1)} style={s.control}><Icon name="chevron-forward" size={ds.iconSize.lg} color={c.primaryText} /></TouchableOpacity>
     </View>
-    <View style={s.legend}><Icon name="checkmark-circle" size={18} color={c.accentBlue} /><Text style={s.meta}>Ya estás anotado a un evento</Text></View>
+    <View style={s.legend}><Icon name="checkmark-circle" size={ds.iconSize.sm} color={c.accentBlue} /><Text style={s.meta}>Ya estás anotado a un evento</Text></View>
     <View style={s.grid}>{["L", "M", "M", "J", "V", "S", "D"].map((label, index) => <View key={index} style={s.day}><Text style={s.meta}>{label}</Text></View>)}</View>
     <View style={s.grid}>{Array.from({ length: Math.ceil((offset + days) / 7) * 7 }, (_, index) => {
       const number = index - offset + 1;
@@ -66,7 +66,7 @@ function EventCalendar({ events, joinedEventIds, onOpen }: { events: EventFeedIt
       const key = eventDayKey(new Date(month.getFullYear(), month.getMonth(), number));
       return <TouchableOpacity key={key} accessibilityRole="button" accessibilityLabel={`${number} ${month.toLocaleDateString("es-AR", { month: "long" })}${joinedDays.has(key) ? ", ya estás anotado a eventos" : daysWithEvents.has(key) ? ", con eventos" : ""}`} accessibilityState={{ selected: key === selected }} onPress={() => setSelected(key)} style={s.day}>
         <View style={[s.dayCircle, joinedDays.has(key) && s.joinedDay, key === today && s.todayCircle, key === selected && s.selected]}>
-          {joinedDays.has(key) ? <View style={s.joinedMark}><Icon name="checkmark" size={12} color={c.primaryText} /></View> : null}
+          {joinedDays.has(key) ? <View style={s.joinedMark}><Icon name="checkmark" size={ds.iconSize.xs} color={c.primaryText} /></View> : null}
           <Text style={s.body}>{number}</Text><View style={[s.dot, { opacity: daysWithEvents.has(key) ? 1 : 0 }]} />
         </View>
       </TouchableOpacity>;
@@ -82,7 +82,7 @@ function EventRow({ event, date, joined = false, onOpen }: { event: EventFeedIte
     <MediaImage source={typeof event.image === "string" ? { uri: event.image } : event.image} style={s.thumbnail} resizeMode="cover" />
     <View style={s.eventCopy}>
     <Text style={s.body}>{event.title}</Text>
-    {joined ? <View style={s.legend}><Icon name="checkmark-circle" size={16} color={c.accentBlue} /><Text style={s.meta}>Ya estás anotado</Text></View> : null}
+    {joined ? <View style={s.legend}><Icon name="checkmark-circle" size={ds.iconSize.sm} color={c.accentBlue} /><Text style={s.meta}>Ya estás anotado</Text></View> : null}
     {date ? <Text style={s.meta}>{new Date(date).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</Text> : null}
     {event.location ? <Text style={s.meta} numberOfLines={2}>{event.location}</Text> : null}
     </View>
@@ -165,7 +165,7 @@ const s = StyleSheet.create({
   body: { ...ds.textStyles.subtitle, color: c.primaryText }, meta: { ...ds.textStyles.bodySmall, color: c.secondaryText },
   control: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   grid: { flexDirection: "row", flexWrap: "wrap" }, day: { width: "14.285714%", minHeight: 54, alignItems: "center", justifyContent: "center" },
-  selected: { backgroundColor: c.accentMustard, borderColor: c.accentMustard }, dot: { width: 4, height: 4, borderRadius: ds.radii.pill, backgroundColor: c.primaryText, marginTop: 2 },
+  selected: { backgroundColor: c.accentMustard, borderColor: c.accentMustard }, dot: { width: 4, height: 4, borderRadius: ds.radii.pill, backgroundColor: c.primaryText, marginTop: ds.spacing[1] },
   content: { gap: ds.spacing[2], paddingBottom: ds.spacing[6] },
   thumbnail: { width: ds.componentSize.cardThumb, height: ds.componentSize.cardThumb, borderRadius: ds.radii.md },
   eventCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
