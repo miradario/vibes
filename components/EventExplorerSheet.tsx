@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { Platform, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import { Text, TextInput } from "./Typography";
@@ -20,8 +21,19 @@ export default function EventExplorerSheet({ mode, events, mapEvents, joinedEven
   onClose: () => void; onOpen: (event: EventFeedItem) => void;
 }) {
   const { height } = useWindowDimensions();
-  return <AnimatedSheetModal visible={mode !== null} fullScreen onClose={onClose} sheetStyle={{ height, backgroundColor: c.surface }}>
-    <ScreenContainer edges={["top", "bottom", "left", "right"]} style={s.screen}>
+  // Read the parent provider: native SafeAreaView can report zero inside iOS Modals.
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === "ios";
+  return <AnimatedSheetModal visible={mode !== null} fullScreen onClose={onClose} sheetStyle={{ height, backgroundColor: ds.colors.bg.surface }}>
+    <ScreenContainer
+      edges={isIOS ? [] : ["top", "bottom", "left", "right"]}
+      style={[s.screen, isIOS && {
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left + ds.spacing[4],
+        paddingRight: insets.right + ds.spacing[4],
+      }]}
+    >
       <View style={s.navigationHeader}>
         <BackButton accessibilityLabel="Volver a eventos" onPress={onClose} />
         <Text style={s.navigationTitle} numberOfLines={1} adjustsFontSizeToFit>{mode === "map" ? "Mapa" : "Calendario"}</Text>

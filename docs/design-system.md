@@ -416,3 +416,5 @@ En Calendario, los días con eventos a los que la persona ya se anotó usan supe
 La cabecera de Calendario y Mapa usa BackButton a la izquierda, título centrado y espacio de 44 a la derecha para centrarlo respecto a la pantalla. Mantener la cabecera fija y el safe area superior. Este formato reemplaza la cabecera con texto Volver.
 
 Mapa abre con todos los eventos vigentes sin heredar los filtros del listado. Incluye búsqueda por nombre/lugar, Mis eventos, Gratis, Próximos 7 días y tipos presentes en el feed, con selección visible y Limpiar. Los resultados sin coordenadas permanecen accesibles en la lista bajo el mapa; los online no generan marcadores.
+
+En sheets de pantalla completa dentro de un Modal nativo en iOS, SafeAreaView puede recibir insets en cero. Calendario y Mapa leen useSafeAreaInsets desde el proveedor padre y aplican padding explícito en los cuatro lados, sumando el espaciado del DS en los laterales. Usar ScreenContainer con edges vacíos en ese caso para no duplicar los insets; Android conserva los edges nativos. No sustituir el inset superior por una altura fija de barra de estado.
