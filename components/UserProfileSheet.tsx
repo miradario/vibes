@@ -571,6 +571,7 @@ const UserProfileSheet = ({
   const [gallerySelection, setGallerySelection] = useState({ profileId: profile?.id, index: 0 });
   const activeIndex = gallerySelection.profileId === profile?.id ? gallerySelection.index : 0;
   const setActiveIndex = (index: number) => setGallerySelection({ profileId: profile?.id, index });
+  const advancePhotoRef = useRef<() => void>(() => {});
   const swipe = useMemo(
     () =>
       PanResponder.create({
@@ -615,6 +616,7 @@ const UserProfileSheet = ({
             commitSwipe(action);
           } else {
             resetSwipe();
+            if (Math.abs(g.dx) < 8 && Math.abs(g.dy) < 8) advancePhotoRef.current();
           }
         },
         onPanResponderTerminationRequest: () => false,
@@ -775,6 +777,11 @@ const UserProfileSheet = ({
       offset: boundedIndex * width,
       animated: true,
     });
+  };
+
+  advancePhotoRef.current = () => {
+    if (!canViewPhotos || !hasMultipleImages) return;
+    setGalleryIndex((safeActiveIndex + 1) % profileImages.length);
   };
 
   const handleGalleryMomentumEnd = (
@@ -1051,6 +1058,7 @@ const UserProfileSheet = ({
             style={{ position: "absolute", left: 0, right: 0, top: "12%", height: "53%" }}
             accessible={hasMultipleImages}
             accessibilityLabel={`Foto ${safeActiveIndex + 1} de ${profileImages.length}`}
+            accessibilityHint={hasMultipleImages ? "Tocá para ver la siguiente foto" : undefined}
             accessibilityActions={[
               ...(hasMultipleImages ? [
                 { name: "increment", label: "Foto siguiente" },

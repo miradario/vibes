@@ -454,3 +454,5 @@ El bloque de lugar del detalle de Clases es compacto: nombre/dirección en super
 La tarjeta de lugar de Clases vuelve a incluir una miniatura de mapa de 96 de alto entre la dirección y Cómo llegar. Usar ClassLocationMap compact sin duplicar el pie del mapa; conservar la acción de direcciones y el fallback si no carga la imagen.
 
 El toque sobre la foto principal del perfil no abre el visor ampliado. El zoom se ofrece únicamente en las fotos del perfil completo después de Ver más/deslizar hacia arriba. Conservar navegación entre fotos y gestos de conectar/pasar; cerrar el visor al salir del detalle. No anunciar acciones de ampliación en la foto principal.
+
+El toque breve sin desplazamiento en la foto principal del perfil avanza a la siguiente imagen y vuelve a la primera después de la última. No abre zoom ni ejecuta conectar/pasar; conservar los gestos de navegación y las acciones accesibles de siguiente/anterior. El zoom sigue disponible únicamente dentro del perfil completo.
