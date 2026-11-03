@@ -39,7 +39,7 @@ export default function ClassReservationPanel({ source }: { source: ReservationS
   const selected = mode === "single" ? dates.filter(iso => iso === single) : dates.filter(iso => selectedDays.includes(reservationWeekday(iso, timezone)));
   const existing = (requests.data ?? []).filter(request => request.source_id === source.id && request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now()));
   return <View style={s.section}>
-    <Text accessibilityRole="header" style={s.heading}>¿Cómo querés participar?</Text>
+    <Text accessibilityRole="header" style={s.heading}>Elegí cómo participar</Text>
     <Chips value={mode} onChange={setMode} options={[{value:"single",label:"Clase suelta"},{value:"monthly",label:"Plan mensual"}]} />
     <ReservationSelect label="Mes" options={months.map(value => ({ id: value, label: new Date(value+"T12:00:00Z").toLocaleDateString("es-AR", {month:"long",year:"numeric",timeZone:"UTC"}) }))} value={month} onChange={value => { if(value) { setMonth(value); setSingle(""); setDays([]); } }} />
     {mode === "monthly" ? <>
@@ -86,3 +86,9 @@ const s = StyleSheet.create({
   dates:{flexDirection:"row",flexWrap:"wrap",gap:ds.spacing[2]},date:{minWidth:"29%",flexGrow:1,alignItems:"center",padding:ds.spacing[2],borderRadius:ds.radii.md,backgroundColor:ds.colors.bg.surface,borderWidth:1,borderColor:ds.colors.border.subtle},
   dateLabel:{...ds.textStyles.bodySmall,color:ds.colors.text.primary},
 });
+
+/** First step in the detail: selections and confirmation live on a separate route. */
+export function ClassReservationEntry({ id }: { id: string }) {
+  const navigation = useNavigation<any>();
+  return <LearningActionDock><Button label="Solicitar reserva" onPress={() => navigation.navigate("LearningReservation", {id})} /></LearningActionDock>;
+}

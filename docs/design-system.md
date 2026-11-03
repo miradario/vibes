@@ -430,3 +430,23 @@ El badge new de Clases usa mostaza y texto oscuro, separado del contador de chat
 ### Regla de reutilización
 
 Para cada pantalla se elige un rol existente de tipografía y un componente/preset existente. Si falta una variante, documentar su geometría, estados y alcance aquí antes de reutilizarla; no agregar overrides aislados. `AGENTS.md` referencia esta norma y `npm run lint:ds` verifica estilos fuera de tokens. Las diferencias heredadas se corrigen en los elementos afectados por cada cambio.
+
+### Detalle de actividad de Clases (2/11)
+
+`LearningDetailParts` comparte la composición de clases internas y referencias: imagen 3:2 a todo el ancho, radio xl, etiqueta de práctica/modalidad sobre superficie informativa suave, título display y horario en bloque sutil con icono de reloj. Cabecera Actividad con BackButton y compartir (sin agregar guardados ficticios). Las filas de profesores usan Avatar md, nombre subtitle y Ver perfil con chevron independiente; si no existe perfil interno, mostrar solo los datos reales sin enlace. El lugar se agrupa en una superficie suave con nombre, dirección, acceso al detalle y mapa con Cómo llegar. Reservas y asistencia permanecen en el dock existente; se conservan fechas, confirmaciones e invitaciones.
+
+Esta composición reemplaza en el detalle externo la regla anterior de colocar el nombre de la clase en la cabecera: ahora el título aparece debajo de la fotografía, dentro de LearningHero. No modificar las fotos originales ni introducir colores de la referencia; utilizar tokens semánticos de Vibes. Los títulos, cuerpos y botones conservan los roles del sistema.
+
+Programa y encuentros usa LearningSchedule después del bloque de lugar. Lista única de filas compactas con fecha a la izquierda, horario de inicio/fin en la zona de la clase y badge Próximo mostaza suave. Mostrar como resumen el último encuentro pasado y tres vigentes/futuros; ofrecer Ver todos cuando hay más. Las fechas pasadas se indican con texto y En curso se distingue de Próximo. Las opciones para participar quedan después del programa. La portada de LearningHero usa relación 1,85 para mantener compacto el detalle.
+
+En el detalle de actividad, Editar actividad se encuentra en un menú de tres puntos al extremo derecho de la cabecera. El menú solo aparece cuando managed_ids incluye al organizador; reutilizar AnimatedSheetModal y conservar las restricciones de estado y la autorización del servidor. Eliminar el enlace de edición al pie del detalle. Compartir conserva su acceso independiente.
+
+Programa y encuentros se abre desde Ver próximos encuentros en un AnimatedSheetModal. El detalle conserva solo el acceso compacto; las fechas, estados y expansión de la lista quedan dentro del modal con cierre fijo, scroll y safe area inferior. Esta presentación reemplaza la lista visible directamente en el detalle.
+
+Solicitar reserva en el detalle de Clases abre la ruta LearningReservation con el ID de la clase. Esa pantalla usa Page/ScreenContainer, título de clase, modalidad Clase suelta/Plan mensual, mes, frecuencia o fecha con horario, resumen de fechas y confirmación fija al pie. El detalle ya no muestra los selectores de reserva. Resolver las fechas desde los datos reales al entrar; conservar las solicitudes existentes, confirmación pendiente y acceso al chat. El flujo mantiene sin cobros hasta que se defina explícitamente la integración de pagos.
+
+Próximos encuentros excluye todas las sesiones cuya hora de finalización ya pasó, tanto del resumen como de Ver todos. Conservar las sesiones en curso hasta su finalización y ocultar el acceso si no quedan sesiones vigentes; no incluir el último encuentro pasado.
+
+El bloque de lugar del detalle de Clases es compacto: nombre/dirección en superficie sutil y Cómo llegar separado por un borde, abriendo el mapa externo sin miniatura incrustada. Sobre el encuentro usa título title, cuerpo body y filas con iconos para horarios/ingreso explícitos en la descripción. No inventar datos. El precio informativo usa display sobre mostaza suave, moneda/unidad y cupos solo cuando se conocen. Ver próximos encuentros usa el preset accent/lg; Invitar a alguien secondary/lg. Mantener la solicitud en su ruta separada y sin cobros.
+
+La tarjeta de lugar de Clases vuelve a incluir una miniatura de mapa de 96 de alto entre la dirección y Cómo llegar. Usar ClassLocationMap compact sin duplicar el pie del mapa; conservar la acción de direcciones y el fallback si no carga la imagen.

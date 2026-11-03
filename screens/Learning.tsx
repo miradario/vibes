@@ -1,3 +1,5 @@
+import LearningSchedule from "../components/learning/LearningSchedule";
+import { LearningHero, LearningTeacherRow, LearningPlaceBlock, LearningAbout, LearningPriceCard, LearningInviteButton } from "../components/learning/LearningDetailParts";
 import LearningDateRange from "../components/learning/LearningDateRange";
 import { learningLocality, matchesLearningDateRange, weeklyRangeMatches } from "../src/learning/filters";
 import { WEEKDAYS } from "../src/learning/reservations";
@@ -8,7 +10,7 @@ import { matchesCommunities } from "../src/lib/communities";
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import EventInviteSheet from "../components/EventInviteSheet";
 import ClassLocationMap from "../components/learning/ClassLocationMap";
-import ClassReservationPanel from "../components/learning/ClassReservationPanel";
+import { ClassReservationEntry } from "../components/learning/ClassReservationPanel";
 import { useReservationRequests } from "../src/learning/reservationQueries";
 import { reservationDateLabel } from "../src/learning/reservations";
 import {ExternalClassCard, ExternalPlaceCard} from "../components/learning/ExternalCatalog";
@@ -331,12 +333,28 @@ export function LearningProfileDetail() {
 
 export function LearningActivityDetail() {
   const [inviteVisible, setInviteVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const id = useId(),
     nav = useNav(),
     q = useLearningData(),
     action = useLearningAction();
+  const activity = q.data?.activities.find(item => item.id === id);
+  const canManage = Boolean(activity && q.data?.access.managed_ids.includes(activity.organizer_id));
+  const canEdit = canManage && activity && !["cancelled", "completed"].includes(activity.status);
   return (
-    <Page title="Detalle de la actividad">
+    <Page title="Actividad" headerAction={<View style={{flexDirection:"row",gap:ds.spacing[1]}}>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Compartir clase" onPress={() => setInviteVisible(true)} style={{ width:44,height:44,alignItems:"center",justifyContent:"center" }}><Icon name="share-outline" size={ds.iconSize.lg} color={ds.colors.icon.default} /></TouchableOpacity>
+      {canManage ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Administrar actividad" accessibilityState={{expanded:menuVisible}} onPress={() => setMenuVisible(true)} style={{width:44,height:44,alignItems:"center",justifyContent:"center"}}><Icon name="ellipsis-vertical" size={ds.iconSize.lg} color={ds.colors.icon.default} /></TouchableOpacity> : null}
+    </View>}>
+      <AnimatedSheetModal visible={menuVisible && canManage} onClose={() => setMenuVisible(false)} sheetStyle={ui.sheet}>
+        <Text style={ui.title}>Administrar actividad</Text>
+        <Button label="Editar actividad" disabled={!canEdit} onPress={() => {
+          if (!canEdit || !activity) return;
+          setMenuVisible(false);
+          nav.navigate("LearningActivityEditor", {id:activity.id});
+        }} />
+        <Button secondary label="Cerrar" onPress={() => setMenuVisible(false)} />
+      </AnimatedSheetModal>
       <LearningGate query={q}>
         {(data) => {
           const a = data.activities.find((a) => a.id === id);
@@ -349,77 +367,23 @@ export function LearningActivityDetail() {
             paid = Number(a.price) > 0;
           return (
             <>
-              <Photo key={a.image_url} url={a.image_url} cover />
-              <Text style={ui.heading}>{a.title}</Text>
-              <Text style={ui.muted}>
-                {a.kind === "course" ? "Curso completo" : "Clase"} ·{" "}
-                {statusLabels[a.status]}
-              </Text>
-              {data.profiles
-                .filter((p) => a.teacher_ids.includes(p.id))
-                .map((p) => (
-                  <Link
-                    key={p.id}
-                    label={`Con ${p.name} · Ver perfil`}
-                    onPress={() =>
-                      nav.navigate("LearningProfile", { id: p.id })
-                    }
-                  />
-                ))}
-              {a.place_id && (
-                <Link
-                  label={`${
-                    data.profiles.find((p) => p.id === a.place_id)?.name ??
-                    "Lugar"
-                  } · Ver lugar`}
-                  onPress={() =>
-                    nav.navigate("LearningProfile", { id: a.place_id })
-                  }
-                />
-              )}
-              {!a.place_id && a.catalog_source_id ? (() => {
+              <LearningHero source={a.image_url ? { uri: a.image_url } : null} title={a.title}
+                category={`${data.profiles.filter(profile => a.teacher_ids.includes(profile.id)).flatMap(profile => profile.specialties)[0] || (a.kind === "course" ? "Curso" : "Clase")} · ${modalityLabels[a.modality]}`}
+                schedule={sessions.find(session => Date.parse(session.ends_at) > Date.now()) ? formatSession(sessions.find(session => Date.parse(session.ends_at) > Date.now())!, a.timezone) : undefined} />
+              {data.profiles.filter(profile => a.teacher_ids.includes(profile.id)).map(profile => <LearningTeacherRow key={profile.id} name={profile.name} image={profile.image_url} onPress={() => nav.navigate("LearningProfile", {id:profile.id})} />)}
+              {a.location || a.place_id ? (() => {
+                const internalPlace = data.profiles.find(profile => profile.id === a.place_id);
                 const reference = externalClasses.find(item => item.id === a.catalog_source_id);
-                const place = reference && externalPlaces.find(item => item.id === reference.lugar_id);
-                return place ? <Link label={`${place.nombre} · Ver lugar`} onPress={() => nav.navigate("ExternalCatalogDetail", {id:place.id})} /> : null;
+                const externalPlace = reference && externalPlaces.find(item => item.id === reference.lugar_id);
+                return <LearningPlaceBlock name={internalPlace?.name ?? externalPlace?.nombre} address={a.location || internalPlace?.location || ""} showMap={a.modality !== "online"}
+                  onPress={internalPlace ? () => nav.navigate("LearningProfile", {id:internalPlace.id}) : externalPlace ? () => nav.navigate("ExternalCatalogDetail", {id:externalPlace.id}) : undefined} />;
               })() : null}
-              <Text style={ui.body}>
-                {modalityLabels[a.modality]}
-                {a.location ? ` · ${a.location}` : ""}
-              </Text>
-              {a.modality !== "online" && /\d/.test(a.location) && <ClassLocationMap key={a.location} address={a.location} />}
-              <Button secondary label="Invitar a alguien" onPress={() => setInviteVisible(true)} />
+              <LearningAbout description={a.description} />
+              <LearningPriceCard amount={Number(a.price) === 0 ? "Gratis" : new Intl.NumberFormat("es-AR", {style:"currency",currency:a.currency,minimumFractionDigits:0,maximumFractionDigits:2}).format(Number(a.price))} currency={Number(a.price) > 0 ? a.currency : undefined} unit={a.kind === "course" ? "curso completo" : "entrada individual"} capacity={a.capacity > 0 ? Math.max(0,a.capacity-a.reserved_count) : undefined} />
+              <LearningSchedule sessions={sessions} timezone={a.timezone} teachers={data.profiles.filter(profile => a.teacher_ids.includes(profile.id)).map(profile => profile.name).join(" · ")} />
+              <LearningInviteButton onPress={() => setInviteVisible(true)} />
               <EventInviteSheet classInvite={{id:a.id,title:a.title,date:sessions[0] ? formatSession(sessions[0],a.timezone) : undefined,url:`com.gurudevelopers.vibes://learning/${a.id}`}} visible={inviteVisible} onClose={()=>setInviteVisible(false)} onDiscover={()=>nav.navigate("Tab",{screen:"Discover"})} />
-              <Text style={ui.body}>{a.description}</Text>
-              <Text style={ui.title}>Programa y encuentros</Text>
-              {sessions.map((s, index) => (
-                <View key={s.id} style={ui.card}>
-                  <Text style={ui.title}>
-                    {index + 1}. {s.title}
-                  </Text>
-                  <Text style={ui.body}>{formatSession(s, a.timezone)}</Text>
-                  <Text style={ui.muted}>
-                    {Math.round(
-                      (Date.parse(s.ends_at) - Date.parse(s.starts_at)) / 60000
-                    )}{" "}
-                    minutos · {a.timezone}
-                  </Text>
-                </View>
-              ))}
-              <View style={ui.notice}>
-                <Text style={ui.title}>
-                  {priceLabel(a)}
-                  {a.kind === "course" ? " · precio total" : ""}
-                </Text>
-                <Text style={ui.body}>
-                  {a.capacity - a.reserved_count} cupos disponibles
-                </Text>
-                {paid && a.kind === "course" && (
-                  <Text style={ui.body}>
-                    El pago con Mercado Pago todavía no está disponible. No
-                    podés reservar esta actividad paga por ahora.
-                  </Text>
-                )}
-              </View>
+              {paid && a.kind === "course" ? <Text style={ui.body}>Los pagos desde Vibes todavía no están disponibles.</Text> : null}
               {e && (
                 <Text style={ui.body}>
                   {e.status === "confirmed"
@@ -444,7 +408,7 @@ export function LearningActivityDetail() {
                   }
                 />
               ) : a.kind === "class" ? (
-                <ClassReservationPanel key={a.id} source={{id:a.id,timezone:a.timezone,sessions}} />
+                <ClassReservationEntry id={a.id} />
               ) : (
                 <Button
                   label={
@@ -481,19 +445,13 @@ export function LearningActivityDetail() {
               )}
               {mine && (
                 <>
-                  <LearningActionDock>                  <Button
+                  <LearningActionDock>
+                  <Button
                     label="Ver alumnos y asistencia"
                     secondary
                     onPress={() => nav.navigate("LearningRoster", { id: a.id })}
                   /></LearningActionDock>
-                  {!["cancelled", "completed"].includes(a.status) && (
-                    <Link
-                      label="Editar actividad"
-                      onPress={() =>
-                        nav.navigate("LearningActivityEditor", { id: a.id })
-                      }
-                    />
-                  )}
+
                 </>
               )}
               {action.elements}

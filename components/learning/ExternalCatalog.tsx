@@ -1,10 +1,8 @@
-import { Link } from "./LearningUI";
+import { LearningHero, LearningTeacherRow, LearningPlaceBlock, LearningAbout, LearningInviteButton } from "./LearningDetailParts";
 import { LearningDockHost } from "./LearningActionDock";
 import EventInviteSheet from "../EventInviteSheet";
 import { shareClassInvite } from "../../src/lib/socialShare";
-import ClassLocationMap from "./ClassLocationMap";
-import ClassReservationPanel from "./ClassReservationPanel";
-import { WEEKDAYS } from "../../src/learning/reservations";
+import { ClassReservationEntry } from "./ClassReservationPanel";
 import { useClasesEnabled } from "../../src/featureFlags/useClasesEnabled";
 import {Image} from "expo-image";
 import {externalCatalogImages} from "../../src/learning/externalCatalogImages";
@@ -36,14 +34,11 @@ export function ExternalPlaceCard({item,onPress}:{item:ExternalPlace;onPress:()=
 export function ExternalCatalogDetailScreen() {
   const navigation = useNavigation<any>();
   const [inviteVisible, setInviteVisible] = useState(false);
-  const [descriptionOpen, setDescriptionOpen] = useState(false);
   const {params} = useRoute<any>();
   const clasesEnabled = useClasesEnabled();
   const item = [...externalClasses, ...externalPlaces].find(entry => entry.id === params?.id) ?? null;
   const activity = item && "titulo" in item ? item : null;
   const place = activity ? placeForClass(activity) : item as ExternalPlace|null;
-  const hasMap = Boolean(place?.ubicacion.direccion?.trim());
-  const showModality = activity && !(hasMap && activity.modalidad.trim().toLowerCase() === "presencial");
   const openSource = async () => {
     const url = item?.fuentes[0]?.url;
     if (!url || !url.startsWith("https://")) return;
@@ -51,23 +46,21 @@ export function ExternalCatalogDetailScreen() {
   };
   if (!clasesEnabled) return <ScreenContainer><BackButton accessibilityLabel="Volver" onPress={() => navigation.goBack()} /><Text style={s.body}>Clases y espacios no está disponible por el momento.</Text></ScreenContainer>;
   return <LearningDockHost><ScreenContainer scroll edges={["top","left","right"]} contentContainerStyle={[s.detail, { flexGrow: 1 }]}>
-      <View style={s.detailHeader}><BackButton accessibilityLabel="Volver a clases" onPress={() => navigation.goBack()} /><Text accessibilityRole="header" style={s.headerTitle}>{activity?.titulo ?? "Detalle del lugar"}</Text>{item && <TouchableOpacity accessibilityRole="button" accessibilityLabel={activity ? "Compartir clase" : "Compartir lugar"} style={s.close} onPress={() => { if (activity) { setInviteVisible(true); return; } const url = item.fuentes[0]?.url; void shareClassInvite(place?.nombre ?? "Vibes", url?.startsWith("https://") ? url : null).catch(() => Alert.alert("No se pudo compartir", "Intentá nuevamente más tarde.")); }}><Icon name="share-outline" size={ds.iconSize.lg} color={ds.colors.text.primary} /></TouchableOpacity>}</View>
-      {item && externalCatalogImages[item.id] && <Image source={externalCatalogImages[item.id]} contentFit="contain" style={s.cover} />}
-      {!activity && <Text accessibilityRole="header" style={s.detailTitle}>{place?.nombre ?? "No encontramos esta propuesta"}</Text>}
-      {activity && <>
-        {activity.docente && <Text style={s.body}>Con {activity.docente.nombre}</Text>}
-        {showModality && <View style={s.detailHeader}><Icon name="location-outline" size={ds.iconSize.md} color={ds.colors.text.primary} /><Text style={s.body}>{activity.modalidad}</Text></View>}
-        <View style={s.detailHeader}><Icon name="calendar-outline" size={ds.iconSize.md} color={ds.colors.base.blue} /><Text style={[s.body,{flex:1}]}>{externalSchedule(activity)}</Text></View>
-        <TouchableOpacity accessibilityRole="button" accessibilityState={{expanded:descriptionOpen}} onPress={() => setDescriptionOpen(value => !value)} style={s.accordion}><Icon name="document-text-outline" size={ds.iconSize.lg} color={ds.colors.text.primary}/><Text style={[s.body,{flex:1}]}>Sobre esta clase</Text><Icon name={descriptionOpen ? "chevron-up" : "chevron-down"} size={ds.iconSize.md} color={ds.colors.text.primary}/></TouchableOpacity>
-        {descriptionOpen && <Text style={s.body}>{activity.descripcion}</Text>}
+      <View style={s.detailHeader}><BackButton accessibilityLabel="Volver a clases" onPress={() => navigation.goBack()} /><Text accessibilityRole="header" style={s.headerTitle}>{activity ? "Actividad" : "Lugar"}</Text>{item && <TouchableOpacity accessibilityRole="button" accessibilityLabel={activity ? "Compartir clase" : "Compartir lugar"} style={s.close} onPress={() => { if (activity) { setInviteVisible(true); return; } const url = item.fuentes[0]?.url; void shareClassInvite(place?.nombre ?? "Vibes", url?.startsWith("https://") ? url : null).catch(() => Alert.alert("No se pudo compartir", "Intentá nuevamente más tarde.")); }}><Icon name="share-outline" size={ds.iconSize.lg} color={ds.colors.text.primary} /></TouchableOpacity>}</View>
+      {activity ? <>
+        <LearningHero source={externalCatalogImages[activity.id]} title={activity.titulo} category={`${activity.categoria} · ${activity.modalidad}`} schedule={externalSchedule(activity)} />
+        {activity.docente ? <LearningTeacherRow name={activity.docente.nombre} /> : null}
+        {place ? <LearningPlaceBlock name={place.nombre} address={[externalLocation(place),place.ubicacion.pais].filter(Boolean).join(", ")} onPress={() => navigation.navigate("ExternalCatalogDetail", {id:place.id})} /> : null}
+        <LearningAbout description={activity.descripcion} />
+      </> : <>
+        {item && externalCatalogImages[item.id] ? <Image source={externalCatalogImages[item.id]} contentFit="cover" style={s.cover} /> : null}
+        <Text accessibilityRole="header" style={s.detailTitle}>{place?.nombre ?? "No encontramos esta propuesta"}</Text>
+        {place ? <LearningPlaceBlock address={externalLocation(place)} /> : null}
       </>}
-      {activity && place ? <Link label={`${place.nombre} · Ver lugar`} onPress={() => navigation.navigate("ExternalCatalogDetail", {id:place.id})} /> : null}
-      {item && <Text style={s.body}>{externalLocation(place ?? undefined)}</Text>}
-      {place?.ubicacion.direccion?.trim() && <ClassLocationMap key={place.id} address={[externalLocation(place),place.ubicacion.pais].filter(Boolean).join(", ")} />}
-      {(descriptionOpen || !activity) && !!item?.nota && <Text style={s.meta}>{item.nota}</Text>}
-      {activity && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Invitar personas a la clase" onPress={() => setInviteVisible(true)} style={s.invite}><Icon name="person-add-outline" size={ds.iconSize.md} color={ds.colors.text.primary}/><Text style={s.inviteLabel}>Invitar a alguien</Text></TouchableOpacity>}
-      {activity && activity.horarios_semanales.length > 0 && <ClassReservationPanel key={activity.id} source={{id:activity.id,weekly:activity.horarios_semanales.flatMap(slot => { const day = WEEKDAYS.indexOf(slot.dia); return day < 0 ? [] : [{day,time:slot.hora_inicio}]; })}} />}
-      {item && (descriptionOpen || !activity) && <Text style={s.meta}>Fuente consultada: {item.fuentes[0]?.consultada_el}</Text>}
+      {!activity && !!item?.nota && <Text style={s.meta}>{item.nota}</Text>}
+      {activity ? <LearningInviteButton onPress={() => setInviteVisible(true)} /> : null}
+      {activity && activity.horarios_semanales.length > 0 ? <ClassReservationEntry id={activity.id} /> : null}
+      {item && !activity && <Text style={s.meta}>Fuente consultada: {item.fuentes[0]?.consultada_el}</Text>}
       {item && <TouchableOpacity accessibilityRole="link" onPress={openSource} style={[s.primary, !activity && { marginTop: "auto" }]}><Text style={s.primaryLabel}>Contactar al organizador</Text><Icon name="open-outline" size={ds.iconSize.md} color={buttonContentColor["primary"]}/></TouchableOpacity>}
       {activity && <EventInviteSheet classInvite={{id:activity.id,title:activity.titulo,date:externalSchedule(activity),url:activity.fuentes[0]?.url ?? null}} visible={inviteVisible} onClose={()=>setInviteVisible(false)} onDiscover={()=>navigation.navigate("Tab",{screen:"Discover"})} />}
   </ScreenContainer></LearningDockHost>;

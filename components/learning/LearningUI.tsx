@@ -298,10 +298,12 @@ export function Photo({
 export function Page({
   title,
   embedded = false,
+  headerAction,
   children,
 }: {
   title: string;
   embedded?: boolean;
+  headerAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const nav = useNavigation();
@@ -317,6 +319,7 @@ export function Page({
       {!embedded && <View style={ui.row}>
         <BackButton onPress={() => nav.goBack()} />
         <Text style={[ui.heading, ui.grow]}>{title}</Text>
+        {headerAction}
       </View>}
       {children}
     </ScreenContainer></LearningDockHost>
