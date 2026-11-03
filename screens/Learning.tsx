@@ -1,3 +1,4 @@
+import { isVisibleClassTeacher } from "../src/learning/visibleTeachers";
 import LearningSchedule from "../components/learning/LearningSchedule";
 import { LearningHero, LearningTeacherRow, LearningPlaceBlock, LearningAbout, LearningPriceCard, LearningInviteButton } from "../components/learning/LearningDetailParts";
 import LearningDateRange from "../components/learning/LearningDateRange";
@@ -96,8 +97,9 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
       <LearningGate query={q}>
         {(data) => {
           const personalClassIds = new Set([...data.enrollments.filter(enrollment=>enrollment.status === "confirmed").map(enrollment=>enrollment.activity_id), ...(requests.data ?? []).filter(request=>request.status === "pending_confirmation").map(request=>request.source_id)]);
-          const availableClasses = data.activities.filter(activity => activity.status === "published" && (matchesCommunities({specialties:data.profiles.filter(profile=>activity.teacher_ids.includes(profile.id)).flatMap(profile=>profile.specialties)}, communities) || personalClassIds.has(activity.id)) && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
-          const availableExternalClasses = unimportedCatalogClasses(data.activities).filter(item => matchesCommunities(item, communities) || personalClassIds.has(item.id)).filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
+          const visibleTeacherIds = new Set(data.profiles.filter(profile => profile.kind === "teacher" && isVisibleClassTeacher(profile.name)).map(profile => profile.id));
+          const availableClasses = data.activities.filter(activity => activity.teacher_ids.some(id => visibleTeacherIds.has(id)) && activity.status === "published" && (matchesCommunities({specialties:data.profiles.filter(profile=>activity.teacher_ids.includes(profile.id)).flatMap(profile=>profile.specialties)}, communities) || personalClassIds.has(activity.id)) && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
+          const availableExternalClasses = unimportedCatalogClasses(data.activities).filter(item => isVisibleClassTeacher(item.docente?.nombre)).filter(item => matchesCommunities(item, communities) || personalClassIds.has(item.id)).filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
           const teacherIds = new Set(availableClasses.flatMap(activity => activity.teacher_ids));
           const specs = Array.from(new Set([
             ...data.profiles.filter(profile => teacherIds.has(profile.id)).flatMap(profile => profile.specialties),
@@ -127,7 +129,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
             matchesExternalClass(item, {query,specialty,location,modality,date:""}) && (
               item.proxima_fecha_confirmada ? matchesLearningDateRange([item.proxima_fecha_confirmada], date, dateTo) : weeklyRangeMatches(item.horarios_semanales.map(slot => WEEKDAYS.indexOf(slot.dia)), date, dateTo, wallDate(new Date().toISOString(), "America/Argentina/Buenos_Aires").slice(0,10))
             ));
-          const listedExternalPlaces = externalPlaces.filter(item => matchesCommunities(item, communities) && matchesExternalPlace(item,query,specialty));
+          const listedExternalPlaces = externalPlaces.filter(item => availableExternalClasses.some(activity => activity.lugar_id === item.id) || availableClasses.some(activity => externalClasses.find(reference => reference.id === activity.catalog_source_id)?.lugar_id === item.id)).filter(item => matchesCommunities(item, communities) && matchesExternalPlace(item,query,specialty));
           const enrolledIds = new Set(data.enrollments.filter(enrollment => enrollment.status === "confirmed").map(enrollment => enrollment.activity_id));
           const myClasses = activities.filter(activity => enrolledIds.has(activity.id));
           const requestedIds = new Set((requests.data ?? []).filter(request => request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now())).map(request => request.source_id));
@@ -138,6 +140,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
             (p) =>
               matchesCommunities(p, communities) &&
               p.kind === tab &&
+              (p.kind === "teacher" ? visibleTeacherIds.has(p.id) : availableClasses.some(activity => activity.place_id === p.id)) &&
               p.published &&
               `${p.name} ${p.description} ${p.specialties.join(" ")}`
                 .toLocaleLowerCase()

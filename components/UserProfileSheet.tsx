@@ -615,10 +615,6 @@ const UserProfileSheet = ({
             commitSwipe(action);
           } else {
             resetSwipe();
-            // Single tap (no real movement) opens the full-screen viewer.
-            if (Math.abs(g.dx) < 8 && Math.abs(g.dy) < 8) {
-              openZoomRef.current();
-            }
           }
         },
         onPanResponderTerminationRequest: () => false,
@@ -737,13 +733,14 @@ const UserProfileSheet = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isIOS, detailsVisible]);
 
-  const closeDetails = useCallback(() => setDetailsVisible(false), [setDetailsVisible]);
+  const closeDetails = useCallback(() => { setZoomIndex(null); setDetailsVisible(false); }, [setDetailsVisible]);
   const showDetails = () => {
     if (swipingRef.current || actionPending) return;
     swipeX.stopAnimation();
     swipeX.setValue(0);
     swipeUp.setValue(0);
     panelDragY.setValue(0);
+    setZoomIndex(null);
     setDetailsVisible(true);
   };
 
@@ -753,20 +750,18 @@ const UserProfileSheet = ({
   // Modal declared by the screen can't present on top of an open sheet Modal.
   const [zoomIndex, setZoomIndex] = useState<number | null>(null);
   const openZoom = (index = safeActiveIndex) => {
-    if (swipingRef.current || !canZoomPhotos) return;
+    if (!detailsVisible || swipingRef.current || !canZoomPhotos) return;
     setZoomIndex(index);
   };
-  const renderPhotoViewer = (forDetails: boolean) => (
+  const renderPhotoViewer = () => (
     <PhotoViewer
-      visible={zoomIndex !== null && visible && detailsVisible === forDetails}
+      visible={zoomIndex !== null && visible && detailsVisible}
       images={profileImages}
       initialIndex={zoomIndex ?? 0}
       onClose={() => setZoomIndex(null)}
     />
   );
-  const openZoomRef = useRef(openZoom);
-  openZoomRef.current = openZoom;
-  const zoomAccessibilityActions = canZoomPhotos ? [{ name: "magicTap" as const }, { name: "zoom", label: "Ampliar foto" }] : [];
+
 
   const setGalleryIndex = (nextIndex: number) => {
     if (!hasMultipleImages) return;
@@ -1054,18 +1049,15 @@ const UserProfileSheet = ({
 
           <View
             style={{ position: "absolute", left: 0, right: 0, top: "12%", height: "53%" }}
-            accessible={hasMultipleImages || canZoomPhotos}
+            accessible={hasMultipleImages}
             accessibilityLabel={`Foto ${safeActiveIndex + 1} de ${profileImages.length}`}
-            accessibilityHint={canZoomPhotos ? "Tocá para ver en pantalla completa" : undefined}
             accessibilityActions={[
               ...(hasMultipleImages ? [
                 { name: "increment", label: "Foto siguiente" },
                 { name: "decrement", label: "Foto anterior" },
               ] : []),
-              ...zoomAccessibilityActions,
             ]}
             onAccessibilityAction={({ nativeEvent }) => {
-              if (nativeEvent.actionName === "zoom" || nativeEvent.actionName === "magicTap") return openZoom();
               setGalleryIndex(safeActiveIndex + (nativeEvent.actionName === "increment" ? 1 : -1));
             }}
           />
@@ -1393,10 +1385,9 @@ const UserProfileSheet = ({
               </View>
             ) : null}
           </View>
-          {renderPhotoViewer(true)}
+          {renderPhotoViewer()}
         </AnimatedSheetModal>
         </Animated.View>
-        {renderPhotoViewer(false)}
       </AnimatedSheetModal>
     </>
   );
