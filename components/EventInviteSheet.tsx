@@ -4,11 +4,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import AnimatedSheetModal from "./AnimatedSheetModal";
+import KeyboardSheetModal from "./KeyboardSheetModal";
 import Avatar from "./Avatar";
 import VibesLoader from "./VibesLoader";
 import { Text, TextInput } from "./Typography";
@@ -22,7 +20,6 @@ import { eligibleInviteContacts } from "../src/lib/eventInviteContacts";
 import { buildClassInvitation, type ClassInvitation, buildChallengeInvitation, buildEventInvitation } from "../src/lib/eventInvites";
 import { useInviteToChallengeMutation } from "../src/queries/challengeRestart.queries";
 import { shareClassInvite, shareChallengeInvite, shareEventInvite } from "../src/lib/socialShare";
-import { vibesTheme } from "../src/theme/vibesTheme";
 import * as ds from "../src/theme/tokens";
 
 export default function EventInviteSheet({
@@ -56,8 +53,6 @@ export default function EventInviteSheet({
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const sending = useRef(false);
-  const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
   const invitation = useMemo(() => privateChallenge ? "" : classInvite ? buildClassInvitation(classInvite) : isChallenge ? buildChallengeInvitation(event!) : buildEventInvitation(event!), [event, classInvite, privateChallenge, isChallenge]);
   useEffect(() => {
     setSent(new Set());
@@ -96,18 +91,9 @@ export default function EventInviteSheet({
     }
   };
   return (
-    <AnimatedSheetModal
-      visible={visible}
-      onClose={close}
-      closeOnBackdropPress={!sendingId}
-      sheetStyle={[
-        s.sheet,
-        {
-          maxHeight: height - insets.top - 20,
-          paddingBottom: Math.max(insets.bottom, ds.spacing[4]),
-        },
-      ]}
-    >
+    <KeyboardSheetModal visible={visible} onClose={close}>
+      <View style={[s.sheet, { maxHeight: "100%", paddingBottom: ds.spacing[4] }]}>
+
       <View style={s.header}>
         <Text style={s.title}>{isClass ? "Invitar a la clase" : isChallenge ? "Invitar al desafío" : "Invitar al evento"}</Text>
         <TouchableOpacity
@@ -120,7 +106,7 @@ export default function EventInviteSheet({
           <Ionicons
             name="close"
             size={ds.iconSize.lg}
-            color={vibesTheme.colors.primaryText}
+            color={ds.colors.text.primary}
           />
         </TouchableOpacity>
       </View>
@@ -142,7 +128,7 @@ export default function EventInviteSheet({
           catch { setError("No pudimos abrir las opciones para compartir. Intentá de nuevo."); }
         }}
       >
-        <Ionicons name="share-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
+        <Ionicons name="share-outline" size={ds.iconSize.lg} color={ds.colors.text.primary} />
         <View style={s.discoverCopy}>
           <Text style={s.name}>Invitar por WhatsApp o enlace</Text>
           <Text style={s.copy}>{isPrivateChallenge ? "El link solo abre el desafío para quienes ya tengan acceso." : "Elegí personas que no estén en tus contactos de Vibes."}</Text>
@@ -153,7 +139,7 @@ export default function EventInviteSheet({
         onChangeText={setSearch}
         placeholder="Buscar entre mis conexiones"
         accessibilityLabel="Buscar conexiones"
-        placeholderTextColor={vibesTheme.colors.secondaryText}
+        placeholderTextColor={ds.colors.text.secondary}
         style={s.search}
       />
       {error ? (
@@ -186,7 +172,8 @@ export default function EventInviteSheet({
           data={contacts}
           keyExtractor={(item) => item.id}
           style={s.list}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode="on-drag"
           ListEmptyComponent={
             <Text style={s.empty}>
               {search.trim()
@@ -236,13 +223,13 @@ export default function EventInviteSheet({
           }}
         />
       )}
-    </AnimatedSheetModal>
+      </View>
+    </KeyboardSheetModal>
   );
 }
-const c = vibesTheme.colors;
 const s = StyleSheet.create({
   sheet: {
-    backgroundColor: c.background,
+    backgroundColor: ds.colors.bg.screen,
     borderTopLeftRadius: ds.radii.xl,
     borderTopRightRadius: ds.radii.xl,
     paddingHorizontal: ds.spacing[5],
@@ -258,7 +245,7 @@ const s = StyleSheet.create({
   title: {
     flex: 1,
     ...ds.textStyles.title,
-    color: c.primaryText,
+    color: ds.colors.text.primary,
   },
   close: {
     minWidth: 48,
@@ -266,7 +253,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  copy: { color: c.secondaryText, ...ds.textStyles.bodySmall },
+  copy: { color: ds.colors.text.secondary, ...ds.textStyles.bodySmall },
   preview: {
     padding: ds.spacing[4],
     borderRadius: ds.radii.lg,
@@ -274,7 +261,7 @@ const s = StyleSheet.create({
     gap: ds.spacing[1],
   },
   previewTitle: {
-    color: c.primaryText,
+    color: ds.colors.text.primary,
     ...ds.textStyles.subtitleMedium,
   },
   discover: {
@@ -288,16 +275,16 @@ const s = StyleSheet.create({
   },
   discoverCopy: { flex: 1 },
   name: {
-    color: c.primaryText,
+    color: ds.colors.text.primary,
     ...ds.textStyles.subtitleMedium,
   },
   search: {
     minHeight: 48,
     borderWidth: 1,
-    borderColor: c.secondaryText,
+    borderColor: ds.colors.text.secondary,
     borderRadius: ds.radii.lg,
     paddingHorizontal: ds.spacing[4],
-    color: c.primaryText,
+    color: ds.colors.text.primary,
     ...ds.textStyles.body,
   },
   list: { flexGrow: 0, flexShrink: 1 },
@@ -315,22 +302,22 @@ const s = StyleSheet.create({
     borderRadius: ds.radii.lg,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.accentMustard,
+    backgroundColor: ds.colors.base.mustard,
   },
   sent: {
     backgroundColor: ds.colors.feedback.infoBg,
     borderWidth: 1,
-    borderColor: c.accentBlue,
+    borderColor: ds.colors.base.blue,
   },
   buttonText: {
-    color: c.primaryText,
+    color: ds.colors.text.primary,
     ...ds.textStyles.labelMedium,
   },
   empty: {
     paddingVertical: ds.spacing[5],
-    color: c.secondaryText,
+    color: ds.colors.text.secondary,
     ...ds.textStyles.body,
     gap: ds.spacing[3],
   },
-  error: { color: c.primaryText, ...ds.textStyles.bodySmall },
+  error: { color: ds.colors.text.primary, ...ds.textStyles.bodySmall },
 });

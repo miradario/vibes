@@ -16,3 +16,9 @@
 - Priorizar la legibilidad sobre la cercanía numérica entre colores: usar texto oscuro sobre fondos mostaza, azul o coral; reservar el texto claro para fondos oscuros. No convertir bordes, iconos o estados seleccionados en el mismo color que su fondo. Para superficies suaves, usar los acentos de la paleta con opacidad.
 
 - Excepción solicitada para el visor de perfiles (`components/UserProfileSheet.tsx`): fondo negro `#000000` y degradé negro con opacidad sobre la foto full-screen. No extender esta excepción a otras pantallas.
+
+## Consistencia obligatoria de componentes
+
+- Antes de agregar un control, buscar el equivalente en `components/ui` y reutilizar sus presets (`buttonStyles`, `surfaceStyles`, `chipStyles`), `BackButton`, `SectionHeader` y `Typography`. No crear tamaños, radios ni tipografías particulares para una feature.
+- Las acciones persistentes de Clases usan `LearningActionDock` dentro de `LearningDockHost`. Las búsquedas en sheets con teclado usan `KeyboardSheetModal` (basado en `AnimatedSheetModal`).
+- Si falta una variante reutilizable, definirla y documentarla primero en [el design system](docs/design-system.md), junto con su alcance; no resolverla con estilos aislados.
