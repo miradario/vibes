@@ -1,3 +1,5 @@
+import StudioBookingPanel from "../components/learning/StudioBookingPanel";
+import { studioStudentEnabled } from "../src/learning/studioStudent";
 import React from "react";
 import { useRoute } from "@react-navigation/native";
 import { Text } from "../components/Typography";
@@ -8,8 +10,10 @@ import { externalClasses } from "../src/learning/externalCatalog";
 import { WEEKDAYS } from "../src/learning/reservations";
 import { sessionsFor } from "../src/learning/utils";
 export default function LearningReservationScreen() {
-  const id = (useRoute().params as { id?: string } | undefined)?.id;
+  const params = useRoute().params as { id?: string; sessionId?: string } | undefined;
+  const id = params?.id;
   const query = useLearningData();
+  if (studioStudentEnabled && id && !id.startsWith("clase_")) return <Page title="Reservar encuentro"><StudioBookingPanel activityId={id} initialSessionId={params?.sessionId} /></Page>;
   return <Page title="Solicitar reserva"><LearningGate query={query}>{data => {
     const activity = data.activities.find(item => item.id === id);
     if (activity) {

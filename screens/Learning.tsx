@@ -175,13 +175,13 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               <DiscoverPathCards selected={communities} onToggle={value=>setCommunities(previous=>previous.includes(value)?previous.filter(item=>item!==value):[...previous,value])} onClear={()=>setCommunities([])} />
               <Chips value={specialty} onChange={setSpecialty} options={[{value:"",label:"Todas las prácticas"},...specs.map(value=>({value,label:value}))]} />
               {tab === "activity" ? <>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver mi agenda y reservas" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Mi agenda y reservas</Text><Icon name="chevron-forward" size={ds.iconSize.md} color={ds.colors.icon.default} /></TouchableOpacity>
                 {myClasses.length + myRequestedClasses.length + myRequestedActivities.length > 0 ? <>
                 <Text accessibilityRole="header" style={explore.sectionTitle}>Mis clases</Text>
                 <Text style={explore.sectionHint}>Inscripciones y solicitudes pendientes</Text>
                 {myRequestedActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} status="Solicitud pendiente" onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
                 {myRequestedClasses.map(item => <View key={item.id}><ExternalClassCard item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} /><Text style={explore.sectionHint}>Pendiente de confirmación con el organizador</Text></View>)}
                 {myClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver todas mis clases y cursos" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Ver mis clases y cursos</Text><Icon name="chevron-forward" size={ds.iconSize.md} color={ds.colors.text.primary} /></TouchableOpacity>
                 </> : null}
                 {!!(otherClasses.length + listedExternalClasses.length) && <Text accessibilityRole="header" style={explore.sectionTitle}>Más clases</Text>}
                 {otherClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
