@@ -36,3 +36,13 @@ test('the later about-you step keeps its original position before identity', () 
   const { VIBES_ONBOARDING_STEPS: steps } = load('src/screens/Onboarding/vibesOnboardingContent.ts');
   assert.equal(steps.indexOf('practices') + 1, steps.indexOf('identity'));
 });
+
+test('signup rejects numbers in either name, including Unicode numbers', () => {
+  for (const name of ['123', 'Ana123', 'Ana 2', 'Ana１２', 'Ana١٢', 'Ana²']) {
+    assert.equal(basics.hasOnboardingBasics(name, ''), false, name);
+    assert.equal(basics.hasOnboardingBasics('Ana', name), false, name);
+  }
+  for (const name of ['María José', 'Jean-Luc', "O’Connor", '李明']) {
+    assert.equal(basics.hasOnboardingBasics(name, ''), true, name);
+  }
+});

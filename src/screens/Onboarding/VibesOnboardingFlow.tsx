@@ -11,7 +11,7 @@ import OnboardingGlobe from "../../../components/OnboardingGlobe";
 import ProfileReadyIllustration from "../../../components/ProfileReadyIllustration";
 import Svg, { Path } from "react-native-svg";
 import PlayfulVibesLogo from "../../../components/PlayfulVibesLogo";
-import { hasOnboardingBasics, onboardingFullName, splitOnboardingName } from "../../lib/onboardingBasics";
+import { hasNumbersInName, hasOnboardingBasics, onboardingFullName, splitOnboardingName } from "../../lib/onboardingBasics";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { revealFocusedInput as revealInputInViewport } from "../../lib/revealFocusedInput";
 import {
@@ -364,6 +364,10 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
   };
 
   const goNext = async () => {
+    if (!hasOnboardingBasics(firstName, lastName)) {
+      setStepIndex(VIBES_ONBOARDING_STEPS.indexOf("profileText"));
+      return false;
+    }
     if (["profile", "profileText"].includes(step) && !canContinue) return false;
     updateDraft(currentDraft);
     if (step !== "completion") trackSignupEvent("onboarding_step_completed", { step, stepIndex });
@@ -750,6 +754,11 @@ const VibesOnboardingContent = ({ skipContinueChoice = false }: { skipContinueCh
               returnKeyType="done" onSubmitEditing={() => Keyboard.dismiss()}
             />
           </View>
+          {hasNumbersInName(displayName) ? (
+            <Text style={localStyles.introLabel} accessibilityLiveRegion="polite">
+              {english ? "First and last names cannot contain numbers." : "El nombre y el apellido no pueden contener números."}
+            </Text>
+          ) : null}
           <View style={localStyles.introField}>
             <Text style={localStyles.introLabel}>{english ? "Gender" : "Género"} <Text style={localStyles.optionalLabel}>{english ? "Optional" : "Opcional"}</Text></Text>
             <View style={localStyles.ideaChips}>
