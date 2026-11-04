@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, Image, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { CameraView, type CameraType } from "expo-camera";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Icon from "./Icon";
@@ -32,6 +33,9 @@ export default function AppCamera() {
   const busyRef = useRef(false);
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const pendingResult = useRef<ImagePicker.ImagePickerResult | null>(null);
+  // Modal con statusBarTranslucent: aplicamos los insets explícitos (patrón PhotoViewer).
+  // Math.max conserva el aire histórico (48 arriba, 56 abajo) cuando el inset es menor.
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     openCamera = (next) => {
@@ -84,7 +88,7 @@ export default function AppCamera() {
       }}
       sheetStyle={styles.sheet}>
       {request ? <>
-        <View style={styles.preview}>
+        <View style={[styles.preview, { marginTop: Math.max(insets.top, ds.spacing[12]) }]}>
           {photo ? <Image source={{ uri: photo.uri }} style={StyleSheet.absoluteFill} resizeMode="contain" /> :
             <CameraView ref={camera} style={StyleSheet.absoluteFill} facing={facing} mode="picture"
               onCameraReady={() => setReady(true)}
@@ -94,7 +98,7 @@ export default function AppCamera() {
               }} />}
         </View>
         {!photo ? <Text style={styles.cameraMessage}>Sos perfecto como sos</Text> : null}
-        <View style={styles.controls}>
+        <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, ds.spacing[12]) + ds.spacing[2] }]}>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar cámara" style={styles.button}
             onPress={() => close({ canceled: true, assets: null })}>
             <Icon name="close" size={ds.iconSize.xl} color={vibesTheme.colors.background} />
@@ -123,9 +127,9 @@ export default function AppCamera() {
 }
 const styles = StyleSheet.create({
   sheet: { flex: 1, backgroundColor: vibesTheme.colors.primaryText },
-  preview: { flex: 1, marginTop: ds.spacing[12] },
+  preview: { flex: 1 },
   cameraMessage: { color: vibesTheme.colors.background, ...ds.textStyles.heading, textAlign: "center", paddingHorizontal: ds.spacing[6], paddingTop: ds.spacing[5] },
-  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", paddingTop: ds.spacing[4], paddingBottom: /* ds-lint-allow layout: paddingBottom 56 (medida de layout fuera de la escala) */ 56 },
+  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-around", paddingTop: ds.spacing[4] },
   button: { minWidth: 60, minHeight: 60, alignItems: "center", justifyContent: "center" },
   capture: { width: 72, height: 72, borderRadius: ds.radii.pill, backgroundColor: vibesTheme.colors.accentMustard, alignItems: "center", justifyContent: "center" },
   label: { color: vibesTheme.colors.background, ...ds.textStyles.body },

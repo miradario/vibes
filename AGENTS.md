@@ -5,6 +5,7 @@
 
 - When implementing a modal (especially bottom-sheet style with backdrop), use `components/AnimatedSheetModal.tsx` instead of creating a new ad-hoc `Modal` animation.
 - For new screens, use `components/ScreenContainer.tsx` as the base container unless there is a concrete reason not to.
+- En sheets/modals de pantalla completa (`AnimatedSheetModal fullScreen`, `Modal` de RN) no confiar solo en `SafeAreaView` en iOS; aplicar `useSafeAreaInsets()` arriba y abajo; la cabecera y la flecha de volver nunca se superponen a la barra de estado.
 
 ## Paleta obligatoria de Vibes
 
