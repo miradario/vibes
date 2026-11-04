@@ -10,6 +10,9 @@
  * animaciones) no se revisan.
  *  - en components/ui/**: `vibesTheme.*` (usá ds.*) y números en width/height/minWidth/minHeight/maxWidth
  *    (usá ds.componentSize / ds.touchTarget / ds.avatarSize / ds.iconSize);
+ *  - en screens/ y components/: <AnimatedSheetModal fullScreen> o <Modal statusBarTranslucent> en un archivo
+ *    que no usa useSafeAreaInsets (en iOS el SafeAreaView recibe insets en 0 dentro del Modal).
+ *    Excepción: `/* ds-lint-allow safe-area: <motivo> *\/` en las 3 líneas previas al elemento.
  *  - en todo el código: número suelto como 2º argumento de withAlpha (usá ds.opacity.*).
  * Fuera de components/ui, `vibesTheme.*` es solo aviso (no falla) mientras dura la migración,
  * salvo en VIBES_THEME_STRICT (archivos ya migrados: ahí falla).
@@ -82,7 +85,24 @@ function lintFile(file) {
     problems.push(`${rel}:${line + 1}:${character + 1}  ${msg}`);
   };
   const isUi = rel.startsWith("components/ui/");
+  const checksSafeArea = /^(screens|components)\//.test(rel) && !/useSafeAreaInsets\s*\(/.test(src);
+  const truthyAttr = (el, name) => el.attributes.properties.some((at) => ts.isJsxAttribute(at) && at.name.getText(sf) === name &&
+    !(at.initializer && ts.isJsxExpression(at.initializer) && at.initializer.expression &&
+      at.initializer.expression.kind === ts.SyntaxKind.FalseKeyword));
+  const safeAreaAllowed = (n) => {
+    const { line } = sf.getLineAndCharacterOfPosition(n.getStart(sf));
+    const from = sf.getPositionOfLineAndCharacter(Math.max(0, line - 3), 0);
+    return /ds-lint-allow\s+safe-area\b[:\s]*[^*\s][^*]*/.test(src.slice(from, n.getStart(sf)));
+  };
   function visit(n) {
+    if (checksSafeArea && (ts.isJsxSelfClosingElement(n) || ts.isJsxOpeningElement(n))) {
+      const tag = n.tagName.getText(sf);
+      const prop = tag === "AnimatedSheetModal" ? "fullScreen" : tag === "Modal" ? "statusBarTranslucent" : null;
+      if (prop && truthyAttr(n, prop) && !safeAreaAllowed(n)) {
+        const { line, character } = sf.getLineAndCharacterOfPosition(n.getStart(sf));
+        problems.push(`${rel}:${line + 1}:${character + 1}  <${tag} ${prop}> sin useSafeAreaInsets: aplicá los insets (patrón PhotoViewer) o documentá /* ds-lint-allow safe-area: <motivo> */`);
+      }
+    }
     if (ts.isPropertyAccessExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === "vibesTheme") {
       if (isUi || VIBES_THEME_STRICT.has(rel)) report(n, `${n.getText(sf)} en ${isUi ? "components/ui" : rel}: usá ds.*`);
       else if (!allowed(n)) {
@@ -133,7 +153,7 @@ if (warnings.length) console.warn(`⚠ ${warnings.length} usos de vibesTheme.* f
 if (warnings.length && process.env.DS_LINT_VERBOSE) console.warn(warnings.join("\n"));
 if (problems.length) {
   console.error(problems.join("\n"));
-  console.error(`\n✖ ${problems.length} valores hardcodeados (DESIGN_SYSTEM.md §1). Usá tokens de src/theme/tokens o documentá la excepción con /* ds-lint-allow <motivo> */.`);
+  console.error(`\n✖ ${problems.length} problemas del DS (valores hardcodeados o safe area, DESIGN_SYSTEM.md §1). Usá tokens de src/theme/tokens o documentá la excepción con /* ds-lint-allow <motivo> */.`);
   process.exit(1);
 }
 console.log(`✔ Design system: ${files.length} archivos sin valores hardcodeados.`);
