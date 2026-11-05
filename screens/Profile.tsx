@@ -196,6 +196,16 @@ const Profile = () => {
             />
           ))}
 
+          {__DEV__ ? (
+            <ListItem
+              title="[Dev] Home clases alumno"
+              leadingIcon="school-outline"
+              trailing={{ type: "chevron" }}
+              divider
+              onPress={() => navigation.navigate("StudentClassesHomeMock" as never)}
+            />
+          ) : null}
+
           <ListItem
             title={isLoggingOut ? t("profile.loggingOut") : t("profile.logout")}
             leadingIcon="power"
