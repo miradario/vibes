@@ -460,3 +460,9 @@ El toque breve sin desplazamiento en la foto principal del perfil avanza a la si
 El acceso Mis clases abre LearningStudentScreen: resumen Tu próxima práctica, tabs Agenda/Mis reservas/Historial y fechas reales por día. Distinguir reserva confirmada y solicitud pendiente, conservar estados del backend y no convertir solicitudes en confirmaciones. Cancelar solicitud confirma que se cancelan todas sus fechas. No mostrar packs, créditos ni lista de espera inventados cuando el contrato aún no los ofrece; mantener sin cobros.
 
 El nuevo modo alumno del portal usa EXPO_PUBLIC_PORTAL_STUDIO_ENABLED (false por defecto) y el contrato portal_student de vibes-web. Reservar, Mis reservas, Historial, Mis packs, Rutinas y Avisos reutilizan Page, Chips, Button y tokens. Distinguir confirmada/espera/cancelada, mostrar plazos y consentimiento explícito para espera y WhatsApp. No mostrar cupos libres calculados con datos incompletos ni compras móviles; saldo incluye solo packs acreditados y vigentes. Conservar el acceso al flujo anterior. Contrato y activación: docs/learning-student-contract.md.
+
+### Respuestas de selección única sin valor inicial
+
+`components/ui/RadioOption.tsx` reutiliza `optionCardStyles`: ancho completo, alto mínimo `componentSize.optionCard`, radio `lg`, padding horizontal `spacing/4`, vertical `spacing/3` y separación `spacing/3`. Texto `subtitle` oscuro, borde `border/default` y fondo `bg/surface`; seleccionado usa `bg/selected` y `border/selected`. El indicador `iconSize.md` en `icon/default` muestra un círculo vacío o marcado; la selección no depende solo del color. Rol radio con estado checked y disabled; opacidad de presión y deshabilitado del DS.
+
+La pregunta de servicio de Vibi presenta Sí y Todavía no en filas separadas por `spacing/2`, sin selección inicial salvo una respuesta guardada. Guardar requiere una respuesta explícita; Ahora no cierra sin guardar.

@@ -16,7 +16,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../src/lib/supabase";
 import { localDayKey, MOODS } from "../src/lib/profileQuestions";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
-import { vibesTheme } from "../src/theme/vibesTheme";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Vibi from "./Vibi";
 import { useNavigation } from "@react-navigation/native";
@@ -29,7 +28,7 @@ import {
 } from "../src/lib/vibiDailyPrompts";
 import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "./ui/buttonStyles";
 import { chipHitSlop, chipIcon, chipStyles } from "./ui/chipStyles";
-import SegmentedControl from "./ui/SegmentedControl";
+import RadioOption from "./ui/RadioOption";
 import * as ds from "../src/theme/tokens";
 
 export default function DailyMoodCard({
@@ -173,6 +172,7 @@ export default function DailyMoodCard({
       return;
     }
     if (!userId || loading || savingRef.current) return;
+    if (prompt.kind === "service" && service === null) return;
     if (localDayKey() !== day) {
       setDay(localDayKey());
       return;
@@ -251,7 +251,7 @@ export default function DailyMoodCard({
             <Ionicons
               name="close"
               size={ds.iconSize.lg}
-              color={vibesTheme.colors.secondaryText}
+              color={ds.colors.text.secondary}
             />
           </TouchableOpacity>
         </View>
@@ -317,16 +317,20 @@ export default function DailyMoodCard({
             <Text style={s.subtitle}>
               Dar servicio cambia tu vida. Puede ser un pequeño gesto de ayuda.
             </Text>
-            <SegmentedControl
-              options={[
-                { key: "yes", label: "Sí" },
-                { key: "no", label: "Todavía no" },
-              ]}
-              selected={service === null ? null : service ? "yes" : "no"}
-              onChange={(key) => setService(key === "yes")}
-              disabled={loading || saving}
-              optionRole="radio"
-            />
+            <View accessibilityRole="radiogroup" accessibilityLabel={prompt.title} style={s.energySource}>
+              <RadioOption
+                label="Sí"
+                selected={service === true}
+                onPress={() => setService(true)}
+                disabled={loading || saving}
+              />
+              <RadioOption
+                label="Todavía no"
+                selected={service === false}
+                onPress={() => setService(false)}
+                disabled={loading || saving}
+              />
+            </View>
           </View>
         ) : prompt.kind === "person" ? (
           <View style={s.energySource}>
@@ -407,7 +411,7 @@ export default function DailyMoodCard({
 }
 const s = StyleSheet.create({
   sheet: {
-    backgroundColor: vibesTheme.colors.background,
+    backgroundColor: ds.colors.bg.surface,
     borderTopLeftRadius: ds.radii.xl,
     borderTopRightRadius: ds.radii.xl,
     maxWidth: 540,
@@ -431,7 +435,7 @@ const s = StyleSheet.create({
   },
   author: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2] },
   authorText: {
-    color: vibesTheme.colors.primaryText,
+    color: ds.colors.text.primary,
     ...ds.textStyles.heading,
   },
   energySources: { gap: ds.spacing[5] },
@@ -453,17 +457,17 @@ const s = StyleSheet.create({
   eyebrow: {
     ...ds.textStyles.caption,
     letterSpacing: 2,
-    color: vibesTheme.colors.secondaryText,
+    color: ds.colors.text.secondary,
     marginBottom: ds.spacing[3],
   },
   title: {
     marginBottom: ds.spacing[4],
     ...ds.textStyles.title,
-    color: vibesTheme.colors.primaryText,
+    color: ds.colors.text.primary,
   },
   subtitle: {
     ...ds.textStyles.body,
-    color: vibesTheme.colors.secondaryText,
+    color: ds.colors.text.secondary,
     marginTop: ds.spacing[2],
     marginBottom: ds.spacing[5],
   },
@@ -478,11 +482,11 @@ const s = StyleSheet.create({
   },
   privacyText: {
     ...ds.textStyles.caption,
-    color: vibesTheme.colors.secondaryText,
+    color: ds.colors.text.secondary,
     flexShrink: 1,
   },
   error: {
-    color: vibesTheme.colors.primaryText,
+    color: ds.colors.text.primary,
     ...ds.textStyles.bodySmall,
     marginTop: ds.spacing[3],
   },
@@ -499,5 +503,5 @@ const s = StyleSheet.create({
     justifyContent: "center",
     padding: ds.spacing[3],
   },
-  skipText: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.body },
+  skipText: { color: ds.colors.text.secondary, ...ds.textStyles.body },
 });
