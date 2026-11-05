@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   },
   weekStrip: {
     flexDirection: "row",
-    gap: ds.spacing[2],
+    gap: ds.spacing[1],
   },
   classList: {
     ...cardStyles.base,
