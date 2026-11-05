@@ -8,7 +8,7 @@ import DayPill from "./ui/DayPill";
 import * as ds from "../src/theme/tokens";
 
 export type EventRecurrenceDraft = { frequency: "none" | "weekly" | "monthly"; count: string; weekdays: number[] };
-const days = [[1, "L", "Lunes"], [2, "M", "Martes"], [3, "M", "Miércoles"], [4, "J", "Jueves"], [5, "V", "Viernes"], [6, "S", "Sábado"], [0, "D", "Domingo"]] as const;
+const days = [[1, "L", "Lunes"], [2, "M", "Martes"], [3, "X", "Miércoles"], [4, "J", "Jueves"], [5, "V", "Viernes"], [6, "S", "Sábado"], [0, "D", "Domingo"]] as const;
 
 export default function EventRecurrenceEditor({ value, onChange, defaultWeekday, schedule }: {
   value: EventRecurrenceDraft;
