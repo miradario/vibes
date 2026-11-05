@@ -28,6 +28,8 @@ Usar exclusivamente estos seis colores base. Las transparencias derivan de ellos
 
 **Contraste:** texto e iconos `primaryText` sobre mostaza, azul o coral. Texto `surface` sobre fondos `primaryText`. En superficies suaves usar acentos con opacidad y texto oscuro. Un borde, icono o indicador seleccionado debe distinguirse de su fondo. Validar legibilidad en el tamaño real; pertenecer a la paleta no garantiza contraste suficiente.
 
+**Texto de acento (`text/accent`, `ds.colors.text.accent`, `#F4A340`):** mismo valor que `accentMustard`. Solo para textos cortos de énfasis junto a contenido en `text/primary`, como el nombre del autor en la cita de una respuesta de chat (`MessageReply`). No usar para cuerpos ni textos largos: sobre `surface` el contraste es bajo.
+
 **Estados:** comunicar error, éxito y selección con texto e iconografía además de color. No introducir rojo o verde fuera de la paleta. Para mensajes de error nuevos, usar texto oscuro, icono y superficie coral con opacidad.
 
 **Excepción vigente:** [`UserProfileSheet`](../components/UserProfileSheet.tsx) permite fondo `#000000` y degradé negro con opacidad sobre la fotografía full-screen. No extenderla a otros componentes.

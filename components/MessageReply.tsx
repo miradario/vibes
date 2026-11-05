@@ -110,7 +110,7 @@ const s = StyleSheet.create({
   content: { flex: 1 },
   author: {
     ...ds.textStyles.label,
-    color: ds.colors.base.mustard,
+    color: ds.colors.text.accent,
   },
   snippet: {
     ...ds.textStyles.bodySmall,
