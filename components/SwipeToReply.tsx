@@ -10,7 +10,6 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { Icon } from ".";
-import { vibesTheme } from "../src/theme/vibesTheme";
 import * as ds from "../src/theme/tokens";
 
 const THRESHOLD = 64;
@@ -74,7 +73,7 @@ export default function SwipeToReply({
           <Icon
             name="arrow-undo"
             size={ds.iconSize.md}
-            color={vibesTheme.colors.accentMustard}
+            color={ds.colors.icon.accent}
           />
         </Animated.View>
         <Animated.View style={contentStyle}>{children}</Animated.View>
