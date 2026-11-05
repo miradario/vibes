@@ -145,6 +145,8 @@ El selector de fotos de onboarding y Editar perfil es el mismo `ProfilePhotoPick
 
 Usar [`ScreenContainer`](../components/ScreenContainer.tsx) en pantallas nuevas. Sus edges por defecto son top/left/right; definir el manejo del borde inferior junto con el tab bar, footer y teclado para evitar dobles insets. Las medidas históricas como `paddingTop: 68` de Eventos no son una norma para pantallas nuevas.
 
+**Safe area obligatorio.** Toda pantalla, sheet `fullScreen` o modal de pantalla completa respeta el safe area superior e inferior: la cabecera, la flecha de volver y cualquier control superior nunca se superponen a la barra de estado, el notch ni la Dynamic Island. En pantallas de navegación usar `ScreenContainer`. Dentro de `Modal`/`AnimatedSheetModal fullScreen`, en iOS el `SafeAreaView` puede recibir insets en 0: aplicar los insets con `useSafeAreaInsets()` (patrón de `PhotoViewer`), una sola vez por borde. No usar paddings fijos (52, 60, 68) como sustituto del inset. Verificar en un iPhone con Dynamic Island. `npm run lint:ds` falla si un archivo de `screens/` o `components/` renderiza `<AnimatedSheetModal fullScreen>` o `<Modal statusBarTranslucent>` sin usar `useSafeAreaInsets`; la excepción se documenta con `/* ds-lint-allow safe-area: <motivo> */` en las 3 líneas previas al elemento.
+
 Usar [`Icon`](../components/Icon.tsx) para iconografía existente. Etiquetar acciones de solo icono con `accessibilityLabel` y rol. Evitar texto significativo dentro de imágenes cuando puede renderizarse como texto accesible.
 
 ## Modales y movimiento

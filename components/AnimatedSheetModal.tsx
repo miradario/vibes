@@ -228,6 +228,7 @@ const AnimatedSheetModal = ({
   return inline ? (
     content
   ) : (
+    /* ds-lint-allow safe-area: primitiva genérica; cada contenido fullScreen aplica sus insets */
     <Modal
       transparent
       hardwareAccelerated={Platform.OS === "android"}
