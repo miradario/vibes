@@ -6,6 +6,12 @@ import ChatMessageContent from "../components/ChatMessageContent";
 import HeartMessageBubble from "../components/HeartMessageBubble";
 import { useMessageHearts } from "../src/queries/messageHearts.queries";
 import MessageEntrance from "../components/MessageEntrance";
+import SwipeToReply from "../components/SwipeToReply";
+import {
+  QuotedMessage,
+  ReplyPreviewBar,
+  type ReplyTarget,
+} from "../components/MessageReply";
 /** @format */
 
 import React, {
@@ -165,6 +171,7 @@ const EventChat = () => {
     avatarUrl: string | null;
   } | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   const membersBackdropOpacity = useRef(new Animated.Value(0)).current;
   const membersCardOpacity = useRef(new Animated.Value(0)).current;
   const membersCardScale = useRef(new Animated.Value(0.92)).current;
@@ -423,6 +430,30 @@ const EventChat = () => {
     return () => clearTimeout(timeoutId);
   }, [messagesLoading]);
 
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  useEffect(() => setReplyTo(null), [eventId]);
+  const messagesById = useMemo(
+    () => new Map(timelineMessages.map((m) => [m.id, m])),
+    [timelineMessages]
+  );
+  const replyAuthorName = (msg: EventMessage) =>
+    msg.senderId === userId
+      ? "Vos"
+      : getSenderInfo(msg.senderId).name || "Participante";
+  const startReply = (msg: EventMessage) => {
+    setReplyTo({ id: msg.id, author: replyAuthorName(msg), body: msg.body });
+    inputRef.current?.focus();
+  };
+  // Sin original cargado (historial viejo, borrado u oculto) no hace nada.
+  const scrollToMessage = (messageId: string) => {
+    const position = messagePositions.current.get(messageId);
+    if (!position) return;
+    scrollRef.current?.scrollTo({
+      y: Math.max(0, position.y - ds.spacing[8]),
+      animated: true,
+    });
+  };
+
   const handleSend = async () => {
     const body = message.trim();
     if (!body || !eventId || !userId) {
@@ -433,13 +464,16 @@ const EventChat = () => {
       });
       return;
     }
+    const reply = replyTo;
     setMessage("");
+    setReplyTo(null);
     try {
       await sendMutation.mutateAsync({
         eventId,
         eventType,
         senderId: userId,
         body,
+        replyToMessageId: reply?.id ?? null,
       });
     } catch (err: any) {
       console.error("[EventChat] Send error:", err);
@@ -448,6 +482,7 @@ const EventChat = () => {
         err?.message ?? "No se pudo enviar el mensaje."
       );
       setMessage(body);
+      setReplyTo(reply);
     }
   };
 
@@ -775,8 +810,15 @@ const EventChat = () => {
             timelineMessages.map((msg) => {
               const isMe = msg.senderId === userId;
               const sender = getSenderInfo(msg.senderId);
+              const quoted = msg.replyToMessageId
+                ? messagesById.get(msg.replyToMessageId)
+                : undefined;
               return (
                 <View key={msg.id} onLayout={event => { messagePositions.current.set(msg.id, { ...event.nativeEvent.layout, date: msg.createdAt }); updateVisibleDate(); }}>
+                <SwipeToReply
+                  enabled={msg.deliveryStatus !== "sending"}
+                  onReply={() => startReply(msg)}
+                >
                 <MessageEntrance
                   key={msg.id}
                   sending={isMe && msg.deliveryStatus === "sending"}
@@ -829,6 +871,15 @@ const EventChat = () => {
                               </Text>
                             </TouchableOpacity>
                           )}
+                          {msg.replyToMessageId ? (
+                            <QuotedMessage
+                              author={quoted ? replyAuthorName(quoted) : undefined}
+                              body={quoted?.body ?? null}
+                              onPress={() =>
+                                scrollToMessage(msg.replyToMessageId!)
+                              }
+                            />
+                          ) : null}
                           <ChatMessageContent
                             onPhotoPress={press}
                             onLongPress={longPress}
@@ -860,6 +911,7 @@ const EventChat = () => {
                     )}
                   </HeartMessageBubble>
                 </MessageEntrance>
+                </SwipeToReply>
                 </View>
               );
             })
@@ -867,6 +919,10 @@ const EventChat = () => {
         </ScrollView>
         <ChatVisibleDate date={visibleDate.date} />
         </View>
+
+        {replyTo ? (
+          <ReplyPreviewBar target={replyTo} onClose={() => setReplyTo(null)} />
+        ) : null}
 
         <View
           style={[
@@ -894,6 +950,7 @@ const EventChat = () => {
             }
           />
           <TextInput
+            ref={inputRef}
             style={[
               styles.eventChatInput,
               localStyles.composerInput,

@@ -18,6 +18,8 @@ export const colors = {
     onDark: palette.paper,
     onAccent: palette.ink,
     link: palette.ink,
+    /** Texto de acento corto (p. ej. autor en la cita de una respuesta). */
+    accent: palette.mustard,
   },
   border: {
     subtle: withAlpha(palette.ink, opacity.subtle),

@@ -4,7 +4,6 @@ import { Text } from "./Typography";
 import { Icon } from ".";
 import { messagePreview } from "../src/lib/chatPhotos";
 import { getInvitationDisplayText } from "../src/lib/eventInvites";
-import { vibesTheme } from "../src/theme/vibesTheme";
 import * as ds from "../src/theme/tokens";
 
 export type ReplyTarget = { id: string; author: string; body: string };
@@ -41,7 +40,7 @@ export function ReplyPreviewBar({
         onPress={onClose}
         style={s.close}
       >
-        <Icon name="close" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} />
+        <Icon name="close" size={ds.iconSize.md} color={ds.colors.icon.muted} />
       </TouchableOpacity>
     </View>
   );
@@ -106,16 +105,16 @@ const s = StyleSheet.create({
     alignSelf: "stretch",
     borderRadius: ds.radii.pill,
     marginHorizontal: ds.spacing[2],
-    backgroundColor: vibesTheme.colors.accentMustard,
+    backgroundColor: ds.colors.border.selected,
   },
   content: { flex: 1 },
   author: {
     ...ds.textStyles.label,
-    color: vibesTheme.colors.accentMustard,
+    color: ds.colors.text.accent,
   },
   snippet: {
     ...ds.textStyles.bodySmall,
-    color: vibesTheme.colors.secondaryText,
+    color: ds.colors.text.secondary,
   },
   missing: { fontStyle: "italic" },
   close: { padding: ds.spacing[1] },
