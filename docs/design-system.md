@@ -434,7 +434,7 @@ Las solicitudes y la acción Alumnos y asistencia viven en `LearningActionDock`,
 
 Las invitaciones compartidas usan `KeyboardSheetModal`, que mide el solapamiento real del teclado; la lista mantiene taps y scroll para elegir resultados con el teclado visible. Clases filtra por localidades (ciudad/barrio), nunca por direcciones completas. Fecha de encuentro usa calendario con rango desde/hasta, extremos seleccionados y rango suave; los filtros combinan modalidad, localidad y fechas.
 
-El badge new de Clases usa mostaza y texto oscuro, separado del contador de chats, tanto en la pestaña inactiva como en la burbuja activa. El override `EXPO_PUBLIC_LOCAL_CLASSES=true` funciona únicamente con `__DEV__`: habilita la vista local y no cambia Firebase ni permisos del servidor.
+Sin badge `new` en Clases (decisión Agus 6/11: con el flag prendido y Clases primero, no va en el ícono ni en la burbuja). El contador de chats no cambia. El override `EXPO_PUBLIC_LOCAL_CLASSES=true` funciona únicamente con `__DEV__`: habilita la vista local y no cambia Firebase ni permisos del servidor.
 
 ### Regla de reutilización
 
