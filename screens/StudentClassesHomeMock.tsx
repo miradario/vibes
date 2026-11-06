@@ -13,7 +13,7 @@ import ListItem from "../components/ui/ListItem";
 import PersonCard from "../components/ui/PersonCard";
 import WeekDayCell from "../components/ui/WeekDayCell";
 import { cardStyles } from "../components/ui/surfaceStyles";
-import { buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import Icon from "../components/Icon";
 import {
   STUDENT_CLASSES_HOME_MOCK,
   type MockClassRow,
@@ -127,34 +127,34 @@ export default function StudentClassesHomeMock() {
 function NextClassCard() {
   const next = mock.nextClass;
   return (
-    <View style={styles.nextCard} accessibilityRole="summary">
-      <View style={styles.nextRow}>
-        <View
-          style={styles.nextMedia}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <BookOpen color={ds.colors.base.mustard} size={ds.iconSize.xl} />
-        </View>
-        <View style={styles.nextCopy}>
-          <Text style={styles.nextTitle} numberOfLines={2}>
-            {next.title}
-          </Text>
-          <Text style={styles.nextMeta}>{next.whenLabel}</Text>
-          <Text style={styles.nextMeta}>{next.teacherLabel}</Text>
-          <Text style={styles.nextMeta}>{next.locationLabel}</Text>
-        </View>
-      </View>
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel={`Ver detalle de ${next.title}`}
-        activeOpacity={ds.opacity.pressed}
-        onPress={() => {}}
-        style={[buttonStyle("secondary", "sm"), styles.nextAction]}
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={`Ver detalle de ${next.title}`}
+      activeOpacity={ds.opacity.pressed}
+      onPress={() => {}}
+      style={styles.nextCard}
+    >
+      <View
+        style={styles.nextMedia}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
       >
-        <Text style={buttonLabel("sm", "secondary")}>Ver detalle</Text>
-      </TouchableOpacity>
-    </View>
+        <BookOpen color={ds.colors.base.mustard} size={ds.iconSize.xl} />
+      </View>
+      <View style={styles.nextCopy}>
+        <Text style={styles.nextTitle} numberOfLines={2}>
+          {next.title}
+        </Text>
+        <Text style={styles.nextMeta}>{next.whenLabel}</Text>
+        <Text style={styles.nextMeta}>{next.teacherLabel}</Text>
+        <Text style={styles.nextMeta}>{next.locationLabel}</Text>
+      </View>
+      <Icon
+        name="chevron-forward"
+        size={ds.iconSize.md}
+        color={ds.colors.icon.muted}
+      />
+    </TouchableOpacity>
   );
 }
 
@@ -207,14 +207,11 @@ const styles = StyleSheet.create({
   nextCard: {
     ...cardStyles.base,
     ...cardStyles.padding,
+    flexDirection: "row",
+    alignItems: "center",
     gap: ds.spacing[3],
     borderWidth: 2,
     borderColor: ds.colors.border.default,
-  },
-  nextRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: ds.spacing[3],
   },
   nextMedia: {
     width: ds.componentSize.cardThumb,
@@ -232,9 +229,6 @@ const styles = StyleSheet.create({
   nextMeta: {
     ...ds.textStyles.bodySmall,
     color: ds.colors.text.secondary,
-  },
-  nextAction: {
-    alignSelf: "flex-end",
   },
   weekStrip: {
     flexDirection: "row",
