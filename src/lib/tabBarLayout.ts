@@ -66,10 +66,17 @@ export const getTabSlotCenterX = (
   return barLeft + 10 + center * (barWidth - 20);
 };
 
-/** Reserve a central slot for Home; share each remaining half among its tabs. */
+/**
+ * Slot widths for CustomTabBar. Equal slots unless Home sits with ≥2 tabs on
+ * each side (true center reserve). With Clases first, Home is at index 1 →
+ * equal weights so Clases is a normal tab and labels don't collide (Agus 6/11).
+ * Flag off keeps Home first → also equal (same as before Clases).
+ */
 export const getTabSlotWeight = (index: number, count: number, homeIndex: number) => {
-  if (homeIndex < 1 || homeIndex >= count - 1) return 1 / Math.max(count, 1);
+  const leftCount = homeIndex;
+  const rightCount = count - homeIndex - 1;
+  if (leftCount < 2 || rightCount < 2) return 1 / Math.max(count, 1);
   const homeWidth = 1 / (count % 2 === 0 ? count + 1 : count);
   if (index === homeIndex) return homeWidth;
-  return (1 - homeWidth) / 2 / (index < homeIndex ? homeIndex : count - homeIndex - 1);
+  return (1 - homeWidth) / 2 / (index < homeIndex ? leftCount : rightCount);
 };
