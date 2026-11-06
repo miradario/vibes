@@ -4,6 +4,7 @@
  * (bottom bar visible, sin chevron back). Ver ClassesTab en Activities.tsx.
  */
 import React, { useMemo, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { BookOpen } from "lucide-react-native";
 import { Text } from "../components/Typography";
@@ -25,6 +26,7 @@ import * as ds from "../src/theme/tokens";
 const mock = STUDENT_CLASSES_HOME_MOCK;
 
 export default function StudentClassesHomeMock() {
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState(mock.todayDate);
 
@@ -72,7 +74,7 @@ export default function StudentClassesHomeMock() {
         <View style={styles.section}>
           <SectionHeader
             title="Mis clases esta semana"
-            onPress={() => {}}
+            onPress={() => navigation.navigate("StudentClassesCalendarMock" as never)}
             accessibilityLabel="Ver calendario"
           />
           <View style={styles.weekStrip} accessibilityRole="tablist">

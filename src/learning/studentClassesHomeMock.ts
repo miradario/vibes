@@ -5,6 +5,8 @@
  * La semana del mock es fija (9–15 nov 2026) para que la UI no dependa del día real.
  */
 
+import type { EventFeedItem } from "../queries/events.queries";
+
 export type MockWeekDay = {
   /** ISO date YYYY-MM-DD (mediodía local implícito). */
   date: string;
@@ -24,6 +26,8 @@ export type MockClassRow = {
   timeLabel: string;
   title: string;
   hostName: string;
+  /** Lugar (calendario / detalle). */
+  locationLabel: string;
 };
 
 export type MockNextClass = {
@@ -87,6 +91,7 @@ export const STUDENT_CLASSES_HOME_MOCK: StudentClassesHomeMock = {
       timeLabel: "10:00",
       title: "Yoga Vinyasa",
       hostName: "María López",
+      locationLabel: "Estudio Prana, Cañuelas",
     },
     {
       id: "class-2",
@@ -95,6 +100,7 @@ export const STUDENT_CLASSES_HOME_MOCK: StudentClassesHomeMock = {
       timeLabel: "19:00",
       title: "Yoga Restaurativo",
       hostName: "María López",
+      locationLabel: "Estudio Prana, Cañuelas",
     },
     {
       id: "class-3",
@@ -103,6 +109,7 @@ export const STUDENT_CLASSES_HOME_MOCK: StudentClassesHomeMock = {
       timeLabel: "09:30",
       title: "Meditación guiada",
       hostName: "Centro Ananda",
+      locationLabel: "Centro Ananda",
     },
   ],
   hosts: [
@@ -111,3 +118,27 @@ export const STUDENT_CLASSES_HOME_MOCK: StudentClassesHomeMock = {
     { id: "host-lucas", name: "Lucas Pérez", tag: "Profesor", kind: "teacher", imageUri: null },
   ],
 };
+
+/**
+ * Mapea las clases del mock a `EventFeedItem` para reutilizar `EventCalendar`
+ * (misma grilla/lista que Eventos). Solo __DEV__.
+ */
+export function studentClassesAsCalendarFeed(): EventFeedItem[] {
+  return STUDENT_CLASSES_HOME_MOCK.weekClasses.map((row) => {
+    const [year, month, day] = row.date.split("-").map(Number);
+    const [hour, minute] = row.timeLabel.split(":").map(Number);
+    const startsAt = new Date(year, month - 1, day, hour, minute, 0, 0).toISOString();
+    return {
+      id: row.id,
+      type: "event" as const,
+      title: row.title,
+      subtitle: row.hostName,
+      date: row.dateLabel,
+      startsAt,
+      attendees: "",
+      image: "",
+      location: row.locationLabel,
+      hostName: row.hostName,
+    };
+  });
+}
