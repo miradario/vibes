@@ -1,13 +1,13 @@
 /**
  * Diseño-only: home de clases para un alumno que entró por link de profesor/institución.
- * Datos fake en `studentClassesHomeMock`. Solo montada en __DEV__ (ver App.tsx + Perfil).
+ * Datos fake en `studentClassesHomeMock`. En __DEV__ reemplaza el contenido del tab Clases
+ * (bottom bar visible, sin chevron back). Ver ClassesTab en Activities.tsx.
  */
 import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { BookOpen } from "lucide-react-native";
 import { Text } from "../components/Typography";
 import ScreenContainer from "../components/ScreenContainer";
-import BackButton from "../components/BackButton";
 import SectionHeader from "../components/ui/SectionHeader";
 import ListItem from "../components/ui/ListItem";
 import PersonCard from "../components/ui/PersonCard";
@@ -37,12 +37,6 @@ export default function StudentClassesHomeMock() {
 
   return (
     <ScreenContainer edges={["top", "left", "right"]} style={styles.screen}>
-      <View style={styles.topBar}>
-        <BackButton accessibilityLabel="Volver" />
-        <Text style={styles.devBadge} accessibilityLabel="Vista de diseño con datos de ejemplo">
-          Diseño · datos de ejemplo
-        </Text>
-      </View>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -52,6 +46,12 @@ export default function StudentClassesHomeMock() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
+          <Text
+            style={styles.devBadge}
+            accessibilityLabel="Vista de diseño con datos de ejemplo"
+          >
+            Diseño · datos de ejemplo
+          </Text>
           <Text
             style={styles.greeting}
             numberOfLines={1}
@@ -180,14 +180,6 @@ function ClassRow({ row, divider }: { row: MockClassRow; divider: boolean }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: ds.colors.bg.screen },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: ds.spacing[4],
-    paddingTop: ds.spacing[2],
-    minHeight: ds.touchTarget,
-  },
   devBadge: {
     ...ds.textStyles.caption,
     color: ds.colors.text.secondary,

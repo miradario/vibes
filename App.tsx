@@ -1,5 +1,4 @@
 import LearningStudentScreen, { LegacyLearningStudentScreen } from "./screens/LearningStudent";
-import StudentClassesHomeMock from "./screens/StudentClassesHomeMock";
 import LearningReservationScreen from "./screens/LearningReservation";
 import { useVibesPointsEnabled } from "./src/featureFlags/useVibesPointsEnabled";
 import VibesPoints from "./screens/VibesPoints";
@@ -511,6 +510,9 @@ const AppNavigator = () => {
                   initialRouteName="Home"
                   tabBar={(props) => <CustomTabBar {...props} />}
                 >
+                  {clasesEnabled ? (
+                    <Tab.Screen name="ClassesTab" component={ClassesTab} options={{ tabBarLabel: "Clases" }} />
+                  ) : null}
                   <Tab.Screen
                     name="Home"
                     component={Home}
@@ -549,9 +551,6 @@ const AppNavigator = () => {
                       ),
                     }}
                   />
-                  {clasesEnabled ? (
-                    <Tab.Screen name="ClassesTab" component={ClassesTab} options={{ tabBarLabel: "Clases" }} />
-                  ) : null}
                   {meetPeopleEnabled ? (
                   <Tab.Screen
                     name="Discover"
@@ -602,7 +601,6 @@ const AppNavigator = () => {
             <Stack.Screen name="LearningActivity" component={LearningActivityDetail} options={{headerShown:false}} />
             <Stack.Screen name="LearningReservation" component={LearningReservationScreen} options={{headerShown:false}} />
             <Stack.Screen name="LearningMine" component={LearningStudentScreen} options={{headerShown:false}} />
-            {__DEV__ ? <Stack.Screen name="StudentClassesHomeMock" component={StudentClassesHomeMock} options={{headerShown:false}} /> : null}
             <Stack.Screen name="LearningLegacyMine" component={LegacyLearningStudentScreen} options={{headerShown:false}} />
             <Stack.Screen name="LearningManage" component={LearningManage} options={{headerShown:false}} />
             <Stack.Screen name="LearningRoster" component={LearningRoster} options={{headerShown:false}} />
