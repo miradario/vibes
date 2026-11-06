@@ -6,6 +6,7 @@
  */
 
 import type { EventFeedItem } from "../queries/events.queries";
+import { WEEKDAY_INITIALS_MON_FIRST, WEEKDAY_NAMES_MON_FIRST } from "../lib/weekdays";
 
 export type MockWeekDay = {
   /** ISO date YYYY-MM-DD (mediodía local implícito). */
@@ -75,13 +76,13 @@ export const STUDENT_CLASSES_HOME_MOCK: StudentClassesHomeMock = {
     imageUri: null,
   },
   week: [
-    { date: "2026-11-09", letter: "L", weekdayLabel: "Lunes", dayNumber: 9, hasClass: false },
-    { date: "2026-11-10", letter: "M", weekdayLabel: "Martes", dayNumber: 10, hasClass: false },
-    { date: "2026-11-11", letter: "X", weekdayLabel: "Miércoles", dayNumber: 11, hasClass: true },
-    { date: "2026-11-12", letter: "J", weekdayLabel: "Jueves", dayNumber: 12, hasClass: false },
-    { date: "2026-11-13", letter: "V", weekdayLabel: "Viernes", dayNumber: 13, hasClass: true },
-    { date: "2026-11-14", letter: "S", weekdayLabel: "Sábado", dayNumber: 14, hasClass: true },
-    { date: "2026-11-15", letter: "D", weekdayLabel: "Domingo", dayNumber: 15, hasClass: false },
+    { date: "2026-11-09", letter: WEEKDAY_INITIALS_MON_FIRST[0], weekdayLabel: WEEKDAY_NAMES_MON_FIRST[0], dayNumber: 9, hasClass: false },
+    { date: "2026-11-10", letter: WEEKDAY_INITIALS_MON_FIRST[1], weekdayLabel: WEEKDAY_NAMES_MON_FIRST[1], dayNumber: 10, hasClass: false },
+    { date: "2026-11-11", letter: WEEKDAY_INITIALS_MON_FIRST[2], weekdayLabel: WEEKDAY_NAMES_MON_FIRST[2], dayNumber: 11, hasClass: true },
+    { date: "2026-11-12", letter: WEEKDAY_INITIALS_MON_FIRST[3], weekdayLabel: WEEKDAY_NAMES_MON_FIRST[3], dayNumber: 12, hasClass: false },
+    { date: "2026-11-13", letter: WEEKDAY_INITIALS_MON_FIRST[4], weekdayLabel: WEEKDAY_NAMES_MON_FIRST[4], dayNumber: 13, hasClass: true },
+    { date: "2026-11-14", letter: WEEKDAY_INITIALS_MON_FIRST[5], weekdayLabel: WEEKDAY_NAMES_MON_FIRST[5], dayNumber: 14, hasClass: true },
+    { date: "2026-11-15", letter: WEEKDAY_INITIALS_MON_FIRST[6], weekdayLabel: WEEKDAY_NAMES_MON_FIRST[6], dayNumber: 15, hasClass: false },
   ],
   weekClasses: [
     {

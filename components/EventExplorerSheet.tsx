@@ -11,6 +11,7 @@ import MediaImage from "./MediaImage";
 import ScreenContainer from "./ScreenContainer";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { calendarOccurrences, eventDayKey, hasEventCoordinates } from "../src/lib/eventExplorer";
+import { WEEKDAY_INITIALS_MON_FIRST, WEEKDAY_NAMES_MON_FIRST } from "../src/lib/weekdays";
 import * as ds from "../src/theme/tokens";
 import { vibesTheme } from "../src/theme/vibesTheme";
 const c = vibesTheme.colors;
@@ -93,7 +94,7 @@ export function EventCalendar({
       <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mes siguiente" onPress={() => changeMonth(1)} style={s.control}><Icon name="chevron-forward" size={ds.iconSize.lg} color={c.primaryText} /></TouchableOpacity>
     </View>
     <View style={s.legend}><Icon name="checkmark-circle" size={ds.iconSize.sm} color={c.accentBlue} /><Text style={s.meta}>{joinedLegend}</Text></View>
-    <View style={s.grid}>{["L", "M", "M", "J", "V", "S", "D"].map((label, index) => <View key={index} style={s.day}><Text style={s.meta}>{label}</Text></View>)}</View>
+    <View style={s.grid} accessibilityRole="summary">{WEEKDAY_INITIALS_MON_FIRST.map((label, index) => <View key={label + String(index)} style={s.day} accessible accessibilityLabel={WEEKDAY_NAMES_MON_FIRST[index]}><Text style={s.meta} importantForAccessibility="no">{label}</Text></View>)}</View>
     <View style={s.grid}>{Array.from({ length: Math.ceil((offset + days) / 7) * 7 }, (_, index) => {
       const number = index - offset + 1;
       if (number < 1 || number > days) return <View key={index} style={s.day} />;

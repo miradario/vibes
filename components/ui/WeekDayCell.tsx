@@ -4,7 +4,7 @@ import { Text } from "../Typography";
 import * as ds from "../../src/theme/tokens";
 
 type WeekDayCellProps = {
-  /** Letra del día (L M X J V S D). */
+  /** Letra del día (L M X J V S D; ver `WEEKDAY_INITIALS_MON_FIRST`). */
   letter: string;
   /** Número del día del mes. */
   dayNumber: number;
