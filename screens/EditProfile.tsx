@@ -1,4 +1,5 @@
 import {
+  hasNumbersInName,
   onboardingFullName,
   splitOnboardingName,
 } from "../src/lib/onboardingBasics";
@@ -386,9 +387,15 @@ const EditProfile = () => {
     };
   }, []);
 
+  const nameHasNumbers = hasNumbersInName(displayName);
+  const nameNumbersError = locale.startsWith("en")
+    ? "First and last names cannot contain numbers."
+    : "El nombre y el apellido no pueden contener números.";
+
   const saveDisplayName = async () => {
     const userId = session?.user?.id;
     if (!userId || !firstName.trim()) return false;
+    if (hasNumbersInName(displayName)) return false;
     setSavingName(true);
     try {
       const { error } = await supabase
@@ -551,7 +558,10 @@ const EditProfile = () => {
         <View style={styles.editSection}>
           <Text style={styles.editSectionTitle}>{t("editProfile.name")}</Text>
           <TextInput
-            style={localStyles.nameInput}
+            style={[
+              localStyles.nameInput,
+              nameHasNumbers ? localStyles.nameInputError : null,
+            ]}
             value={firstName}
             onChangeText={setFirstName}
             autoComplete="given-name"
@@ -571,7 +581,10 @@ const EditProfile = () => {
             {locale.startsWith("en") ? "Last name" : "Apellido"}
           </Text>
           <TextInput
-            style={localStyles.nameInput}
+            style={[
+              localStyles.nameInput,
+              nameHasNumbers ? localStyles.nameInputError : null,
+            ]}
             accessibilityLabel={
               locale.startsWith("en")
                 ? "Last name, optional"
@@ -593,6 +606,14 @@ const EditProfile = () => {
             editable={!savingName}
             maxLength={50}
           />
+          {nameHasNumbers ? (
+            <Text
+              style={localStyles.nameErrorText}
+              accessibilityLiveRegion="polite"
+            >
+              {nameNumbersError}
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.editSection}>
@@ -772,6 +793,14 @@ const localStyles = StyleSheet.create({
     color: DARK_GRAY,
     borderWidth: 1,
     borderColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
+  },
+  nameInputError: {
+    borderColor: ds.colors.border.error,
+  },
+  nameErrorText: {
+    color: ds.colors.action.destructive,
+    ...ds.textStyles.label,
+    marginTop: ds.spacing[2],
   },
   readOnlyField: {
     backgroundColor: vibesTheme.colors.background,

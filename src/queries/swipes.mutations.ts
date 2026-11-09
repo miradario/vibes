@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase";
 import { maybeRequestStoreReview } from "../lib/storeReview";
 import { useAuthSession } from "../auth/auth.queries";
 import type { GetCandidatesResponse } from "../api/modules/candidates/candidates.types";
+import { hasNumbersInName } from "../lib/onboardingBasics";
 
 type SwipeInput = {
   targetUserId: string;
@@ -49,10 +50,14 @@ const ensureProfileExists = async (
   userId: string,
   fallbackName?: string | null
 ) => {
-  const displayName =
+  // Email local-parts often contain digits (grazzini14, …). The DB CHECK
+  // profiles_display_name_no_digits rejects those, so fall back to "Vibes".
+  const trimmed =
     typeof fallbackName === "string" && fallbackName.trim().length > 0
       ? fallbackName.trim()
-      : "Vibes";
+      : "";
+  const displayName =
+    trimmed && !hasNumbersInName(trimmed) ? trimmed : "Vibes";
 
   const { error } = await supabase.from("profiles").upsert(
     {
