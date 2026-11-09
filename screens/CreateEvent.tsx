@@ -1,7 +1,8 @@
+import { eventPlaces } from "../src/lib/eventPlaces";
+import { readCommunities, canonicalCommunity } from "../src/lib/communities";
 import ScreenContainer from "../components/ScreenContainer";
 import {creationFormStyles} from "../src/theme/creationFormStyles";
 import DiscoverPathCards from "../components/DiscoverPathCards";
-import { SPIRITUAL_PATH_OPTIONS } from "../src/lib/spiritualPaths";
 import EventRecurrenceEditor, { type EventRecurrenceDraft } from "../components/EventRecurrenceEditor";
 import EventScheduleEditor from "../components/EventScheduleEditor";
 import { normalizeSchedule, serializeSchedule, sessionDraft, getEventRecurrence, buildRecurringSchedule, validateScheduleDrafts } from "../src/lib/eventSchedule";
@@ -10,7 +11,7 @@ import { EVENT_CATEGORIES, EVENT_PARTICIPATION_TYPES, parseEventCategory, parseE
 import { launchAppCamera } from "../components/AppCamera";
 /** @format */
 
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   View,
@@ -49,6 +50,7 @@ import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { useProfileQuery } from "../src/queries/profile.queries";
 import {
+  useEventsFeedQuery,
   useCreateEventMutation,
   type EventModality,
   type EventPricingType,
@@ -57,12 +59,18 @@ import {
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getGoogleMapsClientConfig } from "../src/config/googleMaps";
 import { getIosMapPreviewSource } from "../src/config/mapPreview";
+import OverlayBadge, { overlayBadgeContentColor } from "../components/ui/OverlayBadge";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import { cardStyles } from "../components/ui/surfaceStyles";
+import { iconCircleStyle } from "../components/ui/IconCircle";
+import { buttonContentColor, buttonLabel, buttonStyle } from "../components/ui/buttonStyles";
+import * as ds from "../src/theme/tokens";
 
 const IMAGE_MEDIA_TYPE =
   (ImagePicker as any).MediaType?.Images
     ? [(ImagePicker as any).MediaType.Images]
     : ["images"];
-const PLACEHOLDER_COLOR = "rgba(43, 43, 43, 0.34)";
+const PLACEHOLDER_COLOR = ds.colors.scrim;
 
 const normalizeCapacityInput = (value: string) => value.replace(/\D+/g, "");
 
@@ -239,11 +247,15 @@ const CreateEvent = () => {
   const [location, setLocation] = useState(
     typeof editingEvent?.location === "string" ? editingEvent.location : "",
   );
+  const [placesVisible, setPlacesVisible] = useState(false);
+  const [placeSearch, setPlaceSearch] = useState("");
+  const placesFeed = useEventsFeedQuery({ loadAll: true });
+  const availablePlaces = useMemo(() => eventPlaces(placesFeed.data ?? [], placeSearch), [placesFeed.data, placeSearch]);
   const [isValidatingLocation, setIsValidatingLocation] = useState(false);
   const [eventImageUri, setEventImageUri] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const pendingPhotoAction = useRef<null | "camera" | "gallery">(null);
-  const [spiritualPaths, setSpiritualPaths] = useState<string[]>(() => (editingEvent?.tags ?? []).filter((tag: string) => SPIRITUAL_PATH_OPTIONS.includes(tag as any)));
+  const [spiritualPaths, setSpiritualPaths] = useState<string[]>(() => readCommunities(editingEvent?.tags));
   const [validatedLocation, setValidatedLocation] = useState<{
     address: string;
     lat: number | null;
@@ -606,7 +618,7 @@ const CreateEvent = () => {
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt,
           schedule: schedule ?? [],
-          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !SPIRITUAL_PATH_OPTIONS.includes(tag as any)), ...spiritualPaths],
+          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !canonicalCommunity(tag)), ...spiritualPaths],
           location: resolvedLocation,
           locationLatitude:
             modality === "in_person" && validatedLocation
@@ -635,7 +647,7 @@ const CreateEvent = () => {
           description: subtitle.trim() || null,
           startsAt: resolvedStartsAt!,
           schedule: schedule ?? [],
-          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !SPIRITUAL_PATH_OPTIONS.includes(tag as any)), ...spiritualPaths],
+          tags: [...(editingEvent?.tags ?? []).filter((tag: string) => !canonicalCommunity(tag)), ...spiritualPaths],
           location: resolvedLocation,
           locationLatitude:
             modality === "in_person" && validatedLocation
@@ -700,7 +712,7 @@ const CreateEvent = () => {
       keyboardVerticalOffset={0}
     >
       <View style={styles.bg}>
-        <AppHeader title={isEditing ? "Editar evento" : "Crear evento"} showBack onBack={() => navigation.goBack()} style={{paddingHorizontal:24,marginBottom:8}} titleStyle={localStyles.screenTitle} />
+        <AppHeader title={isEditing ? "Editar evento" : "Crear evento"} showBack onBack={() => navigation.goBack()} style={{paddingHorizontal:ds.spacing[6],marginBottom:ds.spacing[2]}} titleStyle={localStyles.screenTitle} />
       <ScrollView
         style={{flex:1}}
         contentContainerStyle={localStyles.content}
@@ -735,15 +747,17 @@ const CreateEvent = () => {
                   style={localStyles.coverImage}
                 />
                 <View style={localStyles.coverScrim} />
-                <View style={localStyles.coverChangeBadge}>
-                  <Icon name="camera-outline" size={17} color={WHITE} />
-                  <Text style={localStyles.coverChangeText}>Cambiar portada</Text>
-                </View>
+                <OverlayBadge
+                    tone="dark"
+                    position="bottom-right"
+                    icon={<Icon name="camera-outline" size={ds.iconSize.sm} color={overlayBadgeContentColor("dark")} />}
+                    label="Cambiar portada"
+                  />
               </>
             ) : (
               <View style={localStyles.coverEmptyState}>
                 <View style={localStyles.coverIconCircle}>
-                  <Icon name="image-outline" size={28} color={PRIMARY_COLOR} />
+                  <Icon name="image-outline" size={ds.iconSize.xl} color={PRIMARY_COLOR} />
                 </View>
                 <Text style={localStyles.uploadImageTitle}>Subir foto de portada</Text>
                 <Text style={localStyles.uploadImageHint}>
@@ -802,7 +816,7 @@ const CreateEvent = () => {
             <View style={localStyles.linkValidationRow}>
               <Icon
                 name={isEventLinkValid ? "checkmark-circle" : "alert-circle"}
-                size={16}
+                size={ds.iconSize.sm}
                 color={isEventLinkValid ? vibesTheme.colors.secondaryText : vibesTheme.colors.accentCoral}
               />
               <Text
@@ -823,14 +837,14 @@ const CreateEvent = () => {
           <Text style={localStyles.label}>{recurrenceDraft.frequency === "none" ? "Fechas y horarios" : "Primer encuentro de la serie"}</Text>
           <EventScheduleEditor value={visibleDrafts} issues={scheduleIssues} onChange={setScheduleDrafts} allowMultiple={recurrenceDraft.frequency === "none"} />
           <EventRecurrenceEditor value={recurrenceDraft} onChange={setRecurrenceDraft} defaultWeekday={defaultWeekday} schedule={schedule} />
-          <Text style={localStyles.label}>Camino espiritual</Text>
+          <Text style={localStyles.label}>Comunidad</Text>
           <DiscoverPathCards selected={spiritualPaths} onToggle={(path) => setSpiritualPaths((previous) => previous.includes(path) ? previous.filter((value) => value !== path) : [...previous, path])} onClear={() => setSpiritualPaths([])} style={localStyles.pathCards} />
 
           <EventClassificationPicker label="Categoría · qué actividad es" options={EVENT_CATEGORIES} value={category} onChange={setCategory} style={localStyles.pickerSection} labelStyle={localStyles.pickerLabel} />
           <EventClassificationPicker label="Tipo · cómo se participa" options={EVENT_PARTICIPATION_TYPES} value={participationType} onChange={setParticipationType} style={localStyles.pickerSection} labelStyle={localStyles.pickerLabel} />
           <Text style={localStyles.label}>Modalidad</Text>
           <View style={localStyles.choiceRow}>
-            <TouchableOpacity
+            <TouchableOpacity hitSlop={chipHitSlop}
               style={[
                 localStyles.choiceChip,
                 modality === "in_person" && localStyles.choiceChipActive,
@@ -846,7 +860,7 @@ const CreateEvent = () => {
                 Presencial
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity hitSlop={chipHitSlop}
               style={[
                 localStyles.choiceChip,
                 modality === "online" && localStyles.choiceChipActive,
@@ -870,7 +884,13 @@ const CreateEvent = () => {
 
           {modality === "in_person" ? (
             <>
-              <Text style={localStyles.label}>Ubicación</Text>
+              <Text style={localStyles.label}>Lugar</Text>
+              <TouchableOpacity accessibilityRole="button" style={placeStyles.row} onPress={() => { Keyboard.dismiss(); setPlaceSearch(""); setPlacesVisible(true); }}>
+                <Icon name="location-outline" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
+                <Text style={placeStyles.text}>{location || "Elegir un lugar existente"}</Text>
+                <Icon name="chevron-down" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
+              </TouchableOpacity>
+              <Text style={localStyles.locationHint}>O ingresá una dirección nueva</Text>
               <TextInput
                 ref={locationInputRef}
                 style={localStyles.input}
@@ -966,7 +986,7 @@ const CreateEvent = () => {
                     ) : (
                       <View style={localStyles.mapPreviewFallback}>
                         <View style={localStyles.mapPreviewFallbackPin}>
-                          <Icon name="location" size={26} color={PRIMARY_COLOR} />
+                          <Icon name="location" size={ds.iconSize.lg} color={PRIMARY_COLOR} />
                         </View>
                         <Text style={localStyles.mapPreviewFallbackTitle}>
                           Ubicación lista para abrir
@@ -988,12 +1008,11 @@ const CreateEvent = () => {
                       onPress={handleOpenValidatedLocation}
                       accessibilityRole="button"
                     >
-                      <View style={localStyles.mapPreviewBadge}>
-                        <Icon name="navigate" size={14} color={WHITE} />
-                        <Text style={localStyles.mapPreviewBadgeText}>
-                          Ver mapa
-                        </Text>
-                      </View>
+                      <OverlayBadge
+                        tone="dark"
+                        icon={<Icon name="navigate" size={ds.iconSize.sm} color={overlayBadgeContentColor("dark")} />}
+                        label="Ver mapa"
+                      />
                     </TouchableOpacity>
                   </View>
                   {typeof validatedLocation.lat === "number" &&
@@ -1035,7 +1054,7 @@ const CreateEvent = () => {
 
           <Text style={localStyles.label}>Acceso</Text>
           <View style={localStyles.choiceRow}>
-            <TouchableOpacity
+            <TouchableOpacity hitSlop={chipHitSlop}
               style={[
                 localStyles.choiceChip,
                 pricingType === "free" && localStyles.choiceChipActive,
@@ -1051,7 +1070,7 @@ const CreateEvent = () => {
                 Gratis
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity hitSlop={chipHitSlop}
               style={[
                 localStyles.choiceChip,
                 pricingType === "paid" && localStyles.choiceChipActive,
@@ -1116,7 +1135,7 @@ const CreateEvent = () => {
       <View
         style={[
           localStyles.fixedFooter,
-          { paddingBottom: Math.max(insets.bottom + 12, 18) },
+          { paddingBottom: Math.max(insets.bottom + ds.spacing[3], ds.spacing[4]) },
         ]}
       >
         <TouchableOpacity
@@ -1177,6 +1196,24 @@ const CreateEvent = () => {
       </AnimatedSheetModal>
       </View>
     </KeyboardAvoidingView>
+      <AnimatedSheetModal visible={placesVisible} onClose={() => setPlacesVisible(false)} sheetStyle={[placeStyles.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[4]) + ds.spacing[4] }]}>
+        <View style={placeStyles.heading}>
+          <Text style={placeStyles.title}>Elegir lugar</Text>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar lugares" style={placeStyles.close} onPress={() => setPlacesVisible(false)}><Icon name="close" size={ds.iconSize.lg} color={ds.colors.text.primary} /></TouchableOpacity>
+        </View>
+        <TextInput accessibilityLabel="Buscar lugar" style={localStyles.input} placeholder="Buscar dirección" placeholderTextColor={vibesTheme.colors.secondaryText} value={placeSearch} onChangeText={setPlaceSearch} autoCorrect={false} />
+        <ScrollView keyboardShouldPersistTaps="handled" style={{ flexGrow: 0 }}>
+          {placesFeed.isLoading ? <VibesLoader /> : placesFeed.isError ? <TouchableOpacity accessibilityRole="button" style={placeStyles.row} onPress={() => void placesFeed.refetch()}><Text style={placeStyles.text}>No pudimos cargar los lugares. Reintentar</Text></TouchableOpacity> : availablePlaces.length ? availablePlaces.map(place => (
+            <TouchableOpacity key={place.address} accessibilityRole="button" accessibilityState={{ selected: place.address === location }} style={placeStyles.row} onPress={() => {
+              setLocation(place.address); setValidatedLocation(place); setMapPreviewFailed(false); setIsLocationFocused(false); locationSuggestions.clear(); setPlacesVisible(false);
+            }}>
+              <Icon name="location-outline" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
+              <Text style={placeStyles.text}>{place.address}</Text>
+              {place.address === location ? <Icon name="checkmark" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} /> : null}
+            </TouchableOpacity>
+          )) : <Text style={localStyles.locationHint}>No hay lugares que coincidan. Podés ingresar una dirección nueva en el formulario.</Text>}
+        </ScrollView>
+      </AnimatedSheetModal>
     </ScreenContainer>
   );
 };
@@ -1184,68 +1221,62 @@ const CreateEvent = () => {
 const legacyStyles = StyleSheet.create({
   header: {
     paddingHorizontal: 0,
-    marginBottom: 4,
+    marginBottom: ds.spacing[1],
   },
   screenTitle: {
     color: DARK_GRAY,
-    fontSize: 28,
-    lineHeight: 32,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.title,
   },
   content: {
-    paddingBottom: 128,
+    paddingBottom: /* ds-lint-allow layout: paddingBottom 128 (medida de layout fuera de la escala) */ 128,
   },
   formCard: {
     backgroundColor: WHITE,
-    marginTop: 18,
-    borderRadius: 18,
-    padding: 18,
+    marginTop: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
     shadowColor: BLACK,
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOpacity: ds.shadows.sm.shadowOpacity,
+    shadowRadius: ds.shadows.sm.shadowRadius,
+    shadowOffset: ds.shadows.sm.shadowOffset,
+    elevation: ds.shadows.sm.elevation,
   },
   label: {
     color: DARK_GRAY,
-    fontSize: 14,
-    fontWeight: "400",
-    marginBottom: 8,
-    marginTop: 12,
+    ...ds.textStyles.bodySmall,
+    marginBottom: ds.spacing[2],
+    marginTop: ds.spacing[3],
   },
   input: {
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     borderWidth: 1,
     borderColor: "transparent",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     color: DARK_GRAY,
   },
   inputInvalid: {
-    borderColor: "rgba(216, 140, 122, 0.72)",
-    backgroundColor: "rgba(216, 140, 122, 0.05)",
+    borderColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.higher),
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.subtle),
   },
   descriptionInput: {
     minHeight: 160,
-    fontSize: 17,
-    lineHeight: 25,
-    borderColor: `${vibesTheme.colors.secondaryText}40`,
+    ...ds.textStyles.body,
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium),
   },
   inputValid: {
-    borderColor: "rgba(110, 110, 110, 0.58)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.high),
   },
   linkValidationRow: {
-    marginTop: 7,
+    marginTop: ds.spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: ds.spacing[2],
   },
   linkValidationText: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.caption,
   },
   linkValidationTextValid: {
     color: vibesTheme.colors.secondaryText,
@@ -1255,148 +1286,101 @@ const legacyStyles = StyleSheet.create({
   },
   dateTimeRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   choiceRow: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 2,
+    gap: ds.spacing[3],
+    marginTop: ds.spacing[1],
   },
-  choiceChip: {
-    flex: 1,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.1)",
-    backgroundColor: vibesTheme.colors.background,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  choiceChipActive: {
-    backgroundColor: vibesTheme.colors.accentBlue,
-    borderColor: vibesTheme.colors.accentBlue,
-  },
-  choiceChipText: {
-    color: DARK_GRAY,
-    fontSize: 14,
-    fontWeight: "400",
-  },
-  choiceChipTextActive: {
-    color: vibesTheme.colors.surface,
-  },
+  choiceChip: { ...chipStyles.base, ...chipStyles.fullWidth },
+  choiceChipActive: { ...chipStyles.selected },
+  choiceChipText: { ...chipStyles.label },
+  choiceChipTextActive: { ...chipStyles.labelSelected },
   dateTimeButton: {
     flex: 1,
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    borderRadius: ds.radii.md,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[4],
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
   dateTimeButtonText: {
     color: DARK_GRAY,
-    fontSize: 14,
+    ...ds.textStyles.bodySmall,
   },
   dateTimePlaceholder: {
     color: TEXT_SECONDARY,
   },
   selectedDateTimeText: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     color: vibesTheme.colors.accentBlue,
-    fontSize: 13,
-    fontWeight: "400",
+    ...ds.textStyles.bodySmall,
   },
   pickerWrap: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     backgroundColor: vibesTheme.colors.background,
-    borderRadius: 12,
+    borderRadius: ds.radii.md,
     overflow: "hidden",
   },
   pickerDoneButton: {
     alignSelf: "flex-end",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
   },
   pickerDoneText: {
     color: vibesTheme.colors.accentBlue,
-    fontWeight: "400",
+    fontFamily: ds.fontFamilies.regular,
   },
   createButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 6 },
+    ...buttonStyle("accent", "lg"),
   },
   createButtonDisabled: {
     opacity: 0.72,
   },
   createButtonText: {
-    fontFamily: vibesTheme.fonts.semibold,
-    color: vibesTheme.colors.surface,
-    fontSize: 15,
+    ...buttonLabel("lg", "accent"),
   },
   fixedFooter: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    paddingTop: 12,
-    paddingHorizontal: 20,
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
+    paddingTop: ds.spacing[3],
+    paddingHorizontal: ds.spacing[5],
+    backgroundColor: ds.colors.bg.surface,
     borderTopWidth: 1,
-    borderTopColor: "rgba(43, 43, 43, 0.06)",
+    borderTopColor: ds.colors.border.subtle,
     shadowColor: BLACK,
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: -5 },
-    elevation: 10,
+    shadowOpacity: ds.shadows.md.shadowOpacity,
+    shadowRadius: ds.shadows.md.shadowRadius,
+    shadowOffset: ds.shadows.md.shadowOffset,
+    elevation: ds.shadows.md.elevation,
   },
   validateButton: {
-    marginTop: 10,
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    paddingVertical: 10,
-    alignItems: "center",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 3 },
+    ...buttonStyle("secondary", "md"),
+    marginTop: ds.spacing[3],
   },
   validateButtonText: {
-    color: DARK_GRAY,
-    fontWeight: "400",
+    ...buttonLabel("md", "secondary"),
   },
   locationHint: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
+    ...ds.textStyles.bodySmall,
   },
   validatedText: {
-    marginTop: 8,
+    marginTop: ds.spacing[2],
     color: vibesTheme.colors.accentBlue,
-    fontSize: 13,
-    fontWeight: "400",
+    ...ds.textStyles.bodySmall,
   },
   validatedLocationBlock: {
-    marginTop: 8,
-    gap: 10,
+    marginTop: ds.spacing[2],
+    gap: ds.spacing[3],
   },
-  mapPreviewCard: {
-    height: 168,
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "rgba(216, 140, 122, 0.25)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.32)",
-  },
+  mapPreviewCard: { ...cardStyles.mapPreview },
   mapPreviewImage: {
     width: "100%",
     height: "100%",
@@ -1416,50 +1400,47 @@ const legacyStyles = StyleSheet.create({
     top: "50%",
     width: 44,
     height: 44,
-    marginLeft: -22,
-    marginTop: -34,
-    borderRadius: 22,
+    marginLeft: -ds.spacing[6],
+    marginTop: -ds.spacing[8],
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(254, 254, 253, 0.92)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
     shadowColor: BLACK,
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    shadowOpacity: ds.shadows.sm.shadowOpacity,
+    shadowRadius: ds.shadows.sm.shadowRadius,
+    shadowOffset: ds.shadows.sm.shadowOffset,
+    elevation: ds.shadows.sm.elevation,
   },
   mapPreviewFallback: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    paddingHorizontal: 22,
-    backgroundColor: "rgba(244, 163, 64, 0.13)",
+    gap: ds.spacing[3],
+    paddingHorizontal: ds.spacing[6],
+    backgroundColor: ds.colors.bg.selected,
   },
   mapPreviewFallbackPin: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.14)",
+    backgroundColor: ds.colors.bg.selected,
   },
   mapPreviewFallbackTitle: {
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.body,
     textAlign: "center",
   },
   mapPreviewFallbackText: {
     color: DARK_GRAY,
-    fontSize: 14,
-    fontWeight: "400",
+    ...ds.textStyles.bodySmall,
     textAlign: "center",
   },
   mapPreviewFallbackMeta: {
     color: TEXT_SECONDARY,
-    fontSize: 12,
-    fontWeight: "400",
+    ...ds.textStyles.caption,
     textAlign: "center",
   },
   mapPreviewOverlay: {
@@ -1467,27 +1448,13 @@ const legacyStyles = StyleSheet.create({
     right: 12,
     bottom: 12,
   },
-  mapPreviewBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(43, 43, 43, 0.72)",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  mapPreviewBadgeText: {
-    color: WHITE,
-    fontSize: 12,
-    fontWeight: "400",
-  },
   coverPicker: {
     width: "100%",
     aspectRatio: 16 / 9,
-    borderRadius: 16,
+    borderRadius: ds.radii.lg,
     borderWidth: 1,
-    borderColor: "rgba(244, 163, 64, 0.42)",
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
+    backgroundColor: ds.colors.bg.selected,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
@@ -1500,120 +1467,85 @@ const legacyStyles = StyleSheet.create({
   },
   coverScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(43, 43, 43, 0.22)",
-  },
-  coverChangeBadge: {
-    position: "absolute",
-    right: 12,
-    bottom: 12,
-    minHeight: 38,
-    borderRadius: 19,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 14,
-    backgroundColor: "rgba(43, 43, 43, 0.78)",
-  },
-  coverChangeText: {
-    color: WHITE,
-    fontSize: 13,
-    lineHeight: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium),
   },
   coverEmptyState: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 28,
+    paddingHorizontal: ds.spacing[8],
   },
   coverIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-    backgroundColor: "rgba(244, 163, 64, 0.16)",
+    ...iconCircleStyle("lg", "accent"),
+    marginBottom: ds.spacing[3],
   },
   uploadImageTitle: {
     color: DARK_GRAY,
-    fontSize: 16,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
   },
   uploadImageHint: {
-    marginTop: 5,
-    color: "rgba(43, 43, 43, 0.52)",
-    fontSize: 13,
-    lineHeight: 17,
+    marginTop: ds.spacing[1],
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.strong),
+    ...ds.textStyles.bodySmall,
     textAlign: "center",
   },
   photoSheet: {
     backgroundColor: WHITE,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 30,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
+    paddingHorizontal: ds.spacing[6],
+    paddingTop: ds.spacing[3],
+    paddingBottom: ds.spacing[8],
     shadowColor: BLACK,
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    shadowOpacity: ds.shadows.md.shadowOpacity,
+    shadowRadius: ds.shadows.md.shadowRadius,
+    shadowOffset: ds.shadows.md.shadowOffset,
+    elevation: ds.shadows.md.elevation,
   },
   sheetHandle: {
     alignSelf: "center",
     width: 44,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(43, 43, 43, 0.16)",
-    marginBottom: 16,
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.colors.border.default,
+    marginBottom: ds.spacing[4],
   },
   modalTitle: {
-    fontSize: 18,
+    ...ds.textStyles.body,
     color: DARK_GRAY,
-    fontFamily: vibesTheme.fonts.regular,
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
   },
   modalPrimaryButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 24,
-    paddingVertical: 12,
-    alignItems: "center",
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 5 },
+    ...buttonStyle("accent", "md"),
   },
   modalPrimaryText: {
-    color: vibesTheme.colors.surface,
-    fontWeight: "400",
+    ...buttonLabel("md", "accent"),
   },
   modalSecondaryButton: {
-    backgroundColor: vibesTheme.colors.background,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.accentMustard,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 10,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowColor: PRIMARY_COLOR,
-    shadowOffset: { width: 0, height: 3 },
+    ...buttonStyle("secondary", "md"),
+    marginTop: ds.spacing[3],
   },
   modalSecondaryText: {
-    color: DARK_GRAY,
-    fontWeight: "400",
+    ...buttonLabel("md", "secondary"),
   },
   modalCancelButton: {
-    marginTop: 14,
+    marginTop: ds.spacing[4],
     alignItems: "center",
   },
   modalCancelText: {
     color: TEXT_SECONDARY,
-    fontWeight: "400",
+    fontFamily: ds.fontFamilies.regular,
   },
 });
 
 export default CreateEvent;
 
 const localStyles = {...legacyStyles, ...creationFormStyles};
+
+const placeStyles = StyleSheet.create({
+ row: { minHeight: ds.touchTarget, padding: ds.spacing[3], gap: ds.spacing[2], marginBottom: ds.spacing[2], flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: ds.colors.border.subtle, borderRadius: ds.radii.lg, backgroundColor: ds.colors.bg.surface },
+ text: { flex: 1, ...ds.textStyles.body, color: ds.colors.text.primary },
+ sheet: { maxHeight: "80%", padding: ds.spacing[6], gap: ds.spacing[3], backgroundColor: ds.colors.bg.surface, borderTopLeftRadius: ds.radii.xl, borderTopRightRadius: ds.radii.xl },
+ heading: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3] },
+ close: { width: ds.touchTarget, height: ds.touchTarget, borderRadius: ds.radii.pill, alignItems: "center", justifyContent: "center", backgroundColor: ds.colors.bg.subtle },
+ title: { flex: 1, ...ds.textStyles.title, color: ds.colors.text.primary },
+});

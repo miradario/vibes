@@ -1,12 +1,9 @@
-import { vibesTheme } from "../../src/theme/vibesTheme";
 import React from "react";
 import { StyleSheet, TouchableOpacity, type StyleProp, type ViewStyle } from "react-native";
 import { Text } from "../Typography";
 import Icon from "../Icon";
-import {
-  ONBOARDING_COLORS,
-  onboardingStyles,
-} from "../../src/screens/Onboarding/vibesOnboardingStyles";
+import { chipHitSlop, chipIcon, chipStyles } from "../ui/chipStyles";
+import * as ds from "../../src/theme/tokens";
 
 type SelectablePillProps = {
   label: string;
@@ -29,34 +26,30 @@ const SelectablePill = ({
     accessibilityRole="checkbox"
     accessibilityState={{ checked: selected }}
     accessibilityLabel={label}
+    hitSlop={chipHitSlop}
     style={[
-      onboardingStyles.pill,
-      isAddOption && onboardingStyles.pillAdd,
-      selected && onboardingStyles.pillActive,
+      chipStyles.base,
+      selected && !isAddOption && chipStyles.selected,
+      compact && chipStyles.fullWidth,
       compact && compactStyles.pill,
       style,
     ]}
     onPress={onPress}
-    activeOpacity={0.86}
+    activeOpacity={ds.opacity.pressed}
   >
-    <Text style={[onboardingStyles.pillText, compact && compactStyles.label]} numberOfLines={compact ? 1 : undefined} adjustsFontSizeToFit={compact} minimumFontScale={0.8}>{label}</Text>
+    <Text style={[chipStyles.label, compact && compactStyles.label]} numberOfLines={compact ? 1 : undefined} adjustsFontSizeToFit={compact} minimumFontScale={0.8}>{label}</Text>
     <Icon
       name={
         isAddOption ? "add" : selected ? "checkmark-circle" : "ellipse-outline"
       }
-      size={compact ? 14 : isAddOption ? 20 : 16}
-      color={
-        selected || isAddOption
-          ? ONBOARDING_COLORS.mustard
-          : "rgba(43, 43, 43, 0.22)"
-      }
-      style={[onboardingStyles.pillIcon, compact && {marginLeft:4}]}
+      size={chipIcon.size}
+      color={selected && !isAddOption ? chipIcon.selectedColor : chipIcon.color}
     />
   </TouchableOpacity>
 );
 
 const compactStyles = StyleSheet.create({
-  pill: {flex:1,minWidth:0,minHeight:44,paddingHorizontal:6,borderRadius:14},
-  label: {flexShrink:1,fontSize:13,lineHeight:18,color:vibesTheme.colors.primaryText},
+  pill: {minWidth:0},
+  label: {flexShrink:1},
 });
 export default SelectablePill;

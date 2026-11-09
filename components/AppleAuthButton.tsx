@@ -6,6 +6,7 @@ import { Platform, StyleSheet, View } from "react-native";
 import { Text } from "./Typography";
 import * as AppleAuthentication from "expo-apple-authentication";
 import VibesLoader from "./VibesLoader";
+import * as ds from "../src/theme/tokens";
 
 type AppleAuthButtonProps = {
   onPress: () => void;
@@ -79,16 +80,16 @@ const styles = StyleSheet.create({
   fallbackButton: {
     width: "100%",
     minHeight: 54,
-    borderRadius: 22,
+    borderRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.primaryText,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
   fallbackText: {
     color: vibesTheme.colors.background,
-    fontSize: 16,
+    ...ds.textStyles.body,
   },
 });
 

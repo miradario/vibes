@@ -14,10 +14,12 @@ export default function KeyboardViewport({ children, style, iosAvoiding = true }
   const updateOverlap = () => {
     if (Platform.OS !== "android") return;
     const measurement = ++revision.current;
-    root.current?.measureInWindow((_x, y, _width, height) => {
+    // Fabric measureInWindow can report y=0 inside a padded safe-area parent.
+    // measure supplies the page origin in the same coordinates as keyboard.screenY.
+    root.current?.measure((_x, _y, _width, height, _pageX, pageY) => {
       // A resize or hide can overtake this native measurement on first focus.
       if (measurement !== revision.current) return;
-      const next = keyboardTop.current === null ? 0 : Math.max(0, y + height - keyboardTop.current);
+      const next = keyboardTop.current === null ? 0 : Math.max(0, pageY + height - keyboardTop.current);
       setOverlap(previous => Math.abs(previous - next) > 1 ? next : previous);
     });
   };

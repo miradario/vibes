@@ -7,6 +7,7 @@ import {
   type ProfileAnswers,
 } from "../../src/lib/profileQuestions";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import * as ds from "../../src/theme/tokens";
 
 type Props = {
   onInputFocus?: (input: NativeTextInput | null) => void;
@@ -103,24 +104,22 @@ export default function ProfileQuestionsForm({
 }
 const styles = StyleSheet.create({
   title: {
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 32,
-    lineHeight: 40,
+    ...ds.textStyles.display,
     color: vibesTheme.colors.primaryText,
-    marginVertical: 16,
+    marginVertical: ds.spacing[4],
   },
-  hint: { fontSize: 16, lineHeight: 23, color: vibesTheme.colors.secondaryText, marginBottom: 16 },
-  field: { marginBottom: 30 },
-  label: { fontFamily: vibesTheme.fonts.semibold, fontSize: 21, lineHeight: 28, color: vibesTheme.colors.primaryText, marginBottom: 12 },
-  personalityOptions: {flexWrap:"nowrap",gap:6},
-  options: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  hint: { ...ds.textStyles.body, color: vibesTheme.colors.secondaryText, marginBottom: ds.spacing[4] },
+  field: { marginBottom: ds.spacing[8] },
+  label: { ...ds.textStyles.heading, color: vibesTheme.colors.primaryText, marginBottom: ds.spacing[3] },
+  personalityOptions: {flexWrap:"nowrap",gap:ds.spacing[2]},
+  options: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[3] },
   input: {
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
-    borderRadius: 18,
-    padding: 16,
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
+    borderRadius: ds.radii.lg,
+    padding: ds.spacing[4],
     minHeight: 90,
     color: vibesTheme.colors.primaryText,
-    fontSize: 16,
+    ...ds.textStyles.body,
   },
 });

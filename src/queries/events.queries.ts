@@ -14,6 +14,7 @@ import { useAuthSession } from "../auth/auth.queries";
 import { createSignedProfilePhotoUrl } from "../lib/profilePhotoStorage";
 import { uploadImageToSupabase } from "../lib/supabaseStorage";
 import { assertAcceptableContent } from "../lib/moderation";
+import { maybeRequestStoreReview } from "../lib/storeReview";
 import {
   encodeChallengeDescriptionWithPreset,
   extractChallengePresetFromDescription,
@@ -139,6 +140,7 @@ type CreateChallengeInput = {
   hostName?: string | null;
   hostImage?: string | null;
   visibility?: ChallengeVisibility;
+  tags?: string[];
 };
 
 export type ChallengeJoinRequest = {
@@ -1427,6 +1429,8 @@ export const useCheckInChallengeMutation = () => {
       if (error) throw error;
     },
     onSuccess: (_data, { challengeId, userId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["vibesSummary", userId] });
+      void queryClient.invalidateQueries({ queryKey: ["vibesHistory", userId] });
       queryClient.invalidateQueries({
         queryKey: challengeParticipantKeys.participant(challengeId, userId),
       });
@@ -1594,6 +1598,7 @@ export const useUpdateChallengeMutation = () => {
           original.startsAt ?? null
         ),
         visibility: input.visibility ?? original.visibility,
+        ...(input.tags ? { tags: input.tags } : {}),
         image_url: imageUrl,
       }).eq("id", input.id).eq("created_by", auth.user.id).select("*").single();
       if (error) throw error;
@@ -1625,6 +1630,7 @@ export const useCreateChallengeMutation = () => {
         title: input.title,
         subtitle: input.subtitle,
         duration_days: input.durationDays,
+        ...(input.tags ? { tags: input.tags } : {}),
         visibility: input.visibility ?? "public",
         image_url: imageUrl,
       };
@@ -2007,6 +2013,7 @@ export const useJoinEventMutation = () => {
       queryClient.invalidateQueries({
         queryKey: eventType === "event" ? eventsKeys.all : challengesKeys.all,
       });
+      if (eventType === "event") void maybeRequestStoreReview();
     },
   });
 };
@@ -2135,6 +2142,8 @@ export type EventMessage = {
   body: string;
   createdAt: string;
   deliveryStatus?: "sending" | "sent";
+  /** Mensaje citado al responder (swipe a la derecha). */
+  replyToMessageId?: string | null;
 };
 
 const isConfirmedEventMessageForPending = (
@@ -2177,6 +2186,9 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
                 senderAvatar: null,
                 body: String(row.body),
                 createdAt: String(row.created_at),
+                replyToMessageId: row.reply_to_message_id
+                  ? String(row.reply_to_message_id)
+                  : null,
               };
 
               if (old.some((item) => item.id === message.id)) return old;
@@ -2208,7 +2220,7 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
 
       const { data: rows, error } = await supabase
         .from("event_messages")
-        .select("id, event_id, sender_id, body, created_at")
+        .select("id, event_id, sender_id, body, created_at, reply_to_message_id")
         .eq("event_id", eventId)
         // Newest 200, so long chats still show (and can mark read) the latest.
         .order("created_at", { ascending: false })
@@ -2258,6 +2270,9 @@ export const useEventMessagesQuery = (eventId: string | undefined) => {
               senderAvatar: null,
               body: String(row.body),
               createdAt: String(row.created_at),
+              replyToMessageId: row.reply_to_message_id
+                ? String(row.reply_to_message_id)
+                : null,
             };
           })
       );
@@ -2299,10 +2314,16 @@ export const useSendEventMessageMutation = () => {
   return useMutation<
     EventMessage,
     unknown,
-    { eventId: string; eventType: EventType; senderId: string; body: string },
+    {
+      eventId: string;
+      eventType: EventType;
+      senderId: string;
+      body: string;
+      replyToMessageId?: string | null;
+    },
     { tempId: string; eventId: string }
   >({
-    onMutate: async ({ eventId, senderId, body }) => {
+    onMutate: async ({ eventId, senderId, body, replyToMessageId }) => {
       const tempId = `pending-${Date.now()}`;
 
       await queryClient.cancelQueries({
@@ -2321,13 +2342,20 @@ export const useSendEventMessageMutation = () => {
             body,
             createdAt: new Date().toISOString(),
             deliveryStatus: "sending",
+            replyToMessageId: replyToMessageId ?? null,
           },
         ]
       );
 
       return { tempId, eventId };
     },
-    mutationFn: async ({ eventId, eventType, senderId, body }) => {
+    mutationFn: async ({
+      eventId,
+      eventType,
+      senderId,
+      body,
+      replyToMessageId,
+    }) => {
       assertAcceptableContent([body]);
 
       if (eventType === "challenge") {
@@ -2360,8 +2388,11 @@ export const useSendEventMessageMutation = () => {
           event_type: eventType,
           sender_id: senderId,
           body: body.trim(),
+          ...(replyToMessageId
+            ? { reply_to_message_id: replyToMessageId }
+            : {}),
         })
-        .select("id, event_id, sender_id, body, created_at")
+        .select("id, event_id, sender_id, body, created_at, reply_to_message_id")
         .single();
       if (error) throw error;
 
@@ -2374,6 +2405,9 @@ export const useSendEventMessageMutation = () => {
         body: String((data as any).body),
         createdAt: String((data as any).created_at),
         deliveryStatus: "sent",
+        replyToMessageId: (data as any).reply_to_message_id
+          ? String((data as any).reply_to_message_id)
+          : null,
       };
     },
     onError: (_error, _variables, context) => {

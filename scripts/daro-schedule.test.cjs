@@ -55,7 +55,7 @@ test('unlimited capacity never displays participant count divided by zero', () =
   assert.equal(schedule.formatAttendees(7, 0), '7 · sin límite');
   assert.equal(schedule.formatAttendees(7, 20), '7/20');
 });
-test('Home prioritizes age, proximity and shared tastes and does not mutate the candidate pool', () => {
+test('Home prioritizes age, proximity and shared purposes and does not mutate the candidate pool', () => {
   const own = { suggestionAge: 32, spiritual_path: ['Meditación'], open_to: ['Amistad'] };
   const range = { ageMin: null, ageMax: null };
   const pool = [
@@ -96,4 +96,10 @@ test('event end survives save/edit and invalid end ranges are rejected', () => {
   assert.equal(schedule.nextEventSession(sessions, null, during).endsAt, sessions[0].endsAt);
   assert.equal(schedule.eventHasExpired(sessions, null, new Date(2026, 9, 17, 19).getTime()), true);
   assert.equal(filters.matchesEventDateAndLocation({ schedule: sessions }, new Date(2026, 9, 16), new Date(2026, 9, 16), ''), true);
+});
+
+test('Home ranking ignores community membership', () => {
+  const own = { spiritualPath: ['Hatha'], communities: ['Hatha'] };
+  const pool = [{ id: 'other', spiritualPath: ['Bikram'] }, { id: 'same', spiritualPath: ['Hatha'], communities: ['Hatha'] }];
+  assert.deepEqual(suggestions.rankHomeSuggestions(pool, own, { ageMin: null, ageMax: null }).map(p => p.id), ['other', 'same']);
 });

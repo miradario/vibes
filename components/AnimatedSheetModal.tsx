@@ -10,6 +10,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type AnimatedSheetModalProps = {
   visible: boolean;
@@ -227,8 +228,10 @@ const AnimatedSheetModal = ({
   return inline ? (
     content
   ) : (
+    /* ds-lint-allow safe-area: primitiva genérica; cada contenido fullScreen aplica sus insets */
     <Modal
       transparent
+      hardwareAccelerated={Platform.OS === "android"}
       visible={isMounted}
       onDismiss={notifyClosed}
       animationType="none"
@@ -249,7 +252,7 @@ const styles = StyleSheet.create({
   centered: {
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: ds.spacing[6],
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

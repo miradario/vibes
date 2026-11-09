@@ -12,6 +12,7 @@ import { useAuthSession } from "../src/auth/auth.queries";
 import { upsertUserPreferences } from "../src/lib/userPreferencesStore";
 import { useUserPreferencesQuery } from "../src/queries/userPreferences.queries";
 import { showToast } from "../src/utils/toast";
+import * as ds from "../src/theme/tokens";
 
 const toCamelKey = (key: string) =>
   key.replace(/_([a-z])/g, (_match: string, letter: string) =>
@@ -101,7 +102,7 @@ const PreferenceDetail = () => {
           title={config.label}
           showBack
           onBack={() => navigation.goBack()}
-          style={{ paddingHorizontal: 0, marginBottom: 6 }}
+          style={{ paddingHorizontal: 0, marginBottom: ds.spacing[2] }}
           titleStyle={styles.settingsTitle}
         />
 
@@ -112,7 +113,7 @@ const PreferenceDetail = () => {
               <Text style={styles.preferenceEmphasis}>{config.label}</Text>.
             </Text>
 
-            <View style={{ marginTop: 8, flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+            <View style={{ marginTop: ds.spacing[2], flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[3] }}>
               {config.options.map((option: string) => (
                 <SelectablePill key={option} label={option} selected={selected.includes(option)} onPress={() => toggleOption(option)} />
               ))}

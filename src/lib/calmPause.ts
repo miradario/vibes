@@ -1,5 +1,8 @@
 export const INHALE_MS = 4000;
 export const EXHALE_MS = 6000;
+// Pauses on each end state of looping logo animations (mark and word).
+export const HOLD_ICON_MS = 3000;
+export const HOLD_WORD_MS = 3000;
 export const BREATH_CYCLE_MS = INHALE_MS + EXHALE_MS;
 export const getCalmIllustrationSize = (
   width: number,

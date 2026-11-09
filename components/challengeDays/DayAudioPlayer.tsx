@@ -6,6 +6,7 @@ import { Text } from "../Typography";
 import { DayButton } from "./DayButton";
 import { dayStyles as s } from "./styles";
 import { vibesTheme } from "../../src/theme/vibesTheme";
+import * as ds from "../../src/theme/tokens";
 const time = (ms: number) =>
   `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(
     2,
@@ -100,7 +101,7 @@ export default function DayAudioPlayer({
     }
   };
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: ds.spacing[2] }}>
       <Text style={s.text}>{name}</Text>
       <View style={s.row}>
         <DayButton

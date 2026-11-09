@@ -30,12 +30,13 @@ def check_text(path):
             value = "".join(c * 2 for c in value)
         if len(value) == 8:
             value = value[2:] if path.suffix == ".xml" else value[:6]
-        photo_viewer_black = location == "components/UserProfileSheet.tsx" and value == "000000"
-        # User-requested stronger red, restricted to message-heart reactions.
-        message_heart_red = location == "components/HeartMessageBubble.tsx" and value == "C62828"
-        if value not in PALETTE and not photo_viewer_black and not message_heart_red:
+        # DS §1.10: negro del visor de fotos, definido solo en los tokens.
+        photo_viewer_black = location == "src/theme/tokens/palette.ts" and value == "000000"
+        if value not in PALETTE and not photo_viewer_black:
             errors.append(f"{location}:{text.count(chr(10), 0, match.start()) + 1}: {match[0]}")
     for match in re.finditer(r"\b(rgba?|hsla?)\(([^()]*)\)", text):
+        if location == "src/theme/tokens/opacity.ts":
+            continue  # withAlpha() arma el rgba a partir de los tokens
         if match[1].startswith("hsl"):
             errors.append(f"{location}: use palette tokens instead of {match[0]}")
             continue

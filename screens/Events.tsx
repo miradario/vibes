@@ -1,3 +1,6 @@
+import EventExplorerSheet, { type EventExplorerMode } from "../components/EventExplorerSheet";
+import { useCommunityFilter } from "../src/hooks/useCommunityFilter";
+import { matchesCommunities } from "../src/lib/communities";
 import { useReducedMotion } from "react-native-reanimated";
 import DiscoverPathCards from "../components/DiscoverPathCards";
 import { isCuratedChallenge } from "../src/lib/curatedChallenges";
@@ -38,7 +41,10 @@ import {
 import type { EventFeedItem, EventModality } from "../src/queries/events.queries";
 import { useAuthSession } from "../src/auth/auth.queries";
 import { getChallengeTimeline } from "../src/lib/challengeTimeline";
-import { getBottomTabContentPadding } from "../src/lib/tabBarLayout";
+import { getBottomTabContentPadding, TAB_BAR_CONTENT_CLEARANCE } from "../src/lib/tabBarLayout";
+
+/** Aire extra que la lista de Eventos ya tenía sobre la barra (140 = 118 + 22). */
+const EVENTS_LIST_EXTRA_CLEARANCE = 22;
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
 import {
@@ -49,6 +55,7 @@ import {
 } from "../src/queries/challengeRestart.queries";
 import RestartChallengeConfirmSheet from "../components/challengeRestart/RestartChallengeConfirmSheet";
 import { restartStyles } from "../components/challengeRestart/styles";
+import * as ds from "../src/theme/tokens";
 
 type FeedListItem =
   | {
@@ -210,10 +217,9 @@ const Events = ({
     section === "challenge" ? t("events.searchChallenges") : t("events.searchEvents");
   const [modality, setModality] = useState<EventModality | null>(null);
   const [category, setCategory] = useState<EventCategory | null>(null);
-  const [spiritualPaths, setSpiritualPaths] = useState<string[]>([]);
+  const [spiritualPaths, setSpiritualPaths] = useCommunityFilter();
   const [participationType, setParticipationType] = useState<EventParticipationType | null>(null);
   const [filtersVisible, setFiltersVisible] = useState(false);
-  const [frequentOnly, setFrequentOnly] = useState(false);
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
   const [datePreset, setDatePreset] = useState<EventDatePreset | null>(null);
@@ -231,18 +237,20 @@ const Events = ({
     (!pastOnly && ((draftDateFrom && draftDateFrom < today) || (draftDateTo && draftDateTo < today)))
   );
   const [pricingType, setPricingType] = useState<"free" | "paid" | null>(null);
+  const [frequentOnly, setFrequentOnly] = useState(false);
   const [draftFilters, setDraftFilters] = useState<{
+    frequentOnly: boolean;
     pricingType: "free" | "paid" | null;
     category: EventCategory | null;
     participationType: EventParticipationType | null;
     modality: EventModality | null;
-  }>({ pricingType: null, category: null, participationType: null, modality: null });
+  }>({ frequentOnly: false, pricingType: null, category: null, participationType: null, modality: null });
   const activeFilterCount = [frequentOnly, category, participationType, modality, spiritualPaths.length > 0, dateFrom, dateTo, locationFilter.trim()].filter(Boolean).length;
   const [filterPanel, setFilterPanel] = useState<"date" | "location" | "other">("date");
   const openFilters = (panel: "date" | "location" | "other") => {
     setFilterPanel(panel);
     Keyboard.dismiss();
-    setDraftFilters({ pricingType, category, participationType, modality });
+    setDraftFilters({ frequentOnly, pricingType, category, participationType, modality });
     setDraftDatePreset(datePreset);
     setDraftDateFrom(dateFrom);
     setDraftDateTo(dateTo);
@@ -275,6 +283,7 @@ const Events = ({
   // Lazy loading: the feed loads page by page while scrolling. Search,
   // filters and the views that group or sort the whole set (past, already
   // started, private) need every row, so they load the remaining pages.
+  const [explorerMode, setExplorerMode] = useState<EventExplorerMode | null>(null);
   const needsFullFeed =
     pastOnly ||
     startedOnly ||
@@ -346,6 +355,16 @@ const Events = ({
       joinedChallengeIds.has(item.id) || (Boolean(viewerId) && item.createdBy === viewerId && item.visibility === "private"),
     [joinedChallengeIds, viewerId],
   );
+  // Joined events always stay in "Tus eventos", whatever the community filter.
+  const joinedEventIds = useMemo(
+    () =>
+      new Set(
+        myEventGroups
+          .filter((group) => group.eventType === "event")
+          .map((group) => group.eventId),
+      ),
+    [myEventGroups],
+  );
   const normalizedSearch = normalizeSearchText(search);
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -362,7 +381,8 @@ const Events = ({
       }
       if (section === "event" && !matchesEventDateAndLocation(item, dateFrom, dateTo, locationFilter)) return false;
       if (section === "event" && !matchesEventClassification(item, category, participationType, modality)) return false;
-      if (section === "event" && spiritualPaths.length > 0 && !spiritualPaths.some((path) => item.tags?.includes(path))) return false;
+      // Challenges have no community tags, so the community filter only applies to events.
+      if (section === "event" && !joinedEventIds.has(item.id) && !matchesCommunities(item, spiritualPaths)) return false;
       if (section === "event" && frequentOnly && !getEventRecurrence(item.schedule)) return false;
       if (section === "event" && pricingType && item.pricingType !== pricingType) return false;
       if (!normalizedSearch) return true;
@@ -385,7 +405,7 @@ const Events = ({
 
       return haystack.includes(normalizedSearch);
     });
-  }, [items, isMyChallenge, spiritualPaths, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
+  }, [items, isMyChallenge, joinedEventIds, spiritualPaths, frequentOnly, challengeTab, startedOnly, pastOnly, pricingType, normalizedSearch, section, category, participationType, modality, dateFrom, dateTo, locationFilter]);
 
   const visibleItems = useMemo(() => {
     if (section !== "challenge") {
@@ -610,13 +630,13 @@ const Events = ({
 
   return (
     <ScreenContainer edges={pastOnly || (section === "challenge" && !embedded) ? ["top", "left", "right"] : []} style={styles.bg}>
-      <View style={[styles.eventsContainer, localStyles.eventsContainer, (pastOnly || embedded || section === "challenge") && { paddingTop: 12 }]}>
+      <View style={[styles.eventsContainer, localStyles.eventsContainer, (pastOnly || embedded || section === "challenge") && { paddingTop: ds.spacing[3] }]}>
         {!embedded && <View style={[localStyles.headerRow, section === "challenge" && !pastOnly && localStyles.challengeHeaderRow]}>
           {pastOnly && section !== "challenge" ? (
             <BackButton accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={localStyles.filterButton} />
           ) : null}
           <View style={[localStyles.titleRow, section === "challenge" && !pastOnly && localStyles.challengeTitleRow]}>
-            {!embedded && <Text style={[pastOnly && styles.eventsTitle, localStyles.screenTitle, !pastOnly && { fontFamily: vibesTheme.fonts.extraBold, fontSize: 34, lineHeight: 42 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
+            {!embedded && <Text style={[pastOnly && styles.eventsTitle, localStyles.screenTitle, !pastOnly && { ...ds.textStyles.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</Text>}
 
           </View>
           <View style={[localStyles.headerActions, section === "challenge" && !pastOnly && localStyles.challengeHeaderActions]}>
@@ -633,7 +653,7 @@ const Events = ({
               navigation.navigate("CreateEvent" as never);
             }}
           >
-            <Icon name="add" size={20} color={vibesTheme.colors.primaryText} style={localStyles.createIcon} />
+            <Icon name="add" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} style={localStyles.createIcon} />
           </TouchableOpacity> : null}
           {section === "challenge" ? <TouchableOpacity
             accessibilityRole="button" accessibilityLabel={pastOnly ? "Volver a desafíos" : "Ver todos los desafíos"}
@@ -643,14 +663,14 @@ const Events = ({
               setSearch("");
             }}
             style={[localStyles.filterButton, localStyles.headerAction]}
-          ><Icon name={pastOnly ? "arrow-back" : "home-outline"} size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
+          ><Icon name={pastOnly ? "arrow-back" : "home-outline"} size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
           {!pastOnly && section === "challenge" && challengeTab === "public" ? <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Ya comenzados"
             accessibilityState={{ selected: startedOnly }}
             onPress={() => setStartedOnly(value => !value)}
             style={[localStyles.filterButton, localStyles.headerAction, startedOnly && { borderWidth: 1, borderColor: vibesTheme.colors.primaryText }]}
-          ><Icon name="time-outline" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
+          ><Icon name="time-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} /></TouchableOpacity> : null}
             {!pastOnly ? (
               <TouchableOpacity
                 accessibilityRole="button"
@@ -658,14 +678,14 @@ const Events = ({
                 onPress={() => section === "challenge" ? navigation.navigate("PastChallenges" as never, { section: "challenge", challengeTab } as never) : navigation.navigate("PastEvents" as never)}
                 style={[localStyles.filterButton, localStyles.headerAction]}
               >
-                <Icon name="archive-outline" size={23} color={vibesTheme.colors.primaryText} />
+                <Icon name="archive-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
               </TouchableOpacity>
             ) : null}
           </View>
         </View>}
         {section === "challenge" && !pastOnly ? <>
           <View style={[pillTabStyles.selector, localStyles.challengeTabs]} accessibilityRole="tablist">
-            {([ ["public", "Público"], ["private", "Mis desafíos"], ["vibes", "Por Vibes"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[pillTabStyles.tab, challengeTab === mode && pillTabStyles.selected]}><Text style={[pillTabStyles.label, challengeTab === mode && pillTabStyles.selectedLabel]}>{label}</Text></TouchableOpacity>)}
+            {([ ["public", "Público"], ["private", "Mis desafíos"], ["vibes", "Por Vibes"] ] as const).map(([mode, label]) => <TouchableOpacity key={mode} accessibilityRole="tab" accessibilityState={{ selected: challengeTab === mode }} onPress={() => setChallengeTab(mode)} style={[pillTabStyles.tab, localStyles.challengeTab, challengeTab === mode && pillTabStyles.selected]}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[pillTabStyles.label, localStyles.challengeTabLabel, challengeTab === mode && pillTabStyles.selectedLabel]}>{label}</Text></TouchableOpacity>)}
           </View>
         </> : null}
         <View style={{ flex: 1, overflow: "hidden" }}>
@@ -674,11 +694,11 @@ const Events = ({
           transform: [{ translateY: filtersProgress.interpolate({ inputRange: [0, 1], outputRange: [-filtersHeight, 0] }) }] }}>
         <View onLayout={event => { const height = event.nativeEvent.layout.height; if (height > 0) setFiltersHeight(height); }}>
         <View style={[styles.eventsSearchBar, localStyles.searchBar, localStyles.challengeSearch]}>
-          <Icon name="search" size={20} color={TEXT_SECONDARY} />
+          <Icon name="search" size={ds.iconSize.md} color={TEXT_SECONDARY} />
           <TextInput
-            style={[styles.eventsSearchInput, localStyles.searchInput, { fontSize: 16 }]}
+            style={[styles.eventsSearchInput, localStyles.searchInput, { ...ds.textStyles.body }]}
             placeholder={searchPlaceholder}
-            placeholderTextColor="rgba(43, 43, 43, 0.34)"
+            placeholderTextColor={ds.colors.scrim}
             value={search}
             onChangeText={setSearch}
             autoCapitalize="none"
@@ -693,23 +713,22 @@ const Events = ({
             {([
               ["date", "calendar-outline", "Fecha", Boolean(dateFrom || dateTo)],
               ["location", "location-outline", "Ubicación", Boolean(locationFilter)],
-              ["other", "options-outline", "Más filtros", Boolean(category || pricingType || participationType || modality)],
-            ] as const).map(([panel, icon, label, active]) => <TouchableOpacity key={label} accessibilityRole="button" accessibilityLabel={`Filtrar por ${label}`} accessibilityState={{ expanded: filtersVisible && filterPanel === panel }} onPress={() => openFilters(panel)} style={[localStyles.eventFilterChip, active && { borderColor: vibesTheme.colors.primaryText, backgroundColor: `${vibesTheme.colors.primaryText}0C` }]}>
-              <Icon name={icon} size={18} color={vibesTheme.colors.primaryText} />
+              ["other", "options-outline", "Más filtros", Boolean(frequentOnly || category || pricingType || participationType || modality)],
+            ] as const).map(([panel, icon, label, active]) => <TouchableOpacity key={label} accessibilityRole="button" accessibilityLabel={`Filtrar por ${label}`} accessibilityState={{ expanded: filtersVisible && filterPanel === panel }} onPress={() => openFilters(panel)} style={[localStyles.eventFilterChip, active && { borderColor: vibesTheme.colors.primaryText, backgroundColor: ds.colors.bg.subtle }]}>
+              <Icon name={icon} size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
               <Text numberOfLines={1} style={localStyles.eventFilterLabel}>{label}</Text>
-              <Icon name="chevron-down" size={14} color={vibesTheme.colors.primaryText} />
+              <Icon name="chevron-down" size={ds.iconSize.sm} color={vibesTheme.colors.primaryText} />
             </TouchableOpacity>)}
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={localStyles.eventCategoriesScroll} contentContainerStyle={localStyles.eventCategories}>
-            <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: category === null && !frequentOnly }} onPress={() => { setCategory(null); setFrequentOnly(false); }} style={[localStyles.eventCategory, category === null && !frequentOnly && { backgroundColor: vibesTheme.colors.primaryText }]}><Text style={[localStyles.eventCategoryLabel, category === null && !frequentOnly && { color: vibesTheme.colors.surface }]}>Todos</Text></TouchableOpacity>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mostrar solo eventos frecuentes" accessibilityState={{ selected: frequentOnly }} onPress={() => setFrequentOnly(value => !value)} style={[localStyles.eventCategory, frequentOnly && { backgroundColor: vibesTheme.colors.accentMustard }]}>
-              <Text style={[localStyles.eventCategoryLabel, { color: vibesTheme.colors.primaryText }]}>Frecuentes</Text>
-            </TouchableOpacity>
-          </ScrollView>
           <DiscoverPathCards selected={spiritualPaths}
             onToggle={path => setSpiritualPaths(current => current.includes(path) ? current.filter(value => value !== path) : [...current, path])}
             onClear={() => setSpiritualPaths([])} />
         </> : null}
+        {section === "event" ? <View style={{ flexDirection: "row", gap: ds.spacing[2], paddingVertical: ds.spacing[2] }}>
+          {([["calendar", "calendar-outline", "Calendario"]] as const).map(([mode, icon, label]) => <TouchableOpacity key={mode} accessibilityRole="button" accessibilityLabel={`Ver ${label.toLowerCase()} de eventos`} onPress={() => setExplorerMode(mode)} style={[localStyles.eventFilterChip, { flex: 1 }]}>
+            <Icon name={icon} size={ds.iconSize.md} color={vibesTheme.colors.primaryText} /><Text style={{ ...ds.textStyles.label, color: vibesTheme.colors.primaryText }}>{label}</Text>
+          </TouchableOpacity>)}
+        </View> : null}
         </View>
         </Animated.View>
         {section === "challenge" && startedOnly && !pastOnly ? <Text style={localStyles.feedSectionTitle}>Ya comenzados</Text> : null}
@@ -741,7 +760,7 @@ const Events = ({
           contentContainerStyle={[
             styles.eventsListContent,
             localStyles.eventsListContent,
-            { paddingBottom: pastOnly ? insets.bottom + 24 : getBottomTabContentPadding(insets.bottom, 140) },
+            { paddingBottom: pastOnly ? insets.bottom + ds.spacing[6] : getBottomTabContentPadding(insets.bottom, TAB_BAR_CONTENT_CLEARANCE + EVENTS_LIST_EXTRA_CLEARANCE) },
           ]}
           ListFooterComponentStyle={[
             localStyles.listFooter,
@@ -762,8 +781,6 @@ const Events = ({
                       ? section === "challenge"
                         ? "No encontramos desafíos"
                         : "No encontramos eventos"
-                    : section === "event" && frequentOnly
-                      ? "No encontramos eventos frecuentes"
                     : section === "event" && expiredEventItems.length > 0
                       ? "No hay eventos vigentes"
                     : section === "challenge" && challengeTab === "vibes"
@@ -785,8 +802,6 @@ const Events = ({
                       ? "Probá con otros filtros."
                     : normalizedSearch
                       ? "Probá con otro nombre, lugar o fecha."
-                    : section === "event" && frequentOnly
-                      ? "Probá con otros filtros o desactivá Frecuentes para ver todos los eventos."
                     : section === "event" && expiredEventItems.length > 0
                       ? pastOnly ? "Probá con otros filtros." : "Podés consultar el historial en Eventos pasados."
                     : section === "challenge" && challengeTab === "vibes"
@@ -807,8 +822,8 @@ const Events = ({
                 <TouchableOpacity accessibilityRole="button" onPress={() => {
                   void (section === "challenge" ? challengesQuery : eventsQuery).refetch();
                   if (section === "challenge") void groupsQuery.refetch();
-                }} style={{ padding: 16 }}>
-                  <Text style={{ color: vibesTheme.colors.accentBlue, fontSize: 18 }}>Reintentar</Text>
+                }} style={{ padding: ds.spacing[4] }}>
+                  <Text style={{ color: vibesTheme.colors.accentBlue, ...ds.textStyles.body }}>Reintentar</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -816,7 +831,7 @@ const Events = ({
           renderItem={({ item: listItem }) => {
             if (listItem.kind === "section") {
               return (
-                <View style={[localStyles.feedSectionHeader, section === "event" && { marginTop: 16 }]}>
+                <View style={[localStyles.feedSectionHeader, section === "event" && { marginTop: ds.spacing[4] }]}>
                   <Text style={[
                     localStyles.feedSectionTitle,
                     listItem.id === "general-challenges" && localStyles.activeChallengesTitle,
@@ -862,20 +877,20 @@ const Events = ({
                   <View style={localStyles.eventCopy}>
                     <Text style={localStyles.eventTitle} numberOfLines={1}>{item.title}</Text>
                     <View style={localStyles.eventMetadataRow}>
-                      <Icon name="calendar-outline" size={17} color={vibesTheme.colors.accentBlue} />
+                      <Icon name="calendar-outline" size={ds.iconSize.sm} color={vibesTheme.colors.accentBlue} />
                       <Text style={[localStyles.eventMetadataText, { color: vibesTheme.colors.accentBlue, fontFamily: vibesTheme.fonts.semibold }]} numberOfLines={1}>{dateLabel}</Text>
                     </View>
                     {item.location || item.modality === "online" ? <View style={localStyles.eventMetadataRow}>
-                      <Icon name={item.modality === "online" ? "videocam-outline" : "location"} size={17} color={vibesTheme.colors.secondaryText} />
+                      <Icon name={item.modality === "online" ? "videocam-outline" : "location"} size={ds.iconSize.sm} color={vibesTheme.colors.secondaryText} />
                       <Text style={localStyles.eventMetadataText} numberOfLines={1}>{item.modality === "online" ? "Online" : item.location}</Text>
                     </View> : null}
                     {frequencyLabel || sessions.length > 1 || count > 1 ? <View style={localStyles.eventMetadataRow}>
-                      <Icon name={sessions.length > 1 ? "repeat" : "people"} size={17} color={vibesTheme.colors.secondaryText} />
+                      <Icon name={sessions.length > 1 ? "repeat" : "people"} size={ds.iconSize.sm} color={vibesTheme.colors.secondaryText} />
                       <Text style={localStyles.eventMetadataText} numberOfLines={1}>{[frequencyLabel || (sessions.length > 1 ? `${sessions.length} horarios` : null), count > 1 ? `${count} personas` : null].filter(Boolean).join(" · ")}</Text>
                     </View> : null}
                   </View>
                   <View style={localStyles.eventViewButton}>
-                    <Icon name="chevron-forward" size={20} color={vibesTheme.colors.secondaryText} />
+                    <Icon name="chevron-forward" size={ds.iconSize.md} color={vibesTheme.colors.secondaryText} />
                   </View>
                 </TouchableOpacity>
               );
@@ -924,7 +939,7 @@ const Events = ({
                         style={restartStyles.pill}
                         onPress={() => setRestartTarget(item)}
                       >
-                        <Icon name="refresh-outline" size={16} color={vibesTheme.colors.accentBlue} />
+                        <Icon name="refresh-outline" size={ds.iconSize.sm} color={vibesTheme.colors.accentBlue} />
                         <Text style={restartStyles.pillText}>{t(isCuratedChallenge(item) ? "challengeRestart.start" : "challengeRestart.restart")}</Text>
                       </TouchableOpacity>
                     </View>
@@ -938,13 +953,17 @@ const Events = ({
         />
         </View>
       </View>
+      <EventExplorerSheet mode={explorerMode} joinedEventIds={joinedEventIds} mapEvents={items.filter(item => item.type === "event" && !isExpiredEvent(item))} events={visibleItems} loading={isLoading || eventsQuery.isFetchingNextPage} onClose={() => setExplorerMode(null)} onOpen={event => {
+        setExplorerMode(null);
+        navigation.navigate("EventDetail" as never, { event } as never);
+      }} />
       <KeyboardSheetModal visible={filtersVisible && section === "event"} onClose={() => setFiltersVisible(false)}>
         <View style={[localStyles.filtersSheet, { maxHeight: "100%" }]}>
         <View style={localStyles.filterHandle} />
         <View style={localStyles.filterHeader}>
           <Text style={localStyles.filterTitle}>{filterPanel === "date" ? "Fecha" : filterPanel === "location" ? "Ubicación" : "Otros filtros"}</Text>
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar filtros" onPress={() => setFiltersVisible(false)} style={localStyles.filterButton}>
-            <Icon name="close" size={22} color={vibesTheme.colors.primaryText} />
+            <Icon name="close" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={localStyles.filterContent} showsVerticalScrollIndicator={false}>
@@ -973,10 +992,10 @@ const Events = ({
               setDraftDateTo(null);
             }}
           >
-            <Icon name="refresh-outline" size={21} color={vibesTheme.colors.primaryText} />
+            <Icon name="refresh-outline" size={ds.iconSize.md} color={vibesTheme.colors.primaryText} />
           </TouchableOpacity>
           </View>
-          <View style={{ flexDirection: "row", gap: 12 }}>
+          <View style={{ flexDirection: "row", gap: ds.spacing[3] }}>
             {(["from", "to"] as const).map((field) => {
               const date = field === "from" ? draftDateFrom : draftDateTo;
               const label = field === "from" ? "Desde" : "Hasta";
@@ -1045,15 +1064,16 @@ const Events = ({
           {invalidDateRange ? <Text style={{ color: vibesTheme.colors.primaryText }}>La fecha final debe ser igual o posterior a la inicial.</Text> : null}
           </> : null}
           {filterPanel === "other" ? <>
+          <EventClassificationPicker filter label="Frecuencia" options={[{ id: "frequent", label: "Frecuentes" }] as const} value={draftFilters.frequentOnly ? "frequent" : null} onChange={(value) => setDraftFilters(draft => ({ ...draft, frequentOnly: value === "frequent" }))} />
           <EventClassificationPicker filter label="Precio" options={[{ id: "free", label: "Gratis" }, { id: "paid", label: "Pago" }] as const} value={draftFilters.pricingType} onChange={(value) => setDraftFilters((draft) => ({ ...draft, pricingType: value }))} />
           <EventClassificationPicker filter label="Tipo de evento" options={availableCategories} value={draftFilters.category} onChange={(value) => setDraftFilters((draft) => ({ ...draft, category: value }))} />
           <EventClassificationPicker filter label="Participación" options={availableParticipationTypes} value={draftFilters.participationType} onChange={(value) => setDraftFilters((draft) => ({ ...draft, participationType: value }))} />
           <EventClassificationPicker filter label="Modalidad" options={EVENT_MODALITIES} value={draftFilters.modality} onChange={(value) => setDraftFilters((draft) => ({ ...draft, modality: value }))} />
           </> : null}
         </ScrollView>
-        <View style={[localStyles.filterFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <View style={[localStyles.filterFooter, { paddingBottom: Math.max(insets.bottom, ds.spacing[4]) }]}>
           <TouchableOpacity accessibilityRole="button" style={localStyles.filterClear} onPress={() => {
-            if (filterPanel === "other") setDraftFilters({ pricingType: null, category: null, participationType: null, modality: null });
+            if (filterPanel === "other") setDraftFilters({ frequentOnly: false, pricingType: null, category: null, participationType: null, modality: null });
             if (filterPanel === "date") { setDraftDatePreset(null); setDraftDateFrom(null); setDraftDateTo(null); setDateField(null); }
             if (filterPanel === "location") setDraftLocation("");
           }}>
@@ -1065,7 +1085,7 @@ const Events = ({
             }
             if (filterPanel === "location") setLocationFilter(draftLocation.trim());
             if (filterPanel === "other") {
-              setCategory(draftFilters.category); setPricingType(draftFilters.pricingType); setParticipationType(draftFilters.participationType); setModality(draftFilters.modality);
+              setFrequentOnly(draftFilters.frequentOnly); setCategory(draftFilters.category); setPricingType(draftFilters.pricingType); setParticipationType(draftFilters.participationType); setModality(draftFilters.modality);
             }
             setFiltersVisible(false);
           }}>
@@ -1091,11 +1111,11 @@ const Events = ({
 export default Events;
 
 const localStyles = StyleSheet.create({
-  headerAction: { borderRadius: 14, backgroundColor: `${vibesTheme.colors.secondaryText}0C` },
+  headerAction: { borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
 tabRow: {
     flexDirection: "row",
-    gap: vibesTheme.spacing.sm,
-    marginBottom: vibesTheme.spacing.lg,
+    gap: vibesTheme.spacing[2],
+    marginBottom: vibesTheme.spacing[6],
   },
 tab: {
     flex: 1,
@@ -1104,90 +1124,90 @@ tab: {
     justifyContent: "center",
     borderRadius: vibesTheme.radii.pill,
     borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
+    borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim),
     backgroundColor: "transparent",
   },
 tabSelected: {
     borderColor: vibesTheme.colors.accentMustard,
-    backgroundColor: "rgba(244, 163, 64, 0.43)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.strong),
   },
-tabText: { color: vibesTheme.colors.secondaryText, fontFamily: vibesTheme.fonts.bold, fontSize: 16 },
+tabText: { color: vibesTheme.colors.secondaryText, ...ds.textStyles.subtitle },
 tabTextSelected: { color: vibesTheme.colors.primaryText },
 cardActions: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-    gap: vibesTheme.spacing.sm,
-    marginTop: vibesTheme.spacing.sm,
+    gap: vibesTheme.spacing[2],
+    marginTop: vibesTheme.spacing[2],
   },
 filterButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
-filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
-filterBadgeText: { color: vibesTheme.colors.primaryText, fontSize: 11, fontFamily: vibesTheme.fonts.bold },
-filtersSheet: { maxHeight: "85%", backgroundColor: vibesTheme.colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
-filterHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginTop: 12, backgroundColor: "rgba(43,43,43,0.2)" },
-filterHeader: { paddingHorizontal: 20, paddingTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-filterTitle: { fontSize: 24, fontFamily: vibesTheme.fonts.bold, color: vibesTheme.colors.primaryText },
-filterContent: { paddingHorizontal: 20, paddingBottom: 16 },
-filterFooter: { flexDirection: "row", gap: 12, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(43,43,43,0.08)" },
-filterClear: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: "rgba(43,43,43,0.2)", borderRadius: 24, alignItems: "center", justifyContent: "center" },
-datePresets: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-datePreset: { minHeight: 44, paddingHorizontal: 12, borderRadius: 22, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, backgroundColor: vibesTheme.colors.surface, justifyContent: "center" },
+filterBadge: { position: "absolute", top: 0, right: 0, minWidth: 18, height: 18, borderRadius: ds.radii.pill, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
+filterBadgeText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.micro },
+filtersSheet: { maxHeight: "85%", backgroundColor: vibesTheme.colors.background, borderTopLeftRadius: ds.radii.xl, borderTopRightRadius: ds.radii.xl },
+filterHandle: { width: 40, height: 4, borderRadius: ds.radii.pill, alignSelf: "center", marginTop: ds.spacing[3], backgroundColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium) },
+filterHeader: { paddingHorizontal: ds.spacing[5], paddingTop: ds.spacing[3], flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+filterTitle: { ...ds.textStyles.title, color: vibesTheme.colors.primaryText },
+filterContent: { paddingHorizontal: ds.spacing[5], paddingBottom: ds.spacing[4] },
+filterFooter: { flexDirection: "row", gap: ds.spacing[3], paddingHorizontal: ds.spacing[5], paddingTop: ds.spacing[3], borderTopWidth: 1, borderTopColor: ds.colors.border.subtle },
+filterClear: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.ink, ds.opacity.medium), borderRadius: ds.radii.xl, alignItems: "center", justifyContent: "center" },
+datePresets: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2], marginTop: ds.spacing[3] },
+datePreset: { minHeight: 44, paddingHorizontal: ds.spacing[3], borderRadius: ds.radii.xl, borderWidth: 1, borderColor: vibesTheme.colors.secondaryText, backgroundColor: vibesTheme.colors.surface, justifyContent: "center" },
 datePresetSelected: { backgroundColor: vibesTheme.colors.primaryText, borderColor: vibesTheme.colors.primaryText },
-datePresetText: { fontSize: 14, color: vibesTheme.colors.primaryText },
-dateField: { flex: 1, justifyContent: "flex-end", gap: 6 },
-dateFieldLabel: { color: vibesTheme.colors.primaryText, fontSize: 14, fontFamily: vibesTheme.fonts.regular, paddingLeft: 12 },
-dateFieldText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.regular },
+datePresetText: { ...ds.textStyles.bodySmall, color: vibesTheme.colors.primaryText },
+dateField: { flex: 1, justifyContent: "flex-end", gap: ds.spacing[2] },
+dateFieldLabel: { color: vibesTheme.colors.primaryText, ...ds.textStyles.bodySmall, paddingLeft: ds.spacing[3] },
+dateFieldText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.body },
 dateFilterButton: { flex: 0, backgroundColor: vibesTheme.colors.accentMustard, borderColor: vibesTheme.colors.primaryText },
-filterApply: { flex: 1, minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
-filterActionText: { color: vibesTheme.colors.primaryText, fontSize: 16, fontFamily: vibesTheme.fonts.bold },
+filterApply: { flex: 1, minHeight: 48, borderRadius: ds.radii.xl, alignItems: "center", justifyContent: "center", backgroundColor: vibesTheme.colors.accentMustard },
+filterActionText: { color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitle },
 eventListRow: {
-    width: "100%", flexDirection: "row", alignItems: "center", gap: 12,
-    padding: 10, marginBottom: 10, borderRadius: 16,
-    borderWidth: 1, borderColor: `${vibesTheme.colors.primaryText}24`,
+    width: "100%", flexDirection: "row", alignItems: "center", gap: ds.spacing[3],
+    padding: ds.spacing[3], marginBottom: ds.spacing[3], borderRadius: ds.radii.lg,
+    borderWidth: 1, borderColor: ds.colors.border.default,
     backgroundColor: vibesTheme.colors.surface,
   },
 eventThumbnail: {
-    width: 88, height: 88, borderRadius: 12,
-    backgroundColor: "rgba(57, 120, 184, 0.13)",
+    width: 88, height: 88, borderRadius: ds.radii.md,
+    backgroundColor: ds.colors.feedback.infoBg,
   },
-eventCopy: { flex: 1, minWidth: 0, gap: 3 },
+eventCopy: { flex: 1, minWidth: 0, gap: ds.spacing[1] },
 eventTitle: {
-    fontSize: 17, lineHeight: 23, fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.subtitle, 
     color: vibesTheme.colors.primaryText,
   },
-eventMetadataRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+eventMetadataRow: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2] },
 eventMetadataText: {
-    flex: 1, fontSize: 13, lineHeight: 18, color: vibesTheme.colors.secondaryText,
+    flex: 1, ...ds.textStyles.bodySmall, color: vibesTheme.colors.secondaryText,
   },
 eventViewButton: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: ds.spacing[1],
     minWidth: 22, minHeight: 44,
   },
 eventViewText: {
-    fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.primaryText,
+    ...ds.textStyles.label, color: vibesTheme.colors.primaryText,
   },
 eventsContainer: {
-    paddingTop: 68,
+    paddingTop: /* ds-lint-allow layout: paddingTop 68 (medida de layout fuera de la escala) */ 68,
   },
-challengeHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+challengeHeaderRow: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2], marginBottom: ds.spacing[4] },
 challengeHeaderActions: { alignSelf: "center" },
-challengeTabs: { marginBottom: 12 },
+challengeTabs: { marginBottom: ds.spacing[3] },
+challengeTab: { paddingHorizontal: ds.spacing[3], paddingVertical: ds.spacing[2] },
+challengeTabLabel: { flexShrink: 1, textAlign: "center" },
 challengeTitleRow: { flex: 1, minWidth: 0 },
-headerActions: { flexDirection: "row", alignItems: "center", alignSelf: "flex-end", gap: 6 },
+headerActions: { flexDirection: "row", alignItems: "center", alignSelf: "flex-end", gap: ds.spacing[2] },
 headerRow: {
     minHeight: 48,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 20,
+    gap: ds.spacing[2],
+    marginBottom: ds.spacing[5],
   },
 screenTitle: {
     flexShrink: 1,
     color: TEXT_PRIMARY,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 26,
-    lineHeight: 32,
+    ...ds.textStyles.title,
     marginBottom: 0,
     textAlign: "left",
   },
@@ -1200,8 +1220,8 @@ titleRow: {
 listFooter: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
-    marginBottom: 20,
+    marginTop: ds.spacing[2],
+    marginBottom: ds.spacing[5],
   },
 bottomAlignedListFooter: {
     marginTop: "auto",
@@ -1209,68 +1229,56 @@ bottomAlignedListFooter: {
 eventsListContent: {
     flexGrow: 1,
   },
-createIcon: { lineHeight: 20, includeFontPadding: false },
+createIcon: { lineHeight: ds.iconSize.md, includeFontPadding: false },
 searchBar: {
     height: 40,
     paddingVertical: 0,
   },
 searchInput: {
     paddingVertical: 0,
-    fontSize: 14,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.labelMedium,
     color: vibesTheme.colors.primaryText,
   },
 feedSectionHeader: {
-    marginTop: 4,
-    marginBottom: 10,
-    paddingHorizontal: 4,
+    marginTop: ds.spacing[1],
+    marginBottom: ds.spacing[3],
+    paddingHorizontal: ds.spacing[1],
   },
 feedSectionTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 25,
-    lineHeight: 29,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.title,
   },
 activeChallengesTitle: {
-    fontSize: 20,
-    lineHeight: 25,
+    ...ds.textStyles.heading,
   },
 joinedChallengesTitle: {
-    marginTop: 12,
-    fontSize: 20,
-    lineHeight: 25,
+    marginTop: ds.spacing[3],
+    ...ds.textStyles.heading,
     color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.regular,
   },
 feedSectionSubtitle: {
-    marginTop: 2,
-    color: "rgba(43, 43, 43, 0.58)",
-    fontSize: 15,
-    lineHeight: 19,
-    fontFamily: vibesTheme.fonts.subtitle,
+    marginTop: ds.spacing[1],
+    color: ds.withAlpha(ds.colors.base.ink, ds.opacity.high),
+    ...ds.textStyles.subtitleMedium,
   },
 feedRowCard: {
     minHeight: 98,
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     backgroundColor: vibesTheme.colors.background,
     borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: ds.colors.border.subtle,
+    paddingHorizontal: ds.spacing[4],
+    paddingVertical: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    marginBottom: 12,
-    shadowColor: vibesTheme.colors.primaryText,
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 18,
-    elevation: 2,
+    gap: ds.spacing[4],
+    marginBottom: ds.spacing[3],
+    ...ds.shadows.md,
   },
 feedRowThumb: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: ds.radii.pill,
     backgroundColor: vibesTheme.colors.background,
   },
 feedRowThumbWrap: {
@@ -1284,7 +1292,7 @@ feedRowContent: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
   },
 feedRowContentChallenge: {
     alignItems: "flex-start",
@@ -1297,106 +1305,94 @@ feedRowTopMeta: {
     width: "100%",
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginBottom: 6,
+    marginBottom: ds.spacing[2],
   },
 feedRowTitleLine: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: ds.spacing[2],
   },
 feedRowTitle: {
     flex: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 20,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
 feedRowMeta: {
-    marginTop: 4,
+    marginTop: ds.spacing[1],
     color: vibesTheme.colors.primaryText,
-    fontSize: 15,
-    lineHeight: 19,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.subtitle,
   },
 communityTodayRow: {
-    marginTop: 6,
+    marginTop: ds.spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: ds.spacing[1],
   },
 communityTodayText: {
     flex: 1,
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    lineHeight: 17,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
 feedThumbProgressPill: {
     position: "absolute",
     top: -6,
     alignSelf: "center",
-    borderRadius: 999,
+    borderRadius: ds.radii.pill,
     minWidth: 84,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: "rgba(57, 120, 184, 0.92)",
+    paddingHorizontal: ds.spacing[2],
+    paddingVertical: ds.spacing[1],
+    backgroundColor: ds.colors.base.blue,
     borderWidth: 1,
-    borderColor: "rgba(254, 254, 253, 0.9)",
+    borderColor: ds.colors.bg.surfaceTranslucent,
   },
 feedThumbProgressPillPending: {
-    backgroundColor: "rgba(254, 254, 253, 0.94)",
-    borderColor: "rgba(244, 163, 64, 0.82)",
+    backgroundColor: ds.colors.bg.surfaceTranslucent,
+    borderColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.higher),
   },
 feedThumbProgressText: {
     color: vibesTheme.colors.background,
-    fontSize: 12,
-    lineHeight: 14,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.caption,
     textAlign: "center",
   },
 feedThumbProgressTextPending: {
     color: vibesTheme.colors.primaryText,
   },
 feedInlineProgressPill: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderRadius: ds.radii.pill,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[1],
     flexShrink: 0,
   },
 feedInlineProgressText: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 12,
-    lineHeight: 14,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.caption,
   },
 feedRowBottom: {
     width: "100%",
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
+    gap: ds.spacing[3],
   },
 feedParticipantsWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: ds.spacing[2],
   },
 feedParticipantsCount: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    lineHeight: 17,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
 feedParticipantsCountWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: ds.spacing[1],
   },
 feedRowRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: ds.spacing[3],
   },
 avatarStack: {
     flexDirection: "row",
@@ -1406,75 +1402,68 @@ avatarStack: {
 stackAvatar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: ds.radii.pill,
     borderWidth: 2,
     borderColor: vibesTheme.colors.background,
-    backgroundColor: "rgba(216, 140, 122, 0.20)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
   },
 feedRowArrow: {
     width: 34,
     height: 34,
-    borderRadius: 17,
+    borderRadius: ds.radii.pill,
     alignItems: "center",
     justifyContent: "center",
   },
 progressPill: {
     alignSelf: "flex-start",
-    marginTop: 8,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: "rgba(57, 120, 184, 0.18)",
+    marginTop: ds.spacing[2],
+    borderRadius: ds.radii.pill,
+    paddingHorizontal: ds.spacing[3],
+    paddingVertical: ds.spacing[1],
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium),
   },
 progressPillPending: {
-    backgroundColor: "rgba(244, 163, 64, 0.18)",
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.medium),
   },
 progressPillDone: {
-    backgroundColor: "rgba(216, 140, 122, 0.18)",
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.medium),
   },
 progressPillText: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 16,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
   },
 emptyState: {
-    paddingHorizontal: 28,
-    paddingVertical: 48,
+    paddingHorizontal: ds.spacing[8],
+    paddingVertical: ds.spacing[12],
     alignItems: "center",
   },
 emptyTitle: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 24,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.title,
     textAlign: "center",
   },
 emptyText: {
-    marginTop: 10,
+    marginTop: ds.spacing[3],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.subtitleMedium,
     textAlign: "center",
   },
-eventFilterRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-eventFilterChip: { flex: 1, minHeight: 44, borderRadius: 13, borderWidth: 1, borderColor: `${vibesTheme.colors.secondaryText}40`, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 8, gap: 6 },
-eventFilterLabel: { flexShrink: 1, fontSize: 13, fontFamily: vibesTheme.fonts.medium, color: vibesTheme.colors.primaryText },
+eventFilterRow: { flexDirection: "row", gap: ds.spacing[2], marginBottom: ds.spacing[3] },
+eventFilterChip: { flex: 1, minHeight: 44, borderRadius: ds.radii.md, borderWidth: 1, borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium), flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: ds.spacing[2], gap: ds.spacing[2] },
+eventFilterLabel: { flexShrink: 1, ...ds.textStyles.labelMedium, color: vibesTheme.colors.primaryText },
 eventCategoriesScroll: { flexGrow: 0, flexShrink: 0 },
-eventCategories: { gap: 8, paddingBottom: 12 },
-eventCategory: { borderRadius: 24, paddingHorizontal: 18, minHeight: 44, justifyContent: "center", backgroundColor: `${vibesTheme.colors.secondaryText}12` },
-eventCategoryLabel: { fontSize: 14, fontFamily: vibesTheme.fonts.semibold, color: vibesTheme.colors.secondaryText },
-challengeSearch: { minHeight: 48, borderRadius: 16, backgroundColor: `${vibesTheme.colors.secondaryText}0C`, borderWidth: 1, borderColor: vibesTheme.colors.borderSoft },
-challengeCount: { color: vibesTheme.colors.accentBlue, fontSize: 16 },
-challengeExploreButton: { backgroundColor: vibesTheme.colors.primaryText, padding: 16, borderRadius: 24, marginTop: 16 },
+eventCategories: { gap: ds.spacing[2], paddingBottom: ds.spacing[3] },
+eventCategory: { borderRadius: ds.radii.xl, paddingHorizontal: ds.spacing[4], minHeight: 44, justifyContent: "center", backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle) },
+eventCategoryLabel: { ...ds.textStyles.label, color: vibesTheme.colors.secondaryText },
+challengeSearch: { minHeight: 48, borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle), borderWidth: 1, borderColor: vibesTheme.colors.borderSoft },
+challengeCount: { color: vibesTheme.colors.accentBlue, ...ds.textStyles.body },
+challengeExploreButton: { backgroundColor: vibesTheme.colors.primaryText, padding: ds.spacing[4], borderRadius: ds.radii.xl, marginTop: ds.spacing[4] },
 footerToggleGroup: {
-    gap: 12,
+    gap: ds.spacing[3],
   },
 finishedSectionSubtitle: {
-    marginTop: 3,
+    marginTop: ds.spacing[1],
     color: vibesTheme.colors.secondaryText,
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: vibesTheme.fonts.subtitle,
+    ...ds.textStyles.labelMedium,
   }
 });

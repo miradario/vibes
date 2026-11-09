@@ -234,7 +234,7 @@ const buildPreferences = (profile: ProfileLike): string[] => {
   }
 
   pushPreference(
-    "Camino espiritual",
+    "Comunidad",
     profile.spiritualPath ?? profile.spiritual_path
   );
   pushPreference(

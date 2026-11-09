@@ -28,6 +28,8 @@ Usar exclusivamente estos seis colores base. Las transparencias derivan de ellos
 
 **Contraste:** texto e iconos `primaryText` sobre mostaza, azul o coral. Texto `surface` sobre fondos `primaryText`. En superficies suaves usar acentos con opacidad y texto oscuro. Un borde, icono o indicador seleccionado debe distinguirse de su fondo. Validar legibilidad en el tamaño real; pertenecer a la paleta no garantiza contraste suficiente.
 
+**Texto de acento (`text/accent`, `ds.colors.text.accent`, `#F4A340`):** mismo valor que `accentMustard`. Solo para textos cortos de énfasis junto a contenido en `text/primary`, como el nombre del autor en la cita de una respuesta de chat (`MessageReply`). No usar para cuerpos ni textos largos: sobre `surface` el contraste es bajo.
+
 **Estados:** comunicar error, éxito y selección con texto e iconografía además de color. No introducir rojo o verde fuera de la paleta. Para mensajes de error nuevos, usar texto oscuro, icono y superficie coral con opacidad.
 
 **Excepción vigente:** [`UserProfileSheet`](../components/UserProfileSheet.tsx) permite fondo `#000000` y degradé negro con opacidad sobre la fotografía full-screen. No extenderla a otros componentes.
@@ -53,7 +55,7 @@ La siguiente escala define roles reutilizables. Algunos valores ya existen en pa
 | Rol | Tamaño / interlineado | Familia / peso | Color | Uso |
 | --- | --- | --- | --- | --- |
 | Título de pantalla principal | **34 / 42** | `extraBold` / 800 | `primaryText` | Actividades, Eventos, Desafíos, Descubrir, Chats; mismo estilo en todas |
-| Título de onboarding | 36 / 43 | `extraBold` / 800 | `primaryText` | Pregunta principal; en ancho <360: 30 / 36 |
+| Título de onboarding | 28 / 34 | `extraBold` / 800 | `primaryText` | Pregunta principal; en ancho <360: 26 / 32 |
 | Título de pantalla secundaria | 26 / 32 | `semibold` / 600 | `primaryText` | Historial y vistas subordinadas |
 | Título de sección | 25 / 29 | `semibold` / 600 | `primaryText` | Agrupaciones principales de un feed |
 | Título de modal estándar | 24 / 30 | `bold` / 700 | `primaryText` | Confirmaciones y sheets simples |
@@ -88,6 +90,8 @@ Norma: una acción principal por bloque de decisión. Texto en forma de verbo co
 | Secundario de acento (contorno azul) | Alto mínimo 52, radio `pill`, padding horizontal 16 | 16 / 22, `semibold`, 600, centrado | `accentBlue` | `surface`, borde 1,5 de `accentBlue` al 45% |
 | Acción de cabecera | Alto mínimo 48, radio 14, padding horizontal 18, gap 8 | 16 / 20, `semibold`, 600 | `primaryText` | `secondaryText` al 4,7% (`0C`) |
 | Solo icono | Área mínima 44 × 44; icono 20–24 | Sin texto visual; label accesible obligatorio | `primaryText` | `surface` o superficie suave |
+| Solo icono lleno (`iconButtonFilled`) | 44 × 44 (`touchTarget`), radio `pill`; icono `iconSize.md` (20) | Sin texto visual; label accesible obligatorio | `text/on-dark` | `action/primary`, sin borde ni sombra; deshabilitado con `buttonDisabled` (44%). Uso: enviar en Chat, EventChat, CommunityGroupChat y Vibi |
+| Selector de día (`DayPill variant="selectable"`) | Círculo 40 (`componentSize.dayPill.md`), hitSlop a 44 | `text/label` | `text/primary` | default `bg/surface` + `border/default`; selected `bg/selected` + `border/selected` (igual que Chip selected); disabled `buttonDisabled`. Multiselección, rol checkbox. Uso: días de la semana en EventRecurrenceEditor |
 | Volver | 44 × 44, radio 13; chevron 27 | Label accesible “Volver” | `primaryText` | `surface` con `secondaryText` al 4,7% |
 | Terciario / omitir | Área táctil mínima 44 de alto | 18 / 24, `regular`, 400 | `secondaryText` | Transparente |
 | Autenticación Google | Alto mínimo 54, radio 22, borde 1 | 16 / 22, `medium`, 500 | `primaryText` | `surface` al 92%; borde mostaza al 28% |
@@ -96,7 +100,7 @@ Componentes: [`PrimaryButton`](../components/onboarding/PrimaryButton.tsx) para 
 
 ### Cabeceras de Eventos y Desafíos
 
-Las tabs de Desafíos son Público, Privado y Por Vibes, con el mismo estilo pill. Por Vibes es un catálogo de desafíos curados: cada tarjeta usa `ChallengeFeedCard` con la acción Reiniciar, igual que los finalizados.
+Las tabs de Desafíos son Público, Mis desafíos y Por Vibes, con el mismo estilo pill. Cada opción conserva padding horizontal 10 y vertical 8; ajustar el texto a una línea para que Mis desafíos no toque los bordes. Por Vibes es un catálogo de desafíos curados: cada tarjeta usa `ChallengeFeedCard` con la acción Reiniciar, igual que los finalizados.
 
 En los acordeones de Desafíos privados, mantener el título de sección en 25 / 29 SemiBold y mostrar la cantidad a continuación entre paréntesis, en 18 / 29 Regular y `secondaryText`.
 
@@ -111,6 +115,10 @@ Usar botones de solo icono de 44 × 44, radio 14, fondo `secondaryText` al 4,7% 
 - **Destructivo:** acción explícita y confirmación proporcional a la pérdida de datos; usar paleta autorizada, no rojo agregado.
 
 En Editar perfil, “Guardar” mantiene sus dimensiones y su texto durante el envío: el tilde se reemplaza por `VibesLoader`. La pantalla permanece abierta si falla el guardado.
+
+### ListItem (`components/ui/ListItem.tsx`, 30/10)
+
+Fila única de listas, menús y ajustes (DS §5.18). Props: `title`, `subtitle?`, `leadingIcon?` (caja 36, `radius/md`, `bg/subtle`, ícono 20) o `leading?` (avatar o nodo), `trailing?` (`chevron` 20 `icon/muted`, `check` 20 `border/selected`, `text` en `text/caption` secondary, `switch`, `custom`), `tone` (`default` | `destructive`: caja `feedback/error-bg` e ícono `action/destructive`), `selected`/`selectable`/`multiple`, `disabled`, `divider`, `size` (`md` 56 | `lg` 72 con avatar; `componentSize.listItem`). Padding X `spacing/4`, Y `spacing/3`, gap `spacing/3`. Título `text/subtitle` 1 línea; subtítulo `text/body-small` secondary 1 línea. Estados: pressed `bg/subtle`, selected `bg/selected`, disabled `opacity/disabled`. Divider 1 px `border/subtle` abajo (no en el último). Accesibilidad: `button`; `radio` si es seleccionable (`checkbox` con `multiple`).
 
 ## Campos, búsqueda y selección
 
@@ -134,9 +142,12 @@ El selector de fotos de onboarding y Editar perfil es el mismo `ProfilePhotoPick
 | Tarjeta estándar nueva | Fondo `surface`, radio `md`, padding 16, separación 16; borde `borderSoft` |
 | Separación entre secciones | 24 o 32; 8 entre título y descripción |
 | Iconos de acción | 20–24; área táctil mínima 44 × 44; excepción BackButton: 27 |
+| Tamaños de icono (`iconSize`) | `xs` 12, `sm` 16, `md` 20, `lg` 24, `xl` 32, `xxl` 48. `xs` 12 solo para glifos chicos dentro de badges de 18 (p. ej. la marca de anotado del calendario en EventExplorerSheet) |
 | Sombras | Base `primaryText`, `secondaryText` o acento autorizado, con opacidad; preferir borde suave cuando alcance |
 
 Usar [`ScreenContainer`](../components/ScreenContainer.tsx) en pantallas nuevas. Sus edges por defecto son top/left/right; definir el manejo del borde inferior junto con el tab bar, footer y teclado para evitar dobles insets. Las medidas históricas como `paddingTop: 68` de Eventos no son una norma para pantallas nuevas.
+
+**Safe area obligatorio.** Toda pantalla, sheet `fullScreen` o modal de pantalla completa respeta el safe area superior e inferior: la cabecera, la flecha de volver y cualquier control superior nunca se superponen a la barra de estado, el notch ni la Dynamic Island. En pantallas de navegación usar `ScreenContainer`. Dentro de `Modal`/`AnimatedSheetModal fullScreen`, en iOS el `SafeAreaView` puede recibir insets en 0: aplicar los insets con `useSafeAreaInsets()` (patrón de `PhotoViewer`), una sola vez por borde. No usar paddings fijos (52, 60, 68) como sustituto del inset. Verificar en un iPhone con Dynamic Island. `npm run lint:ds` falla si un archivo de `screens/` o `components/` renderiza `<AnimatedSheetModal fullScreen>` o `<Modal statusBarTranslucent>` sin usar `useSafeAreaInsets`; la excepción se documenta con `/* ds-lint-allow safe-area: <motivo> */` en las 3 líneas previas al elemento.
 
 Usar [`Icon`](../components/Icon.tsx) para iconografía existente. Etiquetar acciones de solo icono con `accessibilityLabel` y rol. Evitar texto significativo dentro de imágenes cuando puede renderizarse como texto accesible.
 
@@ -162,7 +173,6 @@ Los estados de arranque Boot y Startup muestran la animación de marca en Androi
 
 Esta documentación no modifica la UI ni afirma una migración completa:
 
-- `VibesActionButton.startText` usa actualmente 21 / 24 Regular y `surface` sobre mostaza. Contradice la norma de contraste; al intervenir ese botón, migrar a texto oscuro y al rol de primario de acento.
 - `VibesActionButton.skipButton` tiene padding vertical 6 y no fija un mínimo táctil de 44 en el layout; desde el FTUX tiene `hitSlop` de 8 por lado (área táctil ≈ 50) sin cambiar su tamaño visual. Revisar el layout al modificarlo.
 - El título del modal de filtros de Descubrir usa 38 / Bold. Es una variante existente, no el estándar para nuevos sheets simples.
 - Eventos y Desafíos usan overrides para el título principal; el estilo base 26 / 32 SemiBold sigue atendiendo vistas históricas. No eliminarlo sin revisar `pastOnly`.
@@ -192,7 +202,7 @@ La barra de navegación inferior se apoya en el borde inferior, sin margen exter
 
 La barra inferior compacta usa 64 de alto base (adaptable al tamaño de texto), 12 de espacio superior y botón seleccionado de 48 que sobresale 6 sobre la superficie. El contenido reserva su altura real más 20 de separación, sin espacio extra específico de iOS.
 
-El padding inferior de la barra descuenta 12 del inset (mínimo 0), considerando el espacio interno bajo los labels. Esto baja toda la barra 12 en iPhone con indicador de inicio; usar `getTabBarBottomPadding` también en la geometría del contenido y FTUX.
+El padding inferior de la barra respeta el inset completo, con un mínimo de 12, para separar iconos y labels del borde y del área de gestos. Usar `getTabBarBottomPadding` también en la geometría del contenido y FTUX.
 
 ## Eventos frecuentes
 
@@ -233,7 +243,7 @@ La barra de filtros se anima con translateY sobre el listado, sin modificar la a
 
 El detalle de clases externas muestra foto, docente, horario, lugar y acordeón “Sobre esta clase”. ClassReservationPanel permite clase suelta o plan mensual, mes y frecuencia; los selectores abren AnimatedSheetModal. El resumen usa fechas calculadas en la zona horaria de la clase, excluyendo las pasadas. Las referencias externas son solicitudes personales pendientes, no se envían al organizador ni confirman cupo. Indicar que la persona debe contactar al organizador. No mostrar checkout ni total mensual. Guardar y cancelar persiste en el servidor; Mis clases incluye las solicitudes pendientes y el historial conserva las canceladas. Las clases propias usan sus encuentros reales; los cursos conservan su inscripción completa.
 
-La cabecera de Actividades usa título compacto 26/32 SemiBold, a pedido del usuario. En Desafíos el título usa 22/28 SemiBold y comparte una sola fila con los cuatro botones de 44, con separación 6. Permitir ajuste del título en ancho compacto sin partir la palabra. No mostrar el subtítulo “Pequeños pasos, en buena compañía”. Los labels de la barra inferior conservan una sola línea.
+La cabecera de Actividades usa título compacto 26/32 SemiBold, a pedido del usuario. En Desafíos el título usa 22/28 SemiBold y comparte una sola fila con los cuatro botones de 44, con separación 6. Permitir ajuste del título en ancho compacto sin partir la palabra. No mostrar el subtítulo “Pequeños pasos, en buena compañía”. Los labels de la barra inferior usan 11/14 Regular y conservan una sola línea.
 
 El detalle externo de clase usa layout compacto: padding 16, separación 10, foto de 168 de alto y título 22/28. Notas y fecha de consulta se despliegan con “Sobre esta clase”. El formulario de solicitud usa separación 10, resumen con padding 12 y fechas en grilla; mantiene controles de al menos 44–48 de alto y un único aviso breve sobre contacto y ausencia de cobros.
 
@@ -241,7 +251,7 @@ En el archivo de Desafíos, el control de la derecha pasa a “Volver a desafío
 
 Las tarjetas compactas de clases mantienen título y horario en una línea y separación 3, para que el cuerpo no supere el alto de la imagen. Omitir el precio cuando no está publicado; no mostrar “Precio a consultar” en el listado. En las referencias externas la imagen acompaña el escalado de fuente.
 
-“Tipo de evento” (categoría) se elige dentro de Más filtros, con opciones presentes en los eventos cargados. Se guarda al Aplicar y se restablece con Limpiar. No mostrar categorías en la barra horizontal; conservar allí Todos y Frecuentes.
+“Tipo de evento” (categoría) se elige dentro de Más filtros, con opciones presentes en los eventos cargados. Se guarda al Aplicar y se restablece con Limpiar. No mostrar categorías en la barra horizontal; no mostrar los accesos Todos ni Frecuentes.
 
 Camino espiritual se elige únicamente en la barra principal de Eventos. Más filtros no lo duplica ni modifica su selección al aplicar o limpiar.
 
@@ -274,3 +284,189 @@ Inicio es el primer acceso de la barra inferior, a la izquierda, seguido de Desa
 Los indicadores seleccionados de la barra inferior alternan los acentos por acceso: Inicio coral, Desafíos azul, Eventos coral, Clases mostaza, Descubrir azul y Chats coral. Los iconos sobre estos fondos conservan `primaryText` para legibilidad.
 
 Descubrir no muestra el acceso “Clases y espacios”. Las clases se consultan desde su acceso propio en la navegación inferior.
+
+## Tus Vibes
+
+Inicio muestra el puntaje Vibes alineado a la derecha en la misma fila de la cabecera, como acceso al total y al historial propio. La cabecera conserva avatar y saludo, sin botón de Configuración ni subtítulo de bienvenida, para subir el contenido. Usar cápsula mostaza suave con borde, icono de pulso en círculo mostaza y total destacado, sin chevron ni la palabra “Vibes” visible (conservarla en el label accesible), 17/23 Bold en primaryText; conservar área táctil mínima de 44. Tus Vibes usa ScreenContainer, superficies suaves mostaza/coral, iconos azules y puntajes en primaryText. No usar verde para los incrementos. Mostrar total, aportes y acumulado del mes; estados de carga, error con Reintentar, historial paginado y estado vacío. Cómo funciona abre AnimatedSheetModal. Los Vibes no tienen valor monetario. Los valores se calculan en base de datos a partir de meditación registrada (+10 por día), invitación por chat (+5 por actividad, máximo tres al día UTC), asistencia confirmada a clase (+50 por sesión) y desafío completo (+100). Incluir actividad anterior registrada, sin inventar asistencias a partir de reservas.
+
+El registro de meditación es una declaración de la persona, no una verificación automática de reproducción. Se guarda privado por defecto y el servidor elige el día UTC. El sheet permite 5, 10 o 20 minutos, guiada o en silencio; muestra confirmación, duplicado y error, sin multiplicar el puntaje por duración.
+
+## Comunidades y filtro inicial
+
+El onboarding pregunta “Tus comunidades” y permite elegir varias: El Arte de Vivir, Danzantes, Ashtanga, Hatha, Meditación, Bikram, Tantra, Músicos, Artistas, Servicio y Otros. Reemplaza la denominación Camino espiritual en perfil y filtros. La selección guardada sirve de filtro inicial en Eventos, Desafíos, Clases, Descubrir y recomendaciones de Vibi. Usar la misma normalización y coincidencia OR en todas las superficies, excluyendo perfiles y contenido sin comunidad asignada cuando hay una selección activa. Sin selección, incluir todos. No inferir pertenencia a partir de descripciones. Conservar el acceso al contenido personal ya adquirido o iniciado. Los filtros de exploración permiten cambiar la selección o elegir Todos; no modificar el perfil al hacerlo. La creación de eventos y desafíos permite asignar comunidades mediante los mismos chips.
+
+En Eventos y Desafíos, mostrar la comunidad seleccionada únicamente en DiscoverPathCards, sin duplicarla con chips de filtros activos. Los filtros activos de comunidad se muestran en Clases y Descubrir mediante ActiveCommunityFilters: un chip por comunidad con “×” y una acción Limpiar. Quitar un chip actualiza inmediatamente los resultados de esa pantalla; Limpiar muestra todas las comunidades. No cambiar las comunidades del perfil al quitar filtros. La fila se oculta cuando no hay selecciones y comparte el comportamiento de la barra de filtros del listado.
+
+En Android, KeyboardViewport calcula el solapamiento con la posición absoluta `pageY` de `measure`, sumada a la altura del viewport. No usar `measureInWindow` para este cálculo: en Fabric puede devolver y=0 dentro del SafeAreaView y dejar el compositor debajo del teclado. Conservar la compensación única de adjustResize y descartar mediciones tardías al cerrar el teclado.
+
+## Bienvenida
+
+Welcome muestra AnimatedBrandLogo de 64 × 64, animado en loop y centrado arriba de todo, sin un wordmark estático adicional, una ilustración de comunidad y el mensaje “Encontrá tu comunidad. Conectá con tu bienestar.”. Crear cuenta e Iniciar sesión reutilizan VibesActionButton, con primario oscuro primaryText y texto surface para Crear cuenta, y secundario de contorno azul para Iniciar sesión. El primario compartido usa texto primaryText 18/24 Bold. Mantener las acciones en el flujo y toda la bienvenida en una pantalla: ilustración flexible sin altura mínima, marca y tipografía más compactas cuando el alto útil es menor a 700. Permitir scroll únicamente como alternativa con escalado de accesibilidad mayor a 1,3.
+
+Inicio no muestra filtros de comunidad ni filtra sus recomendaciones de personas, eventos o desafíos por comunidad. La coincidencia de comunidad tampoco suma prioridad al ordenar personas sugeridas en Inicio; conservar los demás criterios de edad, proximidad y propósitos.
+
+El título Configuracion se mantiene sin acento por pedido del usuario y en una sola línea con ajuste automático al ancho disponible, sin dejar la última letra en un segundo renglón.
+
+Tus Vibes presenta un tablero compacto (total 38/46, ilustración de 64 y estadísticas de 20/26), seguido de Tu actividad. Seguí sumando se ubica al final, debajo del historial y de Ver más actividad, y abre AnimatedSheetModal con las reglas y los puntajes. El botón Registrar mi meditación y la opción de meditación +10 permanecen ocultos por el momento; conservar los registros históricos y las reglas del servidor. Esperar onClosed del sheet antes de abrir el registro. Omitir los bloques promocionales de cabecera y pie en la pantalla principal.
+
+En Inicio, Nuevas conexiones queda cerca de la cabecera: margen inferior del saludo 8 y separación entre título y fotos 4 en ConnectionStrip compacto. Conservar el área táctil del título y el espacio del badge sobre las fotos.
+
+La ilustración de bienvenida lleva tres esferas suaves con opacidad 0,24: mostaza de 42% del alto, coral y azul de 38%. No mostrar aro azul. Cada esfera elige destinos y escalas aleatorios independientes, con transiciones suaves de 3,2 a 5,8 segundos. Al terminar una transición elige otra, sin recorrido fijo ni ida y vuelta repetida. Limitar desplazamiento horizontal al 20% del ancho (máximo 90) y vertical entre -110 y 20. Esperar la carga de la ilustración; cancelar animaciones y temporizadores fuera de foco, en segundo plano o al desmontar. Con reducción de movimiento se muestran estáticas. La ilustración y los botones permanecen estables.
+
+En la bienvenida, “Encontrá tu comunidad.” ocupa una sola línea con ajuste automático de fuente al ancho disponible, y “Conectá con tu bienestar.” ocupa otra línea debajo, también con ajuste automático.
+
+La bienvenida alinea el contenido hacia arriba: sin padding superior extra, ilustración con proporción 1,5 y altura máxima 300 (sin crecer para rellenar la pantalla), margen superior 8 e inferior 4 antes del título. Mantener foto, mensaje y acciones próximos.
+
+DiscoverPathCards usa chips compactos de comunidad: alto mínimo táctil 44, padding horizontal 10 y vertical 6, texto oscuro 13/18 SemiBold en una línea, sin iconos decorativos ni radios de selección vacíos. La selección muestra tilde y borde mostaza sobre fondo mostaza suave. El ancho acompaña el nombre completo y la fila permite desplazamiento horizontal.
+
+Eventos no muestra la fila Todos/Frecuentes en pantalla. La opción Frecuencia (Todos/Frecuentes) se elige dentro de Más filtros, se confirma con Aplicar y se restablece con Limpiar. Mantener búsqueda, Fecha, Ubicación, Más filtros y comunidades.
+
+En la bienvenida, Crear cuenta e Iniciar sesión se apoyan al pie del alto útil mediante marginTop auto, con separación mínima superior 16 y respetando el safe area inferior; la ilustración y el mensaje quedan arriba.
+
+La bienvenida reparte el espacio libre entre logo e ilustración y entre mensaje y botones mediante márgenes automáticos; mantiene foto y título próximos y el logo con padding superior 8.
+
+Inicio de sesión muestra Volver, símbolo centrado, ilustración de dos personas sobre círculo mostaza suave y el título Qué bueno verte de nuevo en 23/29 Bold, sin el subtítulo Volvé a conectar con tu comunidad. Google y Apple conservan sus componentes y comportamiento. Campos con labels Email/Contraseña en caja normal, bordes secundarios suaves, mostrar contraseña accesible, recuperación y crear cuenta en azul. Iniciar sesión usa botón oscuro primaryText con texto surface. Usar KeyboardViewport y scroll para teclado y pantallas pequeñas.
+
+Login mide el alto visible y el formulario real para ajustar la ilustración entre 0 y 170 de alto: priorizar que campos y acciones entren completos, incluso con Apple o un error visible. Cabecera de 56 y logo de 54; conservar scroll como respaldo para teclado y accesibilidad cuando los controles superen el alto útil.
+
+El contenedor de la ilustración de Login permite overflow visible para no cortar la esfera al acercarse al logo; la cabecera permanece por encima con zIndex 1. El círculo de Login comparte useWanderingSphere con la bienvenida: destinos y escalas aleatorios continuos, sin repetir un recorrido fijo, tras cargar la ilustración. Limitar el desplazamiento a 45 horizontal y 30% del alto de imagen (máximo 45) hacia arriba. Respetar reducción de movimiento, foco y segundo plano.
+
+En Login, Iniciar sesión y ¿No tenés cuenta? Crear cuenta forman un pie independiente del formulario, alineado al fondo mediante marginTop auto, dentro del safe area. Medir también el alto del pie al calcular el tamaño de la ilustración.
+
+En Welcome, Crear cuenta e Iniciar sesión tienen idéntico ancho, alto 58, radio pill y texto 18/24 Bold; solo difieren los colores de sus variantes.
+
+Los botones mostaza siempre usan texto e iconos primaryText, también en diálogos, filtros, recuperación, fotos, reportes y confirmaciones. No usar texto surface/blanco sobre mostaza. Mantener texto surface únicamente sobre botones oscuros.
+
+El feature flag Firebase vibes_points_enabled controla la visibilidad del puntaje en Inicio, el acceso Tus Vibes del perfil y la ruta de detalle. Valor local predeterminado false, con actualización en tiempo real igual que Clases. Ocultarlo no elimina el historial ni detiene los créditos del servidor.
+
+Nuevas conexiones no muestra por ahora el botón ni el texto Ocultar. Conservar el resto de accesos y la fila de fotos.
+
+En Chats, ConnectionStrip usa persistent: las nuevas conexiones no caducan por cantidad de sesiones ni por un ocultamiento local previo, y mostrarlas no aumenta el contador de Inicio. Conserva el criterio de conexiones nuevas (activas y cuyo chat aún no se abrió). Inicio mantiene su límite de dos sesiones.
+
+Nuevas conexiones usa presentación comprimida: avatar exterior 54 (48 en Inicio compacto), imagen 48 (42 compacto), separación horizontal 8, nombre a 4 de la foto y margen inferior 12 (8 compacto). Mantener área táctil mínima 44 y no recortar el contador.
+
+En Nuevas conexiones, el título conserva área táctil 44, sin margen inferior de fila y con compensación visual de -8 antes de las fotos. Mantener padding superior 4 para no cortar el badge.
+
+En Inicio, la cabecera de eventos muestra “Tus eventos” cuando hay eventos propios vigentes y “Eventos para vos” cuando no los hay y se muestran sugerencias o el estado vacío. Las cabeceras de eventos y Tus desafíos no agregan margen inferior antes de las tarjetas. Conservar el área táctil 44 y la separación entre tarjetas.
+
+La comunidad Meditación reemplaza la denominación Meditación trascendental; normalizar los nombres anteriores y la variante trasendental para conservar las selecciones y asociaciones guardadas.
+
+El botón Filtros de Descubrir comparte el diseño de Solicitudes y Comunidad: contorno secundario suave, superficie clara, radio 21, alto mínimo 48 y texto oscuro SemiBold con icono oscuro de 22. Mantener el contador de filtros activos.
+
+El visor ampliado de fotos se inicializa por perfil y foto solicitada, evitando mostrar primero el índice de una apertura anterior. Desactivar fadeDuration de Android en la imagen ampliada y no remontarla solo por cambiar visible. Mantener AnimatedSheetModal y los gestos de zoom.
+
+El visor de fotos mantiene una interfaz mínima: sin ayuda textual permanente, con cierre y contador discretos. Mostrar navegación inferior solo cuando hay más de una foto; conservar gestos y labels accesibles.
+
+El visor ampliado usa AnimatedSheetModal inline y keepMounted dentro del modal del perfil, evitando apilar otro Modal nativo. Entrada y salida sin desplazamiento ni demora, con fundido corto de 120/100 ms, para evitar destellos y cambios de barras del sistema al abrir una foto.
+
+Al abrir el perfil desde Descubrir, la foto entra a escala 1 sin zoom de 0,86 a 1. La medición inicial de altura se aplica directamente, sin animar el reajuste del viewport durante la entrada. Conservar la transición al desplegar detalles y los gestos del perfil.
+
+En ProfileMediaImage, la miniatura y la imagen final comparten contentFit y esperan las dimensiones cuando hay fondo desenfocado. Evitar mostrar primero una miniatura recortada en cover y luego la foto en contain, que produce un salto breve.
+
+Descubrir hidrata sus filtros guardados una sola vez por cuenta: los refetch posteriores al guardado no deben sobrescribir selecciones locales recientes. Abrir o cerrar Comunidad no borra la selección; únicamente cambiar una opción o Limpiar la modifica.
+
+Los modales compartidos usan hardwareAccelerated en Android para componer fotos y capas animadas. UserProfileSheet mantiene photoHeight como Animated.Value estable por instancia, sin recrearlo cuando cambia la medición del viewport al abrir el modal.
+
+Para fotos con bandas desenfocadas, ProfileMediaImage espera onDisplay del fondo antes de revelar la composición y notificar al perfil. Cargar ambas capas con la misma prioridad para evitar que el fondo llegue después de la foto horizontal. Si falla el fondo, permitir mostrar la foto sobre la superficie de respaldo.
+
+Comunidad es el nuevo nombre de Camino: los datos del perfil siguen en spiritual_path y spiritual_path_details (y sus aliases camelCase), con prioridad sobre campos alternativos communities. Conservar rol, años y notas; no crear un perfil de comunidad separado ni perder selecciones anteriores.
+
+En Descubrir, las opciones de comunidad se derivan de las personas disponibles tras aplicar los demás filtros y ocultamientos, antes de aplicar la comunidad seleccionada. No mostrar comunidades sin personas ni reducir las opciones a la comunidad ya elegida. Conservar Todos y los chips activos para poder quitar una selección que dejó de tener resultados.
+
+En onboarding, la elección de comunidades aparece en el primer formulario, en el lugar que ocupaba Algo muy vos. El campo Algo muy vos, con descripción e ideas, ocupa el paso posterior que antes mostraba comunidades (practices), antes de identity. No intercambiar los pasos de identidad por esta modificación.
+
+El onboarding usa cabeceras compactas en todos sus pasos: progreso de 44, padding superior 4, títulos 26–28/32–34 y decoraciones de 64–82 de alto. Empecemos por vos usa 28/32, logo 72×82 y saludo compacto. Reducir márgenes entre bloques a 8–14; opciones de al menos 52 y acciones secundarias de al menos 44, conservando inputs legibles y escalado accesible.
+
+Tus comunidades usa título 22/28, decoración 44×48 y opciones a 6 de la cabecera, con separación 8 entre opciones. Sin margen superior adicional en el bloque.
+
+Crear/editar evento permite elegir entre direcciones publicadas mediante AnimatedSheetModal con búsqueda, carga, error y vacío. Deduplicar direcciones, reutilizar coordenadas existentes y mantener entrada manual y validación de direcciones nuevas.
+
+### SectionHeader (`components/ui/SectionHeader.tsx`, 30/10)
+Título de sección en `textStyles.heading` (`text/primary`). Con `onPress` se vuelve link de sección ("ver todo"): toda la fila es tocable (touch target 44 por hitSlop, sin inflar la fila), role `link`, label `Ver <título>` (sobrescribible) y chevron `chevron-forward` de 20 (`iconSize.md`) en el token nuevo `icon/accent` (mustard). Los chevrons dentro de cards siguen en `icon/muted`. El margen inferior lo pone la pantalla (12 al primer card). Uso: Home (Eventos para vos, Tus desafíos, Personas con tu vibe) y ConnectionStrip (Nuevas conexiones).
+
+### TabBarItem (`components/CustomTabBar.tsx`, restaurado 2/11)
+La barra ocupa todo el ancho y conserva el safe area inferior. Restaurar la burbuja elevada de 48 para la pestaña seleccionada, con transición horizontal y acentos intercalados (Inicio coral). Las pestañas no seleccionadas muestran icono y label compacto. La guía FTUX sigue la geometría de la burbuja mediante TAB_FLOATING_BUTTON_SIZE y TAB_FLOATING_TOP. Se reemplaza la variante pill 48×28 por pedido del usuario.
+
+Tokens (2/11, mismo look): burbuja `componentSize.tabBubble` (48), separación desde el borde superior de la barra `componentSize.tabBubbleRise` (6), halo `componentSize.tabBubbleHalo` (56) con `opacity.halo` (0.34) y sombra `glow.tab` (geometría de `shadows.md`, color del acento del tab), anillo FTUX `componentSize.tabFtuxRing` (66, borde 3, `base.mustard` sobre `bg/surface`), badge de no leídos en `componentSize.tabBadgeOffset` (top −7, right −13). Acentos por tab con `colors.base.coral` / `blue` / `mustard`; íconos y label en `text/primary` / `text/secondary`, fondo `bg/screen`. Íconos: activo `iconSize.lg` (24) con `strokeWidth.active` (2.25), resto `iconSize.lg` con `strokeWidth.default` (2.05). Pressed: `opacity.pressed`. Animación en `motion.tabBar`: `bubbleDuration` 520, `iconInDuration` 360, `ftuxRingInDuration` 240, `selectedRise` −18, `selectedScale` 0.84, `iconInOffsetY` 12, `iconInScale` 0.76. `lint:ds` falla si `CustomTabBar.tsx` o `tabBarLayout.ts` vuelven a usar `vibesTheme.*`. Se eliminó `componentSize.tabIndicator` (pill 48×28) sin usos.
+
+### Miniaturas de cards (`componentSize.cardThumb*`, 30/10)
+`componentSize.cardThumb` = 76 (cuadrada, desafíos) y `componentSize.cardThumbWide` = 112×76 (eventos), con `radii.md` (12) para la media interna. Uso: HomeOverview (cards de desafío y evento), placeholders de Home y ChallengeFeedCard.
+
+### PersonCard (`components/ui/PersonCard.tsx`, 30/10)
+Card chica de persona para carruseles: ancho y foto `componentSize.personCard` (96), `radii.lg`, borde 1 `border/default`, fondo `bg/surface`, padding `spacing/2`. Nombre `textStyles.subtitle` (1 línea), tag opcional `textStyles.micro` `text/secondary` (2 líneas). Toda la card es tocable (>44), role button con label `Ver perfil de <nombre>`, pressed `opacity.pressed`. `blurred` desenfoca la foto (`componentSize.personCardBlur`). Uso: Home "Personas con tu vibe".
+
+### Card compacta (`cardStyles.paddingCompact`, 30/10)
+Para cards-fila con miniatura (Home: desafíos y eventos): padding vertical `spacing/3` (12) y horizontal `spacing/4` (16). El resto de las cards usa `cardStyles.padding` (16).
+
+### Títulos de sección en sheets de filtros (30/10)
+En los sheets de Filtros (Descubrir e Inicio) los títulos de sección (Género, Edad, Distancia, Nacionalidad…) usan `textStyles.subtitle` (16/22 semibold, `text/primary`), por debajo del título del sheet. `RangeSlider` acepta `labelStyle="section"` para usar ese estilo (por defecto `textStyles.title`) y `hideUnlimitedUpper` para no repetir "Sin límite" abajo cuando no hay máximo (el botón de arriba ya lo muestra y resetea).
+
+Inicio carga su contenido después de navegar: reservar dos filas compactas de eventos y tres de desafíos mediante skeletons con la geometría de las tarjetas reales y secondaryText con opacidad. Cada sección reemplaza sus placeholders al resolver su consulta; los refetch con datos conservan las tarjetas visibles. La apertura solo espera sesión, validación de cuenta, perfil para onboarding y actualización obligatoria, con comprobaciones independientes en paralelo y tiempos acotados.
+
+Personas con tu vibe reserva seis PersonCardSkeleton con la geometría de PersonCard durante la consulta inicial. Al llegar los perfiles muestra sus textos y reemplaza el skeleton de cada foto independientemente al terminar de cargar (o mostrar su fallback). Sin spinner global ni espera por la última imagen; conservar las tarjetas durante refetch.
+
+Las miniaturas progresivas de Personas con tu vibe usan cover sin composición de fondo desenfocado, para revelar cada foto en cuanto se muestre su propia imagen. Su identidad de caché ignora la rotación del token firmado, evitando reactivar el skeleton por una renovación de URL.
+
+Eventos ofrece accesos Calendario y Mapa sobre el listado, conservando todos los filtros activos. Ambas vistas usan AnimatedSheetModal y ScreenContainer. Calendario marca días con eventos, permite cambiar de mes y lista las ocurrencias del día, incluyendo las fechas recurrentes guardadas. Mapa permite zoom/desplazamiento y abrir eventos desde puntos; excluye online y coordenadas inválidas, informa cuántos eventos no tienen punto y conserva una lista accesible. No solicitar ubicación del usuario. Marcadores mostaza con borde y texto oscuro; atribución cartográfica visible.
+
+Las filas del día seleccionado en Calendario y del Mapa de eventos muestran una miniatura cuadrada cardThumb (76), con caché de MediaImage, junto al título, horario y lugar. Conservar fallback cuando no hay imagen y toda la fila como acceso al detalle.
+
+Calendario y Mapa de eventos muestran BackButton de 44×44 arriba a la izquierda, con label Volver a eventos; permanece fuera del contenido desplazable y cierra la vista conservando el listado y sus filtros.
+
+Calendario y Mapa se presentan como sheet de pantalla completa con safe area superior e inferior. La cabecera fija muestra flecha y texto Volver para hacer explícita la salida. Calendario usa título Tu próximo encuentro, mes/año y acción Hoy; cada día ocupa una celda de al menos 54 y un círculo de 44. Hoy tiene contorno azul, selección mostaza con texto oscuro y puntos de eventos oscuros. Conservar navegación entre meses y miniaturas del día elegido.
+
+En Calendario, los días con eventos a los que la persona ya se anotó usan superficie azul suave y tilde oscura sobre badge coral. Mantener la tilde sobre el día seleccionado mostaza y explicarla con leyenda y label accesible. Las filas correspondientes indican Ya estás anotado; derivar el estado de las membresías reales de eventos.
+
+La cabecera de Calendario y Mapa usa BackButton a la izquierda, título centrado y espacio de 44 a la derecha para centrarlo respecto a la pantalla. Mantener la cabecera fija y el safe area superior. Este formato reemplaza la cabecera con texto Volver.
+
+Mapa abre con todos los eventos vigentes sin heredar los filtros del listado. Incluye búsqueda por nombre/lugar, Mis eventos, Gratis, Próximos 7 días y tipos presentes en el feed, con selección visible y Limpiar. Los resultados sin coordenadas permanecen accesibles en la lista bajo el mapa; los online no generan marcadores.
+
+En sheets de pantalla completa dentro de un Modal nativo en iOS, SafeAreaView puede recibir insets en cero. Calendario y Mapa leen useSafeAreaInsets desde el proveedor padre y aplican padding explícito en los cuatro lados, sumando el espaciado del DS en los laterales. Usar ScreenContainer con edges vacíos en ese caso para no duplicar los insets; Android conserva los edges nativos. No sustituir el inset superior por una altura fija de barra de estado.
+
+### Clases: controles y accesibilidad (2/11)
+
+Clases usa exclusivamente tokens semánticos y presets compartidos: `buttonStyle`/`buttonLabel` para primario mostaza y secundario contorneado, `chipStyles` para filtros, `Typography` para texto. `LearningUI.Button` adapta esos presets sin añadir tamaños ni tipografías. Los enlaces Ver perfil/Ver lugar son filas con texto flexible y ChevronRight independiente (nunca flechas escritas dentro de labels). Perfil corresponde a una ficha interna; las referencias de lugar abren su detalle con Ver lugar y no inventan un perfil.
+
+Las solicitudes y la acción Alumnos y asistencia viven en `LearningActionDock`, fuera del scroll, dentro de `LearningDockHost`; reservar el safe area inferior. El contenido sigue desplazándose sin quedar cubierto. En detalles de lugares sin perfil, Contactar al organizador se alinea al final del contenido, después de dirección, mapa y descripción. Los selectores de mes usan filas de al menos 48 y separación `spacing/3`.
+
+Las invitaciones compartidas usan `KeyboardSheetModal`, que mide el solapamiento real del teclado; la lista mantiene taps y scroll para elegir resultados con el teclado visible. Clases filtra por localidades (ciudad/barrio), nunca por direcciones completas. Fecha de encuentro usa calendario con rango desde/hasta, extremos seleccionados y rango suave; los filtros combinan modalidad, localidad y fechas.
+
+El badge new de Clases usa mostaza y texto oscuro, separado del contador de chats, tanto en la pestaña inactiva como en la burbuja activa. El override `EXPO_PUBLIC_LOCAL_CLASSES=true` funciona únicamente con `__DEV__`: habilita la vista local y no cambia Firebase ni permisos del servidor.
+
+### Regla de reutilización
+
+Para cada pantalla se elige un rol existente de tipografía y un componente/preset existente. Si falta una variante, documentar su geometría, estados y alcance aquí antes de reutilizarla; no agregar overrides aislados. `AGENTS.md` referencia esta norma y `npm run lint:ds` verifica estilos fuera de tokens. Las diferencias heredadas se corrigen en los elementos afectados por cada cambio.
+
+### Detalle de actividad de Clases (2/11)
+
+`LearningDetailParts` comparte la composición de clases internas y referencias: imagen 3:2 a todo el ancho, radio xl, etiqueta de práctica/modalidad sobre superficie informativa suave, título display y horario en bloque sutil con icono de reloj. Cabecera Actividad con BackButton y compartir (sin agregar guardados ficticios). Las filas de profesores usan Avatar md, nombre subtitle y Ver perfil con chevron independiente; si no existe perfil interno, mostrar solo los datos reales sin enlace. El lugar se agrupa en una superficie suave con nombre, dirección, acceso al detalle y mapa con Cómo llegar. Reservas y asistencia permanecen en el dock existente; se conservan fechas, confirmaciones e invitaciones.
+
+Esta composición reemplaza en el detalle externo la regla anterior de colocar el nombre de la clase en la cabecera: ahora el título aparece debajo de la fotografía, dentro de LearningHero. No modificar las fotos originales ni introducir colores de la referencia; utilizar tokens semánticos de Vibes. Los títulos, cuerpos y botones conservan los roles del sistema.
+
+Programa y encuentros usa LearningSchedule después del bloque de lugar. Lista única de filas compactas con fecha a la izquierda, horario de inicio/fin en la zona de la clase y badge Próximo mostaza suave. Mostrar como resumen el último encuentro pasado y tres vigentes/futuros; ofrecer Ver todos cuando hay más. Las fechas pasadas se indican con texto y En curso se distingue de Próximo. Las opciones para participar quedan después del programa. La portada de LearningHero usa relación 1,85 para mantener compacto el detalle.
+
+En el detalle de actividad, Editar actividad se encuentra en un menú de tres puntos al extremo derecho de la cabecera. El menú solo aparece cuando managed_ids incluye al organizador; reutilizar AnimatedSheetModal y conservar las restricciones de estado y la autorización del servidor. Eliminar el enlace de edición al pie del detalle. Compartir conserva su acceso independiente.
+
+Programa y encuentros se abre desde Ver próximos encuentros en un AnimatedSheetModal. El detalle conserva solo el acceso compacto; las fechas, estados y expansión de la lista quedan dentro del modal con cierre fijo, scroll y safe area inferior. Esta presentación reemplaza la lista visible directamente en el detalle.
+
+Solicitar reserva en el detalle de Clases abre la ruta LearningReservation con el ID de la clase. Esa pantalla usa Page/ScreenContainer, título de clase, modalidad Clase suelta/Plan mensual, mes, frecuencia o fecha con horario, resumen de fechas y confirmación fija al pie. El detalle ya no muestra los selectores de reserva. Resolver las fechas desde los datos reales al entrar; conservar las solicitudes existentes, confirmación pendiente y acceso al chat. El flujo mantiene sin cobros hasta que se defina explícitamente la integración de pagos.
+
+Próximos encuentros excluye todas las sesiones cuya hora de finalización ya pasó, tanto del resumen como de Ver todos. Conservar las sesiones en curso hasta su finalización y ocultar el acceso si no quedan sesiones vigentes; no incluir el último encuentro pasado.
+
+El bloque de lugar del detalle de Clases es compacto: nombre/dirección en superficie sutil y Cómo llegar separado por un borde, abriendo el mapa externo sin miniatura incrustada. Sobre el encuentro usa título title, cuerpo body y filas con iconos para horarios/ingreso explícitos en la descripción. No inventar datos. El precio informativo usa display sobre mostaza suave, moneda/unidad y cupos solo cuando se conocen. Ver próximos encuentros usa el preset accent/lg; Invitar a alguien secondary/lg. Mantener la solicitud en su ruta separada y sin cobros.
+
+La tarjeta de lugar de Clases vuelve a incluir una miniatura de mapa de 96 de alto entre la dirección y Cómo llegar. Usar ClassLocationMap compact sin duplicar el pie del mapa; conservar la acción de direcciones y el fallback si no carga la imagen.
+
+El toque sobre la foto principal del perfil no abre el visor ampliado. El zoom se ofrece únicamente en las fotos del perfil completo después de Ver más/deslizar hacia arriba. Conservar navegación entre fotos y gestos de conectar/pasar; cerrar el visor al salir del detalle. No anunciar acciones de ampliación en la foto principal.
+
+El toque breve sin desplazamiento en la foto principal del perfil avanza a la siguiente imagen y vuelve a la primera después de la última. No abre zoom ni ejecuta conectar/pasar; conservar los gestos de navegación y las acciones accesibles de siguiente/anterior. El zoom sigue disponible únicamente dentro del perfil completo.
+
+El acceso Mis clases abre LearningStudentScreen: resumen Tu próxima práctica, tabs Agenda/Mis reservas/Historial y fechas reales por día. Distinguir reserva confirmada y solicitud pendiente, conservar estados del backend y no convertir solicitudes en confirmaciones. Cancelar solicitud confirma que se cancelan todas sus fechas. No mostrar packs, créditos ni lista de espera inventados cuando el contrato aún no los ofrece; mantener sin cobros.
+
+El nuevo modo alumno del portal usa EXPO_PUBLIC_PORTAL_STUDIO_ENABLED (false por defecto) y el contrato portal_student de vibes-web. Reservar, Mis reservas, Historial, Mis packs, Rutinas y Avisos reutilizan Page, Chips, Button y tokens. Distinguir confirmada/espera/cancelada, mostrar plazos y consentimiento explícito para espera y WhatsApp. No mostrar cupos libres calculados con datos incompletos ni compras móviles; saldo incluye solo packs acreditados y vigentes. Conservar el acceso al flujo anterior. Contrato y activación: docs/learning-student-contract.md.
+
+### Respuestas de selección única sin valor inicial
+
+`components/ui/RadioOption.tsx` reutiliza `optionCardStyles`: ancho completo, alto mínimo `componentSize.optionCard`, radio `lg`, padding horizontal `spacing/4`, vertical `spacing/3` y separación `spacing/3`. Texto `subtitle` oscuro, borde `border/default` y fondo `bg/surface`; seleccionado usa `bg/selected` y `border/selected`. El indicador `iconSize.md` en `icon/default` muestra un círculo vacío o marcado; la selección no depende solo del color. Rol radio con estado checked y disabled; opacidad de presión y deshabilitado del DS.
+
+La pregunta de servicio de Vibi presenta Sí y Todavía no en filas separadas por `spacing/2`, sin selección inicial salvo una respuesta guardada. Guardar requiere una respuesta explícita; Ahora no cierra sin guardar.

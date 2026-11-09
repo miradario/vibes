@@ -2,6 +2,8 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "colors:check": "python3 scripts/check_vibes_palette.py",
+    "lint:ds": "node scripts/lint-design-tokens.cjs",
+    "typecheck": "node scripts/tsc-baseline.cjs",
     "postinstall": "node scripts/android-modal-transparency.cjs && node scripts/navigation-web-compat.cjs",
     "start": "expo start",
     "android": "expo run:android",
@@ -9,7 +11,8 @@
     "web": "expo start --web",
     "eject": "expo eject",
     "discover:check": "node scripts/check_discover_capacity.js",
-    "vibi:check": "node --test scripts/vibi.test.cjs scripts/ftux.test.cjs"
+    "vibi:check": "node --test scripts/vibi.test.cjs scripts/ftux.test.cjs",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
     "@babel/runtime": "^7.28.6",
@@ -57,6 +60,7 @@
     "expo-sharing": "~14.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
+    "expo-store-review": "~9.0.9",
     "expo-task-manager": "~14.0.9",
     "expo-updates": "~29.0.16",
     "expo-web-browser": "~15.0.11",

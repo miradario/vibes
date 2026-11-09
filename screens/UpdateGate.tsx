@@ -14,6 +14,7 @@ import {
 import { useI18n } from "../src/i18n";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { getPostAuthRoute } from "../src/lib/onboardingFlow";
+import * as ds from "../src/theme/tokens";
 
 type UpdateGateRoute = {
   key: string;
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingHorizontal: 24,
+    paddingHorizontal: ds.spacing[6],
   },
   content: {
     flex: 1,
@@ -130,20 +131,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actions: {
-    gap: 12,
+    gap: ds.spacing[3],
     alignItems: "center",
-    paddingBottom: 36,
+    paddingBottom: ds.spacing[8],
   },
   primaryButton: {
     maxWidth: 480,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...ds.shadows.none,
   },
   secondaryButton: {
     width: "100%",
     maxWidth: 480,
     height: 58,
-    borderRadius: 24,
+    borderRadius: ds.radii.xl,
     borderWidth: 1,
     borderColor: colors.accentBlue,
     backgroundColor: colors.background,
@@ -152,8 +152,7 @@ const styles = StyleSheet.create({
   },
   secondaryText: {
     color: colors.accentBlue,
-    fontSize: 19,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
   pressed: { opacity: 0.8 },
 });

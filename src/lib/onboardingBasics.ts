@@ -4,5 +4,7 @@ export const splitOnboardingName = (displayName = "") => {
 };
 export const onboardingFullName = (firstName: string, lastName: string) =>
   [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
-export const hasOnboardingBasics = (firstName: string, _lastName?: string) =>
-  Boolean(firstName.trim());
+export const hasNumbersInName = (name: string) => /\p{N}/u.test(name);
+
+export const hasOnboardingBasics = (firstName: string, lastName = "") =>
+  Boolean(firstName.trim()) && !hasNumbersInName(firstName) && !hasNumbersInName(lastName);

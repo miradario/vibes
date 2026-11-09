@@ -1,7 +1,8 @@
+const pureTs = require('./helpers/load-pure-ts.cjs');
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const ts=require('typescript'),fs=require('node:fs'),vm=require('node:vm');
-function load(file,imports={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020},fileName:file}).outputText,{exports,require:name=>imports[name]??{}});return exports;}
+function load(file,imports={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020},fileName:file}).outputText,{exports,require:name=>imports[name]??pureTs.dependency(file,name)});return exports;}
 const paths=load('src/lib/spiritualPaths.ts');
 const api=load('src/lib/aboutMeProfile.ts',{'./spiritualPaths':paths});
 test('Sobre mí restores onboarding preferences and custom practices in both row formats',()=>{

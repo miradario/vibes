@@ -4,6 +4,7 @@ import { Text } from "./Typography";
 import Icon from "./Icon";
 import styles from "../assets/styles";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type FiltersProps = {
   label?: string;
@@ -19,7 +20,7 @@ const Filters = ({
   <TouchableOpacity style={styles.filters} onPress={onPress} activeOpacity={0.9}>
     <View style={styles.filtersRow}>
       <View style={styles.filtersIcon}>
-        <Icon name="options" size={14} color={vibesTheme.colors.accentBlue} />
+        <Icon name="options" size={ds.iconSize.sm} color={vibesTheme.colors.accentBlue} />
       </View>
       <View>
         <Text style={styles.filtersLabel}>{label}</Text>
@@ -27,7 +28,7 @@ const Filters = ({
       </View>
     </View>
     <View style={styles.filtersChevron}>
-      <Icon name="chevron-down" size={16} color={vibesTheme.colors.accentBlue} />
+      <Icon name="chevron-down" size={ds.iconSize.sm} color={vibesTheme.colors.accentBlue} />
     </View>
   </TouchableOpacity>
 );

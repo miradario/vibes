@@ -1,0 +1,11 @@
+#!/bin/sh
+# Lint del Design System sobre los archivos staged (docs/design-system.md).
+# Saltear solo en emergencias: git commit --no-verify
+files=$(git diff --cached --name-only --diff-filter=ACMR -- 'screens/*' 'components/*' 'src/*' 'assets/styles/*' | grep -E '\.(tsx?|jsx?)$')
+[ -z "$files" ] && exit 0
+echo "pre-commit: npm run lint:ds sobre archivos staged"
+# shellcheck disable=SC2086
+npm run -s lint:ds -- $files || {
+  echo "✖ lint:ds falló. Usá tokens del DS o documentá la excepción con /* ds-lint-allow <motivo> */."
+  exit 1
+}

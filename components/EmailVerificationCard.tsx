@@ -8,6 +8,7 @@ import {
   isEmailOwnershipVerified,
   sendEmailVerification,
 } from "../src/auth/emailVerification";
+import * as ds from "../src/theme/tokens";
 
 export default function EmailVerificationCard({ userId, email }: { userId?: string; email?: string }) {
   const query = useEmailOwnershipQuery(userId);
@@ -63,8 +64,8 @@ export default function EmailVerificationCard({ userId, email }: { userId?: stri
   return (
     <View>
       <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1,
-        borderColor: "rgba(110, 110, 110, 0.30)", borderRadius: 14, paddingHorizontal: 14, minHeight: 52 }}>
-        <Text style={{ flex: 1, paddingVertical: 14, fontSize: 17, color: vibesTheme.colors.primaryText }}>
+        borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.scrim), borderRadius: ds.radii.lg, paddingHorizontal: ds.spacing[4], minHeight: 52 }}>
+        <Text style={{ flex: 1, paddingVertical: ds.spacing[4], ...ds.textStyles.body, color: vibesTheme.colors.primaryText }}>
           {query.data?.email ?? email ?? "—"}
         </Text>
         <TouchableOpacity
@@ -72,25 +73,25 @@ export default function EmailVerificationCard({ userId, email }: { userId?: stri
           accessibilityLabel={verified ? "Email verificado" : "Validar email"}
           disabled={verified || sending || query.isLoading}
           onPress={startVerification}
-          style={{ marginLeft: 12, minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" }}>
-          <Icon name="checkmark-circle" size={26} color={verified ? vibesTheme.colors.primaryText : vibesTheme.colors.accentBlue} />
+          style={{ marginLeft: ds.spacing[3], minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" }}>
+          <Icon name="checkmark-circle" size={ds.iconSize.lg} color={verified ? vibesTheme.colors.primaryText : vibesTheme.colors.accentBlue} />
         </TouchableOpacity>
       </View>
       {!verified && (
         <TouchableOpacity accessibilityRole="button" disabled={sending || query.isLoading}
           onPress={startVerification}
           style={{ minHeight: 48, alignSelf: "flex-end", justifyContent: "center" }}>
-          <Text style={{ fontSize: 13, color: vibesTheme.colors.primaryText, textDecorationLine: "underline" }}>
+          <Text style={{ ...ds.textStyles.bodySmall, color: vibesTheme.colors.primaryText, textDecorationLine: "underline" }}>
             {query.isLoading ? "Consultando…" : sending ? "Enviando…" : "Validar email"}
           </Text>
         </TouchableOpacity>
       )}
       {!verified && expanded && (
         <View>
-          {!!message && <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, color: vibesTheme.colors.secondaryText }}>{message}</Text>}
+          {!!message && <Text accessibilityLiveRegion="polite" style={{ ...ds.textStyles.bodySmall, color: vibesTheme.colors.secondaryText }}>{message}</Text>}
           <TouchableOpacity accessibilityRole="button" disabled={checking}
             onPress={() => void check()} style={{ minHeight: 48, justifyContent: "center" }}>
-            <Text style={{ fontSize: 13, color: vibesTheme.colors.primaryText, textDecorationLine: "underline" }}>
+            <Text style={{ ...ds.textStyles.bodySmall, color: vibesTheme.colors.primaryText, textDecorationLine: "underline" }}>
               {checking ? "Comprobando…" : "Ya abrí el enlace · Comprobar"}
             </Text>
           </TouchableOpacity>

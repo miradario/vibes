@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const ts = require('typescript');
 
-function mount({ height = 800, keyboardTop = null, platform = 'android' } = {}) {
+function mount({ height = 800, top = 0, keyboardTop = null, platform = 'android' } = {}) {
   const slots = [], effects = [], listeners = {}, measurements = [];
   let cursor = 0;
   const React = {
@@ -35,7 +35,7 @@ function mount({ height = 800, keyboardTop = null, platform = 'android' } = {}) 
   cursor = 0;
   const tree = module.exports.default({ children: 'content', style: { flex: 1 } });
   if (tree.props.ref) tree.props.ref.current = {
-    measureInWindow: fn => { const measuredHeight = height; measurements.push(() => fn(0, 0, 400, measuredHeight)); },
+    measure: fn => { const measuredHeight = height; measurements.push(() => fn(0, top, 400, measuredHeight, 0, top)); },
   };
   const cleanups = effects.map(fn => fn());
   const flush = () => { while (measurements.length) measurements.shift()(); };
@@ -80,4 +80,13 @@ test('iOS retains its native KeyboardAvoidingView padding behavior', () => {
   const view = mount({ platform: 'ios' });
   assert.equal(view.tree.type, 'Avoid');
   assert.equal(view.tree.props.behavior, 'padding');
+});
+
+
+test('chat inside a safe area uses its actual page origin above the keyboard', () => {
+ const view = mount({height:947,top:50.333333});
+ view.show(661.333333);view.flush();
+ assert.ok(Math.abs(view.overlap()-336)<0.001);
+ view.resize(611);view.flush();assert.ok(view.overlap()<0.001);
+ view.hide();view.flush();assert.equal(view.overlap(),0);
 });

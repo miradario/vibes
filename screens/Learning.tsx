@@ -1,6 +1,17 @@
+import { isVisibleClassTeacher } from "../src/learning/visibleTeachers";
+import LearningSchedule from "../components/learning/LearningSchedule";
+import { LearningHero, LearningTeacherRow, LearningPlaceBlock, LearningAbout, LearningPriceCard, LearningInviteButton } from "../components/learning/LearningDetailParts";
+import LearningDateRange from "../components/learning/LearningDateRange";
+import { learningLocality, matchesLearningDateRange, weeklyRangeMatches } from "../src/learning/filters";
+import { WEEKDAYS } from "../src/learning/reservations";
+import { LearningActionDock } from "../components/learning/LearningActionDock";
+import ActiveCommunityFilters from "../components/ActiveCommunityFilters";
+import { useCommunityFilter } from "../src/hooks/useCommunityFilter";
+import { matchesCommunities } from "../src/lib/communities";
+import DiscoverPathCards from "../components/DiscoverPathCards";
 import EventInviteSheet from "../components/EventInviteSheet";
 import ClassLocationMap from "../components/learning/ClassLocationMap";
-import ClassReservationPanel from "../components/learning/ClassReservationPanel";
+import { ClassReservationEntry } from "../components/learning/ClassReservationPanel";
 import { useReservationRequests } from "../src/learning/reservationQueries";
 import { reservationDateLabel } from "../src/learning/reservations";
 import {ExternalClassCard, ExternalPlaceCard} from "../components/learning/ExternalCatalog";
@@ -10,7 +21,6 @@ import { Alert, View, TouchableOpacity, ScrollView, StyleSheet } from "react-nat
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text, TextInput } from "../components/Typography";
 import Icon from "../components/Icon";
-import { vibesTheme } from "../src/theme/vibesTheme";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useLearningData, useLearningRoster } from "../src/learning/queries";
 import {
@@ -47,6 +57,8 @@ import {
   ui,
   useLearningAction,
 } from "../components/learning/LearningUI";
+import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
+import * as ds from "../src/theme/tokens";
 const useNav = () => useNavigation<any>();
 const useId = () => (useRoute().params as { id?: string } | undefined)?.id;
 
@@ -64,10 +76,11 @@ export function LearningCreateAction() {
       return;
     }
     nav.navigate(data.access.managed_ids.length ? "LearningActivityEditor" : "LearningProfileEditor", data.access.managed_ids.length ? undefined : { continueToClass: true });
-  }} style={explore.iconButton}><Icon name="add" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>;
+  }} style={explore.iconButton}><Icon name="add" size={ds.iconSize.lg} color={ds.colors.text.primary} /></TouchableOpacity>;
 }
 
 export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
+  const [communities, setCommunities] = useCommunityFilter();
   const requests = useReservationRequests();
   const nav = useNav(),
     q = useLearningData();
@@ -77,34 +90,46 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
     [modality, setModality] = useState(""),
     [location, setLocation] = useState(""),
     [date, setDate] = useState(""),
+    [dateTo, setDateTo] = useState(""),
     [filters, setFilters] = useState(false);
   return (
     <Page title="Clases y espacios" embedded={embedded}>
       <LearningGate query={q}>
         {(data) => {
-          const availableClasses = data.activities.filter(activity => activity.status === "published" && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
-          const availableExternalClasses = unimportedCatalogClasses(data.activities).filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
+          const personalClassIds = new Set([...data.enrollments.filter(enrollment=>enrollment.status === "confirmed").map(enrollment=>enrollment.activity_id), ...(requests.data ?? []).filter(request=>request.status === "pending_confirmation").map(request=>request.source_id)]);
+          const visibleTeacherIds = new Set(data.profiles.filter(profile => profile.kind === "teacher" && isVisibleClassTeacher(profile.name)).map(profile => profile.id));
+          const availableClasses = data.activities.filter(activity => activity.teacher_ids.some(id => visibleTeacherIds.has(id)) && activity.status === "published" && (matchesCommunities({specialties:data.profiles.filter(profile=>activity.teacher_ids.includes(profile.id)).flatMap(profile=>profile.specialties)}, communities) || personalClassIds.has(activity.id)) && sessionsFor(data, activity.id).some(session => Date.parse(session.ends_at) > Date.now()));
+          const availableExternalClasses = unimportedCatalogClasses(data.activities).filter(item => isVisibleClassTeacher(item.docente?.nombre)).filter(item => matchesCommunities(item, communities) || personalClassIds.has(item.id)).filter(item => item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada));
           const teacherIds = new Set(availableClasses.flatMap(activity => activity.teacher_ids));
           const specs = Array.from(new Set([
             ...data.profiles.filter(profile => teacherIds.has(profile.id)).flatMap(profile => profile.specialties),
             ...availableExternalClasses.map(item => item.categoria),
           ])).sort();
           const availableModalities = modalityOptions.filter(option => availableClasses.some(activity => activity.modality === option.value || activity.modality === "mixed") || availableExternalClasses.some(item => option.value === "in_person" ? /presencial/i.test(item.modalidad) : option.value === "online" ? /online|distancia/i.test(item.modalidad) : /presencial/i.test(item.modalidad) && /online|distancia/i.test(item.modalidad)));
-          const availableLocations = Array.from(new Set([...availableClasses.map(activity => activity.location), ...availableExternalClasses.map(item => {const place = externalPlaces.find(place => place.id === item.lugar_id); return place?.ubicacion.barrio || place?.ubicacion.ciudad || "";})].filter(Boolean))).sort();
-          const availableDates = Array.from(new Set([...availableClasses.flatMap(activity => sessionsFor(data, activity.id).filter(session => Date.parse(session.starts_at) > Date.now()).map(session => wallDate(session.starts_at,activity.timezone).slice(0,10))), ...availableExternalClasses.flatMap(item => { const confirmed = item.proxima_fecha_confirmada as string | null; return confirmed ? [confirmed] : []; })])).sort();
+          const activityLocality = (activity: LearningActivity) => {
+            const reference = externalClasses.find(item => item.id === activity.catalog_source_id);
+            const place = reference && externalPlaces.find(item => item.id === reference.lugar_id);
+            return place?.ubicacion.barrio || place?.ubicacion.ciudad || learningLocality(activity.location);
+          };
+          const availableLocations = Array.from(new Set([
+            ...availableClasses.map(activityLocality),
+            ...availableExternalClasses.map(item => { const place = externalPlaces.find(place => place.id === item.lugar_id); return place?.ubicacion.barrio || place?.ubicacion.ciudad || ""; }),
+          ].filter(Boolean))).sort();
           const activities = availableClasses.filter((a) =>
             sessionsFor(data, a.id).length > 0 && matchesActivity(a, data, {
               query,
               specialty,
               modality,
-              location,
-              date,
-            })
+              location: "",
+              date: "",
+            }) && (!location || activityLocality(a) === location) && matchesLearningDateRange(sessionsFor(data, a.id).map(session => wallDate(session.starts_at, a.timezone)), date, dateTo)
           );
           const listedExternalClasses = availableExternalClasses.filter(item =>
             (item.horarios_semanales.some(slot => Boolean(slot.hora_inicio)) || Boolean(item.proxima_fecha_confirmada)) &&
-            matchesExternalClass(item, {query,specialty,location,modality,date}));
-          const listedExternalPlaces = externalPlaces.filter(item => matchesExternalPlace(item,query,specialty));
+            matchesExternalClass(item, {query,specialty,location,modality,date:""}) && (
+              item.proxima_fecha_confirmada ? matchesLearningDateRange([item.proxima_fecha_confirmada], date, dateTo) : weeklyRangeMatches(item.horarios_semanales.map(slot => WEEKDAYS.indexOf(slot.dia)), date, dateTo, wallDate(new Date().toISOString(), "America/Argentina/Buenos_Aires").slice(0,10))
+            ));
+          const listedExternalPlaces = externalPlaces.filter(item => availableExternalClasses.some(activity => activity.lugar_id === item.id) || availableClasses.some(activity => externalClasses.find(reference => reference.id === activity.catalog_source_id)?.lugar_id === item.id)).filter(item => matchesCommunities(item, communities) && matchesExternalPlace(item,query,specialty));
           const enrolledIds = new Set(data.enrollments.filter(enrollment => enrollment.status === "confirmed").map(enrollment => enrollment.activity_id));
           const myClasses = activities.filter(activity => enrolledIds.has(activity.id));
           const requestedIds = new Set((requests.data ?? []).filter(request => request.status === "pending_confirmation" && request.starts_at.some(iso => Date.parse(iso) > Date.now())).map(request => request.source_id));
@@ -113,7 +138,9 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           const otherClasses = activities.filter(activity => !enrolledIds.has(activity.id) && !requestedIds.has(activity.id));
           const profiles = data.profiles.filter(
             (p) =>
+              matchesCommunities(p, communities) &&
               p.kind === tab &&
+              (p.kind === "teacher" ? visibleTeacherIds.has(p.id) : availableClasses.some(activity => activity.place_id === p.id)) &&
               p.published &&
               `${p.name} ${p.description} ${p.specialties.join(" ")}`
                 .toLocaleLowerCase()
@@ -125,7 +152,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               p.location
                 .toLocaleLowerCase()
                 .includes(location.trim().toLocaleLowerCase()) &&
-              (!date ||
+              (!(date || dateTo) ||
                 activities.some((a) =>
                   p.kind === "teacher"
                     ? a.teacher_ids.includes(p.id)
@@ -134,25 +161,27 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           );
           return (
             <>
+              <ActiveCommunityFilters selected={communities} onRemove={value=>setCommunities(previous=>previous.filter(item=>item!==value))} onClear={()=>setCommunities([])} />
               {!embedded && <View style={explore.toolbar}><LearningCreateAction /></View>}
               <View style={explore.search}>
-                <Icon name="search" size={20} color={vibesTheme.colors.secondaryText} />
-                <TextInput accessibilityLabel="Buscar clases o lugares" placeholder="¿Qué te gustaría practicar?" placeholderTextColor={vibesTheme.colors.secondaryText} value={query} onChangeText={setQuery} style={explore.searchInput} returnKeyType="search" />
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Filtrar clases" onPress={() => setFilters(true)} style={explore.clear}><Icon name="options-outline" size={22} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
-                {!!query && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setQuery("")} style={explore.clear}><Icon name="close" size={20} color={vibesTheme.colors.secondaryText} /></TouchableOpacity>}
+                <Icon name="search" size={ds.iconSize.md} color={ds.colors.text.secondary} />
+                <TextInput accessibilityLabel="Buscar clases o lugares" placeholder="¿Qué te gustaría practicar?" placeholderTextColor={ds.colors.text.secondary} value={query} onChangeText={setQuery} style={explore.searchInput} returnKeyType="search" />
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Filtrar clases" onPress={() => setFilters(true)} style={explore.clear}><Icon name="options-outline" size={ds.iconSize.lg} color={ds.colors.text.primary} /></TouchableOpacity>
+                {!!query && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setQuery("")} style={explore.clear}><Icon name="close" size={ds.iconSize.md} color={ds.colors.text.secondary} /></TouchableOpacity>}
               </View>
               <Chips value={tab} onChange={setTab} options={[
                 {value:"activity",label:"Clases y cursos"}, {value:"place",label:"Lugares"}
               ]} />
+              <DiscoverPathCards selected={communities} onToggle={value=>setCommunities(previous=>previous.includes(value)?previous.filter(item=>item!==value):[...previous,value])} onClear={()=>setCommunities([])} />
               <Chips value={specialty} onChange={setSpecialty} options={[{value:"",label:"Todas las prácticas"},...specs.map(value=>({value,label:value}))]} />
               {tab === "activity" ? <>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver mi agenda y reservas" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Mi agenda y reservas</Text><Icon name="chevron-forward" size={ds.iconSize.md} color={ds.colors.icon.default} /></TouchableOpacity>
                 {myClasses.length + myRequestedClasses.length + myRequestedActivities.length > 0 ? <>
                 <Text accessibilityRole="header" style={explore.sectionTitle}>Mis clases</Text>
                 <Text style={explore.sectionHint}>Inscripciones y solicitudes pendientes</Text>
                 {myRequestedActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} status="Solicitud pendiente" onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
                 {myRequestedClasses.map(item => <View key={item.id}><ExternalClassCard item={item} onPress={() => nav.navigate("ExternalCatalogDetail", {id:item.id})} /><Text style={explore.sectionHint}>Pendiente de confirmación con el organizador</Text></View>)}
                 {myClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver todas mis clases y cursos" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Ver mis clases y cursos</Text><Icon name="chevron-forward" size={18} color={vibesTheme.colors.primaryText} /></TouchableOpacity>
                 </> : null}
                 {!!(otherClasses.length + listedExternalClasses.length) && <Text accessibilityRole="header" style={explore.sectionTitle}>Más clases</Text>}
                 {otherClasses.map(activity => <ActivityCard key={activity.id} activity={activity} compact data={data} onPress={() => nav.navigate("LearningActivity", {id:activity.id})} />)}
@@ -164,10 +193,10 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               </>}
               {(tab === "activity" ? activities.length + listedExternalClasses.length : profiles.length + listedExternalPlaces.length) === 0 && (
                 <View style={explore.empty}>
-                  <View style={explore.emptyIcon}><Icon name="school-outline" size={30} color={vibesTheme.colors.accentBlue} /></View>
-                  <Text style={explore.emptyTitle}>{query || specialty || modality || location || date ? "No encontramos coincidencias" : tab === "activity" ? "Pronto, nuevas clases" : "Pronto, más propuestas"}</Text>
-                  <Text style={explore.emptyBody}>{query || specialty || modality || location || date ? "Probá con otra búsqueda o ajustá los filtros." : "Volvé a explorar para descubrir nuevas prácticas y personas."}</Text>
-                  <TouchableOpacity accessibilityRole="button" style={explore.action} onPress={() => {if(query || specialty || modality || location || date){setQuery("");setSpecialty("");setModality("");setLocation("");setDate("");}else void q.refetch();}}><Text style={explore.actionLabel}>{query || specialty || modality || location || date ? "Limpiar filtros" : "Actualizar"}</Text></TouchableOpacity>
+                  <View style={explore.emptyIcon}><Icon name="school-outline" size={ds.iconSize.xl} color={ds.colors.base.blue} /></View>
+                  <Text style={explore.emptyTitle}>{query || specialty || modality || location || date || dateTo ? "No encontramos coincidencias" : tab === "activity" ? "Pronto, nuevas clases" : "Pronto, más propuestas"}</Text>
+                  <Text style={explore.emptyBody}>{query || specialty || modality || location || date || dateTo ? "Probá con otra búsqueda o ajustá los filtros." : "Volvé a explorar para descubrir nuevas prácticas y personas."}</Text>
+                  <TouchableOpacity accessibilityRole="button" style={explore.action} onPress={() => {if(query || specialty || modality || location || date){setQuery("");setSpecialty("");setModality("");setLocation("");setDate("");setDateTo("");}else void q.refetch();}}><Text style={explore.actionLabel}>{query || specialty || modality || location || date || dateTo ? "Limpiar filtros" : "Actualizar"}</Text></TouchableOpacity>
                 </View>
               )}
               <AnimatedSheetModal
@@ -177,7 +206,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               >
                 <ScrollView
                   keyboardShouldPersistTaps="handled"
-                  contentContainerStyle={{ gap: 16 }}
+                  contentContainerStyle={{ gap: ds.spacing[4] }}
                 >
                   <Text style={ui.title}>Filtrar clases y perfiles</Text>
                   <Chips
@@ -189,7 +218,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
                     ]}
                   />
                   {!!availableLocations.length && <><Text style={ui.body}>Ciudad o barrio</Text><Chips value={location} onChange={setLocation} options={[{value:"",label:"Todas"},...availableLocations.map(value=>({value,label:value}))]} /></>}
-                  {!!availableDates.length && <><Text style={ui.body}>Fecha del encuentro</Text><Chips value={date} onChange={setDate} options={[{value:"",label:"Todas"},...availableDates.map(value=>({value,label:value}))]} /></>}
+                  <LearningDateRange from={date} to={dateTo} onChange={(from, to) => { setDate(from); setDateTo(to); }} />
                   <Button
                     label="Ver resultados"
                     onPress={() => setFilters(false)}
@@ -201,7 +230,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
                       setSpecialty("");
                       setModality("");
                       setLocation("");
-                      setDate("");
+                      setDate("");setDateTo("");
                       setFilters(false);
                     }}
                   />
@@ -307,12 +336,28 @@ export function LearningProfileDetail() {
 
 export function LearningActivityDetail() {
   const [inviteVisible, setInviteVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const id = useId(),
     nav = useNav(),
     q = useLearningData(),
     action = useLearningAction();
+  const activity = q.data?.activities.find(item => item.id === id);
+  const canManage = Boolean(activity && q.data?.access.managed_ids.includes(activity.organizer_id));
+  const canEdit = canManage && activity && !["cancelled", "completed"].includes(activity.status);
   return (
-    <Page title="Detalle de la actividad">
+    <Page title="Actividad" headerAction={<View style={{flexDirection:"row",gap:ds.spacing[1]}}>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Compartir clase" onPress={() => setInviteVisible(true)} style={{ width:44,height:44,alignItems:"center",justifyContent:"center" }}><Icon name="share-outline" size={ds.iconSize.lg} color={ds.colors.icon.default} /></TouchableOpacity>
+      {canManage ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Administrar actividad" accessibilityState={{expanded:menuVisible}} onPress={() => setMenuVisible(true)} style={{width:44,height:44,alignItems:"center",justifyContent:"center"}}><Icon name="ellipsis-vertical" size={ds.iconSize.lg} color={ds.colors.icon.default} /></TouchableOpacity> : null}
+    </View>}>
+      <AnimatedSheetModal visible={menuVisible && canManage} onClose={() => setMenuVisible(false)} sheetStyle={ui.sheet}>
+        <Text style={ui.title}>Administrar actividad</Text>
+        <Button label="Editar actividad" disabled={!canEdit} onPress={() => {
+          if (!canEdit || !activity) return;
+          setMenuVisible(false);
+          nav.navigate("LearningActivityEditor", {id:activity.id});
+        }} />
+        <Button secondary label="Cerrar" onPress={() => setMenuVisible(false)} />
+      </AnimatedSheetModal>
       <LearningGate query={q}>
         {(data) => {
           const a = data.activities.find((a) => a.id === id);
@@ -325,72 +370,23 @@ export function LearningActivityDetail() {
             paid = Number(a.price) > 0;
           return (
             <>
-              <Photo key={a.image_url} url={a.image_url} cover />
-              <Text style={ui.heading}>{a.title}</Text>
-              <Text style={ui.muted}>
-                {a.kind === "course" ? "Curso completo" : "Clase"} ·{" "}
-                {statusLabels[a.status]}
-              </Text>
-              {data.profiles
-                .filter((p) => a.teacher_ids.includes(p.id))
-                .map((p) => (
-                  <Link
-                    key={p.id}
-                    label={`Con ${p.name} → Ver perfil`}
-                    onPress={() =>
-                      nav.navigate("LearningProfile", { id: p.id })
-                    }
-                  />
-                ))}
-              {a.place_id && (
-                <Link
-                  label={`${
-                    data.profiles.find((p) => p.id === a.place_id)?.name ??
-                    "Lugar"
-                  } → Ver lugar`}
-                  onPress={() =>
-                    nav.navigate("LearningProfile", { id: a.place_id })
-                  }
-                />
-              )}
-              <Text style={ui.body}>
-                {modalityLabels[a.modality]}
-                {a.location ? ` · ${a.location}` : ""}
-              </Text>
-              {a.modality !== "online" && /\d/.test(a.location) && <ClassLocationMap key={a.location} address={a.location} />}
-              <Button secondary label="Invitar a alguien" onPress={() => setInviteVisible(true)} />
+              <LearningHero source={a.image_url ? { uri: a.image_url } : null} title={a.title}
+                category={`${data.profiles.filter(profile => a.teacher_ids.includes(profile.id)).flatMap(profile => profile.specialties)[0] || (a.kind === "course" ? "Curso" : "Clase")} · ${modalityLabels[a.modality]}`}
+                schedule={sessions.find(session => Date.parse(session.ends_at) > Date.now()) ? formatSession(sessions.find(session => Date.parse(session.ends_at) > Date.now())!, a.timezone) : undefined} />
+              {data.profiles.filter(profile => a.teacher_ids.includes(profile.id)).map(profile => <LearningTeacherRow key={profile.id} name={profile.name} image={profile.image_url} onPress={() => nav.navigate("LearningProfile", {id:profile.id})} />)}
+              {a.location || a.place_id ? (() => {
+                const internalPlace = data.profiles.find(profile => profile.id === a.place_id);
+                const reference = externalClasses.find(item => item.id === a.catalog_source_id);
+                const externalPlace = reference && externalPlaces.find(item => item.id === reference.lugar_id);
+                return <LearningPlaceBlock name={internalPlace?.name ?? externalPlace?.nombre} address={a.location || internalPlace?.location || ""} showMap={a.modality !== "online"}
+                  onPress={internalPlace ? () => nav.navigate("LearningProfile", {id:internalPlace.id}) : externalPlace ? () => nav.navigate("ExternalCatalogDetail", {id:externalPlace.id}) : undefined} />;
+              })() : null}
+              <LearningAbout description={a.description} />
+              <LearningPriceCard amount={Number(a.price) === 0 ? "Gratis" : new Intl.NumberFormat("es-AR", {style:"currency",currency:a.currency,minimumFractionDigits:0,maximumFractionDigits:2}).format(Number(a.price))} currency={Number(a.price) > 0 ? a.currency : undefined} unit={a.kind === "course" ? "curso completo" : "entrada individual"} capacity={a.capacity > 0 ? Math.max(0,a.capacity-a.reserved_count) : undefined} />
+              <LearningSchedule sessions={sessions} timezone={a.timezone} teachers={data.profiles.filter(profile => a.teacher_ids.includes(profile.id)).map(profile => profile.name).join(" · ")} />
+              <LearningInviteButton onPress={() => setInviteVisible(true)} />
               <EventInviteSheet classInvite={{id:a.id,title:a.title,date:sessions[0] ? formatSession(sessions[0],a.timezone) : undefined,url:`com.gurudevelopers.vibes://learning/${a.id}`}} visible={inviteVisible} onClose={()=>setInviteVisible(false)} onDiscover={()=>nav.navigate("Tab",{screen:"Discover"})} />
-              <Text style={ui.body}>{a.description}</Text>
-              <Text style={ui.title}>Programa y encuentros</Text>
-              {sessions.map((s, index) => (
-                <View key={s.id} style={ui.card}>
-                  <Text style={ui.title}>
-                    {index + 1}. {s.title}
-                  </Text>
-                  <Text style={ui.body}>{formatSession(s, a.timezone)}</Text>
-                  <Text style={ui.muted}>
-                    {Math.round(
-                      (Date.parse(s.ends_at) - Date.parse(s.starts_at)) / 60000
-                    )}{" "}
-                    minutos · {a.timezone}
-                  </Text>
-                </View>
-              ))}
-              <View style={ui.notice}>
-                <Text style={ui.title}>
-                  {priceLabel(a)}
-                  {a.kind === "course" ? " · precio total" : ""}
-                </Text>
-                <Text style={ui.body}>
-                  {a.capacity - a.reserved_count} cupos disponibles
-                </Text>
-                {paid && a.kind === "course" && (
-                  <Text style={ui.body}>
-                    El pago con Mercado Pago todavía no está disponible. No
-                    podés reservar esta actividad paga por ahora.
-                  </Text>
-                )}
-              </View>
+              {paid && a.kind === "course" ? <Text style={ui.body}>Los pagos desde Vibes todavía no están disponibles.</Text> : null}
               {e && (
                 <Text style={ui.body}>
                   {e.status === "confirmed"
@@ -415,7 +411,7 @@ export function LearningActivityDetail() {
                   }
                 />
               ) : a.kind === "class" ? (
-                <ClassReservationPanel key={a.id} source={{id:a.id,timezone:a.timezone,sessions}} />
+                <ClassReservationEntry id={a.id} />
               ) : (
                 <Button
                   label={
@@ -452,19 +448,13 @@ export function LearningActivityDetail() {
               )}
               {mine && (
                 <>
+                  <LearningActionDock>
                   <Button
                     label="Ver alumnos y asistencia"
                     secondary
                     onPress={() => nav.navigate("LearningRoster", { id: a.id })}
-                  />
-                  {!["cancelled", "completed"].includes(a.status) && (
-                    <Link
-                      label="Editar actividad"
-                      onPress={() =>
-                        nav.navigate("LearningActivityEditor", { id: a.id })
-                      }
-                    />
-                  )}
+                  /></LearningActionDock>
+
                 </>
               )}
               {action.elements}
@@ -1243,7 +1233,8 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
               disabled: locked,
             }}
             disabled={locked}
-            style={[ui.chip, teachers.includes(p.id) && ui.selected]}
+            hitSlop={chipHitSlop}
+            style={[chipStyles.base, teachers.includes(p.id) && chipStyles.selected, locked && chipStyles.disabled]}
             onPress={() =>
               setTeachers((t) =>
                 t.includes(p.id) ? t.filter((id) => id !== p.id) : [...t, p.id]
@@ -1251,7 +1242,7 @@ function ActivityEditorForm({ data, id }: { data: LearningData; id?: string }) {
             }
           >
             <Text
-              style={[ui.chipText, teachers.includes(p.id) && ui.selectedText]}
+              style={[chipStyles.label, teachers.includes(p.id) && chipStyles.labelSelected]}
             >
               {p.name}
             </Text>
@@ -1374,22 +1365,22 @@ export function LearningActivityEditor() {
 }
 
 const explore = StyleSheet.create({
-  toolbar: {flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},
-  subtitle: {flex:1,fontSize:15,lineHeight:22,color:vibesTheme.colors.secondaryText},
-  iconButton: {width:44,height:44,borderRadius:14,alignItems:"center",justifyContent:"center",backgroundColor:`${vibesTheme.colors.secondaryText}0C`},
-  search: {flexDirection:"row",alignItems:"center",gap:10,minHeight:48,paddingHorizontal:14,borderRadius:16,backgroundColor:`${vibesTheme.colors.secondaryText}0C`},
-  searchInput: {flex:1,minHeight:48,fontSize:16,color:vibesTheme.colors.primaryText},
+  toolbar: {flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:ds.spacing[2]},
+  subtitle: {flex:1,...ds.textStyles.body,color:ds.colors.text.secondary},
+  iconButton: {width:44,height:44,borderRadius:ds.radii.lg,alignItems:"center",justifyContent:"center",backgroundColor:ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle)},
+  search: {flexDirection:"row",alignItems:"center",gap:ds.spacing[3],minHeight:48,paddingHorizontal:ds.spacing[4],borderRadius:ds.radii.lg,backgroundColor:ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.subtle)},
+  searchInput: {flex:1,minHeight:48,...ds.textStyles.body,color:ds.colors.text.primary},
   clear: {minWidth:44,minHeight:44,alignItems:"center",justifyContent:"center"},
-  actions: {flexDirection:"row",gap:10},
-  action: {flexDirection:"row",gap:8,minHeight:44,paddingHorizontal:16,paddingVertical:10,borderRadius:999,alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:`${vibesTheme.colors.primaryText}1F`},
-  actionLabel: {fontFamily:vibesTheme.fonts.semibold,fontSize:14,lineHeight:20,color:vibesTheme.colors.primaryText},
-  filterLabel: {fontFamily:vibesTheme.fonts.semibold,fontSize:14,lineHeight:20,color:vibesTheme.colors.accentBlue},
-  activeFilter: {backgroundColor:`${vibesTheme.colors.accentBlue}14`,borderColor:vibesTheme.colors.accentBlue},
-  sectionHint: {fontSize:15,lineHeight:22,color:vibesTheme.colors.secondaryText},
+  actions: {flexDirection:"row",gap:ds.spacing[3]},
+  action: {flexDirection:"row",gap:ds.spacing[2],minHeight:44,paddingHorizontal:ds.spacing[4],paddingVertical:ds.spacing[3],borderRadius:ds.radii.pill,alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:ds.colors.border.default},
+  actionLabel: {...ds.textStyles.label,color:ds.colors.text.primary},
+  filterLabel: {...ds.textStyles.label,color:ds.colors.base.blue},
+  activeFilter: {backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),borderColor:ds.colors.base.blue},
+  sectionHint: {...ds.textStyles.body,color:ds.colors.text.secondary},
   mineLink: {flexDirection:"row",alignItems:"center",justifyContent:"space-between",minHeight:44},
-  sectionTitle: {fontFamily:vibesTheme.fonts.semibold,fontSize:25,lineHeight:29,color:vibesTheme.colors.primaryText,marginTop:8},
-  empty: {paddingVertical:28,paddingHorizontal:16,alignItems:"center",gap:12},
-  emptyIcon: {width:64,height:64,borderRadius:32,backgroundColor:`${vibesTheme.colors.accentBlue}14`,alignItems:"center",justifyContent:"center"},
-  emptyTitle: {fontFamily:vibesTheme.fonts.bold,fontSize:20,lineHeight:26,color:vibesTheme.colors.primaryText,textAlign:"center"},
-  emptyBody: {fontSize:15,lineHeight:22,color:vibesTheme.colors.secondaryText,textAlign:"center",maxWidth:300},
+  sectionTitle: {...ds.textStyles.title,color:ds.colors.text.primary,marginTop:ds.spacing[2]},
+  empty: {paddingVertical:ds.spacing[8],paddingHorizontal:ds.spacing[4],alignItems:"center",gap:ds.spacing[3]},
+  emptyIcon: {width:64,height:64,borderRadius:ds.radii.pill,backgroundColor:ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle),alignItems:"center",justifyContent:"center"},
+  emptyTitle: {...ds.textStyles.heading,color:ds.colors.text.primary,textAlign:"center"},
+  emptyBody: {...ds.textStyles.body,color:ds.colors.text.secondary,textAlign:"center",maxWidth:300},
 });

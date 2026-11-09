@@ -19,10 +19,12 @@ import styles from "../assets/styles";
 import AppHeader from "../components/AppHeader";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
 import { useOnboardingDraft } from "../src/queries/onboarding.queries";
+import { hasNumbersInName } from "../src/lib/onboardingBasics";
 import { useI18n } from "../src/i18n";
+import * as ds from "../src/theme/tokens";
 
 const OnboardingName = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigation = useNavigation();
   const { draft, updateDraft } = useOnboardingDraft();
   const scrollViewRef = useRef<ScrollView | null>(null);
@@ -44,9 +46,12 @@ const OnboardingName = () => {
     }, 80);
   };
 
+  const nameHasNumbers = hasNumbersInName(name);
+  const english = locale.startsWith("en");
+
   const goToNextStep = () => {
     const trimmedName = name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName || hasNumbersInName(trimmedName)) return;
 
     updateDraft({ displayName: trimmedName });
     navigation.navigate("OnboardingAge" as never);
@@ -95,13 +100,24 @@ const OnboardingName = () => {
             </View>
 
 
+            {nameHasNumbers ? (
+              <Text
+                style={localStyles.nameErrorText}
+                accessibilityLiveRegion="polite"
+              >
+                {english
+                  ? "First and last names cannot contain numbers."
+                  : "El nombre y el apellido no pueden contener números."}
+              </Text>
+            ) : null}
+
             <View style={styles.onboardFooter}>
               <TouchableOpacity
                 style={[
                   styles.onboardNext,
-                  !name.trim() && styles.onboardNextDisabled,
+                  (!name.trim() || nameHasNumbers) && styles.onboardNextDisabled,
                 ]}
-                disabled={!name.trim()}
+                disabled={!name.trim() || nameHasNumbers}
                 onPress={goToNextStep}
               >
                 <Text style={styles.onboardNextText}>{t("common.next")}</Text>
@@ -117,6 +133,11 @@ const OnboardingName = () => {
 export default OnboardingName;
 
 const localStyles = StyleSheet.create({
+  nameErrorText: {
+    color: ds.colors.action.destructive,
+    ...ds.textStyles.label,
+    marginTop: ds.spacing[2],
+  },
   keyboard: {
     flex: 1,
   },
@@ -127,7 +148,7 @@ const localStyles = StyleSheet.create({
     width: "100%",
     flex: 1,
     minHeight: 320,
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: ds.spacing[4],
+    marginBottom: ds.spacing[3],
   },
 });

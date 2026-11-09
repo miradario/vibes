@@ -6,6 +6,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Text, TextInput } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { sessionDraft, type EventScheduleDraft, type ScheduleDraftIssue } from "../src/lib/eventSchedule";
+import { buttonContentColor, buttonLabel, buttonStyle } from "./ui/buttonStyles";
+import * as ds from "../src/theme/tokens";
 
 export default function EventScheduleEditor({ value, onChange, allowMultiple = true, issues = [] }: {
   value: EventScheduleDraft[];
@@ -69,7 +71,7 @@ export default function EventScheduleEditor({ value, onChange, allowMultiple = t
     {Platform.OS === "ios" ? <AnimatedSheetModal
       visible={dateIndex !== null}
       onClose={() => setDateIndex(null)}
-      sheetStyle={[styles.dateSheet, { paddingBottom: Math.max(insets.bottom, 16) }]}
+      sheetStyle={[styles.dateSheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[4]) }]}
     >
       <Text accessibilityRole="header" style={styles.sheetTitle}>{editingEnd ? "Fecha de fin" : "Fecha de inicio"}</Text>
       <DateTimePicker value={pendingDate} mode="date" display="spinner"
@@ -96,20 +98,24 @@ export default function EventScheduleEditor({ value, onChange, allowMultiple = t
 }
 const colors = vibesTheme.colors;
 const styles = StyleSheet.create({
-  dateSheet: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
-  sheetTitle: { fontSize: 24, lineHeight: 30, fontFamily: vibesTheme.fonts.bold, color: colors.primaryText },
-  confirm: { minHeight: 56, borderRadius: 999, backgroundColor: colors.primaryText, alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
-  confirmText: { fontSize: 18, lineHeight: 24, fontFamily: vibesTheme.fonts.bold, color: colors.surface },
+  dateSheet: { backgroundColor: colors.surface, borderTopLeftRadius: ds.radii.xl, borderTopRightRadius: ds.radii.xl, padding: ds.spacing[6], gap: ds.spacing[3] },
+  sheetTitle: { ...ds.textStyles.title, color: colors.primaryText },
+  confirm: {
+    ...buttonStyle("primary", "lg"),
+  },
+  confirmText: {
+    ...buttonLabel("lg", "primary"),
+  },
   cancel: { minHeight: 44, alignItems: "center", justifyContent: "center" },
-  cancelText: { fontSize: 18, lineHeight: 24, fontFamily: vibesTheme.fonts.regular, color: colors.secondaryText },
-  container: { gap: 12 },
-  hint: { color: colors.secondaryText, fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.regular },
+  cancelText: { ...ds.textStyles.subtitle, color: colors.secondaryText },
+  container: { gap: ds.spacing[3] },
+  hint: { color: colors.secondaryText, ...ds.textStyles.bodySmall },
   issueText: { width: "100%" },
   issueError: { width: "100%", color: colors.accentBlue },
-  row: { flexDirection: "row", gap: 8, alignItems: "center", flexWrap: "wrap" },
-  date: { flexGrow: 1, padding: 14, borderWidth: 1, borderColor: `${colors.primaryText}1F`, borderRadius: 16, backgroundColor: colors.surface },
-  time: { width: 100, padding: 14, borderWidth: 1, borderColor: `${colors.primaryText}1F`, borderRadius: 16, color: colors.primaryText, fontSize: 16, backgroundColor: colors.surface },
-  remove: { paddingVertical: 14, paddingHorizontal: 8 },
-  add: { padding: 14, borderWidth: 1, borderColor: colors.accentBlue, borderRadius: 16, alignItems: "center" },
-  text: { color: colors.primaryText, fontSize: 16, lineHeight: 24 },
+  row: { flexDirection: "row", gap: ds.spacing[2], alignItems: "center", flexWrap: "wrap" },
+  date: { flexGrow: 1, padding: ds.spacing[4], borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.lg, backgroundColor: colors.surface },
+  time: { width: 100, padding: ds.spacing[4], borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.lg, color: colors.primaryText, ...ds.textStyles.body, backgroundColor: colors.surface },
+  remove: { paddingVertical: ds.spacing[4], paddingHorizontal: ds.spacing[2] },
+  add: { padding: ds.spacing[4], borderWidth: 1, borderColor: colors.accentBlue, borderRadius: ds.radii.lg, alignItems: "center" },
+  text: { color: colors.primaryText, ...ds.textStyles.body },
 });

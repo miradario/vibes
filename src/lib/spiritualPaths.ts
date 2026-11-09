@@ -1,16 +1,5 @@
-export const SPIRITUAL_PATH_OPTIONS = [
-  "Meditación",
-  "Yoga",
-  "Astrología",
-  "Reiki",
-  "El Arte de Vivir",
-  "Ashtanga",
-  "Kundalini",
-  "Hatha Yoga",
-  "Tantra",
-  "Contact",
-  "Otro",
-] as const;
+import { COMMUNITY_OPTIONS, canonicalCommunity } from "./communities";
+export const SPIRITUAL_PATH_OPTIONS: readonly string[] = COMMUNITY_OPTIONS;
 
 export type SpiritualPathDetail = {
   role?: string;
@@ -38,7 +27,7 @@ export const SPIRITUAL_PATH_DETAIL_FIELDS: readonly SpiritualPathDetailFieldConf
   },
   {
     key: "years",
-    label: "Años de práctica",
+    label: "Años en la comunidad",
     placeholder: "Ej. 5",
     keyboardType: "number-pad",
   },
@@ -94,12 +83,12 @@ export const normalizeSpiritualPathDetails = (
 
   return Object.entries(value as Record<string, unknown>).reduce<SpiritualPathDetails>(
     (acc, [path, detail]) => {
-      const trimmedPath = sanitizeText(path);
+      const trimmedPath = canonicalCommunity(path) ?? sanitizeText(path);
       if (!trimmedPath) {
         return acc;
       }
 
-      acc[trimmedPath] = normalizeSpiritualPathDetail(detail);
+      acc[trimmedPath] = { ...acc[trimmedPath], ...normalizeSpiritualPathDetail(detail) };
       return acc;
     },
     {},
@@ -113,7 +102,7 @@ export const getSelectedSpiritualPaths = (
   const selectedPaths = Array.isArray(pathsValue)
     ? pathsValue
         .filter((item): item is string => typeof item === "string")
-        .map((item) => item.trim())
+        .map((item) => canonicalCommunity(item) ?? item.trim())
         .filter(Boolean)
     : [];
   const detailPaths = Object.keys(normalizeSpiritualPathDetails(detailsValue));

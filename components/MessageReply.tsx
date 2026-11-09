@@ -4,7 +4,7 @@ import { Text } from "./Typography";
 import { Icon } from ".";
 import { messagePreview } from "../src/lib/chatPhotos";
 import { getInvitationDisplayText } from "../src/lib/eventInvites";
-import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export type ReplyTarget = { id: string; author: string; body: string };
 
@@ -40,7 +40,7 @@ export function ReplyPreviewBar({
         onPress={onClose}
         style={s.close}
       >
-        <Icon name="close" size={20} color={vibesTheme.colors.secondaryText} />
+        <Icon name="close" size={ds.iconSize.md} color={ds.colors.icon.muted} />
       </TouchableOpacity>
     </View>
   );
@@ -85,39 +85,37 @@ const s = StyleSheet.create({
   bar: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 12,
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingRight: 8,
-    borderRadius: 12,
-    backgroundColor: "rgba(244, 163, 64, 0.10)",
+    marginHorizontal: ds.spacing[3],
+    marginTop: ds.spacing[2],
+    paddingVertical: ds.spacing[2],
+    paddingRight: ds.spacing[2],
+    borderRadius: ds.radii.md,
+    backgroundColor: ds.colors.bg.selected,
   },
   quote: {
     flexDirection: "row",
-    marginBottom: 6,
-    paddingVertical: 6,
-    paddingRight: 8,
-    borderRadius: 10,
-    backgroundColor: "rgba(43, 43, 43, 0.06)",
+    marginBottom: ds.spacing[2],
+    paddingVertical: ds.spacing[2],
+    paddingRight: ds.spacing[2],
+    borderRadius: ds.radii.md,
+    backgroundColor: ds.colors.bg.subtle,
   },
   accent: {
     width: 3,
     alignSelf: "stretch",
-    borderRadius: 2,
-    marginHorizontal: 8,
-    backgroundColor: vibesTheme.colors.accentMustard,
+    borderRadius: ds.radii.pill,
+    marginHorizontal: ds.spacing[2],
+    backgroundColor: ds.colors.border.selected,
   },
   content: { flex: 1 },
   author: {
-    fontSize: 13,
-    color: vibesTheme.colors.accentMustard,
-    fontFamily: vibesTheme.fonts.semibold,
+    ...ds.textStyles.label,
+    color: ds.colors.text.accent,
   },
   snippet: {
-    fontSize: 14,
-    color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.regular,
+    ...ds.textStyles.bodySmall,
+    color: ds.colors.text.secondary,
   },
   missing: { fontStyle: "italic" },
-  close: { padding: 4 },
+  close: { padding: ds.spacing[1] },
 });

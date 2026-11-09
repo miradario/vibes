@@ -942,6 +942,8 @@ export const useSendDirectMessageMutation = () => {
       );
     },
     onSuccess: (msg, _variables, context) => {
+      void queryClient.invalidateQueries({ queryKey: ["vibesSummary", msg.senderId] });
+      void queryClient.invalidateQueries({ queryKey: ["vibesHistory", msg.senderId] });
       queryClient.setQueryData<DirectMessage[]>(
         dmKeys.byMatch(msg.matchId),
         (prev) => {

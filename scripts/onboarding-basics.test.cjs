@@ -1,3 +1,4 @@
+const pureTs = require('./helpers/load-pure-ts.cjs');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -7,7 +8,7 @@ const load = file => {
   const api = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS },
-  }).outputText, { exports: api });
+  }).outputText, { exports: api, require: name => pureTs.dependency(file,name) });
   return api;
 };
 const basics = load('src/lib/onboardingBasics.ts');
@@ -29,4 +30,19 @@ test('the decision to continue comes immediately after basics, before every opti
   for (const name of ['purpose', 'location', 'practices', 'identity', 'interests'])
     assert.ok(steps.indexOf(name) > steps.indexOf('continueChoice'));
   assert.equal(steps[steps.length - 1], 'completion');
+});
+
+test('the later about-you step keeps its original position before identity', () => {
+  const { VIBES_ONBOARDING_STEPS: steps } = load('src/screens/Onboarding/vibesOnboardingContent.ts');
+  assert.equal(steps.indexOf('practices') + 1, steps.indexOf('identity'));
+});
+
+test('signup rejects numbers in either name, including Unicode numbers', () => {
+  for (const name of ['123', 'Ana123', 'Ana 2', 'Ana１２', 'Ana١٢', 'Ana²']) {
+    assert.equal(basics.hasOnboardingBasics(name, ''), false, name);
+    assert.equal(basics.hasOnboardingBasics('Ana', name), false, name);
+  }
+  for (const name of ['María José', 'Jean-Luc', "O’Connor", '李明']) {
+    assert.equal(basics.hasOnboardingBasics(name, ''), true, name);
+  }
 });

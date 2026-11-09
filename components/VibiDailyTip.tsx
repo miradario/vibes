@@ -4,6 +4,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../src/lib/supabase";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { Text } from "./Typography";
+import Icon from "./Icon";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle, buttonVariant } from "./ui/buttonStyles";
+import * as ds from "../src/theme/tokens";
 
 type Guide = { detail: string; actions: string[] };
 const validGuide = (value: unknown): value is Guide => {
@@ -19,6 +22,22 @@ const validGuide = (value: unknown): value is Guide => {
     )
   );
 };
+
+const HISTORY_KEY = (userId: string) => `vibiDailyTipHistory:${userId}`;
+const HISTORY_SIZE = 14;
+const readHistory = async (userId: string): Promise<string[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(HISTORY_KEY(userId));
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
+};
+const summarize = (guide: Guide) =>
+  [guide.detail.slice(0, 200), ...guide.actions].join(" | ");
 
 export default function VibiDailyTip({
   userId,
@@ -68,20 +87,33 @@ export default function VibiDailyTip({
       const { data, error: requestError } = await supabase.functions.invoke(
         "daily-guide",
         {
-          body: { locale: "es" },
+          body: { locale: "es", recent: await readHistory(userId) },
           timeout: 60000,
         }
       );
-      if (requestError || !validGuide(data))
-        throw new Error("guide_unavailable");
+      if (requestError) {
+        const status = (requestError as { context?: { status?: number } })
+          .context?.status;
+        throw new Error(status === 429 ? "rate_limit" : "guide_unavailable");
+      }
+      if (!validGuide(data)) throw new Error("guide_unavailable");
       if (current !== generation.current) return;
       setGuide(data);
       await AsyncStorage.setItem(cacheKey, JSON.stringify(data)).catch(
         () => {}
       );
-    } catch {
+      const history = await readHistory(userId);
+      await AsyncStorage.setItem(
+        HISTORY_KEY(userId),
+        JSON.stringify([summarize(data), ...history].slice(0, HISTORY_SIZE))
+      ).catch(() => {});
+    } catch (caught) {
       if (current === generation.current)
-        setError("No pude generar tu consejo. Podés intentar de nuevo.");
+        setError(
+          caught instanceof Error && caught.message === "rate_limit"
+            ? "Ya pediste varios consejos hoy. Volvé mañana por uno nuevo."
+            : "No pude generar tu consejo. Podés intentar de nuevo."
+        );
     } finally {
       if (current === generation.current) {
         inFlight.current = false;
@@ -131,7 +163,7 @@ export default function VibiDailyTip({
             disabled={busy}
             accessibilityState={{ disabled: busy, busy }}
             onPress={() => void generate()}
-            style={[s.button, busy && { opacity: 0.5 }]}
+            style={[s.button, busy && buttonDisabled]}
           >
             <Text style={s.buttonText}>
               {busy
@@ -147,8 +179,9 @@ export default function VibiDailyTip({
         <TouchableOpacity
           accessibilityRole="button"
           onPress={onClose}
-          style={s.button}
+          style={[s.button, s.doneButton]}
         >
+          <Icon name="heart-outline" size={ds.iconSize.lg} color={buttonContentColor["accent"]} />
           <Text style={s.buttonText}>Listo</Text>
         </TouchableOpacity>
       ) : null}
@@ -162,11 +195,11 @@ export default function VibiDailyTip({
 }
 const s = StyleSheet.create({
   card: {
-    marginTop: 24,
-    padding: 16,
-    gap: 12,
-    borderRadius: 18,
-    backgroundColor: "rgba(244, 163, 64, 0.16)",
+    marginTop: ds.spacing[6],
+    padding: ds.spacing[4],
+    gap: ds.spacing[3],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.colors.bg.selected,
   },
   // Sí/No step: the buttons sit directly on the sheet, without the tinted card.
   cardBare: {
@@ -174,36 +207,22 @@ const s = StyleSheet.create({
     borderRadius: 0,
     backgroundColor: "transparent",
   },
-  choices: { flexDirection: "row", gap: 12 },
+  choices: { flexDirection: "row", gap: ds.spacing[3] },
   choice: { flex: 1 },
-  secondary: {
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: vibesTheme.colors.secondaryText,
-  },
+  secondary: { ...buttonVariant.secondary },
   title: {
     color: vibesTheme.colors.primaryText,
-    fontSize: 20,
-    lineHeight: 26,
-    fontFamily: vibesTheme.fonts.medium,
+    ...ds.textStyles.heading,
   },
   copy: {
     color: vibesTheme.colors.secondaryText,
-    fontSize: 18,
-    lineHeight: 27,
+    ...ds.textStyles.body,
   },
   button: {
-    minHeight: 48,
-    padding: 12,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
+    ...buttonStyle("accent", "md"),
   },
+  doneButton: { flexDirection: "row", gap: ds.spacing[2] },
   buttonText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    lineHeight: 24,
-    fontFamily: vibesTheme.fonts.medium,
+    ...buttonLabel("md", "accent"),
   },
 });

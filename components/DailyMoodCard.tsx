@@ -16,7 +16,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../src/lib/supabase";
 import { localDayKey, MOODS } from "../src/lib/profileQuestions";
 import { useCalmMotion } from "../src/hooks/useCalmMotion";
-import { vibesTheme } from "../src/theme/vibesTheme";
 import AnimatedSheetModal from "./AnimatedSheetModal";
 import Vibi from "./Vibi";
 import { useNavigation } from "@react-navigation/native";
@@ -25,8 +24,12 @@ import VibiDailyTip from "./VibiDailyTip";
 import {
   ENERGY_SOURCES,
   getVibiDailyPrompt,
-  claimVibiDailyGreeting,
+  claimVibiDailyGreetingForDay,
 } from "../src/lib/vibiDailyPrompts";
+import { buttonContentColor, buttonDisabled, buttonLabel, buttonStyle } from "./ui/buttonStyles";
+import { chipHitSlop, chipIcon, chipStyles } from "./ui/chipStyles";
+import RadioOption from "./ui/RadioOption";
+import * as ds from "../src/theme/tokens";
 
 export default function DailyMoodCard({
   userId,
@@ -147,10 +150,16 @@ export default function DailyMoodCard({
       return;
     }
     if (!enabled || !userId) return;
+    let cancelled = false;
     const timer = setTimeout(() => {
-      if (claimVibiDailyGreeting(userId)) setOpen(true);
+      void claimVibiDailyGreetingForDay(userId, day).then((claimed) => {
+        if (claimed && !cancelled) setOpen(true);
+      });
     }, 350);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [visible, enabled, userId, day]);
 
   const dismiss = () => {
@@ -163,6 +172,7 @@ export default function DailyMoodCard({
       return;
     }
     if (!userId || loading || savingRef.current) return;
+    if (prompt.kind === "service" && service === null) return;
     if (localDayKey() !== day) {
       setDay(localDayKey());
       return;
@@ -217,7 +227,7 @@ export default function DailyMoodCard({
         s.sheet,
         {
           maxHeight: height - insets.top - 16,
-          paddingBottom: Math.max(insets.bottom, 16),
+          paddingBottom: Math.max(insets.bottom, ds.spacing[4]),
         },
       ]}
     >
@@ -240,12 +250,12 @@ export default function DailyMoodCard({
           >
             <Ionicons
               name="close"
-              size={23}
-              color={vibesTheme.colors.secondaryText}
+              size={ds.iconSize.lg}
+              color={ds.colors.text.secondary}
             />
           </TouchableOpacity>
         </View>
-        <Text accessibilityRole="header" style={[s.title, prompt.kind === "energy" && { fontSize: 32, lineHeight: 39 }]}>
+        <Text accessibilityRole="header" style={[s.title, prompt.kind === "energy" && { ...ds.textStyles.display }]}>
           {prompt.title}
         </Text>
         {prompt.kind === "mood" ? (
@@ -269,27 +279,24 @@ export default function DailyMoodCard({
                         : [...current, mood]
                     )
                   }
-                  style={[s.option, selected && s.selected]}
-                  activeOpacity={0.75}
+                  hitSlop={chipHitSlop}
+                  style={[chipStyles.base, selected && chipStyles.selected, (loading || saving) && chipStyles.disabled]}
+                  activeOpacity={ds.opacity.pressed}
                 >
-                  <Text style={[s.optionText, selected && s.selectedText]}>
+                  <Text style={[chipStyles.label, selected && chipStyles.labelSelected]}>
                     {mood}
                   </Text>
                   <Ionicons
                     name={selected ? "checkmark-circle" : "ellipse-outline"}
-                    size={18}
-                    color={
-                      selected
-                        ? vibesTheme.colors.primaryText
-                        : vibesTheme.colors.accentBlue
-                    }
+                    size={chipIcon.size}
+                    color={selected ? chipIcon.selectedColor : chipIcon.color}
                   />
                 </TouchableOpacity>
               );
             })}
           </View>
         ) : prompt.kind === "energy" ? (
-          <View style={{ gap: 8 }}>
+          <View style={{ gap: ds.spacing[2] }}>
             <Text style={s.privacyText}>
               Del 1 (muy bajo) al 10 (muy alto).
             </Text>
@@ -310,22 +317,19 @@ export default function DailyMoodCard({
             <Text style={s.subtitle}>
               Dar servicio cambia tu vida. Puede ser un pequeño gesto de ayuda.
             </Text>
-            <View style={s.options}>
-              {[true, false].map((value) => (
-                <TouchableOpacity
-                  key={String(value)}
-                  accessibilityRole="radio"
-                  accessibilityState={{
-                    selected: service === value,
-                    disabled: loading || saving,
-                  }}
-                  disabled={loading || saving}
-                  onPress={() => setService(value)}
-                  style={[s.option, service === value && s.selected]}
-                >
-                  <Text style={s.scoreText}>{value ? "Sí" : "Todavía no"}</Text>
-                </TouchableOpacity>
-              ))}
+            <View accessibilityRole="radiogroup" accessibilityLabel={prompt.title} style={s.energySource}>
+              <RadioOption
+                label="Sí"
+                selected={service === true}
+                onPress={() => setService(true)}
+                disabled={loading || saving}
+              />
+              <RadioOption
+                label="Todavía no"
+                selected={service === false}
+                onPress={() => setService(false)}
+                disabled={loading || saving}
+              />
             </View>
           </View>
         ) : prompt.kind === "person" ? (
@@ -338,7 +342,7 @@ export default function DailyMoodCard({
                 accessibilityRole="button"
                 disabled={!vibiEnabled}
                 accessibilityState={{ disabled: !vibiEnabled }}
-                style={[s.save, !vibiEnabled && { opacity: 0.5 }]}
+                style={[s.save, !vibiEnabled && buttonDisabled]}
                 onPress={() => {
                   dismiss();
                   navigation.navigate("Vibi", {
@@ -350,10 +354,10 @@ export default function DailyMoodCard({
               </TouchableOpacity>
               <TouchableOpacity
                 accessibilityRole="button"
-                style={s.option}
+                style={s.no}
                 onPress={dismiss}
               >
-                <Text style={s.scoreText}>No</Text>
+                <Text style={s.noText}>No</Text>
               </TouchableOpacity>
             </View>
             {!vibiEnabled ? (
@@ -386,7 +390,7 @@ export default function DailyMoodCard({
             accessibilityState={{ disabled: saveDisabled, busy: saving }}
             disabled={saveDisabled}
             onPress={() => void (loadFailed ? load() : save())}
-            style={[s.save, saveDisabled && { opacity: 0.5 }]}
+            style={[s.save, saveDisabled && buttonDisabled]}
           >
             <Text style={s.saveText}>
               {saving ? "Guardando…" : loadFailed ? "Reintentar" : "Guardar"}
@@ -407,42 +411,40 @@ export default function DailyMoodCard({
 }
 const s = StyleSheet.create({
   sheet: {
-    backgroundColor: vibesTheme.colors.background,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    backgroundColor: ds.colors.bg.surface,
+    borderTopLeftRadius: ds.radii.xl,
+    borderTopRightRadius: ds.radii.xl,
     maxWidth: 540,
     alignSelf: "center",
   },
   handle: {
     width: 38,
     height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(216, 140, 122, 0.39)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.coral, ds.opacity.strong),
     alignSelf: "center",
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: ds.spacing[3],
+    marginBottom: ds.spacing[1],
   },
-  content: { paddingHorizontal: 24, paddingBottom: 10 },
+  content: { paddingHorizontal: ds.spacing[6], paddingBottom: ds.spacing[3] },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: ds.spacing[3],
   },
-  author: { flexDirection: "row", alignItems: "center", gap: 8 },
+  author: { flexDirection: "row", alignItems: "center", gap: ds.spacing[2] },
   authorText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 18,
-    fontFamily: vibesTheme.fonts.medium,
+    color: ds.colors.text.primary,
+    ...ds.textStyles.heading,
   },
-  energySources: { gap: 20 },
-  energySource: { gap: 8 },
-  scoreText: { color: vibesTheme.colors.primaryText, fontSize: 16 },
+  energySources: { gap: ds.spacing[5] },
+  energySource: { gap: ds.spacing[2] },
   heroIcon: {
     width: 54,
     height: 54,
-    borderRadius: 27,
-    backgroundColor: "rgba(244, 163, 64, 0.32)",
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.mustard, ds.opacity.scrim),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -453,87 +455,53 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   eyebrow: {
-    fontSize: 10,
+    ...ds.textStyles.caption,
     letterSpacing: 2,
-    color: vibesTheme.colors.secondaryText,
-    marginBottom: 10,
+    color: ds.colors.text.secondary,
+    marginBottom: ds.spacing[3],
   },
   title: {
-    marginBottom: 14,
-    fontSize: 27,
-    lineHeight: 33,
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.medium,
+    marginBottom: ds.spacing[4],
+    ...ds.textStyles.title,
+    color: ds.colors.text.primary,
   },
   subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: vibesTheme.colors.secondaryText,
-    marginTop: 8,
-    marginBottom: 20,
+    ...ds.textStyles.body,
+    color: ds.colors.text.secondary,
+    marginTop: ds.spacing[2],
+    marginBottom: ds.spacing[5],
   },
-  options: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-    minHeight: 48,
-    paddingVertical: 10,
-    paddingHorizontal: 13,
-    borderRadius: 17,
-    backgroundColor: vibesTheme.colors.background,
-    borderWidth: 1,
-    borderColor: "rgba(110, 110, 110, 0.30)",
-  },
-  selected: {
-    backgroundColor: "rgba(244, 163, 64, 0.39)",
-    borderColor: vibesTheme.colors.accentMustard,
-  },
-  optionText: {
-    fontSize: 14,
-    color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    flexShrink: 1,
-  },
-  selectedText: { color: vibesTheme.colors.primaryText },
+  options: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
+  no: { ...buttonStyle("secondary", "lg") },
+  noText: { ...buttonLabel("lg", "secondary") },
   privacy: {
     flexDirection: "row",
-    gap: 6,
+    gap: ds.spacing[2],
     alignItems: "center",
-    marginTop: 18,
+    marginTop: ds.spacing[4],
   },
   privacyText: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: vibesTheme.colors.secondaryText,
+    ...ds.textStyles.caption,
+    color: ds.colors.text.secondary,
     flexShrink: 1,
   },
   error: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 10,
+    color: ds.colors.text.primary,
+    ...ds.textStyles.bodySmall,
+    marginTop: ds.spacing[3],
   },
-  footer: { paddingHorizontal: 24, paddingTop: 10 },
+  footer: { paddingHorizontal: ds.spacing[6], paddingTop: ds.spacing[3] },
   save: {
-    minHeight: 52,
-    padding: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: vibesTheme.colors.accentMustard,
-    borderRadius: 20,
+    ...buttonStyle("accent", "lg"),
   },
   saveText: {
-    color: vibesTheme.colors.primaryText,
-    fontSize: 17,
-    fontFamily: vibesTheme.fonts.medium,
+    ...buttonLabel("lg", "accent"),
   },
   skip: {
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
+    padding: ds.spacing[3],
   },
-  skipText: { color: vibesTheme.colors.secondaryText, fontSize: 15 },
+  skipText: { color: ds.colors.text.secondary, ...ds.textStyles.body },
 });

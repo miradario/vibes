@@ -19,10 +19,11 @@ import { useVibiEnabled } from "../src/featureFlags/useVibiEnabled";
 import { useVibi } from "../src/vibi/useVibi";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
 import { setVisible } from "../src/vibi/controller";
+import * as ds from "../src/theme/tokens";
 
 const OVERLAY_SCALE = 0.8;
 const SIZE = 64 * OVERLAY_SCALE;
-const BUTTON_PADDING = vibesTheme.spacing.sm * OVERLAY_SCALE;
+const BUTTON_PADDING = vibesTheme.spacing[2] * OVERLAY_SCALE;
 const BUTTON_BORDER = 2 * OVERLAY_SCALE;
 const BUTTON_SIZE = SIZE + (BUTTON_PADDING + BUTTON_BORDER) * 2;
 const CLOSE_SPACE = 36 * OVERLAY_SCALE;
@@ -280,12 +281,12 @@ const styles = StyleSheet.create({
     // photos or cards underneath (Home and every screen where it floats).
     backgroundColor: colors.surface,
     borderWidth: BUTTON_BORDER,
-    borderColor: `${colors.accentBlue}59`,
-    shadowColor: colors.primaryText,
-    shadowOpacity: 0.18,
+    borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.scrim),
+    shadowColor: ds.shadows.lg.shadowColor,
+    shadowOpacity: ds.shadows.lg.shadowOpacity,
     shadowRadius: 10 * OVERLAY_SCALE,
-    shadowOffset: { width: 0, height: 4 * OVERLAY_SCALE },
-    elevation: 6,
+    shadowOffset: ds.shadows.lg.shadowOffset,
+    elevation: ds.shadows.lg.elevation,
   },
   control: {
     position: "absolute",
@@ -305,10 +306,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.borderSoft,
-    shadowColor: colors.primaryText,
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    ...ds.shadows.sm,
   },
 });

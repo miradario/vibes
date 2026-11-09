@@ -1,3 +1,4 @@
+import { COMMUNITY_OPTIONS } from "../../lib/communities";
 export const VIBES_ONBOARDING_STEPS = [
   "profileText",
   "profile",
@@ -59,22 +60,7 @@ export const ENERGY_OPTIONS: OnboardingOption[] = [
 
 export const AGE_RANGES = ["18-24", "25-34", "35-44", "45-54", "55+"] as const;
 
-export const PRACTICE_OPTIONS = [
-  "Meditación",
-  "Yoga",
-  "Art of Living",
-  "Mindfulness",
-  "Running",
-  "Bikram",
-  "Vipassana",
-  "Ashtanga",
-  "Baile",
-  "Canto",
-  "Tantra",
-  "Contact",
-  "Música",
-  "Otras",
-] as const;
+export const PRACTICE_OPTIONS: readonly string[] = COMMUNITY_OPTIONS;
 
 export const STEP_COPY: Record<
   VibesOnboardingStep,
@@ -106,8 +92,8 @@ export const STEP_COPY: Record<
     button: "Siguiente",
   },
   practices: {
-    title: "Prácticas que te inspiran",
-    subtitle: "Seleccioná las que forman parte de tu camino",
+    title: "Tus comunidades",
+    subtitle: "Elegí una o varias. Serán tus filtros por defecto en la app",
     button: "Siguiente",
   },
   identity: {

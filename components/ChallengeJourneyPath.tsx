@@ -6,13 +6,16 @@ import { Text } from "./Typography";
 import Icon from "./Icon";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { useVibiRuntime } from "../src/vibi/useMotionPreference";
+import * as ds from "../src/theme/tokens";
 
 const c = vibesTheme.colors;
 const PITCH = 94;
 const TOP = 42;
 
-export default function ChallengeJourneyPath({ totalDays, currentDay, completedDays }: {
+export default function ChallengeJourneyPath({ totalDays, currentDay, completedDays, play = true }: {
   totalDays: number; currentDay: number; completedDays: number[];
+  /** When false, the mascot waits at the start until the section is visible. */
+  play?: boolean;
 }) {
   const [width, setWidth] = useState(300);
   const focused = useIsFocused();
@@ -39,7 +42,7 @@ export default function ChallengeJourneyPath({ totalDays, currentDay, completedD
   }, [target, width]);
   useEffect(() => {
     travel.stopAnimation(); float.stopAnimation();
-    if (!motionReady || !active || !focused) return;
+    if (!motionReady || !active || !focused || !play) return;
     if (reducedMotion) { travel.setValue(1); float.setValue(0); return; }
     travel.setValue(0); float.setValue(0);
     const arrival = Animated.timing(travel, { toValue: 1, duration: Math.max(900, target * 650), easing: Easing.inOut(Easing.cubic), useNativeDriver: true });
@@ -49,7 +52,7 @@ export default function ChallengeJourneyPath({ totalDays, currentDay, completedD
     ]));
     arrival.start(); breathing.start();
     return () => { arrival.stop(); breathing.stop(); };
-  }, [active, focused, reducedMotion, motionReady, target, width, travel, float]);
+  }, [active, focused, reducedMotion, motionReady, play, target, width, travel, float]);
   const range = points.map((_, i) => i / (points.length - 1));
   return <View onLayout={event => setWidth(event.nativeEvent.layout.width)}>
     <Text style={s.count}>{completedDays.filter(day => day >= 1 && day <= totalDays).length} de {totalDays} días completados</Text>
@@ -66,10 +69,10 @@ export default function ChallengeJourneyPath({ totalDays, currentDay, completedD
         const isToday = day === currentDay;
         return <View key={day} style={[s.dayRow, { top: y(i) - 22, left: x(i) - 22 }]}>
           {isToday ? <Text style={s.today}>HOY</Text> : null}
-          <View style={[s.node, (done || isToday) && s.nodeActive, isToday && s.current]}>
-            {done ? <Icon name="checkmark" size={25} color={c.surface} /> : <Text style={[s.number, isToday && { color: c.surface }]}>{day}</Text>}
+          <View style={[s.node, done && s.nodeActive, isToday && s.current, isToday && !done && s.currentPending]}>
+            {done ? <Icon name="checkmark" size={ds.iconSize.lg} color={c.surface} /> : <Text style={[s.number, isToday && { color: c.accentBlue }]}>{day}</Text>}
           </View>
-          <Text numberOfLines={isToday ? 2 : 1} style={[s.dayLabel, { maxWidth: width - x(i) - 36 }, isToday && s.currentLabel]}>{isToday ? (done ? "¡Completaste el desafío hoy!" : "Aún debes completar el desafío hoy") : `Día ${day}`}</Text>
+          <Text numberOfLines={isToday ? 2 : 1} style={[s.dayLabel, { maxWidth: width - x(i) - 36 }, isToday && s.currentLabel]}>{isToday ? (done ? "¡Completaste el desafío hoy!" : "Aún debes completarlo") : `Día ${day}`}</Text>
         </View>;
       })}
       <Animated.View pointerEvents="none" style={[s.mascot, { transform: [
@@ -85,15 +88,16 @@ export default function ChallengeJourneyPath({ totalDays, currentDay, completedD
   </View>;
 }
 const s = StyleSheet.create({
-  count: { color: c.secondaryText, fontSize: 16, fontFamily: vibesTheme.fonts.semibold, marginBottom: 20 },
-  dayRow: { position: "absolute", flexDirection: "row", alignItems: "center", gap: 14 },
-  node: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface, borderWidth: 2, borderColor: `${c.secondaryText}40`, alignItems: "center", justifyContent: "center" },
+  count: { color: c.secondaryText, ...ds.textStyles.subtitle, marginBottom: ds.spacing[5] },
+  dayRow: { position: "absolute", flexDirection: "row", alignItems: "center", gap: ds.spacing[4] },
+  node: { width: 44, height: 44, borderRadius: ds.radii.pill, backgroundColor: c.surface, borderWidth: 2, borderColor: ds.withAlpha(ds.colors.base.inkSoft, ds.opacity.medium), alignItems: "center", justifyContent: "center" },
   nodeActive: { backgroundColor: c.accentBlue, borderColor: c.accentBlue },
-  current: { transform: [{ scale: 1.15 }], borderWidth: 5, borderColor: `${c.accentBlue}40` },
-  number: { fontFamily: vibesTheme.fonts.bold, fontSize: 20, color: c.secondaryText },
-  today: { position: "absolute", top: -28, left: 0, color: c.accentBlue, fontFamily: vibesTheme.fonts.bold, fontSize: 13 },
-  dayLabel: { fontSize: 15, color: c.secondaryText, fontFamily: vibesTheme.fonts.medium },
+  currentPending: { backgroundColor: c.surface, borderColor: c.accentBlue, borderWidth: 3 },
+  current: { transform: [{ scale: 1.15 }], borderWidth: 5, borderColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.medium) },
+  number: { ...ds.textStyles.heading, color: c.secondaryText },
+  today: { position: "absolute", top: -28, left: 0, color: c.accentBlue, ...ds.textStyles.label },
+  dayLabel: { ...ds.textStyles.subtitleMedium, color: c.secondaryText },
   currentLabel: { color: c.primaryText, fontFamily: vibesTheme.fonts.bold },
   mascot: { position: "absolute", left: 0, top: 0 },
-  more: { color: c.secondaryText, fontSize: 12, textAlign: "center", marginBottom: 12 },
+  more: { color: c.secondaryText, ...ds.textStyles.caption, textAlign: "center", marginBottom: ds.spacing[3] },
 });

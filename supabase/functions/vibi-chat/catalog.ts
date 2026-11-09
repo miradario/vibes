@@ -1,3 +1,4 @@
+import { matchesCommunities, defaultCommunities } from "../_shared/communities.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import {
   type Candidate,
@@ -192,7 +193,7 @@ export async function loadCatalog(
     ],
   ] as const) {
     for (const item of items) {
-      if (!visibleActivity(item, type, joined, creators)) continue;
+      if (!visibleActivity(item, type, joined, creators) || !matchesCommunities(item, defaultCommunities(ownPreferences))) continue;
       candidates.push({
         id: item.id,
         type,

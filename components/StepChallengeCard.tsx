@@ -5,7 +5,8 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Text } from "./Typography";
 import Icon from "./Icon";
 import VibesActionButton from "./VibesActionButton";
-import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
+import { cardStyles } from "./ui/surfaceStyles";
 import { formatStepCount, getStepProgress } from "../src/lib/stepChallenge";
 import { healthSourceName, type HealthAvailability } from "../src/health/healthSteps";
 
@@ -54,7 +55,7 @@ const StepChallengeCard = ({
   return (
     <View style={styles.card} accessible={false}>
       <View style={styles.header}>
-        <Icon name="walk-outline" size={24} color={vibesTheme.colors.accentBlue} />
+        <Icon name="walk-outline" size={ds.iconSize.lg} color={ds.colors.base.blue} />
         <Text style={styles.title}>Meta diaria: {goalLabel}</Text>
       </View>
       {connected ? (
@@ -74,7 +75,7 @@ const StepChallengeCard = ({
       <Text style={styles.body}>{body}</Text>
       {action ? (
         connecting ? (
-          <ActivityIndicator color={vibesTheme.colors.accentBlue} style={styles.loader} />
+          <ActivityIndicator color={ds.colors.base.blue} style={styles.loader} />
         ) : (
           <VibesActionButton label={action} variant="outline" onPress={onConnect} style={styles.button} />
         )
@@ -84,53 +85,21 @@ const StepChallengeCard = ({
 };
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 24,
-    backgroundColor: "rgba(254, 254, 253, 0.96)",
-    borderWidth: 1,
-    borderColor: "rgba(43, 43, 43, 0.08)",
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    gap: 12,
-    shadowColor: vibesTheme.colors.secondaryText,
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  header: { flexDirection: "row", alignItems: "center", gap: 12 },
-  title: {
-    flex: 1,
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.semibold,
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  progressBlock: { gap: 8 },
-  progressLabel: {
-    color: vibesTheme.colors.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
-    fontSize: 22,
-    lineHeight: 28,
-  },
+  card: { ...cardStyles.base, ...cardStyles.padding, gap: ds.spacing[3] },
+  header: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3] },
+  title: { flex: 1, color: ds.colors.text.primary, ...ds.textStyles.subtitle },
+  progressBlock: { gap: ds.spacing[2] },
+  progressLabel: { color: ds.colors.text.primary, ...ds.textStyles.title },
   track: {
-    height: 10,
-    borderRadius: vibesTheme.radii.pill,
-    backgroundColor: "rgba(57, 120, 184, 0.18)",
+    height: ds.spacing[2],
+    borderRadius: ds.radii.pill,
+    backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.soft),
     overflow: "hidden",
   },
-  fill: {
-    height: "100%",
-    borderRadius: vibesTheme.radii.pill,
-    backgroundColor: vibesTheme.colors.accentBlue,
-  },
-  body: {
-    color: vibesTheme.colors.secondaryText,
-    fontFamily: vibesTheme.fonts.medium,
-    fontSize: 15,
-    lineHeight: 21,
-  },
+  fill: { height: "100%", borderRadius: ds.radii.pill, backgroundColor: ds.colors.base.blue },
+  body: { color: ds.colors.text.secondary, ...ds.textStyles.bodySmall },
   button: { alignSelf: "stretch" },
-  loader: { paddingVertical: 14 },
+  loader: { paddingVertical: ds.spacing[4] },
 });
 
 export default memo(StepChallengeCard);

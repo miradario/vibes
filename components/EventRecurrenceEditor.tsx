@@ -1,8 +1,11 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Text, TextInput } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
 import { formatSession, type EventSession } from "../src/lib/eventSchedule";
+import SegmentedControl from "./ui/SegmentedControl";
+import DayPill from "./ui/DayPill";
+import * as ds from "../src/theme/tokens";
 
 export type EventRecurrenceDraft = { frequency: "none" | "weekly" | "monthly"; count: string; weekdays: number[] };
 const days = [[1, "L", "Lunes"], [2, "M", "Martes"], [3, "M", "Miércoles"], [4, "J", "Jueves"], [5, "V", "Viernes"], [6, "S", "Sábado"], [0, "D", "Domingo"]] as const;
@@ -17,22 +20,18 @@ export default function EventRecurrenceEditor({ value, onChange, defaultWeekday,
   const countValid = /^\d+$/.test(value.count) && Number(value.count) >= 2 && Number(value.count) <= 52;
   return <View style={s.group}>
     <Text style={s.label}>Repetir evento</Text>
-    <View style={s.options}>
-      {([["none", "No repetir"], ["weekly", "Semanal"], ["monthly", "Mensual"]] as const).map(([frequency, label]) => <TouchableOpacity
-        key={frequency} accessibilityRole="button" accessibilityState={{ selected: value.frequency === frequency }}
-        style={[s.option, value.frequency === frequency && s.selected]} onPress={() => onChange({ ...value, frequency })}>
-        <Text style={s.optionText}>{label}</Text>
-      </TouchableOpacity>)}
-    </View>
+    <SegmentedControl
+      options={[{ key: "none", label: "No repetir" }, { key: "weekly", label: "Semanal" }, { key: "monthly", label: "Mensual" }] as const}
+      selected={value.frequency} onChange={(frequency) => onChange({ ...value, frequency })} />
     {value.frequency !== "none" ? <>
       {value.frequency === "weekly" ? <>
         <Text style={s.label}>Días de la semana</Text>
-        <View style={s.options}>{days.map(([day, letter, label]) => <TouchableOpacity key={day} accessibilityRole="button" accessibilityLabel={label}
-          accessibilityState={{ selected: weekdays.includes(day) }} style={[s.day, weekdays.includes(day) && s.selected]}
+        <View style={s.options}>{days.map(([day, letter, label]) => <DayPill key={day} variant="selectable" label={letter} accessibilityLabel={label}
+          selected={weekdays.includes(day)}
           onPress={() => {
             const next = weekdays.includes(day) ? weekdays.filter(item => item !== day) : [...weekdays, day];
             if (next.length) onChange({ ...value, weekdays: next });
-          }}><Text style={s.optionText}>{letter}</Text></TouchableOpacity>)}</View>
+          }} />)}</View>
       </> : <Text style={s.hint}>Se repite el mismo día de cada mes. Si ese día no existe, se usa el último día del mes.</Text>}
       <Text style={s.label}>Cantidad de encuentros</Text>
       <TextInput value={value.count} onChangeText={count => onChange({ ...value, count: count.replace(/\D/g, "") })}
@@ -49,14 +48,10 @@ export default function EventRecurrenceEditor({ value, onChange, defaultWeekday,
 }
 const c = vibesTheme.colors;
 const s = StyleSheet.create({
-  group: { gap: 8, marginTop: 20 },
-  label: { fontSize: 14, lineHeight: 20, color: c.primaryText, fontFamily: vibesTheme.fonts.semibold },
-  options: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  option: { minHeight: 40, justifyContent: "center", paddingHorizontal: 14, paddingVertical: 0, borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 16, backgroundColor: c.surface },
-  day: { flexGrow: 1, minWidth: 36, minHeight: 40, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 12, backgroundColor: c.surface },
-  selected: { borderColor: c.accentMustard, backgroundColor: `${c.accentMustard}24` },
-  optionText: { fontSize: 14, lineHeight: 20, color: c.primaryText, fontFamily: vibesTheme.fonts.semibold },
-  hint: { fontSize: 14, lineHeight: 20, color: c.secondaryText, fontFamily: vibesTheme.fonts.regular },
-  input: { minHeight: 48, borderWidth: 1, borderColor: `${c.primaryText}1F`, borderRadius: 16, padding: 12, color: c.primaryText, backgroundColor: c.surface, fontSize: 16, fontFamily: vibesTheme.fonts.regular },
-  preview: { gap: 6, padding: 16, borderRadius: 16, backgroundColor: `${c.accentBlue}14` },
+  group: { gap: ds.spacing[2], marginTop: ds.spacing[5] },
+  label: { ...ds.textStyles.label, color: c.primaryText },
+  options: { flexDirection: "row", flexWrap: "wrap", gap: ds.spacing[2] },
+  hint: { ...ds.textStyles.bodySmall, color: c.secondaryText },
+  input: { minHeight: 48, borderWidth: 1, borderColor: ds.colors.border.default, borderRadius: ds.radii.lg, padding: ds.spacing[3], color: c.primaryText, backgroundColor: c.surface, ...ds.textStyles.body },
+  preview: { gap: ds.spacing[2], padding: ds.spacing[4], borderRadius: ds.radii.lg, backgroundColor: ds.withAlpha(ds.colors.base.blue, ds.opacity.subtle) },
 });

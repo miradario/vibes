@@ -27,9 +27,8 @@ export function homeSuggestionScore(candidate: Profile, own: Profile, range: Ran
   const locationScore = typeof distance === "number" && Number.isFinite(distance) && distance >= 0
     ? 1 / (1 + distance / 30)
     : ownCity && ownCity === candidateCity ? 1 : 0;
-  const tastes = overlap(selected(own, "spiritualPath", "spiritual_path"), selected(candidate, "spiritualPath", "spiritual_path"));
   const purposes = overlap(selected(own, "openTo", "open_to"), selected(candidate, "openTo", "open_to"));
-  return ageScore + locationScore + tastes + purposes;
+  return ageScore + locationScore + purposes;
 }
 
 export function rankHomeSuggestions<T extends Profile>(candidates: T[], own: Profile, range: Range): T[] {

@@ -6,6 +6,7 @@ import { Image as ExpoImage } from "expo-image";
 import VibesLoader from "./VibesLoader";
 import BrandImagePlaceholder from "./BrandImagePlaceholder";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 type ProfileMediaImageProps = {
   source?: any;
@@ -60,6 +61,7 @@ const ProfileMediaImage = ({
   const canPreview = typeof preview === "number" || hasValidUri(preview);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [displayedKey, setDisplayedKey] = useState<string | null>(null);
+  const [backgroundReadyKey, setBackgroundReadyKey] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [imageSize, setImageSize] = useState<{ key: string; width: number; height: number } | null>(null);
 
@@ -112,11 +114,13 @@ const ProfileMediaImage = ({
   const isPortrait = resolvedSize && resolvedSize.height > resolvedSize.width;
   const layoutReady = !blurBackground || Boolean(resolvedSize);
   const resolvedFit = blurBackground ? (isPortrait && contentFit === "cover" ? "cover" : "contain") : contentFit;
+  const needsBackground = blurBackground && Boolean(resolvedSize) && !(isPortrait && contentFit === "cover");
+  const compositionReady = layoutReady && (!needsBackground || backgroundReadyKey === sourceKey);
   useEffect(() => {
-    if (displayedKey !== sourceKey || !layoutReady || notifiedRequest.current === request) return;
+    if (displayedKey !== sourceKey || !compositionReady || notifiedRequest.current === request) return;
     notifiedRequest.current = request;
     displayCallback.current?.();
-  }, [displayedKey, sourceKey, layoutReady, request]);
+  }, [displayedKey, sourceKey, compositionReady, request]);
   const hasError = errorKey === sourceKey;
   const loading = canRenderSource && !hasError && displayedKey !== sourceKey;
   useEffect(() => {
@@ -130,19 +134,21 @@ const ProfileMediaImage = ({
   return (
     <View style={[styles.container, { backgroundColor: fallbackBackgroundColor }, style]}>
       {!canRenderSource ? <BrandImagePlaceholder /> : null}
-        {canPreview ? <ExpoImage source={imageCacheSource(preview)} style={StyleSheet.absoluteFillObject}
-          contentFit="cover" cachePolicy="memory-disk" transition={0} blurRadius={blurRadius}
+        {canPreview ? <ExpoImage source={imageCacheSource(preview)} style={[StyleSheet.absoluteFillObject, { opacity: compositionReady && displayedKey === sourceKey ? 1 : 0 }]}
+          contentFit={resolvedFit} cachePolicy="memory-disk" transition={0} blurRadius={blurRadius}
           priority={priority} accessible={false} /> : null}
       {canRenderSource && !hasError ? (
         <>
-        {blurBackground && resolvedSize && !(isPortrait && contentFit === "cover") ? (
+        {needsBackground ? (
           <ExpoImage
             recyclingKey={`background-${sourceKey}`}
             source={imageCacheSource(source)}
-            style={[StyleSheet.absoluteFillObject, { transform: [{ scale: 1.08 }] }]}
+            style={[StyleSheet.absoluteFillObject, { opacity: compositionReady && displayedKey === sourceKey ? 1 : 0, transform: [{ scale: 1.08 }] }]}
             cachePolicy="memory-disk"
             contentFit="cover"
-            priority="low"
+            priority={priority}
+            onDisplay={() => { if (activeRequest.current === request) setBackgroundReadyKey(sourceKey); }}
+            onError={() => { if (activeRequest.current === request) setBackgroundReadyKey(sourceKey); }}
             blurRadius={Math.max(24, blurRadius)}
             transition={0}
             accessible={false}
@@ -155,7 +161,7 @@ const ProfileMediaImage = ({
           placeholder={canPreview ? imageCacheSource(preview) : undefined}
           placeholderContentFit={resolvedFit}
           blurRadius={blurRadius}
-          style={[StyleSheet.absoluteFillObject, { opacity: layoutReady ? 1 : 0 }]}
+          style={[StyleSheet.absoluteFillObject, { opacity: compositionReady && displayedKey === sourceKey ? 1 : 0 }]}
           cachePolicy="memory-disk"
           priority={priority}
           contentFit={resolvedFit}
@@ -180,11 +186,11 @@ const ProfileMediaImage = ({
         </View>
       ) : null}
       {hasError ? (
-        <View style={[styles.loading, canPreview ? { top: undefined, paddingVertical: 10, backgroundColor: `${vibesTheme.colors.background}E6` } : { backgroundColor: fallbackBackgroundColor }]}>
-          <Text style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", marginBottom: 12 }}>No se pudo cargar la foto.</Text>
+        <View style={[styles.loading, canPreview ? { top: undefined, paddingVertical: ds.spacing[3], backgroundColor: ds.colors.bg.surfaceTranslucent } : { backgroundColor: fallbackBackgroundColor }]}>
+          <Text style={{ color: vibesTheme.colors.secondaryText, textAlign: "center", marginBottom: ds.spacing[3] }}>No se pudo cargar la foto.</Text>
           <TouchableOpacity accessibilityRole="button" onPress={() => {
             retries.current.count = 0; setErrorKey(null); setDisplayedKey(null); setAttempt(value => value + 1);
-          }} style={{ padding: 12 }}>
+          }} style={{ padding: ds.spacing[3] }}>
             <Text style={{ color: vibesTheme.colors.accentBlue }}>Reintentar</Text>
           </TouchableOpacity>
         </View>

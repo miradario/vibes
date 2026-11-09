@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
-import { candidatesKeys } from "./candidates.queries";
+import { candidatesKeys, outgoingConnectionKeys } from "./candidates.queries";
 import { matchKeys } from "./matches.queries";
 import { supabase } from "../lib/supabase";
+import { maybeRequestStoreReview } from "../lib/storeReview";
 import { useAuthSession } from "../auth/auth.queries";
 import type { GetCandidatesResponse } from "../api/modules/candidates/candidates.types";
+import { hasNumbersInName } from "../lib/onboardingBasics";
 
 type SwipeInput = {
   targetUserId: string;
@@ -48,10 +50,14 @@ const ensureProfileExists = async (
   userId: string,
   fallbackName?: string | null
 ) => {
-  const displayName =
+  // Email local-parts often contain digits (grazzini14, …). The DB CHECK
+  // profiles_display_name_no_digits rejects those, so fall back to "Vibes".
+  const trimmed =
     typeof fallbackName === "string" && fallbackName.trim().length > 0
       ? fallbackName.trim()
-      : "Vibes";
+      : "";
+  const displayName =
+    trimmed && !hasNumbersInName(trimmed) ? trimmed : "Vibes";
 
   const { error } = await supabase.from("profiles").upsert(
     {
@@ -247,6 +253,13 @@ export const useSwipeMutation = () => {
 
       return { previous };
     },
+    onSuccess: (result, payload) => {
+      if (payload.direction === "like") {
+        queryClient.setQueryData<string[]>(outgoingConnectionKeys.user(session?.user?.id), previous =>
+          Array.from(new Set([...(previous ?? []), payload.targetUserId])));
+      }
+      if (result.match) void maybeRequestStoreReview();
+    },
     onError: (_error, _payload, context) => {
       context?.previous.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
@@ -255,6 +268,7 @@ export const useSwipeMutation = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: candidatesKeys.all });
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
+      queryClient.invalidateQueries({ queryKey: outgoingConnectionKeys.all });
     },
   });
 };

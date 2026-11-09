@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type DailyGuideBody = { locale?: unknown };
+type DailyGuideBody = { locale?: unknown; recent?: unknown };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,8 +29,20 @@ const parseBody = async (req: Request): Promise<DailyGuideBody> => {
     : {};
 };
 
+const recentTips = (body: DailyGuideBody) =>
+  Array.isArray(body.recent)
+    ? body.recent.map(sanitize).filter(Boolean).slice(0, 14).map((tip) => tip.slice(0, 400))
+    : [];
+
+const DEFAULT_DAILY_LIMIT = 5;
+const dailyLimit = () => {
+  const parsed = Number.parseInt(Deno.env.get("DAILY_GUIDE_DAILY_LIMIT") ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DAILY_LIMIT;
+};
+
 const buildPrompt = (body: DailyGuideBody) => {
   const isEnglish = body.locale === "en";
+  const recent = recentTips(body);
   return [
     "Sos Guru Vibes, una guía cálida dentro de una app de bienestar llamada Vibes.",
     "Creá un consejo general para responder: ¿cómo tener un gran día hoy?",
@@ -41,6 +53,10 @@ const buildPrompt = (body: DailyGuideBody) => {
     "detail desarrolla el consejo en un párrafo de 300 a 550 caracteres.",
     "actions contiene exactamente tres acciones breves, realistas y diferentes para hoy.",
     "No uses markdown, hashtags ni comillas decorativas.",
+    "Elegí un enfoque concreto y distinto cada vez (por ejemplo descanso, vínculos, cuerpo, naturaleza, foco, gratitud, servicio, alimentación, respiración, creatividad).",
+    recent.length
+      ? `No repitas ni parafrasees estos consejos que la persona ya recibió; usá otro enfoque y otras acciones: ${recent.map((tip, i) => `(${i + 1}) ${tip}`).join(" ")}`
+      : "",
     isEnglish
       ? "Write the entire response in natural English."
       : "Escribí toda la respuesta en español rioplatense.",
@@ -76,6 +92,22 @@ Deno.serve(async (req) => {
     const openaiKey = Deno.env.get("OPENAI_API_KEY")?.trim();
     const providerKey = deepseekKey || openaiKey;
     if (!providerKey) return json({ error: "not_configured" }, 503);
+
+    // Per-user quota, checked before spending provider credits.
+    const admin = createClient(getEnv("SUPABASE_URL"), getEnv("SUPABASE_SERVICE_ROLE_KEY"), {
+      auth: { persistSession: false },
+    });
+    const claim = await admin.rpc("daily_guide_claim", {
+      p_user_id: user.id,
+      p_daily_limit: dailyLimit(),
+    });
+    if (claim.error?.message?.includes("daily_guide_rate_limit")) {
+      return json({ error: "rate_limit", message: "Daily guide limit reached. Try again tomorrow." }, 429);
+    }
+    if (claim.error) {
+      console.error("[daily-guide] quota check failed", claim.error.message);
+      return json({ error: "Unexpected error" }, 500);
+    }
     const endpoint = deepseekKey
       ? "https://api.deepseek.com/chat/completions"
       : "https://api.openai.com/v1/chat/completions";
@@ -93,7 +125,7 @@ Deno.serve(async (req) => {
         model,
         ...(deepseekKey ? { thinking: { type: "disabled" } } : {}),
         max_tokens: 1000,
-        temperature: 0.85,
+        temperature: 1,
         response_format: { type: "json_object" },
         messages: [
           {

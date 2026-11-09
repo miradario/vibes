@@ -1,5 +1,7 @@
 import { hasProfilePhotos, comparePhotoPriority } from "../lib/profilePhotos";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { mapSupabaseSelect } from "../api/mappers/case.mapper";
 import type {
   Candidate,
@@ -372,22 +374,74 @@ export const useCandidatesQuery = (
   const normalizedAgeRange =
     ageRange && (ageRange.min !== null || ageRange.max !== null) ? ageRange : undefined;
 
+  const queryClient = useQueryClient();
+  const queryKey = [
+    ...candidatesKeys.list(currentUserId, params),
+    photoPreview ? "home-preview" : "discovery",
+    normalizedAgeRange?.min ?? null,
+    normalizedAgeRange?.max ?? null,
+  ];
+  const cacheKey = `vibes:home-people:v1:${JSON.stringify(queryKey)}`;
+  useEffect(() => {
+    if (!photoPreview || !currentUserId || !enabled) return;
+    let active = true;
+    void AsyncStorage.getItem(cacheKey).then(raw => {
+      if (!raw || !active) return;
+      const cached = JSON.parse(raw);
+      const age = Date.now() - cached.savedAt;
+      if (!Array.isArray(cached.data) || !Number.isFinite(age) || age < 0 || age > 15 * 60_000) return;
+      // A completed request always wins over a slower disk read.
+      if (queryClient.getQueryData(queryKey) === undefined) {
+        queryClient.setQueryData(queryKey, cached.data, { updatedAt: cached.savedAt });
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [cacheKey, currentUserId, enabled, photoPreview, queryClient]);
+
   return useQuery<GetCandidatesResponse>({
-    queryKey: [
-      ...candidatesKeys.list(currentUserId, params),
-      photoPreview ? "home-preview" : "discovery",
-      normalizedAgeRange?.min ?? null,
-      normalizedAgeRange?.max ?? null,
-    ],
+    queryKey,
     enabled: Boolean(currentUserId) && enabled,
-    queryFn: () =>
-      fetchCandidates(currentUserId, params, false, undefined, photoPreview, normalizedAgeRange),
+    queryFn: async () => {
+      const data = await fetchCandidates(currentUserId, params, false, undefined, photoPreview, normalizedAgeRange);
+      if (photoPreview) {
+        void AsyncStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data })).catch(() => {});
+      }
+      return data;
+    },
     retry: 1,
     retryDelay: 1000,
     staleTime: 5 * 60_000,
-    refetchOnMount: false,
+    refetchOnMount: photoPreview ? "always" : false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchInterval: false,
   });
 };
+
+/** All outgoing connections, without the discovery RPC's recent-swipe window. */
+export const outgoingConnectionKeys = {
+  all: ["outgoing-connections"] as const,
+  user: (userId?: string) => ["outgoing-connections", userId ?? "anonymous"] as const,
+};
+
+export function useOutgoingConnectionsQuery(userId?: string, enabled = true) {
+  return useQuery<string[]>({
+    queryKey: outgoingConnectionKeys.user(userId),
+    enabled: Boolean(userId) && enabled,
+    queryFn: async () => {
+      const ids: string[] = [];
+      const pageSize = 500;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase.from("swipes")
+          .select("target_id").eq("swiper_id", userId!).eq("direction", "like")
+          .order("target_id").range(from, from + pageSize - 1);
+        if (error) throw error;
+        ids.push(...(data ?? []).map(row => String(row.target_id)));
+        if (!data || data.length < pageSize) break;
+      }
+      return ids;
+    },
+    staleTime: 30_000,
+    refetchOnMount: "always",
+  });
+}

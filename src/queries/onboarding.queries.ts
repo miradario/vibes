@@ -13,6 +13,7 @@ import { upsertUserPreferences } from "../lib/userPreferencesStore";
 import { profileKeys } from "./profile.queries";
 import { userPreferencesKeys } from "./userPreferences.queries";
 import { assertAcceptableContent } from "../lib/moderation";
+import { hasNumbersInName } from "../lib/onboardingBasics";
 
 const PROFILE_PICTURES_BUCKET = "profile pictures";
 
@@ -357,9 +358,16 @@ export const useCompleteOnboardingMutation = () => {
         ...(draft.otherTags ?? []),
       ]);
 
+      const trimmedDisplayName = draft.displayName?.trim() ?? "";
+      if (hasNumbersInName(trimmedDisplayName)) {
+        throw new Error(
+          "El nombre y el apellido no pueden contener números."
+        );
+      }
+
       const payload: Record<string, unknown> = {
         id: userId,
-        display_name: draft.displayName?.trim() ?? "",
+        display_name: trimmedDisplayName,
         gender_id: draft.genderId ?? DEFAULT_GENDER_ID,
         intent_id: draft.intentId ?? DEFAULT_INTENT_ID,
       };
@@ -385,6 +393,7 @@ export const useCompleteOnboardingMutation = () => {
       await runOnboardingStep("Preferencias", () =>
         upsertUserPreferences(userId, {
           spiritual_path: draft.spiritualPath ?? [],
+          discover_spiritual_paths: draft.spiritualPath ?? [],
           spiritual_path_details: draft.spiritualPathDetails ?? {},
           vegetarian: draft.vegetarian || "No",
           about_me: draft.aboutMe?.trim() ?? "",

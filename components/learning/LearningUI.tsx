@@ -1,3 +1,5 @@
+import BackButton from "../BackButton";
+import { LearningDockHost } from "./LearningActionDock";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -10,12 +12,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getBottomTabContentPadding } from "../../src/lib/tabBarLayout";
 import { useNavigation } from "@react-navigation/native";
-import { BookOpen, ChevronLeft, ChevronRight, MapPin } from "lucide-react-native";
+import { BookOpen, ChevronRight, MapPin } from "lucide-react-native";
 import { Text, TextInput } from "../Typography";
 import ScreenContainer from "../ScreenContainer";
-import VibesActionButton from "../VibesActionButton";
+import { buttonStyle, buttonLabel, buttonDisabled } from "../ui/buttonStyles";
 import AnimatedSheetModal from "../AnimatedSheetModal";
-import { vibesTheme } from "../../src/theme/vibesTheme";
 import { useLearningEnabled } from "../../src/featureFlags/useLearningEnabled";
 import {
   learningError,
@@ -37,89 +38,69 @@ import type {
 import * as ImagePicker from "expo-image-picker";
 import { uploadImageToSupabase } from "../../src/lib/supabaseStorage";
 import { useAuthSession } from "../../src/auth/auth.queries";
-const c = vibesTheme.colors;
+import { cardStyles } from "../ui/surfaceStyles";
+import { chipHitSlop, chipStyles } from "../ui/chipStyles";
+import * as ds from "../../src/theme/tokens";
 export const ui = StyleSheet.create({
-  page: { flex: 1, backgroundColor: c.background },
+  page: { flex: 1, backgroundColor: ds.colors.bg.screen },
   content: {
-    padding: 24,
-    paddingBottom: 48,
+    padding: ds.spacing[6],
+    paddingBottom: ds.spacing[12],
     width: "100%",
     maxWidth: 740,
     alignSelf: "center",
-    gap: 16,
+    gap: ds.spacing[4],
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: ds.spacing[3],
     flexWrap: "wrap",
   },
   grow: { flex: 1 },
   heading: {
-    fontSize: 26,
-    lineHeight: 32,
-    color: c.primaryText,
-    fontFamily: vibesTheme.fonts.bold,
+    ...ds.textStyles.title,
+    color: ds.colors.text.primary,
   },
-  title: { fontSize: 24, lineHeight: 30, fontFamily: vibesTheme.fonts.bold, color: c.primaryText },
-  body: { fontSize: 16, lineHeight: 24, fontFamily: vibesTheme.fonts.regular, color: c.primaryText },
-  muted: { fontSize: 15, lineHeight: 22, color: c.secondaryText },
-  card: {
-    borderWidth: 1,
-    borderColor: c.borderSoft,
-    borderRadius: 24,
-    padding: 16,
-    gap: 10,
-    backgroundColor: c.surface,
-  },
+  title: { ...ds.textStyles.title, color: ds.colors.text.primary },
+  body: { ...ds.textStyles.body, color: ds.colors.text.primary },
+  muted: { ...ds.textStyles.body, color: ds.colors.text.secondary },
+  card: { ...cardStyles.base, padding: ds.spacing[4], gap: ds.spacing[3] },
   input: {
     borderWidth: 1,
-    borderColor: `${c.primaryText}1F`,
-    borderRadius: 16,
+    borderColor: ds.colors.border.default,
+    borderRadius: ds.radii.lg,
     minHeight: 48,
-    padding: 14,
-    color: c.primaryText,
-    fontSize: 16,
-    backgroundColor: c.surface,
+    padding: ds.spacing[4],
+    color: ds.colors.text.primary,
+    ...ds.textStyles.body,
+    backgroundColor: ds.colors.bg.surface,
   },
-  chip: {
-    borderWidth: 1,
-    borderColor: `${c.primaryText}1F`,
-    borderRadius: 24,
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  selected: { backgroundColor: `${c.accentMustard}24`, borderColor: c.accentMustard },
-  chipText: { fontSize: 14, lineHeight: 20, fontFamily: vibesTheme.fonts.semibold, color: c.primaryText },
-  selectedText: { color: c.primaryText },
-  link: { color: c.accentBlue, fontSize: 18 },
-  photo: { width: 92, height: 100, borderRadius: 16 },
-  cover: { height: 190, width: "100%", borderRadius: 18 },
+  link: { color: ds.colors.base.blue, ...ds.textStyles.body },
+  photo: { width: 92, height: 100, borderRadius: ds.radii.lg },
+  cover: { height: 190, width: "100%", borderRadius: ds.radii.lg },
   fallback: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(244, 163, 64, 0.12)",
+    backgroundColor: ds.colors.bg.selected,
   },
   notice: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: "rgba(57, 120, 184, 0.10)",
-    gap: 8,
+    padding: ds.spacing[4],
+    borderRadius: ds.radii.lg,
+    backgroundColor: ds.colors.feedback.infoBg,
+    gap: ds.spacing[2],
   },
-  error: { backgroundColor: "rgba(216, 140, 122, 0.15)" },
-  primaryText: { color: c.primaryText },
+  error: { backgroundColor: ds.colors.feedback.errorBg },
+  primaryText: { color: ds.colors.text.primary },
   secondaryButton: {
-    backgroundColor: c.surface,
-    borderColor: c.accentBlue,
+    backgroundColor: ds.colors.bg.surface,
+    borderColor: ds.colors.base.blue,
     borderWidth: 1,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...ds.shadows.none,
   },
   disabled: { opacity: 0.5 },
-  sheet: { backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 18, maxHeight: "85%" },
-  tiny: { fontSize: 15, color: c.secondaryText },
+  sheet: { backgroundColor: ds.colors.bg.surface, borderTopLeftRadius: ds.radii.xl, borderTopRightRadius: ds.radii.xl, padding: ds.spacing[6], gap: ds.spacing[4], maxHeight: "85%" },
+  tiny: { ...ds.textStyles.body, color: ds.colors.text.secondary },
 });
 export function Button({
   label,
@@ -133,13 +114,10 @@ export function Button({
   secondary?: boolean;
 }) {
   return (
-    <VibesActionButton
-      label={label}
-      onPress={onPress}
-      disabled={disabled}
-      textStyle={ui.primaryText}
-      style={[secondary && ui.secondaryButton, disabled && ui.disabled]}
-    />
+    <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled }} onPress={onPress} disabled={disabled} activeOpacity={ds.opacity.pressed}
+      style={[buttonStyle(secondary ? "secondary" : "accent", "lg"), disabled && buttonDisabled]}>
+      <Text style={buttonLabel("lg", secondary ? "secondary" : "accent")}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 export function Link({
@@ -157,9 +135,10 @@ export function Link({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[{ paddingVertical: 8 }, disabled && ui.disabled]}
+      style={[{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: ds.spacing[2], paddingVertical: ds.spacing[2] }, disabled && ui.disabled]}
     >
-      <Text style={ui.link}>{label}</Text>
+      <Text style={[ui.link, { flex: 1 }]}>{label.replace(/\s*→\s*/g, " · ")}</Text>
+      <ChevronRight size={ds.iconSize.md} color={ds.colors.icon.default} />
     </TouchableOpacity>
   );
 }
@@ -204,7 +183,7 @@ export function ImageField({
     }
   };
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: ds.spacing[3] }}>
       <Field
         label={label}
         value={value}
@@ -238,7 +217,7 @@ export function Chips({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 8 }}
+      contentContainerStyle={{ gap: ds.spacing[2] }}
     >
       {options.map((o) => (
         <TouchableOpacity
@@ -246,9 +225,10 @@ export function Chips({
           accessibilityRole="button"
           accessibilityState={{ selected: o.value === value }}
           onPress={() => onChange(o.value)}
-          style={[ui.chip, o.value === value && ui.selected]}
+          hitSlop={chipHitSlop}
+          style={[chipStyles.base, o.value === value && chipStyles.selected]}
         >
-          <Text style={[ui.chipText, o.value === value && ui.selectedText]}>
+          <Text style={[chipStyles.label, o.value === value && chipStyles.labelSelected]}>
             {o.label}
           </Text>
         </TouchableOpacity>
@@ -274,7 +254,7 @@ export function Field({
   editable?: boolean;
 }) {
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: ds.spacing[2] }}>
       <Text style={ui.body}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
@@ -311,42 +291,38 @@ export function Photo({
     />
   ) : (
     <View style={[cover ? ui.cover : ui.photo, ui.fallback]}>
-      <BookOpen color={c.accentMustard} size={36} />
+      <BookOpen color={ds.colors.base.mustard} size={36} />
     </View>
   );
 }
 export function Page({
   title,
   embedded = false,
+  headerAction,
   children,
 }: {
   title: string;
   embedded?: boolean;
+  headerAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const nav = useNavigation();
   const insets = useSafeAreaInsets();
   return (
-    <ScreenContainer
+    <LearningDockHost><ScreenContainer
       scroll
       style={ui.page}
-      edges={embedded ? [] : ["top", "left", "right", "bottom"]}
+      edges={embedded ? [] : ["top", "left", "right"]}
       contentContainerStyle={[ui.content, embedded && {paddingBottom: getBottomTabContentPadding(insets.bottom, 48)}]}
       scrollViewProps={{ keyboardShouldPersistTaps: "handled" }}
     >
       {!embedded && <View style={ui.row}>
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          onPress={() => nav.goBack()}
-          style={{ padding: 8 }}
-        >
-          <ChevronLeft color={c.accentBlue} size={28} />
-        </TouchableOpacity>
+        <BackButton onPress={() => nav.goBack()} />
         <Text style={[ui.heading, ui.grow]}>{title}</Text>
+        {headerAction}
       </View>}
       {children}
-    </ScreenContainer>
+    </ScreenContainer></LearningDockHost>
   );
 }
 export function LearningGate({
@@ -372,7 +348,7 @@ export function LearningGate({
   if (query.isPending)
     return (
       <View style={ui.notice}>
-        <ActivityIndicator color={c.accentBlue} />
+        <ActivityIndicator color={ds.colors.base.blue} />
         <Text style={ui.body}>Cargando clases y espacios…</Text>
       </View>
     );
@@ -427,10 +403,10 @@ export function ProfileCard({
         <Text style={ui.muted}>{modalityLabels[profile.modality]}</Text>
         {!!profile.location && (
           <Text style={ui.muted}>
-            <MapPin size={15} color={c.secondaryText} /> {profile.location}
+            <MapPin size={15} color={ds.colors.text.secondary} /> {profile.location}
           </Text>
         )}
-        <Text style={ui.link}>Ver perfil →</Text>
+        <View style={ui.row}><Text style={ui.link}>Ver perfil</Text><ChevronRight size={ds.iconSize.md} color={ds.colors.icon.default} /></View>
       </View>
     </TouchableOpacity>
   );
@@ -464,7 +440,7 @@ export function ActivityCard({
         <Text style={exploreCard.meta} numberOfLines={1}>{teachers.map(p => p.name).join(" · ") || modalityLabels[activity.modality]}</Text>
         <Text style={exploreCard.meta} numberOfLines={1}>{[activity.location, priceLabel(activity)].filter(Boolean).join(" · ")}</Text>
       </View>
-      <ChevronRight size={20} color={c.secondaryText} />
+      <ChevronRight size={20} color={ds.colors.text.secondary} />
     </TouchableOpacity>
   );
   return (
@@ -559,7 +535,7 @@ export function useLearningAction() {
             if (!mutation.isPending) setConfirmation(null);
           }}
           closeOnBackdropPress={!mutation.isPending}
-          sheetStyle={[ui.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}
+          sheetStyle={[ui.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[6]) }]}
         >
           <Text style={ui.title}>Confirmar acción</Text>
           <Text style={ui.body}>{confirmation?.text}</Text>
@@ -605,10 +581,10 @@ export const modalityOptions = Object.entries(modalityLabels).map(
 export { statusLabels };
 
 const exploreCard = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", gap: 12, padding: 10, borderRadius: 20, borderWidth: 1, borderColor: `${c.primaryText}14`, backgroundColor: c.surface },
-  image: { width: 92, height: 100, borderRadius: 14, overflow: "hidden" },
-  copy: { flex: 1, gap: 3 },
-  title: { fontFamily: vibesTheme.fonts.bold, fontSize: 17, lineHeight: 23, color: c.primaryText },
-  date: { fontFamily: vibesTheme.fonts.medium, fontSize: 14, lineHeight: 20, color: c.accentBlue },
-  meta: { fontSize: 13, lineHeight: 18, color: c.secondaryText },
+  row: { flexDirection: "row", alignItems: "center", gap: ds.spacing[3], padding: ds.spacing[3], borderRadius: ds.radii.xl, borderWidth: 1, borderColor: ds.colors.bg.subtle, backgroundColor: ds.colors.bg.surface },
+  image: { width: 92, height: 100, borderRadius: ds.radii.lg, overflow: "hidden" },
+  copy: { flex: 1, gap: ds.spacing[1] },
+  title: { ...ds.textStyles.subtitle, color: ds.colors.text.primary },
+  date: { ...ds.textStyles.labelMedium, color: ds.colors.base.blue },
+  meta: { ...ds.textStyles.bodySmall, color: ds.colors.text.secondary },
 });

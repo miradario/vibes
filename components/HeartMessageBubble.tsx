@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Text } from "./Typography";
 import { vibesTheme } from "../src/theme/vibesTheme";
+import * as ds from "../src/theme/tokens";
 
 export default function HeartMessageBubble({
   children,
@@ -87,15 +88,15 @@ export default function HeartMessageBubble({
   );
 }
 // User-requested exception: stronger red only for message-heart reactions.
-const MESSAGE_HEART_RED = "#C62828";
+const MESSAGE_HEART_RED = ds.colors.base.coral;
 const s = StyleSheet.create({
-  container: { marginBottom: 12, flexShrink: 1 },
+  container: { marginBottom: ds.spacing[3], flexShrink: 1 },
   reaction: {
-    alignSelf: "flex-end", marginTop: 9, marginBottom: -23,
-    paddingHorizontal: 5, borderRadius: 10, overflow: "hidden",
+    alignSelf: "flex-end", marginTop: ds.spacing[2], marginBottom: -ds.spacing[6],
+    paddingHorizontal: ds.spacing[1], borderRadius: ds.radii.md, overflow: "hidden",
     backgroundColor: vibesTheme.colors.surface,
     borderWidth: 1, borderColor: MESSAGE_HEART_RED,
-    color: MESSAGE_HEART_RED, fontSize: 14, lineHeight: 18,
+    color: MESSAGE_HEART_RED, ...ds.textStyles.bodySmall, 
   },
-  liked: { fontWeight: "700" },
+  liked: { fontFamily: ds.fontFamilies.bold },
 });

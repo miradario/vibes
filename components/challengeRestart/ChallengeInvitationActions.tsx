@@ -8,6 +8,7 @@ import {
   useRespondChallengeInvitationMutation,
   type ReceivedChallengeInvitation,
 } from "../../src/queries/challengeRestart.queries";
+import * as ds from "../../src/theme/tokens";
 
 /** Footer for an invitee of a private challenge: accept joins, reject never joins. */
 export default function ChallengeInvitationActions({
@@ -31,7 +32,7 @@ export default function ChallengeInvitationActions({
       },
     );
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: ds.spacing[2] }}>
       <Text style={restartStyles.statusText}>
         {t(invitation.status === "rejected" ? "challengeRestart.statusRejected" : "challengeRestart.statusPending")}
       </Text>

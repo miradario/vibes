@@ -83,6 +83,8 @@ export function useLearningMutation() {
     }) => learningRpc(name, args),
     onSuccess: async () => {
       await Promise.all([
+        client.invalidateQueries({ queryKey: ["vibesSummary"] }),
+        client.invalidateQueries({ queryKey: ["vibesHistory"] }),
         client.invalidateQueries({ queryKey: ["learning"] }),
         client.invalidateQueries({ queryKey: ["communityGroups"] }),
         client.invalidateQueries({ queryKey: ["communityGroupMembers"] }),

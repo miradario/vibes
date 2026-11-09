@@ -1,19 +1,27 @@
 import { PixelRatio } from "react-native";
+import { componentSize } from "../theme/tokens/sizes";
 
 export const TAB_BAR_TOP_SPACE = 12;
-// The row already leaves space below its labels; avoid counting it twice.
+// Keep labels clear of the gesture area, including devices without a bottom inset.
 export const getTabBarBottomPadding = (insetBottom: number) =>
-  Math.max(0, insetBottom - 12);
+  Math.max(12, insetBottom);
 /** Raised selected-tab bubble in CustomTabBar (size and top offset in the bar root). */
-export const TAB_FLOATING_BUTTON_SIZE = 48;
-export const TAB_FLOATING_TOP = 6;
+export const TAB_FLOATING_BUTTON_SIZE = componentSize.tabBubble;
+export const TAB_FLOATING_TOP = componentSize.tabBubbleRise;
 
 export const getBottomTabBarHeight = (fontScale = PixelRatio.getFontScale()) =>
   Math.max(64, 36 + 28 * fontScale);
 
+/**
+ * Espacio mínimo debajo del contenido scrolleable de las pestañas para que el último
+ * ítem no quede tapado por la barra flotante (barra + safe area + aire), en equipos sin
+ * inset inferior. Con inset, manda el cálculo real de la barra.
+ */
+export const TAB_BAR_CONTENT_CLEARANCE = 118;
+
 export const getBottomTabContentPadding = (
   insetBottom: number,
-  minimumPadding: number
+  minimumPadding: number = TAB_BAR_CONTENT_CLEARANCE
 ) => {
   const barAndGap =
     getBottomTabBarHeight() + getTabBarBottomPadding(insetBottom) + TAB_BAR_TOP_SPACE + 20;

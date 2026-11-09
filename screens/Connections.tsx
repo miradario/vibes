@@ -26,7 +26,7 @@ export default function Connections() {
         initialMessagesTab={route.params?.initialMessagesTab}
         showHeader={false}
         contentTopPadding={8}
-        contentBottomPadding={getBottomTabContentPadding(insets.bottom, 118)}
+        contentBottomPadding={getBottomTabContentPadding(insets.bottom)}
       />
     </SafeAreaView>
   );
