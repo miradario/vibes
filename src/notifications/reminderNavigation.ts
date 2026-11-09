@@ -1,6 +1,6 @@
 export const getReminderDestination = (data: Record<string, unknown>) => {
   if (typeof data.eventId !== "string" || !data.eventId.trim()) return null;
-  if (data.type === "challenge_reminder") {
+  if (data.type === "challenge_reminder" || data.type === "challenge_health_checkin") {
     return { name: "ChallengeDetailScreen", params: { challengeId: data.eventId, event: undefined } };
   }
   if (data.type === "event_reminder") {

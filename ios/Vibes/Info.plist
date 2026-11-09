@@ -61,6 +61,8 @@
 	<string>Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Vibes uses your location while the app is open to suggest nearby people and events, for example filling in your city during onboarding.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Vibes lee tus pasos de Apple Salud para marcar solo el día en los desafíos de pasos cuando llegás a la meta, por ejemplo 1000 pasos por día. Tus pasos no salen del celular.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -101,6 +103,14 @@
 	</array>
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.expo.modules.backgroundtask.processing</string>
+	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 </dict>

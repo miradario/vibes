@@ -47,6 +47,7 @@ function setup(userId, ownerId = 'owner') {
     if (name === '../lib/supabase') return { supabase };
     if (name === '../constants/challengeMediaPresets') return media;
     if (name === '../lib/moderation') return { assertAcceptableContent() {} };
+    if (name === '../lib/stepChallenge') return load('src/lib/stepChallenge.ts', () => ({}));
     return {};
   });
   return { mutation: api.useUpdateChallengeMutation(), updates, touchedTables, filters, original, cacheWrites };
