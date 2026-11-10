@@ -4,6 +4,7 @@ export const getChallengeContentLabel = (day: number) =>
   day === ALL_CHALLENGE_DAYS ? "Todos los días" : `Día ${day}`;
 
 export const DAY_MEDIA_BUCKET = "challenge-day-media";
+export const RESOURCE_PATH_SEGMENT = "resources";
 export const MAX_DAY_ATTACHMENTS = 20;
 export const PHOTO_LIMIT = 10 * 1024 * 1024;
 export const AUDIO_LIMIT = 25 * 1024 * 1024;
@@ -46,6 +47,16 @@ export function getChallengeContentForDay(
 
 export type DayDraft = Omit<ChallengeDay, "attachments"> & {
   attachments: DraftAttachment[];
+};
+export type ChallengeResources = {
+  challenge_id: string;
+  attachments: DayAttachment[];
+  revision: number;
+};
+export type ResourceDraft = {
+  challenge_id: string;
+  attachments: DraftAttachment[];
+  revision: number;
 };
 
 const VIDEO_ID = /^[a-zA-Z0-9_-]{11}$/;
@@ -149,19 +160,14 @@ export function inferDayMime(name: string, mime?: string | null) {
     (ext === "jpeg" ? "image/jpeg" : "application/octet-stream")
   );
 }
-export function validateDayDraft(draft: DayDraft) {
-  if (!draft.title.trim() || draft.title.length > 160)
-    throw new Error("El título es obligatorio y admite hasta 160 caracteres.");
-  if (draft.description.length > 10000)
-    throw new Error("La consigna admite hasta 10.000 caracteres.");
-  if (draft.attachments.length > MAX_DAY_ATTACHMENTS)
-    throw new Error("Podés agregar hasta 20 contenidos por día.");
-  if (
-    new Set(draft.attachments.map((a) => a.id)).size !==
-    draft.attachments.length
-  )
+export function validateAttachments(
+  items: DraftAttachment[],
+  limitMessage = "Podés agregar hasta 20 contenidos por día."
+) {
+  if (items.length > MAX_DAY_ATTACHMENTS) throw new Error(limitMessage);
+  if (new Set(items.map((a) => a.id)).size !== items.length)
     throw new Error("Hay contenidos duplicados.");
-  for (const item of draft.attachments) {
+  for (const item of items) {
     if (item.type === "link") parseDayLink(item.url ?? "");
     else {
       validateDayFile(item.type, item.mime ?? "", item.size ?? 0);
@@ -169,6 +175,55 @@ export function validateDayDraft(draft: DayDraft) {
         throw new Error("Volvé a seleccionar el archivo que falta.");
     }
   }
+}
+export function validateDayDraft(draft: DayDraft) {
+  if (!draft.title.trim() || draft.title.length > 160)
+    throw new Error("El título es obligatorio y admite hasta 160 caracteres.");
+  if (draft.description.length > 10000)
+    throw new Error("La consigna admite hasta 10.000 caracteres.");
+  validateAttachments(draft.attachments);
+}
+export function validateResourceDraft(items: DraftAttachment[]) {
+  validateAttachments(items, "Podés agregar hasta 20 contenidos.");
+}
+export function resourceMediaPath(
+  challengeId: string,
+  userId: string,
+  attachmentId: string,
+  extension: string
+) {
+  return `${challengeId}/${RESOURCE_PATH_SEGMENT}/${userId}/${attachmentId}.${extension}`;
+}
+export function isResourceMediaPath(path: string) {
+  return new RegExp(
+    `^[0-9a-f-]{36}/${RESOURCE_PATH_SEGMENT}/[0-9a-f-]{36}/[0-9a-f-]{36}\.[a-z0-9]+$`,
+    "i"
+  ).test(path);
+}
+export function fileExtensionFromPath(path: string) {
+  const name = path.split("/").pop() ?? "";
+  const dot = name.lastIndexOf(".");
+  return dot >= 0 ? name.slice(dot + 1) : "bin";
+}
+/**
+ * Rebuilds a copied attachment list, keeping already-copied links and
+ * substituting successfully copied media in the original order.
+ */
+export function buildRestartAttachments(
+  source: DayAttachment[],
+  targetLinkIds: Set<string>,
+  copiedMedia: DayAttachment[]
+): DayAttachment[] {
+  let mediaIndex = 0;
+  return source.flatMap((item) => {
+    if (item.type === "link") return targetLinkIds.has(item.id) ? [item] : [];
+    const next = copiedMedia[mediaIndex];
+    if (next && item.path && next.name === item.name) {
+      mediaIndex += 1;
+      return [next];
+    }
+    return [];
+  });
 }
 export function moveDayAttachment<T>(
   items: T[],

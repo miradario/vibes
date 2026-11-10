@@ -12,6 +12,7 @@ import ScreenContainer from "../components/ScreenContainer";
 import {creationFormStyles} from "../src/theme/creationFormStyles";
 import { launchAppCamera } from "../components/AppCamera";
 import ChallengeDaysSection from "../components/challengeDays/ChallengeDaysSection";
+import ChallengeResourcesSection from "../components/challengeResources/ChallengeResourcesSection";
 /** @format */
 
 import React, { useRef, useState } from "react";
@@ -409,6 +410,10 @@ const CreateChallenge = () => {
               submitBehavior="newline"
             />
 
+            <View style={localStyles.resourcesBlock}>
+              <ChallengeResourcesSection challengeId={editing?.id} />
+            </View>
+
             <Text style={localStyles.label}>Duración en días</Text>
             <TextInput
               ref={daysInputRef}
@@ -739,6 +744,9 @@ const legacyStyles = StyleSheet.create({
     ...buttonLabel("md", "accent"),
   },
   dayContentEditor: {
+    marginTop: ds.spacing[4],
+  },
+  resourcesBlock: {
     marginTop: ds.spacing[4],
   },
   createButton: {

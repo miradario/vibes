@@ -17,6 +17,7 @@ import { getChallengeDay, completedChallengeDays, getChallengeStreaks } from "..
 import MediaImage from "../components/MediaImage";
 import { playAnimation } from "../src/vibi/controller";
 import ChallengeDaysSection from "../components/challengeDays/ChallengeDaysSection";
+import ChallengeResourcesView from "../components/challengeResources/ChallengeResourcesView";
 import ParticipantsSheet from "../components/ParticipantsSheet";
 /** @format */
 
@@ -1646,6 +1647,14 @@ const ChallengeDetailScreen = () => {
                 ) : null}
               </View>
             </View> : null}
+            {event?.id && (isJoined || isAdmin) ? (
+              <ChallengeResourcesView
+                challengeId={event.id}
+                visible
+                headingStyle={localStyles.descriptionHeading}
+                sectionStyle={localStyles.descriptionSection}
+              />
+            ) : null}
             {event?.id && (!event.visibility || event.visibility === "public") ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Invitar personas al desafío" onPress={() => { if (!userId) { navigation.navigate("Login" as never); return; } setInviteVisible(true); }} style={localStyles.inviteAction}>
               <Icon name="person-add-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
               <Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitleMedium }}>Invitar a alguien</Text>
