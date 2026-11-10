@@ -1,7 +1,7 @@
 /** @format */
 
 import React, { memo } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import type { ComponentProps } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "./Typography";
@@ -80,6 +80,8 @@ const HealthChallengeCard = ({
   // el progreso se muestra aunque Salud no esté conectada o no esté disponible.
   const showProgress = availability !== null && (connected || isMindful);
   const vibesNote = isMindful ? " Tus meditaciones registradas en Vibes también suman." : "";
+  // En iPhone los minutos de ejercicio los registra sobre todo el Apple Watch.
+  const watchNote = metric === "exercise_minutes" && Platform.OS === "ios" ? " Con Apple Watch se registra mejor." : "";
 
   let body: string;
   let action: string | null = null;
@@ -95,10 +97,10 @@ const HealthChallengeCard = ({
     body = `Para que el día se marque solo al llegar a ${goalLabel}, ${availability === "not_installed" ? "instalá" : "actualizá"} Health Connect.${vibesNote} Mientras tanto, podés marcarlo a mano.`;
     action = availability === "not_installed" ? "Instalar Health Connect" : "Actualizar Health Connect";
   } else if (!connected) {
-    body = `Conectá ${healthSourceName} y el día se marca solo cuando llegues a ${goalLabel}.${vibesNote} También podés marcarlo a mano.`;
+    body = `Conectá ${healthSourceName} y el día se marca solo cuando llegues a ${goalLabel}.${vibesNote}${watchNote} También podés marcarlo a mano.`;
     action = `Conectar ${healthSourceName}`;
   } else {
-    body = pendingCopy(metric, progress.remaining, goalLabel) + (isMindful ? vibesNote : "");
+    body = pendingCopy(metric, progress.remaining, goalLabel) + (isMindful ? vibesNote : "") + watchNote;
   }
   if (isMindful && vibesMinutes > 0 && !checkedInToday && availability !== null) {
     body = `Hoy registraste ${formatMetricValue(metric, vibesMinutes)} en Vibes. ${body}`;

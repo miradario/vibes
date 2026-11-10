@@ -3,6 +3,7 @@
 // en el celular y nunca se suben al servidor.
 import { Linking, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getMindfulnessFeatureStatus } from "../../modules/vibes-health-features";
 import {
   getMetricWindow,
   sumIntervalMinutes,
@@ -64,19 +65,21 @@ const ensureHealthConnect = () => {
 
 /* ---------- Mindfulness en Android ---------- */
 
-// MindfulnessSession depende de la versión de Health Connect (Android 14+ con
-// la actualización del sistema). react-native-health-connect 4.1.3 no expone
-// getFeatureStatus, así que: Android < 14 → no soportado; en 14+ una lectura
-// mínima que falla con SDK_VERSION_ERROR / INVALID_RECORD_TYPE → no soportado.
-// PERMISSION_ERROR significa que existe pero todavía no hay permiso.
+// MindfulnessSession depende de la versión de Health Connect. Primero usamos la
+// verificación oficial (HealthConnectClient.features.getFeatureStatus con
+// FEATURE_MINDFULNESS_SESSION) del módulo local modules/vibes-health-features.
+// Solo si ese módulo no está o no responde (binario viejo, error nativo)
+// caemos a la heurística: Android < 14 → no soportado; en 14+ una lectura
+// mínima que falla con SDK_VERSION_ERROR / INVALID_RECORD_TYPE → no soportado
+// y PERMISSION_ERROR → existe pero todavía no hay permiso.
 const ANDROID_MINDFULNESS_MIN_API = 34;
 let androidMindfulnessSupport: Promise<boolean> | null = null;
 
 const errorCode = (error: unknown) =>
   String((error as { code?: unknown } | null)?.code ?? (error as Error | null)?.message ?? "");
 
-const probeAndroidMindfulness = async () => {
-  if (Platform.OS !== "android" || Number(Platform.Version) < ANDROID_MINDFULNESS_MIN_API) return false;
+const probeAndroidMindfulnessHeuristic = async () => {
+  if (Number(Platform.Version) < ANDROID_MINDFULNESS_MIN_API) return false;
   if (!(await ensureHealthConnect())) return false;
   const now = new Date();
   try {
@@ -97,6 +100,18 @@ const probeAndroidMindfulness = async () => {
     androidMindfulnessSupport = null;
     return false;
   }
+};
+
+const probeAndroidMindfulness = async () => {
+  if (Platform.OS !== "android") return false;
+  const official = await getMindfulnessFeatureStatus();
+  if (official === "available") return true;
+  if (official === "unavailable" || official === "sdk_unavailable") {
+    // sdk_unavailable puede cambiar si instalan Health Connect: no cachear.
+    if (official === "sdk_unavailable") androidMindfulnessSupport = null;
+    return false;
+  }
+  return probeAndroidMindfulnessHeuristic();
 };
 
 export const isAndroidMindfulnessSupported = () => {
@@ -120,8 +135,9 @@ export const getHealthAvailability = async (
         if (metric === "mindful_minutes" && !(await isAndroidMindfulnessSupported())) return "unsupported";
         return "available";
       }
-      // Sin Health Connect instalado no se puede saber si va a soportar
-      // mindfulness: en Android < 14 nunca lo soporta, así que no ofrecemos instalarlo.
+      // Sin Health Connect instalado no hay forma oficial de saber si va a
+      // soportar mindfulness; en Android < 14 es poco probable, así que no
+      // ofrecemos instalarlo solo para eso (queda manual + meditaciones de Vibes).
       if (metric === "mindful_minutes" && Number(Platform.Version) < ANDROID_MINDFULNESS_MIN_API) {
         return "unsupported";
       }

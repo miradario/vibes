@@ -50,7 +50,7 @@ begin
       visibility, metric_type, daily_goal
     ) values (
       '30 minutos de movimiento',
-      'Caminá, bailá, entrená o hacé yoga: lo que te mueva. Conectá Apple Salud o Health Connect y, cuando sumes 30 minutos de ejercicio, el día se marca solo. Si preferís, también podés marcarlo a mano.',
+      'Caminá, bailá, entrená o hacé yoga: lo que te mueva. Conectá Apple Salud (mejor con Apple Watch) o Health Connect y, cuando sumes 30 minutos de ejercicio, el día se marca solo. Si preferís, también podés marcarlo a mano.',
       starts, 21, 'Vibes', array['por-vibes', 'movimiento'], owner_id,
       'public', 'exercise_minutes', 30
     );

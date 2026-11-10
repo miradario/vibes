@@ -208,3 +208,26 @@ test("Vibes meditations feed mindfulness challenges", () => {
   // The background task keeps its original name so existing registrations stay valid.
   assert.match(fs.readFileSync("src/health/healthBackgroundTask.ts", "utf8"), /"vibes-step-challenge-checkin"/);
 });
+
+test("Android mindfulness uses the official feature check, heuristic only as fallback", () => {
+  const cfg = JSON.parse(fs.readFileSync("modules/vibes-health-features/expo-module.config.json", "utf8"));
+  assert.deepEqual(cfg.platforms, ["android"]); // no iOS pod, no Podfile.lock change
+  const kt = fs.readFileSync(
+    "modules/vibes-health-features/android/src/main/java/expo/modules/vibeshealthfeatures/VibesHealthFeaturesModule.kt",
+    "utf8"
+  );
+  assert.match(kt, /features\s*\.getFeatureStatus\(HealthConnectFeatures\.FEATURE_MINDFULNESS_SESSION\)/);
+  assert.match(kt, /ExperimentalMindfulnessSessionApi/);
+  const gradle = fs.readFileSync("modules/vibes-health-features/android/build.gradle", "utf8");
+  assert.match(gradle, /connect-client:1\.1\.0/);
+  const metrics = fs.readFileSync("src/health/healthMetrics.ts", "utf8");
+  const probe = metrics.slice(metrics.indexOf("const probeAndroidMindfulness = async"));
+  assert.ok(probe.indexOf("getMindfulnessFeatureStatus()") < probe.indexOf("probeAndroidMindfulnessHeuristic()"));
+});
+
+test("exercise copy mentions the Apple Watch", () => {
+  const seed = fs.readFileSync("supabase/seeds/por_vibes_health_metric_challenges.sql", "utf8");
+  assert.match(seed, /30 minutos de movimiento[\s\S]*Apple Watch/);
+  const card = fs.readFileSync("components/HealthChallengeCard.tsx", "utf8");
+  assert.match(card, /exercise_minutes" && Platform\.OS === "ios" \? " Con Apple Watch se registra mejor\."/);
+});

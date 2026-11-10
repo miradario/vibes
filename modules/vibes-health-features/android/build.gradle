@@ -1,0 +1,22 @@
+// Módulo local (solo Android): expone la verificación oficial de Health Connect
+// HealthConnectClient.features.getFeatureStatus para MindfulnessSession.
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.vibeshealthfeatures'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.vibeshealthfeatures"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+}
+
+dependencies {
+  // Misma versión que usa react-native-health-connect 4.1.3.
+  implementation "androidx.health.connect:connect-client:1.1.0"
+}
