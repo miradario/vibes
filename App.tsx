@@ -32,9 +32,9 @@ import Vibi from "./screens/Vibi";
 /** @format */
 
 import "react-native-url-polyfill/auto";
-// Defines the step-challenge background task in global scope (must run at startup).
-import "./src/health/stepsBackgroundTask";
-import { StepChallengeSync } from "./src/health/StepChallengeSync";
+// Defines the health-challenge background task in global scope (must run at startup).
+import "./src/health/healthBackgroundTask";
+import { HealthChallengeSync } from "./src/health/HealthChallengeSync";
 import React from "react";
 import { AppState, Linking, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -409,7 +409,7 @@ const AppNavigator = () => {
             navigateFromNotification(nextData);
           }}
         >
-          <StepChallengeSync />
+          <HealthChallengeSync />
           <PushNotificationsBootstrap
             navigateFromNotification={navigateFromNotification}
             getCurrentRoute={() =>

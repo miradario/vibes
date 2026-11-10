@@ -62,7 +62,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Vibes uses your location while the app is open to suggest nearby people and events, for example filling in your city during onboarding.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Vibes lee tus pasos de Apple Salud para marcar solo el día en los desafíos de pasos cuando llegás a la meta, por ejemplo 1000 pasos por día. Tus pasos no salen del celular.</string>
+	<string>Vibes lee de Apple Salud tus pasos, minutos de mindfulness, sueño, minutos de ejercicio y distancia caminando o corriendo, solo para marcar el día en los desafíos que conectes cuando llegás a la meta, por ejemplo 10 minutos de meditación o 7 horas de sueño. Tus datos de salud no salen del celular.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
