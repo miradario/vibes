@@ -75,6 +75,13 @@ test('migration copies resource links in restart_challenge and leaves day media 
   const sql = fs.readFileSync('supabase/migrations/20261110200000_challenge_resources.sql', 'utf8');
   assert.match(sql, /save_challenge_resources/);
   assert.match(sql, /split_part\(attachment_path, '\/', 2\) <> 'resources'/);
+  assert.match(sql, /private\.can_restart_source/);
+  assert.match(sql, /list_challenge_resource_media_for_copy/);
+  const access = sql.slice(
+    sql.indexOf('create or replace function public.challenge_day_media_access'),
+    sql.indexOf('revoke all on function public.challenge_day_media_access')
+  );
+  assert.match(access, /private\.can_restart_source\(challenge,/);
   const restart = sql.slice(sql.lastIndexOf('create or replace function private.restart_challenge'));
   assert.match(restart, /insert into public\.challenge_days/);
   assert.match(restart, /insert into public\.challenge_resources/);
@@ -86,4 +93,18 @@ test('migration copies resource links in restart_challenge and leaves day media 
   assert.doesNotMatch(dayCopy, /type <> 'link'/);
   const resourceCopy = restart.slice(restart.indexOf('insert into public.challenge_resources'));
   assert.match(resourceCopy, /a->>'type' = 'link'/);
+});
+
+test('copyResourceMedia asks the copy RPC for source attachments instead of selecting challenge_resources', () => {
+  const source = fs.readFileSync('src/queries/challengeRestart.queries.ts', 'utf8');
+  const fn = source.slice(
+    source.indexOf('const copyResourceMedia'),
+    source.indexOf('export const useRestartChallengeMutation')
+  );
+  assert.match(fn, /list_challenge_resource_media_for_copy/);
+  assert.doesNotMatch(fn, /eq\(["']challenge_id["'],\s*sourceId\)/);
+  assert.match(fn, /\.from\(["']challenge_resources["']\)/);
+  assert.match(fn, /eq\(["']challenge_id["'],\s*targetId\)/);
+  assert.match(fn, /buildRestartAttachments/);
+  assert.match(fn, /save_challenge_resources/);
 });

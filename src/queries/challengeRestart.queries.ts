@@ -210,22 +210,23 @@ const copyDayMedia = async (
 /**
  * Resource photos/audio also live under the source challenge path. Copy each
  * file under the new challenge and republish (SQL already brought the links).
- * A storage read policy lets the owner of a restart / Por Vibes copy read the
- * source resource files even if they are not a participant of the original.
+ *
+ * Source resource rows are not readable to a copier who is not a participant
+ * (e.g. Por Vibes). A dedicated RPC returns the attachment list needed to copy
+ * files, and storage allows reading those published source files only if the
+ * caller created the copy and can still see the original challenge.
  */
 const copyResourceMedia = async (
   sourceId: string,
   targetId: string,
   userId: string,
 ): Promise<boolean> => {
-  const { data: sourceRow, error } = await supabase
-    .from("challenge_resources")
-    .select("*")
-    .eq("challenge_id", sourceId)
-    .maybeSingle();
+  const { data: sourceAttachmentsRaw, error } = await supabase.rpc(
+    "list_challenge_resource_media_for_copy",
+    { source_id: sourceId, target_id: targetId },
+  );
   if (error) return false;
-  const source = sourceRow as ChallengeResources | null;
-  const sourceAttachments = source?.attachments ?? [];
+  const sourceAttachments = (sourceAttachmentsRaw ?? []) as DayAttachment[];
   if (!sourceAttachments.some((item) => item.type !== "link" && item.path)) {
     return true;
   }

@@ -21,6 +21,54 @@ create policy challenge_resources_read on public.challenge_resources
   for select to authenticated
   using (public.can_read_challenge_day(challenge_id));
 
+
+-- Shared restart/copy visibility checks. Same helpers as the day-media copy
+-- migration; CREATE OR REPLACE keeps them identical in either merge order.
+create or replace function private.can_restart_source(source_id uuid, caller uuid)
+returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.challenges source
+    where source.id = source_id
+      and (
+        source.created_by = caller
+        or coalesce(source.visibility, 'public') = 'public'
+        or exists (
+          select 1 from public.challenge_participants p
+          where p.challenge_id = source_id and p.user_id = caller
+        )
+        or exists (
+          select 1 from public.event_participants ep
+          where ep.event_id = source_id and ep.event_type = 'challenge' and ep.user_id = caller
+        )
+        or exists (
+          select 1 from public.challenge_invitations i
+          where i.challenge_id = source_id and i.invitee_id = caller
+        )
+        or (
+          source.visibility = 'friends' and exists (
+            select 1 from public.matches m
+            where (m.user1_id = caller and m.user2_id = source.created_by)
+               or (m.user2_id = caller and m.user1_id = source.created_by)
+          )
+        )
+      )
+  );
+$$;
+revoke all on function private.can_restart_source(uuid, uuid) from public, anon, authenticated;
+
+create or replace function private.owns_restart_copy(source_id uuid, target_id uuid, caller uuid)
+returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.challenges copy
+    where copy.id = target_id
+      and copy.created_by = caller
+      and copy.source_challenge_id = source_id
+  );
+$$;
+revoke all on function private.owns_restart_copy(uuid, uuid, uuid) from public, anon, authenticated;
+
 -- Day media stays at {challenge}/{day}/{user}/{id}.ext.
 -- Challenge resources use {challenge}/resources/{user}/{id}.ext in the same bucket.
 create or replace function public.challenge_day_media_access(object_name text, editing boolean)
@@ -67,8 +115,10 @@ begin
         )
       )
     ) or (
-      -- Owner of a restart / Por Vibes copy can read source resource files to copy them.
-      exists (
+      -- Owner of a restart / Por Vibes copy can read source resource files to copy them,
+      -- only if they can still see the source challenge (same check as restart).
+      private.can_restart_source(challenge, (select auth.uid()))
+      and exists (
         select 1 from public.challenges copy
         where copy.created_by = (select auth.uid())
           and copy.source_challenge_id = challenge
@@ -188,6 +238,32 @@ end;
 $$;
 revoke all on function public.save_challenge_resources(uuid, jsonb, integer) from public, anon;
 grant execute on function public.save_challenge_resources(uuid, jsonb, integer) to authenticated;
+
+
+-- Returns source resource attachments (needed to preserve order and copy files)
+-- without exposing them via a general SELECT on challenge_resources.
+create or replace function public.list_challenge_resource_media_for_copy(
+  source_id uuid,
+  target_id uuid
+) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare
+  caller uuid := auth.uid();
+  result jsonb;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if not private.owns_restart_copy(source_id, target_id, caller)
+    or not private.can_restart_source(source_id, caller) then
+    raise exception 'Desafío no disponible';
+  end if;
+  select r.attachments into result
+    from public.challenge_resources r
+    where r.challenge_id = source_id;
+  return coalesce(result, '[]'::jsonb);
+end;
+$$;
+revoke all on function public.list_challenge_resource_media_for_copy(uuid, uuid) from public, anon;
+grant execute on function public.list_challenge_resource_media_for_copy(uuid, uuid) to authenticated;
 
 -- Latest restart_challenge body (Por Vibes) plus link-only copy of resources.
 -- Photos and audio are copied afterwards by the app into new storage paths.
