@@ -15,14 +15,17 @@ import ScreenContainer from "../ScreenContainer";
 import { launchAppCamera } from "../AppCamera";
 import { Text, TextInput } from "../Typography";
 import { useSaveChallengeDay } from "../../src/queries/challengeDays.queries";
+import { useSaveChallengeResources } from "../../src/queries/challengeResources.queries";
 import {
   ChallengeDay,
+  ChallengeResources,
   DayDraft,
   DraftAttachment,
   MAX_DAY_ATTACHMENTS,
   DAY_MEDIA_BUCKET,
   inferDayMime,
   validateDayDraft,
+  validateResourceDraft,
   validateDayFile,
   parseDayLink,
   moveDayAttachment,
@@ -33,7 +36,10 @@ import {
   removeDayFile,
 } from "../../src/lib/dayDraftFiles";
 import { readUriAsArrayBuffer } from "../../src/lib/supabaseStorage";
-import { uploadDayAttachment } from "../../src/lib/challengeDayStorage";
+import {
+  uploadDayAttachment,
+  uploadResourceAttachment,
+} from "../../src/lib/challengeDayStorage";
 import { supabase } from "../../src/lib/supabase";
 import { DayButton } from "./DayButton";
 import DayAudioPlayer from "./DayAudioPlayer";
@@ -52,12 +58,17 @@ export default function ChallengeDayEditor({
   initial,
   userId,
   onClose,
+  variant = "day",
 }: {
   initial: ChallengeDay;
   userId: string;
   onClose: () => void;
+  variant?: "day" | "resources";
 }) {
-  const key = `challenge-day-draft:${userId}:${initial.challenge_id}:${initial.day}`;
+  const isResources = variant === "resources";
+  const key = isResources
+    ? `challenge-resources-draft:${userId}:${initial.challenge_id}`
+    : `challenge-day-draft:${userId}:${initial.challenge_id}:${initial.day}`;
   const [draft, setDraft] = useState<EditorDraft>(initial);
   const current = useRef<EditorDraft>(initial);
   const [ready, setReady] = useState(false);
@@ -76,7 +87,8 @@ export default function ChallengeDayEditor({
   const [seconds, setSeconds] = useState(0);
   const recorder = useRef<Audio.Recording | null>(null);
   const [conflict, setConflict] = useState<ChallengeDay | null>(null);
-  const saveMutation = useSaveChallengeDay();
+  const saveDayMutation = useSaveChallengeDay();
+  const saveResourcesMutation = useSaveChallengeResources();
   const insets = useSafeAreaInsets();
   const persist = (next: EditorDraft) => {
     current.current = next;
@@ -103,7 +115,7 @@ export default function ChallengeDayEditor({
           const value = JSON.parse(stored) as EditorDraft;
           if (
             value.challenge_id !== initial.challenge_id ||
-            value.day !== initial.day ||
+            (!isResources && value.day !== initial.day) ||
             !Array.isArray(value.attachments)
           )
             throw new Error("El borrador local no es válido.");
@@ -383,18 +395,25 @@ export default function ChallengeDayEditor({
         throw new Error(
           "Tocá “Agregar link” para incluir el enlace antes de guardar."
         );
-      validateDayDraft(current.current);
+      if (isResources) validateResourceDraft(current.current.attachments);
+      else validateDayDraft(current.current);
       await persist(current.current);
       for (const item of current.current.attachments) {
         if (item.type === "link" || item.path) continue;
         setProgress({ id: item.id, percent: 0 });
         try {
-          const path = await uploadDayAttachment(
-            initial.challenge_id,
-            initial.day,
-            item,
-            (percent) => setProgress({ id: item.id, percent })
-          );
+          const path = await (isResources
+            ? uploadResourceAttachment(
+                initial.challenge_id,
+                item,
+                (percent) => setProgress({ id: item.id, percent })
+              )
+            : uploadDayAttachment(
+                initial.challenge_id,
+                initial.day,
+                item,
+                (percent) => setProgress({ id: item.id, percent })
+              ));
           await persist({
             ...current.current,
             attachments: current.current.attachments.map((a) =>
@@ -413,28 +432,64 @@ export default function ChallengeDayEditor({
         }
       }
       setProgress(null);
-      let saved: ChallengeDay;
+      let savedAttachments: DraftAttachment[];
+      let savedRevision: number;
       try {
-        saved = await saveMutation.mutateAsync(current.current);
+        if (isResources) {
+          const saved = await saveResourcesMutation.mutateAsync({
+            challenge_id: current.current.challenge_id,
+            attachments: current.current.attachments,
+            revision: current.current.revision,
+          });
+          savedAttachments = saved.attachments;
+          savedRevision = saved.revision;
+        } else {
+          const saved = await saveDayMutation.mutateAsync(current.current);
+          savedAttachments = saved.attachments;
+          savedRevision = saved.revision;
+        }
       } catch (e) {
         if (message(e).includes("otro dispositivo")) {
-          const latest = await supabase
-            .from("challenge_days")
-            .select("*")
-            .eq("challenge_id", initial.challenge_id)
-            .eq("day", initial.day)
-            .single();
-          if (latest.data) setConflict(latest.data as ChallengeDay);
+          if (isResources) {
+            const latest = await supabase
+              .from("challenge_resources")
+              .select("*")
+              .eq("challenge_id", initial.challenge_id)
+              .maybeSingle();
+            if (latest.data) {
+              const row = latest.data as ChallengeResources;
+              setConflict({
+                challenge_id: row.challenge_id,
+                day: 0,
+                title: "Recursos",
+                description: "",
+                attachments: row.attachments,
+                revision: row.revision,
+              });
+            }
+          } else {
+            const latest = await supabase
+              .from("challenge_days")
+              .select("*")
+              .eq("challenge_id", initial.challenge_id)
+              .eq("day", initial.day)
+              .single();
+            if (latest.data) setConflict(latest.data as ChallengeDay);
+          }
         }
         throw e;
       }
       const completedDraft = current.current;
       // The server save is authoritative, even if local cleanup fails.
-      await persist({ ...saved }).catch(() => undefined);
+      await persist({
+        ...completedDraft,
+        attachments: savedAttachments,
+        revision: savedRevision,
+      }).catch(() => undefined);
       await AsyncStorage.removeItem(key).catch(() => undefined);
       await cleanup(
         completedDraft,
-        new Set(saved.attachments.flatMap((a) => (a.path ? [a.path] : [])))
+        new Set(savedAttachments.flatMap((a) => (a.path ? [a.path] : [])))
       ).catch(() => undefined);
       onClose();
     });
@@ -500,7 +555,7 @@ export default function ChallengeDayEditor({
             ]}
           >
             <View style={s.between}>
-              <Text style={s.title}>{initial.day === ALL_CHALLENGE_DAYS ? "Contenido para todos los días" : `Personalizar día ${initial.day}`}</Text>
+              <Text style={s.title}>{isResources ? "Recursos del desafío" : initial.day === ALL_CHALLENGE_DAYS ? "Contenido para todos los días" : `Personalizar día ${initial.day}`}</Text>
               <DayButton
                 label="Cerrar"
                 disabled={busy || recording}
@@ -510,7 +565,9 @@ export default function ChallengeDayEditor({
               />
             </View>
             <Text style={s.hint}>
-              Estos cambios se comparten con todos los participantes.
+              {isResources
+                ? "Estos recursos quedan disponibles para quienes participan del desafío."
+                : "Estos cambios se comparten con todos los participantes."}
             </Text>
             {restored ? (
               <Text style={s.hint}>Recuperamos tu borrador pendiente.</Text>
@@ -519,32 +576,36 @@ export default function ChallengeDayEditor({
               <VibesLoader />
             ) : (
               <>
-                <Text style={s.text}>Título</Text>
-                <TextInput
-                  accessibilityLabel={initial.day === ALL_CHALLENGE_DAYS ? "Título del contenido compartido" : "Título del día"}
-                  value={draft.title}
-                  maxLength={160}
-                  editable={!busy && !recording}
-                  style={s.input}
-                  onChangeText={(title) =>
-                    void persist({ ...current.current, title })
-                  }
-                />
-                <Text style={s.text}>Descripción o consigna</Text>
-                <TextInput
-                  accessibilityLabel="Descripción o consigna"
-                  value={draft.description}
-                  maxLength={10000}
-                  editable={!busy && !recording}
-                  multiline
-                  style={[
-                    s.input,
-                    { minHeight: 110, textAlignVertical: "top" },
-                  ]}
-                  onChangeText={(description) =>
-                    void persist({ ...current.current, description })
-                  }
-                />
+                {isResources ? null : (
+                  <>
+                    <Text style={s.text}>Título</Text>
+                    <TextInput
+                      accessibilityLabel={initial.day === ALL_CHALLENGE_DAYS ? "Título del contenido compartido" : "Título del día"}
+                      value={draft.title}
+                      maxLength={160}
+                      editable={!busy && !recording}
+                      style={s.input}
+                      onChangeText={(title) =>
+                        void persist({ ...current.current, title })
+                      }
+                    />
+                    <Text style={s.text}>Descripción o consigna</Text>
+                    <TextInput
+                      accessibilityLabel="Descripción o consigna"
+                      value={draft.description}
+                      maxLength={10000}
+                      editable={!busy && !recording}
+                      multiline
+                      style={[
+                        s.input,
+                        { minHeight: 110, textAlignVertical: "top" },
+                      ]}
+                      onChangeText={(description) =>
+                        void persist({ ...current.current, description })
+                      }
+                    />
+                  </>
+                )}
                 <View style={s.mediaSection}>
                   <Text style={s.sectionTitle}>Sumar contenido</Text>
                   <Text style={s.hint}>
@@ -600,7 +661,7 @@ export default function ChallengeDayEditor({
                 <View style={s.linkBox}>
                   <Text style={s.sectionTitle}>Link o YouTube</Text>
                   <TextInput
-                    accessibilityLabel={initial.day === ALL_CHALLENGE_DAYS ? "Enlace para todos los días" : "Enlace del día"}
+                    accessibilityLabel={isResources ? "Enlace de los recursos" : initial.day === ALL_CHALLENGE_DAYS ? "Enlace para todos los días" : "Enlace del día"}
                     placeholder="Pegá el enlace"
                     placeholderTextColor={vibesTheme.colors.secondaryText}
                     value={linkInput}
@@ -712,8 +773,12 @@ export default function ChallengeDayEditor({
                 {conflict ? (
                   <View style={s.card}>
                     <Text style={s.title}>Versión publicada</Text>
-                    <Text style={s.text}>{conflict.title}</Text>
-                    <Text style={s.text}>{conflict.description}</Text>
+                    {isResources ? null : (
+                      <>
+                        <Text style={s.text}>{conflict.title}</Text>
+                        <Text style={s.text}>{conflict.description}</Text>
+                      </>
+                    )}
                     <Text style={s.hint}>
                       {conflict.attachments.length} contenidos. Guardar tu
                       borrador reemplazará esta versión.
@@ -746,6 +811,8 @@ export default function ChallengeDayEditor({
                         ? "Guardando…"
                         : error
                         ? "Reintentar guardar"
+                        : isResources
+                        ? "Guardar recursos"
                         : initial.day === ALL_CHALLENGE_DAYS ? "Guardar para todos los días" : "Guardar día"
                     }
                     onPress={save}

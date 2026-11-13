@@ -4,6 +4,7 @@ import { readUriAsArrayBuffer } from "./supabaseStorage";
 import {
   DAY_MEDIA_BUCKET,
   DraftAttachment,
+  resourceMediaPath,
   validateDayFile,
 } from "./challengeDayContent";
 import { resolveDayFile } from "./dayDraftFiles";
@@ -12,7 +13,8 @@ export async function uploadDayAttachment(
   challengeId: string,
   day: number,
   item: DraftAttachment,
-  onProgress: (percent: number) => void
+  onProgress: (percent: number) => void,
+  target: "day" | "resources" = "day"
 ) {
   const {
     data: { session },
@@ -28,7 +30,10 @@ export async function uploadDayAttachment(
     item.mime ?? "",
     bytes.byteLength
   );
-  const path = `${challengeId}/${day}/${session.user.id}/${item.id}.${extension}`;
+  const path =
+    target === "resources"
+      ? resourceMediaPath(challengeId, session.user.id, item.id, extension)
+      : `${challengeId}/${day}/${session.user.id}/${item.id}.${extension}`;
   // Stable path makes retries idempotent after a lost server response.
   const { data: existing } = await supabase.storage
     .from(DAY_MEDIA_BUCKET)
@@ -82,4 +87,12 @@ export async function uploadDayAttachment(
     xhr.send(bytes);
   });
   return path;
+}
+
+export async function uploadResourceAttachment(
+  challengeId: string,
+  item: DraftAttachment,
+  onProgress: (percent: number) => void
+) {
+  return uploadDayAttachment(challengeId, 0, item, onProgress, "resources");
 }

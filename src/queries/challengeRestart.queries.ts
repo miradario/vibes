@@ -7,7 +7,9 @@ import {
   DAY_MEDIA_BUCKET,
   buildRestartAttachments,
   fileExtensionFromPath,
+  resourceMediaPath,
   type ChallengeDay,
+  type ChallengeResources,
   type DayAttachment,
 } from "../lib/challengeDayContent";
 import {
@@ -207,6 +209,86 @@ const copyDayMedia = async (
   return ok;
 };
 
+/**
+ * Resource photos/audio also live under the source challenge path. Copy each
+ * file under the new challenge and republish (SQL already brought the links).
+ *
+ * Source resource rows are not readable to a copier who is not a participant
+ * (e.g. Por Vibes). A dedicated RPC returns the attachment list needed to copy
+ * files, and storage allows reading those published source files only if the
+ * caller created the copy and can still see the original challenge.
+ */
+const copyResourceMedia = async (
+  sourceId: string,
+  targetId: string,
+  userId: string,
+): Promise<boolean> => {
+  const { data: sourceAttachmentsRaw, error } = await supabase.rpc(
+    "list_challenge_resource_media_for_copy",
+    { source_id: sourceId, target_id: targetId },
+  );
+  if (error) return false;
+  const sourceAttachments = (sourceAttachmentsRaw ?? []) as DayAttachment[];
+  if (!sourceAttachments.some((item) => item.type !== "link" && item.path)) {
+    return true;
+  }
+
+  const { data: targetRow, error: targetError } = await supabase
+    .from("challenge_resources")
+    .select("*")
+    .eq("challenge_id", targetId)
+    .maybeSingle();
+  if (targetError) return false;
+  const target = (targetRow as ChallengeResources | null) ?? {
+    challenge_id: targetId,
+    attachments: [],
+    revision: 0,
+  };
+
+  const copied: DayAttachment[] = [];
+  let ok = true;
+  for (const item of sourceAttachments) {
+    if (item.type === "link" || !item.path) continue;
+    const id = randomUUID();
+    const nextPath = resourceMediaPath(
+      targetId,
+      userId,
+      id,
+      fileExtensionFromPath(item.path),
+    );
+    const { error: copyError } = await supabase.storage
+      .from(DAY_MEDIA_BUCKET)
+      .copy(item.path, nextPath);
+    if (copyError) {
+      ok = false;
+      continue;
+    }
+    copied.push({
+      id,
+      type: item.type,
+      name: item.name,
+      path: nextPath,
+      mime: item.mime,
+      size: item.size,
+    });
+  }
+  if (copied.length === 0 && !sourceAttachments.some((item) => item.type === "link")) {
+    return ok;
+  }
+  const attachments = buildRestartAttachments(
+    sourceAttachments,
+    new Set(target.attachments.map((item) => item.id)),
+    copied,
+  );
+  const { error: saveError } = await supabase.rpc("save_challenge_resources", {
+    target_challenge: targetId,
+    new_attachments: attachments,
+    expected_revision: target.revision,
+  });
+  if (saveError) ok = false;
+  return ok;
+};
+
 export const useRestartChallengeMutation = () => {
   const queryClient = useQueryClient();
   return useMutation<RestartChallengeResult, unknown, RestartChallengeInput>({
@@ -232,10 +314,15 @@ export const useRestartChallengeMutation = () => {
       });
       if (error) throw error;
       const challengeId = String(data);
-      const mediaCopied = await copyDayMedia(input.source.id, challengeId, input.userId).catch(
+      const daysCopied = await copyDayMedia(input.source.id, challengeId, input.userId).catch(
         () => false,
       );
-      return { challengeId, mediaCopied };
+      const resourcesCopied = await copyResourceMedia(
+        input.source.id,
+        challengeId,
+        input.userId,
+      ).catch(() => false);
+      return { challengeId, mediaCopied: daysCopied && resourcesCopied };
     },
     onSuccess: (_result, input) => invalidateChallengeLists(queryClient, input.userId),
   });
