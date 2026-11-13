@@ -130,23 +130,31 @@ export type RestartChallengeResult = {
 
 const fileExtension = fileExtensionFromPath;
 
+type SourceDayMedia = {
+  day: number;
+  attachments: DayAttachment[];
+};
+
 /**
  * Uploaded photos/audio of each day live under the source challenge path, so
  * members of the copy could not read them. Copy each file under the new
  * challenge and republish the day (the SQL copy already brought text + links).
+ *
+ * Source day rows are not readable to a copier who is not a participant
+ * (e.g. Por Vibes). A dedicated RPC returns only the attachment lists needed
+ * to copy files, and storage allows reading those published source files.
  */
 const copyDayMedia = async (
   sourceId: string,
   targetId: string,
   userId: string,
 ): Promise<boolean> => {
-  const { data: sourceDays, error } = await supabase
-    .from("challenge_days")
-    .select("*")
-    .eq("challenge_id", sourceId);
+  const { data: sourceDays, error } = await supabase.rpc(
+    "list_challenge_day_media_for_copy",
+    { source_id: sourceId, target_id: targetId },
+  );
   if (error) return false;
-  const days = (sourceDays ?? []) as ChallengeDay[];
-  const withMedia = days.filter((day) =>
+  const withMedia = ((sourceDays ?? []) as SourceDayMedia[]).filter((day) =>
     (day.attachments ?? []).some((item) => item.type !== "link" && item.path),
   );
   if (withMedia.length === 0) return true;
@@ -183,17 +191,11 @@ const copyDayMedia = async (
     }
     if (copied.length === 0) continue;
     // Keep the original order: links stay where they were relative to media.
-    const linkIds = new Set(target.attachments.map((item) => item.id));
-    let mediaIndex = 0;
-    const attachments = day.attachments.flatMap((item) => {
-      if (item.type === "link") return linkIds.has(item.id) ? [item] : [];
-      const next = copied[mediaIndex];
-      if (next && item.path && next.name === item.name) {
-        mediaIndex += 1;
-        return [next];
-      }
-      return [];
-    });
+    const attachments = buildRestartAttachments(
+      day.attachments,
+      new Set(target.attachments.map((item) => item.id)),
+      copied,
+    );
     const { error: saveError } = await supabase.rpc("save_challenge_day", {
       target_challenge: targetId,
       target_day: day.day,

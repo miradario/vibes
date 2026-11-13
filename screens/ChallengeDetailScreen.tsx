@@ -5,9 +5,9 @@ import ChallengeCompletionShareCard from "../components/ChallengeCompletionShare
 import { captureRef, releaseCapture } from "react-native-view-shot";
 import ChallengeCompletionConfetti from "../components/ChallengeCompletionConfetti";
 import ChallengeJourneyPath from "../components/ChallengeJourneyPath";
-import StepChallengeCard from "../components/StepChallengeCard";
-import { isStepChallenge } from "../src/lib/stepChallenge";
-import { useStepChallenge } from "../src/health/useStepChallenge";
+import HealthChallengeCard from "../components/HealthChallengeCard";
+import { isHealthChallenge } from "../src/lib/healthChallenge";
+import { useHealthChallenge } from "../src/health/useHealthChallenge";
 import BackButton from "../components/BackButton";
 import { useLocalDay } from "../src/hooks/useLocalDay";
 import { usePublicContentBack } from "../src/hooks/usePublicContentBack";
@@ -1103,11 +1103,13 @@ const ChallengeDetailScreen = () => {
       (challenge.checkInStatus === "completed" && !hasRemoteTodayCheckin
         ? 1
         : 0);
-  const stepGoal = isStepChallenge(event) ? event.dailyGoal : null;
-  const stepChallenge = useStepChallenge({
+  const healthMetric = isHealthChallenge(event) ? event.metricType : null;
+  const healthGoal = isHealthChallenge(event) ? event.dailyGoal : null;
+  const healthChallenge = useHealthChallenge({
+    metric: healthMetric,
     challengeId: event?.id,
     userId,
-    enabled: Boolean(stepGoal && isJoined && challengeTimeline.status === "active"),
+    enabled: Boolean(healthMetric && healthGoal && isJoined && challengeTimeline.status === "active"),
   });
   const contentMaxWidth = width >= 700 ? 620 : undefined;
   const isChallengeCompleted =
@@ -1659,15 +1661,17 @@ const ChallengeDetailScreen = () => {
               <Icon name="person-add-outline" size={ds.iconSize.lg} color={vibesTheme.colors.primaryText} />
               <Text style={{ color: vibesTheme.colors.primaryText, ...ds.textStyles.subtitleMedium }}>Invitar a alguien</Text>
             </TouchableOpacity> : null}
-            {stepGoal && isJoined && challengeTimeline.status === "active" ? (
-              <StepChallengeCard
-                dailyGoal={stepGoal}
-                steps={stepChallenge.steps}
-                availability={stepChallenge.availability}
-                connected={stepChallenge.connected}
-                connecting={stepChallenge.connecting}
+            {healthMetric && healthGoal && isJoined && challengeTimeline.status === "active" ? (
+              <HealthChallengeCard
+                metric={healthMetric}
+                dailyGoal={healthGoal}
+                value={healthChallenge.value}
+                vibesMinutes={healthChallenge.vibesMinutes}
+                availability={healthChallenge.availability}
+                connected={healthChallenge.connected}
+                connecting={healthChallenge.connecting}
                 checkedInToday={challenge.checkInStatus === "completed"}
-                onConnect={() => void stepChallenge.connect()}
+                onConnect={() => void healthChallenge.connect()}
               />
             ) : null}
             <ChallengeJourneyCard ref={journeyCardRef} challenge={challenge} percent={percent} playPath={journeyInView} onLayout={checkJourneyInView} />

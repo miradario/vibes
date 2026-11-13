@@ -239,6 +239,20 @@ La barra completa de filtros de los listados (búsqueda, fecha, ubicación, otro
 
 La barra de filtros se anima con translateY sobre el listado, sin modificar la altura de FlatList durante el gesto. El listado reserva una cabecera de altura fija para su posición inicial. Ignorar el rebote de ambos extremos al detectar el sentido, para evitar alternancias y saltos provocados por cambios de viewport.
 
+## Desafíos conectados a Salud (`components/HealthChallengeCard.tsx`, 10/11)
+
+Una sola card para todas las métricas de Salud (reemplaza a `StepChallengeCard`). Se muestra en el detalle del desafío solo si el usuario participa y el desafío está en curso, antes de `ChallengeJourneyCard`. Superficie `cardStyles.base` + `cardStyles.padding`, separación `spacing/3`. Cabecera en fila (gap `spacing/3`): icono `iconSize.lg` (24) en `colors.base.blue` y “Meta diaria: …” en `text/subtitle` `text/primary`. Progreso (gap `spacing/2`): valor en `text/title` `text/primary` y barra de alto `spacing/2`, radio `pill`, pista `base.blue` con `opacity.soft` y relleno `base.blue`; rol `progressbar` con label “<métrica de hoy>: <valor> / <meta>” y `accessibilityValue`. Cuerpo en `text/body-small` `text/secondary`. La acción (Conectar Apple Salud / Health Connect, Instalar o Actualizar Health Connect) usa `VibesActionButton` `outline` a todo el ancho; mientras conecta, `ActivityIndicator` azul con padding vertical `spacing/4`. Sin colores ni tokens nuevos: todas las métricas usan el mismo acento azul y se distinguen por icono y texto.
+
+| Métrica (`metric_type`) | Icono (Ionicons) | Unidad de `daily_goal` | Formato | Meta en la cabecera |
+| --- | --- | --- | --- | --- |
+| `steps` | `walk-outline` | pasos | `1.000 pasos`; progreso `650 / 1.000 pasos` | `1.000 pasos` |
+| `mindful_minutes` | `flower-outline` | minutos | `10 min`, `1 h 5 min` | `10 min de meditación` |
+| `sleep_minutes` | `moon-outline` | minutos | `6 h 30 min / 7 h` | `7 h de sueño` |
+| `exercise_minutes` | `body-outline` | minutos | `30 min` | `30 min de movimiento` |
+| `distance_meters` | `footsteps-outline` | metros | `1,4 km / 2 km` (redondea hacia abajo) | `moverte 2 km` |
+
+Estados del cuerpo: revisando (“Revisando tu progreso…”), día ya marcado, dispositivo sin Salud (marcar a mano), Health Connect sin instalar o desactualizado (acción para instalar o actualizar), sin conectar (acción Conectar) y conectado (“Te faltan … Cuando llegues a la meta, el día se marca solo.”). El check-in manual sigue disponible siempre. Mindfulness suma Salud y las meditaciones registradas en Vibes: muestra el progreso aunque Salud no esté conectada o no esté disponible (Android sin `MindfulnessSession`), y en ese caso no ofrece conectar. Sueño se atribuye al día en que te despertás (de las 18 h del día anterior a las 18 h del día) y lo aclara en el cuerpo. La distancia en Android puede incluir bici; por eso el copy dice “moverte X km”. En iPhone, ejercicio agrega “Con Apple Watch se registra mejor.” al cuerpo sin conectar y en curso.
+
 ## Solicitudes de clases sin pagos
 
 El detalle de clases externas muestra foto, docente, horario, lugar y acordeón “Sobre esta clase”. ClassReservationPanel permite clase suelta o plan mensual, mes y frecuencia; los selectores abren AnimatedSheetModal. El resumen usa fechas calculadas en la zona horaria de la clase, excluyendo las pasadas. Las referencias externas son solicitudes personales pendientes, no se envían al organizador ni confirman cupo. Indicar que la persona debe contactar al organizador. No mostrar checkout ni total mensual. Guardar y cancelar persiste en el servidor; Mis clases incluye las solicitudes pendientes y el historial conserva las canceladas. Las clases propias usan sus encuentros reales; los cursos conservan su inscripción completa.
