@@ -15,6 +15,8 @@ El editor permite título, consigna, cámara, selección múltiple de fotos, aud
 - Una subida fallida no publica cambios parciales. Reintentar reutiliza las subidas confirmadas y comprueba rutas estables para recuperar respuestas perdidas. Se muestra el porcentaje por archivo y el error correspondiente.
 - Al guardar o descartar se limpian los archivos locales y se intenta eliminar adjuntos remotos descartados. Si se desinstala la app, se borra su almacenamiento local o se interrumpe la limpieza, pueden quedar objetos remotos sin referencia. Una limpieza administrativa futura debe excluir tanto los adjuntos publicados como las subidas recientes; no borrar archivos únicamente por antigüedad.
 - No se modifican check-ins, rachas, duración ni progreso.
+- Al reiniciar o copiar un desafío (incluido Por Vibes), el SQL copia texto y links. Las fotos y audios los copia la app a rutas del nuevo desafío. Quien no participa del original no puede leer `challenge_days`; usa el RPC `list_challenge_day_media_for_copy` y una lectura de Storage limitada a los archivos ya publicados, solo si creó la copia y podría reiniciar el original.
+
 
 ## Límites y plataformas
 

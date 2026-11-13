@@ -191,3 +191,30 @@ export function persistedAttachments(
       : { id, type, name, path, mime, size }
   );
 }
+
+export function fileExtensionFromPath(path: string) {
+  const name = path.split("/").pop() ?? "";
+  const dot = name.lastIndexOf(".");
+  return dot >= 0 ? name.slice(dot + 1) : "bin";
+}
+
+/**
+ * Rebuilds a copied attachment list, keeping already-copied links and
+ * substituting successfully copied media in the original order.
+ */
+export function buildRestartAttachments(
+  source: DayAttachment[],
+  targetLinkIds: Set<string>,
+  copiedMedia: DayAttachment[]
+): DayAttachment[] {
+  let mediaIndex = 0;
+  return source.flatMap((item) => {
+    if (item.type === "link") return targetLinkIds.has(item.id) ? [item] : [];
+    const next = copiedMedia[mediaIndex];
+    if (next && item.path && next.name === item.name) {
+      mediaIndex += 1;
+      return [next];
+    }
+    return [];
+  });
+}
