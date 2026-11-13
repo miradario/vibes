@@ -123,7 +123,6 @@ type TabButtonProps = {
   accessibilityLabel: string;
   accentColor: ColorValue;
   unreadCount?: number;
-  isNew?: boolean;
 };
 
 const formatUnreadBadge = (count: number) => (count > 9 ? "9+" : String(count));
@@ -140,7 +139,6 @@ const TabButton = memo(
     accessibilityLabel,
     accentColor,
     unreadCount = 0,
-    isNew = false,
   }: TabButtonProps) => {
     const focusProgress = useSharedValue(isFocused ? 1 : 0);
 
@@ -192,7 +190,6 @@ const TabButton = memo(
               color={ds.colors.text.primary}
               strokeWidth={ds.strokeWidth.default}
             />
-            {isNew ? <View style={localStyles.newBadge}><Text style={localStyles.newBadgeText}>new</Text></View> : null}
             {unreadCount > 0 ? (
               <View style={localStyles.unreadBadge}>
                 <Text style={localStyles.unreadBadgeText}>
@@ -340,7 +337,6 @@ const CustomTabBar = ({
                 }
                 accessibilityLabel={accessibilityLabel}
                 accentColor={routeColor.text}
-                isNew={route.name === "ClassesTab"}
                 icon={Icon}
                 isFocused={isFocused}
                 label={label}
@@ -399,7 +395,6 @@ const CustomTabBar = ({
                 </Animated.View>
               </LinearGradient>
             </View>
-            {selectedVisualRoute?.name === "ClassesTab" ? <View style={localStyles.newBadge}><Text style={localStyles.newBadgeText}>new</Text></View> : null}
             {selectedVisualRoute?.name === "Calendar" &&
               vibesUnreadCount > 0 && (
                 <View style={localStyles.unreadBadge}>
@@ -519,8 +514,6 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  newBadge: { ...badgeStyles.outlined, position: "absolute", top: -ds.spacing[2], right: -ds.spacing[4], borderRadius: ds.radii.pill, paddingHorizontal: ds.spacing[1], backgroundColor: ds.colors.base.mustard },
-  newBadgeText: { ...ds.textStyles.micro, color: ds.colors.text.onAccent },
   unreadBadge: {
     ...badgeStyles.count,
     ...badgeStyles.outlined,

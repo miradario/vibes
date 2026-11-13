@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "../Typography";
 import Icon from "../Icon";
 import { eventDayKey } from "../../src/lib/eventExplorer";
+import { WEEKDAY_INITIALS_MON_FIRST, WEEKDAY_NAMES_MON_FIRST } from "../../src/lib/weekdays";
 import * as ds from "../../src/theme/tokens";
 export default function LearningDateRange({ from, to, onChange }: { from: string; to: string; onChange: (from: string, to: string) => void }) {
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -21,7 +22,7 @@ export default function LearningDateRange({ from, to, onChange }: { from: string
       <Text style={[s.label, { flex: 1, textAlign: "center" }]}>{month.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</Text>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mes siguiente" style={s.arrow} onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><Icon name="chevron-forward" size={ds.iconSize.md} color={ds.colors.icon.default} /></TouchableOpacity>
     </View>
-    <View style={s.grid}>{["L", "M", "M", "J", "V", "S", "D"].map((label, index) => <View key={index} style={s.cell}><Text style={s.copy}>{label}</Text></View>)}</View>
+    <View style={s.grid}>{WEEKDAY_INITIALS_MON_FIRST.map((label, index) => <View key={label + String(index)} style={s.cell} accessible accessibilityLabel={WEEKDAY_NAMES_MON_FIRST[index]}><Text style={s.copy} importantForAccessibility="no">{label}</Text></View>)}</View>
     <View style={s.grid}>{Array.from({ length: Math.ceil((offset + count) / 7) * 7 }, (_, index) => {
       const day = index - offset + 1;
       if (day < 1 || day > count) return <View key={index} style={s.cell} />;
