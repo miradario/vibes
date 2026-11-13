@@ -35,7 +35,8 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSLocationAlwaysUsageDescription": "Vibes uses your location to suggest nearby people and events, for example filling in your city during onboarding.",
         "NSMicrophoneUsageDescription": "Vibes usa el micrófono cuando elegís grabar un audio para un día de tu desafío.",
-        "NSHealthShareUsageDescription": "Vibes lee de Apple Salud tus pasos, minutos de mindfulness, sueño, minutos de ejercicio y distancia caminando o corriendo, solo para marcar el día en los desafíos que conectes cuando llegás a la meta, por ejemplo 10 minutos de meditación o 7 horas de sueño. Tus datos de salud no salen del celular."
+        "NSHealthShareUsageDescription": "Vibes lee de Apple Salud tus pasos, minutos de mindfulness, sueño, minutos de ejercicio y distancia caminando o corriendo, solo para marcar el día en los desafíos que conectes cuando llegás a la meta, por ejemplo 10 minutos de meditación o 7 horas de sueño. Tus datos de salud no salen del celular.",
+        "NSHealthUpdateUsageDescription": "Vibes no guarda ni modifica datos en Apple Salud. Solo lee tu actividad para marcar el día en los desafíos que conectes cuando llegás a la meta. Tus datos de salud no salen del celular."
       },
       "googleServicesFile": "./config/firebase/GoogleService-Info.plist"
     },
@@ -154,7 +155,7 @@
         "@kingstinct/react-native-healthkit",
         {
           "NSHealthShareUsageDescription": "Vibes lee de Apple Salud tus pasos, minutos de mindfulness, sueño, minutos de ejercicio y distancia caminando o corriendo, solo para marcar el día en los desafíos que conectes cuando llegás a la meta, por ejemplo 10 minutos de meditación o 7 horas de sueño. Tus datos de salud no salen del celular.",
-          "NSHealthUpdateUsageDescription": false,
+          "NSHealthUpdateUsageDescription": "Vibes no guarda ni modifica datos en Apple Salud. Solo lee tu actividad para marcar el día en los desafíos que conectes cuando llegás a la meta. Tus datos de salud no salen del celular.",
           "background": true
         }
       ],
