@@ -80,10 +80,26 @@ export function useRegisterVibesMeditation() {
       if (error) throw error;
       return data as boolean;
     },
-    onSuccess: () =>
-      Promise.all([
+    onSuccess: () => {
+      // Las meditaciones registradas en Vibes suman a los desafíos de
+      // mindfulness: si con esta se llega a la meta, el día se marca solo.
+      // require diferido: evita cargar el módulo de Salud hasta que hace falta.
+      const { runHealthAutoCheckins } =
+        require("../health/healthAutoCheckin") as typeof import("../health/healthAutoCheckin");
+      void runHealthAutoCheckins({ notify: false })
+        .then((result) => {
+          if (!result.checkedIn.length) return;
+          client.invalidateQueries({ queryKey: ["challenge_participant"] });
+          client.invalidateQueries({ queryKey: ["challenge_checkins"] });
+          client.invalidateQueries({ queryKey: ["challenge_checkins_today_count"] });
+          client.invalidateQueries({ queryKey: ["challenge_participants_list"] });
+          client.invalidateQueries({ queryKey: ["challenges"] });
+        })
+        .catch(() => {});
+      return Promise.all([
         client.invalidateQueries({ queryKey: ["vibesSummary"] }),
         client.invalidateQueries({ queryKey: ["vibesHistory"] }),
-      ]),
+      ]);
+    },
   });
 }

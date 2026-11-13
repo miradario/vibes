@@ -1,6 +1,6 @@
 import { normalizeSchedule, formatAttendees, displayEventSession, type EventSession } from "../lib/eventSchedule";
 import { localDayKey, calendarDayNumber } from "../lib/challengeProgress";
-import { parseChallengeMetric, type ChallengeMetricType } from "../lib/stepChallenge";
+import { parseChallengeMetric, type ChallengeMetricType } from "../lib/healthChallenge";
 import { useLocalDay } from "../hooks/useLocalDay";
 import { parseEventCategory, parseEventParticipationType, type EventCategory, type EventParticipationType } from "../constants/eventClassification";
 import { useEffect, useMemo, useRef } from "react";
