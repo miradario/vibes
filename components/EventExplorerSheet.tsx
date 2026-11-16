@@ -11,6 +11,7 @@ import MediaImage from "./MediaImage";
 import ScreenContainer from "./ScreenContainer";
 import type { EventFeedItem } from "../src/queries/events.queries";
 import { calendarOccurrences, eventDayKey, hasEventCoordinates } from "../src/lib/eventExplorer";
+import { WEEKDAY_INITIALS_MON_FIRST, WEEKDAY_NAMES_MON_FIRST } from "../src/lib/weekdays";
 import * as ds from "../src/theme/tokens";
 import { vibesTheme } from "../src/theme/vibesTheme";
 const c = vibesTheme.colors;
@@ -45,7 +46,29 @@ export default function EventExplorerSheet({ mode, events, mapEvents, joinedEven
   </AnimatedSheetModal>;
 }
 
-function EventCalendar({ events, joinedEventIds, onOpen }: { events: EventFeedItem[]; joinedEventIds: ReadonlySet<string>; onOpen: (event: EventFeedItem) => void }) {
+export type EventCalendarProps = {
+  events: EventFeedItem[];
+  joinedEventIds: ReadonlySet<string>;
+  onOpen: (event: EventFeedItem) => void;
+  /** Defaults preserve the Eventos calendar copy. */
+  title?: string;
+  emptyDayMessage?: string;
+  joinedLegend?: string;
+  dayHasItemsA11y?: string;
+  dayJoinedA11y?: string;
+};
+
+/** Month grid + day list used by Eventos (EventExplorerSheet) and the __DEV__ classes mock. */
+export function EventCalendar({
+  events,
+  joinedEventIds,
+  onOpen,
+  title = "Tu próximo encuentro",
+  emptyDayMessage = "No hay eventos para este día con los filtros actuales.",
+  joinedLegend = "Ya estás anotado a un evento",
+  dayHasItemsA11y = "con eventos",
+  dayJoinedA11y = "ya estás anotado a eventos",
+}: EventCalendarProps) {
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selected, setSelected] = useState(() => eventDayKey(new Date()));
   const today = eventDayKey(new Date());
@@ -60,7 +83,7 @@ function EventCalendar({ events, joinedEventIds, onOpen }: { events: EventFeedIt
   };
   const dayEvents = occurrences.filter(item => item.day === selected);
   return <ScrollView contentContainerStyle={s.content}>
-    <Text style={s.calendarTitle}>Tu próximo encuentro</Text>
+    <Text style={s.calendarTitle}>{title}</Text>
     <View style={s.header}>
       <Text style={[s.month, { flex: 1 }]}>{month.toLocaleDateString("es-AR", { month: "long" }).toLocaleUpperCase("es-AR")} <Text style={s.meta}>{month.getFullYear()}</Text></Text>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ir a hoy" onPress={() => { const now = new Date(); setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setSelected(today); }} style={s.todayButton}><Text style={s.body}>Hoy · {new Date().getDate()}</Text></TouchableOpacity>
@@ -70,13 +93,13 @@ function EventCalendar({ events, joinedEventIds, onOpen }: { events: EventFeedIt
       <Text style={s.meta}>Elegí un día</Text>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mes siguiente" onPress={() => changeMonth(1)} style={s.control}><Icon name="chevron-forward" size={ds.iconSize.lg} color={c.primaryText} /></TouchableOpacity>
     </View>
-    <View style={s.legend}><Icon name="checkmark-circle" size={ds.iconSize.sm} color={c.accentBlue} /><Text style={s.meta}>Ya estás anotado a un evento</Text></View>
-    <View style={s.grid}>{["L", "M", "M", "J", "V", "S", "D"].map((label, index) => <View key={index} style={s.day}><Text style={s.meta}>{label}</Text></View>)}</View>
+    <View style={s.legend}><Icon name="checkmark-circle" size={ds.iconSize.sm} color={c.accentBlue} /><Text style={s.meta}>{joinedLegend}</Text></View>
+    <View style={s.grid} accessibilityRole="summary">{WEEKDAY_INITIALS_MON_FIRST.map((label, index) => <View key={label + String(index)} style={s.day} accessible accessibilityLabel={WEEKDAY_NAMES_MON_FIRST[index]}><Text style={s.meta} importantForAccessibility="no">{label}</Text></View>)}</View>
     <View style={s.grid}>{Array.from({ length: Math.ceil((offset + days) / 7) * 7 }, (_, index) => {
       const number = index - offset + 1;
       if (number < 1 || number > days) return <View key={index} style={s.day} />;
       const key = eventDayKey(new Date(month.getFullYear(), month.getMonth(), number));
-      return <TouchableOpacity key={key} accessibilityRole="button" accessibilityLabel={`${number} ${month.toLocaleDateString("es-AR", { month: "long" })}${joinedDays.has(key) ? ", ya estás anotado a eventos" : daysWithEvents.has(key) ? ", con eventos" : ""}`} accessibilityState={{ selected: key === selected }} onPress={() => setSelected(key)} style={s.day}>
+      return <TouchableOpacity key={key} accessibilityRole="button" accessibilityLabel={`${number} ${month.toLocaleDateString("es-AR", { month: "long" })}${joinedDays.has(key) ? `, ${dayJoinedA11y}` : daysWithEvents.has(key) ? `, ${dayHasItemsA11y}` : ""}`} accessibilityState={{ selected: key === selected }} onPress={() => setSelected(key)} style={s.day}>
         <View style={[s.dayCircle, joinedDays.has(key) && s.joinedDay, key === today && s.todayCircle, key === selected && s.selected]}>
           {joinedDays.has(key) ? <View style={s.joinedMark}><Icon name="checkmark" size={ds.iconSize.xs} color={c.primaryText} /></View> : null}
           <Text style={s.body}>{number}</Text><View style={[s.dot, { opacity: daysWithEvents.has(key) ? 1 : 0 }]} />
@@ -84,7 +107,7 @@ function EventCalendar({ events, joinedEventIds, onOpen }: { events: EventFeedIt
       </TouchableOpacity>;
     })}</View>
     <Text style={s.month}>{new Date(`${selected}T12:00:00`).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}</Text>
-    {!dayEvents.length ? <Text style={s.meta}>No hay eventos para este día con los filtros actuales.</Text> : null}
+    {!dayEvents.length ? <Text style={s.meta}>{emptyDayMessage}</Text> : null}
     {dayEvents.map(({ event, startsAt }) => <EventRow key={`${event.id}-${startsAt}`} event={event} date={startsAt} joined={joinedEventIds.has(event.id)} onOpen={onOpen} />)}
   </ScrollView>;
 }

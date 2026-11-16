@@ -6,10 +6,9 @@ import { formatSession, type EventSession } from "../src/lib/eventSchedule";
 import SegmentedControl from "./ui/SegmentedControl";
 import DayPill from "./ui/DayPill";
 import * as ds from "../src/theme/tokens";
+import { WEEKDAY_OPTIONS_MON_FIRST } from "../src/lib/weekdays";
 
 export type EventRecurrenceDraft = { frequency: "none" | "weekly" | "monthly"; count: string; weekdays: number[] };
-const days = [[1, "L", "Lunes"], [2, "M", "Martes"], [3, "M", "Miércoles"], [4, "J", "Jueves"], [5, "V", "Viernes"], [6, "S", "Sábado"], [0, "D", "Domingo"]] as const;
-
 export default function EventRecurrenceEditor({ value, onChange, defaultWeekday, schedule }: {
   value: EventRecurrenceDraft;
   onChange: (next: EventRecurrenceDraft) => void;
@@ -26,7 +25,7 @@ export default function EventRecurrenceEditor({ value, onChange, defaultWeekday,
     {value.frequency !== "none" ? <>
       {value.frequency === "weekly" ? <>
         <Text style={s.label}>Días de la semana</Text>
-        <View style={s.options}>{days.map(([day, letter, label]) => <DayPill key={day} variant="selectable" label={letter} accessibilityLabel={label}
+        <View style={s.options}>{WEEKDAY_OPTIONS_MON_FIRST.map(([day, letter, label]) => <DayPill key={day} variant="selectable" label={letter} accessibilityLabel={label}
           selected={weekdays.includes(day)}
           onPress={() => {
             const next = weekdays.includes(day) ? weekdays.filter(item => item !== day) : [...weekdays, day];

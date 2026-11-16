@@ -8,9 +8,15 @@ import { vibesTheme } from "../src/theme/vibesTheme";
 import { useI18n } from "../src/i18n";
 import Events from "./Events";
 import { LearningExplore, LearningCreateAction } from "./Learning";
+import StudentClassesHomeMock from "./StudentClassesHomeMock";
 import * as ds from "../src/theme/tokens";
 
 export function ClassesTab() {
+  // Diseño-only: en __DEV__ el tab Clases muestra el mock de home alumno
+  // (bottom bar visible). Builds de prod siguen con LearningExplore.
+  if (__DEV__) {
+    return <StudentClassesHomeMock />;
+  }
   return <Activities section="classes" />;
 }
 

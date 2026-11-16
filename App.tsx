@@ -4,6 +4,7 @@ import { useVibesPointsEnabled } from "./src/featureFlags/useVibesPointsEnabled"
 import VibesPoints from "./screens/VibesPoints";
 import {ExternalCatalogDetailScreen} from "./components/learning/ExternalCatalog";
 import Activities, { ClassesTab } from "./screens/Activities";
+import StudentClassesCalendarMock from "./screens/StudentClassesCalendarMock";
 import { useClasesEnabled } from "./src/featureFlags/useClasesEnabled";
 import {LearningExplore, LearningProfileDetail, LearningActivityDetail, LearningMine, LearningManage, LearningRoster, LearningProfileEditor, LearningActivityEditor} from "./screens/Learning";
 import { useMeetPeople } from "./src/queries/meetPeople.queries";
@@ -514,6 +515,9 @@ const AppNavigator = () => {
                   initialRouteName="Home"
                   tabBar={(props) => <CustomTabBar {...props} />}
                 >
+                  {clasesEnabled ? (
+                    <Tab.Screen name="ClassesTab" component={ClassesTab} options={{ tabBarLabel: "Clases" }} />
+                  ) : null}
                   <Tab.Screen
                     name="Home"
                     component={Home}
@@ -552,9 +556,6 @@ const AppNavigator = () => {
                       ),
                     }}
                   />
-                  {clasesEnabled ? (
-                    <Tab.Screen name="ClassesTab" component={ClassesTab} options={{ tabBarLabel: "Clases" }} />
-                  ) : null}
                   {meetPeopleEnabled ? (
                   <Tab.Screen
                     name="Discover"
@@ -610,6 +611,7 @@ const AppNavigator = () => {
             <Stack.Screen name="LearningRoster" component={LearningRoster} options={{headerShown:false}} />
             <Stack.Screen name="LearningProfileEditor" component={LearningProfileEditor} options={{headerShown:false}} />
             <Stack.Screen name="LearningActivityEditor" component={LearningActivityEditor} options={{headerShown:false}} />
+            {__DEV__ ? <Stack.Screen name="StudentClassesCalendarMock" component={StudentClassesCalendarMock} options={{headerShown:false}} /> : null}
             <Stack.Screen
               name="Login"
               component={Login}
