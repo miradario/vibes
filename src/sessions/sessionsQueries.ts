@@ -4,9 +4,9 @@ import { useAuthSession } from "../auth/auth.queries";
 import { useSesionesEnabled } from "../featureFlags/useSesionesEnabled";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
-import { dayStartISO, sessionDay } from "./sessions";
+import { dayStartISO, isPaymentHold, sessionDay, type SessionPaymentMethod } from "./sessions";
 import {
-  cancelSession, loadOrganizerAvailability, loadOrganizerContact, loadStudentSessions,
+  bookSession, cancelSession, loadOrganizerAvailability, loadOrganizerContact, loadServicePricing, loadStudentSessions,
   requestCheckoutUrl, reserveSession, respondToSession, type RpcClient,
 } from "./sessionsApi";
 
@@ -19,6 +19,7 @@ export const sessionKeys = {
   mine: (userId?: string) => ["sessions", "mine", userId ?? "anonymous"] as const,
   organizer: (organizerId: string) => ["sessions", "organizer", organizerId] as const,
   contact: (organizerId: string) => ["sessions", "contact", organizerId] as const,
+  pricing: (organizerId: string) => ["sessions", "pricing", organizerId] as const,
 };
 
 export function useStudentSessions() {
@@ -30,6 +31,8 @@ export function useStudentSessions() {
     queryFn: () => withBootTimeout(loadStudentSessions(client), 15000, "student sessions"),
     staleTime: 15000,
     retry: 1,
+    // While a Mercado Pago hold waits for the webhook, poll so it flips to confirmed (or released).
+    refetchInterval: (query) => (query.state.data?.sessions.some(isPaymentHold) ? 5000 : false),
   });
 }
 
@@ -57,8 +60,21 @@ export function useOrganizerContact(organizerId: string | undefined) {
   });
 }
 
+export function useServicePricing(organizerId: string | undefined) {
+  const { data: session } = useAuthSession();
+  const enabled = useSesionesEnabled();
+  return useQuery({
+    queryKey: sessionKeys.pricing(organizerId ?? ""),
+    enabled: enabled && !!organizerId && !!session?.user.id,
+    queryFn: () => withBootTimeout(loadServicePricing(client, organizerId!), 15000, "service pricing"),
+    staleTime: 15000,
+    retry: 1,
+  });
+}
+
 type SessionAction =
   | { action: "reserve"; organizerId: string; availabilityId: string; startsAt: string; duration: number }
+  | { action: "book"; availabilityId: string; startsAt: string; duration: number; paymentMethod: SessionPaymentMethod | null }
   | { action: "cancel"; id: string }
   | { action: "accept"; id: string }
   | { action: "decline"; id: string };
@@ -72,6 +88,7 @@ export function useSessionMutation() {
       const run = () => {
         switch (input.action) {
           case "reserve": return reserveSession(client, input.organizerId, input.availabilityId, input.startsAt, input.duration);
+          case "book": return bookSession(client, input.availabilityId, input.startsAt, input.duration, input.paymentMethod);
           case "cancel": return cancelSession(client, input.id);
           default: return respondToSession(client, input.id, input.action);
         }
@@ -83,7 +100,7 @@ export function useSessionMutation() {
   });
 }
 
-/** Opens the existing Mercado Pago web checkout and refreshes the session when it closes. */
+/** Opens the Mercado Pago web checkout (facilitator's account) and refreshes the session when it closes. */
 export function useSessionCheckout() {
   const queryClient = useQueryClient();
   return useMutation({

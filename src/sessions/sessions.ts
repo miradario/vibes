@@ -16,7 +16,17 @@ export type AvailabilityWindow = {
   ends_at: string;
   busy: BusyRange[];
 };
-export type SessionAwaiting = "student" | "facilitator" | null;
+export type SessionAwaiting = "student" | "facilitator" | "payment" | null;
+export type SessionPaymentMethod = "mercadopago" | "cash" | "transfer";
+/** Price and payment methods the facilitator set for a service (organizer + title + location). */
+export type ServicePricing = {
+  title: string;
+  location: string;
+  price: number;
+  currency?: string;
+  payment_methods: SessionPaymentMethod[];
+  payment_instructions?: string;
+};
 export type SessionPaymentStatus = "pending" | "paid" | "free" | "refunded" | "cancelled" | null;
 export type StudentSession = {
   id: string;
@@ -35,6 +45,13 @@ export type StudentSession = {
   amount?: number | null;
   currency?: string | null;
   payment_status?: SessionPaymentStatus | string;
+  /** null on legacy facilitator orders, which are paid with Mercado Pago. */
+  payment_method?: SessionPaymentMethod | null;
+  /** Mercado Pago hold: the slot is kept until this time while the student pays. */
+  hold_expires_at?: string | null;
+  payment_instructions?: string | null;
+  /** Paid after the hold was released (or after cancelling): settled with the facilitator. */
+  late_payment?: boolean;
   whatsapp_phone?: string | null;
 };
 export type SchedulerData = {
@@ -72,7 +89,8 @@ export function toISO(day: string, time: string): string {
  */
 export function sessionAwaiting(session: StudentSession): SessionAwaiting {
   if (session.status !== "pending") return null;
-  if (session.awaiting === "student" || session.awaiting === "facilitator") return session.awaiting;
+  if (session.awaiting === "student" || session.awaiting === "facilitator" || session.awaiting === "payment") return session.awaiting;
+  if (isPaymentHold(session)) return "payment";
   if (typeof session.created_by_me === "boolean") return session.created_by_me ? "facilitator" : "student";
   return session.outside_availability ? "facilitator" : "student";
 }
@@ -82,30 +100,77 @@ export function canCancelSession(session: StudentSession, now = Date.now()): boo
   return session.status !== "cancelled" && Date.parse(session.starts_at) > now;
 }
 
+/** Pending booking held while the student pays with Mercado Pago (15 minutes). */
+export function isPaymentHold(session: StudentSession): boolean {
+  return session.status === "pending" && !!session.order_id && !!session.hold_expires_at
+    && (session.payment_method ?? "mercadopago") === "mercadopago" && session.payment_status === "pending";
+}
+
+export const HOLD_MINUTES = 15;
+export const PAYMENT_METHOD_LABELS: Record<SessionPaymentMethod, string> = {
+  mercadopago: "Mercado Pago",
+  cash: "Efectivo",
+  transfer: "Transferencia",
+};
+export const NO_REFUND_NOTE = "Si cancelás después de pagar, no hay reintegro automático: lo arreglás directamente con el facilitador.";
+
 export type PaymentState =
   | { kind: "coordinate" }
   | { kind: "free" }
   | { kind: "pay"; amount: number; currency: string; orderId: string }
+  | { kind: "hold"; amount: number; currency: string; orderId: string; expiresAt: string }
+  | { kind: "offline"; amount: number; currency: string; method: "cash" | "transfer"; instructions: string | null }
+  | { kind: "offline_paid"; amount: number; currency: string; method: "cash" | "transfer" }
+  | { kind: "late"; amount: number; currency: string }
   | { kind: "awaiting_confirmation"; amount: number; currency: string }
   | { kind: "paid"; amount: number; currency: string }
   | { kind: "refunded"; amount: number; currency: string };
 
 /**
- * Payment shown for a session. Only the facilitator sets an amount (appointment_orders);
- * when the student books there is no order and payment is coordinated with the facilitator.
- * The web checkout only opens once the booking is confirmed (same rule as the portal).
+ * Payment shown for a session (appointment_orders). Without an order (no price set, or an
+ * out-of-hours request) payment is coordinated with the facilitator.
+ * - Mercado Pago chosen when booking: the slot is held and "Pagar" is available until it expires.
+ * - Cash / transfer: paid directly to the facilitator, nothing to pay in the app.
+ * - Facilitator-scheduled sessions: the checkout opens once the booking is confirmed (portal rule).
+ * The money always goes to the facilitator's own Mercado Pago account (server side).
  */
 export function sessionPayment(session: StudentSession): PaymentState {
   const amount = Number(session.amount ?? 0);
   const currency = session.currency || "ARS";
   const status = session.payment_status ?? null;
+  const method = session.payment_method ?? "mercadopago";
   if (!session.order_id || !Number.isFinite(amount)) return { kind: "coordinate" };
   if (status === "free" || amount <= 0) return { kind: "free" };
+  if (session.status === "cancelled" && status === "paid") return { kind: "late", amount, currency };
+  if (method !== "mercadopago") {
+    if (status === "paid") return { kind: "offline_paid", amount, currency, method };
+    if (status === "pending") return { kind: "offline", amount, currency, method, instructions: session.payment_instructions?.trim() || null };
+  }
   if (status === "paid") return { kind: "paid", amount, currency };
   if (status === "refunded") return { kind: "refunded", amount, currency };
   if (status === "cancelled") return { kind: "coordinate" };
+  if (isPaymentHold(session)) return { kind: "hold", amount, currency, orderId: session.order_id, expiresAt: session.hold_expires_at! };
   if (session.status !== "confirmed") return { kind: "awaiting_confirmation", amount, currency };
   return { kind: "pay", amount, currency, orderId: session.order_id };
+}
+
+/** Seconds left to pay a Mercado Pago hold (0 when expired). */
+export function holdSecondsLeft(expiresAt: string, now = Date.now()): number {
+  const end = Date.parse(expiresAt);
+  return Number.isFinite(end) ? Math.max(0, Math.floor((end - now) / 1000)) : 0;
+}
+export function formatCountdown(seconds: number): string {
+  const safe = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`;
+}
+
+/** Pricing of a service, or null when the facilitator didn't set one (payment coordinated). */
+export function servicePricing(pricing: ServicePricing[] | null | undefined, service: Pick<AvailabilityWindow, "title" | "location"> | null | undefined): ServicePricing | null {
+  if (!service) return null;
+  const match = (pricing ?? []).find((item) => item.title === service.title && (item.location ?? "") === (service.location ?? ""));
+  if (!match || !Number.isFinite(Number(match.price))) return null;
+  const methods = (match.payment_methods ?? []).filter((method): method is SessionPaymentMethod => method in PAYMENT_METHOD_LABELS);
+  return { ...match, price: Number(match.price), payment_methods: methods };
 }
 
 export function formatMoney(amount: number, currency = "ARS"): string {
@@ -117,21 +182,25 @@ export function formatMoney(amount: number, currency = "ARS"): string {
 }
 
 export function sessionStatusLabel(session: StudentSession): string {
-  if (session.status === "cancelled") return "Cancelada";
+  if (session.status === "cancelled") return session.late_payment ? "Cancelada · pago a resolver" : "Cancelada";
   if (session.status === "confirmed") return "Confirmada";
-  return sessionAwaiting(session) === "student" ? "Te toca confirmar" : "Esperando confirmación del facilitador";
+  const awaiting = sessionAwaiting(session);
+  if (awaiting === "payment") return "Esperando el pago";
+  return awaiting === "student" ? "Te toca confirmar" : "Esperando confirmación del facilitador";
 }
 
 /** Session needs something from the student: confirm it or pay it. */
 export function sessionNeedsStudent(session: StudentSession, now = Date.now()): "confirm" | "pay" | null {
   if (session.status === "cancelled" || Date.parse(session.ends_at) <= now) return null;
   if (sessionAwaiting(session) === "student" && Date.parse(session.starts_at) > now) return "confirm";
-  return sessionPayment(session).kind === "pay" ? "pay" : null;
+  const payment = sessionPayment(session);
+  if (payment.kind === "hold") return holdSecondsLeft(payment.expiresAt, now) > 0 ? "pay" : null;
+  return payment.kind === "pay" ? "pay" : null;
 }
 
 export function upcomingSessions(sessions: StudentSession[], now = Date.now()): StudentSession[] {
   return sessions
-    .filter((session) => session.status !== "cancelled" && Date.parse(session.ends_at) > now)
+    .filter((session) => (session.status !== "cancelled" || session.late_payment) && Date.parse(session.ends_at) > now)
     .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
 }
 
@@ -217,6 +286,10 @@ export function isMissingRpc(cause: unknown): boolean {
   const error = cause as { code?: string } | null;
   return error?.code === "PGRST202" || error?.code === "42883";
 }
+/** RPC or action not deployed yet (portal_student_sessions without pricing / book). */
+export function isUnsupportedAction(cause: unknown): boolean {
+  return isMissingRpc(cause) || (cause as { message?: string } | null)?.message === "INVALID_ACTION";
+}
 
 export function sessionError(cause: unknown): string {
   const error = cause as { code?: string; message?: string } | null;
@@ -231,6 +304,9 @@ export function sessionError(cause: unknown): string {
     AUTH_REQUIRED: "Iniciá sesión nuevamente.",
     LEARNING_DISABLED: "Las sesiones no están disponibles en este momento. Probá más tarde.",
     NOT_PENDING: "Esta sesión ya no está pendiente de tu confirmación.",
+    AWAITING_PAYMENT: "Esta sesión se confirma sola cuando se acredita el pago.",
+    PAYMENT_REQUIRED: "Este servicio tiene precio. Actualizá la app para elegir cómo pagar.",
+    PAYMENT_METHOD_UNAVAILABLE: "Esa forma de pago ya no está disponible. Actualizá y elegí otra.",
   };
   return messages[error?.message ?? ""] ?? "No pudimos completar la operación. Actualizá y volvé a intentar.";
 }

@@ -147,3 +147,63 @@ test('notification settings show the sessions category only with flag and column
  assert.equal(keys({notificationSessions:true},true).includes('notificationSessions'),true);
  assert.equal(keys({},false).length,6);
 });
+
+test('payments: Mercado Pago hold waits for the payment and confirms itself',()=>{
+ const hold=session({status:'pending',created_by_me:true,order_id:'o',amount:5000,payment_status:'pending',payment_method:'mercadopago',hold_expires_at:'2026-11-17T12:15:00Z'});
+ assert.equal(s.isPaymentHold(hold),true);
+ assert.equal(s.sessionAwaiting(hold),'payment');
+ assert.equal(s.sessionAwaiting(session({status:'pending',awaiting:'payment'})),'payment');
+ assert.equal(s.sessionStatusLabel(hold),'Esperando el pago');
+ assert.deepEqual(plain(s.sessionPayment(hold)),{kind:'hold',amount:5000,currency:'ARS',orderId:'o',expiresAt:'2026-11-17T12:15:00Z'});
+ assert.equal(s.sessionNeedsStudent(hold,NOW),'pay');
+ assert.equal(s.sessionNeedsStudent(hold,Date.parse('2026-11-17T12:16:00Z')),null);
+ assert.equal(s.holdSecondsLeft('2026-11-17T12:15:00Z',NOW),900);
+ assert.equal(s.holdSecondsLeft('2026-11-17T11:00:00Z',NOW),0);
+ assert.equal(s.formatCountdown(905),'15:05'); assert.equal(s.formatCountdown(-3),'0:00');
+ // Once credited it is a regular paid session.
+ assert.equal(s.sessionPayment({...hold,status:'confirmed',payment_status:'paid'}).kind,'paid');
+});
+
+test('payments: cash and transfer are paid to the facilitator, nothing to pay in the app',()=>{
+ const cash=session({order_id:'o',amount:3000,payment_status:'pending',payment_method:'cash',payment_instructions:' Alias ana.reiki '});
+ assert.deepEqual(plain(s.sessionPayment(cash)),{kind:'offline',amount:3000,currency:'ARS',method:'cash',instructions:'Alias ana.reiki'});
+ assert.equal(s.sessionNeedsStudent(cash,NOW),null);
+ assert.equal(s.sessionPayment({...cash,payment_method:'transfer',payment_status:'paid'}).kind,'offline_paid');
+ // Legacy facilitator orders (no payment_method) keep the confirm-then-pay flow.
+ assert.equal(s.sessionPayment(session({status:'pending',order_id:'o',amount:5000,payment_status:'pending',payment_method:null})).kind,'awaiting_confirmation');
+});
+
+test('payments: a payment credited after the hold was released is settled with the facilitator',()=>{
+ const late=session({status:'cancelled',late_payment:true,order_id:'o',amount:5000,payment_status:'paid',payment_method:'mercadopago',hold_expires_at:'2026-11-17T11:00:00Z'});
+ assert.equal(s.sessionPayment(late).kind,'late');
+ assert.equal(s.sessionStatusLabel(late),'Cancelada · pago a resolver');
+ assert.equal(s.upcomingSessions([late,session({id:'c',status:'cancelled'})],NOW).length,1);
+ assert.equal(s.canCancelSession(late,NOW),false);
+ assert.match(s.NO_REFUND_NOTE,/no hay reintegro automático/);
+});
+
+test('service pricing matches title and location and drops unknown methods',()=>{
+ const pricing=[{title:'Reiki',location:'',price:'5000',payment_methods:['mercadopago','cash','bitcoin']},{title:'Reiki',location:'Palermo',price:0,payment_methods:[]}];
+ assert.deepEqual(plain(s.servicePricing(pricing,{title:'Reiki',location:''})),{title:'Reiki',location:'',price:5000,payment_methods:['mercadopago','cash']});
+ assert.equal(s.servicePricing(pricing,{title:'Reiki',location:'Palermo'}).price,0);
+ assert.equal(s.servicePricing(pricing,{title:'Yoga',location:''}),null);
+ assert.equal(s.servicePricing(null,{title:'Reiki',location:''}),null);
+ assert.equal(s.PAYMENT_METHOD_LABELS.transfer,'Transferencia');
+ assert.match(s.sessionError({message:'PAYMENT_METHOD_UNAVAILABLE'}),/forma de pago/);
+});
+
+test('pricing and book use portal_student_sessions and degrade when not deployed',async()=>{
+ const calls=[];
+ const ok={rpc:async(name,args)=>{calls.push({name,args});return {data:args.p_action==='pricing'?{services:[{title:'Reiki',location:'',price:5000,payment_methods:['cash']}],hold_minutes:15}:{booking_id:'b9',order_id:'o9',hold_expires_at:'2026-11-17T12:15:00Z'},error:null};}};
+ const pricing=await api.loadServicePricing(ok,'org');
+ assert.equal(pricing.supported,true); assert.equal(pricing.holdMinutes,15); assert.equal(pricing.services.length,1);
+ assert.deepEqual(plain(calls[0]),{name:'portal_student_sessions',args:{p_action:'pricing',p_id:'org',p_data:{}}});
+ const booked=await api.bookSession(ok,'a1','2026-11-20T13:00:00.000Z',60,'mercadopago');
+ assert.equal(booked.order_id,'o9');
+ assert.deepEqual(plain(calls[1]),{name:'portal_student_sessions',args:{p_action:'book',p_id:'a1',p_data:{starts_at:'2026-11-20T13:00:00.000Z',duration:60,payment_method:'mercadopago'}}});
+ const oldRpc={rpc:async()=>({data:null,error:{code:'P0001',message:'INVALID_ACTION'}})};
+ assert.deepEqual(plain(await api.loadServicePricing(oldRpc,'org')),{services:[],supported:false,holdMinutes:15});
+ const missing={rpc:async()=>({data:null,error:{code:'PGRST202'}})};
+ assert.equal((await api.loadServicePricing(missing,'org')).supported,false);
+ await assert.rejects(api.loadServicePricing({rpc:async()=>({data:null,error:{message:'FORBIDDEN'}})},'org'));
+});

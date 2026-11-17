@@ -8,14 +8,15 @@ import { Button, Chips, Empty, Page, Photo, ui } from "../components/learning/Le
 import { bannerStyles, cardStyles } from "../components/ui/surfaceStyles";
 import { useSesionesEnabled } from "../src/featureFlags/useSesionesEnabled";
 import {
-  bookableDays, REQUEST_TIMES, requestDays, SESSION_DURATIONS, sessionDayLabel, sessionError, sessionTime,
-  sessionWhen, startOptions, toISO, whatsappLink, type AvailabilityWindow,
+  bookableDays, formatMoney, NO_REFUND_NOTE, PAYMENT_METHOD_LABELS, REQUEST_TIMES, requestDays, SESSION_DURATIONS,
+  sessionDayLabel, sessionError, servicePricing, sessionTime, sessionWhen, startOptions, toISO, whatsappLink,
+  type AvailabilityWindow, type ServicePricing, type SessionPaymentMethod,
 } from "../src/sessions/sessions";
-import { findReservedBooking } from "../src/sessions/sessionsApi";
-import { useOrganizerAvailability, useOrganizerContact, useProfessionals, useSessionMutation } from "../src/sessions/sessionsQueries";
+import { findReservedBooking, type BookSessionResult } from "../src/sessions/sessionsApi";
+import { useOrganizerAvailability, useOrganizerContact, useProfessionals, useServicePricing, useSessionMutation } from "../src/sessions/sessionsQueries";
 import * as ds from "../src/theme/tokens";
 
-type Draft = { availabilityId: string; startsAt: string; duration: number; outside: boolean };
+type Draft = { availabilityId: string; startsAt: string; duration: number; outside: boolean; pricing: ServicePricing | null; method: SessionPaymentMethod | null };
 const serviceKey = (item: Pick<AvailabilityWindow, "title" | "location">) => `${item.title}\u0000${item.location}`;
 
 export default function ProfessionalDetailScreen() {
@@ -51,7 +52,9 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
   const insets = useSafeAreaInsets();
   const availability = useOrganizerAvailability(organizerId);
   const contact = useOrganizerContact(organizerId);
+  const pricingQuery = useServicePricing(organizerId);
   const mutation = useSessionMutation();
+  const [method, setMethod] = useState<SessionPaymentMethod | "">("");
   const [service, setService] = useState("");
   const [duration, setDuration] = useState<number>(60);
   const [day, setDay] = useState("");
@@ -72,17 +75,33 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
   const activeDay = days.includes(day) ? day : days[0] ?? "";
   const starts = selected && activeDay ? startOptions(windows, selected, activeDay, duration) : [];
   const activeStart = starts.find((item) => item.startsAt === start) ?? null;
+  // null: no price set (or backend not deployed yet) → payment coordinated with the facilitator.
+  const pricing = pricingQuery.data?.supported ? servicePricing(pricingQuery.data.services, selected) : null;
+  const priced = !!pricing && pricing.price > 0;
+  const methods = priced ? pricing.payment_methods : [];
+  const activeMethod: SessionPaymentMethod | null = priced ? (methods.find((item) => item === method) ?? (methods.length === 1 ? methods[0] : null)) : null;
+  const holdMinutes = pricingQuery.data?.holdMinutes ?? 15;
+  // Don't book before knowing the price: a priced service must go through 'book'.
+  const pricingReady = pricingQuery.isSuccess;
   const whatsapp = whatsappLink(contact.data?.whatsapp_phone, `Hola ${organizerName}, te escribo desde Vibes para consultar por una sesión.`);
   const reqDays = requestDays();
   const reqDay = reqDays.includes(requestDay) ? requestDay : reqDays[0];
 
   const submit = (value: Draft) => {
     setNotice("");
-    void mutation.mutateAsync({ action: "reserve", organizerId, availabilityId: value.availabilityId, startsAt: value.startsAt, duration: value.duration })
+    // Priced services go through portal_student_sessions('book'); out-of-hours requests and
+    // services without a price keep the scheduler reservation (payment coordinated).
+    const priced = !value.outside && !!value.pricing;
+    const action = priced
+      ? mutation.mutateAsync({ action: "book", availabilityId: value.availabilityId, startsAt: value.startsAt, duration: value.duration, paymentMethod: value.method })
+      : mutation.mutateAsync({ action: "reserve", organizerId, availabilityId: value.availabilityId, startsAt: value.startsAt, duration: value.duration });
+    void action
       .then((data) => {
         setDraft(null); setRequestOpen(false); setStart("");
-        const booking = findReservedBooking(data as never, organizerId, value.startsAt);
-        if (booking) nav.navigate("SessionDetail", { id: booking.id });
+        const result = data as BookSessionResult;
+        const bookingId = priced ? result?.booking_id : findReservedBooking(data as never, organizerId, value.startsAt)?.id;
+        // Mercado Pago: open the checkout right away from the session detail (the slot is held meanwhile).
+        if (bookingId) nav.navigate("SessionDetail", { id: bookingId, checkout: value.method === "mercadopago" ? result?.order_id ?? undefined : undefined });
         else setNotice(value.outside ? "Enviamos tu solicitud. Queda pendiente hasta que la confirme el facilitador." : "Listo, reservaste la sesión.");
       })
       .catch(() => setDraft(null));
@@ -104,10 +123,21 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
         <View style={s.grid}><Chips value={activeStart?.startsAt ?? ""} onChange={setStart} options={starts.map((item) => ({ value: item.startsAt, label: sessionTime(item.startsAt) }))} /></View>
         <View style={[cardStyles.base, cardStyles.padding, s.block]}>
           <Text style={s.label}>Pago</Text>
-          <Text style={ui.body}>A coordinar con el facilitador.</Text>
+          {pricingQuery.isLoading ? <Text style={ui.muted}>Consultando el precio…</Text> : null}
+          {pricingQuery.isError ? <><Text accessibilityRole="alert" style={ui.body}>{sessionError(pricingQuery.error)}</Text><Button secondary label="Reintentar" onPress={() => void pricingQuery.refetch()} /></> : null}
+          {pricingReady && !pricing ? <Text style={ui.body}>A coordinar con el facilitador.</Text> : null}
+          {pricing && !priced ? <Text style={ui.body}>Sin cargo.</Text> : null}
+          {priced ? <>
+            <Text style={ui.body}>Precio: {formatMoney(pricing.price, pricing.currency)}</Text>
+            {methods.length > 1 ? <Chips value={activeMethod ?? ""} onChange={(value) => setMethod(value as SessionPaymentMethod)} options={methods.map((value) => ({ value, label: PAYMENT_METHOD_LABELS[value] }))} /> : null}
+            {methods.length === 1 ? <Text style={ui.body}>Forma de pago: {PAYMENT_METHOD_LABELS[methods[0]]}</Text> : null}
+            {!methods.length ? <Text style={ui.muted}>{organizerName} todavía no habilitó formas de pago. Escribile para coordinar.</Text> : null}
+            {methods.length > 1 && !activeMethod ? <Text style={ui.muted}>Elegí cómo vas a pagar.</Text> : null}
+            {activeMethod ? <Text style={ui.muted}>{paymentMethodHint(activeMethod, holdMinutes)}</Text> : null}
+          </> : null}
         </View>
-        <Button label="Reservar sesión" disabled={!activeStart || mutation.isPending}
-          onPress={() => activeStart && setDraft({ availabilityId: activeStart.availabilityId, startsAt: activeStart.startsAt, duration, outside: false })} />
+        <Button label="Reservar sesión" disabled={!activeStart || mutation.isPending || !pricingReady || (priced && !activeMethod)}
+          onPress={() => activeStart && setDraft({ availabilityId: activeStart.availabilityId, startsAt: activeStart.startsAt, duration, outside: false, pricing, method: activeMethod })} />
       </> : <Text style={ui.muted}>No hay horarios libres para esta duración en las próximas semanas.</Text>}
     </> : null}
 
@@ -123,8 +153,8 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
       sheetStyle={[ui.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[6]) }]}>
       <Text style={ui.title}>Confirmar reserva</Text>
       {draft ? <Text style={ui.body}>{selected?.title} con {organizerName}, {sessionWhen({ starts_at: draft.startsAt, ends_at: new Date(Date.parse(draft.startsAt) + draft.duration * 60000).toISOString() })}.</Text> : null}
-      <Text style={ui.muted}>El pago se coordina con el facilitador. Podés cancelar hasta que empiece la sesión.</Text>
-      <Button label={mutation.isPending ? "Reservando…" : "Confirmar reserva"} disabled={mutation.isPending || !draft} onPress={() => draft && submit(draft)} />
+      {draft ? <DraftPayment draft={draft} organizerName={organizerName} holdMinutes={holdMinutes} /> : null}
+      <Button label={mutation.isPending ? "Reservando…" : draft?.method === "mercadopago" ? "Reservar y pagar" : "Confirmar reserva"} disabled={mutation.isPending || !draft} onPress={() => draft && submit(draft)} />
       <Button secondary label="Volver" disabled={mutation.isPending} onPress={() => setDraft(null)} />
     </AnimatedSheetModal>
 
@@ -142,7 +172,7 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
           <Chips value={String(duration)} onChange={(value) => setDuration(Number(value))} options={SESSION_DURATIONS.map((value) => ({ value: String(value), label: `${value} min` }))} />
           <View style={[bannerStyles.base, bannerStyles.info]}><Text style={ui.body}>Pago: a coordinar con el facilitador.</Text></View>
           <Button label={mutation.isPending ? "Enviando…" : "Enviar solicitud"} disabled={mutation.isPending || !requestTime}
-            onPress={() => submit({ availabilityId: selected.id, startsAt: toISO(reqDay, requestTime), duration, outside: true })} />
+            onPress={() => submit({ availabilityId: selected.id, startsAt: toISO(reqDay, requestTime), duration, outside: true, pricing: null, method: null })} />
         </> : <Text style={ui.body}>{organizerName} todavía no habilitó solicitudes desde la app.{whatsapp ? " Escribile por WhatsApp para coordinar." : " Volvé a intentarlo más adelante."}</Text>}
         {whatsapp ? <Button secondary label="Escribir por WhatsApp" onPress={() => void Linking.openURL(whatsapp).catch(() => {})} /> : null}
         {mutation.isError ? <Text accessibilityRole="alert" style={ui.body}>{sessionError(mutation.error)}</Text> : null}
@@ -150,6 +180,28 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
       </ScrollView>
     </AnimatedSheetModal>
   </>;
+}
+
+function paymentMethodHint(method: SessionPaymentMethod, holdMinutes: number): string {
+  if (method === "mercadopago") return `Pagás en la app con Mercado Pago. Guardamos el horario ${holdMinutes} minutos mientras pagás y la sesión se confirma sola cuando se acredita.`;
+  return method === "cash" ? "Pagás en efectivo directamente al facilitador. La sesión queda confirmada al reservar." : "Pagás por transferencia directamente al facilitador. La sesión queda confirmada al reservar.";
+}
+
+/** Payment summary in the "Confirmar reserva" sheet. */
+function DraftPayment({ draft, organizerName, holdMinutes }: { draft: Draft; organizerName: string; holdMinutes: number }) {
+  const pricing = draft.pricing;
+  if (!pricing) return <Text style={ui.muted}>El pago se coordina con el facilitador. Podés cancelar hasta que empiece la sesión.</Text>;
+  if (pricing.price <= 0 || !draft.method) return <Text style={ui.muted}>Sin cargo. Podés cancelar hasta que empiece la sesión.</Text>;
+  const total = formatMoney(pricing.price, pricing.currency);
+  const instructions = draft.method !== "mercadopago" ? pricing.payment_instructions?.trim() : "";
+  return <View style={s.block}>
+    <Text style={ui.body}>Total: {total} · {PAYMENT_METHOD_LABELS[draft.method]}</Text>
+    {draft.method === "mercadopago"
+      ? <Text style={ui.muted}>Al confirmar abrimos Mercado Pago. El horario queda guardado {holdMinutes} minutos: si el pago no se acredita en ese tiempo, se libera. El pago va directo a la cuenta de {organizerName}.</Text>
+      : <Text style={ui.muted}>Le pagás a {organizerName} {draft.method === "cash" ? "en efectivo" : "por transferencia"}; en la app no se cobra nada.</Text>}
+    {instructions ? <Text style={ui.muted}>{instructions}</Text> : null}
+    <Text style={ui.muted}>Podés cancelar hasta que empiece la sesión. {NO_REFUND_NOTE}</Text>
+  </View>;
 }
 
 const s = StyleSheet.create({

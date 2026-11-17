@@ -1,7 +1,11 @@
 // RPC contract for student sessions. Existing prod RPCs: portal_scheduler (get / reserve /
 // cancel). Proposed, not deployed yet: portal_student_sessions (list / accept / decline /
-// contact). Every call that depends on the proposed RPC degrades gracefully when missing.
-import { isMissingRpc, type SchedulerData, type StudentSession } from "./sessions";
+// contact / pricing / book). Every call that depends on the proposed RPC degrades gracefully
+// when missing.
+import {
+  HOLD_MINUTES, isMissingRpc, isUnsupportedAction, type SchedulerData, type ServicePricing,
+  type SessionPaymentMethod, type StudentSession,
+} from "./sessions";
 
 export type RpcClient = { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> };
 
@@ -40,6 +44,34 @@ export function cancelSession(client: RpcClient, bookingId: string) {
   return scheduler(client, "cancel", null, bookingId);
 }
 
+export type ServicePricingResult = { services: ServicePricing[]; supported: boolean; holdMinutes: number };
+
+/** Prices and payment methods per service. Mercado Pago only comes when the facilitator has it connected. */
+export async function loadServicePricing(client: RpcClient, organizerId: string): Promise<ServicePricingResult> {
+  try {
+    const data = await call<{ services?: ServicePricing[]; hold_minutes?: number } | null>(client, "portal_student_sessions", { p_action: "pricing", p_id: organizerId, p_data: {} });
+    return { services: data?.services ?? [], supported: true, holdMinutes: Number(data?.hold_minutes) || HOLD_MINUTES };
+  } catch (cause) {
+    if (isUnsupportedAction(cause)) return { services: [], supported: false, holdMinutes: HOLD_MINUTES };
+    throw cause;
+  }
+}
+
+export type BookSessionResult = { sessions?: StudentSession[]; booking_id?: string | null; order_id?: string | null; hold_expires_at?: string | null };
+
+/**
+ * Books a priced service with the chosen payment method (null when it is free).
+ * Mercado Pago → pending, held until hold_expires_at while the student pays; it confirms itself
+ * when the webhook credits the payment. Cash / transfer → confirmed, paid to the facilitator.
+ */
+export function bookSession(client: RpcClient, availabilityId: string, startsAt: string, duration: number, paymentMethod: SessionPaymentMethod | null) {
+  return call<BookSessionResult>(client, "portal_student_sessions", {
+    p_action: "book",
+    p_id: availabilityId,
+    p_data: { starts_at: startsAt, duration, payment_method: paymentMethod },
+  });
+}
+
 export async function respondToSession(client: RpcClient, bookingId: string, answer: "accept" | "decline") {
   try {
     return await call<unknown>(client, "portal_student_sessions", { p_action: answer, p_id: bookingId, p_data: {} });
@@ -67,7 +99,10 @@ export function findReservedBooking(data: SchedulerData | null | undefined, orga
 }
 
 const MERCADO_PAGO_URL = /^https:\/\/[\w.-]*mercadopago\.(com|com\.ar)\//;
-/** Same endpoint the portal uses; the server validates access, amount and confirmation. */
+/**
+ * Same endpoint the portal uses; the server validates access, amount, confirmation or an active
+ * hold, and creates the preference with the facilitator's own Mercado Pago account.
+ */
 export async function requestCheckoutUrl(fetchImpl: typeof fetch, portalUrl: string, accessToken: string, orderId: string): Promise<string> {
   const response = await fetchImpl(`${portalUrl.replace(/\/$/, "")}/api/portal/appointment-checkout`, {
     method: "POST",
