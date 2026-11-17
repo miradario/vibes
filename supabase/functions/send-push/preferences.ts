@@ -5,6 +5,10 @@ const columns: Record<string, string> = {
   event_message: "notification_group_messages",
   challenge_reminder: "notification_challenges",
   event_reminder: "notification_events",
+  appointment_invited: "notification_sessions",
+  appointment_confirmed: "notification_sessions",
+  appointment_updated: "notification_sessions",
+  appointment_cancelled: "notification_sessions",
 };
 
 export const notificationAllowed = (

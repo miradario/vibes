@@ -4,13 +4,16 @@ import { useVibesPointsEnabled } from "./src/featureFlags/useVibesPointsEnabled"
 import VibesPoints from "./screens/VibesPoints";
 import {ExternalCatalogDetailScreen} from "./components/learning/ExternalCatalog";
 import Activities, { ClassesTab } from "./screens/Activities";
-import { useClasesEnabled } from "./src/featureFlags/useClasesEnabled";
+import { useActivitiesFlags } from "./src/featureFlags/useActivitiesFlags";
+import { teacherManagementInApp } from "./src/featureFlags/activities";
+import SessionDetailScreen from "./screens/SessionDetail";
+import ProfessionalDetailScreen from "./screens/ProfessionalDetail";
 import {LearningExplore, LearningProfileDetail, LearningActivityDetail, LearningMine, LearningManage, LearningRoster, LearningProfileEditor, LearningActivityEditor} from "./screens/Learning";
 import { useMeetPeople } from "./src/queries/meetPeople.queries";
 import PastChallenges from "./screens/PastChallenges";
 import { getReminderDestination, shouldDeferReminder } from "./src/notifications/reminderNavigation";
 import PastEvents from "./screens/PastEvents";
-import { checkDeferredLinkOnce, type DeferredDestination } from "./src/deeplinks/deferredLink";
+import { checkDeferredLinkOnce, deferredNeedsMainApp, type DeferredDestination } from "./src/deeplinks/deferredLink";
 import VibiOverlay from "./components/VibiOverlay";
 import FtuxGuide from "./components/ftux/FtuxGuide";
 import {
@@ -131,6 +134,7 @@ const linking = {
       EventDetail: "event/:eventId",
       ExternalCatalogDetail: "class/:id",
       LearningActivity: "learning/:id",
+      SessionDetail: "session/:id",
       ChallengeDetailScreen: "challenge/:challengeId",
     },
   },
@@ -156,6 +160,8 @@ function flushDeferredDestination() {
   if (!pendingDeferredDestination || !isNavigationReady || !nav) return;
   // Wait until Startup/UpdateGate reset the stack, and let a tapped notification go first.
   if (pendingNotificationData || shouldDeferReminder(nav.getCurrentRoute()?.name)) return;
+  // A session invitation opens after signup/login and onboarding, once the main tabs exist.
+  if (deferredNeedsMainApp(pendingDeferredDestination) && !nav.getRootState()?.routes?.some((route: { name: string }) => route.name === "Tab")) return;
   const destination = pendingDeferredDestination;
   pendingDeferredDestination = null;
   nav.dispatch(CommonActions.navigate(destination));
@@ -199,7 +205,7 @@ const CommunityRuntime = () => {
 };
 const AppNavigator = () => {
   const { enabled: meetPeopleEnabled } = useMeetPeople();
-  const clasesEnabled = useClasesEnabled();
+  const activities = useActivitiesFlags();
   const vibesPointsEnabled = useVibesPointsEnabled();
   React.useEffect(() => startRemoteConfig(), []);
   React.useEffect(() => startAppOpenTracking(), []);
@@ -552,8 +558,8 @@ const AppNavigator = () => {
                       ),
                     }}
                   />
-                  {clasesEnabled ? (
-                    <Tab.Screen name="ClassesTab" component={ClassesTab} options={{ tabBarLabel: "Clases" }} />
+                  {activities.visible ? (
+                    <Tab.Screen name="ClassesTab" component={ClassesTab} options={{ tabBarLabel: activities.label }} />
                   ) : null}
                   {meetPeopleEnabled ? (
                   <Tab.Screen
@@ -606,10 +612,13 @@ const AppNavigator = () => {
             <Stack.Screen name="LearningReservation" component={LearningReservationScreen} options={{headerShown:false}} />
             <Stack.Screen name="LearningMine" component={LearningStudentScreen} options={{headerShown:false}} />
             <Stack.Screen name="LearningLegacyMine" component={LegacyLearningStudentScreen} options={{headerShown:false}} />
-            <Stack.Screen name="LearningManage" component={LearningManage} options={{headerShown:false}} />
-            <Stack.Screen name="LearningRoster" component={LearningRoster} options={{headerShown:false}} />
-            <Stack.Screen name="LearningProfileEditor" component={LearningProfileEditor} options={{headerShown:false}} />
-            <Stack.Screen name="LearningActivityEditor" component={LearningActivityEditor} options={{headerShown:false}} />
+            {/* Teacher management lives in the web portal; in-app editors only behind the build flag. */}
+            {teacherManagementInApp ? <Stack.Screen name="LearningManage" component={LearningManage} options={{headerShown:false}} /> : null}
+            {teacherManagementInApp ? <Stack.Screen name="LearningRoster" component={LearningRoster} options={{headerShown:false}} /> : null}
+            {teacherManagementInApp ? <Stack.Screen name="LearningProfileEditor" component={LearningProfileEditor} options={{headerShown:false}} /> : null}
+            {teacherManagementInApp ? <Stack.Screen name="LearningActivityEditor" component={LearningActivityEditor} options={{headerShown:false}} /> : null}
+            <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{headerShown:false}} />
+            <Stack.Screen name="ProfessionalDetail" component={ProfessionalDetailScreen} options={{headerShown:false}} />
             <Stack.Screen
               name="Login"
               component={Login}

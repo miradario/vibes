@@ -7,10 +7,10 @@ function load(env={}) {
  const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/learning/studioStudent.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports,Date,process:{env}});return exports;
 }
 const api=load();
-test('studio stays disabled until its migration is deployed and explicitly enabled',()=>{
- assert.equal(api.studioStudentEnabled,false);
- assert.equal(load({EXPO_PUBLIC_PORTAL_STUDIO_ENABLED:'false'}).studioStudentEnabled,false);
- assert.equal(load({EXPO_PUBLIC_PORTAL_STUDIO_ENABLED:'true'}).studioStudentEnabled,true);
+test('the portal agenda is gated by the clases flag, not by an env switch',()=>{
+ assert.equal('studioStudentEnabled' in api,false);
+ assert.doesNotMatch(fs.readFileSync('src/learning/studioStudentQueries.ts','utf8'),/PORTAL_STUDIO_ENABLED/);
+ assert.match(api.studioStudentError({message:'LEARNING_DISABLED'}),/no están disponibles/);
 });
 test('mobile uses the exact portal_student RPC contract for reads and per-session bookings',async()=>{
  const calls=[];const client={rpc:async(name,args)=>{calls.push({name,args});return {data:'id',error:null};}};

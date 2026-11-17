@@ -25,7 +25,28 @@ export const notificationCategories = [
     label: "challenges",
   },
   { key: "notificationEvents", column: "notification_events", label: "events" },
+  // Needs the additive user_preferences.notification_sessions column (draft migration);
+  // the settings screen hides it until the column exists and the `sesiones` flag is on.
+  {
+    key: "notificationSessions",
+    column: "notification_sessions",
+    label: "sessions",
+  },
 ] as const;
+
+export type NotificationCategory = (typeof notificationCategories)[number];
+
+/** Categories shown in settings: sessions only with the flag on and the column present. */
+export const visibleNotificationCategories = (
+  prefs: Record<string, unknown>,
+  sessionsEnabled: boolean
+): NotificationCategory[] =>
+  notificationCategories.filter(
+    (category) =>
+      category.key !== "notificationSessions" ||
+      (sessionsEnabled &&
+        ("notificationSessions" in prefs || "notification_sessions" in prefs))
+  );
 
 export const eventReminderTimings = ["24h", "1h", "both"] as const;
 export type EventReminderTiming = (typeof eventReminderTimings)[number];

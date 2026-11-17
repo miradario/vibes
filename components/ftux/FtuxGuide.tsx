@@ -1,4 +1,4 @@
-import { useClasesEnabled } from "../../src/featureFlags/useClasesEnabled";
+import { useActivitiesFlags } from "../../src/featureFlags/useActivitiesFlags";
 import { useMeetPeople } from "../../src/queries/meetPeople.queries";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -573,7 +573,7 @@ export function CoachCard({
   const cardWidth = Math.min(width - 32, 520);
   const cardLeft = (width - cardWidth) / 2;
   const { enabled: meetPeopleEnabled } = useMeetPeople();
-  const clasesEnabled = useClasesEnabled();
+  const clasesEnabled = useActivitiesFlags().visible;
   const visibleTabs = VISIBLE_TABS.filter(route => (meetPeopleEnabled || route !== "Discover") && (clasesEnabled || route !== "ClassesTab"));
   const slotX = getTabSlotCenterX(visibleTabs.indexOf(STEP_ROUTE[step]), visibleTabs.length, width, visibleTabs.indexOf("Home"));
   const arrowLeft = Math.min(Math.max(slotX - cardLeft - 9, 24), cardWidth - 42);

@@ -106,7 +106,8 @@ const getRouteLabel = (
   label: BottomTabBarProps["descriptors"][string]["options"]["tabBarLabel"],
   title?: string
 ) => {
-  if (routeName === "EventsTab" && typeof label === "string") return label;
+  // ClassesTab is named after the flags: Clases, Sesiones or Actividades.
+  if ((routeName === "EventsTab" || routeName === "ClassesTab") && typeof label === "string") return label;
   if (labelByRoute[routeName]) return labelByRoute[routeName];
   if (typeof label === "string") return label;
   return title ?? routeName;
@@ -360,7 +361,13 @@ const CustomTabBar = ({
           <TouchableOpacity
             accessibilityRole="tab"
             accessibilityLabel={
-              labelByRoute[selectedVisualRoute?.name ?? "Home"]
+              selectedVisualRoute
+                ? getRouteLabel(
+                    selectedVisualRoute.name,
+                    descriptors[selectedVisualRoute.key]?.options.tabBarLabel,
+                    descriptors[selectedVisualRoute.key]?.options.title
+                  )
+                : labelByRoute.Home
             }
             accessibilityState={{ selected: true }}
             activeOpacity={ds.opacity.pressed}

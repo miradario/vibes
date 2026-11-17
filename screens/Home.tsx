@@ -8,6 +8,7 @@ import { rankHomeSuggestions } from "../src/lib/homeSuggestions";
 import { matchesSavedDiscoverExtras } from "../src/lib/discoverSavedFilters";
 import PhotoViewer from "../components/PhotoViewer";
 import HomeOverview from "../components/HomeOverview";
+import UpcomingActivities from "../components/home/UpcomingActivities";
 import FirstHomePreferencesGate from "../components/FirstHomePreferencesGate";
 import DailyMoodCard from "../components/DailyMoodCard";
 import CompleteProfilePrompt from "../components/CompleteProfilePrompt";
@@ -988,6 +989,9 @@ const Home = () => {
             userId={session?.user?.id}
             enabled={moodGateUser === session?.user?.id && !ftuxBlocksMood}
           />
+
+          {/* Classes and sessions (flags `clases` / `sesiones`); hidden without data. */}
+          <UpcomingActivities />
 
           <HomeOverview userId={session?.user?.id}>
 

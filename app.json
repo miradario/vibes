@@ -74,6 +74,11 @@
               "scheme": "https",
               "host": "vibes.gurudevelopers.dev",
               "pathPrefix": "/challenge"
+            },
+            {
+              "scheme": "https",
+              "host": "vibes.gurudevelopers.dev",
+              "pathPrefix": "/session"
             }
           ],
           "category": [
