@@ -17,7 +17,7 @@
     "ios": {
       "icon": "./assets/icon-ios-flat.png",
       "supportsTablet": false,
-      "buildNumber": "69",
+      "buildNumber": "70",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -46,7 +46,7 @@
         "foregroundImage": "./assets/adaptive-icon-flat.png",
         "backgroundColor": "#FEFEFD"
       },
-      "versionCode": 69,
+      "versionCode": 70,
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.health.READ_STEPS",

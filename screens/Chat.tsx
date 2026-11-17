@@ -125,7 +125,7 @@ const Chat = () => {
     isFocused
   );
 
-  const visibleDate = useChatVisibleDate(matchId, false, receipts.onViewableItemsChanged);  const sendMutation = useSendDirectMessageMutation();
+  const visibleDate = useChatVisibleDate(matchId, true, receipts.onViewableItemsChanged);  const sendMutation = useSendDirectMessageMutation();
   const deleteMutation = useDeleteDirectMessageMutation();
   const unmatchMutation = useUnmatchMutation();
   const reportMutation = useReportUserMutation();
@@ -149,6 +149,11 @@ const Chat = () => {
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  // Inverted lists start at the newest message, including with cached history.
+  const newestFirstMessages = useMemo(
+    () => [...(messages ?? [])].reverse(),
+    [messages]
+  );
   const messagesById = useMemo(
     () => new Map((messages ?? []).map((message) => [message.id, message])),
     [messages]
@@ -164,7 +169,7 @@ const Chat = () => {
   };
 
   const scrollToMessage = (messageId: string) => {
-    const index = (messages ?? []).findIndex((m) => m.id === messageId);
+    const index = newestFirstMessages.findIndex((m) => m.id === messageId);
     if (index < 0) return;
     flatListRef.current?.scrollToIndex({
       index,
@@ -178,7 +183,7 @@ const Chat = () => {
   useEffect(() => {
     if (messages && messages.length > 0) {
       setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
       }, 100);
     }
   }, [messages?.length]);
@@ -189,7 +194,7 @@ const Chat = () => {
       (event) => {
         setKeyboardHeight(event.endCoordinates.height);
         setTimeout(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
+          flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
         }, 80);
       }
     );
@@ -611,12 +616,13 @@ const Chat = () => {
               style={{ flex: 1 }}
               onLayout={() => {
                 if (keyboardHeight > 0) {
-                  flatListRef.current?.scrollToEnd({ animated: false });
+                  flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
                 }
               }}
               onViewableItemsChanged={visibleDate.onViewableItemsChanged}
               viewabilityConfig={receipts.viewabilityConfig}
-              data={messages ?? []}
+              inverted
+              data={newestFirstMessages}
               keyExtractor={(item) => item.id}
               renderItem={renderMessage}
               onScrollToIndexFailed={({ index, averageItemLength }) => {
@@ -635,7 +641,7 @@ const Chat = () => {
                   paddingBottom: ds.spacing[4],
                 },
               ]}
-              ListHeaderComponent={
+              ListFooterComponent={
                 messages?.length ? (
                   <Text style={styles.chatMatchedText}>
                     Conectaste con {otherUserName || "esta persona"}
@@ -652,9 +658,6 @@ const Chat = () => {
                     Saludá a {otherUserName || "tu conexión"}.
                   </Text>
                 </View>
-              }
-              onContentSizeChange={() =>
-                flatListRef.current?.scrollToEnd({ animated: false })
               }
             /><ChatVisibleDate date={visibleDate.date} /></View>
           )}
@@ -721,7 +724,7 @@ const Chat = () => {
               returnKeyType="default"
               onFocus={() =>
                 setTimeout(() => {
-                  flatListRef.current?.scrollToEnd({ animated: true });
+                  flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
                 }, 120)
               }
             />
