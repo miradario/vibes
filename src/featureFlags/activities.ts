@@ -13,9 +13,20 @@ export function activitiesTabVisible({ clases, sesiones }: ActivitiesFlags): boo
   return clases || sesiones;
 }
 
-/** Kinds offered inside Explorar / Mis reservas, in display order. */
+/** Kinds offered in the tab and in Mis reservas, in display order. */
 export function activitiesKinds({ clases, sesiones }: ActivitiesFlags): ActivitiesKind[] {
   return [...(clases ? ["classes" as const] : []), ...(sesiones ? ["sessions" as const] : [])];
+}
+
+const KIND_LABELS: Record<ActivitiesKind, string> = { classes: "Clases", sessions: "Sesiones" };
+/** Main switcher of the tab: Clases / Sesiones only when both kinds are on, none otherwise. */
+export function activitiesSwitcherOptions(kinds: ActivitiesKind[]): { key: ActivitiesKind; label: string }[] {
+  return kinds.length > 1 ? kinds.map((key) => ({ key, label: KIND_LABELS[key] })) : [];
+}
+
+/** `section: "mine"` (Home, SessionDetail) opens the Mis reservas sheet. */
+export function opensReservations(params: unknown): boolean {
+  return !!params && typeof params === "object" && (params as { section?: unknown }).section === "mine";
 }
 
 // Teacher/place management (LearningManage, editors, roster) lives in the web portal.

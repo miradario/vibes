@@ -21,6 +21,15 @@ const plain=v=>JSON.parse(JSON.stringify(v));
 const NOW=Date.parse('2026-11-17T12:00:00Z');
 const session=(o={})=>({id:'b1',status:'confirmed',title:'Sesión',starts_at:'2026-11-20T13:00:00Z',ends_at:'2026-11-20T14:00:00Z',organizer_id:'org',organizer_name:'Ana',location:null,outside_availability:false,order_id:null,amount:null,payment_status:null,...o});
 
+test('tab switcher only with both kinds; section mine opens Mis reservas',()=>{
+ assert.deepEqual(plain(acts.activitiesSwitcherOptions(['classes','sessions'])),[{key:'classes',label:'Clases'},{key:'sessions',label:'Sesiones'}]);
+ assert.deepEqual(plain(acts.activitiesSwitcherOptions(['sessions'])),[]);
+ assert.deepEqual(plain(acts.activitiesSwitcherOptions([])),[]);
+ assert.equal(acts.opensReservations({section:'mine'}),true);
+ assert.equal(acts.opensReservations({section:'explore'}),false);
+ assert.equal(acts.opensReservations(undefined),false);
+});
+
 test('tab label and kinds follow the clases/sesiones flags',()=>{
  assert.equal(acts.activitiesTabLabel({clases:true,sesiones:false}),'Clases');
  assert.equal(acts.activitiesTabLabel({clases:false,sesiones:true}),'Sesiones');

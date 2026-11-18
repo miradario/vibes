@@ -14,13 +14,19 @@ import { studioStudentError } from "../../src/learning/studioStudent";
 import type { ActivitiesKind } from "../../src/featureFlags/activities";
 import * as ds from "../../src/theme/tokens";
 
-/** Mis reservas: upcoming sessions (needs-action first) and class bookings of the portal agenda. */
-export default function MyReservations({ kinds }: { kinds: ActivitiesKind[] }) {
+type Go = (route: string, params?: Record<string, unknown>) => void;
+
+/**
+ * Mis reservas: upcoming sessions (needs-action first) and class bookings of the portal agenda.
+ * `navigate` lets the sheet close itself before opening a detail.
+ */
+export default function MyReservations({ kinds, navigate }: { kinds: ActivitiesKind[]; navigate?: Go }) {
   const nav = useNavigation<any>();
+  const go: Go = navigate ?? ((route, params) => nav.navigate(route, params));
   return (
     <View style={s.root}>
-      {kinds.includes("sessions") ? <SessionsSection onOpen={(id) => nav.navigate("SessionDetail", { id })} /> : null}
-      {kinds.includes("classes") ? <ClassesSection /> : null}
+      {kinds.includes("sessions") ? <SessionsSection onOpen={(id) => go("SessionDetail", { id })} /> : null}
+      {kinds.includes("classes") ? <ClassesSection go={go} /> : null}
     </View>
   );
 }
@@ -35,13 +41,12 @@ function SessionsSection({ onOpen }: { onOpen: (id: string) => void }) {
       {query.isLoading ? <View style={ui.notice}><ActivityIndicator color={ds.colors.base.blue} /><Text style={ui.body}>Cargando tus sesiones…</Text></View> : null}
       {query.isError ? <View style={[ui.notice, ui.error]}><Text accessibilityRole="alert" style={ui.body}>{sessionError(query.error)}</Text><Button secondary label="Reintentar" onPress={() => void query.refetch()} /></View> : null}
       {ordered.map((session) => <SessionCard key={session.id} session={session} onPress={() => onOpen(session.id)} />)}
-      {query.data && !ordered.length ? <Empty text="No tenés sesiones próximas. Buscá un profesional en Explorar." /> : null}
+      {query.data && !ordered.length ? <Empty text="No tenés sesiones próximas. Elegí un profesional en Sesiones." /> : null}
     </View>
   );
 }
 
-function ClassesSection() {
-  const nav = useNavigation<any>();
+function ClassesSection({ go }: { go: Go }) {
   const query = useStudioStudentQuery();
   const now = Date.now();
   const bookings = (query.data?.bookings ?? [])
@@ -50,12 +55,12 @@ function ClassesSection() {
   const label = (iso: string, timezone = SESSION_TIMEZONE) => new Date(iso).toLocaleString("es-AR", { timeZone: timezone, weekday: "long", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   return (
     <View style={s.section}>
-      <SectionHeader title="Clases" onPress={() => nav.navigate("LearningMine")} accessibilityLabel="Ver agenda, packs y avisos de clases" />
+      <SectionHeader title="Clases" onPress={() => go("LearningMine")} accessibilityLabel="Ver agenda, packs y avisos de clases" />
       {query.isLoading ? <View style={ui.notice}><ActivityIndicator color={ds.colors.base.blue} /><Text style={ui.body}>Cargando tus clases…</Text></View> : null}
       {query.isError ? <View style={[ui.notice, ui.error]}><Text accessibilityRole="alert" style={ui.body}>{studioStudentError(query.error)}</Text><Button secondary label="Reintentar" onPress={() => void query.refetch()} /></View> : null}
       {bookings.map((booking) => (
         <TouchableOpacity key={booking.id} accessibilityRole="button" accessibilityLabel={`Ver ${booking.title}`} activeOpacity={ds.opacity.pressed}
-          onPress={() => nav.navigate("LearningMine")} style={[cardStyles.base, cardStyles.padding, s.row]}>
+          onPress={() => go("LearningMine")} style={[cardStyles.base, cardStyles.padding, s.row]}>
           <View style={s.copy}>
             <Text style={s.title}>{booking.title}</Text>
             <Text style={s.meta}>{label(booking.starts_at, booking.timezone)}</Text>
@@ -64,9 +69,9 @@ function ClassesSection() {
           <Icon name="chevron-forward" size={ds.iconSize.md} color={ds.colors.icon.muted} />
         </TouchableOpacity>
       ))}
-      {query.data && !bookings.length ? <Empty text="No tenés clases reservadas. Elegí un encuentro en Explorar." /> : null}
-      <Button secondary label="Packs, historial y avisos" onPress={() => nav.navigate("LearningMine")} />
-      <Button secondary label="Inscripciones anteriores" onPress={() => nav.navigate("LearningLegacyMine")} />
+      {query.data && !bookings.length ? <Empty text="No tenés clases reservadas. Elegí un encuentro en Clases." /> : null}
+      <Button secondary label="Packs, historial y avisos" onPress={() => go("LearningMine")} />
+      <Button secondary label="Inscripciones anteriores" onPress={() => go("LearningLegacyMine")} />
     </View>
   );
 }
