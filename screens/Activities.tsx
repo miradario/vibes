@@ -47,11 +47,11 @@ export function ClassesTab() {
           onChange={setSection}
         />
         {section === "explore" && flags.kinds.length > 1 ? (
-          <Chips value={exploreKind} onChange={(value) => setKind(value as ActivitiesKind)} options={[{ value: "classes", label: "Clases" }, { value: "sessions", label: "Profesionales" }]} />
+          <Chips value={exploreKind} onChange={(value) => setKind(value as ActivitiesKind)} options={[{ value: "classes", label: "Clases" }, { value: "sessions", label: "Sesiones" }]} />
         ) : null}
       </View>
       {section === "explore" && exploreKind === "classes" ? <LearningExplore embedded /> : null}
-      {section === "explore" && exploreKind === "sessions" ? <Page title="Profesionales" embedded><ProfessionalsExplore /></Page> : null}
+      {section === "explore" && exploreKind === "sessions" ? <Page title="Sesiones" embedded><ProfessionalsExplore /></Page> : null}
       {section === "mine" ? <Page title="Mis reservas" embedded><MyReservations kinds={flags.kinds} /></Page> : null}
     </ScreenContainer>
   );

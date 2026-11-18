@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import { useAuthSession } from "../auth/auth.queries";
+import { organizersWithAvailability, withActiveAvailability } from "./professionals";
 import { useSesionesEnabled } from "../featureFlags/useSesionesEnabled";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
 import { dayStartISO, isPaymentHold, sessionDay, sessionReturnUrl, type SessionPaymentMethod } from "./sessions";
 import {
-  bookSession, cancelSession, setSessionPaymentMethod, loadOrganizerAvailability, loadOrganizerContact, loadServicePricing, loadStudentSessions,
+  bookSession, cancelSession, loadAllAvailability, setSessionPaymentMethod, loadOrganizerAvailability, loadOrganizerContact, loadServicePricing, loadStudentSessions,
   requestCheckoutUrl, reserveSession, respondToSession, type RpcClient,
 } from "./sessionsApi";
 
@@ -135,7 +136,11 @@ export type Professional = {
   approved?: boolean;
 };
 
-/** All published and approved learning profiles, with or without availability. */
+/**
+ * Published and approved learning profiles with active session availability (Explorar › Sesiones).
+ * Availability comes from portal_scheduler('get') without organizer, the same windows
+ * ProfessionalDetail shows; profiles that only give classes are left out.
+ */
 export function useProfessionals() {
   const { data: session } = useAuthSession();
   const enabled = useSesionesEnabled();
@@ -143,13 +148,16 @@ export function useProfessionals() {
     queryKey: ["sessions", "professionals", session?.user.id ?? "anonymous"] as const,
     enabled: enabled && !!session?.user.id,
     queryFn: async () => {
-      const { data, error } = await withBootTimeout(
-        Promise.resolve(supabase.from("learning_profiles").select("id,kind,name,description,specialties,image_url,location,modality,published,approved").eq("published", true).eq("approved", true).order("name").limit(500)),
+      const [profiles, windows] = await withBootTimeout(
+        Promise.all([
+          Promise.resolve(supabase.from("learning_profiles").select("id,kind,name,description,specialties,image_url,location,modality,published,approved").eq("published", true).eq("approved", true).order("name").limit(500)),
+          loadAllAvailability(client, dayStartISO(sessionDay(Date.now()))),
+        ]),
         15000,
         "professionals"
       );
-      if (error) throw error;
-      return (data ?? []) as Professional[];
+      if (profiles.error) throw profiles.error;
+      return withActiveAvailability((profiles.data ?? []) as Professional[], organizersWithAvailability(windows));
     },
     staleTime: 60000,
     retry: 1,

@@ -11,8 +11,8 @@ import { filterProfessionals, professionalSpecialties } from "../../src/sessions
 import { sessionError } from "../../src/sessions/sessions";
 import * as ds from "../../src/theme/tokens";
 
-/** Explorar › Profesionales: every published and approved profile, even without
- * availability (they can still be asked for out-of-hours sessions). */
+/** Explorar › Sesiones: published and approved profiles with active session availability
+ * (profiles that only give classes don't show up here). */
 export default function ProfessionalsExplore() {
   const nav = useNavigation<any>();
   const query = useProfessionals();
@@ -27,7 +27,7 @@ export default function ProfessionalsExplore() {
     <View style={s.list}>
       <View style={s.search}>
         <Icon name="search" size={ds.iconSize.md} color={ds.colors.text.secondary} />
-        <TextInput accessibilityLabel="Buscar profesionales" placeholder="Buscá por nombre o práctica" placeholderTextColor={ds.colors.text.secondary}
+        <TextInput accessibilityLabel="Buscar sesiones con profesionales" placeholder="Buscá por nombre o práctica" placeholderTextColor={ds.colors.text.secondary}
           value={search} onChangeText={setSearch} style={s.searchInput} returnKeyType="search" />
         {search ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setSearch("")} style={s.clear}><Icon name="close" size={ds.iconSize.md} color={ds.colors.text.secondary} /></TouchableOpacity> : null}
       </View>
@@ -45,7 +45,7 @@ export default function ProfessionalsExplore() {
         </TouchableOpacity>
       ))}
       {!shown.length ? (
-        <Empty text={specialty || search ? "No encontramos profesionales con ese filtro. Probá con otra especialidad." : "Todavía no hay profesionales publicados. Volvé pronto."} />
+        <Empty text={specialty || search ? "No encontramos profesionales con ese filtro. Probá con otra especialidad." : "Todavía no hay profesionales con turnos disponibles. Volvé pronto."} />
       ) : null}
       {specialty || search ? <Button secondary label="Limpiar filtros" onPress={() => { setSpecialty(""); setSearch(""); }} /> : null}
     </View>

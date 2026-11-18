@@ -35,6 +35,12 @@ export function loadOrganizerAvailability(client: RpcClient, organizerId: string
   return scheduler(client, "get", organizerId, null, { from });
 }
 
+/** Active availability windows of every published organizer from `from` (Explorar › Sesiones). */
+export async function loadAllAvailability(client: RpcClient, from: string) {
+  const data = await scheduler(client, "get", null, null, { from });
+  return data?.availability ?? [];
+}
+
 /** Inside availability → confirmed; outside (out-of-hours request) → pending for the facilitator. */
 export function reserveSession(client: RpcClient, organizerId: string, availabilityId: string, startsAt: string, duration: number) {
   return scheduler(client, "reserve", organizerId, availabilityId, { starts_at: startsAt, duration });

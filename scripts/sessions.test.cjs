@@ -118,12 +118,25 @@ test('home shows next class, next session and a notice for confirm/pay',()=>{
  const empty=home.homeActivities([],[],NOW); assert.equal(empty.nextClass,null); assert.equal(empty.nextSession,null);
 });
 
-test('professionals: specialties and filter, including profiles without availability',()=>{
+test('professionals: specialties and filter',()=>{
  const list=[{name:'Ana',specialties:['Yoga','Meditación']},{name:'Beto',description:'Coach',specialties:['Coaching']},{name:'Caro',specialties:[]}];
  assert.deepEqual(plain(pros.professionalSpecialties(list)),['Coaching','Meditación','Yoga']);
  assert.deepEqual(plain(pros.filterProfessionals(list,'','').map(p=>p.name)),['Ana','Beto','Caro']);
  assert.deepEqual(plain(pros.filterProfessionals(list,'Yoga','').map(p=>p.name)),['Ana']);
  assert.deepEqual(plain(pros.filterProfessionals(list,'','coach').map(p=>p.name)),['Beto']);
+});
+
+test('professionals: only organizers with active availability that still has free time',()=>{
+ const w=(o)=>({id:'w',organizer_id:'a',title:'S',location:'',starts_at:'2026-11-18T12:00:00Z',ends_at:'2026-11-18T15:00:00Z',busy:[],...o});
+ const ids=pros.organizersWithAvailability([
+  w({organizer_id:'a'}),
+  w({organizer_id:'past',starts_at:'2026-11-16T12:00:00Z',ends_at:'2026-11-16T15:00:00Z'}),
+  w({organizer_id:'full',busy:[{starts_at:'2026-11-18T12:00:00Z',ends_at:'2026-11-18T15:00:00Z'}]}),
+ ],NOW);
+ assert.deepEqual([...ids],['a']);
+ const list=[{id:'a',name:'Moni'},{id:'b',name:'Ana'},{id:'past',name:'Beto'}];
+ assert.deepEqual(plain(pros.withActiveAvailability(list,ids).map(p=>p.name)),['Moni']);
+ assert.deepEqual(plain(pros.withActiveAvailability(list,new Set())),[]);
 });
 
 test('session pushes and deferred links open the session detail',()=>{
