@@ -4,9 +4,9 @@ import { useAuthSession } from "../auth/auth.queries";
 import { useSesionesEnabled } from "../featureFlags/useSesionesEnabled";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
-import { dayStartISO, isPaymentHold, sessionDay, type SessionPaymentMethod } from "./sessions";
+import { dayStartISO, isPaymentHold, sessionDay, sessionReturnUrl, type SessionPaymentMethod } from "./sessions";
 import {
-  bookSession, cancelSession, loadOrganizerAvailability, loadOrganizerContact, loadServicePricing, loadStudentSessions,
+  bookSession, cancelSession, setSessionPaymentMethod, loadOrganizerAvailability, loadOrganizerContact, loadServicePricing, loadStudentSessions,
   requestCheckoutUrl, reserveSession, respondToSession, type RpcClient,
 } from "./sessionsApi";
 
@@ -75,6 +75,7 @@ export function useServicePricing(organizerId: string | undefined) {
 type SessionAction =
   | { action: "reserve"; organizerId: string; availabilityId: string; startsAt: string; duration: number }
   | { action: "book"; availabilityId: string; startsAt: string; duration: number; paymentMethod: SessionPaymentMethod | null }
+  | { action: "set_payment_method"; id: string; paymentMethod: SessionPaymentMethod }
   | { action: "cancel"; id: string }
   | { action: "accept"; id: string }
   | { action: "decline"; id: string };
@@ -89,6 +90,7 @@ export function useSessionMutation() {
         switch (input.action) {
           case "reserve": return reserveSession(client, input.organizerId, input.availabilityId, input.startsAt, input.duration);
           case "book": return bookSession(client, input.availabilityId, input.startsAt, input.duration, input.paymentMethod);
+          case "set_payment_method": return setSessionPaymentMethod(client, input.id, input.paymentMethod);
           case "cancel": return cancelSession(client, input.id);
           default: return respondToSession(client, input.id, input.action);
         }
@@ -104,12 +106,15 @@ export function useSessionMutation() {
 export function useSessionCheckout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (orderId: string) => {
+    mutationFn: async ({ orderId, bookingId }: { orderId: string; bookingId: string }) => {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) throw new Error("Iniciá sesión nuevamente para continuar con el pago.");
       const url = await requestCheckoutUrl(fetch, PORTAL_URL, token, orderId);
-      await WebBrowser.openBrowserAsync(url, { dismissButtonStyle: "close" });
+      // Mercado Pago's back_urls point at com.gurudevelopers.vibes://session/<id>: the auth session
+      // closes on that redirect and the student is back on the session detail. If the portal still
+      // returns to the web, the student closes the browser and we refresh the same way.
+      await WebBrowser.openAuthSessionAsync(url, sessionReturnUrl(bookingId));
     },
     retry: false,
     // The payment is credited by the webhook; the return URL never marks it as paid.

@@ -89,9 +89,10 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
 
   const submit = (value: Draft) => {
     setNotice("");
-    // Priced services go through portal_student_sessions('book'); out-of-hours requests and
-    // services without a price keep the scheduler reservation (payment coordinated).
-    const priced = !value.outside && !!value.pricing;
+    // Priced services go through portal_student_sessions('book'), also for out-of-hours requests
+    // (the chosen method is kept until the facilitator approves and the order is created).
+    // Services without a price keep the scheduler reservation (payment coordinated).
+    const priced = !!value.pricing;
     const action = priced
       ? mutation.mutateAsync({ action: "book", availabilityId: value.availabilityId, startsAt: value.startsAt, duration: value.duration, paymentMethod: value.method })
       : mutation.mutateAsync({ action: "reserve", organizerId, availabilityId: value.availabilityId, startsAt: value.startsAt, duration: value.duration });
@@ -170,9 +171,15 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
           <Chips value={requestTime} onChange={setRequestTime} options={REQUEST_TIMES.map((value) => ({ value, label: value }))} />
           <Text style={s.label}>Duración</Text>
           <Chips value={String(duration)} onChange={(value) => setDuration(Number(value))} options={SESSION_DURATIONS.map((value) => ({ value: String(value), label: `${value} min` }))} />
-          <View style={[bannerStyles.base, bannerStyles.info]}><Text style={ui.body}>Pago: a coordinar con el facilitador.</Text></View>
-          <Button label={mutation.isPending ? "Enviando…" : "Enviar solicitud"} disabled={mutation.isPending || !requestTime}
-            onPress={() => submit({ availabilityId: selected.id, startsAt: toISO(reqDay, requestTime), duration, outside: true, pricing: null, method: null })} />
+          {priced ? <View style={s.block}>
+            <Text style={s.label}>Pago</Text>
+            <Text style={ui.body}>Precio: {formatMoney(pricing.price, pricing.currency)}</Text>
+            {methods.length > 1 ? <Chips value={activeMethod ?? ""} onChange={(value) => setMethod(value as SessionPaymentMethod)} options={methods.map((value) => ({ value, label: PAYMENT_METHOD_LABELS[value] }))} /> : null}
+            {methods.length === 1 ? <Text style={ui.body}>Forma de pago: {PAYMENT_METHOD_LABELS[methods[0]]}</Text> : null}
+            <View style={[bannerStyles.base, bannerStyles.info]}><Text style={ui.body}>No se cobra nada ahora. Si {organizerName} la confirma, vas a poder pagar{activeMethod === "mercadopago" ? " con Mercado Pago desde la sesión" : ""}. {NO_REFUND_NOTE}</Text></View>
+          </View> : <View style={[bannerStyles.base, bannerStyles.info]}><Text style={ui.body}>{pricing ? "Sin cargo." : "Pago: a coordinar con el facilitador."}</Text></View>}
+          <Button label={mutation.isPending ? "Enviando…" : "Enviar solicitud"} disabled={mutation.isPending || !requestTime || !pricingReady || (priced && methods.length > 1 && !activeMethod)}
+            onPress={() => submit({ availabilityId: selected.id, startsAt: toISO(reqDay, requestTime), duration, outside: true, pricing, method: activeMethod })} />
         </> : <Text style={ui.body}>{organizerName} todavía no habilitó solicitudes desde la app.{whatsapp ? " Escribile por WhatsApp para coordinar." : " Volvé a intentarlo más adelante."}</Text>}
         {whatsapp ? <Button secondary label="Escribir por WhatsApp" onPress={() => void Linking.openURL(whatsapp).catch(() => {})} /> : null}
         {mutation.isError ? <Text accessibilityRole="alert" style={ui.body}>{sessionError(mutation.error)}</Text> : null}

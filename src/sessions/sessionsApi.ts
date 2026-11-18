@@ -72,6 +72,11 @@ export function bookSession(client: RpcClient, availabilityId: string, startsAt:
   });
 }
 
+/** Switch the payment method of a student-created session that isn't paid yet. */
+export function setSessionPaymentMethod(client: RpcClient, bookingId: string, paymentMethod: SessionPaymentMethod) {
+  return call<{ sessions?: StudentSession[] }>(client, "portal_student_sessions", { p_action: "set_payment_method", p_id: bookingId, p_data: { payment_method: paymentMethod } });
+}
+
 export async function respondToSession(client: RpcClient, bookingId: string, answer: "accept" | "decline") {
   try {
     return await call<unknown>(client, "portal_student_sessions", { p_action: answer, p_id: bookingId, p_data: {} });
@@ -107,7 +112,8 @@ export async function requestCheckoutUrl(fetchImpl: typeof fetch, portalUrl: str
   const response = await fetchImpl(`${portalUrl.replace(/\/$/, "")}/api/portal/appointment-checkout`, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ order_id: orderId }),
+    // return_to "app": back_urls go to com.gurudevelopers.vibes://session/<booking_id> (portal change, see PR #96).
+    body: JSON.stringify({ order_id: orderId, return_to: "app" }),
   });
   let body: { init_point?: unknown; error?: unknown } = {};
   try { body = await response.json(); } catch { body = {}; }

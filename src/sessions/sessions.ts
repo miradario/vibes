@@ -52,6 +52,13 @@ export type StudentSession = {
   payment_instructions?: string | null;
   /** Paid after the hold was released (or after cancelling): settled with the facilitator. */
   late_payment?: boolean;
+  /** Unpaid Mercado Pago hold released at hold_expires_at. */
+  released?: boolean;
+  /** Pending request without order yet: service price and the method chosen with the request. */
+  service_price?: number | null;
+  requested_payment_method?: SessionPaymentMethod | null;
+  /** Methods the student can switch to (student-created booking, nothing paid yet). */
+  payment_methods?: SessionPaymentMethod[] | null;
   whatsapp_phone?: string | null;
 };
 export type SchedulerData = {
@@ -122,7 +129,8 @@ export type PaymentState =
   | { kind: "offline"; amount: number; currency: string; method: "cash" | "transfer"; instructions: string | null }
   | { kind: "offline_paid"; amount: number; currency: string; method: "cash" | "transfer" }
   | { kind: "late"; amount: number; currency: string }
-  | { kind: "awaiting_confirmation"; amount: number; currency: string }
+  | { kind: "released" }
+  | { kind: "awaiting_confirmation"; amount: number; currency: string; method?: SessionPaymentMethod | null }
   | { kind: "paid"; amount: number; currency: string }
   | { kind: "refunded"; amount: number; currency: string };
 
@@ -139,7 +147,14 @@ export function sessionPayment(session: StudentSession): PaymentState {
   const currency = session.currency || "ARS";
   const status = session.payment_status ?? null;
   const method = session.payment_method ?? "mercadopago";
-  if (!session.order_id || !Number.isFinite(amount)) return { kind: "coordinate" };
+  if (session.status === "cancelled" && session.released && status !== "paid") return { kind: "released" };
+  if (!session.order_id) {
+    // Out-of-hours request of a priced service: the order is created when the facilitator approves it.
+    const price = Number(session.service_price ?? 0);
+    if (session.status === "pending" && Number.isFinite(price) && price > 0) return { kind: "awaiting_confirmation", amount: price, currency, method: session.requested_payment_method ?? null };
+    return { kind: "coordinate" };
+  }
+  if (!Number.isFinite(amount)) return { kind: "coordinate" };
   if (status === "free" || amount <= 0) return { kind: "free" };
   if (session.status === "cancelled" && status === "paid") return { kind: "late", amount, currency };
   if (method !== "mercadopago") {
@@ -152,6 +167,19 @@ export function sessionPayment(session: StudentSession): PaymentState {
   if (isPaymentHold(session)) return { kind: "hold", amount, currency, orderId: session.order_id, expiresAt: session.hold_expires_at! };
   if (session.status !== "confirmed") return { kind: "awaiting_confirmation", amount, currency };
   return { kind: "pay", amount, currency, orderId: session.order_id };
+}
+
+/** Methods the student can still switch to (more than one enabled and nothing paid). */
+export function switchablePaymentMethods(session: StudentSession): SessionPaymentMethod[] {
+  if (session.status === "cancelled" || isPaymentHold(session)) return [];
+  const methods = (session.payment_methods ?? []).filter((method): method is SessionPaymentMethod => method in PAYMENT_METHOD_LABELS);
+  return methods.length > 1 ? methods : [];
+}
+
+/** Deep link the Mercado Pago checkout returns to (back_urls, built by the portal with return_to: "app"). */
+export const APP_SCHEME = "com.gurudevelopers.vibes";
+export function sessionReturnUrl(bookingId: string): string {
+  return `${APP_SCHEME}://session/${encodeURIComponent(bookingId)}`;
 }
 
 /** Seconds left to pay a Mercado Pago hold (0 when expired). */
@@ -182,7 +210,7 @@ export function formatMoney(amount: number, currency = "ARS"): string {
 }
 
 export function sessionStatusLabel(session: StudentSession): string {
-  if (session.status === "cancelled") return session.late_payment ? "Cancelada · pago a resolver" : "Cancelada";
+  if (session.status === "cancelled") return session.late_payment ? "Cancelada · pago a resolver" : session.released ? "Liberada · sin pago" : "Cancelada";
   if (session.status === "confirmed") return "Confirmada";
   const awaiting = sessionAwaiting(session);
   if (awaiting === "payment") return "Esperando el pago";
@@ -305,7 +333,6 @@ export function sessionError(cause: unknown): string {
     LEARNING_DISABLED: "Las sesiones no están disponibles en este momento. Probá más tarde.",
     NOT_PENDING: "Esta sesión ya no está pendiente de tu confirmación.",
     AWAITING_PAYMENT: "Esta sesión se confirma sola cuando se acredita el pago.",
-    PAYMENT_REQUIRED: "Este servicio tiene precio. Actualizá la app para elegir cómo pagar.",
     PAYMENT_METHOD_UNAVAILABLE: "Esa forma de pago ya no está disponible. Actualizá y elegí otra.",
   };
   return messages[error?.message ?? ""] ?? "No pudimos completar la operación. Actualizá y volvé a intentar.";

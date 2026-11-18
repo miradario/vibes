@@ -207,3 +207,30 @@ test('pricing and book use portal_student_sessions and degrade when not deployed
  assert.equal((await api.loadServicePricing(missing,'org')).supported,false);
  await assert.rejects(api.loadServicePricing({rpc:async()=>({data:null,error:{message:'FORBIDDEN'}})},'org'));
 });
+
+test('released holds, out-of-hours requests with price and switching methods',()=>{
+ const released=session({status:'cancelled',released:true,order_id:'o',amount:5000,payment_status:'cancelled',payment_method:'mercadopago',hold_expires_at:'2026-11-17T11:00:00Z'});
+ assert.equal(s.sessionPayment(released).kind,'released');
+ assert.equal(s.sessionStatusLabel(released),'Liberada · sin pago');
+ assert.equal(s.upcomingSessions([released],NOW).length,0);
+ const request=session({status:'pending',outside_availability:true,created_by_me:true,service_price:5000,requested_payment_method:'transfer',payment_methods:['mercadopago','transfer']});
+ assert.deepEqual(plain(s.sessionPayment(request)),{kind:'awaiting_confirmation',amount:5000,currency:'ARS',method:'transfer'});
+ assert.deepEqual(plain(s.switchablePaymentMethods(request)),['mercadopago','transfer']);
+ assert.equal(s.sessionPayment(session({status:'pending',outside_availability:true})).kind,'coordinate');
+ // Approved: order with the service price, paid as usual.
+ assert.equal(s.sessionPayment(session({order_id:'o',amount:5000,payment_status:'pending',payment_method:'mercadopago'})).kind,'pay');
+ assert.deepEqual(plain(s.switchablePaymentMethods(session({payment_methods:['cash']}))),[]);
+ assert.deepEqual(plain(s.switchablePaymentMethods(session({status:'pending',order_id:'o',amount:1,payment_status:'pending',payment_method:'mercadopago',hold_expires_at:'2026-11-17T12:15:00Z',payment_methods:['cash','mercadopago']}))),[]);
+ assert.equal(s.sessionReturnUrl('b 1'),'com.gurudevelopers.vibes://session/b%201');
+});
+
+test('checkout asks the portal to return to the app; set_payment_method RPC',async()=>{
+ let body;const fetchOk=async(url,init)=>{body=JSON.parse(init.body);return {ok:true,json:async()=>({init_point:'https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=1'})};};
+ await api.requestCheckoutUrl(fetchOk,'https://p','t','o1');
+ assert.deepEqual(body,{order_id:'o1',return_to:'app'});
+ const calls=[];const client={rpc:async(name,args)=>{calls.push({name,args});return {data:{sessions:[]},error:null};}};
+ await api.setSessionPaymentMethod(client,'b1','cash');
+ assert.deepEqual(plain(calls[0]),{name:'portal_student_sessions',args:{p_action:'set_payment_method',p_id:'b1',p_data:{payment_method:'cash'}}});
+ const nav=load('src/notifications/reminderNavigation.ts');
+ assert.deepEqual(plain(nav.getReminderDestination({type:'appointment_released',sessionId:'b1'})),{name:'SessionDetail',params:{id:'b1'}});
+});

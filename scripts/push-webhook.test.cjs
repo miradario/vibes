@@ -128,7 +128,7 @@ test('stale, completed, cancelled, left, rescheduled or disabled reminders are s
 });
 
 test('session pushes map to notification_sessions and respect the opt-out',()=>{
- for(const type of ['appointment_invited','appointment_confirmed','appointment_updated','appointment_cancelled']){
+ for(const type of ['appointment_invited','appointment_confirmed','appointment_updated','appointment_cancelled','appointment_released']){
   assert.equal(prefsApi.notificationAllowed({notification_sessions:false},type),false);
   assert.equal(prefsApi.notificationAllowed({},type),true);
  }
@@ -140,6 +140,9 @@ test('session copy is Spanish, dated in Buenos Aires and opens the session detai
  assert.match(push.body,/Ana te agendó "Sesión de yoga" el .*20 de noviembre a las 10:00/);
  assert.equal(apptApi.buildAppointmentNotifications({event:'other',recipient_id:'a',session_id:'b'}).length,0);
  assert.equal(apptApi.buildAppointmentNotifications({event:'cancelled',session_id:'b'}).length,0);
+ const [released]=apptApi.buildAppointmentNotifications({event:'released',recipient_id:'student',session_id:'s1',title:'Reiki',starts_at:'2026-11-20T13:00:00Z'});
+ assert.equal(released.title,'Se liberó el horario'); assert.match(released.body,/No se acreditó el pago de "Reiki"/);
+ assert.deepEqual({...released.data},{type:'appointment_released',sessionId:'s1'});
 });
 test('APPOINTMENT payloads reach the recipient; missing notification_sessions column falls back',async()=>{
  const fixture=handlerFixture();

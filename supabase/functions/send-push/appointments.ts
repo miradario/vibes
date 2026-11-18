@@ -1,6 +1,6 @@
 // Session (turno) pushes. The DB trigger private.notify_appointment_push() (draft migration,
 // not applied yet) resolves the recipient and posts table "appointment_notifications".
-export const APPOINTMENT_EVENTS = ["invited", "confirmed", "updated", "cancelled"] as const;
+export const APPOINTMENT_EVENTS = ["invited", "confirmed", "updated", "cancelled", "released"] as const;
 export type AppointmentEvent = (typeof APPOINTMENT_EVENTS)[number];
 
 const TIMEZONE = "America/Argentina/Buenos_Aires";
@@ -39,6 +39,8 @@ export const appointmentCopy = (event: AppointmentEvent, record: Record<string, 
       return { title: "Cambió tu sesión", body: `"${title}" ahora es${at}. Revisá los detalles.` };
     case "cancelled":
       return { title: "Sesión cancelada", body: `${organizer} canceló "${title}"${at}.` };
+    case "released":
+      return { title: "Se liberó el horario", body: `No se acreditó el pago de "${title}"${at} a tiempo, así que liberamos el horario. Podés volver a reservar.` };
   }
 };
 

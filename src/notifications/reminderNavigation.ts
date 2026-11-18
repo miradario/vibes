@@ -1,4 +1,4 @@
-export const SESSION_PUSH_TYPES = ["appointment_invited", "appointment_confirmed", "appointment_updated", "appointment_cancelled"] as const;
+export const SESSION_PUSH_TYPES = ["appointment_invited", "appointment_confirmed", "appointment_updated", "appointment_cancelled", "appointment_released"] as const;
 export const isSessionPush = (data: Record<string, unknown> | null | undefined) =>
   typeof data?.type === "string" && (SESSION_PUSH_TYPES as readonly string[]).includes(data.type);
 

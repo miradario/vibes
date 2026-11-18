@@ -4,14 +4,14 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "../components/Typography";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
-import { Button, Empty, Page, ui } from "../components/learning/LearningUI";
+import { Button, Chips, Empty, Page, ui } from "../components/learning/LearningUI";
 import { cardStyles, bannerStyles } from "../components/ui/surfaceStyles";
 import { useSesionesEnabled } from "../src/featureFlags/useSesionesEnabled";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
   canCancelSession, formatCountdown, formatMoney, holdSecondsLeft, NO_REFUND_NOTE, PAYMENT_METHOD_LABELS,
-  sessionAwaiting, sessionError, sessionPayment, sessionStatusLabel, sessionTime, sessionWhen, whatsappLink,
-  type StudentSession,
+  sessionAwaiting, sessionError, sessionPayment, sessionStatusLabel, sessionTime, sessionWhen, switchablePaymentMethods,
+  whatsappLink, type SessionPaymentMethod, type StudentSession,
 } from "../src/sessions/sessions";
 import { useOrganizerContact, useSessionCheckout, useSessionMutation, useStudentSessions } from "../src/sessions/sessionsQueries";
 import * as ds from "../src/theme/tokens";
@@ -77,8 +77,10 @@ function SessionBody({ session, respondSupported, checkoutOrder }: { session: St
     if (autoCheckout.current || !checkoutOrder || payment.kind !== "hold" || payment.orderId !== checkoutOrder) return;
     autoCheckout.current = true;
     nav.setParams({ checkout: undefined });
-    void checkout.mutateAsync(payment.orderId).catch(() => {});
-  }, [checkoutOrder, payment, checkout, nav]);
+    void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {});
+  }, [checkoutOrder, payment, checkout, nav, session.id]);
+  const switchable = switchablePaymentMethods(session);
+  const currentMethod = session.payment_method ?? session.requested_payment_method ?? null;
   const run = (input: Parameters<typeof mutation.mutateAsync>[0], success: string) => {
     setNotice("");
     void mutation.mutateAsync(input).then(() => setNotice(success)).catch(() => {}).finally(() => setPending(null));
@@ -106,7 +108,7 @@ function SessionBody({ session, respondSupported, checkoutOrder }: { session: St
         <View style={[bannerStyles.base, bannerStyles.warning, s.block]}>
           {holdLeft > 0
             ? <Text style={ui.body}>Guardamos tu horario hasta las {sessionTime(payment.expiresAt)} (quedan {formatCountdown(holdLeft)}). Pagá con Mercado Pago para confirmarla; si el pago no se acredita a tiempo, el horario se libera.</Text>
-            : <Text style={ui.body}>Se terminó el tiempo para pagar. Si ya pagaste, puede tardar unos minutos en acreditarse; si no, el horario se libera.</Text>}
+            : <Text style={ui.body}>Se terminó el tiempo para pagar y el horario se libera. Si pagaste justo ahora, el pago no reactiva la reserva: lo arreglás con {session.organizer_name}.</Text>}
         </View>
       ) : null}
       {awaiting === "facilitator" ? (
@@ -119,7 +121,11 @@ function SessionBody({ session, respondSupported, checkoutOrder }: { session: St
         <Text style={s.label}>Pago</Text>
         {payment.kind === "coordinate" ? <Text style={ui.body}>A coordinar con el facilitador.</Text> : null}
         {payment.kind === "free" ? <Text style={ui.body}>Sin cargo.</Text> : null}
-        {payment.kind === "awaiting_confirmation" ? <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)}. Vas a poder pagar cuando la sesión esté confirmada.</Text> : null}
+        {payment.kind === "awaiting_confirmation" ? <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)}{payment.method ? ` · ${PAYMENT_METHOD_LABELS[payment.method]}` : ""}. Vas a poder pagar cuando la sesión esté confirmada.</Text> : null}
+        {payment.kind === "released" ? <>
+          <Text style={ui.body}>Liberamos el horario porque el pago no se acreditó a tiempo.</Text>
+          <Button secondary label="Reservar de nuevo" onPress={() => nav.navigate("ProfessionalDetail", { id: session.organizer_id })} />
+        </> : null}
         {payment.kind === "paid" ? <>
           <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)} · Pago acreditado.</Text>
           <Text style={ui.muted}>{NO_REFUND_NOTE}</Text>
@@ -134,15 +140,20 @@ function SessionBody({ session, respondSupported, checkoutOrder }: { session: St
         {payment.kind === "hold" ? <>
           <Text style={ui.body}>Total: {formatMoney(payment.amount, payment.currency)}</Text>
           <Button label={checkout.isPending ? "Abriendo el pago…" : "Pagar con Mercado Pago"} disabled={busy || holdLeft <= 0}
-            onPress={() => void checkout.mutateAsync(payment.orderId).catch(() => {})} />
+            onPress={() => void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {})} />
           <Text style={ui.muted}>El pago va directo a la cuenta de {session.organizer_name}. Cuando se acredite, la sesión se confirma sola. {NO_REFUND_NOTE}</Text>
         </> : null}
         {payment.kind === "refunded" ? <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)} · Pago reintegrado.</Text> : null}
         {payment.kind === "pay" ? <>
           <Text style={ui.body}>Total: {formatMoney(payment.amount, payment.currency)}</Text>
           <Button label={checkout.isPending ? "Abriendo el pago…" : "Pagar"} disabled={busy}
-            onPress={() => void checkout.mutateAsync(payment.orderId).catch(() => {})} />
+            onPress={() => void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {})} />
           <Text style={ui.muted}>El pago se hace con Mercado Pago en una ventana segura y va directo a la cuenta de {session.organizer_name}. Cuando lo acrediten, lo vas a ver acá. {NO_REFUND_NOTE}</Text>
+        </> : null}
+        {switchable.length ? <>
+          <Text style={s.label}>Forma de pago</Text>
+          <Chips value={currentMethod ?? ""} onChange={(value) => value !== currentMethod && !busy && run({ action: "set_payment_method", id: session.id, paymentMethod: value as SessionPaymentMethod }, "Listo, cambiamos la forma de pago.")}
+            options={switchable.map((value) => ({ value, label: PAYMENT_METHOD_LABELS[value] }))} />
         </> : null}
         {checkout.isError ? <Text accessibilityRole="alert" style={ui.body}>{checkout.error instanceof Error ? checkout.error.message : "No pudimos abrir el pago."}</Text> : null}
       </View>

@@ -9,6 +9,7 @@ const columns: Record<string, string> = {
   appointment_confirmed: "notification_sessions",
   appointment_updated: "notification_sessions",
   appointment_cancelled: "notification_sessions",
+  appointment_released: "notification_sessions",
 };
 
 export const notificationAllowed = (
