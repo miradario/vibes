@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { notificationAllowed } from "./preferences.ts";
 import { authorizedWebhook, isChallengeInvitationAccepted, isConnectionRequest } from "./webhook.ts";
 import { buildReengagementNotification } from "./reengagement.ts";
+import { buildAppointmentNotifications } from "./appointments.ts";
 
 type SupabaseClient = ReturnType<typeof createAdminClient>;
 
@@ -488,10 +489,14 @@ const fetchNotificationPreferences = async (
 ) => {
   if (userIds.length === 0) return new Map<string, Record<string, unknown>>();
 
-  const { data, error } = await supabase
-    .from("user_preferences")
-    .select("user_id, notifications_enabled, notification_connections, notification_matches, notification_direct_messages, notification_group_messages, notification_challenges, notification_events")
-    .in("user_id", userIds);
+  const baseColumns = "user_id, notifications_enabled, notification_connections, notification_matches, notification_direct_messages, notification_group_messages, notification_challenges, notification_events";
+  const select = (columns: string) =>
+    supabase.from("user_preferences").select(columns).in("user_id", userIds);
+  let { data, error } = await select(`${baseColumns}, notification_sessions`);
+  // notification_sessions is additive; until its migration runs keep every other push working.
+  if (error && (error as { code?: string }).code === "42703") {
+    ({ data, error } = await select(baseColumns));
+  }
 
   if (error) throw error;
 
@@ -909,6 +914,10 @@ const buildNotifications = async (
     return buildMatchNotifications(supabase, record);
   }
 
+  if (table === "appointment_notifications" && payload.type === "APPOINTMENT") {
+    return buildAppointmentNotifications(record);
+  }
+
   return [];
 };
 
@@ -925,7 +934,7 @@ serve(async (req: Request) => {
 
   try {
     const payload = (await req.json()) as WebhookPayload;
-    if (payload.type && payload.type !== "INSERT" && !(payload.type === "UPDATE" && (payload.table === "swipes" || payload.table === "challenge_invitations"))) {
+    if (payload.type && payload.type !== "INSERT" && !(payload.type === "APPOINTMENT" && payload.table === "appointment_notifications") && !(payload.type === "UPDATE" && (payload.table === "swipes" || payload.table === "challenge_invitations"))) {
       return new Response(
         JSON.stringify({ ignored: true, reason: "unsupported event type" }),
         {

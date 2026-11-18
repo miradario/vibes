@@ -14,6 +14,7 @@ import { dmKeys, matchKeys, useMatchesQuery } from "../queries/matches.queries";
 import { eventMessageKeys, myEventGroupsKeys } from "../queries/events.queries";
 import { useUserPreferencesQuery, userPreferencesKeys } from "../queries/userPreferences.queries";
 import { getDeviceTimeZone } from "./preferences";
+import { isSessionPush } from "./reminderNavigation";
 
 const isChatNotificationData = (
   data: Record<string, unknown> | null
@@ -513,6 +514,8 @@ export const PushNotificationsBootstrap = ({
             : null;
 
         refreshCommunityFromPush(queryClient, data);
+        // Session invitations/changes: refresh "Mis reservas", Home and the session detail.
+        if (isSessionPush(data)) void queryClient.invalidateQueries({ queryKey: ["sessions"] });
         if (data?.type === "new_match" && typeof data.otherUserId === "string") {
           void dismissSupersededConnectionRequests(data.otherUserId);
         }

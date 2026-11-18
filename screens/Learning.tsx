@@ -59,6 +59,7 @@ import {
 } from "../components/learning/LearningUI";
 import { chipHitSlop, chipStyles } from "../components/ui/chipStyles";
 import * as ds from "../src/theme/tokens";
+import { teacherManagementInApp } from "../src/featureFlags/activities";
 const useNav = () => useNavigation<any>();
 const useId = () => (useRoute().params as { id?: string } | undefined)?.id;
 
@@ -162,7 +163,7 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
           return (
             <>
               <ActiveCommunityFilters selected={communities} onRemove={value=>setCommunities(previous=>previous.filter(item=>item!==value))} onClear={()=>setCommunities([])} />
-              {!embedded && <View style={explore.toolbar}><LearningCreateAction /></View>}
+              {!embedded && teacherManagementInApp && <View style={explore.toolbar}><LearningCreateAction /></View>}
               <View style={explore.search}>
                 <Icon name="search" size={ds.iconSize.md} color={ds.colors.text.secondary} />
                 <TextInput accessibilityLabel="Buscar clases o lugares" placeholder="¿Qué te gustaría practicar?" placeholderTextColor={ds.colors.text.secondary} value={query} onChangeText={setQuery} style={explore.searchInput} returnKeyType="search" />
@@ -175,7 +176,8 @@ export function LearningExplore({ embedded = false }: { embedded?: boolean }) {
               <DiscoverPathCards selected={communities} onToggle={value=>setCommunities(previous=>previous.includes(value)?previous.filter(item=>item!==value):[...previous,value])} onClear={()=>setCommunities([])} />
               <Chips value={specialty} onChange={setSpecialty} options={[{value:"",label:"Todas las prácticas"},...specs.map(value=>({value,label:value}))]} />
               {tab === "activity" ? <>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver mi agenda y reservas" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Mi agenda y reservas</Text><Icon name="chevron-forward" size={ds.iconSize.md} color={ds.colors.icon.default} /></TouchableOpacity>
+                {/* Inside the Actividades tab, "Mis reservas" already lists the agenda. */}
+                {!embedded && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ver mi agenda y reservas" onPress={() => nav.navigate("LearningMine")} style={explore.mineLink}><Text style={explore.actionLabel}>Mi agenda y reservas</Text><Icon name="chevron-forward" size={ds.iconSize.md} color={ds.colors.icon.default} /></TouchableOpacity>}
                 {myClasses.length + myRequestedClasses.length + myRequestedActivities.length > 0 ? <>
                 <Text accessibilityRole="header" style={explore.sectionTitle}>Mis clases</Text>
                 <Text style={explore.sectionHint}>Inscripciones y solicitudes pendientes</Text>
@@ -285,7 +287,7 @@ export function LearningProfileDetail() {
                 {modalityLabels[p.modality]}
                 {p.location ? ` · ${p.location}` : ""}
               </Text>
-              {data.access.managed_ids.includes(p.id) && (
+              {teacherManagementInApp && data.access.managed_ids.includes(p.id) && (
                 <Link
                   label="Editar perfil"
                   onPress={() =>
@@ -342,7 +344,8 @@ export function LearningActivityDetail() {
     q = useLearningData(),
     action = useLearningAction();
   const activity = q.data?.activities.find(item => item.id === id);
-  const canManage = Boolean(activity && q.data?.access.managed_ids.includes(activity.organizer_id));
+  // Management lives in the portal; the in-app editors are hidden unless the build flag is on.
+  const canManage = teacherManagementInApp && Boolean(activity && q.data?.access.managed_ids.includes(activity.organizer_id));
   const canEdit = canManage && activity && !["cancelled", "completed"].includes(activity.status);
   return (
     <Page title="Actividad" headerAction={<View style={{flexDirection:"row",gap:ds.spacing[1]}}>
@@ -446,7 +449,7 @@ export function LearningActivityDetail() {
                   }
                 />
               )}
-              {mine && (
+              {mine && teacherManagementInApp && (
                 <>
                   <LearningActionDock>
                   <Button

@@ -1,5 +1,5 @@
 import StudioStudentScreen from "./StudioStudent";
-import { studioStudentEnabled } from "../src/learning/studioStudent";
+import { useClasesEnabled } from "../src/featureFlags/useClasesEnabled";
 import React, { useMemo, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -14,7 +14,9 @@ import { useLocalDay } from "../src/hooks/useLocalDay";
 import * as ds from "../src/theme/tokens";
 const statusLabels = {confirmed:"Reserva confirmada",pending:"Pendiente de confirmación",cancelled:"Cancelada"};
 export default function LearningStudentScreen() {
-  return studioStudentEnabled ? <StudioStudentScreen /> : <LegacyLearningStudentScreen />;
+  // With the `clases` flag on, classes use the portal per-encounter agenda (packs and credits);
+  // older enrollments stay reachable as history from LearningLegacyMine.
+  return useClasesEnabled() ? <StudioStudentScreen /> : <LegacyLearningStudentScreen />;
 }
 export function LegacyLearningStudentScreen() {
   const query = useLearningData();

@@ -45,6 +45,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="https" android:host="vibes.gurudevelopers.dev" android:pathPrefix="/event"/>
         <data android:scheme="https" android:host="vibes.gurudevelopers.dev" android:pathPrefix="/challenge"/>
+        <data android:scheme="https" android:host="vibes.gurudevelopers.dev" android:pathPrefix="/session"/>
       </intent-filter>
       <intent-filter>
         <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>

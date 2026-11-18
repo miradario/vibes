@@ -27,7 +27,8 @@ test('only the first acceptance of a challenge invitation notifies the creator',
  assert.equal(api.isChallengeInvitationAccepted({...row,invited_by:'invitee'},{status:'pending'}),false);
 });
 
-const prefsApi={};
+const prefsApi={}, apptApi={};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('supabase/functions/send-push/appointments.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports:apptApi,Intl,Date});
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('supabase/functions/send-push/preferences.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports:prefsApi});
 function handlerFixture({disabled=false,blocked=false,preferences={},reminder=null,candidate={title:'Encuentro'}}={}) {
  let handler; const deliveries=[]; let databaseCalls=0;
@@ -48,7 +49,7 @@ function handlerFixture({disabled=false,blocked=false,preferences={},reminder=nu
  }};
  const env={PUSH_WEBHOOK_SECRET:'x'.repeat(64),SUPABASE_URL:'https://example.test',SUPABASE_SERVICE_ROLE_KEY:'fixture'};
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('supabase/functions/send-push/index.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
-  exports:{},require:name=>name==='./preferences.ts'?prefsApi:name==='./webhook.ts'?api:name.includes('server.ts')?{serve:fn=>handler=fn}:{createClient:()=>db},
+  exports:{},require:name=>name==='./preferences.ts'?prefsApi:name==='./appointments.ts'?apptApi:name==='./webhook.ts'?api:name.includes('server.ts')?{serve:fn=>handler=fn}:{createClient:()=>db},
   Deno:{env:{get:key=>env[key]}},Request,Response,console,TextEncoder,crypto:require('node:crypto').webcrypto,
  });
  return {deliveries, calls:()=>databaseCalls, send:(payload,authorized=true)=>handler(new Request('https://example.test',{method:'POST',headers:authorized?{Authorization:'Bearer '+env.PUSH_WEBHOOK_SECRET}:{},body:JSON.stringify(payload)}))};
@@ -124,4 +125,34 @@ test('stale, completed, cancelled, left, rescheduled or disabled reminders are s
   assert.equal((await fixture.send(reminderPayload)).status,200);
   assert.deepEqual(fixture.deliveries,[]);
  }
+});
+
+test('session pushes map to notification_sessions and respect the opt-out',()=>{
+ for(const type of ['appointment_invited','appointment_confirmed','appointment_updated','appointment_cancelled','appointment_released']){
+  assert.equal(prefsApi.notificationAllowed({notification_sessions:false},type),false);
+  assert.equal(prefsApi.notificationAllowed({},type),true);
+ }
+});
+test('session copy is Spanish, dated in Buenos Aires and opens the session detail',()=>{
+ const [push]=apptApi.buildAppointmentNotifications({event:'invited',recipient_id:'student',session_id:'s1',title:'Sesión de yoga',organizer_name:'Ana',starts_at:'2026-11-20T13:00:00Z'});
+ assert.equal(push.recipientId,'student');
+ assert.deepEqual({...push.data},{type:'appointment_invited',sessionId:'s1'});
+ assert.match(push.body,/Ana te agendó "Sesión de yoga" el .*20 de noviembre a las 10:00/);
+ assert.equal(apptApi.buildAppointmentNotifications({event:'other',recipient_id:'a',session_id:'b'}).length,0);
+ assert.equal(apptApi.buildAppointmentNotifications({event:'cancelled',session_id:'b'}).length,0);
+ const [released]=apptApi.buildAppointmentNotifications({event:'released',recipient_id:'student',session_id:'s1',title:'Reiki',starts_at:'2026-11-20T13:00:00Z'});
+ assert.equal(released.title,'Se liberó el horario'); assert.match(released.body,/No se acreditó el pago de "Reiki"/);
+ assert.deepEqual({...released.data},{type:'appointment_released',sessionId:'s1'});
+});
+test('APPOINTMENT payloads reach the recipient; missing notification_sessions column falls back',async()=>{
+ const fixture=handlerFixture();
+ const response=await fixture.send({type:'APPOINTMENT',schema:'private',table:'appointment_notifications',record:{event:'confirmed',recipient_id:'recipient',session_id:'s1',title:'Sesión',starts_at:'2026-11-20T13:00:00Z'}});
+ assert.equal(response.status,200);
+ assert.deepEqual(fixture.deliveries,['recipient']);
+ const optedOut=handlerFixture({preferences:{notification_sessions:false}});
+ await optedOut.send({type:'APPOINTMENT',table:'appointment_notifications',record:{event:'updated',recipient_id:'recipient',session_id:'s1'}});
+ assert.deepEqual(optedOut.deliveries,[]);
+ const source=fs.readFileSync('supabase/functions/send-push/index.ts','utf8');
+ assert.match(source,/notification_sessions`\);\n[\s\S]*?42703[\s\S]*?select\(baseColumns\)/);
+ assert.match(source,/channel_id: "default"/);
 });
