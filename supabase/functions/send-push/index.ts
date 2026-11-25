@@ -501,7 +501,8 @@ const fetchNotificationPreferences = async (
   if (error) throw error;
 
   const preferences = new Map<string, Record<string, unknown>>();
-  for (const row of data ?? []) {
+  // Dynamic column list: supabase-js can't infer the row type from a runtime string.
+  for (const row of (data ?? []) as unknown as Record<string, unknown>[]) {
     preferences.set(String(row.user_id), row);
   }
 
