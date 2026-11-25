@@ -7,6 +7,9 @@ import Activities, { ClassesTab } from "./screens/Activities";
 import { useActivitiesFlags } from "./src/featureFlags/useActivitiesFlags";
 import { teacherManagementInApp } from "./src/featureFlags/activities";
 import SessionDetailScreen from "./screens/SessionDetail";
+import SessionHistoryScreen from "./screens/SessionHistory";
+import ClassHistoryScreen from "./screens/ClassHistory";
+import ClassBookingDetailScreen from "./screens/ClassBookingDetail";
 import ProfessionalDetailScreen from "./screens/ProfessionalDetail";
 import {LearningExplore, LearningProfileDetail, LearningActivityDetail, LearningMine, LearningManage, LearningRoster, LearningProfileEditor, LearningActivityEditor} from "./screens/Learning";
 import { useMeetPeople } from "./src/queries/meetPeople.queries";
@@ -618,6 +621,9 @@ const AppNavigator = () => {
             {teacherManagementInApp ? <Stack.Screen name="LearningProfileEditor" component={LearningProfileEditor} options={{headerShown:false}} /> : null}
             {teacherManagementInApp ? <Stack.Screen name="LearningActivityEditor" component={LearningActivityEditor} options={{headerShown:false}} /> : null}
             <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{headerShown:false}} />
+            <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} options={{headerShown:false}} />
+            <Stack.Screen name="ClassHistory" component={ClassHistoryScreen} options={{headerShown:false}} />
+            <Stack.Screen name="ClassBookingDetail" component={ClassBookingDetailScreen} options={{headerShown:false}} />
             <Stack.Screen name="ProfessionalDetail" component={ProfessionalDetailScreen} options={{headerShown:false}} />
             <Stack.Screen
               name="Login"

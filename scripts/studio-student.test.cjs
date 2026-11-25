@@ -44,3 +44,25 @@ test('RPC errors propagate and unavailable migration gets an honest message',asy
  assert.match(api.studioStudentError(error),/todavía no está habilitada/);
  assert.match(api.studioStudentError({message:'CREDITS_REQUIRED'}),/crédito vigente/);
 });
+
+test('past studio bookings are ended confirmed and cancelled, most recent first',()=>{
+ const booking=(o={})=>({id:'b',organizer_id:'org',session_id:'s',title:'Yoga',starts_at:'2026-11-06T19:00:00Z',ends_at:'2026-11-06T20:00:00Z',timezone:'America/Argentina/Buenos_Aires',status:'confirmed',present:null,cancellation_hours:12,...o});
+ const now=Date.parse('2026-11-17T12:00:00Z');
+ const history=api.pastStudioBookings([
+  booking({id:'up',starts_at:'2026-11-20T19:00:00Z',ends_at:'2026-11-20T20:00:00Z'}),
+  booking({id:'past',starts_at:'2026-11-10T19:00:00Z',ends_at:'2026-11-10T20:00:00Z'}),
+  booking({id:'cx',status:'cancelled',starts_at:'2026-11-21T19:00:00Z',ends_at:'2026-11-21T20:00:00Z'}),
+  booking({id:'wait',status:'waitlist',starts_at:'2026-11-10T19:00:00Z',ends_at:'2026-11-10T20:00:00Z'}),
+  booking({id:'cp',status:'cancelled',starts_at:'2026-11-09T19:00:00Z',ends_at:'2026-11-09T20:00:00Z'}),
+ ],now);
+ assert.deepEqual(history.map(item=>item.id),['cx','past','cp']);
+ const upcoming=api.upcomingStudioBookings([
+  booking({id:'up',starts_at:'2026-11-20T19:00:00Z',ends_at:'2026-11-20T20:00:00Z'}),
+  booking({id:'past'}),
+  booking({id:'cx',status:'cancelled',starts_at:'2026-11-21T19:00:00Z',ends_at:'2026-11-21T20:00:00Z'}),
+ ],now);
+ assert.deepEqual(upcoming.map(item=>item.id),['up']);
+ assert.match(api.studioBookingWhen(booking()),/yoga|nov|11|16:00|19:00/i);
+ assert.equal(api.STUDIO_BOOKING_STATUS_LABEL.waitlist,'Lista de espera');
+});
+

@@ -232,6 +232,26 @@ export function upcomingSessions(sessions: StudentSession[], now = Date.now()): 
     .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
 }
 
+/**
+ * Historial de sesiones del alumno, de la más reciente a la más antigua.
+ *
+ * Entran: confirmadas que ya terminaron, y canceladas (incluye un rechazo del
+ * alumno o del facilitador, y una retención de Mercado Pago vencida / released).
+ * No entran las que siguen en `upcomingSessions` (por ejemplo una cancelada con
+ * `late_payment` cuyo horario todavía no pasó, para que el alumno resuelva el pago)
+ * ni las `pending` que terminaron sin confirmarse ni cancelarse: no se tomaron.
+ */
+export function pastSessions(sessions: StudentSession[], now = Date.now()): StudentSession[] {
+  const upcomingIds = new Set(upcomingSessions(sessions, now).map((session) => session.id));
+  return sessions
+    .filter((session) => {
+      if (upcomingIds.has(session.id)) return false;
+      if (session.status === "cancelled") return true;
+      return session.status === "confirmed" && Date.parse(session.ends_at) <= now;
+    })
+    .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at));
+}
+
 /** Free ranges of an availability window after removing busy ranges and the past. */
 export function freeRanges(window: AvailabilityWindow, now = Date.now()): BusyRange[] {
   let ranges = [{ start: Math.max(Date.parse(window.starts_at), Math.ceil(now / 60000) * 60000), end: Date.parse(window.ends_at) }];

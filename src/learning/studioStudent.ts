@@ -18,8 +18,24 @@ export async function requestStudioStudent<T>(client:RpcClient, action:StudentAc
 export function studioCreditBalance(orders:StudioOrder[],now=Date.now()) {
   return orders.filter(order=>order.status==="paid" && order.expires_at && Date.parse(order.expires_at)>now).reduce((sum,order)=>sum+order.remaining,0);
 }
+export const STUDIO_BOOKING_STATUS_LABEL = { confirmed:"Confirmada", waitlist:"Lista de espera", cancelled:"Cancelada" } as const;
 export function studioCanCancel(booking:StudioBooking,now=Date.now()) {
   return booking.status==="waitlist" || (booking.status==="confirmed" && Date.parse(booking.starts_at)>now+booking.cancellation_hours*3600000);
+}
+export function studioBookingWhen(booking:Pick<StudioBooking,"starts_at"|"timezone">) {
+  return new Date(booking.starts_at).toLocaleString("es-AR",{timeZone:booking.timezone??"America/Argentina/Buenos_Aires",weekday:"long",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+}
+export function upcomingStudioBookings(bookings:StudioBooking[],now=Date.now()) {
+  return bookings
+    .filter((item)=>item.status!=="cancelled" && Date.parse(item.ends_at)>now)
+    .sort((a,b)=>Date.parse(a.starts_at)-Date.parse(b.starts_at));
+}
+/** Historial de clases: confirmadas que ya terminaron y canceladas, de la más reciente a la más antigua.
+ * Las reservas próximas quedan en Mis reservas. Una espera que venció sin confirmarse no entra: el alumno no tomó la clase. */
+export function pastStudioBookings(bookings:StudioBooking[],now=Date.now()) {
+  return bookings
+    .filter((item)=>item.status==="cancelled" || (item.status==="confirmed" && Date.parse(item.ends_at)<=now))
+    .sort((a,b)=>Date.parse(b.starts_at)-Date.parse(a.starts_at));
 }
 export function studioStudentError(cause:unknown) {
   const error=cause as {code?:string;message?:string};

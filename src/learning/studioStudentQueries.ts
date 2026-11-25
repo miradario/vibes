@@ -3,6 +3,7 @@ import { useAuthSession } from "../auth/auth.queries";
 import { useClasesEnabled } from "../featureFlags/useClasesEnabled";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
+import { loadOrganizerContact } from "../sessions/sessionsApi";
 import { requestStudioStudent, type StudioStudentData, type StudentAction } from "./studioStudent";
 const client={rpc:(name:string,args:Record<string,unknown>)=>supabase.rpc(name,args)};
 export const studioStudentKey=(userId?:string)=>["studio-student",userId??"anonymous"] as const;
@@ -11,6 +12,13 @@ export function useStudioStudentQuery() {
   const classes=useClasesEnabled();
   return useQuery({queryKey:studioStudentKey(session?.user.id),enabled:classes&&!!session?.user.id,
     queryFn:()=>withBootTimeout(requestStudioStudent<StudioStudentData>(client),15000,"studio student"),staleTime:15000,retry:1});
+}
+/** WhatsApp del estudio (`private.studio_settings.whatsapp_phone` vía portal_student_sessions).
+ * No usa el teléfono de `contacts`: ese es el del alumno, para que el estudio le escriba. */
+export function useStudioWhatsApp(organizerId:string|undefined) {
+  const {data:session}=useAuthSession();
+  return useQuery({queryKey:["studio-student","whatsapp",organizerId??""] as const,enabled:!!organizerId&&!!session?.user.id,
+    queryFn:()=>loadOrganizerContact(client,organizerId!),staleTime:5*60000,retry:false});
 }
 export function useStudioStudentMutation() {
   const {data:session}=useAuthSession();

@@ -256,3 +256,18 @@ test('checkout asks the portal to return to the app; set_payment_method RPC',asy
  const nav=load('src/notifications/reminderNavigation.ts');
  assert.deepEqual(plain(nav.getReminderDestination({type:'appointment_released',sessionId:'b1'})),{name:'SessionDetail',params:{id:'b1'}});
 });
+
+test('pastSessions keeps ended confirmed and cancelled items, most recent first',()=>{
+ const past=session({id:'past',starts_at:'2026-11-10T13:00:00Z',ends_at:'2026-11-10T14:00:00Z'});
+ const upcoming=session({id:'up'});
+ const cancelledFuture=session({id:'cx',status:'cancelled',starts_at:'2026-11-21T13:00:00Z',ends_at:'2026-11-21T14:00:00Z'});
+ const cancelledPast=session({id:'cp',status:'cancelled',starts_at:'2026-11-09T13:00:00Z',ends_at:'2026-11-09T14:00:00Z'});
+ const released=session({id:'rel',status:'cancelled',released:true,starts_at:'2026-11-20T13:00:00Z',ends_at:'2026-11-20T14:00:00Z'});
+ const lateUpcoming=session({id:'late',status:'cancelled',late_payment:true,order_id:'o',amount:1,payment_status:'paid',starts_at:'2026-11-20T13:00:00Z',ends_at:'2026-11-20T14:00:00Z'});
+ const latePast=session({id:'late-past',status:'cancelled',late_payment:true,order_id:'o',amount:1,payment_status:'paid',starts_at:'2026-11-08T13:00:00Z',ends_at:'2026-11-08T14:00:00Z'});
+ const pendingPast=session({id:'pend',status:'pending',starts_at:'2026-11-10T13:00:00Z',ends_at:'2026-11-10T14:00:00Z'});
+ const history=s.pastSessions([upcoming,pendingPast,cancelledPast,past,cancelledFuture,released,lateUpcoming,latePast],NOW);
+ assert.deepEqual(history.map(item=>item.id),['cx','rel','past','cp','late-past']);
+ assert.equal(s.upcomingSessions([lateUpcoming,released],NOW).map(item=>item.id).join(),'late');
+});
+

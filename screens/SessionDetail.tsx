@@ -6,6 +6,7 @@ import { Text } from "../components/Typography";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { Button, Chips, Empty, Page, ui } from "../components/learning/LearningUI";
 import { cardStyles, bannerStyles } from "../components/ui/surfaceStyles";
+import { CardRowSkeleton, SkeletonGroup } from "../components/ui/Skeleton";
 import { useSesionesEnabled } from "../src/featureFlags/useSesionesEnabled";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
@@ -19,9 +20,10 @@ import * as ds from "../src/theme/tokens";
 type Pending = "cancel" | "decline" | null;
 
 export default function SessionDetailScreen() {
-  const params = useRoute().params as { id?: string; checkout?: string } | undefined;
+  const params = useRoute().params as { id?: string; checkout?: string; readOnly?: boolean } | undefined;
   const id = typeof params?.id === "string" ? params.id : "";
   const checkoutOrder = typeof params?.checkout === "string" ? params.checkout : undefined;
+  const readOnly = params?.readOnly === true;
   const enabled = useSesionesEnabled();
   const { data: auth } = useAuthSession();
   const query = useStudentSessions();
@@ -30,7 +32,10 @@ export default function SessionDetailScreen() {
   if (!auth?.user?.id) return <Page title="Sesión"><Text style={ui.body}>Iniciá sesión con tu cuenta de Vibes para ver esta sesión.</Text></Page>;
   return (
     <Page title="Sesión">
-      {query.isLoading ? <Text style={ui.muted}>Cargando la sesión…</Text> : null}
+      {query.isLoading ? <SkeletonGroup label="Cargando la sesión">
+        <CardRowSkeleton pill lines={[{ text: "title", width: "75%" }, { text: "body", width: "50%" }, { text: "body", width: "65%" }]} />
+        <CardRowSkeleton lines={[{ text: "label", width: "25%" }, { text: "body", width: "70%" }]} />
+      </SkeletonGroup> : null}
       {query.isError ? (
         <View style={[ui.notice, ui.error]}>
           <Text accessibilityRole="alert" style={ui.body}>{sessionError(query.error)}</Text>
@@ -38,7 +43,7 @@ export default function SessionDetailScreen() {
         </View>
       ) : null}
       {query.data && !session ? <Empty text="No encontramos esta sesión. Puede que se haya cancelado o que ya haya terminado." /> : null}
-      {session ? <SessionBody session={session} respondSupported={query.data?.respondSupported ?? false} checkoutOrder={checkoutOrder} /> : null}
+      {session ? <SessionBody session={session} respondSupported={query.data?.respondSupported ?? false} checkoutOrder={checkoutOrder} readOnly={readOnly} /> : null}
     </Page>
   );
 }
@@ -55,7 +60,7 @@ function useNow(active: boolean): number {
   return now;
 }
 
-function SessionBody({ session, respondSupported, checkoutOrder }: { session: StudentSession; respondSupported: boolean; checkoutOrder?: string }) {
+function SessionBody({ session, respondSupported, checkoutOrder, readOnly }: { session: StudentSession; respondSupported: boolean; checkoutOrder?: string; readOnly: boolean }) {
   const nav = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const mutation = useSessionMutation();
@@ -74,11 +79,11 @@ function SessionBody({ session, respondSupported, checkoutOrder }: { session: St
   // Right after booking with Mercado Pago, open the checkout once (the slot is already held).
   const autoCheckout = useRef(false);
   useEffect(() => {
-    if (autoCheckout.current || !checkoutOrder || payment.kind !== "hold" || payment.orderId !== checkoutOrder) return;
+    if (readOnly || autoCheckout.current || !checkoutOrder || payment.kind !== "hold" || payment.orderId !== checkoutOrder) return;
     autoCheckout.current = true;
     nav.setParams({ checkout: undefined });
     void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {});
-  }, [checkoutOrder, payment, checkout, nav, session.id]);
+  }, [readOnly, checkoutOrder, payment, checkout, nav, session.id]);
   const switchable = switchablePaymentMethods(session);
   const currentMethod = session.payment_method ?? session.requested_payment_method ?? null;
   const run = (input: Parameters<typeof mutation.mutateAsync>[0], success: string) => {
@@ -95,7 +100,7 @@ function SessionBody({ session, respondSupported, checkoutOrder }: { session: St
         <View style={[s.pill, session.status === "pending" ? s.pillPending : null]}><Text style={s.pillText}>{sessionStatusLabel(session)}</Text></View>
       </View>
 
-      {awaiting === "student" && cancellable ? (
+      {!readOnly && awaiting === "student" && cancellable ? (
         <View style={[bannerStyles.base, bannerStyles.warning, s.block]}>
           <Text style={ui.body}>{session.organizer_name} te agendó esta sesión. Confirmala para reservar el horario o rechazala si no podés.</Text>
           <Button label={mutation.isPending ? "Guardando…" : "Confirmar sesión"} disabled={busy || !respondSupported}
@@ -124,7 +129,7 @@ function SessionBody({ session, respondSupported, checkoutOrder }: { session: St
         {payment.kind === "awaiting_confirmation" ? <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)}{payment.method ? ` · ${PAYMENT_METHOD_LABELS[payment.method]}` : ""}. Vas a poder pagar cuando la sesión esté confirmada.</Text> : null}
         {payment.kind === "released" ? <>
           <Text style={ui.body}>Liberamos el horario porque el pago no se acreditó a tiempo.</Text>
-          <Button secondary label="Reservar de nuevo" onPress={() => nav.navigate("ProfessionalDetail", { id: session.organizer_id })} />
+          {!readOnly ? <Button secondary label="Reservar de nuevo" onPress={() => nav.navigate("ProfessionalDetail", { id: session.organizer_id })} /> : null}
         </> : null}
         {payment.kind === "paid" ? <>
           <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)} · Pago acreditado.</Text>
@@ -139,32 +144,32 @@ function SessionBody({ session, respondSupported, checkoutOrder }: { session: St
         {payment.kind === "late" ? <Text style={ui.body}>Pagaste {formatMoney(payment.amount, payment.currency)}, pero la reserva ya no estaba vigente. Escribile a {session.organizer_name} para resolverlo.</Text> : null}
         {payment.kind === "hold" ? <>
           <Text style={ui.body}>Total: {formatMoney(payment.amount, payment.currency)}</Text>
-          <Button label={checkout.isPending ? "Abriendo el pago…" : "Pagar con Mercado Pago"} disabled={busy || holdLeft <= 0}
-            onPress={() => void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {})} />
+          {!readOnly ? <Button label={checkout.isPending ? "Abriendo el pago…" : "Pagar con Mercado Pago"} disabled={busy || holdLeft <= 0}
+            onPress={() => void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {})} /> : null}
           <Text style={ui.muted}>El pago va directo a la cuenta de {session.organizer_name}. Cuando se acredite, la sesión se confirma sola. {NO_REFUND_NOTE}</Text>
         </> : null}
         {payment.kind === "refunded" ? <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)} · Pago reintegrado.</Text> : null}
         {payment.kind === "pay" ? <>
           <Text style={ui.body}>Total: {formatMoney(payment.amount, payment.currency)}</Text>
-          <Button label={checkout.isPending ? "Abriendo el pago…" : "Pagar"} disabled={busy}
-            onPress={() => void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {})} />
+          {!readOnly ? <Button label={checkout.isPending ? "Abriendo el pago…" : "Pagar"} disabled={busy}
+            onPress={() => void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {})} /> : null}
           <Text style={ui.muted}>El pago se hace con Mercado Pago en una ventana segura y va directo a la cuenta de {session.organizer_name}. Cuando lo acrediten, lo vas a ver acá. {NO_REFUND_NOTE}</Text>
         </> : null}
-        {switchable.length ? <>
+        {!readOnly && switchable.length ? <>
           <Text style={s.label}>Forma de pago</Text>
           <Chips value={currentMethod ?? ""} onChange={(value) => value !== currentMethod && !busy && run({ action: "set_payment_method", id: session.id, paymentMethod: value as SessionPaymentMethod }, "Listo, cambiamos la forma de pago.")}
             options={switchable.map((value) => ({ value, label: PAYMENT_METHOD_LABELS[value] }))} />
         </> : null}
-        {checkout.isError ? <Text accessibilityRole="alert" style={ui.body}>{checkout.error instanceof Error ? checkout.error.message : "No pudimos abrir el pago."}</Text> : null}
+        {!readOnly && checkout.isError ? <Text accessibilityRole="alert" style={ui.body}>{checkout.error instanceof Error ? checkout.error.message : "No pudimos abrir el pago."}</Text> : null}
       </View>
 
-      {whatsapp ? <Button secondary label="Escribir por WhatsApp" onPress={() => void Linking.openURL(whatsapp).catch(() => {})} /> : null}
-      {cancellable && awaiting !== "student" ? <Button secondary label={payment.kind === "hold" ? "Cancelar reserva" : "Cancelar sesión"} disabled={busy} onPress={() => setPending("cancel")} /> : null}
-      {notice ? <Text accessibilityLiveRegion="polite" style={ui.body}>{notice}</Text> : null}
-      {mutation.isError ? <Text accessibilityRole="alert" style={ui.body}>{sessionError(mutation.error)}</Text> : null}
-      <Button secondary label="Ver mis reservas" onPress={() => nav.navigate("Tab", { screen: "ClassesTab", params: { section: "mine" } })} />
+      {!readOnly && whatsapp ? <Button secondary label="Escribir por WhatsApp" onPress={() => void Linking.openURL(whatsapp).catch(() => {})} /> : null}
+      {!readOnly && cancellable && awaiting !== "student" ? <Button secondary label={payment.kind === "hold" ? "Cancelar reserva" : "Cancelar sesión"} disabled={busy} onPress={() => setPending("cancel")} /> : null}
+      {!readOnly && notice ? <Text accessibilityLiveRegion="polite" style={ui.body}>{notice}</Text> : null}
+      {!readOnly && mutation.isError ? <Text accessibilityRole="alert" style={ui.body}>{sessionError(mutation.error)}</Text> : null}
+      {!readOnly ? <Button secondary label="Ver mis reservas" onPress={() => nav.navigate("Tab", { screen: "ClassesTab", params: { section: "mine" } })} /> : null}
 
-      <AnimatedSheetModal visible={pending !== null} onClose={() => { if (!mutation.isPending) setPending(null); }}
+      <AnimatedSheetModal visible={!readOnly && pending !== null} onClose={() => { if (!mutation.isPending) setPending(null); }}
         closeOnBackdropPress={!mutation.isPending} sheetStyle={[ui.sheet, { paddingBottom: Math.max(insets.bottom, ds.spacing[6]) }]}>
         <Text style={ui.title}>{pending === "decline" ? "Rechazar sesión" : "Cancelar sesión"}</Text>
         <Text style={ui.body}>Vas a liberar el horario de {session.title} con {session.organizer_name}.{payment.kind === "paid" || payment.kind === "offline_paid" || payment.kind === "hold" ? ` ${NO_REFUND_NOTE}` : ""}</Text>
