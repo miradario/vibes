@@ -5,7 +5,7 @@ import { organizersWithAvailability, withActiveAvailability } from "./profession
 import { useSesionesEnabled } from "../featureFlags/useSesionesEnabled";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
-import { dayStartISO, hasPendingMercadoPayment, isPaymentHold, sessionDay, sessionReturnUrl, type SessionPaymentMethod } from "./sessions";
+import { dayStartISO, hasPendingMercadoPayment, sessionDay, sessionReturnUrl, type SessionPaymentMethod } from "./sessions";
 import {
   bookSession, cancelSession, loadAllAvailability, setSessionPaymentMethod, loadOrganizerAvailability, loadOrganizerContact, loadServicePricing, loadStudentSessions,
   requestCheckoutUrl, reserveSession, respondToSession, type RpcClient,
