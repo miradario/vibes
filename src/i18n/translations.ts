@@ -425,7 +425,7 @@ const baseTranslations = {
       groupMessages: "Mensajes de grupos",
       challenges: "Recordatorios de desafíos",
       events: "Próximos eventos",
-      sessions: "Sesiones con profesionales",
+      sessions: "Sesiones con facilitadores",
       challengeHint: "Solo si todavía no lo completaste ese día",
       dailyReminder: "Recordatorio diario",
       dailyAt: "Todos los días a las {{time}}",

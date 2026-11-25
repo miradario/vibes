@@ -5,7 +5,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "../components/Typography";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { Button, Chips, Empty, Page, Photo, ui } from "../components/learning/LearningUI";
-import { bannerStyles, cardStyles } from "../components/ui/surfaceStyles";
+import { bannerStyles } from "../components/ui/surfaceStyles";
+import Tag from "../components/ui/Tag";
+import { CardRowSkeleton, SkeletonChips, SkeletonGroup, SkeletonLine } from "../components/ui/Skeleton";
 import { useSesionesEnabled } from "../src/featureFlags/useSesionesEnabled";
 import {
   bookableDays, formatMoney, NO_REFUND_NOTE, PAYMENT_METHOD_LABELS, REQUEST_TIMES, requestDays, SESSION_DURATIONS,
@@ -25,10 +27,13 @@ export default function ProfessionalDetailScreen() {
   const enabled = useSesionesEnabled();
   const professionals = useProfessionals();
   const profile = professionals.data?.find((item) => item.id === id);
-  if (!enabled) return <Page title="Profesional"><Empty text="Las sesiones no están disponibles por el momento." /></Page>;
+  if (!enabled) return <Page title="Facilitador"><Empty text="Las sesiones no están disponibles por el momento." /></Page>;
   return (
-    <Page title="Profesional">
-      {professionals.isLoading ? <Text style={ui.muted}>Cargando perfil…</Text> : null}
+    <Page title="Facilitador">
+      {professionals.isLoading ? <SkeletonGroup label="Cargando perfil">
+        <CardRowSkeleton cardStyle={ui.row} thumb={ui.photo} lines={[{ text: "title", width: "70%" }, { text: "body", width: "60%" }, { text: "body", width: "40%" }]} />
+        <SkeletonLine width="95%" /><SkeletonLine width="85%" /><SkeletonLine width="60%" />
+      </SkeletonGroup> : null}
       {professionals.isError ? <View style={[ui.notice, ui.error]}><Text accessibilityRole="alert" style={ui.body}>{sessionError(professionals.error)}</Text><Button secondary label="Reintentar" onPress={() => void professionals.refetch()} /></View> : null}
       {professionals.data && !profile ? <Empty text="Este perfil no está disponible." /> : null}
       {profile ? <>
@@ -110,11 +115,13 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
 
   return <>
     <Text accessibilityRole="header" style={ui.title}>Reservar una sesión</Text>
-    {availability.isLoading ? <Text style={ui.muted}>Consultando disponibilidad…</Text> : null}
+    {availability.isLoading ? <SkeletonGroup label="Consultando disponibilidad">
+      <SkeletonLine width="50%" /><SkeletonLine text="label" width="25%" /><SkeletonChips count={4} /><SkeletonLine text="label" width="20%" /><SkeletonChips count={4} />
+    </SkeletonGroup> : null}
     {availability.isError ? <View style={[ui.notice, ui.error]}><Text accessibilityRole="alert" style={ui.body}>{sessionError(availability.error)}</Text><Button secondary label="Reintentar" onPress={() => void availability.refetch()} /></View> : null}
     {availability.data && !services.length ? <Text style={ui.body}>{organizerName} todavía no publicó horarios. Podés consultarle por un horario fuera de turno.</Text> : null}
     {selected ? <>
-      {services.length > 1 ? <><Text style={s.label}>Servicio</Text><Chips value={serviceKey(selected)} onChange={(value) => { setService(value); setStart(""); }} options={services.map((item) => ({ value: serviceKey(item), label: item.location ? `${item.title} · ${item.location}` : item.title }))} /></> : <Text style={ui.body}>{selected.title}{selected.location ? ` · ${selected.location}` : ""}</Text>}
+      {services.length > 1 ? <><Text style={s.label}>Servicio</Text><Chips value={serviceKey(selected)} onChange={(value) => { setService(value); setStart(""); }} options={services.map((item) => ({ value: serviceKey(item), label: item.location ? `${item.title} · ${item.location}` : item.title }))} /></> : <Tag label={selected.location ? `${selected.title} · ${selected.location}` : selected.title} />}
       <Text style={s.label}>Duración</Text>
       <Chips value={String(duration)} onChange={(value) => { setDuration(Number(value)); setStart(""); }} options={SESSION_DURATIONS.map((value) => ({ value: String(value), label: `${value} min` }))} />
       {days.length ? <>
@@ -122,9 +129,9 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
         <Chips value={activeDay} onChange={(value) => { setDay(value); setStart(""); }} options={days.map((value) => ({ value, label: sessionDayLabel(value) }))} />
         <Text style={s.label}>Horario</Text>
         <View style={s.grid}><Chips value={activeStart?.startsAt ?? ""} onChange={setStart} options={starts.map((item) => ({ value: item.startsAt, label: sessionTime(item.startsAt) }))} /></View>
-        <View style={[cardStyles.base, cardStyles.padding, s.block]}>
+        <View style={s.block}>
           <Text style={s.label}>Pago</Text>
-          {pricingQuery.isLoading ? <Text style={ui.muted}>Consultando el precio…</Text> : null}
+          {pricingQuery.isLoading ? <SkeletonGroup label="Consultando el precio"><SkeletonLine width="55%" /></SkeletonGroup> : null}
           {pricingQuery.isError ? <><Text accessibilityRole="alert" style={ui.body}>{sessionError(pricingQuery.error)}</Text><Button secondary label="Reintentar" onPress={() => void pricingQuery.refetch()} /></> : null}
           {pricingReady && !pricing ? <Text style={ui.body}>A coordinar con el facilitador.</Text> : null}
           {pricing && !priced ? <Text style={ui.body}>Sin cargo.</Text> : null}
@@ -142,9 +149,9 @@ function Booking({ organizerId, organizerName }: { organizerId: string; organize
       </> : <Text style={ui.muted}>No hay horarios libres para esta duración en las próximas semanas.</Text>}
     </> : null}
 
-    <View style={[cardStyles.base, cardStyles.padding, s.block]}>
+    <View style={s.block}>
       <Text style={ui.body}>¿Ninguno de estos horarios te sirve?</Text>
-      <Button secondary label="Consultar por horarios fuera de turno" disabled={mutation.isPending} onPress={() => { setNotice(""); setRequestOpen(true); }} />
+      <Button link label="Consultar por horarios fuera de turno" disabled={mutation.isPending} onPress={() => { setNotice(""); setRequestOpen(true); }} />
       {whatsapp ? <Button secondary label="Escribir por WhatsApp" onPress={() => void Linking.openURL(whatsapp).catch(() => {})} /> : null}
     </View>
     {notice ? <Text accessibilityLiveRegion="polite" style={ui.body}>{notice}</Text> : null}

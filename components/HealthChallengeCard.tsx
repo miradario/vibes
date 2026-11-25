@@ -129,6 +129,7 @@ const HealthChallengeCard = ({
       <Text style={styles.body}>{body}</Text>
       {action ? (
         connecting ? (
+          /* ds-lint-allow loading: acción en curso (conectando Salud), reemplaza al botón; DS "Desafíos conectados a Salud" */
           <ActivityIndicator color={ds.colors.base.blue} style={styles.loader} />
         ) : (
           <VibesActionButton label={action} variant="outline" onPress={onConnect} style={styles.button} />

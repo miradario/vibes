@@ -21,6 +21,7 @@ import { Alert, View, TouchableOpacity, ScrollView, StyleSheet } from "react-nat
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text, TextInput } from "../components/Typography";
 import Icon from "../components/Icon";
+import { CardRowSkeleton, SkeletonGroup } from "../components/ui/Skeleton";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { useLearningData, useLearningRoster } from "../src/learning/queries";
 import {
@@ -798,7 +799,11 @@ export function LearningRoster() {
                   la actividad esté cancelada.
                 </Text>
               )}
-              {roster.isPending && <Empty text="Cargando alumnos…" />}
+              {roster.isPending && (
+                <SkeletonGroup label="Cargando alumnos">
+                  {[0, 1, 2].map((index) => <CardRowSkeleton key={index} cardStyle={ui.card} lines={[{ text: "title", width: "60%" }, { text: "body", width: "45%" }]} />)}
+                </SkeletonGroup>
+              )}
               {roster.isError && (
                 <View style={ui.notice}>
                   <Text style={ui.body}>{learningError(roster.error)}</Text>

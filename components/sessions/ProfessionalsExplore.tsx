@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ChevronRight, MapPin } from "lucide-react-native";
 import { Text, TextInput } from "../Typography";
 import Icon from "../Icon";
 import { Button, Chips, Empty, Photo, ui } from "../learning/LearningUI";
 import { cardStyles } from "../ui/surfaceStyles";
+import { CardRowSkeleton, SkeletonGroup } from "../ui/Skeleton";
 import { useProfessionals } from "../../src/sessions/sessionsQueries";
 import { filterProfessionals, professionalSpecialties } from "../../src/sessions/professionals";
 import { sessionError } from "../../src/sessions/sessions";
@@ -18,7 +19,7 @@ export default function ProfessionalsExplore() {
   const query = useProfessionals();
   const [specialty, setSpecialty] = useState("");
   const [search, setSearch] = useState("");
-  if (query.isLoading) return <View style={ui.notice}><ActivityIndicator color={ds.colors.base.blue} /><Text style={ui.body}>Cargando profesionales…</Text></View>;
+  if (query.isLoading) return <ProfessionalsSkeleton />;
   if (query.isError) return <View style={[ui.notice, ui.error]}><Text accessibilityRole="alert" style={ui.body}>{sessionError(query.error)}</Text><Button secondary label="Reintentar" onPress={() => void query.refetch()} /></View>;
   const profiles = query.data ?? [];
   const specialties = professionalSpecialties(profiles);
@@ -27,7 +28,7 @@ export default function ProfessionalsExplore() {
     <View style={s.list}>
       <View style={s.search}>
         <Icon name="search" size={ds.iconSize.md} color={ds.colors.text.secondary} />
-        <TextInput accessibilityLabel="Buscar sesiones con profesionales" placeholder="Buscá por nombre o práctica" placeholderTextColor={ds.colors.text.secondary}
+        <TextInput accessibilityLabel="Buscar sesiones con facilitadores" placeholder="Buscá por nombre o práctica" placeholderTextColor={ds.colors.text.secondary}
           value={search} onChangeText={setSearch} style={s.searchInput} returnKeyType="search" />
         {search ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setSearch("")} style={s.clear}><Icon name="close" size={ds.iconSize.md} color={ds.colors.text.secondary} /></TouchableOpacity> : null}
       </View>
@@ -45,10 +46,22 @@ export default function ProfessionalsExplore() {
         </TouchableOpacity>
       ))}
       {!shown.length ? (
-        <Empty text={specialty || search ? "No encontramos profesionales con ese filtro. Probá con otra especialidad." : "Todavía no hay profesionales con turnos disponibles. Volvé pronto."} />
+        <Empty text={specialty || search ? "No encontramos facilitadores con ese filtro. Probá con otra especialidad." : "Todavía no hay facilitadores con turnos disponibles. Volvé pronto."} />
       ) : null}
       {specialty || search ? <Button secondary label="Limpiar filtros" onPress={() => { setSpecialty(""); setSearch(""); }} /> : null}
     </View>
+  );
+}
+
+/** Carga inicial: tres filas con la geometría de la card de facilitador (foto + nombre, práctica, lugar y enlace). */
+function ProfessionalsSkeleton() {
+  return (
+    <SkeletonGroup label="Cargando facilitadores">
+      {Array.from({ length: 3 }, (_, index) => (
+        <CardRowSkeleton key={index} thumb={ui.photo}
+          lines={[{ text: "subtitle", width: "70%" }, { text: "bodySmall", width: "85%" }, { text: "bodySmall", width: "55%" }, { text: "label", width: "45%" }]} />
+      ))}
+    </SkeletonGroup>
   );
 }
 

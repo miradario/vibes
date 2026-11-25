@@ -27,7 +27,7 @@ export const appointmentWhen = (iso: unknown, timezone: unknown = TIMEZONE) => {
 
 export const appointmentCopy = (event: AppointmentEvent, record: Record<string, unknown>) => {
   const title = text(record.title) || "tu sesión";
-  const organizer = text(record.organizer_name, 40) || "Tu profesional";
+  const organizer = text(record.organizer_name, 40) || "Tu facilitador";
   const when = appointmentWhen(record.starts_at, record.timezone);
   const at = when ? ` el ${when}` : "";
   switch (event) {

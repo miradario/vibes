@@ -2,7 +2,6 @@ import BackButton from "../BackButton";
 import { LearningDockHost } from "./LearningActionDock";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -39,6 +38,7 @@ import * as ImagePicker from "expo-image-picker";
 import { uploadImageToSupabase } from "../../src/lib/supabaseStorage";
 import { useAuthSession } from "../../src/auth/auth.queries";
 import { cardStyles } from "../ui/surfaceStyles";
+import { CardRowSkeleton, SkeletonGroup } from "../ui/Skeleton";
 import { chipHitSlop, chipStyles } from "../ui/chipStyles";
 import * as ds from "../../src/theme/tokens";
 export const ui = StyleSheet.create({
@@ -107,17 +107,32 @@ export function Button({
   onPress,
   disabled = false,
   secondary = false,
+  link = false,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   secondary?: boolean;
+  /** Acción terciaria de baja jerarquía: texto subrayado sin fondo ni borde (`buttonVariant.link`). */
+  link?: boolean;
 }) {
+  const variant = link ? "link" : secondary ? "secondary" : "accent";
   return (
     <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled }} onPress={onPress} disabled={disabled} activeOpacity={ds.opacity.pressed}
-      style={[buttonStyle(secondary ? "secondary" : "accent", "lg"), disabled && buttonDisabled]}>
-      <Text style={buttonLabel("lg", secondary ? "secondary" : "accent")}>{label}</Text>
+      style={[buttonStyle(variant, link ? "sm" : "lg"), disabled && buttonDisabled]}>
+      <Text style={buttonLabel(link ? "sm" : "lg", variant)}>{label}</Text>
     </TouchableOpacity>
+  );
+}
+/** Carga inicial de Clases: tres filas con la geometría de `ActivityCard compact` (foto 92×100 + 4 líneas). */
+export function ActivityListSkeleton({ count = 3, label = "Cargando clases y espacios" }: { count?: number; label?: string }) {
+  return (
+    <SkeletonGroup label={label}>
+      {Array.from({ length: count }, (_, index) => (
+        <CardRowSkeleton key={index} cardStyle={exploreCard.row} thumb={exploreCard.image} chevron
+          lines={[{ text: "subtitle", width: "75%" }, { text: "labelMedium", width: "55%" }, { text: "bodySmall", width: "60%" }, { text: "bodySmall", width: "45%" }]} />
+      ))}
+    </SkeletonGroup>
   );
 }
 export function Link({
@@ -345,13 +360,7 @@ export function LearningGate({
         Iniciá sesión con tu cuenta de Vibes para continuar.
       </Text>
     );
-  if (query.isPending)
-    return (
-      <View style={ui.notice}>
-        <ActivityIndicator color={ds.colors.base.blue} />
-        <Text style={ui.body}>Cargando clases y espacios…</Text>
-      </View>
-    );
+  if (query.isPending) return <ActivityListSkeleton />;
   if (query.isError || !query.data)
     return (
       <View style={[ui.notice, ui.error]}>

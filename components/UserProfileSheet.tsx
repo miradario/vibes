@@ -880,6 +880,7 @@ const UserProfileSheet = ({
       >
         {profileImages.length > 0 && photoReadyId !== profile.id && !swipeNextProfile ? (
           <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { alignItems: "center", justifyContent: "center" }]} accessibilityLabel="Cargando perfil">
+            {/* ds-lint-allow loading: overlay sobre la foto full-screen mientras carga la imagen (media, no lista); preexistente */}
             {isFollowingProfile ? <VibesLoader /> : <ActivityIndicator size="small" color={vibesTheme.colors.accentBlue} />}
           </View>
         ) : null}

@@ -14,6 +14,10 @@
  *    que no usa useSafeAreaInsets (en iOS el SafeAreaView recibe insets en 0 dentro del Modal).
  *    Excepción: `/* ds-lint-allow safe-area: <motivo> *\/` en las 3 líneas previas al elemento.
  *  - en todo el código: número suelto como 2º argumento de withAlpha (usá ds.opacity.*).
+ *  - en screens/ y components/ (estados de carga, DS "Estados de carga"): <ActivityIndicator> o texto visible
+ *    "Cargando…"/"Consultando…" como placeholder de carga inicial (usá los skeletons de components/ui/Skeleton).
+ *    No cuenta dentro de un botón (Pressable, Touchable…, …Button o prop label: acción en curso) ni en accessibility*.
+ *    Excepción: `/* ds-lint-allow loading: <motivo> *\/` en las 3 líneas previas.
  * Fuera de components/ui, `vibesTheme.*` es solo aviso (no falla) mientras dura la migración,
  * salvo en VIBES_THEME_STRICT (archivos ya migrados: ahí falla).
  * Excepciones documentadas: comentario `/* ds-lint-allow <motivo> *\/` justo antes del valor,
@@ -89,10 +93,26 @@ function lintFile(file) {
   const truthyAttr = (el, name) => el.attributes.properties.some((at) => ts.isJsxAttribute(at) && at.name.getText(sf) === name &&
     !(at.initializer && ts.isJsxExpression(at.initializer) && at.initializer.expression &&
       at.initializer.expression.kind === ts.SyntaxKind.FalseKeyword));
-  const safeAreaAllowed = (n) => {
+  const lineAllowed = (n, kind) => {
     const { line } = sf.getLineAndCharacterOfPosition(n.getStart(sf));
     const from = sf.getPositionOfLineAndCharacter(Math.max(0, line - 3), 0);
-    return /ds-lint-allow\s+safe-area\b[:\s]*[^*\s][^*]*/.test(src.slice(from, n.getStart(sf)));
+    return new RegExp(`ds-lint-allow\\s+${kind}\\b[:\\s]*[^*\\s][^*]*`).test(src.slice(from, n.getStart(sf)));
+  };
+  const safeAreaAllowed = (n) => lineAllowed(n, "safe-area");
+  const checksLoading = /^(screens|components)\//.test(rel) && rel !== "components/VibesLoader.tsx";
+  /** Dentro de un control de acción (botón) o de una prop accesible: no es un placeholder de carga. */
+  const inActionOrA11y = (n) => {
+    for (let k = n.parent; k; k = k.parent) {
+      if (ts.isJsxAttribute(k)) { const a = k.name.getText(sf); if (/^accessibility/.test(a) || a === "label") return true; }
+      if ((ts.isJsxElement(k) && /(Pressable|Touchable\w*|Button)$/.test(k.openingElement.tagName.getText(sf))) ||
+          (ts.isJsxSelfClosingElement(k) && /(Pressable|Touchable\w*|Button)$/.test(k.tagName.getText(sf)))) return true;
+    }
+    return false;
+  };
+  const loadingProblem = (n, what) => {
+    if (inActionOrA11y(n) || lineAllowed(n, "loading")) return;
+    const { line, character } = sf.getLineAndCharacterOfPosition(n.getStart(sf));
+    problems.push(`${rel}:${line + 1}:${character + 1}  ${what} como estado de carga: usá skeletons con la geometría real (components/ui/Skeleton) o, si es una acción en curso, documentá /* ds-lint-allow loading: <motivo> */`);
   };
   function visit(n) {
     if (checksSafeArea && (ts.isJsxSelfClosingElement(n) || ts.isJsxOpeningElement(n))) {
@@ -103,6 +123,13 @@ function lintFile(file) {
         problems.push(`${rel}:${line + 1}:${character + 1}  <${tag} ${prop}> sin useSafeAreaInsets: aplicá los insets (patrón PhotoViewer) o documentá /* ds-lint-allow safe-area: <motivo> */`);
       }
     }
+    if (checksLoading && (ts.isJsxSelfClosingElement(n) || ts.isJsxOpeningElement(n)) && n.tagName.getText(sf) === "ActivityIndicator")
+      loadingProblem(n, "<ActivityIndicator>");
+    if (checksLoading && (ts.isJsxText(n) || ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) &&
+        /^\s*(Cargando|Consultando)\b/.test(n.text) && !(n.parent && ts.isImportDeclaration(n.parent)) &&
+        // solo texto que termina en JSX (hijo o prop), no strings de lógica
+        (ts.isJsxText(n) || (() => { for (let k = n.parent; k; k = k.parent) { if (ts.isJsxElement(k) || ts.isJsxSelfClosingElement(k) || ts.isJsxAttribute(k)) return true; if (ts.isBlock(k) || ts.isSourceFile(k)) return false; } return false; })()))
+      loadingProblem(n, `texto "${n.text.trim()}"`);
     if (ts.isPropertyAccessExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === "vibesTheme") {
       if (isUi || VIBES_THEME_STRICT.has(rel)) report(n, `${n.getText(sf)} en ${isUi ? "components/ui" : rel}: usá ds.*`);
       else if (!allowed(n)) {
@@ -153,7 +180,7 @@ if (warnings.length) console.warn(`⚠ ${warnings.length} usos de vibesTheme.* f
 if (warnings.length && process.env.DS_LINT_VERBOSE) console.warn(warnings.join("\n"));
 if (problems.length) {
   console.error(problems.join("\n"));
-  console.error(`\n✖ ${problems.length} problemas del DS (valores hardcodeados o safe area, DESIGN_SYSTEM.md §1). Usá tokens de src/theme/tokens o documentá la excepción con /* ds-lint-allow <motivo> */.`);
+  console.error(`\n✖ ${problems.length} problemas del DS (valores hardcodeados, safe area o estados de carga, DESIGN_SYSTEM.md §1). Usá tokens de src/theme/tokens o documentá la excepción con /* ds-lint-allow <motivo> */.`);
   process.exit(1);
 }
 console.log(`✔ Design system: ${files.length} archivos sin valores hardcodeados.`);
