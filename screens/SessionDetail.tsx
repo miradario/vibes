@@ -10,7 +10,7 @@ import { CardRowSkeleton, SkeletonGroup } from "../components/ui/Skeleton";
 import { useSesionesEnabled } from "../src/featureFlags/useSesionesEnabled";
 import { useAuthSession } from "../src/auth/auth.queries";
 import {
-  canCancelSession, formatCountdown, formatMoney, holdSecondsLeft, NO_REFUND_NOTE, PAYMENT_METHOD_LABELS,
+  canCancelSession, isCheckoutProcessing, formatCountdown, formatMoney, holdSecondsLeft, NO_REFUND_NOTE, PAYMENT_METHOD_LABELS,
   sessionAwaiting, sessionError, sessionPayment, sessionStatusLabel, sessionTime, sessionWhen, switchablePaymentMethods,
   whatsappLink, type SessionPaymentMethod, type StudentSession,
 } from "../src/sessions/sessions";
@@ -70,6 +70,8 @@ function SessionBody({ session, respondSupported, checkoutOrder, readOnly }: { s
   const [notice, setNotice] = useState("");
   const awaiting = sessionAwaiting(session);
   const payment = sessionPayment(session);
+  const processingPayment = !readOnly && checkout.variables?.orderId === session.order_id
+    && isCheckoutProcessing(session, checkout.isPending, checkout.data);
   const cancellable = canCancelSession(session);
   const phone = session.whatsapp_phone ?? contact.data?.whatsapp_phone ?? null;
   const whatsapp = whatsappLink(phone, `Hola ${session.organizer_name}, te escribo por la sesión "${session.title}" (${sessionWhen(session)}).`);
@@ -124,6 +126,7 @@ function SessionBody({ session, respondSupported, checkoutOrder, readOnly }: { s
 
       <View style={[cardStyles.base, cardStyles.padding, s.block]}>
         <Text style={s.label}>Pago</Text>
+        {processingPayment ? <Text accessibilityLiveRegion="polite" style={ui.body}>Procesando pago… Esperando la confirmación de Mercado Pago. Si ya pagaste, no vuelvas a pagar.</Text> : null}
         {payment.kind === "coordinate" ? <Text style={ui.body}>A coordinar con el facilitador.</Text> : null}
         {payment.kind === "free" ? <Text style={ui.body}>Sin cargo.</Text> : null}
         {payment.kind === "awaiting_confirmation" ? <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)}{payment.method ? ` · ${PAYMENT_METHOD_LABELS[payment.method]}` : ""}. Vas a poder pagar cuando la sesión esté confirmada.</Text> : null}
@@ -144,18 +147,18 @@ function SessionBody({ session, respondSupported, checkoutOrder, readOnly }: { s
         {payment.kind === "late" ? <Text style={ui.body}>Pagaste {formatMoney(payment.amount, payment.currency)}, pero la reserva ya no estaba vigente. Escribile a {session.organizer_name} para resolverlo.</Text> : null}
         {payment.kind === "hold" ? <>
           <Text style={ui.body}>Total: {formatMoney(payment.amount, payment.currency)}</Text>
-          {!readOnly ? <Button label={checkout.isPending ? "Abriendo el pago…" : "Pagar con Mercado Pago"} disabled={busy || holdLeft <= 0}
+          {!readOnly ? <Button label={processingPayment ? "Procesando pago…" : "Pagar con Mercado Pago"} disabled={busy || processingPayment || holdLeft <= 0}
             onPress={() => void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {})} /> : null}
           <Text style={ui.muted}>El pago va directo a la cuenta de {session.organizer_name}. Cuando se acredite, la sesión se confirma sola. {NO_REFUND_NOTE}</Text>
         </> : null}
         {payment.kind === "refunded" ? <Text style={ui.body}>{formatMoney(payment.amount, payment.currency)} · Pago reintegrado.</Text> : null}
         {payment.kind === "pay" ? <>
           <Text style={ui.body}>Total: {formatMoney(payment.amount, payment.currency)}</Text>
-          {!readOnly ? <Button label={checkout.isPending ? "Abriendo el pago…" : "Pagar"} disabled={busy}
+          {!readOnly ? <Button label={processingPayment ? "Procesando pago…" : "Pagar"} disabled={busy || processingPayment}
             onPress={() => void checkout.mutateAsync({ orderId: payment.orderId, bookingId: session.id }).catch(() => {})} /> : null}
           <Text style={ui.muted}>El pago se hace con Mercado Pago en una ventana segura y va directo a la cuenta de {session.organizer_name}. Cuando lo acrediten, lo vas a ver acá. {NO_REFUND_NOTE}</Text>
         </> : null}
-        {!readOnly && switchable.length ? <>
+        {!readOnly && !processingPayment && switchable.length ? <>
           <Text style={s.label}>Forma de pago</Text>
           <Chips value={currentMethod ?? ""} onChange={(value) => value !== currentMethod && !busy && run({ action: "set_payment_method", id: session.id, paymentMethod: value as SessionPaymentMethod }, "Listo, cambiamos la forma de pago.")}
             options={switchable.map((value) => ({ value, label: PAYMENT_METHOD_LABELS[value] }))} />

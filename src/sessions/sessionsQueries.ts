@@ -5,7 +5,7 @@ import { organizersWithAvailability, withActiveAvailability } from "./profession
 import { useSesionesEnabled } from "../featureFlags/useSesionesEnabled";
 import { supabase } from "../lib/supabase";
 import { withBootTimeout } from "../lib/startupBoot";
-import { dayStartISO, isPaymentHold, sessionDay, sessionReturnUrl, type SessionPaymentMethod } from "./sessions";
+import { dayStartISO, hasPendingMercadoPayment, isPaymentHold, sessionDay, sessionReturnUrl, type SessionPaymentMethod } from "./sessions";
 import {
   bookSession, cancelSession, loadAllAvailability, setSessionPaymentMethod, loadOrganizerAvailability, loadOrganizerContact, loadServicePricing, loadStudentSessions,
   requestCheckoutUrl, reserveSession, respondToSession, type RpcClient,
@@ -32,8 +32,8 @@ export function useStudentSessions() {
     queryFn: () => withBootTimeout(loadStudentSessions(client), 15000, "student sessions"),
     staleTime: 15000,
     retry: 1,
-    // While a Mercado Pago hold waits for the webhook, poll so it flips to confirmed (or released).
-    refetchInterval: (query) => (query.state.data?.sessions.some(isPaymentHold) ? 5000 : false),
+    // Poll online pending orders, including sessions scheduled by the facilitator.
+    refetchInterval: (query) => (query.state.data?.sessions.some(hasPendingMercadoPayment) ? 5000 : false),
   });
 }
 
@@ -115,7 +115,7 @@ export function useSessionCheckout() {
       // Mercado Pago's back_urls point at com.gurudevelopers.vibes://session/<id>: the auth session
       // closes on that redirect and the student is back on the session detail. If the portal still
       // returns to the web, the student closes the browser and we refresh the same way.
-      await WebBrowser.openAuthSessionAsync(url, sessionReturnUrl(bookingId));
+      return await WebBrowser.openAuthSessionAsync(url, sessionReturnUrl(bookingId));
     },
     retry: false,
     // The payment is credited by the webhook; the return URL never marks it as paid.

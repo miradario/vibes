@@ -357,3 +357,21 @@ export function sessionError(cause: unknown): string {
   };
   return messages[error?.message ?? ""] ?? "No pudimos completar la operación. Actualizá y volvé a intentar.";
 }
+
+/** Only an online pending order can be awaiting Mercado Pago's confirmation. */
+export function hasPendingMercadoPayment(session: StudentSession): boolean {
+  return session.status !== "cancelled" && !!session.order_id && session.payment_status === "pending"
+    && (session.payment_method ?? "mercadopago") === "mercadopago";
+}
+
+/** Browser return is provisional; only the server can mark the order paid. */
+export function isCheckoutProcessing(session: StudentSession, pending: boolean, result?: { type: string; url?: string }): boolean {
+  if (!hasPendingMercadoPayment(session)) return false;
+  if (pending) return true;
+  if (result?.type !== "success" || !result.url) return false;
+  try {
+    const params = new URL(result.url).searchParams;
+    const status = params.get("collection_status") ?? params.get("status");
+    return !["rejected", "failure", "cancelled"].includes(status ?? "");
+  } catch { return false; }
+}

@@ -8,7 +8,7 @@ function load(file,env={}){
  const key=file+JSON.stringify(env); if(cache[key])return cache[key];
  const exports={}; cache[key]=exports;
  const out=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
- vm.runInNewContext(out,{exports,Intl,Date,JSON,encodeURIComponent,Error,process:{env},
+ vm.runInNewContext(out,{exports,Intl,Date,JSON,URL,encodeURIComponent,Error,process:{env},
   require:name=>load(path.join(path.dirname(file),name)+'.ts',env)});
  return exports;
 }
@@ -271,3 +271,18 @@ test('pastSessions keeps ended confirmed and cancelled items, most recent first'
  assert.equal(s.upcomingSessions([lateUpcoming,released],NOW).map(item=>item.id).join(),'late');
 });
 
+
+test('processing payment is provisional, stops for paid/offline/cancelled and excludes failed browser returns',()=>{
+ const order=session({order_id:'order',amount:10000,payment_status:'pending'});
+ const returned={type:'success',url:'com.gurudevelopers.vibes://session/b1?status=approved'};
+ assert.equal(s.isCheckoutProcessing(order,true),true);
+ assert.equal(s.isCheckoutProcessing(order,false,returned),true);
+ assert.equal(s.isCheckoutProcessing(order,false,{type:'cancel'}),false);
+ assert.equal(s.isCheckoutProcessing(order,false,{type:'success',url:'com.gurudevelopers.vibes://session/b1?collection_status=rejected'}),false);
+ for(const change of [{payment_status:'paid'},{payment_status:'refunded'},{payment_method:'cash'},{payment_method:'transfer'},{status:'cancelled'}]) {
+  assert.equal(s.isCheckoutProcessing({...order,...change},false,returned),false);
+  assert.equal(s.hasPendingMercadoPayment({...order,...change}),false);
+ }
+ assert.equal(s.hasPendingMercadoPayment(order),true);
+ assert.equal(order.payment_status,'pending');
+});
