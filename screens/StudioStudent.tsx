@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Page, Button, Chips, Empty, Field, ui } from "../components/learning/LearningUI";
 import AnimatedSheetModal from "../components/AnimatedSheetModal";
 import { Text } from "../components/Typography";
+import { CardRowSkeleton, SkeletonBlock, SkeletonChips, SkeletonGroup } from "../components/ui/Skeleton";
 import { useStudioStudentQuery, useStudioStudentMutation } from "../src/learning/studioStudentQueries";
 import { studioCanCancel, studioCreditBalance, studioStudentError, type StudioBooking, type StudioContact } from "../src/learning/studioStudent";
 import * as ds from "../src/theme/tokens";
@@ -36,7 +37,11 @@ export default function StudioStudentScreen() {
   const label=(iso:string,timezone="America/Argentina/Buenos_Aires")=>new Date(iso).toLocaleString("es-AR",{timeZone:timezone,weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
   return <KeyboardViewport style={{flex:1}}><Page title="Mis clases">
     <Button secondary label={query.isFetching?"Actualizando…":"Actualizar agenda"} disabled={query.isFetching||mutation.isPending} onPress={()=>void query.refetch()} />
-    {query.isLoading ? <Text style={ui.muted}>Cargando tu agenda…</Text> : null}
+    {query.isLoading ? <SkeletonGroup label="Cargando tu agenda" style={{gap:ds.spacing[4]}}>
+      <SkeletonBlock style={[ui.notice,{height:ds.textStyles.title.lineHeight+ds.textStyles.body.lineHeight+ds.spacing[2]+ds.spacing[4]*2}]} />
+      <SkeletonChips count={4} />
+      {[0,1].map(index=><CardRowSkeleton key={index} cardStyle={ui.card} lines={[{text:"title",width:"70%"},{text:"body",width:"55%"},{text:"body",width:"65%"}]} />)}
+    </SkeletonGroup> : null}
     {query.isError ? <Text accessibilityRole="alert" style={ui.body}>{studioStudentError(query.error)}</Text> : null}
     {mutation.isError ? <Text accessibilityRole="alert" style={ui.body}>{studioStudentError(mutation.error)}</Text> : null}
     {data ? <>

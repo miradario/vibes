@@ -4,7 +4,7 @@ import * as ds from "../../src/theme/tokens";
  * Button (DS §5.1). Mientras no exista `<Button>` en código, las pantallas usan estos
  * presets. Todas las variantes son pill. Tamaños: sm 36 / md 48 / lg 56.
  */
-export type ButtonVariant = "primary" | "accent" | "secondary" | "secondary-blue" | "ghost" | "destructive";
+export type ButtonVariant = "primary" | "accent" | "secondary" | "secondary-blue" | "ghost" | "destructive" | "link";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const heights = ds.componentSize.button;
@@ -29,6 +29,8 @@ export const buttonVariant = {
   "secondary-blue": { backgroundColor: ds.colors.bg.surface, borderWidth: 1, borderColor: ds.colors.action.secondaryBlueBorder },
   ghost: { backgroundColor: "transparent" },
   destructive: { backgroundColor: ds.colors.feedback.errorBg, borderWidth: 1, borderColor: ds.colors.border.error },
+  /** Enlace (terciario): solo texto subrayado, sin fondo ni borde; área táctil `touchTarget` (44). */
+  link: { backgroundColor: "transparent", minHeight: ds.touchTarget, paddingHorizontal: ds.spacing[1], alignSelf: "center" },
 } as const;
 
 /** Color de etiqueta e ícono por variante. */
@@ -39,13 +41,14 @@ export const buttonContentColor: Record<ButtonVariant, string> = {
   "secondary-blue": ds.colors.action.secondaryBlueText,
   ghost: ds.colors.text.primary,
   destructive: ds.colors.text.primary,
+  link: ds.colors.text.primary,
 };
 
 /** Tipografía de la etiqueta: sm `label`, md/lg `subtitle` (secondary-blue: variantes medium). */
 export const buttonLabel = (size: ButtonSize, variant: ButtonVariant) => {
   const blue = variant === "secondary-blue";
   const type = size === "sm" ? (blue ? ds.textStyles.labelMedium : ds.textStyles.label) : blue ? ds.textStyles.subtitleMedium : ds.textStyles.subtitle;
-  return { ...type, color: buttonContentColor[variant], textAlign: "center", flexShrink: 1 } as const;
+  return { ...type, color: buttonContentColor[variant], textAlign: "center", flexShrink: 1, ...(variant === "link" ? { textDecorationLine: "underline" as const } : null) } as const;
 };
 
 export const buttonStyle = (variant: ButtonVariant, size: ButtonSize = "md") => ({ ...buttonBase, ...buttonSize[size], ...buttonVariant[variant] });

@@ -10,16 +10,20 @@ const CLAIM_TIMEOUT_MS = 6000;
 
 export type DeferredDestination =
   | { name: "ChallengeDetailScreen"; params: { challengeId: string } }
-  | { name: "EventDetail"; params: { eventId: string } };
+  | { name: "EventDetail"; params: { eventId: string } }
+  | { name: "SessionDetail"; params: { id: string } };
 
 /** Maps a shared https URL to the same screens the linking config uses. */
 export const deferredUrlToDestination = (url: string): DeferredDestination | null => {
   const match = url.match(
-    /^(?:https:\/\/vibes\.gurudevelopers\.dev|com\.gurudevelopers\.vibes:\/)\/(challenge|event)\/([^/?#]+)/i
+    /^(?:https:\/\/vibes\.gurudevelopers\.dev|com\.gurudevelopers\.vibes:\/)\/(challenge|event|session)\/([^/?#]+)/i
   );
   if (!match) return null;
   const id = decodeURIComponent(match[2]);
-  return match[1].toLowerCase() === "challenge"
+  const kind = match[1].toLowerCase();
+  // session: invitation email for students without a Vibes account (deferred link built by the portal).
+  if (kind === "session") return { name: "SessionDetail", params: { id } };
+  return kind === "challenge"
     ? { name: "ChallengeDetailScreen", params: { challengeId: id } }
     : { name: "EventDetail", params: { eventId: id } };
 };
@@ -88,3 +92,7 @@ export const checkDeferredLinkOnce = async (): Promise<DeferredDestination | nul
     return null;
   }
 };
+
+/** Session invitations need an account: wait until the signed-in app (Tab) is on the stack. */
+export const deferredNeedsMainApp = (destination: DeferredDestination | null) =>
+  destination?.name === "SessionDetail";

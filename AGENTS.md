@@ -5,6 +5,8 @@
 
 - When implementing a modal (especially bottom-sheet style with backdrop), use `components/AnimatedSheetModal.tsx` instead of creating a new ad-hoc `Modal` animation.
 - For new screens, use `components/ScreenContainer.tsx` as the base container unless there is a concrete reason not to.
+- Estados de carga: la carga inicial de una lista, card o pantalla usa skeletons con la geometría de las tarjetas reales (`components/ui/Skeleton`: `SkeletonGroup` + `CardRowSkeleton` / `SkeletonLine` / `SkeletonChips`, o el skeleton propio del componente como `PersonCardSkeleton`), nunca un `ActivityIndicator` ni un texto "Cargando…"/"Consultando…" suelto. Mostrar el skeleton solo con `isLoading`/`isPending` sin datos; en refetch (`isFetching`) conservar las tarjetas visibles. `ActivityIndicator` / `VibesLoader` quedan para una acción en curso dentro del control que la dispara (botón, conectar Salud). `npm run lint:ds` lo verifica; una excepción necesita `/* ds-lint-allow loading: <motivo> */`.
+- Acciones terciarias o de baja jerarquía (p. ej. "Consultar por horarios fuera de turno") usan la variante `link` del botón (`buttonStyle("link")` / `<Button link>` de LearningUI): texto subrayado sin fondo ni borde, área táctil 44. No envolver acciones secundarias en una card con borde solo para agruparlas.
 - En sheets/modals de pantalla completa (`AnimatedSheetModal fullScreen`, `Modal` de RN) no confiar solo en `SafeAreaView` en iOS; aplicar `useSafeAreaInsets()` arriba y abajo; la cabecera y la flecha de volver nunca se superponen a la barra de estado.
 
 ## Paleta obligatoria de Vibes

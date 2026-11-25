@@ -24,12 +24,13 @@ import {
   reminderTimeToDate,
   reminderTimeFromDate,
   getReminderTiming,
-  notificationCategories,
+  visibleNotificationCategories,
   reminderTimingLabel,
 } from "../src/notifications/preferences";
 import { optionCardCheck, optionCardStyles } from "./ui/optionCardStyles";
 import ListItem from "./ui/ListItem";
 import * as ds from "../src/theme/tokens";
+import { useSesionesEnabled } from "../src/featureFlags/useSesionesEnabled";
 
 const colors = vibesTheme.colors;
 
@@ -56,9 +57,9 @@ export default function NotificationPreferencesSection() {
   const timing = getReminderTiming(prefs.eventReminderTiming);
   const challengeTime = getChallengeReminderTime(prefs.challengeReminderTime);
   const busy = pending !== null || !query.isSuccess || !userId;
-  const count = notificationCategories.filter(
-    ({ key }) => prefs[key] !== false
-  ).length;
+  const sessionsEnabled = useSesionesEnabled();
+  const categories = visibleNotificationCategories(prefs, sessionsEnabled);
+  const count = categories.filter(({ key }) => prefs[key] !== false).length;
   const permissionGranted =
     permission?.granted ||
     permission?.ios?.status ===
@@ -239,7 +240,7 @@ export default function NotificationPreferencesSection() {
               {!expanded ? (
                 <Text style={s.description}>
                   {enabled
-                    ? t("configuration.summary", { count })
+                    ? t("configuration.summary", { count, total: categories.length })
                     : t("configuration.allOff")}
                 </Text>
               ) : null}
@@ -252,7 +253,7 @@ export default function NotificationPreferencesSection() {
           </Pressable>
           {expanded && enabled ? (
             <View>
-              {notificationCategories.map((category) => (
+              {categories.map((category) => (
                 <View key={category.key} style={s.category}>
                   <View style={s.row}>
                     <View style={s.flex}>

@@ -1,11 +1,12 @@
 import StudioStudentScreen from "./StudioStudent";
-import { studioStudentEnabled } from "../src/learning/studioStudent";
+import { useClasesEnabled } from "../src/featureFlags/useClasesEnabled";
 import React, { useMemo, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Page, LearningGate, Button, Chips, Empty, useLearningAction } from "../components/learning/LearningUI";
 import { Text } from "../components/Typography";
 import Icon from "../components/Icon";
+import { CardRowSkeleton, SkeletonGroup } from "../components/ui/Skeleton";
 import { useLearningData } from "../src/learning/queries";
 import { useReservationRequests } from "../src/learning/reservationQueries";
 import { studentAgenda, isUpcomingStudentMeeting, type StudentMeeting } from "../src/learning/studentAgenda";
@@ -14,7 +15,9 @@ import { useLocalDay } from "../src/hooks/useLocalDay";
 import * as ds from "../src/theme/tokens";
 const statusLabels = {confirmed:"Reserva confirmada",pending:"Pendiente de confirmación",cancelled:"Cancelada"};
 export default function LearningStudentScreen() {
-  return studioStudentEnabled ? <StudioStudentScreen /> : <LegacyLearningStudentScreen />;
+  // With the `clases` flag on, classes use the portal per-encounter agenda (packs and credits);
+  // older enrollments stay reachable as history from LearningLegacyMine.
+  return useClasesEnabled() ? <StudioStudentScreen /> : <LegacyLearningStudentScreen />;
 }
 export function LegacyLearningStudentScreen() {
   const query = useLearningData();
@@ -35,7 +38,7 @@ export function LegacyLearningStudentScreen() {
       {upcoming[0] ? <Text style={s.meta}>{new Date(upcoming[0].startsAt).toLocaleString("es-AR",{timeZone:upcoming[0].timezone,weekday:"long",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})} · {statusLabels[upcoming[0].status]}</Text> : null}
     </View>
     <Chips value={tab} onChange={setTab} options={[{value:"agenda",label:"Agenda"},{value:"reservations",label:"Mis reservas"},{value:"history",label:"Historial"}]} />
-    {requests.isLoading ? <Text style={s.meta}>Cargando tus solicitudes…</Text> : null}
+    {requests.isLoading ? <SkeletonGroup label="Cargando tus solicitudes"><CardRowSkeleton chevron lines={[{ text: "subtitle", width: "70%" }, { text: "bodySmall", width: "40%" }, { text: "bodySmall", width: "55%" }]} pill /></SkeletonGroup> : null}
     {requests.isError ? <View style={s.notice}><Text style={s.meta}>No pudimos actualizar tus solicitudes.</Text><Button secondary label="Reintentar" onPress={() => void requests.refetch()} /></View> : null}
     {tab === "agenda" && days.length ? <Chips value={selectedDay} onChange={setDay} options={days.map(value => ({value,label:new Date(value+"T12:00:00").toLocaleDateString("es-AR",{weekday:"short",day:"numeric",month:"short"})}))} /> : null}
     {shown.map(meeting => <View key={meeting.id} style={s.card}>

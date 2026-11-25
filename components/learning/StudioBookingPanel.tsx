@@ -4,6 +4,7 @@ import { Text } from "../Typography";
 import AnimatedSheetModal from "../AnimatedSheetModal";
 import { Button, Chips, Empty, ui } from "./LearningUI";
 import { LearningActionDock } from "./LearningActionDock";
+import { SkeletonChips, SkeletonGroup, SkeletonLine } from "../ui/Skeleton";
 import { useStudioStudentQuery, useStudioStudentMutation } from "../../src/learning/studioStudentQueries";
 import { studioStudentError } from "../../src/learning/studioStudent";
 import * as ds from "../../src/theme/tokens";
@@ -15,7 +16,7 @@ export default function StudioBookingPanel({activityId,initialSessionId}:{activi
   const [confirm,setConfirm]=useState(false);
   const [notice,setNotice]=useState("");
   const activity=query.data?.activities.find(item=>item.id===activityId);
-  if(query.isLoading) return <Text style={ui.muted}>Cargando encuentros…</Text>;
+  if(query.isLoading) return <SkeletonGroup label="Cargando encuentros" style={{gap:ds.spacing[4]}}><SkeletonLine text="title" width="70%" /><SkeletonLine width="40%" /><SkeletonChips /></SkeletonGroup>;
   if(query.isError) return <><Text style={ui.muted}>{studioStudentError(query.error)}</Text><Button secondary label="Reintentar" onPress={()=>void query.refetch()} /></>;
   if(!activity) return <Empty text="Esta clase no está disponible en la nueva agenda." />;
   const sessions=query.data!.sessions.filter(item=>item.activity_id===activityId&&Date.parse(item.starts_at)>Date.now());

@@ -81,8 +81,8 @@ test('loading prevents edits, and rapid changes cannot race pending saves',async
 test('category summary interpolates the count in every supported locale',()=>{
  const i18n={};vm.runInNewContext(compile('src/i18n/translations.ts'),{exports:i18n});
  for(const locale of ['es','es-AR','en']) {
-  const label=i18n.translate(locale,'configuration.summary',{count:4});
-  assert.ok(label.includes('4'));assert.ok(!label.includes('{'));
+  const label=i18n.translate(locale,'configuration.summary',{count:4,total:7});
+  assert.ok(label.includes('4'));assert.ok(label.includes('7'));assert.ok(!label.includes('{'));
  }
 });
 
